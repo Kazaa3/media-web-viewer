@@ -2,54 +2,194 @@
 <html>
 
 <head>
+    <title>Media Player</title> <!-- ohne: -->
     <script type="text/javascript" src="/eel.js"></script>
     <style>
         body {
-            font-family: Arial;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+
+        .header-container {
+            padding: 20px 20px 10px 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .layout-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #f7f7f7;
+            border-right: 1px solid #ddd;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .sidebar-cover {
+            width: 260px;
+            height: 260px;
+            border-radius: 8px;
+            object-fit: cover;
+            background-color: #eee;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+            width: 100%;
+        }
+
+        .sidebar-artist {
+            color: #555;
+            font-size: 1em;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-meta {
+            color: #888;
+            font-size: 0.85em;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        #media-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 20px 20px 20px;
+        }
+
+        .player-container {
+            background-color: #ffffff;
+            border-top: 1px solid #ddd;
+            padding: 15px 20px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            z-index: 10;
         }
 
         #player {
             width: 100%;
-            height: 60px;
-            margin: 20px 0;
+            height: 40px;
+            outline: none;
+        }
+
+        #status {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 8px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .media-item {
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #eee;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .media-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+            border-color: #ddd;
         }
 
         .media-cover {
             width: 50px;
             height: 50px;
-            border-radius: 4px;
+            border-radius: 6px;
             object-fit: cover;
             margin-right: 15px;
-            background-color: #ddd;
-            /* fallback if no cover */
+            background-color: #eee;
+            flex-shrink: 0;
         }
 
         .media-info {
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        .media-item:hover {
-            background: #f0f0f0;
+        .media-info strong {
+            font-size: 1.05em;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .media-info span {
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #666;
         }
     </style>
 </head>
 
 <body>
-    <h1>Media Library</h1>
-    <button onclick="scan()">Scan Media</button>
-    <div id="media-list"></div>
-    <audio id="player" controls></audio>
-    <div id="status"></div>
+    <div class="header-container">
+        <h1>Media Player</h1>
+        <button onclick="scan()"
+            style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Scan
+            Media</button>
+    </div>
+
+    <div class="layout-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img id="sb-cover" class="sidebar-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                style="opacity: 0.5;">
+            <div id="sb-title" class="sidebar-title">Kein Lied gewählt</div>
+            <div id="sb-artist" class="sidebar-artist">-</div>
+            <div id="sb-meta" class="sidebar-meta"></div>
+        </div>
+
+        <!-- Main List -->
+        <div id="media-list"></div>
+    </div>
+
+    <!-- Sticky Footer Player -->
+    <div class="player-container">
+        <audio id="player" controls></audio>
+        <div id="status">Wählt ein Lied aus der Liste!</div>
+    </div>
 
     <script>
         let currentPlayer = document.getElementById('player');
@@ -62,35 +202,60 @@
                 let div = document.createElement('div');
                 div.className = 'media-item';
                 let tags = item.tags;
-                let extraInfo = [tags.year, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
+                let displayYear = tags.year ? tags.year.substring(0, 4) : '';
+                let extraInfo = [displayYear, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
 
                 div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
                     <div class="media-info">
-                        <strong>${item.name}</strong> 
-                        <span>${tags.artist} - ${tags.title} (${item.duration}, ${item.type})</span>
-                        <span style="font-size: 0.85em; color: #666; margin-top: 2px;">${extraInfo}</span>
+                        <strong>${tags.title}</strong> 
+                        <span>${tags.artist}</span>
+                        <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
                     </div>
                 `;
+
                 let mediaUrl = '/media/' + encodeURIComponent(item.name);
                 if (item.type === 'm4a' || item.type === 'alac') {
-                    // Trick the browser: Chromium aborts requests for .m4a instantly.
-                    // By appending .flac, it sends the HTTP request, hitting our backend transcode.
                     mediaUrl += '.flac_transcoded';
                 }
-                div.onclick = () => play(item.name, mediaUrl);
+
+                div.onclick = () => play(item, mediaUrl);
                 list.appendChild(div);
             });
         }
 
-        function play(name, path) {
-            currentPlayer.src = path;  // HTML5 Audio/Video
+        function play(item, path) {
+            currentPlayer.src = path;
             currentPlayer.play();
-            document.getElementById('status').innerHTML = `Spielt: ${name}`;
-            eel.play_media(path)();  // Python-Benachrichtigung
+
+            // Update Status Bar
+            document.getElementById('status').innerHTML = `Spielt: <strong>${item.tags.title}</strong> von ${item.tags.artist}`;
+
+            // Update Sidebar
+            let tags = item.tags;
+            let extraInfo = [tags.year, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
+
+            let sbCover = document.getElementById('sb-cover');
+            sbCover.src = "/cover/" + encodeURIComponent(item.name);
+            sbCover.style.opacity = "1";
+            sbCover.onerror = function () {
+                this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                this.style.backgroundColor = '#ddd';
+            };
+
+            document.getElementById('sb-title').innerText = tags.title;
+            document.getElementById('sb-artist').innerText = tags.artist;
+            // Limit year to 4 digits if it's a full date string
+            let displayYear = tags.year ? tags.year.substring(0, 4) : '';
+            let extraInfoSb = [displayYear, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
+
+            document.getElementById('sb-meta').innerText = extraInfoSb + "\n" + item.duration + " • " + item.type.toUpperCase();
+
+            // Python Backend anfunken
+            eel.play_media(path)();
         }
 
-        scan();  // Auto-Scan
+        scan();
     </script>
 </body>
 
