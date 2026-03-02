@@ -1,14 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Medienbibliothek</title>
     <script type="text/javascript" src="/eel.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #player { width: 100%; height: 60px; margin: 20px 0; }
+        .media-item { padding: 10px; border-bottom: 1px solid #ccc; cursor: pointer; }
+        .media-item:hover { background: #f0f0f0; }
+    </style>
 </head>
 <body>
-    <h1>Medienbibliothek</h1>
-    <button onclick="loadMedia()">Medien laden</button>
-    <ul id="media-list"></ul>
+    <h1>Media Library</h1>
+    <button onclick="scan()">Scan Media</button>
+    <div id="media-list"></div>
+    <audio id="player" controls></audio>
+    <div id="status"></div>
 
-    <script src="script.js"></script>
+    <script>
+        let currentPlayer = document.getElementById('player');
+
+        async function scan() {
+            let result = await eel.scan_media()();
+            let list = document.getElementById('media-list');
+            list.innerHTML = '';
+            result.media.forEach(item => {
+                let div = document.createElement('div');
+                div.className = 'media-item';
+                div.innerHTML = `
+                    <strong>${item.name}</strong> 
+                    <br>${item.tags.artist} - ${item.tags.title} 
+                    (${item.duration}, ${item.type})
+                `;
+                div.onclick = () => play(item.path);
+                list.appendChild(div);
+            });
+        }
+
+        function play(path) {
+            currentPlayer.src = path;  // HTML5 Audio/Video
+            currentPlayer.play();
+            document.getElementById('status').innerHTML = `Spielt: ${path}`;
+            eel.play_media(path)();  // Python-Benachrichtigung
+        }
+
+        scan();  // Auto-Scan
+    </script>
 </body>
 </html>
