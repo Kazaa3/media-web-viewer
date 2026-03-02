@@ -37,6 +37,9 @@ from mutagen.id3 import ID3
 #Video-Tag-Bibliothek
 #mkvinfo
 
+#M4B
+from mutagen.mp4 import MP4
+
 # weitere Container
 # mp4, avi, mov, mkv, webm, flv, wmv, mpg, mpeg, m4v, 3gp, 3g2, ogv, ogg, mts, m2ts
 
@@ -304,7 +307,7 @@ class MediaItem:
                 
         # Künstlich eine Bittiefe für MP3/AAC vergeben, falls sie leer ist, damit es schöner im UI aussieht
         if not tags['bitdepth'] and tags['codec'] in ['MP3', 'AAC']:
-            tags['bitdepth'] = '16 Bit'
+            tags['bitdepth'] = '-- Bit'
             
         return tags
 
