@@ -18,10 +18,19 @@
 import eel # Electron-like Python Library for building desktop apps with web technologies
 import os
 from pathlib import Path
+
+# Audio-Tag-Bibliothek
 from mutagen.mp3 import MP3  # Für MP3-Dauer
 from mutagen.flac import FLAC  # Für FLAC-Dauer
 from mutagen.oggvorbis import OggVorbis  # Für OGG
 from mutagen.mp4 import MP4  # Für ALAC/M4A
+from mutagen.opus import Opus
+from mutagen.wave import Wave
+from mutagen.aac import AAC
+from mutagen.wma import WMA
+
+#Video-Tag-Bibliothek
+from mutagen.mp4 import MP4
 
 
 class MediaItem:
@@ -47,6 +56,12 @@ class MediaItem:
             elif self.type == '.m4a':
                 audio = MP4(self.path)
                 return int(audio.info.length)
+            elif self.type == '.opus':
+                audio = Opus(self.path)
+                return int(audio.info.length) 
+            elif self.type == '.wav':
+                audio = Wave(self.path)
+                return int(audio.info.length)  
         except:
             pass
         return 0
@@ -86,6 +101,38 @@ class MediaItem:
                     'artist': artist[0] if artist else 'Unbekannt',
                     'title': title[0] if title else self.name
                 }
+            elif self.type == '.opus':
+                audio = Opus(self.path)
+                artist = audio.get('artist')
+                title = audio.get('title')
+                return {
+                    'artist': artist[0] if artist else 'Unbekannt',
+                    'title': title[0] if title else self.name
+                }       
+            elif self.type == '.wav':
+                audio = Wave(self.path)
+                artist = audio.get('artist')
+                title = audio.get('title')
+                return {
+                    'artist': artist[0] if artist else 'Unbekannt',
+                    'title': title[0] if title else self.name
+                }       
+            elif self.type == '.aac':
+                audio = AAC(self.path)
+                artist = audio.get('artist')
+                title = audio.get('title')
+                return {
+                    'artist': artist[0] if artist else 'Unbekannt',
+                    'title': title[0] if title else self.name
+                }       
+            elif self.type == '.wma':
+                audio = WMA(self.path)
+                artist = audio.get('artist')
+                title = audio.get('title')
+                return {
+                    'artist': artist[0] if artist else 'Unbekannt',
+                    'title': title[0] if title else self.name
+                }       
         except:
             pass
         return {'artist': 'Unbekannt', 'title': self.name}
@@ -119,9 +166,9 @@ def scan_media():
         return {"error": "Ordner erstellt – füge Dateien hinzu"}
     media = []
     for f in Path(MEDIA_DIR).iterdir():
-        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a'}:
+        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.opus', '.aac', '.wma'}:
             item = MediaItem(f.name, f)
-            media.append(item.to_dict())
+            media.append(item.to_dict()) # Datenmodel
     return {"media": media}  # Reich an GUI mit Tags + Dauer
 
 @eel.expose("play_media")
