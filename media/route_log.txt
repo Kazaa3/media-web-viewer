@@ -1,0 +1,148 @@
+ROUTE CALLED: filepath=sample.flac, ext=sample.flac
+ROUTE CALLED: filepath=sample.mp3, ext=sample.mp3
+REQ IN: http://localhost:8000/index.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=index.html
+REQ IN: http://localhost:8000/media/sample.flac
+ROUTE CALLED: filepath=sample.flac, ext=sample.flac
+REQ IN: http://localhost:8000/index.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=index.html
+REQ IN: http://localhost:8000/index.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=index.html
+REQ IN: http://localhost:8000/index.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=index.html
+REQ IN: http://localhost:8000/app.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=app.html
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+TRANSCODING STARTED: full_path=./media/02 We the People….m4a
+TRANSCODING SUCCESS
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/sample.flac
+ROUTE CALLED: filepath=sample.flac, ext=sample.flac
+REQ IN: http://localhost:8000/media/sample.flac
+ROUTE CALLED: filepath=sample.flac, ext=sample.flac
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/app.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=app.html
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/app.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=app.html
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/app.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=app.html
+REQ IN: http://localhost:8000/media/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a.flac_transcoded
+ROUTE CALLED: filepath=09 Beautiful (feat. MOD SUN).m4a, ext=09 beautiful (feat. mod sun).m4a
+TRANSCODING STARTED: full_path=./media/09 Beautiful (feat. MOD SUN).m4a
+TRANSCODING SUCCESS
+REQ IN: http://localhost:8000/media/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a.flac_transcoded
+ROUTE CALLED: filepath=09 Beautiful (feat. MOD SUN).m4a, ext=09 beautiful (feat. mod sun).m4a
+REQ IN: http://localhost:8000/media/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a.flac_transcoded
+ROUTE CALLED: filepath=09 Beautiful (feat. MOD SUN).m4a, ext=09 beautiful (feat. mod sun).m4a
+REQ IN: http://localhost:8000/media/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a.flac_transcoded
+ROUTE CALLED: filepath=09 Beautiful (feat. MOD SUN).m4a, ext=09 beautiful (feat. mod sun).m4a
+REQ IN: http://localhost:8000/media/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a.flac_transcoded
+ROUTE CALLED: filepath=09 Beautiful (feat. MOD SUN).m4a, ext=09 beautiful (feat. mod sun).m4a
+REQ IN: http://localhost:8000/media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a.flac_transcoded
+ROUTE CALLED: filepath=01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a, ext=01-05-oscar_peterson-blue_and_sentimental-lls.m4a
+TRANSCODING STARTED: full_path=./media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a
+TRANSCODING SUCCESS
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/01%20-%20Anfangsstadium%20RMX.mp3
+ROUTE CALLED: filepath=01 - Anfangsstadium RMX.mp3, ext=01 - anfangsstadium rmx.mp3
+REQ IN: http://localhost:8000/media/sample.mp3
+ROUTE CALLED: filepath=sample.mp3, ext=sample.mp3
+REQ IN: http://localhost:8000/media/sample.flac
+ROUTE CALLED: filepath=sample.flac, ext=sample.flac
+REQ IN: http://localhost:8000/media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a.flac_transcoded
+ROUTE CALLED: filepath=01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a, ext=01-05-oscar_peterson-blue_and_sentimental-lls.m4a
+REQ IN: http://localhost:8000/app.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=app.html
+REQ IN: http://localhost:8000/cover/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a
+REQ IN: http://localhost:8000/cover/02%20Aaliyah%20feat.%20Static%20-%20Loose%20Rap.flac
+REQ IN: http://localhost:8000/cover/01%20-%20Anfangsstadium%20RMX.mp3
+REQ IN: http://localhost:8000/cover/02%20We%20the%20People%E2%80%A6.m4a
+REQ IN: http://localhost:8000/cover/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a
+REQ IN: http://localhost:8000/cover/sample.mp3
+REQ IN: http://localhost:8000/cover/01%20Culture%20-%20Jah%20Izrehl.flac
+REQ IN: http://localhost:8000/cover/sample.flac
+REQ IN: http://localhost:8000/media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a.flac_transcoded
+ROUTE CALLED: filepath=01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a, ext=01-05-oscar_peterson-blue_and_sentimental-lls.m4a
+REQ IN: http://localhost:8000/media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a.flac_transcoded
+ROUTE CALLED: filepath=01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a, ext=01-05-oscar_peterson-blue_and_sentimental-lls.m4a
+REQ IN: http://localhost:8000/media/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a.flac_transcoded
+ROUTE CALLED: filepath=09 Beautiful (feat. MOD SUN).m4a, ext=09 beautiful (feat. mod sun).m4a
+REQ IN: http://localhost:8000/app.html
+REQ IN: http://localhost:8000/eel.js
+REQ IN: http://localhost:8000/eel?page=app.html
+REQ IN: http://localhost:8000/cover/09%20Beautiful%20%28feat.%20MOD%20SUN%29.m4a
+REQ IN: http://localhost:8000/cover/02%20Aaliyah%20feat.%20Static%20-%20Loose%20Rap.flac
+REQ IN: http://localhost:8000/cover/01%20-%20Anfangsstadium%20RMX.mp3
+REQ IN: http://localhost:8000/cover/02%20We%20the%20People%E2%80%A6.m4a
+REQ IN: http://localhost:8000/cover/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a
+REQ IN: http://localhost:8000/cover/sample.mp3
+REQ IN: http://localhost:8000/cover/01%20Culture%20-%20Jah%20Izrehl.flac
+REQ IN: http://localhost:8000/cover/sample.flac
+REQ IN: http://localhost:8000/media/01%20Culture%20-%20Jah%20Izrehl.flac
+ROUTE CALLED: filepath=01 Culture - Jah Izrehl.flac, ext=01 culture - jah izrehl.flac
+REQ IN: http://localhost:8000/media/02%20We%20the%20People%E2%80%A6.m4a.flac_transcoded
+ROUTE CALLED: filepath=02 We the People….m4a, ext=02 we the people….m4a
+REQ IN: http://localhost:8000/media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a.flac_transcoded
+ROUTE CALLED: filepath=01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a, ext=01-05-oscar_peterson-blue_and_sentimental-lls.m4a
+REQ IN: http://localhost:8000/media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a.flac_transcoded
+ROUTE CALLED: filepath=01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a, ext=01-05-oscar_peterson-blue_and_sentimental-lls.m4a
