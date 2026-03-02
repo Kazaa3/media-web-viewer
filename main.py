@@ -90,8 +90,22 @@ class MediaItem:
         tags = {
             'artist': 'Unbekannt', 'title': self.name, 'year': '', 'genre': '', 
             'track': '', 'totaltracks': '', 'album': '', 'albumartist': '', 'disc': '',
-            'bitrate': '', 'samplerate': '', 'codec': '', 'filesize': '', 'tagtype': '', 'has_art': 'No'
+            'bitrate': '', 'samplerate': '', 'codec': '', 'filesize': '', 'tagtype': 'None', 'has_art': 'No'
         }
+        
+        try:
+            import os
+            tags['filesize'] = f"{os.path.getsize(self.path) / (1024 * 1024):.2f} MB"
+        except:
+            pass
+            
+        # Try finding Artist / Title from the filename string as fallback
+        if " - " in self.name:
+            parts = self.name.split(" - ", 1)
+            tags['artist'] = parts[0].strip()
+            tags['title'] = parts[1].rsplit(".", 1)[0].strip() if "." in parts[1] else parts[1].strip()
+        else:
+            tags['title'] = self.name.rsplit(".", 1)[0] if "." in self.name else self.name
         
         def safe_get(audio_obj, key, default=''):
             val = audio_obj.get(key)
@@ -203,8 +217,6 @@ class MediaItem:
             # Retrieve Tag Container formatting
             if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
                 tags['tagtype'] = type(audio_for_info.tags).__name__
-            else:
-                tags['tagtype'] = 'None'
                 
             # Detect Embedded Cover Art
             if self.type == '.mp3' and audio_for_info:
@@ -213,13 +225,31 @@ class MediaItem:
                 tags['has_art'] = 'Yes' if len(audio_for_info.pictures) > 0 else 'No'
             elif self.type in {'.m4a', '.alac'} and audio_for_info:
                 tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
-                
-            # File size computation
-            import os
-            tags['filesize'] = f"{os.path.getsize(self.path) / (1024 * 1024):.2f} MB"
                     
-        except Exception:
+        except Exception as e:
+            # Für .aac oder Dateien ohne korrekte Tags fangen wir den Fehler ab
             pass
+            
+        # FFmpeg Fallback für fehlende Samplerate/Bitrate (speziell für untagged AAC Dateien)
+        if not tags['samplerate'] or not tags['bitrate']:
+            try:
+                import subprocess, re
+                cmd = ["ffmpeg", "-i", self.path.as_posix()]
+                output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
+                # Stream #0... Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
+                stream_match = re.search(r"Stream #.*?: Audio: .*?,\s*(\d+) Hz", output)
+                if stream_match and not tags['samplerate']:
+                    tags['samplerate'] = f"{round(int(stream_match.group(1)) / 1000, 1)} kHz"
+                
+                # Duration: ... bitrate: 256 kb/s
+                bit_match = re.search(r"bitrate:\s*(\d+)\s*kb/s", output)
+                if bit_match and not tags['bitrate']:
+                    tags['bitrate'] = f"{bit_match.group(1)} kbps"
+                    
+                if not tags['codec']:
+                    tags['codec'] = self.type[1:].upper()
+            except Exception:
+                pass
             
         return tags
 
