@@ -276,7 +276,7 @@
 
             document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
 
-            let badgeText = [tags.codec, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+            let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
             if (badgeText) {
                 document.getElementById('sb-badge').innerText = badgeText;
                 document.getElementById('sb-badge').style.display = 'inline-block';
