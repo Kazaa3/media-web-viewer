@@ -90,7 +90,7 @@ class MediaItem:
         tags = {
             'artist': 'Unbekannt', 'title': self.name, 'year': '', 'genre': '', 
             'track': '', 'totaltracks': '', 'album': '', 'albumartist': '', 'disc': '',
-            'bitrate': '', 'samplerate': '', 'codec': ''
+            'bitrate': '', 'samplerate': '', 'codec': '', 'filesize': '', 'tagtype': '', 'has_art': 'No'
         }
         
         def safe_get(audio_obj, key, default=''):
@@ -199,6 +199,24 @@ class MediaItem:
                     tags['bitrate'] = f"{int(info.bitrate / 1000)} kbps"
                 if hasattr(info, 'sample_rate') and info.sample_rate:
                     tags['samplerate'] = f"{round(info.sample_rate / 1000, 1)} kHz"
+                    
+            # Retrieve Tag Container formatting
+            if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
+                tags['tagtype'] = type(audio_for_info.tags).__name__
+            else:
+                tags['tagtype'] = 'None'
+                
+            # Detect Embedded Cover Art
+            if self.type == '.mp3' and audio_for_info:
+                tags['has_art'] = 'Yes' if any(k.startswith('APIC') for k in audio_for_info.keys()) else 'No'
+            elif self.type == '.flac' and audio_for_info:
+                tags['has_art'] = 'Yes' if len(audio_for_info.pictures) > 0 else 'No'
+            elif self.type in {'.m4a', '.alac'} and audio_for_info:
+                tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
+                
+            # File size computation
+            import os
+            tags['filesize'] = f"{os.path.getsize(self.path) / (1024 * 1024):.2f} MB"
                     
         except Exception:
             pass

@@ -193,6 +193,7 @@
                 style="font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 6px; text-align: center;"></div>
             <div id="sb-meta" class="sidebar-meta"></div>
             <div id="sb-badge" class="sidebar-badge" style="display: none;"></div>
+            <div id="sb-fileinfo" style="font-size: 0.75em; color: #999; margin-top: 15px; text-align: center;"></div>
         </div>
 
         <!-- Main List -->
@@ -282,6 +283,9 @@
             } else {
                 document.getElementById('sb-badge').style.display = 'none';
             }
+
+            let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
+            document.getElementById('sb-fileinfo').innerText = [tags.filesize, tags.tagtype, artStr].filter(Boolean).join(' • ');
 
             // Python Backend anfunken
             eel.play_media(path)();
