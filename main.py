@@ -83,6 +83,21 @@ class MediaItem:
                 return int(audio.info.length)  
         except:
             pass
+            
+        # FFmpeg fallback if mutagen fails
+        try:
+            import subprocess, re
+            cmd = ["ffmpeg", "-i", self.path.as_posix()]
+            output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
+            dur_match = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", output)
+            if dur_match:
+                hours = int(dur_match.group(1))
+                minutes = int(dur_match.group(2))
+                seconds = float(dur_match.group(3))
+                return int(hours * 3600 + minutes * 60 + seconds)
+        except:
+            pass
+            
         return 0
 
     def _get_tags(self):
@@ -90,7 +105,7 @@ class MediaItem:
         tags = {
             'artist': 'Unbekannt', 'title': self.name, 'year': '', 'genre': '', 
             'track': '', 'totaltracks': '', 'album': '', 'albumartist': '', 'disc': '',
-            'bitrate': '', 'samplerate': '', 'codec': '', 'filesize': '', 'tagtype': 'None', 'has_art': 'No'
+            'bitrate': '', 'samplerate': '', 'bitdepth': '', 'codec': '', 'filesize': '', 'tagtype': 'None', 'has_art': 'No'
         }
         
         try:
@@ -132,6 +147,8 @@ class MediaItem:
                 tags['albumartist'] = safe_get(audio, 'ALBUMARTIST')
                 tags['disc'] = safe_get(audio, 'DISCNUMBER')
                 tags['codec'] = 'FLAC'
+                if hasattr(audio.info, 'bits_per_sample') and audio.info.bits_per_sample:
+                    tags['bitdepth'] = f"{audio.info.bits_per_sample} Bit"
                 
             elif self.type == '.mp3':
                 audio = MP3(self.path)
@@ -213,6 +230,16 @@ class MediaItem:
                     tags['bitrate'] = f"{int(info.bitrate / 1000)} kbps"
                 if hasattr(info, 'sample_rate') and info.sample_rate:
                     tags['samplerate'] = f"{round(info.sample_rate / 1000, 1)} kHz"
+                if hasattr(info, 'bits_per_sample') and info.bits_per_sample:
+                    tags['bitdepth'] = f"{info.bits_per_sample} Bit"
+                elif hasattr(info, 'bits_per_sample'):
+                    # Some might return 0
+                    if info.bits_per_sample > 0:
+                        tags['bitdepth'] = f"{info.bits_per_sample} Bit"
+                    else:
+                        tags['bitdepth'] = ''
+                else:
+                    tags['bitdepth'] = ''
                     
             # Retrieve Tag Container formatting
             if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
@@ -230,18 +257,42 @@ class MediaItem:
             # Für .aac oder Dateien ohne korrekte Tags fangen wir den Fehler ab
             pass
             
-        # FFmpeg Fallback für fehlende Samplerate/Bitrate (speziell für untagged AAC Dateien)
-        if not tags['samplerate'] or not tags['bitrate']:
+        # FFmpeg Fallback für fehlende Metadaten (speziell für untagged AAC Dateien)
+        if not tags['samplerate'] or not tags['bitrate'] or tags['tagtype'] == 'None':
             try:
                 import subprocess, re
                 cmd = ["ffmpeg", "-i", self.path.as_posix()]
                 output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
-                # Stream #0... Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
-                stream_match = re.search(r"Stream #.*?: Audio: .*?,\s*(\d+) Hz", output)
-                if stream_match and not tags['samplerate']:
-                    tags['samplerate'] = f"{round(int(stream_match.group(1)) / 1000, 1)} kHz"
                 
-                # Duration: ... bitrate: 256 kb/s
+                # Container / Format aus Input Info lesen: Input #0, matroska,webm, from ...
+                if tags['tagtype'] == 'None':
+                    input_match = re.search(r"Input #0,\s*([^,]+)", output)
+                    if input_match:
+                        tags['tagtype'] = input_match.group(1).upper() + " (FFmpeg)"
+                
+                # Stream #0... Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
+                # Look for bit depth like "s16", "s24", "fltp"
+                stream_match = re.search(r"Stream #.*?: Audio:\s*([^,]+),\s*(\d+)\s*Hz,\s*[^,]+,\s*([^,]+)", output)
+                if stream_match:
+                    if not tags['codec'] or tags['codec'] == self.type[1:].upper():
+                        tags['codec'] = stream_match.group(1).split()[0].upper()
+                    if not tags['samplerate']:
+                        tags['samplerate'] = f"{round(int(stream_match.group(2)) / 1000, 1)} kHz"
+                    
+                    # Try to map ffmpeg format (s16, s24, s32, fltp) to bit depth
+                    fmt = stream_match.group(3).strip()
+                    if not tags['bitdepth']:
+                        if fmt in ['s16', 's16p']: tags['bitdepth'] = '16 Bit'
+                        elif fmt in ['s24', 's24p']: tags['bitdepth'] = '24 Bit'
+                        elif fmt in ['s32', 's32p']: tags['bitdepth'] = '32 Bit'
+                        elif fmt in ['flt', 'fltp']: tags['bitdepth'] = '32 Bit Float'
+                        
+                    # Look for stream bitrate at the end: e.g. "..., 256 kb/s"
+                    bitrate_match = re.search(r"(\d+)\s*kb/s", stream_match.group(0))
+                    if bitrate_match and not tags['bitrate']:
+                        tags['bitrate'] = f"{bitrate_match.group(1)} kbps"
+                
+            # Duration: ... bitrate: 256 kb/s
                 bit_match = re.search(r"bitrate:\s*(\d+)\s*kb/s", output)
                 if bit_match and not tags['bitrate']:
                     tags['bitrate'] = f"{bit_match.group(1)} kbps"
@@ -250,15 +301,26 @@ class MediaItem:
                     tags['codec'] = self.type[1:].upper()
             except Exception:
                 pass
+                
+        # Künstlich eine Bittiefe für MP3/AAC vergeben, falls sie leer ist, damit es schöner im UI aussieht
+        if not tags['bitdepth'] and tags['codec'] in ['MP3', 'AAC']:
+            tags['bitdepth'] = '16 Bit'
             
         return tags
 
     def to_dict(self):
-        mins, secs = divmod(self.duration, 60)
+        hours, remainder = divmod(self.duration, 3600)
+        mins, secs = divmod(remainder, 60)
+        
+        if hours > 0:
+            duration_str = f"{hours}:{mins:02d}:{secs:02d}"
+        else:
+            duration_str = f"{mins}:{secs:02d}"
+            
         return {
             'name': self.name,
             'path': self.path.as_posix(),
-            'duration': f"{mins}:{secs:02d}",
+            'duration': duration_str,
             'tags': self.tags,
             'type': self.type[1:]  # 'mp3'
         }
