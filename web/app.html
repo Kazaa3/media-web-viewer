@@ -81,6 +81,17 @@
             line-height: 1.4;
         }
 
+        .sidebar-badge {
+            display: inline-block;
+            background: #eee;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            color: #555;
+            margin-top: 10px;
+            font-family: inherit;
+        }
+
         #media-list {
             flex: 1;
             overflow-y: auto;
@@ -178,7 +189,10 @@
                 style="opacity: 0.5;">
             <div id="sb-title" class="sidebar-title">Kein Lied gewählt</div>
             <div id="sb-artist" class="sidebar-artist">-</div>
+            <div id="sb-album"
+                style="font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 6px; text-align: center;"></div>
             <div id="sb-meta" class="sidebar-meta"></div>
+            <div id="sb-badge" class="sidebar-badge" style="display: none;"></div>
         </div>
 
         <!-- Main List -->
@@ -203,7 +217,10 @@
                 div.className = 'media-item';
                 let tags = item.tags;
                 let displayYear = tags.year ? tags.year.substring(0, 4) : '';
-                let extraInfo = [displayYear, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
+                let trackStr = tags.track ? 'Track ' + tags.track : '';
+                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
 
                 div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
@@ -233,7 +250,6 @@
 
             // Update Sidebar
             let tags = item.tags;
-            let extraInfo = [tags.year, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
 
             let sbCover = document.getElementById('sb-cover');
             sbCover.src = "/cover/" + encodeURIComponent(item.name);
@@ -244,12 +260,28 @@
             };
 
             document.getElementById('sb-title').innerText = tags.title;
-            document.getElementById('sb-artist').innerText = tags.artist;
+            document.getElementById('sb-artist').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
+            document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
+
             // Limit year to 4 digits if it's a full date string
             let displayYear = tags.year ? tags.year.substring(0, 4) : '';
-            let extraInfoSb = [displayYear, tags.genre, tags.track ? 'Track ' + tags.track : ''].filter(Boolean).join(' • ');
 
-            document.getElementById('sb-meta').innerText = extraInfoSb + "\n" + item.duration + " • " + item.type.toUpperCase();
+            let trackStr = tags.track ? 'Track ' + tags.track : '';
+            if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+            let discStr = tags.disc ? 'Disc ' + tags.disc : '';
+
+            let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
+
+            document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
+
+            let badgeText = [tags.codec, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+            if (badgeText) {
+                document.getElementById('sb-badge').innerText = badgeText;
+                document.getElementById('sb-badge').style.display = 'inline-block';
+            } else {
+                document.getElementById('sb-badge').style.display = 'none';
+            }
 
             // Python Backend anfunken
             eel.play_media(path)();
