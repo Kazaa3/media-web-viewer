@@ -86,8 +86,12 @@ class MediaItem:
         return 0
 
     def _get_tags(self):
-        """Extrahiert zusätzliche Metadaten wie Jahr, Genre und Track (mutagen)."""
-        tags = {'artist': 'Unbekannt', 'title': self.name, 'year': '', 'genre': '', 'track': ''}
+        """Extrahiert umfassende Metadaten (Jahr, Genre, Album, Stream Info) (mutagen)."""
+        tags = {
+            'artist': 'Unbekannt', 'title': self.name, 'year': '', 'genre': '', 
+            'track': '', 'totaltracks': '', 'album': '', 'albumartist': '', 'disc': '',
+            'bitrate': '', 'samplerate': '', 'codec': ''
+        }
         
         def safe_get(audio_obj, key, default=''):
             val = audio_obj.get(key)
@@ -98,40 +102,76 @@ class MediaItem:
             return str(val)
 
         try:
+            # Info stream info fallback block 
+            audio_for_info = None
+            
             if self.type == '.flac':
                 audio = FLAC(self.path)
+                audio_for_info = audio
                 tags['artist'] = safe_get(audio, 'ARTIST', default='Unbekannt')
                 tags['title'] = safe_get(audio, 'TITLE', default=self.name)
                 tags['year'] = safe_get(audio, 'DATE')
                 tags['genre'] = safe_get(audio, 'GENRE')
                 tags['track'] = safe_get(audio, 'TRACKNUMBER')
+                tags['totaltracks'] = safe_get(audio, 'TRACKTOTAL') or safe_get(audio, 'TOTALTRACKS')
+                tags['album'] = safe_get(audio, 'ALBUM')
+                tags['albumartist'] = safe_get(audio, 'ALBUMARTIST')
+                tags['disc'] = safe_get(audio, 'DISCNUMBER')
+                tags['codec'] = 'FLAC'
                 
             elif self.type == '.mp3':
                 audio = MP3(self.path)
+                audio_for_info = audio
                 art = audio.get('TPE1')
                 tit = audio.get('TIT2')
                 yr = audio.get('TDRC') or audio.get('TYER')
                 gn = audio.get('TCON')
                 tr = audio.get('TRCK')
+                alb = audio.get('TALB')
+                aart = audio.get('TPE2')
+                dsc = audio.get('TPOS')
                 
                 tags['artist'] = str(art.text[0]) if art and hasattr(art, 'text') else (str(art[0]) if art else 'Unbekannt')
                 tags['title'] = str(tit.text[0]) if tit and hasattr(tit, 'text') else (str(tit[0]) if tit else self.name)
                 tags['year'] = str(yr.text[0]) if yr and hasattr(yr, 'text') else (str(yr) if yr else '')
                 tags['genre'] = str(gn.text[0]) if gn and hasattr(gn, 'text') else (str(gn) if gn else '')
-                tags['track'] = str(tr.text[0]).split('/')[0] if tr and hasattr(tr, 'text') else (str(tr) if tr else '')
+                tags['album'] = str(alb.text[0]) if alb and hasattr(alb, 'text') else (str(alb[0]) if alb else '')
+                tags['albumartist'] = str(aart.text[0]) if aart and hasattr(aart, 'text') else (str(aart[0]) if aart else '')
+                tags['disc'] = str(dsc.text[0]).split('/')[0] if dsc and hasattr(dsc, 'text') else (str(dsc) if dsc else '')
+                
+                tr_val = str(tr.text[0]) if tr and hasattr(tr, 'text') else (str(tr) if tr else '')
+                if '/' in tr_val:
+                    tags['track'] = tr_val.split('/')[0]
+                    tags['totaltracks'] = tr_val.split('/')[1]
+                else:
+                    tags['track'] = tr_val
+                    
+                tags['codec'] = 'MP3'
                 
             elif self.type in {'.m4a', '.alac'}:
                 audio = MP4(self.path)
+                audio_for_info = audio
                 tags['artist'] = safe_get(audio, '\xa9ART', default='Unbekannt')
                 tags['title'] = safe_get(audio, '\xa9nam', default=self.name)
                 tags['year'] = safe_get(audio, '\xa9day')
                 tags['genre'] = safe_get(audio, '\xa9gen')
+                tags['album'] = safe_get(audio, '\xa9alb')
+                tags['albumartist'] = safe_get(audio, 'aART')
                 
                 trkn = audio.get('trkn')
-                if trkn and len(trkn) > 0 and isinstance(trkn[0], tuple) and len(trkn[0]) > 0:
-                    tags['track'] = str(trkn[0][0])
+                if trkn and len(trkn) > 0 and isinstance(trkn[0], tuple):
+                    if len(trkn[0]) > 0 and int(trkn[0][0]) > 0: tags['track'] = str(trkn[0][0])
+                    if len(trkn[0]) > 1 and int(trkn[0][1]) > 0: tags['totaltracks'] = str(trkn[0][1])
                 elif trkn and len(trkn) > 0:
                     tags['track'] = str(trkn[0])
+                    
+                disk = audio.get('disk')
+                if disk and len(disk) > 0 and isinstance(disk[0], tuple):
+                    if len(disk[0]) > 0 and int(disk[0][0]) > 0: tags['disc'] = str(disk[0][0])
+                elif disk and len(disk) > 0:
+                    tags['disc'] = str(disk[0])
+                    
+                tags['codec'] = getattr(audio.info, 'codec', self.type[1:].upper())
                     
             elif self.type in {'.ogg', '.opus', '.wav', '.aac', '.wma'}:
                 if self.type == '.ogg': audio = OggVorbis(self.path)
@@ -140,11 +180,26 @@ class MediaItem:
                 elif self.type == '.aac': audio = AAC(self.path)
                 elif self.type == '.wma': audio = ASF(self.path)
                 
+                audio_for_info = audio
+                
                 tags['artist'] = safe_get(audio, 'artist', default='Unbekannt')
                 tags['title'] = safe_get(audio, 'title', default=self.name)
                 tags['year'] = safe_get(audio, 'date') or safe_get(audio, 'year')
                 tags['genre'] = safe_get(audio, 'genre')
+                tags['album'] = safe_get(audio, 'album')
+                tags['albumartist'] = safe_get(audio, 'albumartist')
                 tags['track'] = safe_get(audio, 'tracknumber') or safe_get(audio, 'track')
+                tags['disc'] = safe_get(audio, 'discnumber')
+                tags['codec'] = self.type[1:].upper()
+            
+            # Retrieve common stream info elements
+            if audio_for_info and hasattr(audio_for_info, 'info'):
+                info = audio_for_info.info
+                if hasattr(info, 'bitrate') and info.bitrate:
+                    tags['bitrate'] = f"{int(info.bitrate / 1000)} kbps"
+                if hasattr(info, 'sample_rate') and info.sample_rate:
+                    tags['samplerate'] = f"{round(info.sample_rate / 1000, 1)} kHz"
+                    
         except Exception:
             pass
             
