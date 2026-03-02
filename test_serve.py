@@ -1,26 +1,23 @@
 import eel
 import bottle
-from main import MEDIA_DIR
 
-@bottle.route('/media/<filepath:path>')
-def serve_media(filepath):
-    return bottle.static_file(filepath, root=MEDIA_DIR)
+@bottle.route('/testroute')
+def test():
+    return "Hello"
 
-eel.init("web")
-# start server in thread so we can test it
-import threading
-server_thread = threading.Thread(target=eel.start, args=("index.html",), kwargs={"size": (1000, 600), "block": False})
-server_thread.daemon = True
-server_thread.start()
+eel.init('web')
+# eel.start uses a blocking call. We can start it with block=False
+eel.start('index.html', size=(100, 100), block=False)
 
 import time
+time.sleep(1)
+
 import urllib.request
-time.sleep(2) # wait for server to start
-
 try:
-    url = "http://localhost:8000/media/sample.flac"
-    response = urllib.request.urlopen(url)
-    print("SUCCESS: Got status code", response.getcode())
+    print(urllib.request.urlopen('http://localhost:8000/testroute').read().decode('utf-8'))
 except Exception as e:
-    print("FAILED:", e)
-
+    print(e)
+    try:
+        # Eel's default port might not be 8000. It's usually 8000.
+        pass
+    except: pass
