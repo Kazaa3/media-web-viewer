@@ -356,7 +356,7 @@ def serve_media(filepath):
     with open(os.path.join(MEDIA_DIR, 'route_log.txt'), 'a') as f:
         f.write(f"ROUTE CALLED: filepath={filepath}, ext={ext}\n")
     
-    if ext.endswith('.alac') or ext.endswith('.m4a'):
+    if ext.endswith('.alac') or ext.endswith('.m4a') or ext.endswith('.m4b'):
         full_path = os.path.join(MEDIA_DIR, filepath)
         cache_dir = os.path.join(MEDIA_DIR, '.cache')
         os.makedirs(cache_dir, exist_ok=True)
@@ -424,7 +424,7 @@ def serve_cover(filepath):
             if audio.pictures:
                 img_data = audio.pictures[0].data
                 mime_type = audio.pictures[0].mime
-        elif file_type in {'.m4a', '.alac'}:
+        elif file_type in {'.m4a', '.alac', '.m4b'}:
             audio = MP4(full_path)
             if 'covr' in audio.tags and audio.tags['covr']:
                 # MP4 covers are usually arrays of binary data
@@ -452,7 +452,7 @@ def scan_media():
         return {"error": "Ordner erstellt – füge Dateien hinzu"}
     media = []
     for f in Path(MEDIA_DIR).iterdir():
-        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma'}:
+        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'}:
             item = MediaItem(f.name, f)
             media.append(item.to_dict()) # Datenmodel
     return {"media": media}  # Reich an GUI mit Tags + Dauer
