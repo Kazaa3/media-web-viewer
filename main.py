@@ -47,6 +47,8 @@ from mutagen.wave import WAVE
 from mutagen.aac import AAC
 from mutagen.asf import ASF # Für WMA
 from mutagen.id3 import ID3 # statt ffmpeg
+from mutagen.dsdiff import DSDIFF # DSD Interchange File Format: .dsf-Dateien
+from mutagen.dsf import DSF # DSD Stream File: .dsd-Dateien
 
 #Video-Tag-Bibliothek
 #mkvinfo
@@ -54,7 +56,11 @@ from mutagen.id3 import ID3 # statt ffmpeg
 #mp3tag
 # Untersützedateiformate als Liste
 
-
+# ID3v2.4 / ID3v2.3 / ID3v2.2 / ID3v1.1 / ID3v1
+# APEv2 / APEv1
+# MP4 Atoms
+# FLACVComment
+# OggVComment
 
 # weitere Container
 # mp4, avi, mov, mkv, webm, flv, wmv, mpg, mpeg, m4v, 3gp, 3g2, ogv, ogg, mts, m2ts
@@ -69,6 +75,50 @@ from mutagen.id3 import ID3 # statt ffmpeg
 # iso, img, vhd, vmdk, vdi
 # bat, sh, ps1, cmd
 # py, js, html, css, php, java, c, cpp, h, hpp, cs, rb, go, rs, swift, kt,kts,kts
+
+
+                    # ==========================================
+                    # CONTAINER-FORMAT AUSWERTUNG (FFmpeg)
+                    # ==========================================
+                    # FFmpeg gibt in der Line "Input #0" das exakte Demuxer-Format an.
+                    # Viele Formate teilen sich historisch denselben Container-Standard:
+                    # 
+                    # 1. ISOBMFF (Apple QuickTime Derivate):
+                    #    Formate wie .mp4, .m4a (Audio) und .m4b (Audiobooks) basieren alle 
+                    #    auf dem "Base Media" Format (ISO/IEC 14496-12). FFmpeg fasst diese 
+                    #    beim Einlesen generisch unter dem Begriff "mov,mp4,m4a,3gp,3g2,mj2" zusammen.
+                    #    Wenn wir "MOV" auslesen, aber die Datei eigentlich ".m4b" heißt, 
+                    #    korrigieren wir die Anzeige für den User exakt auf die Dateiendung (z.B. M4B).
+                    #
+                    # 2. Matroska / WebM:
+                    #    Ein extrem flexibler Open-Source Container, der fast alle Streams schluckt.
+                    #    FFmpeg meldet hier "matroska,webm". Wir bereinigen das visuell zu "MKV".
+                    # ==========================================
+
+            # ==========================================
+            # AUDIO-TAG AUSWERTUNG (Mutagen)
+            # ==========================================
+            # Je nach Dateityp verwendet die Mutagen-Bibliothek völlig unterschiedliche Parser.
+            # Um dem Nutzer saubere, branchenübliche Tag-Typen anzuzeigen, schlüsseln wir diese auf:
+            #
+            # 1. ID3 (MP3):
+            #    ID3-Tags haben historisch viele Iterationen (v1, v2.2, v2.3, v2.4). Da die Version hier
+            #    elementar für die Kompatibilität von Car-Audios und Playern ist, lesen wir explizit
+            #    den `tags.version` Tuple (z.B. (2,3,0)) aus und wandeln ihn formal in "ID3v2.3" um.
+            # 
+            # 2. ISOBMFF / Apple (MP4/M4A/M4B):
+            #    Nutzt intern sogenannte "MP4 Atoms" (ilst). Ein versionierungsgeladenes Chaos 
+            #    wie bei ID3 gibt es hier nicht. Wir benennen Mutagens rohes "MP4Tags" in das
+            #    cleane "MP4" um.
+            #
+            # 3. Xiph (Ogg/FLAC):
+            #    Nutzen den "Vorbis Comment" Standard (eine simple LISTE von Schlüssel=Wert paaren).
+            #    Auch hier gibt es keine nennenswerte Unterversionierung. Um sie voneinander 
+            #    zu trennen, benennen wir "OggVComment" und "FLACVComment" in menschliche Strings um.
+            # ==========================================
+
+
+
 
 
 class MediaItem:
