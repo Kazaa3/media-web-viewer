@@ -368,8 +368,9 @@ def add_file_to_library(file_path):
         return {"status": "exists", "name": p.name}
     
     item = MediaItem(p.name, p)
-    db.insert_media(item.to_dict())
-    return {"status": "added", "name": p.name}
+    item_dict = item.to_dict()
+    db.insert_media(item_dict)
+    return {"status": "added", "item": item_dict}
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
