@@ -268,7 +268,7 @@
     <!-- Sticky Footer Player -->
     <div class="player-container" style="display: flex; align-items: center; gap: 10px;">
         <img id="footer-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-            style="width: 40px; height: auto; border-radius: 4px; object-fit: contain; background: #ddd; align-self: stretch;">
+            style="width: 40px; height: auto; border-radius: 4px; object-fit: contain; background: transparent; align-self: stretch;">
         <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <audio id="player" controls style="width: 100%;"></audio>
             <div id="status" style="font-size: 0.85em;">Wählt ein Lied aus der Liste!</div>
@@ -414,8 +414,8 @@
             let list = document.getElementById('media-list');
             list.innerHTML = '';
 
-            // Populate Debug Tab
-            document.getElementById('debug-output').textContent = JSON.stringify(result.media, null, 2);
+            // Populate Debug Tab with perf timing
+            document.getElementById('debug-output').textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media, null, 2);
             result.media.forEach(item => {
                 let div = document.createElement('div');
                 div.className = 'media-item';
@@ -427,7 +427,7 @@
                 let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
 
                 div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
+                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="Cover Art">
                     <div class="media-info">
                         <strong>${tags.title}</strong> 
                         <span>${tags.artist}</span>
