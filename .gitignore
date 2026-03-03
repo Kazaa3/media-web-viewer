@@ -16,8 +16,9 @@ media/*.m4a
 media/*.flac
 media/*.alac
 media/*.wav
-
 __pycache__/
+*.pyc
+**/*.pyc
 media/.cache/
 media/route_log.txt
 *.db
