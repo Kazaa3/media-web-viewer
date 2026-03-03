@@ -1003,6 +1003,8 @@
                 return;
             }
 
+            console.log("First media item from DB:", result.media[0]);
+
             // Restore population of Debug Tab
             const debugOutput = document.getElementById('debug-output');
             if (debugOutput) {
@@ -1013,23 +1015,28 @@
             result.media.forEach(item => {
                 let div = document.createElement('div');
                 div.className = 'media-item';
-                let tags = item.tags;
+                let tags = item.tags || {}; // Fallback if tags object is completely missing
                 let displayYear = tags.year ? tags.year.substring(0, 4) : '';
                 let trackStr = tags.track ? 'Track ' + tags.track : '';
                 if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
                 let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
 
+                // Fallbacks if metadata is missing
+                let titleDisplay = tags.title || item.name || item.filename || "Unbekannter Titel";
+                let artistDisplay = tags.artist || "Unbekannter Künstler";
+                let itemName = item.name || item.filename || "unknown";
+
                 div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
+                    <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
                     <div class="media-info">
-                        <strong>${tags.title}</strong>
-                        <span>${tags.artist}</span>
+                        <strong>${titleDisplay}</strong>
+                        <span>${artistDisplay}</span>
                         <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
                     </div>
                 `;
 
-                let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                let mediaUrl = '/media/' + encodeURIComponent(itemName);
                 if (item.is_transcoded && item.transcoded_format) {
                     mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
                 }

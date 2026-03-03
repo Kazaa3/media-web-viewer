@@ -9,7 +9,7 @@ CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG = {
-    "parser_chain": ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"],
+    "parser_chain": ["mutagen", "pymediainfo", "ffmpeg", "container", "filename"],
     "debug_scan": True,
     "debug_parser": True
 }
