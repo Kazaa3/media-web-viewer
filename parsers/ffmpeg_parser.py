@@ -1,14 +1,6 @@
 import subprocess
 import re
 
-def format_samplerate(hz):
-    try:
-        hz = float(hz)
-        khz = hz / 1000
-        return f"{int(khz)} kHz" if khz.is_integer() else f"{khz:g} kHz"
-    except:
-        return ""
-
 def parse(path, file_type, tags):
     try:
         cmd = ["ffmpeg", "-i", str(path)]
@@ -32,12 +24,13 @@ def parse(path, file_type, tags):
         stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
         if stream_match:
             audio_line = stream_match.group(1)
+            from .format_utils import format_codec, format_bitdepth, format_samplerate
             
             # Codec
             if not tags.get('codec') or tags.get('codec') == file_type[1:].lower():
                 codec_match = re.search(r"^\s*([a-zA-Z0-9_]+)", audio_line)
                 if codec_match:
-                    tags['codec'] = codec_match.group(1).lower()
+                    tags['codec'] = format_codec(codec_match.group(1))
                     
             # Sample rate
             if not tags.get('samplerate'):
@@ -49,30 +42,7 @@ def parse(path, file_type, tags):
             fmt_match = re.search(r"\b(u8|u8p|s16|s16p|s24|s24p|s32|s32p|fltp|flt|dblp|dbl|s64|s64p)\b", audio_line)
             if fmt_match:
                 fmt = fmt_match.group(1)
-                fmt_map = {
-                    'u8': '8 Bit (u8)', 'u8p': '8 Bit (u8p)',
-                    's16': '16 Bit (s16)', 's16p': '16 Bit (s16p)',
-                    's24': '24 Bit (s24)', 's24p': '24 Bit (s24p)',
-                    's32': '32 Bit (s32)', 's32p': '32 Bit (s32p)', # 24 Bit (s32) if PCM_S24LE
-                    's64': '64 Bit (s64)', 's64p': '64 Bit (s64p)',
-                    'flt': '32 Bit (flt)', 'fltp': '32 Bit (fltp)',
-                    'dbl': '64 Bit (dbl)', 'dblp': '64 Bit (dblp)',
-                }
-                bit_label = fmt_map.get(fmt, fmt)
-                is_float = fmt in ('flt', 'fltp', 'dbl', 'dblp')
-                
-                if tags.get('bitdepth'):
-                    # Mutagen already set a value, e.g. "16 Bit"
-                    existing = tags['bitdepth'].replace(' Bit', '')
-                    if is_float:
-                        tags['bitdepth'] = f"{existing} Bit (as {bit_label}: {fmt})"
-                    elif '(' not in tags['bitdepth']:
-                        tags['bitdepth'] += f" ({fmt})"
-                else:
-                    if is_float:
-                        tags['bitdepth'] = f"{bit_label} Float ({fmt})"
-                    else:
-                        tags['bitdepth'] = f"{bit_label} ({fmt})"
+                tags['bitdepth'] = format_bitdepth(None, codec=tags.get('codec'), file_type=file_type, internal_fmt=fmt)
                 
             # Bitrate
             if not tags.get('bitrate'):

@@ -51,9 +51,7 @@ def extract_metadata(path, filename, debug=False):
             duration = 0
     # 4. FFmpeg Fallback für fehlende Werte (insbesondere Float-Bitdepth bei Lossy)
     # Deaktiviert standardmäßig, da es einen ressourcenintensiven Subprozess startet.
-    # Wenn gewünscht, kann dies über einen optionalen Parameter injiziert werden,
-    # aber wir vermeiden hier den direkten Import von `main.py`, um zirkuläre
-    # Abhängigkeiten (ImportError) zu verhindern!
+    from .format_utils import PARSER_CONFIG, format_bitdepth
     
     needs_ffmpeg = (
         not tags.get('samplerate') or 
@@ -61,7 +59,7 @@ def extract_metadata(path, filename, debug=False):
         not tags.get('bitdepth') or
         not duration
     )
-    if needs_ffmpeg and False:
+    if needs_ffmpeg and PARSER_CONFIG.get("enable_ffmpeg", False):
         tags = ffmpeg_parser.parse(path_obj, file_type, tags)
         if not duration and tags.get('duration'):
             try:
@@ -71,12 +69,8 @@ def extract_metadata(path, filename, debug=False):
                 
     # 5. Final Fallback for Lossy / Missing Bitdepth
     # The user specifically requested formats like MP3 to default to "16 Bit (lossy)"
-    # if no bit depth was extracted natively by the parsers.
+    # We now use centralized formatting logic.
     if not tags.get('bitdepth'):
-        lossy_extensions = {'.mp3', '.ogg', '.aac', '.m4a', '.m4b', '.wma', '.opus'}
-        if file_type in lossy_extensions:
-            tags['bitdepth'] = "16 Bit (lossy)"
-        else:
-            tags['bitdepth'] = "16 Bit"
+        tags['bitdepth'] = format_bitdepth(None, codec=tags.get('codec'), file_type=file_type)
             
     return duration, tags

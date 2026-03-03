@@ -1,88 +1,106 @@
 # GUI Media Web Viewer
 
-Ein benutzerdefinierter Media Player mit eingebetteter Web-GUI. Das Projekt basiert auf Python, [Eel](https://github.com/python-eel/Eel) für das Desktop-Fenster und dem [Bottle](https://bottlepy.org/) Web-Framework für das Streaming. Es unterstützt eine Vielzahl von Audioformaten wie MP3, M4A, M4B, ALAC, FLAC, OGG und WAV.
+A custom media player with an embedded web-based GUI. It is built using Python, Eel, and the Bottle web framework. It supports parsing a wide range of audio formats including MP3, M4A, M4B, ALAC, FLAC, OGG, and WAV.
 
-## Features & Highlights
+## Features
 
-- **Web-basierte GUI:** Nutzt HTML/JS/CSS für ein modernes Interface, gerendert in einem Chromium-basierten Desktopfenster.
-- **Zwei-Spalten-Metadateneditor:** Ein integrierter "Edit"-Tab mit Split-Pane-Layout. Rechts werden dynamisch bearbeitbare Textfelder für alle erkannten Metadaten generiert, links bleibt die durchsuchbare Bibliothek sichtbar.
-- **Datei-Browser & Bibliothek-Trennung:** Importiere einzelne Dateien oder durchsuche beliebige Ordner (startend in `/home/xc`) ohne direkten Voll-Scan. Der automatische Start-Scan indexiert nur explizit den Projekt-`media/`-Ordner.
-- **Persistente Debugging-Konsole:** Im "Debug DB"-Tab kann neben der rohen JSON-Ausgabe der Datenbank auch die Live-Python-Konsole verfolgt werden. Alle Start-Logs und Scans werden gepuffert und dem Frontend beim Start zur Verfügung gestellt.
-- **On-the-Fly Transcoding:** Formate, die vom Browser nicht nativ unterstützt werden (z. B. Apple Lossless `ALAC`), werden im Hintergrund via `ffmpeg` gecached und als `FLAC` gestreamt.
-- **Intelligente Metadaten-Extraktion:** Nutzt eine vierstufige Pipeline (`filename`, `mutagen`, `ffmpeg`, `pymediainfo`), um Dauer, Cover-Bilder, Bitraten und Tags zuverlässig auszuwerten.
-- **Eingebettete Cover-Art:** Holt Albumcover direkt aus den ID3/MP4/FLAC-Headern und serviert sie nativ über eine eigene Bottle-Route im Player und der Sidebar.
-- **SQLite-Datenbank:** Permanente Speicherung aller Metadaten zur schnellen Suche und Anzeige.
+- **Web-based GUI:** Powered by [Eel](https://github.com/python-eel/Eel), bringing modern HTML/JS/CSS to a desktop app interface.
+- **Micro Backend Server:** Uses the [Bottle](https://bottlepy.org/) WSGI micro web-framework to serve media and cover art seamlessly to the frontend.
+- **Smart Metadata Extraction:** Uses multiple parser modules (`pymediainfo`, `mutagen`, and `ffmpeg` fallback) to comprehensively read audio tags (title, artist, album, bit depth, codec, sampling rate).
+- **On-the-Fly Transcoding:** Automatically transcodes formats with poor browser compatibility like Apple Lossless (`ALAC`) to `FLAC` in the background utilizing lightweight `ffmpeg` caching, ensuring smooth immediate playback on the frontend.
+- **Embedded Cover Art:** Identifies and displays embedded cover images inside MP4/M4A/MP3/FLAC items directly natively in the app.
+- **SQLite Database:** Media metadata is persisted in a local SQLite database with playlist support (placeholder).
+- **Debug Tab:** Built-in debug view showing the raw JSON data from the database.
 
-## Systemvoraussetzungen
+## Requirements
 
 - Python 3.11+
-- Ein installiertes und im System-PATH verfügbares `ffmpeg`.
-- Benötigte Python-Pakete (`eel`, `bottle`, `mutagen`, `pymediainfo`).
+- `eel`
+- `bottle`
+- `mutagen`
+- `pymediainfo`
+- A working installation of `ffmpeg` in your PATH.
 
-## Installation & Start
+## Installation / Run
 
 ```bash
-# Empfohlen: Virtuelles Environment nutzen
+# Optional: Setup virtual environment
 # python -m venv .venv
 # source .venv/bin/activate
 
-# Abhängigkeiten installieren
+# Install required python packages
 pip install eel bottle mutagen pymediainfo
 
-# Programm starten
+# Run the media viewer
 python main.py
 ```
 
-## Projektstruktur
+## Project Structure
 
 ```
 gui_media_web_viewer/
-├── main.py               ← Haupteinstiegspunkt, Eel-Bootstrapping, Startup-Logik, MediaItem
-├── db.py                 ← SQLite-Operationen (init, insert, clear, update_tags)
-├── parsers/              ← Extraktions-Pipeline
+├── main.py               ← Einstiegspunkt, MediaItem-Klasse, Bootstrapping der Eel App
+├── db.py                 ← SQLite-Datenbanklogik (init, insert, query, clear)
+├── parsers/              ← Metadaten-Extraktion (4 Parser in Pipeline)
 │   ├── filename_parser.py
 │   ├── mutagen_parser.py
 │   ├── ffmpeg_parser.py
 │   └── pymediainfo_parser.py
-├── web/                  ← Frontend GUI (wird von Eel geladen)
-│   ├── app.html          ← Das komplette UI mit Tabs (Player, Browser, Edit, Debug)
-│   ├── app_bottle.py     ← Paralleler Bottle-Server für Audio-Streaming und Cover
-│   └── script.js         ← Init-Logik und Dateibrowser-Anbindung
-├── tests/                ← isolierte Entwickler-Skripte
-├── media/                ← Standard-Indexierungsordner (SCAN_MEDIA_DIR)
-└── media_library.db      ← SQLite DB (wird lokal angelegt)
+├── web/                  ← Frontend + Bottle-Webserver
+│   ├── app.html          ← GUI (HTML/CSS/JS) mit Tabs (Library + Debug)
+│   ├── app_bottle.py     ← Bottle-Server mit Routen: /media/, /cover/
+│   └── script.js         ← JavaScript für die GUI
+├── tests/                ← Ausgelagerte Test- und Debug-Skripte
+├── media/                ← Multimedia-Dateien (gitignored)
+└── media_library.db      ← SQLite-DB (gitignored, wird automatisch erzeugt)
 ```
 
-## Kernmodule im Detail
+## Core Modules
 
-### 1. `main.py` (App-Controller & Backend)
+### main.py
 
-Das Herzstück der Anwendung, welches Eel initiiert und die Brücke zwischen UI und Python schlägt.
-- **Konstanten-Trennung:** `SCAN_MEDIA_DIR` bestimmt den Ordner für den automatischen Bibliotheksaufbau (Projekt-Ornder `media/`). `BROWSER_DEFAULT_DIR` steuert nur die Startansicht im manuellen Browser-Tab.
-- **`scan_media()`**: Wird nun exklusiv vom Startup-Prozess (oder manuell aus der GUI mit klaren Pfaden) gesteuert, um doppelte / unbeabsichtigte `/home`-Scans zu verhindern.
-- **Log-Puffer:** Eine globale `LOG_BUFFER` Liste fängt alle `debug_log()` Aufrufe (und den Python-Startbefehl) auf. Die GUI kann diese via `@eel.expose("get_debug_logs")` asynchron laden.
+| Bereich | Beschreibung |
+|---------|-------------|
+| **Konstanten** | `MEDIA_DIR`, `AUDIO_EXTENSIONS`, `VIDEO_EXTENSIONS`, etc. |
+| **MediaItem** | Klasse: nimmt Dateiname + Pfad, extrahiert Dauer und Tags |
+| **Parser-Pipeline** | `filename → mutagen → ffmpeg → pymediainfo` (sequenziell) |
+| **scan_media()** | Eel-exposed: löscht DB, scannt alle Dateien neu, gibt JSON zurück |
+| **play_media()** | Eel-exposed: Bestätigung für Frontend-Playback |
+| **Startup** | `db.init_db()` → `eel.init()` → `eel.start()` |
 
-### 2. `web/app.html` & `script.js` (Frontend)
+### db.py
 
-Das Frontend ist in ein Tab-System unterteilt:
-- **Player/Library:** Zeigt die indexierten Listen, ein dauerhaftes Footer-Audio-Element und eine Sidebar mit Metadaten.
-- **Browser:** Lässt das lokale Dateisystem erkunden. Klickt man auf "➕", wird die Datei der Bibliothek hinzugefügt, ohne alles neuzuladen.
-- **Edit:** Verwendet einen nativen HTML-Spalten-Teiler (`splitter-v`). Klickt man links auf ein Lied, parst JS alle DB-Felder und baut dynamisch die Eingabefelder für den Editor auf. Änderungen gehen an `db.py`.
-- **Optionen/Debug:** Hier lassen sich Konsolen-Outputs betrachten, Feature-Flags schalten und die Datenbank komplett zurücksetzen.
+| Funktion | Beschreibung |
+|----------|-------------|
+| `init_db()` | Erstellt Tabellen `media`, `playlists`, `playlist_media` |
+| `clear_media()` | Löscht alle Einträge aus `media` (für Refresh) |
+| `insert_media()` | Fügt ein MediaItem-Dict ein (Tags als JSON-String) |
+| `get_all_media()` | Gibt alle Medien als Liste von Dicts zurück |
+| `get_known_media_names()` | Gibt Set aller bekannten Dateinamen zurück |
 
-### 3. `parsers/` (Metadaten-Pipeline)
+### Parser-Pipeline (`parsers/`)
 
-Jede Audio-Datei wandert beim Scan durch vier Parser in dieser Reihenfolge:
-1. **`filename_parser`**: Versucht Titel und Artist aus dem Dateinamen zu erraten.
-2. **`mutagen_parser`**: Hauptparser für ID3/MP4/Vorbis-Tags, Sampling-Raten und Cover-Verfügbarkeit. (Schnell & Nativ).
-3. **`pymediainfo_parser`**: Springt ein, wenn wichtige Infos wie Dauer oder tiefe Container-Infos fehlen.
-4. **`ffmpeg_parser`**: (Optionaler Fallback) via FFmpeg CLI für absolute Härtefälle.
+| Reihenfolge | Parser | Quelle | Was er liefert |
+|:-----------:|--------|--------|----------------|
+| 1 | `filename_parser` | Dateiname | Basis-Tags: title, artist, Dateigröße |
+| 2 | `mutagen_parser` | Mutagen-Lib | ID3/MP4/Vorbis-Tags, Cover-Erkennung, Bitrate, Samplerate |
+| 3 | `ffmpeg_parser` | FFmpeg CLI | Container-Format, Codec, Bitdepth (Fallback) |
+| 4 | `pymediainfo_parser` | pymediainfo | Ergänzende/fehlende Metadaten |
 
-Jeder Parser erhält das Dictionary des vorherigen Parsers und überschreibt nur leere Werte (non-destructive).
+> Jeder Parser bekommt das bisherige `tags`-Dict und ergänzt fehlende Werte, ohne vorhandene zu überschreiben.
 
-### 4. `app_bottle.py` (Streaming & Covers)
+### Web-Frontend (`web/`)
 
-Eel ist primär für Websockets (UI-Logik) zuständig. Für große Media-Dateien oder Suchvorgänge parallel im Netzwerk braucht es dediziertes HTTP.
-- **Laden von Covern (`/cover/<file>`)**: Liest ID3/MP4-Metadaten on-the-fly im Speicher aus und serviert das Binärbild als `image/jpeg` oder `png`.
-- **Media-Streaming (`/media/<file>`)**: Erkennt Dateiendungen. Unterstützt Datei-Serving anhand des absoluten Pfades aus der Datenbank statt fester Ordnerbindungen.
-- **Transcoding**: Wenn eine `.flac_transcoded` Endung angefragt wird, spawnt ein FFmpeg-Subprozess, wandelt die Datei temporär in `.cache` um und streamed das verdauliche FLAC an den Browser.
+| Datei | Beschreibung |
+|-------|-------------|
+| `app.html` | Komplette UI: Sidebar (Cover, Metadaten), Medienliste, Audio-Player, Tab-System (Library + Debug) |
+| `app_bottle.py` | Bottle-Routen: `/media/<file>` (mit ALAC→FLAC Transkodierung + Caching), `/cover/<file>` (eingebettetes Cover-Art) |
+
+## Transcoding
+
+Dateien mit Apple Lossless (ALAC) Codec können nicht nativ im Browser abgespielt werden. Die App erkennt das und:
+
+1. **`main.py`**: Setzt `is_transcoded = True` wenn Codec = ALAC
+2. **`app.html`**: Hängt `.flac_transcoded` an die Media-URL an
+3. **`app_bottle.py`**: Erkennt die Endung, transkodiert via `ffmpeg` nach FLAC, cached das Ergebnis in `media/.cache/`
+4. **UI**: Zeigt `⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als FLAC gestreamt.`

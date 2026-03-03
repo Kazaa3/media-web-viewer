@@ -119,17 +119,26 @@ def parse(path, file_type, tags, name):
             tags['albumartist'] = safe_get(audio, 'albumartist')
             tags['track'] = safe_get(audio, 'tracknumber') or safe_get(audio, 'track')
             tags['disc'] = safe_get(audio, 'discnumber')
-            tags['codec'] = file_type[1:].lower()
         
         # Stream info elements
         if audio_for_info and hasattr(audio_for_info, 'info'):
             info = audio_for_info.info
             if hasattr(info, 'bitrate') and info.bitrate:
                 tags['bitrate'] = f"{int((info.bitrate + 500) // 1000)} kbps"
-            if hasattr(info, 'sample_rate') and info.sample_rate:
+            
+            if not tags.get('codec'):
+                from .format_utils import format_codec
+                tags['codec'] = format_codec(tags.get('file_type') or file_type[1:])
+            
+            # Samplerate
+            if not tags.get('samplerate') and hasattr(info, 'sample_rate'):
+                from .format_utils import format_samplerate
                 tags['samplerate'] = format_samplerate(info.sample_rate)
-            if hasattr(info, 'bits_per_sample') and info.bits_per_sample and info.bits_per_sample > 0:
-                tags['bitdepth'] = f"{info.bits_per_sample} Bit"
+                
+            # Bitdepth
+            if not tags.get('bitdepth') and hasattr(info, 'bits_per_sample'):
+                from .format_utils import format_bitdepth
+                tags['bitdepth'] = format_bitdepth(info.bits_per_sample, codec=tags.get('codec'), file_type=file_type)
 
         # Tag types
         if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
