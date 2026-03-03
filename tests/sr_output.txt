@@ -1,0 +1,15 @@
+File: media/Amewu - Leidkultur Zenit Remixes - 01 Leidkultur (Zenit Remix).m4a | SR: 44.1 kHz | BR: 1583 kbps
+File: media/1 Nate's Theme.mp3 | SR: 44.1 kHz | BR: 256 kbps
+File: media/09 Beautiful (feat. MOD SUN).m4a | SR: 44.1 kHz | BR: 256 kbps
+File: media/01-05-Oscar_Peterson-Blue_and_Sentimental-LLS.m4a | SR: 44.1 kHz | BR: 331 kbps
+File: media/02 We the People….m4a | SR: 44.1 kHz | BR: 973 kbps
+File: media/01 - Anfangsstadium RMX.mp3 | SR: 44.1 kHz | BR: 305 kbps
+File: media/Hudson Mohawke - Watch Dogs Theme.mp3 | SR: 44.1 kHz | BR: 256 kbps
+File: media/Ken Wilber - Integral Transformation.m4b | SR: 44.1 kHz | BR: 63 kbps
+File: media/Heinz Strunk - Fleisch ist mein Gemüse (Komplettes Hörbuch).aac | SR: 44.1 kHz | BR: 128 kbps
+File: media/02 Aaliyah feat. Static - Loose Rap.flac | SR: 44.1 kHz | BR: 923 kbps
+File: media/Hudson Mohawke - W4tched (Cinema).mp3 | SR: 44.1 kHz | BR: 256 kbps
+File: media/route_log.txt | SR:  | BR: 47 kbps
+File: media/sample.mp3 | SR:  | BR: 
+File: media/01 Culture - Jah Izrehl.flac | SR: 44.1 kHz | BR: 1001 kbps
+File: media/sample.flac | SR:  | BR: 

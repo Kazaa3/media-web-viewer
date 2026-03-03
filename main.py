@@ -21,8 +21,19 @@ from pathlib import Path
 import subprocess
 import re  # For MKV parsing
 
+# Konfiguration
+MEDIA_DIR = "./media"  # Ordner mit Testdateien
+
+
+
+# Eigene Module
+
 # Eigene Parser
 from parsers import filename_parser, mutagen_parser, ffmpeg_parser, pymediainfo_parser
+
+# Eigene bottle Web-Routen
+from web import app_bottle
+
 
 # Audio-Tag-Bibliothek
 from mutagen.mp3 import MP3  # Für MP3-Dauer
@@ -160,11 +171,6 @@ class MediaItem:
         }
 
 
-# Testdateien
-MEDIA_DIR = "./media"  # Ordner, in dem deine Dateien liegen
-
-# Import the separated bottle routes
-from web import app_bottle
 
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
