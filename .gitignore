@@ -5,5 +5,17 @@ media/*.mp3
 media/*.aac
 media/*.ogg
 media/*.wav
+media/*.opus
+media/*.wma
+media/*.webm
+media/*.mp4
+media/*.m4v
+media/*.mkv
+media/*.m4a
+media/*.flac
+media/*.alac
+media/*.wav
 
 __pycache__/
+media/.cache/
+media/route_log.txt

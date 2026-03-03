@@ -291,7 +291,7 @@
             let fileInfoStr = [tags.size, contStr, artStr].filter(Boolean).join(' • ');
             let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '\n\nTag Format: ' + tags.tagtype : '';
 
-            let transcodeStr = item.is_transcoded ? '\n⚠️ Datei wird on-the-fly für den Webplayer transkodiert' : '';
+            let transcodeStr = item.is_transcoded ? `\n\n⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.` : '';
 
             document.getElementById('sb-fileinfo').innerText = fileInfoStr + tagStr + transcodeStr;
 
