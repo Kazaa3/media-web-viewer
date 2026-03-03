@@ -250,6 +250,91 @@
             top: 0;
             bottom: 0;
         }
+
+        /* Parser List Drag & Drop */
+        .parser-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .parser-item {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: grab;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .parser-item:active {
+            cursor: grabbing;
+        }
+
+        .parser-item.dragging {
+            opacity: 0.5;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .parser-handle {
+            margin-right: 15px;
+            color: #999;
+            cursor: grab;
+        }
+
+        .parser-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .2s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #2a7;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
     </style>
 </head>
 
@@ -390,6 +475,23 @@
                         <div id="debug-flags-container"
                             style="display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                             <!-- Flags werden dynamisch geladen -->
+                        </div>
+
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">Parser-Architektur</h3>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Sortiere die
+                            Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach Bedarf.</p>
+
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                            <ul id="parser-list" class="parser-list">
+                                <!-- Dynamically populated list -->
+                            </ul>
+                            <button onclick="saveParserChainUI()"
+                                style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Reihenfolge
+                                Speichern</button>
+                            <span id="parser-save-status"
+                                style="margin-left: 10px; font-size: 0.85em; color: #2a7; display: none;">✅
+                                Gespeichert</span>
                         </div>
 
                         <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
@@ -935,6 +1037,128 @@
                 div.onclick = () => play(item, mediaUrl);
                 list.appendChild(div);
             });
+        }
+
+        // Parser GUI Logic
+        const PARSER_LABELS = {
+            "filename": "Dateiname (Basis-Tags)",
+            "mutagen": "Mutagen (Schnell, Nativ)",
+            "pymediainfo": "MediaInfo (C-Binding)",
+            "ffmpeg": "FFmpeg (Subprozess Fallback)",
+            "container": "Container (Erweiterungs-Fallback)"
+        };
+
+        const ALL_PARSERS = Object.keys(PARSER_LABELS);
+        let currentParserChain = [];
+
+        async function loadParserConfig() {
+            const config = await eel.get_parser_config()();
+            currentParserChain = config.parser_chain || ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"];
+            renderParserList();
+        }
+
+        function renderParserList() {
+            const list = document.getElementById('parser-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            // Render active parsers in order
+            currentParserChain.forEach(parser => {
+                if (PARSER_LABELS[parser]) {
+                    list.appendChild(createParserItem(parser, true));
+                }
+            });
+
+            // Render inactive parsers at the bottom
+            ALL_PARSERS.forEach(parser => {
+                if (!currentParserChain.includes(parser)) {
+                    list.appendChild(createParserItem(parser, false));
+                }
+            });
+
+            setupDragAndDrop();
+        }
+
+        function createParserItem(parserId, isActive) {
+            const li = document.createElement('li');
+            li.className = 'parser-item';
+            li.draggable = true;
+            li.dataset.id = parserId;
+
+            li.innerHTML = `
+                <div class="parser-handle">☰</div>
+                <div class="parser-name">${PARSER_LABELS[parserId]}</div>
+                <label class="switch">
+                    <input type="checkbox" class="parser-toggle" ${isActive ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            `;
+            return li;
+        }
+
+        function setupDragAndDrop() {
+            const list = document.getElementById('parser-list');
+            let draggedItem = null;
+
+            list.addEventListener('dragstart', e => {
+                if (e.target.classList.contains('parser-item')) {
+                    draggedItem = e.target;
+                    setTimeout(() => e.target.classList.add('dragging'), 0);
+                }
+            });
+
+            list.addEventListener('dragend', e => {
+                if (e.target.classList.contains('parser-item')) {
+                    e.target.classList.remove('dragging');
+                    draggedItem = null;
+                }
+            });
+
+            list.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(list, e.clientY);
+                if (draggedItem) {
+                    if (afterElement == null) {
+                        list.appendChild(draggedItem);
+                    } else {
+                        list.insertBefore(draggedItem, afterElement);
+                    }
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.parser-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        async function saveParserChainUI() {
+            const listItems = document.querySelectorAll('.parser-item');
+            const newChain = [];
+
+            listItems.forEach(item => {
+                const isActive = item.querySelector('.parser-toggle').checked;
+                if (isActive) {
+                    newChain.push(item.dataset.id);
+                }
+            });
+
+            const result = await eel.save_parser_config({ "parser_chain": newChain })();
+            if (result.status === 'ok') {
+                const statusSpan = document.getElementById('parser-save-status');
+                statusSpan.style.display = 'inline';
+                setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+            } else {
+                alert("Fehler beim Speichern der Parser-Konfiguration.");
+            }
         }
 
         async function loadDebugFlags() {

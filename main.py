@@ -341,6 +341,46 @@ def play_media(path):
         print(f"[Debug-Player] Spiele ab: {path}")
     return {"status": "play", "path": path} # Bestätigung
 
+@eel.expose
+def open_in_explorer(path_str):
+    print(f"Versuche zu oeffnen: {path_str}")
+    path_obj = Path(path_str)
+    if not path_obj.exists():
+        print("Existiert nicht")
+        return {"error": "Nicht gefunden"}
+        
+    try:
+        # Check OS and open accordingly
+        if os.name == 'nt':  # Windows
+            os.startfile(path_str)
+        elif sys.platform == 'darwin':  # macOS
+            subprocess.run(['open', '-R', path_str])
+        else:  # Linux (freedesktop)
+            subprocess.run(['xdg-open', str(path_obj.parent)])
+        return {"status": "ok"}
+    except Exception as e:
+        print(f"Fehler beim Oeffnen: {e}")
+        return {"error": str(e)}
+
+@eel.expose
+def get_parser_config():
+    """Returns the current parser configuration including the parser chain order."""
+    sys.path.append(str(Path(__file__).parent)) # Ensure local imports work dynamically
+    from parsers.format_utils import PARSER_CONFIG
+    return PARSER_CONFIG
+
+@eel.expose
+def save_parser_config(new_config):
+    """Updates and saves the parser configuration from the UI."""
+    sys.path.append(str(Path(__file__).parent))
+    from parsers.format_utils import PARSER_CONFIG, save_parser_config as save_config
+    try:
+        PARSER_CONFIG.update(new_config)
+        save_config()
+        return {"status": "ok"}
+    except Exception as e:
+        return {"error": str(e)}
+
 @eel.expose("browse_dir")
 def browse_dir(dir_path=None):
     """Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser."""

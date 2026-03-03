@@ -1,12 +1,45 @@
 import re
+import os
+import json
+from pathlib import Path
+
+# Config File Path
+CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
 
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG = {
-    "enable_ffmpeg": False,
+    "parser_chain": ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"],
     "debug_scan": True,
     "debug_parser": True
 }
+
+def load_parser_config():
+    """Loads parser configuration from disk."""
+    global PARSER_CONFIG
+    if CONFIG_FILE.exists():
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                loaded = json.load(f)
+                PARSER_CONFIG.update(loaded)
+        except Exception as e:
+            print(f"Error loading config: {e}")
+    else:
+        # Ensure directory exists but wait to save until needed
+        os.makedirs(CONFIG_FILE.parent, exist_ok=True)
+        save_parser_config()
+
+def save_parser_config():
+    """Saves parser configuration to disk."""
+    try:
+        os.makedirs(CONFIG_FILE.parent, exist_ok=True)
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(PARSER_CONFIG, f, indent=4)
+    except Exception as e:
+        print(f"Error saving config: {e}")
+
+# Load immediately on import
+load_parser_config()
 
 def format_samplerate(hz):
     """Standardizes sample rate display (e.g., 44100 -> 44.1 kHz)."""
