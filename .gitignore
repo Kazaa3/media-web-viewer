@@ -1,2 +1,7 @@
-media/02 Aaliyah feat. Static - Loose Rap.flac
-media/02 We the People….m4a
+media/*.flac
+media/*.m4a
+media/*.m4b
+media/*.mp3
+media/*.aac
+media/*.ogg
+media/*.wav
