@@ -205,8 +205,8 @@
             <h1>Media Player</h1>
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="switchTab('player', this)">Player</button>
-                <button class="tab-btn" onclick="switchTab('browser', this)">Browser</button>
-                <button class="tab-btn" onclick="switchTab('bibliothek', this)">Bibliothek</button>
+                <button class="tab-btn" onclick="switchTab('bibliothek', this)">Browser</button>
+                <button class="tab-btn" onclick="switchTab('browser', this)">Bibliothek</button>
                 <button class="tab-btn" onclick="switchTab('optionen', this)">Optionen</button>
                 <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
             </div>
@@ -339,8 +339,8 @@
 
             const tabMap = {
                 'player': 'media-list',
-                'browser': 'browser-tab',
-                'bibliothek': 'bibliothek-tab',
+                'bibliothek': 'browser-tab',
+                'browser': 'bibliothek-tab',
                 'optionen': 'optionen-tab',
                 'debug': 'debug-list'
             };
@@ -350,11 +350,11 @@
             btn.classList.add('active');
 
             // Auto-load file browser on first visit
-            if (tabId === 'browser' && !fbCurrentPath) {
+            if (tabId === 'bibliothek' && !fbCurrentPath) {
                 fbNavigate();
             }
-            // Refresh library list when switching to Bibliothek
-            if (tabId === 'bibliothek') {
+            // Refresh library list when switching to Browser
+            if (tabId === 'browser') {
                 refreshBibliothek();
             }
         }
