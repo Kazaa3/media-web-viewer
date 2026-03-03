@@ -349,6 +349,9 @@
             }
             btn.classList.add('active');
 
+            // Show sidebar only on Player tab, footer player always visible
+            document.querySelector('.sidebar').style.display = tabId === 'player' ? '' : 'none';
+
             // Auto-load file browser on first visit
             if (tabId === 'bibliothek' && !fbCurrentPath) {
                 fbNavigate();
