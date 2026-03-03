@@ -28,12 +28,14 @@ MEDIA_DIR = "./media"  # Ordner mit Testdateien
 
 # Eigene Module
 
+# Benutzerdefinierte Module
+import db
+
 # Eigene Parser
 from parsers import filename_parser, mutagen_parser, ffmpeg_parser, pymediainfo_parser
 
 # Eigene bottle Web-Routen
 from web import app_bottle
-
 
 # Audio-Tag-Bibliothek
 from mutagen.mp3 import MP3  # Für MP3-Dauer
@@ -179,12 +181,17 @@ def scan_media():
     if not os.path.exists(MEDIA_DIR):
         os.makedirs(MEDIA_DIR)
         return {"error": "Ordner erstellt – füge Dateien hinzu"}
-    media = []
+        
+    known_names = db.get_known_media_names()
+    
     for f in Path(MEDIA_DIR).iterdir():
-        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'}:
+        if f.is_file() and f.name not in known_names and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'}:
+            # Neues Item in Datenbank eintragen
             item = MediaItem(f.name, f)
-            media.append(item.to_dict()) # Datenmodel
-    return {"media": media}  # Reich an GUI mit Tags + Dauer
+            db.insert_media(item.to_dict())
+            
+    # Liefere gescannten Stand direkt aus der DB zurück
+    return {"media": db.get_all_media()}  # Reich an GUI mit Tags + Dauer
 
 @eel.expose("play_media")
 def play_media(path):
