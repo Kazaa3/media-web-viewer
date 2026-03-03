@@ -33,34 +33,18 @@ def parse(path, file_type, tags):
                 tags['year'] = general_track.recorded_date or ''
                 
         if audio_track:
-            fmt_lower = audio_track.format.lower() if audio_track.format else ''
+            from .format_utils import format_codec, format_bitdepth, format_samplerate
             
-            # Explicitly overwrite generic codec like 'wav' if a detailed PCM format is found
-            if fmt_lower == 'pcm':
-                sign = 'S' if getattr(audio_track, 'format_settings__sign', '') == 'Signed' else 'U'
-                end = 'LE' if getattr(audio_track, 'format_settings__endianness', '') == 'Little' else 'BE'
-                bps = audio_track.bit_depth or ''
-                tags['codec'] = f"PCM_{sign}{bps}{end}"
-            elif not tags.get('codec') and audio_track.format:
-                tags['codec'] = fmt_lower
+            # Use centralized formatting for codec
+            tags['codec'] = format_codec(audio_track.format, track_info=audio_track)
                 
             if not tags.get('bitrate') and audio_track.bit_rate:
                 tags['bitrate'] = f"{int(audio_track.bit_rate / 1000)} kbps"
             if not tags.get('samplerate') and audio_track.sampling_rate:
-                hz = float(audio_track.sampling_rate)
-                khz = hz / 1000
-                tags['samplerate'] = f"{int(khz)} kHz" if khz.is_integer() else f"{khz:g} kHz"
+                tags['samplerate'] = format_samplerate(audio_track.sampling_rate)
                 
-            # Override bitdepth for PCM explicitly to match FFmpeg signature format
-            if audio_track.format and audio_track.format.lower() == 'pcm' and audio_track.bit_depth:
-                if int(audio_track.bit_depth) == 24:
-                    tags['bitdepth'] = "32 Bit (s32)"
-                elif int(audio_track.bit_depth) == 16:
-                    tags['bitdepth'] = "16 Bit (s16)"
-                else:
-                    tags['bitdepth'] = f"{audio_track.bit_depth} Bit"
-            elif not tags.get('bitdepth') and audio_track.bit_depth:
-                tags['bitdepth'] = f"{audio_track.bit_depth} Bit"
+            # Use centralized formatting for bitdepth
+            tags['bitdepth'] = format_bitdepth(audio_track.bit_depth, codec=tags.get('codec'), file_type=file_type)
                 
     except Exception as e:
         pass
