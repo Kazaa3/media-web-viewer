@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 def parse(path, filename):
     tags = {
@@ -10,7 +10,7 @@ def parse(path, filename):
     }
     
     try:
-        tags['size'] = f"{os.path.getsize(path) / (1024 * 1024):.2f} MB"
+        tags['size'] = f"{Path(path).stat().st_size / (1024 * 1024):.2f} MB"
     except Exception:
         pass
         

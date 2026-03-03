@@ -182,7 +182,7 @@ class MediaItem:
         # FFmpeg fallback if mutagen fails
         try:
             import subprocess, re
-            cmd = ["ffmpeg", "-i", self.path.as_posix()]
+            cmd = ["ffmpeg", "-i", str(self.path)]
             output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
             dur_match = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", output)
             if dur_match:
@@ -231,7 +231,7 @@ class MediaItem:
         
         return {
             'name': self.name,
-            'path': self.path.as_posix(),
+            'path': str(self.path),
             'duration': duration_str,
             'tags': self.tags,
             'type': self.type[1:],
@@ -245,7 +245,7 @@ class MediaItem:
 # Funktion, um Medien zu scannen und an die GUI zu senden
 @eel.expose("scan_media")
 def scan_media():
-    if not os.path.exists(MEDIA_DIR):
+    if not Path(MEDIA_DIR).exists():
         os.makedirs(MEDIA_DIR)
         return {"error": "Ordner erstellt – füge Dateien hinzu"}
     
