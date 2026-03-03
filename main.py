@@ -39,7 +39,7 @@ from mutagen.id3 import ID3 # statt ffmpeg
 #mkvinfo
 #mediainfo
 #mp3tag
-
+# Untersützedateiformate als Liste
 
 
 
@@ -145,7 +145,9 @@ class MediaItem:
         else:
             duration_str = f"{mins}:{secs:02d}"
             
-        is_transcoded = self.type in {'.m4a', '.alac', '.m4b'}
+        codec = self.tags.get('codec', '').upper()
+        is_transcoded = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
+        transcoded_format = 'FLAC' if is_transcoded else None
         
         return {
             'name': self.name,
@@ -153,7 +155,8 @@ class MediaItem:
             'duration': duration_str,
             'tags': self.tags,
             'type': self.type[1:],
-            'is_transcoded': is_transcoded
+            'is_transcoded': is_transcoded,
+            'transcoded_format': transcoded_format
         }
 
 

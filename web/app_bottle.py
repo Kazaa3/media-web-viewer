@@ -21,14 +21,16 @@ def serve_media(filepath):
     ext = filepath.lower()
     
     # Strip the disguise extension added by Javascript
+    needs_transcoding = False
     if filepath.endswith('.flac_transcoded'):
         filepath = filepath[:-16]
         ext = filepath.lower()
+        needs_transcoding = True
 
     with open(os.path.join(MEDIA_DIR, 'route_log.txt'), 'a') as f:
         f.write(f"ROUTE CALLED: filepath={filepath}, ext={ext}\n")
     
-    if ext.endswith('.alac') or ext.endswith('.m4a') or ext.endswith('.m4b'):
+    if needs_transcoding:
         full_path = os.path.join(MEDIA_DIR, filepath)
         cache_dir = os.path.join(MEDIA_DIR, '.cache')
         os.makedirs(cache_dir, exist_ok=True)
