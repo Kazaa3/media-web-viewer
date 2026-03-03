@@ -46,17 +46,24 @@ def parse(path, file_type, tags):
                     tags['samplerate'] = format_samplerate(sr_match.group(1))
                     
             # Bitdepth
-            fmt_match = re.search(r"\b(s16|s16p|s24|s24p|s32|s32p|fltp|flt)\b", audio_line)
+            fmt_match = re.search(r"\b(u8|u8p|s16|s16p|s24|s24p|s32|s32p|fltp|flt|dblp|dbl|s64|s64p)\b", audio_line)
             if fmt_match:
                 fmt = fmt_match.group(1)
+                fmt_map = {
+                    'u8': '8 Bit', 'u8p': '8 Bit',
+                    's16': '16 Bit', 's16p': '16 Bit',
+                    's24': '24 Bit', 's24p': '24 Bit',
+                    's32': '32 Bit', 's32p': '32 Bit',
+                    's64': '64 Bit', 's64p': '64 Bit',
+                    'flt': '32 Bit (Float)', 'fltp': '32 Bit (Float)',
+                    'dbl': '64 Bit (Float)', 'dblp': '64 Bit (Float)',
+                }
+                bit_label = fmt_map.get(fmt, fmt)
                 if tags.get('bitdepth'):
                     if '(' not in tags['bitdepth']:
                         tags['bitdepth'] += f" ({fmt})"
                 else:
-                    if fmt in ('s16', 's16p'): tags['bitdepth'] = f"16 Bit ({fmt})"
-                    elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})"
-                    elif fmt in ('s32', 's32p'): tags['bitdepth'] = f"32 Bit ({fmt})"
-                    elif fmt in ('fltp', 'flt'): tags['bitdepth'] = f"16 Bit ({fmt})"
+                    tags['bitdepth'] = f"{bit_label} ({fmt})"
                 
             # Bitrate
             if not tags.get('bitrate'):
