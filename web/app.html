@@ -1051,10 +1051,27 @@
         const ALL_PARSERS = Object.keys(PARSER_LABELS);
         let currentParserChain = [];
 
-        async function loadParserConfig() {
-            const config = await eel.get_parser_config()();
-            currentParserChain = config.parser_chain || ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"];
-            renderParserList();
+        function loadParserConfig() {
+            eel.get_parser_config()((config) => {
+                console.log("Raw parser config from python:", config);
+
+                // Eel sometimes returns strings instead of objects depending on the browser
+                if (typeof config === 'string') {
+                    try {
+                        config = JSON.parse(config);
+                    } catch (e) {
+                        console.error("Failed to parse config string:", e);
+                    }
+                }
+
+                if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
+                    currentParserChain = config.parser_chain;
+                } else {
+                    console.warn("Failed to load parser_chain, falling back to defaults.");
+                    currentParserChain = ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"];
+                }
+                renderParserList();
+            });
         }
 
         function renderParserList() {
@@ -1085,9 +1102,11 @@
             li.draggable = true;
             li.dataset.id = parserId;
 
+            const labelName = PARSER_LABELS[parserId] || parserId;
+
             li.innerHTML = `
                 <div class="parser-handle">☰</div>
-                <div class="parser-name">${PARSER_LABELS[parserId]}</div>
+                <div class="parser-name">${labelName}</div>
                 <label class="switch">
                     <input type="checkbox" class="parser-toggle" ${isActive ? 'checked' : ''}>
                     <span class="slider"></span>
@@ -1140,7 +1159,7 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        async function saveParserChainUI() {
+        function saveParserChainUI() {
             const listItems = document.querySelectorAll('.parser-item');
             const newChain = [];
 
@@ -1151,14 +1170,19 @@
                 }
             });
 
-            const result = await eel.save_parser_config({ "parser_chain": newChain })();
-            if (result.status === 'ok') {
-                const statusSpan = document.getElementById('parser-save-status');
-                statusSpan.style.display = 'inline';
-                setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
-            } else {
-                alert("Fehler beim Speichern der Parser-Konfiguration.");
-            }
+            console.log("Saving new parser chain:", newChain);
+
+            // Pass object that matches Python expected structure
+            eel.save_parser_config({ "parser_chain": newChain })((result) => {
+                if (result && result.status === 'ok') {
+                    const statusSpan = document.getElementById('parser-save-status');
+                    statusSpan.style.display = 'inline';
+                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                } else {
+                    console.error("Save failed:", result);
+                    alert("Fehler beim Speichern der Parser-Konfiguration.");
+                }
+            });
         }
 
         async function loadDebugFlags() {
