@@ -259,12 +259,32 @@ class MediaItem:
                     cmd = ["ffmpeg", "-i", self.path.as_posix()]
                     output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
                     
+                    # ==========================================
+                    # CONTAINER-FORMAT AUSWERTUNG (FFmpeg)
+                    # ==========================================
+                    # FFmpeg gibt in der Line "Input #0" das exakte Demuxer-Format an.
+                    # Viele Formate teilen sich historisch denselben Container-Standard:
+                    # 
+                    # 1. ISOBMFF (Apple QuickTime Derivate):
+                    #    Formate wie .mp4, .m4a (Audio) und .m4b (Audiobooks) basieren alle 
+                    #    auf dem "Base Media" Format (ISO/IEC 14496-12). FFmpeg fasst diese 
+                    #    beim Einlesen generisch unter dem Begriff "mov,mp4,m4a,3gp,3g2,mj2" zusammen.
+                    #    Wenn wir "MOV" auslesen, aber die Datei eigentlich ".m4b" heißt, 
+                    #    korrigieren wir die Anzeige für den User exakt auf die Dateiendung (z.B. M4B).
+                    #
+                    # 2. Matroska / WebM:
+                    #    Ein extrem flexibler Open-Source Container, der fast alle Streams schluckt.
+                    #    FFmpeg meldet hier "matroska,webm". Wir bereinigen das visuell zu "MKV".
+                    # ==========================================
                     input_match = re.search(r"Input #0,\s*([^,]+)", output)
                     if input_match:
                         raw_cont = input_match.group(1).upper().strip()
                         raw_ext = self.type[1:].upper()
+                        
+                        # Apple/ISOBMFF Container Bereinigung
                         if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
                             tags['container'] = raw_ext
+                        # Matroska Container Bereinigung
                         elif raw_cont == 'MATROSKA':
                             tags['container'] = 'MKV'
                         else:
@@ -288,7 +308,27 @@ class MediaItem:
                 except Exception:
                     pass
                     
-            # Retrieve Tag Container formatting
+            # ==========================================
+            # AUDIO-TAG AUSWERTUNG (Mutagen)
+            # ==========================================
+            # Je nach Dateityp verwendet die Mutagen-Bibliothek völlig unterschiedliche Parser.
+            # Um dem Nutzer saubere, branchenübliche Tag-Typen anzuzeigen, schlüsseln wir diese auf:
+            #
+            # 1. ID3 (MP3):
+            #    ID3-Tags haben historisch viele Iterationen (v1, v2.2, v2.3, v2.4). Da die Version hier
+            #    elementar für die Kompatibilität von Car-Audios und Playern ist, lesen wir explizit
+            #    den `tags.version` Tuple (z.B. (2,3,0)) aus und wandeln ihn formal in "ID3v2.3" um.
+            # 
+            # 2. ISOBMFF / Apple (MP4/M4A/M4B):
+            #    Nutzt intern sogenannte "MP4 Atoms" (ilst). Ein versionierungsgeladenes Chaos 
+            #    wie bei ID3 gibt es hier nicht. Wir benennen Mutagens rohes "MP4Tags" in das
+            #    cleane "MP4" um.
+            #
+            # 3. Xiph (Ogg/FLAC):
+            #    Nutzen den "Vorbis Comment" Standard (eine simple LISTE von Schlüssel=Wert paaren).
+            #    Auch hier gibt es keine nennenswerte Unterversionierung. Um sie voneinander 
+            #    zu trennen, benennen wir "OggVComment" und "FLACVComment" in menschliche Strings um.
+            # ==========================================
             if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
                 tag_name = type(audio_for_info.tags).__name__
                 if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
@@ -324,10 +364,18 @@ class MediaItem:
                 
                 # Container / Format aus Input Info lesen: Input #0, matroska,webm, from ...
                 if not tags['container']:
+                    # ==========================================
+                    # FALLBACK CONTAINER-FORMAT AUSWERTUNG
+                    # ==========================================
+                    # Falls Mutagen komplett fehlgeschlagen ist (z.B. bei komplexen MKVs),
+                    # extrahieren wir den Container nachträglich nochmal sauber analog zur Head-Logik.
+                    # Dies verhindert fehlerhafte "Tag Format" Anzeigen, da ein Container (MKV) 
+                    # kein Tag-Format (wie ID3) ist!
                     input_match = re.search(r"Input #0,\s*([^,]+)", output)
                     if input_match:
                         raw_cont = input_match.group(1).upper().strip()
                         raw_ext = self.type[1:].upper()
+                        
                         if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
                             tags['container'] = raw_ext
                         elif raw_cont == 'MATROSKA':
