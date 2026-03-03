@@ -63,7 +63,7 @@ ARCHIVE_EXTENSIONS = {
 import db
 
 # Eigene Parser
-from parsers import filename_parser, mutagen_parser, ffmpeg_parser, pymediainfo_parser
+from parsers import media_parser
 
 # Eigene bottle Web-Routen
 from web import app_bottle
@@ -157,8 +157,7 @@ class MediaItem:
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
-        self.duration = self._get_duration()
-        self.tags = self._get_tags()
+        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name)
 
 
     def show_info(self):
@@ -169,66 +168,7 @@ class MediaItem:
         print(self.tags)
         print("\n")
 
-    def _get_duration(self):
-        """Extrahiert Dauer in Sekunden (mit mutagen)."""
-        try:
-            if self.type == '.mp3':
-                audio = MP3(self.path)
-                return int(audio.info.length)
-            elif self.type == '.flac':
-                audio = FLAC(self.path)
-                return int(audio.info.length)
-            elif self.type == '.ogg':
-                audio = OggVorbis(self.path)
-                return int(audio.info.length)
-            elif self.type in {'.m4a', '.alac', '.m4b'}:
-                audio = MP4(self.path)
-                return int(audio.info.length)
-            elif self.type == '.opus':
-                audio = OggOpus(self.path)
-                return int(audio.info.length) 
-            elif self.type == '.wav':
-                audio = WAVE(self.path)
-                return int(audio.info.length)  
-        except:
-            pass
-            
-        # FFmpeg fallback if mutagen fails
-        try:
-            import subprocess, re
-            cmd = ["ffmpeg", "-i", str(self.path)]
-            output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
-            dur_match = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", output)
-            if dur_match:
-                hours = int(dur_match.group(1))
-                minutes = int(dur_match.group(2))
-                seconds = float(dur_match.group(3))
-                return int(hours * 3600 + minutes * 60 + seconds)
-        except:
-            pass
-            
-        return 0
 
-    def _get_tags(self):
-        """Extrahiert umfassende Metadaten sequenziell mit verschiedenen Parsern."""
-        # 1. Filename Parser (Grundlage)
-        tags = filename_parser.parse(self.path, self.name)
-        
-        # 2. Mutagen Parser (Hauptquelle)
-        tags = mutagen_parser.parse(self.path, self.type, tags, self.name)
-        
-        # 3. FFmpeg Parser (Fallback für Bitrate/Samplerate/Container)
-        if not tags['samplerate'] or not tags['bitrate'] or tags['tagtype'] == 'None' or not tags['bitdepth']:
-            tags = ffmpeg_parser.parse(self.path, self.type, tags)
-            
-        # 4. pymediainfo Parser (Fallback)
-        # Python wrapper around the same libmediainfo library like in MediaInfo GUI
-        tags = pymediainfo_parser.parse(self.path, self.type, tags)
-        
-        # 5. mp3tag
-        # TODO: Implement mp3tag parser for audio book chapter support
-        
-        return tags
 
     def to_dict(self):
         hours, remainder = divmod(self.duration, 3600)
@@ -273,6 +213,9 @@ def get_library():
 # Funktion, um Medien zu scannen und an die GUI zu senden
 @eel.expose("scan_media")
 def scan_media():
+    import time
+    start_time = time.time()
+    
     if not Path(MEDIA_DIR).exists():
         os.makedirs(MEDIA_DIR)
         return {"error": "Ordner erstellt – füge Dateien hinzu"}
@@ -280,13 +223,21 @@ def scan_media():
     # DB leeren und komplett neu einlesen (Refresh)
     db.clear_media()
     
+    count = 0
     for f in Path(MEDIA_DIR).iterdir():
         if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
             item = MediaItem(f.name, f)
             db.insert_media(item.to_dict())
+            count += 1
             
+    elapsed = time.time() - start_time
+    print(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
+    
     # Liefere gescannten Stand direkt aus der DB zurück
-    return {"media": db.get_all_media()}  # Reich an GUI mit Tags + Dauer
+    return {
+        "media": db.get_all_media(),
+        "stats": {"count": count, "time_seconds": elapsed}
+    }
 
 @eel.expose("play_media")
 def play_media(path):
