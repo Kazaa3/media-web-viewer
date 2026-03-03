@@ -231,12 +231,12 @@ def scan_media():
     if not os.path.exists(MEDIA_DIR):
         os.makedirs(MEDIA_DIR)
         return {"error": "Ordner erstellt – füge Dateien hinzu"}
-        
-    known_names = db.get_known_media_names()
+    
+    # DB leeren und komplett neu einlesen (Refresh)
+    db.clear_media()
     
     for f in Path(MEDIA_DIR).iterdir():
-        if f.is_file() and f.name not in known_names and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'}:
-            # Neues Item in Datenbank eintragen
+        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'}:
             item = MediaItem(f.name, f)
             db.insert_media(item.to_dict())
             

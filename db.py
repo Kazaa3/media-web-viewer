@@ -50,6 +50,12 @@ def get_known_media_names():
     conn.close()
     return names
 
+def clear_media():
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.execute("DELETE FROM media")
+    conn.commit()
+    conn.close()
+
 def insert_media(item_dict):
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
