@@ -19,3 +19,4 @@ media/*.wav
 __pycache__/
 media/.cache/
 media/route_log.txt
+*.db

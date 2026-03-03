@@ -191,7 +191,10 @@ def play_media(path):
     """GUI ruft das an – aber HTML5 Audio handhabt Abspielen client-seitig."""
     return {"status": "play", "path": path}  # Bestätigung
 
+import db
+
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
+    db.init_db()               # SQLite-Datenbank initialisieren (Placeholder)
     eel.init("web")            # Ordner mit HTML/CSS/JS
     eel.start("app.html", size=(1000, 600))    # Starte Seite
