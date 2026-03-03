@@ -315,6 +315,23 @@ def browse_dir(dir_path=None):
     parent = str(target.parent) if target.parent != target else None
     return {"path": str(target), "parent": parent, "items": items}
 
+@eel.expose("add_file_to_library")
+def add_file_to_library(file_path):
+    """Fügt eine einzelne Datei aus dem Datei-Browser der Bibliothek hinzu."""
+    p = Path(file_path)
+    if not p.exists() or not p.is_file():
+        return {"error": "Datei nicht gefunden"}
+    if p.suffix.lower() not in AUDIO_EXTENSIONS:
+        return {"error": "Kein unterstütztes Audioformat"}
+    
+    known = db.get_known_media_names()
+    if p.name in known:
+        return {"status": "exists", "name": p.name}
+    
+    item = MediaItem(p.name, p)
+    db.insert_media(item.to_dict())
+    return {"status": "added", "name": p.name}
+
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
     db.init_db()               # SQLite-Datenbank initialisieren (Placeholder)

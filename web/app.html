@@ -302,7 +302,22 @@
                     row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
                     row.onclick = () => fbNavigate(item.path);
                 } else {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;">${item.name}</span><span style="color: #999; font-size: 0.85em;">${item.size}</span>`;
+                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
+                    row.onclick = async () => {
+                        let statusEl = row.querySelector('.fb-status');
+                        statusEl.textContent = '⏳ …';
+                        let result = await eel.add_file_to_library(item.path)();
+                        if (result.status === 'added') {
+                            statusEl.textContent = '✅ Hinzugefügt';
+                            statusEl.style.color = '#2a7';
+                        } else if (result.status === 'exists') {
+                            statusEl.textContent = '⚠️ Bereits vorhanden';
+                            statusEl.style.color = '#c90';
+                        } else {
+                            statusEl.textContent = '❌ ' + (result.error || 'Fehler');
+                            statusEl.style.color = '#c33';
+                        }
+                    };
                 }
                 list.appendChild(row);
             });
