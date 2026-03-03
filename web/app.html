@@ -497,6 +497,51 @@
             eel.play_media(path)();
         }
 
+        async function loadLibrary() {
+            let result = await eel.get_library()();
+            let list = document.getElementById('media-list');
+            list.innerHTML = '';
+
+            if (!result.media || result.media.length === 0) {
+                list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Klicke "Scan Media" oder füge Dateien über den Browser-Tab hinzu.</p>';
+                return;
+            }
+
+            // Populate Debug Tab
+            document.getElementById('debug-output').textContent = JSON.stringify(result.media, null, 2);
+
+            result.media.forEach(item => {
+                let div = document.createElement('div');
+                div.className = 'media-item';
+                let tags = item.tags;
+                let displayYear = tags.year ? tags.year.substring(0, 4) : '';
+                let trackStr = tags.track ? 'Track ' + tags.track : '';
+                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+                let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+
+                div.innerHTML = `
+                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
+                    <div class="media-info">
+                        <strong>${tags.title}</strong>
+                        <span>${tags.artist}</span>
+                        <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
+                        <span style="font-size: 0.75em; color: #aaa;">${codecInfo}</span>
+                    </div>
+                    <span style="font-size: 0.85em; color: #999; white-space: nowrap;">${item.duration}</span>
+                `;
+
+                let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                if (item.is_transcoded && item.transcoded_format) {
+                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                }
+
+                div.onclick = () => play(item, mediaUrl);
+                list.appendChild(div);
+            });
+        }
+
         loadLibrary();
     </script>
 </body>
