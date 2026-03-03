@@ -193,7 +193,9 @@
                 style="font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 6px; text-align: center;"></div>
             <div id="sb-meta" class="sidebar-meta"></div>
             <div id="sb-badge" class="sidebar-badge" style="display: none;"></div>
-            <div id="sb-fileinfo" style="font-size: 0.75em; color: #999; margin-top: 15px; text-align: center;"></div>
+            <div id="sb-fileinfo"
+                style="font-size: 0.75em; color: #999; margin-top: 15px; margin-bottom: 8px; text-align: center; white-space: pre-wrap;">
+            </div>
         </div>
 
         <!-- Main List -->
@@ -285,7 +287,10 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            document.getElementById('sb-fileinfo').innerText = [tags.filesize, tags.tagtype, artStr].filter(Boolean).join(' • ');
+            let contStr = tags.container ? tags.container.replace(',WEBM', '').replace(',MP4', '').replace(',M4A', '') : path.split('.').pop().toUpperCase();
+            let fileInfoStr = [tags.filesize, contStr, artStr].filter(Boolean).join(' • ');
+            let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '\n\nTag Format: ' + tags.tagtype : '';
+            document.getElementById('sb-fileinfo').innerText = fileInfoStr + tagStr;
 
             // Python Backend anfunken
             eel.play_media(path)();
