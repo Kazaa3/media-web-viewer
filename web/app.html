@@ -302,10 +302,6 @@
                     <input id="fb-path-input" type="text" onkeypress="if(event.key === 'Enter') fbNavigate(this.value)"
                         style="flex: 1; padding: 10px 16px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 1em; color: #444;" />
 
-                    <button id="browse-folder-btn" onclick="fbPickFolder()"
-                        style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center;">📂
-                        Browse</button>
-
                     <button onclick="scan(document.getElementById('fb-path-input').value, false)"
                         style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center;">➕
                         Hinzufügen</button>
@@ -382,22 +378,50 @@
             </div>
 
             <div id="options-tab" class="tab-content" style="padding: 20px;">
-                <h2>Optionen</h2>
-                <p style="color: #666; margin-bottom: 20px;">Hier können Einstellungen vorgenommen werden.</p>
+                <h2 style="margin-bottom: 25px;">Optionen</h2>
 
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;">Debug-Flags</h3>
-                <div id="debug-flags-container"
-                    style="display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; max-width: 400px;">
-                    <!-- Flags werden dynamisch geladen -->
-                </div>
+                <div style="display: flex; gap: 40px; align-items: flex-start;">
+                    <!-- Left Column: Core Settings -->
+                    <div style="flex: 1; max-width: 500px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">Allgemein & Debug</h3>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Hier können technische Parameter
+                            und Debug-Flags gesteuert werden.</p>
 
-                <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <h3 style="font-size: 1.1em; color: #c33; margin-bottom: 12px;">Gefahrenzone</h3>
-                    <button onclick="clearDatabase()"
-                        style="padding: 10px 20px; background: #f4d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">Datenbank
-                        löschen</button>
-                    <p style="font-size: 0.8em; color: #999; margin-top: 8px;">Vorsicht: Dies löscht alle indexierten
-                        Lieder aus der Bibliothek.</p>
+                        <div id="debug-flags-container"
+                            style="display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                            <!-- Flags werden dynamisch geladen -->
+                        </div>
+
+                        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                            <h3 style="font-size: 1.1em; color: #c33; margin-bottom: 12px;">Gefahrenzone</h3>
+                            <button onclick="clearDatabase()"
+                                style="padding: 10px 20px; background: #f4d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: opacity 0.2s;">Datenbank
+                                löschen</button>
+                            <p style="font-size: 0.8em; color: #999; margin-top: 8px;">Vorsicht: Dies löscht alle
+                                indexierten
+                                Lieder aus der Bibliothek.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: "Spielereien" -->
+                    <div style="flex: 1; border-left: 1px solid #eee; padding-left: 40px; min-height: 300px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px; color: #2a7;">✨ Spielereien</h3>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Experimentelle Funktionen und
+                            Tools.</p>
+
+                        <div
+                            style="background: #fdfdfd; border: 1px dashed #ccc; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; align-items: flex-start;">
+                            <div style="font-size: 0.9em; font-weight: bold; color: #444;">Medien-Verzeichnis wählen
+                            </div>
+                            <p style="font-size: 0.85em; color: #888; margin: 0;">Öffnet den nativen Ordner-Dialog
+                                (Tkinter), um ein neues Ziel für den Datei-Browser festzulegen.</p>
+
+                            <button id="browse-folder-btn" onclick="fbPickFolder()"
+                                style="padding: 12px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s;">
+                                <span style="font-size: 1.2em;">📂</span> Ordner durchsuchen
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -447,7 +471,11 @@
 
         async function fbPickFolder() {
             const folder = await eel.pick_folder()();
-            if (folder) fbNavigate(folder);
+            if (folder) {
+                // Switch to browser tab automatically after folder selection
+                switchTab('browser', document.querySelector('.tab-btn[onclick*="browser"]'));
+                fbNavigate(folder);
+            }
         }
 
         async function fbNavigate(dirPath) {
