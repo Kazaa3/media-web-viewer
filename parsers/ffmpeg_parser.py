@@ -55,15 +55,24 @@ def parse(path, file_type, tags):
                     's24': '24 Bit', 's24p': '24 Bit',
                     's32': '32 Bit', 's32p': '32 Bit',
                     's64': '64 Bit', 's64p': '64 Bit',
-                    'flt': '32 Bit (Float)', 'fltp': '32 Bit (Float)',
-                    'dbl': '64 Bit (Float)', 'dblp': '64 Bit (Float)',
+                    'flt': '32 Bit', 'fltp': '32 Bit',
+                    'dbl': '64 Bit', 'dblp': '64 Bit',
                 }
                 bit_label = fmt_map.get(fmt, fmt)
+                is_float = fmt in ('flt', 'fltp', 'dbl', 'dblp')
+                
                 if tags.get('bitdepth'):
-                    if '(' not in tags['bitdepth']:
+                    # Mutagen already set a value, e.g. "16 Bit"
+                    existing = tags['bitdepth'].replace(' Bit', '')
+                    if is_float:
+                        tags['bitdepth'] = f"{existing} Bit (as {bit_label}: {fmt})"
+                    elif '(' not in tags['bitdepth']:
                         tags['bitdepth'] += f" ({fmt})"
                 else:
-                    tags['bitdepth'] = f"{bit_label} ({fmt})"
+                    if is_float:
+                        tags['bitdepth'] = f"{bit_label} Float ({fmt})"
+                    else:
+                        tags['bitdepth'] = f"{bit_label} ({fmt})"
                 
             # Bitrate
             if not tags.get('bitrate'):
