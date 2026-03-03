@@ -287,7 +287,7 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let contStr = tags.container ? tags.container.replace(',WEBM', '').replace(',MP4', '').replace(',M4A', '') : path.split('.').pop().toUpperCase();
+            let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + path.split('.').pop().toUpperCase();
             let fileInfoStr = [tags.filesize, contStr, artStr].filter(Boolean).join(' • ');
             let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '\n\nTag Format: ' + tags.tagtype : '';
             document.getElementById('sb-fileinfo').innerText = fileInfoStr + tagStr;
