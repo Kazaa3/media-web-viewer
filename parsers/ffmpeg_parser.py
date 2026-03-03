@@ -21,12 +21,12 @@ def parse(path, file_type, tags):
                 raw_cont = input_match.group(1).upper().strip()
                 raw_ext = file_type[1:].upper()
                 
-                if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
-                    tags['container'] = raw_ext
+                if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V', 'ALAC'):
+                    tags['container'] = raw_ext.lower()
                 elif raw_cont == 'MATROSKA':
-                    tags['container'] = 'MKV'
+                    tags['container'] = 'mkv'
                 else:
-                    tags['container'] = raw_cont
+                    tags['container'] = raw_cont.lower()
                     
         # Audio stream fallback
         stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
@@ -34,10 +34,10 @@ def parse(path, file_type, tags):
             audio_line = stream_match.group(1)
             
             # Codec
-            if not tags.get('codec') or tags.get('codec') == file_type[1:].upper():
+            if not tags.get('codec') or tags.get('codec') == file_type[1:].lower():
                 codec_match = re.search(r"^\s*([a-zA-Z0-9_]+)", audio_line)
                 if codec_match:
-                    tags['codec'] = codec_match.group(1).upper()
+                    tags['codec'] = codec_match.group(1).lower()
                     
             # Sample rate
             if not tags.get('samplerate'):
@@ -50,13 +50,13 @@ def parse(path, file_type, tags):
             if fmt_match:
                 fmt = fmt_match.group(1)
                 fmt_map = {
-                    'u8': '8 Bit', 'u8p': '8 Bit',
-                    's16': '16 Bit', 's16p': '16 Bit',
-                    's24': '24 Bit', 's24p': '24 Bit',
-                    's32': '32 Bit', 's32p': '32 Bit',
-                    's64': '64 Bit', 's64p': '64 Bit',
-                    'flt': '32 Bit', 'fltp': '32 Bit',
-                    'dbl': '64 Bit', 'dblp': '64 Bit',
+                    'u8': '8 Bit (u8)', 'u8p': '8 Bit (u8p)',
+                    's16': '16 Bit (s16)', 's16p': '16 Bit (s16p)',
+                    's24': '24 Bit (s24)', 's24p': '24 Bit (s24p)',
+                    's32': '32 Bit (s32)', 's32p': '32 Bit (s32p)',
+                    's64': '64 Bit (s64)', 's64p': '64 Bit (s64p)',
+                    'flt': '32 Bit (flt)', 'fltp': '32 Bit (fltp)',
+                    'dbl': '64 Bit (dbl)', 'dblp': '64 Bit (dblp)',
                 }
                 bit_label = fmt_map.get(fmt, fmt)
                 is_float = fmt in ('flt', 'fltp', 'dbl', 'dblp')
@@ -86,7 +86,7 @@ def parse(path, file_type, tags):
             tags['bitrate'] = f"{bit_match.group(1)} kbps"
             
         if not tags.get('codec'):
-            tags['codec'] = file_type[1:].upper()
+            tags['codec'] = file_type[1:].lower()
 
     except Exception:
         pass

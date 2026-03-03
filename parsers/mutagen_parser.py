@@ -43,7 +43,7 @@ def parse(path, file_type, tags, name):
             tags['album'] = safe_get(audio, 'ALBUM')
             tags['albumartist'] = safe_get(audio, 'ALBUMARTIST')
             tags['disc'] = safe_get(audio, 'DISCNUMBER')
-            tags['codec'] = 'FLAC'
+            tags['codec'] = 'flac'
             if hasattr(audio.info, 'bits_per_sample') and audio.info.bits_per_sample:
                 tags['bitdepth'] = f"{audio.info.bits_per_sample} Bit"
             
@@ -74,7 +74,7 @@ def parse(path, file_type, tags, name):
             elif tr_val:
                 tags['track'] = tr_val
                 
-            tags['codec'] = 'MP3'
+            tags['codec'] = 'mp3'
             
         elif file_type in {'.m4a', '.alac', '.m4b'}:
             audio = MP4(path)
@@ -99,7 +99,8 @@ def parse(path, file_type, tags, name):
             elif disk and len(disk) > 0:
                 tags['disc'] = str(disk[0])
                 
-            tags['codec'] = getattr(audio.info, 'codec', file_type[1:].upper())
+            raw_codec = getattr(audio.info, 'codec', None)
+            tags['codec'] = str(raw_codec).lower() if raw_codec else file_type[1:].lower()
                 
         elif file_type in {'.ogg', '.opus', '.wav', '.aac', '.wma'}:
             if file_type == '.ogg': audio = OggVorbis(path)
@@ -118,7 +119,7 @@ def parse(path, file_type, tags, name):
             tags['albumartist'] = safe_get(audio, 'albumartist')
             tags['track'] = safe_get(audio, 'tracknumber') or safe_get(audio, 'track')
             tags['disc'] = safe_get(audio, 'discnumber')
-            tags['codec'] = file_type[1:].upper()
+            tags['codec'] = file_type[1:].lower()
         
         # Stream info elements
         if audio_for_info and hasattr(audio_for_info, 'info'):

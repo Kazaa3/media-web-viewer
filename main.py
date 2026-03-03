@@ -84,7 +84,8 @@ DEBUG_FLAGS = {
     "scan": False,
     "parser": False,
     "player": False,
-    "db": False
+    "db": False,
+    "ffmpeg": False
 }
 
 LOG_BUFFER = []
