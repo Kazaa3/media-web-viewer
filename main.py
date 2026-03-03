@@ -75,7 +75,7 @@ class MediaItem:
             elif self.type == '.ogg':
                 audio = OggVorbis(self.path)
                 return int(audio.info.length)
-            elif self.type in {'.m4a', '.alac'}:
+            elif self.type in {'.m4a', '.alac', '.m4b'}:
                 audio = MP4(self.path)
                 return int(audio.info.length)
             elif self.type == '.opus':
@@ -133,6 +133,14 @@ class MediaItem:
                 return str(val[0])
             return str(val)
 
+        def format_samplerate(hz):
+            try:
+                hz = float(hz)
+                khz = hz / 1000
+                return f"{int(khz)} kHz" if khz.is_integer() else f"{khz:g} kHz"
+            except:
+                return ""
+
         try:
             # Info stream info fallback block 
             audio_for_info = None
@@ -182,7 +190,7 @@ class MediaItem:
                     
                 tags['codec'] = 'MP3'
                 
-            elif self.type in {'.m4a', '.alac'}:
+            elif self.type in {'.m4a', '.alac', '.m4b'}:
                 audio = MP4(self.path)
                 audio_for_info = audio
                 tags['artist'] = safe_get(audio, '\xa9ART', default='Unbekannt')
@@ -230,19 +238,41 @@ class MediaItem:
             if audio_for_info and hasattr(audio_for_info, 'info'):
                 info = audio_for_info.info
                 if hasattr(info, 'bitrate') and info.bitrate:
-                    tags['bitrate'] = f"{int(info.bitrate / 1000)} kbps"
+                    tags['bitrate'] = f"{int((info.bitrate + 500) // 1000)} kbps"
                 if hasattr(info, 'sample_rate') and info.sample_rate:
-                    tags['samplerate'] = f"{round(info.sample_rate / 1000, 1)} kHz"
+                    tags['samplerate'] = format_samplerate(info.sample_rate)
                 if hasattr(info, 'bits_per_sample') and info.bits_per_sample:
                     tags['bitdepth'] = f"{info.bits_per_sample} Bit"
                 elif hasattr(info, 'bits_per_sample'):
-                    # Some might return 0
                     if info.bits_per_sample > 0:
                         tags['bitdepth'] = f"{info.bits_per_sample} Bit"
                     else:
                         tags['bitdepth'] = ''
                 else:
                     tags['bitdepth'] = ''
+                    
+                # Append exact FFmpeg stream format for uniformity across all formats if missing
+                try:
+                    import subprocess, re
+                    cmd = ["ffmpeg", "-i", self.path.as_posix()]
+                    output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
+                    stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
+                    if stream_match:
+                        audio_line = stream_match.group(1)
+                        fmt_match = re.search(r"\b(s16|s16p|s24|s24p|s32|s32p|fltp|flt)\b", audio_line)
+                        if fmt_match:
+                            fmt = fmt_match.group(1)
+                            # If mutagen found e.g. '16 Bit', append '(s16p)'
+                            if tags['bitdepth']:
+                                if '(' not in tags['bitdepth']:
+                                    tags['bitdepth'] += f" ({fmt})"
+                            else:
+                                if fmt in ('s16', 's16p'): tags['bitdepth'] = f"16 Bit ({fmt})"
+                                elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})"
+                                elif fmt in ('s32', 's32p'): tags['bitdepth'] = f"32 Bit ({fmt})"
+                                elif fmt in ('fltp', 'flt'): tags['bitdepth'] = f"16 Bit ({fmt})"
+                except Exception:
+                    pass
                     
             # Retrieve Tag Container formatting
             if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
@@ -253,7 +283,7 @@ class MediaItem:
                 tags['has_art'] = 'Yes' if any(k.startswith('APIC') for k in audio_for_info.keys()) else 'No'
             elif self.type == '.flac' and audio_for_info:
                 tags['has_art'] = 'Yes' if len(audio_for_info.pictures) > 0 else 'No'
-            elif self.type in {'.m4a', '.alac'} and audio_for_info:
+            elif self.type in {'.m4a', '.alac', '.m4b'} and audio_for_info:
                 tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
                     
         except Exception as e:
@@ -261,7 +291,7 @@ class MediaItem:
             pass
             
         # FFmpeg Fallback für fehlende Metadaten (speziell für untagged AAC Dateien)
-        if not tags['samplerate'] or not tags['bitrate'] or tags['tagtype'] == 'None':
+        if not tags['samplerate'] or not tags['bitrate'] or tags['tagtype'] == 'None' or not tags['bitdepth']:
             try:
                 import subprocess, re
                 cmd = ["ffmpeg", "-i", self.path.as_posix()]
@@ -273,27 +303,34 @@ class MediaItem:
                     if input_match:
                         tags['tagtype'] = input_match.group(1).upper() + " (FFmpeg)"
                 
-                # Stream #0... Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
-                # Look for bit depth like "s16", "s24", "fltp"
-                stream_match = re.search(r"Stream #.*?: Audio:\s*([^,]+),\s*(\d+)\s*Hz,\s*[^,]+,\s*([^,]+)", output)
+                # Suche Audio-Stream Zeile: Stream #0:0: Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
+                stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
                 if stream_match:
-                    if not tags['codec'] or tags['codec'] == self.type[1:].upper():
-                        tags['codec'] = stream_match.group(1).split()[0].upper()
-                    if not tags['samplerate']:
-                        tags['samplerate'] = f"{round(int(stream_match.group(2)) / 1000, 1)} kHz"
+                    audio_line = stream_match.group(1)
                     
-                    # Try to map ffmpeg format (s16, s24, s32, fltp) to bit depth
-                    fmt = stream_match.group(3).strip()
+                    if not tags['codec'] or tags['codec'] == self.type[1:].upper():
+                        codec_match = re.search(r"^\s*([a-zA-Z0-9_]+)", audio_line)
+                        if codec_match:
+                            tags['codec'] = codec_match.group(1).upper()
+                            
+                    if not tags['samplerate']:
+                        sr_match = re.search(r"(\d+)\s*Hz", audio_line) # Suche nach Sample Rate
+                        if sr_match:
+                            tags['samplerate'] = format_samplerate(sr_match.group(1))
+                            
                     if not tags['bitdepth']:
-                        if fmt in ['s16', 's16p']: tags['bitdepth'] = '16 Bit'
-                        elif fmt in ['s24', 's24p']: tags['bitdepth'] = '24 Bit'
-                        elif fmt in ['s32', 's32p']: tags['bitdepth'] = '32 Bit'
-                        elif fmt in ['flt', 'fltp']: tags['bitdepth'] = '32 Bit Float'
+                        fmt_match = re.search(r"\b(s16|s16p|s24|s24p|s32|s32p|fltp|flt)\b", audio_line)
+                        if fmt_match:
+                            fmt = fmt_match.group(1)
+                            if fmt in ('s16', 's16p'): tags['bitdepth'] = f"16 Bit ({fmt})"
+                            elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})"
+                            elif fmt in ('s32', 's32p'): tags['bitdepth'] = f"32 Bit ({fmt})"
+                            elif fmt in ('fltp', 'flt'): tags['bitdepth'] = f"16 Bit ({fmt})"
                         
-                    # Look for stream bitrate at the end: e.g. "..., 256 kb/s"
-                    bitrate_match = re.search(r"(\d+)\s*kb/s", stream_match.group(0))
-                    if bitrate_match and not tags['bitrate']:
-                        tags['bitrate'] = f"{bitrate_match.group(1)} kbps"
+                    if not tags['bitrate']:
+                        br_match = re.search(r"(\d+)\s*kb/s", audio_line)
+                        if br_match:
+                            tags['bitrate'] = f"{br_match.group(1)} kbps"
                 
             # Duration: ... bitrate: 256 kb/s
                 bit_match = re.search(r"bitrate:\s*(\d+)\s*kb/s", output)
@@ -305,10 +342,7 @@ class MediaItem:
             except Exception:
                 pass
                 
-        # Künstlich eine Bittiefe für MP3/AAC vergeben, falls sie leer ist, damit es schöner im UI aussieht
-        if not tags['bitdepth'] and tags['codec'] in ['MP3', 'AAC']:
-            tags['bitdepth'] = '-- Bit'
-            
+        # If bitdepth is not available, leave it empty so the UI hides it cleanly.
         return tags
 
     def to_dict(self):
