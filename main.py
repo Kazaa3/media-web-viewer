@@ -265,6 +265,10 @@ class MediaItem:
 
 
 
+@eel.expose("get_library")
+def get_library():
+    """Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen."""
+    return {"media": db.get_all_media()}
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
 @eel.expose("scan_media")
