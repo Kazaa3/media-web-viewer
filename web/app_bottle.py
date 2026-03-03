@@ -2,10 +2,15 @@ import bottle
 import mimetypes
 import subprocess
 import uuid
+import sys
 from pathlib import Path
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
+
+# Add parent dir so we can import db
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import db
 
 MEDIA_DIR = Path("./media")
 LOG_FILE = MEDIA_DIR / "route_log.txt"
@@ -13,6 +18,18 @@ LOG_FILE = MEDIA_DIR / "route_log.txt"
 def _log(msg):
     with open(LOG_FILE, 'a') as f:
         f.write(msg + "\n")
+
+def _resolve_path(filename):
+    """Resolve a filename to its full path via DB lookup, fallback to MEDIA_DIR."""
+    db_path = db.get_media_path(filename)
+    if db_path:
+        p = Path(db_path)
+        if p.exists():
+            return p
+    local = MEDIA_DIR / filename
+    if local.exists():
+        return local
+    return None
 
 @bottle.hook('before_request')
 def log_request():
@@ -39,8 +56,11 @@ def serve_media(filepath):
     ext = filepath.lower()
     _log(f"ROUTE CALLED: filepath={filepath}, ext={ext}")
     
+    full_path = _resolve_path(filepath)
+    if not full_path:
+        return bottle.HTTPError(404, "File not found")
+    
     if needs_transcoding:
-        full_path = MEDIA_DIR / filepath
         cache_dir = MEDIA_DIR / '.cache'
         cache_dir.mkdir(exist_ok=True)
         
@@ -77,13 +97,13 @@ def serve_media(filepath):
         mime_type = 'audio/flac'
     
     if mime_type:
-        return bottle.static_file(filepath, root=str(MEDIA_DIR), mimetype=mime_type)
-    return bottle.static_file(filepath, root=str(MEDIA_DIR))
+        return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)
+    return bottle.static_file(full_path.name, root=str(full_path.parent))
 
 @bottle.route('/cover/<filepath:path>')
 def serve_cover(filepath):
-    full_path = MEDIA_DIR / filepath
-    if not full_path.exists():
+    full_path = _resolve_path(filepath)
+    if not full_path or not full_path.exists():
         return bottle.HTTPError(404, "File not found")
         
     file_type = full_path.suffix.lower()
