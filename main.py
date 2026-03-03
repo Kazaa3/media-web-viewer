@@ -42,6 +42,16 @@ ARCHIVE_EXTENSIONS = {
     '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'
 }   
 
+### Typen erstellen
+
+
+# Audio  --> Werte --> Bitrate --> Samplerate --> Bitdepth --> Tag-Format --> Container
+# WMAV2  --> ASFTags --> ASF
+# WAV24 --> PCM_S24LE | 32 Bit (s32) | 44.1 kHz
+# WAV16 --> PCM_S16LE | 16 Bit (s16) | 44.1 kHz
+
+
+
 
 # Eigene Module
 
@@ -226,8 +236,18 @@ class MediaItem:
             duration_str = f"{mins}:{secs:02d}"
             
         codec = self.tags.get('codec', '').upper()
-        is_transcoded = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
-        transcoded_format = 'FLAC' if is_transcoded else None
+        # Lossless ALAC → transcode to FLAC
+        is_alac = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
+        # Lossy WMA → transcode to OGG (Opus)
+        is_wma = self.type == '.wma'
+        
+        is_transcoded = is_alac or is_wma
+        if is_alac:
+            transcoded_format = 'FLAC'
+        elif is_wma:
+            transcoded_format = 'OGG'
+        else:
+            transcoded_format = None
         
         return {
             'name': self.name,

@@ -23,13 +23,20 @@ def serve_media(filepath):
     mime_type, _ = mimetypes.guess_type(filepath)
     ext = filepath.lower()
     
-    # Strip the disguise extension added by Javascript
+    # Detect transcoding suffix: .flac_transcoded or .ogg_transcoded
     needs_transcoding = False
+    transcode_format = None
+    
     if filepath.endswith('.flac_transcoded'):
         filepath = filepath[:-16]
-        ext = filepath.lower()
+        transcode_format = 'flac'
         needs_transcoding = True
-
+    elif filepath.endswith('.ogg_transcoded'):
+        filepath = filepath[:-15]
+        transcode_format = 'ogg'
+        needs_transcoding = True
+    
+    ext = filepath.lower()
     _log(f"ROUTE CALLED: filepath={filepath}, ext={ext}")
     
     if needs_transcoding:
@@ -37,21 +44,25 @@ def serve_media(filepath):
         cache_dir = MEDIA_DIR / '.cache'
         cache_dir.mkdir(exist_ok=True)
         
-        # Cachename replaces extension with .flac to avoid collisions
-        cache_filename = filepath.replace('/', '_').rsplit('.', 1)[0] + '.flac'
+        cache_filename = filepath.replace('/', '_').rsplit('.', 1)[0] + '.' + transcode_format
         cache_path = cache_dir / cache_filename
         tmp_path = cache_path.with_suffix(f'.{uuid.uuid4().hex[:6]}.tmp')
         
-        # Check if we already transcoded this file
+        # FFmpeg output format and MIME type
+        if transcode_format == 'ogg':
+            ffmpeg_args = ['-c:a', 'libopus', '-b:a', '128k', '-f', 'ogg']
+            serve_mime = 'audio/ogg'
+        else:
+            ffmpeg_args = ['-f', 'flac']
+            serve_mime = 'audio/flac'
+        
         if not cache_path.exists():
-            _log(f"TRANSCODING STARTED: full_path={full_path}")
+            _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
             try:
-                # Run ffmpeg to generate the FLAC file to a temporary path first
                 subprocess.run(
-                    ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn', '-f', 'flac', str(tmp_path)],
+                    ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn'] + ffmpeg_args + [str(tmp_path)],
                     check=True, capture_output=True, text=True
                 )
-                # Atomic rename ensures other concurrent requests don't read a half-written file
                 tmp_path.replace(cache_path)
                 _log("TRANSCODING SUCCESS")
             except subprocess.CalledProcessError as e:
@@ -60,8 +71,7 @@ def serve_media(filepath):
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")
                 
-        # Serve the cached FLAC file instead of the ALAC one
-        return bottle.static_file(cache_filename, root=str(cache_dir), mimetype='audio/flac')
+        return bottle.static_file(cache_filename, root=str(cache_dir), mimetype=serve_mime)
 
     if ext.endswith('.flac'):
         mime_type = 'audio/flac'

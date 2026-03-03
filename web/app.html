@@ -309,8 +309,8 @@
                 `;
 
                 let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.is_transcoded) {
-                    mediaUrl += '.flac_transcoded';
+                if (item.is_transcoded && item.transcoded_format) {
+                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
                 }
 
                 div.onclick = () => play(item, mediaUrl);
