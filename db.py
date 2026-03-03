@@ -108,3 +108,14 @@ def get_media_path(name):
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else None
+def update_media_tags(name, tags_dict):
+    """Aktualisiert die Tags eines Medien-Items in der Datenbank."""
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE media 
+        SET tags = ? 
+        WHERE name = ?
+    """, (json.dumps(tags_dict), name))
+    conn.commit()
+    conn.close()

@@ -24,9 +24,18 @@ import os
 from pathlib import Path
 import subprocess
 import re  # For MKV parsing
+import tkinter as tk
+from tkinter import filedialog
 
 # Konfiguration
-MEDIA_DIR = "./media"  # Ordner mit Testdateien
+USE_HOME_AS_DEFAULT = True
+DEFAULT_MEDIA_DIR = "/home/xc" if USE_HOME_AS_DEFAULT else str(Path(__file__).parent / "media")
+
+# Verwende einen festen absoluten Pfad basierend auf diesem Script
+MEDIA_DIR = DEFAULT_MEDIA_DIR  # Ordner mit Testdateien
+
+
+
 AUDIO_EXTENSIONS = {
     '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
 }
@@ -57,7 +66,28 @@ ARCHIVE_EXTENSIONS = {
 
 
 
-# Eigene Module
+# Debug-Optionen
+DEBUG_FLAGS = {
+    "scan": False,
+    "parser": False,
+    "player": False,
+    "db": False
+}
+
+def debug_log(message):
+    print(message)
+    # Eel-Aufruf (asynchron, wir warten nicht)
+    eel.log_to_debug(message)()
+
+@eel.expose("get_debug_flags")
+def get_debug_flags():
+    return DEBUG_FLAGS
+
+@eel.expose("set_debug_flag")
+def set_debug_flag(key, value):
+    if key in DEBUG_FLAGS:
+        DEBUG_FLAGS[key] = value
+        debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
 # Benutzerdefinierte Module
 import db
@@ -157,7 +187,7 @@ class MediaItem:
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
-        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name)
+        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"])
 
 
     def show_info(self):
@@ -210,29 +240,67 @@ def get_library():
     """Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen."""
     return {"media": db.get_all_media()}
 
+@eel.expose("clear_database")
+def clear_database():
+    """Löscht alle Einträge aus der Bibliothek-Datenbank."""
+    db.clear_media()
+    return {"status": "ok", "message": "Datenbank geleert", "media": []}
+
+@eel.expose("update_tags")
+def update_tags(name, tags_dict):
+    """Speichert angepasste Tags für ein Item in der DB."""
+    db.update_media_tags(name, tags_dict)
+    return {"status": "ok"}
+
+
+@eel.expose("get_default_media_dir")
+def get_default_media_dir():
+    """Gibt den voreingestellten Medienordner (absolute Pfad) zurück."""
+    return DEFAULT_MEDIA_DIR
+
 # Funktion, um Medien zu scannen und an die GUI zu senden
 @eel.expose("scan_media")
-def scan_media():
+def scan_media(dir_path: str | None = None, clear_db: bool = True):
+    """Scannt rekursiv einen Ordner und indexiert Audiodateien. Optionaler Reset der DB."""
     import time
     start_time = time.time()
-    
-    if not Path(MEDIA_DIR).exists():
-        os.makedirs(MEDIA_DIR)
-        return {"error": "Ordner erstellt – füge Dateien hinzu"}
-    
-    # DB leeren und komplett neu einlesen (Refresh)
-    db.clear_media()
-    
+    # Status in GUI anzeigen
+    eel.set_db_status(True)()
+
+    scan_root = Path(dir_path) if dir_path else Path(MEDIA_DIR)
+    if not scan_root.exists():
+        try:
+            scan_root.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            return {"error": f"Ordner nicht gefunden und konnte nicht erstellt werden: {scan_root}"}
+        return {"error": "Ordner erstellt – füge Dateien hinzu", "path": str(scan_root)}
+
+    # DB optional leeren
+    if clear_db:
+        db.clear_media()
+
     count = 0
-    for f in Path(MEDIA_DIR).iterdir():
+    # Rekursiv suchen, um Medien in Unterordnern zu finden
+    for f in scan_root.rglob('*'):
         if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
-            item = MediaItem(f.name, f)
-            db.insert_media(item.to_dict())
-            count += 1
-            
+            if DEBUG_FLAGS["scan"]:
+                debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
+            try:
+                item = MediaItem(f.name, f)
+                db.insert_media(item.to_dict())
+                count = count + 1
+            except Exception as e:
+                if DEBUG_FLAGS["scan"]:
+                    debug_log(f"[Debug-Scan] Fehler bei {f.name}: {e}")
+                # Ignoriere problematische Dateien, aber setze das Logging fort
+                continue
+
     elapsed = time.time() - start_time
-    print(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
-    
+    debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
+
+    # Status in GUI ausblenden
+    eel.set_db_status(False)()
+
     # Liefere gescannten Stand direkt aus der DB zurück
     return {
         "media": db.get_all_media(),
@@ -242,13 +310,15 @@ def scan_media():
 @eel.expose("play_media")
 def play_media(path):
     """GUI ruft das an – aber HTML5 Audio handhabt Abspielen client-seitig."""
-    return {"status": "play", "path": path}  # Bestätigung
+    if DEBUG_FLAGS["player"]:
+        print(f"[Debug-Player] Spiele ab: {path}")
+    return {"status": "play", "path": path} # Bestätigung
 
 @eel.expose("browse_dir")
 def browse_dir(dir_path=None):
     """Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser."""
     if not dir_path:
-        dir_path = str(Path.home())
+        dir_path = DEFAULT_MEDIA_DIR
     
     target = Path(dir_path)
     if not target.exists() or not target.is_dir():
@@ -270,6 +340,20 @@ def browse_dir(dir_path=None):
     parent = str(target.parent) if target.parent != target else None
     return {"path": str(target), "parent": parent, "items": items}
 
+@eel.expose("pick_folder")
+def pick_folder():
+    """Öffnet einen nativen Ordner-Auswahldialog."""
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        folder_path = filedialog.askdirectory()
+        root.destroy()
+        return folder_path if folder_path else None
+    except Exception as e:
+        print(f"[Error] Folder picker failed: {e}")
+        return None
+
 @eel.expose("add_file_to_library")
 def add_file_to_library(file_path):
     """Fügt eine einzelne Datei aus dem Datei-Browser der Bibliothek hinzu."""
@@ -289,6 +373,8 @@ def add_file_to_library(file_path):
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
+
     db.init_db()               # SQLite-Datenbank initialisieren (Placeholder)
-    eel.init("web")            # Ordner mit HTML/CSS/JS
-    eel.start("app.html", size=(1000, 600))    # Starte Seite
+    web_dir = str(Path(__file__).parent / "web")  # Absoluter Pfad zum web-Ordner
+    eel.init(web_dir)            # Ordner mit HTML/CSS/JS
+    eel.start("app.html", size=(1000, 700))    # Starte Seite
