@@ -39,7 +39,7 @@ async function initDefaultFolder() {
                             const lines = [];
                             if (res.items && res.items.length > 0) {
                                 for (const it of res.items) {
-                                    lines.push(`# ${it.name} [${it.type}] ${it.size ? '('+it.size+')' : ''}`);
+                                    lines.push(`# ${it.name} [${it.type}] ${it.size ? '(' + it.size + ')' : ''}`);
                                 }
                             } else {
                                 lines.push('# Kein Inhalt im Verzeichnis');
@@ -69,7 +69,7 @@ async function initDefaultFolder() {
                             const lines = [];
                             if (res.items && res.items.length > 0) {
                                 for (const it of res.items) {
-                                    lines.push(`# ${it.name} [${it.type}] ${it.size ? '('+it.size+')' : ''}`);
+                                    lines.push(`# ${it.name} [${it.type}] ${it.size ? '(' + it.size + ')' : ''}`);
                                 }
                             } else {
                                 lines.push('# Kein Inhalt im Verzeichnis');
@@ -91,6 +91,9 @@ async function initDefaultFolder() {
     }
 }
 
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function () {
     initDefaultFolder();
+    if (typeof loadDebugLogs === 'function') {
+        loadDebugLogs();
+    }
 });
