@@ -225,6 +225,31 @@
             height: 14px;
             animation: spin 1s linear infinite;
         }
+
+        /* Splitter System */
+        .splitter-v {
+            width: 6px;
+            cursor: col-resize;
+            background: #eee;
+            transition: background 0.2s;
+            position: relative;
+            z-index: 20;
+            user-select: none;
+        }
+
+        .splitter-v:hover,
+        .splitter-v.active {
+            background: #2a7;
+        }
+
+        .splitter-v::after {
+            content: '';
+            position: absolute;
+            left: -4px;
+            right: -4px;
+            top: 0;
+            bottom: 0;
+        }
     </style>
 </head>
 
@@ -242,7 +267,7 @@
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <button onclick="scan()" id="scan-btn"
+            <button onclick="scan(null, true)" id="scan-btn"
                 style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Scan
                 Media</button>
         </div>
@@ -281,7 +306,7 @@
                         style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center;">📂
                         Browse</button>
 
-                    <button onclick="scan(false)"
+                    <button onclick="scan(document.getElementById('fb-path-input').value, false)"
                         style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center;">➕
                         Hinzufügen</button>
                 </div>
@@ -294,10 +319,10 @@
             </div>
 
             <div id="edit-tab" class="tab-content" style="padding: 0; display: none; height: 100%; width: 100%;">
-                <div style="display: flex; height: 100%; width: 100%; overflow: hidden;">
+                <div id="edit-split-container" style="display: flex; height: 100%; width: 100%; overflow: hidden;">
                     <!-- Left: Item List -->
-                    <div
-                        style="flex: 1; border-right: 1px solid #ddd; display: flex; flex-direction: column; background: #f9f9f9;">
+                    <div id="edit-sidebar-left"
+                        style="width: 50%; border-right: 1px solid #ddd; display: flex; flex-direction: column; background: #f9f9f9; flex-shrink: 0; min-width: 200px;">
                         <div style="padding: 15px; border-bottom: 1px solid #ddd; background: #fff;">
                             <input type="text" id="edit-search" placeholder="Suche in Bibliothek..."
                                 oninput="filterEditList()"
@@ -307,43 +332,51 @@
                             <!-- Items werden hier geladen -->
                         </div>
                     </div>
-                    <!-- Right: Editor Form -->
-                    <div id="edit-form-container"
-                        style="flex: 1.5; padding: 30px; background: #fff; overflow-y: auto; display: none;">
 
-                        <!-- Header: Cover + Filename -->
-                        <div
-                            style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-                            <img id="edit-cover" src=""
-                                onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"
-                                style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; background: #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                            <div style="flex: 1;">
-                                <h3 id="edit-form-title" style="margin: 0 0 8px 0; color: #333;">Datei bearbeiten</h3>
-                                <div id="edit-filename-display"
-                                    style="font-family: monospace; font-size: 0.9em; color: #666; word-break: break-all;">
+                    <!-- Splitter -->
+                    <div id="edit-splitter" class="splitter-v"></div>
+
+                    <!-- Right: Wrapper for Editor / Placeholder -->
+                    <div id="edit-right-wrapper"
+                        style="flex: 1; display: flex; flex-direction: column; min-width: 300px;">
+                        <div id="edit-form-container"
+                            style="flex: 1; padding: 30px; background: #fff; overflow-y: auto; display: none;">
+
+                            <!-- Header: Cover + Filename -->
+                            <div
+                                style="display: flex; align-items: flex-start; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                                <img id="edit-cover" src=""
+                                    onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"
+                                    style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; background: #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                <div style="flex: 1;">
+                                    <h3 id="edit-form-title" style="margin: 0 0 8px 0; color: #333;">Datei bearbeiten
+                                    </h3>
+                                    <div id="edit-filename-display"
+                                        style="font-family: monospace; font-size: 0.9em; color: #666; word-break: break-all;">
+                                    </div>
+                                    <input type="hidden" id="edit-item-name">
                                 </div>
-                                <input type="hidden" id="edit-item-name">
+                            </div>
+
+                            <!-- Dynamic Tags List -->
+                            <div id="edit-dynamic-tags" style="display: flex; flex-direction: column; gap: 4px;">
+                                <!-- One row per JSON entry -->
+                            </div>
+
+                            <!-- Actions -->
+                            <div
+                                style="margin-top: 30px; display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #eee;">
+                                <button onclick="saveTags()"
+                                    style="padding: 10px 24px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Speichern</button>
+                                <button onclick="resetEditForm()"
+                                    style="padding: 10px 24px; background: #eee; color: #333; border: 1px solid #ccc; border-radius: 6px; cursor: pointer;">Abbrechen</button>
                             </div>
                         </div>
-
-                        <!-- Dynamic Tags List -->
-                        <div id="edit-dynamic-tags" style="display: flex; flex-direction: column; gap: 4px;">
-                            <!-- One row per JSON entry -->
+                        <div id="edit-placeholder"
+                            style="flex: 1; display: flex; align-items: center; justify-content: center; color: #999; flex-direction: column;">
+                            <span style="font-size: 3em; margin-bottom: 10px;">📝</span>
+                            <p>Wähle links ein Element aus, um die Metadaten zu bearbeiten.</p>
                         </div>
-
-                        <!-- Actions -->
-                        <div
-                            style="margin-top: 30px; display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #eee;">
-                            <button onclick="saveTags()"
-                                style="padding: 10px 24px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Speichern</button>
-                            <button onclick="resetEditForm()"
-                                style="padding: 10px 24px; background: #eee; color: #333; border: 1px solid #ccc; border-radius: 6px; cursor: pointer;">Abbrechen</button>
-                        </div>
-                    </div>
-                    <div id="edit-placeholder"
-                        style="flex: 1.5; display: flex; align-items: center; justify-content: center; color: #999; flex-direction: column;">
-                        <span style="font-size: 3em; margin-bottom: 10px;">📝</span>
-                        <p>Wähle links ein Element aus, um die Metadaten zu bearbeiten.</p>
                     </div>
                 </div>
             </div>
@@ -516,9 +549,8 @@
             }
             btn.classList.add('active');
 
-            // Show sidebar only on Player tab, footer player hidden on Library tab
+            // Show sidebar only on Player tab
             document.querySelector('.sidebar').style.display = tabId === 'player' ? '' : 'none';
-            document.querySelector('.player-container').style.display = tabId === 'library' ? 'none' : 'flex';
 
             // Refresh Player list when switching to Player tab
             if (tabId === 'player') {
@@ -542,6 +574,23 @@
             // Load items when switching to Edit
             if (tabId === 'edit') {
                 loadEditItems();
+            }
+
+            // Load debug logs when switching to Debug DB
+            if (tabId === 'debug') {
+                loadDebugLogs();
+            }
+        }
+
+        // ============ Debug Log Logic ============
+        async function loadDebugLogs() {
+            const logs = await eel.get_debug_logs()();
+            const debugTextarea = document.getElementById('browse-results-debug');
+            if (debugTextarea && logs) {
+                // Nur überschreiben, wenn wir nicht schon live-Logs sammeln,
+                // oder anhängen, wenn es Sinn macht. Wir überschreiben es beim Tab-Wechsel komplett.
+                debugTextarea.value = logs;
+                debugTextarea.scrollTop = debugTextarea.scrollHeight;
             }
         }
 
@@ -713,10 +762,8 @@
             });
         }
 
-        async function scan(clearDb = true) {
-            const dirInput = document.getElementById('fb-path-input');
-            const dir = dirInput ? dirInput.value : null;
-            let result = await eel.scan_media(dir, clearDb)();
+        async function scan(targetDir = null, clearDb = true) {
+            let result = await eel.scan_media(targetDir, clearDb)();
             let list = document.getElementById('media-list');
             list.innerHTML = '';
 
@@ -920,6 +967,46 @@
                 container.style.display = isVisible ? 'flex' : 'none';
             }
         }
+
+        // ============ Resizable Splitter Logic ============
+        (function initSplitter() {
+            const splitter = document.getElementById('edit-splitter');
+            const leftPane = document.getElementById('edit-sidebar-left');
+            const container = document.getElementById('edit-split-container');
+            let isDragging = false;
+
+            if (!splitter || !leftPane || !container) return;
+
+            splitter.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                splitter.classList.add('active');
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+
+                const containerRect = container.getBoundingClientRect();
+                let newWidth = e.clientX - containerRect.left;
+
+                // Constraints
+                const minWidth = 200;
+                const maxWidth = containerRect.width - 300;
+
+                if (newWidth < minWidth) newWidth = minWidth;
+                if (newWidth > maxWidth) newWidth = maxWidth;
+
+                leftPane.style.width = newWidth + 'px';
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                splitter.classList.remove('active');
+                document.body.style.cursor = 'default';
+            });
+        })();
 
         loadLibrary();
     </script>

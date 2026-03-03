@@ -1,38 +1,51 @@
 # Todo
+
+
 ## Funktionen
 # File-Handling
 # - Medien scannen (Ordner durchsuchen, Metadaten extrahieren)
 # - Weitere Funktionen hinzufügen, z.B. zum Abspielen von Medien, Verwalten von Wiedergabelisten, etc.
+
+
 ##### GUI
 # - Hauptfenster mit Navigation (Medienbibliothek, Wiedergabelisten, Einstellungen)
 # - Medienbibliothek (Datei-Explorer, Drag & Drop)
+
+
 ##### Datenbank
 # Wechsel zu:  pywebview oder Flask
 # SQLite über sqlite3 oder SQLAlchemy
+
+
 ############ Datenmodel
 # Datenstruktur für Medien
 # class MediaItem(name, path, type, duration, tags, ...)
 
 # Parser zusammen führen
-
+# Duplikat-Erkennung
 
 
 
 #Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
+import sys
 import os
 from pathlib import Path
 import subprocess
 import re  # For MKV parsing
+
+# kann raus. aber aktuell noch im code
 import tkinter as tk
 from tkinter import filedialog
 
 # Konfiguration
-USE_HOME_AS_DEFAULT = True
-DEFAULT_MEDIA_DIR = "/home/xc" if USE_HOME_AS_DEFAULT else str(Path(__file__).parent / "media")
+# 1. Ort für den automatischen Bibliotheks-Scan
+SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
 
-# Verwende einen festen absoluten Pfad basierend auf diesem Script
-MEDIA_DIR = DEFAULT_MEDIA_DIR  # Ordner mit Testdateien
+# 2. Standard-Pfad beim ersten Öffnen des Browsers
+BROWSER_DEFAULT_DIR = "/home/xc"
+
+
 
 
 
@@ -74,10 +87,19 @@ DEBUG_FLAGS = {
     "db": False
 }
 
+LOG_BUFFER = []
+
 def debug_log(message):
     print(message)
-    # Eel-Aufruf (asynchron, wir warten nicht)
-    eel.log_to_debug(message)()
+    LOG_BUFFER.append(str(message))
+    # Eel-Aufruf (asynchron, wir warten nicht) - nur wenn verbunden/registriert
+    if hasattr(eel, 'log_to_debug'):
+        eel.log_to_debug(message)()
+
+@eel.expose("get_debug_logs")
+def get_debug_logs():
+    """Gibt den gesamten bisherigen Log-Verlauf als String zurück."""
+    return "\n".join(LOG_BUFFER)
 
 @eel.expose("get_debug_flags")
 def get_debug_flags():
@@ -256,7 +278,7 @@ def update_tags(name, tags_dict):
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
     """Gibt den voreingestellten Medienordner (absolute Pfad) zurück."""
-    return DEFAULT_MEDIA_DIR
+    return SCAN_MEDIA_DIR
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
 @eel.expose("scan_media")
@@ -264,15 +286,24 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """Scannt rekursiv einen Ordner und indexiert Audiodateien. Optionaler Reset der DB."""
     import time
     start_time = time.time()
-    # Status in GUI anzeigen
-    eel.set_db_status(True)()
+    
+    # Status in GUI anzeigen (falls verbunden)
+    if hasattr(eel, 'set_db_status'):
+        eel.set_db_status(True)()
 
-    scan_root = Path(dir_path) if dir_path else Path(MEDIA_DIR)
+    # Wenn kein Pfad übergeben wurde, nutzen wir den konfigurierten SCAN_MEDIA_DIR.
+    # Wir stellen sicher, dass leere Strings ebenfalls als None behandelt werden.
+    effective_path = dir_path if (dir_path and dir_path.strip()) else SCAN_MEDIA_DIR
+    scan_root = Path(effective_path).resolve()
+    
+    debug_log(f"\n[Scan] Starting scan of: {scan_root}")
+    
     if not scan_root.exists():
         try:
             scan_root.mkdir(parents=True, exist_ok=True)
-        except Exception:
-            return {"error": f"Ordner nicht gefunden und konnte nicht erstellt werden: {scan_root}"}
+            print(f"[Scan] Created missing directory: {scan_root}")
+        except Exception as e:
+            return {"error": f"Ordner nicht gefunden und konnte nicht erstellt werden: {e}"}
         return {"error": "Ordner erstellt – füge Dateien hinzu", "path": str(scan_root)}
 
     # DB optional leeren
@@ -295,11 +326,14 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 # Ignoriere problematische Dateien, aber setze das Logging fort
                 continue
 
+    if hasattr(eel, 'set_db_status'):
+        eel.set_db_status(False)()
+    
     elapsed = time.time() - start_time
     debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
 
-    # Status in GUI ausblenden
-    eel.set_db_status(False)()
+    # Status in GUI ausblenden (redundant, already handled by guard above)
+
 
     # Liefere gescannten Stand direkt aus der DB zurück
     return {
@@ -318,7 +352,7 @@ def play_media(path):
 def browse_dir(dir_path=None):
     """Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser."""
     if not dir_path:
-        dir_path = DEFAULT_MEDIA_DIR
+        dir_path = BROWSER_DEFAULT_DIR
     
     target = Path(dir_path)
     if not target.exists() or not target.is_dir():
@@ -374,8 +408,18 @@ def add_file_to_library(file_path):
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
+    # Logge den Start-Befehl (für das Debug-Fenster)
+    startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
+    debug_log(startup_cmd)
 
-    db.init_db()               # SQLite-Datenbank initialisieren (Placeholder)
-    web_dir = str(Path(__file__).parent / "web")  # Absoluter Pfad zum web-Ordner
-    eel.init(web_dir)            # Ordner mit HTML/CSS/JS
-    eel.start("app.html", size=(1000, 700))    # Starte Seite
+    db.init_db()               
+    
+    # Ensure scan dir exists and start initial indexing
+    Path(SCAN_MEDIA_DIR).mkdir(parents=True, exist_ok=True)
+    
+    # Erst-Scan beim Start (nur für SCAN_MEDIA_DIR)
+    scan_media(dir_path=None, clear_db=True)
+    
+    web_dir = str(Path(__file__).parent / "web")
+    eel.init(web_dir)
+    eel.start("app.html", size=(1200, 800))
