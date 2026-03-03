@@ -268,7 +268,7 @@
     <!-- Sticky Footer Player -->
     <div class="player-container" style="display: flex; align-items: center; gap: 10px;">
         <img id="footer-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-            style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #ddd;">
+            style="width: 40px; height: auto; border-radius: 4px; object-fit: contain; background: #ddd; align-self: stretch;">
         <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <audio id="player" controls style="width: 100%;"></audio>
             <div id="status" style="font-size: 0.85em;">Wählt ein Lied aus der Liste!</div>
@@ -398,6 +398,13 @@
                     </div>
                     <span style="font-size: 0.85em; color: #999; white-space: nowrap;">${item.duration}</span>
                 `;
+
+                let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                if (item.is_transcoded && item.transcoded_format) {
+                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                }
+
+                div.onclick = () => play(item, mediaUrl);
                 list.appendChild(div);
             });
         }
@@ -519,7 +526,6 @@
                 if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
                 let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
-                let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
 
                 div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
@@ -527,9 +533,7 @@
                         <strong>${tags.title}</strong>
                         <span>${tags.artist}</span>
                         <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
-                        <span style="font-size: 0.75em; color: #aaa;">${codecInfo}</span>
                     </div>
-                    <span style="font-size: 0.85em; color: #999; white-space: nowrap;">${item.duration}</span>
                 `;
 
                 let mediaUrl = '/media/' + encodeURIComponent(item.name);
