@@ -7,6 +7,7 @@ media/*.ogg
 media/*.wav
 media/*.opus
 media/*.wma
+media/*.WMA
 media/*.webm
 media/*.mp4
 media/*.m4v
@@ -20,4 +21,3 @@ __pycache__/
 media/.cache/
 media/route_log.txt
 *.db
-media/Hermes House Band - Brasil Samba Mix.WMA

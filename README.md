@@ -39,7 +39,7 @@ python main.py
 
 ```
 gui_media_web_viewer/
-├── main.py               ← Einstiegspunkt, MediaItem-Klasse, Eel-Exposed Funktionen
+├── main.py               ← Einstiegspunkt, MediaItem-Klasse, Bootstrapping der Eel App
 ├── db.py                 ← SQLite-Datenbanklogik (init, insert, query, clear)
 ├── parsers/              ← Metadaten-Extraktion (4 Parser in Pipeline)
 │   ├── filename_parser.py
@@ -48,10 +48,10 @@ gui_media_web_viewer/
 │   └── pymediainfo_parser.py
 ├── web/                  ← Frontend + Bottle-Webserver
 │   ├── app.html          ← GUI (HTML/CSS/JS) mit Tabs (Library + Debug)
-│   ├── app_bottle.py     ← Bottle-Routen: /media/, /cover/
-│   └── script.js
+│   ├── app_bottle.py     ← Bottle-Server mit Routen: /media/, /cover/
+│   └── script.js         ← JavaScript für die GUI
 ├── tests/                ← Ausgelagerte Test- und Debug-Skripte
-├── media/                ← Audio-Dateien (gitignored)
+├── media/                ← Multimedia-Dateien (gitignored)
 └── media_library.db      ← SQLite-DB (gitignored, wird automatisch erzeugt)
 ```
 
