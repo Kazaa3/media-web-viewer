@@ -12,7 +12,7 @@ A custom media player with an embedded web-based GUI. It is built using Python, 
 
 ## Requirements
 
-- Python 3+
+- `Python 3.11+`
 - `eel`
 - `bottle`
 - `mutagen`

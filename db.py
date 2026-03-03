@@ -1,36 +1,26 @@
 import sqlite3
 import os
+import json
 
 DB_FILENAME = "media_library.db"
 
 def init_db():
-    """
-    Initialisiert die Datenbank und erstellt die benötigten Tabellen, falls diese noch nicht existieren.
-    """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
 
-    # Tabelle für Medien
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS media (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE,
             path TEXT,
+            type TEXT,
             duration TEXT,
-            title TEXT,
-            artist TEXT,
-            album TEXT,
-            year TEXT,
-            genre TEXT,
-            track TEXT,
-            codec TEXT,
-            bitrate TEXT,
-            samplerate TEXT,
-            is_transcoded BOOLEAN
+            is_transcoded BOOLEAN,
+            transcoded_format TEXT,
+            tags TEXT
         )
     """)
 
-    # Tabelle für Playlists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS playlists (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +28,6 @@ def init_db():
         )
     """)
 
-    # Verknüpfungstabelle Medien <-> Playlists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS playlist_media (
             playlist_id INTEGER,
@@ -51,8 +40,56 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print(f"Datenbank '{DB_FILENAME}' erfolgreich initialisiert.")
 
-def query_example():
-    """ Placeholder-Funktion für spätere Datenbankzugriffe. """
-    pass
+def get_known_media_names():
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM media")
+    names = {row[0] for row in cursor.fetchall()}
+    conn.close()
+    return names
+
+def insert_media(item_dict):
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO media (name, path, type, duration, is_transcoded, transcoded_format, tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            item_dict['name'],
+            item_dict['path'],
+            item_dict['type'],
+            item_dict['duration'],
+            item_dict['is_transcoded'],
+            item_dict.get('transcoded_format'),
+            json.dumps(item_dict['tags'])
+        ))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass # Schon vorhanden
+    finally:
+        conn.close()
+
+def get_all_media():
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM media ORDER BY name")
+    rows = cursor.fetchall()
+    
+    media_list = []
+    for row in rows:
+        media_list.append({
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {}
+        })
+    conn.close()
+    return media_list
