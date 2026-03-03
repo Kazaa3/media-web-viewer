@@ -92,10 +92,35 @@
             font-family: inherit;
         }
 
-        #media-list {
+        .tab-content {
+            display: none;
             flex: 1;
             overflow-y: auto;
             padding: 10px 20px 20px 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            padding: 6px 12px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background: #eee;
+            border-radius: 4px;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            font-weight: bold;
         }
 
         .player-container {
@@ -176,7 +201,13 @@
 
 <body>
     <div class="header-container">
-        <h1>Media Player</h1> <!-- localhost:8000-->
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h1>Media Player</h1>
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('library', this)">Library</button>
+                <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
+            </div>
+        </div>
         <button onclick="scan()"
             style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Scan
             Media</button>
@@ -198,8 +229,15 @@
             </div>
         </div>
 
-        <!-- Main List -->
-        <div id="media-list"></div>
+        <!-- Main Right Content Area -->
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff;">
+            <div id="media-list" class="tab-content active"></div>
+
+            <div id="debug-list" class="tab-content">
+                <pre id="debug-output"
+                    style="background: #222; color: #0f0; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin: 0; min-height: 100%;"></pre>
+            </div>
+        </div>
     </div>
 
     <!-- Sticky Footer Player -->
@@ -211,10 +249,25 @@
     <script>
         let currentPlayer = document.getElementById('player');
 
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            if (tabId === 'library') {
+                document.getElementById('media-list').classList.add('active');
+            } else if (tabId === 'debug') {
+                document.getElementById('debug-list').classList.add('active');
+            }
+            btn.classList.add('active');
+        }
+
         async function scan() {
             let result = await eel.scan_media()();
             let list = document.getElementById('media-list');
             list.innerHTML = '';
+
+            // Populate Debug Tab
+            document.getElementById('debug-output').textContent = JSON.stringify(result.media, null, 2);
             result.media.forEach(item => {
                 let div = document.createElement('div');
                 div.className = 'media-item';
