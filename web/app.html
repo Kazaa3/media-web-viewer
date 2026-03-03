@@ -235,12 +235,15 @@
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff;">
             <div id="media-list" class="tab-content active"></div>
 
-            <div id="bibliothek-tab" class="tab-content" style="padding: 20px;">
-                <h2>Bibliothek</h2>
-                <p style="color: #666;">Hier wird die komplette Medienbibliothek mit Sortier- und Filterfunktionen
-                    angezeigt.</p>
-                <p style="color: #999; font-size: 0.9em;">🚧 Dieses Feature wird in einer späteren Version
-                    implementiert.</p>
+            <div id="bibliothek-tab" class="tab-content" style="padding: 20px; overflow-y: auto;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <button id="fb-back" onclick="fbBack()"
+                        style="padding: 6px 12px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 4px; cursor: pointer; font-size: 1.1em;">⬆️</button>
+                    <div id="fb-path"
+                        style="flex: 1; padding: 8px 12px; background: #f0f0f0; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    </div>
+                </div>
+                <div id="fb-list"></div>
             </div>
 
             <div id="optionen-tab" class="tab-content" style="padding: 20px;">
@@ -266,6 +269,50 @@
     <script>
         let currentPlayer = document.getElementById('player');
 
+        // ============ File Browser ============
+        let fbCurrentPath = null;
+        let fbParentPath = null;
+
+        async function fbNavigate(dirPath) {
+            let result = await eel.browse_dir(dirPath || null)();
+            if (result.error) {
+                document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
+                return;
+            }
+            fbCurrentPath = result.path;
+            fbParentPath = result.parent;
+            document.getElementById('fb-path').innerText = result.path;
+            document.getElementById('fb-back').disabled = !result.parent;
+
+            let list = document.getElementById('fb-list');
+            list.innerHTML = '';
+
+            if (result.items.length === 0) {
+                list.innerHTML = '<p style="color: #999;">Keine Audiodateien oder Ordner gefunden.</p>';
+                return;
+            }
+
+            result.items.forEach(item => {
+                let row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
+                row.onmouseover = () => row.style.background = '#f5f5f5';
+                row.onmouseout = () => row.style.background = '';
+
+                if (item.type === 'folder') {
+                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
+                    row.onclick = () => fbNavigate(item.path);
+                } else {
+                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;">${item.name}</span><span style="color: #999; font-size: 0.85em;">${item.size}</span>`;
+                }
+                list.appendChild(row);
+            });
+        }
+
+        function fbBack() {
+            if (fbParentPath) fbNavigate(fbParentPath);
+        }
+
+        // ============ Tab Switching ============
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -280,6 +327,11 @@
                 document.getElementById(tabMap[tabId]).classList.add('active');
             }
             btn.classList.add('active');
+
+            // Auto-load file browser on first visit
+            if (tabId === 'bibliothek' && !fbCurrentPath) {
+                fbNavigate();
+            }
         }
 
         async function scan() {

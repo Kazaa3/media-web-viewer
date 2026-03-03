@@ -13,6 +13,10 @@
 # Datenstruktur für Medien
 # class MediaItem(name, path, type, duration, tags, ...)
 
+# Parser zusammen führen
+
+
+
 
 #Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
@@ -284,6 +288,32 @@ def scan_media():
 def play_media(path):
     """GUI ruft das an – aber HTML5 Audio handhabt Abspielen client-seitig."""
     return {"status": "play", "path": path}  # Bestätigung
+
+@eel.expose("browse_dir")
+def browse_dir(dir_path=None):
+    """Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser."""
+    if not dir_path:
+        dir_path = str(Path.home())
+    
+    target = Path(dir_path)
+    if not target.exists() or not target.is_dir():
+        return {"error": "Ordner nicht gefunden", "path": dir_path}
+    
+    items = []
+    try:
+        for entry in sorted(target.iterdir(), key=lambda e: (not e.is_dir(), e.name.lower())):
+            if entry.name.startswith('.'):
+                continue
+            if entry.is_dir():
+                items.append({"name": entry.name, "path": str(entry), "type": "folder"})
+            elif entry.suffix.lower() in AUDIO_EXTENSIONS:
+                size_mb = entry.stat().st_size / (1024 * 1024)
+                items.append({"name": entry.name, "path": str(entry), "type": "file", "size": f"{size_mb:.1f} MB"})
+    except PermissionError:
+        return {"error": "Keine Berechtigung", "path": dir_path}
+    
+    parent = str(target.parent) if target.parent != target else None
+    return {"path": str(target), "parent": parent, "items": items}
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
