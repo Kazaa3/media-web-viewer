@@ -43,7 +43,7 @@ from tkinter import filedialog
 SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
 
 # 2. Standard-Pfad beim ersten Öffnen des Browsers
-BROWSER_DEFAULT_DIR = "/home/xc"
+BROWSER_DEFAULT_DIR = str(Path.home())
 
 
 
