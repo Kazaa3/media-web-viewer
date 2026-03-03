@@ -266,9 +266,13 @@
     </div>
 
     <!-- Sticky Footer Player -->
-    <div class="player-container">
-        <audio id="player" controls></audio>
-        <div id="status">Wählt ein Lied aus der Liste!</div>
+    <div class="player-container" style="display: flex; align-items: center; gap: 10px;">
+        <img id="footer-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+            style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #ddd;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+            <audio id="player" controls style="width: 100%;"></audio>
+            <div id="status" style="font-size: 0.85em;">Wählt ein Lied aus der Liste!</div>
+        </div>
     </div>
 
     <script>
@@ -441,6 +445,10 @@
 
             let sbCover = document.getElementById('sb-cover');
             sbCover.src = "/cover/" + encodeURIComponent(item.name);
+            // Update footer cover too
+            let footerCover = document.getElementById('footer-cover');
+            footerCover.src = "/cover/" + encodeURIComponent(item.name);
+            footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
             sbCover.style.opacity = "1";
             sbCover.onerror = function () {
                 this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
