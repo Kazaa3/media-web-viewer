@@ -505,9 +505,8 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: "Spielereien" -->
-                    <div style="flex: 1; border-left: 1px solid #eee; padding-left: 40px; min-height: 300px;">
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px; color: #2a7;">✨ Spielereien</h3>
+                    <div>
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px; color: #444;">Debug-Flags (Temporär)</h3>
                         <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Experimentelle Funktionen und
                             Tools.</p>
 
@@ -1290,8 +1289,11 @@
                 document.body.style.cursor = 'default';
             });
         })();
-
         loadLibrary();
+        loadParserConfig();
+
+        // Load debug flags as well
+        loadDebugFlags();
     </script>
 </body>
 
