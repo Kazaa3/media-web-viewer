@@ -204,7 +204,9 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1>Media Player</h1>
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('library', this)">Library</button>
+                <button class="tab-btn active" onclick="switchTab('player', this)">Player</button>
+                <button class="tab-btn" onclick="switchTab('bibliothek', this)">Bibliothek</button>
+                <button class="tab-btn" onclick="switchTab('optionen', this)">Optionen</button>
                 <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
             </div>
         </div>
@@ -233,6 +235,21 @@
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff;">
             <div id="media-list" class="tab-content active"></div>
 
+            <div id="bibliothek-tab" class="tab-content" style="padding: 20px;">
+                <h2>Bibliothek</h2>
+                <p style="color: #666;">Hier wird die komplette Medienbibliothek mit Sortier- und Filterfunktionen
+                    angezeigt.</p>
+                <p style="color: #999; font-size: 0.9em;">🚧 Dieses Feature wird in einer späteren Version
+                    implementiert.</p>
+            </div>
+
+            <div id="optionen-tab" class="tab-content" style="padding: 20px;">
+                <h2>Optionen</h2>
+                <p style="color: #666;">Hier können Einstellungen vorgenommen werden.</p>
+                <p style="color: #999; font-size: 0.9em;">🚧 Dieses Feature wird in einer späteren Version
+                    implementiert.</p>
+            </div>
+
             <div id="debug-list" class="tab-content">
                 <pre id="debug-output"
                     style="background: #222; color: #0f0; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin: 0; min-height: 100%;"></pre>
@@ -253,10 +270,14 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
-            if (tabId === 'library') {
-                document.getElementById('media-list').classList.add('active');
-            } else if (tabId === 'debug') {
-                document.getElementById('debug-list').classList.add('active');
+            const tabMap = {
+                'player': 'media-list',
+                'bibliothek': 'bibliothek-tab',
+                'optionen': 'optionen-tab',
+                'debug': 'debug-list'
+            };
+            if (tabMap[tabId]) {
+                document.getElementById(tabMap[tabId]).classList.add('active');
             }
             btn.classList.add('active');
         }
