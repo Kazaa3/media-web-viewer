@@ -235,7 +235,7 @@
                 `;
 
                 let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.type === 'm4a' || item.type === 'alac') {
+                if (item.is_transcoded) {
                     mediaUrl += '.flac_transcoded';
                 }
 
@@ -287,10 +287,13 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + path.split('.').pop().toUpperCase();
-            let fileInfoStr = [tags.filesize, contStr, artStr].filter(Boolean).join(' • ');
+            let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + item.type.toUpperCase();
+            let fileInfoStr = [tags.size, contStr, artStr].filter(Boolean).join(' • ');
             let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '\n\nTag Format: ' + tags.tagtype : '';
-            document.getElementById('sb-fileinfo').innerText = fileInfoStr + tagStr;
+
+            let transcodeStr = item.is_transcoded ? '\n⚠️ Datei wird on-the-fly für den Webplayer transkodiert' : '';
+
+            document.getElementById('sb-fileinfo').innerText = fileInfoStr + tagStr + transcodeStr;
 
             // Python Backend anfunken
             eel.play_media(path)();
