@@ -356,6 +356,11 @@
             // Show sidebar only on Player tab, footer player always visible
             document.querySelector('.sidebar').style.display = tabId === 'player' ? '' : 'none';
 
+            // Refresh Player list when switching to Player tab
+            if (tabId === 'player') {
+                loadLibrary();
+            }
+
             // Auto-load file browser on first visit
             if (tabId === 'bibliothek' && !fbCurrentPath) {
                 fbNavigate();
@@ -366,7 +371,7 @@
             }
         }
         async function refreshBibliothek() {
-            let result = await eel.scan_media()();
+            let result = await eel.get_library()();
             let list = document.getElementById('bibliothek-list');
             list.innerHTML = '';
             if (!result.media || result.media.length === 0) {
@@ -492,7 +497,7 @@
             eel.play_media(path)();
         }
 
-        scan();
+        loadLibrary();
     </script>
 </body>
 
