@@ -99,3 +99,12 @@ def get_all_media():
         })
     conn.close()
     return media_list
+
+def get_media_path(name):
+    """Gibt den vollen Dateipfad für einen Mediennamen zurück."""
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT path FROM media WHERE name = ?", (name,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else None
