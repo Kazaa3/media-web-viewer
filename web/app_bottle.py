@@ -12,10 +12,11 @@ from mutagen.mp4 import MP4
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
 
-MEDIA_DIR = Path("./media")
+MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
 LOG_FILE = MEDIA_DIR / "route_log.txt"
 
 def _log(msg):
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     with open(LOG_FILE, 'a') as f:
         f.write(msg + "\n")
 

@@ -5,11 +5,14 @@ from . import mutagen_parser
 from . import pymediainfo_parser
 from . import ffmpeg_parser
 
-def extract_metadata(path, filename, logger=None):
+def extract_metadata(path, filename, debug=False):
     """
     Zentraler Parser, der Redundanzen vermeidet und FFmpeg-Subprozesse
     für die Indexierung überflüssig macht.
     """
+    if debug:
+        print(f"[Debug-Parser] Starte Parsing für: {filename}")
+        
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
     

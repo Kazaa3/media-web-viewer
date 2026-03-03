@@ -46,6 +46,16 @@
             flex-direction: column;
             align-items: center;
             overflow-y: auto;
+            /* Hide scrollbar */
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari and Opera */
         }
 
         .sidebar-cover {
@@ -96,8 +106,8 @@
             display: none;
             flex: 1;
             overflow-y: auto;
-            padding: 10px 20px 20px 20px;
             width: 100%;
+            height: 100%;
             box-sizing: border-box;
         }
 
@@ -196,6 +206,25 @@
             text-overflow: ellipsis;
             color: #666;
         }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            border: 2px solid #ddd;
+            border-top: 2px solid #2a7;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 
@@ -205,9 +234,10 @@
             <h1>Media Player</h1>
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="switchTab('player', this)">Player</button>
-                <button class="tab-btn" onclick="switchTab('bibliothek', this)">Browser</button>
-                <button class="tab-btn" onclick="switchTab('browser', this)">Bibliothek</button>
-                <button class="tab-btn" onclick="switchTab('optionen', this)">Optionen</button>
+                <button class="tab-btn" onclick="switchTab('library', this)">Bibliothek</button>
+                <button class="tab-btn" onclick="switchTab('browser', this)">Browser</button>
+                <button class="tab-btn" onclick="switchTab('edit', this)">Edit</button>
+                <button class="tab-btn" onclick="switchTab('options', this)">Optionen</button>
                 <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
             </div>
         </div>
@@ -240,69 +270,131 @@
             <div id="media-list" class="tab-content active"></div>
 
             <div id="browser-tab" class="tab-content" style="padding: 20px; overflow-y: auto;">
-                <div style="display: flex; align-items: stretch; gap: 10px; margin-bottom: 25px;">
+                <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 20px;">
                     <button id="fb-back" onclick="fbBack()"
                         style="padding: 10px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 6px; cursor: pointer; font-size: 1.2em; display: flex; align-items: center; justify-content: center;">⬆️</button>
-                    <div id="fb-path"
-                        style="flex: 1; padding: 14px 16px; background: #f0f0f0; border-radius: 6px; font-family: monospace; font-size: 1em; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center;">
+
+                    <input id="fb-path-input" type="text" onkeypress="if(event.key === 'Enter') fbNavigate(this.value)"
+                        style="flex: 1; padding: 10px 16px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 1em; color: #444;" />
+
+                    <button id="browse-folder-btn" onclick="fbPickFolder()"
+                        style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center;">📂
+                        Browse</button>
+
+                    <button onclick="scan(false)"
+                        style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center;">➕
+                        Hinzufügen</button>
+                </div>
+
+                <div id="fb-list"></div>
+            </div>
+
+            <div id="library-tab" class="tab-content" style="overflow-y: auto; width: 100%;">
+                <div id="library-list"></div>
+            </div>
+
+            <div id="edit-tab" class="tab-content" style="padding: 0; display: none; height: 100%;">
+                <div style="display: flex; height: 100%; overflow: hidden;">
+                    <!-- Left: Item List -->
+                    <div
+                        style="flex: 1; border-right: 1px solid #ddd; display: flex; flex-direction: column; background: #f9f9f9;">
+                        <div style="padding: 15px; border-bottom: 1px solid #ddd; background: #fff;">
+                            <input type="text" id="edit-search" placeholder="Suche in Bibliothek..."
+                                oninput="filterEditList()"
+                                style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+                        </div>
+                        <div id="edit-items-list" style="flex: 1; overflow-y: auto; padding: 10px;">
+                            <!-- Items werden hier geladen -->
+                        </div>
+                    </div>
+                    <!-- Right: Editor Form -->
+                    <div id="edit-form-container"
+                        style="flex: 1.5; padding: 30px; background: #fff; overflow-y: auto; display: none;">
+                        <h2 id="edit-form-title" style="margin-top: 0;">Tag Editor</h2>
+                        <input type="hidden" id="edit-item-name">
+                        <div style="display: flex; flex-direction: column; gap: 15px; max-width: 500px;">
+                            <div class="form-group">
+                                <label
+                                    style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Titel</label>
+                                <input type="text" id="edit-tag-title"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Künstler</label>
+                                <input type="text" id="edit-tag-artist"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Album</label>
+                                <input type="text" id="edit-tag-album"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Genre</label>
+                                <input type="text" id="edit-tag-genre"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            <div class="form-group">
+                                <label
+                                    style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Jahr</label>
+                                <input type="text" id="edit-tag-year"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display: block; font-size: 0.85em; color: #666; margin-bottom: 4px;">Track
+                                    Nummer</label>
+                                <input type="text" id="edit-tag-track"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                                <button onclick="saveTags()"
+                                    style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Speichern</button>
+                                <button onclick="resetEditForm()"
+                                    style="padding: 10px 20px; background: #eee; color: #333; border: 1px solid #ccc; border-radius: 6px; cursor: pointer;">Abbrechen</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="edit-placeholder"
+                        style="flex: 1.5; display: flex; align-items: center; justify-content: center; color: #999; flex-direction: column;">
+                        <span style="font-size: 3em; margin-bottom: 10px;">📝</span>
+                        <p>Wähle links ein Element aus, um die Metadaten zu bearbeiten.</p>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                    <input id="default-folder-input" type="text" placeholder="Media folder"
-                        style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; font-family:monospace;" />
-                    <button id="browse-folder-btn"
-                        style="padding:6px 10px; border-radius:4px; border:1px solid #ccc; background:white; cursor:pointer;">Browse</button>
-                    <button onclick="scan()"
-                        style="padding:6px 10px; border-radius:4px; border:1px solid #ccc; background:#fff; cursor:pointer;">Scan</button>
+            </div>
+
+            <div id="options-tab" class="tab-content" style="padding: 20px;">
+                <h2>Optionen</h2>
+                <p style="color: #666; margin-bottom: 20px;">Hier können Einstellungen vorgenommen werden.</p>
+
+                <h3 style="font-size: 1.1em; margin-bottom: 15px;">Debug-Flags</h3>
+                <div id="debug-flags-container"
+                    style="display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; max-width: 400px;">
+                    <!-- Flags werden dynamisch geladen -->
                 </div>
-                <div style="margin-bottom:12px;">
-                    <textarea id="browse-results" rows="3"
-                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; font-family:monospace; font-size:0.9em;"
+            </div>
+
+            <div id="debug-list" class="tab-content"
+                style="display: none; flex-direction: row; gap: 10px; overflow: hidden; padding: 0;">
+
+                <!-- Left half: JSON Output -->
+                <div style="flex: 1.3; overflow-y: auto; background: #222; border-right: 1px solid #333;">
+                    <pre id="debug-output"
+                        style="color: #0f0; padding: 15px; font-size: 0.9em; margin: 0; min-height: 100%; white-space: pre-wrap; word-wrap: break-word;"></pre>
+                </div>
+
+                <!-- Right half: Text Area (Logs/Print) -->
+                <div
+                    style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; background: #111;">
+                    <textarea id="browse-results-debug"
+                        style="flex: 1; min-height: 200px; width:100%; padding:12px; border:1px solid #333; border-radius:6px; font-family:monospace; font-size:0.9em; background:#000; color:#0f0; resize: none;"
                         placeholder="# Ergebnisse erscheinen hier..."># Keine Ergebnisse</textarea>
                 </div>
+
             </div>
-            <div id="fb-list"></div>
         </div>
-
-        <div id="bibliothek-tab" class="tab-content" style="overflow-y: auto;">
-            <div id="bibliothek-list"></div>
-        </div>
-
-        <div id="optionen-tab" class="tab-content" style="padding: 20px;">
-            <h2>Optionen</h2>
-            <p style="color: #666;">Hier können Einstellungen vorgenommen werden.</p>
-            <p style="color: #999; font-size: 0.9em;">🚧 Dieses Feature wird in einer späteren Version
-                implementiert.</p>
-        </div>
-
-        <div id="debug-list" class="tab-content"
-            style="display: none; flex-direction: row; gap: 20px; overflow: hidden; padding: 0;">
-
-            <!-- Left half: Controls and Text Area -->
-            <div
-                style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; border-right: 1px solid #333; background: #111;">
-                <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-                    <input id="default-folder-input-debug" type="text" placeholder="Media folder (debug)"
-                        style="flex:1; padding:10px; border:1px solid #444; border-radius:4px; background:#222; color:#0f0; font-family:monospace;" />
-                    <button id="browse-folder-btn-debug"
-                        style="padding:10px 16px; border-radius:4px; border:1px solid #444; background:#222; color:#0f0; cursor:pointer;">Browse</button>
-                    <button id="scan-btn-debug"
-                        style="padding:10px 16px; border-radius:4px; border:1px solid #444; background:#222; color:#0f0; cursor:pointer;"
-                        onclick="scan()">Scan</button>
-                </div>
-                <textarea id="browse-results-debug"
-                    style="flex: 1; min-height: 200px; width:100%; padding:12px; border:1px solid #333; border-radius:6px; font-family:monospace; font-size:0.9em; background:#000; color:#0f0; resize: none;"
-                    placeholder="# Ergebnisse erscheinen hier..."></textarea>
-            </div>
-
-            <!-- Right half: JSON Output -->
-            <div style="flex: 1; overflow-y: auto; background: #222;">
-                <pre id="debug-output"
-                    style="color: #0f0; padding: 15px; font-size: 0.9em; margin: 0; min-height: 100%; white-space: pre-wrap; word-wrap: break-word;"></pre>
-            </div>
-
-        </div>
-    </div>
     </div>
 
     <!-- Sticky Footer Player -->
@@ -313,6 +405,12 @@
             <audio id="player" controls style="width: 100%;"></audio>
             <div id="status" style="font-size: 0.85em;">Wählt ein Lied aus der Liste!</div>
         </div>
+        <!-- DB Update Status Bar -->
+        <div id="db-status-container"
+            style="display: none; align-items: center; gap: 8px; font-size: 0.85em; color: #2a7; font-weight: bold; padding: 0 10px;">
+            <div class="spinner"></div>
+            <span>Datenbank wird aktualisiert...</span>
+        </div>
     </div>
 
     <script>
@@ -322,6 +420,11 @@
         let fbCurrentPath = null;
         let fbParentPath = null;
 
+        async function fbPickFolder() {
+            const folder = await eel.pick_folder()();
+            if (folder) fbNavigate(folder);
+        }
+
         async function fbNavigate(dirPath) {
             let result = await eel.browse_dir(dirPath || null)();
             if (result.error) {
@@ -330,7 +433,7 @@
             }
             fbCurrentPath = result.path;
             fbParentPath = result.parent;
-            document.getElementById('fb-path').innerText = result.path;
+            document.getElementById('fb-path-input').value = result.path;
             document.getElementById('fb-back').disabled = !result.parent;
 
             let list = document.getElementById('fb-list');
@@ -378,32 +481,41 @@
 
         // ============ Tab Switching ============
         function switchTab(tabId, btn) {
+            // Reset all tabs
             document.querySelectorAll('.tab-content').forEach(el => {
                 el.classList.remove('active');
-                if (el.id === 'debug-list') {
-                    el.style.display = 'none'; // reset flex display explicitly
-                }
+                el.style.display = 'none'; // Force hide all
             });
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
             const tabMap = {
                 'player': 'media-list',
-                'bibliothek': 'browser-tab',
-                'browser': 'bibliothek-tab',
-                'optionen': 'optionen-tab',
+                'library': 'library-tab',
+                'browser': 'browser-tab',
+                'edit': 'edit-tab',
+                'options': 'options-tab',
                 'debug': 'debug-list'
             };
-            if (tabMap[tabId]) {
-                const targetEl = document.getElementById(tabMap[tabId]);
+
+            const targetId = tabMap[tabId];
+            if (targetId) {
+                const targetEl = document.getElementById(targetId);
                 targetEl.classList.add('active');
+
+                // Specific display requirements
                 if (tabId === 'debug') {
                     targetEl.style.display = 'flex';
+                } else if (tabId === 'edit') {
+                    targetEl.style.display = 'block';
+                } else {
+                    targetEl.style.display = 'block';
                 }
             }
             btn.classList.add('active');
 
-            // Show sidebar only on Player tab, footer player always visible
+            // Show sidebar only on Player tab, footer player hidden on Library tab
             document.querySelector('.sidebar').style.display = tabId === 'player' ? '' : 'none';
+            document.querySelector('.player-container').style.display = tabId === 'library' ? 'none' : 'flex';
 
             // Refresh Player list when switching to Player tab
             if (tabId === 'player') {
@@ -411,17 +523,118 @@
             }
 
             // Auto-load file browser on first visit
-            if (tabId === 'bibliothek' && !fbCurrentPath) {
+            if (tabId === 'browser' && !fbCurrentPath) {
                 fbNavigate();
             }
-            // Refresh library list when switching to Browser
-            if (tabId === 'browser') {
-                refreshBibliothek();
+            // Refresh library list when switching to Bibliothek
+            if (tabId === 'library') {
+                refreshLibrary();
+            }
+
+            // Load debug flags when switching to Options
+            if (tabId === 'options') {
+                loadDebugFlags();
+            }
+
+            // Load items when switching to Edit
+            if (tabId === 'edit') {
+                loadEditItems();
             }
         }
-        async function refreshBibliothek() {
+
+        // ============ Edit Tab Logic ============
+        let allLibraryItems = [];
+
+        async function loadEditItems() {
+            const result = await eel.get_library()();
+            allLibraryItems = result.media || [];
+            renderEditList(allLibraryItems);
+        }
+
+        function renderEditList(items) {
+            const list = document.getElementById('edit-items-list');
+            list.innerHTML = '';
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 10px; transition: background 0.1s;';
+                div.onmouseover = () => div.style.background = '#f0f0f0';
+                div.onmouseout = () => div.style.background = '#fff';
+                div.onclick = () => openEditForm(item);
+
+                const thumb = document.createElement('img');
+                thumb.src = `/cover/${encodeURIComponent(item.name)}`;
+                thumb.style.cssText = 'width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #eee;';
+                thumb.onerror = () => thumb.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+
+                const info = document.createElement('div');
+                info.style.overflow = 'hidden';
+                info.innerHTML = `<div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.tags.title || item.name}</div><div style="font-size: 0.8em; color: #666;">${item.tags.artist || '-'}</div>`;
+
+                div.appendChild(thumb);
+                div.appendChild(info);
+                list.appendChild(div);
+            });
+        }
+
+        function filterEditList() {
+            const query = document.getElementById('edit-search').value.toLowerCase();
+            const filtered = allLibraryItems.filter(item =>
+                item.name.toLowerCase().includes(query) ||
+                (item.tags.title && item.tags.title.toLowerCase().includes(query)) ||
+                (item.tags.artist && item.tags.artist.toLowerCase().includes(query)) ||
+                (item.tags.album && item.tags.album.toLowerCase().includes(query))
+            );
+            renderEditList(filtered);
+        }
+
+        function openEditForm(item) {
+            document.getElementById('edit-placeholder').style.display = 'none';
+            document.getElementById('edit-form-container').style.display = 'block';
+
+            document.getElementById('edit-item-name').value = item.name;
+            document.getElementById('edit-tag-title').value = item.tags.title || '';
+            document.getElementById('edit-tag-artist').value = item.tags.artist || '';
+            document.getElementById('edit-tag-album').value = item.tags.album || '';
+            document.getElementById('edit-tag-genre').value = item.tags.genre || '';
+            document.getElementById('edit-tag-year').value = item.tags.year || '';
+            document.getElementById('edit-tag-track').value = item.tags.track || '';
+
+            document.getElementById('edit-form-title').innerText = "Bearbeite: " + item.name;
+        }
+
+        function resetEditForm() {
+            document.getElementById('edit-placeholder').style.display = 'flex';
+            document.getElementById('edit-form-container').style.display = 'none';
+        }
+
+        async function saveTags() {
+            const name = document.getElementById('edit-item-name').value;
+            const item = allLibraryItems.find(i => i.name === name);
+            if (!item) return;
+
+            const newTags = {
+                ...item.tags,
+                title: document.getElementById('edit-tag-title').value,
+                artist: document.getElementById('edit-tag-artist').value,
+                album: document.getElementById('edit-tag-album').value,
+                genre: document.getElementById('edit-tag-genre').value,
+                year: document.getElementById('edit-tag-year').value,
+                track: document.getElementById('edit-tag-track').value
+            };
+
+            const result = await eel.update_tags(name, newTags)();
+            if (result.status === 'ok') {
+                // Update local data
+                item.tags = newTags;
+                // Optional: show a small toast or update list
+                loadEditItems(); // Refresh full list to show changes
+                alert("Metadaten gespeichert!");
+            }
+        }
+
+        async function refreshLibrary() {
             let result = await eel.get_library()();
-            let list = document.getElementById('bibliothek-list');
+            let list = document.getElementById('library-list');
             list.innerHTML = '';
             if (!result.media || result.media.length === 0) {
                 list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
@@ -458,10 +671,10 @@
             });
         }
 
-        async function scan() {
-            const dirInput = document.getElementById('default-folder-input') || document.getElementById('default-folder-input-debug');
+        async function scan(clearDb = true) {
+            const dirInput = document.getElementById('fb-path-input');
             const dir = dirInput ? dirInput.value : null;
-            let result = await eel.scan_media(dir)();
+            let result = await eel.scan_media(dir, clearDb)();
             let list = document.getElementById('media-list');
             list.innerHTML = '';
 
@@ -565,8 +778,12 @@
                 return;
             }
 
-            // Populate Debug Tab
-            document.getElementById('debug-output').textContent = JSON.stringify(result.media, null, 2);
+            // Restore population of Debug Tab
+            const debugOutput = document.getElementById('debug-output');
+            if (debugOutput) {
+                const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
+                debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
+            }
 
             result.media.forEach(item => {
                 let div = document.createElement('div');
@@ -595,6 +812,65 @@
                 div.onclick = () => play(item, mediaUrl);
                 list.appendChild(div);
             });
+        }
+
+        async function loadDebugFlags() {
+            const flags = await eel.get_debug_flags()();
+            const container = document.getElementById('debug-flags-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (const [key, value] of Object.entries(flags)) {
+                const label = document.createElement('label');
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '10px';
+                label.style.cursor = 'pointer';
+                label.style.padding = '5px';
+                label.style.borderRadius = '4px';
+                label.onmouseover = () => label.style.background = '#f9f9f9';
+                label.onmouseout = () => label.style.background = 'transparent';
+
+                label.innerHTML = `
+                    <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
+                    <span style="font-family: monospace; font-size: 0.95em;">${key.toUpperCase()} Debugging-Logs</span>
+                `;
+                container.appendChild(label);
+            }
+        }
+
+        async function toggleDebugFlag(key, value) {
+            await eel.set_debug_flag(key, value)();
+        }
+
+        async function clearDatabase() {
+            if (confirm("Möchtest du wirklich die gesamte Datenbank löschen? Alle indexierten Medien werden entfernt.")) {
+                const result = await eel.clear_database()();
+                if (result.status === 'ok') {
+                    alert("Datenbank wurde erfolgreich geleert.");
+                    loadLibrary(); // Update views
+                }
+            }
+        }
+
+        eel.expose(log_to_debug);
+        function log_to_debug(message) {
+            const debugTextarea = document.getElementById('browse-results-debug');
+            if (debugTextarea) {
+                if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
+                    debugTextarea.value += '\n';
+                }
+                debugTextarea.value += message + '\n';
+                debugTextarea.scrollTop = debugTextarea.scrollHeight;
+            }
+        }
+
+        eel.expose(set_db_status);
+        function set_db_status(isVisible) {
+            const container = document.getElementById('db-status-container');
+            if (container) {
+                container.style.display = isVisible ? 'flex' : 'none';
+            }
         }
 
         loadLibrary();
