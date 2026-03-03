@@ -5,3 +5,5 @@ media/*.mp3
 media/*.aac
 media/*.ogg
 media/*.wav
+
+__pycache__/

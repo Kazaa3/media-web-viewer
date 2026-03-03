@@ -21,24 +21,27 @@ from pathlib import Path
 import subprocess
 import re  # For MKV parsing
 
+# Eigene Parser
+from parsers import filename_parser, mutagen_parser, ffmpeg_parser, mediaview_parser
 
 # Audio-Tag-Bibliothek
 from mutagen.mp3 import MP3  # Für MP3-Dauer
 from mutagen.flac import FLAC  # Für FLAC-Dauer
 from mutagen.oggvorbis import OggVorbis  # Für OGG
-from mutagen.mp4 import MP4  # Für ALAC/M4A
+from mutagen.mp4 import MP4  # Für ALAC/M4A/M4B
 from mutagen.oggopus import OggOpus
 from mutagen.wave import WAVE
 from mutagen.aac import AAC
 from mutagen.asf import ASF # Für WMA
-
-from mutagen.id3 import ID3
+from mutagen.id3 import ID3 # statt ffmpeg
 
 #Video-Tag-Bibliothek
 #mkvinfo
+#mediainfo
+#mp3tag
 
-#M4B
-from mutagen.mp4 import MP4
+
+
 
 # weitere Container
 # mp4, avi, mov, mkv, webm, flv, wmv, mpg, mpeg, m4v, 3gp, 3g2, ogv, ogg, mts, m2ts
@@ -62,6 +65,15 @@ class MediaItem:
         self.type = self.path.suffix.lower()
         self.duration = self._get_duration()
         self.tags = self._get_tags()
+
+
+    def show_info(self):
+        print(self.name)
+        print(self.path)
+        print(self.type)
+        print(self.duration)
+        print(self.tags)
+        print("\n")
 
     def _get_duration(self):
         """Extrahiert Dauer in Sekunden (mit mutagen)."""
@@ -104,325 +116,20 @@ class MediaItem:
         return 0
 
     def _get_tags(self):
-        """Extrahiert umfassende Metadaten (Jahr, Genre, Album, Stream Info) (mutagen)."""
-        tags = {
-            'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
-            'codec': '', 'size': '', 'tagtype': '', 'container': '',
-            'has_art': 'No', 'title': '', 'artist': '', 'album': '',
-            'date': '', 'genre': '', 'track': '', 'totaltracks': '',
-            'disc': '', 'totaldiscs': ''
-        }
+        """Extrahiert umfassende Metadaten sequenziell mit verschiedenen Parsern."""
+        # 1. Filename Parser (Grundlage)
+        tags = filename_parser.parse(self.path, self.name)
         
-        try:
-            import os
-            tags['size'] = f"{os.path.getsize(self.path) / (1024 * 1024):.2f} MB"
-        except:
-            pass
-            
-        # Try finding Artist / Title from the filename string as fallback
-        if " - " in self.name:
-            parts = self.name.split(" - ", 1)
-            tags['artist'] = parts[0].strip()
-            tags['title'] = parts[1].rsplit(".", 1)[0].strip() if "." in parts[1] else parts[1].strip()
-        else:
-            tags['title'] = self.name.rsplit(".", 1)[0] if "." in self.name else self.name
+        # 2. Mutagen Parser (Hauptquelle)
+        tags = mutagen_parser.parse(self.path, self.type, tags, self.name)
         
-        def safe_get(audio_obj, key, default=''):
-            val = audio_obj.get(key)
-            if not val:
-                return default
-            if isinstance(val, list) and len(val) > 0:
-                return str(val[0])
-            return str(val)
-
-        def format_samplerate(hz):
-            try:
-                hz = float(hz)
-                khz = hz / 1000
-                return f"{int(khz)} kHz" if khz.is_integer() else f"{khz:g} kHz"
-            except:
-                return ""
-
-        try:
-            # Info stream info fallback block 
-            audio_for_info = None
-            
-            if self.type == '.flac':
-                audio = FLAC(self.path)
-                audio_for_info = audio
-                tags['artist'] = safe_get(audio, 'ARTIST', default='Unbekannt')
-                tags['title'] = safe_get(audio, 'TITLE', default=self.name)
-                tags['year'] = safe_get(audio, 'DATE')
-                tags['genre'] = safe_get(audio, 'GENRE')
-                tags['track'] = safe_get(audio, 'TRACKNUMBER')
-                tags['totaltracks'] = safe_get(audio, 'TRACKTOTAL') or safe_get(audio, 'TOTALTRACKS')
-                tags['album'] = safe_get(audio, 'ALBUM')
-                tags['albumartist'] = safe_get(audio, 'ALBUMARTIST')
-                tags['disc'] = safe_get(audio, 'DISCNUMBER')
-                tags['codec'] = 'FLAC'
-                if hasattr(audio.info, 'bits_per_sample') and audio.info.bits_per_sample:
-                    tags['bitdepth'] = f"{audio.info.bits_per_sample} Bit"
-                
-            elif self.type == '.mp3':
-                audio = MP3(self.path)
-                audio_for_info = audio
-                art = audio.get('TPE1')
-                tit = audio.get('TIT2')
-                yr = audio.get('TDRC') or audio.get('TYER')
-                gn = audio.get('TCON')
-                tr = audio.get('TRCK')
-                alb = audio.get('TALB')
-                aart = audio.get('TPE2')
-                dsc = audio.get('TPOS')
-                
-                tags['artist'] = str(art.text[0]) if art and hasattr(art, 'text') else (str(art[0]) if art else 'Unbekannt')
-                tags['title'] = str(tit.text[0]) if tit and hasattr(tit, 'text') else (str(tit[0]) if tit else self.name)
-                tags['year'] = str(yr.text[0]) if yr and hasattr(yr, 'text') else (str(yr) if yr else '')
-                tags['genre'] = str(gn.text[0]) if gn and hasattr(gn, 'text') else (str(gn) if gn else '')
-                tags['album'] = str(alb.text[0]) if alb and hasattr(alb, 'text') else (str(alb[0]) if alb else '')
-                tags['albumartist'] = str(aart.text[0]) if aart and hasattr(aart, 'text') else (str(aart[0]) if aart else '')
-                tags['disc'] = str(dsc.text[0]).split('/')[0] if dsc and hasattr(dsc, 'text') else (str(dsc) if dsc else '')
-                
-                tr_val = str(tr.text[0]) if tr and hasattr(tr, 'text') else (str(tr) if tr else '')
-                if '/' in tr_val:
-                    tags['track'] = tr_val.split('/')[0]
-                    tags['totaltracks'] = tr_val.split('/')[1]
-                else:
-                    tags['track'] = tr_val
-                    
-                tags['codec'] = 'MP3'
-                
-            elif self.type in {'.m4a', '.alac', '.m4b'}:
-                audio = MP4(self.path)
-                audio_for_info = audio
-                tags['artist'] = safe_get(audio, '\xa9ART', default='Unbekannt')
-                tags['title'] = safe_get(audio, '\xa9nam', default=self.name)
-                tags['year'] = safe_get(audio, '\xa9day')
-                tags['genre'] = safe_get(audio, '\xa9gen')
-                tags['album'] = safe_get(audio, '\xa9alb')
-                tags['albumartist'] = safe_get(audio, 'aART')
-                
-                trkn = audio.get('trkn')
-                if trkn and len(trkn) > 0 and isinstance(trkn[0], tuple):
-                    if len(trkn[0]) > 0 and int(trkn[0][0]) > 0: tags['track'] = str(trkn[0][0])
-                    if len(trkn[0]) > 1 and int(trkn[0][1]) > 0: tags['totaltracks'] = str(trkn[0][1])
-                elif trkn and len(trkn) > 0:
-                    tags['track'] = str(trkn[0])
-                    
-                disk = audio.get('disk')
-                if disk and len(disk) > 0 and isinstance(disk[0], tuple):
-                    if len(disk[0]) > 0 and int(disk[0][0]) > 0: tags['disc'] = str(disk[0][0])
-                elif disk and len(disk) > 0:
-                    tags['disc'] = str(disk[0])
-                    
-                tags['codec'] = getattr(audio.info, 'codec', self.type[1:].upper())
-                    
-            elif self.type in {'.ogg', '.opus', '.wav', '.aac', '.wma'}:
-                if self.type == '.ogg': audio = OggVorbis(self.path)
-                elif self.type == '.opus': audio = OggOpus(self.path)
-                elif self.type == '.wav': audio = WAVE(self.path)
-                elif self.type == '.aac': audio = AAC(self.path)
-                elif self.type == '.wma': audio = ASF(self.path)
-                
-                audio_for_info = audio
-                
-                tags['artist'] = safe_get(audio, 'artist', default='Unbekannt')
-                tags['title'] = safe_get(audio, 'title', default=self.name)
-                tags['year'] = safe_get(audio, 'date') or safe_get(audio, 'year')
-                tags['genre'] = safe_get(audio, 'genre')
-                tags['album'] = safe_get(audio, 'album')
-                tags['albumartist'] = safe_get(audio, 'albumartist')
-                tags['track'] = safe_get(audio, 'tracknumber') or safe_get(audio, 'track')
-                tags['disc'] = safe_get(audio, 'discnumber')
-                tags['codec'] = self.type[1:].upper()
-            
-            # Retrieve common stream info elements
-            if audio_for_info and hasattr(audio_for_info, 'info'):
-                info = audio_for_info.info
-                if hasattr(info, 'bitrate') and info.bitrate:
-                    tags['bitrate'] = f"{int((info.bitrate + 500) // 1000)} kbps"
-                if hasattr(info, 'sample_rate') and info.sample_rate:
-                    tags['samplerate'] = format_samplerate(info.sample_rate)
-                if hasattr(info, 'bits_per_sample') and info.bits_per_sample:
-                    tags['bitdepth'] = f"{info.bits_per_sample} Bit"
-                elif hasattr(info, 'bits_per_sample'):
-                    if info.bits_per_sample > 0:
-                        tags['bitdepth'] = f"{info.bits_per_sample} Bit"
-                    else:
-                        tags['bitdepth'] = ''
-                else:
-                    tags['bitdepth'] = ''
-                    
-                # Append exact FFmpeg stream format for uniformity across all formats if missing
-                try:
-                    import subprocess, re
-                    cmd = ["ffmpeg", "-i", self.path.as_posix()]
-                    output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
-                    
-                    # ==========================================
-                    # CONTAINER-FORMAT AUSWERTUNG (FFmpeg)
-                    # ==========================================
-                    # FFmpeg gibt in der Line "Input #0" das exakte Demuxer-Format an.
-                    # Viele Formate teilen sich historisch denselben Container-Standard:
-                    # 
-                    # 1. ISOBMFF (Apple QuickTime Derivate):
-                    #    Formate wie .mp4, .m4a (Audio) und .m4b (Audiobooks) basieren alle 
-                    #    auf dem "Base Media" Format (ISO/IEC 14496-12). FFmpeg fasst diese 
-                    #    beim Einlesen generisch unter dem Begriff "mov,mp4,m4a,3gp,3g2,mj2" zusammen.
-                    #    Wenn wir "MOV" auslesen, aber die Datei eigentlich ".m4b" heißt, 
-                    #    korrigieren wir die Anzeige für den User exakt auf die Dateiendung (z.B. M4B).
-                    #
-                    # 2. Matroska / WebM:
-                    #    Ein extrem flexibler Open-Source Container, der fast alle Streams schluckt.
-                    #    FFmpeg meldet hier "matroska,webm". Wir bereinigen das visuell zu "MKV".
-                    # ==========================================
-                    input_match = re.search(r"Input #0,\s*([^,]+)", output)
-                    if input_match:
-                        raw_cont = input_match.group(1).upper().strip()
-                        raw_ext = self.type[1:].upper()
-                        
-                        # Apple/ISOBMFF Container Bereinigung
-                        if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
-                            tags['container'] = raw_ext
-                        # Matroska Container Bereinigung
-                        elif raw_cont == 'MATROSKA':
-                            tags['container'] = 'MKV'
-                        else:
-                            tags['container'] = raw_cont
-                            
-                    stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
-                    if stream_match:
-                        audio_line = stream_match.group(1)
-                        fmt_match = re.search(r"\b(s16|s16p|s24|s24p|s32|s32p|fltp|flt)\b", audio_line)
-                        if fmt_match:
-                            fmt = fmt_match.group(1)
-                            # If mutagen found e.g. '16 Bit', append '(s16p)'
-                            if tags['bitdepth']:
-                                if '(' not in tags['bitdepth']:
-                                    tags['bitdepth'] += f" ({fmt})"
-                            else:
-                                if fmt in ('s16', 's16p'): tags['bitdepth'] = f"16 Bit ({fmt})"
-                                elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})" # Das liegt daran, dass Computer-Prozessoren (CPUs) nativ keine 24-Bit-Blöcke verarbeiten können (es gibt nur 8, 16, 32, 64 Bit Architektur). Wenn FFmpeg also ein hochauflösendes 24-Bit-Signal dekodiert, wird es für die interne Sound-Verarbeitung in der Regel mit Nullen aufgefüllt (Zero-Padding) und als flüssiger 32-Bit-Integer (s32p = signed 32-bit planar) an die Soundkarte weitergereicht
-                                elif fmt in ('s32', 's32p'): tags['bitdepth'] = f"32 Bit ({fmt})"
-                                elif fmt in ('fltp', 'flt'): tags['bitdepth'] = f"16 Bit ({fmt})"
-                except Exception:
-                    pass
-                    
-            # ==========================================
-            # AUDIO-TAG AUSWERTUNG (Mutagen)
-            # ==========================================
-            # Je nach Dateityp verwendet die Mutagen-Bibliothek völlig unterschiedliche Parser.
-            # Um dem Nutzer saubere, branchenübliche Tag-Typen anzuzeigen, schlüsseln wir diese auf:
-            #
-            # 1. ID3 (MP3):
-            #    ID3-Tags haben historisch viele Iterationen (v1, v2.2, v2.3, v2.4). Da die Version hier
-            #    elementar für die Kompatibilität von Car-Audios und Playern ist, lesen wir explizit
-            #    den `tags.version` Tuple (z.B. (2,3,0)) aus und wandeln ihn formal in "ID3v2.3" um.
-            # 
-            # 2. ISOBMFF / Apple (MP4/M4A/M4B):
-            #    Nutzt intern sogenannte "MP4 Atoms" (ilst). Ein versionierungsgeladenes Chaos 
-            #    wie bei ID3 gibt es hier nicht. Wir benennen Mutagens rohes "MP4Tags" in das
-            #    cleane "MP4" um.
-            #
-            # 3. Xiph (Ogg/FLAC):
-            #    Nutzen den "Vorbis Comment" Standard (eine simple LISTE von Schlüssel=Wert paaren).
-            #    Auch hier gibt es keine nennenswerte Unterversionierung. Um sie voneinander 
-            #    zu trennen, benennen wir "OggVComment" und "FLACVComment" in menschliche Strings um.
-            # ==========================================
-            if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
-                tag_name = type(audio_for_info.tags).__name__
-                if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
-                    # e.g., (2, 3, 0) -> ID3v2.3
-                    tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]}"
-                elif tag_name == 'MP4Tags':
-                    tags['tagtype'] = 'MP4Tags'
-                elif tag_name == 'OggVComment':
-                    tags['tagtype'] = 'Vorbis Comment (Ogg)'
-                elif tag_name == 'VCFLACDict': # FLACVComment
-                    tags['tagtype'] = 'Vorbis Comment (FLAC)'
-                else:
-                    tags['tagtype'] = tag_name
-                
-            # Detect Embedded Cover Art
-            if self.type == '.mp3' and audio_for_info:
-                tags['has_art'] = 'Yes' if any(k.startswith('APIC') for k in audio_for_info.keys()) else 'No'
-            elif self.type == '.flac' and audio_for_info:
-                tags['has_art'] = 'Yes' if len(audio_for_info.pictures) > 0 else 'No'
-            elif self.type in {'.m4a', '.alac', '.m4b'} and audio_for_info:
-                tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
-                    
-        except Exception as e:
-            # Für .aac oder Dateien ohne korrekte Tags fangen wir den Fehler ab
-            pass
-            
-        # FFmpeg Fallback für fehlende Metadaten (speziell für untagged AAC Dateien)
+        # 3. FFmpeg Parser (Fallback für Bitrate/Samplerate/Container)
         if not tags['samplerate'] or not tags['bitrate'] or tags['tagtype'] == 'None' or not tags['bitdepth']:
-            try:
-                import subprocess, re
-                cmd = ["ffmpeg", "-i", self.path.as_posix()]
-                output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
-                
-                # Container / Format aus Input Info lesen: Input #0, matroska,webm, from ...
-                if not tags['container']:
-                    # ==========================================
-                    # FALLBACK CONTAINER-FORMAT AUSWERTUNG
-                    # ==========================================
-                    # Falls Mutagen komplett fehlgeschlagen ist (z.B. bei komplexen MKVs),
-                    # extrahieren wir den Container nachträglich nochmal sauber analog zur Head-Logik.
-                    # Dies verhindert fehlerhafte "Tag Format" Anzeigen, da ein Container (MKV) 
-                    # kein Tag-Format (wie ID3) ist!
-                    input_match = re.search(r"Input #0,\s*([^,]+)", output)
-                    if input_match:
-                        raw_cont = input_match.group(1).upper().strip()
-                        raw_ext = self.type[1:].upper()
-                        
-                        if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
-                            tags['container'] = raw_ext
-                        elif raw_cont == 'MATROSKA':
-                            tags['container'] = 'MKV'
-                        else:
-                            tags['container'] = raw_cont
-                
-                # Suche Audio-Stream Zeile: Stream #0:0: Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
-                stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
-                if stream_match:
-                    audio_line = stream_match.group(1)
-                    
-                    if not tags['codec'] or tags['codec'] == self.type[1:].upper():
-                        codec_match = re.search(r"^\s*([a-zA-Z0-9_]+)", audio_line)
-                        if codec_match:
-                            tags['codec'] = codec_match.group(1).upper()
-                            
-                    if not tags['samplerate']:
-                        sr_match = re.search(r"(\d+)\s*Hz", audio_line) # Suche nach Sample Rate
-                        if sr_match:
-                            tags['samplerate'] = format_samplerate(sr_match.group(1))
-                            
-                    if not tags['bitdepth']:
-                        fmt_match = re.search(r"\b(s16|s16p|s24|s24p|s32|s32p|fltp|flt)\b", audio_line)
-                        if fmt_match:
-                            fmt = fmt_match.group(1)
-                            if fmt in ('s16', 's16p'): tags['bitdepth'] = f"16 Bit ({fmt})"
-                            elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})"
-                            elif fmt in ('s32', 's32p'): tags['bitdepth'] = f"32 Bit ({fmt})"
-                            elif fmt in ('fltp', 'flt'): tags['bitdepth'] = f"16 Bit ({fmt})"
-                        
-                    if not tags['bitrate']:
-                        br_match = re.search(r"(\d+)\s*kb/s", audio_line)
-                        if br_match:
-                            tags['bitrate'] = f"{br_match.group(1)} kbps"
-                
-            # Duration: ... bitrate: 256 kb/s
-                bit_match = re.search(r"bitrate:\s*(\d+)\s*kb/s", output)
-                if bit_match and not tags['bitrate']:
-                    tags['bitrate'] = f"{bit_match.group(1)} kbps"
-                    
-                if not tags['codec']:
-                    tags['codec'] = self.type[1:].upper()
-            except Exception:
-                pass
-                
-        # If bitdepth is not available, leave it empty so the UI hides it cleanly.
+            tags = ffmpeg_parser.parse(self.path, self.type, tags)
+            
+        # 4. Mediaview Parser (Platzhalter)
+        tags = mediaview_parser.parse(self.path, self.type, tags)
+        
         return tags
 
     def to_dict(self):
