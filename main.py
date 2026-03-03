@@ -335,10 +335,10 @@ class MediaItem:
                     # e.g., (2, 3, 0) -> ID3v2.3
                     tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]}"
                 elif tag_name == 'MP4Tags':
-                    tags['tagtype'] = 'MP4'
+                    tags['tagtype'] = 'MP4Tags'
                 elif tag_name == 'OggVComment':
                     tags['tagtype'] = 'Vorbis Comment (Ogg)'
-                elif tag_name == 'FLACVComment':
+                elif tag_name == 'VCFLACDict': # FLACVComment
                     tags['tagtype'] = 'Vorbis Comment (FLAC)'
                 else:
                     tags['tagtype'] = tag_name
