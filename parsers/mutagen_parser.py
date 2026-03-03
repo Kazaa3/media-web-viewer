@@ -1,11 +1,15 @@
-from mutagen.mp3 import MP3
-from mutagen.flac import FLAC
-from mutagen.oggvorbis import OggVorbis
-from mutagen.mp4 import MP4
+# Audio-Tag-Bibliothek
+from mutagen.mp3 import MP3  # Für MP3-Dauer
+from mutagen.flac import FLAC  # Für FLAC-Dauer
+from mutagen.oggvorbis import OggVorbis  # Für OGG
+from mutagen.mp4 import MP4  # Für ALAC/M4A/M4B
 from mutagen.oggopus import OggOpus
 from mutagen.wave import WAVE
 from mutagen.aac import AAC
-from mutagen.asf import ASF
+from mutagen.asf import ASF # Für WMA
+from mutagen.id3 import ID3 # statt ffmpeg
+from mutagen.dsdiff import DSDIFF # DSD Interchange File Format: .dsf-Dateien
+from mutagen.dsf import DSF # DSD Stream File: .dsd-Dateien
 
 def safe_get(audio_obj, key, default=''):
     val = audio_obj.get(key)

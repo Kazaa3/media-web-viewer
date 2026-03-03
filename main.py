@@ -120,18 +120,7 @@ from parsers import media_parser
 # Eigene bottle Web-Routen
 from web import app_bottle
 
-# Audio-Tag-Bibliothek
-from mutagen.mp3 import MP3  # Für MP3-Dauer
-from mutagen.flac import FLAC  # Für FLAC-Dauer
-from mutagen.oggvorbis import OggVorbis  # Für OGG
-from mutagen.mp4 import MP4  # Für ALAC/M4A/M4B
-from mutagen.oggopus import OggOpus
-from mutagen.wave import WAVE
-from mutagen.aac import AAC
-from mutagen.asf import ASF # Für WMA
-from mutagen.id3 import ID3 # statt ffmpeg
-from mutagen.dsdiff import DSDIFF # DSD Interchange File Format: .dsf-Dateien
-from mutagen.dsf import DSF # DSD Stream File: .dsd-Dateien
+
 
 #Video-Tag-Bibliothek
 #mkvinfo
@@ -274,7 +263,6 @@ def update_tags(name, tags_dict):
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
-
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
     """Gibt den voreingestellten Medienordner (absolute Pfad) zurück."""
@@ -314,6 +302,10 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     # Rekursiv suchen, um Medien in Unterordnern zu finden
     for f in scan_root.rglob('*'):
         if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
+            # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
+            if '.cache' in f.parts:
+                continue
+            
             if DEBUG_FLAGS["scan"]:
                 debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
             try:
