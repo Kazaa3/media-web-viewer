@@ -106,14 +106,16 @@ class MediaItem:
     def _get_tags(self):
         """Extrahiert umfassende Metadaten (Jahr, Genre, Album, Stream Info) (mutagen)."""
         tags = {
-            'artist': 'Unbekannt', 'title': self.name, 'year': '', 'genre': '', 
-            'track': '', 'totaltracks': '', 'album': '', 'albumartist': '', 'disc': '',
-            'bitrate': '', 'samplerate': '', 'bitdepth': '', 'codec': '', 'filesize': '', 'tagtype': 'None', 'has_art': 'No'
+            'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
+            'codec': '', 'size': '', 'tagtype': '', 'container': '',
+            'has_art': 'No', 'title': '', 'artist': '', 'album': '',
+            'date': '', 'genre': '', 'track': '', 'totaltracks': '',
+            'disc': '', 'totaldiscs': ''
         }
         
         try:
             import os
-            tags['filesize'] = f"{os.path.getsize(self.path) / (1024 * 1024):.2f} MB"
+            tags['size'] = f"{os.path.getsize(self.path) / (1024 * 1024):.2f} MB"
         except:
             pass
             
@@ -256,6 +258,18 @@ class MediaItem:
                     import subprocess, re
                     cmd = ["ffmpeg", "-i", self.path.as_posix()]
                     output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
+                    
+                    input_match = re.search(r"Input #0,\s*([^,]+)", output)
+                    if input_match:
+                        raw_cont = input_match.group(1).upper().strip()
+                        raw_ext = self.type[1:].upper()
+                        if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
+                            tags['container'] = raw_ext
+                        elif raw_cont == 'MATROSKA':
+                            tags['container'] = 'MKV'
+                        else:
+                            tags['container'] = raw_cont
+                            
                     stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
                     if stream_match:
                         audio_line = stream_match.group(1)
@@ -268,7 +282,7 @@ class MediaItem:
                                     tags['bitdepth'] += f" ({fmt})"
                             else:
                                 if fmt in ('s16', 's16p'): tags['bitdepth'] = f"16 Bit ({fmt})"
-                                elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})"
+                                elif fmt in ('s24', 's24p'): tags['bitdepth'] = f"24 Bit ({fmt})" # Das liegt daran, dass Computer-Prozessoren (CPUs) nativ keine 24-Bit-Blöcke verarbeiten können (es gibt nur 8, 16, 32, 64 Bit Architektur). Wenn FFmpeg also ein hochauflösendes 24-Bit-Signal dekodiert, wird es für die interne Sound-Verarbeitung in der Regel mit Nullen aufgefüllt (Zero-Padding) und als flüssiger 32-Bit-Integer (s32p = signed 32-bit planar) an die Soundkarte weitergereicht
                                 elif fmt in ('s32', 's32p'): tags['bitdepth'] = f"32 Bit ({fmt})"
                                 elif fmt in ('fltp', 'flt'): tags['bitdepth'] = f"16 Bit ({fmt})"
                 except Exception:
@@ -276,7 +290,18 @@ class MediaItem:
                     
             # Retrieve Tag Container formatting
             if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
-                tags['tagtype'] = type(audio_for_info.tags).__name__
+                tag_name = type(audio_for_info.tags).__name__
+                if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
+                    # e.g., (2, 3, 0) -> ID3v2.3
+                    tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]}"
+                elif tag_name == 'MP4Tags':
+                    tags['tagtype'] = 'MP4'
+                elif tag_name == 'OggVComment':
+                    tags['tagtype'] = 'Vorbis Comment (Ogg)'
+                elif tag_name == 'FLACVComment':
+                    tags['tagtype'] = 'Vorbis Comment (FLAC)'
+                else:
+                    tags['tagtype'] = tag_name
                 
             # Detect Embedded Cover Art
             if self.type == '.mp3' and audio_for_info:
@@ -298,10 +323,17 @@ class MediaItem:
                 output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
                 
                 # Container / Format aus Input Info lesen: Input #0, matroska,webm, from ...
-                if tags['tagtype'] == 'None':
+                if not tags['container']:
                     input_match = re.search(r"Input #0,\s*([^,]+)", output)
                     if input_match:
-                        tags['tagtype'] = input_match.group(1).upper() + " (FFmpeg)"
+                        raw_cont = input_match.group(1).upper().strip()
+                        raw_ext = self.type[1:].upper()
+                        if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V'):
+                            tags['container'] = raw_ext
+                        elif raw_cont == 'MATROSKA':
+                            tags['container'] = 'MKV'
+                        else:
+                            tags['container'] = raw_cont
                 
                 # Suche Audio-Stream Zeile: Stream #0:0: Audio: aac (LC), 44100 Hz, stereo, fltp, 256 kb/s
                 stream_match = re.search(r"Stream #.*?: Audio:(.*)", output)
