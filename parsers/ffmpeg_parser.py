@@ -53,7 +53,7 @@ def parse(path, file_type, tags):
                     'u8': '8 Bit (u8)', 'u8p': '8 Bit (u8p)',
                     's16': '16 Bit (s16)', 's16p': '16 Bit (s16p)',
                     's24': '24 Bit (s24)', 's24p': '24 Bit (s24p)',
-                    's32': '32 Bit (s32)', 's32p': '32 Bit (s32p)',
+                    's32': '32 Bit (s32)', 's32p': '32 Bit (s32p)', # 24 Bit (s32) if PCM_S24LE
                     's64': '64 Bit (s64)', 's64p': '64 Bit (s64p)',
                     'flt': '32 Bit (flt)', 'fltp': '32 Bit (fltp)',
                     'dbl': '64 Bit (dbl)', 'dblp': '64 Bit (dblp)',
