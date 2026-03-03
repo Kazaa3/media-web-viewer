@@ -11,7 +11,7 @@ def format_samplerate(hz):
 
 def parse(path, file_type, tags):
     try:
-        cmd = ["ffmpeg", "-i", path.as_posix()]
+        cmd = ["ffmpeg", "-i", str(path)]
         output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
         
         # Container/Format fallback
