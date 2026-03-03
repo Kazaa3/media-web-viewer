@@ -23,7 +23,24 @@ import re  # For MKV parsing
 
 # Konfiguration
 MEDIA_DIR = "./media"  # Ordner mit Testdateien
-
+AUDIO_EXTENSIONS = {
+    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
+}
+VIDEO_EXTENSIONS = {
+    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.ogg', '.mts', '.m2ts'
+}
+DOCUMENT_EXTENSIONS = {
+    '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
+}
+IMAGE_EXTENSIONS = {
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico'
+}
+EBOOK_EXTENSIONS = {
+    '.epub', '.mobi', '.azw', '.fb2'
+}
+ARCHIVE_EXTENSIONS = {
+    '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'
+}   
 
 
 # Eigene Module
@@ -236,7 +253,7 @@ def scan_media():
     db.clear_media()
     
     for f in Path(MEDIA_DIR).iterdir():
-        if f.is_file() and f.suffix.lower() in {'.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'}:
+        if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
             item = MediaItem(f.name, f)
             db.insert_media(item.to_dict())
             
