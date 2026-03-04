@@ -46,6 +46,7 @@
             flex-direction: column;
             align-items: center;
             overflow-y: auto;
+            overflow-x: hidden;
             /* Hide scrollbar */
             -ms-overflow-style: none;
             /* IE and Edge */
@@ -56,6 +57,18 @@
         .sidebar::-webkit-scrollbar {
             display: none;
             /* Chrome, Safari and Opera */
+        }
+
+        /* Hide chapters scrollbar */
+        #sb-fileinfo>div>div::-webkit-scrollbar {
+            display: none;
+        }
+
+        #sb-fileinfo>div>div {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
         }
 
         .sidebar-cover {
@@ -359,9 +372,9 @@
     </div>
 
 
-    <div class="layout-container">
+    <div class="layout-container" id="main-split-container">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div id="main-sidebar" class="sidebar">
             <img id="sb-cover" class="sidebar-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
                 style="opacity: 0.5;">
             <div id="sb-title" class="sidebar-title">Kein Lied gewählt</div>
@@ -375,8 +388,11 @@
             </div>
         </div>
 
+        <!-- Main Splitter -->
+        <div class="splitter-v" id="main-splitter"></div>
+
         <!-- Main Right Content Area -->
-        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff;">
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-width: 0;">
             <div id="media-list" class="tab-content active"></div>
 
             <div id="browser-tab" class="tab-content" style="padding: 20px; overflow-y: auto;">
@@ -1322,43 +1338,49 @@
         }
 
         // ============ Resizable Splitter Logic ============
-        (function initSplitter() {
-            const splitter = document.getElementById('edit-splitter');
-            const leftPane = document.getElementById('edit-sidebar-left');
-            const container = document.getElementById('edit-split-container');
-            let isDragging = false;
+        (function () {
+            function initSplitter(splitterId, leftPaneId, containerId) {
+                const splitter = document.getElementById(splitterId);
+                const leftPane = document.getElementById(leftPaneId);
+                const container = document.getElementById(containerId);
+                let isDragging = false;
 
-            if (!splitter || !leftPane || !container) return;
+                if (!splitter || !leftPane || !container) return;
 
-            splitter.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                splitter.classList.add('active');
-                document.body.style.cursor = 'col-resize';
-                e.preventDefault();
-            });
+                splitter.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    splitter.classList.add('active');
+                    document.body.style.cursor = 'col-resize';
+                    e.preventDefault();
+                });
 
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
+                window.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
 
-                const containerRect = container.getBoundingClientRect();
-                let newWidth = e.clientX - containerRect.left;
+                    const containerRect = container.getBoundingClientRect();
+                    let newWidth = e.clientX - containerRect.left;
 
-                // Constraints
-                const minWidth = 200;
-                const maxWidth = containerRect.width - 300;
+                    // Constraints
+                    const minWidth = 200;
+                    const maxWidth = containerRect.width - 300;
 
-                if (newWidth < minWidth) newWidth = minWidth;
-                if (newWidth > maxWidth) newWidth = maxWidth;
+                    if (newWidth < minWidth) newWidth = minWidth;
+                    if (newWidth > maxWidth) newWidth = maxWidth;
 
-                leftPane.style.width = newWidth + 'px';
-            });
+                    leftPane.style.width = newWidth + 'px';
+                });
 
-            window.addEventListener('mouseup', () => {
-                if (!isDragging) return;
-                isDragging = false;
-                splitter.classList.remove('active');
-                document.body.style.cursor = 'default';
-            });
+                window.addEventListener('mouseup', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    splitter.classList.remove('active');
+                    document.body.style.cursor = 'default';
+                });
+            }
+
+            // Init both splitters
+            initSplitter('edit-splitter', 'edit-sidebar-left', 'edit-split-container');
+            initSplitter('main-splitter', 'main-sidebar', 'main-split-container');
         })();
         // Toggle Parser Times function
         function toggleParserTimes(show) {
