@@ -22,3 +22,4 @@ __pycache__/
 media/.cache/
 media/route_log.txt
 *.db
+Screens/
