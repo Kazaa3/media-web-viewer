@@ -625,32 +625,9 @@
                     <div
                         style="flex: 1; max-width: 500px; background: #fff; border: 1px solid #eee; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                         <h3 style="font-size: 1.1em; margin-bottom: 20px;">Test-Suiten auswählen</h3>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <label class="debug-flag-label"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="test-db" checked style="width: 18px; height: 18px;">
-                                <span style="font-weight: 500;">Database Logic</span>
-                            </label>
-                            <label class="debug-flag-label"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="test-media-item" checked style="width: 18px; height: 18px;">
-                                <span style="font-weight: 500;">MediaItem Logic</span>
-                            </label>
-                            <label class="debug-flag-label"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="test-parser" checked style="width: 18px; height: 18px;">
-                                <span style="font-weight: 500;">Parser Logic</span>
-                            </label>
-                            <label class="debug-flag-label"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-left: 20px;">
-                                <input type="checkbox" id="test-chapters" checked style="width: 18px; height: 18px;">
-                                <span style="font-weight: 500; color: #666;">└ Chapters Logic (incl. Order)</span>
-                            </label>
-                            <label class="debug-flag-label"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="test-gui" style="width: 18px; height: 18px;">
-                                <span style="font-weight: 500;">GUI Behavior (Browser)</span>
-                            </label>
+                        <div id="test-suites-container" style="display: flex; flex-direction: column; gap: 12px;">
+                            <!-- Dynamically loaded -->
+                            <div style="color: #999; font-size: 0.9em;">Suche nach Tests...</div>
                         </div>
 
                         <button onclick="runSelectedTests()"
@@ -1626,14 +1603,58 @@
             }
         }
 
-        async function runSelectedTests() {
-            const suites = [];
-            if (document.getElementById('test-db').checked) suites.push('db');
-            if (document.getElementById('test-media-item').checked) suites.push('media_item');
-            if (document.getElementById('test-parser').checked) suites.push('parser');
-            if (document.getElementById('test-chapters').checked) suites.push('chapters');
+        async function loadTestSuites() {
+            const container = document.getElementById('test-suites-container');
+            if (!container) return;
 
-            const guiTest = document.getElementById('test-gui').checked;
+            try {
+                const suites = await eel.get_test_suites()();
+                container.innerHTML = '';
+                if (suites.length === 0) {
+                    container.innerHTML = '<div style="color: #999;">Keine Tests gefunden.</div>';
+                    return;
+                }
+
+                suites.forEach(suite => {
+                    const label = document.createElement('label');
+                    label.className = 'debug-flag-label';
+                    label.style.display = 'flex';
+                    label.style.alignItems = 'center';
+                    label.style.gap = '10px';
+                    label.style.cursor = 'pointer';
+                    label.innerHTML = `
+                        <input type="checkbox" class="test-suite-checkbox" value="${suite.id}" checked style="width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">${suite.name}</span>
+                    `;
+                    container.appendChild(label);
+                });
+
+                // Add separate GUI test option manually
+                const guiLabel = document.createElement('label');
+                guiLabel.className = 'debug-flag-label';
+                guiLabel.style.display = 'flex';
+                guiLabel.style.alignItems = 'center';
+                guiLabel.style.gap = '10px';
+                guiLabel.style.cursor = 'pointer';
+                guiLabel.style.marginTop = '10px';
+                guiLabel.style.paddingTop = '10px';
+                guiLabel.style.borderTop = '1px solid #eee';
+                guiLabel.innerHTML = `
+                    <input type="checkbox" id="test-gui" style="width: 18px; height: 18px;">
+                    <span style="font-weight: 500;">GUI Behavior (Browser Subagent)</span>
+                `;
+                container.appendChild(guiLabel);
+
+            } catch (e) {
+                console.error("Failed to load suites:", e);
+                container.innerHTML = `<div style="color: #f44;">Fehler beim Laden: ${e}</div>`;
+            }
+        }
+
+        async function runSelectedTests() {
+            const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
+            const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+            const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
 
             const resultsContainer = document.getElementById('test-results-container');
             const outputArea = document.getElementById('test-output');
@@ -1641,10 +1662,11 @@
             resultsContainer.style.display = 'block';
             outputArea.textContent = "Tests werden gestartet...\n";
             outputArea.style.color = "#d4d4d4";
+            outputArea.style.borderLeft = "1px solid #333";
 
-            if (suites.length > 0) {
+            if (selectedFiles.length > 0) {
                 try {
-                    const result = await eel.run_tests(suites)();
+                    const result = await eel.run_tests(selectedFiles)();
                     outputArea.textContent += `Status: ${result.summary}\n\n${result.output}`;
                     if (result.exit_code !== 0) {
                         outputArea.style.borderLeft = "5px solid #f44";
@@ -1671,6 +1693,7 @@
             loadLibrary();
             loadParserConfig();
             loadDebugFlags();
+            loadTestSuites();
         }, 100);
     </script>
 </body>
