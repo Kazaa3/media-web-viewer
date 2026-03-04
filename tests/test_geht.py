@@ -1,8 +1,8 @@
-# Kategorie: -
-# Eingabewerte: -
-# Ausgabewerte: -
-# Testdateien: -
-# Kommentar: Neuer Test
+# Kategorie: Kategorie
+# Eingabewerte: Test
+# Ausgabewerte: Test
+# Testdateien: Test
+# Kommentar: Test Kommentar
 
 import pytest
 
