@@ -186,6 +186,7 @@ ARCHIVE_EXTENSIONS = {
 #die unetrkapitelsortierung ist nicht 1,2,3 sondern 1,21,22,2
 # alte einträge zu typ, container und tag ist weg und soll wieder in das linke seiten fenster des players
 # tESTS IMMER hinzufügen
+# kommentare hinzufügen für doku ki komen
 
 # Debug-Optionen
 DEBUG_FLAGS = {
