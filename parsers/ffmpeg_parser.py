@@ -27,8 +27,8 @@ def parse(path, file_type, tags):
             from .format_utils import format_codec, format_bitdepth, format_samplerate
             
             # Codec
-            if not tags.get('codec') or tags.get('codec') == file_type[1:].lower():
-                codec_match = re.search(r"^\s*([a-zA-Z0-9_]+)", audio_line)
+            if not tags.get('codec') or tags.get('codec') == file_type[1:].lower() or tags.get('container') == 'mkv':
+                codec_match = re.search(r"^\s*([a-zA-Z0-9_\-]+)", audio_line)
                 if codec_match:
                     tags['codec'] = format_codec(codec_match.group(1))
                     

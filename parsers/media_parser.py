@@ -31,6 +31,8 @@ def extract_metadata(path, filename, debug=False):
             not tags.get('bitrate') or 
             not tags.get('bitdepth') or
             not tags.get('codec') or
+            tags.get('codec') == file_type[1:].lower() or
+            not tags.get('container') or
             not duration
         )
         
