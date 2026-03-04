@@ -102,9 +102,39 @@ BROWSER_DEFAULT_DIR = str(Path.home())
 # Namensdoument. footer / pop up synnyme
 # Funktionsdokument. so wie read-me
 
-
+# tut
 # File format guides zru Erklärung
-#json
+# json parsing dict
+# technoligie möglichkeiten
+# Einteilung wireframe, mockups, prototypes, UI, UX
+# bze kurz, mittel, lang
+
+
+# git
+#Edit repository details
+# Releases
+# Branches
+# Packages
+
+
+# STelle merken
+# Play count
+# Last played
+# Rating
+# Vor und zurück
+# Playlist
+# Alben, Compilations, SSingles, etc.
+# Filme und Serien
+# Ebooks
+# Bilder
+# Dokumente
+# Archive
+# Sonstige
+# Daten Typen, die noch zu identifizieren sind
+# Test mit selenium
+# Test mit pytest
+# Vibecoding mit Antigravity
+
 
 AUDIO_EXTENSIONS = {
     '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
@@ -312,6 +342,20 @@ from models import MediaItem
 
 # Benchmarking
 # Parsen, Sorting, Einlesen, Unterschiedliche PArser, Transkodierung, Cache
+
+
+
+#requriements.txt
+# env
+# alle alten .md in das logbuch kopieren
+
+
+# datenbank logik
+# wie werden items angelegt.
+# für jeden medientp eigene daten bank
+# felder für unterschiedlice tags unetrschiedlich.
+# trotzdem eine große datenbank
+
 
 @eel.expose("get_library")
 def get_library():
