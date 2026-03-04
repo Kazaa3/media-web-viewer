@@ -357,6 +357,55 @@ from models import MediaItem
 # trotzdem eine große datenbank
 
 
+# Anforderungen. Neue Features
+# Bestehende Features
+# Zu erweiternde Features
+# 
+
+# Benchmarking
+# Parsen, Sorting, Einlesen, Unterschiedliche PArser, Transkodierung, Cache
+
+
+# Werte auf GUI Qexposen
+# Immer alle .md walktrough und nach logbuch
+# git kommentare
+
+
+#debug db
+#debug parser
+#debug transcoding
+#debug cache
+#debug gui
+#debug selen etsting
+#debug py testing
+
+#zu db
+# datei auswählen. standard ist das dict
+# konsole log doku
+# 
+
+# ganz ferne zukunft:
+# web gui mit playlist
+# ki sortierung
+#
+
+# oPTIONEN REWORK
+# Neue anordnung
+# Flagssteuerung ist doppelt, aber lassen weil es so gut funktioniert.
+# lern tool einbauen mit puzzle
+
+
+
+
+#gui element zentrierung
+# diverses
+# scrolbar abschalten
+# Design Ideen für Rework
+
+
+# Dateiendung änderbar machen
+
+
 @eel.expose("get_library")
 def get_library():
     """Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen."""
