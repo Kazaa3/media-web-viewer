@@ -40,5 +40,3 @@ main.py
 Anklicken eines Hörbuches (z.B. "Adam Grant - Nonkonformisten.m4b") in der GUI.
 Prüfen, ob die Kapitelübersicht fehlerfrei und optisch passend in der Seitenleiste gerendert wird.
 
-Comment
-Ctrl+Alt+M

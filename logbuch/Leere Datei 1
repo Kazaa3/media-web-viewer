@@ -1,8 +1,0 @@
-2. Sidebar-Anpassung (
-
-app.html
-):
-Der Begriff wurde von "Item Type" in "Filetype" geändert.
-Die Darstellung in der Sidebar wurde vereinheitlicht und nutzt nun den Trenner • (Dot).
-Die Zeile sieht nun so aus:
-File: mp3 • Container: mp3 • Tag Format: ID3v2.3 • Filetype: Album
