@@ -146,11 +146,11 @@ def parse(path, file_type, tags, name):
             if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
                 tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]} / ID3v2.4 / ID3v2.3 / ID3v2.2 / ID3v1.1 / ID3v1"
             elif tag_name == 'MP4Tags':
-                tags['tagtype'] = 'MP4Tags / MP4 Atoms'
+                tags['tagtype'] = 'MP4Tags / Atoms'
             elif tag_name == 'OggVComment':
-                tags['tagtype'] = 'Vorbis Comment (Ogg): OggVComment'
+                tags['tagtype'] = 'OggVComment' #Vorbis Comment (Ogg)
             elif tag_name == 'VCFLACDict':
-                tags['tagtype'] = 'Vorbis Comment (FLAC): VCFLACDict'
+                tags['tagtype'] = 'VCFLACDict' #Vorbis Comment (FLAC)
             else:
                 tags['tagtype'] = tag_name
             
