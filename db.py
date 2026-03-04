@@ -15,6 +15,7 @@ def init_db():
             path TEXT,
             type TEXT,
             duration TEXT,
+            category TEXT,
             is_transcoded BOOLEAN,
             transcoded_format TEXT,
             tags TEXT
@@ -37,6 +38,13 @@ def init_db():
             FOREIGN KEY(media_id) REFERENCES media(id)
         )
     """)
+
+    # Migration: Add category column if missing (for existing databases)
+    try:
+        cursor.execute("ALTER TABLE media ADD COLUMN category TEXT")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # Already exists
 
     conn.commit()
     conn.close()
@@ -61,13 +69,14 @@ def insert_media(item_dict):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            INSERT INTO media (name, path, type, duration, is_transcoded, transcoded_format, tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO media (name, path, type, duration, category, is_transcoded, transcoded_format, tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
             item_dict['type'],
             item_dict['duration'],
+            item_dict['category'],
             item_dict['is_transcoded'],
             item_dict.get('transcoded_format'),
             json.dumps(item_dict['tags'])
@@ -93,6 +102,7 @@ def get_all_media():
             'path': row['path'],
             'type': row['type'],
             'duration': row['duration'],
+            'category': row['category'],
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {}

@@ -1,5 +1,13 @@
 # main.py
 
+# Irgendwo brauche ich einen PLatz um schnell Ideen festzuhalten. 
+# Das hier ist ein Logbuch. Hier schreibe ich Ideen und was ich gerade mache.
+# Das ist nicht für den Endnutzer gedacht.
+
+#  Filetype Logik funktioniert nicht richtig
+#  Bearbeiten Button in Logbuch und Testfenster funktioniert nicht
+#  zu jeder Datei wird der komplette Tag gespeichert, was sehr viel Speicherplatz verbraucht und nicht performant ist.
+
 #Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
 import sys
