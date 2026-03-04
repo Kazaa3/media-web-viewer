@@ -680,6 +680,11 @@ def browse_dir(dir_path=None):
 # in dem feautres modal.... soll es unter: v den link zum vollständigen logbuch tab geben
 
 
+# Einafches Logbuch mit modal
+# Vollständiges Logbuch
+# Erweitertes Logbuch mit Kategorieren
+# Test cases mit KAtegorien
+
 
 @eel.expose("pick_folder")
 def pick_folder():
