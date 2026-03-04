@@ -398,6 +398,56 @@ def update_test_metadata(filename, metadata):
         return {"error": str(e)}
 
 @eel.expose
+def create_new_test(name):
+    """Creates a new test file with a basic template."""
+    test_dir = Path(__file__).parent / "tests"
+    test_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Sanitize name
+    safe_name = "".join([c for c in name if c.isalnum() or c in (' ', '_', '-')]).strip().replace(' ', '_')
+    if not safe_name.startswith('test_'):
+        safe_name = f"test_{safe_name}"
+    
+    filename = f"{safe_name}.py"
+    file_path = test_dir / filename
+    
+    if file_path.exists():
+        return {"status": "error", "message": "Test existiert bereits"}
+        
+    template = f"""# Kategorie: -
+# Eingabewerte: -
+# Ausgabewerte: -
+# Testdateien: -
+# Kommentar: Neuer Test
+
+import pytest
+
+def {safe_name}():
+    # Hier Test-Code schreiben
+    assert True
+"""
+    try:
+        file_path.write_text(template, encoding='utf-8')
+        return {"status": "ok", "filename": filename}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def delete_test(filename):
+    """Löscht eine Test-Datei."""
+    test_dir = Path(__file__).parent / "tests"
+    file_path = test_dir / filename
+    
+    if not file_path.exists():
+        return {"status": "error", "message": "Datei nicht gefunden"}
+        
+    try:
+        file_path.unlink()
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def get_logbook_entry(feature_name):
     """Read a markdown file from the logbuch directory."""
     log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
@@ -477,7 +527,7 @@ def delete_logbook_entry(filename):
         filename = filename + '.md'
     
     # Verhindere Directory Traversal
-    if '/' in filename or '\\' in filename or filename.startswith('.'):
+    if '/' in filename or '\\' in filename or filename.startswith('.') or '..' in filename:
         return {"error": "Ungültiger Dateiname"}
     
     file_path = log_dir / filename
