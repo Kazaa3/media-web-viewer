@@ -372,6 +372,8 @@
                 <button class="tab-btn" onclick="switchTab('options', this)">Optionen</button>
                 <button class="tab-btn" onclick="switchTab('parser', this)">Parser</button>
                 <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
+                <button class="tab-btn" style="background: #fdf5e6; border-color: #f4d;" onclick="toggleDebugMenu()">⚙️
+                    Flags</button>
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -631,6 +633,28 @@
             style="display: none; align-items: center; gap: 8px; font-size: 0.85em; color: #2a7; font-weight: bold; padding: 0 10px;">
             <div class="spinner"></div>
             <span>Datenbank wird aktualisiert...</span>
+        </div>
+    </div>
+
+    <!-- Debug Flags Modal/Overlay -->
+    <div id="debug-flags-modal"
+        style="display: none; position: fixed; top: 80px; right: 20px; width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 1.1em;">Debug Flags</h3>
+            <button onclick="toggleDebugMenu()"
+                style="border: none; background: transparent; cursor: pointer; font-size: 1.2em;">✕</button>
+        </div>
+        <div id="modal-debug-flags" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Content will be mirrored from Options tab or updated via Eel -->
+        </div>
+        <div
+            style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 8px;">
+            <button onclick="loadLibrary()"
+                style="width: 100%; padding: 8px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Force
+                Reload List</button>
+            <button onclick="eel.scan_media(null, false)()"
+                style="width: 100%; padding: 8px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Quick
+                Scan (No Clear)</button>
         </div>
     </div>
 
@@ -1179,8 +1203,9 @@
                 let result = await eel.get_library()();
                 let list = document.getElementById('media-list');
                 list.innerHTML = '';
-
+                console.log("[loadLibrary] Result from backend:", result);
                 if (!result || !result.media || result.media.length === 0) {
+                    console.warn("[loadLibrary] No media found in library.");
                     list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Klicke "Scan Media" oder füge Dateien über den Browser-Tab hinzu.</p>';
                     return;
                 }
@@ -1412,14 +1437,35 @@
 
                 label.innerHTML = `
                     <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
-                    <span style="font-family: monospace; font-size: 0.95em;">${key.toUpperCase()} Debugging-Logs</span>
+                    <span style="font-family: monospace; font-size: 0.95em;">${key.toUpperCase()}</span>
                 `;
                 container.appendChild(label);
+            }
+
+            // Sync with Modal
+            const modalContainer = document.getElementById('modal-debug-flags');
+            if (modalContainer) {
+                modalContainer.innerHTML = container.innerHTML;
+                // Re-bind the onchange because innerHTML doesn't preserve it cleanly in some browsers if listeners were manual,
+                // but here it's inline in string, so it should be fine. 
+                // However, we need to make sure toggleDebugFlag is global.
             }
         }
 
         async function toggleDebugFlag(key, value) {
             await eel.set_debug_flag(key, value)();
+            // Refresh both locations
+            loadDebugFlags();
+        }
+
+        function toggleDebugMenu() {
+            const modal = document.getElementById('debug-flags-modal');
+            if (modal.style.display === 'none') {
+                modal.style.display = 'block';
+                loadDebugFlags();
+            } else {
+                modal.style.display = 'none';
+            }
         }
 
         async function clearDatabase() {
