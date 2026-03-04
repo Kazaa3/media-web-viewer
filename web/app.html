@@ -1035,7 +1035,7 @@
                 chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
                 tags.chapters.forEach((chap, idx) => {
                     let timeString = new Date(chap.start * 1000).toISOString().substring(11, 19);
-                    chaptersHtml += `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 6px 0;">
+                    chaptersHtml += `<div onclick="window.jumpToChapter(${chap.start})" style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 6px 4px; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background=''">
                         <span style="color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 75%;" title="${chap.title}">${chap.title}</span>
                         <span style="color: #888; font-family: monospace;">${timeString}</span>
                     </div>`;
@@ -1054,6 +1054,14 @@
             switchTab('edit', editBtn);
             openEditForm(item);
         }
+
+        window.jumpToChapter = function (startTime) {
+            let p = document.getElementById('player');
+            if (p) {
+                p.currentTime = startTime;
+                p.play();
+            }
+        };
 
         async function loadLibrary() {
             let result = await eel.get_library()();
