@@ -110,7 +110,7 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
         from .format_utils import natural_sort_key
         # Priority: 1. Natural Title, 2. Start Time
         tags['chapters'] = sorted(tags['chapters'], key=lambda x: (natural_sort_key(x.get('title', '')), x.get('start', 0.0)))
-        if logger:
+        if logger and debug:
             first_chaps = [c.get('title') for c in tags['chapters'][:5]]
             logger(f"[Parser] Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 

@@ -162,7 +162,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     effective_path = dir_path if (dir_path and dir_path.strip()) else SCAN_MEDIA_DIR
     scan_root = Path(effective_path).resolve()
     
-    debug_log(f"\n[Scan] Starting scan of: {scan_root}")
+    if DEBUG_FLAGS.get("scan"):
+        debug_log(f"\n[Scan] Starting scan of: {scan_root}")
     
     if not scan_root.exists():
         try:
@@ -200,7 +201,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         eel.set_db_status(False)()
     
     elapsed = time.time() - start_time
-    debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
+    if DEBUG_FLAGS.get("scan"):
+        debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
 
     # Status in GUI ausblenden (redundant, already handled by guard above)
 
@@ -614,7 +616,11 @@ def run_gui_tests():
 if __name__ == "__main__":
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
-    debug_log(startup_cmd)
+    # Only print on startup if a debug flag is active (though usually all are False initially)
+    # Append to LOG_BUFFER silently so it's visible in the debug window later
+    LOG_BUFFER.append(startup_cmd)
+    if any(DEBUG_FLAGS.values()):
+        print(startup_cmd)
 
     db.init_db()               
     
