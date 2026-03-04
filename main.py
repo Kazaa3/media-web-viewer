@@ -208,6 +208,12 @@ class MediaItem:
         print(self.type)
         print(self.duration)
         print(self.tags)
+        print(self.tags.get('_parser_times'))
+        print(self.tags.get('container'))
+        print(self.tags.get('codec'))
+        print(self.tags.get('tagtype'))
+        print(self.tags.get('size'))
+        
         print("\n")
 
 
