@@ -1205,6 +1205,9 @@
             // Combine them
             fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
 
+            // Base info: Name & Path (Prepended)
+            let headerInfo = `<strong>${item.name}</strong><br><span style="color:#888; font-size:0.9em;">Category: ${item.category || 'Audio'}</span><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
+            fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
             // Format Parser Times
             let parserTimesHtml = '';
             // Only show if the toggle is checked
@@ -1225,7 +1228,6 @@
                 }
             }
             // Base info: Name & Path
-            fileInfoStr = `<strong>${item.name}</strong><br><span style="color:#888; font-size:0.9em;">Category: ${item.category || 'Audio'}</span><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em;">${path}</span>`;
             let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
 
             // Render chapters if available

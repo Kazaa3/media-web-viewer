@@ -88,7 +88,7 @@ def parse(path, file_type, tags, mode='lightweight'):
                 
             if chapters:
                 from .format_utils import natural_sort_key
-                tags['chapters'] = sorted(chapters, key=lambda x: natural_sort_key(x.get('title', x.get('start', 0))))
+                tags['chapters'] = sorted(chapters, key=lambda x: (x.get('start', 0.0), natural_sort_key(x.get('title', ''))))
 
     except Exception:
         pass

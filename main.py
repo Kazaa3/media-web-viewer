@@ -105,8 +105,9 @@ ARCHIVE_EXTENSIONS = {
 # # debug flags menu
 # mandatory unit test for all new components
 # agenten gesteuerter browser test
-
-
+# m4b sind immer hörbücher und nicht audio
+#die unetrkapitelsortierung ist nicht 1,2,3 sondern 1,21,22,2
+# alte einträge zu typ, container und tag ist weg und soll wieder in das linke seiten fenster des players
 
 # Debug-Optionen
 DEBUG_FLAGS = {
