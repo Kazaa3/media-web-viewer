@@ -1,3 +1,9 @@
+# Kategorie: Performance Test
+# Eingabewerte: Reale Medien im /media Ordner
+# Ausgabewerte: Ausführungszeiten (STDOUT)
+# Testdateien: /media/*
+# Kommentar: Misst die Geschwindigkeit von pymediainfo, mutagen, ffmpeg etc.
+
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pathlib import Path

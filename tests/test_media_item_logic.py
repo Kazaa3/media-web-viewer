@@ -1,3 +1,8 @@
+# Kategorie: Unit Test (Logik)
+# Eingabewerte: MediaItem Objekte
+# Ausgabewerte: Dictionary / JSON Kompatibel
+# Testdateien: test.mp3, test.alac, test.wma (Mocks)
+# Kommentar: Prüft ob die Datenstrukturen und Transcoding-Parameter sauber abgebildet werden.
 
 import sys
 import os

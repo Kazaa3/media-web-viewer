@@ -135,6 +135,13 @@ BROWSER_DEFAULT_DIR = str(Path.home())
 # Test mit pytest
 # Vibecoding mit Antigravity
 
+# Lernen JavaScript
+# Refresh HTML, CSS
+# Refresh Python
+# Refresh EEL
+# pYTHON Datenanalyse
+# Python Scraping
+
 
 AUDIO_EXTENSIONS = {
     '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
@@ -335,6 +342,9 @@ from models import MediaItem
 #/media/01-05-Joan_Baez-Lowlands-LLS.m4a.flac_transcoded
 # /media/02%20Ludwig%20van%20Beethoven%20-%20Piano%20Concerto%20No.%205%20in%20E-flat%20major%2C%20Op.%2073%20''Emperor''-%20II.%20Adagio%20un%20poco%20mosso.wav
 
+# Testdaten generell
+
+
 # Testdateien Ordner mit infos
 # m4b mit Cahpetr Variante 1
 # m4b mit variante 2
@@ -367,7 +377,8 @@ from models import MediaItem
 
 
 # Werte auf GUI Qexposen
-# Immer alle .md walktrough und nach logbuch
+# Immer alle .md  und nach logbuch. walktrough, Scratchpad .mds geenrell
+
 # git kommentare
 
 
@@ -404,6 +415,67 @@ from models import MediaItem
 
 
 # Dateiendung änderbar machen
+
+
+
+# universales Wörterbuch für Tags
+# Berücksichtigung der unterschiedlichen TAg varianten
+
+#smb / nfs / webdav / ftp / sftp
+
+# screenshots
+
+# kommentar rework
+
+# Die vielen Pythons anschauen
+# Linux 7 user / bin / home /ab / anaconda3 / envs / p14 / bin / python3.14
+# conda env list
+# conda activate p14
+#global lokal
+#/bin/python3.11
+
+
+# fehlt test tab rework
+# Testkategorien
+# Eingabewerte
+# Ausgabewerte
+# Testdateien
+# Aufzählung der passes
+# Kommentar
+
+
+# sprache, impressum, legende
+# item, footer
+# getrentn nach technologie
+#decorator 
+
+# notizbuch
+# ausbauen
+
+
+#eel
+#http://localhost:8000/app.html
+#selenium testing
+
+# anderer port
+#check für refresh, wenn down
+
+# un abgehakte punkte wieder hinzufügen
+
+# doku library
+# mutagen
+# ffmpeg
+# parser
+# db
+# cache
+# gui
+# selenium
+# py testing
+#python
+# eel
+#mct
+
+#rezepeti
 
 
 @eel.expose("get_library")
@@ -570,6 +642,41 @@ def browse_dir(dir_path=None):
     parent = str(target.parent) if target.parent != target else None
     return {"path": str(target), "parent": parent, "items": items}
 
+# Läuft über Tkinter
+# Kann man das auch über eel machen?
+# Funktioniert der manuelle import mehrer dateien
+
+
+# templates
+# an gui schicken
+# globale flanke
+# tbc
+
+# unetr feartures
+# unten loogbuch link
+# Synchronisiert mit `task.md` und `walkthrough.md` • Klicken für Details
+
+#logbuch ist verloren gegangen. heir die .mds
+
+
+# perplexity kopierer / scraper
+
+
+# json.dumps() garantiert JSON-konforme double quotes und Escaping.
+
+
+#jede.md datei jeden implementation plan in logbuch speichern. 
+#rename
+#task.md
+#walktrough.md
+#implementationplan.md
+#review changes
+#sowie git kommentare
+
+
+# CApture tool
+
+
 @eel.expose("pick_folder")
 def pick_folder():
     """Öffnet einen nativen Ordner-Auswahldialog."""
@@ -604,20 +711,41 @@ def add_file_to_library(file_path):
 
 @eel.expose
 def get_test_suites():
-    """Discover all .py files in the tests/ directory."""
+    """Discover all test files in the tests/ directory and extract metadata."""
     test_dir = Path(__file__).parent / "tests"
     if not test_dir.exists():
         return []
     
     suites = []
-    for f in sorted(test_dir.glob("test_*.py")):
-        # Read the first few lines to find a title/description if possible
-        display_name = f.stem.replace("test_", "").replace("_", " ").title()
-        suites.append({
-            "id": f.name,
-            "name": display_name,
-            "path": str(f)
-        })
+    for f in sorted(test_dir.glob("*.py")):
+        if f.name.startswith("test_") or f.name.startswith("benchmark_"):
+            try:
+                content = f.read_text(encoding='utf-8')
+            except Exception:
+                content = ""
+            
+            metadata = {
+                "category": "-",
+                "inputs": "-",
+                "outputs": "-",
+                "files": "-",
+                "comment": "-"
+            }
+            
+            for line in content.splitlines():
+                if line.startswith("# Kategorie:"): metadata["category"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Eingabewerte:"): metadata["inputs"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Ausgabewerte:"): metadata["outputs"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Testdateien:"): metadata["files"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Kommentar:"): metadata["comment"] = line.split(":", 1)[1].strip()
+
+            display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
+            suites.append({
+                "id": f.name,
+                "name": display_name,
+                "path": str(f),
+                "metadata": metadata
+            })
     return suites
 
 @eel.expose
@@ -668,10 +796,25 @@ def run_tests(test_files):
             env=env,
             cwd=str(Path(__file__).parent)
         )
+        # Parse output for passed/failed
+        import re
+        passes = 0
+        fails = 0
+        match = re.search(r'==.*?\s(\d+)\s+passed', output)
+        if match:
+            passes = int(match.group(1))
+        match_fails = re.search(r'==.*?\s(\d+)\s+failed', output)
+        if match_fails:
+            fails = int(match_fails.group(1))
+            
+        summary = f"{passes} passed, {fails} failed"
+        
         return {
             "exit_code": result.returncode,
-            "output": result.stdout + "\n" + result.stderr,
-            "summary": "Tests passed" if result.returncode == 0 else "Tests failed"
+            "output": output,
+            "summary": summary,
+            "passes": passes,
+            "fails": fails
         }
     except Exception as e:
         return {"error": str(e)}
