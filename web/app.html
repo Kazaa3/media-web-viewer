@@ -373,6 +373,8 @@
                 <button class="tab-btn" onclick="switchTab('parser', this)">Parser</button>
                 <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
                 <button class="tab-btn" onclick="switchTab('tests', this)">Tests</button>
+                <button class="tab-btn" onclick="switchTab('logbuch', this)"
+                    style="background: #e1f5fe; border-color: #0277bd; color: #0277bd;">📓 Logbuch</button>
                 <button class="tab-btn" style="background: #fdf5e6; border-color: #f4d;" onclick="toggleDebugMenu()">⚙️
                     Flags</button>
             </div>
@@ -648,6 +650,29 @@
                 </div>
             </div>
 
+            <!-- Logbuch Tab -->
+            <div id="logbuch-tab" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
+                <h2 style="margin-bottom: 25px;">Vollständiges Logbuch</h2>
+                <div style="display: flex; gap: 30px;">
+                    <div
+                        style="flex: 1; max-width: 350px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">Einträge</h3>
+                        <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- populated by JS -->
+                            <div style="color: #999; font-style: italic;">Lade Einträge...</div>
+                        </div>
+                    </div>
+                    <div
+                        style="flex: 2; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px; min-height: 500px;">
+                        <h2 id="logbuch-tab-title" style="margin-top: 0; margin-bottom: 20px; color: #333;">Willkommen
+                            im Logbuch</h2>
+                        <div id="logbuch-tab-content" style="line-height: 1.6; color: #444;">
+                            Wähle links einen Eintrag aus, um ihn zu lesen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="debug-tab" class="tab-content"
                 style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
                 <!-- Left half: JSON Output -->
@@ -811,398 +836,409 @@
                 </div>
             </div>
 
+            <div
+                style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.8em; color: #888;">Synchronisiert mit `task.md` und `walkthrough.md`</div>
+                <button
+                    onclick="toggleFeatureStatus(); switchTab('logbuch', document.querySelector('.tab-btn[onclick*=\'logbuch\']'));"
+                    style="padding: 8px 16px; background: #e1f5fe; color: #0277bd; border: 1px solid #81d4fa; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: background 0.2s;">
+                    📓 Zum vollständigen Logbuch
+                </button>
+            </div>
         </div>
-        <div
-            style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; font-size: 0.8em; color: #888;">
-            Synchronisiert mit `task.md` und `walkthrough.md` • Klicken für Details
+
+        <!-- Logbook Detail Modal -->
+        <div id="logbook-modal"
+            style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
+            <div
+                style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Logbuch: Feature
+                    Name
+                </h3>
+                <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
+                    style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
+            </div>
+            <div id="logbook-content"
+                style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;">
+                Lade Details...
+            </div>
+            <div
+                style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
+                <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
+                    style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Schließen</button>
+            </div>
         </div>
-    </div>
 
-    <!-- Logbook Detail Modal -->
-    <div id="logbook-modal"
-        style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
-        <div
-            style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Logbuch: Feature Name
-            </h3>
-            <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
-                style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
-        </div>
-        <div id="logbook-content"
-            style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;">
-            Lade Details...
-        </div>
-        <div
-            style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
-            <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
-                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Schließen</button>
-        </div>
-    </div>
+        <script>
+            let currentPlayer = document.getElementById('player');
 
-    <script>
-        let currentPlayer = document.getElementById('player');
+            // ============ File Browser ============
+            let fbCurrentPath = null;
+            let fbParentPath = null;
 
-        // ============ File Browser ============
-        let fbCurrentPath = null;
-        let fbParentPath = null;
-
-        async function fbPickFolder() {
-            const folder = await eel.pick_folder()();
-            if (folder) {
-                // Switch to browser tab automatically after folder selection
-                switchTab('browser', document.querySelector('.tab-btn[onclick*="browser"]'));
-                fbNavigate(folder);
-            }
-        }
-
-        async function fbNavigate(dirPath) {
-            let result = await eel.browse_dir(dirPath || null)();
-            if (result.error) {
-                document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
-                return;
-            }
-            fbCurrentPath = result.path;
-            fbParentPath = result.parent;
-            document.getElementById('fb-path-input').value = result.path;
-            document.getElementById('fb-back').disabled = !result.parent;
-
-            let list = document.getElementById('fb-list');
-            list.innerHTML = '';
-
-            if (result.items.length === 0) {
-                list.innerHTML = '<p style="color: #999;">Keine Audiodateien oder Ordner gefunden.</p>';
-                return;
+            async function fbPickFolder() {
+                const folder = await eel.pick_folder()();
+                if (folder) {
+                    // Switch to browser tab automatically after folder selection
+                    switchTab('browser', document.querySelector('.tab-btn[onclick*="browser"]'));
+                    fbNavigate(folder);
+                }
             }
 
-            result.items.forEach(item => {
-                let row = document.createElement('div');
-                row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
-                row.onmouseover = () => row.style.background = '#f5f5f5';
-                row.onmouseout = () => row.style.background = '';
+            async function fbNavigate(dirPath) {
+                let result = await eel.browse_dir(dirPath || null)();
+                if (result.error) {
+                    document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
+                    return;
+                }
+                fbCurrentPath = result.path;
+                fbParentPath = result.parent;
+                document.getElementById('fb-path-input').value = result.path;
+                document.getElementById('fb-back').disabled = !result.parent;
 
-                if (item.type === 'folder') {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
-                    row.onclick = () => fbNavigate(item.path);
-                } else {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
-                    row.onclick = async () => {
-                        let statusEl = row.querySelector('.fb-status');
-                        statusEl.textContent = '⏳ …';
-                        let res = await eel.add_file_to_library(item.path)();
-                        if (res.status === 'added' || res.status === 'exists') {
-                            statusEl.textContent = res.status === 'added' ? '✅ Hinzugefügt' : '⚠️ Vorhanden';
-                            statusEl.style.color = res.status === 'added' ? '#2a7' : '#c90';
+                let list = document.getElementById('fb-list');
+                list.innerHTML = '';
 
-                            // If added, we have the item. If exists, we need to find it in allLibraryItems (which we should refresh)
-                            let finalItem = res.item;
-                            if (!finalItem) {
-                                // Try to find in existing library list
-                                const lib = await eel.get_library()();
-                                finalItem = lib.media.find(m => m.name === (res.name || item.name));
-                            }
+                if (result.items.length === 0) {
+                    list.innerHTML = '<p style="color: #999;">Keine Audiodateien oder Ordner gefunden.</p>';
+                    return;
+                }
 
-                            if (finalItem) {
-                                let mediaUrl = '/media/' + encodeURIComponent(finalItem.name);
-                                if (finalItem.is_transcoded && finalItem.transcoded_format) {
-                                    mediaUrl += '.' + finalItem.transcoded_format.toLowerCase() + '_transcoded';
+                result.items.forEach(item => {
+                    let row = document.createElement('div');
+                    row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
+                    row.onmouseover = () => row.style.background = '#f5f5f5';
+                    row.onmouseout = () => row.style.background = '';
+
+                    if (item.type === 'folder') {
+                        row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
+                        row.onclick = () => fbNavigate(item.path);
+                    } else {
+                        row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
+                        row.onclick = async () => {
+                            let statusEl = row.querySelector('.fb-status');
+                            statusEl.textContent = '⏳ …';
+                            let res = await eel.add_file_to_library(item.path)();
+                            if (res.status === 'added' || res.status === 'exists') {
+                                statusEl.textContent = res.status === 'added' ? '✅ Hinzugefügt' : '⚠️ Vorhanden';
+                                statusEl.style.color = res.status === 'added' ? '#2a7' : '#c90';
+
+                                // If added, we have the item. If exists, we need to find it in allLibraryItems (which we should refresh)
+                                let finalItem = res.item;
+                                if (!finalItem) {
+                                    // Try to find in existing library list
+                                    const lib = await eel.get_library()();
+                                    finalItem = lib.media.find(m => m.name === (res.name || item.name));
                                 }
-                                jumpToEdit(finalItem);
+
+                                if (finalItem) {
+                                    let mediaUrl = '/media/' + encodeURIComponent(finalItem.name);
+                                    if (finalItem.is_transcoded && finalItem.transcoded_format) {
+                                        mediaUrl += '.' + finalItem.transcoded_format.toLowerCase() + '_transcoded';
+                                    }
+                                    jumpToEdit(finalItem);
+                                }
+                            } else {
+                                statusEl.textContent = '❌ ' + (res.error || 'Fehler');
+                                statusEl.style.color = '#c33';
                             }
-                        } else {
-                            statusEl.textContent = '❌ ' + (res.error || 'Fehler');
-                            statusEl.style.color = '#c33';
-                        }
-                    };
-                }
-                list.appendChild(row);
-            });
-        }
-
-        function fbBack() {
-            if (fbParentPath) fbNavigate(fbParentPath);
-        }
-
-        // ============ Tab Switching ============
-        function switchTab(tabId, btn) {
-            // Reset all tabs
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.classList.remove('active');
-                el.style.display = 'none'; // Force hide all
-            });
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-            const tabMap = {
-                'player': 'media-list',
-                'library': 'library-tab',
-                'browser': 'browser-tab',
-                'edit': 'edit-tab',
-                'options': 'options-tab',
-                'parser': 'parser-tab',
-                'debug': 'debug-list',
-                'tests': 'tests'
-            };
-
-            const targetId = tabMap[tabId];
-            if (targetId) {
-                const targetEl = document.getElementById(targetId);
-                targetEl.classList.add('active');
-
-                // Specific display requirements
-                if (tabId === 'debug' || tabId === 'edit') {
-                    targetEl.style.display = 'flex';
-                } else {
-                    targetEl.style.display = 'block';
-                }
-            }
-            btn.classList.add('active');
-
-            // Show sidebar only on Player tab
-            document.querySelector('.sidebar').style.display = tabId === 'player' ? '' : 'none';
-
-            // Refresh Player list when switching to Player tab
-            if (tabId === 'player') {
-                loadLibrary();
+                        };
+                    }
+                    list.appendChild(row);
+                });
             }
 
-            // Auto-load file browser on first visit
-            if (tabId === 'browser' && !fbCurrentPath) {
-                fbNavigate();
-            }
-            // Refresh library list when switching to Bibliothek
-            if (tabId === 'library') {
-                refreshLibrary();
+            function fbBack() {
+                if (fbParentPath) fbNavigate(fbParentPath);
             }
 
-            // Load debug flags when switching to Options
-            if (tabId === 'options') {
-                loadDebugFlags();
-            }
+            // ============ Tab Switching ============
+            function switchTab(tabId, btn) {
+                // Reset all tabs
+                document.querySelectorAll('.tab-content').forEach(el => {
+                    el.classList.remove('active');
+                    el.style.display = 'none'; // Force hide all
+                });
+                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
-            // Load items when switching to Edit
-            if (tabId === 'edit') {
-                loadEditItems();
-            }
-
-            // Load debug logs when switching to Debug DB
-            if (tabId === 'debug') {
-                loadDebugLogs();
-            }
-        }
-
-        // ============ Debug Log Logic ============
-        async function loadDebugLogs() {
-            const logs = await eel.get_debug_logs()();
-            const debugTextarea = document.getElementById('browse-results-debug');
-            if (debugTextarea && logs) {
-                // Nur überschreiben, wenn wir nicht schon live-Logs sammeln,
-                // oder anhängen, wenn es Sinn macht. Wir überschreiben es beim Tab-Wechsel komplett.
-                debugTextarea.value = logs;
-                debugTextarea.scrollTop = debugTextarea.scrollHeight;
-            }
-        }
-
-        // ============ Edit Tab Logic ============
-        let allLibraryItems = [];
-
-        async function loadEditItems() {
-            const result = await eel.get_library()();
-            allLibraryItems = result.media || [];
-            renderEditList(allLibraryItems);
-        }
-
-        function renderEditList(items) {
-            const list = document.getElementById('edit-items-list');
-            list.innerHTML = '';
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.style.cssText = 'padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 10px; transition: background 0.1s; position: relative; z-index: 10; pointer-events: auto;';
-                div.onmouseover = () => div.style.background = '#f0f0f0';
-                div.onmouseout = () => div.style.background = '#fff';
-                div.onclick = () => {
-                    console.log("[Editor] Item clicked:", item.name);
-                    openEditForm(item);
+                const tabMap = {
+                    'player': 'media-list',
+                    'library': 'library-tab',
+                    'browser': 'browser-tab',
+                    'edit': 'edit-tab',
+                    'options': 'options-tab',
+                    'parser': 'parser-tab',
+                    'debug': 'debug-list',
+                    'tests': 'tests',
+                    'logbuch': 'logbuch-tab'
                 };
 
-                const thumb = document.createElement('img');
-                thumb.src = `/cover/${encodeURIComponent(item.name)}`;
-                thumb.style.cssText = 'width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #eee;';
-                thumb.onerror = () => thumb.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                const targetId = tabMap[tabId];
+                if (targetId) {
+                    const targetEl = document.getElementById(targetId);
+                    targetEl.classList.add('active');
 
-                const info = document.createElement('div');
-                info.style.overflow = 'hidden';
-                info.innerHTML = `<div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.tags.title || item.name}</div><div style="font-size: 0.8em; color: #666;">${item.tags.artist || '-'}</div>`;
+                    // Specific display requirements
+                    if (tabId === 'debug' || tabId === 'edit') {
+                        targetEl.style.display = 'flex';
+                    } else {
+                        targetEl.style.display = 'block';
+                    }
+                }
+                btn.classList.add('active');
 
-                div.appendChild(thumb);
-                div.appendChild(info);
-                list.appendChild(div);
-            });
-        }
+                // Show sidebar only on Player tab
+                document.querySelector('.sidebar').style.display = tabId === 'player' ? '' : 'none';
 
-        function filterEditList() {
-            const query = document.getElementById('edit-search').value.toLowerCase();
-            const filtered = allLibraryItems.filter(item =>
-                item.name.toLowerCase().includes(query) ||
-                (item.tags.title && item.tags.title.toLowerCase().includes(query)) ||
-                (item.tags.artist && item.tags.artist.toLowerCase().includes(query)) ||
-                (item.tags.album && item.tags.album.toLowerCase().includes(query))
-            );
-            renderEditList(filtered);
-        }
+                // Refresh Player list when switching to Player tab
+                if (tabId === 'player') {
+                    loadLibrary();
+                }
 
-        function openEditForm(item) {
-            console.log("[Editor] Opening form for:", item.name);
-            const placeholder = document.getElementById('edit-placeholder');
-            const form = document.getElementById('edit-form-container');
+                // Auto-load file browser on first visit
+                if (tabId === 'browser' && !fbCurrentPath) {
+                    fbNavigate();
+                }
+                // Refresh library list when switching to Bibliothek
+                if (tabId === 'library') {
+                    refreshLibrary();
+                }
 
-            if (placeholder) placeholder.style.setProperty('display', 'none', 'important');
-            if (form) form.style.setProperty('display', 'block', 'important');
+                // Load debug flags when switching to Options
+                if (tabId === 'options') {
+                    loadDebugFlags();
+                }
 
-            if (!item) {
-                console.error("[Editor] No item provided!");
-                return;
+                // Load items when switching to Edit
+                if (tabId === 'edit') {
+                    loadEditItems();
+                }
+
+                // Load debug logs when switching to Debug DB
+                if (tabId === 'debug') {
+                    loadDebugLogs();
+                }
+
+                // Load logbuch list when switching to Logbuch tab
+                if (tabId === 'logbuch') {
+                    loadLogbuchTab();
+                }
             }
 
-            document.getElementById('edit-item-name').value = item.name;
-            document.getElementById('edit-filename-display').innerText = item.name;
-            document.getElementById('edit-cover').src = `/cover/${encodeURIComponent(item.name)}`;
+            // ============ Debug Log Logic ============
+            async function loadDebugLogs() {
+                const logs = await eel.get_debug_logs()();
+                const debugTextarea = document.getElementById('browse-results-debug');
+                if (debugTextarea && logs) {
+                    // Nur überschreiben, wenn wir nicht schon live-Logs sammeln,
+                    // oder anhängen, wenn es Sinn macht. Wir überschreiben es beim Tab-Wechsel komplett.
+                    debugTextarea.value = logs;
+                    debugTextarea.scrollTop = debugTextarea.scrollHeight;
+                }
+            }
 
-            const container = document.getElementById('edit-dynamic-tags');
-            container.innerHTML = '';
+            // ============ Edit Tab Logic ============
+            let allLibraryItems = [];
 
-            // Alphabetisch sortieren für Ordnung
-            const keys = Object.keys(item.tags).sort();
+            async function loadEditItems() {
+                const result = await eel.get_library()();
+                allLibraryItems = result.media || [];
+                renderEditList(allLibraryItems);
+            }
 
-            keys.forEach(key => {
-                if (key === 'chapters' || key === '_parser_times') return;
+            function renderEditList(items) {
+                const list = document.getElementById('edit-items-list');
+                list.innerHTML = '';
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 10px; transition: background 0.1s; position: relative; z-index: 10; pointer-events: auto;';
+                    div.onmouseover = () => div.style.background = '#f0f0f0';
+                    div.onmouseout = () => div.style.background = '#fff';
+                    div.onclick = () => {
+                        console.log("[Editor] Item clicked:", item.name);
+                        openEditForm(item);
+                    };
 
-                const row = document.createElement('div');
-                row.style.display = 'flex';
-                row.style.alignItems = 'center';
-                row.style.padding = '8px 0';
-                row.style.borderBottom = '1px solid #f9f9f9';
+                    const thumb = document.createElement('img');
+                    thumb.src = `/cover/${encodeURIComponent(item.name)}`;
+                    thumb.style.cssText = 'width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #eee;';
+                    thumb.onerror = () => thumb.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 
-                const label = document.createElement('label');
-                label.style.width = '140px';
-                label.style.fontSize = '0.85em';
-                label.style.color = '#666';
-                label.style.textTransform = 'capitalize';
-                label.innerText = key.replace('_', ' ');
+                    const info = document.createElement('div');
+                    info.style.overflow = 'hidden';
+                    info.innerHTML = `<div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.tags.title || item.name}</div><div style="font-size: 0.8em; color: #666;">${item.tags.artist || '-'}</div>`;
 
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'edit-dynamic-input';
-                input.dataset.key = key;
-                input.value = item.tags[key] || '';
-                input.style.flex = '1';
-                input.style.padding = '8px 12px';
-                input.style.border = '1px solid #eee';
-                input.style.borderRadius = '4px';
-                input.style.fontSize = '0.95em';
-                input.onfocus = () => input.style.borderColor = '#2a7';
-                input.onblur = () => input.style.borderColor = '#eee';
+                    div.appendChild(thumb);
+                    div.appendChild(info);
+                    list.appendChild(div);
+                });
+            }
 
-                row.appendChild(label);
-                row.appendChild(input);
-                container.appendChild(row);
-            });
+            function filterEditList() {
+                const query = document.getElementById('edit-search').value.toLowerCase();
+                const filtered = allLibraryItems.filter(item =>
+                    item.name.toLowerCase().includes(query) ||
+                    (item.tags.title && item.tags.title.toLowerCase().includes(query)) ||
+                    (item.tags.artist && item.tags.artist.toLowerCase().includes(query)) ||
+                    (item.tags.album && item.tags.album.toLowerCase().includes(query))
+                );
+                renderEditList(filtered);
+            }
 
-            if (item.tags.chapters && Array.isArray(item.tags.chapters) && item.tags.chapters.length > 0) {
-                const chapHeader = document.createElement('h4');
-                chapHeader.innerText = 'Kapitel bearbeiten';
-                chapHeader.style.marginTop = '20px';
-                chapHeader.style.marginBottom = '10px';
-                chapHeader.style.color = '#555';
-                container.appendChild(chapHeader);
+            function openEditForm(item) {
+                console.log("[Editor] Opening form for:", item.name);
+                const placeholder = document.getElementById('edit-placeholder');
+                const form = document.getElementById('edit-form-container');
 
-                item.tags.chapters.forEach((chap, idx) => {
+                if (placeholder) placeholder.style.setProperty('display', 'none', 'important');
+                if (form) form.style.setProperty('display', 'block', 'important');
+
+                if (!item) {
+                    console.error("[Editor] No item provided!");
+                    return;
+                }
+
+                document.getElementById('edit-item-name').value = item.name;
+                document.getElementById('edit-filename-display').innerText = item.name;
+                document.getElementById('edit-cover').src = `/cover/${encodeURIComponent(item.name)}`;
+
+                const container = document.getElementById('edit-dynamic-tags');
+                container.innerHTML = '';
+
+                // Alphabetisch sortieren für Ordnung
+                const keys = Object.keys(item.tags).sort();
+
+                keys.forEach(key => {
+                    if (key === 'chapters' || key === '_parser_times') return;
+
                     const row = document.createElement('div');
                     row.style.display = 'flex';
                     row.style.alignItems = 'center';
-                    row.style.padding = '4px 0';
+                    row.style.padding = '8px 0';
+                    row.style.borderBottom = '1px solid #f9f9f9';
 
                     const label = document.createElement('label');
                     label.style.width = '140px';
                     label.style.fontSize = '0.85em';
-                    label.style.color = '#888';
-                    label.innerText = `Kapitel ${idx + 1}`;
+                    label.style.color = '#666';
+                    label.style.textTransform = 'capitalize';
+                    label.innerText = key.replace('_', ' ');
 
                     const input = document.createElement('input');
                     input.type = 'text';
-                    input.className = 'edit-chapter-input';
-                    input.dataset.index = idx;
-                    input.value = chap.title || `Kapitel ${idx + 1}`;
+                    input.className = 'edit-dynamic-input';
+                    input.dataset.key = key;
+                    input.value = item.tags[key] || '';
                     input.style.flex = '1';
-                    input.style.padding = '6px 12px';
+                    input.style.padding = '8px 12px';
                     input.style.border = '1px solid #eee';
                     input.style.borderRadius = '4px';
-                    input.style.fontSize = '0.9em';
-                    input.style.background = '#fafafa';
+                    input.style.fontSize = '0.95em';
+                    input.onfocus = () => input.style.borderColor = '#2a7';
+                    input.onblur = () => input.style.borderColor = '#eee';
 
                     row.appendChild(label);
                     row.appendChild(input);
                     container.appendChild(row);
                 });
+
+                if (item.tags.chapters && Array.isArray(item.tags.chapters) && item.tags.chapters.length > 0) {
+                    const chapHeader = document.createElement('h4');
+                    chapHeader.innerText = 'Kapitel bearbeiten';
+                    chapHeader.style.marginTop = '20px';
+                    chapHeader.style.marginBottom = '10px';
+                    chapHeader.style.color = '#555';
+                    container.appendChild(chapHeader);
+
+                    item.tags.chapters.forEach((chap, idx) => {
+                        const row = document.createElement('div');
+                        row.style.display = 'flex';
+                        row.style.alignItems = 'center';
+                        row.style.padding = '4px 0';
+
+                        const label = document.createElement('label');
+                        label.style.width = '140px';
+                        label.style.fontSize = '0.85em';
+                        label.style.color = '#888';
+                        label.innerText = `Kapitel ${idx + 1}`;
+
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'edit-chapter-input';
+                        input.dataset.index = idx;
+                        input.value = chap.title || `Kapitel ${idx + 1}`;
+                        input.style.flex = '1';
+                        input.style.padding = '6px 12px';
+                        input.style.border = '1px solid #eee';
+                        input.style.borderRadius = '4px';
+                        input.style.fontSize = '0.9em';
+                        input.style.background = '#fafafa';
+
+                        row.appendChild(label);
+                        row.appendChild(input);
+                        container.appendChild(row);
+                    });
+                }
             }
-        }
 
-        function resetEditForm() {
-            document.getElementById('edit-placeholder').style.display = 'flex';
-            document.getElementById('edit-form-container').style.display = 'none';
-        }
-
-        async function saveTags() {
-            const name = document.getElementById('edit-item-name').value;
-            const item = allLibraryItems.find(i => i.name === name);
-            if (!item) return;
-
-            const newTags = {};
-            document.querySelectorAll('.edit-dynamic-input').forEach(input => {
-                newTags[input.dataset.key] = input.value;
-            });
-
-            // Erhalte komplexe Objekte
-            if (item.tags._parser_times) {
-                newTags._parser_times = item.tags._parser_times;
+            function resetEditForm() {
+                document.getElementById('edit-placeholder').style.display = 'flex';
+                document.getElementById('edit-form-container').style.display = 'none';
             }
-            if (item.tags.chapters && Array.isArray(item.tags.chapters)) {
-                newTags.chapters = JSON.parse(JSON.stringify(item.tags.chapters));
-                document.querySelectorAll('.edit-chapter-input').forEach(input => {
-                    const idx = parseInt(input.dataset.index);
-                    if (newTags.chapters[idx]) {
-                        newTags.chapters[idx].title = input.value;
-                    }
+
+            async function saveTags() {
+                const name = document.getElementById('edit-item-name').value;
+                const item = allLibraryItems.find(i => i.name === name);
+                if (!item) return;
+
+                const newTags = {};
+                document.querySelectorAll('.edit-dynamic-input').forEach(input => {
+                    newTags[input.dataset.key] = input.value;
                 });
+
+                // Erhalte komplexe Objekte
+                if (item.tags._parser_times) {
+                    newTags._parser_times = item.tags._parser_times;
+                }
+                if (item.tags.chapters && Array.isArray(item.tags.chapters)) {
+                    newTags.chapters = JSON.parse(JSON.stringify(item.tags.chapters));
+                    document.querySelectorAll('.edit-chapter-input').forEach(input => {
+                        const idx = parseInt(input.dataset.index);
+                        if (newTags.chapters[idx]) {
+                            newTags.chapters[idx].title = input.value;
+                        }
+                    });
+                }
+
+                const result = await eel.update_tags(name, newTags)();
+                if (result.status === 'ok') {
+                    // Update local data
+                    item.tags = newTags;
+                    // Optional: show a small toast or update list
+                    loadEditItems(); // Refresh full list to show changes
+                    alert("Metadaten gespeichert!");
+                }
             }
 
-            const result = await eel.update_tags(name, newTags)();
-            if (result.status === 'ok') {
-                // Update local data
-                item.tags = newTags;
-                // Optional: show a small toast or update list
-                loadEditItems(); // Refresh full list to show changes
-                alert("Metadaten gespeichert!");
-            }
-        }
+            async function refreshLibrary() {
+                let result = await eel.get_library()();
+                let list = document.getElementById('library-list');
+                list.innerHTML = '';
+                if (!result.media || result.media.length === 0) {
+                    list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
+                    return;
+                }
+                result.media.forEach(item => {
+                    let div = document.createElement('div');
+                    div.className = 'media-item';
+                    let tags = item.tags;
+                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                    let trackStr = tags.track ? 'Track ' + tags.track : '';
+                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+                    let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
 
-        async function refreshLibrary() {
-            let result = await eel.get_library()();
-            let list = document.getElementById('library-list');
-            list.innerHTML = '';
-            if (!result.media || result.media.length === 0) {
-                list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
-                return;
-            }
-            result.media.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'media-item';
-                let tags = item.tags;
-                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                let trackStr = tags.track ? 'Track ' + tags.track : '';
-                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
-                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
-                let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
-
-                div.innerHTML = `
+                    div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
                     <div class="media-info">
                         <strong>${tags.title}</strong>
@@ -1213,34 +1249,34 @@
                     <span style="font-size: 0.85em; color: #999; white-space: nowrap; margin-left: auto;">${item.duration}</span>
                 `;
 
-                let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.is_transcoded && item.transcoded_format) {
-                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
-                }
+                    let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                    if (item.is_transcoded && item.transcoded_format) {
+                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                    }
 
-                div.onclick = () => jumpToEdit(item);
-                list.appendChild(div);
-            });
-        }
+                    div.onclick = () => jumpToEdit(item);
+                    list.appendChild(div);
+                });
+            }
 
-        async function scan(targetDir = null, clearDb = true) {
-            let result = await eel.scan_media(targetDir, clearDb)();
-            let list = document.getElementById('media-list');
-            list.innerHTML = '';
+            async function scan(targetDir = null, clearDb = true) {
+                let result = await eel.scan_media(targetDir, clearDb)();
+                let list = document.getElementById('media-list');
+                list.innerHTML = '';
 
-            // Populate Debug Tab with perf timing
-            document.getElementById('debug-output').textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media, null, 2);
-            result.media.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'media-item';
-                let tags = item.tags;
-                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                let trackStr = tags.track ? 'Track ' + tags.track : '';
-                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+                // Populate Debug Tab with perf timing
+                document.getElementById('debug-output').textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media, null, 2);
+                result.media.forEach(item => {
+                    let div = document.createElement('div');
+                    div.className = 'media-item';
+                    let tags = item.tags;
+                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                    let trackStr = tags.track ? 'Track ' + tags.track : '';
+                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
-                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
 
-                div.innerHTML = `
+                    div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="Cover Art">
                     <div class="media-info">
                         <strong>${tags.title}</strong> 
@@ -1249,177 +1285,177 @@
                     </div>
                 `;
 
-                let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.is_transcoded && item.transcoded_format) {
-                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
-                }
+                    let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                    if (item.is_transcoded && item.transcoded_format) {
+                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                    }
 
-                div.onclick = () => play(item, mediaUrl);
-                list.appendChild(div);
-            });
-        }
-
-        function play(item, path) {
-            currentPlayer.src = path;
-            currentPlayer.play();
-
-            // Update Status Bar
-            document.getElementById('status').innerHTML = `Spielt: <strong>${item.tags.title}</strong> von ${item.tags.artist}`;
-
-            // Update Sidebar
-            let tags = item.tags;
-            console.log("Playing item tags:", tags);
-
-            let sbCover = document.getElementById('sb-cover');
-            sbCover.src = "/cover/" + encodeURIComponent(item.name);
-            // Update footer cover too
-            let footerCover = document.getElementById('footer-cover');
-            footerCover.src = "/cover/" + encodeURIComponent(item.name);
-            footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
-            sbCover.style.opacity = "1";
-            sbCover.onerror = function () {
-                this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-                this.style.backgroundColor = '#ddd';
-            };
-
-            document.getElementById('sb-title').innerText = tags.title;
-            document.getElementById('sb-artist').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
-            document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
-
-            // Limit year to 4 digits if it's a full date string
-            let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-
-            let trackStr = tags.track ? 'Track ' + tags.track : '';
-            if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
-
-            let discStr = tags.disc ? 'Disc ' + tags.disc : '';
-
-            let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
-
-            document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
-
-            let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
-            if (badgeText) {
-                document.getElementById('sb-badge').innerText = badgeText;
-                document.getElementById('sb-badge').style.display = 'inline-block';
-            } else {
-                document.getElementById('sb-badge').style.display = 'none';
+                    div.onclick = () => play(item, mediaUrl);
+                    list.appendChild(div);
+                });
             }
 
-            let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let extStr = 'File: ' + item.type.toLowerCase();
-            let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
+            function play(item, path) {
+                currentPlayer.src = path;
+                currentPlayer.play();
 
-            // Reorganize top row with size and art
-            let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
+                // Update Status Bar
+                document.getElementById('status').innerHTML = `Spielt: <strong>${item.tags.title}</strong> von ${item.tags.artist}`;
 
-            // New distinct row for format details
-            let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
-            let tagStr = 'Tag Format: ' + tagVal;
-            let formatDetailsStr = [extStr, contStr, tagStr].filter(Boolean).join(' &bull; ');
+                // Update Sidebar
+                let tags = item.tags;
+                console.log("Playing item tags:", tags);
 
-            // Combine them
-            fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
+                let sbCover = document.getElementById('sb-cover');
+                sbCover.src = "/cover/" + encodeURIComponent(item.name);
+                // Update footer cover too
+                let footerCover = document.getElementById('footer-cover');
+                footerCover.src = "/cover/" + encodeURIComponent(item.name);
+                footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
+                sbCover.style.opacity = "1";
+                sbCover.onerror = function () {
+                    this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                    this.style.backgroundColor = '#ddd';
+                };
 
-            // Base info: Name & Path (Prepended)
-            let headerInfo = `<strong>${item.name}</strong><br><span style="color:#888; font-size:0.9em;">Category: ${item.category || 'Audio'}</span><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
-            fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
-            // Format Parser Times
-            let parserTimesHtml = '';
-            // Only show if the toggle is checked
-            const showParserTimes = document.getElementById('toggle-parser-times') ? document.getElementById('toggle-parser-times').checked : true;
+                document.getElementById('sb-title').innerText = tags.title;
+                document.getElementById('sb-artist').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
+                document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
 
-            if (showParserTimes && tags._parser_times) {
-                let times = [];
-                for (const [pName, pTime] of Object.entries(tags._parser_times)) {
-                    let msTime = (pTime * 1000).toFixed(1);
-                    if (pTime > 0) {
-                        times.push(`<span style="color: #666; font-weight: bold;" title="Wurde ausgeführt">${pName}: ${msTime}ms</span>`);
-                    } else {
-                        times.push(`<span style="color: #ccc;" title="Wurde übersprungen">${pName}: übersprungen</span>`);
+                // Limit year to 4 digits if it's a full date string
+                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+
+                let trackStr = tags.track ? 'Track ' + tags.track : '';
+                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                let discStr = tags.disc ? 'Disc ' + tags.disc : '';
+
+                let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
+
+                document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
+
+                let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+                if (badgeText) {
+                    document.getElementById('sb-badge').innerText = badgeText;
+                    document.getElementById('sb-badge').style.display = 'inline-block';
+                } else {
+                    document.getElementById('sb-badge').style.display = 'none';
+                }
+
+                let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
+                let extStr = 'File: ' + item.type.toLowerCase();
+                let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
+
+                // Reorganize top row with size and art
+                let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
+
+                // New distinct row for format details
+                let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
+                let tagStr = 'Tag Format: ' + tagVal;
+                let formatDetailsStr = [extStr, contStr, tagStr].filter(Boolean).join(' &bull; ');
+
+                // Combine them
+                fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
+
+                // Base info: Name & Path (Prepended)
+                let headerInfo = `<strong>${item.name}</strong><br><span style="color:#888; font-size:0.9em;">Category: ${item.category || 'Audio'}</span><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
+                fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
+                // Format Parser Times
+                let parserTimesHtml = '';
+                // Only show if the toggle is checked
+                const showParserTimes = document.getElementById('toggle-parser-times') ? document.getElementById('toggle-parser-times').checked : true;
+
+                if (showParserTimes && tags._parser_times) {
+                    let times = [];
+                    for (const [pName, pTime] of Object.entries(tags._parser_times)) {
+                        let msTime = (pTime * 1000).toFixed(1);
+                        if (pTime > 0) {
+                            times.push(`<span style="color: #666; font-weight: bold;" title="Wurde ausgeführt">${pName}: ${msTime}ms</span>`);
+                        } else {
+                            times.push(`<span style="color: #ccc;" title="Wurde übersprungen">${pName}: übersprungen</span>`);
+                        }
+                    }
+                    if (times.length > 0) {
+                        parserTimesHtml = '<br><br>Parser-Zeiten:<br>' + times.join(' &bull; ');
                     }
                 }
-                if (times.length > 0) {
-                    parserTimesHtml = '<br><br>Parser-Zeiten:<br>' + times.join(' &bull; ');
-                }
-            }
-            // Base info: Name & Path
-            let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
+                // Base info: Name & Path
+                let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
 
-            // Render chapters if available
-            let chaptersHtml = '';
-            if (tags.chapters && tags.chapters.length > 0) {
-                chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px; text-align: left;">';
-                chaptersHtml += '<h4 style="margin-top:0; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 4px;">Kapitel (' + tags.chapters.length + ')</h4>';
-                chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
-                tags.chapters.forEach((chap, idx) => {
-                    let timeString = new Date(chap.start * 1000).toISOString().substring(11, 19);
-                    chaptersHtml += `<div onclick="window.jumpToChapter(${chap.start})" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 6px 4px; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background=''">
+                // Render chapters if available
+                let chaptersHtml = '';
+                if (tags.chapters && tags.chapters.length > 0) {
+                    chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px; text-align: left;">';
+                    chaptersHtml += '<h4 style="margin-top:0; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 4px;">Kapitel (' + tags.chapters.length + ')</h4>';
+                    chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
+                    tags.chapters.forEach((chap, idx) => {
+                        let timeString = new Date(chap.start * 1000).toISOString().substring(11, 19);
+                        chaptersHtml += `<div onclick="window.jumpToChapter(${chap.start})" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 6px 4px; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background=''">
                         <span style="color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; margin-right: 10px;" title="${chap.title}">${chap.title}</span>
                         <span style="color: #888; font-family: monospace; flex-shrink: 0;">${timeString}</span>
                     </div>`;
-                });
-                chaptersHtml += '</div></div>';
-            }
-
-            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
-
-            // Python Backend anfunken
-            eel.play_media(path)();
-        }
-
-        function jumpToEdit(item) {
-            const editBtn = document.querySelector('button[onclick*="\'edit\'"]');
-            switchTab('edit', editBtn);
-            openEditForm(item);
-        }
-
-        window.jumpToChapter = function (startTime) {
-            let p = document.getElementById('player');
-            if (p) {
-                p.currentTime = startTime;
-                p.play();
-            }
-        };
-
-        async function loadLibrary(retryCount) {
-            retryCount = retryCount || 0;
-            try {
-                let result = await eel.get_library()();
-                let list = document.getElementById('media-list');
-                list.innerHTML = '';
-                console.log("[loadLibrary] Result from backend:", result);
-                if (!result || !result.media || result.media.length === 0) {
-                    console.warn("[loadLibrary] No media found in library.");
-                    list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Klicke "Scan Media" oder füge Dateien über den Browser-Tab hinzu.</p>';
-                    return;
+                    });
+                    chaptersHtml += '</div></div>';
                 }
 
-                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
+                document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
 
-                // Restore population of Debug Tab
-                const debugOutput = document.getElementById('debug-output');
-                if (debugOutput) {
-                    const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
-                    debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
+                // Python Backend anfunken
+                eel.play_media(path)();
+            }
+
+            function jumpToEdit(item) {
+                const editBtn = document.querySelector('button[onclick*="\'edit\'"]');
+                switchTab('edit', editBtn);
+                openEditForm(item);
+            }
+
+            window.jumpToChapter = function (startTime) {
+                let p = document.getElementById('player');
+                if (p) {
+                    p.currentTime = startTime;
+                    p.play();
                 }
+            };
 
-                result.media.forEach(item => {
-                    let div = document.createElement('div');
-                    div.className = 'media-item';
-                    let tags = item.tags || {}; // Fallback if tags object is completely missing
-                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                    let trackStr = tags.track ? 'Track ' + tags.track : '';
-                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+            async function loadLibrary(retryCount) {
+                retryCount = retryCount || 0;
+                try {
+                    let result = await eel.get_library()();
+                    let list = document.getElementById('media-list');
+                    list.innerHTML = '';
+                    console.log("[loadLibrary] Result from backend:", result);
+                    if (!result || !result.media || result.media.length === 0) {
+                        console.warn("[loadLibrary] No media found in library.");
+                        list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Klicke "Scan Media" oder füge Dateien über den Browser-Tab hinzu.</p>';
+                        return;
+                    }
 
-                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+                    console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
 
-                    // Fallbacks if metadata is missing
-                    let titleDisplay = tags.title || item.name || item.filename || "Unbekannter Titel";
-                    let artistDisplay = tags.artist || "Unbekannter Künstler";
-                    let itemName = item.name || item.filename || "unknown";
+                    // Restore population of Debug Tab
+                    const debugOutput = document.getElementById('debug-output');
+                    if (debugOutput) {
+                        const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
+                        debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
+                    }
 
-                    div.innerHTML = `
+                    result.media.forEach(item => {
+                        let div = document.createElement('div');
+                        div.className = 'media-item';
+                        let tags = item.tags || {}; // Fallback if tags object is completely missing
+                        let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                        let trackStr = tags.track ? 'Track ' + tags.track : '';
+                        if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                        let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+
+                        // Fallbacks if metadata is missing
+                        let titleDisplay = tags.title || item.name || item.filename || "Unbekannter Titel";
+                        let artistDisplay = tags.artist || "Unbekannter Künstler";
+                        let itemName = item.name || item.filename || "unknown";
+
+                        div.innerHTML = `
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
@@ -1428,98 +1464,98 @@
                         </div>
                     `;
 
-                    let mediaUrl = '/media/' + encodeURIComponent(itemName);
-                    if (item.is_transcoded && item.transcoded_format) {
-                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
-                    }
+                        let mediaUrl = '/media/' + encodeURIComponent(itemName);
+                        if (item.is_transcoded && item.transcoded_format) {
+                            mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                        }
 
-                    div.onclick = () => play(item, mediaUrl);
-                    list.appendChild(div);
-                });
-            } catch (e) {
-                console.error('[loadLibrary] Error loading library:', e);
-                if (retryCount < 3) {
-                    console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
-                    setTimeout(() => loadLibrary(retryCount + 1), 1000);
-                } else {
-                    let list = document.getElementById('media-list');
-                    if (list) list.innerHTML = '<p style="padding: 20px; color: #c33;">Fehler beim Laden der Bibliothek: ' + e.message + '</p>';
+                        div.onclick = () => play(item, mediaUrl);
+                        list.appendChild(div);
+                    });
+                } catch (e) {
+                    console.error('[loadLibrary] Error loading library:', e);
+                    if (retryCount < 3) {
+                        console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
+                        setTimeout(() => loadLibrary(retryCount + 1), 1000);
+                    } else {
+                        let list = document.getElementById('media-list');
+                        if (list) list.innerHTML = '<p style="padding: 20px; color: #c33;">Fehler beim Laden der Bibliothek: ' + e.message + '</p>';
+                    }
                 }
             }
-        }
 
-        // Parser GUI Logic
-        const PARSER_LABELS = {
-            "filename": "Dateiname (Basis-Tags)",
-            "mutagen": "Mutagen (Schnell, Nativ)",
-            "pymediainfo": "MediaInfo (C-Binding)",
-            "ffmpeg": "FFmpeg (Subprozess Fallback)",
-            "container": "Container (Erweiterungs-Fallback)"
-        };
+            // Parser GUI Logic
+            const PARSER_LABELS = {
+                "filename": "Dateiname (Basis-Tags)",
+                "mutagen": "Mutagen (Schnell, Nativ)",
+                "pymediainfo": "MediaInfo (C-Binding)",
+                "ffmpeg": "FFmpeg (Subprozess Fallback)",
+                "container": "Container (Erweiterungs-Fallback)"
+            };
 
-        const ALL_PARSERS = Object.keys(PARSER_LABELS);
-        let currentParserChain = [];
+            const ALL_PARSERS = Object.keys(PARSER_LABELS);
+            let currentParserChain = [];
 
-        function loadParserConfig() {
-            eel.get_parser_config()((config) => {
-                console.log("Raw parser config from python:", config);
+            function loadParserConfig() {
+                eel.get_parser_config()((config) => {
+                    console.log("Raw parser config from python:", config);
 
-                // Eel sometimes returns strings instead of objects depending on the browser
-                if (typeof config === 'string') {
-                    try {
-                        config = JSON.parse(config);
-                    } catch (e) {
-                        console.error("Failed to parse config string:", e);
+                    // Eel sometimes returns strings instead of objects depending on the browser
+                    if (typeof config === 'string') {
+                        try {
+                            config = JSON.parse(config);
+                        } catch (e) {
+                            console.error("Failed to parse config string:", e);
+                        }
                     }
-                }
 
-                if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
-                    currentParserChain = config.parser_chain;
-                } else {
-                    console.warn("Failed to load parser_chain, falling back to defaults.");
-                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
-                }
+                    if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
+                        currentParserChain = config.parser_chain;
+                    } else {
+                        console.warn("Failed to load parser_chain, falling back to defaults.");
+                        currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+                    }
 
-                if (config && config.parser_mode) {
-                    const modeToggle = document.getElementById('toggle-parser-mode');
-                    if (modeToggle) modeToggle.checked = (config.parser_mode === "full");
-                }
+                    if (config && config.parser_mode) {
+                        const modeToggle = document.getElementById('toggle-parser-mode');
+                        if (modeToggle) modeToggle.checked = (config.parser_mode === "full");
+                    }
 
-                renderParserList();
-            });
-        }
+                    renderParserList();
+                });
+            }
 
-        function renderParserList() {
-            const list = document.getElementById('parser-list');
-            if (!list) return;
-            list.innerHTML = '';
+            function renderParserList() {
+                const list = document.getElementById('parser-list');
+                if (!list) return;
+                list.innerHTML = '';
 
-            // Render active parsers in order
-            currentParserChain.forEach(parser => {
-                if (PARSER_LABELS[parser]) {
-                    list.appendChild(createParserItem(parser, true));
-                }
-            });
+                // Render active parsers in order
+                currentParserChain.forEach(parser => {
+                    if (PARSER_LABELS[parser]) {
+                        list.appendChild(createParserItem(parser, true));
+                    }
+                });
 
-            // Render inactive parsers at the bottom
-            ALL_PARSERS.forEach(parser => {
-                if (!currentParserChain.includes(parser)) {
-                    list.appendChild(createParserItem(parser, false));
-                }
-            });
+                // Render inactive parsers at the bottom
+                ALL_PARSERS.forEach(parser => {
+                    if (!currentParserChain.includes(parser)) {
+                        list.appendChild(createParserItem(parser, false));
+                    }
+                });
 
-            setupDragAndDrop();
-        }
+                setupDragAndDrop();
+            }
 
-        function createParserItem(parserId, isActive) {
-            const li = document.createElement('li');
-            li.className = 'parser-item';
-            li.draggable = true;
-            li.dataset.id = parserId;
+            function createParserItem(parserId, isActive) {
+                const li = document.createElement('li');
+                li.className = 'parser-item';
+                li.draggable = true;
+                li.dataset.id = parserId;
 
-            const labelName = PARSER_LABELS[parserId] || parserId;
+                const labelName = PARSER_LABELS[parserId] || parserId;
 
-            li.innerHTML = `
+                li.innerHTML = `
                 <div class="parser-handle">☰</div>
                 <div class="parser-name">${labelName}</div>
                 <label class="switch">
@@ -1527,299 +1563,299 @@
                     <span class="slider"></span>
                 </label>
             `;
-            return li;
-        }
+                return li;
+            }
 
-        function setupDragAndDrop() {
-            const list = document.getElementById('parser-list');
-            let draggedItem = null;
+            function setupDragAndDrop() {
+                const list = document.getElementById('parser-list');
+                let draggedItem = null;
 
-            list.addEventListener('dragstart', e => {
-                if (e.target.classList.contains('parser-item')) {
-                    draggedItem = e.target;
-                    setTimeout(() => e.target.classList.add('dragging'), 0);
-                }
-            });
-
-            list.addEventListener('dragend', e => {
-                if (e.target.classList.contains('parser-item')) {
-                    e.target.classList.remove('dragging');
-                    draggedItem = null;
-                }
-            });
-
-            list.addEventListener('dragover', e => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(list, e.clientY);
-                if (draggedItem) {
-                    if (afterElement == null) {
-                        list.appendChild(draggedItem);
-                    } else {
-                        list.insertBefore(draggedItem, afterElement);
+                list.addEventListener('dragstart', e => {
+                    if (e.target.classList.contains('parser-item')) {
+                        draggedItem = e.target;
+                        setTimeout(() => e.target.classList.add('dragging'), 0);
                     }
-                }
-            });
-        }
+                });
 
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.parser-item:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
+                list.addEventListener('dragend', e => {
+                    if (e.target.classList.contains('parser-item')) {
+                        e.target.classList.remove('dragging');
+                        draggedItem = null;
+                    }
+                });
 
-        function saveParserChainUI() {
-            const listItems = document.querySelectorAll('.parser-item');
-            const newChain = [];
+                list.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(list, e.clientY);
+                    if (draggedItem) {
+                        if (afterElement == null) {
+                            list.appendChild(draggedItem);
+                        } else {
+                            list.insertBefore(draggedItem, afterElement);
+                        }
+                    }
+                });
+            }
 
-            listItems.forEach(item => {
-                const isActive = item.querySelector('.parser-toggle').checked;
-                if (isActive) {
-                    newChain.push(item.dataset.id);
-                }
-            });
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.parser-item:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
 
-            const modeToggle = document.getElementById('toggle-parser-mode');
-            const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
+            function saveParserChainUI() {
+                const listItems = document.querySelectorAll('.parser-item');
+                const newChain = [];
 
-            console.log("Saving new parser config:", newChain, newMode);
+                listItems.forEach(item => {
+                    const isActive = item.querySelector('.parser-toggle').checked;
+                    if (isActive) {
+                        newChain.push(item.dataset.id);
+                    }
+                });
 
-            // Pass object that matches Python expected structure
-            eel.save_parser_config({ "parser_chain": newChain, "parser_mode": newMode })((result) => {
-                if (result && result.status === 'ok') {
-                    const statusSpan = document.getElementById('parser-save-status');
-                    statusSpan.style.display = 'inline';
-                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
-                } else {
-                    console.error("Save failed:", result);
-                    alert("Fehler beim Speichern der Parser-Konfiguration.");
-                }
-            });
-        }
+                const modeToggle = document.getElementById('toggle-parser-mode');
+                const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
 
-        async function loadDebugFlags() {
-            const flags = await eel.get_debug_flags()();
-            const container = document.getElementById('debug-flags-container');
-            if (!container) return;
-            container.innerHTML = '';
+                console.log("Saving new parser config:", newChain, newMode);
 
-            for (const [key, value] of Object.entries(flags)) {
-                const label = document.createElement('label');
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
-                label.style.gap = '10px';
-                label.style.cursor = 'pointer';
-                label.style.padding = '5px';
-                label.style.borderRadius = '4px';
-                label.onmouseover = () => label.style.background = '#f9f9f9';
-                label.onmouseout = () => label.style.background = 'transparent';
+                // Pass object that matches Python expected structure
+                eel.save_parser_config({ "parser_chain": newChain, "parser_mode": newMode })((result) => {
+                    if (result && result.status === 'ok') {
+                        const statusSpan = document.getElementById('parser-save-status');
+                        statusSpan.style.display = 'inline';
+                        setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                    } else {
+                        console.error("Save failed:", result);
+                        alert("Fehler beim Speichern der Parser-Konfiguration.");
+                    }
+                });
+            }
 
-                label.innerHTML = `
+            async function loadDebugFlags() {
+                const flags = await eel.get_debug_flags()();
+                const container = document.getElementById('debug-flags-container');
+                if (!container) return;
+                container.innerHTML = '';
+
+                for (const [key, value] of Object.entries(flags)) {
+                    const label = document.createElement('label');
+                    label.style.display = 'flex';
+                    label.style.alignItems = 'center';
+                    label.style.gap = '10px';
+                    label.style.cursor = 'pointer';
+                    label.style.padding = '5px';
+                    label.style.borderRadius = '4px';
+                    label.onmouseover = () => label.style.background = '#f9f9f9';
+                    label.onmouseout = () => label.style.background = 'transparent';
+
+                    label.innerHTML = `
                     <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
                     <span style="font-family: monospace; font-size: 0.95em;">${key.toUpperCase()}</span>
                 `;
-                container.appendChild(label);
+                    container.appendChild(label);
+                }
+
+                // Sync with Modal
+                const modalContainer = document.getElementById('modal-debug-flags');
+                if (modalContainer) {
+                    modalContainer.innerHTML = container.innerHTML;
+                    // Re-bind the onchange because innerHTML doesn't preserve it cleanly in some browsers if listeners were manual,
+                    // but here it's inline in string, so it should be fine. 
+                    // However, we need to make sure toggleDebugFlag is global.
+                }
             }
 
-            // Sync with Modal
-            const modalContainer = document.getElementById('modal-debug-flags');
-            if (modalContainer) {
-                modalContainer.innerHTML = container.innerHTML;
-                // Re-bind the onchange because innerHTML doesn't preserve it cleanly in some browsers if listeners were manual,
-                // but here it's inline in string, so it should be fine. 
-                // However, we need to make sure toggleDebugFlag is global.
-            }
-        }
-
-        async function toggleDebugFlag(key, value) {
-            await eel.set_debug_flag(key, value)();
-            // Refresh both locations
-            loadDebugFlags();
-        }
-
-        function toggleDebugMenu() {
-            const modal = document.getElementById('debug-flags-modal');
-            if (modal.style.display === 'none') {
-                modal.style.display = 'block';
-                document.getElementById('feature-status-modal').style.display = 'none'; // Close other
+            async function toggleDebugFlag(key, value) {
+                await eel.set_debug_flag(key, value)();
+                // Refresh both locations
                 loadDebugFlags();
-            } else {
-                modal.style.display = 'none';
             }
-        }
 
-        function toggleFeatureStatus() {
-            const modal = document.getElementById('feature-status-modal');
-            if (modal.style.display === 'none') {
+            function toggleDebugMenu() {
+                const modal = document.getElementById('debug-flags-modal');
+                if (modal.style.display === 'none') {
+                    modal.style.display = 'block';
+                    document.getElementById('feature-status-modal').style.display = 'none'; // Close other
+                    loadDebugFlags();
+                } else {
+                    modal.style.display = 'none';
+                }
+            }
+
+            function toggleFeatureStatus() {
+                const modal = document.getElementById('feature-status-modal');
+                if (modal.style.display === 'none') {
+                    modal.style.display = 'block';
+                    document.getElementById('debug-flags-modal').style.display = 'none'; // Close other
+                } else {
+                    modal.style.display = 'none';
+                }
+            }
+
+            async function openLogbook(featureName) {
+                const modal = document.getElementById('logbook-modal');
+                const title = document.getElementById('logbook-title');
+                const content = document.getElementById('logbook-content');
+
+                title.innerText = `Logbuch: ${featureName}`;
+                content.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
                 modal.style.display = 'block';
-                document.getElementById('debug-flags-modal').style.display = 'none'; // Close other
-            } else {
-                modal.style.display = 'none';
-            }
-        }
 
-        async function openLogbook(featureName) {
-            const modal = document.getElementById('logbook-modal');
-            const title = document.getElementById('logbook-title');
-            const content = document.getElementById('logbook-content');
+                try {
+                    const markdown = await eel.get_logbook_entry(featureName)();
+                    // Simple markdown parsing for display
+                    let html = markdown
+                        .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
+                        .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '<br><br>');
 
-            title.innerText = `Logbuch: ${featureName}`;
-            content.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-            modal.style.display = 'block';
-
-            try {
-                const markdown = await eel.get_logbook_entry(featureName)();
-                // Simple markdown parsing for display
-                let html = markdown
-                    .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
-                    .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '<br><br>');
-
-                content.innerHTML = html;
-            } catch (e) {
-                content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
-            }
-        }
-
-        async function clearDatabase() {
-            if (confirm("Möchtest du wirklich die gesamte Datenbank löschen? Alle indexierten Medien werden entfernt.")) {
-                const result = await eel.clear_database()();
-                if (result.status === 'ok') {
-                    alert("Datenbank wurde erfolgreich geleert.");
-                    loadLibrary(); // Update views
+                    content.innerHTML = html;
+                } catch (e) {
+                    content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
                 }
             }
-        }
 
-        eel.expose(log_to_debug);
-        function log_to_debug(message) {
-            const debugTextarea = document.getElementById('browse-results-debug');
-            if (debugTextarea) {
-                if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
-                    debugTextarea.value += '\n';
-                }
-                debugTextarea.value += message + '\n';
-                debugTextarea.scrollTop = debugTextarea.scrollHeight;
-            }
-        }
-
-        eel.expose(set_db_status);
-        function set_db_status(isVisible) {
-            const container = document.getElementById('db-status-container');
-            if (container) {
-                container.style.display = isVisible ? 'flex' : 'none';
-            }
-        }
-
-        // ============ Resizable Splitter Logic ============
-        (function () {
-            function initSplitter(splitterId, leftPaneId, containerId) {
-                const splitter = document.getElementById(splitterId);
-                const leftPane = document.getElementById(leftPaneId);
-                const container = document.getElementById(containerId);
-                let isDragging = false;
-
-                if (!splitter || !leftPane || !container) return;
-
-                splitter.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    splitter.classList.add('active');
-                    document.body.style.cursor = 'col-resize';
-                    e.preventDefault();
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-
-                    const containerRect = container.getBoundingClientRect();
-                    let newWidth = e.clientX - containerRect.left;
-
-                    // Constraints
-                    const minWidth = 200;
-                    const maxWidth = containerRect.width - 300;
-
-                    if (newWidth < minWidth) newWidth = minWidth;
-                    if (newWidth > maxWidth) newWidth = maxWidth;
-
-                    leftPane.style.width = newWidth + 'px';
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    splitter.classList.remove('active');
-                    document.body.style.cursor = 'default';
-                });
-            }
-
-            // Init both splitters
-            initSplitter('edit-splitter', 'edit-sidebar-left', 'edit-split-container');
-            initSplitter('main-splitter', 'main-sidebar', 'main-split-container');
-        })();
-        // Toggle Parser Times function
-        function toggleParserTimes(show) {
-            // Re-render the sidebar info if a song is currently playing
-            if (currentPlayer.src) {
-                // Find current item based on the title, or we can just trigger a re-render of the file info
-                const titleText = document.getElementById('sb-title').innerText;
-                if (titleText !== "Kein Lied gewählt") {
-                    // Since we don't store the current item globally, we can just toggle the visibility
-                    // of the parser times within the existing text if possible, or force the user to re-click.
-                    // The easiest way is to let the user re-click for now, but we saved the preference.
-                }
-            }
-        }
-
-        async function loadTestSuites() {
-            const container = document.getElementById('test-suites-container');
-            container.innerHTML = '<div style="color: #999; font-style: italic;">Lade Tests...</div>';
-            try {
-                const suites = await eel.get_test_suites()();
-                container.innerHTML = '';
-                if (suites.length === 0) {
-                    container.innerHTML = '<div style="color: #999;">Keine Tests gefunden.</div>';
-                    return;
-                }
-
-                // Append the GUI Test as a fake suite
-                suites.push({
-                    id: 'gui_test_fake',
-                    name: 'GUI Tests (Selenium)',
-                    isGuiTest: true,
-                    metadata: {
-                        category: "E2E Test",
-                        inputs: "Browser Interactions",
-                        outputs: "DOM State",
-                        files: "App HTML",
-                        comment: "Testet die App im Browser. Muss manuell vom Agenten ausgelöst werden."
+            async function clearDatabase() {
+                if (confirm("Möchtest du wirklich die gesamte Datenbank löschen? Alle indexierten Medien werden entfernt.")) {
+                    const result = await eel.clear_database()();
+                    if (result.status === 'ok') {
+                        alert("Datenbank wurde erfolgreich geleert.");
+                        loadLibrary(); // Update views
                     }
-                });
+                }
+            }
 
-                suites.forEach(suite => {
-                    const card = document.createElement('div');
-                    card.style.cssText = 'background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s;';
-                    card.onmouseover = () => { card.style.transform = 'translateY(-2px)'; card.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; };
-                    card.onmouseout = () => { card.style.transform = 'translateY(0)'; card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.02)'; };
+            eel.expose(log_to_debug);
+            function log_to_debug(message) {
+                const debugTextarea = document.getElementById('browse-results-debug');
+                if (debugTextarea) {
+                    if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
+                        debugTextarea.value += '\n';
+                    }
+                    debugTextarea.value += message + '\n';
+                    debugTextarea.scrollTop = debugTextarea.scrollHeight;
+                }
+            }
 
-                    let checkboxHtml = '';
-                    if (suite.isGuiTest) {
-                        checkboxHtml = `<input type="checkbox" id="test-gui" style="width: 20px; height: 20px; cursor: pointer;">`;
-                    } else {
-                        checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" checked style="width: 20px; height: 20px; cursor: pointer;">`;
+            eel.expose(set_db_status);
+            function set_db_status(isVisible) {
+                const container = document.getElementById('db-status-container');
+                if (container) {
+                    container.style.display = isVisible ? 'flex' : 'none';
+                }
+            }
+
+            // ============ Resizable Splitter Logic ============
+            (function () {
+                function initSplitter(splitterId, leftPaneId, containerId) {
+                    const splitter = document.getElementById(splitterId);
+                    const leftPane = document.getElementById(leftPaneId);
+                    const container = document.getElementById(containerId);
+                    let isDragging = false;
+
+                    if (!splitter || !leftPane || !container) return;
+
+                    splitter.addEventListener('mousedown', (e) => {
+                        isDragging = true;
+                        splitter.classList.add('active');
+                        document.body.style.cursor = 'col-resize';
+                        e.preventDefault();
+                    });
+
+                    window.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+
+                        const containerRect = container.getBoundingClientRect();
+                        let newWidth = e.clientX - containerRect.left;
+
+                        // Constraints
+                        const minWidth = 200;
+                        const maxWidth = containerRect.width - 300;
+
+                        if (newWidth < minWidth) newWidth = minWidth;
+                        if (newWidth > maxWidth) newWidth = maxWidth;
+
+                        leftPane.style.width = newWidth + 'px';
+                    });
+
+                    window.addEventListener('mouseup', () => {
+                        if (!isDragging) return;
+                        isDragging = false;
+                        splitter.classList.remove('active');
+                        document.body.style.cursor = 'default';
+                    });
+                }
+
+                // Init both splitters
+                initSplitter('edit-splitter', 'edit-sidebar-left', 'edit-split-container');
+                initSplitter('main-splitter', 'main-sidebar', 'main-split-container');
+            })();
+            // Toggle Parser Times function
+            function toggleParserTimes(show) {
+                // Re-render the sidebar info if a song is currently playing
+                if (currentPlayer.src) {
+                    // Find current item based on the title, or we can just trigger a re-render of the file info
+                    const titleText = document.getElementById('sb-title').innerText;
+                    if (titleText !== "Kein Lied gewählt") {
+                        // Since we don't store the current item globally, we can just toggle the visibility
+                        // of the parser times within the existing text if possible, or force the user to re-click.
+                        // The easiest way is to let the user re-click for now, but we saved the preference.
+                    }
+                }
+            }
+
+            async function loadTestSuites() {
+                const container = document.getElementById('test-suites-container');
+                container.innerHTML = '<div style="color: #999; font-style: italic;">Lade Tests...</div>';
+                try {
+                    const suites = await eel.get_test_suites()();
+                    container.innerHTML = '';
+                    if (suites.length === 0) {
+                        container.innerHTML = '<div style="color: #999;">Keine Tests gefunden.</div>';
+                        return;
                     }
 
-                    const m = suite.metadata || {};
-                    const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
+                    // Append the GUI Test as a fake suite
+                    suites.push({
+                        id: 'gui_test_fake',
+                        name: 'GUI Tests (Selenium)',
+                        isGuiTest: true,
+                        metadata: {
+                            category: "E2E Test",
+                            inputs: "Browser Interactions",
+                            outputs: "DOM State",
+                            files: "App HTML",
+                            comment: "Testet die App im Browser. Muss manuell vom Agenten ausgelöst werden."
+                        }
+                    });
 
-                    card.innerHTML = `
+                    suites.forEach(suite => {
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s;';
+                        card.onmouseover = () => { card.style.transform = 'translateY(-2px)'; card.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; };
+                        card.onmouseout = () => { card.style.transform = 'translateY(0)'; card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.02)'; };
+
+                        let checkboxHtml = '';
+                        if (suite.isGuiTest) {
+                            checkboxHtml = `<input type="checkbox" id="test-gui" style="width: 20px; height: 20px; cursor: pointer;">`;
+                        } else {
+                            checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" checked style="width: 20px; height: 20px; cursor: pointer;">`;
+                        }
+
+                        const m = suite.metadata || {};
+                        const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
+
+                        card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 ${checkboxHtml}
@@ -1836,77 +1872,77 @@
                             ${m.comment || '-'}
                         </div>
                     `;
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                container.innerHTML = `<div style="color: #c33;">Fehler beim Laden der Tests: ${error}</div>`;
+                        container.appendChild(card);
+                    });
+                } catch (error) {
+                    container.innerHTML = `<div style="color: #c33;">Fehler beim Laden der Tests: ${error}</div>`;
+                }
             }
-        }
 
-        async function runSelectedTests() {
-            const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
-            const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
-            const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
+            async function runSelectedTests() {
+                const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
+                const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+                const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
 
-            const resultsContainer = document.getElementById('test-results-container');
-            const outputArea = document.getElementById('test-output');
-            const summaryBadge = document.getElementById('test-run-summary');
+                const resultsContainer = document.getElementById('test-results-container');
+                const outputArea = document.getElementById('test-output');
+                const summaryBadge = document.getElementById('test-run-summary');
 
-            if (resultsContainer) resultsContainer.style.display = 'block';
-            outputArea.textContent = "Tests werden gestartet...\n";
-            summaryBadge.style.display = 'none';
-            summaryBadge.textContent = '';
-            summaryBadge.style.background = '#f0f0f0';
-            summaryBadge.style.color = '#444';
+                if (resultsContainer) resultsContainer.style.display = 'block';
+                outputArea.textContent = "Tests werden gestartet...\n";
+                summaryBadge.style.display = 'none';
+                summaryBadge.textContent = '';
+                summaryBadge.style.background = '#f0f0f0';
+                summaryBadge.style.color = '#444';
 
-            let totalPasses = 0;
-            let totalFails = 0;
+                let totalPasses = 0;
+                let totalFails = 0;
 
-            if (selectedFiles.length > 0) {
-                try {
-                    const result = await eel.run_tests(selectedFiles)();
-                    if (result.error) {
-                        outputArea.textContent += `Fehler bei der Testausführung: ${result.error}\n`;
-                    } else {
-                        outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
-                        if (result.passes !== undefined) totalPasses += result.passes;
-                        if (result.fails !== undefined) totalFails += result.fails;
+                if (selectedFiles.length > 0) {
+                    try {
+                        const result = await eel.run_tests(selectedFiles)();
+                        if (result.error) {
+                            outputArea.textContent += `Fehler bei der Testausführung: ${result.error}\n`;
+                        } else {
+                            outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
+                            if (result.passes !== undefined) totalPasses += result.passes;
+                            if (result.fails !== undefined) totalFails += result.fails;
+                        }
+                    } catch (e) {
+                        outputArea.textContent += `Systemfehler: ${e}\n`;
                     }
-                } catch (e) {
-                    outputArea.textContent += `Systemfehler: ${e}\n`;
+                } else if (!guiTest) {
+                    outputArea.textContent = "Keine Tests ausgewählt.";
                 }
-            } else if (!guiTest) {
-                outputArea.textContent = "Keine Tests ausgewählt.";
-            }
 
-            if (guiTest) {
-                const guiRes = await eel.run_gui_tests()();
-                outputArea.textContent += `\n\n[GUI-Tests] ${guiRes.message}`;
-            }
+                if (guiTest) {
+                    const guiRes = await eel.run_gui_tests()();
+                    outputArea.textContent += `\n\n[GUI-Tests] ${guiRes.message}`;
+                }
 
-            // Update summary badge if we ran python tests
-            if (selectedFiles.length > 0) {
-                summaryBadge.style.display = 'inline-block';
-                if (totalFails > 0) {
-                    summaryBadge.textContent = `❌ ${totalFails} Failed, ${totalPasses} Passed`;
-                    summaryBadge.style.background = '#ffebee';
-                    summaryBadge.style.color = '#c62828';
-                } else {
-                    summaryBadge.textContent = `✅ Alle ${totalPasses} Tests Passed`;
-                    summaryBadge.style.background = '#e8f5e9';
-                    summaryBadge.style.color = '#2e7d32';
+                // Update summary badge if we ran python tests
+                if (selectedFiles.length > 0) {
+                    summaryBadge.style.display = 'inline-block';
+                    if (totalFails > 0) {
+                        summaryBadge.textContent = `❌ ${totalFails} Failed, ${totalPasses} Passed`;
+                        summaryBadge.style.background = '#ffebee';
+                        summaryBadge.style.color = '#c62828';
+                    } else {
+                        summaryBadge.textContent = `✅ Alle ${totalPasses} Tests Passed`;
+                        summaryBadge.style.background = '#e8f5e9';
+                        summaryBadge.style.color = '#2e7d32';
+                    }
                 }
             }
-        }
 
-        // Initial load: wait a tick for Eel WebSocket to connect, then load data
-        setTimeout(function () {
-            loadLibrary();
-            loadParserConfig();
-            loadDebugFlags();
-            loadTestSuites();
-        }, 100);
-    </script>
+            // Initial load: wait a tick for Eel WebSocket to connect, then load data
+            setTimeout(function () {
+                loadLibrary();
+                loadParserConfig();
+                loadDebugFlags();
+                loadTestSuites();
+            }, 100);
+        </script>
 </body>
 
 </html>
