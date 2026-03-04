@@ -1026,7 +1026,7 @@
 
             let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
 
-            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + tagStr + parserTimesHtml + transcodeHtml;
+            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml;
 
             // Python Backend anfunken
             eel.play_media(path)();

@@ -86,13 +86,18 @@ def format_codec(raw_codec, track_info=None):
 
 def format_container(raw_container, file_type=None):
     """Standardizes container naming."""
-    if not raw_container:
-        raw_container = file_type[1:] if file_type else ""
+    container = str(raw_container).lower().strip() if raw_container else ""
+
+    if not container and file_type:
+        container = file_type[1:].lower()
     
-    container = str(raw_container).lower().strip()
+    # Handle ambiguous FFmpeg container outputs
+    if container == 'matroska,webm':
+        if file_type == '.webm':
+            return 'webm'
+        return 'mkv'
     
     container_map = {
-        'matroska,webm': 'mkv',
         'matroska': 'mkv',
         'mov,mp4,m4a,3gp,3g2,mj2': 'mp4',
         'mpeg-4': 'mp4',
