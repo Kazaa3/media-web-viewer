@@ -1027,7 +1027,23 @@
 
             let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
 
-            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml;
+            // Render chapters if available
+            let chaptersHtml = '';
+            if (tags.chapters && tags.chapters.length > 0) {
+                chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px;">';
+                chaptersHtml += '<h4 style="margin-top:0; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 4px;">Kapitel (' + tags.chapters.length + ')</h4>';
+                chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
+                tags.chapters.forEach((chap, idx) => {
+                    let timeString = new Date(chap.start * 1000).toISOString().substring(11, 19);
+                    chaptersHtml += `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 6px 0;">
+                        <span style="color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 75%;" title="${chap.title}">${chap.title}</span>
+                        <span style="color: #888; font-family: monospace;">${timeString}</span>
+                    </div>`;
+                });
+                chaptersHtml += '</div></div>';
+            }
+
+            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
 
             // Python Backend anfunken
             eel.play_media(path)();

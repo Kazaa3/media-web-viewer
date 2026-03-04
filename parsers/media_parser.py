@@ -33,7 +33,8 @@ def extract_metadata(path, filename, debug=False):
             not tags.get('codec') or
             tags.get('codec') == file_type[1:].lower() or
             not tags.get('container') or
-            not duration
+            not duration or
+            (file_type in ['.m4b', '.mkv', '.m4a', '.mp4'] and not tags.get('chapters'))
         )
         
         if parser_name == "filename":

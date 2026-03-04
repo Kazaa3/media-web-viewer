@@ -56,6 +56,32 @@ def parse(path, file_type, tags):
         if not tags.get('codec'):
             tags['codec'] = file_type[1:].lower()
 
+        # Chapter parsing
+        chapters = []
+        lines = output.split('\n')
+        current_chapter = None
+        for line in lines:
+            chap_match = re.search(r"Chapter\s+#\d+:\d+:\s+start\s+([\d.]+),\s+end\s+([\d.]+)", line)
+            if chap_match:
+                if current_chapter:
+                    chapters.append(current_chapter)
+                current_chapter = {
+                    'start': float(chap_match.group(1)),
+                    'end': float(chap_match.group(2)),
+                    'title': f"Kapitel {len(chapters) + 1}"
+                }
+                continue
+                
+            title_match = re.search(r"^\s+title\s+:\s+(.*)$", line)
+            if title_match and current_chapter:
+                current_chapter['title'] = title_match.group(1).strip()
+                
+        if current_chapter:
+            chapters.append(current_chapter)
+            
+        if chapters:
+            tags['chapters'] = chapters
+
     except Exception:
         pass
 
