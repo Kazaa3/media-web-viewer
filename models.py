@@ -29,34 +29,28 @@ class MediaItem:
         path_str = str(self.path).lower()
         tags = self.tags or {}
         
-        # 1. Strict .m4b -> Hörbuch (as requested)
+        # 1. Strict .m4b -> Hörbuch (as requested previously)
         if ext == '.m4b':
             return 'Hörbuch'
             
         # 2. Audio Parser Logic
         if ext in AUDIO_EXTENSIONS:
-            # Detect Compilation
-            is_comp = tags.get('compilation')
-            if is_comp in [True, 1, '1', 'Yes', 'yes', 'True']:
+            artist = (tags.get('artist') or "").lower()
+            album = (tags.get('album') or "").lower()
+            
+            # - Compilation: if VA / unknown Interpret
+            if any(k in artist for k in ['va', 'various artists', 'various', 'unknown', 'unbekannt']):
                 return 'Compilation'
             
-            # Detect Release Type (if available in tags)
-            release_type = tags.get('releasetype', '').lower()
-            if 'single' in release_type:
+            # - Single: if album tag not filled OR "single" in string (album title)
+            if not album or 'single' in album:
                 return 'Single'
-            if 'album' in release_type:
-                return 'Album'
             
-            # Fallback detection for Single/Album based on album title
-            album_title = tags.get('album', '').lower()
-            if album_title:
-                if ' - single' in album_title or '(single)' in album_title:
-                    return 'Single'
-                if ' - ep' in album_title or '(ep)' in album_title:
-                    return 'EP' # The user didn't ask for EP, but it's common. I'll stick to Album if they didn't ask.
+            # - Album: if album tag filled
+            if album:
                 return 'Album'
 
-            # Detect Audiobook (Hörbuch) from path/genre if not .m4b
+            # Fallback detection for Audiobook (Hörbuch) from path/genre
             genre = tags.get('genre', '').lower()
             if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
                 return 'Hörbuch'

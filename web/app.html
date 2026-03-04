@@ -1779,8 +1779,8 @@
                 // New distinct row for format details
                 let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
                 let tagStr = 'Tag Format: ' + tagVal;
-                let itemTypeStr = (item.category && item.category !== 'Audio') ? 'Item Type: ' + item.category : '';
-                let formatDetailsStr = [extStr, contStr, tagStr, itemTypeStr].filter(Boolean).join(' &bull; ');
+                let fileTypeStr = (item.category && item.category !== 'Audio') ? 'Filetype: ' + item.category : '';
+                let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
 
                 // Combine them
                 fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
