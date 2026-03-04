@@ -1,3 +1,9 @@
+# Kategorie: Logic / Sorting Test
+# Eingabewerte: Listen von Strings ("1", "21", "2", "Kapitel 1")
+# Ausgabewerte: Richtig sortierte Listen (1, 2, 21)
+# Testdateien: Keine (Mocks)
+# Kommentar: Verifiziert das Natural Sorting, um das Problem der 1, 21, 22, 2 Sortierung zu lösen.
+
 import pytest
 import re
 from parsers.format_utils import natural_sort_key

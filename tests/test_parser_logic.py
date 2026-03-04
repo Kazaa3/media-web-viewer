@@ -1,3 +1,8 @@
+# Kategorie: Parser Test
+# Eingabewerte: Dateinamen, Pfade
+# Ausgabewerte: Extrahierte Tags (Artist, Title)
+# Testdateien: Keine (Dateinamen-Simulation)
+# Kommentar: Prüft die RegEx-basierte Extraktion von Metadaten aus Dateinamen.
 
 import sys
 import os

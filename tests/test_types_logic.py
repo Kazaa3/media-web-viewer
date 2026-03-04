@@ -1,3 +1,9 @@
+# Kategorie: UI / Types Test
+# Eingabewerte: Pfade, Dateinamen, unsortierte Listen
+# Ausgabewerte: Kategorien (Hörbuch, Film, etc.), Natural Sorting
+# Testdateien: Keine (Mocks)
+# Kommentar: Prüft die automatische Typ-Erkennung und Natural Sorting Logik.
+
 import pytest
 from pathlib import Path
 from models import MediaItem

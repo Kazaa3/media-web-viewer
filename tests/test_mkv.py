@@ -1,3 +1,9 @@
+# Kategorie: Format Test (MKV)
+# Eingabewerte: FFmpeg Output
+# Ausgabewerte: Bitrate (Extrahierung per RegEx)
+# Testdateien: Keine (Temporäre test.mkv)
+# Kommentar: Prüft ob FFmpeg-Metadaten korrekt für MKV Container geparst werden können.
+
 import subprocess, re
 out = subprocess.run(["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "1", "-c:a", "libmp3lame", "-b:a", "128k", "test.mkv"], stderr=subprocess.PIPE, text=True).stderr
 out = subprocess.run(["ffmpeg", "-i", "test.mkv"], stderr=subprocess.PIPE, text=True).stderr

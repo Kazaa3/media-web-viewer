@@ -1,3 +1,9 @@
+# Kategorie: Integration Test
+# Eingabewerte: Echte Mediendateien aus ./media
+# Ausgabewerte: Metadaten-Dicts (Lightweight vs. Full)
+# Testdateien: /media/*
+# Kommentar: Vergleicht die Performance und Informationstiefe zwischen "Lightweight" und "Full" Parser-Modi.
+
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pathlib import Path
