@@ -42,6 +42,27 @@ def save_parser_config():
 # Load immediately on import
 load_parser_config()
 
+def natural_sort_key(text):
+    """
+    Helper for natural/numeric sorting. 
+    "Kapitel 2" comes before "Kapitel 10".
+    """
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', str(text))]
+
+# Extension Categories
+AUDIO_EXTENSIONS = {
+    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
+}
+VIDEO_EXTENSIONS = {
+    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
+}
+DOCUMENT_EXTENSIONS = {
+    '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
+}
+EBOOK_EXTENSIONS = {
+    '.epub', '.mobi', '.azw', '.fb2'
+}
+
 def format_samplerate(hz):
     """Standardizes sample rate display (e.g., 44100 -> 44.1 kHz)."""
     try:

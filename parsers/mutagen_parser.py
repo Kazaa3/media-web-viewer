@@ -52,8 +52,9 @@ def parse(path, file_type, tags, name, mode='lightweight'):
             
             # Chapters for FLAC/Vorbis
             chapters = []
+            from .format_utils import natural_sort_key
             chapter_keys = [k for k in audio.keys() if k.startswith('CHAPTER') and not k.endswith('NAME') and not k.endswith('URL')]
-            for k in sorted(chapter_keys):
+            for k in sorted(chapter_keys, key=natural_sort_key):
                 idx = k.replace('CHAPTER', '')
                 start_val = audio.get(k)
                 title_val = audio.get(f"CHAPTER{idx}NAME")
@@ -73,7 +74,8 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                     'end': 0.0 # Ogg/Flac chapters often don't have explicit ends, we can calculate later if needed
                 })
             if chapters and not tags.get('chapters'):
-                tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
+                from .format_utils import natural_sort_key
+                tags['chapters'] = sorted(chapters, key=lambda x: (x['start'], natural_sort_key(x['title'])))
 
         elif file_type == '.mp3':
             audio = MP3(path)
@@ -123,8 +125,9 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                             'title': title
                         })
             if chapters and not tags.get('chapters'):
-                # Sort by start time just in case
-                tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
+                # Sort by start time and then naturally by title
+                from .format_utils import natural_sort_key
+                tags['chapters'] = sorted(chapters, key=lambda x: (x['start'], natural_sort_key(x['title'])))
             
         elif file_type in {'.m4a', '.alac', '.m4b', '.mp4'}:
             audio = MP4(path)
@@ -162,7 +165,8 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                         'end': chap.end if hasattr(chap, 'end') else 0.0
                     })
             if chapters and not tags.get('chapters'):
-                 tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
+                 from .format_utils import natural_sort_key
+                 tags['chapters'] = sorted(chapters, key=lambda x: (x['start'], natural_sort_key(x['title'])))
                 
         elif file_type in {'.ogg', '.opus', '.wav', '.aac', '.wma'}:
             if file_type == '.ogg': audio = OggVorbis(path)
