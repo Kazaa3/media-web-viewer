@@ -32,7 +32,7 @@ A custom media player with an embedded web-based GUI. It is built using Python, 
 # source .venv/bin/activate
 
 # Install required python packages
-pip install eel bottle mutagen pymediainfo
+pip install eel bottle mutagen pymediainfo pytest
 
 # Run the media viewer
 python main.py
@@ -66,7 +66,7 @@ gui_media_web_viewer/
 | Bereich | Beschreibung |
 |---------|-------------|
 | **API Exposure** | Exponiert Funktionen für das Frontend: `get_library`, `run_tests`, `get_debug_logs`, etc. |
-| **Parser-Pipeline** | Koordiniert `filename → mutagen → ffmpeg → pymediainfo` |
+| **Parser-Pipeline** | Koordiniert `filename → container → mutagen → pymediainfo → ffmpeg` |
 | **scan_media()** | Eel-exposed: löscht DB, scannt alle Dateien neu, nutzt `MediaItem` |
 | **run_tests()** | Führt ausgewählte Pytest-Suiten aus und gibt Ergebnisse an das GUI zurück. |
 | **Startup** | `db.init_db()` → `eel.init()` → `eel.start()` |

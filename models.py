@@ -1,4 +1,5 @@
 from pathlib import Path
+from parsers.format_utils import PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 from parsers.format_utils import PARSER_CONFIG
 from parsers import media_parser
 
@@ -20,6 +21,28 @@ class MediaItem:
             mode=parser_mode, 
             logger=self.logger
         )
+        self.category = self.get_category()
+
+    def get_category(self):
+        """Detects the category of the media item based on extension and path."""
+        ext = self.type.lower()
+        path_str = str(self.path).lower()
+        
+        if ext in AUDIO_EXTENSIONS:
+            # Detect Audiobook (Hörbuch)
+            if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or ext == '.m4b':
+                return 'Hörbuch'
+            return 'Audio'
+        elif ext in VIDEO_EXTENSIONS:
+            if 'serie' in path_str or 'tv' in path_str or 'season' in path_str:
+                return 'Serie'
+            return 'Film'
+        elif ext in EBOOK_EXTENSIONS:
+            return 'E-Book'
+        elif ext in DOCUMENT_EXTENSIONS:
+            return 'Dokument'
+        
+        return 'Unbekannt'
 
     def show_info(self):
         print(self.name)
@@ -58,6 +81,7 @@ class MediaItem:
             'duration': duration_str,
             'tags': self.tags,
             'type': self.type[1:] if self.type.startswith('.') else self.type,
+            'category': self.category,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format
         }
