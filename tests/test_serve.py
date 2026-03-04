@@ -1,3 +1,9 @@
+# Kategorie: Server Test (Eel/Bottle)
+# Eingabewerte: HTTP Requests an localhost
+# Ausgabewerte: HTTP Responses ("Hello")
+# Testdateien: Keine
+# Kommentar: Prüft ob die Eel/Bottle Server-Integration korrekt auf Anfragen reagiert.
+
 import eel
 import bottle
 

@@ -1,3 +1,9 @@
+# Kategorie: Routing Test
+# Eingabewerte: Pfade zu ALAC / M4A Dateien
+# Ausgabewerte: HTTP Responses, Dateisystem-Checks (.cache)
+# Testdateien: media/sample.alac
+# Kommentar: Prüft das dynamische Servieren und Caching von speziellen Audioformaten wie ALAC.
+
 import eel
 import bottle
 import threading

@@ -1,3 +1,9 @@
+# Kategorie: Logic Test
+# Eingabewerte: Kapitel-Dictionaries (Mock)
+# Ausgabewerte: Sortierte Kapitel-Reihenfolge
+# Testdateien: Keine (Mocks)
+# Kommentar: Prüft die Sortierung und Validierung von Kapitel-Metadaten.
+
 import os
 import sys
 from pathlib import Path

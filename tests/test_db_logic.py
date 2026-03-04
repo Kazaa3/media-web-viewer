@@ -1,3 +1,8 @@
+# Kategorie: Database Test
+# Eingabewerte: Media-Dictionaries, Dateipfade
+# Ausgabewerte: Datenbank-Einträge
+# Testdateien: Temporäre SQLite DB
+# Kommentar: Prüft CRUD Operationen auf der Media-Datenbank.
 
 import sys
 import os
