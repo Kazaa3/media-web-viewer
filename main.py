@@ -677,6 +677,9 @@ def browse_dir(dir_path=None):
 
 # CApture tool
 
+# in dem feautres modal.... soll es unter: v den link zum vollständigen logbuch tab geben
+
+
 
 @eel.expose("pick_folder")
 def pick_folder():
