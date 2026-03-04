@@ -15,7 +15,8 @@ def benchmark_parsers():
         "filename": 0.0,
         "mutagen": 0.0,
         "pymediainfo": 0.0,
-        "ffmpeg": 0.0
+        "ffmpeg": 0.0,
+        "container": 0.0
     }
     file_count = 0
 
@@ -55,6 +56,17 @@ def benchmark_parsers():
         t_ffmpeg = time.time() - t0
         total_times["ffmpeg"] += t_ffmpeg
         print(f"  ffmpeg      : {t_ffmpeg:.4f} sec")
+        
+        # container parser
+        t0 = time.time()
+        tags_container = {}
+        if not tags_container.get('container'):
+            tags_container['container'] = file_type[1:].lower()
+            if not tags_container.get('codec'):
+                tags_container['codec'] = file_type[1:].lower()
+        t_container = time.time() - t0
+        total_times["container"] += t_container
+        print(f"  container   : {t_container:.4f} sec")
         
         print("-" * 40)
 

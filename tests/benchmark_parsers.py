@@ -13,7 +13,8 @@ parser_times = {
     "filename": 0.0,
     "mutagen": 0.0,
     "pymediainfo": 0.0,
-    "ffmpeg": 0.0
+    "ffmpeg": 0.0,
+    "container": 0.0
 }
 
 for f in files:
@@ -41,6 +42,15 @@ for f in files:
     t0 = time.time()
     tags = ffmpeg_parser.parse(path_obj, file_type, {})
     parser_times["ffmpeg"] += (time.time() - t0)
+
+    # container parser
+    t0 = time.time()
+    tags_container = {}
+    if not tags_container.get('container'):
+        tags_container['container'] = file_type[1:].lower()
+        if not tags_container.get('codec'):
+            tags_container['codec'] = file_type[1:].lower()
+    parser_times["container"] += (time.time() - t0)
 
 print(f"Total files: {len(files)}")
 print("-" * 30)
