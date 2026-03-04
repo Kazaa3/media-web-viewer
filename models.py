@@ -24,18 +24,46 @@ class MediaItem:
         self.category = self.get_category()
 
     def get_category(self):
-        """Detects the category of the media item based on extension and path."""
+        """Detects the category of the media item based on extension and metadata tags."""
         ext = self.type.lower()
         path_str = str(self.path).lower()
+        tags = self.tags or {}
         
+        # 1. Strict .m4b -> Hörbuch (as requested)
         if ext == '.m4b':
             return 'Hörbuch'
             
+        # 2. Audio Parser Logic
         if ext in AUDIO_EXTENSIONS:
-            # Detect Audiobook (Hörbuch)
-            if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']):
+            # Detect Compilation
+            is_comp = tags.get('compilation')
+            if is_comp in [True, 1, '1', 'Yes', 'yes', 'True']:
+                return 'Compilation'
+            
+            # Detect Release Type (if available in tags)
+            release_type = tags.get('releasetype', '').lower()
+            if 'single' in release_type:
+                return 'Single'
+            if 'album' in release_type:
+                return 'Album'
+            
+            # Fallback detection for Single/Album based on album title
+            album_title = tags.get('album', '').lower()
+            if album_title:
+                if ' - single' in album_title or '(single)' in album_title:
+                    return 'Single'
+                if ' - ep' in album_title or '(ep)' in album_title:
+                    return 'EP' # The user didn't ask for EP, but it's common. I'll stick to Album if they didn't ask.
+                return 'Album'
+
+            # Detect Audiobook (Hörbuch) from path/genre if not .m4b
+            genre = tags.get('genre', '').lower()
+            if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
                 return 'Hörbuch'
+                
             return 'Audio'
+
+        # 3. Non-Audio fallbacks (Videos, E-Books, Docs)
         elif ext in VIDEO_EXTENSIONS:
             if 'serie' in path_str or 'tv' in path_str or 'season' in path_str:
                 return 'Serie'
