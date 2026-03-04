@@ -642,6 +642,11 @@
                                 <span style="font-weight: 500;">Parser Logic</span>
                             </label>
                             <label class="debug-flag-label"
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-left: 20px;">
+                                <input type="checkbox" id="test-chapters" checked style="width: 18px; height: 18px;">
+                                <span style="font-weight: 500; color: #666;">└ Chapters Logic (incl. Order)</span>
+                            </label>
+                            <label class="debug-flag-label"
                                 style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                                 <input type="checkbox" id="test-gui" style="width: 18px; height: 18px;">
                                 <span style="font-weight: 500;">GUI Behavior (Browser)</span>
@@ -1623,6 +1628,7 @@
             if (document.getElementById('test-db').checked) suites.push('db');
             if (document.getElementById('test-media-item').checked) suites.push('media_item');
             if (document.getElementById('test-parser').checked) suites.push('parser');
+            if (document.getElementById('test-chapters').checked) suites.push('chapters');
 
             const guiTest = document.getElementById('test-gui').checked;
 
