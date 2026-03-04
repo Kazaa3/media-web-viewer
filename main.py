@@ -62,9 +62,49 @@ SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
 # 2. Standard-Pfad beim ersten Öffnen des Browsers
 BROWSER_DEFAULT_DIR = str(Path.home())
 
+#
+#
+# Flags Popup Bug
+
+# m4b sind Hörbücher
+# mkv audio. if no video
+# mkv video, wenn min 1 video
+# Hinter den Namen nicht Audio schrieben 
+
+#20 in strings
 
 
 
+
+
+# Test Kategorien
+# Testframe work erklären
+#pytest
+#+ Selenium + Dom anweisungen
+# Testnamen bearbeitbar machen
+# Beschriebung hinzufügen
+# Testeregbnisse die nötig für pass sind hinzufügen
+
+
+
+
+# Feature Request Window
+# Liste von allen Mini Features, sowie in Tasks.md und Walktrough. Alles resoren
+#beim klciken der features soll sich ein log buch öffnen. wo jeder der punkte aus dem panel ausfürhlich behandelt wird mti eigener .md dort hin kopiert. der ordner heißt logbuch
+
+
+# Chapter sorting rework
+
+# Rework Logbook
+# Feature Request
+# Da drunter schon implementiert
+
+# Namensdoument. footer / pop up synnyme
+# Funktionsdokument. so wie read-me
+
+
+# File format guides zru Erklärung
+#json
 
 AUDIO_EXTENSIONS = {
     '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
@@ -225,8 +265,53 @@ from models import MediaItem
 
 
 # MediaItem logic moved to models.py
+# test aktulisierung unten rechts
+# aletr lösch button
+# Flags steuerung rework
+# Konsole wird teils zu gespammt 
+# im anderen fall nicht genug infos
+# merken der standard einstellung und reihenfolge
 
+##Erjlären
+# Daten model
+# File typen
+# Container
+# Codec
+# Bit depth
+# Sampling rate
+# Bitrate
+# Channels
+# Duration
+# File size
+# Cover art
+# Chapters
+# Tags
+# Parser
+# Transcoding
+# Cache
+# Debug
+# Walkthrough
+# Tasks
+# Feature Request
+# Logbook
+# Namensdocument
+# Funktionsdokument
+# File format guides
+# gui
+# selen etsting
+# py testing
 
+#unetrschiede bei alac, bei mp3
+#/media/01-05-Joan_Baez-Lowlands-LLS.m4a.flac_transcoded
+# /media/02%20Ludwig%20van%20Beethoven%20-%20Piano%20Concerto%20No.%205%20in%20E-flat%20major%2C%20Op.%2073%20''Emperor''-%20II.%20Adagio%20un%20poco%20mosso.wav
+
+# Testdateien Ordner mit infos
+# m4b mit Cahpetr Variante 1
+# m4b mit variante 2
+# späetr dokumente: pdf
+
+# Benchmarking
+# Parsen, Sorting, Einlesen, Unterschiedliche PArser, Transkodierung, Cache
 
 @eel.expose("get_library")
 def get_library():
