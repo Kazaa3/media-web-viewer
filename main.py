@@ -42,8 +42,13 @@
 import eel # Electron-like Python Library for building desktop apps with web technologies
 import sys
 import os
-from pathlib import Path
+import json
+import time
 import subprocess
+import io
+import contextlib
+import pytest
+from pathlib import Path
 import re  # For MKV parsing
 
 # kann raus. aber aktuell noch im code
@@ -115,7 +120,7 @@ def debug_log(message):
     if hasattr(eel, 'log_to_debug'):
         eel.log_to_debug(message)()
 
-@eel.expose("get_debug_logs")
+@eel.expose
 def get_debug_logs():
     """Gibt den gesamten bisherigen Log-Verlauf als String zurück."""
     return "\n".join(LOG_BUFFER)
@@ -462,6 +467,41 @@ def add_file_to_library(file_path):
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
+
+@eel.expose
+def run_tests(suites):
+    """Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück."""
+    debug_log(f"[Tests] Running suites: {suites}")
+    
+    test_files = []
+    if 'db' in suites: test_files.append("tests/test_db_logic.py")
+    if 'media_item' in suites: test_files.append("tests/test_media_item_logic.py")
+    if 'parser' in suites: test_files.append("tests/test_parser_logic.py")
+    
+    if not test_files:
+        return {"error": "Keine Test-Suiten ausgewählt."}
+
+    # Capture stdout to get pytest report
+    f = io.StringIO()
+    with contextlib.redirect_stdout(f):
+        exit_code = pytest.main(["-v"] + test_files)
+    
+    output = f.getvalue()
+    return {
+        "exit_code": int(exit_code),
+        "output": output,
+        "summary": "Tests passed" if exit_code == 0 else "Tests failed"
+    }
+
+@eel.expose
+def run_gui_tests():
+    """Dummy-Funktion für GUI-Tests (da diese über den Agenten laufen)."""
+    # In einer realen App würde man hier vielleicht Selenium/Playwright fernsteuern.
+    # Hier geben wir einfach einen Hinweis zurück.
+    return {
+        "status": "info",
+        "message": "GUI-Tests müssen über den Antigravity-Agenten (Browser Subagent) gestartet werden."
+    }
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
