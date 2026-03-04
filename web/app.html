@@ -378,6 +378,9 @@
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="toggleFeatureStatus()"
+                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #1b5e20; cursor: pointer; font-weight: bold;">✨
+                Features</button>
             <button onclick="scan(null, true)" id="scan-btn"
                 style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Scan
                 Media</button>
@@ -678,25 +681,77 @@
         </div>
     </div>
 
-    <!-- Debug Flags Modal/Overlay -->
-    <div id="debug-flags-modal"
-        style="display: none; position: fixed; top: 80px; right: 20px; width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; font-size: 1.1em;">Debug Flags</h3>
-            <button onclick="toggleDebugMenu()"
-                style="border: none; background: transparent; cursor: pointer; font-size: 1.2em;">✕</button>
-        </div>
-        <div id="modal-debug-flags" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- Content will be mirrored from Options tab or updated via Eel -->
+    <!-- Feature Status Modal -->
+    <div id="feature-status-modal"
+        style="display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); width: 450px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); z-index: 2000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
+        <div
+            style="background: #1a1a1a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Projekt-Status & Features</h3>
+            <button onclick="toggleFeatureStatus()"
+                style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
         </div>
         <div
-            style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 8px;">
-            <button onclick="loadLibrary()"
-                style="width: 100%; padding: 8px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Force
-                Reload List</button>
-            <button onclick="eel.scan_media(null, false)()"
-                style="width: 100%; padding: 8px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Quick
-                Scan (No Clear)</button>
+            style="padding: 25px; display: flex; flex-direction: column; gap: 16px; max-height: 500px; overflow-y: auto;">
+
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div
+                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
+                    COMPLETED</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1a1a1a;">Natural Sorting</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Korrekte numerische Kapitelsortierung
+                        (1, 2, 10...) basierend auf Titeln & Timestamps.</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div
+                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
+                    COMPLETED</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1a1a1a;">Dynamic Test Suite</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Automatisches Finden und Ausführen von
+                        Test-Skripten im `tests/` Ordner via GUI.</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div
+                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
+                    COMPLETED</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1a1a1a;">Media Categorization</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Intelligente Erkennung von Hörbüchern
+                        (.m4b) und Integration in Datei-Browser.</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div
+                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
+                    COMPLETED</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1a1a1a;">Premium Sidebar Info</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Detaillierte Anzeige von Bitrate,
+                        Codec, Container und Tag-Formaten.</div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div
+                    style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
+                    ACTIVE</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1a1a1a;">Extended Format Support</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Unterstützung für MKV, FLAC, AAC und
+                        Metadaten-Mapping für alle Container.</div>
+                </div>
+            </div>
+
+        </div>
+        <div
+            style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; font-size: 0.8em; color: #888;">
+            Synchronisiert mit `task.md` und `walkthrough.md`
         </div>
     </div>
 
@@ -1508,7 +1563,18 @@
             const modal = document.getElementById('debug-flags-modal');
             if (modal.style.display === 'none') {
                 modal.style.display = 'block';
+                document.getElementById('feature-status-modal').style.display = 'none'; // Close other
                 loadDebugFlags();
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        function toggleFeatureStatus() {
+            const modal = document.getElementById('feature-status-modal');
+            if (modal.style.display === 'none') {
+                modal.style.display = 'block';
+                document.getElementById('debug-flags-modal').style.display = 'none'; // Close other
             } else {
                 modal.style.display = 'none';
             }
