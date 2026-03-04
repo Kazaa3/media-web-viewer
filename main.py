@@ -96,6 +96,7 @@ ARCHIVE_EXTENSIONS = {
 #File: wav • Container: wave
 #Parser-Zeiten:
 #pymediainfo: 10.0ms • mutagen: 0.3ms • container: übersprungen • filename: 0.0ms • ffmpeg: übersprungen
+#die unetrkapitelsortierung ist nicht 1,2,3 sondern 1,21,22,2
 
 # Debug-Optionen
 DEBUG_FLAGS = {
@@ -364,7 +365,7 @@ def play_media(path):
         debug_log(f"[Debug-Player] Spiele ab: {path}")
     return {"status": "play", "path": path} # Bestätigung
 
-@eel.expose
+@eel.expose("open_in_explorer")
 def open_in_explorer(path_str):
     print(f"Versuche zu oeffnen: {path_str}")
     path_obj = Path(path_str)
@@ -384,7 +385,6 @@ def open_in_explorer(path_str):
     except Exception as e:
         print(f"Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
-￼ Summarize findings
 
 @eel.expose
 def get_parser_config():
