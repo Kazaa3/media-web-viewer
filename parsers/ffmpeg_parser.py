@@ -1,11 +1,17 @@
 import subprocess
 import re
 
-def parse(path, file_type, tags):
+def parse(path, file_type, tags, mode='lightweight'):
+    if mode == 'full' and 'full_tags' not in tags:
+        tags['full_tags'] = {}
+        
     try:
         cmd = ["ffmpeg", "-i", str(path)]
         output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
         
+        if mode == 'full':
+            tags['full_tags']['ffmpeg_raw'] = output
+            
         # Container/Format fallback
         if not tags.get('container'):
             input_match = re.search(r"Input #0,\s*([^,]+)", output)
@@ -57,30 +63,31 @@ def parse(path, file_type, tags):
             tags['codec'] = file_type[1:].lower()
 
         # Chapter parsing
-        chapters = []
-        lines = output.split('\n')
-        current_chapter = None
-        for line in lines:
-            chap_match = re.search(r"Chapter\s+#\d+:\d+:\s+start\s+([\d.]+),\s+end\s+([\d.]+)", line)
-            if chap_match:
-                if current_chapter:
-                    chapters.append(current_chapter)
-                current_chapter = {
-                    'start': float(chap_match.group(1)),
-                    'end': float(chap_match.group(2)),
-                    'title': f"Kapitel {len(chapters) + 1}"
-                }
-                continue
+        if not tags.get('chapters'):
+            chapters = []
+            lines = output.split('\n')
+            current_chapter = None
+            for line in lines:
+                chap_match = re.search(r"Chapter\s+#\d+:\d+:\s+start\s+([\d.]+),\s+end\s+([\d.]+)", line)
+                if chap_match:
+                    if current_chapter:
+                        chapters.append(current_chapter)
+                    current_chapter = {
+                        'start': float(chap_match.group(1)),
+                        'end': float(chap_match.group(2)),
+                        'title': f"Kapitel {len(chapters) + 1}"
+                    }
+                    continue
+                    
+                title_match = re.search(r"^\s+title\s+:\s+(.*)$", line)
+                if title_match and current_chapter:
+                    current_chapter['title'] = title_match.group(1).strip()
+                    
+            if current_chapter:
+                chapters.append(current_chapter)
                 
-            title_match = re.search(r"^\s+title\s+:\s+(.*)$", line)
-            if title_match and current_chapter:
-                current_chapter['title'] = title_match.group(1).strip()
-                
-        if current_chapter:
-            chapters.append(current_chapter)
-            
-        if chapters:
-            tags['chapters'] = chapters
+            if chapters:
+                tags['chapters'] = chapters
 
     except Exception:
         pass

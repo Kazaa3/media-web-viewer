@@ -1,19 +1,25 @@
 from pymediainfo import MediaInfo
 
-def parse(path, file_type, tags):
+def parse(path, file_type, tags, mode='lightweight'):
     """
     Extrahierte Metadaten mittels MediaInfo als Fallback/Ergänzung.
     """
+    if mode == 'full' and 'full_tags' not in tags:
+        tags['full_tags'] = {}
+
     try:
         media_info = MediaInfo.parse(path)
         general_track = None
         audio_track = None
+        menu_track = None
         
         for track in media_info.tracks:
             if track.track_type == "General":
                 general_track = track
             elif track.track_type == "Audio":
                 audio_track = track
+            elif track.track_type == "Menu":
+                menu_track = track
                 
         if general_track:
             if not tags.get('duration') and general_track.duration:
@@ -45,6 +51,41 @@ def parse(path, file_type, tags):
                 
             # Use centralized formatting for bitdepth
             tags['bitdepth'] = format_bitdepth(audio_track.bit_depth, codec=tags.get('codec'), file_type=file_type)
+
+        if mode == 'full':
+            for i, track in enumerate(media_info.tracks):
+                tags['full_tags'][f"mediainfo_{i}_{track.track_type}"] = track.to_data()
+
+        # Chapters from Menu track
+        if menu_track and not tags.get('chapters'):
+            chapters = []
+            menu_data = menu_track.to_data()
+            
+            # Mediainfo formats chapters usually as "123456: Chapter 1" inside the dictionary keys
+            # or sometimes as specific properties. We will iterate over the to_data keys looking for digits.
+            for key, val in menu_data.items():
+                # Keys are usually time formats like '00_00_00_000' or similar representing time or milliseconds
+                if '_' in key and str(val).startswith('Chapter') or ':' in str(val) or len(key.split('_')) >= 3:
+                     # Calculate start time from key if it's formatted like HH_MM_SS_mmm
+                     parts = key.split('_')
+                     try:
+                         if len(parts) >= 3:
+                             h = float(parts[0])
+                             m = float(parts[1])
+                             s = float(parts[2])
+                             ms = float(parts[3]) if len(parts) > 3 else 0.0
+                             start_time = h * 3600 + m * 60 + s + (ms / 1000.0)
+                             
+                             chapters.append({
+                                 'start': start_time,
+                                 'title': str(val),
+                                 'end': 0.0
+                             })
+                     except ValueError:
+                         pass
+            
+            if chapters:
+                tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
                 
     except Exception as e:
         pass

@@ -27,9 +27,12 @@ def format_samplerate(hz):
     except:
         return ""
 
-def parse(path, file_type, tags, name):
+def parse(path, file_type, tags, name, mode='lightweight'):
     audio_for_info = None
     
+    if mode == 'full' and 'full_tags' not in tags:
+        tags['full_tags'] = {}
+        
     try:
         if file_type == '.flac':
             audio = FLAC(path)
@@ -47,6 +50,31 @@ def parse(path, file_type, tags, name):
             if hasattr(audio.info, 'bits_per_sample') and audio.info.bits_per_sample:
                 tags['bitdepth'] = f"{audio.info.bits_per_sample} Bit"
             
+            # Chapters for FLAC/Vorbis
+            chapters = []
+            chapter_keys = [k for k in audio.keys() if k.startswith('CHAPTER') and not k.endswith('NAME') and not k.endswith('URL')]
+            for k in sorted(chapter_keys):
+                idx = k.replace('CHAPTER', '')
+                start_val = audio.get(k)
+                title_val = audio.get(f"CHAPTER{idx}NAME")
+                
+                start_t = 0.0
+                if start_val and isinstance(start_val, list):
+                    # Sometimes chapter times are formatted like HH:MM:SS.mmm
+                    parts = start_val[0].split(':')
+                    if len(parts) == 3:
+                        start_t = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
+                    elif len(parts) == 2:
+                        start_t = float(parts[0]) * 60 + float(parts[1])
+                
+                chapters.append({
+                    'start': start_t,
+                    'title': title_val[0] if title_val else f"Kapitel {len(chapters) + 1}",
+                    'end': 0.0 # Ogg/Flac chapters often don't have explicit ends, we can calculate later if needed
+                })
+            if chapters and not tags.get('chapters'):
+                tags['chapters'] = chapters
+
         elif file_type == '.mp3':
             audio = MP3(path)
             audio_for_info = audio
@@ -76,7 +104,29 @@ def parse(path, file_type, tags, name):
                 
             tags['codec'] = 'mp3'
             
-        elif file_type in {'.m4a', '.alac', '.m4b'}:
+            # Chapters for MP3 (ID3 CHAP frames)
+            chapters = []
+            if hasattr(audio, 'tags'):
+                for key, frame in audio.tags.items():
+                    if key.startswith('CHAP'):
+                        # ID3v2 chapter frames
+                        start_time = frame.start_time / 1000.0 if hasattr(frame, 'start_time') else 0.0
+                        end_time = frame.end_time / 1000.0 if hasattr(frame, 'end_time') else 0.0
+                        title = f"Kapitel {len(chapters) + 1}"
+                        # Try to extract the TIT2 sub-frame from the CHAP frame
+                        if hasattr(frame, 'sub_frames') and 'TIT2' in frame.sub_frames:
+                            title = str(frame.sub_frames['TIT2'].text[0])
+                            
+                        chapters.append({
+                            'start': start_time,
+                            'end': end_time,
+                            'title': title
+                        })
+            if chapters and not tags.get('chapters'):
+                # Sort by start time just in case
+                tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
+            
+        elif file_type in {'.m4a', '.alac', '.m4b', '.mp4'}:
             audio = MP4(path)
             audio_for_info = audio
             tags['artist'] = safe_get(audio, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
@@ -101,6 +151,18 @@ def parse(path, file_type, tags, name):
                 
             raw_codec = getattr(audio.info, 'codec', None)
             tags['codec'] = str(raw_codec).lower() if raw_codec else file_type[1:].lower()
+            
+            # Chapters for MP4
+            chapters = []
+            if audio.chapters:
+                for i, chap in enumerate(audio.chapters):
+                    chapters.append({
+                        'start': chap.start,
+                        'title': chap.title if chap.title else f"Kapitel {i + 1}",
+                        'end': chap.end if hasattr(chap, 'end') else 0.0
+                    })
+            if chapters and not tags.get('chapters'):
+                 tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
                 
         elif file_type in {'.ogg', '.opus', '.wav', '.aac', '.wma'}:
             if file_type == '.ogg': audio = OggVorbis(path)
@@ -142,6 +204,11 @@ def parse(path, file_type, tags, name):
 
         # Tag types
         if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
+            
+            if mode == 'full':
+                for k, v in audio_for_info.tags.items():
+                    tags['full_tags'][f"mutagen_{k}"] = str(v)
+            
             tag_name = type(audio_for_info.tags).__name__
             if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
                 tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]}"
@@ -164,7 +231,7 @@ def parse(path, file_type, tags, name):
         elif file_type in {'.m4a', '.alac', '.m4b'} and audio_for_info:
             tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
                 
-    except Exception:
+    except Exception as e:
         pass
 
     return tags

@@ -361,6 +361,7 @@
                 <button class="tab-btn" onclick="switchTab('browser', this)">Browser</button>
                 <button class="tab-btn" onclick="switchTab('edit', this)">Edit</button>
                 <button class="tab-btn" onclick="switchTab('options', this)">Optionen</button>
+                <button class="tab-btn" onclick="switchTab('parser', this)">Parser</button>
                 <button class="tab-btn" onclick="switchTab('debug', this)">Debug DB</button>
             </div>
         </div>
@@ -508,9 +509,67 @@
                             </div>
                         </div>
 
+                        <!-- Parser moved to new tab -->
+
+                        <div>
+                            <h3 style="font-size: 1.1em; margin-bottom: 15px; color: #444;">Debug-Flags (Temporär)</h3>
+                            <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Experimentelle Funktionen und
+                                Tools.</p>
+
+                            <div
+                                style="background: #fdfdfd; border: 1px dashed #ccc; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; align-items: flex-start;">
+                                <div style="font-size: 0.9em; font-weight: bold; color: #444;">Medien-Verzeichnis wählen
+                                </div>
+                                <p style="font-size: 0.85em; color: #888; margin: 0;">Öffnet den nativen Ordner-Dialog
+                                    (Tkinter), um ein neues Ziel für den Datei-Browser festzulegen.</p>
+
+                                <button id="browse-folder-btn" onclick="fbPickFolder()"
+                                    style="padding: 12px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s;">
+                                    <span style="font-size: 1.2em;">📂</span> Ordner durchsuchen
+                                </button>
+                            </div>
+
+                            <div style="margin-top: auto; padding-top: 40px;">
+                                <h3 style="font-size: 1.1em; color: #c33; margin-bottom: 12px;">Gefahrenzone</h3>
+                                <button onclick="clearDatabase()"
+                                    style="padding: 10px 20px; background: #f4d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: opacity 0.2s;">Datenbank
+                                    löschen</button>
+                                <p style="font-size: 0.8em; color: #999; margin-top: 8px;">Vorsicht: Dies löscht alle
+                                    indexierten
+                                    Lieder aus der Bibliothek.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- Close flex row container inside options-tab -->
+            </div> <!-- Close options-tab -->
+
+            <div id="parser-tab" class="tab-content" style="padding: 20px;">
+                <h2 style="margin-bottom: 25px;">Parser Konfiguration</h2>
+
+                <div style="display: flex; gap: 40px; align-items: flex-start;">
+                    <!-- Left Column: Core Parser Settings -->
+                    <div style="flex: 1; max-width: 500px;">
+
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">Erweiterter Parser-Modus</h3>
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-parser-mode" onchange="saveParserChainUI()">
+                                <span class="slider"></span>
+                            </label>
+                            <div>
+                                <div style="font-weight: 500;">Full Mode (Alle Tags parsen)</div>
+                                <div style="font-size: 0.85em; color: #666; margin-top: 4px;">Wenn aktiviert,
+                                    ignoriert der Parser Performance-Optimierungen und sammelt alle tiefgreifende
+                                    Tags aus Medien (Kapitel, Streams, RAW FFmpeg). Dies ist langsamer, bietet aber
+                                    vollständige Metadaten.</div>
+                            </div>
+                        </div>
+
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;">Parser-Architektur</h3>
                         <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Sortiere die
-                            Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach Bedarf.</p>
+                            Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach Bedarf.
+                        </p>
 
                         <div
                             style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
@@ -518,42 +577,13 @@
                                 <!-- Dynamically populated list -->
                             </ul>
                             <button onclick="saveParserChainUI()"
-                                style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Reihenfolge
+                                style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Konfiguration
                                 Speichern</button>
                             <span id="parser-save-status"
                                 style="margin-left: 10px; font-size: 0.85em; color: #2a7; display: none;">✅
                                 Gespeichert</span>
                         </div>
 
-                    </div>
-
-                    <div>
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px; color: #444;">Debug-Flags (Temporär)</h3>
-                        <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Experimentelle Funktionen und
-                            Tools.</p>
-
-                        <div
-                            style="background: #fdfdfd; border: 1px dashed #ccc; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; align-items: flex-start;">
-                            <div style="font-size: 0.9em; font-weight: bold; color: #444;">Medien-Verzeichnis wählen
-                            </div>
-                            <p style="font-size: 0.85em; color: #888; margin: 0;">Öffnet den nativen Ordner-Dialog
-                                (Tkinter), um ein neues Ziel für den Datei-Browser festzulegen.</p>
-
-                            <button id="browse-folder-btn" onclick="fbPickFolder()"
-                                style="padding: 12px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s;">
-                                <span style="font-size: 1.2em;">📂</span> Ordner durchsuchen
-                            </button>
-                        </div>
-
-                        <div style="margin-top: auto; padding-top: 40px;">
-                            <h3 style="font-size: 1.1em; color: #c33; margin-bottom: 12px;">Gefahrenzone</h3>
-                            <button onclick="clearDatabase()"
-                                style="padding: 10px 20px; background: #f4d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: opacity 0.2s;">Datenbank
-                                löschen</button>
-                            <p style="font-size: 0.8em; color: #999; margin-top: 8px;">Vorsicht: Dies löscht alle
-                                indexierten
-                                Lieder aus der Bibliothek.</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -693,6 +723,7 @@
                 'browser': 'browser-tab',
                 'edit': 'edit-tab',
                 'options': 'options-tab',
+                'parser': 'parser-tab',
                 'debug': 'debug-list'
             };
 
@@ -1215,8 +1246,14 @@
                     currentParserChain = config.parser_chain;
                 } else {
                     console.warn("Failed to load parser_chain, falling back to defaults.");
-                    currentParserChain = ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"];
+                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
                 }
+
+                if (config && config.parser_mode) {
+                    const modeToggle = document.getElementById('toggle-parser-mode');
+                    if (modeToggle) modeToggle.checked = (config.parser_mode === "full");
+                }
+
                 renderParserList();
             });
         }
@@ -1317,10 +1354,13 @@
                 }
             });
 
-            console.log("Saving new parser chain:", newChain);
+            const modeToggle = document.getElementById('toggle-parser-mode');
+            const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
+
+            console.log("Saving new parser config:", newChain, newMode);
 
             // Pass object that matches Python expected structure
-            eel.save_parser_config({ "parser_chain": newChain })((result) => {
+            eel.save_parser_config({ "parser_chain": newChain, "parser_mode": newMode })((result) => {
                 if (result && result.status === 'ok') {
                     const statusSpan = document.getElementById('parser-save-status');
                     statusSpan.style.display = 'inline';
