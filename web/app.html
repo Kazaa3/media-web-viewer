@@ -1725,6 +1725,56 @@
                 }
             }
 
+            async function loadLogbuchTab() {
+                const list = document.getElementById('logbuch-tab-list');
+                const title = document.getElementById('logbuch-tab-title');
+                const content = document.getElementById('logbuch-tab-content');
+                if (!list || !content) return;
+
+                list.innerHTML = '<div style="color:#999;">Lade Einträge...</div>';
+
+                try {
+                    const entries = await eel.list_logbook_entries()();
+                    if (!entries || entries.length === 0) {
+                        list.innerHTML = '<div style="color:#999;font-style:italic;">Keine Logbücher gefunden.</div>';
+                        return;
+                    }
+
+                    list.innerHTML = '';
+                    entries.forEach(entry => {
+                        let btn = document.createElement('div');
+                        btn.style.padding = '10px 15px';
+                        btn.style.background = '#f5f5f5';
+                        btn.style.borderRadius = '6px';
+                        btn.style.cursor = 'pointer';
+                        btn.style.transition = 'background 0.2s';
+                        btn.innerText = entry;
+                        btn.onmouseover = () => btn.style.background = '#e9e9e9';
+                        btn.onmouseout = () => btn.style.background = '#f5f5f5';
+
+                        btn.onclick = async () => {
+                            title.innerText = entry;
+                            content.innerHTML = '<div style="color:#999;">Lade Text...</div>';
+                            try {
+                                const markdown = await eel.get_logbook_entry(entry)();
+                                let html = markdown
+                                    .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
+                                    .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
+                                    .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                    .replace(/\n\n/g, '<br><br>');
+                                content.innerHTML = html;
+                            } catch (e) {
+                                content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
+                            }
+                        };
+                        list.appendChild(btn);
+                    });
+                } catch (e) {
+                    list.innerHTML = `<div style="color:#f44;">Fehler beim Laden der Liste.</div>`;
+                }
+            }
+
             async function clearDatabase() {
                 if (confirm("Möchtest du wirklich die gesamte Datenbank löschen? Alle indexierten Medien werden entfernt.")) {
                     const result = await eel.clear_database()();

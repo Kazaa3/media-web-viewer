@@ -757,7 +757,10 @@ def get_logbook_entry(feature_name):
     """Read a markdown file from the logbuch directory."""
     log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
     if not log_file.exists():
-        return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
+        # Fallback without extension just in case it was passed directly
+        log_file = Path(__file__).parent / "logbuch" / feature_name
+        if not log_file.exists():
+            return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
     
     try:
         content = log_file.read_text(encoding='utf-8')
@@ -766,6 +769,18 @@ def get_logbook_entry(feature_name):
         return content
     except Exception as e:
         return f"<h1>Error</h1><p>{str(e)}</p>"
+
+@eel.expose
+def list_logbook_entries():
+    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner zurück."""
+    log_dir = Path(__file__).parent / "logbuch"
+    if not log_dir.exists():
+        return []
+    
+    entries = []
+    for f in sorted(log_dir.glob("*.md")):
+        entries.append(f.stem)
+    return entries
 
 @eel.expose
 def run_tests(test_files):
