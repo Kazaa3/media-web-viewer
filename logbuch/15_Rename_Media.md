@@ -1,0 +1,33 @@
+<!-- Category: UI/UX -->
+
+Ich habe die gewünschten Änderungen umgesetzt, sodass Elemente in der Bibliothek nun umbenannt und auch gezielt gelöscht werden können.
+
+Änderungen im Überblick:
+Metadaten-Editor (Edit-Tab):
+
+Umbenennen: Neben dem Dateinamen im Editor findest du nun einen Button "✏️ Name ändern". Dieser öffnet einen Dialog, in dem du den Anzeigenamen in der Bibliothek ändern kannst. Der neue Name wird sofort in der Datenbank gespeichert und die Liste aktualisiert.
+Löschen: Unten rechts im Editor gibt es nun den Button "🗑️ Aus Bibliothek löschen". Damit kannst du ein Element dauerhaft aus deiner Datenbank entfernen (die Originaldatei auf der Festplatte bleibt natürlich erhalten).
+Backend (main.py & db.py):
+
+Ich habe die nötigen Eel-Funktionen (
+
+rename_media
+, 
+
+delete_media
+) in 
+
+main.py
+ registriert.
+In 
+
+db.py
+ wurden die entsprechenden SQL-Befehle implementiert, um die 
+
+media
+-Tabelle sicher zu aktualisieren.
+UI-Integration:
+
+Die Liste im Edit-Tab wird nach jeder Änderung automatisch neu geladen, damit du deine Änderungen sofort siehst.
+Bestätigungsdialoge verhindern versehentliches Löschen.
+Du kannst nun im Edit-Tab ein Lied auswählen, oben auf "Name ändern" klicken, den Text anpassen und mit "Speichern" (für die Tags) oder direkt über den Rename-Dialog (für den Namen) alles festschreiben.

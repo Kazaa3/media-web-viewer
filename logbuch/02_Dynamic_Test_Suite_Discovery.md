@@ -1,0 +1,7 @@
+<!-- Category: Tests -->
+
+Dynamic Test Suite Discovery
+The "Tests" tab now automatically scans the 
+tests/
+ directory and lists all available test scripts, allowing users to run new tests without code changes to the UI.
+
