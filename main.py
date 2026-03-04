@@ -30,7 +30,8 @@
 #neu sortieren 1.filename 2.container 3. mutagen 4. pymediainfo 5. ffmpeg
 # kapitel parser für 3 und 4
 # string parser: wenn "zahl " vor dem Titel steht, dann ist das die Tracknummer, z.B. "02 Ludwig van Beethoven" --> Track 2
-
+# container auslesen. mkv parsing. mkv hat keine tags. mkv hat nur streams. 
+# cointainer nested aac parsen
 
 
 

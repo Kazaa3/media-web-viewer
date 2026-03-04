@@ -144,13 +144,15 @@ def parse(path, file_type, tags, name):
         if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
             tag_name = type(audio_for_info.tags).__name__
             if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
-                tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]} / ID3v2.4 / ID3v2.3 / ID3v2.2 / ID3v1.1 / ID3v1"
+                tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]}"
             elif tag_name == 'MP4Tags':
-                tags['tagtype'] = 'MP4Tags / Atoms'
+                tags['tagtype'] = 'MP4Tags'
             elif tag_name == 'OggVComment':
                 tags['tagtype'] = 'OggVComment' #Vorbis Comment (Ogg)
             elif tag_name == 'VCFLACDict':
                 tags['tagtype'] = 'VCFLACDict' #Vorbis Comment (FLAC)
+            elif tag_name == 'ASFTags':
+                tags['tagtype'] = 'ASFTags' #Windows Media Audio
             else:
                 tags['tagtype'] = tag_name
             
