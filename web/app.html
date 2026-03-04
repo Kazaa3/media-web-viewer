@@ -1220,6 +1220,35 @@
                 }
             }
 
+            async function renameMedia() {
+                const oldName = document.getElementById('edit-item-name').value;
+                const newName = prompt("Neuen Namen für dieses Element eingeben:", oldName);
+                if (newName && newName !== oldName) {
+                    const res = await eel.rename_media(oldName, newName)();
+                    if (res.status === 'ok') {
+                        document.getElementById('edit-item-name').value = newName;
+                        document.getElementById('edit-filename-display').innerText = newName;
+                        // Refresh library and list
+                        loadEditItems();
+                        alert("Name wurde erfolgreich aktualisiert!");
+                    } else {
+                        alert("Fehler: " + res.message);
+                    }
+                }
+            }
+
+            async function deleteMediaFromEdit() {
+                const name = document.getElementById('edit-item-name').value;
+                if (confirm(`Möchtest du "${name}" wirklich aus der Bibliothek entfernen?\n(Die Datei auf der Festplatte bleibt erhalten.)`)) {
+                    const res = await eel.delete_media(name)();
+                    if (res.status === 'ok') {
+                        resetEditForm();
+                        loadEditItems();
+                        alert("Element wurde aus der Bibliothek entfernt.");
+                    }
+                }
+            }
+
             async function refreshLibrary() {
                 let result = await eel.get_library()();
                 let list = document.getElementById('library-list');

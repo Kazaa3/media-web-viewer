@@ -119,3 +119,24 @@ def update_media_tags(name, tags_dict):
     """, (json.dumps(tags_dict), name))
     conn.commit()
     conn.close()
+
+def rename_media(old_name, new_name):
+    """Benennt ein Medium in der DB um (nur das Feld 'name')."""
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE media SET name = ? WHERE name = ?", (new_name, old_name))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def delete_media_by_name(name):
+    """Löscht ein Medium anhand des Namens aus der DB."""
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM media WHERE name = ?", (name,))
+    conn.commit()
+    conn.close()
