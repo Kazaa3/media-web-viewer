@@ -992,27 +992,32 @@
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
             let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + item.type.toUpperCase();
-            let fileInfoStr = [tags.size, contStr, artStr].filter(Boolean).join(' • ');
-            let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '\n\nTag Format: ' + tags.tagtype : '';
+            let fileInfoStr = [tags.size, contStr, artStr].filter(Boolean).join(' &bull; ');
+            let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '<br><br>Tag Format: ' + tags.tagtype : '';
 
             // Format Parser Times
-            let parserTimesStr = '';
+            let parserTimesHtml = '';
             // Only show if the toggle is checked
             const showParserTimes = document.getElementById('toggle-parser-times') ? document.getElementById('toggle-parser-times').checked : true;
 
             if (showParserTimes && tags._parser_times) {
                 let times = [];
                 for (const [pName, pTime] of Object.entries(tags._parser_times)) {
-                    times.push(`${pName}: ${(pTime * 1000).toFixed(1)}ms`);
+                    let msTime = (pTime * 1000).toFixed(1);
+                    if (pTime > 0) {
+                        times.push(`<span style="color: #666; font-weight: bold;" title="Wurde ausgeführt">${pName}: ${msTime}ms</span>`);
+                    } else {
+                        times.push(`<span style="color: #ccc;" title="Wurde übersprungen">${pName}: übersprungen</span>`);
+                    }
                 }
                 if (times.length > 0) {
-                    parserTimesStr = '\n\nParser-Zeiten:\n' + times.join(' • ');
+                    parserTimesHtml = '<br><br>Parser-Zeiten:<br>' + times.join(' &bull; ');
                 }
             }
 
-            let transcodeStr = item.is_transcoded ? `\n\n⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.` : '';
+            let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
 
-            document.getElementById('sb-fileinfo').innerText = fileInfoStr + tagStr + parserTimesStr + transcodeStr;
+            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + tagStr + parserTimesHtml + transcodeHtml;
 
             // Python Backend anfunken
             eel.play_media(path)();
