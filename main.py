@@ -484,6 +484,10 @@ from models import MediaItem
 # chore
 # https://www.w3tutorials.net/blog/when-to-use-chore-as-type-of-commit-message/
 
+#debug fenster:
+# Erweiterung um andere DAteityen als das dict/json
+
+
 
 
 @eel.expose("get_library")
@@ -718,8 +722,11 @@ def browse_dir(dir_path=None):
 # Test cases mit KAtegorien
 
 #Logbuch
-# Einträge zu Einträge
-
+# Einträge zu Feature
+# Zwei Spalten
+# unetre abgeschlossen Feature mit unerOrdner im logbuch
+# unten rechts Impressum / gloassar
+# bearbeiten buttton funktioniert nicht
 
 
 
@@ -799,6 +806,48 @@ def get_test_suites():
                 "metadata": metadata
             })
     return suites
+
+@eel.expose
+def update_test_metadata(filename, metadata):
+    """Updates the metadata comments in a test file."""
+    test_dir = Path(__file__).parent / "tests"
+    file_path = test_dir / filename
+    
+    if not file_path.exists():
+        return {"error": "Test-Datei nicht gefunden"}
+        
+    try:
+        content = file_path.read_text(encoding='utf-8')
+        lines = content.splitlines()
+        
+        # Remove existing metadata lines
+        new_lines = []
+        for line in lines:
+            if not any(line.startswith(prefix) for prefix in [
+                "# Kategorie:", "# Eingabewerte:", "# Ausgabewerte:", "# Testdateien:", "# Kommentar:"
+            ]):
+                new_lines.append(line)
+        
+        # Prepend new metadata
+        header = [
+            f"# Kategorie: {metadata.get('category', '-')}",
+            f"# Eingabewerte: {metadata.get('inputs', '-')}",
+            f"# Ausgabewerte: {metadata.get('outputs', '-')}",
+            f"# Testdateien: {metadata.get('files', '-')}",
+            f"# Kommentar: {metadata.get('comment', '-')}",
+            ""  # Add empty line after metadata
+        ]
+        
+        # Join lines with proper newline handling
+        # Skip leading empty lines if there are any after removing metadata
+        while new_lines and not new_lines[0].strip():
+            new_lines.pop(0)
+
+        final_content = "\n".join(header + new_lines)
+        file_path.write_text(final_content, encoding='utf-8')
+        return {"status": "ok"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @eel.expose
 def get_logbook_entry(feature_name):
