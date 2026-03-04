@@ -15,8 +15,6 @@ def parse(path, file_type, tags):
                 
                 if raw_cont == 'MOV' and raw_ext in ('MP4', 'M4A', 'M4B', 'M4V', 'ALAC'):
                     tags['container'] = raw_ext.lower()
-                elif raw_cont == 'MATROSKA':
-                    tags['container'] = 'mkv'
                 else:
                     tags['container'] = raw_cont.lower()
                     

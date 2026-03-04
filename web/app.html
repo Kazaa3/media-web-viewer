@@ -991,9 +991,18 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + item.type.toUpperCase();
-            let fileInfoStr = [tags.size, contStr, artStr].filter(Boolean).join(' &bull; ');
-            let tagStr = tags.tagtype && tags.tagtype !== 'None' ? '<br><br>Tag Format: ' + tags.tagtype : '';
+            let extStr = 'File: ' + item.type.toUpperCase().replace('.', '');
+            let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + extStr.replace('File: ', '');
+
+            // Reorganize top row with size and art
+            let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
+
+            // New distinct row for format details
+            let tagStr = tags.tagtype && tags.tagtype !== 'None' ? 'Tag Format: ' + tags.tagtype : '';
+            let formatDetailsStr = [extStr, contStr, tagStr].filter(Boolean).join(' &bull; ');
+
+            // Combine them
+            fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
 
             // Format Parser Times
             let parserTimesHtml = '';

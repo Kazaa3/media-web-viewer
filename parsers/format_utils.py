@@ -67,7 +67,8 @@ def format_codec(raw_codec, track_info=None):
         'opus': 'opus',
         'flac': 'flac',
         'alac': 'alac',
-        'aac': 'aac'
+        'aac': 'aac',
+        'm4a': 'aac'
     }
     
     # PCM specific handling
@@ -82,6 +83,53 @@ def format_codec(raw_codec, track_info=None):
         return raw_codec.upper()
         
     return codec_map.get(codec, codec)
+
+def format_container(raw_container, file_type=None):
+    """Standardizes container naming."""
+    if not raw_container:
+        raw_container = file_type[1:] if file_type else ""
+    
+    container = str(raw_container).lower().strip()
+    
+    container_map = {
+        'matroska,webm': 'mkv',
+        'matroska': 'mkv',
+        'mov,mp4,m4a,3gp,3g2,mj2': 'mp4',
+        'mpeg-4': 'mp4',
+        'quicktime': 'mp4',
+        'asf': 'wma',
+        'ogg': 'ogg',
+        'flac': 'flac',
+        'mp3': 'mp3'
+    }
+    
+    # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
+    if container in ('id3', 'wav') and file_type:
+        return file_type[1:].lower()
+        
+    return container_map.get(container, container)
+
+def format_tagtype(raw_tagtype):
+    """Standardizes meta tag object types into human readable formats."""
+    if not raw_tagtype:
+        return ""
+        
+    tag = str(raw_tagtype).strip()
+    
+    # Already formatted versions (e.g. ID3v2.3)
+    if tag.startswith("ID3v"):
+        return tag
+        
+    tag_map = {
+        'ID3': 'ID3',
+        'MP4Tags': 'MP4Tags',
+        'OggVComment': 'Vorbis Comment (Ogg)',
+        'VCFLACDict': 'Vorbis Comment (FLAC)',
+        'ASF': 'ASF',
+        'APETag': 'APEv2'
+    }
+    
+    return tag_map.get(tag, tag)
 
 def format_bitdepth(bit_depth, codec=None, file_type=None, internal_fmt=None):
     """
