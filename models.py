@@ -71,7 +71,7 @@ class MediaItem:
 
     def show_info(self):
         print(self.name)
-        print(self.path)
+        print(str(self.path))
         print(self.type)
         print(self.duration)
         print(self.tags)
@@ -100,11 +100,19 @@ class MediaItem:
         else:
             transcoded_format = None
         
+        # Filter tags: Only keep what's strictly necessary for the UI/Database to save space
+        whitelist = {
+            'title', 'artist', 'album', 'year', 'genre', 'track', 'totaltracks',
+            'disc', 'codec', 'bitdepth', 'samplerate', 'bitrate', 'size',
+            'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation'
+        }
+        filtered_tags = {k: v for k, v in self.tags.items() if k in whitelist}
+        
         return {
             'name': self.name,
             'path': str(self.path),
             'duration': duration_str,
-            'tags': self.tags,
+            'tags': filtered_tags,
             'type': self.type[1:] if self.type.startswith('.') else self.type,
             'category': self.category,
             'is_transcoded': is_transcoded,

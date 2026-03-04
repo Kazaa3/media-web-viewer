@@ -434,7 +434,10 @@
             currentLogbookEditName = name;
             currentLogbookEditFilename = filename;
             const modal = document.getElementById('logbuch-editor-modal');
-            if (!modal) return;
+            if (!modal) {
+                console.error("Modal 'logbuch-editor-modal' not found!");
+                return;
+            }
             const nameInput = document.getElementById('logbuch-editor-name');
             const contentInput = document.getElementById('logbuch-editor-content');
             const title = document.getElementById('logbuch-editor-title');
@@ -450,7 +453,9 @@
                 contentInput.value = '<!-- Category: Planung -->\n\n# Neuer Eintrag\n\n';
                 nameInput.disabled = false;
             }
+
             modal.style.display = 'flex';
+            modal.style.zIndex = "4000"; // Ensure it's on top
         }
 
         async function saveLogbookEntry() {
@@ -1779,7 +1784,8 @@
                 // New distinct row for format details
                 let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
                 let tagStr = 'Tag Format: ' + tagVal;
-                let fileTypeStr = (item.category && item.category !== 'Audio') ? 'Filetype: ' + item.category : '';
+                let filetypeValue = item.category || 'Audio';
+                let fileTypeStr = `Filetype: ${filetypeValue}`;
                 let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
 
                 // Combine them
@@ -2283,7 +2289,6 @@
 
                         const m = suite.metadata || {};
                         const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
-                        const editBtnHtml = suite.isGuiTest ? '' : `<button onclick='event.stopPropagation(); openTestEditModal(${JSON.stringify(suite).replace(/'/g, "&apos;")})' style="border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✏️ Bearbeiten</button>`;
 
                         card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
@@ -2291,8 +2296,7 @@
                                 ${checkboxHtml}
                                 <h3 style="margin: 0; font-size: 1.1em; color: #333;">${suite.name}</h3>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                ${editBtnHtml}
+                            <div class="test-card-actions" style="display: flex; align-items: center; gap: 8px;">
                                 ${categoryHtml}
                             </div>
                         </div>
@@ -2305,6 +2309,21 @@
                             ${m.comment || '-'}
                         </div>
                     `;
+
+                        if (!suite.isGuiTest) {
+                            const actionsArea = card.querySelector('.test-card-actions');
+                            const editBtn = document.createElement('button');
+                            editBtn.innerText = '✏️ Bearbeiten';
+                            editBtn.style.cssText = 'border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;';
+                            editBtn.onmouseover = () => editBtn.style.opacity = '1';
+                            editBtn.onmouseout = () => editBtn.style.opacity = '0.6';
+                            editBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                openTestEditModal(suite);
+                            };
+                            actionsArea.prepend(editBtn);
+                        }
+
                         container.appendChild(card);
                     });
                 } catch (error) {
