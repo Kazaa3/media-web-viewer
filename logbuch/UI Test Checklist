@@ -1,0 +1,12 @@
+UI Test Checklist
+ Open http://localhost:8000
+ Verify '⚙️ Flags' button in header
+ Click '⚙️ Flags' and verify modal appears
+ Verify modal contains SCAN, PARSER, PLAYER, DB checkboxes
+ Toggle SCAN checkbox in modal
+ Close modal with '✕'
+ Navigate to 'Optionen' and verify SCAN toggle sync
+ Return to 'Player' tab
+ Click 'Scan Media'
+ Wait for scan to finish (spinner gone)
+ Verify media items are rendered

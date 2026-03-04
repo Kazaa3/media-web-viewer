@@ -1,21 +1,3 @@
-# Test Tab Rework & Additional Features
-
-This task list tracks the implementation of the UI rework for the Test tab and other recently requested features.
-
-## 1. Test Tab Rework
-- [x] Parse additional metadata from test files or define a registry in `main.py`.
-  - Metadata needed: `Testkategorien`, `Eingabewerte`, `Ausgabewerte`, `Testdateien`, `AufzĂ¤hlung der passes`, `Kommentar`.
-- [x] Modify `app.html` to display the Test tab as a rich interface (e.g., table or cards) rather than just a list of checkboxes.
-- [x] Ensure execution of tests still works and displays results nicely.
-
-## 2. Python Datenanalyse & Scraping (Stub)
-- [x] Add basic stubs / placeholders for Python data analysis and scraping, as requested by the comments.
-
-## 3. Logbuch & Checklisten
-- [x] Make sure missing markdown files are restored to `logbuch/` if appropriate.
-- [x] Bring back unchecked to-do points somewhere if they were lost.
-
-
 Walkthrough: Test Tab Rework & Logbuch Feature
 Änderungen und Verlauf
 In diesem Arbeitsgang (inklusive der Reparatur-Schritte) wurden folgende Ziele erreicht:
@@ -53,3 +35,4 @@ main.py
 test_bitdepth.py
 .
 ✔️ Der neue "Logbuch"-Tab lädt dynamisch Markdown und wendet rudimentäres Styling darauf an.
+Synchronisiert mit den Projektanforderungen und dem Git Log.
