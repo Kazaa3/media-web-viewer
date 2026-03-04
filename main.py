@@ -443,6 +443,21 @@ def get_test_suites():
     return suites
 
 @eel.expose
+def get_logbook_entry(feature_name):
+    """Read a markdown file from the logbuch directory."""
+    log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
+    if not log_file.exists():
+        return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
+    
+    try:
+        content = log_file.read_text(encoding='utf-8')
+        # Simple markdown to HTML conversion (basic bold/header)
+        # In a real app we'd use 'markdown' library, but let's keep it simple or use JS side.
+        return content
+    except Exception as e:
+        return f"<h1>Error</h1><p>{str(e)}</p>"
+
+@eel.expose
 def run_tests(test_files):
     """Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück."""
     debug_log(f"[Tests] Running files: {test_files}")
