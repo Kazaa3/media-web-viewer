@@ -665,7 +665,7 @@ def browse_dir(dir_path=None):
 
 # json.dumps() garantiert JSON-konforme double quotes und Escaping.
 
-
+#rework. the dokmentation
 #jede.md datei jeden implementation plan in logbuch speichern. 
 #rename
 #task.md
@@ -797,6 +797,9 @@ def run_tests(test_files):
             env=env,
             cwd=str(Path(__file__).parent)
         )
+        
+        output = result.stdout + "\n" + result.stderr
+        
         # Parse output for passed/failed
         import re
         passes = 0
