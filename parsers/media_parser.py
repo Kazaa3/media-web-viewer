@@ -19,6 +19,7 @@ def extract_metadata(path, filename, debug=False):
     
     tags = {}
     duration = 0
+    parser_times = {}
     
     # Iterate dynamically through the user-configured parser chain
     parser_chain = PARSER_CONFIG.get("parser_chain", ["filename", "mutagen", "pymediainfo", "ffmpeg", "container"])
@@ -34,23 +35,42 @@ def extract_metadata(path, filename, debug=False):
         )
         
         if parser_name == "filename":
+            t0 = time.time()
             tags = filename_parser.parse(path_obj, filename, tags=tags)
+            parser_times["filename"] = time.time() - t0
             
         elif parser_name == "mutagen":
+            t0 = time.time()
             tags = mutagen_parser.parse(path_obj, file_type, tags, filename)
+            parser_times["mutagen"] = time.time() - t0
             
-        elif parser_name == "pymediainfo" and needs_more_info:
-            tags = pymediainfo_parser.parse(path_obj, file_type, tags)
+        elif parser_name == "pymediainfo":
+            if needs_more_info:
+                t0 = time.time()
+                tags = pymediainfo_parser.parse(path_obj, file_type, tags)
+                parser_times["pymediainfo"] = time.time() - t0
+            else:
+                parser_times["pymediainfo"] = 0.0
             
-        elif parser_name == "ffmpeg" and needs_more_info:
-            tags = ffmpeg_parser.parse(path_obj, file_type, tags)
+        elif parser_name == "ffmpeg":
+            if needs_more_info:
+                t0 = time.time()
+                tags = ffmpeg_parser.parse(path_obj, file_type, tags)
+                parser_times["ffmpeg"] = time.time() - t0
+            else:
+                parser_times["ffmpeg"] = 0.0
             
-        elif parser_name == "container" and needs_more_info:
-            # Fallback block mostly handled inside ffmpeg, but isolated here for config flexibility
-            if not tags.get('container'):
-                 tags['container'] = file_type[1:].lower()
-                 if not tags.get('codec'):
-                     tags['codec'] = file_type[1:].lower()
+        elif parser_name == "container":
+            if needs_more_info:
+                t0 = time.time()
+                # Fallback block mostly handled inside ffmpeg, but isolated here for config flexibility
+                if not tags.get('container'):
+                     tags['container'] = file_type[1:].lower()
+                     if not tags.get('codec'):
+                         tags['codec'] = file_type[1:].lower()
+                parser_times["container"] = time.time() - t0
+            else:
+                parser_times["container"] = 0.0
 
         # Update duration safely after each potential parser
         if 'duration' in tags and tags['duration'] and not duration:
@@ -64,5 +84,7 @@ def extract_metadata(path, filename, debug=False):
     # We now use centralized formatting logic.
     if not tags.get('bitdepth'):
         tags['bitdepth'] = format_bitdepth(None, codec=tags.get('codec'), file_type=file_type)
+        
+    tags['_parser_times'] = parser_times
             
     return duration, tags
