@@ -46,8 +46,12 @@ def natural_sort_key(text):
     """
     Helper for natural/numeric sorting. 
     "Kapitel 2" comes before "Kapitel 10".
+    Handles None and numbers gracefully.
     """
-    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', str(text))]
+    if text is None: return []
+    if isinstance(text, (int, float)): return [text]
+    s = str(text)
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', s)]
 
 # Extension Categories
 AUDIO_EXTENSIONS = {

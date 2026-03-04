@@ -28,9 +28,12 @@ class MediaItem:
         ext = self.type.lower()
         path_str = str(self.path).lower()
         
+        if ext == '.m4b':
+            return 'Hörbuch'
+            
         if ext in AUDIO_EXTENSIONS:
             # Detect Audiobook (Hörbuch)
-            if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or ext == '.m4b':
+            if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']):
                 return 'Hörbuch'
             return 'Audio'
         elif ext in VIDEO_EXTENSIONS:
