@@ -1,6 +1,7 @@
+import re
 from pathlib import Path
 
-def parse(path, filename, tags=None):
+def parse(path, filename, tags=None, mode='lightweight'):
     if tags is None:
         tags = {
             'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
@@ -16,8 +17,15 @@ def parse(path, filename, tags=None):
     except Exception:
         pass
         
-    if " - " in filename:
-        parts = filename.split(" - ", 1)
+    working_filename = filename
+    if not tags.get('track'):
+        track_match = re.match(r"^(\d+)\s+(.*)", working_filename)
+        if track_match:
+            tags['track'] = str(int(track_match.group(1))) # Remove leading zeros
+            working_filename = track_match.group(2)
+            
+    if " - " in working_filename:
+        parts = working_filename.split(" - ", 1)
         if not tags.get('artist'):
             tags['artist'] = parts[0].strip()
         if not tags.get('title'):
@@ -25,7 +33,7 @@ def parse(path, filename, tags=None):
             tags['title'] = title
     else:
         if not tags.get('title'):
-            title = filename.rsplit(".", 1)[0] if "." in filename else filename
+            title = working_filename.rsplit(".", 1)[0] if "." in working_filename else working_filename
             tags['title'] = title
         
     return tags

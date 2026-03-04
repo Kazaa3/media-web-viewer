@@ -217,7 +217,9 @@ class MediaItem:
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
-        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"])
+        from parsers.format_utils import PARSER_CONFIG
+        parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
+        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"], mode=parser_mode)
 
 # Auf gui bringen
     def show_info(self):
