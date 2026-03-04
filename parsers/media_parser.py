@@ -6,13 +6,15 @@ from . import pymediainfo_parser
 from . import ffmpeg_parser
 from . import container_parser
 
-def extract_metadata(path, filename, debug=False, mode='lightweight'):
+def extract_metadata(path, filename, debug=False, mode='lightweight', logger=print):
     """
     Zentraler Parser, der Redundanzen vermeidet und FFmpeg-Subprozesse
     für die Indexierung überflüssig macht.
     """
     if debug:
-        print(f"[Debug-Parser] Starte Parsing für: {filename} in Mode: {mode}")
+        logger(f"[Debug-Parser] Starte Parsing für '{filename}' (Mode: {mode})")
+    if mode == 'full':
+        logger(f"[Debug-Parser] 🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
         
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()

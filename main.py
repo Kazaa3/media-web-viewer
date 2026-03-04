@@ -102,8 +102,7 @@ DEBUG_FLAGS = {
     "scan": False,
     "parser": False,
     "player": False,
-    "db": False,
-    "ffmpeg": False
+    "db": False
 }
 
 LOG_BUFFER = []
@@ -135,6 +134,7 @@ import db
 
 # Eigene Parser
 from parsers import media_parser
+from parsers.format_utils import PARSER_CONFIG
 
 # Eigene bottle Web-Routen
 from web import app_bottle
@@ -217,9 +217,8 @@ class MediaItem:
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
-        from parsers.format_utils import PARSER_CONFIG
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
-        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"], mode=parser_mode)
+        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"], mode=parser_mode, logger=debug_log)
 
 # Auf gui bringen
     def show_info(self):
@@ -228,12 +227,6 @@ class MediaItem:
         print(self.type)
         print(self.duration)
         print(self.tags)
-        print(self.tags.get('_parser_times'))
-        print(self.tags.get('container'))
-        print(self.tags.get('codec'))
-        print(self.tags.get('tagtype'))
-        print(self.tags.get('size'))
-
         print("\n")
 
 
@@ -281,12 +274,16 @@ def get_library():
 @eel.expose("clear_database")
 def clear_database():
     """Löscht alle Einträge aus der Bibliothek-Datenbank."""
+    if DEBUG_FLAGS["db"]:
+        debug_log("[Debug-DB] Tabelle wird geleert...")
     db.clear_media()
     return {"status": "ok", "message": "Datenbank geleert", "media": []}
 
 @eel.expose("update_tags")
 def update_tags(name, tags_dict):
     """Speichert angepasste Tags für ein Item in der DB."""
+    if DEBUG_FLAGS["db"]:
+        debug_log(f"[Debug-DB] Aktualisiere DB Tags für: {name}")
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
@@ -364,7 +361,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 def play_media(path):
     """GUI ruft das an – aber HTML5 Audio handhabt Abspielen client-seitig."""
     if DEBUG_FLAGS["player"]:
-        print(f"[Debug-Player] Spiele ab: {path}")
+        debug_log(f"[Debug-Player] Spiele ab: {path}")
     return {"status": "play", "path": path} # Bestätigung
 
 @eel.expose
@@ -387,6 +384,7 @@ def open_in_explorer(path_str):
     except Exception as e:
         print(f"Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
+￼ Summarize findings
 
 @eel.expose
 def get_parser_config():
@@ -481,4 +479,11 @@ if __name__ == "__main__":
     
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
-    eel.start("app.html", size=(1200, 800))
+    
+    # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
+    # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
+    eel.start("app.html", size=(1200, 800), block=False)
+    
+    # Server am Leben halten
+    while True:
+        eel.sleep(1.0)

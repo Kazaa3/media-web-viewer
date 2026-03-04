@@ -352,6 +352,15 @@
 </head>
 
 <body>
+    <script>
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            alert("JS Error: " + msg + "\nLine: " + lineNo + "\nCol: " + columnNo);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+            alert("Uncaught Promise: " + event.reason);
+        });
+    </script>
     <div class="header-container">
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1>Media Player</h1>
@@ -394,7 +403,7 @@
 
         <!-- Main Right Content Area -->
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-width: 0;">
-            <div id="media-list" class="tab-content active"></div>
+            <div id="media-list" class="tab-content active" style="padding: 10px;"></div>
 
             <div id="browser-tab" class="tab-content" style="padding: 20px; overflow-y: auto;">
                 <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 20px;">
@@ -981,7 +990,7 @@
                 let div = document.createElement('div');
                 div.className = 'media-item';
                 let tags = item.tags;
-                let displayYear = tags.year ? tags.year.substring(0, 4) : '';
+                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
                 let trackStr = tags.track ? 'Track ' + tags.track : '';
                 if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
                 let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
@@ -1019,7 +1028,7 @@
                 let div = document.createElement('div');
                 div.className = 'media-item';
                 let tags = item.tags;
-                let displayYear = tags.year ? tags.year.substring(0, 4) : '';
+                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
                 let trackStr = tags.track ? 'Track ' + tags.track : '';
                 if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
@@ -1072,7 +1081,7 @@
             document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
 
             // Limit year to 4 digits if it's a full date string
-            let displayYear = tags.year ? tags.year.substring(0, 4) : '';
+            let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
 
             let trackStr = tags.track ? 'Track ' + tags.track : '';
             if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
@@ -1164,57 +1173,69 @@
             }
         };
 
-        async function loadLibrary() {
-            let result = await eel.get_library()();
-            let list = document.getElementById('media-list');
-            list.innerHTML = '';
+        async function loadLibrary(retryCount) {
+            retryCount = retryCount || 0;
+            try {
+                let result = await eel.get_library()();
+                let list = document.getElementById('media-list');
+                list.innerHTML = '';
 
-            if (!result.media || result.media.length === 0) {
-                list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Klicke "Scan Media" oder füge Dateien über den Browser-Tab hinzu.</p>';
-                return;
-            }
-
-            console.log("First media item from DB:", result.media[0]);
-
-            // Restore population of Debug Tab
-            const debugOutput = document.getElementById('debug-output');
-            if (debugOutput) {
-                const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
-                debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
-            }
-
-            result.media.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'media-item';
-                let tags = item.tags || {}; // Fallback if tags object is completely missing
-                let displayYear = tags.year ? tags.year.substring(0, 4) : '';
-                let trackStr = tags.track ? 'Track ' + tags.track : '';
-                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
-
-                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
-
-                // Fallbacks if metadata is missing
-                let titleDisplay = tags.title || item.name || item.filename || "Unbekannter Titel";
-                let artistDisplay = tags.artist || "Unbekannter Künstler";
-                let itemName = item.name || item.filename || "unknown";
-
-                div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
-                    <div class="media-info">
-                        <strong>${titleDisplay}</strong>
-                        <span>${artistDisplay}</span>
-                        <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
-                    </div>
-                `;
-
-                let mediaUrl = '/media/' + encodeURIComponent(itemName);
-                if (item.is_transcoded && item.transcoded_format) {
-                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                if (!result || !result.media || result.media.length === 0) {
+                    list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Klicke "Scan Media" oder füge Dateien über den Browser-Tab hinzu.</p>';
+                    return;
                 }
 
-                div.onclick = () => play(item, mediaUrl);
-                list.appendChild(div);
-            });
+                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
+
+                // Restore population of Debug Tab
+                const debugOutput = document.getElementById('debug-output');
+                if (debugOutput) {
+                    const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
+                    debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
+                }
+
+                result.media.forEach(item => {
+                    let div = document.createElement('div');
+                    div.className = 'media-item';
+                    let tags = item.tags || {}; // Fallback if tags object is completely missing
+                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                    let trackStr = tags.track ? 'Track ' + tags.track : '';
+                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+
+                    // Fallbacks if metadata is missing
+                    let titleDisplay = tags.title || item.name || item.filename || "Unbekannter Titel";
+                    let artistDisplay = tags.artist || "Unbekannter Künstler";
+                    let itemName = item.name || item.filename || "unknown";
+
+                    div.innerHTML = `
+                        <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
+                        <div class="media-info">
+                            <strong>${titleDisplay}</strong>
+                            <span>${artistDisplay}</span>
+                            <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
+                        </div>
+                    `;
+
+                    let mediaUrl = '/media/' + encodeURIComponent(itemName);
+                    if (item.is_transcoded && item.transcoded_format) {
+                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                    }
+
+                    div.onclick = () => play(item, mediaUrl);
+                    list.appendChild(div);
+                });
+            } catch (e) {
+                console.error('[loadLibrary] Error loading library:', e);
+                if (retryCount < 3) {
+                    console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
+                    setTimeout(() => loadLibrary(retryCount + 1), 1000);
+                } else {
+                    let list = document.getElementById('media-list');
+                    if (list) list.innerHTML = '<p style="padding: 20px; color: #c33;">Fehler beim Laden der Bibliothek: ' + e.message + '</p>';
+                }
+            }
         }
 
         // Parser GUI Logic
@@ -1490,11 +1511,12 @@
             }
         }
 
-        loadLibrary();
-        loadParserConfig();
-
-        // Load debug flags as well
-        loadDebugFlags();
+        // Initial load: wait a tick for Eel WebSocket to connect, then load data
+        setTimeout(function () {
+            loadLibrary();
+            loadParserConfig();
+            loadDebugFlags();
+        }, 100);
     </script>
 </body>
 
