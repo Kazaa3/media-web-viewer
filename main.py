@@ -507,6 +507,29 @@ def update_tags(name, tags_dict):
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
+@eel.expose("rename_media")
+def rename_media(old_name, new_name):
+    """Benennt ein Medium in der DB um."""
+    if not new_name or new_name.strip() == "":
+        return {"status": "error", "message": "Name darf nicht leer sein"}
+    
+    if DEBUG_FLAGS["db"]:
+        debug_log(f"[Debug-DB] Benenne um: {old_name} -> {new_name}")
+    
+    success = db.rename_media(old_name, new_name)
+    if success:
+        return {"status": "ok"}
+    else:
+        return {"status": "error", "message": "Name bereits vorhanden oder Fehler"}
+
+@eel.expose("delete_media")
+def delete_media(name):
+    """Löscht ein Medium aus der DB."""
+    if DEBUG_FLAGS["db"]:
+        debug_log(f"[Debug-DB] Lösche aus DB: {name}")
+    db.delete_media_by_name(name)
+    return {"status": "ok"}
+
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
     """Gibt den voreingestellten Medienordner (absolute Pfad) zurück."""
