@@ -145,14 +145,14 @@ from parsers.format_utils import PARSER_CONFIG
 # Eigene bottle Web-Routen
 from web import app_bottle
 
-
-
-#Video-Tag-Bibliothek
+# Models
+from models import MediaItem
 #mkvinfo
 #mediainfo
 #mp3tag
 # Untersützedateiformate als Liste
 
+# Tags
 # ID3v2.4 / ID3v2.3 / ID3v2.2 / ID3v1.1 / ID3v1
 # APEv2 / APEv1
 # MP4 Atoms
@@ -217,58 +217,7 @@ from web import app_bottle
 
 
 
-
-class MediaItem:
-    def __init__(self, name, path):
-        self.name = name
-        self.path = Path(path)
-        self.type = self.path.suffix.lower()
-        parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
-        self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"], mode=parser_mode, logger=debug_log)
-
-# Auf gui bringen
-    def show_info(self):
-        print(self.name)
-        print(self.path)
-        print(self.type)
-        print(self.duration)
-        print(self.tags)
-        print("\n")
-
-
-
-    def to_dict(self):
-        hours, remainder = divmod(self.duration, 3600)
-        mins, secs = divmod(remainder, 60)
-        
-        if hours > 0:
-            duration_str = f"{hours}:{mins:02d}:{secs:02d}"
-        else:
-            duration_str = f"{mins}:{secs:02d}"
-            
-        codec = self.tags.get('codec', '').upper()
-        # Lossless ALAC → transcode to FLAC
-        is_alac = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
-        # Lossy WMA → transcode to OGG (Opus)
-        is_wma = self.type == '.wma'
-        
-        is_transcoded = is_alac or is_wma
-        if is_alac:
-            transcoded_format = 'FLAC'
-        elif is_wma:
-            transcoded_format = 'OGG'
-        else:
-            transcoded_format = None
-        
-        return {
-            'name': self.name,
-            'path': str(self.path),
-            'duration': duration_str,
-            'tags': self.tags,
-            'type': self.type[1:],
-            'is_transcoded': is_transcoded,
-            'transcoded_format': transcoded_format
-        }
+# MediaItem logic moved to models.py
 
 
 
@@ -463,7 +412,7 @@ def add_file_to_library(file_path):
     if p.name in known:
         return {"status": "exists", "name": p.name}
     
-    item = MediaItem(p.name, p)
+    item = MediaItem(p.name, p, debug_flags=DEBUG_FLAGS, logger=debug_log)
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
@@ -477,6 +426,7 @@ def run_tests(suites):
     if 'db' in suites: test_files.append("tests/test_db_logic.py")
     if 'media_item' in suites: test_files.append("tests/test_media_item_logic.py")
     if 'parser' in suites: test_files.append("tests/test_parser_logic.py")
+    if 'chapters' in suites: test_files.append("tests/test_chapters_logic.py")
     
     if not test_files:
         return {"error": "Keine Test-Suiten ausgewählt."}
