@@ -9,8 +9,10 @@ A custom media player with an embedded web-based GUI. It is built using Python, 
 - **Smart Metadata Extraction:** Uses multiple parser modules (`pymediainfo`, `mutagen`, and `ffmpeg` fallback) to comprehensively read audio tags (title, artist, album, bit depth, codec, sampling rate).
 - **On-the-Fly Transcoding:** Automatically transcodes formats with poor browser compatibility like Apple Lossless (`ALAC`) to `FLAC` in the background utilizing lightweight `ffmpeg` caching, ensuring smooth immediate playback on the frontend.
 - **Embedded Cover Art:** Identifies and displays embedded cover images inside MP4/M4A/MP3/FLAC items directly natively in the app.
+- **Integrated Testing Suite:** A dedicated "Tests" tab allows running backend unit tests (Pytest) and GUI verification directly from the application.
+- **Chapter Support:** Automatically parses and chronologically sorts media chapters (supported in MP3, FLAC, and MP4/M4B).
 - **SQLite Database:** Media metadata is persisted in a local SQLite database with playlist support (placeholder).
-- **Debug Tab:** Built-in debug view showing the raw JSON data from the database.
+- **Debug & Config:** Built-in tabs for database debugging, parser chain configuration, and experimental debug flags.
 
 ## Requirements
 
@@ -39,7 +41,8 @@ python main.py
 
 ```
 gui_media_web_viewer/
-├── main.py               ← Einstiegspunkt, MediaItem-Klasse, Bootstrapping der Eel App
+├── main.py               ← Einstiegspunkt, Eel App Bootstrapping, API Exposure
+├── models.py             ← Datenmodelle (MediaItem-Klasse)
 ├── db.py                 ← SQLite-Datenbanklogik (init, insert, query, clear)
 ├── parsers/              ← Metadaten-Extraktion (4 Parser in Pipeline)
 │   ├── filename_parser.py
@@ -47,10 +50,10 @@ gui_media_web_viewer/
 │   ├── ffmpeg_parser.py
 │   └── pymediainfo_parser.py
 ├── web/                  ← Frontend + Bottle-Webserver
-│   ├── app.html          ← GUI (HTML/CSS/JS) mit Tabs (Library + Debug)
+│   ├── app.html          ← GUI (HTML/CSS/JS) mit Tabs (Library, Tests, Options)
 │   ├── app_bottle.py     ← Bottle-Server mit Routen: /media/, /cover/
 │   └── script.js         ← JavaScript für die GUI
-├── tests/                ← Ausgelagerte Test- und Debug-Skripte
+├── tests/                ← Unit-Tests (Pytest) für DB, MediaItem und Parser
 ├── media/                ← Multimedia-Dateien (gitignored)
 └── media_library.db      ← SQLite-DB (gitignored, wird automatisch erzeugt)
 ```
@@ -61,12 +64,18 @@ gui_media_web_viewer/
 
 | Bereich | Beschreibung |
 |---------|-------------|
-| **Konstanten** | `MEDIA_DIR`, `AUDIO_EXTENSIONS`, `VIDEO_EXTENSIONS`, etc. |
-| **MediaItem** | Klasse: nimmt Dateiname + Pfad, extrahiert Dauer und Tags |
-| **Parser-Pipeline** | `filename → mutagen → ffmpeg → pymediainfo` (sequenziell) |
-| **scan_media()** | Eel-exposed: löscht DB, scannt alle Dateien neu, gibt JSON zurück |
-| **play_media()** | Eel-exposed: Bestätigung für Frontend-Playback |
+| **API Exposure** | Exponiert Funktionen für das Frontend: `get_library`, `run_tests`, `get_debug_logs`, etc. |
+| **Parser-Pipeline** | Koordiniert `filename → mutagen → ffmpeg → pymediainfo` |
+| **scan_media()** | Eel-exposed: löscht DB, scannt alle Dateien neu, nutzt `MediaItem` |
+| **run_tests()** | Führt ausgewählte Pytest-Suiten aus und gibt Ergebnisse an das GUI zurück. |
 | **Startup** | `db.init_db()` → `eel.init()` → `eel.start()` |
+
+### models.py
+
+| Klasse | Beschreibung |
+|--------|-------------|
+| **MediaItem** | Repräsentiert ein Medium; extrahiert Dauer, Tags und Kapitel. |
+| **to_dict()** | Formatiert Daten für das Frontend (inkl. Transkodierungs-Flags). |
 
 ### db.py
 
