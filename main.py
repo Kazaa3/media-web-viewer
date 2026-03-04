@@ -685,6 +685,8 @@ def browse_dir(dir_path=None):
 # Erweitertes Logbuch mit Kategorieren
 # Test cases mit KAtegorien
 
+# Visuelles Redesign: Die einfache Checkbox-Liste wurde in ein "Rich Card"-Layout übersetzt
+
 
 @eel.expose("pick_folder")
 def pick_folder():
