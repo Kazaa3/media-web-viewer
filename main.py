@@ -102,6 +102,11 @@ ARCHIVE_EXTENSIONS = {
 #Parser-Zeiten:
 #pymediainfo: 10.0ms • mutagen: 0.3ms • container: übersprungen • filename: 0.0ms • ffmpeg: übersprungen
 #die unetrkapitelsortierung ist nicht 1,2,3 sondern 1,21,22,2
+# # debug flags menu
+# mandatory unit test for all new components
+# agenten gesteuerter browser test
+
+
 
 # Debug-Optionen
 DEBUG_FLAGS = {

@@ -7,7 +7,7 @@ A custom media player with an embedded web-based GUI. It is built using Python, 
 - **Web-based GUI:** Powered by [Eel](https://github.com/python-eel/Eel), bringing modern HTML/JS/CSS to a desktop app interface.
 - **Micro Backend Server:** Uses the [Bottle](https://bottlepy.org/) WSGI micro web-framework to serve media and cover art seamlessly to the frontend.
 - **Smart Metadata Extraction:** Uses multiple parser modules (`pymediainfo`, `mutagen`, and `ffmpeg` fallback) to comprehensively read audio tags (title, artist, album, bit depth, codec, sampling rate).
-- **On-the-Fly Transcoding:** Automatically transcodes formats with poor browser compatibility like Apple Lossless (`ALAC`) to `FLAC` in the background utilizing lightweight `ffmpeg` caching, ensuring smooth immediate playback on the frontend.
+- **On-the-Fly Transcoding:** Automatically transcodes formats with poor browser compatibility like Apple Lossless (`ALAC`) to `FLAC`, or (`WMA`) to `OGG` in the background utilizing lightweight `ffmpeg` caching, ensuring smooth immediate playback on the frontend.
 - **Embedded Cover Art:** Identifies and displays embedded cover images inside MP4/M4A/MP3/FLAC items directly natively in the app.
 - **Integrated Testing Suite:** A dedicated "Tests" tab allows running backend unit tests (Pytest) and GUI verification directly from the application.
 - **Chapter Support:** Automatically parses and chronologically sorts media chapters (supported in MP3, FLAC, and MP4/M4B).
@@ -21,6 +21,7 @@ A custom media player with an embedded web-based GUI. It is built using Python, 
 - `bottle`
 - `mutagen`
 - `pymediainfo`
+- `pytest`
 - A working installation of `ffmpeg` in your PATH.
 
 ## Installation / Run
