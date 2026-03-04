@@ -425,30 +425,63 @@ def add_file_to_library(file_path):
     return {"status": "added", "item": item_dict}
 
 @eel.expose
-def run_tests(suites):
-    """Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück."""
-    debug_log(f"[Tests] Running suites: {suites}")
+def get_test_suites():
+    """Discover all .py files in the tests/ directory."""
+    test_dir = Path(__file__).parent / "tests"
+    if not test_dir.exists():
+        return []
     
-    test_files = []
-    if 'db' in suites: test_files.append("tests/test_db_logic.py")
-    if 'media_item' in suites: test_files.append("tests/test_media_item_logic.py")
-    if 'parser' in suites: test_files.append("tests/test_parser_logic.py")
-    if 'chapters' in suites: test_files.append("tests/test_chapters_logic.py")
+    suites = []
+    for f in sorted(test_dir.glob("test_*.py")):
+        # Read the first few lines to find a title/description if possible
+        display_name = f.stem.replace("test_", "").replace("_", " ").title()
+        suites.append({
+            "id": f.name,
+            "name": display_name,
+            "path": str(f)
+        })
+    return suites
+
+@eel.expose
+def run_tests(test_files):
+    """Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück."""
+    debug_log(f"[Tests] Running files: {test_files}")
     
     if not test_files:
         return {"error": "Keine Test-Suiten ausgewählt."}
 
+    # Verify files exist
+    valid_files = []
+    for tf in test_files:
+        p = Path(__file__).parent / "tests" / tf
+        if p.exists():
+            valid_files.append(str(p))
+    
+    if not valid_files:
+        return {"error": "Keine gültigen Test-Dateien gefunden."}
+
     # Capture stdout to get pytest report
     f = io.StringIO()
-    with contextlib.redirect_stdout(f):
-        exit_code = pytest.main(["-v"] + test_files)
+    # We need to set PYTHONPATH so tests can import models/parsers
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path(__file__).parent)
     
-    output = f.getvalue()
-    return {
-        "exit_code": int(exit_code),
-        "output": output,
-        "summary": "Tests passed" if exit_code == 0 else "Tests failed"
-    }
+    # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "-v"] + valid_files,
+            capture_output=True,
+            text=True,
+            env=env,
+            cwd=str(Path(__file__).parent)
+        )
+        return {
+            "exit_code": result.returncode,
+            "output": result.stdout + "\n" + result.stderr,
+            "summary": "Tests passed" if result.returncode == 0 else "Tests failed"
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 @eel.expose
 def run_gui_tests():

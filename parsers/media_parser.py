@@ -105,6 +105,11 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     if tags.get('tagtype'):
         tags['tagtype'] = format_tagtype(tags['tagtype'])
         
+    # Final Chapter Sort (Natural & Chronological)
+    if tags.get('chapters') and isinstance(tags['chapters'], list):
+        from .format_utils import natural_sort_key
+        tags['chapters'] = sorted(tags['chapters'], key=lambda x: (x.get('start', 0.0), natural_sort_key(x.get('title', ''))))
+
     tags['_parser_times'] = parser_times
             
     return duration, tags
