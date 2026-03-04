@@ -1779,13 +1779,14 @@
                 // New distinct row for format details
                 let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
                 let tagStr = 'Tag Format: ' + tagVal;
-                let formatDetailsStr = [extStr, contStr, tagStr].filter(Boolean).join(' &bull; ');
+                let itemTypeStr = (item.category && item.category !== 'Audio') ? 'Item Type: ' + item.category : '';
+                let formatDetailsStr = [extStr, contStr, tagStr, itemTypeStr].filter(Boolean).join(' &bull; ');
 
                 // Combine them
                 fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
 
                 // Base info: Name & Path (Prepended)
-                let headerInfo = `<strong>${item.name}</strong><br><span style="color:#888; font-size:0.9em;">Category: ${item.category || 'Audio'}</span><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
+                let headerInfo = `<strong>${item.name}</strong><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
                 fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
                 // Format Parser Times
                 let parserTimesHtml = '';
@@ -1882,11 +1883,12 @@
                         let artistDisplay = tags.artist || "Unbekannter Künstler";
                         let itemName = item.name || item.filename || "unknown";
 
+                        let catBadge = (item.category && item.category !== 'Audio') ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
                         div.innerHTML = `
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
-                            <span>${artistDisplay} <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category || 'Audio'})</span></span>
+                            <span>${artistDisplay}${catBadge}</span>
                             <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
                         </div>
                     `;
