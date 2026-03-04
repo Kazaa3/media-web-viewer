@@ -665,6 +665,11 @@
                     <div
                         style="flex: 1; max-width: 350px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px;">
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;">Einträge</h3>
+                        <div style="margin-bottom: 15px;">
+                            <select id="logbuch-category-filter" onchange="renderLogbuchEntries(currentLogbuchEntries || [])" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
+                                <option value="Alle">Alle Kategorien</option>
+                            </select>
+                        </div>
                         <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
                             <!-- populated by JS -->
                             <div style="color: #999; font-style: italic;">Lade Einträge...</div>
@@ -712,6 +717,119 @@
             style="display: none; align-items: center; gap: 8px; font-size: 0.85em; color: #2a7; font-weight: bold; padding: 0 10px;">
             <div class="spinner"></div>
             <span>Datenbank wird aktualisiert...</span>
+        </div>
+    </div>
+
+    <!-- Footer mit Impressum -->
+    <div style="background: #f5f5f5; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #666;">
+        <div>
+            <span>Media Web Viewer</span>
+            <span style="margin: 0 8px; color: #ccc;">•</span>
+            <span id="version" style="color: #999;">v1.0</span>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <button onclick="openImpressum()" style="border: none; background: transparent; color: #0277bd; cursor: pointer; text-decoration: none; padding: 0; font-size: 0.85em;">Impressum</button>
+            <button onclick="openAbout()" style="border: none; background: transparent; color: #0277bd; cursor: pointer; text-decoration: none; padding: 0; font-size: 0.85em;">Über</button>
+        </div>
+    </div>
+
+    <!-- Impressum Modal -->
+    <div id="impressum-modal"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 3500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
+        <div style="background: #1a1a1a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.2em;">Impressum</h3>
+            <button onclick="closeImpressum()" style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
+        </div>
+        <div style="padding: 30px; overflow-y: auto; flex: 1; line-height: 1.8; color: #444;">
+            <h4 style="margin-top: 0;">Media Web Viewer</h4>
+            <p>Eine Desktop-Anwendung zur Verwaltung und Wiedergabe von Mediendateien mit erweiterten Metadaten-Parsing-Funktionen.</p>
+            
+            <h4>Technologie</h4>
+            <p>Entwickelt mit:</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li><strong>Python 3.11+</strong> - Backend</li>
+                <li><strong>Eel</strong> - Desktop-App-Framework</li>
+                <li><strong>Bottle</strong> - Web-Framework</li>
+                <li><strong>HTML5/CSS3/JavaScript</strong> - Frontend</li>
+                <li><strong>SQLite</strong> - Datenbank</li>
+                <li><strong>FFmpeg, Mutagen, PyMediaInfo</strong> - Metadaten-Parser</li>
+            </ul>
+
+            <h4>Funktionen</h4>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Intelligente Metadaten-Extraktion aus Audio- und Videodateien</li>
+                <li>Unterstützung für Multiple Audio-Formate (MP3, FLAC, M4A, M4B, OGG, WAV, etc.)</li>
+                <li>Automatische Transkodierung von inkompatiblen Formaten</li>
+                <li>Kapitel-Support für Hörbücher und lange Podcasts</li>
+                <li>Integrierte Test-Suite und Debug-Tools</li>
+                <li>Konfigurierbare Parser-Chain für optimale Performance</li>
+            </ul>
+
+            <h4>Datenschutz</h4>
+            <p>Diese Anwendung ist ein lokales Desktop-Programm. Alle Daten werden lokal in einer SQLite-Datenbank gespeichert. Es werden keine Daten an externe Server übertragen.</p>
+
+            <h4>Lizenz</h4>
+            <p>Dieses Projekt ist unter Entwicklung und kann frei verwendet werden.</p>
+
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p style="font-size: 0.9em; color: #888;">
+                <strong>Entwickler:</strong> XC<br>
+                <strong>Datum:</strong> 4. März 2026<br>
+                <strong>Ort:</strong> Deutschland
+            </p>
+        </div>
+        <div style="background: #f9f9f9; padding: 15px 30px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
+            <button onclick="closeImpressum()" style="padding: 8px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold;">Schließen</button>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="about-modal"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 3500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
+        <div style="background: #1a1a1a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.2em;">Über Media Web Viewer</h3>
+            <button onclick="closeAbout()" style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
+        </div>
+        <div style="padding: 30px; overflow-y: auto; flex: 1; line-height: 1.8; color: #444;">
+            <h2 style="margin-top: 0; color: #1a1a1a;">Media Web Viewer v1.0</h2>
+            
+            <p style="font-size: 1.05em; color: #333;">Eine umfassende Desktop-Anwendung zur Verwaltung, Indexierung und Wiedergabe von Mediendateien mit hochperformanten Metadaten-Parsing-Funktionen.</p>
+
+            <h3>Hauptmerkmale</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>🎵 <strong>Multi-Format Support</strong> - MP3, FLAC, M4A, M4B, OGG, WAV, OPUS, AAC und mehr</li>
+                <li>⚡ <strong>Intelligente Parser-Chain</strong> - Automatische Auswahl der optimalen Parser-Kombination</li>
+                <li>📚 <strong>Hörbuch-Support</strong> - Automatische Kapitel-Erkennung und Sortierung</li>
+                <li>🔄 <strong>Automatische Transkodierung</strong> - ALAC → FLAC, WMA → OGG für Browser-Kompatibilität</li>
+                <li>💾 <strong>Persistente Metadaten</strong> - SQLite-Datenbank mit erweiterbarem Datenmodell</li>
+                <li>🧪 <strong>Integrierte Test-Suite</strong> - pytest-Integration mit GUI-Ausführung</li>
+                <li>🎛️ <strong>Debug & Konfiguration</strong> - Umfangreiche Debug-Flags und Parser-Konfiguration</li>
+                <li>📖 <strong>Logbuch-System</strong> - Dokumentation und Fortschrittsträger für Entwicklung</li>
+            </ul>
+
+            <h3>Zur Zeit verfügbar</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Bibliotheks-Management mit Metadaten-Editor</li>
+                <li>Browser-basierte Datei-Indexierung</li>
+                <li>HTML5-Audio-Player mit Kapitel-Navigation</li>
+                <li>Echtzeit-Debug-Logs und Performance-Metriken</li>
+            </ul>
+
+            <h3>Geplante Features</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>🎞️ Video-Playback (vorbereitete Infrastruktur)</li>
+                <li>📋 Wiedergabelisten-Management</li>
+                <li>🎨 Themenkonfiguration</li>
+                <li>🔐 Sichere Metadaten-Synchronisation</li>
+            </ul>
+
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p style="font-size: 0.9em; color: #888;">
+                Weitere Informationen findest du im Logbuch unter dem "Logbuch"-Tab.
+            </p>
+        </div>
+        <div style="background: #f9f9f9; padding: 15px 30px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
+            <button onclick="closeAbout()" style="padding: 8px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold;">Schließen</button>
         </div>
     </div>
 
@@ -930,8 +1048,39 @@
             </div>
         </div>
 
+        <!-- Logbuch Editor Modal -->
+        <div id="logbuch-editor-modal"
+            style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 700px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 3000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; display: flex; flex-direction: column;">
+            <div
+                style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="logbuch-editor-title" style="margin: 0; font-size: 1.2em;">Neuer Eintrag</h3>
+                <button onclick="closeLogbookEditor()"
+                    style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
+            </div>
+            <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1;">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 0.9em; font-weight: bold; color: #555;">Name (wird zu Dateiname)</label>
+                    <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+                    <label style="font-size: 0.9em; font-weight: bold; color: #555;">Inhalt (Markdown)</label>
+                    <textarea id="logbuch-editor-content" placeholder="Schreibe hier den Inhalt in Markdown..."
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; resize: vertical; flex: 1; min-height: 300px;"></textarea>
+                </div>
+            </div>
+            <div
+                style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="closeLogbookEditor()"
+                    style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;">Abbrechen</button>
+                <button onclick="saveLogbookEntry()"
+                    style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Speichern</button>
+            </div>
+        </div>
+
         <script>
             let currentPlayer = document.getElementById('player');
+            let currentLogbuchEntries = [];
 
             // ============ File Browser ============
             let fbCurrentPath = null;
@@ -1819,6 +1968,8 @@
                 const list = document.getElementById('logbuch-tab-list');
                 const title = document.getElementById('logbuch-tab-title');
                 const content = document.getElementById('logbuch-tab-content');
+                const categoryFilter = document.getElementById('logbuch-category-filter');
+                
                 if (!list || !content) return;
 
                 list.innerHTML = '<div style="color:#999;">Lade Einträge...</div>';
@@ -1830,39 +1981,201 @@
                         return;
                     }
 
-                    list.innerHTML = '';
-                    entries.forEach(entry => {
-                        let btn = document.createElement('div');
-                        btn.style.padding = '10px 15px';
-                        btn.style.background = '#f5f5f5';
-                        btn.style.borderRadius = '6px';
-                        btn.style.cursor = 'pointer';
-                        btn.style.transition = 'background 0.2s';
-                        btn.innerText = entry;
-                        btn.onmouseover = () => btn.style.background = '#e9e9e9';
-                        btn.onmouseout = () => btn.style.background = '#f5f5f5';
+                    // Store globally for filtering
+                    currentLogbuchEntries = entries;
 
-                        btn.onclick = async () => {
-                            title.innerText = entry;
-                            content.innerHTML = '<div style="color:#999;">Lade Text...</div>';
-                            try {
-                                const markdown = await eel.get_logbook_entry(entry)();
-                                let html = markdown
-                                    .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
-                                    .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
-                                    .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
-                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                    .replace(/\n\n/g, '<br><br>');
-                                content.innerHTML = html;
-                            } catch (e) {
-                                content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
-                            }
-                        };
-                        list.appendChild(btn);
-                    });
+                    // Get unique categories
+                    let categories = new Set(['Alle']);
+                    entries.forEach(e => categories.add(e.category));
+                    
+                    // Populate category filter
+                    if (categoryFilter) {
+                        categoryFilter.innerHTML = '';
+                        categories.forEach(cat => {
+                            const opt = document.createElement('option');
+                            opt.value = cat;
+                            opt.text = cat;
+                            categoryFilter.appendChild(opt);
+                        });
+                    }
+
+                    // Render entries grouped by category
+                    renderLogbuchEntries(entries);
+                    
                 } catch (e) {
                     list.innerHTML = `<div style="color:#f44;">Fehler beim Laden der Liste.</div>`;
                 }
+            }
+
+            function renderLogbuchEntries(entries) {
+                const list = document.getElementById('logbuch-tab-list');
+                const filter = document.getElementById('logbuch-category-filter');
+                const selectedCategory = filter ? filter.value : 'Alle';
+                
+                list.innerHTML = '';
+                
+                // Group by category
+                const grouped = {};
+                entries.forEach(e => {
+                    if (!grouped[e.category]) grouped[e.category] = [];
+                    grouped[e.category].push(e);
+                });
+
+                // Render filtered categories
+                const categories = selectedCategory === 'Alle' ? Object.keys(grouped).sort() : [selectedCategory];
+                
+                categories.forEach(cat => {
+                    if (!grouped[cat]) return;
+                    
+                    const catHeader = document.createElement('div');
+                    catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
+                    catHeader.innerText = cat;
+                    list.appendChild(catHeader);
+                    
+                    grouped[cat].forEach(entry => {
+                        const btn = document.createElement('div');
+                        btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
+                        
+                        const nameEl = document.createElement('span');
+                        nameEl.innerText = entry.name;
+                        nameEl.style.flex = '1';
+                        btn.appendChild(nameEl);
+                        
+                        // Delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.innerText = '✕';
+                        deleteBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-size: 1.2em; padding: 0; width: 20px; height: 20px; display: none; opacity: 0.5;';
+                        deleteBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Wirklich "${entry.name}" löschen?`)) {
+                                deleteLogbookEntry(entry.filename);
+                            }
+                        };
+                        btn.appendChild(deleteBtn);
+                        
+                        btn.onmouseover = () => {
+                            btn.style.background = '#e9e9e9';
+                            deleteBtn.style.display = 'block';
+                        };
+                        btn.onmouseout = () => {
+                            btn.style.background = '#f5f5f5';
+                            deleteBtn.style.display = 'none';
+                        };
+
+                        btn.onclick = async () => {
+                            loadLogbuchContent(entry.name, entry.filename);
+                        };
+                        list.appendChild(btn);
+                    });
+                });
+
+                // Button to create new entry
+                const newBtn = document.createElement('button');
+                newBtn.innerText = '➕ Neuer Eintrag';
+                newBtn.style.cssText = 'width: 100%; padding: 10px; margin-top: 15px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s;';
+                newBtn.onmouseover = () => newBtn.style.background = '#d4edda';
+                newBtn.onmouseout = () => newBtn.style.background = '#e8f5e9';
+                newBtn.onclick = () => openLogbookEditor();
+                list.appendChild(newBtn);
+            }
+
+            async function loadLogbuchContent(name, filename) {
+                const title = document.getElementById('logbuch-tab-title');
+                const content = document.getElementById('logbuch-tab-content');
+                
+                title.innerText = name;
+                content.innerHTML = '<div style="color:#999;">Lade Text...</div>';
+                try {
+                    const markdown = await eel.get_logbook_entry(name)();
+                    let html = markdown
+                        .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
+                        .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '<br><br>');
+                    
+                    content.innerHTML = html;
+                    
+                    // Add edit button
+                    const editBtn = document.createElement('button');
+                    editBtn.innerText = '✏️ Bearbeiten';
+                    editBtn.style.cssText = 'margin-top: 20px; padding: 8px 16px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
+                    editBtn.onclick = () => openLogbookEditor(name, filename, markdown);
+                    content.appendChild(editBtn);
+                    
+                } catch (e) {
+                    content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
+                }
+            }
+
+            let currentLogbookEditName = null;
+            let currentLogbookEditFilename = null;
+
+            function openLogbookEditor(name, filename, content) {
+                currentLogbookEditName = name;
+                currentLogbookEditFilename = filename;
+                
+                const modal = document.getElementById('logbuch-editor-modal');
+                if (!modal) {
+                    console.error('Modal not found: logbuch-editor-modal');
+                    return;
+                }
+                
+                const nameInput = document.getElementById('logbuch-editor-name');
+                const contentInput = document.getElementById('logbuch-editor-content');
+                const title = document.getElementById('logbuch-editor-title');
+                
+                if (name) {
+                    title.innerText = `Bearbeite: ${name}`;
+                    nameInput.value = name;
+                    contentInput.value = content || '';
+                    nameInput.disabled = true;
+                } else {
+                    title.innerText = 'Neuer Eintrag';
+                    nameInput.value = '';
+                    contentInput.value = '<!-- Category: Planung -->\n\n# Neuer Eintrag\n\n';
+                    nameInput.disabled = false;
+                }
+                
+                modal.style.display = 'block';
+            }
+
+            async function saveLogbookEntry() {
+                const name = document.getElementById('logbuch-editor-name').value.trim();
+                const content = document.getElementById('logbuch-editor-content').value;
+                
+                if (!name) {
+                    alert('Bitte gib einen Namen ein');
+                    return;
+                }
+                
+                const res = await eel.save_logbook_entry(name, content)();
+                if (res.status === 'ok') {
+                    closeLogbookEditor();
+                    loadLogbuchTab();
+                    alert('Eintrag gespeichert!');
+                } else {
+                    alert('Fehler: ' + res.error);
+                }
+            }
+
+            async function deleteLogbookEntry(filename) {
+                const res = await eel.delete_logbook_entry(filename)();
+                if (res.status === 'ok') {
+                    loadLogbuchTab();
+                    document.getElementById('logbuch-tab-title').innerText = 'Willkommen im Logbuch';
+                    document.getElementById('logbuch-tab-content').innerText = 'Wähle links einen Eintrag aus, um ihn zu lesen.';
+                    alert('Eintrag gelöscht!');
+                } else {
+                    alert('Fehler: ' + res.error);
+                }
+            }
+
+            function closeLogbookEditor() {
+                const modal = document.getElementById('logbuch-editor-modal');
+                if (modal) modal.style.display = 'none';
+                currentLogbookEditName = null;
+                currentLogbookEditFilename = null;
             }
 
             async function clearDatabase() {
@@ -2116,6 +2429,41 @@
                     alert("Fehler: " + res.error);
                 }
             }
+
+            // ============ Impressum & About ============
+            function openImpressum() {
+                const modal = document.getElementById('impressum-modal');
+                if (modal) modal.style.display = 'flex';
+                // Close about if open
+                const aboutModal = document.getElementById('about-modal');
+                if (aboutModal) aboutModal.style.display = 'none';
+            }
+
+            function closeImpressum() {
+                const modal = document.getElementById('impressum-modal');
+                if (modal) modal.style.display = 'none';
+            }
+
+            function openAbout() {
+                const modal = document.getElementById('about-modal');
+                if (modal) modal.style.display = 'flex';
+                // Close impressum if open
+                const impressumModal = document.getElementById('impressum-modal');
+                if (impressumModal) impressumModal.style.display = 'none';
+            }
+
+            function closeAbout() {
+                const modal = document.getElementById('about-modal');
+                if (modal) modal.style.display = 'none';
+            }
+
+            // Close modals on escape key
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.getElementById('impressum-modal').style.display = 'none';
+                    document.getElementById('about-modal').style.display = 'none';
+                }
+            });
 
             // Initial load: wait a tick for Eel WebSocket to connect, then load data
             setTimeout(function () {

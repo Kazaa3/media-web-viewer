@@ -409,15 +409,79 @@ def get_logbook_entry(feature_name):
 
 @eel.expose
 def list_logbook_entries():
-    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner zurück."""
+    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Kategorien zurück."""
     log_dir = Path(__file__).parent / "logbuch"
     if not log_dir.exists():
         return []
     
     entries = []
     for f in sorted(log_dir.glob("*.md")):
-        entries.append(f.stem)
+        try:
+            with open(f, 'r', encoding='utf-8') as fp:
+                first_line = fp.readline()
+                category = "Sonstiges"
+                
+                if "<!-- Category:" in first_line:
+                    category = first_line.split("Category: ")[1].split(" -->")[0]
+                
+                entries.append({
+                    "name": f.stem,
+                    "filename": f.name,
+                    "category": category
+                })
+        except Exception:
+            entries.append({
+                "name": f.stem,
+                "filename": f.name,
+                "category": "Fehler"
+            })
+    
     return entries
+
+@eel.expose
+def save_logbook_entry(filename, content):
+    """Speichert oder aktualisiert einen Logbuch-Eintrag."""
+    log_dir = Path(__file__).parent / "logbuch"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Sichere den Dateinamen
+    if not filename.endswith('.md'):
+        filename = filename + '.md'
+    
+    # Verhindere Directory Traversal
+    if '/' in filename or '\\' in filename or filename.startswith('.'):
+        return {"error": "Ungültiger Dateiname"}
+    
+    file_path = log_dir / filename
+    
+    try:
+        file_path.write_text(content, encoding='utf-8')
+        return {"status": "ok", "filename": filename}
+    except Exception as e:
+        return {"error": str(e)}
+
+@eel.expose
+def delete_logbook_entry(filename):
+    """Löscht einen Logbuch-Eintrag."""
+    log_dir = Path(__file__).parent / "logbuch"
+    
+    if not filename.endswith('.md'):
+        filename = filename + '.md'
+    
+    # Verhindere Directory Traversal
+    if '/' in filename or '\\' in filename or filename.startswith('.'):
+        return {"error": "Ungültiger Dateiname"}
+    
+    file_path = log_dir / filename
+    
+    if not file_path.exists():
+        return {"error": "Datei nicht gefunden"}
+    
+    try:
+        file_path.unlink()
+        return {"status": "ok"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @eel.expose
 def run_tests(test_files):
