@@ -15,7 +15,7 @@ def extract_metadata(path, filename, debug=False):
         
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
-    from .format_utils import PARSER_CONFIG, format_bitdepth
+    from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
     
     tags = {}
     duration = 0
@@ -86,6 +86,14 @@ def extract_metadata(path, filename, debug=False):
     # We now use centralized formatting logic.
     if not tags.get('bitdepth'):
         tags['bitdepth'] = format_bitdepth(None, codec=tags.get('codec'), file_type=file_type)
+        
+    # Enforce standard formatting for consistency across all parsers
+    if tags.get('codec'):
+        tags['codec'] = format_codec(tags['codec'])
+    if tags.get('container'):
+        tags['container'] = format_container(tags['container'], file_type)
+    if tags.get('tagtype'):
+        tags['tagtype'] = format_tagtype(tags['tagtype'])
         
     tags['_parser_times'] = parser_times
             
