@@ -827,6 +827,8 @@
             const keys = Object.keys(item.tags).sort();
 
             keys.forEach(key => {
+                if (key === 'chapters' || key === '_parser_times') return;
+
                 const row = document.createElement('div');
                 row.style.display = 'flex';
                 row.style.alignItems = 'center';
@@ -857,6 +859,44 @@
                 row.appendChild(input);
                 container.appendChild(row);
             });
+
+            if (item.tags.chapters && Array.isArray(item.tags.chapters) && item.tags.chapters.length > 0) {
+                const chapHeader = document.createElement('h4');
+                chapHeader.innerText = 'Kapitel bearbeiten';
+                chapHeader.style.marginTop = '20px';
+                chapHeader.style.marginBottom = '10px';
+                chapHeader.style.color = '#555';
+                container.appendChild(chapHeader);
+
+                item.tags.chapters.forEach((chap, idx) => {
+                    const row = document.createElement('div');
+                    row.style.display = 'flex';
+                    row.style.alignItems = 'center';
+                    row.style.padding = '4px 0';
+
+                    const label = document.createElement('label');
+                    label.style.width = '140px';
+                    label.style.fontSize = '0.85em';
+                    label.style.color = '#888';
+                    label.innerText = `Kapitel ${idx + 1}`;
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'edit-chapter-input';
+                    input.dataset.index = idx;
+                    input.value = chap.title || `Kapitel ${idx + 1}`;
+                    input.style.flex = '1';
+                    input.style.padding = '6px 12px';
+                    input.style.border = '1px solid #eee';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.9em';
+                    input.style.background = '#fafafa';
+
+                    row.appendChild(label);
+                    row.appendChild(input);
+                    container.appendChild(row);
+                });
+            }
         }
 
         function resetEditForm() {
@@ -873,6 +913,20 @@
             document.querySelectorAll('.edit-dynamic-input').forEach(input => {
                 newTags[input.dataset.key] = input.value;
             });
+
+            // Erhalte komplexe Objekte
+            if (item.tags._parser_times) {
+                newTags._parser_times = item.tags._parser_times;
+            }
+            if (item.tags.chapters && Array.isArray(item.tags.chapters)) {
+                newTags.chapters = JSON.parse(JSON.stringify(item.tags.chapters));
+                document.querySelectorAll('.edit-chapter-input').forEach(input => {
+                    const idx = parseInt(input.dataset.index);
+                    if (newTags.chapters[idx]) {
+                        newTags.chapters[idx].title = input.value;
+                    }
+                });
+            }
 
             const result = await eel.update_tags(name, newTags)();
             if (result.status === 'ok') {
@@ -1046,7 +1100,7 @@
             // Render chapters if available
             let chaptersHtml = '';
             if (tags.chapters && tags.chapters.length > 0) {
-                chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px;">';
+                chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px; text-align: left;">';
                 chaptersHtml += '<h4 style="margin-top:0; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 4px;">Kapitel (' + tags.chapters.length + ')</h4>';
                 chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
                 tags.chapters.forEach((chap, idx) => {
