@@ -24,6 +24,15 @@
 # Parser zusammen führen
 # Duplikat-Erkennung
 
+# logische trennung item / full object mit allen tags
+#Parser-Zeiten:
+#pymediainfo: 2.2ms • mutagen: 0.4ms • container: 0.0ms • filename: 0.0ms • ffmpeg: 51.0ms
+#neu sortieren 1.filename 2.container 3. mutagen 4. pymediainfo 5. ffmpeg
+# kapitel parser für 3 und 4
+
+
+
+### SCAN Debugging-Logs unvollständig bzw sind die einzigen
 
 
 #Benötigte Module importieren
@@ -207,7 +216,7 @@ class MediaItem:
         self.type = self.path.suffix.lower()
         self.duration, self.tags = media_parser.extract_metadata(self.path, self.name, debug=DEBUG_FLAGS["parser"])
 
-
+# Auf gui bringen
     def show_info(self):
         print(self.name)
         print(self.path)
