@@ -1,3 +1,9 @@
+# Kategorie: Routing & URL Encoding Debug
+# Eingabewerte: Pfade mit Sonderzeichen (Leerzeichen, …)
+# Ausgabewerte: HTTP Success oder Failure
+# Testdateien: 02 We the People….m4a
+# Kommentar: Debuggt Probleme mit speziellen Dateinamen und deren URL-Encoding in Bottle-Routen.
+
 import eel
 import bottle
 import threading

@@ -1,3 +1,9 @@
+# Kategorie: Metadata Extraction (Mutagen)
+# Eingabewerte: MP3 Dateien
+# Ausgabewerte: ID3v2 Tags (TPE1, TDRC)
+# Testdateien: media/sample.mp3
+# Kommentar: Prüft die Extraktion von ID3-Tags mit der Mutagen-Bibliothek.
+
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4

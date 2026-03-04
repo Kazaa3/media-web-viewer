@@ -1,3 +1,9 @@
+# Kategorie: Audio Bit-Depth Test
+# Eingabewerte: WAV Dateien (16-bit, 24-bit)
+# Ausgabewerte: Korrekte Bit-Depth Metadaten
+# Testdateien: media/*.wav
+# Kommentar: Prüft ob der FFmpeg-Parser die Bit-Tiefe für PCM-Audio (WAV) korrekt identifiziert.
+
 import sys
 from pathlib import Path
 from parsers import ffmpeg_parser

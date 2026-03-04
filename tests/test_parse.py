@@ -1,3 +1,9 @@
+# Kategorie: Parser Benchmark
+# Eingabewerte: Verzeichnis /media
+# Ausgabewerte: Zeitmessung pro Parser (filename, mutagen, pymediainfo, ffmpeg)
+# Testdateien: Alle Dateien in /media
+# Kommentar: Misst und vergleicht die Ausführungszeit der verschiedenen Metadaten-Parser.
+
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pathlib import Path

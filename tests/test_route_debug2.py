@@ -1,3 +1,9 @@
+# Kategorie: Direct Path Routing Test
+# Eingabewerte: Pfad "media/..."
+# Ausgabewerte: HTTP Response von der Route
+# Testdateien: 02 We the People….m4a
+# Kommentar: Testet ob die Route auch bei vorangestelltem "media/" im Pfad korrekt greift.
+
 import eel
 import bottle
 import threading

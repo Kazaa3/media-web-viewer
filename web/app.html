@@ -877,6 +877,59 @@
             </div>
         </div>
 
+        <!-- Test Edit Modal -->
+        <div id="test-edit-modal"
+            style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 500px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 3000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
+            <div
+                style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.2em;">Test-Metadaten</h3>
+                <button onclick="closeTestEditModal()"
+                    style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
+            </div>
+            <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <p id="test-edit-filename" style="margin: 0; font-family: monospace; font-size: 0.85em; color: #666;">
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label
+                        style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Kategorie</label>
+                    <input type="text" id="test-edit-category"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label
+                        style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Eingabewerte</label>
+                    <input type="text" id="test-edit-inputs"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label
+                        style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Ausgabewerte</label>
+                    <input type="text" id="test-edit-outputs"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label
+                        style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Testdateien</label>
+                    <input type="text" id="test-edit-files"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label
+                        style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Kommentar</label>
+                    <textarea id="test-edit-comment"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 80px; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div
+                style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="closeTestEditModal()"
+                    style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;">Abbrechen</button>
+                <button onclick="saveTestMetadata()"
+                    style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Speichern</button>
+            </div>
+        </div>
+
         <script>
             let currentPlayer = document.getElementById('player');
 
@@ -1941,6 +1994,7 @@
 
                         const m = suite.metadata || {};
                         const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
+                        const editBtnHtml = suite.isGuiTest ? '' : `<button onclick='event.stopPropagation(); openTestEditModal(${JSON.stringify(suite).replace(/'/g, "&apos;")})' style="border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✏️ Bearbeiten</button>`;
 
                         card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
@@ -1948,7 +2002,10 @@
                                 ${checkboxHtml}
                                 <h3 style="margin: 0; font-size: 1.1em; color: #333;">${suite.name}</h3>
                             </div>
-                            ${categoryHtml}
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${editBtnHtml}
+                                ${categoryHtml}
+                            </div>
                         </div>
                         <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-size: 0.85em; color: #555; margin-bottom: 15px;">
                             <strong style="color: #333;">Eingabewerte:</strong> <span>${m.inputs || '-'}</span>
@@ -2019,6 +2076,44 @@
                         summaryBadge.style.background = '#e8f5e9';
                         summaryBadge.style.color = '#2e7d32';
                     }
+                }
+            }
+
+            let currentEditingTestFile = null;
+
+            function openTestEditModal(suite) {
+                currentEditingTestFile = suite.id;
+                document.getElementById('test-edit-filename').innerText = `Datei: tests/${suite.id}`;
+                document.getElementById('test-edit-category').value = suite.metadata.category || '-';
+                document.getElementById('test-edit-inputs').value = suite.metadata.inputs || '-';
+                document.getElementById('test-edit-outputs').value = suite.metadata.outputs || '-';
+                document.getElementById('test-edit-files').value = suite.metadata.files || '-';
+                document.getElementById('test-edit-comment').value = suite.metadata.comment || '-';
+                document.getElementById('test-edit-modal').style.display = 'block';
+            }
+
+            function closeTestEditModal() {
+                document.getElementById('test-edit-modal').style.display = 'none';
+            }
+
+            async function saveTestMetadata() {
+                if (!currentEditingTestFile) return;
+
+                const metadata = {
+                    category: document.getElementById('test-edit-category').value,
+                    inputs: document.getElementById('test-edit-inputs').value,
+                    outputs: document.getElementById('test-edit-outputs').value,
+                    files: document.getElementById('test-edit-files').value,
+                    comment: document.getElementById('test-edit-comment').value
+                };
+
+                const res = await eel.update_test_metadata(currentEditingTestFile, metadata)();
+                if (res.status === 'ok') {
+                    closeTestEditModal();
+                    loadTestSuites(); // Reload to show new metadata
+                    alert("Test-Metadaten aktualisiert!");
+                } else {
+                    alert("Fehler: " + res.error);
                 }
             }
 

@@ -1,3 +1,9 @@
+# Kategorie: MediaItem Metadata Extraction
+# Eingabewerte: AAC Dateien in /media
+# Ausgabewerte: Samplerate, Bitrate, Dateigröße, Codec, TagType
+# Testdateien: media/*.aac
+# Kommentar: Gezielter Test der Metadaten-Extraktion für das AAC-Containerformat.
+
 import sys; sys.path.append('.')
 from main import MediaItem
 from pathlib import Path
