@@ -481,6 +481,11 @@ from models import MediaItem
 #reiben in der app. nicht nur liste
 
 
+# chore
+# https://www.w3tutorials.net/blog/when-to-use-chore-as-type-of-commit-message/
+
+
+
 @eel.expose("get_library")
 def get_library():
     """Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen."""
