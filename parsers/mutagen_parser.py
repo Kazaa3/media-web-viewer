@@ -73,7 +73,7 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                     'end': 0.0 # Ogg/Flac chapters often don't have explicit ends, we can calculate later if needed
                 })
             if chapters and not tags.get('chapters'):
-                tags['chapters'] = chapters
+                tags['chapters'] = sorted(chapters, key=lambda x: x['start'])
 
         elif file_type == '.mp3':
             audio = MP3(path)
