@@ -478,6 +478,8 @@ from models import MediaItem
 
 #rezepeti
 
+#reiben in der app. nicht nur liste
+
 
 @eel.expose("get_library")
 def get_library():
@@ -653,6 +655,8 @@ def browse_dir(dir_path=None):
 # globale flanke
 # tbc
 
+#datenfluss diagram
+
 # unetr feartures
 # unten loogbuch link
 # Synchronisiert mit `task.md` und `walkthrough.md` • Klicken für Details
@@ -685,8 +689,17 @@ def browse_dir(dir_path=None):
 # Erweitertes Logbuch mit Kategorieren
 # Test cases mit KAtegorien
 
-# Visuelles Redesign: Die einfache Checkbox-Liste wurde in ein "Rich Card"-Layout übersetzt
+#Logbuch
+# Einträge zu Einträge
 
+
+
+
+#dokumentiere alle feature im logbuch
+
+
+# Visuelles Redesign: Die einfache Checkbox-Liste wurde in ein "Rich Card"-Layout übersetzt
+#die doku im logbuch erneuern
 
 @eel.expose("pick_folder")
 def pick_folder():
@@ -877,7 +890,7 @@ if __name__ == "__main__":
     
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
-    eel.start("app.html", size=(1200, 800), block=False)
+    eel.start("app.html", size=(1350, 800), block=False)
     
     # Server am Leben halten
     while True:
