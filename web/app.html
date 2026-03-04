@@ -991,14 +991,15 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let extStr = 'File: ' + item.type.toUpperCase().replace('.', '');
-            let contStr = tags.container ? 'Container: ' + tags.container : 'Container: ' + extStr.replace('File: ', '');
+            let extStr = 'File: ' + item.type.toLowerCase();
+            let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
 
             // Reorganize top row with size and art
             let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
 
             // New distinct row for format details
-            let tagStr = tags.tagtype && tags.tagtype !== 'None' ? 'Tag Format: ' + tags.tagtype : '';
+            let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
+            let tagStr = 'Tag Format: ' + tagVal;
             let formatDetailsStr = [extStr, contStr, tagStr].filter(Boolean).join(' &bull; ');
 
             // Combine them

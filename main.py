@@ -76,8 +76,14 @@ ARCHIVE_EXTENSIONS = {
 # WAV24 --> PCM_S24LE | 32 Bit (s32) | 44.1 kHz
 # WAV16 --> PCM_S16LE | 16 Bit (s16) | 44.1 kHz
 
-
-
+#mp4a.40.2 | 16 Bit (lossy) | 44.1 kHz | 320 kbps
+#149.86 MB • Art: Yes
+#File: M4B • Container: m4a • Tag Format: MP4Tags
+#PCM_S16LE | 16 Bit (s16) | 44.1 kHz | 1411 kbps
+#79.21 MB • Art: No
+#File: wav • Container: wave
+#Parser-Zeiten:
+#pymediainfo: 10.0ms • mutagen: 0.3ms • container: übersprungen • filename: 0.0ms • ffmpeg: übersprungen
 
 # Debug-Optionen
 DEBUG_FLAGS = {
@@ -213,7 +219,7 @@ class MediaItem:
         print(self.tags.get('codec'))
         print(self.tags.get('tagtype'))
         print(self.tags.get('size'))
-        
+
         print("\n")
 
 
