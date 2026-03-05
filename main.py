@@ -1,5 +1,6 @@
 # main.py – Media Web Viewer
 # Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
+print("[Startup] main.py loading...")
 
 #Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
@@ -21,20 +22,10 @@ SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
 
 # 2. Standard-Pfad beim ersten Öffnen des Browsers
 BROWSER_DEFAULT_DIR = str(Path.home())
-AUDIO_EXTENSIONS = {
-    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
-}
-VIDEO_EXTENSIONS = {
-    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.ogg', '.mts', '.m2ts'
-}
-DOCUMENT_EXTENSIONS = {
-    '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
-}
+# Redundante Definitionen entfernt, da diese nun aus parsers.format_utils importiert werden.
+# (AUDIO_EXTENSIONS, VIDEO_EXTENSIONS etc. werden oben importiert)
 IMAGE_EXTENSIONS = {
     '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico'
-}
-EBOOK_EXTENSIONS = {
-    '.epub', '.mobi', '.azw', '.fb2'
 }
 ARCHIVE_EXTENSIONS = {
     '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'
@@ -269,25 +260,6 @@ def open_in_explorer(path_str):
         return {"status": "ok"}
     except Exception as e:
         print(f"Fehler beim Oeffnen: {e}")
-        return {"error": str(e)}
-
-@eel.expose
-def get_parser_config():
-    """Returns the current parser configuration including the parser chain order."""
-    sys.path.append(str(Path(__file__).parent)) # Ensure local imports work dynamically
-    from parsers.format_utils import PARSER_CONFIG
-    return PARSER_CONFIG
-
-@eel.expose
-def save_parser_config(new_config):
-    """Updates and saves the parser configuration from the UI."""
-    sys.path.append(str(Path(__file__).parent))
-    from parsers.format_utils import PARSER_CONFIG, save_parser_config as save_config
-    try:
-        PARSER_CONFIG.update(new_config)
-        save_config()
-        return {"status": "ok"}
-    except Exception as e:
         return {"error": str(e)}
 
 @eel.expose("browse_dir")
@@ -667,15 +639,21 @@ if __name__ == "__main__":
         Path(d).mkdir(parents=True, exist_ok=True)
     
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
-    scan_media(dir_path=None, clear_db=True)
+    # In einem Thread, damit die GUI sofort erscheint
+    import threading
+    threading.Thread(target=lambda: scan_media(dir_path=None, clear_db=True), daemon=True).start()
     
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
     
+    print("[Startup] Starting Eel UI...")
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
-    eel.start("app.html", size=(1350, 800), block=False, port=0)
+    try:
+        eel.start("app.html", size=(1350, 800), block=False, port=0)
+    except Exception as e:
+        print(f"[Startup-Error] eel.start failed: {e}")
     
     # Server am Leben halten
     while True:

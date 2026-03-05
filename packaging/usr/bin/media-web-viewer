@@ -14,4 +14,4 @@ if [ ! -f "$VENV_PYTHON" ]; then
 fi
 
 # Run the app and log potential startup errors to /tmp
-exec "$VENV_PYTHON" "$APP_DIR/main.py" "$@" 2> /tmp/media_viewer_startup.log
+exec "$VENV_PYTHON" "$APP_DIR/main.py" "$@" > /tmp/media_viewer_startup.log 2>&1

@@ -5,7 +5,7 @@ Priority: optional
 Architecture: amd64
 Depends: python3 (>= 3.11), python3-venv, python3-pip, python3-tk
 Recommends: ffmpeg
-Maintainer: XC <xc@localhost>
+Maintainer: kazaa3
 Description: Media Web Viewer
  A local desktop application for managing and playing media files
  with advanced metadata parsing. Built with Python, Eel, and Bottle.
