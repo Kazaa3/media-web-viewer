@@ -35,3 +35,8 @@ env/
 
 # Env vars
 .env
+
+# Packaging
+build/
+dist/
+*.spec
