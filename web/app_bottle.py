@@ -16,9 +16,14 @@ MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
 LOG_FILE = MEDIA_DIR / "route_log.txt"
 
 def _log(msg):
-    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-    with open(LOG_FILE, 'a') as f:
-        f.write(msg + "\n")
+    try:
+        # Try to use a user-writable log directory
+        log_dir = Path.home() / ".media-web-viewer"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        with open(log_dir / "route_log.txt", 'a') as f:
+            f.write(msg + "\n")
+    except Exception:
+        pass # Never crash due to logging failures
 
 def _resolve_path(filename):
     """Resolve a filename to its full path via DB lookup, fallback to MEDIA_DIR."""

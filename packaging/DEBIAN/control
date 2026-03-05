@@ -1,9 +1,9 @@
 Package: media-web-viewer
-Version: 1.0.0
+Version: 1.1.0
 Section: multimedia
 Priority: optional
 Architecture: amd64
-Depends: python3 (>= 3.11), python3-venv, python3-pip
+Depends: python3 (>= 3.11), python3-venv, python3-pip, python3-tk
 Recommends: ffmpeg
 Maintainer: XC <xc@localhost>
 Description: Media Web Viewer

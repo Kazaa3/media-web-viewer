@@ -2,9 +2,14 @@ import sqlite3
 import os
 import json
 
-DB_FILENAME = "media_library.db"
+from pathlib import Path
+
+# Use a user-writable path for the database
+DB_DIR = Path.home() / ".media-web-viewer"
+DB_FILENAME = str(DB_DIR / "media_library.db")
 
 def init_db():
+    DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
 
