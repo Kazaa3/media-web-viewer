@@ -13,6 +13,7 @@ import contextlib
 
 from pathlib import Path
 import re  # For MKV parsing
+from parsers.format_utils import PARSER_CONFIG, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
 # Konfiguration
 # 1. Ort für den automatischen Bibliotheks-Scan
@@ -148,43 +149,47 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
     # Wenn kein Pfad übergeben wurde, nutzen wir den konfigurierten SCAN_MEDIA_DIR.
     # Wir stellen sicher, dass leere Strings ebenfalls als None behandelt werden.
-    effective_path = dir_path if (dir_path and dir_path.strip()) else SCAN_MEDIA_DIR
-    scan_root = Path(effective_path).resolve()
-    
-    if DEBUG_FLAGS.get("scan"):
-        debug_log(f"\n[Scan] Starting scan of: {scan_root}")
-    
-    if not scan_root.exists():
-        try:
-            scan_root.mkdir(parents=True, exist_ok=True)
-            print(f"[Scan] Created missing directory: {scan_root}")
-        except Exception as e:
-            return {"error": f"Ordner nicht gefunden und konnte nicht erstellt werden: {e}"}
-        return {"error": "Ordner erstellt – füge Dateien hinzu", "path": str(scan_root)}
-
     # DB optional leeren
     if clear_db:
         db.clear_media()
 
+    # Determine which directories to scan
+    scan_roots = []
+    if dir_path and dir_path.strip():
+        scan_roots.append(Path(dir_path).resolve())
+    else:
+        # Use all directories from config
+        config_dirs = PARSER_CONFIG.get("scan_dirs", [SCAN_MEDIA_DIR])
+        for d in config_dirs:
+            p = Path(d).resolve()
+            if p.exists():
+                scan_roots.append(p)
+            else:
+                debug_log(f"[Scan] Skipping non-existent directory: {d}")
+
     count = 0
-    # Rekursiv suchen, um Medien in Unterordnern zu finden
-    for f in scan_root.rglob('*'):
-        if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
-            # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
-            if '.cache' in f.parts:
-                continue
-            
-            if DEBUG_FLAGS["scan"]:
-                debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
-            try:
-                item = MediaItem(f.name, f)
-                db.insert_media(item.to_dict())
-                count = count + 1
-            except Exception as e:
+    for scan_root in scan_roots:
+        if DEBUG_FLAGS.get("scan"):
+            debug_log(f"\n[Scan] Starting scan of: {scan_root}")
+        
+        # Rekursiv suchen, um Medien in Unterordnern zu finden
+        for f in scan_root.rglob('*'):
+            if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
+                # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
+                if '.cache' in f.parts:
+                    continue
+                
                 if DEBUG_FLAGS["scan"]:
-                    debug_log(f"[Debug-Scan] Fehler bei {f.name}: {e}")
-                # Ignoriere problematische Dateien, aber setze das Logging fort
-                continue
+                    debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
+                try:
+                    item = MediaItem(f.name, f)
+                    db.insert_media(item.to_dict())
+                    count = count + 1
+                except Exception as e:
+                    if DEBUG_FLAGS["scan"]:
+                        debug_log(f"[Debug-Scan] Fehler bei {f.name}: {e}")
+                    # Ignoriere problematische Dateien, aber setze das Logging fort
+                    continue
 
     if hasattr(eel, 'set_db_status'):
         eel.set_db_status(False)()
@@ -201,6 +206,42 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         "media": db.get_all_media(),
         "stats": {"count": count, "time_seconds": elapsed}
     }
+
+@eel.expose("get_parser_config")
+def get_parser_config():
+    """Gibt die aktuelle Parser-Konfiguration an das Frontend zurück."""
+    return PARSER_CONFIG
+
+@eel.expose("update_parser_config")
+def update_parser_config(new_config):
+    """Aktualisiert die Konfiguration und speichert sie auf Festplatte."""
+    PARSER_CONFIG.update(new_config)
+    save_parser_config()
+    return {"status": "ok"}
+
+@eel.expose("add_scan_dir")
+def add_scan_dir():
+    """Öffnet einen Dialog zur Auswahl eines neuen Scan-Verzeichnisses."""
+    new_dir = pick_folder()
+    if new_dir:
+        dirs = PARSER_CONFIG.get("scan_dirs", [])
+        if new_dir not in dirs:
+            dirs.append(new_dir)
+            PARSER_CONFIG["scan_dirs"] = dirs
+            save_parser_config()
+            return {"status": "ok", "dirs": dirs}
+    return {"status": "cancel"}
+
+@eel.expose("remove_scan_dir")
+def remove_scan_dir(dir_path):
+    """Entfernt ein Verzeichnis aus der Scan-Liste."""
+    dirs = PARSER_CONFIG.get("scan_dirs", [])
+    if dir_path in dirs:
+        dirs.remove(dir_path)
+        PARSER_CONFIG["scan_dirs"] = dirs
+        save_parser_config()
+        return {"status": "ok", "dirs": dirs}
+    return {"status": "error", "message": "Pfand nicht in Liste"}
 
 @eel.expose("play_media")
 def play_media(path):
@@ -620,10 +661,12 @@ if __name__ == "__main__":
 
     db.init_db()               
     
-    # Ensure scan dir exists and start initial indexing
-    Path(SCAN_MEDIA_DIR).mkdir(parents=True, exist_ok=True)
+    # Ensure scan dirs exist and start initial indexing
+    config_dirs = PARSER_CONFIG.get("scan_dirs", [SCAN_MEDIA_DIR])
+    for d in config_dirs:
+        Path(d).mkdir(parents=True, exist_ok=True)
     
-    # Erst-Scan beim Start (nur für SCAN_MEDIA_DIR)
+    # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     scan_media(dir_path=None, clear_db=True)
     
     web_dir = str(Path(__file__).parent / "web")
