@@ -1724,7 +1724,7 @@
                 let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
 
                 div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
+                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                     <div class="media-info">
                         <strong>${tags.title}</strong>
                         <span>${tags.artist}</span>
@@ -1762,7 +1762,7 @@
                 let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
 
                 div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="Cover Art">
+                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                     <div class="media-info">
                         <strong>${tags.title}</strong> 
                         <span>${tags.artist}</span>
@@ -1942,9 +1942,10 @@
                     let artistDisplay = tags.artist || "Unbekannter Künstler";
                     let itemName = item.name || item.filename || "unknown";
 
-                    let catBadge = (item.category && item.category !== 'Audio') ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
+                    const specialCategories = ['Hörbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
+                    let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
                     div.innerHTML = `
-                        <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='#ddd';" alt="Cover Art">
+                        <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
                             <span>${artistDisplay}${catBadge}</span>
