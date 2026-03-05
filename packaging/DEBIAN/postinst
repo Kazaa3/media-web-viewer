@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+APP_DIR="/opt/media-web-viewer"
+VENV_DIR="$APP_DIR/.venv"
+
+echo "Setting up Media Web Viewer..."
+
+# Create virtual environment
+python3 -m venv "$VENV_DIR"
+
+# Install Python dependencies
+"$VENV_DIR/bin/pip" install --upgrade pip --quiet
+"$VENV_DIR/bin/pip" install -r "$APP_DIR/requirements.txt" --quiet
+
+# Ensure media directory exists
+mkdir -p "$APP_DIR/media"
+
+echo "Installation complete. Run: media-web-viewer"

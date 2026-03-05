@@ -1,0 +1,13 @@
+#!/bin/bash
+# Media Web Viewer launcher
+# Activates the installed virtual environment and starts the app
+APP_DIR="/opt/media-web-viewer"
+VENV_PYTHON="$APP_DIR/.venv/bin/python"
+
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "Fehler: Virtual environment nicht gefunden."
+    echo "Bitte erneut installieren: sudo dpkg -i media-web-viewer_*.deb"
+    exit 1
+fi
+
+exec "$VENV_PYTHON" "$APP_DIR/main.py" "$@"
