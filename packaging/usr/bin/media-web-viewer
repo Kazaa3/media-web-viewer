@@ -1,6 +1,9 @@
 #!/bin/bash
 # Media Web Viewer launcher
-# Activates the installed virtual environment and starts the app
+# Isolates the process from other python environments (Conda, etc.)
+export PYTHONPATH=""
+export PYTHONHOME=""
+
 APP_DIR="/opt/media-web-viewer"
 VENV_PYTHON="$APP_DIR/.venv/bin/python"
 
@@ -10,4 +13,5 @@ if [ ! -f "$VENV_PYTHON" ]; then
     exit 1
 fi
 
-exec "$VENV_PYTHON" "$APP_DIR/main.py" "$@"
+# Run the app and log potential startup errors to /tmp
+exec "$VENV_PYTHON" "$APP_DIR/main.py" "$@" 2> /tmp/media_viewer_startup.log
