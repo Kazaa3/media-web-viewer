@@ -12,7 +12,8 @@ PARSER_CONFIG = {
     "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
     "parser_mode": "lightweight",
     "debug_scan": True,
-    "debug_parser": True
+    "debug_parser": True,
+    "scan_dirs": [str(Path(__file__).resolve().parent.parent / "media")]
 }
 
 def load_parser_config():

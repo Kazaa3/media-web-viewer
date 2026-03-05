@@ -404,6 +404,7 @@
             }
             if (tabId === 'options') {
                 if (typeof loadDebugFlags === 'function') loadDebugFlags();
+                loadScanDirs();
             }
             if (tabId === 'edit') {
                 if (typeof loadEditItems === 'function') loadEditItems();
@@ -520,6 +521,49 @@
                 }
             } catch (e) {
                 list.innerHTML = `<div style="color:#f44;">Fehler beim Laden der Liste.</div>`;
+            }
+        }
+
+        async function loadScanDirs() {
+            const container = document.getElementById('scan-dirs-list');
+            if (!container) return;
+            const config = await eel.get_parser_config()();
+            const dirs = config.scan_dirs || [];
+
+            container.innerHTML = '';
+            if (dirs.length === 0) {
+                container.innerHTML = '<div style="color: #999; font-style: italic; font-size: 0.9em; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px dashed #ddd;">Keine Verzeichnisse konfiguriert.</div>';
+                return;
+            }
+
+            dirs.forEach(path => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; font-size: 0.9em;';
+
+                const pathEl = document.createElement('span');
+                pathEl.style.cssText = 'font-family: monospace; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin-right: 10px;';
+                pathEl.innerText = path;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.innerText = '✕';
+                removeBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-weight: bold; padding: 5px;';
+                removeBtn.onclick = async () => {
+                    if (confirm(`Verzeichnis "${path}" wirklich entfernen?`)) {
+                        const res = await eel.remove_scan_dir(path)();
+                        if (res.status === 'ok') loadScanDirs();
+                    }
+                };
+
+                row.appendChild(pathEl);
+                row.appendChild(removeBtn);
+                container.appendChild(row);
+            });
+        }
+
+        async function addScanDirUI() {
+            const res = await eel.add_scan_dir()();
+            if (res.status === 'ok') {
+                loadScanDirs();
             }
         }
 
@@ -766,6 +810,18 @@
                             style="display: flex; flex-direction: column; gap: 12px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                             <!-- Flags werden dynamisch geladen -->
                         </div>
+
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">Index-Verzeichnisse</h3>
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 12px;">Ordner, die beim Start oder Klick
+                            auf 'Scan' automatisch nach Medien durchsucht werden.</p>
+                        <div id="scan-dirs-list"
+                            style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                            <!-- Dynamically loaded -->
+                        </div>
+                        <button onclick="addScanDirUI()"
+                            style="padding: 8px 16px; background: #e8f5e9; color: #2a7; border: 1px solid #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px;">
+                            ➕ Verzeichnis hinzufügen
+                        </button>
 
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;">Darstellung</h3>
                         <div
