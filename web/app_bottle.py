@@ -11,16 +11,17 @@ from mutagen.mp4 import MP4
 # Add parent dir so we can import db
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import db
-
-MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
-LOG_FILE = MEDIA_DIR / "route_log.txt"
-
+ 
+APP_ROOT = Path(__file__).resolve().parent.parent
+MEDIA_DIR = APP_ROOT / "media"
+APP_DATA_DIR = Path.home() / ".media-web-viewer"
+LOG_FILE = APP_DATA_DIR / "route_log.txt"
+CACHE_DIR = APP_DATA_DIR / "cache"
+ 
 def _log(msg):
     try:
-        # Try to use a user-writable log directory
-        log_dir = Path.home() / ".media-web-viewer"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        with open(log_dir / "route_log.txt", 'a') as f:
+        APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        with open(LOG_FILE, 'a') as f:
             f.write(msg + "\n")
     except Exception:
         pass # Never crash due to logging failures
@@ -67,11 +68,10 @@ def serve_media(filepath):
         return bottle.HTTPError(404, "File not found")
     
     if needs_transcoding:
-        cache_dir = MEDIA_DIR / '.cache'
-        cache_dir.mkdir(exist_ok=True)
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
         
         cache_filename = filepath.replace('/', '_').rsplit('.', 1)[0] + '.' + transcode_format
-        cache_path = cache_dir / cache_filename
+        cache_path = CACHE_DIR / cache_filename
         tmp_path = cache_path.with_suffix(f'.{uuid.uuid4().hex[:6]}.tmp')
         
         # FFmpeg output format and MIME type
@@ -97,7 +97,7 @@ def serve_media(filepath):
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")
                 
-        return bottle.static_file(cache_filename, root=str(cache_dir), mimetype=serve_mime)
+        return bottle.static_file(cache_filename, root=str(CACHE_DIR), mimetype=serve_mime)
 
     if ext.endswith('.flac'):
         mime_type = 'audio/flac'
@@ -147,3 +147,12 @@ def serve_cover(filepath):
         return img_data
     
     return bottle.HTTPError(404, "No cover found")
+
+@bottle.error(500)
+def error500(error):
+    import traceback
+    with open("/tmp/media_viewer_500.log", "a") as f:
+        f.write("\n--- ERROR 500 ---\n")
+        f.write(traceback.format_exc())
+        f.write(f"URL: {bottle.request.url}\n")
+    return "Internal Server Error (Details logged to /tmp/media_viewer_500.log)"

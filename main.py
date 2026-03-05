@@ -631,7 +631,8 @@ if __name__ == "__main__":
     
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
-    eel.start("app.html", size=(1350, 800), block=False)
+    # port=0 sucht automatisch einen freien Port
+    eel.start("app.html", size=(1350, 800), block=False, port=0)
     
     # Server am Leben halten
     while True:
