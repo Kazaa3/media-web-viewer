@@ -1,5 +1,8 @@
 media/*.flac
 media/*.m4a
+media/*.alac
+media/*.wav
+media/*.m4a
 media/*.m4b
 media/*.mp3
 media/*.aac
@@ -12,10 +15,7 @@ media/*.webm
 media/*.mp4
 media/*.m4v
 media/*.mkv
-media/*.m4a
-media/*.flac
-media/*.alac
-media/*.wav
+
 __pycache__/
 *.pyc
 **/*.pyc
@@ -41,3 +41,8 @@ build/
 dist/
 *.spec
 *.deb
+
+
+
+packaging/opt/media-web-viewer/media/
+packaging/opt/media-web-viewer/media/*.wma
