@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+APP_DIR="/opt/media-web-viewer"
+
+echo "Removing Media Web Viewer virtual environment..."
+rm -rf "$APP_DIR/.venv"
+rm -rf "$APP_DIR/__pycache__"
+find "$APP_DIR" -name "*.pyc" -delete

@@ -1,0 +1,7 @@
+eel>=0.18.2
+bottle>=0.13.0
+bottle-websocket>=0.2.9
+mutagen>=1.47.0
+pymediainfo>=7.0.1
+gevent>=25.9.1
+gevent-websocket>=0.10.1

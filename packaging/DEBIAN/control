@@ -1,0 +1,11 @@
+Package: media-web-viewer
+Version: 1.0.0
+Section: multimedia
+Priority: optional
+Architecture: amd64
+Depends: python3 (>= 3.11), python3-venv, python3-pip
+Recommends: ffmpeg
+Maintainer: XC <xc@localhost>
+Description: Media Web Viewer
+ A local desktop application for managing and playing media files
+ with advanced metadata parsing. Built with Python, Eel, and Bottle.

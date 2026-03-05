@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Media Web Viewer
+Comment=Lokaler Mediaplayer mit Metadaten-Verwaltung
+Exec=media-web-viewer
+Icon=preferences-desktop-multimedia
+Terminal=false
+Categories=AudioVideo;Player;
+Keywords=media;audio;player;library;
