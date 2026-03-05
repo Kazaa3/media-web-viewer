@@ -171,7 +171,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 
                 # Blacklist für unerwünschte Dateien (Cover-Art, Captcha, etc.)
                 name_lower = f.name.lower()
-                if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart']):
+                if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
                     continue
                 
                 if DEBUG_FLAGS["scan"]:
