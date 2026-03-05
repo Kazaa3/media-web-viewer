@@ -37,9 +37,9 @@ class MediaItem:
         if ext in AUDIO_EXTENSIONS:
             artist = (tags.get('artist') or "").lower()
             album = (tags.get('album') or "").lower()
-            
-            # - Compilation: if VA / unknown Interpret
-            if any(k in artist for k in ['va', 'various artists', 'various', 'unknown', 'unbekannt']):
+
+            # - Compilation: if VA / Various Artists (NOT just unknown)
+            if any(k in artist for k in ['va', 'various artists', 'various']):
                 return 'Compilation'
             
             # - Single: if album tag not filled OR "single" in string (album title)
