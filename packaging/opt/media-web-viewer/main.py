@@ -14,10 +14,6 @@ import contextlib
 from pathlib import Path
 import re  # For MKV parsing
 
-# kann raus. aber aktuell noch im code
-import tkinter as tk
-from tkinter import filedialog
-
 # Konfiguration
 # 1. Ort für den automatischen Bibliotheks-Scan
 SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
@@ -283,6 +279,8 @@ def browse_dir(dir_path=None):
 def pick_folder():
     """Öffnet einen nativen Ordner-Auswahldialog."""
     try:
+        import tkinter as tk
+        from tkinter import filedialog
         root = tk.Tk()
         root.withdraw()
         root.wm_attributes('-topmost', 1)

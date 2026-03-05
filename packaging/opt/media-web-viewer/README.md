@@ -110,9 +110,10 @@ Each parser receives the current `tags` dict and only fills in missing values â€
 | Order | Parser | Source | Provides |
 |:-----:|--------|--------|----------|
 | 1 | `filename_parser` | Filename | title, artist, file size |
-| 2 | `mutagen_parser` | Mutagen lib | ID3/MP4/Vorbis tags, bitrate, samplerate, cover detection |
-| 3 | `ffmpeg_parser` | FFmpeg CLI | Container format, codec, bit depth (fallback) |
-| 4 | `pymediainfo_parser` | pymediainfo | Supplementary / missing metadata |
+| 2 | `container_parser` | Container format | container format |
+| 3 | `mutagen_parser` | Mutagen lib | ID3/MP4/Vorbis tags, bitrate, samplerate, cover detection |
+| 4 | `ffmpeg_parser` | FFmpeg CLI | Container format, codec, bit depth (fallback) |
+| 5 | `pymediainfo_parser` | pymediainfo | Supplementary / missing metadata |
 
 ---
 

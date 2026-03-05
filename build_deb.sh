@@ -4,7 +4,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PACKAGE_NAME="media-web-viewer"
-VERSION="1.0.0"
+VERSION="1.1.0"
 ARCH="amd64"
 DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
 STAGING="$SCRIPT_DIR/packaging"
@@ -40,6 +40,8 @@ rsync -a \
     --exclude '*.db' \
     --exclude '.gitignore' \
     --exclude '*.spec' \
+    --exclude '*.deb' \
+    --exclude '.pytest_cache' \
     "$SCRIPT_DIR/" "$APP_DEST/"
 
 # DEBIAN-Skripte ausführbar machen
