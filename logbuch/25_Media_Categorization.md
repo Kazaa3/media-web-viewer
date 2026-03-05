@@ -9,8 +9,13 @@ The system automatically categorizes media based on:
 
 ## Support for New Types
 The backend is prepared to handle:
-- **Hörbuch** (Audiobooks)
 - **Audio** (Music, Podcasts)
+- **Album**
+- **Compilation**
+- **Single**
+- **Hörbuch** (Audiobooks)
+
+Missing:
 - **Video** (Movies, Clips)
 - **Serie** (TV Shows)
 - **Dokument / E-Book** (.pdf, .epub)
