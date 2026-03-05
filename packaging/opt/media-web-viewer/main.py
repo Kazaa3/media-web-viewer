@@ -138,8 +138,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     if hasattr(eel, 'set_db_status'):
         eel.set_db_status(True)()
 
-    # Wenn kein Pfad übergeben wurde, nutzen wir den konfigurierten SCAN_MEDIA_DIR.
-    # Wir stellen sicher, dass leere Strings ebenfalls als None behandelt werden.
+    start_time = time.time()
     # DB optional leeren
     if clear_db:
         db.clear_media()
@@ -174,8 +173,10 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                     debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
                 try:
                     item = MediaItem(f.name, f)
-                    db.insert_media(item.to_dict())
-                    count = count + 1
+                    item_dict = item.to_dict()
+                    debug_log(f"[DB-Insert] {f.name} (Category: {item_dict.get('category')}) from {f.parent}")
+                    db.insert_media(item_dict)
+                    count += 1
                 except Exception as e:
                     if DEBUG_FLAGS["scan"]:
                         debug_log(f"[Debug-Scan] Fehler bei {f.name}: {e}")
