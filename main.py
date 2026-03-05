@@ -451,13 +451,17 @@ def delete_test(filename):
 
 @eel.expose
 def get_logbook_entry(feature_name):
-    """Read a markdown file from the logbuch directory."""
-    log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
-    if not log_file.exists():
-        # Fallback without extension just in case it was passed directly
-        log_file = Path(__file__).parent / "logbuch" / feature_name
+    """Read a markdown file from the logbuch directory or README from main dir."""
+    if feature_name.upper() == "README" or feature_name.upper() == "README.MD":
+        log_file = Path(__file__).parent / "README.md"
+    else:
+        log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
         if not log_file.exists():
-            return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
+            # Fallback without extension just in case it was passed directly
+            log_file = Path(__file__).parent / "logbuch" / feature_name
+            
+    if not log_file.exists():
+        return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
     
     try:
         content = log_file.read_text(encoding='utf-8')
