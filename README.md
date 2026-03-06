@@ -103,6 +103,9 @@ sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
 - **Parser Configuration:** Drag-and-drop reordering of the parser chain with enable/disable toggles
 - **Debug Tools:** Real-time log viewer and configurable debug flags
 - **Logbook:** Built-in development log and documentation viewer
+- **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art')
+- **Smart Categorization:** Advanced logic to distinguish between Albums, Singles, and Compilations
+- **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`
 
 ---
 
