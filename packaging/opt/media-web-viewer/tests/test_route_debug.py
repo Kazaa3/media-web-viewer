@@ -22,7 +22,7 @@ def serve_media(filepath):
 eel.init('web')
 
 def run_eel():
-    eel.start('index.html', size=(100, 100), port=8082, block=False)
+    eel.start('index.html', mode=None, size=(100, 100), port=8083, block=False)
     while True:
         time.sleep(1)
 

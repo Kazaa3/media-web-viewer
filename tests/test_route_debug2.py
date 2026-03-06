@@ -24,7 +24,7 @@ eel.init('web')
 
 def run_eel():
     # Use block=False and a different port
-    eel.start('index.html', size=(100, 100), port=8083, block=False)
+    eel.start('index.html', mode=None, size=(100, 100), port=8083, block=False)
     while True:
         time.sleep(1)
 
