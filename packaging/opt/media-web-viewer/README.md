@@ -11,7 +11,7 @@ A local desktop media player and library manager with an embedded web-based GUI.
 > Download the latest `.deb` from [Releases](../../releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.1.8_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
@@ -22,7 +22,29 @@ The installer automatically sets up a Python virtual environment and installs al
 
 **Uninstall:**
 ```bash
-**Uninstall:** `sudo apt remove media-web-viewer` (keeps config) or `sudo apt purge media-web-viewer` (removes all)
+# Keep configuration files
+sudo apt remove media-web-viewer
+
+# Remove everything (purge)
+sudo apt purge media-web-viewer
+```
+
+---
+
+## Troubleshooting & Reset
+
+### Start from Scratch
+If you previously ran the app from source or want to reset all settings, note that `apt purge` does **not** remove files in your home directory. To truly start "from zero":
+
+```bash
+# 1. Remove old user configuration and database
+rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
+
+# 2. Reinstall the clean version
+sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
+
+# 3. Fix dependencies if needed
+sudo apt-get install -f
 ```
 
 ---
@@ -30,6 +52,8 @@ The installer automatically sets up a Python virtual environment and installs al
 ## Indexing
 
 The app indexes `/opt/media-web-viewer/media` by default. You can add more directories in the **Options** tab using the "Add Directory" button.
+
+---
 
 ### Option B: Run from Source
 
@@ -61,7 +85,7 @@ python main.py
 
 ```bash
 bash build_deb.sh
-sudo dpkg -i media-web-viewer_1.1.8_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
 ```
 
 ---
@@ -79,6 +103,9 @@ sudo dpkg -i media-web-viewer_1.1.8_amd64.deb
 - **Parser Configuration:** Drag-and-drop reordering of the parser chain with enable/disable toggles
 - **Debug Tools:** Real-time log viewer and configurable debug flags
 - **Logbook:** Built-in development log and documentation viewer
+- **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art')
+- **Smart Categorization:** Advanced logic to distinguish between Albums, Singles, and Compilations
+- **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`
 
 ---
 

@@ -29,44 +29,37 @@ class MediaItem:
         path_str = str(self.path).lower()
         tags = self.tags or {}
         
-        # 1. Strict .m4b -> Hörbuch (as requested previously)
-        if ext == '.m4b':
-            return 'Hörbuch'
-            
+        # 1. Video / E-Book / Document (Non-Audio)
+        if ext in VIDEO_EXTENSIONS:
+            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
+                return 'Serie'
+            return 'Film'
+        if ext in EBOOK_EXTENSIONS:
+            return 'E-Book'
+        if ext in DOCUMENT_EXTENSIONS:
+            return 'Dokument'
+
         # 2. Audio Parser Logic
-        if ext in AUDIO_EXTENSIONS:
+        if ext in AUDIO_EXTENSIONS or ext == '.m4b':
+            # Priority 1: Hörbuch (m4b extension or keyword in path/genre)
+            genre = tags.get('genre', '').lower()
+            if ext == '.m4b' or any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
+                return 'Hörbuch'
+
+            # Priority 2: Music specific tags
             artist = (tags.get('artist') or "").lower()
             album = (tags.get('album') or "").lower()
 
-            # - Compilation: if VA / Various Artists (NOT just unknown)
             if any(k in artist for k in ['va', 'various artists', 'various']):
                 return 'Compilation'
             
-            # - Single: if album tag not filled OR "single" in string (album title)
-            if not album or 'single' in album:
-                return 'Single'
-            
-            # - Album: if album tag filled
             if album:
+                if 'single' in album:
+                    return 'Single'
                 return 'Album'
-
-            # Fallback detection for Audiobook (Hörbuch) from path/genre
-            genre = tags.get('genre', '').lower()
-            if any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
-                return 'Hörbuch'
                 
             return 'Audio'
 
-        # 3. Non-Audio fallbacks (Videos, E-Books, Docs)
-        elif ext in VIDEO_EXTENSIONS:
-            if 'serie' in path_str or 'tv' in path_str or 'season' in path_str:
-                return 'Serie'
-            return 'Film'
-        elif ext in EBOOK_EXTENSIONS:
-            return 'E-Book'
-        elif ext in DOCUMENT_EXTENSIONS:
-            return 'Dokument'
-        
         return 'Unbekannt'
 
     def show_info(self):

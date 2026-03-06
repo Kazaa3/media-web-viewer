@@ -81,7 +81,7 @@ def insert_media(item_dict):
             item_dict['path'],
             item_dict['type'],
             item_dict['duration'],
-            item_dict['category'],
+            item_dict.get('category', 'Audio'),
             item_dict['is_transcoded'],
             item_dict.get('transcoded_format'),
             json.dumps(item_dict['tags'])
