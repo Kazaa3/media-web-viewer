@@ -1,10 +1,9 @@
 Package: media-web-viewer
-Version: 1.1.6
+Version: 1.1.8
 Section: multimedia
 Priority: optional
 Architecture: amd64
-Depends: python3 (>= 3.11), python3-venv, python3-pip, python3-tk
-Recommends: ffmpeg
+Depends: python3 (>= 3.11), python3-venv, python3-pip, python3-tk, libmediainfo0v5, ffmpeg
 Maintainer: kazaa3
 Description: Media Web Viewer
  A local desktop application for managing and playing media files

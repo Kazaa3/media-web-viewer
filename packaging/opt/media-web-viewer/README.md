@@ -11,7 +11,7 @@ A local desktop media player and library manager with an embedded web-based GUI.
 > Download the latest `.deb` from [Releases](../../releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.0.0_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.8_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
@@ -27,11 +27,17 @@ sudo apt remove media-web-viewer
 
 ---
 
+## Indexing
+
+The app indexes `/opt/media-web-viewer/media` by default. You can add more directories in the **Options** tab using the "Add Directory" button.
+
 ### Option B: Run from Source
 
 **Requirements:**
 - Python 3.11+
 - `ffmpeg` in your PATH (for transcoding and metadata fallback)
+- `python3-tk` (for system file dialogs)
+- `libmediainfo0v5` (required by pymediainfo)
 
 ```bash
 # Clone the repository
@@ -55,7 +61,7 @@ python main.py
 
 ```bash
 bash build_deb.sh
-sudo dpkg -i media-web-viewer_1.0.0_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.8_amd64.deb
 ```
 
 ---
