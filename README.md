@@ -22,7 +22,7 @@ The installer automatically sets up a Python virtual environment and installs al
 
 **Uninstall:**
 ```bash
-sudo apt remove media-web-viewer
+**Uninstall:** `sudo apt remove media-web-viewer` (keeps config) or `sudo apt purge media-web-viewer` (removes all)
 ```
 
 ---
