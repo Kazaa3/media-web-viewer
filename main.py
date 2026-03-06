@@ -44,7 +44,8 @@ DEBUG_FLAGS = {
     "scan": False,
     "parser": False,
     "player": False,
-    "db": False
+    "db": False,
+    "tests": False
 }
 
 LOG_BUFFER = []
@@ -569,7 +570,8 @@ def delete_logbook_entry(filename):
 def run_tests(test_files):
     """Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück."""
     import pytest  # Nur lokal importieren – nicht als globale Abhängigkeit
-    debug_log(f"[Tests] Running files: {test_files}")
+    if DEBUG_FLAGS.get("tests"):
+        debug_log(f"[Tests] Running files: {test_files}")
     
     if not test_files:
         return {"error": "Keine Test-Suiten ausgewählt."}
