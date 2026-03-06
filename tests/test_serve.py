@@ -6,24 +6,35 @@
 
 import eel
 import bottle
-
-@bottle.route('/testroute')
-def test():
-    return "Hello"
-
-eel.init('web')
-# eel.start uses a blocking call. We can start it with block=False
-eel.start('index.html', size=(100, 100), block=False)
-
 import time
-time.sleep(1)
-
 import urllib.request
-try:
-    print(urllib.request.urlopen('http://localhost:8000/testroute').read().decode('utf-8'))
-except Exception as e:
-    print(e)
+import threading
+
+def test_server_startup():
+    """Starts Eel with a headless mode (no browser) to test routing."""
+    
+    @bottle.route('/testroute')
+    def test_route():
+        return "Hello"
+
+    # Start Eel in a separate thread because it's blocking
+    # We use 'none' as mode to prevent ANY browser window from opening
+    t = threading.Thread(target=lambda: eel.start('index.html', mode=None, block=True, port=8888), daemon=True)
+    t.start()
+    
+    # Give the server a moment to start
+    time.sleep(1.5)
+
     try:
-        # Eel's default port might not be 8000. It's usually 8000.
+        response = urllib.request.urlopen('http://localhost:8888/testroute', timeout=5).read().decode('utf-8')
+        assert response == "Hello", f"Expected 'Hello', got '{response}'"
+    finally:
+        # We don't have a clean way to stop the Eel thread here without exiting path,
+        # but as it's a daemon thread in a subprocess (if run via main process), it's fine for a unit test.
         pass
-    except: pass
+
+if __name__ == "__main__":
+    # If run directly
+    eel.init('web')
+    test_server_startup()
+    print("Test passed!")
