@@ -16,7 +16,7 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.8"
+VERSION = "1.1.9"
 
 @eel.expose("get_version")
 def get_version():
