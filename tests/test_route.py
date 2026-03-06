@@ -26,7 +26,7 @@ def serve_media(filepath):
 
 def run_eel():
     eel.init('web')
-    eel.start('index.html', size=(100, 100), port=8080)
+    eel.start('index.html', mode=None, size=(100, 100), port=8082, block=False)
 
 t = threading.Thread(target=run_eel, daemon=True)
 t.start()
