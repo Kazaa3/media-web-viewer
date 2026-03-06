@@ -16,7 +16,7 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.9"
+VERSION = "1.1.10"
 
 @eel.expose("get_version")
 def get_version():
@@ -186,7 +186,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 try:
                     item = MediaItem(f.name, f)
                     item_dict = item.to_dict()
-                    debug_log(f"[DB-Insert] {f.name} (Category: {item_dict.get('category')}) from {f.parent}")
+                    if DEBUG_FLAGS["db"]:
+                        debug_log(f"[DB-Insert] {f.name} (Category: {item_dict.get('category')}) from {f.parent}")
                     db.insert_media(item_dict)
                     count += 1
                 except Exception as e:
