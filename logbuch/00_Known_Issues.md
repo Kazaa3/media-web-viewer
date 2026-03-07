@@ -1,6 +1,6 @@
-<!-- Category: Planning -->
-<!-- Title_DE: Bekannte Probleme (Stand v1.1.15) -->
-<!-- Title_EN: Known Issues (Status v1.1.15) -->
+<!-- Category: Bug -->
+<!-- Title_DE: Bekannte Probleme (Stand v1.1.18) -->
+<!-- Title_EN: Known Issues (Status v1.1.18) -->
 <!-- Summary_DE: Aktueller Stand der Fehlerbehebung und offene Punkte. -->
 <!-- Summary_EN: Current status of bug fixes and open points. -->
 <!-- Status: PLAN -->
