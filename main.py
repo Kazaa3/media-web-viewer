@@ -32,7 +32,12 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.18"
+# Version laden
+VERSION_FILE = Path(__file__).parent / "VERSION"
+try:
+    VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
+except Exception:
+    VERSION = "1.1.19" # Fallback
 
 @eel.expose("get_version")
 def get_version():
@@ -601,23 +606,25 @@ def list_logbook_entries():
                 
                 for line in lines:
                     line = line.strip()
-                    if "<!-- Category:" in line:
-                        category = line.split("Category: ")[1].split(" -->")[0]
-                    if "<!-- Summary_DE:" in line:
-                        summary_de = line.split("Summary_DE: ")[1].split(" -->")[0]
-                    elif "<!-- Summary_EN:" in line:
-                        summary_en = line.split("Summary_EN: ")[1].split(" -->")[0]
-                    elif "<!-- Summary:" in line:
-                        summary = line.split("Summary: ")[1].split(" -->")[0]
+                    # Support both <!-- Tag: Value --> and Tag: Value formats
+                    content = line
+                    if "<!--" in line and "-->" in line:
+                        content = line.split("<!--")[1].split("-->")[0].strip()
                     
-                    if "<!-- Status:" in line:
-                        status = line.split("Status: ")[1].split(" -->")[0]
-                    if "<!-- Title_DE:" in line:
-                        title_de = line.split("Title_DE: ")[1].split(" -->")[0]
-                    elif "<!-- Title_EN:" in line:
-                        title_en = line.split("Title_EN: ")[1].split(" -->")[0]
+                    if ":" in content:
+                        key, val = content.split(":", 1)
+                        key = key.strip()
+                        val = val.strip()
+                        
+                        if key == "Category": category = val
+                        elif key == "Status": status = val
+                        elif key == "Title_DE": title_de = val
+                        elif key == "Title_EN": title_en = val
+                        elif key == "Summary_DE": summary_de = val
+                        elif key == "Summary_EN": summary_en = val
+                        elif key == "Summary": summary = val
                     
-                    if line.startswith("# "):
+                    if line.startswith("# ") and not (title_de or title_en):
                         title = line.replace("# ", "").strip()
                 
                 # Special case for Known Issues
@@ -627,6 +634,10 @@ def list_logbook_entries():
                 # Fallbacks
                 if not title_de: title_de = title
                 if not title_en: title_en = title
+                
+                # Bi-directional summary fallback 
+                if not summary:
+                    summary = summary_de or summary_en
                 if not summary_de: summary_de = summary
                 if not summary_en: summary_en = summary
 

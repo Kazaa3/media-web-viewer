@@ -1,57 +1,60 @@
 <!-- Category: Bug -->
-<!-- Title_DE: Bekannte Probleme (Stand v1.1.18) -->
-<!-- Title_EN: Known Issues (Status v1.1.18) -->
+<!-- Title_DE: Bekannte Probleme (Stand v1.1.20) -->
+<!-- Title_EN: Known Issues (Status v1.1.20) -->
 <!-- Summary_DE: Aktueller Stand der Fehlerbehebung und offene Punkte. -->
 <!-- Summary_EN: Current status of bug fixes and open points. -->
 <!-- Status: PLAN -->
 
-# Bekannte Probleme (Stand v1.1.17)
+# Bekannte Probleme (Stand v1.1.20)
 
 ## Behobene Probleme
 - [x] Unnötige Konsolenausgaben beim Scan (jetzt hinter `db`-Flag).
 - [x] Pfad-Konflikte nach Neuinstallation (Dokumentation für Reset hinzugefügt).
 - [x] Fehlende System-Abhängigkeiten in der `.deb` (jetzt in `control` hinterlegt).
-- [x] Testing & Logging
+- [x] **v1.1.18/1.1.19 Highlights**:
+    - [x] Umplatzierung der "Danger Zone" (Reset) in den Optionen.
+    - [x] Interaktive News-Bar im Header.
+    - [x] Vollständige Projekt-Dokumentation (`DOCUMENTATION.md`).
+    - [x] Dynamisches und bilinguales Feature-Modal.
+    - [x] Features Modal hat nicht automatisch die neusten EInträge (42 fehlt)
 
 ## Offene Punkte
-- [ ] Globale Versionierung
-- [ ] Hörbuch Tag muss weg
-- [ ] Noch deutsch: Keine spezifischen Optionen für "Filename" verfügbar.
-- [ ] Noch deutsch: Keine spezifischen Optionen für "Container Structure" verfügbar.
-- [ ] Edit menu: Metadata saved! Popups später ausblenden / UI Umgestaltung
-- [ ] im log Edit menu: Eintrag gespeichert!
-- [ ] Refresh im Editmenü erfolgt nach schreiben nicht
-- [ ] Enhancing Feature Modal and Navigation Bar
-- [ ]  <!-- Category: Planung --> # Neuer Eintrag Tag in Formular deutsch
-- [ ]  Console und Dict wieder tauschen / Mehr Dateiformate exposen / Datenbank intigrieren
-- [ ]  Standardsprache aus Systemsprache ermitteln 
-- [ ] Parser Rewrite
-- [ ] Kein automatischer Refresh der UI, wenn Dateien im Dateisystem verschoben werden (manueller Scan nötig).
-- [ ] Große Listen (Player-Tab) könnten bei >10.000 Einträgen eine Virtual-Scrolling Lösung vertragen.
-- [ ] Container Parser falsch. Rüber zu pymediainfo. und hier mkv container erkennung für mkv audio Erkennung
-- [ ] Speichern der Tags als String in der DB speichert nicht alle Tags, um Performance zu garantieren. Aber diese Tags müssen später für eine große Datenbank wiederherstellbar sein. Meilenstein Medienbibliothek
-- [ ] Hinzufügen von Video- und Audio-Dateien zur Datenbank. 
-    - [ ] Pflicht: m1a/alac, flac, mp3 
-    - [ ] Opional: DSD 
-- [ ] Weitere Datentypen hinzufügen. , wie Dokumente, E-Books, Bilder, Archive etc.
-- [ ] ID-System für Medienelemente, die aus mehreren Objekten bestehen.
-- [ ] Filmscraper
-- [ ] GUI überarbeiten
-- [ ] Gehört. Eher zu Features.
-- [ ] Windows exe
-- [ ] Weitere Datenquellen und Tools
-- [ ] DOCUMENTATION
-- [ ] Debug Flags
+- [x] Globale Versionierung (zentrale Stelle statt 3 Dateien).
+- [x] Versioneurung fehlt in doku
+- [ ] Edit aktuaisuerng / bib
+- [x] logbuch einträge filterung wenn header fehlt führt zu fehlenden einträgen
+- [x] Sortierung neuer log einträge erfolgt bei abgescjlossen. neue sind aber noch offfen. neuen status einführen
+- [ ] logtab. fixe elemente für tag felder auf gui
+- [ ] Test: Verifizierung .deb mit Version
+- [ ] Hörbuch Tag (Backend) muss vereinheitlicht werden.
+- [ ] Parser-Optionen: "Filename" und "Container" Details noch auf Deutsch.
+- [ ] Edit-Menü: Metadaten-Speicher-Popups automatisch ausblenden.
+- [ ] Refresh im Edit-Menü nach Speichern verbessern.
+- [ ] Standardsprache aus Systemsprache ermitteln.
+- [ ] Parser Rewrite (Meilenstein Performance).
+- [ ] Kein automatischer Refresh der UI bei Dateioperationen (manueller Scan nötig).
+- [ ] Container Parser (mkv audio Erkennung via pymediainfo verbessern).
+- [ ] Medienbibliothek: Skalierbarkeit (>10.000 Einträge).
 
 <!-- lang-split -->
 
-# Known Issues (Status v1.1.15)
+# Known Issues (Status v1.1.20)
 
 ## Fixed Issues
 - [x] Unnecessary console output during scan (now behind `db` flag).
 - [x] Path conflicts after re-installation (added documentation for reset).
 - [x] Missing system dependencies in the `.deb` (now listed in `control`).
+- [x] **v1.1.18/1.1.19 Highlights**:
+    - [x] Relocation of "Danger Zone" in options.
+    - [x] Interactive News Bar in header.
+    - [x] Full project documentation (`DOCUMENTATION.md`).
+    - [x] Dynamic and bilingual feature modal.
 
 ## Open Tasks
-- [ ] No automatic UI refresh when files are moved in the file system (manual scan required).
-- [ ] Large lists (Player Tab) could use a virtual scrolling solution for >10,000 entries.
+- [x] Global versioning system.
+- [x] Eintrag gespeichert! noch deutsch nach logbook edit
+- [ ] Logging file
+- [x] debug flags
+- [ ] Standardize audiobook tags in backend.
+- [ ] No automatic UI refresh on file system changes.
+- [ ] Scalability for very large libraries.

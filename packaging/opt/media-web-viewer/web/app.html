@@ -485,9 +485,9 @@
             if (res.status === 'ok') {
                 closeLogbookEditor();
                 loadLogbuchTab();
-                alert('Eintrag gespeichert!');
+                alert(i18n('logbook_saved'));
             } else {
-                alert('Fehler: ' + res.error);
+                alert(i18n('logbook_error') + res.error);
             }
         }
 
@@ -497,7 +497,7 @@
                 loadLogbuchTab();
                 document.getElementById('logbuch-tab-title').innerText = 'Willkommen im Logbuch';
                 document.getElementById('logbuch-tab-content').innerText = 'Wähle links einen Eintrag aus, um ihn zu lesen.';
-                alert('Eintrag gelöscht!');
+                alert(i18n('logbook_deleted'));
             } else {
                 alert('Fehler: ' + res.error);
             }
@@ -703,13 +703,13 @@
                     Flags</button>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; align-items:center; gap:12px; flex: 1; justify-content: flex-end; overflow: hidden;">
             <button onclick="toggleFeatureStatus()"
-                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #1b5e20; cursor: pointer; font-weight: bold;"
+                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #1b5e20; cursor: pointer; font-weight: bold; flex-shrink: 0;"
                 data-i18n="btn_features">✨
                 Features</button>
             <button onclick="scan(null, true)" id="scan-btn"
-                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; flex-shrink: 0;"
                 data-i18n="btn_scan_media">Scan
                 Media</button>
         </div>
@@ -1226,122 +1226,9 @@
             <button onclick="toggleFeatureStatus()"
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
         </div>
-        <div
+        <div id="feature-list-container"
             style="padding: 25px; display: flex; flex-direction: column; gap: 16px; max-height: 500px; overflow-y: auto;">
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('27_Natural_Sorting')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    COMPLETED</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_natural_sorting_title">Natural
-                        Sorting</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;" data-i18n="feat_natural_sorting_desc">
-                        Korrekte numerische Kapitelsortierung (1, 2, 10...) basierend auf Titeln & Timestamps.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('21_Dynamic_Test_Suite')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    COMPLETED</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_dynamic_test_suite_title">Dynamic
-                        Test Suite</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
-                        data-i18n="feat_dynamic_test_suite_desc">Automatisches Finden und Ausführen von Test-Skripten im
-                        `tests/` Ordner via GUI.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('25_Media_Categorization')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    COMPLETED</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_media_categorization_title">Media
-                        Categorization</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
-                        data-i18n="feat_media_categorization_desc">Intelligente Erkennung von Hörbüchern (.m4b) und
-                        Integration in Datei-Browser.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('28_Premium_Sidebar_Info')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    COMPLETED</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_premium_sidebar_info_title">Premium
-                        Sidebar Info</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
-                        data-i18n="feat_premium_sidebar_info_desc">Detaillierte Anzeige von Bitrate, Codec, Container
-                        und Tag-Formaten.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    ACTIVE</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_extended_format_support_title">
-                        Extended Format Support</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
-                        data-i18n="feat_extended_format_support_desc">Unterstützung für MKV, FLAC, AAC und
-                        Metadaten-Mapping für alle Container.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('23_Implementation_Plan_Test_Tab')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    PLAN</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_impl_plan_test_tab_title">
-                        Implementation Plan Test Tab</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
-                        data-i18n="feat_impl_plan_test_tab_desc">Planung zum Rework des Tests-Tabs.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('30_Task_Test_Tab')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #e1f5fe; color: #0277bd; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    TASK</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_task_test_tab_title">Task List: Test
-                        Tab</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;" data-i18n="feat_task_test_tab_desc">
-                        Entwicklungs-Aufgaben für die Test-UI.</div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
-                onclick="openLogbook('README')" onmouseover="this.style.background='#f5f5f5'"
-                onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #f5f5f5; color: #777; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    DOCS</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Project Documentation</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Vollständige README und
-                        Architektur-Übersicht.</div>
-                </div>
-            </div>
+            <!-- Dynamically loaded -->
         </div>
     </div>
 
@@ -2389,47 +2276,95 @@
                 const entries = await eel.list_logbook_entries()();
                 container.innerHTML = '';
 
-                // Filter: Show only entries that have a summary (others are just logs)
-                const features = entries.filter(e => e.summary && e.summary.trim() !== "");
+                // Documentation Link at the top
+                // Filter: Show only entries that have a summary
+                let allItems = entries.filter(e => e.summary && e.summary.trim() !== "");
 
-                if (features.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; color: #888; padding: 20px;">${t('lib_no_media_desc')}</div>`;
+                const allSorted = [...allItems].filter(f => f.name !== '31_Project_Documentation').reverse();
+                const latest = allSorted.slice(0, 3);
+                const latestNames = latest.map(l => l.name);
+
+                // 1. Bugs (Known Issues + entries categorized as Bug)
+                const bugItems = allItems.filter(f =>
+                    f.name === '00_Known_Issues' || (f.category && f.category.toLowerCase() === 'bug')
+                ).filter(f => !latestNames.includes(f.name));
+
+                // 2. Features (Open)
+                const featureItems = allItems.filter(f =>
+                    (f.category === 'Feature' || f.category === 'Task' || f.category === 'Planung' || f.category === 'Planning') &&
+                    f.status !== 'COMPLETED' &&
+                    f.name !== '00_Known_Issues' &&
+                    !latestNames.includes(f.name)
+                );
+
+                // 3. Documentation
+                const docItem = allItems.find(f => f.name === '31_Project_Documentation');
+                const docItems = docItem ? [docItem] : [];
+
+                // 4. Other Completed
+                const otherCompleted = allItems.filter(f =>
+                    f.status === "COMPLETED" &&
+                    !latestNames.includes(f.name) &&
+                    f.name !== '31_Project_Documentation' &&
+                    f.name !== '00_Known_Issues' &&
+                    !(f.category && f.category.toLowerCase() === 'bug')
+                ).reverse();
+
+                if (allItems.length === 0) {
+                    container.innerHTML += `<div style="text-align: center; color: #888; padding: 20px;">${t('logbook_empty_desc')}</div>`;
                     return;
                 }
 
-                features.forEach(feat => {
-                    const featDiv = document.createElement('div');
-                    featDiv.style.cssText = "display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;";
-                    featDiv.onclick = () => openLogbook(feat.name);
-                    featDiv.onmouseover = () => featDiv.style.background = '#f5f5f5';
-                    featDiv.onmouseout = () => featDiv.style.background = 'transparent';
-
-                    // Color based on status
-                    let badgeBg = "#eee", badgeColor = "#555";
-                    if (feat.status === "COMPLETED") { badgeBg = "#e8f5e9"; badgeColor = "#2e7d32"; }
-                    else if (feat.status === "ACTIVE") { badgeBg = "#e3f2fd"; badgeColor = "#1565c0"; }
-                    else if (feat.status === "PLAN") { badgeBg = "#fff3e0"; badgeColor = "#e65100"; }
-                    else if (feat.status === "TASK") { badgeBg = "#e1f5fe"; badgeColor = "#0277bd"; }
-                    else if (feat.status === "DOCS") { badgeBg = "#ede7f6"; badgeColor = "#5e35b1"; }
-
-                    const displayTitle = currentLanguage === 'de' ? feat.title_de : feat.title_en;
-                    const displaySummary = currentLanguage === 'de' ? feat.summary_de : feat.summary_en;
-
-                    featDiv.innerHTML = `
-                        <div style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; min-width: 80px; text-align: center;">
-                            ${feat.status}
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #1a1a1a;">${displayTitle}</div>
-                            ${displaySummary ? `<div style="font-size: 0.85em; color: #666; margin-top: 2px;">${displaySummary}</div>` : ''}
-                        </div>
-                    `;
-                    container.appendChild(featDiv);
-                });
+                // Render Sections
+                renderFeatureSection(container, t('logbook_section_latest'), latest, true);
+                renderFeatureSection(container, t('logbook_section_bugs'), bugItems);
+                renderFeatureSection(container, t('logbook_section_features'), featureItems);
+                renderFeatureSection(container, t('logbook_btn_documentation'), docItems);
+                renderFeatureSection(container, t('logbook_section_completed'), otherCompleted);
             } catch (e) {
                 console.error("Error loading features:", e);
                 container.innerHTML = '<div style="text-align: center; color: #b71c1c; padding: 20px;">Fehler beim Laden.</div>';
             }
+        }
+
+        function renderFeatureSection(container, title, items, highlight = false) {
+            if (items.length === 0) return;
+
+            const header = document.createElement('div');
+            header.style.cssText = "font-weight: bold; color: #555; font-size: 0.85em; text-transform: uppercase; margin: 15px 0 8px 5px; border-bottom: 2px solid #eee; padding-bottom: 4px; display: flex; align-items: center; gap: 8px;";
+            if (highlight) header.style.color = "#2a7";
+            header.innerText = title;
+            container.appendChild(header);
+
+            items.forEach(feat => {
+                const featDiv = document.createElement('div');
+                featDiv.style.cssText = "display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 12px; border-radius: 8px; transition: all 0.2s; border: 1px solid transparent;";
+                featDiv.onclick = () => openLogbook(feat.name);
+                featDiv.onmouseover = () => { featDiv.style.background = '#f9f9f9'; featDiv.style.borderColor = '#eee'; featDiv.style.transform = 'translateX(4px)'; };
+                featDiv.onmouseout = () => { featDiv.style.background = 'transparent'; featDiv.style.borderColor = 'transparent'; featDiv.style.transform = 'translateX(0)'; };
+
+                // Color based on status
+                let badgeBg = "#eee", badgeColor = "#555";
+                if (feat.status === "COMPLETED") { badgeBg = "#e8f5e9"; badgeColor = "#2e7d32"; }
+                else if (feat.status === "ACTIVE") { badgeBg = "#e3f2fd"; badgeColor = "#1565c0"; }
+                else if (feat.status === "PLAN") { badgeBg = "#fff3e0"; badgeColor = "#e65100"; }
+                else if (feat.status === "TASK") { badgeBg = "#e1f5fe"; badgeColor = "#0277bd"; }
+                else if (feat.status === "DOCS") { badgeBg = "#ede7f6"; badgeColor = "#5e35b1"; }
+
+                const displayTitle = currentLanguage === 'de' ? feat.title_de : feat.title_en;
+                const displaySummary = currentLanguage === 'de' ? feat.summary_de : feat.summary_en;
+
+                featDiv.innerHTML = `
+                    <div style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; min-width: 85px; text-align: center; text-transform: uppercase;">
+                        ${feat.status}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #111; font-size: 0.95em;">${displayTitle}</div>
+                        ${displaySummary ? `<div style="font-size: 0.85em; color: #666; margin-top: 3px; line-height: 1.4;">${displaySummary}</div>` : ''}
+                    </div>
+                `;
+                container.appendChild(featDiv);
+            });
         }
 
         function toggleFeatureStatus() {
@@ -2810,6 +2745,7 @@
             loadParserConfig();
             loadDebugFlags();
             loadTestSuites();
+            loadFeatureStatus();
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {
             try {
