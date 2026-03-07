@@ -4,7 +4,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PACKAGE_NAME="media-web-viewer"
-VERSION="1.1.16"
+VERSION="1.1.17"
 ARCH="amd64"
 DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
 STAGING="$SCRIPT_DIR/packaging"
