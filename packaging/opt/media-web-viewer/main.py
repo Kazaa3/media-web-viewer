@@ -14,7 +14,7 @@ import contextlib
 
 from pathlib import Path
 import re  # For MKV parsing
-from parsers.format_utils import PARSER_CONFIG, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
 VERSION = "1.1.11"
 
@@ -98,6 +98,39 @@ def clear_database():
         debug_log("[Debug-DB] Tabelle wird geleert...")
     db.clear_media()
     return {"status": "ok", "message": "Datenbank geleert", "media": []}
+
+@eel.expose("reset_app_data")
+def reset_app_data():
+    """Löscht Datenbank und Konfigurationsdateien (Private Daten)."""
+    import shutil
+    from pathlib import Path
+    
+    deleted = []
+    
+    # Paths to clear:
+    # 1. ~/.media-web-viewer (Database)
+    db_dir = db.DB_DIR
+    # 2. ~/.config/gui_media_web_viewer (Parser Config)
+    config_dir = Path.home() / ".config" / "gui_media_web_viewer"
+    
+    for p in [db_dir, config_dir]:
+        if p.exists():
+            try:
+                if p.is_dir():
+                    shutil.rmtree(p, ignore_errors=True)
+                else:
+                    p.unlink()
+                deleted.append(str(p))
+            except Exception as e:
+                debug_log(f"[Error] Reset failed for {p}: {e}")
+
+    # Re-initialize to avoid crash on next actions
+    db.init_db()
+    save_parser_config() # Create default config
+    load_parser_config() # Sync local PARSER_CONFIG in memory
+    
+    debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
+    return {"status": "ok", "deleted": deleted}
 
 @eel.expose("update_tags")
 def update_tags(name, tags_dict):
