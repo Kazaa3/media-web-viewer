@@ -1,4 +1,6 @@
 <!-- Category: Tests -->
+<!-- Summary: Automatisches Finden und Ausführen von Test-Skripten im tests/ Ordner via GUI. -->
+<!-- Status: COMPLETED -->
 
 # Dynamic Test Suite
 

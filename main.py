@@ -537,31 +537,49 @@ def get_logbook_entry(feature_name):
 
 @eel.expose
 def list_logbook_entries():
-    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Kategorien zurück."""
+    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück."""
     log_dir = Path(__file__).parent / "logbuch"
     if not log_dir.exists():
         return []
     
     entries = []
+    # Natural sort by filename
     for f in sorted(log_dir.glob("*.md")):
         try:
             with open(f, 'r', encoding='utf-8') as fp:
-                first_line = fp.readline()
+                lines = [fp.readline() for _ in range(10)] # Mehr Zeilen lesen um alles zu finden
                 category = "Sonstiges"
+                summary = ""
+                status = "COMPLETED" # Default
+                title = f.stem
                 
-                if "<!-- Category:" in first_line:
-                    category = first_line.split("Category: ")[1].split(" -->")[0]
+                for line in lines:
+                    line = line.strip()
+                    if "<!-- Category:" in line:
+                        category = line.split("Category: ")[1].split(" -->")[0]
+                    if "<!-- Summary:" in line:
+                        summary = line.split("Summary: ")[1].split(" -->")[0]
+                    if "<!-- Status:" in line:
+                        status = line.split("Status: ")[1].split(" -->")[0]
+                    if line.startswith("# "):
+                        title = line.replace("# ", "").strip()
                 
                 entries.append({
                     "name": f.stem,
                     "filename": f.name,
-                    "category": category
+                    "title": title,
+                    "category": category,
+                    "summary": summary,
+                    "status": status
                 })
         except Exception:
             entries.append({
                 "name": f.stem,
                 "filename": f.name,
-                "category": "Fehler"
+                "title": f.stem,
+                "category": "Fehler",
+                "summary": "",
+                "status": "ERROR"
             })
     
     return entries
