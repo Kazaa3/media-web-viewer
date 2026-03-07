@@ -13,7 +13,8 @@ PARSER_CONFIG = {
     "parser_mode": "lightweight",
     "debug_scan": True,
     "debug_parser": True,
-    "scan_dirs": [str(Path(__file__).resolve().parent.parent / "media")]
+    "scan_dirs": [str(Path(__file__).resolve().parent.parent / "media")],
+    "language": "de"
 }
 
 def load_parser_config():
