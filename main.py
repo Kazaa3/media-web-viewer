@@ -620,6 +620,10 @@ def list_logbook_entries():
                     if line.startswith("# "):
                         title = line.replace("# ", "").strip()
                 
+                # Special case for Known Issues
+                if f.name == "00_Known_Issues.md":
+                    category = "Bug"
+                
                 # Fallbacks
                 if not title_de: title_de = title
                 if not title_en: title_en = title
