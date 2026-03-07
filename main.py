@@ -15,7 +15,7 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.13"
+VERSION = "1.1.14"
 
 @eel.expose("get_version")
 def get_version():
@@ -577,23 +577,46 @@ def list_logbook_entries():
                 status = "COMPLETED" # Default
                 title = f.stem
                 
+                title_de = ""
+                title_en = ""
+                summary_de = ""
+                summary_en = ""
+                
                 for line in lines:
                     line = line.strip()
                     if "<!-- Category:" in line:
                         category = line.split("Category: ")[1].split(" -->")[0]
                     if "<!-- Summary:" in line:
                         summary = line.split("Summary: ")[1].split(" -->")[0]
+                    if "<!-- Summary_DE:" in line:
+                        summary_de = line.split("Summary_DE: ")[1].split(" -->")[0]
+                    if "<!-- Summary_EN:" in line:
+                        summary_en = line.split("Summary_EN: ")[1].split(" -->")[0]
                     if "<!-- Status:" in line:
                         status = line.split("Status: ")[1].split(" -->")[0]
+                    if "<!-- Title_DE:" in line:
+                        title_de = line.split("Title_DE: ")[1].split(" -->")[0]
+                    if "<!-- Title_EN:" in line:
+                        title_en = line.split("Title_EN: ")[1].split(" -->")[0]
                     if line.startswith("# "):
                         title = line.replace("# ", "").strip()
                 
+                # Fallbacks
+                if not title_de: title_de = title
+                if not title_en: title_en = title
+                if not summary_de: summary_de = summary
+                if not summary_en: summary_en = summary
+
                 entries.append({
                     "name": f.stem,
                     "filename": f.name,
                     "title": title,
+                    "title_de": title_de,
+                    "title_en": title_en,
                     "category": category,
                     "summary": summary,
+                    "summary_de": summary_de,
+                    "summary_en": summary_en,
                     "status": status
                 })
         except Exception:
