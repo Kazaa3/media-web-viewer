@@ -1,4 +1,6 @@
 <!-- Category: Parser -->
+<!-- Summary: Korrekte numerische Kapitelsortierung (1, 2, 10...) basierend auf Titeln & Timestamps. -->
+<!-- Status: COMPLETED -->
 
 # Natural Sorting
 
