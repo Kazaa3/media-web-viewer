@@ -2290,7 +2290,7 @@
         async function loadFeatureStatus() {
             const container = document.getElementById('feature-list-container');
             if (!container) return;
-            container.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Lade Features...</div>';
+            container.innerHTML = `<div style="text-align: center; color: #888; padding: 20px;">${t('logbook_loading_items')}</div>`;
 
             try {
                 const entries = await eel.list_logbook_entries()();
