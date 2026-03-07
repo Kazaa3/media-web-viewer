@@ -391,7 +391,9 @@
             }
 
             const sidebar = document.querySelector('.sidebar');
+            const splitter = document.getElementById('main-splitter');
             if (sidebar) sidebar.style.display = tabId === 'player' ? '' : 'none';
+            if (splitter) splitter.style.display = tabId === 'player' ? '' : 'none';
 
             if (tabId === 'player') {
                 if (typeof loadLibrary === 'function') loadLibrary();
@@ -447,12 +449,12 @@
             const title = document.getElementById('logbuch-editor-title');
 
             if (name) {
-                title.innerText = `Bearbeite: ${name}`;
+                title.innerText = `${t('logbook_edit_prefix')}${name}`;
                 nameInput.value = name;
                 contentInput.value = content || '';
                 nameInput.disabled = true;
             } else {
-                title.innerText = 'Neuer Eintrag';
+                title.innerText = t('logbook_edit_title_new');
                 nameInput.value = '';
                 contentInput.value = '<!-- Category: Planung -->\n\n# Neuer Eintrag\n\n';
                 nameInput.disabled = false;
@@ -655,7 +657,7 @@
     </script>
     <div class="header-container">
         <div style="display: flex; align-items: center; gap: 20px;">
-            <h1 data-i18n="nav_player">Media Player</h1>
+            <h1 data-i18n="app_title">Media Player</h1>
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
@@ -731,23 +733,24 @@
                 <div id="library-list"></div>
             </div>
 
-            <div id="edit-tab" class="tab-content" style="padding: 0; display: none; height: 100%; width: 100%;">
-                <div id="edit-tab" class="tab-content" style="padding: 20px; flex-direction: column;">
-                    <h2 style="margin-bottom: 5px;" data-i18n="edit_title">Metadaten Editor</h2>
-                    <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;" data-i18n="edit_subtitle">Passe Tags
-                        und Namen deiner Medien
-                        direkt in der Datenbank an.</p>
+            <div id="edit-tab" class="tab-content"
+                style="padding: 20px; flex-direction: column; display: none; height: 100%; width: 100%;">
+                <h2 style="margin-bottom: 5px;" data-i18n="edit_title">Metadaten Editor</h2>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;" data-i18n="edit_subtitle">Passe Tags
+                    und Namen deiner Medien
+                    direkt in der Datenbank an.</p>
 
-                    <div style="display: flex; gap: 30px; flex: 1;">
-                        <!-- Left: Library List -->
-                        <div style="flex: 1; display: flex; flex-direction: column; min-width: 350px;">
+                <div style="display: flex; gap: 0; flex: 1; min-height: 0; border-top: 1px solid #eee;">
+                    <!-- Left: Library List Sidebar -->
+                    <div id="edit-sidebar-left"
+                        style="width: 350px; display: flex; flex-direction: column; background: #fafafa; border-right: 1px solid #eee;">
+                        <div style="padding: 15px; border-bottom: 1px solid #eee;">
                             <input type="text" id="edit-search" placeholder="Suche in der Bibliothek..."
-                                oninput="loadEditItems()"
-                                style="padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-size: 0.9em; outline: none;"
+                                oninput="filterEditList()"
+                                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9em; outline: none; box-sizing: border-box;"
                                 data-i18n="edit_search_placeholder">
                         </div>
-                        <div id="edit-items-list" style="flex: 1; overflow-y: auto; padding: 10px;"
-                            data-i18n="lib_loading">
+                        <div id="edit-items-list" style="flex: 1; overflow-y: auto; padding: 10px;">
                             <!-- Items werden hier geladen -->
                         </div>
                     </div>
@@ -757,7 +760,7 @@
 
                     <!-- Right: Wrapper for Editor / Placeholder -->
                     <div id="edit-right-wrapper"
-                        style="flex: 1; display: flex; flex-direction: column; min-width: 300px;">
+                        style="flex: 1; display: flex; flex-direction: column; min-width: 300px; background: #fff;">
                         <div id="edit-form-container"
                             style="flex: 1; padding: 30px; background: #fff; overflow-y: auto; display: none;">
 
@@ -807,7 +810,8 @@
                         <div id="edit-placeholder"
                             style="flex: 1; display: flex; align-items: center; justify-content: center; color: #999; flex-direction: column;">
                             <span style="font-size: 3em; margin-bottom: 10px;">📝</span>
-                            <p>Wähle links ein Element aus, um die Metadaten zu bearbeiten.</p>
+                            <p data-i18n="edit_placeholder_text">Wähle links ein Element aus, um die Metadaten zu
+                                bearbeiten.</p>
                         </div>
                     </div>
                 </div>
@@ -833,7 +837,8 @@
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_scan_dirs">
                             Index-Verzeichnisse</h3>
                         <p style="color: #666; font-size: 0.9em; margin-bottom: 12px;"
-                            data-i18n="options_scan_dirs_desc">Ordner, die beim Start oder Klick
+                            data-i18n="options_scan_dirs_desc">
+                            Ordner, die beim Start oder Klick
                             auf 'Scan' automatisch nach Medien durchsucht werden. Der Unterordner 'media' im
                             Programmverzeichnis (/opt/media-web-viewer/media) wird standardmäßig indexiert.</p>
                         <div id="scan-dirs-list"
@@ -868,18 +873,6 @@
 
                         <div>
 
-                            <div
-                                style="background: #fdfdfd; border: 1px dashed #ccc; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 15px; align-items: flex-start;">
-                                <div style="font-size: 0.9em; font-weight: bold; color: #444;">Medien-Verzeichnis wählen
-                                </div>
-                                <p style="font-size: 0.85em; color: #888; margin: 0;">Öffnet den nativen Ordner-Dialog
-                                    (Tkinter), um ein neues Ziel für den Datei-Browser festzulegen.</p>
-
-                                <button id="browse-folder-btn" onclick="fbPickFolder()"
-                                    style="padding: 12px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s;">
-                                    <span style="font-size: 1.2em;">📂</span> Ordner durchsuchen
-                                </button>
-                            </div>
 
                             <div
                                 style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
@@ -946,7 +939,8 @@
                                     style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;">
                                     Leichtgewicht (Schnell)</div>
                                 <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
-                                    data-i18n="parser_mode_desc">Bestimmt, wie intensiv Metadaten extrahiert werden.
+                                    data-i18n="parser_mode_desc">
+                                    Bestimmt, wie intensiv Metadaten extrahiert werden.
                                 </div>
                             </div>
                         </div>
@@ -964,10 +958,12 @@
                                 <!-- Dynamically populated list -->
                             </ul>
                             <button onclick="saveParserChainUI()"
-                                style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Konfiguration
+                                style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
+                                data-i18n="parser_btn_save">Konfiguration
                                 Speichern</button>
                             <span id="parser-save-status"
-                                style="margin-left: 10px; font-size: 0.85em; color: #2a7; display: none;">✅
+                                style="margin-left: 10px; font-size: 0.85em; color: #2a7; display: none;"
+                                data-i18n="parser_save_success">✅
                                 Gespeichert</span>
                         </div>
 
@@ -996,16 +992,18 @@
             <!-- Tests Tab -->
             <div id="tests" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                    <h2 style="margin: 0;">Unit Tests & Verifizierung</h2>
+                    <h2 style="margin: 0;" data-i18n="test_title">Unit Tests & Verifizierung</h2>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <span id="test-run-summary"
                             style="font-weight: bold; font-size: 1.1em; color: #444; background: #f0f0f0; padding: 6px 12px; border-radius: 6px; display: none;"></span>
                         <button onclick="runSelectedTests()"
-                            style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;">
+                            style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
+                            data-i18n="test_run_selected">
                             ▶ Ausgewählte Tests ausführen
                         </button>
                         <button onclick="createNewTest()"
-                            style="padding: 10px 20px; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;">
+                            style="padding: 10px 20px; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
+                            data-i18n="test_new">
                             ➕ Neuer Test
                         </button>
                     </div>
@@ -1014,11 +1012,13 @@
                 <div id="test-suites-container"
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 30px;">
                     <!-- Dynamically loaded -->
-                    <div style="color: #999; font-size: 0.9em;">Suche nach Tests...</div>
+                    <div style="color: #999; font-size: 0.9em;" data-i18n="test_searching">Suche nach Tests...</div>
                 </div>
 
                 <div id="test-results-container" style="display: none; width: 100%;">
-                    <h3 style="font-size: 1.1em; margin-bottom: 15px;">Testergebnisse (Logs):</h3>
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="test_results_label">Testergebnisse
+                        (Logs):
+                    </h3>
                     <pre id="test-output"
                         style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
                 </div>
@@ -1026,11 +1026,11 @@
 
             <!-- Logbuch Tab -->
             <div id="logbuch-tab" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
-                <h2 style="margin-bottom: 25px;">Vollständiges Logbuch</h2>
+                <h2 style="margin-bottom: 25px;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
                 <div style="display: flex; gap: 30px;">
                     <div
                         style="flex: 1; max-width: 350px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px;">
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">Einträge</h3>
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="nav_logbook">Einträge</h3>
                         <div style="margin-bottom: 15px;">
                             <select id="logbuch-category-filter"
                                 onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
@@ -1050,9 +1050,11 @@
                     </div>
                     <div
                         style="flex: 2; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px; min-height: 500px;">
-                        <h2 id="logbuch-tab-title" style="margin-top: 0; margin-bottom: 20px; color: #333;">Willkommen
+                        <h2 id="logbuch-tab-title" style="margin-top: 0; margin-bottom: 20px; color: #333;"
+                            data-i18n="logbook_welcome">Willkommen
                             im Logbuch</h2>
-                        <div id="logbuch-tab-content" style="line-height: 1.6; color: #444;">
+                        <div id="logbuch-tab-content" style="line-height: 1.6; color: #444;"
+                            data-i18n="logbook_select_entry">
                             Wähle links einen Eintrag aus, um ihn zu lesen.
                         </div>
                     </div>
@@ -1069,13 +1071,14 @@
             style="width: 40px; height: auto; border-radius: 4px; object-fit: contain; background: transparent; align-self: stretch;">
         <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <audio id="player" controls style="width: 100%;"></audio>
-            <div id="status" style="font-size: 0.85em;">Wählt ein Lied aus der Liste!</div>
+            <div id="status" style="font-size: 0.85em;" data-i18n="player_select_song">Wählt ein Lied aus der Liste!
+            </div>
         </div>
         <!-- DB Update Status Bar -->
         <div id="db-status-container"
             style="display: none; align-items: center; gap: 8px; font-size: 0.85em; color: #2a7; font-weight: bold; padding: 0 10px;">
             <div class="spinner"></div>
-            <span>Datenbank wird aktualisiert...</span>
+            <span data-i18n="db_updating">Datenbank wird aktualisiert...</span>
         </div>
     </div>
 
@@ -1089,9 +1092,11 @@
         </div>
         <div style="display: flex; gap: 15px;">
             <button onclick="openImpressum()"
-                style="border: none; background: transparent; color: #0277bd; cursor: pointer; text-decoration: none; padding: 0; font-size: 0.85em;">Impressum</button>
+                style="border: none; background: transparent; color: #0277bd; cursor: pointer; text-decoration: none; padding: 0; font-size: 0.85em;"
+                data-i18n="common_imprint">Impressum</button>
             <button onclick="openAbout()"
-                style="border: none; background: transparent; color: #0277bd; cursor: pointer; text-decoration: none; padding: 0; font-size: 0.85em;">Über</button>
+                style="border: none; background: transparent; color: #0277bd; cursor: pointer; text-decoration: none; padding: 0; font-size: 0.85em;"
+                data-i18n="common_about">Über</button>
         </div>
     </div>
 
@@ -1100,54 +1105,40 @@
         style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 3500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
         <div
             style="background: #1a1a1a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.2em;">Impressum</h3>
+            <h3 style="margin: 0; font-size: 1.2em;" data-i18n="common_imprint">Impressum</h3>
             <button onclick="closeImpressum()"
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
         </div>
         <div style="padding: 30px; overflow-y: auto; flex: 1; line-height: 1.8; color: #444;">
             <h4 style="margin-top: 0;">Media Web Viewer</h4>
-            <p>Eine Desktop-Anwendung zur Verwaltung und Wiedergabe von Mediendateien mit erweiterten
+            <p data-i18n="imprint_desc">Eine Desktop-Anwendung zur Verwaltung und Wiedergabe von Mediendateien mit
+                erweiterten
                 Metadaten-Parsing-Funktionen.</p>
 
-            <h4>Technologie</h4>
-            <p>Entwickelt mit:</p>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li><strong>Python 3.11+</strong> - Backend</li>
-                <li><strong>Eel</strong> - Desktop-App-Framework</li>
-                <li><strong>Bottle</strong> - Web-Framework</li>
-                <li><strong>HTML5/CSS3/JavaScript</strong> - Frontend</li>
-                <li><strong>SQLite</strong> - Datenbank</li>
-                <li><strong>FFmpeg, Mutagen, PyMediaInfo</strong> - Metadaten-Parser</li>
-            </ul>
+            <h4 data-i18n="imprint_tech_title">Technologie</h4>
+            <p data-i18n="imprint_tech_desc">Entwickelt mit Python, Eel, Bottle und SQLite.</p>
 
-            <h4>Funktionen</h4>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Intelligente Metadaten-Extraktion aus Audio- und Videodateien</li>
-                <li>Unterstützung für Multiple Audio-Formate (MP3, FLAC, M4A, M4B, OGG, WAV, etc.)</li>
-                <li>Automatische Transkodierung von inkompatiblen Formaten</li>
-                <li>Kapitel-Support für Hörbücher und lange Podcasts</li>
-                <li>Integrierte Test-Suite und Debug-Tools</li>
-                <li>Konfigurierbare Parser-Chain für optimale Performance</li>
-            </ul>
+            <h4 data-i18n="imprint_features_title">Funktionen</h4>
+            <p data-i18n="imprint_features_list">Metadaten-Extraktion, Format-Support (MP3, FLAC, M4B), Transkodierung,
+                Kapitel-Support.</p>
 
-            <h4>Datenschutz</h4>
-            <p>Diese Anwendung ist ein lokales Desktop-Programm. Alle Daten werden lokal in einer SQLite-Datenbank
-                gespeichert. Es werden keine Daten an externe Server übertragen.</p>
+            <h4 data-i18n="imprint_privacy_title">Datenschutz</h4>
+            <p data-i18n="imprint_privacy_desc">Lokale Speicherung in SQLite. Keine Datenübertragung an externe Server.
+            </p>
 
-            <h4>Lizenz</h4>
-            <p>Dieses Projekt ist unter Entwicklung und kann frei verwendet werden.</p>
+            <h4 data-i18n="imprint_license_title">Lizenz</h4>
+            <p data-i18n="imprint_license_desc">Open Source Projekt.</p>
 
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-            <p style="font-size: 0.9em; color: #888;">
-                <strong>Entwickler:</strong> kazaa3<br>
-                <strong>Datum:</strong> 4. März 2026<br>
-                <strong>Ort:</strong> Deutschland
+            <p style="font-size: 0.9em; color: #888;" data-i18n="imprint_dev_info">
+                Entwickler: kazaa3 | Ort: Deutschland
             </p>
         </div>
         <div
             style="background: #f9f9f9; padding: 15px 30px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
             <button onclick="closeImpressum()"
-                style="padding: 8px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold;">Schließen</button>
+                style="padding: 8px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold;"
+                data-i18n="common_close">Schließen</button>
         </div>
     </div>
 
@@ -1156,55 +1147,39 @@
         style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 3500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
         <div
             style="background: #1a1a1a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.2em;">Über Media Web Viewer</h3>
+            <h3 style="margin: 0; font-size: 1.2em;" data-i18n="common_about_app">Über Media Web Viewer</h3>
             <button onclick="closeAbout()"
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
         </div>
         <div style="padding: 30px; overflow-y: auto; flex: 1; line-height: 1.8; color: #444;">
             <h2 id="about-title" style="margin-top: 0; color: #1a1a1a;">Media Web Viewer</h2>
 
-            <p style="font-size: 1.05em; color: #333;">Eine umfassende Desktop-Anwendung zur Verwaltung, Indexierung und
+            <p style="font-size: 1.05em; color: #333;" data-i18n="about_main_desc">Eine umfassende Desktop-Anwendung zur
+                Verwaltung, Indexierung und
                 Wiedergabe von Mediendateien mit hochperformanten Metadaten-Parsing-Funktionen.</p>
 
-            <h3>Hauptmerkmale</h3>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>🎵 <strong>Multi-Format Support</strong> - MP3, FLAC, M4A, M4B, OGG, WAV, OPUS, AAC und mehr</li>
-                <li>⚡ <strong>Intelligente Parser-Chain</strong> - Automatische Auswahl der optimalen Parser-Kombination
-                </li>
-                <li>📚 <strong>Hörbuch-Support</strong> - Automatische Kapitel-Erkennung und Sortierung</li>
-                <li>🔄 <strong>Automatische Transkodierung</strong> - ALAC → FLAC, WMA → OGG für Browser-Kompatibilität
-                </li>
-                <li>💾 <strong>Persistente Metadaten</strong> - SQLite-Datenbank mit erweiterbarem Datenmodell</li>
-                <li>🧪 <strong>Integrierte Test-Suite</strong> - pytest-Integration mit GUI-Ausführung</li>
-                <li>🎛️ <strong>Debug & Konfiguration</strong> - Umfangreiche Debug-Flags und Parser-Konfiguration</li>
-                <li>📖 <strong>Logbuch-System</strong> - Dokumentation und Fortschrittsträger für Entwicklung</li>
-            </ul>
+            <h3 data-i18n="about_features_title">Hauptmerkmale</h3>
+            <p style="font-size: 0.9em;" data-i18n="about_features_list">Multi-format support, Intelligent parser chain,
+                Audiobook support, Automatic transcoding, SQLite DB, Test suite, Logbook.</p>
 
-            <h3>Zur Zeit verfügbar</h3>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Bibliotheks-Management mit Metadaten-Editor</li>
-                <li>Browser-basierte Datei-Indexierung</li>
-                <li>HTML5-Audio-Player mit Kapitel-Navigation</li>
-                <li>Echtzeit-Debug-Logs und Performance-Metriken</li>
-            </ul>
+            <h3 data-i18n="about_available_title">Zur Zeit verfügbar</h3>
+            <p style="font-size: 0.9em;" data-i18n="about_available_list">Library management, File indexing, Audio
+                player with chapters, Real-time debug logs.</p>
 
-            <h3>Geplante Features</h3>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>🎞️ Video-Playback (vorbereitete Infrastruktur)</li>
-                <li>📋 Wiedergabelisten-Management</li>
-                <li>🎨 Themenkonfiguration</li>
-                <li>🔐 Sichere Metadaten-Synchronisation</li>
-            </ul>
+            <h3 data-i18n="about_planned_title">Geplante Features</h3>
+            <p style="font-size: 0.9em;" data-i18n="about_planned_list">Video playback, Playlist management, Theme
+                configuration.</p>
 
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-            <p style="font-size: 0.9em; color: #888;">
+            <p style="font-size: 0.9em; color: #888;" data-i18n="about_logbook_info">
                 Weitere Informationen findest du im Logbuch unter dem "Logbuch"-Tab.
             </p>
         </div>
         <div
             style="background: #f9f9f9; padding: 15px 30px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
             <button onclick="closeAbout()"
-                style="padding: 8px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold;">Schließen</button>
+                style="padding: 8px 20px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-weight: bold;"
+                data-i18n="common_close">Schließen</button>
         </div>
     </div>
 
@@ -1228,7 +1203,8 @@
         style="display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); width: 450px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); z-index: 2000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
         <div
             style="background: #1a1a1a; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Projekt-Status & Features</h3>
+            <h3 style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;" data-i18n="features_title">Projekt-Status
+                & Features</h3>
             <button onclick="toggleFeatureStatus()"
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
         </div>
@@ -1339,10 +1315,12 @@
 
             <div
                 style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-size: 0.8em; color: #888;">Synchronisiert mit `task.md` und `walkthrough.md`</div>
+                <div style="font-size: 0.8em; color: #888;" data-i18n="features_sync_info">Synchronisiert mit `task.md`
+                    und `walkthrough.md`</div>
                 <button
                     onclick="toggleFeatureStatus(); switchTab('logbuch', document.querySelector('.tab-btn[onclick*=\'logbuch\']'));"
-                    style="padding: 8px 16px; background: #e1f5fe; color: #0277bd; border: 1px solid #81d4fa; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: background 0.2s;">
+                    style="padding: 8px 16px; background: #e1f5fe; color: #0277bd; border: 1px solid #81d4fa; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: background 0.2s;"
+                    data-i18n="features_logbook_btn">
                     Zum vollständigen Logbuch
                 </button>
             </div>
@@ -1367,7 +1345,8 @@
         <div
             style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
             <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
-                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;">Schließen</button>
+                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                data-i18n="common_close">Schließen</button>
         </div>
     </div>
 
@@ -1376,7 +1355,7 @@
         style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 500px; max-height: 80vh; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; flex-direction: column;">
         <div
             style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.2em;">Test-Metadaten</h3>
+            <h3 style="margin: 0; font-size: 1.2em;" data-i18n="test_meta_title">Test-Metadaten</h3>
             <button onclick="closeTestEditModal()"
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
         </div>
@@ -1385,32 +1364,32 @@
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label
-                    style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Kategorie</label>
+                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                    data-i18n="test_meta_category">Kategorie</label>
                 <input type="text" id="test-edit-category"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label
-                    style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Eingabewerte</label>
+                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                    data-i18n="test_meta_inputs">Eingabewerte</label>
                 <input type="text" id="test-edit-inputs"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label
-                    style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Ausgabewerte</label>
+                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                    data-i18n="test_meta_outputs">Ausgabewerte</label>
                 <input type="text" id="test-edit-outputs"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label
-                    style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Testdateien</label>
+                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                    data-i18n="test_meta_files">Testdateien</label>
                 <input type="text" id="test-edit-files"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label
-                    style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;">Kommentar</label>
+                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                    data-i18n="test_meta_comment">Kommentar</label>
                 <textarea id="test-edit-comment"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 80px; resize: vertical;"></textarea>
             </div>
@@ -1418,9 +1397,11 @@
         <div
             style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
             <button onclick="closeTestEditModal()"
-                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;">Abbrechen</button>
+                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                data-i18n="common_cancel">Abbrechen</button>
             <button onclick="saveTestMetadata()"
-                style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Speichern</button>
+                style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
+                data-i18n="common_save">Speichern</button>
         </div>
     </div>
 
@@ -1429,28 +1410,35 @@
         style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 700px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
         <div
             style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="logbuch-editor-title" style="margin: 0; font-size: 1.2em;">Neuer Eintrag</h3>
+            <h3 id="logbuch-editor-title" style="margin: 0; font-size: 1.2em;" data-i18n="logbook_edit_new">Neuer
+                Eintrag</h3>
             <button id="logbuch-editor-close-btn" onclick="closeLogbookEditor()"
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
         </div>
         <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1;">
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.9em; font-weight: bold; color: #555;">Name (wird zu Dateiname)</label>
+                <label style="font-size: 0.9em; font-weight: bold; color: #555;"
+                    data-i18n="logbook_edit_name_label">Name (wird zu Dateiname)</label>
                 <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
+                    data-i18n="[placeholder]logbook_edit_placeholder_name">
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
-                <label style="font-size: 0.9em; font-weight: bold; color: #555;">Inhalt (Markdown)</label>
+                <label style="font-size: 0.9em; font-weight: bold; color: #555;"
+                    data-i18n="logbook_edit_content_label">Inhalt (Markdown)</label>
                 <textarea id="logbuch-editor-content" placeholder="Schreibe hier den Inhalt in Markdown..."
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; resize: vertical; flex: 1; min-height: 300px;"></textarea>
+                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; resize: vertical; flex: 1; min-height: 300px;"
+                    data-i18n="[placeholder]logbook_edit_placeholder_content"></textarea>
             </div>
         </div>
         <div
             style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
             <button id="logbuch-editor-cancel-btn" onclick="closeLogbookEditor()"
-                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;">Abbrechen</button>
+                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                data-i18n="common_cancel">Abbrechen</button>
             <button id="logbuch-editor-save-btn" onclick="saveLogbookEntry()"
-                style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;">Speichern</button>
+                style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
+                data-i18n="common_save">Speichern</button>
         </div>
     </div>
 
@@ -1887,7 +1875,7 @@
             currentPlayer.play();
 
             // Update Status Bar
-            document.getElementById('status').innerHTML = `Spielt: <strong>${item.tags.title}</strong> von ${item.tags.artist}`;
+            document.getElementById('status').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
 
             // Update Sidebar
             let tags = item.tags;
@@ -1930,7 +1918,7 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let extStr = 'File: ' + item.type.toLowerCase();
+            let extStr = t('sb_file_label') + item.type.toLowerCase();
             let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
 
             // Reorganize top row with size and art
@@ -1938,9 +1926,9 @@
 
             // New distinct row for format details
             let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
-            let tagStr = 'Tag Format: ' + tagVal;
+            let tagStr = t('sb_tag_format_label') + tagVal;
             let filetypeValue = item.category || 'Audio';
-            let fileTypeStr = `Filetype: ${filetypeValue}`;
+            let fileTypeStr = `${t('sb_filetype_label')}${filetypeValue}`;
             let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
 
             // Combine them
@@ -1965,11 +1953,11 @@
                     }
                 }
                 if (times.length > 0) {
-                    parserTimesHtml = '<br><br>Parser-Zeiten:<br>' + times.join(' &bull; ');
+                    parserTimesHtml = `<br><br>${t('sb_parser_times_title')}<br>` + times.join(' &bull; ');
                 }
             }
             // Base info: Name & Path
-            let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">⚠️ Datei wird on-the-fly für den Webplayer transkodiert und als ${item.transcoded_format || 'FLAC'} gestreamt.</span>` : '';
+            let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">${t('sb_transcoding_msg').replace('{fmt}', item.transcoded_format || 'FLAC')}</span>` : '';
 
             // Render chapters if available
             let chaptersHtml = '';
@@ -2076,15 +2064,7 @@
         }
 
         // Parser GUI Logic
-        const PARSER_LABELS = {
-            "filename": "Dateiname (Basis-Tags)",
-            "mutagen": "Mutagen (Schnell, Nativ)",
-            "pymediainfo": "MediaInfo (C-Binding)",
-            "ffmpeg": "FFmpeg (Subprozess Fallback)",
-            "container": "Container (Erweiterungs-Fallback)"
-        };
-
-        const ALL_PARSERS = Object.keys(PARSER_LABELS);
+        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
         let currentParserChain = [];
 
         function loadParserConfig() {
@@ -2127,7 +2107,7 @@
 
             // Render active parsers in order
             currentParserChain.forEach(parser => {
-                if (PARSER_LABELS[parser]) {
+                if (ALL_PARSERS.includes(parser)) {
                     list.appendChild(createParserItem(parser, true));
                 }
             });
@@ -2148,7 +2128,7 @@
             li.draggable = true;
             li.dataset.id = parserId;
 
-            const labelName = PARSER_LABELS[parserId] || parserId;
+            const labelName = t('parser_' + parserId);
 
             li.innerHTML = `
                 <div class="parser-handle">☰</div>
@@ -2478,9 +2458,9 @@
                             </div>
                         </div>
                         <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-size: 0.85em; color: #555; margin-bottom: 15px;">
-                            <strong style="color: #333;">Eingabewerte:</strong> <span>${m.inputs || '-'}</span>
-                            <strong style="color: #333;">Ausgabewerte:</strong> <span>${m.outputs || '-'}</span>
-                            <strong style="color: #333;">Testdateien:</strong> <span style="font-family: monospace; background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${m.files || '-'}</span>
+                            <strong style="color: #333;">${t('test_meta_inputs')}:</strong> <span>${m.inputs || '-'}</span>
+                            <strong style="color: #333;">${t('test_meta_outputs')}:</strong> <span>${m.outputs || '-'}</span>
+                            <strong style="color: #333;">${t('test_meta_files')}:</strong> <span style="font-family: monospace; background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${m.files || '-'}</span>
                         </div>
                         <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; font-size: 0.85em; color: #777; font-style: italic;">
                             ${m.comment || '-'}
@@ -2488,9 +2468,8 @@
                     `;
 
                     if (!suite.isGuiTest) {
-                        const actionsArea = card.querySelector('.test-card-actions');
                         const editBtn = document.createElement('button');
-                        editBtn.innerText = '✏️ Bearbeiten';
+                        editBtn.innerText = t('test_btn_edit');
                         editBtn.style.cssText = 'border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;';
                         editBtn.onmouseover = () => editBtn.style.opacity = '1';
                         editBtn.onmouseout = () => editBtn.style.opacity = '0.6';
@@ -2498,6 +2477,7 @@
                             e.stopPropagation();
                             openTestEditModal(suite);
                         };
+                        const actionsArea = card.querySelector('.test-card-actions');
                         actionsArea.prepend(editBtn);
 
                         const delBtn = document.createElement('button');
@@ -2572,7 +2552,7 @@
 
         function openTestEditModal(suite) {
             currentEditingTestFile = suite.id;
-            document.getElementById('test-edit-filename').innerText = `Datei: tests/${suite.id}`;
+            document.getElementById('test-edit-filename').innerText = `${t('test_meta_file_label')}tests/${suite.id}`;
             document.getElementById('test-edit-category').value = suite.metadata.category || '-';
             document.getElementById('test-edit-inputs').value = suite.metadata.inputs || '-';
             document.getElementById('test-edit-outputs').value = suite.metadata.outputs || '-';
@@ -2600,9 +2580,9 @@
             if (res.status === 'ok') {
                 closeTestEditModal();
                 loadTestSuites(); // Reload to show new metadata
-                alert("Test-Metadaten aktualisiert!");
+                alert(t("test_save_success"));
             } else {
-                alert("Fehler: " + res.error);
+                alert(t("common_error") + res.error);
             }
         }
 
