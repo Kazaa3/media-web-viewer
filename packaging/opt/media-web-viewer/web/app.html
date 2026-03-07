@@ -2297,6 +2297,13 @@
             const modeToggle = document.getElementById('toggle-parser-mode');
             const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
 
+            // Immediate UI Feedback for Mode
+            const statusText = document.getElementById('parser-mode-status');
+            if (statusText) {
+                statusText.innerText = newMode === "full" ? t('parser_mode_full') : t('parser_mode_light');
+                statusText.style.color = newMode === "full" ? "#e67e22" : "#2a7"; // Orange for Intensive, Green for Fast
+            }
+
             // Prepare the full config object
             const finalConfig = {
                 ...currentParserOptions,
