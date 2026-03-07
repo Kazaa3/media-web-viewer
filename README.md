@@ -8,10 +8,10 @@ A local desktop media player and library manager with an embedded web-based GUI.
 
 ### Option A: Install via .deb (Debian / Ubuntu)
 
-> Download the latest `.deb` from [Releases](../../releases) and run:
+> Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.13_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
@@ -113,13 +113,15 @@ sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
 
 The application automatically categorizes indexed items based on metadata and file patterns:
 
-- **💿 Album / Single:** Music organized by album name or track length.
+- **🎵 Audio:** General fallback for music without specific tags.
+- **💿 Album:** Music organized by album name or track length.
+- **💿 Single:** Music organized by multiple versions for the same song.
 - **🔀 Compilation:** Detection of "Various Artists" or "compilation" tags.
 - **🎻 Klassik (Classical):** Enhanced detection for composers like **Beethoven, Mozart, Bach, Chopin** and "Klassik" keywords.
 - **📚 Hörbuch (Audiobook):** Specialized support for `.m4b` and long audio files including chapter navigation.
 - **🎬 Film / Serie:** Detection for movie files and TV show patterns (Season/Staffel).
 - **📄 E-Book / Dokument:** Support for EPUB, PDF and other document types.
-- **🎵 Audio:** General fallback for music without specific tags.
+
 
 ---
 

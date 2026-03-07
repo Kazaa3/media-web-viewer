@@ -15,7 +15,7 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.12"
+VERSION = "1.1.13"
 
 @eel.expose("get_version")
 def get_version():
@@ -40,6 +40,7 @@ ARCHIVE_EXTENSIONS = {
 
 # Debug-Optionen
 DEBUG_FLAGS = {
+    "system": False,
     "scan": False,
     "parser": False,
     "player": False,
@@ -70,6 +71,19 @@ def set_debug_flag(key, value):
     if key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = value
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
+
+@eel.expose("get_language")
+def get_language():
+    """Gibt die aktuell gewählte Sprache zurück."""
+    return PARSER_CONFIG.get("language", "de")
+
+@eel.expose("set_language")
+def set_language(lang):
+    """Setzt die Sprache der Anwendung."""
+    PARSER_CONFIG["language"] = lang
+    save_parser_config()
+    debug_log(f"[System] Sprache auf '{lang}' gesetzt.")
+    return True
 
 # Benutzerdefinierte Module
 import db
