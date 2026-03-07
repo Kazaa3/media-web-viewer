@@ -1304,516 +1304,503 @@
             <div style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;"
                 onclick="openLogbook('README')" onmouseover="this.style.background='#f5f5f5'"
                 onmouseout="this.style.background='transparent'">
-                <div
-                    style="background: #ede7f6; color: #5e35b1; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
-                    DOCS</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">README / Haupt-Doku</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Projekt-Manual und Guide.</div>
+                <div </div>
                 </div>
             </div>
 
-            <div
-                style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-size: 0.8em; color: #888;" data-i18n="features_sync_info">Synchronisiert mit `task.md`
-                    und `walkthrough.md`</div>
-                <button
-                    onclick="toggleFeatureStatus(); switchTab('logbuch', document.querySelector('.tab-btn[onclick*=\'logbuch\']'));"
-                    style="padding: 8px 16px; background: #e1f5fe; color: #0277bd; border: 1px solid #81d4fa; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: background 0.2s;"
-                    data-i18n="features_logbook_btn">
-                    Zum vollständigen Logbuch
-                </button>
+            <!-- Logbook Detail Modal -->
+            <div id="logbook-modal"
+                style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
+                <div
+                    style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Logbuch:
+                        Feature
+                        Name
+                    </h3>
+                    <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
+                        style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
+                </div>
+                <div id="logbook-content"
+                    style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;">
+                    Lade Details...
+                </div>
+                <div
+                    style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
+                    <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
+                        style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                        data-i18n="common_close">Schließen</button>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Logbook Detail Modal -->
-    <div id="logbook-modal"
-        style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
-        <div
-            style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Logbuch: Feature
-                Name
-            </h3>
-            <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
-                style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
-        </div>
-        <div id="logbook-content"
-            style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;">
-            Lade Details...
-        </div>
-        <div
-            style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
-            <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
-                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;"
-                data-i18n="common_close">Schließen</button>
-        </div>
-    </div>
+            <!-- Test Edit Modal -->
+            <div id="test-edit-modal"
+                style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 500px; max-height: 80vh; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; flex-direction: column;">
+                <div
+                    style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.2em;" data-i18n="test_meta_title">Test-Metadaten</h3>
+                    <button onclick="closeTestEditModal()"
+                        style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
+                </div>
+                <div
+                    style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1;">
+                    <p id="test-edit-filename"
+                        style="margin: 0; font-family: monospace; font-size: 0.85em; color: #666;">
+                    </p>
 
-    <!-- Test Edit Modal -->
-    <div id="test-edit-modal"
-        style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 500px; max-height: 80vh; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; flex-direction: column;">
-        <div
-            style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.2em;" data-i18n="test_meta_title">Test-Metadaten</h3>
-            <button onclick="closeTestEditModal()"
-                style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
-        </div>
-        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1;">
-            <p id="test-edit-filename" style="margin: 0; font-family: monospace; font-size: 0.85em; color: #666;">
-            </p>
-
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
-                    data-i18n="test_meta_category">Kategorie</label>
-                <input type="text" id="test-edit-category"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                            data-i18n="test_meta_category">Kategorie</label>
+                        <input type="text" id="test-edit-category"
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                            data-i18n="test_meta_inputs">Eingabewerte</label>
+                        <input type="text" id="test-edit-inputs"
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                            data-i18n="test_meta_outputs">Ausgabewerte</label>
+                        <input type="text" id="test-edit-outputs"
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                            data-i18n="test_meta_files">Testdateien</label>
+                        <input type="text" id="test-edit-files"
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
+                            data-i18n="test_meta_comment">Kommentar</label>
+                        <textarea id="test-edit-comment"
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 80px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                <div
+                    style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button onclick="closeTestEditModal()"
+                        style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                        data-i18n="common_cancel">Abbrechen</button>
+                    <button onclick="saveTestMetadata()"
+                        style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
+                        data-i18n="common_save">Speichern</button>
+                </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
-                    data-i18n="test_meta_inputs">Eingabewerte</label>
-                <input type="text" id="test-edit-inputs"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+
+            <!-- Logbuch Editor Modal -->
+            <div id="logbuch-editor-modal"
+                style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 700px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
+                <div
+                    style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="logbuch-editor-title" style="margin: 0; font-size: 1.2em;" data-i18n="logbook_edit_new">
+                        Neuer
+                        Eintrag</h3>
+                    <button id="logbuch-editor-close-btn" onclick="closeLogbookEditor()"
+                        style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
+                </div>
+                <div
+                    style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.9em; font-weight: bold; color: #555;"
+                            data-i18n="logbook_edit_name_label">Name (wird zu Dateiname)</label>
+                        <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
+                            data-i18n="[placeholder]logbook_edit_placeholder_name">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+                        <label style="font-size: 0.9em; font-weight: bold; color: #555;"
+                            data-i18n="logbook_edit_content_label">Inhalt (Markdown)</label>
+                        <textarea id="logbuch-editor-content" placeholder="Schreibe hier den Inhalt in Markdown..."
+                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; resize: vertical; flex: 1; min-height: 300px;"
+                            data-i18n="[placeholder]logbook_edit_placeholder_content"></textarea>
+                    </div>
+                </div>
+                <div
+                    style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="logbuch-editor-cancel-btn" onclick="closeLogbookEditor()"
+                        style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;"
+                        data-i18n="common_cancel">Abbrechen</button>
+                    <button id="logbuch-editor-save-btn" onclick="saveLogbookEntry()"
+                        style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
+                        data-i18n="common_save">Speichern</button>
+                </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
-                    data-i18n="test_meta_outputs">Ausgabewerte</label>
-                <input type="text" id="test-edit-outputs"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
-                    data-i18n="test_meta_files">Testdateien</label>
-                <input type="text" id="test-edit-files"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.8em; font-weight: bold; color: #555; text-transform: uppercase;"
-                    data-i18n="test_meta_comment">Kommentar</label>
-                <textarea id="test-edit-comment"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; height: 80px; resize: vertical;"></textarea>
-            </div>
-        </div>
-        <div
-            style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
-            <button onclick="closeTestEditModal()"
-                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;"
-                data-i18n="common_cancel">Abbrechen</button>
-            <button onclick="saveTestMetadata()"
-                style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
-                data-i18n="common_save">Speichern</button>
-        </div>
-    </div>
 
-    <!-- Logbuch Editor Modal -->
-    <div id="logbuch-editor-modal"
-        style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 700px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
-        <div
-            style="background: #333; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="logbuch-editor-title" style="margin: 0; font-size: 1.2em;" data-i18n="logbook_edit_new">Neuer
-                Eintrag</h3>
-            <button id="logbuch-editor-close-btn" onclick="closeLogbookEditor()"
-                style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7;">✕</button>
-        </div>
-        <div style="padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; flex: 1;">
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.9em; font-weight: bold; color: #555;"
-                    data-i18n="logbook_edit_name_label">Name (wird zu Dateiname)</label>
-                <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
-                    data-i18n="[placeholder]logbook_edit_placeholder_name">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
-                <label style="font-size: 0.9em; font-weight: bold; color: #555;"
-                    data-i18n="logbook_edit_content_label">Inhalt (Markdown)</label>
-                <textarea id="logbuch-editor-content" placeholder="Schreibe hier den Inhalt in Markdown..."
-                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; resize: vertical; flex: 1; min-height: 300px;"
-                    data-i18n="[placeholder]logbook_edit_placeholder_content"></textarea>
-            </div>
-        </div>
-        <div
-            style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px;">
-            <button id="logbuch-editor-cancel-btn" onclick="closeLogbookEditor()"
-                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer;"
-                data-i18n="common_cancel">Abbrechen</button>
-            <button id="logbuch-editor-save-btn" onclick="saveLogbookEntry()"
-                style="padding: 8px 16px; border-radius: 6px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
-                data-i18n="common_save">Speichern</button>
-        </div>
-    </div>
+            <script>
+                currentPlayer = document.getElementById('player');
+                currentLogbuchEntries = [];
 
-    <script>
-        currentPlayer = document.getElementById('player');
-        currentLogbuchEntries = [];
+                let translations = {};
+                let currentLanguage = 'de';
 
-        let translations = {};
-        let currentLanguage = 'de';
+                async function initTranslations() {
+                    try {
+                        const response = await fetch('i18n.json');
+                        translations = await response.json();
+                        currentLanguage = await eel.get_language()();
 
-        async function initTranslations() {
-            try {
-                const response = await fetch('i18n.json');
-                translations = await response.json();
-                currentLanguage = await eel.get_language()();
+                        // Update select element
+                        const select = document.getElementById('language-select');
+                        if (select) select.value = currentLanguage;
 
-                // Update select element
-                const select = document.getElementById('language-select');
-                if (select) select.value = currentLanguage;
-
-                applyTranslations(currentLanguage);
-            } catch (e) {
-                console.error('Failed to load translations:', e);
-            }
-        }
-
-        function applyTranslations(lang) {
-            currentLanguage = lang;
-            const elements = document.querySelectorAll('[data-i18n]');
-            elements.forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                        el.placeholder = translations[lang][key];
-                    } else {
-                        el.innerHTML = translations[lang][key];
+                        applyTranslations(currentLanguage);
+                    } catch (e) {
+                        console.error('Failed to load translations:', e);
                     }
                 }
-            });
-            document.documentElement.lang = lang;
-        }
 
-        async function changeLanguage(lang) {
-            await eel.set_language(lang)();
-            applyTranslations(lang);
-        }
-
-        function t(key) {
-            if (translations[currentLanguage] && translations[currentLanguage][key]) {
-                // Support \n in JSON strings
-                return translations[currentLanguage][key].replace(/\\n/g, '\n');
-            }
-            return key;
-        }
-
-        // Initialize on load
-        window.addEventListener('load', initTranslations);
-
-        // ============ File Browser ============
-        let fbCurrentPath = null;
-        let fbParentPath = null;
-
-        async function fbPickFolder() {
-            const folder = await eel.pick_folder()();
-            if (folder) {
-                // Switch to browser tab automatically after folder selection
-                switchTab('browser', document.querySelector('.tab-btn[onclick*="browser"]'));
-                fbNavigate(folder);
-            }
-        }
-
-        async function fbNavigate(dirPath) {
-            let result = await eel.browse_dir(dirPath || null)();
-            if (result.error) {
-                document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
-                return;
-            }
-            fbCurrentPath = result.path;
-            fbParentPath = result.parent;
-            document.getElementById('fb-path-input').value = result.path;
-            document.getElementById('fb-back').disabled = !result.parent;
-
-            let list = document.getElementById('fb-list');
-            list.innerHTML = '';
-
-            if (result.items.length === 0) {
-                list.innerHTML = `<p style="color: #999;">${t('fb_no_items')}</p>`;
-                return;
-            }
-
-            result.items.forEach(item => {
-                let row = document.createElement('div');
-                row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
-                row.onmouseover = () => row.style.background = '#f5f5f5';
-                row.onmouseout = () => row.style.background = '';
-
-                if (item.type === 'folder') {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
-                    row.onclick = () => fbNavigate(item.path);
-                } else {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
-                    row.onclick = async () => {
-                        let statusEl = row.querySelector('.fb-status');
-                        statusEl.textContent = '⏳ …';
-                        let res = await eel.add_file_to_library(item.path)();
-                        if (res.status === 'added' || res.status === 'exists') {
-                            statusEl.textContent = res.status === 'added' ? t('fb_added') : t('fb_exists');
-                            statusEl.style.color = res.status === 'added' ? '#2a7' : '#c90';
-
-                            let finalItem = res.item;
-                            if (!finalItem) {
-                                const lib = await eel.get_library()();
-                                finalItem = lib.media.find(m => m.name === (res.name || item.name));
+                function applyTranslations(lang) {
+                    currentLanguage = lang;
+                    const elements = document.querySelectorAll('[data-i18n]');
+                    elements.forEach(el => {
+                        const key = el.getAttribute('data-i18n');
+                        if (translations[lang] && translations[lang][key]) {
+                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                                el.placeholder = translations[lang][key];
+                            } else {
+                                el.innerHTML = translations[lang][key];
                             }
-
-                            if (finalItem) {
-                                jumpToEdit(finalItem);
-                            }
-                        } else {
-                            statusEl.textContent = t('fb_error') + ' ' + (res.error || '');
-                            statusEl.style.color = '#c33';
                         }
-                    };
+                    });
+                    document.documentElement.lang = lang;
                 }
-                list.appendChild(row);
-            });
-        }
 
-        function fbBack() {
-            if (fbParentPath) fbNavigate(fbParentPath);
-        }
+                async function changeLanguage(lang) {
+                    await eel.set_language(lang)();
+                    applyTranslations(lang);
+                }
 
-        // ============ Debug Log Logic ============
-        async function loadDebugLogs() {
-            const logs = await eel.get_debug_logs()();
-            const debugTextarea = document.getElementById('browse-results-debug');
-            if (debugTextarea && logs) {
-                // Nur überschreiben, wenn wir nicht schon live-Logs sammeln,
-                // oder anhängen, wenn es Sinn macht. Wir überschreiben es beim Tab-Wechsel komplett.
-                debugTextarea.value = logs;
-                debugTextarea.scrollTop = debugTextarea.scrollHeight;
-            }
-        }
-
-        // ============ Edit Tab Logic ============
-        let allLibraryItems = [];
-
-        async function loadEditItems() {
-            const result = await eel.get_library()();
-            allLibraryItems = result.media || [];
-            renderEditList(allLibraryItems);
-        }
-
-        function renderEditList(items) {
-            const list = document.getElementById('edit-items-list');
-            list.innerHTML = '';
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.style.cssText = 'padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 10px; transition: background 0.1s; position: relative; z-index: 10; pointer-events: auto;';
-                div.onmouseover = () => div.style.background = '#f0f0f0';
-                div.onmouseout = () => div.style.background = '#fff';
-                div.onclick = () => {
-                    console.log("[Editor] Item clicked:", item.name);
-                    openEditForm(item);
-                };
-
-                const thumb = document.createElement('img');
-                thumb.src = `/cover/${encodeURIComponent(item.name)}`;
-                thumb.style.cssText = 'width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #eee;';
-                thumb.onerror = () => thumb.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-
-                const info = document.createElement('div');
-                info.style.overflow = 'hidden';
-                info.innerHTML = `<div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.tags.title || item.name}</div><div style="font-size: 0.8em; color: #666;">${item.tags.artist || '-'}</div>`;
-
-                div.appendChild(thumb);
-                div.appendChild(info);
-                list.appendChild(div);
-            });
-        }
-
-        function filterEditList() {
-            const query = document.getElementById('edit-search').value.toLowerCase();
-            const filtered = allLibraryItems.filter(item =>
-                item.name.toLowerCase().includes(query) ||
-                (item.tags.title && item.tags.title.toLowerCase().includes(query)) ||
-                (item.tags.artist && item.tags.artist.toLowerCase().includes(query)) ||
-                (item.tags.album && item.tags.album.toLowerCase().includes(query))
-            );
-            renderEditList(filtered);
-        }
-
-        function openEditForm(item) {
-            console.log("[Editor] Opening form for:", item.name);
-            const placeholder = document.getElementById('edit-placeholder');
-            const form = document.getElementById('edit-form-container');
-
-            if (placeholder) placeholder.style.setProperty('display', 'none', 'important');
-            if (form) form.style.setProperty('display', 'block', 'important');
-
-            if (!item) {
-                console.error("[Editor] No item provided!");
-                return;
-            }
-
-            document.getElementById('edit-item-name').value = item.name;
-            document.getElementById('edit-filename-display').innerText = item.name;
-            document.getElementById('edit-cover').src = `/cover/${encodeURIComponent(item.name)}`;
-
-            const container = document.getElementById('edit-dynamic-tags');
-            container.innerHTML = '';
-
-            // Alphabetisch sortieren für Ordnung
-            const keys = Object.keys(item.tags).sort();
-
-            keys.forEach(key => {
-                if (key === 'chapters' || key === '_parser_times') return;
-
-                const row = document.createElement('div');
-                row.style.display = 'flex';
-                row.style.alignItems = 'center';
-                row.style.padding = '8px 0';
-                row.style.borderBottom = '1px solid #f9f9f9';
-
-                const label = document.createElement('label');
-                label.style.width = '140px';
-                label.style.fontSize = '0.85em';
-                label.style.color = '#666';
-                label.style.textTransform = 'capitalize';
-                label.innerText = key.replace('_', ' ');
-
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'edit-dynamic-input';
-                input.dataset.key = key;
-                input.value = item.tags[key] || '';
-                input.style.flex = '1';
-                input.style.padding = '8px 12px';
-                input.style.border = '1px solid #eee';
-                input.style.borderRadius = '4px';
-                input.style.fontSize = '0.95em';
-                input.onfocus = () => input.style.borderColor = '#2a7';
-                input.onblur = () => input.style.borderColor = '#eee';
-
-                row.appendChild(label);
-                row.appendChild(input);
-                container.appendChild(row);
-            });
-
-            if (item.tags.chapters && Array.isArray(item.tags.chapters) && item.tags.chapters.length > 0) {
-                const chapHeader = document.createElement('h4');
-                chapHeader.innerText = 'Kapitel bearbeiten';
-                chapHeader.style.marginTop = '20px';
-                chapHeader.style.marginBottom = '10px';
-                chapHeader.style.color = '#555';
-                container.appendChild(chapHeader);
-
-                item.tags.chapters.forEach((chap, idx) => {
-                    const row = document.createElement('div');
-                    row.style.display = 'flex';
-                    row.style.alignItems = 'center';
-                    row.style.padding = '4px 0';
-
-                    const label = document.createElement('label');
-                    label.style.width = '140px';
-                    label.style.fontSize = '0.85em';
-                    label.style.color = '#888';
-                    label.innerText = `Kapitel ${idx + 1}`;
-
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'edit-chapter-input';
-                    input.dataset.index = idx;
-                    input.value = chap.title || `Kapitel ${idx + 1}`;
-                    input.style.flex = '1';
-                    input.style.padding = '6px 12px';
-                    input.style.border = '1px solid #eee';
-                    input.style.borderRadius = '4px';
-                    input.style.fontSize = '0.9em';
-                    input.style.background = '#fafafa';
-
-                    row.appendChild(label);
-                    row.appendChild(input);
-                    container.appendChild(row);
-                });
-            }
-        }
-
-        function resetEditForm() {
-            document.getElementById('edit-placeholder').style.display = 'flex';
-            document.getElementById('edit-form-container').style.display = 'none';
-        }
-
-        async function saveTags() {
-            const name = document.getElementById('edit-item-name').value;
-            const item = allLibraryItems.find(i => i.name === name);
-            if (!item) return;
-
-            const newTags = {};
-            document.querySelectorAll('.edit-dynamic-input').forEach(input => {
-                newTags[input.dataset.key] = input.value;
-            });
-
-            // Erhalte komplexe Objekte
-            if (item.tags._parser_times) {
-                newTags._parser_times = item.tags._parser_times;
-            }
-            if (item.tags.chapters && Array.isArray(item.tags.chapters)) {
-                newTags.chapters = JSON.parse(JSON.stringify(item.tags.chapters));
-                document.querySelectorAll('.edit-chapter-input').forEach(input => {
-                    const idx = parseInt(input.dataset.index);
-                    if (newTags.chapters[idx]) {
-                        newTags.chapters[idx].title = input.value;
+                function t(key) {
+                    if (translations[currentLanguage] && translations[currentLanguage][key]) {
+                        // Support \n in JSON strings
+                        return translations[currentLanguage][key].replace(/\\n/g, '\n');
                     }
-                });
-            }
-
-            const result = await eel.update_tags(name, newTags)();
-            if (result.status === 'ok') {
-                // Update local data
-                item.tags = newTags;
-                // Optional: show a small toast or update list
-                loadEditItems(); // Refresh full list to show changes
-                alert("Metadaten gespeichert!");
-            }
-        }
-
-        async function renameMedia() {
-            const oldName = document.getElementById('edit-item-name').value;
-            const newName = prompt("Neuen Namen für dieses Element eingeben:", oldName);
-            if (newName && newName !== oldName) {
-                const res = await eel.rename_media(oldName, newName)();
-                if (res.status === 'ok') {
-                    document.getElementById('edit-item-name').value = newName;
-                    document.getElementById('edit-filename-display').innerText = newName;
-                    // Refresh library and list
-                    loadEditItems();
-                    alert("Name wurde erfolgreich aktualisiert!");
-                } else {
-                    alert("Fehler: " + res.message);
+                    return key;
                 }
-            }
-        }
 
-        async function deleteMediaFromEdit() {
-            const name = document.getElementById('edit-item-name').value;
-            if (confirm(`Möchtest du "${name}" wirklich aus der Bibliothek entfernen?\n(Die Datei auf der Festplatte bleibt erhalten.)`)) {
-                const res = await eel.delete_media(name)();
-                if (res.status === 'ok') {
-                    resetEditForm();
-                    loadEditItems();
-                    alert("Element wurde aus der Bibliothek entfernt.");
+                // Initialize on load
+                window.addEventListener('load', initTranslations);
+
+                // ============ File Browser ============
+                let fbCurrentPath = null;
+                let fbParentPath = null;
+
+                async function fbPickFolder() {
+                    const folder = await eel.pick_folder()();
+                    if (folder) {
+                        // Switch to browser tab automatically after folder selection
+                        switchTab('browser', document.querySelector('.tab-btn[onclick*="browser"]'));
+                        fbNavigate(folder);
+                    }
                 }
-            }
-        }
 
-        async function refreshLibrary() {
-            let result = await eel.get_library()();
-            let list = document.getElementById('library-list');
-            list.innerHTML = '';
-            if (!result.media || result.media.length === 0) {
-                list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
-                return;
-            }
-            result.media.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'media-item';
-                let tags = item.tags;
-                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                let trackStr = tags.track ? 'Track ' + tags.track : '';
-                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
-                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
-                let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+                async function fbNavigate(dirPath) {
+                    let result = await eel.browse_dir(dirPath || null)();
+                    if (result.error) {
+                        document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
+                        return;
+                    }
+                    fbCurrentPath = result.path;
+                    fbParentPath = result.parent;
+                    document.getElementById('fb-path-input').value = result.path;
+                    document.getElementById('fb-back').disabled = !result.parent;
 
-                div.innerHTML = `
+                    let list = document.getElementById('fb-list');
+                    list.innerHTML = '';
+
+                    if (result.items.length === 0) {
+                        list.innerHTML = `<p style="color: #999;">${t('fb_no_items')}</p>`;
+                        return;
+                    }
+
+                    result.items.forEach(item => {
+                        let row = document.createElement('div');
+                        row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
+                        row.onmouseover = () => row.style.background = '#f5f5f5';
+                        row.onmouseout = () => row.style.background = '';
+
+                        if (item.type === 'folder') {
+                            row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
+                            row.onclick = () => fbNavigate(item.path);
+                        } else {
+                            row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
+                            row.onclick = async () => {
+                                let statusEl = row.querySelector('.fb-status');
+                                statusEl.textContent = '⏳ …';
+                                let res = await eel.add_file_to_library(item.path)();
+                                if (res.status === 'added' || res.status === 'exists') {
+                                    statusEl.textContent = res.status === 'added' ? t('fb_added') : t('fb_exists');
+                                    statusEl.style.color = res.status === 'added' ? '#2a7' : '#c90';
+
+                                    let finalItem = res.item;
+                                    if (!finalItem) {
+                                        const lib = await eel.get_library()();
+                                        finalItem = lib.media.find(m => m.name === (res.name || item.name));
+                                    }
+
+                                    if (finalItem) {
+                                        jumpToEdit(finalItem);
+                                    }
+                                } else {
+                                    statusEl.textContent = t('fb_error') + ' ' + (res.error || '');
+                                    statusEl.style.color = '#c33';
+                                }
+                            };
+                        }
+                        list.appendChild(row);
+                    });
+                }
+
+                function fbBack() {
+                    if (fbParentPath) fbNavigate(fbParentPath);
+                }
+
+                // ============ Debug Log Logic ============
+                async function loadDebugLogs() {
+                    const logs = await eel.get_debug_logs()();
+                    const debugTextarea = document.getElementById('browse-results-debug');
+                    if (debugTextarea && logs) {
+                        // Nur überschreiben, wenn wir nicht schon live-Logs sammeln,
+                        // oder anhängen, wenn es Sinn macht. Wir überschreiben es beim Tab-Wechsel komplett.
+                        debugTextarea.value = logs;
+                        debugTextarea.scrollTop = debugTextarea.scrollHeight;
+                    }
+                }
+
+                // ============ Edit Tab Logic ============
+                let allLibraryItems = [];
+
+                async function loadEditItems() {
+                    const result = await eel.get_library()();
+                    allLibraryItems = result.media || [];
+                    renderEditList(allLibraryItems);
+                }
+
+                function renderEditList(items) {
+                    const list = document.getElementById('edit-items-list');
+                    list.innerHTML = '';
+                    items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.style.cssText = 'padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 4px; cursor: pointer; background: #fff; display: flex; align-items: center; gap: 10px; transition: background 0.1s; position: relative; z-index: 10; pointer-events: auto;';
+                        div.onmouseover = () => div.style.background = '#f0f0f0';
+                        div.onmouseout = () => div.style.background = '#fff';
+                        div.onclick = () => {
+                            console.log("[Editor] Item clicked:", item.name);
+                            openEditForm(item);
+                        };
+
+                        const thumb = document.createElement('img');
+                        thumb.src = `/cover/${encodeURIComponent(item.name)}`;
+                        thumb.style.cssText = 'width: 40px; height: 40px; border-radius: 4px; object-fit: cover; background: #eee;';
+                        thumb.onerror = () => thumb.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+
+                        const info = document.createElement('div');
+                        info.style.overflow = 'hidden';
+                        info.innerHTML = `<div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.tags.title || item.name}</div><div style="font-size: 0.8em; color: #666;">${item.tags.artist || '-'}</div>`;
+
+                        div.appendChild(thumb);
+                        div.appendChild(info);
+                        list.appendChild(div);
+                    });
+                }
+
+                function filterEditList() {
+                    const query = document.getElementById('edit-search').value.toLowerCase();
+                    const filtered = allLibraryItems.filter(item =>
+                        item.name.toLowerCase().includes(query) ||
+                        (item.tags.title && item.tags.title.toLowerCase().includes(query)) ||
+                        (item.tags.artist && item.tags.artist.toLowerCase().includes(query)) ||
+                        (item.tags.album && item.tags.album.toLowerCase().includes(query))
+                    );
+                    renderEditList(filtered);
+                }
+
+                function openEditForm(item) {
+                    console.log("[Editor] Opening form for:", item.name);
+                    const placeholder = document.getElementById('edit-placeholder');
+                    const form = document.getElementById('edit-form-container');
+
+                    if (placeholder) placeholder.style.setProperty('display', 'none', 'important');
+                    if (form) form.style.setProperty('display', 'block', 'important');
+
+                    if (!item) {
+                        console.error("[Editor] No item provided!");
+                        return;
+                    }
+
+                    document.getElementById('edit-item-name').value = item.name;
+                    document.getElementById('edit-filename-display').innerText = item.name;
+                    document.getElementById('edit-cover').src = `/cover/${encodeURIComponent(item.name)}`;
+
+                    const container = document.getElementById('edit-dynamic-tags');
+                    container.innerHTML = '';
+
+                    // Alphabetisch sortieren für Ordnung
+                    const keys = Object.keys(item.tags).sort();
+
+                    keys.forEach(key => {
+                        if (key === 'chapters' || key === '_parser_times') return;
+
+                        const row = document.createElement('div');
+                        row.style.display = 'flex';
+                        row.style.alignItems = 'center';
+                        row.style.padding = '8px 0';
+                        row.style.borderBottom = '1px solid #f9f9f9';
+
+                        const label = document.createElement('label');
+                        label.style.width = '140px';
+                        label.style.fontSize = '0.85em';
+                        label.style.color = '#666';
+                        label.style.textTransform = 'capitalize';
+                        label.innerText = key.replace('_', ' ');
+
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'edit-dynamic-input';
+                        input.dataset.key = key;
+                        input.value = item.tags[key] || '';
+                        input.style.flex = '1';
+                        input.style.padding = '8px 12px';
+                        input.style.border = '1px solid #eee';
+                        input.style.borderRadius = '4px';
+                        input.style.fontSize = '0.95em';
+                        input.onfocus = () => input.style.borderColor = '#2a7';
+                        input.onblur = () => input.style.borderColor = '#eee';
+
+                        row.appendChild(label);
+                        row.appendChild(input);
+                        container.appendChild(row);
+                    });
+
+                    if (item.tags.chapters && Array.isArray(item.tags.chapters) && item.tags.chapters.length > 0) {
+                        const chapHeader = document.createElement('h4');
+                        chapHeader.innerText = 'Kapitel bearbeiten';
+                        chapHeader.style.marginTop = '20px';
+                        chapHeader.style.marginBottom = '10px';
+                        chapHeader.style.color = '#555';
+                        container.appendChild(chapHeader);
+
+                        item.tags.chapters.forEach((chap, idx) => {
+                            const row = document.createElement('div');
+                            row.style.display = 'flex';
+                            row.style.alignItems = 'center';
+                            row.style.padding = '4px 0';
+
+                            const label = document.createElement('label');
+                            label.style.width = '140px';
+                            label.style.fontSize = '0.85em';
+                            label.style.color = '#888';
+                            label.innerText = `Kapitel ${idx + 1}`;
+
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.className = 'edit-chapter-input';
+                            input.dataset.index = idx;
+                            input.value = chap.title || `Kapitel ${idx + 1}`;
+                            input.style.flex = '1';
+                            input.style.padding = '6px 12px';
+                            input.style.border = '1px solid #eee';
+                            input.style.borderRadius = '4px';
+                            input.style.fontSize = '0.9em';
+                            input.style.background = '#fafafa';
+
+                            row.appendChild(label);
+                            row.appendChild(input);
+                            container.appendChild(row);
+                        });
+                    }
+                }
+
+                function resetEditForm() {
+                    document.getElementById('edit-placeholder').style.display = 'flex';
+                    document.getElementById('edit-form-container').style.display = 'none';
+                }
+
+                async function saveTags() {
+                    const name = document.getElementById('edit-item-name').value;
+                    const item = allLibraryItems.find(i => i.name === name);
+                    if (!item) return;
+
+                    const newTags = {};
+                    document.querySelectorAll('.edit-dynamic-input').forEach(input => {
+                        newTags[input.dataset.key] = input.value;
+                    });
+
+                    // Erhalte komplexe Objekte
+                    if (item.tags._parser_times) {
+                        newTags._parser_times = item.tags._parser_times;
+                    }
+                    if (item.tags.chapters && Array.isArray(item.tags.chapters)) {
+                        newTags.chapters = JSON.parse(JSON.stringify(item.tags.chapters));
+                        document.querySelectorAll('.edit-chapter-input').forEach(input => {
+                            const idx = parseInt(input.dataset.index);
+                            if (newTags.chapters[idx]) {
+                                newTags.chapters[idx].title = input.value;
+                            }
+                        });
+                    }
+
+                    const result = await eel.update_tags(name, newTags)();
+                    if (result.status === 'ok') {
+                        // Update local data
+                        item.tags = newTags;
+                        // Optional: show a small toast or update list
+                        loadEditItems(); // Refresh full list to show changes
+                        alert(t('edit_save_success'));
+                    }
+                }
+
+                async function renameMedia() {
+                    const oldName = document.getElementById('edit-item-name').value;
+                    const newName = prompt(t('edit_rename_prompt'), oldName);
+                    if (newName && newName !== oldName) {
+                        const res = await eel.rename_media(oldName, newName)();
+                        if (res.status === 'ok') {
+                            document.getElementById('edit-item-name').value = newName;
+                            document.getElementById('edit-filename-display').innerText = newName;
+                            // Refresh library and list
+                            loadEditItems();
+                            alert(t('edit_rename_success'));
+                        } else {
+                            alert(t('edit_rename_error') + res.message);
+                        }
+                    }
+                }
+
+                async function deleteMediaFromEdit() {
+                    const name = document.getElementById('edit-item-name').value;
+                    const msg = t('edit_delete_confirm').replace('{name}', name);
+                    if (confirm(msg)) {
+                        const res = await eel.delete_media(name)();
+                        if (res.status === 'ok') {
+                            resetEditForm();
+                            loadEditItems();
+                            alert(t('edit_delete_success'));
+                        }
+                    }
+                }
+
+                async function refreshLibrary() {
+                    let result = await eel.get_library()();
+                    let list = document.getElementById('library-list');
+                    list.innerHTML = '';
+                    if (!result.media || result.media.length === 0) {
+                        list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
+                        return;
+                    }
+                    result.media.forEach(item => {
+                        let div = document.createElement('div');
+                        div.className = 'media-item';
+                        let tags = item.tags;
+                        let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                        let trackStr = tags.track ? 'Track ' + tags.track : '';
+                        if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+                        let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+                        let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+
+                        div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                     <div class="media-info">
                         <strong>${tags.title}</strong>
@@ -1824,34 +1811,34 @@
                     <span style="font-size: 0.85em; color: #999; white-space: nowrap; margin-left: auto;">${item.duration}</span>
                 `;
 
-                let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.is_transcoded && item.transcoded_format) {
-                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                        let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                        if (item.is_transcoded && item.transcoded_format) {
+                            mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                        }
+
+                        div.onclick = () => jumpToEdit(item);
+                        list.appendChild(div);
+                    });
                 }
 
-                div.onclick = () => jumpToEdit(item);
-                list.appendChild(div);
-            });
-        }
+                async function scan(targetDir = null, clearDb = true) {
+                    let result = await eel.scan_media(targetDir, clearDb)();
+                    let list = document.getElementById('media-list');
+                    list.innerHTML = '';
 
-        async function scan(targetDir = null, clearDb = true) {
-            let result = await eel.scan_media(targetDir, clearDb)();
-            let list = document.getElementById('media-list');
-            list.innerHTML = '';
+                    // Populate Debug Tab with perf timing
+                    document.getElementById('debug-output').textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media, null, 2);
+                    result.media.forEach(item => {
+                        let div = document.createElement('div');
+                        div.className = 'media-item';
+                        let tags = item.tags;
+                        let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                        let trackStr = tags.track ? 'Track ' + tags.track : '';
+                        if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
-            // Populate Debug Tab with perf timing
-            document.getElementById('debug-output').textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media, null, 2);
-            result.media.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'media-item';
-                let tags = item.tags;
-                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                let trackStr = tags.track ? 'Track ' + tags.track : '';
-                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+                        let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
 
-                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
-
-                div.innerHTML = `
+                        div.innerHTML = `
                     <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                     <div class="media-info">
                         <strong>${tags.title}</strong> 
@@ -1860,181 +1847,181 @@
                     </div>
                 `;
 
-                let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.is_transcoded && item.transcoded_format) {
-                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                        let mediaUrl = '/media/' + encodeURIComponent(item.name);
+                        if (item.is_transcoded && item.transcoded_format) {
+                            mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                        }
+
+                        div.onclick = () => play(item, mediaUrl);
+                        list.appendChild(div);
+                    });
                 }
 
-                div.onclick = () => play(item, mediaUrl);
-                list.appendChild(div);
-            });
-        }
+                function play(item, path) {
+                    currentPlayer.src = path;
+                    currentPlayer.play();
 
-        function play(item, path) {
-            currentPlayer.src = path;
-            currentPlayer.play();
+                    // Update Status Bar
+                    document.getElementById('status').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
 
-            // Update Status Bar
-            document.getElementById('status').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
+                    // Update Sidebar
+                    let tags = item.tags;
+                    console.log("Playing item tags:", tags);
 
-            // Update Sidebar
-            let tags = item.tags;
-            console.log("Playing item tags:", tags);
+                    let sbCover = document.getElementById('sb-cover');
+                    sbCover.src = "/cover/" + encodeURIComponent(item.name);
+                    // Update footer cover too
+                    let footerCover = document.getElementById('footer-cover');
+                    footerCover.src = "/cover/" + encodeURIComponent(item.name);
+                    footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
+                    sbCover.style.opacity = "1";
+                    sbCover.onerror = function () {
+                        this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                        this.style.backgroundColor = '#ddd';
+                    };
 
-            let sbCover = document.getElementById('sb-cover');
-            sbCover.src = "/cover/" + encodeURIComponent(item.name);
-            // Update footer cover too
-            let footerCover = document.getElementById('footer-cover');
-            footerCover.src = "/cover/" + encodeURIComponent(item.name);
-            footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
-            sbCover.style.opacity = "1";
-            sbCover.onerror = function () {
-                this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-                this.style.backgroundColor = '#ddd';
-            };
+                    document.getElementById('sb-title').innerText = tags.title;
+                    document.getElementById('sb-artist').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
+                    document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
 
-            document.getElementById('sb-title').innerText = tags.title;
-            document.getElementById('sb-artist').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
-            document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
+                    // Limit year to 4 digits if it's a full date string
+                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
 
-            // Limit year to 4 digits if it's a full date string
-            let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                    let trackStr = tags.track ? 'Track ' + tags.track : '';
+                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
-            let trackStr = tags.track ? 'Track ' + tags.track : '';
-            if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+                    let discStr = tags.disc ? 'Disc ' + tags.disc : '';
 
-            let discStr = tags.disc ? 'Disc ' + tags.disc : '';
+                    let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
 
-            let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
+                    document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
 
-            document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
-
-            let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
-            if (badgeText) {
-                document.getElementById('sb-badge').innerText = badgeText;
-                document.getElementById('sb-badge').style.display = 'inline-block';
-            } else {
-                document.getElementById('sb-badge').style.display = 'none';
-            }
-
-            let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let extStr = t('sb_file_label') + item.type.toLowerCase();
-            let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
-
-            // Reorganize top row with size and art
-            let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
-
-            // New distinct row for format details
-            let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
-            let tagStr = t('sb_tag_format_label') + tagVal;
-            let filetypeValue = item.category || 'Audio';
-            let fileTypeStr = `${t('sb_filetype_label')}${filetypeValue}`;
-            let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
-
-            // Combine them
-            fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
-
-            // Base info: Name & Path (Prepended)
-            let headerInfo = `<strong>${item.name}</strong><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
-            fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
-            // Format Parser Times
-            let parserTimesHtml = '';
-            // Only show if the toggle is checked
-            const showParserTimes = document.getElementById('toggle-parser-times') ? document.getElementById('toggle-parser-times').checked : true;
-
-            if (showParserTimes && tags._parser_times) {
-                let times = [];
-                for (const [pName, pTime] of Object.entries(tags._parser_times)) {
-                    let msTime = (pTime * 1000).toFixed(1);
-                    if (pTime > 0) {
-                        times.push(`<span style="color: #666; font-weight: bold;" title="Wurde ausgeführt">${pName}: ${msTime}ms</span>`);
+                    let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+                    if (badgeText) {
+                        document.getElementById('sb-badge').innerText = badgeText;
+                        document.getElementById('sb-badge').style.display = 'inline-block';
                     } else {
-                        times.push(`<span style="color: #ccc;" title="Wurde übersprungen">${pName}: übersprungen</span>`);
+                        document.getElementById('sb-badge').style.display = 'none';
                     }
-                }
-                if (times.length > 0) {
-                    parserTimesHtml = `<br><br>${t('sb_parser_times_title')}<br>` + times.join(' &bull; ');
-                }
-            }
-            // Base info: Name & Path
-            let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">${t('sb_transcoding_msg').replace('{fmt}', item.transcoded_format || 'FLAC')}</span>` : '';
 
-            // Render chapters if available
-            let chaptersHtml = '';
-            if (tags.chapters && tags.chapters.length > 0) {
-                chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px; text-align: left;">';
-                chaptersHtml += '<h4 style="margin-top:0; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 4px;">Kapitel (' + tags.chapters.length + ')</h4>';
-                chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
-                tags.chapters.forEach((chap, idx) => {
-                    let timeString = new Date(chap.start * 1000).toISOString().substring(11, 19);
-                    chaptersHtml += `<div onclick="window.jumpToChapter(${chap.start})" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 6px 4px; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background=''">
+                    let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
+                    let extStr = t('sb_file_label') + item.type.toLowerCase();
+                    let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
+
+                    // Reorganize top row with size and art
+                    let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
+
+                    // New distinct row for format details
+                    let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
+                    let tagStr = t('sb_tag_format_label') + tagVal;
+                    let filetypeValue = item.category || 'Audio';
+                    let fileTypeStr = `${t('sb_filetype_label')}${filetypeValue}`;
+                    let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
+
+                    // Combine them
+                    fileInfoStr = fileInfoStr + '<br><br>' + formatDetailsStr;
+
+                    // Base info: Name & Path (Prepended)
+                    let headerInfo = `<strong>${item.name}</strong><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
+                    fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
+                    // Format Parser Times
+                    let parserTimesHtml = '';
+                    // Only show if the toggle is checked
+                    const showParserTimes = document.getElementById('toggle-parser-times') ? document.getElementById('toggle-parser-times').checked : true;
+
+                    if (showParserTimes && tags._parser_times) {
+                        let times = [];
+                        for (const [pName, pTime] of Object.entries(tags._parser_times)) {
+                            let msTime = (pTime * 1000).toFixed(1);
+                            if (pTime > 0) {
+                                times.push(`<span style="color: #666; font-weight: bold;" title="Wurde ausgeführt">${pName}: ${msTime}ms</span>`);
+                            } else {
+                                times.push(`<span style="color: #ccc;" title="Wurde übersprungen">${pName}: übersprungen</span>`);
+                            }
+                        }
+                        if (times.length > 0) {
+                            parserTimesHtml = `<br><br>${t('sb_parser_times_title')}<br>` + times.join(' &bull; ');
+                        }
+                    }
+                    // Base info: Name & Path
+                    let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">${t('sb_transcoding_msg').replace('{fmt}', item.transcoded_format || 'FLAC')}</span>` : '';
+
+                    // Render chapters if available
+                    let chaptersHtml = '';
+                    if (tags.chapters && tags.chapters.length > 0) {
+                        chaptersHtml = '<div style="margin-top: 15px; background: #2a2a2a; border-radius: 6px; padding: 10px; text-align: left;">';
+                        chaptersHtml += '<h4 style="margin-top:0; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 4px;">Kapitel (' + tags.chapters.length + ')</h4>';
+                        chaptersHtml += '<div style="max-height: 200px; overflow-y: auto; font-size: 13px; padding-right: 5px;">';
+                        tags.chapters.forEach((chap, idx) => {
+                            let timeString = new Date(chap.start * 1000).toISOString().substring(11, 19);
+                            chaptersHtml += `<div onclick="window.jumpToChapter(${chap.start})" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding: 6px 4px; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background=''">
                         <span style="color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; margin-right: 10px;" title="${chap.title}">${chap.title}</span>
                         <span style="color: #888; font-family: monospace; flex-shrink: 0;">${timeString}</span>
                     </div>`;
-                });
-                chaptersHtml += '</div></div>';
-            }
+                        });
+                        chaptersHtml += '</div></div>';
+                    }
 
-            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
+                    document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
 
-            // Python Backend anfunken
-            eel.play_media(path)();
-        }
-
-        function jumpToEdit(item) {
-            const editBtn = document.querySelector('button[onclick*="\'edit\'"]');
-            switchTab('edit', editBtn);
-            openEditForm(item);
-        }
-
-        window.jumpToChapter = function (startTime) {
-            let p = document.getElementById('player');
-            if (p) {
-                p.currentTime = startTime;
-                p.play();
-            }
-        };
-
-        async function loadLibrary(retryCount) {
-            retryCount = retryCount || 0;
-            try {
-                let result = await eel.get_library()();
-                let list = document.getElementById('media-list');
-                list.innerHTML = '';
-                console.log("[loadLibrary] Result from backend:", result);
-                if (!result || !result.media || result.media.length === 0) {
-                    console.warn("[loadLibrary] No media found in library.");
-                    list.innerHTML = `<p style="padding: 20px; color: #999;">${t('lib_no_media_desc')}</p>`;
-                    return;
+                    // Python Backend anfunken
+                    eel.play_media(path)();
                 }
 
-                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
-
-                // Restore population of Debug Tab
-                const debugOutput = document.getElementById('debug-output');
-                if (debugOutput) {
-                    const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
-                    debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
+                function jumpToEdit(item) {
+                    const editBtn = document.querySelector('button[onclick*="\'edit\'"]');
+                    switchTab('edit', editBtn);
+                    openEditForm(item);
                 }
 
-                result.media.forEach(item => {
-                    let div = document.createElement('div');
-                    div.className = 'media-item';
-                    let tags = item.tags || {}; // Fallback if tags object is completely missing
-                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                    let trackStr = tags.track ? t('lib_track_prefix') + tags.track : '';
-                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+                window.jumpToChapter = function (startTime) {
+                    let p = document.getElementById('player');
+                    if (p) {
+                        p.currentTime = startTime;
+                        p.play();
+                    }
+                };
 
-                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+                async function loadLibrary(retryCount) {
+                    retryCount = retryCount || 0;
+                    try {
+                        let result = await eel.get_library()();
+                        let list = document.getElementById('media-list');
+                        list.innerHTML = '';
+                        console.log("[loadLibrary] Result from backend:", result);
+                        if (!result || !result.media || result.media.length === 0) {
+                            console.warn("[loadLibrary] No media found in library.");
+                            list.innerHTML = `<p style="padding: 20px; color: #999;">${t('lib_no_media_desc')}</p>`;
+                            return;
+                        }
 
-                    // Fallbacks if metadata is missing
-                    let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
-                    let artistDisplay = tags.artist || t('lib_unknown_artist');
-                    let itemName = item.name || item.filename || "unknown";
+                        console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
 
-                    const specialCategories = ['Hörbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
-                    let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
-                    div.innerHTML = `
+                        // Restore population of Debug Tab
+                        const debugOutput = document.getElementById('debug-output');
+                        if (debugOutput) {
+                            const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
+                            debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
+                        }
+
+                        result.media.forEach(item => {
+                            let div = document.createElement('div');
+                            div.className = 'media-item';
+                            let tags = item.tags || {}; // Fallback if tags object is completely missing
+                            let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                            let trackStr = tags.track ? t('lib_track_prefix') + tags.track : '';
+                            if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                            let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+
+                            // Fallbacks if metadata is missing
+                            let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
+                            let artistDisplay = tags.artist || t('lib_unknown_artist');
+                            let itemName = item.name || item.filename || "unknown";
+
+                            const specialCategories = ['Hörbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
+                            let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
+                            div.innerHTML = `
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
@@ -2043,94 +2030,94 @@
                         </div>
                     `;
 
-                    let mediaUrl = '/media/' + encodeURIComponent(itemName);
-                    if (item.is_transcoded && item.transcoded_format) {
-                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
-                    }
+                            let mediaUrl = '/media/' + encodeURIComponent(itemName);
+                            if (item.is_transcoded && item.transcoded_format) {
+                                mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                            }
 
-                    div.onclick = () => play(item, mediaUrl);
-                    list.appendChild(div);
-                });
-            } catch (e) {
-                console.error('[loadLibrary] Error loading library:', e);
-                if (retryCount < 3) {
-                    console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
-                    setTimeout(() => loadLibrary(retryCount + 1), 1000);
-                } else {
-                    let list = document.getElementById('media-list');
-                    if (list) list.innerHTML = '<p style="padding: 20px; color: #c33;">Fehler beim Laden der Bibliothek: ' + e.message + '</p>';
-                }
-            }
-        }
-
-        // Parser GUI Logic
-        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
-        let currentParserChain = [];
-
-        function loadParserConfig() {
-            eel.get_parser_config()((config) => {
-                console.log("Raw parser config from python:", config);
-
-                // Eel sometimes returns strings instead of objects depending on the browser
-                if (typeof config === 'string') {
-                    try {
-                        config = JSON.parse(config);
+                            div.onclick = () => play(item, mediaUrl);
+                            list.appendChild(div);
+                        });
                     } catch (e) {
-                        console.error("Failed to parse config string:", e);
+                        console.error('[loadLibrary] Error loading library:', e);
+                        if (retryCount < 3) {
+                            console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
+                            setTimeout(() => loadLibrary(retryCount + 1), 1000);
+                        } else {
+                            let list = document.getElementById('media-list');
+                            if (list) list.innerHTML = '<p style="padding: 20px; color: #c33;">Fehler beim Laden der Bibliothek: ' + e.message + '</p>';
+                        }
                     }
                 }
 
-                if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
-                    currentParserChain = config.parser_chain;
-                } else {
-                    console.warn("Failed to load parser_chain, falling back to defaults.");
-                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+                // Parser GUI Logic
+                const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+                let currentParserChain = [];
+
+                function loadParserConfig() {
+                    eel.get_parser_config()((config) => {
+                        console.log("Raw parser config from python:", config);
+
+                        // Eel sometimes returns strings instead of objects depending on the browser
+                        if (typeof config === 'string') {
+                            try {
+                                config = JSON.parse(config);
+                            } catch (e) {
+                                console.error("Failed to parse config string:", e);
+                            }
+                        }
+
+                        if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
+                            currentParserChain = config.parser_chain;
+                        } else {
+                            console.warn("Failed to load parser_chain, falling back to defaults.");
+                            currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+                        }
+
+                        if (config && config.parser_mode) {
+                            const modeToggle = document.getElementById('toggle-parser-mode');
+                            if (modeToggle) modeToggle.checked = (config.parser_mode === "full");
+                            const statusText = document.getElementById('parser-mode-status');
+                            if (statusText) {
+                                statusText.innerText = config.parser_mode === "full" ? t('parser_mode_full') : t('parser_mode_light');
+                            }
+                        }
+
+                        renderParserList();
+                    });
                 }
 
-                if (config && config.parser_mode) {
-                    const modeToggle = document.getElementById('toggle-parser-mode');
-                    if (modeToggle) modeToggle.checked = (config.parser_mode === "full");
-                    const statusText = document.getElementById('parser-mode-status');
-                    if (statusText) {
-                        statusText.innerText = config.parser_mode === "full" ? t('parser_mode_full') : t('parser_mode_light');
-                    }
+                function renderParserList() {
+                    const list = document.getElementById('parser-list');
+                    if (!list) return;
+                    list.innerHTML = '';
+
+                    // Render active parsers in order
+                    currentParserChain.forEach(parser => {
+                        if (ALL_PARSERS.includes(parser)) {
+                            list.appendChild(createParserItem(parser, true));
+                        }
+                    });
+
+                    // Render inactive parsers at the bottom
+                    ALL_PARSERS.forEach(parser => {
+                        if (!currentParserChain.includes(parser)) {
+                            list.appendChild(createParserItem(parser, false));
+                        }
+                    });
+
+                    setupDragAndDrop();
                 }
 
-                renderParserList();
-            });
-        }
+                function createParserItem(parserId, isActive) {
+                    const li = document.createElement('li');
+                    li.className = 'parser-item';
+                    li.draggable = true;
+                    li.dataset.id = parserId;
 
-        function renderParserList() {
-            const list = document.getElementById('parser-list');
-            if (!list) return;
-            list.innerHTML = '';
+                    const labelName = t('parser_' + parserId);
 
-            // Render active parsers in order
-            currentParserChain.forEach(parser => {
-                if (ALL_PARSERS.includes(parser)) {
-                    list.appendChild(createParserItem(parser, true));
-                }
-            });
-
-            // Render inactive parsers at the bottom
-            ALL_PARSERS.forEach(parser => {
-                if (!currentParserChain.includes(parser)) {
-                    list.appendChild(createParserItem(parser, false));
-                }
-            });
-
-            setupDragAndDrop();
-        }
-
-        function createParserItem(parserId, isActive) {
-            const li = document.createElement('li');
-            li.className = 'parser-item';
-            li.draggable = true;
-            li.dataset.id = parserId;
-
-            const labelName = t('parser_' + parserId);
-
-            li.innerHTML = `
+                    li.innerHTML = `
                 <div class="parser-handle">☰</div>
                 <div class="parser-name">${labelName}</div>
                 <label class="switch">
@@ -2138,316 +2125,370 @@
                     <span class="slider"></span>
                 </label>
             `;
-            return li;
-        }
-
-        function setupDragAndDrop() {
-            const list = document.getElementById('parser-list');
-            let draggedItem = null;
-
-            list.addEventListener('dragstart', e => {
-                if (e.target.classList.contains('parser-item')) {
-                    draggedItem = e.target;
-                    setTimeout(() => e.target.classList.add('dragging'), 0);
+                    return li;
                 }
-            });
 
-            list.addEventListener('dragend', e => {
-                if (e.target.classList.contains('parser-item')) {
-                    e.target.classList.remove('dragging');
-                    draggedItem = null;
+                function setupDragAndDrop() {
+                    const list = document.getElementById('parser-list');
+                    let draggedItem = null;
+
+                    list.addEventListener('dragstart', e => {
+                        if (e.target.classList.contains('parser-item')) {
+                            draggedItem = e.target;
+                            setTimeout(() => e.target.classList.add('dragging'), 0);
+                        }
+                    });
+
+                    list.addEventListener('dragend', e => {
+                        if (e.target.classList.contains('parser-item')) {
+                            e.target.classList.remove('dragging');
+                            draggedItem = null;
+                        }
+                    });
+
+                    list.addEventListener('dragover', e => {
+                        e.preventDefault();
+                        const afterElement = getDragAfterElement(list, e.clientY);
+                        if (draggedItem) {
+                            if (afterElement == null) {
+                                list.appendChild(draggedItem);
+                            } else {
+                                list.insertBefore(draggedItem, afterElement);
+                            }
+                        }
+                    });
                 }
-            });
 
-            list.addEventListener('dragover', e => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(list, e.clientY);
-                if (draggedItem) {
-                    if (afterElement == null) {
-                        list.appendChild(draggedItem);
-                    } else {
-                        list.insertBefore(draggedItem, afterElement);
-                    }
+                function getDragAfterElement(container, y) {
+                    const draggableElements = [...container.querySelectorAll('.parser-item:not(.dragging)')];
+                    return draggableElements.reduce((closest, child) => {
+                        const box = child.getBoundingClientRect();
+                        const offset = y - box.top - box.height / 2;
+                        if (offset < 0 && offset > closest.offset) {
+                            return { offset: offset, element: child };
+                        } else {
+                            return closest;
+                        }
+                    }, { offset: Number.NEGATIVE_INFINITY }).element;
                 }
-            });
-        }
 
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.parser-item:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
+                function saveParserChainUI() {
+                    const listItems = document.querySelectorAll('.parser-item');
+                    const newChain = [];
+
+                    listItems.forEach(item => {
+                        const isActive = item.querySelector('.parser-toggle').checked;
+                        if (isActive) {
+                            newChain.push(item.dataset.id);
+                        }
+                    });
+
+                    const modeToggle = document.getElementById('toggle-parser-mode');
+                    const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
+
+                    console.log("Saving new parser config:", newChain, newMode);
+
+                    // Pass object that matches Python expected structure
+                    eel.save_parser_config({ "parser_chain": newChain, "parser_mode": newMode })((result) => {
+                        if (result && result.status === 'ok') {
+                            const statusSpan = document.getElementById('parser-save-status');
+                            statusSpan.style.display = 'inline';
+                            setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                        } else {
+                            console.error("Save failed:", result);
+                            alert("Fehler beim Speichern der Parser-Konfiguration.");
+                        }
+                    });
                 }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
 
-        function saveParserChainUI() {
-            const listItems = document.querySelectorAll('.parser-item');
-            const newChain = [];
+                async function loadDebugFlags() {
+                    const flags = await eel.get_debug_flags()();
+                    const container = document.getElementById('debug-flags-container');
+                    if (!container) return;
+                    container.innerHTML = '';
 
-            listItems.forEach(item => {
-                const isActive = item.querySelector('.parser-toggle').checked;
-                if (isActive) {
-                    newChain.push(item.dataset.id);
-                }
-            });
+                    for (const [key, value] of Object.entries(flags)) {
+                        const label = document.createElement('label');
+                        label.style.display = 'flex';
+                        label.style.alignItems = 'center';
+                        label.style.gap = '10px';
+                        label.style.cursor = 'pointer';
+                        label.style.padding = '5px';
+                        label.style.borderRadius = '4px';
+                        label.onmouseover = () => label.style.background = '#f9f9f9';
+                        label.onmouseout = () => label.style.background = 'transparent';
 
-            const modeToggle = document.getElementById('toggle-parser-mode');
-            const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
-
-            console.log("Saving new parser config:", newChain, newMode);
-
-            // Pass object that matches Python expected structure
-            eel.save_parser_config({ "parser_chain": newChain, "parser_mode": newMode })((result) => {
-                if (result && result.status === 'ok') {
-                    const statusSpan = document.getElementById('parser-save-status');
-                    statusSpan.style.display = 'inline';
-                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
-                } else {
-                    console.error("Save failed:", result);
-                    alert("Fehler beim Speichern der Parser-Konfiguration.");
-                }
-            });
-        }
-
-        async function loadDebugFlags() {
-            const flags = await eel.get_debug_flags()();
-            const container = document.getElementById('debug-flags-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            for (const [key, value] of Object.entries(flags)) {
-                const label = document.createElement('label');
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
-                label.style.gap = '10px';
-                label.style.cursor = 'pointer';
-                label.style.padding = '5px';
-                label.style.borderRadius = '4px';
-                label.onmouseover = () => label.style.background = '#f9f9f9';
-                label.onmouseout = () => label.style.background = 'transparent';
-
-                const labelText = t(`debug_flag_${key}`) || key.toUpperCase();
-                label.innerHTML = `
+                        const labelText = t(`debug_flag_${key}`) || key.toUpperCase();
+                        label.innerHTML = `
                     <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
                     <span style="font-family: monospace; font-size: 0.95em;">${labelText}</span>
                 `;
-                container.appendChild(label);
-            }
-
-            // Sync with Modal
-            const modalContainer = document.getElementById('modal-debug-flags');
-            if (modalContainer) {
-                modalContainer.innerHTML = container.innerHTML;
-                // Re-bind the onchange because innerHTML doesn't preserve it cleanly in some browsers if listeners were manual,
-                // but here it's inline in string, so it should be fine. 
-                // However, we need to make sure toggleDebugFlag is global.
-            }
-        }
-
-        async function toggleDebugFlag(key, value) {
-            await eel.set_debug_flag(key, value)();
-            // Refresh both locations
-            loadDebugFlags();
-        }
-
-        function toggleDebugMenu() {
-            const modal = document.getElementById('debug-flags-modal');
-            if (modal.style.display === 'none') {
-                modal.style.display = 'block';
-                document.getElementById('feature-status-modal').style.display = 'none'; // Close other
-                loadDebugFlags();
-            } else {
-                modal.style.display = 'none';
-            }
-        }
-
-        function toggleFeatureStatus() {
-            const modal = document.getElementById('feature-status-modal');
-            if (modal.style.display === 'none') {
-                modal.style.display = 'block';
-                document.getElementById('debug-flags-modal').style.display = 'none'; // Close other
-            } else {
-                modal.style.display = 'none';
-            }
-        }
-
-        async function openLogbook(featureName) {
-            const modal = document.getElementById('logbook-modal');
-            const title = document.getElementById('logbook-title');
-            const content = document.getElementById('logbook-content');
-
-            title.innerText = `Logbuch: ${featureName}`;
-            content.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-            modal.style.display = 'block';
-
-            try {
-                const markdown = await eel.get_logbook_entry(featureName)();
-                // Simple markdown parsing for display
-                let html = markdown
-                    .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
-                    .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '<br><br>');
-
-                content.innerHTML = html;
-            } catch (e) {
-                content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
-            }
-        }
-
-        async function clearDatabase() {
-            if (confirm(t("reset_confirm_db"))) {
-                const result = await eel.clear_database()();
-                if (result.status === 'ok') {
-                    alert(t("reset_success_db"));
-                    loadLibrary(); // Update views
-                }
-            }
-        }
-
-        async function resetAppData() {
-            if (confirm(t("reset_confirm_app"))) {
-                const result = await eel.reset_app_data()();
-                if (result.status === 'ok') {
-                    alert(t("reset_success_app"));
-                    location.reload();
-                } else {
-                    alert("Error: " + result.message);
-                }
-            }
-        }
-
-        eel.expose(log_to_debug);
-        function log_to_debug(message) {
-            const debugTextarea = document.getElementById('browse-results-debug');
-            if (debugTextarea) {
-                if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
-                    debugTextarea.value += '\n';
-                }
-                debugTextarea.value += message + '\n';
-                debugTextarea.scrollTop = debugTextarea.scrollHeight;
-            }
-        }
-
-        eel.expose(set_db_status);
-        function set_db_status(isVisible) {
-            const container = document.getElementById('db-status-container');
-            if (container) {
-                container.style.display = isVisible ? 'flex' : 'none';
-            }
-        }
-
-        // ============ Resizable Splitter Logic ============
-        (function () {
-            function initSplitter(splitterId, leftPaneId, containerId) {
-                const splitter = document.getElementById(splitterId);
-                const leftPane = document.getElementById(leftPaneId);
-                const container = document.getElementById(containerId);
-                let isDragging = false;
-
-                if (!splitter || !leftPane || !container) return;
-
-                splitter.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    splitter.classList.add('active');
-                    document.body.style.cursor = 'col-resize';
-                    e.preventDefault();
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    if (!isDragging) return;
-
-                    const containerRect = container.getBoundingClientRect();
-                    let newWidth = e.clientX - containerRect.left;
-
-                    // Constraints
-                    const minWidth = 200;
-                    const maxWidth = containerRect.width - 300;
-
-                    if (newWidth < minWidth) newWidth = minWidth;
-                    if (newWidth > maxWidth) newWidth = maxWidth;
-
-                    leftPane.style.width = newWidth + 'px';
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    splitter.classList.remove('active');
-                    document.body.style.cursor = 'default';
-                });
-            }
-
-            // Init both splitters
-            initSplitter('edit-splitter', 'edit-sidebar-left', 'edit-split-container');
-            initSplitter('main-splitter', 'main-sidebar', 'main-split-container');
-        })();
-        // Toggle Parser Times function
-        function toggleParserTimes(show) {
-            // Re-render the sidebar info if a song is currently playing
-            if (currentPlayer.src) {
-                // Find current item based on the title, or we can just trigger a re-render of the file info
-                const titleText = document.getElementById('sb-title').innerText;
-                if (titleText !== "Kein Lied gewählt") {
-                    // Since we don't store the current item globally, we can just toggle the visibility
-                    // of the parser times within the existing text if possible, or force the user to re-click.
-                    // The easiest way is to let the user re-click for now, but we saved the preference.
-                }
-            }
-        }
-
-        async function loadTestSuites() {
-            const container = document.getElementById('test-suites-container');
-            if (!container) return;
-            container.innerHTML = '<div style="color: #999; font-style: italic;">Lade Tests...</div>';
-            try {
-                let suites = [];
-                try {
-                    const res = await eel.get_test_suites()();
-                    suites = res || [];
-                } catch (e) {
-                    console.error("Eel get_test_suites failed", e);
-                }
-
-                container.innerHTML = '';
-
-                // Append the GUI Test as a fake suite
-                suites.push({
-                    id: 'gui_test_fake',
-                    name: 'GUI Tests (Selenium)',
-                    isGuiTest: true,
-                    metadata: {
-                        category: "E2E Test",
-                        inputs: "Browser Interactions",
-                        outputs: "DOM State",
-                        files: "App HTML",
-                        comment: "Testet die App im Browser. Muss manuell vom Agenten ausgelöst werden."
+                        container.appendChild(label);
                     }
-                });
 
-                suites.forEach(suite => {
-                    const card = document.createElement('div');
-                    card.style.cssText = 'background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s;';
-                    card.onmouseover = () => { card.style.transform = 'translateY(-2px)'; card.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; };
-                    card.onmouseout = () => { card.style.transform = 'translateY(0)'; card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.02)'; };
+                    // Sync with Modal
+                    const modalContainer = document.getElementById('modal-debug-flags');
+                    if (modalContainer) {
+                        modalContainer.innerHTML = container.innerHTML;
+                        // Re-bind the onchange because innerHTML doesn't preserve it cleanly in some browsers if listeners were manual,
+                        // but here it's inline in string, so it should be fine. 
+                        // However, we need to make sure toggleDebugFlag is global.
+                    }
+                }
 
-                    let checkboxHtml = '';
-                    if (suite.isGuiTest) {
-                        checkboxHtml = `<input type="checkbox" id="test-gui" style="width: 20px; height: 20px; cursor: pointer;">`;
+                async function toggleDebugFlag(key, value) {
+                    await eel.set_debug_flag(key, value)();
+                    // Refresh both locations
+                    loadDebugFlags();
+                }
+
+                function toggleDebugMenu() {
+                    const modal = document.getElementById('debug-flags-modal');
+                    if (modal.style.display === 'none') {
+                        modal.style.display = 'block';
+                        document.getElementById('feature-status-modal').style.display = 'none'; // Close other
+                        loadDebugFlags();
                     } else {
-                        checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" checked style="width: 20px; height: 20px; cursor: pointer;">`;
+                        modal.style.display = 'none';
+                    }
+                }
+
+                async function loadFeatureStatus() {
+                    const container = document.getElementById('feature-list-container');
+                    if (!container) return;
+                    container.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Lade Features...</div>';
+
+                    try {
+                        const entries = await eel.list_logbook_entries()();
+                        container.innerHTML = '';
+
+                        // Filter: Show only entries that have a summary (others are just logs)
+                        const features = entries.filter(e => e.summary && e.summary.trim() !== "");
+
+                        if (features.length === 0) {
+                            container.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Keine Features dokumentiert.</div>';
+                            return;
+                        }
+
+                        features.forEach(feat => {
+                            const featDiv = document.createElement('div');
+                            featDiv.style.cssText = "display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s;";
+                            featDiv.onclick = () => openLogbook(feat.name);
+                            featDiv.onmouseover = () => featDiv.style.background = '#f5f5f5';
+                            featDiv.onmouseout = () => featDiv.style.background = 'transparent';
+
+                            // Color based on status
+                            let badgeBg = "#eee", badgeColor = "#555";
+                            if (feat.status === "COMPLETED") { badgeBg = "#e8f5e9"; badgeColor = "#2e7d32"; }
+                            else if (feat.status === "ACTIVE") { badgeBg = "#e3f2fd"; badgeColor = "#1565c0"; }
+                            else if (feat.status === "PLAN") { badgeBg = "#fff3e0"; badgeColor = "#e65100"; }
+                            else if (feat.status === "TASK") { badgeBg = "#e1f5fe"; badgeColor = "#0277bd"; }
+                            else if (feat.status === "DOCS") { badgeBg = "#ede7f6"; badgeColor = "#5e35b1"; }
+
+                            featDiv.innerHTML = `
+                        <div style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; min-width: 80px; text-align: center;">
+                            ${feat.status}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #1a1a1a;">${feat.title}</div>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 2px;">${feat.summary}</div>
+                        </div>
+                    `;
+                            container.appendChild(featDiv);
+                        });
+                    } catch (e) {
+                        console.error("Error loading features:", e);
+                        container.innerHTML = '<div style="text-align: center; color: #b71c1c; padding: 20px;">Fehler beim Laden.</div>';
+                    }
+                }
+
+                function toggleFeatureStatus() {
+                    const modal = document.getElementById('feature-status-modal');
+                    if (modal.style.display === 'none') {
+                        modal.style.display = 'block';
+                        loadFeatureStatus();
+                        const debugModal = document.getElementById('debug-flags-modal');
+                        if (debugModal) debugModal.style.display = 'none';
+                    } else {
+                        modal.style.display = 'none';
+                    }
+                }
+
+                async function openLogbook(featureName) {
+                    const modal = document.getElementById('logbook-modal');
+                    const title = document.getElementById('logbook-title');
+                    const content = document.getElementById('logbook-content');
+
+                    // Close feature modal if open
+                    document.getElementById('feature-status-modal').style.display = 'none';
+
+                    title.innerText = `Logbuch: ${featureName}`;
+                    content.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+                    modal.style.display = 'block';
+
+                    try {
+                        const markdown = await eel.get_logbook_entry(featureName)();
+                        // Simple markdown parsing for display
+                        let html = markdown
+                            .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
+                            .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
+                            .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n\n/g, '<br><br>');
+
+                        content.innerHTML = html;
+                    } catch (e) {
+                        content.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
+                    }
+                }
+
+                async function clearDatabase() {
+                    if (confirm(t("reset_confirm_db"))) {
+                        const result = await eel.clear_database()();
+                        if (result.status === 'ok') {
+                            alert(t("reset_success_db"));
+                            loadLibrary(); // Update views
+                        }
+                    }
+                }
+
+                async function resetAppData() {
+                    if (confirm(t("reset_confirm_app"))) {
+                        const result = await eel.reset_app_data()();
+                        if (result.status === 'ok') {
+                            alert(t("reset_success_app"));
+                            location.reload();
+                        } else {
+                            alert("Error: " + result.message);
+                        }
+                    }
+                }
+
+                eel.expose(log_to_debug);
+                function log_to_debug(message) {
+                    const debugTextarea = document.getElementById('browse-results-debug');
+                    if (debugTextarea) {
+                        if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
+                            debugTextarea.value += '\n';
+                        }
+                        debugTextarea.value += message + '\n';
+                        debugTextarea.scrollTop = debugTextarea.scrollHeight;
+                    }
+                }
+
+                eel.expose(set_db_status);
+                function set_db_status(isVisible) {
+                    const container = document.getElementById('db-status-container');
+                    if (container) {
+                        container.style.display = isVisible ? 'flex' : 'none';
+                    }
+                }
+
+                // ============ Resizable Splitter Logic ============
+                (function () {
+                    function initSplitter(splitterId, leftPaneId, containerId) {
+                        const splitter = document.getElementById(splitterId);
+                        const leftPane = document.getElementById(leftPaneId);
+                        const container = document.getElementById(containerId);
+                        let isDragging = false;
+
+                        if (!splitter || !leftPane || !container) return;
+
+                        splitter.addEventListener('mousedown', (e) => {
+                            isDragging = true;
+                            splitter.classList.add('active');
+                            document.body.style.cursor = 'col-resize';
+                            e.preventDefault();
+                        });
+
+                        window.addEventListener('mousemove', (e) => {
+                            if (!isDragging) return;
+
+                            const containerRect = container.getBoundingClientRect();
+                            let newWidth = e.clientX - containerRect.left;
+
+                            // Constraints
+                            const minWidth = 200;
+                            const maxWidth = containerRect.width - 300;
+
+                            if (newWidth < minWidth) newWidth = minWidth;
+                            if (newWidth > maxWidth) newWidth = maxWidth;
+
+                            leftPane.style.width = newWidth + 'px';
+                        });
+
+                        window.addEventListener('mouseup', () => {
+                            if (!isDragging) return;
+                            isDragging = false;
+                            splitter.classList.remove('active');
+                            document.body.style.cursor = 'default';
+                        });
                     }
 
-                    const m = suite.metadata || {};
-                    const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
+                    // Init both splitters
+                    initSplitter('edit-splitter', 'edit-sidebar-left', 'edit-split-container');
+                    initSplitter('main-splitter', 'main-sidebar', 'main-split-container');
+                })();
+                // Toggle Parser Times function
+                function toggleParserTimes(show) {
+                    // Re-render the sidebar info if a song is currently playing
+                    if (currentPlayer.src) {
+                        // Find current item based on the title, or we can just trigger a re-render of the file info
+                        const titleText = document.getElementById('sb-title').innerText;
+                        if (titleText !== "Kein Lied gewählt") {
+                            // Since we don't store the current item globally, we can just toggle the visibility
+                            // of the parser times within the existing text if possible, or force the user to re-click.
+                            // The easiest way is to let the user re-click for now, but we saved the preference.
+                        }
+                    }
+                }
 
-                    card.innerHTML = `
+                async function loadTestSuites() {
+                    const container = document.getElementById('test-suites-container');
+                    if (!container) return;
+                    container.innerHTML = '<div style="color: #999; font-style: italic;">Lade Tests...</div>';
+                    try {
+                        let suites = [];
+                        try {
+                            const res = await eel.get_test_suites()();
+                            suites = res || [];
+                        } catch (e) {
+                            console.error("Eel get_test_suites failed", e);
+                        }
+
+                        container.innerHTML = '';
+
+                        // Append the GUI Test as a fake suite
+                        suites.push({
+                            id: 'gui_test_fake',
+                            name: 'GUI Tests (Selenium)',
+                            isGuiTest: true,
+                            metadata: {
+                                category: "E2E Test",
+                                inputs: "Browser Interactions",
+                                outputs: "DOM State",
+                                files: "App HTML",
+                                comment: "Testet die App im Browser. Muss manuell vom Agenten ausgelöst werden."
+                            }
+                        });
+
+                        suites.forEach(suite => {
+                            const card = document.createElement('div');
+                            card.style.cssText = 'background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s;';
+                            card.onmouseover = () => { card.style.transform = 'translateY(-2px)'; card.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; };
+                            card.onmouseout = () => { card.style.transform = 'translateY(0)'; card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.02)'; };
+
+                            let checkboxHtml = '';
+                            if (suite.isGuiTest) {
+                                checkboxHtml = `<input type="checkbox" id="test-gui" style="width: 20px; height: 20px; cursor: pointer;">`;
+                            } else {
+                                checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" checked style="width: 20px; height: 20px; cursor: pointer;">`;
+                            }
+
+                            const m = suite.metadata || {};
+                            const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
+
+                            card.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 ${checkboxHtml}
@@ -2467,198 +2508,198 @@
                         </div>
                     `;
 
-                    if (!suite.isGuiTest) {
-                        const editBtn = document.createElement('button');
-                        editBtn.innerText = t('test_btn_edit');
-                        editBtn.style.cssText = 'border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;';
-                        editBtn.onmouseover = () => editBtn.style.opacity = '1';
-                        editBtn.onmouseout = () => editBtn.style.opacity = '0.6';
-                        editBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            openTestEditModal(suite);
-                        };
-                        const actionsArea = card.querySelector('.test-card-actions');
-                        actionsArea.prepend(editBtn);
+                            if (!suite.isGuiTest) {
+                                const editBtn = document.createElement('button');
+                                editBtn.innerText = t('test_btn_edit');
+                                editBtn.style.cssText = 'border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;';
+                                editBtn.onmouseover = () => editBtn.style.opacity = '1';
+                                editBtn.onmouseout = () => editBtn.style.opacity = '0.6';
+                                editBtn.onclick = (e) => {
+                                    e.stopPropagation();
+                                    openTestEditModal(suite);
+                                };
+                                const actionsArea = card.querySelector('.test-card-actions');
+                                actionsArea.prepend(editBtn);
 
-                        const delBtn = document.createElement('button');
-                        delBtn.innerText = '🗑️';
-                        delBtn.style.cssText = 'border: none; background: #fff; border-radius: 4px; padding: 4px 6px; font-size: 0.8em; cursor: pointer; opacity: 0.4; transition: all 0.2s;';
-                        delBtn.onmouseover = () => { delBtn.style.opacity = '1'; delBtn.style.background = '#ffebee'; };
-                        delBtn.onmouseout = () => { delBtn.style.opacity = '0.4'; delBtn.style.background = '#fff'; };
-                        delBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            deleteTest(suite.id);
-                        };
-                        actionsArea.appendChild(delBtn);
+                                const delBtn = document.createElement('button');
+                                delBtn.innerText = '🗑️';
+                                delBtn.style.cssText = 'border: none; background: #fff; border-radius: 4px; padding: 4px 6px; font-size: 0.8em; cursor: pointer; opacity: 0.4; transition: all 0.2s;';
+                                delBtn.onmouseover = () => { delBtn.style.opacity = '1'; delBtn.style.background = '#ffebee'; };
+                                delBtn.onmouseout = () => { delBtn.style.opacity = '0.4'; delBtn.style.background = '#fff'; };
+                                delBtn.onclick = (e) => {
+                                    e.stopPropagation();
+                                    deleteTest(suite.id);
+                                };
+                                actionsArea.appendChild(delBtn);
+                            }
+
+                            container.appendChild(card);
+                        });
+                    } catch (error) {
+                        container.innerHTML = `<div style="color: #c33;">Fehler beim Laden der Tests: ${error}</div>`;
+                    }
+                }
+
+                async function runSelectedTests() {
+                    const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
+                    const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+                    const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
+
+                    const resultsContainer = document.getElementById('test-results-container');
+                    const outputArea = document.getElementById('test-output');
+                    const summaryBadge = document.getElementById('test-run-summary');
+
+                    if (resultsContainer) resultsContainer.style.display = 'block';
+                    outputArea.textContent = "Tests werden gestartet...\n";
+                    summaryBadge.style.display = 'none';
+                    summaryBadge.textContent = '';
+
+                    let totalPasses = 0;
+                    let totalFails = 0;
+
+                    if (selectedFiles.length > 0) {
+                        try {
+                            const result = await eel.run_tests(selectedFiles)();
+                            if (result.error) {
+                                outputArea.textContent += `Fehler bei der Testausführung: ${result.error}\n`;
+                            } else {
+                                outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
+                                if (result.passes !== undefined) totalPasses += result.passes;
+                                if (result.fails !== undefined) totalFails += result.fails;
+                            }
+                        } catch (e) {
+                            outputArea.textContent += `Systemfehler: ${e}\n`;
+                        }
                     }
 
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                container.innerHTML = `<div style="color: #c33;">Fehler beim Laden der Tests: ${error}</div>`;
-            }
-        }
+                    if (guiTest) {
+                        const guiRes = await eel.run_gui_tests()();
+                        outputArea.textContent += `\n\n[GUI-Tests] ${guiRes.message}`;
+                    }
 
-        async function runSelectedTests() {
-            const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
-            const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
-            const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
+                    if (selectedFiles.length > 0) {
+                        summaryBadge.style.display = 'inline-block';
+                        if (totalFails > 0) {
+                            summaryBadge.textContent = `❌ ${totalFails} Failed, ${totalPasses} Passed`;
+                            summaryBadge.style.background = '#ffebee';
+                            summaryBadge.style.color = '#c62828';
+                        } else {
+                            summaryBadge.textContent = `✅ Alle ${totalPasses} Tests Passed`;
+                            summaryBadge.style.background = '#e8f5e9';
+                            summaryBadge.style.color = '#2e7d32';
+                        }
+                    }
+                }
 
-            const resultsContainer = document.getElementById('test-results-container');
-            const outputArea = document.getElementById('test-output');
-            const summaryBadge = document.getElementById('test-run-summary');
+                function openTestEditModal(suite) {
+                    currentEditingTestFile = suite.id;
+                    document.getElementById('test-edit-filename').innerText = `${t('test_meta_file_label')}tests/${suite.id}`;
+                    document.getElementById('test-edit-category').value = suite.metadata.category || '-';
+                    document.getElementById('test-edit-inputs').value = suite.metadata.inputs || '-';
+                    document.getElementById('test-edit-outputs').value = suite.metadata.outputs || '-';
+                    document.getElementById('test-edit-files').value = suite.metadata.files || '-';
+                    document.getElementById('test-edit-comment').value = suite.metadata.comment || '-';
+                    document.getElementById('test-edit-modal').style.display = 'flex';
+                }
 
-            if (resultsContainer) resultsContainer.style.display = 'block';
-            outputArea.textContent = "Tests werden gestartet...\n";
-            summaryBadge.style.display = 'none';
-            summaryBadge.textContent = '';
+                function closeTestEditModal() {
+                    document.getElementById('test-edit-modal').style.display = 'none';
+                }
 
-            let totalPasses = 0;
-            let totalFails = 0;
+                async function saveTestMetadata() {
+                    if (!currentEditingTestFile) return;
 
-            if (selectedFiles.length > 0) {
-                try {
-                    const result = await eel.run_tests(selectedFiles)();
-                    if (result.error) {
-                        outputArea.textContent += `Fehler bei der Testausführung: ${result.error}\n`;
+                    const metadata = {
+                        category: document.getElementById('test-edit-category').value,
+                        inputs: document.getElementById('test-edit-inputs').value,
+                        outputs: document.getElementById('test-edit-outputs').value,
+                        files: document.getElementById('test-edit-files').value,
+                        comment: document.getElementById('test-edit-comment').value
+                    };
+
+                    const res = await eel.update_test_metadata(currentEditingTestFile, metadata)();
+                    if (res.status === 'ok') {
+                        closeTestEditModal();
+                        loadTestSuites(); // Reload to show new metadata
+                        alert(t("test_save_success"));
                     } else {
-                        outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
-                        if (result.passes !== undefined) totalPasses += result.passes;
-                        if (result.fails !== undefined) totalFails += result.fails;
+                        alert(t("common_error") + res.error);
                     }
-                } catch (e) {
-                    outputArea.textContent += `Systemfehler: ${e}\n`;
                 }
-            }
 
-            if (guiTest) {
-                const guiRes = await eel.run_gui_tests()();
-                outputArea.textContent += `\n\n[GUI-Tests] ${guiRes.message}`;
-            }
-
-            if (selectedFiles.length > 0) {
-                summaryBadge.style.display = 'inline-block';
-                if (totalFails > 0) {
-                    summaryBadge.textContent = `❌ ${totalFails} Failed, ${totalPasses} Passed`;
-                    summaryBadge.style.background = '#ffebee';
-                    summaryBadge.style.color = '#c62828';
-                } else {
-                    summaryBadge.textContent = `✅ Alle ${totalPasses} Tests Passed`;
-                    summaryBadge.style.background = '#e8f5e9';
-                    summaryBadge.style.color = '#2e7d32';
+                async function createNewTest() {
+                    const name = prompt("Name für den neuen Test (z.B. feature_x):");
+                    if (!name) return;
+                    const res = await eel.create_new_test(name)();
+                    if (res.status === 'ok') {
+                        loadTestSuites();
+                    } else {
+                        alert("Fehler: " + (res.message || res.error));
+                    }
                 }
-            }
-        }
 
-        function openTestEditModal(suite) {
-            currentEditingTestFile = suite.id;
-            document.getElementById('test-edit-filename').innerText = `${t('test_meta_file_label')}tests/${suite.id}`;
-            document.getElementById('test-edit-category').value = suite.metadata.category || '-';
-            document.getElementById('test-edit-inputs').value = suite.metadata.inputs || '-';
-            document.getElementById('test-edit-outputs').value = suite.metadata.outputs || '-';
-            document.getElementById('test-edit-files').value = suite.metadata.files || '-';
-            document.getElementById('test-edit-comment').value = suite.metadata.comment || '-';
-            document.getElementById('test-edit-modal').style.display = 'flex';
-        }
+                async function deleteTest(filename) {
+                    if (!confirm(`Möchtest du den Test "${filename}" wirklich löschen?`)) return;
+                    const res = await eel.delete_test(filename)();
+                    if (res.status === 'ok') {
+                        loadTestSuites();
+                    } else {
+                        alert("Fehler: " + (res.message || res.error));
+                    }
+                }
 
-        function closeTestEditModal() {
-            document.getElementById('test-edit-modal').style.display = 'none';
-        }
+                // ============ Impressum & About ============
+                function openImpressum() {
+                    const modal = document.getElementById('impressum-modal');
+                    if (modal) modal.style.display = 'flex';
+                    // Close about if open
+                    const aboutModal = document.getElementById('about-modal');
+                    if (aboutModal) aboutModal.style.display = 'none';
+                }
 
-        async function saveTestMetadata() {
-            if (!currentEditingTestFile) return;
+                function closeImpressum() {
+                    const modal = document.getElementById('impressum-modal');
+                    if (modal) modal.style.display = 'none';
+                }
 
-            const metadata = {
-                category: document.getElementById('test-edit-category').value,
-                inputs: document.getElementById('test-edit-inputs').value,
-                outputs: document.getElementById('test-edit-outputs').value,
-                files: document.getElementById('test-edit-files').value,
-                comment: document.getElementById('test-edit-comment').value
-            };
+                function openAbout() {
+                    const modal = document.getElementById('about-modal');
+                    if (modal) modal.style.display = 'flex';
+                    // Close impressum if open
+                    const impressumModal = document.getElementById('impressum-modal');
+                    if (impressumModal) impressumModal.style.display = 'none';
+                }
 
-            const res = await eel.update_test_metadata(currentEditingTestFile, metadata)();
-            if (res.status === 'ok') {
-                closeTestEditModal();
-                loadTestSuites(); // Reload to show new metadata
-                alert(t("test_save_success"));
-            } else {
-                alert(t("common_error") + res.error);
-            }
-        }
+                function closeAbout() {
+                    const modal = document.getElementById('about-modal');
+                    if (modal) modal.style.display = 'none';
+                }
 
-        async function createNewTest() {
-            const name = prompt("Name für den neuen Test (z.B. feature_x):");
-            if (!name) return;
-            const res = await eel.create_new_test(name)();
-            if (res.status === 'ok') {
-                loadTestSuites();
-            } else {
-                alert("Fehler: " + (res.message || res.error));
-            }
-        }
+                // Close modals on escape key
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        document.getElementById('impressum-modal').style.display = 'none';
+                        document.getElementById('about-modal').style.display = 'none';
+                    }
+                });
 
-        async function deleteTest(filename) {
-            if (!confirm(`Möchtest du den Test "${filename}" wirklich löschen?`)) return;
-            const res = await eel.delete_test(filename)();
-            if (res.status === 'ok') {
-                loadTestSuites();
-            } else {
-                alert("Fehler: " + (res.message || res.error));
-            }
-        }
-
-        // ============ Impressum & About ============
-        function openImpressum() {
-            const modal = document.getElementById('impressum-modal');
-            if (modal) modal.style.display = 'flex';
-            // Close about if open
-            const aboutModal = document.getElementById('about-modal');
-            if (aboutModal) aboutModal.style.display = 'none';
-        }
-
-        function closeImpressum() {
-            const modal = document.getElementById('impressum-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        function openAbout() {
-            const modal = document.getElementById('about-modal');
-            if (modal) modal.style.display = 'flex';
-            // Close impressum if open
-            const impressumModal = document.getElementById('impressum-modal');
-            if (impressumModal) impressumModal.style.display = 'none';
-        }
-
-        function closeAbout() {
-            const modal = document.getElementById('about-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        // Close modals on escape key
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.getElementById('impressum-modal').style.display = 'none';
-                document.getElementById('about-modal').style.display = 'none';
-            }
-        });
-
-        // Initial load: wait a tick for Eel WebSocket to connect, then load data
-        setTimeout(function () {
-            loadLibrary();
-            loadParserConfig();
-            loadDebugFlags();
-            loadTestSuites();
-        }, 100);
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const version = await eel.get_version()();
-                document.getElementById('version-label').textContent = 'v' + version;
-                document.getElementById('about-title').textContent = 'Media Web Viewer v' + version;
-            } catch (e) {
-                console.error("Could not fetch version:", e);
-            }
-        });
-    </script>
+                // Initial load: wait a tick for Eel WebSocket to connect, then load data
+                setTimeout(function () {
+                    loadLibrary();
+                    loadParserConfig();
+                    loadDebugFlags();
+                    loadTestSuites();
+                }, 100);
+                window.addEventListener('DOMContentLoaded', async () => {
+                    try {
+                        const version = await eel.get_version()();
+                        document.getElementById('version-label').textContent = 'v' + version;
+                        document.getElementById('about-title').textContent = 'Media Web Viewer v' + version;
+                    } catch (e) {
+                        console.error("Could not fetch version:", e);
+                    }
+                });
+            </script>
 </body>
 
 </html>

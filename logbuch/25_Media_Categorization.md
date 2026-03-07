@@ -1,24 +1,19 @@
-<!-- Category: UI/UX -->
+<!-- Category: Library -->
+<!-- Summary: Intelligente Erkennung von Hörbüchern (.m4b) und Integration in Datei-Browser. -->
+<!-- Status: COMPLETED -->
 
 # Media Categorization
 
-## Automatic Detection
-The system automatically categorizes media based on:
-- **File Extensions**: `.m4b` is always treated as a **Hörbuch** (audiobook), while `.mp3`, `.flac`, `.wav` are generally **Audio**.
-- **Folder Structure**: If a parent directory contains "audiobooks", "hörbuch", etc., the items are categorized accordingly.
+## Overview
+To improve organization within the library, we added a categorization system that distinguishes between standard Music and Audiobooks.
 
-## Support for New Types
-The backend is prepared to handle:
-- **Audio** (Music, Podcasts)
-- **Album**
-- **Compilation**
-- **Single**
-- **Hörbuch** (Audiobooks)
+## Logic
+1. **File Extension**: Files ending in `.m4b` are automatically flagged as `Audiobook`.
+2. **Path Heuristics**: Folders containing "Hörbuch" or "Audiobook" in their path are also considered.
+3. **Database Flag**: A new `category` field exists in the `media` table.
 
-Missing:
-- **Video** (Movies, Clips)
-- **Serie** (TV Shows)
-- **Dokument / E-Book** (.pdf, .epub)
+## GUI Integration
+- **Badges**: In the library list, items are marked with an "Audiobook" badge if applicable.
+- **Filtering**: The database can now be queried specifically for one category (Music or Audiobook).
 
-## Sidebar Integration
-The category is displayed as a badge in the sidebar and influences which player features (like chapter navigation) are prioritized.
+This system allows for a cleaner user experience when managing large libraries with mixed media types.
