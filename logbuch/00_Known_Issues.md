@@ -11,11 +11,37 @@
 - [x] Unnötige Konsolenausgaben beim Scan (jetzt hinter `db`-Flag).
 - [x] Pfad-Konflikte nach Neuinstallation (Dokumentation für Reset hinzugefügt).
 - [x] Fehlende System-Abhängigkeiten in der `.deb` (jetzt in `control` hinterlegt).
+- [x] Testing & Logging
 
 ## Offene Punkte
+- [ ] Globale Versionierung
 - [ ] Hörbuch Tag muss weg
+- [ ] Noch deutsch: Keine spezifischen Optionen für "Filename" verfügbar.
+- [ ] Noch deutsch: Keine spezifischen Optionen für "Container Structure" verfügbar.
+- [ ] Edit menu: Metadata saved! Popups später ausblenden / UI Umgestaltung
+- [ ] im log Edit menu: Eintrag gespeichert!
+- [ ] Refresh im Editmenü erfolgt nach schreiben nicht
+- [ ] Enhancing Feature Modal and Navigation Bar
+- [ ]  <!-- Category: Planung --> # Neuer Eintrag Tag in Formular deutsch
+- [ ]  Console und Dict wieder tauschen / Mehr Dateiformate exposen / Datenbank intigrieren
+- [ ]  Standardsprache aus Systemsprache ermitteln 
+- [ ] Parser Rewrite
 - [ ] Kein automatischer Refresh der UI, wenn Dateien im Dateisystem verschoben werden (manueller Scan nötig).
 - [ ] Große Listen (Player-Tab) könnten bei >10.000 Einträgen eine Virtual-Scrolling Lösung vertragen.
+- [ ] Container Parser falsch. Rüber zu pymediainfo. und hier mkv container erkennung für mkv audio Erkennung
+- [ ] Speichern der Tags als String in der DB speichert nicht alle Tags, um Performance zu garantieren. Aber diese Tags müssen später für eine große Datenbank wiederherstellbar sein. Meilenstein Medienbibliothek
+- [ ] Hinzufügen von Video- und Audio-Dateien zur Datenbank. 
+    - [ ] Pflicht: m1a/alac, flac, mp3 
+    - [ ] Opional: DSD 
+- [ ] Weitere Datentypen hinzufügen. , wie Dokumente, E-Books, Bilder, Archive etc.
+- [ ] ID-System für Medienelemente, die aus mehreren Objekten bestehen.
+- [ ] Filmscraper
+- [ ] GUI überarbeiten
+- [ ] Gehört. Eher zu Features.
+- [ ] Windows exe
+- [ ] Weitere Datenquellen und Tools
+- [ ] DOCUMENTATION
+- [ ] Debug Flags
 
 <!-- lang-split -->
 
