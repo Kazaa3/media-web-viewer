@@ -157,11 +157,13 @@ The application automatically categorizes indexed items based on metadata and fi
 
 ```
 media-web-viewer/
-├── VERSION               ← Central version number (e.g. 1.1.19)
+├── VERSION               ← Central version number (e.g. 1.1.20)
 ├── main.py               ← Entry point, Eel setup, all backend API functions
-├── models.py             ← MediaItem data model (parsing, transcoding flags)
+├── models.py             ← MediaItem data model (parsing, transcoding logic)
 ├── db.py                 ← SQLite database logic (init, insert, query, clear)
 ├── requirements.txt      ← Python dependencies
+├── DOCUMENTATION.md      ← Comprehensive project documentation
+├── DEPENDENCIES.md       ← Third-party dependencies and licenses
 ├── build_deb.sh          ← Script to build a .deb package
 ├── parsers/              ← Metadata extraction pipeline
 │   ├── filename_parser.py
