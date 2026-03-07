@@ -11,7 +11,6 @@ import time
 import subprocess
 import io
 import contextlib
-
 from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
@@ -77,7 +76,6 @@ import db
 
 # Eigene Parser
 from parsers import media_parser
-from parsers.format_utils import PARSER_CONFIG
 
 # Eigene bottle Web-Routen
 from web import app_bottle
