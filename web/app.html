@@ -507,15 +507,29 @@
                 if (!currentLogbuchEntries || currentLogbuchEntries.length === 0) {
                     list.innerHTML = '<div style="color:#999;font-style:italic;">Keine Logbücher gefunden.</div>';
                 } else {
-                    let categories = new Set(['Alle']);
-                    currentLogbuchEntries.forEach(e => categories.add(e.category));
                     const categoryFilter = document.getElementById('logbuch-category-filter');
                     if (categoryFilter) {
                         categoryFilter.innerHTML = '';
-                        categories.forEach(cat => {
+                        // Always add "All" first
+                        const allOpt = document.createElement('option');
+                        allOpt.value = 'Alle';
+                        allOpt.text = t('logbook_category_all');
+                        categoryFilter.appendChild(allOpt);
+
+                        const catMap = new Map(); // Localized Name -> Original Categories
+                        currentLogbuchEntries.forEach(e => {
+                            const cat = e.category || 'Misc';
+                            const catKey = `cat_${cat.toLowerCase()}`;
+                            const localizedCat = t(catKey) !== catKey ? t(catKey) : cat;
+                            if (!catMap.has(localizedCat)) catMap.set(localizedCat, []);
+                            catMap.get(localizedCat).push(cat);
+                        });
+
+                        const sortedDisplayCats = Array.from(catMap.keys()).sort();
+                        sortedDisplayCats.forEach(displayCat => {
                             const opt = document.createElement('option');
-                            opt.value = cat;
-                            opt.text = cat;
+                            opt.value = displayCat; // Use localized name as filter value
+                            opt.text = displayCat;
                             categoryFilter.appendChild(opt);
                         });
                     }
@@ -575,22 +589,25 @@
             const selectedCategory = filter ? filter.value : 'Alle';
             list.innerHTML = '';
             const grouped = {};
-            entries.forEach(e => {
-                if (!grouped[e.category]) grouped[e.category] = [];
-                grouped[e.category].push(e);
-            });
-            const categories = selectedCategory === 'Alle' ? Object.keys(grouped).sort() : [selectedCategory];
-            categories.forEach(cat => {
-                if (!grouped[cat]) return;
-                const catHeader = document.createElement('div');
-                catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
 
-                // Internationalize Category
+            entries.forEach(e => {
+                const cat = e.category || 'Misc';
                 const catKey = `cat_${cat.toLowerCase()}`;
                 const localizedCat = t(catKey) !== catKey ? t(catKey) : cat;
+
+                if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return;
+
+                if (!grouped[localizedCat]) grouped[localizedCat] = [];
+                grouped[localizedCat].push(e);
+            });
+
+            const sortedCategories = Object.keys(grouped).sort();
+            sortedCategories.forEach(localizedCat => {
+                const catHeader = document.createElement('div');
+                catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
                 catHeader.innerText = localizedCat;
                 list.appendChild(catHeader);
-                grouped[cat].forEach(entry => {
+                grouped[localizedCat].forEach(entry => {
                     const btn = document.createElement('div');
                     btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
                     const nameEl = document.createElement('span');
