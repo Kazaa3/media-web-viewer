@@ -167,13 +167,13 @@ def rename_media(old_name, new_name):
     else:
         return {"status": "error", "message": "Name bereits vorhanden oder Fehler"}
 
-@eel.expose("delete_media")
+@eel.expose
 def delete_media(name):
-    """Löscht ein Medium aus der DB."""
-    if DEBUG_FLAGS["db"]:
-        debug_log(f"[Debug-DB] Lösche aus DB: {name}")
-    db.delete_media_by_name(name)
-    return {"status": "ok"}
+    return db.delete_media(name)
+
+@eel.expose
+def get_db_stats():
+    return db.get_db_stats()
 
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
