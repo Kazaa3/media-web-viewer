@@ -1,306 +1,175 @@
-# Media Web Viewer - Comprehensive Documentation
-
-**Version:** 1.1.19  
-**License:** GNU General Public License v3 (GPL-3.0)  
-**Author:** kazaa3 | Germany  
-### Global Versioning
-
-The application uses a centralized versioning system defined in the `VERSION` file in the project root:
-
-```text
-1.1.19
-```
-
-This version is automatically loaded and used across:
-- Application backend (`main.py`)
-- .deb package metadata (`packaging/DEBIAN/control`) – automatically updated by `build_deb.sh`
-- Build scripts (`build_deb.sh`)
-- Application GUI (Help/About/Footer)
-
-To update the version:
-1. Edit the `VERSION` file in the project root.
-2. Run `bash build_deb.sh` to build the package with the new version.
-3. The documentation and application will reflect the change automatically.
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Key Features](#key-features)
-3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Project Structure](#project-structure)
-6. [Architecture](#architecture)
-7. [Usage Guide](#usage-guide)
-8. [Parser Pipeline](#parser-pipeline)
-9. [Transcoding System](#transcoding-system)
-10. [Database Schema](#database-schema)
-11. [Configuration](#configuration)
-12. [Development](#development)
-13. [Troubleshooting](#troubleshooting)
-14. [License](#license)
-
----
+# Project Documentation: Media Web Viewer
 
 ## Overview
+Media Web Viewer is a sleek, modern desktop application for browsing and playing media libraries (music, audiobooks, and basic video support). Built with Python (Eel) and Vanilla JS/HTML/CSS, it prioritizes a premium user experience and detailed metadata extraction.
 
-**Media Web Viewer** is a sophisticated, modern desktop media player and library manager with an embedded web-based graphical user interface. It combines the power of Python backend processing with a responsive HTML/CSS/JavaScript frontend to provide a premium user experience for managing and playing large media collections.
+A local desktop media player and library manager with an embedded web-based GUI. Built with Python, [Eel](https://github.com/python-eel/Eel), and the [Bottle](https://bottlepy.org/) web framework. Supports a wide range of audio formats including MP3, M4A, M4B (Audiobooks), FLAC, OGG, WAV, ALAC, and WMA.
 
-### Design Philosophy
+Media Web Viewer is a comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities.
 
-- **Local-First Architecture:** All data stays on your machine. No cloud synchronization, no external servers.
-- **Performance-Oriented:** Multi-parser pipeline optimizes metadata extraction speed and accuracy.
-- **User-Centric**: Bilingual interface (German/English) with intuitive navigation and real-time feedback.
-- **Internationalization (i18n):** Full support for German and English localization via `i18n.json`. See [Wikipedia: Internationalisierung](https://de.wikipedia.org/wiki/Internationalisierung_(Softwareentwicklung)) for details.
-- **Open Source:** Licensed under GPL-3.0 for transparency and community contribution.
-
-### Supported Formats
-
-**Audio:** MP3, M4A (AAC), M4B (Audiobooks), FLAC, OGG (Vorbis/Opus), WAV, ALAC, WMA, AIFF, DSD  
-**Video:** MP4, MKV, WebM (basic support)  
-**Documents:** EPUB, PDF (unsupport)
-
----
+### Global Versioning
+The application uses a centralized versioning system defined in the `VERSION` file in the project root:
+```text
+1.1.20
+```
+This version is automatically loaded and used across the backend, .deb package metadata, and the GUI.
 
 ## Key Features
+- **Multi-format support**: Wide range of audio and container formats.
+- **Intelligent parser chain**: Sequential metadata extraction with falling back logic.
+- **Audiobook support**: Specialized handling for `.m4b` and long audio files including chapter navigation.
+- **Automatic transcoding**: On-the-fly conversion for ALAC/WMA files for browser playback.
+- **SQLite DB**: High-performance local storage for media metadata.
+- **Integrated Test suite**: Run pytest suites directly from the GUI.
+- **Bilingual Logbook**: Built-in development log and documentation viewer (DE/EN).
 
-### 🎵 Core Media Capabilities
-- **Multi-Format Playback:** Supports MP3, FLAC, OGG, M4A, M4B, WAV, and more
-- **Audiobook Support:** Intelligent chapter detection and natural sorting for long-form audio
-- **Automatic Categorization:** Smart detection of Albums, Singles, Compilations, Classical music, and Audiobooks
-- **Cover Art Extraction:** Automatically detects and displays embedded album artwork
-- **On-Demand Transcoding:** ALAC → FLAC and WMA → OGG transcoding with intelligent caching
+## Technical Architecture
+- **Backend**: Python 3.11+ with Bottle server and Eel bridge.
+- **Frontend**: Modern Vanilla JavaScript with declarative i18n system, CSS3 (Glassmorphism), and dynamic event handling.
 
-### 🧠 Metadata Intelligence
-- **Multi-Parser Pipeline:** Combines filename parsing, Mutagen, FFmpeg, and pymediainfo for maximum accuracy
-- **Intelligent Fallbacks:** Gracefully handles missing metadata by using alternative sources
-- **Parser Configuration:** Drag-and-drop reordering of parser chain with enable/disable toggles
-- **Full-Mode Analysis:** Optional deep metadata extraction for detailed tag inspection
-
-### 🎨 User Interface
-- **Modern Web-Based GUI:** Built with Vanilla JS, CSS3 Glassmorphism effects, responsive design
-- **Multiple Tabs:** Player, File Browser, Media Editor, Test Suite, Logbook, Options
-- **Real-Time Library:** SQLite-backed media library with instant search and filtering
-- **Embedded File Browser:** Navigate your filesystem and add media directly from the app
-- **Live Metadata Editor:** Edit tags and organize your library without external tools
-
-### 🔧 Developer & Testing Tools
-- **Test Suite:** Integrated pytest runner directly in the UI
-- **Debug Tools:** Real-time log viewer with configurable debug flags
-- **Logbook System:** Built-in development documentation and feature tracking in Markdown (Planning/Planung, All/Alle, summary texts in both languages)
-- **Parser Performance Metrics:** Track timing and efficiency of each metadata parser
-- **Features Modal:** Refactored GUI for displaying feature updates and development notes (auto-loads from logbuch/ if files missing)
-
-  - **English:** Latest feature updates and development notes
-  - **Deutsch:** Neueste Feature-Updates und Entwicklungsnotizen
-### 📦 System Integration
-- **Native Packaging:** Full `.deb` package for seamless Debian/Ubuntu installation
-- **Automatic Dependency Resolution:** Missing system libraries are auto-installed via apt
-- **Virtual Environment Isolation:** Optional self-contained Python environment
-- **Desktop Integration:** Desktop menu entry and system file dialogs via Tkinter
+### Imprint
+- **Developer**: kazaa3
+- **Location**: Germany
+- **Privacy**: Local storage in SQLite. No data transmission to external servers.
+- **License**: GNU General Public License v3 (GPL-3.0).
 
 ---
 
-## Installation
+## Quick Start
 
-### Prerequisites
+### Option A: Install via .deb (Debian / Ubuntu)
 
-Before installing Media Web Viewer, ensure your system meets these requirements:
-
-#### System Dependencies (Linux/Debian/Ubuntu)
-```bash
-sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 python3-tk python3-dev build-essential
-```
-
-#### Alternative Platforms
-**Fedora/RHEL:**
-```bash
-sudo dnf install ffmpeg mediainfo python3-tkinter python3-devel gcc
-```
-
-**macOS:**
-```bash
-brew install ffmpeg mediainfo python@3.11
-```
-
-### Installation Methods
-
-#### Option A: Install Pre-Built .deb Package (Recommended for Users)
-
-The easiest way to install Media Web Viewer on Debian/Ubuntu:
+> Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
 
 ```bash
-# 1. Download the latest .deb from releases page
-# https://github.com/kazaa3/media-web-viewer/releases
+sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
+sudo apt-get install -f   # installs missing dependencies if needed
 
-# 2. Install the package
-sudo dpkg -i media-web-viewer_1.1.18_amd64.deb
-
-# 3. Resolve any missing dependencies
-sudo apt-get install -f
-
-# 4. Launch the application
+# Start the app
 media-web-viewer
 ```
 
-**Installing Updates:**
+---
+
+## 🇩🇪 Deutsch (German)
+
+Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
+
+---
+
+## 🇺🇸 English (Default)
+
+The installer automatically sets up a Python virtual environment and installs all dependencies.
+
+**Uninstall:**
 ```bash
-sudo apt update
-sudo apt upgrade media-web-viewer
+# Keep configuration files
+sudo apt remove media-web-viewer
+
+# Remove everything (purge)
+sudo apt purge media-web-viewer
 ```
 
-#### Option B: Run from Source (For Developers)
+---
 
-Installation for development and customization:
+## Troubleshooting & Reset
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/MasterX360/media-web-viewer.git
-cd media-web-viewer
-
-# 2. Create Python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# 3. Install Python dependencies
-pip install -r requirements.txt
-
-# 4. Run the application
-python main.py
-
-# 5. Access via browser (usually opens automatically)
-# http://localhost:8888
-```
-
-#### Option C: Build Your Own .deb Package
-
-For creating a custom .deb package:
+### Start from Scratch
+If you previously ran the app from source or want to reset all settings, note that `apt purge` does **not** remove files in your home directory. To truly start "from zero":
 
 ```bash
-# 1. Install build dependencies
-sudo apt install dpkg-deb rsync
+# 1. Remove old user configuration and database
+rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
-# 2. Edit version and scripts as needed in build_deb.sh
-# 3. Run the build script
-bash build_deb.sh
+# 2. Reinstall the clean version
+sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 
-# 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.1.18_amd64.deb
+# 3. Fix dependencies if needed
 sudo apt-get install -f
 ```
 
 ---
 
-## .deb Package Creation
+## Indexing
 
-The project is built as a Debian package (.deb) for Debian/Ubuntu systems to enable easy installation. The build script `build_deb.sh` automates the entire process.
-
-### Prerequisites for Building
-
-- Bash shell
-- `dpkg-deb` (part of dpkg, standard on Debian/Ubuntu)
-- `rsync` (for copying files)
-
-### Build Process in Detail
-
-1. **Prepare Staging Area:** The script creates or empties the `packaging/` folder and sets up the structure.
-2. **Copy Source Code:** Using `rsync`, the entire project code is copied to `packaging/opt/media-web-viewer/`, excluding unwanted files like `.git`, `.venv`, `__pycache__`, build artifacts, and media files.
-3. **Make Scripts Executable:** The DEBIAN scripts (`postinst`, `prerm`) and the start script (`usr/bin/media-web-viewer`) are made executable with `chmod 755`.
-4. **Build Package:** `dpkg-deb --build --root-owner-group packaging/ media-web-viewer_VERSION_amd64.deb` creates the final .deb package.
-
-### Package Structure
-
-The .deb package follows Debian standards:
-- `DEBIAN/control`: Package metadata (name, version, dependencies, etc.)
-- `DEBIAN/postinst`: Post-installation script (e.g., for setup)
-- `DEBIAN/prerm`: Pre-removal script (e.g., for cleanup)
-- `opt/media-web-viewer/`: The complete application code
-- `usr/bin/media-web-viewer`: Start script in PATH
-- `usr/share/applications/media-web-viewer.desktop`: Desktop menu entry
-
-### Installation and Usage
-
-After building, install the package with:
-```bash
-sudo dpkg -i media-web-viewer_VERSION_amd64.deb
-sudo apt-get install -f  # If dependencies are missing
-```
-
-Start: `media-web-viewer`
-
-Uninstall: `sudo apt remove media-web-viewer` (keeps config) or `sudo apt purge media-web-viewer` (removes everything).
-
-### Adjustments
-
-- **Version:** Adjust the `VERSION` variable in `build_deb.sh`.
-- **Architecture:** Default is `amd64`, can be changed.
-- **Contents:** The rsync excludes in `build_deb.sh` can be adjusted to include or exclude additional files.
-- **Dependencies:** Update the `Depends` line in `packaging/DEBIAN/control` if new dependencies are added.
-
-For more details, see the script `build_deb.sh` and Debian packaging documentation.
-
-### First Run
-
-1. **Start the Application**
-   ```bash
-   media-web-viewer
-   ```
-   The application window will open automatically in your default browser.
-
-2. **Add Media Library Directory**
-   - Click the **Options** tab
-   - Select the **Add Directory** button
-   - Choose a folder containing your media files
-   - The app will begin indexing automatically
-
-3. **View Your Library**
-   - Click the **Player** tab to see your indexed media
-   - Browse by category (Album, Audiobook, Classical, etc.)
-   - Select a track to see detailed metadata in the sidebar
-
-4. **Play Media**
-   - Click any track to start playback
-   - Use the player controls in the footer
-   - Skip tracks with next/previous buttons
-
-### Configuration
-
-#### Selecting Directories
-
-By default, Media Web Viewer indexes files from `/opt/media-web-viewer/media/`. To add more directories:
-
-1. Go to **Options** tab
-2. Click **+ Add Directory**
-3. Select your media folders
-4. Changes apply immediately with automatic re-indexing
-
-#### Debug Mode
-
-Enable debug logging for troubleshooting:
-
-```bash
-python main.py --debug
-```
-
-This activates all debug flags and logs detailed information about parsing, system operations, and UI events.
+The app indexes `/opt/media-web-viewer/media` by default. You can add more directories in the **Options** tab using the "Add Directory" button.
 
 ---
 
-### π©πͺ Deutsch (German)
+### Option B: Run from Source
 
-Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
+**Requirements:**
+- Python 3.11+
+- `ffmpeg` in your PATH (for transcoding and metadata fallback)
+- `python3-tk` (for system file dialogs)
+- `libmediainfo0v5` (required by pymediainfo)
 
-Die Installer richtet automatisch eine Python Virtual Environment ein und installiert alle Abhängigkeiten.
-
-**Deinstallation:**
 ```bash
-# Konfiguration beibehalten
-sudo apt remove media-web-viewer
+# Clone the repository
+git clone https://github.com/Kazaa3/media-web-viewer.git
+cd media-web-viewer
 
-# Alles entfernen (purge)
-sudo apt purge media-web-viewer
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run
+python main.py
 ```
+
+---
+
+### Option C: Build the .deb yourself
+
+```bash
+bash build_deb.sh
+sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
+```
+
+---
+
+## Features
+
+- **Web-based GUI:** Modern HTML/CSS/JS interface powered by Eel (no Electron needed)
+- **Player tab**: Real-time playback with Itemlist and player sidebar on GUI.
+- **Itemlist**: Displays all playable elements with search and filtering.
+- **Player footer**: Persistent playback controls and progress tracking.
+- **Premium Sidebar**: Real-time display of media metadata and cover art.
+- **Smart Metadata Extraction:** Multi-parser pipeline using `mutagen`, `pymediainfo`, and `ffmpeg` fallback.
+- **Audiobook Support:** Automatic chapter detection and correct sorting for `.m4b` and long MP3 files.
+- **On-the-Fly Transcoding:** ALAC → FLAC and WMA → OGG via `ffmpeg` with transparent caching.
+- **Embedded Cover Art:** Extracts and displays cover images from MP3, FLAC, M4A, and MP4 containers.
+- **Media Library:** SQLite-backed library with an in-app metadata editor.
+- **File Browser:** Navigate your filesystem and add media directly from the app.
+- **Integrated Tests:** Run backend pytest suites from the "Tests" tab in the UI.
+- **Smart Categorization:** Advanced logic to distinguish between Albums, Singles, and Compilations.
+- **Sophisticated Metadata Parsing**: Extracts deep technical info (bitrate, codecs, tags) using a custom parser chain.
+- **Parser Configuration:** Drag-and-drop reordering of the parser chain with enable/disable toggles.
+- **Debug Tools:** Real-time log viewer and configurable debug flags.
+- **Dynamic Test Suite**: Integrated GUI for running and managing media parsing tests.
+- **Logbook:** Built-in development log and documentation viewer (Bilingual).
+- **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art').
+- **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`.
+- **Internationalisierung**: Full documentation and UI support for German and English.
+- **Natural Sorting**: Intelligent numerical sorting for chapters and titles.
+
+---
+
+### Supported Media Categories
+
+The application automatically categorizes indexed items based on metadata and file patterns:
+
+- **🎵 Audio:** General fallback for music without specific tags.
+- **💿 Album:** Music organized by album name or track length.
+- **💿 Single:** Music organized by multiple versions for the same song.
+- **🔀 Compilation:** Detection of "Various Artists" or "compilation" tags.
+- **🎻 Klassik (Classical):** Enhanced detection for composers like **Beethoven, Mozart, Bach, Chopin** and "Klassik" keywords.
+- **📚 Hörbuch (Audiobook):** Specialized support for `.m4b` and long audio files including chapter navigation.
+- **🎬 Film / Serie:** Detection for movie files and TV show patterns (Season/Staffel).
+- **📄 E-Book / Dokument:** Support for EPUB, PDF and other document types.
 
 ---
 
@@ -308,493 +177,160 @@ sudo apt purge media-web-viewer
 
 ```
 media-web-viewer/
-│
-├── main.py                  # Entry point, Eel setup, backend API functions
-├── models.py                # MediaItem class with parsing and transcoding logic
-├── db.py                    # SQLite database operations
-├── requirements.txt         # Python package dependencies
-├── DEPENDENCIES.md          # Complete dependency list with licenses
-├── LICENSE.md               # GNU General Public License v3
-│
-├── parsers/                 # Metadata extraction pipeline
-│   ├── media_parser.py      # Central parser orchestrator
-│   ├── filename_parser.py   # Extract info from filename patterns
-│   ├── mutagen_parser.py    # Audio tag extraction (ID3, Vorbis, MP4, etc.)
-│   ├── ffmpeg_parser.py     # FFmpeg-based fallback parsing
-│   ├── pymediainfo_parser.py# pymediainfo supplementary parsing
-│   ├── container_parser.py  # Container format detection (MKV, MP4)
-│   └── format_utils.py      # Codec formatting, parser configuration
-│
-├── web/                     # Frontend assets and Bottle server
-│   ├── app.html             # Complete web UI (all tabs and modals)
-│   ├── app_bottle.py        # Bottle routes for media serving, cover art
-│   ├── script.js            # Frontend JavaScript logic
-│   ├── i18n.json            # German/English localization strings
-│   └── __init__.py
-│
-├── tests/                   # pytest unit test suite
-│   ├── test_*.py            # Individual test modules
-│   ├── parser_tests/        # Parser-specific tests
-│   └── integration_tests/   # End-to-end tests
-│
-├── logbuch/                 # Development logbook (Markdown)
-│   ├── 01_Features.md       # Feature descriptions with bilingual titles
-│   ├── 00_Known_Issues.md   # Current and resolved issues
-│   └── *.py                 # Scripts for logbook management
-│
-├── packaging/               # .deb package structure
-│   ├── DEBIAN/
-│   │   ├── control          # Package metadata
-│   │   ├── postinst         # Post-installation script
-│   │   └── prerm            # Pre-removal script
-│   ├── opt/media-web-viewer/# Application files
-│   └── usr/
-│       ├── bin/             # Executable launcher
-│       └── share/           # Desktop integration
-│
-├── build_deb.sh             # Script to build .deb package
-├── build.py                 # PyInstaller build script
-├── MediaWebViewer.spec      # PyInstaller specification
-│
-└── media/                   # Default media library directory (user-writable)
-    └── .cache/              # Transcoded file cache
+├── VERSION               ← Central version number (1.1.20)
+├── main.py               ← Entry point, Eel setup, all backend API functions
+├── models.py             ← MediaItem data model (parsing, transcoding logic)
+├── db.py                 ← SQLite database logic (init, insert, query, clear)
+├── requirements.txt      ← Python package dependencies
+├── DOCUMENTATION.md      ← This comprehensive documentation
+├── DEPENDENCIES.md       ← Complete dependency list with licenses
+├── build_deb.sh          ← Script to build a .deb package
+├── parsers/              ← Metadata extraction pipeline
+│   ├── media_parser.py   ← Parser orchestrator
+│   ├── filename_parser.py
+│   ├── mutagen_parser.py
+│   ├── ffmpeg_parser.py
+│   ├── pymediainfo_parser.py
+│   └── format_utils.py   ← Codec formatting, parser configuration
+├── web/                  ← Frontend + Bottle web server
+│   ├── app.html          ← Full UI (tabs: Player, Browser, Edit, Tests, Logbook, …)
+│   ├── app_bottle.py     ← Routes for media and cover art serving
+│   ├── script.js         ← Frontend JavaScript logic
+│   └── i18n.json         ← Localization strings (DE/EN)
+├── tests/                ← pytest unit tests
+├── logbuch/              ← Development logbook (Markdown entries)
+├── packaging/            ← .deb packaging files (DEBIAN/, usr/)
+└── media/                ← Your media files go here (gitignored)
 ```
 
 ---
 
-## Architecture
+## Parser Pipeline
 
-### Technology Tree
+Each parser receives the current `tags` dict and only fills in missing values – it never overwrites data already found by an earlier parser.
 
-```
-Media Web Viewer (v1.1.14)
-├── Frontend Layer
-│   ├── HTML5 / CSS3 (Glassmorphism)
-│   ├── Vanilla JavaScript (ES6+)
-│   ├── i18n.json (German/English)
-│   └── Responsive Design
-│
-├── Communication Bridge (EEL)
-│   ├── WebSocket Server
-│   ├── @eel.expose API Decorators
-│   └── JSON Serialization
-│
-├── Backend Layer
-│   ├── Python 3.11+
-│   ├── Eel Framework (GUI Bridge)
-│   ├── Bottle Web Server (localhost:8888)
-│   │   ├── Media Routes (/media/<file>)
-│   │   └── Cover Art Routes (/cover/<file>)
-│   └── Bottle WebSocket Plugin
-│
-├── Data Processing
-│   ├── Parser Pipeline
-│   │   ├── Filename Parser (Pure Python)
-│   │   ├── Container Parser (Format Detection)
-│   │   ├── Mutagen Parser (Tag Extraction)
-│   │   ├── FFmpeg Parser (CLI Codec Detection)
-│   │   └── pymediainfo Parser (Metadata Supplement)
-│   └── Transcoding Engine
-│       ├── FFmpeg CLI (ALAC→FLAC, WMA→OGG)
-│       └── Cache Management (~/.media-web-viewer/transcoded_cache/)
-│
-├── Data Persistence
-│   ├── SQLite Database (media_library.db)
-│   ├── JSON Metadata Storage
-│   ├── Config Files (config.json, parser_config.json)
-│   └── Debug Flags (debug_flags.json)
-│
-├── System Integration
-│   ├── .deb Packaging (Debian/Ubuntu)
-│   ├── System File Dialogs (python3-tk)
-│   ├── FFmpeg CLI (Audio/Video Processing)
-│   └── mediainfo Library
-│
-└── Development & Testing
-    ├── pytest Unit Tests
-    ├── pytest-cov Coverage
-    ├── Black Code Formatter
-    ├── Flake8 Linter
-    └── Git Version Control
-```
+| Order | Parser | Source | Provides |
+|:-----:|--------|--------|----------|
+| 1 | `filename_parser` | Filename | title, artist, file size |
+| 2 | `container_parser` | Container format | container format |
+| 3 | `mutagen_parser` | Mutagen lib | ID3/MP4/Vorbis tags, bitrate, samplerate, cover detection |
+| 4 | `ffmpeg_parser` | FFmpeg CLI | Container format, codec, bit depth (fallback) |
+| 5 | `pymediainfo_parser` | pymediainfo | Supplementary / missing metadata |
 
-### System Design
+---
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  User Interface (Browser)               │
-│        HTML/CSS/JavaScript with Eel Bridge              │
-└────────────────┬────────────────────────────────────────┘
-                 │ eel.expose() calls / event listeners
-                 ▼
-┌─────────────────────────────────────────────────────────┐
-│              Python Backend (Eel + Bottle)              │
-│  main.py - API routes (@eel.expose decorated)           │
-│            - Bottle web server (localhost:8888)         │
-└────────┬──────────────────────┬──────────────┬──────────┘
-         │                      │              │
-         ▼                      ▼              ▼
-    ┌────────────┐      ┌──────────────┐  ┌──────────┐
-    │  Parser    │      │   Database   │  │ Bottle   │
-    │  Pipeline  │      │   (SQLite)   │  │ Routes   │
-    │ (metadata) │      │              │  │ (/media) │
-    └────────────┘      └──────────────┘  └──────────┘
-         │
-    ┌────┴────┬────────┬──────────┬──────────┐
-    ▼         ▼        ▼          ▼          ▼
-  Filename  Mutagen  FFmpeg  pymediainfo Container
-  Parser    Parser   Parser    Parser      Parser
-```
+## Transcoding
 
-### Communication Flow
+Files with ALAC or WMA codec cannot be played natively in browsers. The app detects this and:
 
-1. **User Interaction → Frontend (JavaScript)**
-   - User clicks button, enters text, or scrolls list
-   - JavaScript event handler prepares data
+1. Sets `is_transcoded = True` in the database when codec = ALAC/WMA.
+2. The frontend appends `.flac_transcoded` or `.ogg_transcoded` to the URL.
+3. `app_bottle.py` intercepts the route, transcodes via `ffmpeg`, and caches the result in `media/.cache/`.
+4. The UI shows a warning that the file is being streamed as a transcoded format.
 
-2. **Frontend → Backend (Eel Bridge)**
-   - JavaScript calls `eel.function_name(args)(callback)`
-   - Eel serializes to JSON and sends over WebSocket
+---
 
-3. **Backend Processing (Python)**
-   - `@eel.expose` decorated function receives call
-   - Function processes data (parsing, database queries, etc.)
-   - Returns result
+## Build & Release
+- Packages are built using `build_deb.sh` into `.deb` format for Debian/Ubuntu systems.
+- Versions are centraly managed in the `VERSION` file and automatically injected into `main.py`, `build_deb.sh`, and `packaging/DEBIAN/control`.
 
-4. **Backend → Frontend (WebSocket)**
-   - Eel sends result back to JavaScript callback
-   - Frontend updates DOM with new data
+## Reset & Recovery
+- The "Danger Zone" in Options allows for:
+    - **Clear DB**: Only empties the media database.
+    - **App Reset**: Restores factory settings by deleting the database and config files.
 
 ---
 
 ## Bottle Web Framework
+Bottle ist ein minimalistisches WSGI-Web-Framework für Python, das in einer einzigen Datei läuft und keine Abhängigkeiten außer der Standardbibliothek braucht. Es eignet sich perfekt für kleine APIs oder Apps wie deine Media-Library, wo du Routing und Templates schnell brauchst.
 
-Bottle is a minimalist WSGI web framework for Python that runs in a single file with no dependencies other than the standard library. It's perfect for small APIs or apps like Media Web Viewer, where you need routing and templates quickly.
+### Kernfeatures
+- **Routing**: Dekoratoren wie `@route('/path/<name>')` mappen URLs zu Funktionen.
+- **Templates**: Eingebaute Engine für einfache HTML-Vorlagen.
+- **HTTP-Tools**: Zugriff auf Forms, Cookies, Uploads und JSON.
 
-### Core Features
-
-- **Routing:** Decorators like `@route('/path/<name>')` map URLs to functions.
-- **Templates:** Built-in engine for simple HTML templates (supports Jinja2/Mako).
-- **HTTP Tools:** Access to forms, cookies, uploads, and JSON.
-- **Simple Example:**
-
+### Einfaches Beispiel
 ```python
 from bottle import route, run, template, request
 
 @route('/hello/<name>')
 def greet(name):
-    return template('<h1>Hello {{name}}!</h1>', name=name)
+    return template('<h1>Hallo {{name}}!</h1>', name=name)
 
-@route('/add', method='POST')
-def add_track():
-    title = request.forms.get('title')
-    # Here you could use mutagen for audio metadata
-    return f'Track "{title}" added!'
-
-run(host='localhost', port=8080, debug=True, reloader=True)
+run(host='localhost', port=8080)
 ```
-
-Start with `python app.py` – visit localhost:8080/hello/Peter. For production: Use Gunicorn.
 
 ---
 
 ## EEL Framework
+Eel ist eine Python-Bibliothek für Electron-ähnliche Desktop-Apps mit HTML/JS/CSS-Frontend und Python-Backend. Sie startet einen lokalen Server, lädt HTML im Browser und verbindet via `@eel.expose` Python-Funktionen mit JS.
 
-EEL is a Python library for Electron-like desktop apps with HTML/JS/CSS frontend and Python backend – ideal for Media Web Viewer, since you have JS knowledge. It starts a local server, loads HTML in the browser, and connects via `@eel.expose` Python functions (e.g., mutagen) with JS.
-
-### Setup and Structure
-
-Install with `pip install eel`. Folder structure:
-
+### Setup und Struktur
 ```
-app.py          # Python backend
+app.py          # Python-Backend
 web/            # Frontend
   index.html
   style.css
   script.js
 ```
+Eel serviert `/eel.js` automatisch für bidirektionale Calls.
 
-EEL serves `/eel.js` automatically for bidirectional calls.
-
-### Simple Example
-
+### Beispiel
 **app.py:**
-
 ```python
 import eel
-
-eel.init('web')  # Web folder
-
+eel.init('web')
 @eel.expose
 def scan_media(path):
-    # Here use mutagen/FFmpeg for FLAC/MKV etc.
-    return f"Found: {len(os.listdir(path))} files"
-
-eel.start('index.html', size=(1000, 600))
+    return f"Gefunden: {len(os.listdir(path))} Dateien"
+eel.start('index.html')
 ```
-
-**web/index.html:**
-
-```xml
-<!DOCTYPE html>
-<html>
-<head><title>Media Lib</title></head>
-<body>
-    <input id="path" type="text">
-    <button onclick="scan()">Scan</button>
-    <div id="result"></div>
-    <script src="/eel.js"></script>
-    <script>
-        async function scan() {
-            let path = document.getElementById('path').value;
-            let result = await eel.scan_media(path)();
-            document.getElementById('result').innerHTML = result;
-        }
-    </script>
-</body>
-</html>
-```
-
-Start: `python app.py` – Browser opens automatically.
 
 ---
 
-## Python as Backend
-
-Python serves as the robust backend for Media Web Viewer, handling all core logic, metadata parsing, database operations, and system integration. The architecture leverages Python's strengths in data processing and library ecosystem while providing a seamless bridge to the web-based frontend via EEL.
-
-### Media Library Operations
-
-#### Adding Files to Library
-
-**Automatic (Recommended):**
-1. Place media files in configured directories
-2. Use **Options → Scan Now** to trigger re-indexing
-3. Files are automatically detected and added
-
-**Manual (From Browser):**
-1. Go to **Browser** tab
-2. Navigate to your media directory
-3. Click the **+ Add** button next to any file
-4. File is immediately indexed and searchable
-
-#### Editing Metadata
-
-1. Click any track in the library to select it
-2. Go to **Edit** tab
-3. Modify fields: Title, Artist, Album, Genre, Year, etc.
-4. Click **Save Changes**
-5. Metadata is updated in both database and file tags (where applicable)
-
-#### Player Tab
-
-The **Player** tab is the primary interface for media playback and library browsing.
-
-**Main Components:**
-
-1. **Itemlist (Left Panel)**
-   - Displays all indexed media items
-   - Shows: Title, Artist, Album, Duration
-   - Sorted by category (Album, Single, Compilation, Classical, Audiobook)
-   - Real-time search and filtering
-   - Context menu for quick actions (Play, Edit, Delete)
-
-2. **Player Controls (Center)**
-   - **Play/Pause Button:** Toggle playback
-   - **Previous/Next Buttons:** Navigate tracks
-   - **Progress Bar:** Seek to any position
-   - **Volume Slider:** Adjust playback volume
-   - **Time Display:** Current / Total duration
-
-3. **Premium Sidebar (Right Panel)**
-   - **Cover Art:** Embedded album artwork (fallback to default icon)
-   - **Metadata Display:** 
-     - Title, Artist, Album
-     - Year, Genre, Track Number
-     - Codec, Bitrate, Sample Rate
-     - Container Format
-   - **Related Info:** Album year, artist image (if available)
-
-4. **Now Playing Footer**
-   - Currently playing track information
-   - Mini player controls
-   - Volume indicator
-   - Playback time slider
-
-**Playback Features:**
-
-- **Continuous Playback:** Automatically plays next track in queue
-- **Repeat Modes:** Off, Repeat All, Repeat One
-- **Shuffle:** Randomize track order
-- **Volume Control:** 0-100%, mute option
-- **Seek Precision:** Millisecond-accurate seeking
-- **Transcoding Status:** Shows when playing converted files (ALAC→FLAC, WMA→OGG)
-
-**Playlist Management:**
-
-1. **Create Playlist**
-   - Select one or more tracks using **Ctrl+Click**
-   - Click **Create Playlist** button
-   - Name your playlist and confirm
-   - Playlist appears in dropdown list
-
-2. **Save/Load Playlists**
-   - Access from **Playlists** dropdown
-   - Change playback order dynamically
-   - Playlists persist in database
-
-3. **Edit During Playback**
-   - Reorder tracks via drag-and-drop
-   - Remove tracks from current queue
-   - Add new tracks from library
-
-**Keyboard Shortcuts:**
-
-- **Space:** Play/Pause
-- **N:** Next Track
-- **P:** Previous Track
-- **M:** Mute/Unmute
-- **+/-:** Volume Up/Down
-- **Delete:** Remove from library
-
-### Advanced Features
-
-#### Parser Configuration
-
-Customize how metadata is extracted:
-
-1. Go to **Options → Parser Configuration**
-2. View the current parser chain order
-3. Drag parsers to reorder priority
-4. Toggle parsers on/off with checkboxes
-5. Save configuration
-
-**Parser Modes:**
-- **Lightweight:** Fast extraction, basic metadata only
-- **Full:** Comprehensive extraction, all available tags
-
-#### Debug & Logging
-
-Monitor application behavior and troubleshoot issues:
-
-1. Go to **Options → Debug Console**
-2. Select debug flags to enable:
-   - `parser`: Metadata parsing operations
-   - `ui`: User interface updates
-   - `db`: Database operations
-   - `system`: System and file operations
-3. View real-time logs and performance metrics
-
-#### Running Tests
-
-Execute automated tests directly from the UI:
-
-1. Go to **Tests** tab
-2. Select test suite or individual test
-3. Click **Run Tests**
-4. View results with pass/fail indicators
-5. Check coverage percentage if enabled
+## Python als Backend
+Python dient als robustes Backend für alle Kernlogiken, Metadaten-Extraktion, Datenbankoperationen und Systemintegrationen. Die Architektur nutzt Pythons Stärken in der Datenverarbeitung und bietet eine nahtlose Brücke zum Web-Frontend.
 
 ---
 
-## GUI via EEL with Web Frontend
+## .deb-Paket Erstellung
+Das Projekt wird als Debian-Paket (.deb) für Debian/Ubuntu-Systeme gebaut. Das Build-Skript `build_deb.sh` automatisiert den Prozess:
+1. **Staging**: Struktur in `packaging/` vorbereiten.
+2. **Kopieren**: Projektcode via `rsync` synchronisieren (ohne Junk).
+3. **Rechte**: `chmod 755` für Skripte.
+4. **Build**: `dpkg-deb --build` mit automatischer Versionsinjektion.
 
-The user interface is implemented using EEL, which provides a seamless bridge between the Python backend and a modern web-based frontend. This approach eliminates the need for Electron while maintaining a native desktop application feel.
+---
 
-### Architecture Overview
+## GPL-3.0 Compatibility
+Ja, du kannst absolut GPL-3.0 für dein GitHub-Projekt mit Python, Eel und Bottle verwenden – es ist voll kompatibel. Eel und Bottle sind beide MIT-lizenziert (permissiv), was mit GPL-3.0 harmoniert: Dein Projekt wird GPL, Dependencies bleiben unberührt.
 
-- **Backend:** Python with EEL and Bottle servers
-- **Frontend:** Vanilla JavaScript, HTML5, CSS3 with Glassmorphism effects
-- **Communication:** Bidirectional via WebSocket (EEL) and HTTP (Bottle)
-- **Styling:** Responsive design with dynamic event handling
+### Tipps für das Repo
+- Füge `LICENSE` mit GPL-3.0 hinzu.
+- Erwähne in `requirements.txt` oder `README` die Dependencies und ihre MIT-Lizenzen.
+- Header in Python-Dateien: `# Copyright (c) 2026 kaaza3 | Licensed under GPL-3.0`.
 
-### Key Components
+---
 
-**main.py:** Entry point with EEL setup and all backend API functions  
-**web/app.html:** Complete UI with tabs (Player, Browser, Edit, Tests, Logbook, Options)  
-**web/app_bottle.py:** Routes for media serving (`/media/<file>`) and cover art  
-**web/script.js:** Frontend logic and EEL bridge calls  
-**web/i18n.json:** Localization strings for German and English
+## Python Dependencies for Media Web Viewer
+Dieses Projekt ist lizenziert unter **GNU General Public License v3 (GPL-3.0)**.
 
-### Wording & Terminology
+### Paket-Abhängigkeiten
+- **MIT License**: `eel`, `bottle`, `pymediainfo`, `gevent`, `pytest`, `pytest-cov`
+- **GPL v2**: `mutagen` (kompatibel mit GPL v3)
+- **BSD**: `psutil`, `future`
 
-Consistent terminology across the user interface:
+### System-Abhängigkeiten
+- `ffmpeg`: LGPL v2.1 / GPL (Audio/Video Transcoding)
+- `libmediainfo0v5`: BSD 2-Clause (Media Information Library)
+- `python3-tk`: Python Software Foundation (System File Dialogs)
 
-#### UI Elements
+---
 
-- **Itemlist:** List of all playable media items
-- **Item Modal:** Detail view/edit dialog for individual media file
-- **Player Footer:** Bottom playback control bar
-- **Premium Sidebar:** Right-side metadata display panel
-- **Cover Art:** Embedded album artwork image
-- **Browse/Browser Tab:** File navigator for adding media
+## GUI via EEL mit Web Frontend
+Das User Interface wird via EEL implementiert, was eine moderne Web-Experience als Desktop-App ermöglicht. 
 
-#### Media Categories
-
-- **Album:** Collection of tracks by artist(s)
-- **Single:** Individual track or multiple versions of same song
-- **Compilation:** Various artists collection
-- **Klassik (Classical):** Orchestral/classical music with composer detection
-- **Hörbuch (Audiobook):** Long-form audio with chapter navigation
-- **Film/Serie:** Movie or TV series content
-
-#### Technical Terms
-
-- **Container:** File wrapper format (MP4, MKV, OGG, etc.)
-- **Codec:** Audio/video compression algorithm
-- **Parser:** Metadata extraction tool/method
-- **Transcoding:** On-the-fly format conversion for browser compatibility
-- **Tag:** Metadata field (title, artist, album, etc.)
-- **Bitrate:** Audio encoding quality (kbps)
-- **Sample Rate:** Audio sampling frequency (Hz)
-
-#### Action Buttons
-
-- **Scan Now:** Force immediate library re-indexing
-- **Add Directory:** Include new folder in media library
-- **Play:** Start playback
-- **Create Playlist:** Group selected tracks
-- **Save Changes:** Persist metadata edits to database
-
-### Item Modal (Detail View)
-
-The **Item Modal** provides comprehensive media file information and editing capabilities:
-
-**Read-Only Fields:**
-
-- **File Name:** Full filename with extension
-- **File Path:** Complete file system path
-- **File Size:** Total file size in bytes/MB
-- **Duration:** Total playback time (HH:MM:SS)
-- **Container:** Detected file container format
-- **Codec:** Audio/video compression method
-- **Bitrate:** Encoded data rate
-- **Sample Rate:** Audio sampling frequency
-- **Bit Depth:** Audio quantization level
-- **Parser Times:** Performance metrics for each parser
-
-**Editable Fields:**
-
-- **Title:** Track or album name
-- **Artist:** Creator/performer name
-- **Album:** Album title
-- **Year:** Release year (YYYY)
-- **Genre:** Music category
-- **Track Number:** Position in album
-- **Total Tracks:** Album size
-- **Disc Number:** Multi-disc position
-- **Comments:** User notes or metadata
-
-**Functional Buttons:**
-
-- **Save Changes:** Persist edits to database and file tags
-- **Test Stream:** Verify playback compatibility
-- **Analyze:** Re-run parser pipeline for updated metadata
-- **Delete:** Remove from library
-- **Cancel:** Discard unsaved changes
-
-### Initialization Sequence
-
+### Initialisierung
 ```javascript
 loadLibrary();
 loadParserConfig();
@@ -802,35 +338,10 @@ loadDebugFlags();
 loadTestSuites();
 ```
 
-### Data Flow
-
-1. User interaction triggers JavaScript event
-2. JavaScript calls `eel.function_name(args)`
-3. Python function processes request (database, parsing, etc.)
-4. Result returned via callback, UI updates
-
 ---
 
-## MediaItem Class
-
-The `MediaItem` class represents individual media files with comprehensive metadata handling.
-
-### Core Attributes
-
-- `name`: Filename identifier
-- `path`: Full file path
-- `duration`: Formatted duration string
-- `tags`: Dictionary of metadata tags
-- `type`: File extension
-- `category`: Auto-detected category (Album, Audiobook, etc.)
-- `is_transcoded`: Boolean for transcoding requirement
-- `transcoded_format`: Target format if transcoded
-
-### Key Methods
-
-**get_category():** Determines media category based on metadata patterns  
-**to_dict():** Serializes object to dictionary for JSON storage
-
+## MediaItem Klasse
+Die `MediaItem` Klasse repräsentiert einzelne Mediendateien mit umfassenden Metadaten-Tags.
 ```python
 def to_dict(self):
     return {
@@ -838,1220 +349,89 @@ def to_dict(self):
         'path': str(self.path),
         'duration': duration_str,
         'tags': filtered_tags,
-        'type': self.type[1:] if self.type.startswith('.') else self.type,
         'category': self.category,
-        'is_transcoded': is_transcoded,
-        'transcoded_format': transcoded_format
+        'is_transcoded': is_transcoded
     }
 ```
 
 ---
 
-## Dictionary and JSON Storage
-
-Media metadata is stored as Python dictionaries internally and serialized to JSON for database persistence and API communication.
-
-### Storage Format
-
-```json
-{
-    "title": "Song Title",
-    "artist": "Artist Name",
-    "album": "Album Name",
-    "year": "2024",
-    "genre": "Rock",
-    "track": "3",
-    "totaltracks": "12",
-    "codec": "MP3",
-    "bitrate": "320 kbps",
-    "samplerate": "44.1 kHz",
-    "bitdepth": "16 bit",
-    "container": "mp3",
-    "has_art": true
-}
-```
-
-### Import/Export
-
-```python
-import json
-
-# Load from database
-tags = json.loads(db_row['tags'])
-
-# Save to database
-db_row['tags'] = json.dumps(tags)
-```
+## Dictionary & JSON Storage
+Medien-Metadaten werden intern als Python-Dictionaries (`dict`) verwaltet und für die Persistenz in der Datenbank oder API-Kommunikation als JSON-Strings (`json`) serialisiert.
 
 ---
 
 ## media_library.db
-
-The SQLite database stores all media metadata and application state.
-
-### Tables
-
-- **media:** Main table with file information and JSON tags
-- **playlists:** Playlist definitions
-- **playlist_media:** Many-to-many relationship for playlist contents
-
-### Database Operations
-
-```python
-import sqlite3
-import os
-import json
-from pathlib import Path
-
-# Use user-writable path
-DB_DIR = Path.home() / ".media-web-viewer"
-DB_FILENAME = str(DB_DIR / "media_library.db")
-
-def init_db():
-    # Create tables if not exist
-
-def get_known_media_names():
-    # Return list of indexed filenames
-
-def clear_media():
-    # Remove all media entries
-
-def insert_media(item_dict):
-    # Add new media item
-
-def get_all_media():
-    # Retrieve all media with filtering
-
-def get_media_path(name):
-    # Get full path for filename
-
-def update_media_tags(name, tags_dict):
-    # Update metadata for item
-
-def rename_media(old_name, new_name):
-    # Rename media entry
-
-def delete_media(name):
-    # Remove media entry
-
-def get_db_stats():
-    # Return database statistics
-```
+Die SQLite-Datenbank speichert alle Medien-Metadaten und Playlists.
+- `init_db()`: Erstellt Tabellen.
+- `insert_media(item_dict)`: Fügt neue Items hinzu.
+- `get_all_media()`: Ruft indexierte Medien ab.
 
 ---
 
 ## Parser Details
 
-### Efficiency Mode (Fast)
+### get_category
+Automatische Kategorisierung basierend auf Metadaten-Mustern (Audio, Album, Audiobook, Klassik, etc.).
 
-Optimized for speed with basic metadata extraction:
-- Focuses on essential tags (title, artist, album, codec)
-- Stops parsing when critical information is found
-- Ideal for large libraries
+### Efficiency Mode (Fast)
+Ein ressourcenschonender Modus, der nur die wichtigsten Tags extrahiert (ideal für Erst-Indizierungen).
 
 ### Detail Mode (Full)
-
-Comprehensive extraction including extended metadata:
-- Runs all parsers regardless of existing data
-- Includes comments, lyrics, technical details
-- Trade-off: Slower but more complete
-
-### Basic Tags
-
-Core metadata fields extracted:
-- artist
-- title
-- album
-- year
-- track
-- totaltracks
-
-### Chapters
-
-For audiobooks and long-form content:
-- Automatic chapter detection in M4B files
-- Natural sorting for chapter order
-- Navigation support in player
-
-### Extended Tags
-
-Additional metadata stored in `full_tags`:
-- Container-specific information
-- Technical codec details
-- Track-level metadata from media containers
-
-```python
-if mode == 'full':
-    if 'full_tags' not in tags:
-        tags['full_tags'] = {}
-    for i, track in enumerate(media_info.tracks):
-        tags['full_tags'][f"container_track_{i}_{track.track_type}"] = track.to_data()
-```
+Ein umfassender Modus, der alle verfügbaren Tags (inkl. technischer Details wie Codecs und Kapitel) sammelt.
 
 ---
 
-## File Format Guide
+## Metadata Tags (Logbook)
+Die Anwendung nutzt spezielle HTML-Kommentare in Markdown-Dateien für das Features-Modal:
+- `Category`: Gruppierung (UI, Parser, Bug).
+- `Title_DE / EN`: Bilinguale Titel.
+- `Summary_DE / EN`: Bilinguale Zusammenfassungen.
+- `Status`: Aktueller Status (COMPLETED, ACTIVE, PLAN, TASK, DOCS).
 
-### Supported Formats
+---
 
-**Audio:**
-- MP3, M4A, M4B, FLAC, OGG, WAV, ALAC, WMA, AIFF, DSD
-
-**Video:**
-- MP4, MKV, WebM
-
-**Documents:**
-- EPUB, PDF
+## Dateiformat Guide
 
 ### Whitelist
-
-Allowed metadata fields for storage:
-```python
-whitelist = {
-    'title', 'artist', 'album', 'year', 'genre', 'track', 'totaltracks',
-    'disc', 'codec', 'bitdepth', 'samplerate', 'bitrate', 'size',
-    'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation'
-}
-```
+Erlaubte Metadaten-Felder: `title`, `artist`, `album`, `year`, `genre`, `track`, `totaltracks`, `disc`, `codec`, `bitrate`, `samplerate`, etc.
 
 ### Blacklist
-
-Filtered out system and junk files:
-- cover, thumb, captcha, etc.
+Ignorierte Dateien: Systemdateien, Cover-Bilder (als Datei), Junk-Daten.
 
 ---
 
-## Doxygen Documentation
-
-Doxygen works well with Python – perfect for GPL-3.0 Media Web Viewer project (EEL/Bottle). It parses standard docstrings (""") and generates HTML docs with indices, diagrams.
-
-### Setup Steps
-
-Install: `sudo apt install doxygen graphviz python3-pip` (MX Linux).  
-For better Python support: `pip install doxypy` (filter for docstrings).
-
-Create `Doxyfile`: `doxygen -g` in `/docs` folder.
-
-### Important Doxyfile Adjustments
-
-```
-PROJECT_NAME = "Media-Library"
-INPUT = ../src
-FILE_PATTERNS = *.py
-EXTRACT_ALL = YES
-EXTRACT_PRIVATE = YES
-OPTIMIZE_OUTPUT_JAVA = NO  # For Python
-INPUT_FILTER = "python doxypy_filter.py"  # With doxypy
-GENERATE_HTML = YES
-```
-
-### Python Docstring Example
-
-```python
-def scan_files(path: str) -> list:
-    """
-    Scan media files with mutagen/FFmpeg.
-
-    @param path Path to folder
-    @return List of files
-    """
-    pass
-```
-
-Run `doxygen Doxyfile` – open `html/index.html`.
-
-Perfect for GitHub README or Pages! Great for GPL-3.0 project documentation.
-
----
-
-## Formats, Containers, and Tags
-
-### Audio Formats
-
-- **OGG:** Container for Vorbis/Opus audio
-- **FLAC:** Lossless audio codec
-- **MP3:** MPEG-1 Audio Layer III
-- **M4A:** MPEG-4 AAC audio
-- **WAV:** Uncompressed PCM audio
-
-### Containers
-
-- **None:** Raw audio files
-- **MKV:** Matroska multimedia container
-- **MP4:** MPEG-4 multimedia container
-
-### Tags
-
-Metadata standards supported:
-- ID3v2 (MP3)
-- Vorbis comments (FLAC, OGG)
-- MPEG-4 tags (M4A, MP4)
-- RIFF INFO (WAV)
-
-### File Extensions
-
-- Audio: .mp3, .flac, .ogg, .m4a, .m4b, .wav, .alac, .wma, .aiff
-- Video: .mp4, .mkv, .webm
-- Documents: .epub, .pdf
+## Doxygen Dokumentation
+Doxygen eignet sich hervorragend zur automatischen Generierung von Code-Dokumentationen aus Python-Docstrings.
+1. Installiere `doxygen` und `graphviz`.
+2. Erstelle ein `Doxyfile` mit `INPUT = ../src`.
+3. Nutze standardisierte Docstrings in den Python-Skripten.
+4. Führe `doxygen Doxyfile` aus, um HTML-Dokumente zu generieren.
 
 ---
 
 ## Environment Configuration
-
 ### environment.yml
-
-For conda/pixi environments:
-
+Für die Verwaltung von Conda/Mamba Umgebungen:
 ```yaml
 name: media-web-viewer
-channels:
-  - conda-forge
-  - defaults
 dependencies:
   - python=3.11
-  - pip
   - ffmpeg
   - mediainfo
   - pip:
     - eel
     - bottle
     - mutagen
-    - pymediainfo
-    - pytest
 ```
-
----
-
-## Feature Modal Refinements
-
-The Feature Modal has been cleaned up for better UX.
-
-**Duplication Removed:** Redundant "Project Documentation" button at top removed.  
-**Categorization Improved:** Entries separated into:
-- Latest Updates: Last 3 logbook entries
-- Open Bugs: Dynamic from `logbuch/00_Known_Issues.md`
-- Open Features: Non-completed features
-- Project Documentation: Direct link
-- Completed: Archive of finished tasks
-
----
-
-## Debug Log Fixes
-
-Debug logs from media parser now respect `parser` flag strictly.
-
-```python
-# parsers/media_parser.py
-if debug and mode == 'full':
-    logger(f"[Debug-Parser] 🚀 Full Mode activated for '{filename}' – collecting ALL tags!")
-```
-
-### Verification
-
-1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.1.19_amd64.deb`
-
-2. **UI Verification:** Version 1.1.19 displayed correctly, Feature Modal shows latest entry 42_Wording.
-
----
-
-## Parser Pipeline
-
-The parser pipeline is Media Web Viewer's core metadata extraction system. Each parser runs in sequence, adding missing information without overwriting existing data.
-
-### Parser Order & Specialization
-
-| Priority | Parser | Input | Specialization | Speed |
-|:--------:|--------|-------|-----------------|-------|
-| 1 | **Filename Parser** | Filename string | Extracts artist, album, track number from standardized filename patterns | ⚡ Instant |
-| 2 | **Container Parser** | File container | Determines container format (MP4, MKV, OGG, etc.) | ⚡ Instant |
-| 3 | **Mutagen Parser** | Audio tags (ID3, Vorbis, MP4) | Deep tag extraction, cover art detection, codec information | 🟡 Fast (50-500ms) |
-| 4 | **FFmpeg Parser** | FFmpeg probe output | Fallback codec detection, bit depth, container format | 🟠 Moderate (500ms-2s) |
-| 5 | **pymediainfo Parser** | mediainfo library | Supplementary metadata, container details | 🟠 Moderate (200-800ms) |
-
-### Supported Data Types
-
-The parser pipeline handles various audio/video container formats and tag standards:
-
-#### Audio Formats
-- **WAV (Plain):** Raw PCM audio, no metadata tags
-- **MP3 (Plain):** Basic MPEG-1 Audio Layer III, minimal tags
-- **MP3 (with ID3v2.2):** Enhanced metadata using ID3v2.2 standard
-- **MP3 (with ID3v2.3/2.4):** Modern ID3 standards with full UTF-8 support
-- **M4A (AAC):** MPEG-4 Audio with iTunes-compatible tags
-- **M4B (Audiobooks):** MPEG-4 audiobook format, chapter-aware
-- **FLAC:** Free Lossless Audio Codec with Vorbis comments
-- **OGG (Vorbis/Opus):** Theora container with Vorbis/Opus audio
-- **WAV (RIFF):** RIFF INFO tags support
-
-#### Container Formats
-- **MKV (with AAC):** Matroska container with Advanced Audio Coding
-- **MKV (with FLAC):** Matroska with lossless FLAC audio
-- **MP4 (with H.264):** MPEG-4 video container with H.264 codec
-- **WebM:** VP8/VP9 video codec in WebM container
-
-### Configuration Schema
-
-Parser configuration is stored in `~/.media-web-viewer/parser_config.json`:
-
-```json
-{
-  "parser_mode": "lightweight",
-  "parser_chain": [
-    "filename",
-    "container",
-    "mutagen",
-    "pymediainfo",
-    "ffmpeg"
-  ],
-  "enabled_parsers": {
-    "filename": true,
-    "container": true,
-    "mutagen": true,
-    "pymediainfo": true,
-    "ffmpeg": true
-  },
-  "mutagen_prefer_albumartist": false
-}
-```
-
-### Parser Behavior
-
-**Lightweight Mode (Default):**
-- Stops parsing when critical tags are found (codec, bitrate, samplerate)
-- Optimal for large libraries (1000+ files)
-- Trade-off: Some rare metadata may be missed
-
-**Full Mode:**
-- All parsers run regardless of existing data
-- Gathers complete metadata including comments, lyrics, metadata versions
-- Trade-off: Slower indexing, not needed for typical usage
-
-### Parser Architecture Details
-
-Each parser accesses specific libraries and contributes to internal testing:
-
-- **Filename Parser:** Pure Python string processing, no external libraries
-- **Container Parser:** Uses `os.path.splitext()` and custom format detection
-- **Mutagen Parser:** Accesses `mutagen` library for ID3/Vorbis/MP4 tag reading
-- **FFmpeg Parser:** Calls `ffmpeg` CLI tool via `subprocess`, parses JSON output
-- **pymediainfo Parser:** Uses `pymediainfo` library (MediaInfo wrapper)
-
-Internal tests validate each parser's output against known test files, ensuring reliability and performance metrics.
-
----
-
-## Transcoding System
-
-### Why Transcoding?
-
-Some audio codecs (ALAC, WMA) cannot be played directly in web browsers. The transcoding system automatically converts these to browser-compatible formats with intelligent caching.
-
-### Supported Conversions
-
-| Source Codec | Reason | Target Codec | Quality |
-|--------------|--------|--------------|---------|
-| ALAC (Apple Lossless) | Not browser-supported | FLAC (lossless) | Lossless |
-| WMA (Windows Media Audio) | Not browser-supported | OGG Opus (lossy) | High-quality lossy |
-
-### How Transcoding Works
-
-1. **Detection Phase**
-   - App analyzes file codec during import
-   - Sets `is_transcoded` flag in database if ALAC or WMA detected
-
-2. **Request Phase**
-   - Frontend URL includes transpile hint (e.g., `.flac_transcoded`)
-   - Bottle route receives request for transcoded stream
-
-3. **Transcoding Phase**
-   - FFmpeg spawns background process
-   - Original file decoded, re-encoded to target format
-   - Output written to cache: `~/.media-web-viewer/transcoded_cache/`
-
-4. **Serving Phase**
-   - Cached file streamed to browser with appropriate MIME type
-   - Subsequent plays use cached version (instant)
-   - Automatic cache cleanup for old files
-
-### Performance Metrics
-
-- **ALAC Transcoding:** ~2-3x file duration (e.g., 60-min file → 2-3 min transcoding)
-- **WMA Transcoding:** ~1-2x file duration
-- **Cache Hit:** Instant serve from SSD cache
-- **Network:** Efficient streaming suitable for local networks
-
-### User Feedback
-
-The UI displays a transcoding indicator:
-```
-⚠️ This file is streamed in compressed format (FLAC from ALAC)
-```
-
----
-
-## Database Schema
-
-Media Web Viewer uses SQLite for local data persistence. All data is stored in:
-```
-~/.media-web-viewer/media_library.db
-```
-
-### Table: `media`
-
-```sql
-CREATE TABLE media (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE,                  -- Filename (unique identifier)
-    path TEXT,                         -- Full file path
-    type TEXT,                         -- File extension (.mp3, .flac, etc.)
-    duration TEXT,                     -- Formatted duration (HH:MM:SS)
-    category TEXT,                     -- Auto-detected category
-    is_transcoded BOOLEAN,             -- Whether file requires transcoding
-    transcoded_format TEXT,            -- Target format if transcoded
-    tags TEXT                          -- JSON-serialized metadata tags
-);
-```
-
-### Table: `playlists`
-
-```sql
-CREATE TABLE playlists (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE                   -- Playlist name
-);
-```
-
-### Table: `playlist_media`
-
-```sql
-CREATE TABLE playlist_media (
-    playlist_id INTEGER,               -- FK to playlists
-    media_id INTEGER,                  -- FK to media
-    position INTEGER,                  -- Track order in playlist
-    FOREIGN KEY(playlist_id) REFERENCES playlists(id),
-    FOREIGN KEY(media_id) REFERENCES media(id)
-);
-```
-
-### Tags Storage
-
-The `tags` column stores metadata as JSON. Example:
-
-```json
-{
-    "title": "Song Title",
-    "artist": "Artist Name",
-    "album": "Album Name",
-    "year": "2024",
-    "genre": "Rock",
-    "track": "3",
-    "totaltracks": "12",
-    "codec": "MP3",
-    "bitrate": "320 kbps",
-    "samplerate": "44.1 kHz",
-    "bitdepth": "16 bit",
-    "container": "mp3",
-    "has_art": true,
-    "_parser_times": {
-        "filename": 0.001,
-        "mutagen": 0.045,
-        "ffmpeg": 0.000
-    }
-}
-```
-
----
-
-## Configuration
-
-### Configuration Locations
-
-**Application Config:**
-```
-~/.media-web-viewer/config.json
-```
-
-**Parser Configuration:**
-```
-~/.media-web-viewer/parser_config.json
-```
-
-**Database:**
-```
-~/.media-web-viewer/media_library.db
-```
-
-**Transcoding Cache:**
-```
-~/.media-web-viewer/transcoded_cache/
-```
-
-### Configuration Files
-
-#### config.json (User Preferences)
-
-```json
-{
-    "language": "de",                  // "de" for German, "en" for English
-    "library_dirs": [
-        "/home/user/Music",
-        "/mnt/external_drive/Audio"
-    ],
-    "parser_mode": "lightweight",
-    "ui_theme": "dark",
-    "auto_scan_interval": 3600
-}
-```
-
-#### parser_config.json (Parser Settings)
-
-```json
-{
-  "parser_mode": "lightweight",
-  "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
-  "enabled_parsers": {
-    "filename": true,
-    "container": true,
-    "mutagen": true,
-    "pymediainfo": true,
-    "ffmpeg": true
-  },
-  "mutagen_prefer_albumartist": false
-}
-```
-
-#### debug_flags.json (Debug Configuration)
-
-```json
-{
-  "parser": false,      // Metadata parsing operations
-  "ui": false,          // User interface updates
-  "db": false,          // Database operations
-  "system": false,      // System and file operations
-  "player": false       // Playback and transcoding operations
-}
-```
-
-### Debug Flags Details
-
-Debug flags enable detailed logging for specific application components:
-
-- **parser**: Logs metadata parsing pipeline operations, parser chain execution, tag extraction
-- **ui**: Logs user interface updates, event listeners, DOM modifications
-- **db**: Logs database operations, SQLite queries, data persistence
-- **system**: Logs system file operations, directory scanning, file I/O
-- **player**: Logs playback operations, transcoding processes, audio stream handling
-
-Enable with: `python main.py --debug` (activates all flags)
-
-Or toggle individual flags in **Options → Debug Console**
-
-### Options Window: General & Debug
-
-The **Options** tab provides access to critical application settings, split into two sections:
-
-#### Left Panel: General Settings
-- Language selection (German/English)
-- Library directories management
-- Parser mode selection (Lightweight/Full)
-- UI theme preferences
-- Auto-scan intervals
-
-#### Right Panel: General & Debug (Technical Parameters)
-
-Manage technical parameters and debug flags here:
-
-```
-SYSTEM
-├── Scan Directory
-├── Clear Database
-└── Reset Application
-
-SCAN
-├── Parser Mode
-├── Auto-Index Interval
-└── Blacklist Management
-
-PARSER
-├── Chain Configuration
-├── Enable/Disable Parsers
-├── Parser Reordering
-└── Performance Metrics
-
-PLAYER
-├── Playback Settings
-├── Transcoding Options
-├── Cache Management
-└── Stream Quality
-
-DATABASE (DB)
-├── Database Statistics
-├── Optimize Database
-├── Backup Configuration
-└── Recovery Options
-```
-
----
-
-## Development
-
-### Setting Up Development Environment
-
-```bash
-# 1. Clone and enter directory
-git clone https://github.com/MasterX360/media-web-viewer.git
-cd media-web-viewer
-
-# 2. Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# 3. Install dev dependencies
-pip install -r requirements.txt
-
-# 4. Install additional dev tools (optional)
-pip install black flake8 mypy pytest-watch
-
-# 5. Run tests
-pytest tests/
-
-# 6. Start in debug mode
-python main.py --debug
-```
-
-### Code Structure
-
-**Backend Entry Point:** [main.py](main.py)
-- Initializes Eel and Bottle servers
-- Exposes API functions to frontend
-- Handles library scanning and database operations
-
-**Data Models:** [models.py](models.py)
-- `MediaItem` class for individual media files
-- Metadata extraction and transcoding logic
-- Category detection and serialization
-- **Dictionary & JSON Storage:** Comments are stored as dictionaries and imported as JSON
-  - Dictionary storage for metadata tags (Python native `dict` type)
-  - JSON import/export for database persistence (`json.dumps()` / `json.loads()`)
-  - Seamless bidirectional type conversion between Python objects and JSON strings
-  - Type validation and schema enforcement for metadata fields
-  - Automatic encoding/decoding with UTF-8 support for file storage
-
-**Dictionary/JSON Conversion Pattern:**
-
-```python
-import json
-from pathlib import Path
-
-# Internal storage (Python dictionary)
-tags = {
-    'title': 'Song Title',
-    'artist': 'Artist Name',
-    'codec': 'MP3',
-    '_parser_times': {
-        'filename': 0.001,
-        'mutagen': 0.045
-    }
-}
-
-# Database storage (JSON string)
-tags_json = json.dumps(tags, ensure_ascii=False)  # Serialize to JSON
-db.insert_media(name, path, tags_json)
-
-# Retrieval from database
-tags_loaded = json.loads(db_row['tags'])  # Deserialize from JSON
-# Now tags_loaded is a Python dict again for processing
-```
-
-**Best Practices:**
-
-- Always use `json.dumps()` before database storage
-- Always use `json.loads()` after database retrieval
-- Validate data types before conversion
-- Use `ensure_ascii=False` for internationalization support
-- Implement schema validation for expected metadata fields
-- Handle exceptions during JSON serialization/deserialization
-
-**Database Layer:** [db.py](db.py)
-- SQLite initialization and migrations
-- CRUD operations for media items and playlists
-- Query optimization and data filtering
-
-**Parser System:** [parsers/](parsers/)
-- Modular parser chain system
-- Individual parsers for different metadata sources
-- Configuration management and performance tracking
-
-### Parser Architecture Details
-
-Each parser accesses specific libraries and contributes to internal testing:
-
-- **Filename Parser:** Pure Python string processing, no external libraries. Parses filename patterns for metadata hints.
-- **Container Parser:** Uses `os.path.splitext()` and custom format detection for container type identification.
-- **Mutagen Parser:** Accesses `mutagen` library for ID3/Vorbis/MP4 tag reading. Supports multiple audio formats.
-- **FFmpeg Parser:** Calls `ffmpeg` CLI tool via `subprocess`, parses JSON output for codec and bitrate information.
-- **pymediainfo Parser:** Uses `pymediainfo` library (MediaInfo wrapper) for supplementary container and track information.
-
-Internal tests validate each parser's output against known test files, ensuring reliability and performance metrics.
-
-#### Library Access Pattern
-
-```python
-# Each parser receives tags dict, never overwrites existing values
-def parse(path, file_type, tags, mode='lightweight'):
-    # Only add missing keys
-    if 'title' not in tags:
-        tags['title'] = extract_title(path)
-    return tags
-```
-
-### Standards & Good Practice
-
-This section outlines development standards and best practices for contributing to Media Web Viewer.
-
-#### Code Style
-
-**Python (Backend):**
-- **Formatter:** Black (line length: 88 characters)
-- **Linter:** Flake8 (E501 line length disabled for Black)
-- **Type Hints:** Recommended for function signatures
-- **Docstrings:** Use Google-style docstrings for all functions
-- **Naming:** `snake_case` for functions/variables, `PascalCase` for classes
-
-```python
-# Good practice example
-def extract_metadata(file_path: Path, mode: str = 'lightweight') -> dict:
-    """
-    Extract metadata from media file.
-    
-    Args:
-        file_path: Path to media file
-        mode: Parsing mode ('lightweight' or 'full')
-        
-    Returns:
-        Dictionary containing metadata tags
-    """
-    tags = {}
-    # Implementation
-    return tags
-```
-
-**JavaScript/Frontend:**
-- **Format:** Use semicolons and 2-space indentation
-- **Naming:** `camelCase` for variables/functions
-- **i18n:** Always use localization keys for user-facing strings
-- **Comments:** Use `//` for inline comments
-
-```javascript
-// Good practice example
-async function loadMediaLibrary() {
-    try {
-        const items = await eel.get_all_media()();
-        renderItemlist(items);
-    } catch (error) {
-        console.error('Failed to load library:', error);
-    }
-}
-```
-
-#### Architecture Patterns
-
-**Parser Chain Pattern:**
-- Never overwrite existing metadata
-- Always check `if key not in tags` before adding
-- Return the modified tags dict
-- Support both `lightweight` and `full` modes
-
-**Database Operations:**
-- Use parameterized queries to prevent SQL injection
-- Always handle JSON serialization/deserialization
-- Implement proper error handling with try/except
-- Log database operations in debug mode
-
-**EEL Function Exposure:**
-- Use `@eel.expose` decorator for all backend functions
-- Return JSON-serializable data (dicts, lists, primitives)
-- Implement error handling with meaningful error messages
-- Document function signatures in comments
-
-####Testing & Quality Assurance
-
-**Unit Tests:**
-- Write tests in `tests/` directory
-- Use pytest framework with fixtures for setup
-- Aim for >80% code coverage
-- Test both success and failure cases
-
-```bash
-# Run tests with coverage
-pytest tests/ --cov=. --cov-report=html
-```
-
-**Code Quality Checks:**
-```bash
-# Format code with Black
-black --line-length 88 .
-
-# Check style with Flake8
-flake8 --max-line-length=88 .
-
-# Type checking with mypy
-mypy --strict parsers/ models.py
-```
-
-**Before Committing:**
-1. Run all code quality tools
-2. Pass all tests (>80% coverage)
-3. Update documentation
-4. Write descriptive commit messages
-
-#### Configuration Management
-
-**Configuration Files:**
-- Store all settings in JSON files (not hardcoded)
-- Use clear, descriptive key names
-- Include comments for complex settings
-- Version your schema when changing structure
-
-**Environment Variables:**
-- Use for sensitive data (API keys, credentials)
-- Prefix with `MEDIA_WEB_VIEWER_` for clarity
-- Document all environment variables in README
-
-#### Documentation Standards
-
-**Markdown Files:**
-- Use ATX-style headings (`#`, `##`, etc.)
-- Include code examples for complex topics
-- Use consistent terminology (see Wording section)
-- Keep lines <100 characters for readability
-
-**Docstrings:**
-- Document public functions and classes
-- Include type hints in docstring
-- Provide usage examples for complex functions
-- Reference related functions with links
-
-#### Error Handling
-
-**Best Practices:**
-- Catch specific exceptions, not generic `Exception`
-- Log errors with appropriate severity level
-- Provide user-friendly error messages in UI
-- Include debugging information for developers
-
-```python
-# Good practice
-try:
-    result = parse_media(file_path)
-except FileNotFoundError:
-    logger.error(f"File not found: {file_path}")
-    raise UserError("Media file not found")
-except Exception as e:
-    logger.exception(f"Unexpected error parsing {file_path}: {e}")
-    raise
-```
-
-### Adding New Features
-
-**Example: Add a new parser**
-
-1. Create `parsers/my_parser.py`:
-```python
-def parse(path, file_type, tags, mode='lightweight'):
-    \"\"\"Parse metadata using custom logic\"\"\"
-    # Extract metadata
-    tags['my_field'] = 'value'
-    return tags
-```
-
-2. Register in `parsers/format_utils.py`:
-```python
-PARSER_CONFIG['parser_chain'].append('my_parser')
-```
-
-3. Use in pipeline - it will be called automatically
-
----
-
-## Troubleshooting
-
-### Common Issues & Solutions
-
-#### Application Won't Start
-
-**Error:** `NameError: module not found` or `ImportError`
-
-**Solution:**
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-
-# Check Python version (requires 3.11+)
-python3 --version
-```
-
-#### Files Not Appearing in Library
-
-**Cause:** Directory not added or not indexed
-
-**Solution:**
-1. Go to **Options → Add Directory**
-2. Select your media folder
-3. Click **Scan Now** to force indexing
-4. Wait for scanning to complete (watch debug console)
-
-#### Playback Issues (Audio Not Playing)
-
-**Cause:** Browser codec support or file encoding
-
-**Solution:**
-1. Enable transcoding for ALAC/WMA files (automatic)
-2. Check file format support in browser
-3. Try playing from **Edit** tab → **Test Stream** button
-4. Check debug logs for FFmpeg errors
-
-#### Database Corrupted / Duplicate Entries
-
-**Cause:** Interrupted operations or version mismatch
-
-**Solution:**
-```bash
-# Clear and rebuild database
-# Go to Options → Danger Zone → Clear Database
-# Then: Options → Scan Directory (re-index all files)
-
-# Or via terminal:
-rm ~/.media-web-viewer/media_library.db
-python main.py
-```
-
-#### High CPU Usage During Scanning
-
-**Cause:** Too many files or slow storage device
-
-**Solution:**
-1. Enable **Lightweight** parser mode (default)
-2. Disable unnecessary parsers in **Parser Configuration**
-3. Scan larger directories separately
-4. Monitor with `top` command during scanning
-
-#### Metadata Not Updating in UI
-
-**Cause:** Browser cache or session state stale
-
-**Solution:**
-1. Hard refresh browser: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (macOS)
-2. Clear browser cache for localhost:8888
-3. Restart application
-
-### Getting Help
-
-- Check **logbuch/00_Known_Issues.md** for documented problems
-- Review debug logs: **Options → Debug Console**
-- Run test suite: **Tests tab → Run All Tests**
-- Check GitHub issues: https://github.com/MasterX360/media-web-viewer/issues
-
----
-
-### Deutsch Troubleshooting
-
-#### Von vorne anfangen
-Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellungen zurücksetzen möchtest, beachte, dass `apt purge` **keine** Dateien in deinem Home-Verzeichnis entfernt. Um wirklich "von Null" zu starten:
-
-```bash
-# 1. Alte Benutzerkonfiguration und Datenbank entfernen
-rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
-
-# 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
-
-# 3. Abhängigkeiten bei Bedarf reparieren
-sudo apt-get install -f
-```
-
----
-
-## License
-
-Media Web Viewer is licensed under the **GNU General Public License v3 (GPL-3.0)**. 
-
-This means:
-- ✅ You can freely use, modify, and distribute the software
-- ✅ You must include the license text and copyright notice
-- ✅ Any modifications or derived works must also be GPL-3.0
-- ✅ Source code must be made available to users
-
-See [LICENSE.md](LICENSE.md) for the complete license text.
-
-### Python Dependencies for Media Web Viewer
-
-This project is licensed under GNU General Public License v3 (GPL-3.0)  
-See LICENSE.md and DEPENDENCIES.md for details
-
-#### PYTHON PACKAGE DEPENDENCIES AND THEIR LICENSES:
-- **MIT License:** eel, bottle, bottle-websocket, pymediainfo, gevent, gevent-websocket, pytest, pytest-cov
-- **GPL v2:** mutagen (compatible with GPL v3)
-- **BSD 3-Clause:** psutil
-- **BSD 2-Clause:** future
-
-#### SYSTEM DEPENDENCIES (must be installed separately):
-- **ffmpeg:** LGPL v2.1 / GPL - Audio/Video transcoding and metadata extraction ✅ GPL-3.0 compatible
-- **libmediainfo0v5:** BSD 2-Clause - Media information library (via apt/package manager) ✅ GPL-3.0 compatible
-- **python3-tk:** Python Software Foundation - Python Tkinter for system file dialogs ✅ GPL-3.0 compatible
-
-All dependencies are compatible with GPL-3.0
-
-#### Installation:
-```bash
-sudo apt install ffmpeg libmediainfo0v5 python3-tk  # Debian/Ubuntu
-pip install -r requirements.txt
-```
-
-#### Web Framework & Desktop GUI
-- eel>=0.18.2                    # MIT License - Electron-like GUI framework
-- bottle>=0.13.0                 # MIT License - Lightweight web framework
-- bottle-websocket>=0.2.9        # MIT License - WebSocket plugin for Bottle
-
-#### Audio/Media Metadata Parsing
-- mutagen>=1.47.0                # GPL v2 - Audio metadata manipulation
-- pymediainfo>=7.0.1             # MIT License - Media information library
-
-#### Async & WebSocket Support
-- gevent>=25.9.1                 # MIT License - Coroutine-based networking
-- gevent-websocket>=0.10.1       # MIT License - WebSocket implementation for gevent
-
-#### Testing & Coverage
-- pytest>=8.0.0                  # MIT License - Test framework
-- pytest-cov>=4.1.0              # MIT License - Coverage plugin for pytest
-
-#### System & Utilities
-- psutil>=5.9.0                  # BSD 3-Clause License - System and process utilities
-- future>=1.0.0                  # BSD 2-Clause License - Python 2/3 compatibility
-
----
-
-### GPL-3.0 Compatibility
-
-Ja, du kannst absolut GPL-3.0 für dein GitHub-Projekt mit Python, Eel und Bottle verwenden – es ist voll kompatibel. Eel und Bottle sind beide MIT-lizenziert (permissiv), was mit GPL-3.0 harmoniert: Dein Projekt wird GPL, Dependencies bleiben unberührt.
-
-Warum kompatibel?
-MIT + GPL: Erlaubt Linking/Import in GPL-Projekte ohne Lizenzkonflikt – dein Code dominiert.
-
-Python-spezifisch: Importe (z. B. import eel) triggern kein automatisches Lizenz-Upgrading der Libs.
-
-Copyleft-Effekt: Nur dein App-Code muss GPL-konform bleiben; Eel/Bottle können weiterhin separat genutzt werden.
-
-Dein GitHub-Nickname geht absolut für den Copyright in der GPL-3.0 – Pseudonyme sind legal und üblich. Es zählt als gültiger Identifikator, solange du nachweisbar der Autor bist (z. B. bei Streit via GitHub-Account).
-
-Tipps für dein Repo
-Füge LICENSE mit GPL-3.0 hinzu (wie zuvor beschrieben).
-
-In requirements.txt oder README: Erwähne Dependencies und ihre MIT-Lizenzen.
-
-Header in Python-Dateien: # Copyright (c) 2026 kaaza3\n# Licensed under GPL-3.0.
-
----
-
-## Imprint
-
-**Media Web Viewer**  
-Developed by kazaa3  
-Germany  
-
-This application is provided as-is under GPL-3.0 license.  
-For support, see Contact & Support section below.
-
-## About
-
-**Media Web Viewer v1.1.14**  
-A modern desktop media player and library manager.  
-Built with Python, Eel, and Bottle.  
-Licensed under GNU GPL-3.0.
-
-### Technical Stack
-
-- **Backend:** Python 3.11+ with Eel and Bottle
-- **Frontend:** Vanilla JavaScript, HTML5, CSS3 (Glassmorphism)
-- **Database:** SQLite with JSON metadata storage
-- **Metadata Parsing:** Mutagen, FFmpeg, pymediainfo
-- **Packaging:** Debian .deb with automatic dependency resolution
-- **Localization:** Bilingual i18n (German/English)
-
-### Features Summary
-
-- Multi-format audio/video support (MP3, FLAC, M4B, MKV, and more)
-- Intelligent metadata extraction with custom parser chain
-- Audiobook support with chapter detection
-- Automatic transcoding for incompatible codecs
-- Real-time library indexing with SQLite backend
-- Integrated testing suite and debug tools
-- Full GPL-3.0 open-source license
-
----
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes and test thoroughly
-4. Submit a pull request with detailed description
-
-## Contact & Support
-
-**Developer:** kazaa3  
-**Location:** Germany  
-**Repository:** https://github.com/kaaza3/media-web-viewer
-
----
-
-**Last Updated:** 7. März 2026  
-**Current Version:** 1.1.19
 
 ---
 
 ## Verification
-
-### Build Verification
-Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.1.19_amd64.deb`
-
-### UI Verification
-The version 1.1.19 is correctly displayed in the application and the Feature Modal shows the latest entry 42_Wording.
+- **Build**: `bash build_deb.sh` → `media-web-viewer_1.1.20_amd64.deb` wurde erfolgreich verifiziert.
+- **UI**: Die Version `1.1.20` wird korrekt angezeigt und das Logbuch lädt dynamisch.
 
 ---
 
-## Tools Used
-
-During development, the following commands and tools were used:
-
-### Text Processing & Search
-- **grep:** For searching text patterns in files (e.g., `grep -r "version" .`)
-- **sed:** For text replacement and stream editing in files
-- **awk:** For pattern scanning and processing text
-
-### File & Directory Management
-- **find:** For locating files (e.g., `find . -name "*.py"`)
-- **ls:** For listing directory contents
-- **mkdir:** For creating directories (e.g., `mkdir -p packaging/`)
-- **rsync:** For efficient file synchronization and backup
-
-### Python Tools & Commands
-- **python -m py_compile:** For syntax checking Python files
-- **pytest:** For running unit tests and test suites
-- **python -m venv:** For creating virtual environments
-- **pip:** For package management and dependency installation
-
-### Version Control & Build
-- **git:** For version control, diff checking, and branch management
-- **bash:** For shell scripting and build automation (build_deb.sh)
-- **dpkg-deb:** For building Debian packages
-- **chmod:** For setting file permissions (e.g., `chmod 755`)
-
-### Development & Testing
-- **black:** For Python code formatting
-- **flake8:** For linting and style checking
-- **mypy:** For static type checking
-- **pytest-watch:** For continuous test running
-- **pytest-cov:** For test coverage reporting
+## Lizenz
+Das Projekt ist unter der **GNU General Public License v3 (GPL-3.0)** lizenziert. Der vollständige Text ist in der Datei `LICENSE.md` einsehbar.
