@@ -28,6 +28,7 @@ def format_samplerate(hz):
         return ""
 
 def parse(path, file_type, tags, name, mode='lightweight'):
+    from .format_utils import PARSER_CONFIG
     audio_for_info = None
     
     if mode == 'full' and 'full_tags' not in tags:
@@ -37,7 +38,13 @@ def parse(path, file_type, tags, name, mode='lightweight'):
         if file_type == '.flac':
             audio = FLAC(path)
             audio_for_info = audio
-            tags['artist'] = safe_get(audio, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
+            
+            # Use preference for album artist
+            if PARSER_CONFIG.get('mutagen_prefer_albumartist'):
+                tags['artist'] = safe_get(audio, 'ALBUMARTIST') or safe_get(audio, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
+            else:
+                tags['artist'] = safe_get(audio, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
+                
             tags['title'] = safe_get(audio, 'TITLE', default=tags.get('title', name))
             tags['year'] = safe_get(audio, 'DATE')
             tags['genre'] = safe_get(audio, 'GENRE')
@@ -89,7 +96,14 @@ def parse(path, file_type, tags, name, mode='lightweight'):
             aart = audio.get('TPE2')
             dsc = audio.get('TPOS')
             
-            if art: tags['artist'] = str(art.text[0]) if hasattr(art, 'text') else str(art[0])
+            # Use preference for album artist
+            if PARSER_CONFIG.get('mutagen_prefer_albumartist') and aart:
+                tags['artist'] = str(aart.text[0]) if hasattr(aart, 'text') else str(aart[0])
+            elif art:
+                tags['artist'] = str(art.text[0]) if hasattr(art, 'text') else str(art[0])
+            else:
+                tags['artist'] = tags.get('artist', 'Unbekannt')
+                
             if tit: tags['title'] = str(tit.text[0]) if hasattr(tit, 'text') else str(tit[0])
             if yr: tags['year'] = str(yr.text[0]) if hasattr(yr, 'text') else str(yr)
             if gn: tags['genre'] = str(gn.text[0]) if hasattr(gn, 'text') else str(gn)
@@ -132,7 +146,12 @@ def parse(path, file_type, tags, name, mode='lightweight'):
         elif file_type in {'.m4a', '.alac', '.m4b', '.mp4'}:
             audio = MP4(path)
             audio_for_info = audio
-            tags['artist'] = safe_get(audio, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
+            
+            if PARSER_CONFIG.get('mutagen_prefer_albumartist'):
+                tags['artist'] = safe_get(audio, 'aART') or safe_get(audio, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
+            else:
+                tags['artist'] = safe_get(audio, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
+                
             tags['title'] = safe_get(audio, '\xa9nam', default=tags.get('title', name))
             tags['year'] = safe_get(audio, '\xa9day')
             tags['genre'] = safe_get(audio, '\xa9gen')

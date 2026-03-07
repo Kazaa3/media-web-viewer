@@ -287,6 +287,12 @@
             cursor: grabbing;
         }
 
+        .parser-item.selected {
+            border-color: #2a7;
+            background: #f0fff4;
+            box-shadow: 0 2px 8px rgba(42, 167, 112, 0.1);
+        }
+
         .parser-item.dragging {
             opacity: 0.5;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -947,9 +953,9 @@
             <div id="parser-tab" class="tab-content" style="padding: 20px;">
                 <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
 
-                <div style="display: flex; gap: 40px; align-items: flex-start;">
+                <div style="display: flex; gap: 30px; align-items: flex-start;">
                     <!-- Left Column: Core Parser Settings -->
-                    <div style="flex: 1; max-width: 500px;">
+                    <div style="flex: 0 0 450px;">
 
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_core_settings">
                             Erweiterter
@@ -993,7 +999,20 @@
                                 data-i18n="parser_save_success">✅
                                 Gespeichert</span>
                         </div>
+                    </div>
 
+                    <!-- Right Column: Parser-Specific Options -->
+                    <div id="parser-details-column"
+                        style="flex: 1; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">
+                            Parser-Optionen</h3>
+                        <div id="parser-options-placeholder" style="color: #999; font-style: italic; margin-top: 20px;"
+                            data-i18n="parser_options_desc">
+                            Wähle einen Parser links aus, um seine Einstellungen zu sehen.
+                        </div>
+                        <div id="parser-options-container" style="display: none; flex-direction: column; gap: 20px;">
+                            <!-- Options will be rendered here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2091,24 +2110,21 @@
         // Parser GUI Logic
         const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
         let currentParserChain = [];
+        let currentParserOptions = {};
 
         function loadParserConfig() {
             eel.get_parser_config()((config) => {
                 console.log("Raw parser config from python:", config);
 
-                // Eel sometimes returns strings instead of objects depending on the browser
                 if (typeof config === 'string') {
-                    try {
-                        config = JSON.parse(config);
-                    } catch (e) {
-                        console.error("Failed to parse config string:", e);
-                    }
+                    try { config = JSON.parse(config); } catch (e) { console.error("Failed to parse config:", e); }
                 }
+
+                currentParserOptions = config || {};
 
                 if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
                     currentParserChain = config.parser_chain;
                 } else {
-                    console.warn("Failed to load parser_chain, falling back to defaults.");
                     currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
                 }
 
@@ -2130,14 +2146,12 @@
             if (!list) return;
             list.innerHTML = '';
 
-            // Render active parsers in order
             currentParserChain.forEach(parser => {
                 if (ALL_PARSERS.includes(parser)) {
                     list.appendChild(createParserItem(parser, true));
                 }
             });
 
-            // Render inactive parsers at the bottom
             ALL_PARSERS.forEach(parser => {
                 if (!currentParserChain.includes(parser)) {
                     list.appendChild(createParserItem(parser, false));
@@ -2157,13 +2171,72 @@
 
             li.innerHTML = `
                 <div class="parser-handle">☰</div>
-                <div class="parser-name">${labelName}</div>
+                <div class="parser-name" style="flex: 1; cursor: pointer;" onclick="showParserOptions('${parserId}')">${labelName}</div>
                 <label class="switch">
-                    <input type="checkbox" class="parser-toggle" ${isActive ? 'checked' : ''}>
+                    <input type="checkbox" class="parser-toggle" ${isActive ? 'checked' : ''} onchange="saveParserChainUI()">
                     <span class="slider"></span>
                 </label>
             `;
+
+            // Add click listener for selection state
+            li.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('parser-toggle') && !e.target.classList.contains('slider')) {
+                    showParserOptions(parserId);
+                }
+            });
+
             return li;
+        }
+
+        function showParserOptions(parserId) {
+            const container = document.getElementById('parser-options-container');
+            const placeholder = document.getElementById('parser-options-placeholder');
+
+            // Highlight selected in list
+            document.querySelectorAll('.parser-item').forEach(li => {
+                li.classList.toggle('selected', li.dataset.id === parserId);
+            });
+
+            placeholder.style.display = 'none';
+            container.style.display = 'flex';
+            container.innerHTML = '';
+
+            let html = '';
+            if (parserId === 'mutagen') {
+                html += renderOptionRow('mutagen_prefer_albumartist', t('parser_opt_mutagen_albumartist'));
+                html += renderOptionRow('mutagen_extract_lyrics', t('parser_opt_mutagen_lyrics'));
+            } else if (parserId === 'pymediainfo') {
+                html += renderOptionRow('pymediainfo_full_scan', t('parser_opt_pymediainfo_full'));
+            } else if (parserId === 'ffmpeg') {
+                html += renderOptionRow('ffmpeg_deep_analysis', t('parser_opt_ffmpeg_deep'));
+                html += renderOptionRow('ffmpeg_extract_thumbnails', t('parser_opt_ffmpeg_thumbs'));
+            } else {
+                html = `<p style="color: #666; font-style: italic; padding: 10px;">Keine spezifischen Optionen für "${t('parser_' + parserId)}" verfügbar.</p>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderOptionRow(key, label) {
+            const isChecked = currentParserOptions[key] === true;
+            return `
+                <div style="display: flex; align-items: center; gap: 15px; background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px; transition: all 0.2s;">
+                    <label class="switch">
+                        <input type="checkbox" id="opt-${key}" ${isChecked ? 'checked' : ''} onchange="updateOptionValue('${key}', this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                    <div style="font-weight: 500; color: #333;">${label}</div>
+                </div>
+            `;
+        }
+
+        function updateOptionValue(key, value) {
+            currentParserOptions[key] = value;
+            // Highlight that saving is needed
+            const saveBtn = document.querySelector('[data-i18n="parser_btn_save"]');
+            if (saveBtn) {
+                saveBtn.style.boxShadow = '0 0 10px rgba(42, 167, 112, 0.4)';
+            }
         }
 
         function setupDragAndDrop() {
@@ -2211,7 +2284,7 @@
         }
 
         function saveParserChainUI() {
-            const listItems = document.querySelectorAll('.parser-item');
+            const listItems = document.getElementById('parser-list').querySelectorAll('.parser-item');
             const newChain = [];
 
             listItems.forEach(item => {
@@ -2224,17 +2297,29 @@
             const modeToggle = document.getElementById('toggle-parser-mode');
             const newMode = (modeToggle && modeToggle.checked) ? "full" : "lightweight";
 
-            console.log("Saving new parser config:", newChain, newMode);
+            // Prepare the full config object
+            const finalConfig = {
+                ...currentParserOptions,
+                "parser_chain": newChain,
+                "parser_mode": newMode
+            };
 
-            // Pass object that matches Python expected structure
-            eel.save_parser_config({ "parser_chain": newChain, "parser_mode": newMode })((result) => {
+            console.log("Saving full parser config:", finalConfig);
+
+            // Use the update_parser_config exposed function in main.py
+            eel.update_parser_config(finalConfig)((result) => {
                 if (result && result.status === 'ok') {
                     const statusSpan = document.getElementById('parser-save-status');
-                    statusSpan.style.display = 'inline';
-                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                    if (statusSpan) {
+                        statusSpan.style.display = 'inline';
+                        setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                    }
+                    // Reset save button visual hint
+                    const saveBtn = document.querySelector('[data-i18n="parser_btn_save"]');
+                    if (saveBtn) saveBtn.style.boxShadow = 'none';
                 } else {
                     console.error("Save failed:", result);
-                    alert("Fehler beim Speichern der Parser-Konfiguration.");
+                    alert(t('common_error') + (result ? result.message : 'Unknown error'));
                 }
             });
         }
