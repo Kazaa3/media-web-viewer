@@ -1,6 +1,6 @@
 # main.py – Media Web Viewer
 # Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
-print("[Startup] main.py loading...")
+# (Startup print moved below)
 
 #Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
@@ -41,14 +41,29 @@ ARCHIVE_EXTENSIONS = {
 # Debug-Optionen
 DEBUG_FLAGS = {
     "system": False,
-    "scan": False,
+    "ui": False,
+    "lib": False,
+    "browser": False,
+    "edit": False,
+    "options": False,
+    "start": False,
     "parser": False,
+    "scan": False,
     "player": False,
     "db": False,
     "tests": False
 }
 
+# Full Debug Mode: If --debug argument is passed, set all flags to True
+if "--debug" in sys.argv:
+    for key in DEBUG_FLAGS:
+        DEBUG_FLAGS[key] = True
+    print("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+
 LOG_BUFFER = []
+
+if DEBUG_FLAGS["start"]:
+    debug_log("[Startup] main.py loading...")
 
 def debug_log(message):
     print(message)
@@ -72,6 +87,13 @@ def set_debug_flag(key, value):
         DEBUG_FLAGS[key] = value
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
+@eel.expose("set_all_debug_flags")
+def set_all_debug_flags(value):
+    """Aktiviert oder deaktiviert alle Debug-Flags gleichzeitig."""
+    for key in DEBUG_FLAGS:
+        DEBUG_FLAGS[key] = value
+    debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
+
 @eel.expose("get_language")
 def get_language():
     """Gibt die aktuell gewählte Sprache zurück."""
@@ -82,7 +104,8 @@ def set_language(lang):
     """Setzt die Sprache der Anwendung."""
     PARSER_CONFIG["language"] = lang
     save_parser_config()
-    debug_log(f"[System] Sprache auf '{lang}' gesetzt.")
+    if DEBUG_FLAGS["system"]:
+        debug_log(f"[System] Sprache auf '{lang}' gesetzt.")
     return True
 
 # Benutzerdefinierte Module
@@ -141,7 +164,8 @@ def reset_app_data():
     save_parser_config() # Create default config
     load_parser_config() # Sync local PARSER_CONFIG in memory
     
-    debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
+    if DEBUG_FLAGS["system"]:
+        debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
     return {"status": "ok", "deleted": deleted}
 
 @eel.expose("update_tags")
@@ -725,7 +749,8 @@ if __name__ == "__main__":
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
     
-    print("[Startup] Starting Eel UI...")
+    if DEBUG_FLAGS["start"]:
+        print("[Startup] Starting Eel UI...")
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port

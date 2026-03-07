@@ -148,10 +148,30 @@ def rename_media(old_name, new_name):
     finally:
         conn.close()
 
-def delete_media_by_name(name):
-    """Löscht ein Medium anhand des Namens aus der DB."""
+def delete_media(name):
+    """Löscht ein Medium aus der DB."""
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM media WHERE name = ?", (name,))
-    conn.commit()
+    try:
+        cursor.execute("DELETE FROM media WHERE name = ?", (name,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_db_stats():
+    """Gibt Statistiken über die Datenbank zurück."""
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM media")
+    total_items = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT category, COUNT(*) FROM media GROUP BY category")
+    categories = {row[0]: row[1] for row in cursor.fetchall()}
+    
     conn.close()
+    return {
+        'total_items': total_items,
+        'categories': categories
+    }

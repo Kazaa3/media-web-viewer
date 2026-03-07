@@ -1,6 +1,6 @@
 # main.py – Media Web Viewer
 # Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
-print("[Startup] main.py loading...")
+# (Startup print moved below)
 
 #Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
@@ -11,12 +11,11 @@ import time
 import subprocess
 import io
 import contextlib
-
 from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.12"
+VERSION = "1.1.13"
 
 @eel.expose("get_version")
 def get_version():
@@ -41,14 +40,30 @@ ARCHIVE_EXTENSIONS = {
 
 # Debug-Optionen
 DEBUG_FLAGS = {
-    "scan": False,
+    "system": False,
+    "ui": False,
+    "lib": False,
+    "browser": False,
+    "edit": False,
+    "options": False,
+    "start": False,
     "parser": False,
+    "scan": False,
     "player": False,
     "db": False,
     "tests": False
 }
 
+# Full Debug Mode: If --debug argument is passed, set all flags to True
+if "--debug" in sys.argv:
+    for key in DEBUG_FLAGS:
+        DEBUG_FLAGS[key] = True
+    print("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+
 LOG_BUFFER = []
+
+if DEBUG_FLAGS["start"]:
+    debug_log("[Startup] main.py loading...")
 
 def debug_log(message):
     print(message)
@@ -72,12 +87,32 @@ def set_debug_flag(key, value):
         DEBUG_FLAGS[key] = value
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
+@eel.expose("set_all_debug_flags")
+def set_all_debug_flags(value):
+    """Aktiviert oder deaktiviert alle Debug-Flags gleichzeitig."""
+    for key in DEBUG_FLAGS:
+        DEBUG_FLAGS[key] = value
+    debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
+
+@eel.expose("get_language")
+def get_language():
+    """Gibt die aktuell gewählte Sprache zurück."""
+    return PARSER_CONFIG.get("language", "de")
+
+@eel.expose("set_language")
+def set_language(lang):
+    """Setzt die Sprache der Anwendung."""
+    PARSER_CONFIG["language"] = lang
+    save_parser_config()
+    if DEBUG_FLAGS["system"]:
+        debug_log(f"[System] Sprache auf '{lang}' gesetzt.")
+    return True
+
 # Benutzerdefinierte Module
 import db
 
 # Eigene Parser
 from parsers import media_parser
-from parsers.format_utils import PARSER_CONFIG
 
 # Eigene bottle Web-Routen
 from web import app_bottle
@@ -129,7 +164,8 @@ def reset_app_data():
     save_parser_config() # Create default config
     load_parser_config() # Sync local PARSER_CONFIG in memory
     
-    debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
+    if DEBUG_FLAGS["system"]:
+        debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
     return {"status": "ok", "deleted": deleted}
 
 @eel.expose("update_tags")
@@ -155,13 +191,13 @@ def rename_media(old_name, new_name):
     else:
         return {"status": "error", "message": "Name bereits vorhanden oder Fehler"}
 
-@eel.expose("delete_media")
+@eel.expose
 def delete_media(name):
-    """Löscht ein Medium aus der DB."""
-    if DEBUG_FLAGS["db"]:
-        debug_log(f"[Debug-DB] Lösche aus DB: {name}")
-    db.delete_media_by_name(name)
-    return {"status": "ok"}
+    return db.delete_media(name)
+
+@eel.expose
+def get_db_stats():
+    return db.get_db_stats()
 
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
@@ -525,31 +561,49 @@ def get_logbook_entry(feature_name):
 
 @eel.expose
 def list_logbook_entries():
-    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Kategorien zurück."""
+    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück."""
     log_dir = Path(__file__).parent / "logbuch"
     if not log_dir.exists():
         return []
     
     entries = []
+    # Natural sort by filename
     for f in sorted(log_dir.glob("*.md")):
         try:
             with open(f, 'r', encoding='utf-8') as fp:
-                first_line = fp.readline()
+                lines = [fp.readline() for _ in range(10)] # Mehr Zeilen lesen um alles zu finden
                 category = "Sonstiges"
+                summary = ""
+                status = "COMPLETED" # Default
+                title = f.stem
                 
-                if "<!-- Category:" in first_line:
-                    category = first_line.split("Category: ")[1].split(" -->")[0]
+                for line in lines:
+                    line = line.strip()
+                    if "<!-- Category:" in line:
+                        category = line.split("Category: ")[1].split(" -->")[0]
+                    if "<!-- Summary:" in line:
+                        summary = line.split("Summary: ")[1].split(" -->")[0]
+                    if "<!-- Status:" in line:
+                        status = line.split("Status: ")[1].split(" -->")[0]
+                    if line.startswith("# "):
+                        title = line.replace("# ", "").strip()
                 
                 entries.append({
                     "name": f.stem,
                     "filename": f.name,
-                    "category": category
+                    "title": title,
+                    "category": category,
+                    "summary": summary,
+                    "status": status
                 })
         except Exception:
             entries.append({
                 "name": f.stem,
                 "filename": f.name,
-                "category": "Fehler"
+                "title": f.stem,
+                "category": "Fehler",
+                "summary": "",
+                "status": "ERROR"
             })
     
     return entries
@@ -695,7 +749,8 @@ if __name__ == "__main__":
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
     
-    print("[Startup] Starting Eel UI...")
+    if DEBUG_FLAGS["start"]:
+        print("[Startup] Starting Eel UI...")
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
