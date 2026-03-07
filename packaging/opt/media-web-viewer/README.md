@@ -11,12 +11,22 @@ A local desktop media player and library manager with an embedded web-based GUI.
 > Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.1.13_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.14_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
 media-web-viewer
 ```
+
+---
+
+## 🇩🇪 Deutsch (German)
+
+Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
+
+---
+
+## 🇺🇸 English (Default)
 
 The installer automatically sets up a Python virtual environment and installs all dependencies.
 
