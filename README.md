@@ -189,4 +189,6 @@ Files with ALAC or WMA codec cannot be played natively in browsers. The app dete
 
 ## License
 
-This project is open source and free to use.
+This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for the full license text.
+
+The MIT License is a permissive open-source license that allows you to use, modify, and distribute the software freely, as long as the original copyright notice and license are included in all copies or substantial portions of the software.

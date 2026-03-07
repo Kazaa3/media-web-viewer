@@ -1,8 +1,25 @@
-# main.py – Media Web Viewer
-# Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
-# (Startup print moved below)
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Media Web Viewer - Desktop Media Player and Library Manager
 
-#Benötigte Module importieren
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+
+# main.py – Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
+
+# Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
 import sys
 import os
@@ -586,18 +603,20 @@ def list_logbook_entries():
                     line = line.strip()
                     if "<!-- Category:" in line:
                         category = line.split("Category: ")[1].split(" -->")[0]
-                    if "<!-- Summary:" in line:
-                        summary = line.split("Summary: ")[1].split(" -->")[0]
                     if "<!-- Summary_DE:" in line:
                         summary_de = line.split("Summary_DE: ")[1].split(" -->")[0]
-                    if "<!-- Summary_EN:" in line:
+                    elif "<!-- Summary_EN:" in line:
                         summary_en = line.split("Summary_EN: ")[1].split(" -->")[0]
+                    elif "<!-- Summary:" in line:
+                        summary = line.split("Summary: ")[1].split(" -->")[0]
+                    
                     if "<!-- Status:" in line:
                         status = line.split("Status: ")[1].split(" -->")[0]
                     if "<!-- Title_DE:" in line:
                         title_de = line.split("Title_DE: ")[1].split(" -->")[0]
-                    if "<!-- Title_EN:" in line:
+                    elif "<!-- Title_EN:" in line:
                         title_en = line.split("Title_EN: ")[1].split(" -->")[0]
+                    
                     if line.startswith("# "):
                         title = line.replace("# ", "").strip()
                 
