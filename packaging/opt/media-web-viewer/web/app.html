@@ -860,13 +860,22 @@
                             </div>
 
                             <div style="margin-top: auto; padding-top: 40px;">
-                                <h3 style="font-size: 1.1em; color: #c33; margin-bottom: 12px;">Gefahrenzone</h3>
-                                <button onclick="clearDatabase()"
-                                    style="padding: 10px 20px; background: #f4d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: opacity 0.2s;">Datenbank
-                                    löschen</button>
-                                <p style="font-size: 0.8em; color: #999; margin-top: 8px;">Vorsicht: Dies löscht alle
-                                    indexierten
-                                    Lieder aus der Bibliothek.</p>
+                                <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;">Gefahrenzone (Reset)
+                                </h3>
+                                <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">Löscht alle privaten
+                                    Daten, die Datenbank und die Konfigurationsdateien (Werkszustand).</p>
+                                <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                                    <button onclick="clearDatabase()"
+                                        style="padding: 10px 16px; background: #fff; color: #f4d; border: 1px solid #f4d; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: all 0.2s;">
+                                        🗑️ Nur DB leeren
+                                    </button>
+                                    <button onclick="resetAppData()"
+                                        style="padding: 10px 20px; background: #c0392b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; box-shadow: 0 4px 10px rgba(192, 57, 43, 0.2); transition: all 0.2s;">
+                                        🔥 App Reset (Alles Löschen)
+                                    </button>
+                                </div>
+                                <p style="font-size: 0.8em; color: #999; margin-top: 8px;">Vorsicht: Diese Aktion kann
+                                    nicht rückgängig gemacht werden!</p>
                             </div>
                         </div>
                     </div>
@@ -2220,6 +2229,18 @@
                 if (result.status === 'ok') {
                     alert("Datenbank wurde erfolgreich geleert.");
                     loadLibrary(); // Update views
+                }
+            }
+        }
+
+        async function resetAppData() {
+            if (confirm("🔥 ACHTUNG: Möchtest du wirklich alle privaten Konfigurationsdateien und die Datenbank löschen?\n\nDie Anwendung wird auf den Werkszustand zurückgesetzt.\n\nDies kann nicht rückgängig gemacht werden!")) {
+                const result = await eel.reset_app_data()();
+                if (result.status === 'ok') {
+                    alert("Alle privaten Daten wurden gelöscht. Die App wird jetzt neu geladen.");
+                    location.reload();
+                } else {
+                    alert("Fehler beim Zurücksetzen: " + result.message);
                 }
             }
         }
