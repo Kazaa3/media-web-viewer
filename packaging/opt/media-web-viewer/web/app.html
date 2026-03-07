@@ -1005,9 +1005,9 @@
                 <div
                     style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #ddd; padding: 20px;">
                     <div style="margin-bottom: 25px;">
-                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_item_db">
-                            Item DB
-                            (Übersicht)</h3>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;"
+                            data-i18n="debug_item_db_overview">
+                            Item DB (Übersicht)</h3>
                         <div id="debug-db-info"
                             style="font-size: 0.9em; color: #666; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px;">
                             <!-- DB Stats will be loaded here -->
@@ -1016,10 +1016,11 @@
                     </div>
 
                     <div style="margin-bottom: 25px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
-                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_item_db">Item DB
-                            (Details)</h3>
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_python_dict">
+                            Python Dict (Details)</h3>
                         <p style="font-size: 0.85em; color: #666; margin-bottom: 12px;" data-i18n="debug_db_desc">
-                            Im Debug & DB Reiter wird das Item-Dictionary angezeigt.
+                            Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank und die
+                            Frontend gesendet wird.
                         </p>
 
                         <div id="debug-items-dict-container"
@@ -1215,10 +1216,10 @@
                     style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     COMPLETED</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Natural Sorting</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Korrekte numerische
-                        Kapitelsortierung
-                        (1, 2, 10...) basierend auf Titeln & Timestamps.</div>
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_natural_sorting_title">Natural
+                        Sorting</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;" data-i18n="feat_natural_sorting_desc">
+                        Korrekte numerische Kapitelsortierung (1, 2, 10...) basierend auf Titeln & Timestamps.</div>
                 </div>
             </div>
 
@@ -1229,10 +1230,11 @@
                     style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     COMPLETED</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Dynamic Test Suite</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Automatisches Finden und Ausführen
-                        von
-                        Test-Skripten im `tests/` Ordner via GUI.</div>
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_dynamic_test_suite_title">Dynamic
+                        Test Suite</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
+                        data-i18n="feat_dynamic_test_suite_desc">Automatisches Finden und Ausführen von Test-Skripten im
+                        `tests/` Ordner via GUI.</div>
                 </div>
             </div>
 
@@ -1243,10 +1245,11 @@
                     style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     COMPLETED</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Media Categorization</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Intelligente Erkennung von
-                        Hörbüchern
-                        (.m4b) und Integration in Datei-Browser.</div>
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_media_categorization_title">Media
+                        Categorization</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
+                        data-i18n="feat_media_categorization_desc">Intelligente Erkennung von Hörbüchern (.m4b) und
+                        Integration in Datei-Browser.</div>
                 </div>
             </div>
 
@@ -1257,9 +1260,11 @@
                     style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     COMPLETED</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Premium Sidebar Info</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Detaillierte Anzeige von Bitrate,
-                        Codec, Container und Tag-Formaten.</div>
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_premium_sidebar_info_title">Premium
+                        Sidebar Info</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
+                        data-i18n="feat_premium_sidebar_info_desc">Detaillierte Anzeige von Bitrate, Codec, Container
+                        und Tag-Formaten.</div>
                 </div>
             </div>
 
@@ -1269,9 +1274,10 @@
                     style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     ACTIVE</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Extended Format Support</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Unterstützung für MKV, FLAC, AAC
-                        und
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_extended_format_support_title">
+                        Extended Format Support</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
+                        data-i18n="feat_extended_format_support_desc">Unterstützung für MKV, FLAC, AAC und
                         Metadaten-Mapping für alle Container.</div>
                 </div>
             </div>
@@ -1283,9 +1289,10 @@
                     style="background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     PLAN</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Implementation Plan Test Tab</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Planung zum Rework des Tests-Tabs.
-                    </div>
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_impl_plan_test_tab_title">
+                        Implementation Plan Test Tab</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;"
+                        data-i18n="feat_impl_plan_test_tab_desc">Planung zum Rework des Tests-Tabs.</div>
                 </div>
             </div>
 
@@ -1296,9 +1303,10 @@
                     style="background: #e1f5fe; color: #0277bd; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">
                     TASK</div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1a1a1a;">Task List: Test Tab</div>
-                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;">Entwicklungs-Aufgaben für Test UI
-                        Rework.</div>
+                    <div style="font-weight: 600; color: #1a1a1a;" data-i18n="feat_task_test_tab_title">Task List: Test
+                        Tab</div>
+                    <div style="font-size: 0.85em; color: #666; margin-top: 2px;" data-i18n="feat_task_test_tab_desc">
+                        Entwicklungs-Aufgaben für die Test-UI.</div>
                 </div>
             </div>
 
