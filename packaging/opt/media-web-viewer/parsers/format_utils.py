@@ -14,7 +14,12 @@ PARSER_CONFIG = {
     "debug_scan": True,
     "debug_parser": True,
     "scan_dirs": [str(Path(__file__).resolve().parent.parent / "media")],
-    "language": "de"
+    "language": "de",
+    "mutagen_prefer_albumartist": True,
+    "mutagen_extract_lyrics": False,
+    "pymediainfo_full_scan": False,
+    "ffmpeg_deep_analysis": False,
+    "ffmpeg_extract_thumbnails": True
 }
 
 def load_parser_config():
