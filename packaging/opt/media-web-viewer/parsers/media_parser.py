@@ -13,7 +13,7 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     """
     if debug:
         logger(f"[Debug-Parser] Starte Parsing für '{filename}' (Mode: {mode})")
-    if mode == 'full':
+    if debug and mode == 'full':
         logger(f"[Debug-Parser] 🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
         
     path_obj = Path(path)

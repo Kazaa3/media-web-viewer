@@ -1,8 +1,25 @@
-# main.py – Media Web Viewer
-# Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
-# (Startup print moved below)
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Media Web Viewer - Desktop Media Player and Library Manager
 
-#Benötigte Module importieren
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+
+# main.py – Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
+
+# Benötigte Module importieren
 import eel # Electron-like Python Library for building desktop apps with web technologies
 import sys
 import os
@@ -15,7 +32,12 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.18"
+# Version laden
+VERSION_FILE = Path(__file__).parent / "VERSION"
+try:
+    VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
+except Exception:
+    VERSION = "1.1.19" # Fallback
 
 @eel.expose("get_version")
 def get_version():
@@ -584,26 +606,38 @@ def list_logbook_entries():
                 
                 for line in lines:
                     line = line.strip()
-                    if "<!-- Category:" in line:
-                        category = line.split("Category: ")[1].split(" -->")[0]
-                    if "<!-- Summary:" in line:
-                        summary = line.split("Summary: ")[1].split(" -->")[0]
-                    if "<!-- Summary_DE:" in line:
-                        summary_de = line.split("Summary_DE: ")[1].split(" -->")[0]
-                    if "<!-- Summary_EN:" in line:
-                        summary_en = line.split("Summary_EN: ")[1].split(" -->")[0]
-                    if "<!-- Status:" in line:
-                        status = line.split("Status: ")[1].split(" -->")[0]
-                    if "<!-- Title_DE:" in line:
-                        title_de = line.split("Title_DE: ")[1].split(" -->")[0]
-                    if "<!-- Title_EN:" in line:
-                        title_en = line.split("Title_EN: ")[1].split(" -->")[0]
-                    if line.startswith("# "):
+                    # Support both <!-- Tag: Value --> and Tag: Value formats
+                    content = line
+                    if "<!--" in line and "-->" in line:
+                        content = line.split("<!--")[1].split("-->")[0].strip()
+                    
+                    if ":" in content:
+                        key, val = content.split(":", 1)
+                        key = key.strip()
+                        val = val.strip()
+                        
+                        if key == "Category": category = val
+                        elif key == "Status": status = val
+                        elif key == "Title_DE": title_de = val
+                        elif key == "Title_EN": title_en = val
+                        elif key == "Summary_DE": summary_de = val
+                        elif key == "Summary_EN": summary_en = val
+                        elif key == "Summary": summary = val
+                    
+                    if line.startswith("# ") and not (title_de or title_en):
                         title = line.replace("# ", "").strip()
+                
+                # Special case for Known Issues
+                if f.name == "00_Known_Issues.md":
+                    category = "Bug"
                 
                 # Fallbacks
                 if not title_de: title_de = title
                 if not title_en: title_en = title
+                
+                # Bi-directional summary fallback 
+                if not summary:
+                    summary = summary_de or summary_en
                 if not summary_de: summary_de = summary
                 if not summary_en: summary_en = summary
 

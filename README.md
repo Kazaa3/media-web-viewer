@@ -2,6 +2,28 @@
 
 A local desktop media player and library manager with an embedded web-based GUI. Built with Python, [Eel](https://github.com/python-eel/Eel), and the [Bottle](https://bottlepy.org/) web framework. Supports a wide range of audio formats including MP3, M4A, M4B (Audiobooks), FLAC, OGG, WAV, ALAC, and WMA.
 
+## Technology Stack
+
+```
+Media Web Viewer
+├── Backend (Python 3.11+)
+│   ├── Eel Framework (Electron-like GUI)
+│   ├── Bottle Web Framework (Media streaming)
+│   ├── SQLite Database (Local storage)
+│   └── FFmpeg (Transcoding)
+├── Frontend (Web Technologies)
+│   ├── HTML5/CSS3 (Responsive UI)
+│   ├── Vanilla JavaScript (No frameworks)
+│   └── Web Audio API (Playback)
+├── Parsers (Metadata Extraction)
+│   ├── Mutagen (Audio tags)
+│   ├── pymediainfo (Media info)
+│   └── FFmpeg (Fallback parsing)
+└── Packaging
+    ├── .deb (Debian/Ubuntu)
+    └── PyInstaller (Standalone exe)
+```
+
 ---
 
 ## Quick Start
@@ -20,13 +42,7 @@ media-web-viewer
 
 ---
 
-## 🇩🇪 Deutsch (German)
-
-Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
-
----
-
-## 🇺🇸 English (Default)
+## Installation
 
 The installer automatically sets up a Python virtual environment and installs all dependencies.
 
@@ -51,7 +67,7 @@ If you previously ran the app from source or want to reset all settings, note th
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall the clean version
-sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.14_amd64.deb
 
 # 3. Fix dependencies if needed
 sudo apt-get install -f
@@ -95,7 +111,7 @@ python main.py
 
 ```bash
 bash build_deb.sh
-sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.14_amd64.deb
 ```
 
 ---
@@ -103,6 +119,8 @@ sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
 ## Features
 
 - **Web-based GUI:** Modern HTML/CSS/JS interface powered by Eel (no Electron needed)
+- **Player Tab:** Real-time playback with item list and player sidebar
+- **Item Modal:** Detailed view for media items with metadata editing
 - **Smart Metadata Extraction:** Multi-parser pipeline using `mutagen`, `pymediainfo`, and `ffmpeg` fallback
 - **Audiobook Support:** Automatic chapter detection and correct sorting for `.m4b` and long MP3 files
 - **On-the-Fly Transcoding:** ALAC → FLAC and WMA → OGG via `ffmpeg` with transparent caching
@@ -139,6 +157,7 @@ The application automatically categorizes indexed items based on metadata and fi
 
 ```
 media-web-viewer/
+├── VERSION               ← Central version number (e.g. 1.1.19)
 ├── main.py               ← Entry point, Eel setup, all backend API functions
 ├── models.py             ← MediaItem data model (parsing, transcoding flags)
 ├── db.py                 ← SQLite database logic (init, insert, query, clear)

@@ -21,6 +21,10 @@ from pathlib import Path
 from parsers.format_utils import PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 from parsers import media_parser
 
+# In General & Debug:
+# Comments are stored as dictionaries and imported as JSON.
+# dict (JSON missing like in a few versions before)
+
 class MediaItem:
     def __init__(self, name, path, debug_flags=None, logger=None):
         self.name = name
@@ -102,6 +106,11 @@ class MediaItem:
         print()
 
     def to_dict(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         hours, remainder = divmod(self.duration, 3600)
         mins, secs = divmod(remainder, 60)
         

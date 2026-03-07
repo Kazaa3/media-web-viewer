@@ -4,11 +4,15 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PACKAGE_NAME="media-web-viewer"
-VERSION="1.1.18"
+# Version aus zentraler Datei lesen
+VERSION=$(cat "$SCRIPT_DIR/VERSION" | tr -d '[:space:]')
 ARCH="amd64"
 DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
 STAGING="$SCRIPT_DIR/packaging"
 APP_DEST="$STAGING/opt/$PACKAGE_NAME"
+
+# Update control file version
+sed -i "s/^Version:.*/Version: $VERSION/" "$STAGING/DEBIAN/control"
 
 echo "==> Bereite Staging-Bereich vor..."
 

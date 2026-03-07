@@ -1,6 +1,29 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Media Web Viewer - Data Models
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 from pathlib import Path
 from parsers.format_utils import PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 from parsers import media_parser
+
+# In General & Debug:
+# Comments are stored as dictionaries and imported as JSON.
+# dict (JSON missing like in a few versions before)
 
 class MediaItem:
     def __init__(self, name, path, debug_flags=None, logger=None):
@@ -69,14 +92,25 @@ class MediaItem:
         return 'Unbekannt'
 
     def show_info(self):
-        print(self.name)
-        print(str(self.path))
-        print(self.type)
-        print(self.duration)
-        print(self.tags)
-        print("\n")
+        """Prints the media item information in a formatted way."""
+        info_dict = self.to_dict()
+        print(f"Name: {info_dict['name']}")
+        print(f"Path: {info_dict['path']}")
+        print(f"Duration: {info_dict['duration']}")
+        print(f"Type: {info_dict['type']}")
+        print(f"Category: {info_dict['category']}")
+        print(f"Is Transcoded: {info_dict['is_transcoded']}")
+        if info_dict['transcoded_format']:
+            print(f"Transcoded Format: {info_dict['transcoded_format']}")
+        print(f"Tags: {info_dict['tags']}")
+        print()
 
     def to_dict(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         hours, remainder = divmod(self.duration, 3600)
         mins, secs = divmod(remainder, 60)
         
