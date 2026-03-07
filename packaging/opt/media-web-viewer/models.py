@@ -46,11 +46,17 @@ class MediaItem:
             if ext == '.m4b' or any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
                 return 'Hörbuch'
 
-            # Priority 2: Music specific tags
+            # Priority 2: Klassik
+            if any(k in genre for k in ['klassik', 'classical']) or \
+               any(k in artist for k in ['beethoven', 'mozart', 'bach', 'chopin', 'klassik', 'classical']) or \
+               any(k in path_str for k in ['klassik', 'classical']):
+                return 'Klassik'
+
+            # Priority 3: Music specific tags
             artist = (tags.get('artist') or "").lower()
             album = (tags.get('album') or "").lower()
 
-            if any(k in artist for k in ['va', 'various artists', 'various']):
+            if any(k in artist for k in ['va', 'various artists', 'various', 'compilation']):
                 return 'Compilation'
             
             if album:
