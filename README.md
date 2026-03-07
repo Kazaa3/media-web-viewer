@@ -11,7 +11,7 @@ A local desktop media player and library manager with an embedded web-based GUI.
 > Download the latest `.deb` from [Releases](../../releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
@@ -41,7 +41,7 @@ If you previously ran the app from source or want to reset all settings, note th
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall the clean version
-sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
 
 # 3. Fix dependencies if needed
 sudo apt-get install -f
@@ -85,7 +85,7 @@ python main.py
 
 ```bash
 bash build_deb.sh
-sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
 ```
 
 ---
@@ -106,6 +106,20 @@ sudo dpkg -i media-web-viewer_1.1.10_amd64.deb
 - **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art')
 - **Smart Categorization:** Advanced logic to distinguish between Albums, Singles, and Compilations
 - **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`
+
+---
+
+### Supported Media Categories
+
+The application automatically categorizes indexed items based on metadata and file patterns:
+
+- **💿 Album / Single:** Music organized by album name or track length.
+- **🔀 Compilation:** Detection of "Various Artists" or "compilation" tags.
+- **🎻 Klassik (Classical):** Enhanced detection for composers like **Beethoven, Mozart, Bach, Chopin** and "Klassik" keywords.
+- **📚 Hörbuch (Audiobook):** Specialized support for `.m4b` and long audio files including chapter navigation.
+- **🎬 Film / Serie:** Detection for movie files and TV show patterns (Season/Staffel).
+- **📄 E-Book / Dokument:** Support for EPUB, PDF and other document types.
+- **🎵 Audio:** General fallback for music without specific tags.
 
 ---
 
