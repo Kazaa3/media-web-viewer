@@ -1,6 +1,5 @@
 from pathlib import Path
 from parsers.format_utils import PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
-from parsers.format_utils import PARSER_CONFIG
 from parsers import media_parser
 
 class MediaItem:
@@ -46,16 +45,17 @@ class MediaItem:
             if ext == '.m4b' or any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
                 return 'Hörbuch'
 
-            # Priority 2: Klassik
+            # Priority 2: Music specific tags
+            artist = (tags.get('artist') or "").lower()
+            album = (tags.get('album') or "").lower()
+
+            # Priority 3: Klassik
             if any(k in genre for k in ['klassik', 'classical']) or \
                any(k in artist for k in ['beethoven', 'mozart', 'bach', 'chopin', 'klassik', 'classical']) or \
                any(k in path_str for k in ['klassik', 'classical']):
                 return 'Klassik'
 
-            # Priority 3: Music specific tags
-            artist = (tags.get('artist') or "").lower()
-            album = (tags.get('album') or "").lower()
-
+            # Priority 4: Compilations / Albums / Singles
             if any(k in artist for k in ['va', 'various artists', 'various', 'compilation']):
                 return 'Compilation'
             
