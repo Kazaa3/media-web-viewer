@@ -901,7 +901,29 @@
                             </select>
                         </div>
 
-                        <div style="margin-top: auto; padding-top: 20px;">
+                    </div>
+
+                    <!-- Right Column: General & Debug Settings -->
+                    <div style="flex: 1; max-width: 500px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_general_debug">Allgemein &
+                            Debug</h3>
+                        <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_debug_desc">
+                            Im Options-Reiter können die Flags für das Logging gesetzt werden.</p>
+
+                        <div id="debug-flags-container"
+                            style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+                            <!-- Flags werden dynamisch geladen -->
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                            <button onclick="setAllFlags(true)"
+                                style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; cursor: pointer; font-weight: bold;"
+                                data-i18n="options_debug_all_on">Alle Flags an</button>
+                            <button onclick="setAllFlags(false)"
+                                style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #c0392b; background: #fff; color: #c0392b; cursor: pointer; font-weight: bold;"
+                                data-i18n="options_debug_all_off">Alle Flags aus</button>
+                        </div>
+
+                        <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
                             <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;"
                                 data-i18n="options_danger_zone">Gefahrenzone (Reset)
                             </h3>
@@ -924,27 +946,6 @@
                                 data-i18n="options_danger_caution">
                                 Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Column: General & Debug Settings -->
-                    <div style="flex: 1; max-width: 500px;">
-                        <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_general_debug">Allgemein &
-                            Debug</h3>
-                        <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_debug_desc">
-                            Im Options-Reiter können die Flags für das Logging gesetzt werden.</p>
-
-                        <div id="debug-flags-container"
-                            style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
-                            <!-- Flags werden dynamisch geladen -->
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-bottom: 30px;">
-                            <button onclick="setAllFlags(true)"
-                                style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; cursor: pointer; font-weight: bold;"
-                                data-i18n="options_debug_all_on">Alle Flags an</button>
-                            <button onclick="setAllFlags(false)"
-                                style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #c0392b; background: #fff; color: #c0392b; cursor: pointer; font-weight: bold;"
-                                data-i18n="options_debug_all_off">Alle Flags aus</button>
                         </div>
                     </div>
                 </div> <!-- Close flex row container inside options-tab -->

@@ -15,7 +15,7 @@ from pathlib import Path
 import re  # For MKV parsing
 from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-VERSION = "1.1.17"
+VERSION = "1.1.18"
 
 @eel.expose("get_version")
 def get_version():
@@ -571,7 +571,7 @@ def list_logbook_entries():
     for f in sorted(log_dir.glob("*.md")):
         try:
             with open(f, 'r', encoding='utf-8') as fp:
-                lines = [fp.readline() for _ in range(10)] # Mehr Zeilen lesen um alles zu finden
+                lines = [fp.readline() for _ in range(20)] # Mehr Zeilen lesen um alles zu finden
                 category = "Sonstiges"
                 summary = ""
                 status = "COMPLETED" # Default
