@@ -24,11 +24,24 @@ def _log(msg):
     @details Interner Helfer zum Loggen von Nachrichten in die Routen-Logdatei.
     @param msg Message to log / Zu loggende Nachricht.
     """
+    try:
+        with open(LOG_FILE, "a", encoding='utf-8') as f:
+            f.write(f"{msg}\n")
+        
+        # Avoid circular import by importing main inside the function
+        import __main__ as main
+        if hasattr(main, 'DEBUG_FLAGS') and main.DEBUG_FLAGS.get("web"):
+            if hasattr(main, 'debug_log'):
+                main.debug_log(f"[Web] {msg}")
+            else:
+                print(f"[Web] {msg}")
+    except Exception:
+        pass
 
 def _resolve_path(filename):
     """
     @brief Resolves a filename to its full filesystem path.
-    @details Auflöst einen Dateinamen in seinen vollen Pfad.
+    @details Löst einen Dateinamen in seinen vollen Pfad auf.
     @param filename Name of the media file / Name der Datei.
     @return Full path or None / Voller Pfad oder None.
     """
