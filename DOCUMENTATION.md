@@ -2328,6 +2328,33 @@ firefox htmlcov/index.html
 
 For more information on the session management tests, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_Dynamic_Session_Management.md).
 
+### Environment Handling & Hygiene
+
+Media Web Viewer is designed to run in a strictly isolated and clean virtual environment. This ensures that dependency conflicts are avoided and the application remains reliable across different systems.
+
+#### Clean & Exclusive Design
+
+- **Exclusivity**: The application verifies at startup whether it is running in its project-local `.venv`. If it detects a global or incorrect environment, it will log a warning.
+- **Integrity Checks**: Every startup involves a "Environment Integrity Check". The `env_handler.py` module verifies that all critical dependencies (`eel`, `mutagen`, `bottle`, etc.) are installed and meet minimum version requirements.
+- **Fingerprinting**: The environment's package state is fingerprinted. This allows developers to detect "dirty" environments where unauthorized packages might have been installed.
+
+#### Environment Repair
+
+If you encounter environment-related errors or dependency conflicts, you can forcefully rebuild the environment:
+
+```bash
+./run.sh --rebuild
+```
+
+**What this does:**
+1. Deactivates any current environment.
+2. Deletes the existing `.venv` directory.
+3. Automatically recreates a fresh virtual environment.
+4. Re-installs all required dependencies from `requirements.txt`.
+5. Restarts the application in the new, clean environment.
+
+---
+
 #### Configuration Management
 
 **Configuration Files:**

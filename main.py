@@ -100,6 +100,7 @@ from parsers.format_utils import (
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
 )
 import logger
+import env_handler
 try:
     import vlc
     HAS_VLC = True
@@ -412,6 +413,9 @@ def initialize_debug_flags(args=None):
 
 # Initialize logging early with default sys.argv
 initialize_debug_flags()
+
+# Ensure we are running in a clean and exclusive environment
+env_handler.validate_safe_startup()
 
 # Log environment information at startup
 def _log_environment_info():

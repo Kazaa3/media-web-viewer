@@ -76,6 +76,16 @@ echo ""
 
 # Start the application
 echo -e "${BLUE}🚀 Starte Media Web Viewer...${NC}"
+
+# Handle Rebuild flag
+if [[ "$1" == "--rebuild" ]]; then
+    echo -e "${YELLOW}♻️  Rebuilding environment as requested...${NC}"
+    deactivate 2>/dev/null || true
+    rm -rf "$VENV_DIR"
+    echo -e "${GREEN}✅ .venv gelöscht. Starte neu...${NC}"
+    exec bash "$0"
+fi
+
 echo ""
 
-exec python main.py
+exec python main.py "$@"
