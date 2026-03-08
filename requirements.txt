@@ -12,11 +12,12 @@
 # - ffmpeg: LGPL v2.1 / GPL - Audio/Video transcoding and metadata extraction ✅ GPL-3.0 compatible
 # - libmediainfo0v5: BSD 2-Clause - Media information library (via apt/package manager) ✅ GPL-3.0 compatible
 # - python3-tk: Python Software Foundation - Python Tkinter for system file dialogs ✅ GPL-3.0 compatible
+# - doxygen: GPL v2 - Documentation generator ✅ GPL-3.0 compatible
 #
 # All dependencies are compatible with GPL-3.0
 #
 # Installation:
-#   sudo apt install ffmpeg libmediainfo0v5 python3-tk  # Debian/Ubuntu
+#   sudo apt install ffmpeg libmediainfo0v5 python3-tk doxygen  # Debian/Ubuntu
 #   pip install -r requirements.txt
 
 # Web Framework & Desktop GUI
@@ -37,6 +38,7 @@ pytest>=8.0.0                  # MIT License - Test framework
 pytest-cov>=4.1.0              # MIT License - Coverage plugin for pytest
 flake8>=7.0.0                  # MIT License - Linter
 mypy>=1.9.0                    # MIT License - Static type checker
+markdown>=3.5.0                # BSD License - Markdown parsing (for documentation tests)
 
 # System & Utilities
 psutil>=5.9.0                  # BSD 3-Clause License - System and process utilities
