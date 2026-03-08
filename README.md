@@ -5,13 +5,23 @@ A local desktop media player and library manager with an embedded web-based GUI.
 ## Technology Stack
 
 ```
-Media Web Viewer (v1.1.20)
-├── Frontend Layer (HTML5/CSS3, Vanilla JS, i18n)
-├── EEL Bridge (WebSocket, JSON Serialization)
-├── Backend (Python 3.11+, Eel, Bottle)
-├── Data Processing (Parser Pipeline, Transcoding)
-├── Data Persistence (SQLite, JSON Config)
-└── System Integration (.deb, FFmpeg, Tkinter Dialogs)
+Media Web Viewer
+├── Backend (Python 3.11+)
+│   ├── Eel Framework (Electron-like GUI)
+│   ├── Bottle Web Framework (Media streaming)
+│   ├── SQLite Database (Local storage)
+│   └── FFmpeg (Transcoding)
+├── Frontend (Web Technologies)
+│   ├── HTML5/CSS3 (Responsive UI)
+│   ├── Vanilla JavaScript (No frameworks)
+│   └── Web Audio API (Playback)
+├── Parsers (Metadata Extraction)
+│   ├── Mutagen (Audio tags)
+│   ├── pymediainfo (Media info)
+│   └── FFmpeg (Fallback parsing)
+└── Packaging
+    ├── .deb (Debian/Ubuntu)
+    └── PyInstaller (Standalone exe)
 ```
 
 ---
@@ -120,9 +130,9 @@ sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 - **Integrated Tests:** Run backend pytest suites from the "Tests" tab in the UI
 - **Parser Configuration:** Drag-and-drop reordering of the parser chain with enable/disable toggles
 - **Debug Tools:** Real-time log viewer and configurable debug flags
-- **Logbook:** Built-in development log and documentation viewer
-- **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art')
 - **Smart Categorization:** Advanced logic to distinguish between Albums, Singles, and Compilations
+- **Logbook:** Built-in development log (Bilingual DE/EN) and features modal
+- **Wording:** Consistent terminology (Item Modal, Player Footer, etc.)
 - **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`
 
 ---
