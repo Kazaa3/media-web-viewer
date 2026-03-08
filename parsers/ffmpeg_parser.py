@@ -54,10 +54,17 @@ def parse(path, file_type, tags, mode='lightweight'):
                     tags['samplerate'] = format_samplerate(sr_match.group(1))
 
             # Bitdepth
-            fmt_match = re.search(r"\b(u8|u8p|s16|s16p|s24|s24p|s32|s32p|fltp|flt|dblp|dbl|s64|s64p)\b", audio_line)
-            if fmt_match:
-                fmt = fmt_match.group(1)
-                tags['bitdepth'] = format_bitdepth(None, codec=tags.get('codec'), file_type=file_type, internal_fmt=fmt)
+            # First try to find explicit bit depth in parentheses (e.g., "s32 (24 bit)")
+            explicit_bit_match = re.search(r"\((\d+)\s*bit\)", audio_line)
+            if explicit_bit_match:
+                bit_depth = explicit_bit_match.group(1)
+                tags['bitdepth'] = f"{bit_depth} Bit"
+            else:
+                # Fall back to format string parsing
+                fmt_match = re.search(r"\b(u8|u8p|s16|s16p|s24|s24p|s32|s32p|fltp|flt|dblp|dbl|s64|s64p)\b", audio_line)
+                if fmt_match:
+                    fmt = fmt_match.group(1)
+                    tags['bitdepth'] = format_bitdepth(None, codec=tags.get('codec'), file_type=file_type, internal_fmt=fmt)
 
             # Bitrate
             if not tags.get('bitrate'):

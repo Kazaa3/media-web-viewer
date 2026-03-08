@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: FFprobe Duration Extraction
-# Eingabewerte: media/sample.alac
+# Eingabewerte: media/01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a
 # Ausgabewerte: FFprobe duration in Sekunden
-# Testdateien: media/sample.alac
-# Kommentar: Testet FFprobe Stream-Duration-Extraktion aus ALAC-Datei (subprocess mit Timeout, Error Handling).
+# Testdateien: media/01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a
+# Kommentar: Testet FFprobe Stream-Duration-Extraktion aus M4A-Datei (subprocess mit Timeout, Error Handling).
 """
 ================================================================================
 FFprobe Duration Extraction Test - Media Web Viewer
@@ -56,12 +56,12 @@ def test_ffprobe_duration_extraction():
     @brief Test FFprobe duration extraction for ALAC files.
     @details Validates that FFprobe correctly extracts duration metadata.
     """
-    media_file = Path("media/sample.alac")
+    media_file = Path("media/01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a")
     
     if not media_file.exists():
-        print(f"⚠️  Testdatei nicht gefunden: {media_file}")
-        print("   Test wird übersprungen.")
-        return
+        print(f"❌ Testdatei nicht gefunden: {media_file}")
+        print("   Test FEHLGESCHLAGEN (Datei fehlt).")
+        return False
     
     try:
         result = subprocess.run(

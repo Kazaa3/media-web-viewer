@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Comprehensive Test Runner
+# Eingabewerte: Alle test_*.py Dateien im tests/ Verzeichnis
+# Ausgabewerte: Test-Status (PASSED/FAILED/SKIPPED), Metadata, Recommendations
+# Testdateien: tests/test_*.py (alle 53+ Tests)
+# Kommentar: Läuft durch ALLE Test-Dateien und dokumentiert jeden Test mit Zweck, Eingabe, Ausgabe, Status und Empfehlungen.
 """
 ================================================================================
 Comprehensive Test Runner - Alle Tests mit Kommentaren

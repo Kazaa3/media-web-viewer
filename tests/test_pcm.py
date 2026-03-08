@@ -52,6 +52,9 @@ VERWENDUNG:
 import sys
 from pathlib import Path
 
+# Add parent directory to path for parser imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 try:
     from parsers import ffmpeg_parser
     PARSER_AVAILABLE = True
@@ -81,11 +84,11 @@ def test_pcm_bitdepth_detection():
         missing.append(str(file_16bit))
     
     if missing:
-        print(f"⚠️  Testdateien nicht gefunden:")
+        print(f"❌ Testdateien nicht gefunden:")
         for f in missing:
             print(f"   - {f}")
-        print("   Test wird übersprungen.")
-        return None
+        print("   Test FEHLGESCHLAGEN (Dateien fehlen).")
+        return False
     
     print("\n🎵 PCM Bit-Depth Detection Test\n")
     
@@ -132,6 +135,4 @@ def test_pcm_bitdepth_detection():
 
 if __name__ == "__main__":
     success = test_pcm_bitdepth_detection()
-    if success is None:
-        sys.exit(0)  # Skipped
     sys.exit(0 if success else 1)

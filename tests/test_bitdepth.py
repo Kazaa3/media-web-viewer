@@ -141,9 +141,9 @@ def test_bitdepth_detection():
         print()
     
     if tested == 0:
-        print("⚠️  Keine Testdateien gefunden")
-        print("   Test wird übersprungen.")
-        return None
+        print("❌ Keine Testdateien gefunden")
+        print("   Test FEHLGESCHLAGEN (Dateien fehlen).")
+        return False
     
     print(f"{'='*60}")
     print(f"Erfolgreich analysiert: {success}/{tested}")
@@ -158,6 +158,4 @@ def test_bitdepth_detection():
 
 if __name__ == "__main__":
     success = test_bitdepth_detection()
-    if success is None:
-        sys.exit(0)  # Skipped
     sys.exit(0 if success else 1)
