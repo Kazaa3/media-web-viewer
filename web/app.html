@@ -2263,7 +2263,7 @@
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
-                alert("VLC Fehler: " + res.error);
+                alert(t('vlc_error_prefix') + res.error);
             }
         }
 
@@ -2353,7 +2353,7 @@
                     let artistDisplay = tags.artist || t('lib_unknown_artist');
                     let itemName = item.name || item.filename || "unknown";
 
-                    const specialCategories = ['Hörbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
+                    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
                     let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
                     div.innerHTML = `
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
@@ -2702,7 +2702,7 @@
                     condaHtml += '</div>';
                     condaList.innerHTML = condaHtml;
                 } else {
-                    condaList.innerHTML = '<span style="color: #999;">Keine Conda-Umgebungen gefunden</span>';
+                    condaList.innerHTML = `<span style="color: #999;">${t('env_no_conda_envs')}</span>`;
                 }
 
                 // Display System Python Installations
@@ -2720,7 +2720,7 @@
                     systemHtml += '</div>';
                     systemList.innerHTML = systemHtml;
                 } else {
-                    systemList.innerHTML = '<span style="color: #999;">Keine System-Python-Installationen gefunden</span>';
+                    systemList.innerHTML = `<span style="color: #999;">${t('env_no_system_pythons')}</span>`;
                 }
 
                 // Display Local Virtual Environments
@@ -2742,7 +2742,7 @@
                     venvsHtml += '</div>';
                     venvsList.innerHTML = venvsHtml;
                 } else {
-                    venvsList.innerHTML = '<span style="color: #999;">Keine lokalen Virtual Environments gefunden</span>';
+                    venvsList.innerHTML = `<span style="color: #999;">${t('env_no_local_venvs')}</span>`;
                 }
 
                 // Display Installed Packages
@@ -2774,7 +2774,7 @@
                     });
                 } else {
                     packageCount.textContent = '(0)';
-                    packagesList.innerHTML = '<span style="color: #999;">Keine Pakete gefunden</span>';
+                    packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
                 }
                 
             } catch (e) {
@@ -2786,12 +2786,12 @@
             const packagesList = document.getElementById('installed-packages-list');
             
             if (packages.length === 0) {
-                packagesList.innerHTML = '<span style="color: #999;">Keine passenden Pakete gefunden</span>';
+                packagesList.innerHTML = `<span style="color: #999;">${t('env_no_matching_packages')}</span>`;
                 return;
             }
             
             let packagesHtml = '<table style="width: 100%; border-collapse: collapse;">';
-            packagesHtml += '<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Paket</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Version</th></tr></thead>';
+            packagesHtml += `<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">${t('env_table_package')}</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">${t('env_table_version')}</th></tr></thead>`;
             packagesHtml += '<tbody>';
             
             packages.forEach((pkg, index) => {
@@ -3064,7 +3064,7 @@
             if (currentPlayer.src) {
                 // Find current item based on the title, or we can just trigger a re-render of the file info
                 const titleText = document.getElementById('sb-title').innerText;
-                if (titleText !== "Kein Lied gewählt") {
+                if (titleText !== t('sb_no_song')) {
                     // The easiest way is to let the user re-click for now, but we saved the preference.
                 }
             }
@@ -3095,7 +3095,7 @@
                         inputs: "Browser Interactions",
                         outputs: "DOM State",
                         files: "App HTML",
-                        comment: "Testet die App im Browser. Muss manuell vom Agenten ausgelöst werden."
+                        comment: t('test_gui_comment')
                     }
                 });
 
@@ -3188,14 +3188,14 @@
                 try {
                     const result = await eel.run_tests(selectedFiles)();
                     if (result.error) {
-                        outputArea.textContent += `Fehler bei der Testausführung: ${result.error}\n`;
+                        outputArea.textContent += `${t('test_run_error')}${result.error}\n`;
                     } else {
                         outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
                         if (result.passes !== undefined) totalPasses += result.passes;
                         if (result.fails !== undefined) totalFails += result.fails;
                     }
                 } catch (e) {
-                    outputArea.textContent += `Systemfehler: ${e}\n`;
+                    outputArea.textContent += `${t('test_run_system_error')}${e}\n`;
                 }
             }
 
@@ -3255,13 +3255,13 @@
         }
 
         async function createNewTest() {
-            const name = prompt("Name für den neuen Test (z.B. feature_x):");
+            const name = prompt(t('test_new_prompt_name'));
             if (!name) return;
             const res = await eel.create_new_test(name)();
             if (res.status === 'ok') {
                 loadTestSuites();
             } else {
-                alert("Fehler: " + (res.message || res.error));
+                alert(t('common_error') + (res.message || res.error));
             }
         }
 
@@ -3271,7 +3271,7 @@
             if (res.status === 'ok') {
                 loadTestSuites();
             } else {
-                alert("Fehler: " + (res.message || res.error));
+                alert(t('common_error') + (res.message || res.error));
             }
         }
 
@@ -3341,10 +3341,10 @@
             statusDiv.innerHTML = `⏳ ${t('vlc_select_playlist')}`;
 
             try {
-                const filePath = await eel.pick_file('VLC Playlist auswählen', [
-                    ['M3U8 Playlists', '*.m3u8'],
-                    ['M3U Playlists', '*.m3u'],
-                    ['Alle Dateien', '*.*']
+                const filePath = await eel.pick_file(t('vlc_picker_title'), [
+                    [t('vlc_filter_m3u8'), '*.m3u8'],
+                    [t('vlc_filter_m3u'), '*.m3u'],
+                    [t('common_all_files'), '*.*']
                 ])();
 
                 if (!filePath) {
@@ -3352,14 +3352,14 @@
                     return;
                 }
 
-                statusDiv.innerHTML = '⏳ Importiere Playlist...';
+                statusDiv.innerHTML = `⏳ ${t('vlc_importing_playlist')}`;
 
                 const result = await eel.import_vlc_playlist(filePath)();
 
                 if (result.error) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `❌ Fehler: ${result.error}`;
+                    statusDiv.innerHTML = `❌ ${t('common_error')}${result.error}`;
                 } else {
                     statusDiv.style.background = '#e8f5e9';
                     statusDiv.style.color = '#2e7d32';
@@ -3367,10 +3367,10 @@
                     const skipped = (result.skipped || []).length;
                     const errors = (result.errors || []).length;
                     
-                    let msg = `✅ Import abgeschlossen!<br>`;
-                    msg += `📥 ${imported} neue Tracks importiert`;
-                    if (skipped > 0) msg += `<br>⏩ ${skipped} bereits vorhanden`;
-                    if (errors > 0) msg += `<br>⚠️ ${errors} Fehler`;
+                    let msg = `✅ ${t('vlc_import_completed')}<br>`;
+                    msg += `📥 ${imported} ${t('vlc_tracks_imported_suffix')}`;
+                    if (skipped > 0) msg += `<br>⏩ ${skipped} ${t('vlc_tracks_already_present_suffix')}`;
+                    if (errors > 0) msg += `<br>⚠️ ${errors} ${t('vlc_errors_suffix')}`;
                     
                     statusDiv.innerHTML = msg;
                     
@@ -3385,7 +3385,7 @@
             } catch (e) {
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
-                statusDiv.innerHTML = `❌ Fehler: ${e.message || e}`;
+                statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
             }
         }
 
@@ -3411,41 +3411,41 @@
                 statusDiv.innerHTML = `⏳ ${t('vlc_select_location')}`;
 
                 // Pick save location
-                const filePath = await eel.pick_save_file('Playlist speichern als', [
-                    ['M3U8 Playlist', '*.m3u8'],
-                    ['Alle Dateien', '*.*']
-                ], 'meine_playlist.m3u8')();
+                const filePath = await eel.pick_save_file(t('vlc_save_playlist_as'), [
+                    [t('vlc_filter_m3u8'), '*.m3u8'],
+                    [t('common_all_files'), '*.*']
+                ], t('vlc_default_playlist_filename'))();
 
                 if (!filePath) {
                     statusDiv.style.display = 'none';
                     return;
                 }
 
-                statusDiv.innerHTML = '⏳ Exportiere Playlist...';
+                statusDiv.innerHTML = `⏳ ${t('vlc_exporting_playlist')}`;
 
                 const result = await eel.export_playlist_to_vlc(mediaNames, filePath)();
 
                 if (result.error) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `❌ Fehler: ${result.error}`;
+                    statusDiv.innerHTML = `❌ ${t('common_error')}${result.error}`;
                 } else {
                     statusDiv.style.background = '#e8f5e9';
                     statusDiv.style.color = '#2e7d32';
                     const exported = result.exported || 0;
                     const missing = (result.missing || []).length;
                     
-                    let msg = `✅ Export abgeschlossen!<br>`;
-                    msg += `💾 ${exported} Tracks exportiert`;
-                    if (missing > 0) msg += `<br>⚠️ ${missing} nicht gefunden`;
-                    msg += `<br>📂 Datei: <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
+                    let msg = `✅ ${t('vlc_export_completed')}<br>`;
+                    msg += `💾 ${exported} ${t('vlc_tracks_exported_suffix')}`;
+                    if (missing > 0) msg += `<br>⚠️ ${missing} ${t('vlc_missing_suffix')}`;
+                    msg += `<br>📂 ${t('common_file_label')} <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
                     
                     statusDiv.innerHTML = msg;
                 }
             } catch (e) {
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
-                statusDiv.innerHTML = `❌ Fehler: ${e.message || e}`;
+                statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
             }
         }
 
@@ -3485,7 +3485,7 @@
                 // Play in external VLC
                 const result = await eel.play_vlc(path)();
                 if (result.error) {
-                    alert('VLC Fehler: ' + result.error);
+                    alert(t('vlc_error_prefix') + result.error);
                 } else {
                     videoPlayer.style.display = 'none';
                     placeholder.style.display = 'none';
