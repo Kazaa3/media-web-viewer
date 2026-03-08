@@ -77,14 +77,16 @@ DEBUG_FLAGS = {
     "scan": False,
     "player": False,
     "db": False,
-    "tests": False
+    "tests": False,
+    "api": False,
+    "web": False
 }
 
 # Full Debug Mode: If --debug argument is passed, set all flags to True
 if "--debug" in sys.argv:
     for key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = True
-    print("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+    debug_log("[System] Full Debug-Mode activated (--debug). All flags set to True.")
 
 LOG_BUFFER = []
 
@@ -357,7 +359,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 if DEBUG_FLAGS["scan"]:
                     debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
                 try:
-                    item = MediaItem(f.name, f)
+                    item = MediaItem(f.name, f, debug_flags=DEBUG_FLAGS, logger=debug_log)
                     item_dict = item.to_dict()
                     if DEBUG_FLAGS["db"]:
                         debug_log(f"[DB-Insert] {f.name} (Category: {item_dict.get('category')}) from {f.parent}")
@@ -961,7 +963,7 @@ if __name__ == "__main__":
     # Append to LOG_BUFFER silently so it's visible in the debug window later
     LOG_BUFFER.append(startup_cmd)
     if any(DEBUG_FLAGS.values()):
-        print(startup_cmd)
+        debug_log(startup_cmd)
 
     db.init_db()               
     
@@ -979,7 +981,7 @@ if __name__ == "__main__":
     eel.init(web_dir)
     
     if DEBUG_FLAGS["start"]:
-        print("[Startup] Starting Eel UI...")
+        debug_log("[Startup] Starting Eel UI...")
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
