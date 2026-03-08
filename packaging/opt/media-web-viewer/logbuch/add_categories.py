@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 # Kategorie-Zuordnung
@@ -45,19 +44,19 @@ for file in sorted(current_dir.glob("*.md")):
     # Extrahiere Nummer aus Dateinamen
     name = file.stem
     prefix = name.split("_")[0] if "_" in name else ""
-    
+
     if prefix in categories:
         content = file.read_text(encoding='utf-8')
-        
+
         # Prüfe, ob Kategorie bereits vorhanden
         if "<!-- Category:" in content:
             continue
-            
+
         category = categories[prefix]
-        
+
         # Füge Kategorie am Anfang hinzu
         new_content = f"<!-- Category: {category} -->\n\n{content}"
-        
+
         file.write_text(new_content, encoding='utf-8')
         print(f"✓ {file.name} -> {category}")
 

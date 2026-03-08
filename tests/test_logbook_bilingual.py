@@ -4,19 +4,19 @@
 # Testdateien: Temporäre .md Dateien in /logbuch
 # Kommentar: Verifiziert, dass die Metadaten-Extraktion für DE und EN korrekt funktioniert.
 
-import sys, os
+from main import list_logbook_entries
+import sys
+import os
 from pathlib import Path
-import shutil
 
 # Pfad zum Projekt-Root hinzufügen
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from main import list_logbook_entries
 
 def test_bilingual_metadata_extraction():
     log_dir = Path(__file__).parent.parent / "logbuch"
     test_file = log_dir / "test_pytest_bilingual.md"
-    
+
     # Test-Datei erstellen
     content = """<!-- Title_DE: Deutsch Titel -->
 <!-- Title_EN: English Title -->
@@ -28,16 +28,16 @@ def test_bilingual_metadata_extraction():
 # Standard Title
 Inhalt hier.
 """
-    
+
     try:
         with open(test_file, 'w', encoding='utf-8') as f:
             f.write(content)
-        
+
         entries = list_logbook_entries()
-        
+
         # Den spezifischen Eintrag suchen
         entry = next((e for e in entries if e['name'] == "test_pytest_bilingual"), None)
-        
+
         assert entry is not None, "Test entry should be found"
         assert entry['title_de'] == "Deutsch Titel"
         assert entry['title_en'] == "English Title"
@@ -46,13 +46,14 @@ Inhalt hier.
         assert entry['title'] == "Standard Title"
         assert entry['status'] == "ACTIVE"
         assert entry['category'] == "Tests"
-        
+
         print("✅ Bilingual metadata extraction test passed!")
-        
+
     finally:
         # Aufräumen
         if test_file.exists():
             test_file.unlink()
+
 
 if __name__ == "__main__":
     test_bilingual_metadata_extraction()

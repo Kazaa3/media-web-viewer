@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 
+
 def parse(path, filename, tags=None, mode='lightweight'):
     """
     @brief Extracts metadata from the filename (e.g., 'Artist - Title').
@@ -19,20 +20,20 @@ def parse(path, filename, tags=None, mode='lightweight'):
             'date': '', 'genre': '', 'track': '', 'totaltracks': '',
             'disc': '', 'totaldiscs': ''
         }
-    
+
     try:
         if not tags.get('size'):
             tags['size'] = f"{Path(path).stat().st_size / (1024 * 1024):.2f} MB"
     except Exception:
         pass
-        
+
     working_filename = filename
     if not tags.get('track'):
         track_match = re.match(r"^(\d+)\s+(.*)", working_filename)
         if track_match:
-            tags['track'] = str(int(track_match.group(1))) # Remove leading zeros
+            tags['track'] = str(int(track_match.group(1)))  # Remove leading zeros
             working_filename = track_match.group(2)
-            
+
     if " - " in working_filename:
         parts = working_filename.split(" - ", 1)
         if not tags.get('artist'):
@@ -44,5 +45,5 @@ def parse(path, filename, tags=None, mode='lightweight'):
         if not tags.get('title'):
             title = working_filename.rsplit(".", 1)[0] if "." in working_filename else working_filename
             tags['title'] = title
-        
+
     return tags

@@ -4,19 +4,21 @@
 # Testdateien: Alle Dateien in /media
 # Kommentar: Misst und vergleicht die Ausführungszeit der verschiedenen Metadaten-Parser.
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from pathlib import Path
-import glob
-import time
-
 from parsers import filename_parser, mutagen_parser, pymediainfo_parser, ffmpeg_parser
+import time
+import glob
+from pathlib import Path
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 media_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'media'))
 
+
 def benchmark_parsers():
     files = glob.glob(os.path.join(media_dir, '*.*'))
-    
+
     total_times = {
         "filename": 0.0,
         "mutagen": 0.0,
@@ -31,7 +33,7 @@ def benchmark_parsers():
         path_obj = Path(f)
         file_type = path_obj.suffix.lower()
         file_count += 1
-        
+
         print(f"File: {name}")
 
         # filename parser
@@ -43,26 +45,25 @@ def benchmark_parsers():
 
         # mutagen parser
         t0 = time.time()
-        tags_mutagen = mutagen_parser.parse(path_obj, file_type, {}, name)
+        mutagen_parser.parse(path_obj, file_type, {}, name)
         t_mutagen = time.time() - t0
         total_times["mutagen"] += t_mutagen
         print(f"  mutagen     : {t_mutagen:.4f} sec")
 
         # pymediainfo parser
         t0 = time.time()
-        tags_pymediainfo = pymediainfo_parser.parse(path_obj, file_type, {})
+        pymediainfo_parser.parse(path_obj, file_type, {})
         t_pymediainfo = time.time() - t0
         total_times["pymediainfo"] += t_pymediainfo
         print(f"  pymediainfo : {t_pymediainfo:.4f} sec")
 
-
         # ffmpeg parser
         t0 = time.time()
-        tags_ffmpeg = ffmpeg_parser.parse(path_obj, file_type, {})
+        ffmpeg_parser.parse(path_obj, file_type, {})
         t_ffmpeg = time.time() - t0
         total_times["ffmpeg"] += t_ffmpeg
         print(f"  ffmpeg      : {t_ffmpeg:.4f} sec")
-        
+
         # container parser
         t0 = time.time()
         tags_container = {}
@@ -73,14 +74,15 @@ def benchmark_parsers():
         t_container = time.time() - t0
         total_times["container"] += t_container
         print(f"  container   : {t_container:.4f} sec")
-        
+
         print("-" * 40)
 
-    print("\n" + "="*40)
+    print("\n" + "=" * 40)
     print(f"TOTAL TIMES ({file_count} files):")
     for parser, t in total_times.items():
         print(f"  {parser:<15}: {t:.4f} sec")
-    print("="*40)
+    print("=" * 40)
+
 
 if __name__ == "__main__":
     benchmark_parsers()

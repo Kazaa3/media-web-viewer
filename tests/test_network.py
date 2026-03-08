@@ -8,8 +8,8 @@ import threading
 import os
 import tempfile
 import socket
-import pytest
 import shutil
+
 
 def get_free_port():
     """Findet einen freien Port auf dem System."""
@@ -19,13 +19,15 @@ def get_free_port():
     s.close()
     return port
 
+
 # Wir nutzen einen Port, der sicher frei ist
 TEST_PORT = get_free_port()
 TMP_DIR = tempfile.mkdtemp()
 
+
 def setup_module():
     eel.init('web')
-    
+
     # Vereinfachte Routen ohne komplexe Platzhalter zum Testen
     @eel.btl.route('/ping')
     def ping():
@@ -50,14 +52,17 @@ def setup_module():
     t.start()
     time.sleep(3.0)
 
+
 def teardown_module():
     if os.path.exists(TMP_DIR):
         shutil.rmtree(TMP_DIR)
+
 
 def test_ping():
     url = f"http://localhost:{TEST_PORT}/ping"
     res = urllib.request.urlopen(url, timeout=5).read().decode('utf-8')
     assert res == "pong"
+
 
 def test_echo_query():
     # Test über Query-String statt Pfad-Parameter
@@ -65,18 +70,22 @@ def test_echo_query():
     res = urllib.request.urlopen(url, timeout=5).read().decode('utf-8')
     assert res == "hello world"
 
+
 def test_static_file_fixed():
     # Wir erstellen die Datei im TMP_DIR
     with open(os.path.join(TMP_DIR, "test.txt"), "w") as f:
         f.write("fix_content")
-    
+
     url = f"http://localhost:{TEST_PORT}/static-direct"
     res = urllib.request.urlopen(url, timeout=5).read().decode('utf-8')
     assert res == "fix_content"
+
 
 if __name__ == "__main__":
     setup_module()
     print(f"Server läuft auf Port {TEST_PORT}")
     try:
-        while True: time.sleep(1)
-    except KeyboardInterrupt: pass
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass

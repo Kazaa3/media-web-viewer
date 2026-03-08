@@ -42,15 +42,15 @@ count = 0
 for file in sorted(Path(".").glob("*.md")):
     name = file.stem
     prefix = name.split("_")[0] if "_" in name else name
-    
+
     if prefix not in categories:
         continue
-    
+
     content = file.read_text(encoding='utf-8')
-    
+
     if "<!-- Category:" in content:
         continue
-    
+
     category = categories[prefix]
     new_content = f"<!-- Category: {category} -->\n\n{content}"
     file.write_text(new_content, encoding='utf-8')
@@ -62,4 +62,3 @@ print(f"\n✅ {count} neue Kategorien hinzugefügt")
 # Verifiziere
 with_cat = len([f for f in Path(".").glob("*.md") if "<!-- Category:" in f.read_text()])
 print(f"📊 Gesamt Dateien mit Kategorie: {with_cat}")
-

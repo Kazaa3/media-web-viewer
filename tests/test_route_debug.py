@@ -9,22 +9,25 @@ import bottle
 import threading
 import time
 import urllib.request
-import os
 
 MEDIA_DIR = "./media"
+
 
 @bottle.route('/media/<filepath:path>')
 def serve_media(filepath):
     print("SERVE_MEDIA CALLED WITH:", filepath)
     return "SUCCESS_BOTTLE"
 
+
 # Eel setup
 eel.init('web')
+
 
 def run_eel():
     eel.start('index.html', mode=None, size=(100, 100), port=8083, block=False)
     while True:
         time.sleep(1)
+
 
 t = threading.Thread(target=run_eel, daemon=True)
 t.start()

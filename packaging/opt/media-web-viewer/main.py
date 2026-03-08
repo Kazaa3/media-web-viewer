@@ -20,24 +20,24 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 # main.py – Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
 
 # Benötigte Module importieren
-import eel # Electron-like Python Library for building desktop apps with web technologies
+from models import MediaItem
+import db
+import eel  # Electron-like Python Library for building desktop apps with web technologies
 import sys
 import os
-import json
-import time
 import subprocess
 import io
-import contextlib
 from pathlib import Path
 import re  # For MKV parsing
-from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS
 
 # Version laden
 VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.2.21" # Fallback
+    VERSION = "1.2.21"  # Fallback
+
 
 @eel.expose("get_version")
 def get_version():
@@ -47,6 +47,7 @@ def get_version():
     @return Version string / Versions-String.
     """
     return VERSION
+
 
 # Konfiguration
 # 1. Ort für den automatischen Bibliotheks-Scan
@@ -61,7 +62,7 @@ IMAGE_EXTENSIONS = {
 }
 ARCHIVE_EXTENSIONS = {
     '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'
-}   
+}
 
 
 # Debug-Optionen
@@ -91,6 +92,7 @@ LOG_BUFFER = []
 if DEBUG_FLAGS["start"]:
     debug_log("[Startup] main.py loading...")
 
+
 def debug_log(message):
     """
     @brief Internal helper to print and buffer log messages for the UI.
@@ -103,6 +105,7 @@ def debug_log(message):
     if hasattr(eel, 'log_to_debug'):
         eel.log_to_debug(message)()
 
+
 @eel.expose
 def get_debug_logs():
     """
@@ -112,6 +115,7 @@ def get_debug_logs():
     """
     return "\n".join(LOG_BUFFER)
 
+
 @eel.expose("get_debug_flags")
 def get_debug_flags():
     """
@@ -120,6 +124,7 @@ def get_debug_flags():
     @return Dictionary of debug flags / Dictionary der Debug-Flags.
     """
     return DEBUG_FLAGS
+
 
 @eel.expose("set_debug_flag")
 def set_debug_flag(key, value):
@@ -133,6 +138,7 @@ def set_debug_flag(key, value):
         DEBUG_FLAGS[key] = value
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
+
 @eel.expose("set_all_debug_flags")
 def set_all_debug_flags(value):
     """
@@ -144,6 +150,7 @@ def set_all_debug_flags(value):
         DEBUG_FLAGS[key] = value
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
 
+
 @eel.expose("get_language")
 def get_language():
     """
@@ -152,6 +159,7 @@ def get_language():
     @return Language code (e.g. 'de', 'en') / Sprachcode.
     """
     return PARSER_CONFIG.get("language", "de")
+
 
 @eel.expose("set_language")
 def set_language(lang):
@@ -167,17 +175,14 @@ def set_language(lang):
         debug_log(f"[System] Sprache auf '{lang}' gesetzt.")
     return True
 
+
 # Benutzerdefinierte Module
-import db
 
 # Eigene Parser
-from parsers import media_parser
 
 # Eigene bottle Web-Routen
-from web import app_bottle
 
 # Models
-from models import MediaItem
 
 
 @eel.expose("get_library")
@@ -188,6 +193,7 @@ def get_library():
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
     return {"media": db.get_all_media()}
+
 
 @eel.expose("clear_database")
 def clear_database():
@@ -201,6 +207,7 @@ def clear_database():
     db.clear_media()
     return {"status": "ok", "message": "Datenbank geleert", "media": []}
 
+
 @eel.expose("reset_app_data")
 def reset_app_data():
     """
@@ -210,15 +217,15 @@ def reset_app_data():
     """
     import shutil
     from pathlib import Path
-    
+
     deleted = []
-    
+
     # Paths to clear:
     # 1. ~/.media-web-viewer (Database)
     db_dir = db.DB_DIR
     # 2. ~/.config/gui_media_web_viewer (Parser Config)
     config_dir = Path.home() / ".config" / "gui_media_web_viewer"
-    
+
     for p in [db_dir, config_dir]:
         if p.exists():
             try:
@@ -232,12 +239,13 @@ def reset_app_data():
 
     # Re-initialize to avoid crash on next actions
     db.init_db()
-    save_parser_config() # Create default config
-    load_parser_config() # Sync local PARSER_CONFIG in memory
-    
+    save_parser_config()  # Create default config
+    load_parser_config()  # Sync local PARSER_CONFIG in memory
+
     if DEBUG_FLAGS["system"]:
         debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
     return {"status": "ok", "deleted": deleted}
+
 
 @eel.expose("update_tags")
 def update_tags(name, tags_dict):
@@ -253,6 +261,7 @@ def update_tags(name, tags_dict):
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
+
 @eel.expose("rename_media")
 def rename_media(old_name, new_name):
     """
@@ -264,15 +273,16 @@ def rename_media(old_name, new_name):
     """
     if not new_name or new_name.strip() == "":
         return {"status": "error", "message": "Name darf nicht leer sein"}
-    
+
     if DEBUG_FLAGS["db"]:
         debug_log(f"[Debug-DB] Benenne um: {old_name} -> {new_name}")
-    
+
     success = db.rename_media(old_name, new_name)
     if success:
         return {"status": "ok"}
     else:
         return {"status": "error", "message": "Name bereits vorhanden oder Fehler"}
+
 
 @eel.expose
 def delete_media(name):
@@ -283,6 +293,7 @@ def delete_media(name):
     """
     return db.delete_media(name)
 
+
 @eel.expose
 def get_db_stats():
     """
@@ -291,6 +302,7 @@ def get_db_stats():
     @return Stats dictionary / Statistik-Dictionary.
     """
     return db.get_db_stats()
+
 
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
@@ -302,6 +314,8 @@ def get_default_media_dir():
     return SCAN_MEDIA_DIR
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
+
+
 @eel.expose("scan_media")
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
@@ -313,7 +327,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     import time
     start_time = time.time()
-    
+
     # Status in GUI anzeigen (falls verbunden)
     if hasattr(eel, 'set_db_status'):
         eel.set_db_status(True)()
@@ -341,19 +355,19 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     for scan_root in scan_roots:
         if DEBUG_FLAGS.get("scan"):
             debug_log(f"\n[Scan] Starting scan of: {scan_root}")
-        
+
         # Rekursiv suchen, um Medien in Unterordnern zu finden
         for f in scan_root.rglob('*'):
             if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
                 # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
                 if '.cache' in f.parts:
                     continue
-                
+
                 # Blacklist für unerwünschte Dateien (Cover-Art, Captcha, etc.)
                 name_lower = f.name.lower()
                 if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
                     continue
-                
+
                 if DEBUG_FLAGS["scan"]:
                     debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
                 try:
@@ -371,19 +385,19 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
     if hasattr(eel, 'set_db_status'):
         eel.set_db_status(False)()
-    
+
     elapsed = time.time() - start_time
     if DEBUG_FLAGS.get("scan"):
         debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
 
     # Status in GUI ausblenden (redundant, already handled by guard above)
 
-
     # Liefere gescannten Stand direkt aus der DB zurück
     return {
         "media": db.get_all_media(),
         "stats": {"count": count, "time_seconds": elapsed}
     }
+
 
 @eel.expose("get_parser_config")
 def get_parser_config():
@@ -393,6 +407,7 @@ def get_parser_config():
     @return Configuration dictionary / Konfigurations-Dictionary.
     """
     return PARSER_CONFIG
+
 
 @eel.expose("update_parser_config")
 def update_parser_config(new_config):
@@ -405,6 +420,7 @@ def update_parser_config(new_config):
     PARSER_CONFIG.update(new_config)
     save_parser_config()
     return {"status": "ok"}
+
 
 @eel.expose("add_scan_dir")
 def add_scan_dir():
@@ -423,6 +439,7 @@ def add_scan_dir():
             return {"status": "ok", "dirs": dirs}
     return {"status": "cancel"}
 
+
 @eel.expose("remove_scan_dir")
 def remove_scan_dir(dir_path):
     """
@@ -439,6 +456,7 @@ def remove_scan_dir(dir_path):
         return {"status": "ok", "dirs": dirs}
     return {"status": "error", "message": "Pfad nicht in Liste"}
 
+
 @eel.expose("play_media")
 def play_media(path):
     """
@@ -449,7 +467,8 @@ def play_media(path):
     """
     if DEBUG_FLAGS["player"]:
         debug_log(f"[Debug-Player] Spiele ab: {path}")
-    return {"status": "play", "path": path} # Bestätigung
+    return {"status": "play", "path": path}  # Bestätigung
+
 
 @eel.expose("open_in_explorer")
 def open_in_explorer(path_str):
@@ -463,7 +482,7 @@ def open_in_explorer(path_str):
     if not path_obj.exists():
         print("Existiert nicht")
         return {"error": "Nicht gefunden"}
-        
+
     try:
         # Check OS and open accordingly
         if os.name == 'nt':  # Windows
@@ -477,6 +496,7 @@ def open_in_explorer(path_str):
         print(f"Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
 
+
 @eel.expose("browse_dir")
 def browse_dir(dir_path=None):
     """
@@ -487,11 +507,11 @@ def browse_dir(dir_path=None):
     """
     if not dir_path:
         dir_path = BROWSER_DEFAULT_DIR
-    
+
     target = Path(dir_path)
     if not target.exists() or not target.is_dir():
         return {"error": "Ordner nicht gefunden", "path": dir_path}
-    
+
     items = []
     try:
         for entry in sorted(target.iterdir(), key=lambda e: (not e.is_dir(), e.name.lower())):
@@ -504,9 +524,10 @@ def browse_dir(dir_path=None):
                 items.append({"name": entry.name, "path": str(entry), "type": "file", "size": f"{size_mb:.1f} MB"})
     except PermissionError:
         return {"error": "Keine Berechtigung", "path": dir_path}
-    
+
     parent = str(target.parent) if target.parent != target else None
     return {"path": str(target), "parent": parent, "items": items}
+
 
 @eel.expose("pick_folder")
 def pick_folder():
@@ -528,6 +549,7 @@ def pick_folder():
         print(f"[Error] Folder picker failed: {e}")
         return None
 
+
 @eel.expose("add_file_to_library")
 def add_file_to_library(file_path):
     """
@@ -541,15 +563,16 @@ def add_file_to_library(file_path):
         return {"error": "Datei nicht gefunden"}
     if p.suffix.lower() not in AUDIO_EXTENSIONS:
         return {"error": "Kein unterstütztes Audioformat"}
-    
+
     known = db.get_known_media_names()
     if p.name in known:
         return {"status": "exists", "name": p.name}
-    
+
     item = MediaItem(p.name, p, debug_flags=DEBUG_FLAGS, logger=debug_log)
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
+
 
 @eel.expose
 def get_test_suites():
@@ -561,7 +584,7 @@ def get_test_suites():
     test_dir = Path(__file__).parent / "tests"
     if not test_dir.exists():
         return []
-    
+
     suites = []
     for f in sorted(test_dir.glob("*.py")):
         if f.name.startswith("test_") or f.name.startswith("benchmark_"):
@@ -569,7 +592,7 @@ def get_test_suites():
                 content = f.read_text(encoding='utf-8')
             except Exception:
                 content = ""
-            
+
             metadata = {
                 "category": "-",
                 "inputs": "-",
@@ -577,13 +600,18 @@ def get_test_suites():
                 "files": "-",
                 "comment": "-"
             }
-            
+
             for line in content.splitlines():
-                if line.startswith("# Kategorie:"): metadata["category"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Eingabewerte:"): metadata["inputs"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Ausgabewerte:"): metadata["outputs"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Testdateien:"): metadata["files"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Kommentar:"): metadata["comment"] = line.split(":", 1)[1].strip()
+                if line.startswith("# Kategorie:"):
+                    metadata["category"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Eingabewerte:"):
+                    metadata["inputs"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Ausgabewerte:"):
+                    metadata["outputs"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Testdateien:"):
+                    metadata["files"] = line.split(":", 1)[1].strip()
+                elif line.startswith("# Kommentar:"):
+                    metadata["comment"] = line.split(":", 1)[1].strip()
 
             display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
             suites.append({
@@ -593,6 +621,7 @@ def get_test_suites():
                 "metadata": metadata
             })
     return suites
+
 
 @eel.expose
 def update_test_metadata(filename, metadata):
@@ -605,14 +634,14 @@ def update_test_metadata(filename, metadata):
     """
     test_dir = Path(__file__).parent / "tests"
     file_path = test_dir / filename
-    
+
     if not file_path.exists():
         return {"error": "Test-Datei nicht gefunden"}
-        
+
     try:
         content = file_path.read_text(encoding='utf-8')
         lines = content.splitlines()
-        
+
         # Remove existing metadata lines
         new_lines = []
         for line in lines:
@@ -620,7 +649,7 @@ def update_test_metadata(filename, metadata):
                 "# Kategorie:", "# Eingabewerte:", "# Ausgabewerte:", "# Testdateien:", "# Kommentar:"
             ]):
                 new_lines.append(line)
-        
+
         # Prepend new metadata
         header = [
             f"# Kategorie: {metadata.get('category', '-')}",
@@ -630,7 +659,7 @@ def update_test_metadata(filename, metadata):
             f"# Kommentar: {metadata.get('comment', '-')}",
             ""  # Add empty line after metadata
         ]
-        
+
         # Join lines with proper newline handling
         # Skip leading empty lines if there are any after removing metadata
         while new_lines and not new_lines[0].strip():
@@ -642,6 +671,7 @@ def update_test_metadata(filename, metadata):
     except Exception as e:
         return {"error": str(e)}
 
+
 @eel.expose
 def create_new_test(name):
     """
@@ -652,18 +682,18 @@ def create_new_test(name):
     """
     test_dir = Path(__file__).parent / "tests"
     test_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Sanitize name
     safe_name = "".join([c for c in name if c.isalnum() or c in (' ', '_', '-')]).strip().replace(' ', '_')
     if not safe_name.startswith('test_'):
         safe_name = f"test_{safe_name}"
-    
+
     filename = f"{safe_name}.py"
     file_path = test_dir / filename
-    
+
     if file_path.exists():
         return {"status": "error", "message": "Test existiert bereits"}
-        
+
     template = f"""# Kategorie: -
 # Eingabewerte: -
 # Ausgabewerte: -
@@ -682,6 +712,7 @@ def {safe_name}():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 @eel.expose
 def delete_test(filename):
     """
@@ -692,15 +723,16 @@ def delete_test(filename):
     """
     test_dir = Path(__file__).parent / "tests"
     file_path = test_dir / filename
-    
+
     if not file_path.exists():
         return {"status": "error", "message": "Datei nicht gefunden"}
-        
+
     try:
         file_path.unlink()
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
 
 @eel.expose
 def get_logbook_entry(feature_name):
@@ -717,10 +749,10 @@ def get_logbook_entry(feature_name):
         if not log_file.exists():
             # Fallback without extension just in case it was passed directly
             log_file = Path(__file__).parent / "logbuch" / feature_name
-            
+
     if not log_file.exists():
         return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
-    
+
     try:
         content = log_file.read_text(encoding='utf-8')
         # Simple markdown to HTML conversion (basic bold/header)
@@ -728,6 +760,7 @@ def get_logbook_entry(feature_name):
         return content
     except Exception as e:
         return f"<h1>Error</h1><p>{str(e)}</p>"
+
 
 @eel.expose
 def list_logbook_entries():
@@ -739,59 +772,70 @@ def list_logbook_entries():
     log_dir = Path(__file__).parent / "logbuch"
     if not log_dir.exists():
         return []
-    
+
     entries = []
     # Natural sort by filename
     for f in sorted(log_dir.glob("*.md")):
         try:
             with open(f, 'r', encoding='utf-8') as fp:
-                lines = [fp.readline() for _ in range(20)] # Mehr Zeilen lesen um alles zu finden
+                lines = [fp.readline() for _ in range(20)]  # Mehr Zeilen lesen um alles zu finden
                 category = "Sonstiges"
                 summary = ""
-                status = "COMPLETED" # Default
+                status = "COMPLETED"  # Default
                 title = f.stem
-                
+
                 title_de = ""
                 title_en = ""
                 summary_de = ""
                 summary_en = ""
-                
+
                 for line in lines:
                     line = line.strip()
                     # Support both <!-- Tag: Value --> and Tag: Value formats
                     content = line
                     if "<!--" in line and "-->" in line:
                         content = line.split("<!--")[1].split("-->")[0].strip()
-                    
+
                     if ":" in content:
                         key, val = content.split(":", 1)
                         key = key.strip()
                         val = val.strip()
-                        
-                        if key == "Category": category = val
-                        elif key == "Status": status = val
-                        elif key == "Title_DE": title_de = val
-                        elif key == "Title_EN": title_en = val
-                        elif key == "Summary_DE": summary_de = val
-                        elif key == "Summary_EN": summary_en = val
-                        elif key == "Summary": summary = val
-                    
+
+                        if key == "Category":
+                            category = val
+                        elif key == "Status":
+                            status = val
+                        elif key == "Title_DE":
+                            title_de = val
+                        elif key == "Title_EN":
+                            title_en = val
+                        elif key == "Summary_DE":
+                            summary_de = val
+                        elif key == "Summary_EN":
+                            summary_en = val
+                        elif key == "Summary":
+                            summary = val
+
                     if line.startswith("# "):
                         title = line.replace("# ", "").strip()
-                
+
                 # Special case for Known Issues
                 if f.name == "00_Known_Issues.md":
                     category = "Bug"
-                
+
                 # Fallbacks
-                if not title_de: title_de = title
-                if not title_en: title_en = title
-                
-                # Bi-directional summary fallback 
+                if not title_de:
+                    title_de = title
+                if not title_en:
+                    title_en = title
+
+                # Bi-directional summary fallback
                 if not summary:
                     summary = summary_de or summary_en
-                if not summary_de: summary_de = summary
-                if not summary_en: summary_en = summary
+                if not summary_de:
+                    summary_de = summary
+                if not summary_en:
+                    summary_en = summary
 
                 entries.append({
                     "name": f.stem,
@@ -814,8 +858,9 @@ def list_logbook_entries():
                 "summary": "",
                 "status": "ERROR"
             })
-    
+
     return entries
+
 
 @eel.expose
 def save_logbook_entry(filename, content):
@@ -828,22 +873,23 @@ def save_logbook_entry(filename, content):
     """
     log_dir = Path(__file__).parent / "logbuch"
     log_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Sichere den Dateinamen
     if not filename.endswith('.md'):
         filename = filename + '.md'
-    
+
     # Verhindere Directory Traversal
     if '/' in filename or '\\' in filename or filename.startswith('.'):
         return {"error": "Ungültiger Dateiname"}
-    
+
     file_path = log_dir / filename
-    
+
     try:
         file_path.write_text(content, encoding='utf-8')
         return {"status": "ok", "filename": filename}
     except Exception as e:
         return {"error": str(e)}
+
 
 @eel.expose
 def delete_logbook_entry(filename):
@@ -854,24 +900,25 @@ def delete_logbook_entry(filename):
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
     log_dir = Path(__file__).parent / "logbuch"
-    
+
     if not filename.endswith('.md'):
         filename = filename + '.md'
-    
+
     # Verhindere Directory Traversal
     if '/' in filename or '\\' in filename or filename.startswith('.') or '..' in filename:
         return {"error": "Ungültiger Dateiname"}
-    
+
     file_path = log_dir / filename
-    
+
     if not file_path.exists():
         return {"error": "Datei nicht gefunden"}
-    
+
     try:
         file_path.unlink()
         return {"status": "ok"}
     except Exception as e:
         return {"error": str(e)}
+
 
 @eel.expose
 def run_tests(test_files):
@@ -884,7 +931,7 @@ def run_tests(test_files):
     import pytest  # Nur lokal importieren – nicht als globale Abhängigkeit
     if DEBUG_FLAGS.get("tests"):
         debug_log(f"[Tests] Running files: {test_files}")
-    
+
     if not test_files:
         return {"error": "Keine Test-Suiten ausgewählt."}
 
@@ -894,16 +941,16 @@ def run_tests(test_files):
         p = Path(__file__).parent / "tests" / tf
         if p.exists():
             valid_files.append(str(p))
-    
+
     if not valid_files:
         return {"error": "Keine gültigen Test-Dateien gefunden."}
 
     # Capture stdout to get pytest report
-    f = io.StringIO()
+    io.StringIO()
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).parent)
-    
+
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
     try:
         result = subprocess.run(
@@ -913,9 +960,9 @@ def run_tests(test_files):
             env=env,
             cwd=str(Path(__file__).parent)
         )
-        
+
         output = result.stdout + "\n" + result.stderr
-        
+
         # Parse output for passed/failed
         import re
         passes = 0
@@ -926,9 +973,9 @@ def run_tests(test_files):
         match_fails = re.search(r'==.*?\s(\d+)\s+failed', output)
         if match_fails:
             fails = int(match_fails.group(1))
-            
+
         summary = f"{passes} passed, {fails} failed"
-        
+
         return {
             "exit_code": result.returncode,
             "output": output,
@@ -938,6 +985,7 @@ def run_tests(test_files):
         }
     except Exception as e:
         return {"error": str(e)}
+
 
 @eel.expose
 def run_gui_tests():
@@ -953,6 +1001,7 @@ def run_gui_tests():
         "message": "GUI-Tests müssen über den Antigravity-Agenten (Browser Subagent) gestartet werden."
     }
 
+
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
     # Logge den Start-Befehl (für das Debug-Fenster)
@@ -963,31 +1012,31 @@ if __name__ == "__main__":
     if any(DEBUG_FLAGS.values()):
         print(startup_cmd)
 
-    db.init_db()               
-    
+    db.init_db()
+
     # Ensure scan dirs exist and start initial indexing
     config_dirs = PARSER_CONFIG.get("scan_dirs", [SCAN_MEDIA_DIR])
     for d in config_dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
-    
+
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
     import threading
     threading.Thread(target=lambda: scan_media(dir_path=None, clear_db=True), daemon=True).start()
-    
+
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
-    
+
     if DEBUG_FLAGS["start"]:
         print("[Startup] Starting Eel UI...")
-    # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit), 
+    # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
     try:
         eel.start("app.html", size=(1350, 800), block=False, port=0)
     except Exception as e:
         print(f"[Startup-Error] eel.start failed: {e}")
-    
+
     # Server am Leben halten
     while True:
         eel.sleep(1.0)

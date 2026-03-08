@@ -13,6 +13,7 @@ import markdown
 # Root Verzeichnis zum Syspath hinzufügen
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+
 def get_markdown_files():
     """Sammelt alle relevanten Markdown Dateien."""
     root_dir = Path(__file__).parent.parent
@@ -20,13 +21,14 @@ def get_markdown_files():
         root_dir / "README.md",
         root_dir / "DOCUMENTATION.md"
     ]
-    
+
     # Logbuch Dateien hinzufügen
     logbuch_dir = root_dir / "logbuch"
     if logbuch_dir.exists():
         md_files.extend(logbuch_dir.glob("*.md"))
-        
+
     return [str(f) for f in md_files if f.exists()]
+
 
 @pytest.mark.parametrize("file_path", get_markdown_files())
 def test_markdown_lint(file_path):
@@ -40,6 +42,7 @@ def test_markdown_lint(file_path):
             assert html is not None
         except Exception as e:
             pytest.fail(f"Markdown validation failed for {file_path}: {e}")
+
 
 def test_markdown_encoding():
     """Prüft ob Dateien in UTF-8 kodiert sind und keine garbled characters enthalten."""

@@ -14,6 +14,5 @@ print("✅ KATEGORIEN-ÜBERSICHT\n")
 for cat in ["Untersuchungen", "Tests", "Parser", "UI/UX", "Planung"]:
     count = len(categories[cat])
     print(f"{cat}: {count} Dateien")
-    
-print(f"\n📊 Gesamt: {sum(len(v) for v in categories.values())} Dateien kategorisiert")
 
+print(f"\n📊 Gesamt: {sum(len(v) for v in categories.values())} Dateien kategorisiert")

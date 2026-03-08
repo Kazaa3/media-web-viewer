@@ -4,13 +4,14 @@
 # Testdateien: /media/*
 # Kommentar: Misst die Geschwindigkeit von pymediainfo, mutagen, ffmpeg etc.
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from pathlib import Path
-import glob
-import time
-
 from parsers import filename_parser, mutagen_parser, pymediainfo_parser, ffmpeg_parser
+import time
+import glob
+from pathlib import Path
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 media_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'media'))
 files = glob.glob(os.path.join(media_dir, '*.*'))

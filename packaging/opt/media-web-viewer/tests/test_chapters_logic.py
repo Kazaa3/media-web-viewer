@@ -6,12 +6,10 @@
 
 import os
 import sys
-from pathlib import Path
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import pytest
 
 def test_chapter_order():
     """Verifies that chapters are sorted correctly by start time."""
@@ -22,10 +20,11 @@ def test_chapter_order():
     ]
     # Simulate a sorting logic that should be in the parser or item initialization
     sorted_chapters = sorted(chapters, key=lambda x: x['start'])
-    
+
     assert sorted_chapters[0]['title'] == "Chapter 1"
     assert sorted_chapters[1]['title'] == "Chapter 2"
     assert sorted_chapters[2]['title'] == "Chapter 3"
+
 
 def test_chapter_boundaries():
     """Verifies that chapter end times don't overlap or leave gaps if intended."""
@@ -35,6 +34,7 @@ def test_chapter_boundaries():
         {"title": "C2", "start": 10, "end": 20}
     ]
     assert chapters[0]['end'] == chapters[1]['start']
+
 
 def test_chapter_duration_positive():
     """Ensures end time is always greater than start time."""

@@ -4,13 +4,12 @@
 # Testdateien: Keine (Dateinamen-Simulation)
 # Kommentar: Prüft die RegEx-basierte Extraktion von Metadaten aus Dateinamen.
 
+from parsers import filename_parser
 import sys
 import os
 from pathlib import Path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import pytest
-from parsers import filename_parser
 
 def test_filename_parser_simple():
     name = "Artist - Title.mp3"
@@ -18,6 +17,7 @@ def test_filename_parser_simple():
     tags = filename_parser.parse(path, name, {})
     assert tags['artist'] == "Artist"
     assert tags['title'] == "Title"
+
 
 def test_filename_parser_complex():
     name = "01-Artist - Title (Remix).flac"

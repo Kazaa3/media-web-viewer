@@ -10,9 +10,9 @@ from mutagen.oggopus import OggOpus
 from mutagen.wave import WAVE
 from mutagen.aac import AAC
 from mutagen.asf import ASF  # Für WMA
-#from mutagen.id3 import ID3  # statt ffmpeg
-#from mutagen.dsdiff import DSDIFF  # DSD Interchange File Format: .dsf-Dateien
-#from mutagen.dsf import DSF  # DSD Stream File: .dsd-Dateien
+# from mutagen.id3 import ID3  # statt ffmpeg
+# from mutagen.dsdiff import DSDIFF  # DSD Interchange File Format: .dsf-Dateien
+# from mutagen.dsf import DSF  # DSD Stream File: .dsd-Dateien
 
 
 def safe_get(audio_obj, key, default=''):

@@ -1,3 +1,4 @@
+import db
 import bottle
 import mimetypes
 import subprocess
@@ -10,14 +11,13 @@ from mutagen.mp4 import MP4
 
 # Add parent dir so we can import db
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import db
- 
+
 APP_ROOT = Path(__file__).resolve().parent.parent
 MEDIA_DIR = APP_ROOT / "media"
 APP_DATA_DIR = Path.home() / ".media-web-viewer"
 LOG_FILE = APP_DATA_DIR / "route_log.txt"
 CACHE_DIR = APP_DATA_DIR / "cache"
- 
+
 
 def _log(msg):
     """
@@ -28,7 +28,7 @@ def _log(msg):
     try:
         with open(LOG_FILE, "a", encoding='utf-8') as f:
             f.write(f"{msg}\n")
-        
+
         # Avoid circular import by importing main inside the function
         import __main__ as main
         if hasattr(main, 'DEBUG_FLAGS') and main.DEBUG_FLAGS.get("web"):
@@ -57,13 +57,13 @@ def _resolve_path(filename):
         return local
     return None
 
-@bottle.hook('before_request')
 
+@bottle.hook('before_request')
 def log_request():
     _log(f"REQ IN: {bottle.request.url}")
 
-@bottle.route('/media/<filepath:path>')
 
+@bottle.route('/media/<filepath:path>')
 def serve_media(filepath):
     """
     @brief Serves media files with optional on-the-fly transcoding.
@@ -73,11 +73,11 @@ def serve_media(filepath):
     """
     mime_type, _ = mimetypes.guess_type(filepath)
     ext = filepath.lower()
-    
+
     # Detect transcoding suffix: .flac_transcoded or .ogg_transcoded
     needs_transcoding = False
     transcode_format = None
-    
+
     if filepath.endswith('.flac_transcoded'):
         filepath = filepath[:-16]
         transcode_format = 'flac'
@@ -86,21 +86,21 @@ def serve_media(filepath):
         filepath = filepath[:-15]
         transcode_format = 'ogg'
         needs_transcoding = True
-    
+
     ext = filepath.lower()
     _log(f"ROUTE CALLED: filepath={filepath}, ext={ext}")
-    
+
     full_path = _resolve_path(filepath)
     if not full_path:
         return bottle.HTTPError(404, "File not found")
-    
+
     if needs_transcoding:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        
+
         cache_filename = filepath.replace('/', '_').rsplit('.', 1)[0] + '.' + transcode_format
         cache_path = CACHE_DIR / cache_filename
         tmp_path = cache_path.with_suffix(f'.{uuid.uuid4().hex[:6]}.tmp')
-        
+
         # FFmpeg output format and MIME type
         if transcode_format == 'ogg':
             ffmpeg_args = ['-c:a', 'libopus', '-b:a', '128k', '-f', 'ogg']
@@ -108,7 +108,7 @@ def serve_media(filepath):
         else:
             ffmpeg_args = ['-f', 'flac']
             serve_mime = 'audio/flac'
-        
+
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
             try:
@@ -123,18 +123,18 @@ def serve_media(filepath):
                 if tmp_path.exists():
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")
-                
+
         return bottle.static_file(cache_filename, root=str(CACHE_DIR), mimetype=serve_mime)
 
     if ext.endswith('.flac'):
         mime_type = 'audio/flac'
-    
+
     if mime_type:
         return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)
     return bottle.static_file(full_path.name, root=str(full_path.parent))
 
-@bottle.route('/cover/<filepath:path>')
 
+@bottle.route('/cover/<filepath:path>')
 def serve_cover(filepath):
     """
     @brief Extracts and serves the embedded cover art from a media file.
@@ -145,12 +145,12 @@ def serve_cover(filepath):
     full_path = _resolve_path(filepath)
     if not full_path or not full_path.exists():
         return bottle.HTTPError(404, "File not found")
-        
+
     file_type = full_path.suffix.lower()
-    
+
     img_data = None
     mime_type = "image/jpeg"
-    
+
     try:
         if file_type == '.mp3':
             audio_mp3 = MP3(str(full_path))
@@ -176,15 +176,15 @@ def serve_cover(filepath):
                     mime_type = 'image/jpeg'
     except Exception:
         pass
-        
+
     if img_data:
         bottle.response.content_type = mime_type
         return img_data
-    
+
     return bottle.HTTPError(404, "No cover found")
 
-@bottle.error(500)
 
+@bottle.error(500)
 def error500(error):
     """
     @brief Custom 500 error handler with debug logging.
