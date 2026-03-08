@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.2.23  
+**Version:** 1.2.24  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.2.23
+1.2.24
 ```
 
 This version is automatically loaded and used across:
@@ -196,7 +196,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.24_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -233,7 +233,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_VERSION_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.24_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -378,8 +378,8 @@ For more information, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_
 Media Web Viewer automatically selects the best available browser when launching the application, **preferring Chrome/Chromium over Vivaldi** and other browsers.
 
 **Browser Priority Order:**
-1. **Google Chrome** (preferred)
-2. **Chromium**
+1. **Google Chrome** (`google-chrome` or `chrome`)
+2. **Chromium** (`chromium-browser` or `chromium`)
 3. **Firefox**
 4. System default browser (fallback)
 
@@ -3491,6 +3491,325 @@ logs = get_ui_logs()
 # Log is also available via the REST API:
 # GET /api/debug/logs → Returns JSON array of log entries
 ```
+
+---
+
+## Build System
+
+Media Web Viewer includes a comprehensive build system (`build_system.py`) for building, testing, and packaging.
+
+### Build System Features
+
+**Available Commands:**
+
+```bash
+# Project information
+python build_system.py --info
+
+# Run test suite
+python build_system.py --test
+
+# Code quality checks
+python build_system.py --lint          # flake8
+python build_system.py --type-check    # mypy
+
+# Build targets
+python build_system.py --build deb           # Debian package
+python build_system.py --build pyinstaller   # Standalone executable
+python build_system.py --build all           # All targets
+
+# Full build process (test + check + build)
+python build_system.py --full-build
+python build_system.py --full-build --skip-tests  # Skip tests (faster)
+
+# Clean artifacts
+python build_system.py --clean       # Clean __pycache__, .pyc, etc.
+python build_system.py --clean-all   # Deep clean (includes dist/, build/)
+```
+
+### Building Debian Packages
+
+**Using Build System:**
+```bash
+python build_system.py --build deb
+```
+
+**Using Legacy Script:**
+```bash
+bash build_deb.sh
+```
+
+**Output:**
+```
+================================================================================
+  Building Debian Package (v1.2.24)
+================================================================================
+
+==> Preparing staging area...
+==> Building .deb package: media-web-viewer_1.2.24_amd64.deb
+dpkg-deb: building package 'media-web-viewer' in 'media-web-viewer_1.2.24_amd64.deb'.
+
+✅ Debian package created: media-web-viewer_1.2.24_amd64.deb
+   Install: sudo dpkg -i media-web-viewer_1.2.24_amd64.deb
+```
+
+### Building Standalone Executables
+
+**Using PyInstaller via Build System:**
+```bash
+python build_system.py --build pyinstaller
+```
+
+**Manual PyInstaller Build:**
+```bash
+# Single file executable
+python -m eel main.py web --onefile --name MediaWebViewer-1.2.24
+
+# With console window (for debugging)
+python -m eel main.py web --onefile --name MediaWebViewer-1.2.24 --console
+
+# Directory build (faster startup)
+python -m eel main.py web --name MediaWebViewer-1.2.24
+```
+
+**Output Location:**
+- Executables: `dist/`
+- Build artifacts: `build/`
+
+**Platform-Specific Builds:**
+
+**Linux:**
+```bash
+# Build on Linux → Linux executable
+python build_system.py --build pyinstaller
+# Output: dist/MediaWebViewer-1.2.24 (ELF binary)
+```
+
+**Windows (Cross-Compilation):**
+```bash
+# Build on Windows → Windows .exe
+python build_system.py --build pyinstaller
+# Output: dist/MediaWebViewer-1.2.24.exe
+
+# Or with Wine on Linux (requires PyInstaller + Wine setup)
+pyinstaller MediaWebViewer.spec --clean
+```
+
+**macOS:**
+```bash
+# Build on macOS → macOS .app bundle
+python build_system.py --build pyinstaller
+# Output: dist/MediaWebViewer-1.2.24.app
+```
+
+### Full Build Workflow
+
+**Complete Release Process:**
+```bash
+# 1. Update version
+echo "1.2.24" > VERSION
+
+# 2. Run full build with tests
+python build_system.py --full-build
+
+# Result:
+# ✅ Environment check passed
+# ✅ All tests passed (XX tests in X.XXXs)
+# ✅ Debian package created: media-web-viewer_1.2.24_amd64.deb
+```
+
+**CI/CD Pipeline Example:**
+```bash
+#!/bin/bash
+# Example CI script
+
+set -e  # Exit on error
+
+echo "Starting CI pipeline..."
+
+# Environment check
+python build_system.py --info
+
+# Run tests
+python build_system.py --test || exit 1
+
+# Code quality
+python build_system.py --lint || exit 1
+python build_system.py --type-check || exit 1
+
+# Build package
+python build_system.py --build deb || exit 1
+
+echo "✅ CI pipeline complete"
+```
+
+### Build System Architecture
+
+The build system is implemented as a Python class (`BuildSystem`) with the following methods:
+
+```python
+class BuildSystem:
+    def check_environment(self) -> bool:
+        """Verify build environment is valid."""
+    
+    def run_tests(self, verbose: bool = False) -> bool:
+        """Run pytest test suite."""
+    
+    def run_linter(self) -> bool:
+        """Run flake8 code quality checks."""
+    
+    def run_type_check(self) -> bool:
+        """Run mypy type checking."""
+    
+    def build_pyinstaller(self, onefile: bool = True, 
+                          console: bool = False) -> bool:
+        """Build standalone executable."""
+    
+    def build_debian_package(self) -> bool:
+        """Build .deb package using build_deb.sh."""
+    
+    def clean(self, full: bool = False) -> bool:
+        """Clean build artifacts."""
+    
+    def full_build(self, target: str = "deb", 
+                   skip_tests: bool = False) -> bool:
+        """Complete build: test + check + build."""
+```
+
+---
+
+## Startup Variants
+
+Media Web Viewer supports multiple startup modes for different use cases.
+
+### Mode 1: Normal (Full Backend)
+
+**Standard mode with complete Eel/WebSocket backend.**
+
+```bash
+# Start application
+python main.py
+```
+
+**Behavior:**
+- ✅ Eel WebSocket server starts
+- ✅ Dynamic port allocation (e.g., 59713)
+- ✅ Browser opens automatically at `http://localhost:<port>/app.html`
+- ✅ Full backend API available
+- ✅ Multiple sessions can run in parallel
+
+**Logging:**
+```
+[Session] Opening browser at http://localhost:59713/app.html
+```
+
+**Use Cases:**
+- Normal application usage
+- Development with full backend
+- Running multiple media libraries simultaneously
+
+### Mode 2: No-GUI (Sessionless)
+
+**Backend initialization without browser or GUI.**
+
+```bash
+# Start in no-GUI mode
+python main.py --ng
+python main.py --no-gui
+python main.py --sessionless
+```
+
+**Behavior:**
+- ✅ Database is initialized
+- ✅ Statistics are displayed
+- ❌ No Eel/WebSocket server
+- ❌ No browser opened
+- ✓ Process exits after displaying info
+
+**Logging:**
+```
+[NoGUI] Mode enabled (--ng / --no-gui / --sessionless).
+[NoGUI] Active DB: /home/user/.media-web-viewer/media_library.db
+[NoGUI] Library entries: 42
+[NoGUI] Configured scan dirs: ['/home/user/Music']
+[NoGUI] No Eel/WebSocket/Browser started. Exiting.
+```
+
+**Use Cases:**
+- Headless server operation
+- Scripts and automation
+- Database status queries
+- CI/CD testing
+- Cron jobs for media scanning
+
+### Mode 3: Connectionless Browser
+
+**Frontend without backend (local file:// access).**
+
+```bash
+# Start in connectionless mode
+python main.py --n
+```
+
+**Behavior:**
+- ✅ Database is initialized
+- ✅ Browser opens `app.html` as local file (`file://...`)
+- ❌ No Eel/WebSocket server
+- ❌ Backend API not available
+- ✓ Frontend displays warning: "Backend not available in connectionless mode"
+
+**Logging:**
+```
+[Mode-N] Connectionless browser mode enabled (--n).
+[Mode-N] Active DB: /home/user/.media-web-viewer/media_library.db
+[Mode-N] Library entries: 42
+[Mode-N] Opened local UI: file:///home/user/project/web/app.html
+[Mode-N] No Eel/WebSocket backend started. Exiting.
+```
+
+**Use Cases:**
+- UI development without backend
+- Frontend testing
+- Static UI screenshots
+- Demo/presentation mode
+
+### Startup Mode Comparison
+
+| Feature | Normal | No-GUI | Connectionless |
+|---------|--------|--------|----------------|
+| **Command** | `python main.py` | `python main.py --ng` | `python main.py --n` |
+| **Eel/WebSocket** | ✅ Yes | ❌ No | ❌ No |
+| **Browser** | ✅ Auto | ❌ No | ✅ Manual |
+| **Backend API** | ✅ Full | ❌ None | ❌ None |
+| **DB Init** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Use Case** | Normal usage | Scripts/Automation | UI Development |
+
+### Session Management
+
+**Check Running Sessions:**
+```python
+from main import check_running_sessions
+
+sessions = check_running_sessions()
+for session in sessions:
+    print(f"Session: PID={session['pid']}, Port={session['port']}")
+```
+
+**Check Port Availability:**
+```python
+from main import is_port_in_use
+
+if is_port_in_use(8000):
+    print("Port 8000 is already in use")
+else:
+    print("Port 8000 is available")
+```
+
+**Session Information:**
+Each session returns:
+- `pid` (int): Process ID
+- `port` (int or None): Listening port (if applicable)
+- `cmdline` (str): Full command line used to start the session
 
 ---
 

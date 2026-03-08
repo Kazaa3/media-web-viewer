@@ -118,7 +118,7 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.2.23"  # Fallback
+    VERSION = "1.2.24"  # Fallback
 
 
 @eel.expose
@@ -457,6 +457,7 @@ def get_preferred_browser():
 
     browser_candidates = [
         ('google-chrome', 'Google Chrome'),
+        ('chrome', 'Google Chrome'),
         ('chromium-browser', 'Chromium'),
         ('chromium', 'Chromium'),
         ('firefox', 'Firefox'),
@@ -513,6 +514,72 @@ def run_connectionless_browser_mode() -> dict:
         "app_url": app_url,
         "scan_dirs": PARSER_CONFIG.get("scan_dirs", []),
     }
+
+
+def check_running_sessions() -> list[dict]:
+    """
+    Check for currently running Media Web Viewer sessions.
+    
+    Returns:
+        list[dict]: List of active sessions with pid, port, and command info
+    """
+    import psutil
+    
+    sessions = []
+    current_pid = os.getpid()
+    
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'connections']):
+        try:
+            # Skip current process
+            if proc.info['pid'] == current_pid:
+                continue
+                
+            # Check if it's a Python process running main.py
+            cmdline = proc.info.get('cmdline') or []
+            if not cmdline:
+                continue
+                
+            # Look for main.py in command line
+            if any('main.py' in str(arg) for arg in cmdline):
+                # Try to find listening port
+                port = None
+                try:
+                    connections = proc.connections()
+                    for conn in connections:
+                        if conn.status == 'LISTEN' and conn.laddr.ip == '127.0.0.1':
+                            port = conn.laddr.port
+                            break
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
+                    pass
+                
+                sessions.append({
+                    'pid': proc.info['pid'],
+                    'port': port,
+                    'cmdline': ' '.join(cmdline),
+                })
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    
+    return sessions
+
+
+def is_port_in_use(port: int) -> bool:
+    """
+    Check if a specific port is in use.
+    
+    Args:
+        port: Port number to check
+        
+    Returns:
+        bool: True if port is in use, False otherwise
+    """
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(('127.0.0.1', port))
+            return False
+        except OSError:
+            return True
 
 # Ensure we are running in a clean and exclusive environment
 env_handler.validate_safe_startup()
