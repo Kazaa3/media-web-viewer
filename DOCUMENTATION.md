@@ -347,6 +347,49 @@ $ python main.py
 
 For more information, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_Dynamic_Session_Management.md).
 
+#### Browser Preference System
+
+Media Web Viewer automatically selects the best available browser when launching the application, **preferring Chrome/Chromium over Vivaldi** and other browsers.
+
+**Browser Priority Order:**
+1. **Google Chrome** (preferred)
+2. **Chromium**
+3. **Firefox**
+4. System default browser (fallback)
+
+**How it works:**
+- The application checks for available browsers in priority order
+- When Chrome or Chromium is found, it's used exclusively
+- Vivaldi is **never** explicitly selected (only as system default fallback)
+- Browser selection is logged for transparency
+
+**Example startup log:**
+```bash
+$ python main.py
+2026-03-08 18:52:37 [INFO] [Session] Opening browser at http://localhost:37755/app.html
+2026-03-08 18:52:37 [INFO] [Browser] Selected: Google Chrome (/usr/bin/google-chrome)
+```
+
+**Why this matters:**
+- **Consistency:** Chrome/Chromium ensure consistent rendering and performance
+- **WebSockets:** Better WebSocket support for Eel communication
+- **Developer Tools:** Chrome DevTools integration for debugging
+- **Standards Compliance:** Chrome implements web standards more reliably
+
+**Override system default:**
+The browser preference system runs automatically on each startup. If you want to use a different browser:
+1. Set `BROWSER` environment variable: `export BROWSER=firefox`
+2. Or modify the priority list in `main.py` → `get_preferred_browser()`
+
+**Testing:**
+Browser preference logic is fully tested in `tests/test_browser_preference.py` (9 tests):
+```bash
+python tests/test_browser_preference.py
+# ✅ Browser detection working correctly
+# ✅ Chrome/Chromium preferred over Vivaldi
+# ✅ Fallback behavior functional
+```
+
 #### VLC Playlist Integration
 
 Media Web Viewer includes bidirectional integration with VLC Media Player:

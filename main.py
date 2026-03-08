@@ -1762,6 +1762,46 @@ if __name__ == "__main__":
             port = s.getsockname()[1]
         return port
     
+    def get_preferred_browser():
+        """
+        Get the preferred browser controller for launching the application.
+        
+        Preference order:
+        1. Google Chrome
+        2. Chromium
+        3. Firefox
+        4. Default system browser
+        
+        Returns:
+            webbrowser.BaseBrowser: Browser controller instance
+        """
+        import webbrowser
+        import shutil
+        
+        # Priority list of browsers
+        browser_candidates = [
+            ('google-chrome', 'Google Chrome'),
+            ('chromium-browser', 'Chromium'),
+            ('chromium', 'Chromium'),
+            ('firefox', 'Firefox'),
+        ]
+        
+        for browser_cmd, browser_name in browser_candidates:
+            browser_path = shutil.which(browser_cmd)
+            if browser_path:
+                logging.info(f"[Browser] Selected: {browser_name} ({browser_path})")
+                try:
+                    # Register and get browser controller
+                    browser_controller = webbrowser.get(f'{browser_path} %s')
+                    return browser_controller
+                except Exception as e:
+                    logging.warning(f"[Browser] Failed to register {browser_name}: {e}")
+                    continue
+        
+        # Fallback to default browser
+        logging.warning("[Browser] Using system default browser (Vivaldi or other)")
+        return webbrowser
+    
     session_port = find_free_port()
     
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
@@ -1771,10 +1811,12 @@ if __name__ == "__main__":
         eel.start("app.html", mode=None, size=(1450, 800), block=False, port=session_port)
         
         # Open browser explicitly after Eel starts with session-specific URL
-        import webbrowser
         session_url = f"http://localhost:{session_port}/app.html"
         logging.info(f"[Session] Opening browser at {session_url}")
-        webbrowser.open(session_url)
+        
+        # Use preferred browser (Chrome/Chromium over Vivaldi)
+        browser = get_preferred_browser()
+        browser.open(session_url)
         
     except Exception as e:
         logging.error(f"[Startup-Error] Failed to start session: {e}")
