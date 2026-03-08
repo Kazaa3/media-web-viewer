@@ -34,6 +34,7 @@ from parsers.format_utils import (
     PARSER_CONFIG, load_parser_config, save_parser_config,
     AUDIO_EXTENSIONS
 )
+import logger
 
 # Version laden
 VERSION_FILE = Path(__file__).parent / "VERSION"
@@ -87,20 +88,23 @@ DEBUG_FLAGS = {
     "web": False
 }
 
-LOG_BUFFER: list[str] = []
+# Initialize logging early
+DEBUG_MODE = "--debug" in sys.argv
+logger.setup_logging(DEBUG_MODE)
 
 
 def debug_log(message: str) -> None:
     """
-    @brief Internal helper to print and buffer log messages for the UI.
-    @details Interner Helfer zum Drucken und Puffern von Log-Nachrichten für die UI.
-    @param message Log message / Log-Nachricht.
+    @brief Universal logging helper (bridged to central logging system).
     """
-    print(message)
-    LOG_BUFFER.append(str(message))
-    # Eel-Aufruf (asynchron, wir warten nicht) - nur wenn verbunden/registriert
-    if hasattr(eel, 'log_to_debug'):
-        eel.log_to_debug(message)()
+    import logging
+    logging.info(message)
+    # Eel callback if front-end is already listening
+    try:
+        if hasattr(eel, 'log_to_debug'):
+            eel.log_to_debug(message)()
+    except Exception:
+        pass
 
 
 if DEBUG_FLAGS["start"]:
@@ -120,7 +124,7 @@ def get_debug_logs():
     @details Gibt den gesamten bisherigen Log-Verlauf als String zurück.
     @return Multi-line log string / Mehrzeiliger Log-String.
     """
-    return "\n".join(LOG_BUFFER)
+    return "\n".join(logger.get_ui_logs())
 
 
 @eel.expose
@@ -1010,8 +1014,8 @@ if __name__ == "__main__":
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
     # Only print on startup if a debug flag is active (though usually all are False initially)
-    # Append to LOG_BUFFER silently so it's visible in the debug window later
-    LOG_BUFFER.append(startup_cmd)
+    # Append to log silently so it's visible in the debug window later
+    debug_log(startup_cmd)
     if any(DEBUG_FLAGS.values()):
         debug_log(startup_cmd)
 

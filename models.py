@@ -23,6 +23,10 @@ from parsers.format_utils import (
     DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 )
 from parsers import media_parser
+import logger
+
+# Get specialized logger for models
+log = logger.get_logger("models")
 
 # In General & Debug:
 # Comments are stored as dictionaries and imported as JSON.
@@ -35,30 +39,23 @@ class MediaItem:
     @details Repräsentiert eine einzelne Mediendatei mit umfassenden Metadaten.
     """
 
-    def __init__(self, name, path, debug_flags=None, logger=None):
+    def __init__(self, name, path):
         """
         @brief Initializes a MediaItem and triggers metadata extraction.
         @details Initialisiert ein MediaItem und startet die Metadaten-Extraktion.
         @param name File basename / Basis-Dateiname.
         @param path Absolute filesystem path / Absoluter Dateipfad.
-        @param debug_flags Optional dict for debugging / Optionales Dict für Debugging.
-        @param logger Optional logging function / Optionale Logging-Funktion.
         """
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
 
-        # Default fallbacks if not provided
-        self.debug_flags = debug_flags or {"parser": False}
-        self.logger = logger or print
-
+        # Debug mode is handled centrally through logger level
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
         self.duration, self.tags = media_parser.extract_metadata(
             self.path,
             self.name,
-            debug=self.debug_flags.get("parser", False),
-            mode=parser_mode,
-            logger=self.logger
+            mode=parser_mode
         )
         self.category = self.get_category()
 

@@ -1,29 +1,30 @@
 import time
 from typing import Any
-
 from pathlib import Path
 from . import filename_parser
 from . import mutagen_parser
 from . import pymediainfo_parser
 from . import ffmpeg_parser
 from . import container_parser
+import logger
+import logging
+
+# Get specialized logger for parser component
+log = logger.get_logger("parser")
 
 
-def extract_metadata(path, filename, debug=False, mode='lightweight', logger=print):
+def extract_metadata(path, filename, mode='lightweight'):
     """
     @brief Orchestrates the metadata extraction process using a sequential parser chain.
     @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
     @param path Path to the media file / Pfad zur Mediendatei.
     @param filename Original filename for fallback parsing / Originaldateiname für Fallback-Parsing.
-    @param debug Enable verbose logging / Aktiviere ausführliches Logging.
     @param mode Extraction mode ('lightweight' or 'full') / Extraktionsmodus ('lightweight' oder 'full').
-    @param logger Logger function / Logging-Funktion.
     @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
-    if debug:
-        logger(f"[Debug-Parser] Starte Parsing für '{filename}' (Mode: {mode})")
-    if debug and mode == 'full':
-        logger(f"[Debug-Parser] 🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
+    log.debug(f"Starte Parsing für '{filename}' (Mode: {mode})")
+    if mode == 'full':
+        log.debug(f"🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
@@ -132,9 +133,9 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
         # Priority: 1. Natural Title, 2. Start Time
         tags['chapters'] = sorted(tags['chapters'], key=lambda x: (
             natural_sort_key(x.get('title', '')), x.get('start', 0.0)))
-        if logger and debug:
+        if log.isEnabledFor(logging.DEBUG):
             first_chaps = [c.get('title') for c in tags['chapters'][:5]]
-            logger(f"[Parser] Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
+            log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
     tags['_parser_times'] = parser_times
 
