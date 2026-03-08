@@ -414,6 +414,7 @@
             }
             if (tabId === 'options') {
                 if (typeof loadDebugFlags === 'function') loadDebugFlags();
+                if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
                 loadScanDirs();
             }
             if (tabId === 'edit') {
@@ -924,6 +925,30 @@
                             <button onclick="setAllFlags(false)"
                                 style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #c0392b; background: #fff; color: #c0392b; cursor: pointer; font-weight: bold;"
                                 data-i18n="options_debug_all_off">Alle Flags aus</button>
+                        </div>
+
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                            <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">Python-Umgebung</h3>
+                            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_environment_desc">
+                                Informationen über die aktuell verwendete Python-Umgebung.</p>
+                            
+                            <div id="environment-info" style="background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 8px; font-size: 0.85em; font-family: monospace;">
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Python-Version:</strong> <span id="env-python-version">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Virtuelle Umgebung:</strong> <span id="env-venv-status">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>venv-Pfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
+                                </div>
+                                <div>
+                                    <strong>System:</strong> <span id="env-platform">-</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
@@ -2481,6 +2506,29 @@
         async function setAllFlags(value) {
             await eel.set_all_debug_flags(value)();
             loadDebugFlags();
+        }
+
+        async function loadEnvironmentInfo() {
+            try {
+                const info = await eel.get_environment_info()();
+                
+                document.getElementById('env-python-version').textContent = info.python_version;
+                document.getElementById('env-venv-status').textContent = info.in_venv ? '✅ Ja' : '❌ Nein';
+                document.getElementById('env-venv-path').textContent = info.venv_path || '-';
+                document.getElementById('env-python-exec').textContent = info.python_executable;
+                document.getElementById('env-platform').textContent = `${info.platform_system} ${info.platform_release}`;
+                
+                // Color code the venv status
+                const statusEl = document.getElementById('env-venv-status');
+                if (info.in_venv) {
+                    statusEl.style.color = '#2a7';
+                    statusEl.style.fontWeight = 'bold';
+                } else {
+                    statusEl.style.color = '#f4d';
+                }
+            } catch (e) {
+                console.error("Failed to load environment info:", e);
+            }
         }
 
         function toggleDebugMenu() {

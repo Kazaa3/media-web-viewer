@@ -2148,6 +2148,64 @@ Contributions are welcome! Please:
 3. Make your changes and test thoroughly
 4. Submit a pull request with detailed description
 
+### Git Author Configuration
+
+**Problem:** When committing changes (even from VS Code), the author appears as "Antigravity" instead of your username.
+
+**Cause:** This project may have been worked on by an AI assistant (Antigravity) that set its own Git configuration in the repository. This configuration overrides your global Git settings and persists even when committing from VS Code.
+
+**Solution - Set Repository-Specific Author:**
+```bash
+cd /path/to/gui_media_web_viewer
+
+# Set your author name and email for this repository only
+git config user.name "kazaa3"
+git config user.email "kazaa3@local"
+
+# Verify the change
+git config user.name
+# Output: kazaa3
+```
+
+**Solution - Set Global Author (affects all repositories):**
+```bash
+# Set author for all Git repositories on your system
+git config --global user.name "kazaa3"
+git config --global user.email "kazaa3@example.com"
+
+# Verify
+git config --global user.name
+```
+
+**Why This Happens:**
+- Git uses a 3-tier config hierarchy: **system** → **global** → **local (repository)**
+- Repository-local config (`.git/config`) has highest priority
+- AI assistants or automated tools may set repository-specific config
+- VS Code uses the Git CLI under the hood, so it respects `.git/config`
+
+**How to Check Current Configuration:**
+```bash
+# Show all config values and their source
+git config --list --show-origin
+
+# Expected output includes:
+# file:.git/config    user.name=kazaa3
+# file:.git/config    user.email=kazaa3@local
+```
+
+**Permanent Fix:**
+```bash
+# Remove repository-specific author override (falls back to global)
+git config --unset user.name
+git config --unset user.email
+
+# Then ensure your global config is set
+git config --global user.name "kazaa3"
+git config --global user.email "kazaa3@example.com"
+```
+
+---
+
 ## Contact & Support
 
 **Developer:** kazaa3  
