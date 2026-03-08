@@ -457,6 +457,7 @@ def get_preferred_browser():
 
     browser_candidates = [
         ('google-chrome', 'Google Chrome'),
+        ('chrome', 'Google Chrome'),
         ('chromium-browser', 'Chromium'),
         ('chromium', 'Chromium'),
         ('firefox', 'Firefox'),

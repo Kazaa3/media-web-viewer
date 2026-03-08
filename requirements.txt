@@ -3,20 +3,25 @@
 # See LICENSE.md and DEPENDENCIES.md for details
 # 
 # PYTHON PACKAGE DEPENDENCIES AND THEIR LICENSES:
-# - MIT License: eel, bottle, bottle-websocket, pymediainfo, gevent, gevent-websocket, pytest, pytest-cov, flake8, mypy
+# - MIT License: eel, bottle, bottle-websocket, pymediainfo, gevent, gevent-websocket, pytest, pytest-cov, flake8, mypy, wheel, setuptools
+# - LGPL 2.1+: python-vlc, chardet
 # - GPL v2: mutagen (compatible with GPL v3)
+# - GPL v2+ (with bootloader exception): pyinstaller (compatible with GPL v3)
 # - BSD 3-Clause: psutil
 # - BSD 2-Clause: future
+# - BSD License: markdown, pyautogui
+# - Apache 2.0: m3u8
 #
 # SYSTEM DEPENDENCIES (must be installed separately):
 # - ffmpeg: LGPL v2.1 / GPL - Audio/Video transcoding and metadata extraction ✅ GPL-3.0 compatible
 # - libmediainfo0v5: BSD 2-Clause - Media information library (via apt/package manager) ✅ GPL-3.0 compatible
 # - doxygen: GPL v2 - Documentation generator ✅ GPL-3.0 compatible
+# - vlc: GPL v2+ - VLC media player (optional, for external playback) ✅ GPL-3.0 compatible
 #
 # All dependencies are compatible with GPL-3.0
 #
 # Installation:
-#   sudo apt install ffmpeg libmediainfo0v5 doxygen  # Debian/Ubuntu
+#   sudo apt install ffmpeg libmediainfo0v5 doxygen vlc  # Debian/Ubuntu
 #   pip install -r requirements.txt
 
 # Web Framework & Desktop GUI
@@ -28,7 +33,7 @@ bottle-websocket>=0.2.9        # MIT License - WebSocket plugin for Bottle
 mutagen>=1.47.0                # GPL v2 - Audio metadata manipulation
 pymediainfo>=7.0.1             # MIT License - Media information library
 m3u8>=4.1.0                    # MIT License - m3u8 playlist parsing
-python-vlc>=3.0.18121          # MIT License - VLC bindings
+python-vlc>=3.0.18121          # LGPL 2.1+ - VLC Python bindings
 
 # Async & WebSocket Support
 gevent>=25.9.1                 # MIT License - Coroutine-based networking
@@ -40,6 +45,10 @@ pytest-cov>=4.1.0              # MIT License - Coverage plugin for pytest
 flake8>=7.0.0                  # MIT License - Linter
 mypy>=1.9.0                    # MIT License - Static type checker
 markdown>=3.5.0                # BSD License - Markdown parsing (for documentation tests)
+
+# Build & Packaging
+pyinstaller>=6.0.0             # GPL v2+ - Standalone executable builder (with bootloader exception)
+wheel>=0.42.0                  # MIT License - Wheel package format
 
 # System & Utilities
 psutil>=5.9.0                  # BSD 3-Clause License - System and process utilities
