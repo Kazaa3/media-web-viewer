@@ -874,6 +874,7 @@ def ping():
     """
     return {"status": "ok", "message": "pong"}
 
+@eel.expose
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
