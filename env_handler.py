@@ -33,6 +33,18 @@ CRITICAL_BINARIES = [
 ]
 BROWSER_BINARIES = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium"]
 
+# Mappings for Conda-specific package names
+APT_TO_CONDA_MAP = {
+    "shared-mime-info": "shared-mime-info",
+    "libgdk-pixbuf2.0-0": "gdk-pixbuf",
+    "mediainfo": "mediainfo",
+    "ffmpeg": "ffmpeg"
+}
+PIP_TO_CONDA_MAP = {
+    "python-vlc": "vlc-python",  # sometimes needed
+    "gevent-websocket": "gevent-websocket"
+}
+
 class EnvironmentManager:
     """
     Manages and validates the Python execution environment.
@@ -101,24 +113,32 @@ class EnvironmentManager:
         """Returns (missing_pip_list, missing_apt_list)"""
         missing_pip = []
         missing_apt = []
+        is_conda = self.is_conda()
         
         from importlib.metadata import version, PackageNotFoundError
         for pkg, min_ver in CRITICAL_DEPENDENCIES.items():
             try:
                 version(pkg)
             except PackageNotFoundError:
-                missing_pip.append(f"{pkg}>={min_ver}")
+                if is_conda and pkg in PIP_TO_CONDA_MAP:
+                    missing_pip.append(f"{PIP_TO_CONDA_MAP[pkg]}>={min_ver}")
+                else:
+                    missing_pip.append(f"{pkg}>={min_ver}")
         
         import shutil
+        # Check system binaries
         apt_map = {
             "ffmpeg": "ffmpeg",
             "mediainfo": "mediainfo",
             "update-mime-database": "shared-mime-info",
             "gdk-pixbuf-query-loaders": "libgdk-pixbuf2.0-0"
         }
-        for binary, pkg in apt_map.items():
+        for binary, apt_pkg in apt_map.items():
             if not shutil.which(binary):
-                missing_apt.append(pkg)
+                if is_conda and apt_pkg in APT_TO_CONDA_MAP:
+                    missing_apt.append(APT_TO_CONDA_MAP[apt_pkg])
+                else:
+                    missing_apt.append(apt_pkg)
         
         return sorted(list(set(missing_pip))), sorted(list(set(missing_apt)))
 
