@@ -2,6 +2,15 @@ import subprocess
 import re
 
 def parse(path, file_type, tags, mode='lightweight'):
+    """
+    @brief Extracts metadata using FFmpeg CLI (last-resort fallback).
+    @details Extrahiert Metadaten mittels FFmpeg CLI (letzte Instanz Fallback).
+    @param path Absolute path / Absoluter Pfad.
+    @param file_type Extension / Dateiendung.
+    @param tags Existing tags dictionary / Vorhandene Tags.
+    @param mode Extraction mode / Extraktionsmodus.
+    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
+    """
     if mode == 'full' and 'full_tags' not in tags:
         tags['full_tags'] = {}
         

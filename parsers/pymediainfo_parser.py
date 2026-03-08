@@ -2,7 +2,13 @@ from pymediainfo import MediaInfo
 
 def parse(path, file_type, tags, mode='lightweight'):
     """
-    Extrahierte Metadaten mittels MediaInfo als Fallback/Ergänzung.
+    @brief Extracts metadata using PyMediaInfo (fallback/supplement).
+    @details Extrahiert Metadaten mittels PyMediaInfo als Fallback oder Ergänzung.
+    @param path Absolute path / Absoluter Pfad.
+    @param file_type Extension / Dateiendung.
+    @param tags Existing tags dictionary / Vorhandene Tags.
+    @param mode Extraction mode / Extraktionsmodus.
+    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
     if mode == 'full' and 'full_tags' not in tags:
         tags['full_tags'] = {}
