@@ -19,8 +19,14 @@ CRITICAL_DEPENDENCIES = {
     "mutagen": "1.47.0",
     "pymediainfo": "7.0.1",
     "gevent": "25.9.1",
-    "gevent-websocket": "0.10.1"
+    "gevent-websocket": "0.10.1",
+    "psutil": "5.9.0",
+    "m3u8": "4.1.0"
 }
+
+# System binaries that should be present
+CRITICAL_BINARIES = ["ffmpeg", "mediainfo"]
+BROWSER_BINARIES = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium"]
 
 class EnvironmentManager:
     """
@@ -69,6 +75,7 @@ class EnvironmentManager:
     def verify_dependencies(self) -> List[str]:
         """
         Strictly verifies that critical dependencies are installed and versions are sufficient.
+        Also checks for critical system binaries and browser availability.
         Returns a list of error messages.
         """
         errors = []
@@ -76,12 +83,20 @@ class EnvironmentManager:
             from importlib.metadata import version, PackageNotFoundError
             for pkg, min_ver in CRITICAL_DEPENDENCIES.items():
                 try:
-                    curr_ver = version(pkg)
-                    # Simple version comparison (for robustness, we could use packaging.version)
-                    # But for now, just checking if it's installed is a good start
-                    pass 
+                    version(pkg)
                 except PackageNotFoundError:
-                    errors.append(f"Missing critical dependency: {pkg} (>= {min_ver})")
+                    errors.append(f"Missing critical Python package: {pkg} (>= {min_ver})")
+            
+            # Check system binaries
+            import shutil
+            for binary in CRITICAL_BINARIES:
+                if not shutil.which(binary):
+                    errors.append(f"Missing critical system binary: {binary}")
+            
+            # Check browser binaries (at least one must be present)
+            if not any(shutil.which(b) for b in BROWSER_BINARIES):
+                errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
+                
         except Exception as e:
             errors.append(f"Environmental integrity check failed: {e}")
             

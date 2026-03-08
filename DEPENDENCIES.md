@@ -64,6 +64,7 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 | **ffmpeg** | latest | LGPL v2.1 / GPL | ✅ GPLv3 | Audio/video transcoding and metadata extraction | `sudo apt install ffmpeg` |
 | **libmediainfo0v5** | latest | BSD 2-Clause | ✅ GPLv3 | Media file information library (required by pymediainfo) | `sudo apt install libmediainfo0v5` |
 | **doxygen** | latest | GPL v2 | ✅ GPLv3 | Documentation generator | `sudo apt install doxygen` |
+| **google-chrome-stable** | latest | Proprietary | ✅ Compatible | Web browser for Eel UI | `sudo apt install google-chrome-stable` |
 
 **License Compatibility Note:** All system dependencies are compatible with GNU General Public License v3 (GPL-3.0). FFmpeg's LGPL v2.1 is compatible with GPLv3, and BSD licenses are permissive allowing use under GPLv3.
 
@@ -71,13 +72,13 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 doxygen
+sudo apt install ffmpeg libmediainfo0v5 doxygen google-chrome-stable
 ```
 
 ### Installation of System Dependencies (Fedora/RHEL)
 
 ```bash
-sudo dnf install ffmpeg mediainfo doxygen
+sudo dnf install ffmpeg mediainfo doxygen google-chrome-stable
 ```
 
 ### Installation of System Dependencies (macOS)
@@ -108,12 +109,12 @@ For full license texts, refer to the individual package repositories:
 For Debian/Ubuntu:
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 doxygen
+sudo apt install ffmpeg libmediainfo0v5 doxygen google-chrome-stable
 ```
 
 For Fedora/RHEL:
 ```bash
-sudo dnf install ffmpeg mediainfo doxygen
+sudo dnf install ffmpeg mediainfo doxygen google-chrome-stable
 ```
 
 ### Step 2: Install Python Packages
