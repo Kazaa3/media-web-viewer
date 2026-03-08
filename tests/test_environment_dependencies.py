@@ -46,20 +46,33 @@ class TestPythonEnvironment:
     
     def test_virtual_environment_active(self):
         """
-        @test Prüft ob eine virtuelle Umgebung aktiv ist
+        @test Prüft ob eine virtuelle Umgebung (venv oder conda) aktiv ist
         @details Empfohlen für isolierte Dependencies
         """
+        # Check for venv
         in_venv = sys.prefix != sys.base_prefix
         venv_env = os.environ.get('VIRTUAL_ENV', None)
         
-        # Warnung wenn kein venv, aber kein Hard Fail
-        if not in_venv and not venv_env:
-            pytest.skip("⚠️ Kein venv aktiv - Bitte 'source .venv/bin/activate' ausführen")
+        # Check for conda
+        conda_env = os.environ.get('CONDA_DEFAULT_ENV', None)
+        conda_prefix = os.environ.get('CONDA_PREFIX', None)
         
-        print(f"✅ Virtual Environment aktiv")
-        if in_venv:
+        in_any_env = in_venv or venv_env or conda_env or conda_prefix
+        
+        # Warnung wenn keine Umgebung, aber kein Hard Fail
+        if not in_any_env:
+            pytest.skip("⚠️ Keine virtuelle Umgebung aktiv - Bitte venv oder conda aktivieren")
+        
+        # Display environment info
+        if conda_env:
+            print(f"✅ Conda Environment aktiv: {conda_env}")
+            if conda_prefix:
+                print(f"   Conda-Pfad: {conda_prefix}")
+        elif in_venv:
+            print(f"✅ Venv aktiv")
             print(f"   venv-Pfad: {sys.prefix}")
         elif venv_env:
+            print(f"✅ Venv aktiv (via VIRTUAL_ENV)")
             print(f"   VIRTUAL_ENV: {venv_env}")
     
     def test_project_root_accessible(self):
