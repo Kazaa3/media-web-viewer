@@ -2831,6 +2831,236 @@ jobs:
 
 ---
 
+## Auto-Launcher Script (run.sh)
+
+### Overview
+
+The `run.sh` script is a convenience launcher that automatically handles environment setup and dependency management. It eliminates the need for manual virtual environment activation and provides clear diagnostics about the Python environment being used.
+
+**Location:** `/path/to/media-web-viewer/run.sh`
+
+### Features
+
+- ✅ **Automatic venv Detection & Creation**: Creates `.venv` if it doesn't exist
+- ✅ **Dependency Management**: Checks and installs missing dependencies from `requirements.txt`
+- ✅ **Environment Reporting**: Displays Python version, environment type (system/venv/conda), and paths
+- ✅ **Clear Status Indicators**: Color-coded output (🟢 green for success, 🔴 red for errors)
+- ✅ **One-Command Startup**: No manual activation required
+
+### Usage
+
+**Basic startup:**
+```bash
+cd /path/to/media-web-viewer
+./run.sh
+```
+
+**With debug flag:**
+```bash
+./run.sh --debug
+```
+
+### What run.sh Does
+
+1. **Checks for `.venv`** in the project directory
+   - If missing: Creates new virtual environment with `python3 -m venv .venv`
+   - If present: Skips creation
+
+2. **Activates the environment**
+   - Sources `source .venv/bin/activate`
+   - Logs activation status
+
+3. **Checks dependencies**
+   - Reads `requirements.txt`
+   - Tests if critical modules (mutagen, eel, bottle) are installed
+   - Installs missing packages via `pip install -r requirements.txt` if needed
+
+4. **Reports environment information**
+   - Displays Python version
+   - Shows environment path
+   - Indicates environment type (.venv, conda, or system)
+   - Shows executable location
+
+5. **Launches the application**
+   - Executes `python main.py` with any passed arguments
+
+### Output Example
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 Media Web Viewer - Auto Launcher
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 Aktiviere Umgebung...
+✅ Umgebung bereit
+Python 3.14.0
+📦 /path/to/media-web-viewer/.venv
+🚀 Starte Anwendung...
+```
+
+### Error Handling
+
+If dependencies are missing or environment detection fails, run.sh provides clear error messages:
+
+```
+❌ Abhängigkeit 'mutagen' nicht installiert!
+────────────────────────────────────────────
+Installiere fehlende Abhängigkeiten...
+pip install -r requirements.txt
+```
+
+---
+
+## Logging System
+
+### Overview
+
+The Media Web Viewer uses a centralized, multi-destination logging system that captures application events both to the console and persistent log files.
+
+### Log Locations
+
+**Primary Log File:**
+```
+~/.media-web-viewer/app.log
+```
+
+**Log Configuration:**
+- **Maximum File Size**: 5 MB (automatic rotation)
+- **Backup Files**: Up to 3 rotated backups maintained
+- **Encoding**: UTF-8
+- **Format**: `YYYY-MM-DD HH:MM:SS [LEVEL] [MODULE] Message`
+
+### Startup Logging
+
+When the application starts, it automatically logs environment information:
+
+```
+════════════════════════════════════════════════════════════
+[Startup] Application started - Environment Information
+────────────────────────────────────────────────────────────
+  Environment Type: Virtual Environment (venv)
+  Environment Name: .venv
+  Environment Path: /home/user/media-web-viewer/.venv
+  Python Version: 3.14.0
+  Python Executable: /home/user/media-web-viewer/.venv/bin/python
+════════════════════════════════════════════════════════════
+```
+
+This information is helpful for:
+- Verifying that the correct virtual environment is active
+- Debugging environment-related issues
+- Confirming Python version compatibility
+- Troubleshooting import errors
+
+### What Gets Logged
+
+**Startup Events:**
+- Environment detection results (venv/conda/system)
+- Python version and paths
+- Debug mode activation status
+- Module initialization
+
+**Runtime Events:**
+- User interactions (file selection, playback)
+- Database operations
+- Media file scanning results
+- Playback events
+- API calls
+
+**Error Events:**
+- Missing dependencies (ModuleNotFoundError)
+- File access errors
+- Database errors
+- Configuration issues
+
+### Debug Mode
+
+Enable detailed logging with the `--debug` flag:
+
+```bash
+./run.sh --debug
+# or directly:
+python main.py --debug
+```
+
+In debug mode:
+- All `logging.debug()` calls are captured
+- Additional diagnostic information is logged
+- All debug flags are enabled
+- Verbose output in console and log file
+
+### Accessing Logs
+
+**View real-time logs (console):**
+```bash
+./run.sh
+# or
+python main.py
+```
+
+**View all logged entries:**
+```bash
+cat ~/.media-web-viewer/app.log
+```
+
+**Monitor logs in real-time:**
+```bash
+tail -f ~/.media-web-viewer/app.log
+```
+
+**View only errors:**
+```bash
+grep "\[ERROR\]" ~/.media-web-viewer/app.log
+```
+
+**View debug entries:**
+```bash
+grep "\[DEBUG\]" ~/.media-web-viewer/app.log
+```
+
+### Log Rotation
+
+When `app.log` reaches 5 MB, it automatically:
+1. Renames current log to `app.log.1`
+2. Renames `app.log.1` to `app.log.2`
+3. Renames `app.log.2` to `app.log.3` (oldest, will be deleted)
+4. Starts fresh `app.log` file
+
+This ensures logs don't consume excessive disk space while maintaining recent history.
+
+### Development Tips
+
+**Adding Logging to Your Code:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Information level (general flow)
+logging.info("[ComponentName] Something happened")
+
+# Debug level (detailed diagnostics)
+logging.debug("[ComponentName] Detailed state: x=123, y=456")
+
+# Warning level (potential issues)
+logging.warning("[ComponentName] This might be a problem")
+
+# Error level (something went wrong)
+logging.error("[ComponentName] Operation failed: %s", error_message)
+```
+
+**Accessing logs from application code:**
+```python
+from logger import get_ui_logs
+
+# Get all buffered logs as list
+logs = get_ui_logs()
+
+# Log is also available via the REST API:
+# GET /api/debug/logs → Returns JSON array of log entries
+```
+
+---
+
 ## Contact & Support
 
 **Developer:** kazaa3  

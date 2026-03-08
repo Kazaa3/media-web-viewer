@@ -248,6 +248,33 @@ def initialize_debug_flags(args=None):
 # Initialize logging early with default sys.argv
 initialize_debug_flags()
 
+# Log environment information at startup
+def _log_environment_info():
+    """Log Python environment details at startup."""
+    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    
+    logging.info("═" * 60)
+    logging.info("[Startup] Application started - Environment Information")
+    logging.info("─" * 60)
+    
+    if env_type == 'conda':
+        logging.info(f"  Environment Type: Conda")
+        logging.info(f"  Environment Name: {env_name}")
+        logging.info(f"  Environment Path: {env_path}")
+    elif env_type == 'venv':
+        logging.info(f"  Environment Type: Virtual Environment (venv)")
+        logging.info(f"  Environment Name: {env_name}")
+        logging.info(f"  Environment Path: {env_path}")
+    else:
+        logging.info(f"  Environment Type: System Python")
+        logging.info(f"  Environment Path: {env_path}")
+    
+    logging.info(f"  Python Version: {py_ver}")
+    logging.info(f"  Python Executable: {py_exec}")
+    logging.info("═" * 60)
+
+_log_environment_info()
+
 
 def debug_log(message: str) -> None:
     """
