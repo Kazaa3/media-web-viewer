@@ -855,6 +855,132 @@ def pick_save_file(title="Datei speichern", filetypes=None, default_name="playli
 
 
 @eel.expose
+def pick_folder_cli(prompt="Ordnerpfad eingeben"):
+    """
+    @brief CLI-based folder picker without GUI dependencies.
+    @details CLI-basierter Ordner-Picker ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @param prompt Input prompt text / Eingabe-Prompt-Text.
+    @return Valid folder path or None / Gültiger Ordnerpfad oder None.
+    """
+    try:
+        print(f"\n{prompt}:")
+        print(f"(Standard: {Path.home()})")
+        user_input = input("> ").strip()
+        
+        if not user_input:
+            return str(Path.home())
+        
+        folder_path = Path(user_input).expanduser().resolve()
+        
+        if folder_path.exists() and folder_path.is_dir():
+            return str(folder_path)
+        else:
+            print(f"Fehler: '{folder_path}' ist kein gültiger Ordner.")
+            return None
+    except (KeyboardInterrupt, EOFError):
+        print("\nAbgebrochen.")
+        return None
+    except Exception as e:
+        logging.error(f"[System] CLI folder picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_file_cli(prompt="Dateipfad eingeben", extensions=None):
+    """
+    @brief CLI-based file picker without GUI dependencies.
+    @details CLI-basierter Datei-Picker ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @param prompt Input prompt text / Eingabe-Prompt-Text.
+    @param extensions Optional list of allowed extensions / Optionale Liste erlaubter Endungen.
+    @return Valid file path or None / Gültiger Dateipfad oder None.
+    """
+    try:
+        ext_info = ""
+        if extensions:
+            ext_info = f" (Erlaubte Formate: {', '.join(extensions)})"
+        
+        print(f"\n{prompt}{ext_info}:")
+        user_input = input("> ").strip()
+        
+        if not user_input:
+            return None
+        
+        file_path = Path(user_input).expanduser().resolve()
+        
+        if not file_path.exists():
+            print(f"Fehler: Datei '{file_path}' nicht gefunden.")
+            return None
+        
+        if not file_path.is_file():
+            print(f"Fehler: '{file_path}' ist keine Datei.")
+            return None
+        
+        if extensions and file_path.suffix.lower() not in extensions:
+            print(f"Fehler: Dateiformat '{file_path.suffix}' nicht erlaubt.")
+            return None
+        
+        return str(file_path)
+    except (KeyboardInterrupt, EOFError):
+        print("\nAbgebrochen.")
+        return None
+    except Exception as e:
+        logging.error(f"[System] CLI file picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_save_file_cli(prompt="Speicherpfad eingeben", default_name="output.txt", extensions=None):
+    """
+    @brief CLI-based save file dialog without GUI dependencies.
+    @details CLI-basierter Speichern-Dialog ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @param prompt Input prompt text / Eingabe-Prompt-Text.
+    @param default_name Default filename / Standard-Dateiname.
+    @param extensions Optional list of allowed extensions / Optionale Liste erlaubter Endungen.
+    @return Valid save path or None / Gültiger Speicherpfad oder None.
+    """
+    try:
+        ext_info = ""
+        if extensions:
+            ext_info = f" (Formate: {', '.join(extensions)})"
+        
+        print(f"\n{prompt}{ext_info}:")
+        print(f"(Standard: {default_name})")
+        user_input = input("> ").strip()
+        
+        if not user_input:
+            user_input = default_name
+        
+        save_path = Path(user_input).expanduser().resolve()
+        
+        # Add extension if missing
+        if extensions and save_path.suffix.lower() not in extensions:
+            save_path = save_path.with_suffix(extensions[0])
+        
+        # Check if parent directory exists
+        if not save_path.parent.exists():
+            print(f"Fehler: Verzeichnis '{save_path.parent}' existiert nicht.")
+            create = input("Verzeichnis erstellen? (j/n): ").strip().lower()
+            if create == 'j':
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                return None
+        
+        # Warn if file exists
+        if save_path.exists():
+            overwrite = input(f"Datei '{save_path.name}' existiert. Überschreiben? (j/n): ").strip().lower()
+            if overwrite != 'j':
+                return None
+        
+        return str(save_path)
+    except (KeyboardInterrupt, EOFError):
+        print("\nAbgebrochen.")
+        return None
+    except Exception as e:
+        logging.error(f"[System] CLI save file picker failed: {e}")
+        return None
+
+
+@eel.expose
 def get_test_suites():
     """
     @brief Discovers all test files in the tests/ directory and extracts metadata.
