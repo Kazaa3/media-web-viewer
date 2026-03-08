@@ -225,9 +225,22 @@ Debugging is granular. Instead of a single toggle, the system uses `DEBUG_FLAGS`
 | Flag | Component | Responsibility |
 |------|-----------|----------------|
 | `system` | Core | Overrides all other flags (Force all logs). |
-| `scan` | Parser | Detailed file indexing and regex matching info. |
+| `start` | Startup | Initialization and boot sequence. |
+| `scan` | Parser | Detailed file indexing and matching info. |
 | `db` | Database | SQL queries and record insertion details. |
-| `web` | Server | HTTP requests and transcoding process logs. |
+| `api` | API/Eel | Function calls between JS and Python. |
+| `web` | Server | Bottle internal routes and static serving. |
+| `i18n` | Locale | Localization and translation lookups. |
+| `websocket` | Eel/WS | WebSocket connection and protocol logs. |
+| `performance`| Timing | Execution times and efficiency metrics. |
+| `metadata` | Tags | Detailed extraction results for media tags. |
+| `transcode` | FFmpeg | Server-side transcoding/caching details. |
+| `file_ops` | FS | File renames, deletions and mutations. |
+| `network` | HTTP | Inbound request logging (Method, URL). |
+| `ui` | Frontend | UI-specific logic bridged from JS. |
+| `player` | Audio | Playback state and control events. |
+| `lib` | Library | High-level library management logic. |
+| `tests` | Tests | Internal test suite execution logs. |
 
 ### Usage in Code
 ```python
