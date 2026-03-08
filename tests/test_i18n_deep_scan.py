@@ -313,6 +313,10 @@ class HTMLTextExtractor(HTMLParser):
            <button>×</button>                → Zu kurz (1 Zeichen)
            <div>   </div>                   → Nur Whitespace
         """
+        # Ignoriere Inhalte in nicht-translatierbaren Tags
+        if self.current_tag in {'script', 'style', 'code', 'pre'}:
+            return
+
         # Entferne Whitespace
         text = data.strip()
         if not text or len(text) < 2:
@@ -629,9 +633,107 @@ def test_html_placeholder_title_attrs():
     return True
 
 
+def test_element_type_cardinality_i18n_coverage():
+    """
+    Deep Scan 7: Prüft Cardinality pro Elementtyp.
+
+    Ziel:
+    - Ermittelt pro Typ (text, placeholder, title, alt) die Anzahl
+      translatierbarer Felder (Soll)
+    - Ermittelt die i18n-gebundenen Felder (Ist)
+    - Schlägt fehl, wenn Ist < Soll
+    """
+    print("\n🔍 Deep Scan 7: Type Cardinality (Soll/Ist i18n)")
+
+    app_html = Path(__file__).parent.parent / "web" / "app.html"
+
+    with open(app_html, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    parser = HTMLTextExtractor()
+    parser.feed(content)
+
+    # Text in klassischen UI-Tags sollte i18n-gebunden sein.
+    relevant_text_tags = {
+        'button', 'label', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'a', 'option'
+    }
+
+    text_exceptions = [
+        'Media Web Viewer', 'Browser', 'Clear', 'Deutsch', 'English',
+        'Import:', 'Export:', 'Feature', 'Name', 'Backend Status'
+    ]
+
+    def is_translatable_text_element(elem):
+        text = (elem.get('text') or '').strip()
+        if elem.get('type') != 'text':
+            return False
+        if elem.get('tag') not in relevant_text_tags:
+            return False
+        if len(text) < 2:
+            return False
+        if re.fullmatch(r'[\d\s\-\.:,;()]+', text):
+            return False
+        if text.startswith('${') or '{{' in text or '}}' in text:
+            return False
+        if any(exc in text for exc in text_exceptions):
+            return False
+        return bool(re.search(r'[a-zäöüß]{2,}', text, re.IGNORECASE))
+
+    expected = {
+        'text': [],
+        'placeholder': [],
+        'title': [],
+        'alt': [],
+    }
+
+    actual = {
+        'text': [],
+        'placeholder': [],
+        'title': [],
+        'alt': [],
+    }
+
+    for elem in parser.text_elements:
+        elem_type = elem.get('type', '')
+
+        if elem_type == 'text' and is_translatable_text_element(elem):
+            expected['text'].append(elem)
+            if elem.get('has_i18n'):
+                actual['text'].append(elem)
+
+        elif elem_type.startswith('attribute:'):
+            attr = elem_type.split(':', 1)[1]
+            if attr in {'placeholder', 'title', 'alt'}:
+                expected[attr].append(elem)
+                if elem.get('has_i18n'):
+                    actual[attr].append(elem)
+
+    failures = []
+    for key in ['text', 'placeholder', 'title', 'alt']:
+        expected_count = len(expected[key])
+        actual_count = len(actual[key])
+        missing_count = expected_count - actual_count
+        print(f"   {key:11} Soll={expected_count:3} | Ist={actual_count:3} | Fehlend={max(missing_count, 0):3}")
+
+        if missing_count > 0:
+            missing_examples = [elem for elem in expected[key] if not elem.get('has_i18n')]
+            failures.append((key, missing_count, missing_examples[:10]))
+
+    if failures:
+        print("❌ Cardinality mismatch gefunden:")
+        for key, missing_count, examples in failures:
+            print(f"   - {key}: {missing_count} ohne i18n-Bindung")
+            for ex in examples[:5]:
+                print(f"      Line {ex.get('line')}: <{ex.get('tag')}> \"{(ex.get('text') or '')[:60]}\"")
+        return False
+
+    print("✅ Cardinality pro Typ ist vollständig i18n-abgedeckt")
+    return True
+
+
 def test_console_log_german():
     """Test for console.log with German debug messages."""
-    print("\n🔍 Deep Scan 7: console.log German Messages")
+    print("\n🔍 Deep Scan 8: console.log German Messages")
     
     app_html = Path(__file__).parent.parent / "web" / "app.html"
     
@@ -685,6 +787,7 @@ def main():
         test_javascript_string_literals,
         test_html_button_labels,
         test_html_placeholder_title_attrs,
+        test_element_type_cardinality_i18n_coverage,
         test_console_log_german,
     ]
     

@@ -724,7 +724,7 @@ def set_language(lang):
 
 
 # Eigene bottle Web-Routen
-# from web import app_bottle (Importing for side effects if needed, but unused here)
+from web import app_bottle  # noqa: F401  # Register bottle routes: /media and /cover
 
 # Models
 
