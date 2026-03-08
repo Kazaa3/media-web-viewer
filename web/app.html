@@ -805,11 +805,25 @@
 
 <body>
     <script>
+        function isUnsupportedMediaError(reason) {
+            const text = String(reason || '');
+            return text.includes('NotSupportedError') || text.includes('no supported source was found');
+        }
+
         window.onerror = function (msg, url, lineNo, columnNo, error) {
             alert("JS Error: " + msg + "\nLine: " + lineNo + "\nCol: " + columnNo);
             return false;
         };
         window.addEventListener('unhandledrejection', function (event) {
+            if (isUnsupportedMediaError(event.reason)) {
+                console.warn('Unsupported media source rejected by browser:', event.reason);
+                const statusEl = document.getElementById('status');
+                if (statusEl) {
+                    statusEl.textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
+                }
+                event.preventDefault();
+                return;
+            }
             alert("Uncaught Promise: " + event.reason);
         });
     </script>
@@ -1336,6 +1350,12 @@
                                 <div style="font-size: 4em; margin-bottom: 10px;">🎞️</div>
                                 <p data-i18n="video_placeholder">Kein Video ausgewählt</p>
                             </div>
+                        </div>
+
+                        <div id="video-unsupported-hint"
+                            style="display: none; margin-bottom: 16px; padding: 12px 14px; background: #fff8e1; border: 1px solid #ffcc80; border-left: 4px solid #f39c12; border-radius: 8px; color: #6d4c41; font-size: 0.9em;"
+                            data-i18n="video_unsupported_hint">
+                            Browser kann dieses Video nicht direkt abspielen. Nutze "In VLC öffnen".
                         </div>
 
                         <div id="vlc-info"
@@ -2151,7 +2171,14 @@
             stopVideo();
 
             currentPlayer.src = path;
-            currentPlayer.play();
+            currentPlayer.play().catch(e => {
+                if (isUnsupportedMediaError(e)) {
+                    console.warn('Audio playback unsupported for source:', path, e);
+                    document.getElementById('status').textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
+                    return;
+                }
+                console.error('Audio playback failed:', e);
+            });
 
             // Update Status Bar
             document.getElementById('status').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
@@ -2264,6 +2291,27 @@
         let currentVideoItem = null;
         let currentVideoPath = null;
 
+        function showUnsupportedVideoHint() {
+            const hint = document.getElementById('video-unsupported-hint');
+            const vlcBtn = document.getElementById('btn-open-vlc');
+            if (hint) hint.style.display = 'block';
+            if (vlcBtn) {
+                vlcBtn.style.display = 'flex';
+                vlcBtn.style.background = '#d35400';
+                vlcBtn.style.boxShadow = '0 0 0 3px rgba(243, 156, 18, 0.35)';
+            }
+        }
+
+        function hideUnsupportedVideoHint() {
+            const hint = document.getElementById('video-unsupported-hint');
+            const vlcBtn = document.getElementById('btn-open-vlc');
+            if (hint) hint.style.display = 'none';
+            if (vlcBtn) {
+                vlcBtn.style.background = '#2980b9';
+                vlcBtn.style.boxShadow = 'none';
+            }
+        }
+
         function updateVideoMode() {
             const toggle = document.getElementById('video-mode-toggle');
             const status = document.getElementById('video-mode-status');
@@ -2273,6 +2321,9 @@
 
             // Show "Open in VLC" button only if in browser mode and video loaded
             document.getElementById('btn-open-vlc').style.display = (!isVLC && currentVideoItem) ? 'flex' : 'none';
+            if (isVLC) {
+                hideUnsupportedVideoHint();
+            }
         }
 
         async function playVideo(item, path) {
@@ -2302,11 +2353,18 @@
             // Stop VLC if running
             eel.stop_vlc()();
             document.getElementById('vlc-info').style.display = 'none';
+            hideUnsupportedVideoHint();
 
             placeholder.style.display = 'none';
             video.style.display = 'block';
+            video.onloadeddata = () => hideUnsupportedVideoHint();
+            video.onerror = () => showUnsupportedVideoHint();
             video.src = path;
             video.play().catch(e => {
+                if (isUnsupportedMediaError(e)) {
+                    showUnsupportedVideoHint();
+                    return;
+                }
                 console.error("Browser playback failed:", e);
             });
 
@@ -2319,6 +2377,7 @@
             video.style.display = 'none';
             document.getElementById('video-placeholder').style.display = 'block';
             document.getElementById('btn-open-vlc').style.display = 'none';
+            hideUnsupportedVideoHint();
 
             document.getElementById('vlc-info').style.display = 'block';
             document.getElementById('vlc-current-file').innerText = currentVideoItem.name;
@@ -2339,6 +2398,7 @@
             if (document.getElementById('video-placeholder')) {
                 document.getElementById('video-placeholder').style.display = 'block';
             }
+            hideUnsupportedVideoHint();
 
             await eel.stop_vlc()();
             if (document.getElementById('vlc-info')) {
@@ -3511,83 +3571,6 @@
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
                 statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
-            }
-        }
-
-        // Video Player Functions
-        // currentVideoPath already declared at line 2041
-        let isVLCMode = false;
-
-        function updateVideoMode() {
-            const toggle = document.getElementById('video-mode-toggle');
-            const statusLabel = document.getElementById('video-mode-status');
-            const videoPlayer = document.getElementById('video-player');
-            const vlcBtn = document.getElementById('btn-open-vlc');
-            
-            isVLCMode = toggle.checked;
-            
-            if (isVLCMode) {
-                statusLabel.textContent = 'VLC';
-                statusLabel.style.color = '#f90';
-                videoPlayer.style.display = 'none';
-                vlcBtn.style.display = 'flex';
-            } else {
-                statusLabel.textContent = 'Browser';
-                statusLabel.style.color = '#2a7';
-                videoPlayer.style.display = 'block';
-                vlcBtn.style.display = 'none';
-            }
-        }
-
-        async function playVideoFile(path) {
-            currentVideoPath = path;
-            const videoPlayer = document.getElementById('video-player');
-            const placeholder = document.getElementById('video-placeholder');
-            const vlcInfo = document.getElementById('vlc-info');
-            const vlcCurrentFile = document.getElementById('vlc-current-file');
-            
-            if (isVLCMode) {
-                // Play in external VLC
-                const result = await eel.play_vlc(path)();
-                if (result.error) {
-                    alert(t('vlc_error_prefix') + result.error);
-                } else {
-                    videoPlayer.style.display = 'none';
-                    placeholder.style.display = 'none';
-                    vlcInfo.style.display = 'block';
-                    vlcCurrentFile.textContent = path;
-                }
-            } else {
-                // Play in embedded browser player
-                videoPlayer.src = `file://${path}`;
-                videoPlayer.style.display = 'block';
-                placeholder.style.display = 'none';
-                vlcInfo.style.display = 'none';
-                videoPlayer.play();
-            }
-        }
-
-        async function stopVideo() {
-            const videoPlayer = document.getElementById('video-player');
-            const placeholder = document.getElementById('video-placeholder');
-            const vlcInfo = document.getElementById('vlc-info');
-            
-            if (isVLCMode) {
-                await eel.stop_vlc()();
-            } else {
-                videoPlayer.pause();
-                videoPlayer.src = '';
-            }
-            
-            videoPlayer.style.display = 'none';
-            placeholder.style.display = 'flex';
-            vlcInfo.style.display = 'none';
-            currentVideoPath = null;
-        }
-
-        async function switchToVLC() {
-            if (currentVideoPath) {
-                await playVideoFile(currentVideoPath);
             }
         }
 

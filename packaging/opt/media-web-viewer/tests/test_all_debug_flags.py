@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: All Debug Flags Test
+# Eingabewerte: All DEBUG_FLAGS
+# Ausgabewerte: Comprehensive validation
+# Testdateien: Keine
+# Kommentar: Testet alle Debug-Flags.
 import unittest
 import sys
 from pathlib import Path

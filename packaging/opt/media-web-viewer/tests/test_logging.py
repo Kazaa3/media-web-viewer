@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Logging System Test
+# Eingabewerte: logger.py module
+# Ausgabewerte: Log formatting, File/Console output
+# Testdateien: logs/*.log
+# Kommentar: Testet Logging-System.
 import logging
 import logger
 from pathlib import Path

@@ -134,7 +134,7 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.3.2"  # Fallback
+    VERSION = "1.3.3"  # Fallback
 
 
 @eel.expose

@@ -1,0 +1,179 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.3.3
+  workflow_dispatch:  # Allow manual trigger
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Linux Executable
+        run: |
+          chmod +x build_exe.sh
+          ./build_exe.sh
+
+      - name: Prepare Linux executable artifact
+        run: |
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          cp dist/MediaWebViewer dist/MediaWebViewer-${VERSION}-Linux
+
+      - name: Build DEB Package
+        run: |
+          chmod +x build_deb.sh
+          ./build_deb.sh
+
+      - name: Upload Linux Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaWebViewer-Linux
+          path: |
+            dist/MediaWebViewer
+            dist/MediaWebViewer-*-Linux
+
+      - name: Upload DEB Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaWebViewer-DEB
+          path: media-web-viewer_*_amd64.deb
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Windows Executable
+        shell: bash
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          python -m PyInstaller \
+            --onefile \
+            --noconsole \
+            --name "MediaWebViewer-${VERSION}-Windows" \
+            --add-data "web;web" \
+            --hidden-import bottle_websocket \
+            --hidden-import gevent \
+            --hidden-import gevent.monkey \
+            main.py
+
+      - name: Verify Windows build output
+        shell: bash
+        run: |
+          ls -lh dist/
+
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaWebViewer-Windows
+          path: dist/*.exe
+          if-no-files-found: error
+
+  create-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="v${VERSION}"
+          fi
+          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.TAG_NAME }}
+          name: Media Web Viewer v${{ steps.meta.outputs.VERSION }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          body: |
+            ## 🚀 Media Web Viewer v${{ steps.meta.outputs.VERSION }}
+            
+            ### Changes in this release
+            - FFmpeg parser: Fixed 24-bit PCM detection
+            - Tests: Updated to use real media files
+            - Tests: Skip logic now fails instead of passing
+            
+            ### Downloads
+            - **Linux**: `MediaWebViewer-Linux` (executable)
+            - **Linux**: `MediaWebViewer-DEB` (.deb package)
+            - **Windows**: `MediaWebViewer-Windows.exe`
+            
+            ### Installation
+            #### Linux (DEB)
+            ```bash
+            sudo dpkg -i media-web-viewer_${{ steps.meta.outputs.VERSION }}_amd64.deb
+            ```
+            
+            #### Linux (Executable)
+            ```bash
+            chmod +x MediaWebViewer-*
+            ./MediaWebViewer-*
+            ```
+            
+            #### Windows
+            Simply run the `.exe` file (no installation required).
+            
+            ### Requirements
+            - FFmpeg (for media processing)
+            - MediaInfo (for metadata extraction)
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/MediaWebViewer-Linux/*
+            artifacts/MediaWebViewer-Windows/*
+            artifacts/MediaWebViewer-DEB/*

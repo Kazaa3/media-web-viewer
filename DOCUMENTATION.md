@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.2  
+**Version:** 1.3.3  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.2
+1.3.3
 ```
 
 This version is automatically loaded and used across:
@@ -29,6 +29,19 @@ To update the version:
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+### Release Notes (v1.3.3)
+
+Highlights of this release:
+- Added automated CI/CD workflows for:
+    - main-branch build artifacts (`ci-artifacts.yml`)
+    - tagged binary releases (`release.yml`)
+- Added local build artifact cleanup helper (`scripts/cleanup_build_artifacts.sh`)
+- Improved media playback error handling in frontend:
+    - global Promise handler now suppresses noisy `NotSupportedError` popups
+    - unsupported sources are shown as readable UI status (`player_unsupported_source`)
+- Removed duplicate video function definitions in frontend to prevent handler overrides
+
 ---
 
 ## Table of Contents
@@ -48,6 +61,7 @@ To update the version:
     - [Standards & Good Practice](#standards--good-practice)
     - [Testing & Quality Assurance](#testing--quality-assurance)
     - [Dynamic Test Suite](#dynamic-test-suite)
+    - [CI/CD Automation](#cicd-automation)
 13. [Troubleshooting](#troubleshooting)
 14. [License](#license)
 
@@ -167,7 +181,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -219,7 +233,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -256,7 +270,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -570,7 +584,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.2)
+Media Web Viewer (v1.3.3)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -2181,6 +2195,59 @@ The destructive mode runs `reinstall_deb.sh` and should be used only on systems 
 
 Media Web Viewer includes a comprehensive automated test suite that validates core functionality, ensuring reliability across updates. The test suite is designed to be run both locally and in CI/CD pipelines.
 
+### CI/CD Automation
+
+The project ships with two active GitHub Actions workflows:
+
+1. `ci-artifacts.yml` (main branch artifacts)
+2. `release.yml` (tagged release with binary publication)
+
+#### Main Artifact Pipeline
+
+**Workflow:** `.github/workflows/ci-artifacts.yml`  
+**Trigger:** push to `main`, manual dispatch
+
+Build outputs:
+- Linux executable: `dist/MediaWebViewer`
+- Debian package: `media-web-viewer_*_amd64.deb`
+
+Artifacts are stored in the GitHub Actions run and can be downloaded without creating a GitHub Release.
+
+#### Tagged Release Pipeline
+
+**Workflow:** `.github/workflows/release.yml`  
+**Trigger:** tag push `v*` (e.g. `v1.3.3`), manual dispatch
+
+Build outputs:
+- Linux executable
+- Debian package
+- Windows executable
+
+Release behavior:
+- Automatically creates/updates a GitHub Release
+- Uploads all binaries as release assets
+
+#### Release Trigger Commands
+
+```bash
+git add .
+git commit -m "Release v1.3.3"
+git tag -a v1.3.3 -m "Release v1.3.3"
+git push origin main --tags
+```
+
+#### Local Artifact Cleanup
+
+To avoid artifact accumulation in the local repository, use:
+
+```bash
+# Dry-run
+scripts/cleanup_build_artifacts.sh
+
+# Execute cleanup (defaults: keep 5 deb, keep 2 dist binaries)
+scripts/cleanup_build_artifacts.sh --execute
+```
+
 #### Test Overview
 
 **Location:** `tests/` directory  
@@ -2395,25 +2462,22 @@ if __name__ == '__main__':
 
 Tests are automatically run on:
 - Pre-commit hooks (optional)
-- GitHub Actions (future)
+- GitHub Actions (active)
 - Local development (manual)
 
-**CI Workflow Example:**
-```yaml
-# .github/workflows/tests.yml (future)
-name: Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.12
-      - run: pip install -r requirements.txt
-      - run: pytest tests/ -v --cov=.
-```
+**Implemented Workflows:**
+
+1. **Main branch artifact workflow** (`.github/workflows/ci-artifacts.yml`)
+     - Trigger: push to `main` and manual dispatch
+     - Builds Linux executable (`dist/MediaWebViewer`)
+     - Builds Debian package (`media-web-viewer_*_amd64.deb`)
+     - Uploads both as GitHub Actions artifacts
+
+2. **Release workflow** (`.github/workflows/release.yml`)
+     - Trigger: tags `v*` (e.g. `v1.3.3`) and manual dispatch
+     - Builds Linux executable, Debian package, and Windows executable
+     - Creates/updates GitHub Release automatically
+     - Uploads binaries as release assets
 
 #### Test Coverage Goals
 
@@ -2589,6 +2653,52 @@ python3 --version
 3. Try playing from **Edit** tab → **Test Stream** button
 4. Check debug logs for FFmpeg errors
 
+#### Uncaught Promise: NotSupportedError (No supported source)
+
+**Error (Browser Console):** `Uncaught Promise: NotSupportedError: Failed to load because no supported source was found.`
+
+**Cause:**
+- The browser cannot decode the selected media codec/container.
+- Typical cases: uncommon codecs in audio/video, unsupported MKV variants, invalid source URL.
+
+**Current Behavior (Implemented):**
+- The global Promise handler in `web/app.html` detects this specific media error.
+- Instead of showing a blocking generic alert, it:
+    1. suppresses the noisy global promise popup,
+    2. logs a warning to console,
+    3. updates UI status with a user-facing message (`player_unsupported_source`).
+
+**Global Promise Handler (Reference Implementation):**
+```javascript
+function isUnsupportedMediaError(reason) {
+    const text = String(reason || '');
+    return text.includes('NotSupportedError') || text.includes('no supported source was found');
+}
+
+window.addEventListener('unhandledrejection', function (event) {
+    if (isUnsupportedMediaError(event.reason)) {
+        console.warn('Unsupported media source rejected by browser:', event.reason);
+        const statusEl = document.getElementById('status');
+        if (statusEl) {
+            statusEl.textContent = t('player_unsupported_source');
+        }
+        event.preventDefault();
+        return;
+    }
+    alert('Uncaught Promise: ' + event.reason);
+});
+```
+
+**User Workarounds:**
+1. Switch to **VLC mode** for video playback.
+2. Use transcoded/compatible format when available.
+3. Verify FFmpeg and parser outputs in Debug Console.
+
+**Developer Notes:**
+- Keep explicit `.play().catch(...)` handling where playback is triggered.
+- Avoid duplicated function definitions for video controls in `web/app.html`, because later declarations override earlier safe handlers.
+- i18n key for this case: `player_unsupported_source` in `web/i18n.json`.
+
 #### Database Corrupted / Duplicate Entries
 
 **Cause:** Interrupted operations or version mismatch
@@ -2687,7 +2797,7 @@ Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellunge
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 
 # 3. Abhängigkeiten bei Bedarf reparieren
 sudo apt-get install -f
@@ -3148,26 +3258,31 @@ bash build_deb.sh
 # Output directory: Current directory
 # Output file: media-web-viewer_<VERSION>_amd64.deb
 ls -lh *.deb
-# Expected: media-web-viewer_1.3.2_amd64.deb
+# Expected: media-web-viewer_1.3.3_amd64.deb
 ```
 
 **2. Version Management:**
 ```bash
 # Build artifacts should match version in code
 grep "VERSION =" main.py
-# Output: VERSION = "1.3.2"
+# Output: VERSION = "1.3.3"
 
 # Filename should match version
 ls media-web-viewer_*.deb
-# Expected: media-web-viewer_1.3.2_amd64.deb
+# Expected: media-web-viewer_1.3.3_amd64.deb
 ```
 
 **3. Storage and Distribution:**
 ```bash
 # DO NOT commit binaries to Git
-# Instead use GitHub Releases for distribution
+# Use GitHub Actions + GitHub Releases for distribution
 
-# Option A: Manual upload to GitHub Releases
+# Recommended (automated):
+# 1) git tag -a v1.3.3 -m "Release v1.3.3"
+# 2) git push origin main --tags
+# 3) .github/workflows/release.yml builds and uploads binaries automatically
+
+# Option A: Manual upload to GitHub Releases (fallback)
 # 1. Go to https://github.com/Kazaa3/media-web-viewer/releases
 # 2. Click "Create a new release"
 # 3. Upload the .deb file
