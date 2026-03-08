@@ -1,6 +1,7 @@
 #!/bin/bash
 # Media Web Viewer - Automatic Environment Setup & Launch Script
 # This script automatically detects and activates the correct Python environment
+# Requires: Python 3.14.2 (from Conda p14) or falls back to python3
 # Supports: venv (primary) and conda (fallback)
 
 set -e
@@ -10,6 +11,7 @@ cd "$PROJECT_DIR"
 
 VENV_DIR=".venv"
 REQUIREMENTS="requirements.txt"
+P14_PYTHON="/home/xc/anaconda3/envs/p14/bin/python"
 
 # Colors for output
 RED='\033[0;31m'
@@ -22,11 +24,20 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}🎬 Media Web Viewer - Auto Launcher${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+# Determine which Python to use (prefer 3.14.2)
+PYTHON_CMD="python3"
+if [ -f "$P14_PYTHON" ]; then
+    PYTHON_CMD="$P14_PYTHON"
+    echo -e "${GREEN}✅ Gefunden: Python 3.14.2${NC}"
+else
+    echo -e "${YELLOW}⚠️  Python 3.14.2 nicht verfügbar, nutze python3${NC}"
+fi
+
 # Check if venv exists
 if [ ! -d "$VENV_DIR" ]; then
     echo -e "${YELLOW}📦 Virtuelle Umgebung nicht gefunden.${NC}"
-    echo -e "${YELLOW}   Erstelle .venv...${NC}"
-    python3 -m venv "$VENV_DIR" || {
+    echo -e "${YELLOW}   Erstelle .venv mit $($PYTHON_CMD --version)...${NC}"
+    "$PYTHON_CMD" -m venv "$VENV_DIR" || {
         echo -e "${RED}❌ Fehler beim Erstellen der venv!${NC}"
         exit 1
     }
