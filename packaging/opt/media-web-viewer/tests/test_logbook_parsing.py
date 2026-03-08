@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Logbook Parsing Test
+# Eingabewerte: logbuch/*.md files
+# Ausgabewerte: Parsed logbook entries
+# Testdateien: logbuch/*.md
+# Kommentar: Testet Logbook-Markdown-Parsing.
 import unittest
 from unittest.mock import patch, MagicMock
 from pathlib import Path

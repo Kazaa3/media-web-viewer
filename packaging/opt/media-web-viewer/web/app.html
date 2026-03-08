@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Media Player</title> <!-- ohne: -->
+    <title data-i18n="app_title">Media Player</title> <!-- ohne: -->
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -518,17 +518,20 @@
             }
             const nameInput = document.getElementById('logbuch-editor-name');
             const contentInput = document.getElementById('logbuch-editor-content');
+            const statusInput = document.getElementById('logbuch-editor-status');
             const title = document.getElementById('logbuch-editor-title');
 
             if (name) {
                 title.innerText = `${t('logbook_edit_prefix')}${name}`;
                 nameInput.value = name;
                 contentInput.value = content || '';
+                if (statusInput) statusInput.value = extractLogbookStatus(content || '');
                 nameInput.disabled = true;
             } else {
                 title.innerText = t('logbook_edit_title_new');
                 nameInput.value = '';
-                contentInput.value = '<!-- Category: Planung -->\n\n# Neuer Eintrag\n\n';
+                contentInput.value = '<!-- Category: Planung -->\n<!-- Status: ACTIVE -->\n\n# Neuer Eintrag\n\n';
+                if (statusInput) statusInput.value = 'ACTIVE';
                 nameInput.disabled = false;
             }
 
@@ -538,9 +541,11 @@
 
         async function saveLogbookEntry() {
             const name = document.getElementById('logbuch-editor-name').value.trim();
-            const content = document.getElementById('logbuch-editor-content').value;
+            const rawContent = document.getElementById('logbuch-editor-content').value;
+            const selectedStatus = (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase();
+            const content = upsertLogbookStatus(rawContent, selectedStatus);
             if (!name) {
-                alert('Bitte gib einen Namen ein');
+                alert(t('test_name_required'));
                 return;
             }
 
@@ -551,9 +556,9 @@
             if (res.status === 'ok') {
                 closeLogbookEditor();
                 loadLogbuchTab();
-                alert(i18n('logbook_saved'));
+                alert(t('logbook_saved'));
             } else {
-                alert(i18n('logbook_error') + res.error);
+                alert(t('logbook_error') + res.error);
             }
         }
 
@@ -561,25 +566,44 @@
             const res = await eel.delete_logbook_entry(filename)();
             if (res.status === 'ok') {
                 loadLogbuchTab();
-                document.getElementById('logbuch-tab-title').innerText = 'Willkommen im Logbuch';
-                document.getElementById('logbuch-tab-content').innerText = 'Wähle links einen Eintrag aus, um ihn zu lesen.';
-                alert(i18n('logbook_deleted'));
+                document.getElementById('logbuch-tab-title').innerText = t('logbook_welcome');
+                document.getElementById('logbuch-tab-content').innerText = t('logbook_select_entry_text');
+                alert(t('logbook_deleted'));
             } else {
-                alert('Fehler: ' + res.error);
+                alert(t('common_error') + res.error);
             }
+        }
+
+        function extractLogbookStatus(markdown) {
+            const fromComment = markdown.match(/<!--\s*Status\s*:\s*([^>]+)\s*-->/i);
+            if (fromComment && fromComment[1]) return fromComment[1].trim().toUpperCase();
+            const fromMarkdown = markdown.match(/^\*\*Status:\*\*\s*(.+)$/im);
+            if (fromMarkdown && fromMarkdown[1]) return fromMarkdown[1].trim().toUpperCase();
+            return 'ACTIVE';
+        }
+
+        function upsertLogbookStatus(markdown, status) {
+            if (/<!--\s*Status\s*:\s*[^>]+\s*-->/i.test(markdown)) {
+                return markdown.replace(/<!--\s*Status\s*:\s*[^>]+\s*-->/i, `<!-- Status: ${status} -->`);
+            }
+            if (/^\*\*Status:\*\*\s*.+$/im.test(markdown)) {
+                return markdown.replace(/^\*\*Status:\*\*\s*.+$/im, `**Status:** ${status}`);
+            }
+            return `<!-- Status: ${status} -->\n${markdown}`;
         }
 
         async function loadLogbuchTab() {
             const list = document.getElementById('logbuch-tab-list');
             if (!list) return;
-            list.innerHTML = '<div style="color:#999;">Lade Einträge...</div>';
+            list.innerHTML = `<div style="color:#999;">${t('logbook_loading_items')}</div>`;
             try {
                 const entries = await eel.list_logbook_entries()();
                 currentLogbuchEntries = entries || [];
                 if (!currentLogbuchEntries || currentLogbuchEntries.length === 0) {
-                    list.innerHTML = '<div style="color:#999;font-style:italic;">Keine Logbücher gefunden.</div>';
+                    list.innerHTML = `<div style="color:#999;font-style:italic;">${t('logbook_no_entries_found')}</div>`;
                 } else {
                     const categoryFilter = document.getElementById('logbuch-category-filter');
+                    const statusFilter = document.getElementById('logbuch-status-filter');
                     if (categoryFilter) {
                         categoryFilter.innerHTML = '';
                         // Always add "All" first
@@ -605,10 +629,25 @@
                             categoryFilter.appendChild(opt);
                         });
                     }
+                    if (statusFilter) {
+                        statusFilter.innerHTML = '';
+                        const allStatus = document.createElement('option');
+                        allStatus.value = 'ALL';
+                        allStatus.text = t('logbook_status_all');
+                        statusFilter.appendChild(allStatus);
+
+                        const statuses = Array.from(new Set(currentLogbuchEntries.map(e => (e.status || 'ACTIVE').toUpperCase()))).sort();
+                        statuses.forEach(status => {
+                            const opt = document.createElement('option');
+                            opt.value = status;
+                            opt.text = status;
+                            statusFilter.appendChild(opt);
+                        });
+                    }
                     renderLogbuchEntries(currentLogbuchEntries);
                 }
             } catch (e) {
-                list.innerHTML = `<div style="color:#f44;">Fehler beim Laden der Liste.</div>`;
+                list.innerHTML = `<div style="color:#f44;">${t('logbook_error_loading_list')}</div>`;
             }
         }
 
@@ -617,10 +656,11 @@
             if (!container) return;
             const config = await eel.get_parser_config()();
             const dirs = config.scan_dirs || [];
+            const defaultMediaDir = await eel.get_default_media_dir()();
 
             container.innerHTML = '';
             if (dirs.length === 0) {
-                container.innerHTML = '<div style="color: #999; font-style: italic; font-size: 0.9em; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px dashed #ddd;">Keine Verzeichnisse konfiguriert.</div>';
+                container.innerHTML = `<div style="color: #999; font-style: italic; font-size: 0.9em; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px dashed #ddd;">${t('options_no_dirs_configured')}</div>`;
                 return;
             }
 
@@ -635,8 +675,20 @@
                 const removeBtn = document.createElement('button');
                 removeBtn.innerText = '✕';
                 removeBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-weight: bold; padding: 5px;';
+
+                const isDefaultDir = path === defaultMediaDir;
+                if (isDefaultDir) {
+                    removeBtn.disabled = true;
+                    removeBtn.style.cssText = 'background: transparent; border: none; color: #aaa; cursor: not-allowed; font-weight: bold; padding: 5px;';
+                    removeBtn.title = t('options_default_dir_fixed');
+                }
+
                 removeBtn.onclick = async () => {
-                    if (confirm(`Verzeichnis "${path}" wirklich entfernen?`)) {
+                    if (isDefaultDir) {
+                        return;
+                    }
+                    const msg = t('options_remove_dir_confirm').replace('{path}', path);
+                    if (confirm(msg)) {
                         const res = await eel.remove_scan_dir(path)();
                         if (res.status === 'ok') loadScanDirs();
                     }
@@ -655,10 +707,19 @@
             }
         }
 
+        async function addDefaultScanDirUI() {
+            const res = await eel.ensure_default_scan_dir()();
+            if (res.status === 'ok') {
+                loadScanDirs();
+            }
+        }
+
         function renderLogbuchEntries(entries) {
             const list = document.getElementById('logbuch-tab-list');
             const filter = document.getElementById('logbuch-category-filter');
             const selectedCategory = filter ? filter.value : 'Alle';
+            const statusFilter = document.getElementById('logbuch-status-filter');
+            const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
             list.innerHTML = '';
             const grouped = {};
 
@@ -668,6 +729,7 @@
                 const localizedCat = t(catKey) !== catKey ? t(catKey) : cat;
 
                 if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return;
+                if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return;
 
                 if (!grouped[localizedCat]) grouped[localizedCat] = [];
                 grouped[localizedCat].push(e);
@@ -679,11 +741,13 @@
                 catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
                 catHeader.innerText = localizedCat;
                 list.appendChild(catHeader);
-                grouped[localizedCat].forEach(entry => {
+                grouped[localizedCat]
+                    .sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0))
+                    .forEach(entry => {
                     const btn = document.createElement('div');
                     btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
                     const nameEl = document.createElement('span');
-                    nameEl.innerText = entry.name;
+                    nameEl.innerText = `${entry.name} [${(entry.status || 'ACTIVE').toUpperCase()}]`;
                     nameEl.style.flex = '1';
                     btn.appendChild(nameEl);
                     const deleteBtn = document.createElement('button');
@@ -691,7 +755,8 @@
                     deleteBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-size: 1.1em; padding: 0; width: 24px; height: 24px; opacity: 0.3; transition: opacity 0.2s;';
                     deleteBtn.onclick = (e) => {
                         e.stopPropagation();
-                        if (confirm(`Wirklich "${entry.name}" löschen?`)) {
+                        const msg = t('logbook_delete_confirm').replace('{name}', entry.name);
+                        if (confirm(msg)) {
                             deleteLogbookEntry(entry.filename);
                         }
                     };
@@ -839,10 +904,10 @@
                     <div id="edit-sidebar-left"
                         style="width: 350px; display: flex; flex-direction: column; background: #fafafa; border-right: 1px solid #eee;">
                         <div style="padding: 15px; border-bottom: 1px solid #eee;">
-                            <input type="text" id="edit-search" placeholder="Suche in der Bibliothek..."
+                            <input type="text" id="edit-search" placeholder="Search library..."
                                 oninput="filterEditList()"
                                 style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9em; outline: none; box-sizing: border-box;"
-                                data-i18n="edit_search_placeholder">
+                                data-i18n="[placeholder]edit_search_library_placeholder">
                         </div>
                         <div id="edit-items-list" style="flex: 1; overflow-y: auto; padding: 10px;">
                             <!-- Items werden hier geladen -->
@@ -912,7 +977,7 @@
             </div>
 
             <div id="options-tab" class="tab-content" style="padding: 20px;">
-                <h2 style="margin-bottom: 25px;">Optionen</h2>
+                <h2 style="margin-bottom: 25px;" data-i18n="options_title">Optionen</h2>
 
                 <div style="display: flex; gap: 40px; align-items: flex-start;">
                     <!-- Left Column: Core Settings -->
@@ -933,6 +998,12 @@
                             style="padding: 8px 16px; background: #e8f5e9; color: #2a7; border: 1px solid #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px;"
                             data-i18n="options_add_dir">
                             ➕ Verzeichnis hinzufügen
+                        </button>
+
+                        <button onclick="addDefaultScanDirUI()"
+                            style="padding: 8px 16px; background: #f3f8ff; color: #2a62c9; border: 1px solid #2a62c9; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px; margin-left: 8px;"
+                            data-i18n="options_add_default_dir">
+                            📁 Standardordner media/ wiederherstellen
                         </button>
 
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">Darstellung
@@ -963,8 +1034,8 @@
                             </div>
                             <select id="language-select" onchange="changeLanguage(this.value)"
                                 style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
-                                <option value="de">Deutsch</option>
-                                <option value="en">English</option>
+                                <option value="de" data-i18n="language_option_de">Deutsch</option>
+                                <option value="en" data-i18n="language_option_en">English</option>
                             </select>
                         </div>
 
@@ -997,58 +1068,59 @@
                             
                             <div id="environment-info" style="background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 8px; font-size: 0.85em; font-family: monospace;">
                                 <div style="margin-bottom: 8px;">
-                                    <strong>Python-Version:</strong> <span id="env-python-version">-</span>
+                                    <strong data-i18n="env_label_python_version">Python-Version:</strong> <span id="env-python-version">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>Umgebung:</strong> <span id="env-venv-status">-</span>
+                                    <strong data-i18n="env_label_environment">Umgebung:</strong> <span id="env-venv-status">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>Umgebungspfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                    <strong data-i18n="env_label_environment_path">Umgebungspfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
+                                    <strong data-i18n="env_label_python_executable">Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
                                 </div>
                                 <div>
-                                    <strong>System:</strong> <span id="env-platform">-</span>
+                                    <strong data-i18n="env_label_system">System:</strong> <span id="env-platform">-</span>
                                 </div>
                             </div>
 
                             <!-- Conda Environments -->
                             <div style="margin-top: 20px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">🐍 Conda Umgebungen</h4>
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_conda_envs">🐍 Conda Umgebungen</h4>
                                 <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;">Lade...</span>
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
 
                             <!-- System Python Installations -->
                             <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">🌐 System Python Installationen</h4>
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_system_python_installs">🌐 System Python Installationen</h4>
                                 <div id="system-pythons-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;">Lade...</span>
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
 
                             <!-- Local Virtual Environments -->
                             <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">📁 Lokale Virtual Environments</h4>
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_local_venvs">📁 Lokale Virtual Environments</h4>
                                 <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
-                                    <span style="color: #999;">Lade...</span>
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
 
                             <!-- Installed Packages -->
                             <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
-                                    📦 Installierte Pakete 
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_installed_packages">
+                                    📦 Installierte Pakete
                                     <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
                                 </h4>
                                 <div style="margin-bottom: 8px;">
-                                    <input type="text" id="package-search" placeholder="Paket suchen..." 
-                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;">
+                                    <input type="text" id="package-search" placeholder="Search packages..." 
+                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
+                                        data-i18n="[placeholder]packages_search_placeholder">
                                 </div>
                                 <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
-                                    <span style="color: #999;">Lade...</span>
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
                         </div>
@@ -1100,7 +1172,7 @@
                             <div>
                                 <div style="font-weight: 500;" data-i18n="parser_mode_label">Effizienz-Modus</div>
                                 <div id="parser-mode-status"
-                                    style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;">
+                                    style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;" data-i18n="parser_mode_light">
                                     Leichtgewicht (Schnell)</div>
                                 <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
                                     data-i18n="parser_mode_desc">
@@ -1161,7 +1233,7 @@
                         <div id="debug-db-info"
                             style="font-size: 0.9em; color: #666; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px;">
                             <!-- DB Stats will be loaded here -->
-                            Lade Datenbank-Statistiken...
+                            <span data-i18n="debug_db_loading_stats">Lade Datenbank-Statistiken...</span>
                         </div>
                     </div>
 
@@ -1176,7 +1248,7 @@
                         <div id="debug-items-dict-container"
                             style="flex: 1; background: #fdf5e6; border: 1px solid #f4d; padding: 15px; border-radius: 8px; font-size: 0.85em; color: #333; overflow: auto;">
                             <pre id="debug-items-json"
-                                style="background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #eee; margin: 0; font-family: 'Fira Code', monospace; font-size: 0.85em; white-space: pre;">Lade Daten...</pre>
+                                style="background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #eee; margin: 0; font-family: 'Fira Code', monospace; font-size: 0.85em; white-space: pre;" data-i18n="debug_loading_data">Lade Daten...</pre>
                         </div>
                     </div>
                 </div>
@@ -1187,7 +1259,7 @@
                         style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                         <span data-i18n="debug_console">Konsole / Logs</span>
                         <button onclick="document.getElementById('debug-output').innerText = ''"
-                            style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;">Clear</button>
+                            style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;" data-i18n="common_clear">Clear</button>
                     </div>
                     <div style="flex: 1; overflow-y: auto; padding: 0;">
                         <pre id="debug-output"
@@ -1252,7 +1324,7 @@
                                     <input type="checkbox" id="video-mode-toggle" onchange="updateVideoMode()">
                                     <span class="slider round"></span>
                                 </label>
-                                <span id="video-mode-status" style="font-size: 0.9em; min-width: 80px;">Browser</span>
+                                <span id="video-mode-status" style="font-size: 0.9em; min-width: 80px;" data-i18n="video_mode_browser">Browser</span>
                             </div>
                         </div>
 
@@ -1289,18 +1361,18 @@
 
                     <!-- VLC Playlist Import/Export Section -->
                     <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
-                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;" data-i18n="vlc_playlist_integration">
                             📼 VLC Playlist Integration
                         </h3>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                             <!-- Import Section -->
                             <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; border: 1px solid #b3d9ff;">
-                                <h4 style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em;">
+                                <h4 style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em;" data-i18n="vlc_import_section_title">
                                     📥 Import VLC Playlist
                                 </h4>
                                 <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
-                                    Importiere eine m3u8/m3u-Playlist aus VLC in deine Bibliothek.
+                                    <span data-i18n="vlc_import_desc">Importiere eine m3u8/m3u-Playlist aus VLC in deine Bibliothek.</span>
                                 </p>
                                 <button onclick="importVLCPlaylist()"
                                     style="width: 100%; padding: 12px 20px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
@@ -1311,11 +1383,11 @@
 
                             <!-- Export Section -->
                             <div style="background: #fff8f0; padding: 20px; border-radius: 8px; border: 1px solid #ffd9b3;">
-                                <h4 style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em;">
+                                <h4 style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em;" data-i18n="vlc_export_section_title">
                                     📤 Export to VLC
                                 </h4>
                                 <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
-                                    Exportiere die gesamte Bibliothek als m3u8-Playlist für VLC.
+                                    <span data-i18n="vlc_export_desc">Exportiere die gesamte Bibliothek als m3u8-Playlist für VLC.</span>
                                 </p>
                                 <button onclick="exportToVLC()"
                                     style="width: 100%; padding: 12px 20px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
@@ -1327,13 +1399,11 @@
 
                         <!-- Info Box -->
                         <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #2a7;">
-                            <div style="font-weight: bold; font-size: 0.9em; color: #333; margin-bottom: 5px;">
-                                💡 Verwendung
-                            </div>
+                            <div style="font-weight: bold; font-size: 0.9em; color: #333; margin-bottom: 5px;" data-i18n="vlc_usage_title">💡 Verwendung</div>
                             <ul style="font-size: 0.85em; color: #666; margin: 5px 0; padding-left: 20px; line-height: 1.6;">
-                                <li><strong>Import:</strong> Wähle eine .m3u8 oder .m3u Playlist aus VLC und importiere alle Tracks in deine Bibliothek.</li>
-                                <li><strong>Export:</strong> Speichere alle Medien aus deiner Bibliothek als VLC-kompatible Playlist.</li>
-                                <li>Die exportierte Playlist kann in VLC geöffnet werden: <code style="background: #e8e8e8; padding: 2px 6px; border-radius: 3px;">Medien → Datei öffnen</code></li>
+                                <li data-i18n="vlc_usage_import">Import: Wähle eine .m3u8 oder .m3u Playlist aus VLC und importiere alle Tracks in deine Bibliothek.</li>
+                                <li data-i18n="vlc_usage_export">Export: Speichere alle Medien aus deiner Bibliothek als VLC-kompatible Playlist.</li>
+                                <li data-i18n="vlc_usage_open_in_vlc">Die exportierte Playlist kann in VLC geöffnet werden: Medien → Datei öffnen</li>
                             </ul>
                         </div>
                     </div>
@@ -1352,12 +1422,19 @@
                             <select id="logbuch-category-filter"
                                 onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
                                 style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
-                                <option value="Alle">Alle Kategorien</option>
+                                <option value="Alle" data-i18n="logbook_category_all">Alle Kategorien</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <select id="logbuch-status-filter"
+                                onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
+                                <option value="ALL" data-i18n="logbook_status_all">Alle Status</option>
                             </select>
                         </div>
                         <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
                             <!-- populated by JS -->
-                            <div style="color: #999; font-style: italic;">Lade Einträge...</div>
+                            <div style="color: #999; font-style: italic;" data-i18n="logbook_loading_items">Lade Einträge...</div>
                         </div>
                         <button onclick="openLogbookEditor()"
                             style="width: 100%; padding: 10px; margin-top: 15px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s;"
@@ -1404,16 +1481,16 @@
     <div
         style="background: #f5f5f5; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #666;">
         <div>
-            <span>Media Web Viewer</span>
+            <span data-i18n="app_title">Media Web Viewer</span>
             <span style="margin: 0 8px; color: #ccc;">•</span>
             <span id="version-label" style="color: #999;">-</span>
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
             <!-- Sync Status Indicator -->
-            <div id="sync-indicator" title="Backend Status"
+            <div id="sync-indicator" title="Backend Status" data-i18n="[title]sync_backend_status"
                 style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #eee; border-radius: 20px; transition: all 0.3s ease;">
                 <div id="sync-dot" style="width: 8px; height: 8px; background: #999; border-radius: 50%;"></div>
-                <span id="sync-text" style="font-size: 0.85em; font-weight: 500;">Initialisierung...</span>
+                <span id="sync-text" style="font-size: 0.85em; font-weight: 500;" data-i18n="sync_initializing">Initialisierung...</span>
             </div>
             <a id="imprint-link" href="#" onclick="openAboutImprint()"
                 style="color: #888; text-decoration: none; font-size: 0.8em;" data-i18n="common_about_imprint">Über &
@@ -1449,7 +1526,7 @@
         style="display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); width: 350px; background: #ffffff; border: 1px solid #f4c2c2; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); z-index: 2000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
         <div
             style="background: #fdf5e6; color: #333; padding: 15px 20px; border-bottom: 2px solid #f4d; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.1em; color: #b71c1c;">⚙️ Debug Flags</h3>
+            <h3 style="margin: 0; font-size: 1.1em; color: #b71c1c;" data-i18n="nav_flags">⚙️ Debug Flags</h3>
             <button onclick="toggleDebugMenu()"
                 style="border: none; background: transparent; color: #b71c1c; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
         </div>
@@ -1481,7 +1558,7 @@
         style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
         <div
             style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;">Logbuch:
+            <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;" data-i18n="logbook_modal_title">Logbuch:
                 Feature
                 Name
             </h3>
@@ -1489,7 +1566,7 @@
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
         </div>
         <div id="logbook-content"
-            style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;">
+            style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;" data-i18n="logbook_loading">
             Lade Details...
         </div>
         <div
@@ -1573,6 +1650,17 @@
                 <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
                     data-i18n="[placeholder]logbook_edit_placeholder_name">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.9em; font-weight: bold; color: #555;" data-i18n="logbook_edit_status_label">Status</label>
+                <select id="logbuch-editor-status"
+                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-family: monospace;">
+                    <option value="ACTIVE" data-i18n="status_active">ACTIVE</option>
+                    <option value="PLAN" data-i18n="status_plan">PLAN</option>
+                    <option value="COMPLETED" data-i18n="status_completed">COMPLETED</option>
+                    <option value="DOCS" data-i18n="status_docs">DOCS</option>
+                    <option value="BUG" data-i18n="status_bug">BUG</option>
+                </select>
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
                 <label style="font-size: 0.9em; font-weight: bold; color: #555;"
@@ -1748,7 +1836,7 @@
                 html += `</ul>`;
                 infoEl.innerHTML = html;
             } catch (e) {
-                infoEl.innerText = "Fehler beim Laden der DB-Info.";
+                infoEl.innerText = t('db_loading_error');
             }
         }
 
@@ -1981,7 +2069,7 @@
             let list = document.getElementById('library-list');
             list.innerHTML = '';
             if (!result.media || result.media.length === 0) {
-                list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
+                list.innerHTML = `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`;
                 return;
             }
             result.media.forEach(item => {
@@ -2138,9 +2226,9 @@
                 for (const [pName, pTime] of Object.entries(tags._parser_times)) {
                     let msTime = (pTime * 1000).toFixed(1);
                     if (pTime > 0) {
-                        times.push(`<span style="color: #666; font-weight: bold;" title="Wurde ausgeführt">${pName}: ${msTime}ms</span>`);
+                        times.push(`<span style="color: #666; font-weight: bold;" title="${t('test_status_executed')}">${pName}: ${msTime}ms</span>`);
                     } else {
-                        times.push(`<span style="color: #ccc;" title="Wurde übersprungen">${pName}: übersprungen</span>`);
+                        times.push(`<span style="color: #ccc;" title="${t('test_status_skipped')}">${pName}: übersprungen</span>`);
                     }
                 }
                 if (times.length > 0) {
@@ -2237,7 +2325,7 @@
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
-                alert("VLC Fehler: " + res.error);
+                alert(t('vlc_error_prefix') + res.error);
             }
         }
 
@@ -2327,7 +2415,7 @@
                     let artistDisplay = tags.artist || t('lib_unknown_artist');
                     let itemName = item.name || item.filename || "unknown";
 
-                    const specialCategories = ['Hörbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
+                    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
                     let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
                     div.innerHTML = `
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
@@ -2353,7 +2441,7 @@
                     setTimeout(() => loadLibrary(retryCount + 1), 1000);
                 } else {
                     let list = document.getElementById('media-list');
-                    if (list) list.innerHTML = '<p style="padding: 20px; color: #c33;">Fehler beim Laden der Bibliothek: ' + e.message + '</p>';
+                    if (list) list.innerHTML = `<p style="padding: 20px; color: #c33;">${t('lib_error_loading')}${e.message}</p>`;
                 }
             }
         }
@@ -2462,7 +2550,8 @@
                 html += renderOptionRow('ffmpeg_deep_analysis', t('parser_opt_ffmpeg_deep'));
                 html += renderOptionRow('ffmpeg_extract_thumbnails', t('parser_opt_ffmpeg_thumbs'));
             } else {
-                html = `<p style="color: #666; font-style: italic; padding: 10px;">Keine spezifischen Optionen für "${t('parser_' + parserId)}" verfügbar.</p>`;
+                const parserName = t('parser_' + parserId);
+                html = `<p style="color: #666; font-style: italic; padding: 10px;">${t('parser_no_options').replace('{parser}', parserName)}</p>`;
             }
 
             container.innerHTML = html;
@@ -2675,7 +2764,7 @@
                     condaHtml += '</div>';
                     condaList.innerHTML = condaHtml;
                 } else {
-                    condaList.innerHTML = '<span style="color: #999;">Keine Conda-Umgebungen gefunden</span>';
+                    condaList.innerHTML = `<span style="color: #999;">${t('env_no_conda_envs')}</span>`;
                 }
 
                 // Display System Python Installations
@@ -2693,7 +2782,7 @@
                     systemHtml += '</div>';
                     systemList.innerHTML = systemHtml;
                 } else {
-                    systemList.innerHTML = '<span style="color: #999;">Keine System-Python-Installationen gefunden</span>';
+                    systemList.innerHTML = `<span style="color: #999;">${t('env_no_system_pythons')}</span>`;
                 }
 
                 // Display Local Virtual Environments
@@ -2715,7 +2804,7 @@
                     venvsHtml += '</div>';
                     venvsList.innerHTML = venvsHtml;
                 } else {
-                    venvsList.innerHTML = '<span style="color: #999;">Keine lokalen Virtual Environments gefunden</span>';
+                    venvsList.innerHTML = `<span style="color: #999;">${t('env_no_local_venvs')}</span>`;
                 }
 
                 // Display Installed Packages
@@ -2747,7 +2836,7 @@
                     });
                 } else {
                     packageCount.textContent = '(0)';
-                    packagesList.innerHTML = '<span style="color: #999;">Keine Pakete gefunden</span>';
+                    packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
                 }
                 
             } catch (e) {
@@ -2759,12 +2848,12 @@
             const packagesList = document.getElementById('installed-packages-list');
             
             if (packages.length === 0) {
-                packagesList.innerHTML = '<span style="color: #999;">Keine passenden Pakete gefunden</span>';
+                packagesList.innerHTML = `<span style="color: #999;">${t('env_no_matching_packages')}</span>`;
                 return;
             }
             
             let packagesHtml = '<table style="width: 100%; border-collapse: collapse;">';
-            packagesHtml += '<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Paket</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Version</th></tr></thead>';
+            packagesHtml += `<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">${t('env_table_package')}</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">${t('env_table_version')}</th></tr></thead>`;
             packagesHtml += '<tbody>';
             
             packages.forEach((pkg, index) => {
@@ -2798,16 +2887,16 @@
             container.innerHTML = `<div style="text-align: center; color: #888; padding: 20px;">${t('logbook_loading_items')}</div>`;
 
             try {
-                const entries = await eel.list_logbook_entries()();
+                const entries = await eel.list_feature_modal_items()();
                 container.innerHTML = '';
 
-                // Documentation Link at the top
                 // Filter: Show only entries that have a summary
                 let allItems = entries.filter(e => e.summary && e.summary.trim() !== "");
-
-                const allSorted = [...allItems].filter(f => f.name !== '31_Project_Documentation').reverse();
+                const allSorted = [...allItems].sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0));
                 const latest = allSorted.slice(0, 3);
                 const latestNames = latest.map(l => l.name);
+
+                const rootItems = allItems.filter(f => f.source === 'root' && !latestNames.includes(f.name));
 
                 // 1. Bugs (Known Issues + entries categorized as Bug)
                 const bugItems = allItems.filter(f =>
@@ -2831,9 +2920,10 @@
                     f.status === "COMPLETED" &&
                     !latestNames.includes(f.name) &&
                     f.name !== '31_Project_Documentation' &&
+                    f.source !== 'root' &&
                     f.name !== '00_Known_Issues' &&
                     !(f.category && f.category.toLowerCase() === 'bug')
-                ).reverse();
+                ).sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0));
 
                 if (allItems.length === 0) {
                     container.innerHTML += `<div style="text-align: center; color: #888; padding: 20px;">${t('logbook_empty_desc')}</div>`;
@@ -2842,13 +2932,14 @@
 
                 // Render Sections
                 renderFeatureSection(container, t('logbook_section_latest'), latest, true);
+                renderFeatureSection(container, t('feature_section_root_docs'), rootItems);
                 renderFeatureSection(container, t('logbook_section_bugs'), bugItems);
                 renderFeatureSection(container, t('logbook_section_features'), featureItems);
                 renderFeatureSection(container, t('logbook_btn_documentation'), docItems);
                 renderFeatureSection(container, t('logbook_section_completed'), otherCompleted);
             } catch (e) {
                 console.error("Error loading features:", e);
-                container.innerHTML = '<div style="text-align: center; color: #b71c1c; padding: 20px;">Fehler beim Laden.</div>';
+                container.innerHTML = `<div style="text-align: center; color: #b71c1c; padding: 20px;">${t('common_error_loading')}</div>`;
             }
         }
 
@@ -2864,7 +2955,7 @@
             items.forEach(feat => {
                 const featDiv = document.createElement('div');
                 featDiv.style.cssText = "display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 12px; border-radius: 8px; transition: all 0.2s; border: 1px solid transparent;";
-                featDiv.onclick = () => openLogbook(feat.name);
+                featDiv.onclick = () => openLogbook(feat.name, feat.source || 'logbuch', feat.filename || feat.name);
                 featDiv.onmouseover = () => { featDiv.style.background = '#f9f9f9'; featDiv.style.borderColor = '#eee'; featDiv.style.transform = 'translateX(4px)'; };
                 featDiv.onmouseout = () => { featDiv.style.background = 'transparent'; featDiv.style.borderColor = 'transparent'; featDiv.style.transform = 'translateX(0)'; };
 
@@ -2904,7 +2995,7 @@
             }
         }
 
-        async function openLogbook(featureName) {
+        async function openLogbook(featureName, source = 'logbuch', filename = null) {
             const modal = document.getElementById('logbook-modal');
             const titleElement = document.getElementById('logbook-title');
             const contentElement = document.getElementById('logbook-content');
@@ -2918,7 +3009,8 @@
             modal.style.display = 'block';
 
             try {
-                let markdown = await eel.get_logbook_entry(featureName)();
+                const entryRef = source === 'root' ? (filename || featureName) : featureName;
+                let markdown = await eel.get_logbook_entry(entryRef, source)();
 
                 // Bilingual split logic
                 if (markdown.includes('<!-- lang-split -->')) {
@@ -2940,7 +3032,7 @@
 
                 contentElement.innerHTML = html;
             } catch (e) {
-                contentElement.innerHTML = `<p style="color: #f44;">Fehler beim Laden: ${e}</p>`;
+                contentElement.innerHTML = `<p style="color: #f44;">${t('edit_error_loading')}${e}</p>`;
             }
         }
 
@@ -3037,7 +3129,7 @@
             if (currentPlayer.src) {
                 // Find current item based on the title, or we can just trigger a re-render of the file info
                 const titleText = document.getElementById('sb-title').innerText;
-                if (titleText !== "Kein Lied gewählt") {
+                if (titleText !== t('sb_no_song')) {
                     // The easiest way is to let the user re-click for now, but we saved the preference.
                 }
             }
@@ -3046,7 +3138,7 @@
         async function loadTestSuites() {
             const container = document.getElementById('test-suites-container');
             if (!container) return;
-            container.innerHTML = '<div style="color: #999; font-style: italic;">Lade Tests...</div>';
+            container.innerHTML = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${t('test_loading')}</div>`;
             try {
                 let suites = [];
                 try {
@@ -3068,7 +3160,7 @@
                         inputs: "Browser Interactions",
                         outputs: "DOM State",
                         files: "App HTML",
-                        comment: "Testet die App im Browser. Muss manuell vom Agenten ausgelöst werden."
+                        comment: t('test_gui_comment')
                     }
                 });
 
@@ -3136,7 +3228,7 @@
                     container.appendChild(card);
                 });
             } catch (error) {
-                container.innerHTML = `<div style="color: #c33;">Fehler beim Laden der Tests: ${error}</div>`;
+                container.innerHTML = `<div style="color: #c33;">${t('test_error_loading')}${error}</div>`;
             }
         }
 
@@ -3161,14 +3253,14 @@
                 try {
                     const result = await eel.run_tests(selectedFiles)();
                     if (result.error) {
-                        outputArea.textContent += `Fehler bei der Testausführung: ${result.error}\n`;
+                        outputArea.textContent += `${t('test_run_error')}${result.error}\n`;
                     } else {
                         outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
                         if (result.passes !== undefined) totalPasses += result.passes;
                         if (result.fails !== undefined) totalFails += result.fails;
                     }
                 } catch (e) {
-                    outputArea.textContent += `Systemfehler: ${e}\n`;
+                    outputArea.textContent += `${t('test_run_system_error')}${e}\n`;
                 }
             }
 
@@ -3228,13 +3320,13 @@
         }
 
         async function createNewTest() {
-            const name = prompt("Name für den neuen Test (z.B. feature_x):");
+            const name = prompt(t('test_new_prompt_name'));
             if (!name) return;
             const res = await eel.create_new_test(name)();
             if (res.status === 'ok') {
                 loadTestSuites();
             } else {
-                alert("Fehler: " + (res.message || res.error));
+                alert(t('common_error') + (res.message || res.error));
             }
         }
 
@@ -3244,7 +3336,7 @@
             if (res.status === 'ok') {
                 loadTestSuites();
             } else {
-                alert("Fehler: " + (res.message || res.error));
+                alert(t('common_error') + (res.message || res.error));
             }
         }
 
@@ -3257,7 +3349,7 @@
             if (typeof eel === 'undefined' || window.__eel_missing__ === true) {
                 dot.style.background = '#f44';
                 indicator.style.background = '#ffebee';
-                text.innerText = 'Offline (Kein Backend)';
+                text.innerText = t('sync_offline_no_backend');
                 text.style.color = '#c62828';
                 return;
             }
@@ -3268,7 +3360,7 @@
                     dot.style.background = '#4CAF50';
                     dot.style.boxShadow = '0 0 8px #4CAF50';
                     indicator.style.background = '#e8f5e9';
-                    text.innerText = 'Synchronisiert';
+                    text.innerText = t('sync_synchronized');
                     text.style.color = '#2e7d32';
                 } else {
                     throw new Error("Invalid response");
@@ -3276,7 +3368,7 @@
             } catch (e) {
                 dot.style.background = '#ff9800';
                 indicator.style.background = '#fff3e0';
-                text.innerText = 'Verbindung verloren...';
+                text.innerText = t('sync_connection_lost');
                 text.style.color = '#e65100';
             }
         }
@@ -3311,13 +3403,13 @@
             statusDiv.style.display = 'block';
             statusDiv.style.background = '#e3f2fd';
             statusDiv.style.color = '#1565c0';
-            statusDiv.innerHTML = '⏳ Wähle eine m3u8/m3u Playlist aus...';
+            statusDiv.innerHTML = `⏳ ${t('vlc_select_playlist')}`;
 
             try {
-                const filePath = await eel.pick_file('VLC Playlist auswählen', [
-                    ['M3U8 Playlists', '*.m3u8'],
-                    ['M3U Playlists', '*.m3u'],
-                    ['Alle Dateien', '*.*']
+                const filePath = await eel.pick_file(t('vlc_picker_title'), [
+                    [t('vlc_filter_m3u8'), '*.m3u8'],
+                    [t('vlc_filter_m3u'), '*.m3u'],
+                    [t('common_all_files'), '*.*']
                 ])();
 
                 if (!filePath) {
@@ -3325,14 +3417,14 @@
                     return;
                 }
 
-                statusDiv.innerHTML = '⏳ Importiere Playlist...';
+                statusDiv.innerHTML = `⏳ ${t('vlc_importing_playlist')}`;
 
                 const result = await eel.import_vlc_playlist(filePath)();
 
                 if (result.error) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `❌ Fehler: ${result.error}`;
+                    statusDiv.innerHTML = `❌ ${t('common_error')}${result.error}`;
                 } else {
                     statusDiv.style.background = '#e8f5e9';
                     statusDiv.style.color = '#2e7d32';
@@ -3340,10 +3432,10 @@
                     const skipped = (result.skipped || []).length;
                     const errors = (result.errors || []).length;
                     
-                    let msg = `✅ Import abgeschlossen!<br>`;
-                    msg += `📥 ${imported} neue Tracks importiert`;
-                    if (skipped > 0) msg += `<br>⏩ ${skipped} bereits vorhanden`;
-                    if (errors > 0) msg += `<br>⚠️ ${errors} Fehler`;
+                    let msg = `✅ ${t('vlc_import_completed')}<br>`;
+                    msg += `📥 ${imported} ${t('vlc_tracks_imported_suffix')}`;
+                    if (skipped > 0) msg += `<br>⏩ ${skipped} ${t('vlc_tracks_already_present_suffix')}`;
+                    if (errors > 0) msg += `<br>⚠️ ${errors} ${t('vlc_errors_suffix')}`;
                     
                     statusDiv.innerHTML = msg;
                     
@@ -3358,7 +3450,7 @@
             } catch (e) {
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
-                statusDiv.innerHTML = `❌ Fehler: ${e.message || e}`;
+                statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
             }
         }
 
@@ -3367,7 +3459,7 @@
             statusDiv.style.display = 'block';
             statusDiv.style.background = '#fff8f0';
             statusDiv.style.color = '#e67e22';
-            statusDiv.innerHTML = '⏳ Lade Bibliothek...';
+            statusDiv.innerHTML = `⏳ ${t('lib_loading_text')}`;
 
             try {
                 // Get all media from library
@@ -3377,48 +3469,48 @@
                 if (mediaNames.length === 0) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = '⚠️ Keine Medien in der Bibliothek';
+                    statusDiv.innerHTML = `⚠️ ${t('lib_no_media_warning')}`;
                     return;
                 }
 
-                statusDiv.innerHTML = '⏳ Wähle Speicherort...';
+                statusDiv.innerHTML = `⏳ ${t('vlc_select_location')}`;
 
                 // Pick save location
-                const filePath = await eel.pick_save_file('Playlist speichern als', [
-                    ['M3U8 Playlist', '*.m3u8'],
-                    ['Alle Dateien', '*.*']
-                ], 'meine_playlist.m3u8')();
+                const filePath = await eel.pick_save_file(t('vlc_save_playlist_as'), [
+                    [t('vlc_filter_m3u8'), '*.m3u8'],
+                    [t('common_all_files'), '*.*']
+                ], t('vlc_default_playlist_filename'))();
 
                 if (!filePath) {
                     statusDiv.style.display = 'none';
                     return;
                 }
 
-                statusDiv.innerHTML = '⏳ Exportiere Playlist...';
+                statusDiv.innerHTML = `⏳ ${t('vlc_exporting_playlist')}`;
 
                 const result = await eel.export_playlist_to_vlc(mediaNames, filePath)();
 
                 if (result.error) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `❌ Fehler: ${result.error}`;
+                    statusDiv.innerHTML = `❌ ${t('common_error')}${result.error}`;
                 } else {
                     statusDiv.style.background = '#e8f5e9';
                     statusDiv.style.color = '#2e7d32';
                     const exported = result.exported || 0;
                     const missing = (result.missing || []).length;
                     
-                    let msg = `✅ Export abgeschlossen!<br>`;
-                    msg += `💾 ${exported} Tracks exportiert`;
-                    if (missing > 0) msg += `<br>⚠️ ${missing} nicht gefunden`;
-                    msg += `<br>📂 Datei: <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
+                    let msg = `✅ ${t('vlc_export_completed')}<br>`;
+                    msg += `💾 ${exported} ${t('vlc_tracks_exported_suffix')}`;
+                    if (missing > 0) msg += `<br>⚠️ ${missing} ${t('vlc_missing_suffix')}`;
+                    msg += `<br>📂 ${t('common_file_label')} <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
                     
                     statusDiv.innerHTML = msg;
                 }
             } catch (e) {
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
-                statusDiv.innerHTML = `❌ Fehler: ${e.message || e}`;
+                statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
             }
         }
 
@@ -3458,7 +3550,7 @@
                 // Play in external VLC
                 const result = await eel.play_vlc(path)();
                 if (result.error) {
-                    alert('VLC Fehler: ' + result.error);
+                    alert(t('vlc_error_prefix') + result.error);
                 } else {
                     videoPlayer.style.display = 'none';
                     placeholder.style.display = 'none';

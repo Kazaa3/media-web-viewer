@@ -1,6 +1,6 @@
 # Installation Guide - Media Web Viewer
 
-**Version:** 1.2.24  
+**Version:** 1.3.3  
 **Date:** March 8, 2026
 
 ## Table of Contents
@@ -8,8 +8,9 @@
 1. [System Requirements](#system-requirements)
 2. [Installation Methods](#installation-methods)
 3. [Building from Source](#building-from-source)
-4. [Running the Application](#running-the-application)
-5. [Troubleshooting](#troubleshooting)
+4. [CI/CD Pipelines](#cicd-pipelines)
+5. [Running the Application](#running-the-application)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -62,10 +63,10 @@ choco install ffmpeg mediainfo python
 
 ```bash
 # Download latest release
-wget https://github.com/Kazaa3/media-web-viewer/releases/download/v1.2.24/media-web-viewer_1.2.24_amd64.deb
+wget https://github.com/Kazaa3/media-web-viewer/releases/download/v1.3.3/media-web-viewer_1.3.3_amd64.deb
 
 # Install package
-sudo dpkg -i media-web-viewer_1.2.24_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 
 # Install missing dependencies (if any)
 sudo apt-get install -f
@@ -99,32 +100,32 @@ sudo apt purge media-web-viewer
 
 ```bash
 # Linux
-wget https://github.com/Kazaa3/media-web-viewer/releases/download/v1.2.24/MediaWebViewer-1.2.24-linux
+wget https://github.com/Kazaa3/media-web-viewer/releases/download/v1.3.3/MediaWebViewer-1.3.3-Linux
 
 # Windows
-# Download MediaWebViewer-1.2.24.exe from releases page
+# Download MediaWebViewer-1.3.3-Windows.exe from releases page
 
 # macOS
-# Download MediaWebViewer-1.2.24.app from releases page
+# Download latest macOS build from releases page (if provided)
 ```
 
 **Make Executable (Linux/macOS):**
 
 ```bash
-chmod +x MediaWebViewer-1.2.24-linux
+chmod +x MediaWebViewer-1.3.3-Linux
 ```
 
 **Run:**
 
 ```bash
 # Linux
-./MediaWebViewer-1.2.24-linux
+./MediaWebViewer-1.3.3-Linux
 
 # Windows
-MediaWebViewer-1.2.24.exe
+MediaWebViewer-1.3.3-Windows.exe
 
 # macOS
-open MediaWebViewer-1.2.24.app
+open MediaWebViewer.app
 ```
 
 **Note:** Standalone executables include all dependencies but are larger (~150 MB) than the Debian package.
@@ -211,7 +212,7 @@ python build_system.py --full-build
 ```
 
 **Output:**
-- Package: `media-web-viewer_1.2.24_amd64.deb`
+- Package: `media-web-viewer_1.3.3_amd64.deb`
 - Location: Project root directory
 
 ---
@@ -225,23 +226,23 @@ python build_system.py --full-build
 python build_system.py --build pyinstaller
 
 # Manual PyInstaller build
-python -m eel main.py web --onefile --name MediaWebViewer-1.2.24
+python -m PyInstaller --onefile --noconsole --name MediaWebViewer-1.3.3 --add-data "web:web" --hidden-import bottle_websocket main.py
 ```
 
 **Platform-Specific Notes:**
 
 **Linux:**
-- Output: `dist/MediaWebViewer-1.2.24` (ELF binary)
+- Output: `dist/MediaWebViewer` (ELF binary)
 - Size: ~100-150 MB
 - Requires: glibc 2.31+ (Ubuntu 20.04+)
 
 **Windows:**
-- Output: `dist/MediaWebViewer-1.2.24.exe`
+- Output: `dist/MediaWebViewer-1.3.3-Windows.exe`
 - Size: ~120-160 MB
 - Requires: Windows 10 or higher
 
 **macOS:**
-- Output: `dist/MediaWebViewer-1.2.24.app`
+- Output: Platform-dependent bundle (if macOS build is configured)
 - Size: ~110-140 MB
 - Requires: macOS 10.14 (Mojave) or higher
 
@@ -259,7 +260,51 @@ media-web-viewer
 python main.py
 
 # From executable
-./MediaWebViewer-1.2.24
+./dist/MediaWebViewer
+
+---
+
+## CI/CD Pipelines
+
+### 1) Main Branch Artifact Pipeline
+
+Workflow: `.github/workflows/ci-artifacts.yml`
+
+- Trigger: push to `main` and manual dispatch
+- Build outputs:
+    - Linux executable (`dist/MediaWebViewer`)
+    - Debian package (`media-web-viewer_*_amd64.deb`)
+- Result: artifacts are uploaded to the workflow run (without creating a GitHub Release)
+
+### 2) Tagged Release Pipeline
+
+Workflow: `.github/workflows/release.yml`
+
+- Trigger: tags `v*` (e.g., `v1.3.3`) and manual dispatch
+- Build outputs:
+    - Linux executable
+    - Debian package
+    - Windows executable
+- Result: automatic GitHub Release with binaries as assets
+
+### Release Trigger Commands
+
+```bash
+git add .
+git commit -m "Release v1.3.3"
+git tag -a v1.3.3 -m "Release v1.3.3"
+git push origin main --tags
+```
+
+### Local Artifact Cleanup
+
+```bash
+# Dry-run
+scripts/cleanup_build_artifacts.sh
+
+# Execute cleanup
+scripts/cleanup_build_artifacts.sh --execute
+```
 ```
 
 ### Startup Modes
@@ -362,7 +407,7 @@ choco install ffmpeg
 
 **Solution:**
 ```bash
-chmod +x MediaWebViewer-1.2.24-linux
+chmod +x MediaWebViewer-1.3.3-Linux
 ```
 
 ---
@@ -448,7 +493,7 @@ rm ~/.local/share/applications/media-web-viewer.desktop
 
 ```bash
 # Remove executable
-rm MediaWebViewer-1.2.24-linux
+rm MediaWebViewer-1.3.3-Linux
 
 # Remove application data
 rm -rf ~/.media-web-viewer
@@ -457,4 +502,4 @@ rm -rf ~/.media-web-viewer
 ---
 
 **Last Updated:** March 8, 2026  
-**Version:** 1.2.24
+**Version:** 1.3.3

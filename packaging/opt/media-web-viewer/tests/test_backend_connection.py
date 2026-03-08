@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Backend Connection Test
+# Eingabewerte: Eel server
+# Ausgabewerte: Connection status
+# Testdateien: Keine
+# Kommentar: Testet Eel Backend-Connection.
 import unittest
 from unittest.mock import patch, MagicMock
 import sys
