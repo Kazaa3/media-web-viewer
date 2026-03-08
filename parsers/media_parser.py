@@ -23,6 +23,7 @@ def extract_metadata(path, filename, mode='lightweight'):
     @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
     log.debug(f"Starte Parsing für '{filename}' (Mode: {mode})")
+    logger.debug("metadata", f"Extraction requested for: {filename} (Mode: {mode})")
     if mode == 'full':
         log.debug(f"🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
@@ -138,5 +139,5 @@ def extract_metadata(path, filename, mode='lightweight'):
             log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
     tags['_parser_times'] = parser_times
-
+    logger.debug("metadata", f"Metadata extraction complete for {filename}. Parsers: {list(parser_times.keys())}")
     return duration, tags

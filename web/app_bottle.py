@@ -48,6 +48,7 @@ def _resolve_path(filename):
 @bottle.hook('before_request')
 def log_request():
     _log(f"REQ IN: {bottle.request.url}")
+    logger.debug("network", f"HTTP Request: {bottle.request.method} {bottle.request.url}")
 
 
 @bottle.route('/media/<filepath:path>')
@@ -74,9 +75,19 @@ def serve_media(filepath):
         transcode_format = 'ogg'
         needs_transcoding = True
 
-    ext = filepath.lower()
-    _log(f"ROUTE CALLED: filepath={filepath}, ext={ext}")
+    transcode_format = None
+    logger.debug("network", f"serve_media: filepath={filepath}")
 
+    if filepath.endswith('.flac_transcoded'):
+        filepath = filepath[:-16]
+        transcode_format = 'flac'
+        needs_transcoding = True
+    elif filepath.endswith('.ogg_transcoded'):
+        filepath = filepath[:-15]
+        transcode_format = 'ogg'
+        needs_transcoding = True
+
+    ext = filepath.lower()
     full_path = _resolve_path(filepath)
     if not full_path:
         return bottle.HTTPError(404, "File not found")
@@ -98,6 +109,7 @@ def serve_media(filepath):
 
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
+            logger.debug("transcode", f"Transcoding required: {full_path} to {transcode_format}")
             try:
                 subprocess.run(
                     ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn'] + ffmpeg_args + [str(tmp_path)],
@@ -105,8 +117,10 @@ def serve_media(filepath):
                 )
                 tmp_path.replace(cache_path)
                 _log("TRANSCODING SUCCESS")
+                logger.debug("transcode", f"Transcoding success: {cache_path}")
             except subprocess.CalledProcessError as e:
                 _log(f"TRANSCODING FAILED: {e.stderr}")
+                logger.debug("transcode", f"Transcoding failed for {full_path}: {e.stderr}")
                 if tmp_path.exists():
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")

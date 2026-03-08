@@ -97,7 +97,14 @@ DEBUG_FLAGS = {
     "db": False,
     "tests": False,
     "api": False,
-    "web": False
+    "web": False,
+    "i18n": False,
+    "websocket": False,
+    "performance": False,
+    "metadata": False,
+    "transcode": False,
+    "file_ops": False,
+    "network": False
 }
 
 def initialize_debug_flags(args=None):
@@ -294,8 +301,8 @@ def update_tags(name, tags_dict):
     @param tags_dict Dictionary of tags to update / Zu aktualisierende Tags.
     @return Status dictionary / Status-Dictionary.
     """
-    if DEBUG_FLAGS["db"]:
-        debug_log(f"[Debug-DB] Aktualisiere DB Tags für: {name}")
+    if DEBUG_FLAGS["db"] or DEBUG_FLAGS["metadata"]:
+        logger.debug("metadata", f"Updating tags for {name}: {tags_dict}")
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
@@ -312,8 +319,7 @@ def rename_media(old_name, new_name):
     if not new_name or new_name.strip() == "":
         return {"status": "error", "message": "Name darf nicht leer sein"}
 
-    if DEBUG_FLAGS["db"]:
-        debug_log(f"[Debug-DB] Benenne um: {old_name} -> {new_name}")
+    logger.debug("file_ops", f"Renaming record: {old_name} -> {new_name}")
 
     success = db.rename_media(old_name, new_name)
     if success:
@@ -329,6 +335,7 @@ def delete_media(name):
     @details Löscht ein Medium aus der DB.
     @param name Media record name / Datenbank-Name.
     """
+    logger.debug("file_ops", f"Deleting record: {name}")
     return db.delete_media(name)
 
 
@@ -422,6 +429,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         eel.set_db_status(False)()
 
     elapsed = time.time() - start_time
+    logger.debug("performance", f"Scan of {scan_root or 'all'} took {elapsed:.2f} seconds.")
     logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
 
     # Status in GUI ausblenden (redundant, already handled by guard above)
@@ -1107,6 +1115,7 @@ if __name__ == "__main__":
 
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
+    logger.debug("websocket", f"Eel initialized with root: {web_dir}")
 
     if DEBUG_FLAGS["start"]:
         debug_log("[Startup] Starting Eel UI...")
@@ -1114,6 +1123,7 @@ if __name__ == "__main__":
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
     try:
+        logger.debug("websocket", "Starting Eel server (bottle/gevent)...")
         eel.start("app.html", size=(1450, 800), block=False, port=0)
     except Exception as e:
         logging.error(f"[Startup-Error] eel.start failed: {e}")
