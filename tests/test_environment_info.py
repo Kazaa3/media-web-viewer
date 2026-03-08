@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Environment Information Test
+# Eingabewerte: Conda environments, System Python, Virtual environments, Installed packages
+# Ausgabewerte: Environment discovery results, Package listings
+# Testdateien: Keine (System-Informationen)
+# Kommentar: Testet erweiterte Environment-Informationen (Conda, System Python, venvs, Packages).
 """
 Test Suite for Extended Environment Information Display
 ========================================================

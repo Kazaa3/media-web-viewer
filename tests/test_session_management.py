@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Session Management & Networking
+# Eingabewerte: Port ranges (8000-8999), Socket availability, Session URLs
+# Ausgabewerte: Dynamic port allocation, URL generation, Parallel session management
+# Testdateien: Keine (Network stack)
+# Kommentar: Testet dynamisches Session-Management und Port-Allocation (12 Tests: Port validation, availability, parallel sessions, URL generation).
 """
 Test suite for dynamic session management and port allocation.
 

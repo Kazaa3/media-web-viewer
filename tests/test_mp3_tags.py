@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Mutagen ID3 Tag Extraction
+# Eingabewerte: media/sample.mp3
+# Ausgabewerte: TPE1 (Artist), TDRC (Year), TIT2 (Title), TALB (Album)
+# Testdateien: media/sample.mp3
+# Kommentar: Testet Mutagen ID3 Tag-Extraktion aus MP3-Datei (TPE1, TDRC, TIT2, TALB mit Error Handling).
 """
 ================================================================================
 ID3 Tag Extraction Test (Mutagen) - Media Web Viewer

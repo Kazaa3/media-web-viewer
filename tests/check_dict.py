@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Unit Test / Dictionary Operations
+# Eingabewerte: Tag-Dictionaries (artist, title, album), JSON-Strings, Nested Dictionaries
+# Ausgabewerte: Serialisierte JSON-Strings, Deserialisierte Dictionaries, Merged Dictionaries
+# Testdateien: Keine (In-Memory-Dictionaries)
+# Kommentar: Validiert alle Dictionary-Operationen für Metadaten-Tags (JSON-Serialisierung, Merge, Copy, Unicode).
 """
 ================================================================================
 Dictionary Operations Test - Media Web Viewer

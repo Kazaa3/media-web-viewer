@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Database Integration Test
+# Eingabewerte: SQLite-Datenbank (~/.media-web-viewer/media_library.db), Test-Mediendaten
+# Ausgabewerte: Tabellen-Existenz, CRUD-Operation-Status, Legacy-DB-Informationen, Statistiken
+# Testdateien: Keine (arbeitet mit temporärer Test-DB)
+# Kommentar: Validiert die vollständige Datenbank-Funktionalität (Tabellenstruktur, CRUD, Legacy-DB-Handling, Statistiken).
 """
 ================================================================================
 Database Integrity Test - Media Web Viewer

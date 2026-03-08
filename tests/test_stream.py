@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: FFprobe Duration Extraction
+# Eingabewerte: media/sample.alac
+# Ausgabewerte: FFprobe duration in Sekunden
+# Testdateien: media/sample.alac
+# Kommentar: Testet FFprobe Stream-Duration-Extraktion aus ALAC-Datei (subprocess mit Timeout, Error Handling).
 """
 ================================================================================
 FFprobe Duration Extraction Test - Media Web Viewer

@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Debug Flags Test
+# Eingabewerte: DEBUG_FLAGS dictionary
+# Ausgabewerte: Flag activation status
+# Testdateien: Keine (Runtime test)
+# Kommentar: Testet Debug-Flag-System.
 import logging
 import logger
 

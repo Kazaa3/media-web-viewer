@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: UI Integrity Test
+# Eingabewerte: web/app.html
+# Ausgabewerte: UI structure validation
+# Testdateien: web/app.html
+# Kommentar: Testet UI-Integrität.
 import unittest
 import re
 from pathlib import Path

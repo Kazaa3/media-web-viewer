@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Parser Pipeline Test
+# Eingabewerte: Media files, Parser chain configuration
+# Ausgabewerte: Metadata extraction results, Parser timing
+# Testdateien: media/* (various formats)
+# Kommentar: Testet vollständige Parser-Pipeline (Filename → Mutagen → FFmpeg → Container).
 """
 Test suite for release pipeline validation.
 Tests the build_system.py pipeline implementation.

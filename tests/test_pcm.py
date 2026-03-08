@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: PCM Bit-Depth Detection
+# Eingabewerte: PCM WAV-Dateien (16-bit und 24-bit)
+# Ausgabewerte: Bit-Depth (16, 24) von parsers.ffmpeg_parser
+# Testdateien: Zwei spezifische WAV-Dateien
+# Kommentar: Testet PCM Bit-Depth-Erkennung für 16-bit und 24-bit WAV-Dateien (ffmpeg_parser mit Missing-File-Handling).
 """
 ================================================================================
 PCM Audio Bit-Depth Test - Media Web Viewer

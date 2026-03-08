@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Media Type Consistency Test
+# Eingabewerte: MediaItem classifications
+# Ausgabewerte: Type consistency validation
+# Testdateien: media/*
+# Kommentar: Testet Media-Type-Konsistenz.
 import unittest
 from pathlib import Path
 import sys

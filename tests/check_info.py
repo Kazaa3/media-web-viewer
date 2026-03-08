@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Mutagen Info Dump Test
+# Eingabewerte: media/*.flac, media/*.mp3, media/*.m4a
+# Ausgabewerte: Mutagen audio.info Attribute (bitrate, channels, length, sample_rate, etc.)
+# Testdateien: Erste Datei von media/*.flac, media/*.mp3, media/*.m4a
+# Kommentar: Dumpt alle Mutagen audio.info Attribute für FLAC, MP3 und M4A Dateien (diagnostischer Test).
 import glob
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3

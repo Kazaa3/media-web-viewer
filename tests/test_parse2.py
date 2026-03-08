@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: MediaItem Metadata Extraction
+# Eingabewerte: AAC Dateien in /media
+# Ausgabewerte: Samplerate, Bitrate, Dateigröße, Codec, TagType
+# Testdateien: media/*.aac
+# Kommentar: Gezielter Test der Metadaten-Extraktion für das AAC-Containerformat (MediaItem-Klasse mit Parser-Integration).
 """
 ================================================================================
 MediaItem Metadata Extraction Test (AAC) - Media Web Viewer

@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: CLI Arguments Test
+# Eingabewerte: Command-line arguments
+# Ausgabewerte: Argument parsing results
+# Testdateien: Keine
+# Kommentar: Testet CLI-Argument-Parsing.
 import sys
 import os
 import unittest

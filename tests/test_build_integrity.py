@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Build Integrity Test
+# Eingabewerte: VERSION file, main.py, packaging/DEBIAN/control
+# Ausgabewerte: Version consistency check
+# Testdateien: VERSION, main.py, packaging/DEBIAN/control
+# Kommentar: Prüft Version-Konsistenz über alle Build-Dateien hinweg.
 import pytest
 import subprocess
 from pathlib import Path

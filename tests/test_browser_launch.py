@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Browser Launch Test
+# Eingabewerte: Browser preference settings, Chrome/Chromium paths
+# Ausgabewerte: Browser launch success, Window creation
+# Testdateien: Keine (System browser)
+# Kommentar: Testet Browser-Launch-Mechanismus (Chrome/Chromium/App-Mode).
 """
 Test suite for browser launch functionality.
 Validates Chrome app mode configuration and fallback behavior.
