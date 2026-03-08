@@ -28,6 +28,8 @@ bottle-websocket>=0.2.9        # MIT License - WebSocket plugin for Bottle
 # Audio/Media Metadata Parsing
 mutagen>=1.47.0                # GPL v2 - Audio metadata manipulation
 pymediainfo>=7.0.1             # MIT License - Media information library
+m3u8>=4.1.0                    # MIT License - m3u8 playlist parsing
+python-vlc>=3.0.18121          # MIT License - VLC bindings
 
 # Async & WebSocket Support
 gevent>=25.9.1                 # MIT License - Coroutine-based networking

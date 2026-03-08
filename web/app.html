@@ -379,7 +379,9 @@
                 'parser': 'parser-tab',
                 'debug': 'debug-tab',
                 'tests': 'tests',
-                'logbuch': 'logbuch-tab'
+                'logbuch': 'logbuch-tab',
+                'vlc': 'video-tab',
+                'video': 'video-tab'
             };
 
             const targetId = tabMap[tabId];
@@ -698,6 +700,7 @@
                 <button class="tab-btn" onclick="switchTab('logbuch', this)"
                     style="background: #e1f5fe; border-color: #0277bd; color: #0277bd;" data-i18n="nav_logbook">📓
                     Logbuch</button>
+                <button class="tab-btn" onclick="switchTab('vlc', this)" data-i18n="nav_video">🎬 Video Player</button>
                 <button class="tab-btn" style="background: #fdf5e6; border-color: #f4d;" onclick="toggleDebugMenu()"
                     data-i18n="nav_flags">⚙️
                     Flags</button>
@@ -1100,6 +1103,62 @@
                     </h3>
                     <pre id="test-output"
                         style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
+                </div>
+            </div>
+
+            <!-- Video Player Tab -->
+            <div id="video-tab" class="tab-content"
+                style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
+                <div style="max-width: 1000px; margin: 0 auto;">
+                    <div
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                            <h2 style="margin:0; color: #333; font-size: 1.4em;" data-i18n="video_tab_title">🎬 Video
+                                Player</h2>
+                            <div
+                                style="display: flex; align-items: center; gap: 15px; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
+                                <span style="font-size: 0.9em; font-weight: bold; color: #666;"
+                                    data-i18n="video_mode_label">Modus:</span>
+                                <label class="switch" style="width: 50px; height: 24px;">
+                                    <input type="checkbox" id="video-mode-toggle" onchange="updateVideoMode()">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span id="video-mode-status" style="font-size: 0.9em; min-width: 80px;">Browser</span>
+                            </div>
+                        </div>
+
+                        <!-- Embedded Player -->
+                        <div id="embedded-video-container"
+                            style="background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                            <video id="video-player" controls style="width: 100%; height: 100%; display: none;"></video>
+                            <div id="video-placeholder" style="color: #444; text-align: center; padding: 40px;">
+                                <div style="font-size: 4em; margin-bottom: 10px;">🎞️</div>
+                                <p data-i18n="video_placeholder">Kein Video ausgewählt</p>
+                            </div>
+                        </div>
+
+                        <div id="vlc-info"
+                            style="margin-bottom: 20px; padding: 15px; background: #fffcf0; border-radius: 8px; border-left: 4px solid #f90; display: none;">
+                            <div style="font-weight: bold; color: #333; margin-bottom: 5px;"
+                                data-i18n="vlc_now_playing">
+                                VLC läuft:</div>
+                            <div id="vlc-current-file"
+                                style="font-family: monospace; font-size: 0.9em; word-break: break-all;">-</div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            <button onclick="stopVideo()"
+                                style="padding: 10px 20px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                                <span>⏹️</span> <span data-i18n="vlc_btn_stop">Stoppen</span>
+                            </button>
+                            <button id="btn-open-vlc" onclick="switchToVLC()"
+                                style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; align-items: center; gap: 8px;">
+                                <span>🚀</span> <span data-i18n="vlc_btn_extern">In VLC öffnen</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1799,6 +1858,16 @@
         }
 
         function play(item, path) {
+            const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v'];
+            const isVideo = item.type === 'video' || (item.extension && videoExts.includes(item.extension.toLowerCase()));
+
+            if (isVideo) {
+                playVideo(item, path);
+                return;
+            }
+            // Ensure video is stopped if audio starts
+            stopVideo();
+
             currentPlayer.src = path;
             currentPlayer.play();
 
@@ -1907,6 +1976,106 @@
 
             // Python Backend anfunken
             eel.play_media(path)();
+        }
+
+        // ============ Video Player ============
+        let currentVideoItem = null;
+        let currentVideoPath = null;
+
+        function updateVideoMode() {
+            const toggle = document.getElementById('video-mode-toggle');
+            const status = document.getElementById('video-mode-status');
+            const isVLC = toggle.checked;
+
+            status.innerText = isVLC ? t('video_mode_vlc') : t('video_mode_browser');
+
+            // Show "Open in VLC" button only if in browser mode and video loaded
+            document.getElementById('btn-open-vlc').style.display = (!isVLC && currentVideoItem) ? 'flex' : 'none';
+        }
+
+        async function playVideo(item, path) {
+            currentVideoItem = item;
+            currentVideoPath = path;
+
+            // Switch to Video tab
+            const vlcBtn = document.querySelector('button[onclick*="\'vlc\'"]');
+            switchTab('vlc', vlcBtn);
+
+            const isVLC = document.getElementById('video-mode-toggle').checked;
+
+            // Ensure audio is paused
+            if (currentPlayer) currentPlayer.pause();
+
+            if (isVLC) {
+                await startVLC(item.path);
+            } else {
+                startEmbeddedVideo(item, path);
+            }
+        }
+
+        function startEmbeddedVideo(item, path) {
+            const video = document.getElementById('video-player');
+            const placeholder = document.getElementById('video-placeholder');
+
+            // Stop VLC if running
+            eel.stop_vlc()();
+            document.getElementById('vlc-info').style.display = 'none';
+
+            placeholder.style.display = 'none';
+            video.style.display = 'block';
+            video.src = path;
+            video.play().catch(e => {
+                console.error("Browser playback failed:", e);
+            });
+
+            document.getElementById('btn-open-vlc').style.display = 'flex';
+        }
+
+        async function startVLC(filePath) {
+            const video = document.getElementById('video-player');
+            video.pause();
+            video.style.display = 'none';
+            document.getElementById('video-placeholder').style.display = 'block';
+            document.getElementById('btn-open-vlc').style.display = 'none';
+
+            document.getElementById('vlc-info').style.display = 'block';
+            document.getElementById('vlc-current-file').innerText = currentVideoItem.name;
+
+            const res = await eel.play_vlc(filePath)();
+            if (res && res.error) {
+                alert("VLC Fehler: " + res.error);
+            }
+        }
+
+        async function stopVideo() {
+            const video = document.getElementById('video-player');
+            if (video) {
+                video.pause();
+                video.src = "";
+                video.style.display = 'none';
+            }
+            if (document.getElementById('video-placeholder')) {
+                document.getElementById('video-placeholder').style.display = 'block';
+            }
+
+            await eel.stop_vlc()();
+            if (document.getElementById('vlc-info')) {
+                document.getElementById('vlc-info').style.display = 'none';
+            }
+            if (document.getElementById('btn-open-vlc')) {
+                document.getElementById('btn-open-vlc').style.display = 'none';
+            }
+
+            currentVideoItem = null;
+            currentVideoPath = null;
+        }
+
+        function switchToVLC() {
+            if (currentVideoItem) {
+                document.getElementById('video-mode-toggle').checked = true;
+                updateVideoMode();
+                startVLC(currentVideoItem.path);
+            }
         }
 
         function jumpToEdit(item) {

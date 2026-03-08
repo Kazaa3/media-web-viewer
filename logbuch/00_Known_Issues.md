@@ -26,6 +26,7 @@ fehlt)
 - [x] logbuch einträge filterung wenn header fehlt führt zu fehlenden einträgen
 - [x] Sortierung neuer log einträge erfolgt bei abgescjlossen. neue sind aber noch offfen. neuen status einführen
 - [x] -md ist kein uni code format
+- Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media". String in
 - [ ] logtab. fixe elemente für tag felder auf gui
 - [ ] Test: Verifizierung .deb mit Version
 - [ ] Hörbuch Tag (Backend) muss vereinheitlicht werden.
