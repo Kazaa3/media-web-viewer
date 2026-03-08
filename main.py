@@ -1747,12 +1747,22 @@ if __name__ == "__main__":
 
     if DEBUG_FLAGS["start"]:
         debug_log("[Startup] Starting Eel UI...")
+    
+    # Use a fixed port for reliable browser opening
+    APP_PORT = 8000
+    
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
-    # port=0 sucht automatisch einen freien Port
     try:
-        logger.debug("websocket", "Starting Eel server (bottle/gevent)...")
-        eel.start("app.html", size=(1450, 800), block=False, port=0)
+        logger.debug("websocket", f"Starting Eel server on port {APP_PORT}...")
+        eel.start("app.html", mode=None, size=(1450, 800), block=False, port=APP_PORT)
+        
+        # Open browser explicitly after Eel starts
+        import webbrowser
+        app_url = f"http://localhost:{APP_PORT}/app.html"
+        logging.info(f"Opening browser at {app_url}")
+        webbrowser.open(app_url)
+        
     except Exception as e:
         logging.error(f"[Startup-Error] eel.start failed: {e}")
 
