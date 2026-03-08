@@ -1,3 +1,4 @@
+from typing import Any
 import re
 import os
 import json
@@ -6,7 +7,6 @@ from pathlib import Path
 # Config File Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
 
-from typing import Any
 
 # Central Parser Configuration
 # This avoids circular imports with main.py
@@ -24,7 +24,8 @@ PARSER_CONFIG: dict[str, Any] = {
     "ffmpeg_extract_thumbnails": True
 }
 
-def load_parser_config():
+
+def load_parser_config() -> None:
     """
     @brief Loads the parser configuration from the central JSON file.
     @details Lädt die Parser-Konfiguration aus der zentralen JSON-Datei.
@@ -42,7 +43,8 @@ def load_parser_config():
         os.makedirs(CONFIG_FILE.parent, exist_ok=True)
         save_parser_config()
 
-def save_parser_config():
+
+def save_parser_config() -> None:
     """
     @brief Saves the current parser configuration to disk.
     @details Speichert die aktuelle Parser-Konfiguration auf der Festplatte.
@@ -54,30 +56,36 @@ def save_parser_config():
     except Exception as e:
         print(f"Error saving config: {e}")
 
+
 # Load immediately on import
 load_parser_config()
 
-def natural_sort_key(text):
+
+def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
     """
     @brief Generates a key for natural/numeric sorting (e.g., 'Track 2' < 'Track 10').
     @details Erzeugt einen Schlüssel für natürliche/numerische Sortierung.
     @param text input string or number / Eingabe-String oder Zahl.
     @return A list of sortable parts / Eine Liste sortierbarer Teile.
     """
-    if text is None: return []
-    if isinstance(text, (int, float)): return [(True, text)]
+    if text is None:
+        return []
+    if isinstance(text, (int, float)):
+        return [(True, text)]
     s = str(text)
     parts = re.split(r'(\d+)', s)
     # Return a list of tuples to avoid mixed-type comparisons in list elements
     # Format: (is_digit, value)
     return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
+
 # Extension Categories
 AUDIO_EXTENSIONS = {
     '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
 }
 VIDEO_EXTENSIONS = {
-    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
+    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
 }
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
@@ -86,7 +94,8 @@ EBOOK_EXTENSIONS = {
     '.epub', '.mobi', '.azw', '.fb2'
 }
 
-def format_samplerate(hz):
+
+def format_samplerate(hz: Any) -> str:
     """
     @brief Standardizes sample rate display (e.g., 44100 -> 44.1 kHz).
     @details Normalisiert die Anzeige der Samplerate.
@@ -100,7 +109,8 @@ def format_samplerate(hz):
     except (ValueError, TypeError):
         return ""
 
-def format_codec(raw_codec, track_info=None):
+
+def format_codec(raw_codec: Any, track_info: Any = None) -> str:
     """
     @brief Standardizes codec naming (lowercase, PCM details).
     @details Normalisiert Codec-Namen (Kleinschreibung, PCM-Details).
@@ -110,9 +120,9 @@ def format_codec(raw_codec, track_info=None):
     """
     if not raw_codec:
         return ""
-        
+
     codec = str(raw_codec).lower()
-    
+
     # Generic mappings for common codecs to match user preference
     codec_map = {
         'mpeg audio': 'mp3',
@@ -123,21 +133,22 @@ def format_codec(raw_codec, track_info=None):
         'aac': 'aac',
         'm4a': 'aac'
     }
-    
+
     # PCM specific handling
     if codec == 'pcm' and track_info:
         sign = 'S' if getattr(track_info, 'format_settings__sign', '') == 'Signed' else 'U'
         end = 'LE' if getattr(track_info, 'format_settings__endianness', '') == 'Little' else 'BE'
         bps = getattr(track_info, 'bit_depth', '')
         return f"PCM_{sign}{bps}{end}"
-    
+
     # Special case for PCM if it already looks like PCM_S16LE
     if codec.startswith('pcm_'):
-        return raw_codec.upper()
-        
+        return str(raw_codec).upper()
+
     return codec_map.get(codec, codec)
 
-def format_container(raw_container, file_type=None):
+
+def format_container(raw_container: Any, file_type: str | None = None) -> str:
     """
     @brief Standardizes container naming (e.g., 'matroska' -> 'mkv').
     @details Normalisiert Container-Namen.
@@ -148,14 +159,14 @@ def format_container(raw_container, file_type=None):
     container = str(raw_container).lower().strip() if raw_container else ""
 
     if not container and file_type:
-        container = file_type[1:].lower()
-    
+        container = file_type[1:].lower() if file_type else ""
+
     # Handle ambiguous FFmpeg container outputs
     if container == 'matroska,webm':
         if file_type == '.webm':
             return 'webm'
         return 'mkv'
-    
+
     container_map = {
         'matroska': 'mkv',
         'mov,mp4,m4a,3gp,3g2,mj2': 'mp4',
@@ -166,14 +177,15 @@ def format_container(raw_container, file_type=None):
         'flac': 'flac',
         'mp3': 'mp3'
     }
-    
+
     # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
     if container in ('id3', 'wav') and file_type:
-        return file_type[1:].lower()
-        
+        return file_type[1:].lower() if file_type else ""
+
     return container_map.get(container, container)
 
-def format_tagtype(raw_tagtype):
+
+def format_tagtype(raw_tagtype: Any) -> str:
     """
     @brief Standardizes meta tag types into human-readable formats (e.g., 'MP4Tags' -> 'm4tags').
     @details Normalisiert Metadaten-Tag-Typen.
@@ -182,26 +194,31 @@ def format_tagtype(raw_tagtype):
     """
     if not raw_tagtype:
         return "plain"
-        
+
     tag = str(raw_tagtype).strip()
-    
+
     # Already formatted versions (e.g. ID3v2.3)
     if tag.startswith("ID3v"):
         return tag
-        
+
     tag_map = {
         'ID3': 'ID3',
         'MP4Tags': 'm4tags',
-        'OggVComment': 'vorbis comment',
-        'VCFLACDict': 'vorbis comment',
+        'OggVComment': 'OggVComment',
+        'VCFLACDict': 'VCFLACDict',
         'ASF': 'asf',
-        'ASFTags': 'asf',
         'APETag': 'APEv2'
     }
-    
+
     return tag_map.get(tag, tag)
 
-def format_bitdepth(bit_depth, codec=None, file_type=None, internal_fmt=None):
+
+def format_bitdepth(
+    bit_depth: Any,
+    codec: Any = None,
+    file_type: str | None = None,
+    internal_fmt: str | None = None
+) -> str:
     """
     @brief Standardizes bit depth display (e.g., '24 Bit (s32)', '16 Bit (lossy)').
     @details Normalisiert die Anzeige der Bit-Tiefe.
@@ -216,18 +233,18 @@ def format_bitdepth(bit_depth, codec=None, file_type=None, internal_fmt=None):
         lossy_extensions = {'.mp3', '.ogg', '.aac', '.m4a', '.m4b', '.wma', '.opus'}
         if file_type in lossy_extensions:
             return "16 Bit (lossy)"
-        return "16 Bit" # Generic default
-        
+        return "16 Bit"  # Generic default
+
     try:
         bd_int = int(bit_depth)
-        
+
         # Check if it is a PCM codec (either explicitly passed or detected in codec string)
         is_pcm = False
         if codec:
             c_upper = str(codec).upper()
             if 'PCM' in c_upper or c_upper == 'WAV':
                 is_pcm = True
-        
+
         if is_pcm:
             if bd_int == 24:
                 return "24 Bit (s32)"
@@ -237,13 +254,13 @@ def format_bitdepth(bit_depth, codec=None, file_type=None, internal_fmt=None):
                 # Could be float or int, usually s32 or flt
                 suffix = f"({internal_fmt})" if internal_fmt else "(s32)"
                 return f"32 Bit {suffix}"
-                
+
         # FFmpeg internal format mapping (e.g. s16, s32, fltp)
         if internal_fmt:
             # Check for specific user requested mapping: 24 Bit (s32) if it came from PCM_S24LE
             if internal_fmt in ('s32', 's32p') and bd_int == 24:
                 return "24 Bit (s32)"
-                
+
             fmt_map = {
                 'u8': '8 Bit (u8)', 'u8p': '8 Bit (u8p)',
                 's16': '16 Bit (s16)', 's16p': '16 Bit (s16p)',

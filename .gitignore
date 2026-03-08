@@ -46,3 +46,16 @@ dist/
 
 packaging/opt/media-web-viewer/media/
 packaging/opt/media-web-viewer/media/*.wma
+
+# Testing and Type Checking
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
