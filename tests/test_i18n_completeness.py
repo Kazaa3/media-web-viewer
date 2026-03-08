@@ -165,6 +165,11 @@ def test_required_i18n_keys_present():
         'logbook_saved',
         'logbook_deleted',
         'logbook_error',
+        'common_loading_short',
+        'common_error_loading',
+        'logbook_error_loading_list',
+        'test_error_loading',
+        'debug_loading_data',
         'parser_filename',
         'parser_container',
         'parser_mutagen',
@@ -182,6 +187,38 @@ def test_required_i18n_keys_present():
         return False
     
     print(f"✅ All {len(required_keys)} required keys present")
+    return True
+
+
+def test_loading_error_keys_are_used_in_ui():
+    """Test that newly required loading/error i18n keys are actually referenced in app.html."""
+    print("\n🧪 Test 4: Loading/Error Keys Referenced")
+
+    app_html = Path(__file__).parent.parent / "web" / "app.html"
+
+    with open(app_html, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    expected_key_usage = [
+        'debug_db_loading_stats',
+        'debug_loading_data',
+        'common_loading_short',
+        'common_error_loading',
+        'logbook_loading_items',
+        'logbook_error_loading_list',
+        'test_error_loading',
+    ]
+
+    missing_usage = []
+    for key in expected_key_usage:
+        if f"data-i18n=\"{key}\"" not in content and f"t('{key}')" not in content and f't("{key}")' not in content:
+            missing_usage.append(key)
+
+    if missing_usage:
+        print(f"❌ Loading/error keys not referenced in UI: {missing_usage}")
+        return False
+
+    print(f"✅ All {len(expected_key_usage)} loading/error keys are referenced in app.html")
     return True
 
 
@@ -393,6 +430,7 @@ def main():
         test_i18n_json_structure,
         test_i18n_key_parity,
         test_required_i18n_keys_present,
+        test_loading_error_keys_are_used_in_ui,
         test_no_hardcoded_german_strings,
         test_no_i18n_function_calls,
         test_eel_expose_on_scan_media,
