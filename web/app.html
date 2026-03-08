@@ -617,6 +617,7 @@
             if (!container) return;
             const config = await eel.get_parser_config()();
             const dirs = config.scan_dirs || [];
+            const defaultMediaDir = await eel.get_default_media_dir()();
 
             container.innerHTML = '';
             if (dirs.length === 0) {
@@ -635,7 +636,18 @@
                 const removeBtn = document.createElement('button');
                 removeBtn.innerText = '✕';
                 removeBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-weight: bold; padding: 5px;';
+
+                const isDefaultDir = path === defaultMediaDir;
+                if (isDefaultDir) {
+                    removeBtn.disabled = true;
+                    removeBtn.style.cssText = 'background: transparent; border: none; color: #aaa; cursor: not-allowed; font-weight: bold; padding: 5px;';
+                    removeBtn.title = t('options_default_dir_fixed');
+                }
+
                 removeBtn.onclick = async () => {
+                    if (isDefaultDir) {
+                        return;
+                    }
                     if (confirm(`Verzeichnis "${path}" wirklich entfernen?`)) {
                         const res = await eel.remove_scan_dir(path)();
                         if (res.status === 'ok') loadScanDirs();
@@ -650,6 +662,13 @@
 
         async function addScanDirUI() {
             const res = await eel.add_scan_dir()();
+            if (res.status === 'ok') {
+                loadScanDirs();
+            }
+        }
+
+        async function addDefaultScanDirUI() {
+            const res = await eel.ensure_default_scan_dir()();
             if (res.status === 'ok') {
                 loadScanDirs();
             }
@@ -933,6 +952,12 @@
                             style="padding: 8px 16px; background: #e8f5e9; color: #2a7; border: 1px solid #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px;"
                             data-i18n="options_add_dir">
                             ➕ Verzeichnis hinzufügen
+                        </button>
+
+                        <button onclick="addDefaultScanDirUI()"
+                            style="padding: 8px 16px; background: #f3f8ff; color: #2a62c9; border: 1px solid #2a62c9; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px; margin-left: 8px;"
+                            data-i18n="options_add_default_dir">
+                            📁 Standardordner media/ wiederherstellen
                         </button>
 
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">Darstellung
