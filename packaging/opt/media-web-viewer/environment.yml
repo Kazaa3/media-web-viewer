@@ -8,6 +8,7 @@ dependencies:
   - mediainfo
   - doxygen
   - graphviz
+  - google-chrome
   - pip
   - pip:
     - eel
