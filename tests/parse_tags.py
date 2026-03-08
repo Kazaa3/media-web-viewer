@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Mutagen Tag Dump Test
+# Eingabewerte: media/*.flac, media/*.mp3, media/*.m4a
+# Ausgabewerte: Alle Mutagen-Tags für FLAC, MP3, M4A (key: value pairs)
+# Testdateien: media/*.flac, media/*.mp3, media/*.m4a
+# Kommentar: Dumpt alle Mutagen-Tags für FLAC, MP3 und M4A Dateien (diagnostischer Tag-Dump).
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4

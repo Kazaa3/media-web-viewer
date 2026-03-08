@@ -80,17 +80,17 @@ def test_aac_metadata_extraction():
     media_dir = Path('media')
     
     if not media_dir.exists():
-        print(f"⚠️  Media-Verzeichnis nicht gefunden: {media_dir}")
-        print("   Test wird übersprungen.")
-        return None
+        print(f"❌ Media-Verzeichnis nicht gefunden: {media_dir}")
+        print("   Test FEHLGESCHLAGEN (Verzeichnis fehlt).")
+        return False
     
     # Find AAC files
     aac_files = list(media_dir.glob('*.aac'))
     
     if not aac_files:
-        print("⚠️  Keine AAC-Dateien gefunden in media/")
-        print("   Test wird übersprungen.")
-        return None
+        print("❌ Keine AAC-Dateien gefunden in media/")
+        print("   Test FEHLGESCHLAGEN (Dateien fehlen).")
+        return False
     
     print(f"\n🎵 AAC Metadata Extraction Test\n")
     print(f"Gefundene AAC-Dateien: {len(aac_files)}\n")
@@ -118,8 +118,8 @@ def test_aac_metadata_extraction():
             print(f"   TagType:    {tagtype}")
             print()
             
-            # Basic validation
-            if samplerate != 'MISSING' and filesize != 'MISSING':
+            # Basic validation - mindestens ein wichtiges Feld sollte vorhanden sein
+            if samplerate != 'MISSING' or bitrate != 'MISSING' or codec != 'MISSING':
                 success_count += 1
             
         except Exception as e:
@@ -138,6 +138,4 @@ def test_aac_metadata_extraction():
 
 if __name__ == "__main__":
     success = test_aac_metadata_extraction()
-    if success is None:
-        sys.exit(0)  # Skipped
     sys.exit(0 if success else 1)

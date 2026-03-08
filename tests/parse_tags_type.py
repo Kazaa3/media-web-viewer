@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tag Type & Album Art Analysis
+# Eingabewerte: media/*.flac, media/*.mp3, media/*.m4a
+# Ausgabewerte: Tag-Type (ID3v2.3, Vorbis, MP4), Album-Art Status, Dateigröße
+# Testdateien: media/*.flac, media/*.mp3, media/*.m4a
+# Kommentar: Analysiert Tag-Types und Album-Art-Präsenz für FLAC/MP3/M4A (APIC, pictures, covr).
 import os
 import glob
 from mutagen.flac import FLAC

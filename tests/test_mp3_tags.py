@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: Mutagen ID3 Tag Extraction
-# Eingabewerte: media/sample.mp3
+# Eingabewerte: media/01 - Einfach & Leicht.mp3
 # Ausgabewerte: TPE1 (Artist), TDRC (Year), TIT2 (Title), TALB (Album)
-# Testdateien: media/sample.mp3
+# Testdateien: media/01 - Einfach & Leicht.mp3
 # Kommentar: Testet Mutagen ID3 Tag-Extraktion aus MP3-Datei (TPE1, TDRC, TIT2, TALB mit Error Handling).
 """
 ================================================================================
@@ -67,12 +67,12 @@ def test_mp3_id3_tag_extraction():
         print("   Installiere mit: pip install mutagen")
         return False
     
-    media_file = Path('media/sample.mp3')
+    media_file = Path('media/01 - Einfach & Leicht.mp3')
     
     if not media_file.exists():
-        print(f"⚠️  Testdatei nicht gefunden: {media_file}")
-        print("   Test wird übersprungen.")
-        return None
+        print(f"❌ Testdatei nicht gefunden: {media_file}")
+        print("   Test FEHLGESCHLAGEN (Datei fehlt).")
+        return False
     
     try:
         audio = MP3(str(media_file))
@@ -104,6 +104,4 @@ def test_mp3_id3_tag_extraction():
 
 if __name__ == "__main__":
     success = test_mp3_id3_tag_extraction()
-    if success is None:
-        sys.exit(0)  # Skipped
     sys.exit(0 if success else 1)
