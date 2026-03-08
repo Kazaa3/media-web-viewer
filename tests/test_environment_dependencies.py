@@ -23,6 +23,8 @@ Verwendung:
     python tests/test_environment_dependencies.py
 """
 
+import importlib
+from unittest.mock import patch
 import pytest
 import sys
 import os
@@ -218,6 +220,20 @@ class TestSystemDependencies:
         else:
             pytest.fail("❌ Kein unterstützter Browser gefunden (Chrome/Chromium/Firefox erforderlich)")
     
+    def test_mime_database_available(self):
+        """@test shared-mime-info muss installiert sein"""
+        import shutil
+        if not shutil.which("update-mime-database"):
+            pytest.fail("❌ update-mime-database nicht gefunden (shared-mime-info fehlt)\n   Fix: sudo apt install shared-mime-info")
+        print("✅ shared-mime-info gefunden")
+
+    def test_pixbuf_loaders_available(self):
+        """@test libgdk-pixbuf2.0-0 muss installiert sein"""
+        import shutil
+        if not shutil.which("gdk-pixbuf-query-loaders"):
+            pytest.fail("❌ gdk-pixbuf-query-loaders nicht gefunden (libgdk-pixbuf2.0-0 fehlt)\n   Fix: sudo apt install libgdk-pixbuf2.0-0")
+        print("✅ gdk-pixbuf-query-loaders gefunden")
+    
     def test_python3_tk_available(self):
         """@test python3-tk für native Datei-Dialoge"""
         try:
@@ -292,35 +308,38 @@ class TestRequirementsTxt:
 
 
 class TestBackendIntegration:
-    """Tests für Backend-Funktionalität"""
-    
+    """Tests für die Integration der Backend-Module"""
+
     def test_main_py_importable(self):
         """@test main.py muss importierbar sein"""
         sys.path.insert(0, str(Path(__file__).parent.parent))
-        try:
-            import main
-            print(f"✅ main.py erfolgreich importiert")
-        except ImportError as e:
-            pytest.fail(f"❌ main.py konnte nicht importiert werden: {e}")
-    
+        with patch('env_handler.validate_safe_startup'), patch('eel.expose', side_effect=lambda x: x):
+            try:
+                import main
+                importlib.reload(main) # Ensure fresh import
+                print(f"✅ main.py erfolgreich importiert")
+            except Exception as e:
+                pytest.fail(f"❌ main.py konnte nicht importiert werden: {e}")
+
     def test_get_environment_info_available(self):
         """@test get_environment_info() Funktion muss existieren"""
         sys.path.insert(0, str(Path(__file__).parent.parent))
-        try:
-            import main
-            assert hasattr(main, 'get_environment_info'), "get_environment_info() nicht gefunden"
-            
-            # Call it and check return type
-            info = main.get_environment_info()
-            assert isinstance(info, dict), "get_environment_info() muss dict zurückgeben"
-            assert 'python_version' in info, "python_version fehlt in Rückgabe"
-            assert 'in_venv' in info, "in_venv fehlt in Rückgabe"
-            
-            print(f"✅ get_environment_info() funktioniert")
-            print(f"   Python: {info['python_version']}")
-            print(f"   venv: {info['in_venv']}")
-        except Exception as e:
-            pytest.fail(f"❌ get_environment_info() Test fehlgeschlagen: {e}")
+        with patch('env_handler.validate_safe_startup'), patch('eel.expose', side_effect=lambda x: x):
+            try:
+                import main
+                assert hasattr(main, 'get_environment_info'), "get_environment_info() nicht gefunden"
+    
+                # Call it and check return type
+                info = main.get_environment_info()
+                assert isinstance(info, dict), f"get_environment_info() muss dict zurückgeben, bekam {type(info)}"
+                assert 'python_version' in info, "python_version fehlt in Rückgabe"
+                assert 'in_venv' in info, "in_venv fehlt in Rückgabe"
+    
+                print(f"✅ get_environment_info() funktioniert")
+                print(f"   Python: {info['python_version']}")
+                print(f"   venv: {info['in_venv']}")
+            except Exception as e:
+                pytest.fail(f"❌ get_environment_info() Test fehlgeschlagen: {e}")
 
 
 # Summary-Funktion für manuellen Run

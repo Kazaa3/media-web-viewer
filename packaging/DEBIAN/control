@@ -3,7 +3,7 @@ Version: 1.2.23
 Section: multimedia
 Priority: optional
 Architecture: amd64
-Depends: python3 (>= 3.11), python3-venv, python3-pip, libmediainfo0v5, ffmpeg, google-chrome-stable | chromium-browser | chromium | firefox
+Depends: python3 (>= 3.11), python3-venv, python3-pip, libmediainfo0v5, ffmpeg, google-chrome-stable | chromium-browser | chromium | firefox, shared-mime-info, libgdk-pixbuf2.0-0
 Maintainer: kazaa3
 Description: Media Web Viewer
  A local desktop application for managing and playing media files
