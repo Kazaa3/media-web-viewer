@@ -624,7 +624,7 @@ def list_logbook_entries():
                         elif key == "Summary_EN": summary_en = val
                         elif key == "Summary": summary = val
                     
-                    if line.startswith("# ") and not (title_de or title_en):
+                    if line.startswith("# "):
                         title = line.replace("# ", "").strip()
                 
                 # Special case for Known Issues
