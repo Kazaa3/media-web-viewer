@@ -4,9 +4,8 @@
 # Testdateien: Keine (Mocks)
 # Kommentar: Verifiziert das Natural Sorting, um das Problem der 1, 21, 22, 2 Sortierung zu lösen.
 
-import pytest
-import re
 from parsers.format_utils import natural_sort_key
+
 
 def test_natural_sort_numeric_strings():
     # User case: "1, 21, 22, 2" -> should be 1, 2, 21, 22
@@ -14,10 +13,12 @@ def test_natural_sort_numeric_strings():
     res = sorted(titles, key=natural_sort_key)
     assert res == ["1", "2", "21", "22"]
 
+
 def test_natural_sort_mixed_strings():
     titles = ["Kapitel 1", "Kapitel 22", "Kapitel 2", "Kapitel 10"]
     res = sorted(titles, key=natural_sort_key)
     assert res == ["Kapitel 1", "Kapitel 2", "Kapitel 10", "Kapitel 22"]
+
 
 def test_chronological_plus_natural_sort():
     # Primary sort by time, secondary by name
@@ -34,6 +35,7 @@ def test_chronological_plus_natural_sort():
     assert res[1]['title'] == 'Kapitel 10'
     assert res[2]['title'] == 'Kapitel 5'
     assert res[3]['title'] == 'Kapitel 2'
+
 
 def test_complex_numbering():
     titles = ["Track 1.1", "Track 1.10", "Track 1.2"]

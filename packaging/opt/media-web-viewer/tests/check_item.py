@@ -1,7 +1,9 @@
-import sys, os
-[sys.path.append(os.path.join(d, 'site-packages')) for d in ['/usr/lib/python3/dist-packages', '/usr/local/lib/python3.10/dist-packages']]
-from main import MediaItem
 import glob
+from main import MediaItem
+import sys
+import os
+[sys.path.append(os.path.join(d, 'site-packages'))
+ for d in ['/usr/lib/python3/dist-packages', '/usr/local/lib/python3.10/dist-packages']]
 files = glob.glob("media/*.mp*") + glob.glob("media/*.mkv") + glob.glob("media/*.we*")
 for f in files:
     try:

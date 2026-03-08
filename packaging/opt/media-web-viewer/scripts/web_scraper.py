@@ -6,5 +6,6 @@ def scrape_metadata(query):
     # ToDo: Implement actual scraping logic
     return {}
 
+
 if __name__ == "__main__":
     scrape_metadata("Beispiel Hörbuch")

@@ -25,11 +25,13 @@ from parsers import media_parser
 # Comments are stored as dictionaries and imported as JSON.
 # dict (JSON missing like in a few versions before)
 
+
 class MediaItem:
     """
     @brief Represents a single media file with comprehensive metadata.
     @details Repräsentiert eine einzelne Mediendatei mit umfassenden Metadaten.
     """
+
     def __init__(self, name, path, debug_flags=None, logger=None):
         """
         @brief Initializes a MediaItem and triggers metadata extraction.
@@ -42,21 +44,21 @@ class MediaItem:
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
-        
+
         # Default fallbacks if not provided
         self.debug_flags = debug_flags or {"parser": False}
         self.logger = logger or print
-        
+
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
         self.duration, self.tags = media_parser.extract_metadata(
-            self.path, 
-            self.name, 
-            debug=self.debug_flags.get("parser", False), 
-            mode=parser_mode, 
+            self.path,
+            self.name,
+            debug=self.debug_flags.get("parser", False),
+            mode=parser_mode,
             logger=self.logger
         )
         self.category = self.get_category()
-        
+
         # New separated metadata fields
         self.extension = self.type[1:] if self.type.startswith('.') else self.type
         self.container = self.tags.get('container', self.extension)
@@ -72,7 +74,7 @@ class MediaItem:
         ext = self.type.lower()
         path_str = str(self.path).lower()
         tags = self.tags or {}
-        
+
         # 1. Video / E-Book / Document (Non-Audio)
         if ext in VIDEO_EXTENSIONS:
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
@@ -87,7 +89,12 @@ class MediaItem:
         if ext in AUDIO_EXTENSIONS or ext == '.m4b':
             # Priority 1: Hörbuch (m4b extension or keyword in path/genre)
             genre = tags.get('genre', '').lower()
-            if ext == '.m4b' or any(k in path_str for k in ['hörbuch', 'hörbücher', 'audiobook', 'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
+            if ext == '.m4b' or any(
+                k in path_str for k in [
+                    'hörbuch',
+                    'hörbücher',
+                    'audiobook',
+                    'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
                 return 'Hörbuch'
 
             # Priority 2: Music specific tags
@@ -103,12 +110,12 @@ class MediaItem:
             # Priority 4: Compilations / Albums / Singles
             if any(k in artist for k in ['va', 'various artists', 'various', 'compilation']):
                 return 'Compilation'
-            
+
             if album:
                 if 'single' in album:
                     return 'Single'
                 return 'Album'
-                
+
             return 'Audio'
 
         return 'Unbekannt'
@@ -138,18 +145,18 @@ class MediaItem:
         """
         hours, remainder = divmod(self.duration, 3600)
         mins, secs = divmod(remainder, 60)
-        
+
         if hours > 0:
             duration_str = f"{hours}:{mins:02d}:{secs:02d}"
         else:
             duration_str = f"{mins}:{secs:02d}"
-            
+
         codec = self.tags.get('codec', '').upper()
         # Lossless ALAC → transcode to FLAC
         is_alac = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
         # Lossy WMA → transcode to OGG (Opus)
         is_wma = self.type == '.wma'
-        
+
         is_transcoded = is_alac or is_wma
         if is_alac:
             transcoded_format = 'FLAC'
@@ -157,7 +164,7 @@ class MediaItem:
             transcoded_format = 'OGG'
         else:
             transcoded_format = None
-        
+
         # Filter tags: Only keep what's strictly necessary for the UI/Database to save space
         whitelist = {
             'title', 'artist', 'album', 'year', 'genre', 'track', 'totaltracks',
@@ -165,7 +172,7 @@ class MediaItem:
             'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation'
         }
         filtered_tags = {k: v for k, v in self.tags.items() if k in whitelist}
-        
+
         return {
             'name': self.name,
             'path': str(self.path),

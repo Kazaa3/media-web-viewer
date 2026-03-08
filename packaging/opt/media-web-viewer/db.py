@@ -18,7 +18,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import sqlite3
-import os
 import json
 
 from pathlib import Path
@@ -26,6 +25,7 @@ from pathlib import Path
 # Use a user-writable path for the database
 DB_DIR = Path.home() / ".media-web-viewer"
 DB_FILENAME = str(DB_DIR / "media_library.db")
+
 
 def init_db():
     """
@@ -84,10 +84,11 @@ def init_db():
             cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
             conn.commit()
         except sqlite3.OperationalError:
-            pass # Already exists
+            pass  # Already exists
 
     conn.commit()
     conn.close()
+
 
 def get_known_media_names():
     """
@@ -103,6 +104,7 @@ def get_known_media_names():
     conn.close()
     return names
 
+
 def clear_media():
     """
     @brief Deletes all entries from the media table.
@@ -112,6 +114,7 @@ def clear_media():
     conn.execute("DELETE FROM media")
     conn.commit()
     conn.close()
+
 
 def insert_media(item_dict):
     """
@@ -141,9 +144,10 @@ def insert_media(item_dict):
         ))
         conn.commit()
     except sqlite3.IntegrityError:
-        pass # Schon vorhanden
+        pass  # Schon vorhanden
     finally:
         conn.close()
+
 
 def get_all_media():
     """
@@ -157,7 +161,7 @@ def get_all_media():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM media ORDER BY name")
     rows = cursor.fetchall()
-    
+
     media_list = []
     for row in rows:
         media_list.append({
@@ -177,6 +181,7 @@ def get_all_media():
     conn.close()
     return media_list
 
+
 def get_media_path(name):
     """
     @brief Returns the full file path for a given media name.
@@ -191,6 +196,7 @@ def get_media_path(name):
     conn.close()
     return row[0] if row else None
 
+
 def update_media_tags(name, tags_dict):
     """
     @brief Updates the tags of a media item in the database.
@@ -201,12 +207,13 @@ def update_media_tags(name, tags_dict):
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     cursor.execute("""
-        UPDATE media 
-        SET tags = ? 
+        UPDATE media
+        SET tags = ?
         WHERE name = ?
     """, (json.dumps(tags_dict), name))
     conn.commit()
     conn.close()
+
 
 def rename_media(old_name, new_name):
     """
@@ -227,6 +234,7 @@ def rename_media(old_name, new_name):
     finally:
         conn.close()
 
+
 def delete_media(name):
     """
     @brief Deletes a media item from the database.
@@ -241,6 +249,7 @@ def delete_media(name):
     finally:
         conn.close()
 
+
 def get_db_stats():
     """
     @brief Returns statistics about the database.
@@ -250,13 +259,13 @@ def get_db_stats():
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
-    
+
     cursor.execute("SELECT COUNT(*) FROM media")
     total_items = cursor.fetchone()[0]
-    
+
     cursor.execute("SELECT category, COUNT(*) FROM media GROUP BY category")
     categories = {row[0]: row[1] for row in cursor.fetchall()}
-    
+
     conn.close()
     return {
         'total_items': total_items,

@@ -6,10 +6,11 @@ from mutagen.mp4 import MP4  # Für ALAC/M4A/M4B
 from mutagen.oggopus import OggOpus
 from mutagen.wave import WAVE
 from mutagen.aac import AAC
-from mutagen.asf import ASF # Für WMA
-from mutagen.id3 import ID3 # statt ffmpeg
-from mutagen.dsdiff import DSDIFF # DSD Interchange File Format: .dsf-Dateien
-from mutagen.dsf import DSF # DSD Stream File: .dsd-Dateien
+from mutagen.asf import ASF  # Für WMA
+from mutagen.id3 import ID3  # statt ffmpeg
+from mutagen.dsdiff import DSDIFF  # DSD Interchange File Format: .dsf-Dateien
+from mutagen.dsf import DSF  # DSD Stream File: .dsd-Dateien
+
 
 def safe_get(audio_obj, key, default=''):
     """
@@ -21,13 +22,15 @@ def safe_get(audio_obj, key, default=''):
     @return Value as string / Wert als String.
     """
 
+
 def format_samplerate(hz):
     try:
         hz = float(hz)
         khz = hz / 1000
         return f"{int(khz)} kHz" if khz.is_integer() else f"{khz:g} kHz"
-    except:
+    except BaseException:
         return ""
+
 
 def parse(path, file_type, tags, name, mode='lightweight'):
     """
@@ -42,21 +45,24 @@ def parse(path, file_type, tags, name, mode='lightweight'):
     """
     from .format_utils import PARSER_CONFIG
     audio_for_info = None
-    
+
     if mode == 'full' and 'full_tags' not in tags:
         tags['full_tags'] = {}
-        
+
     try:
         if file_type == '.flac':
             audio = FLAC(path)
             audio_for_info = audio
-            
+
             # Use preference for album artist
             if PARSER_CONFIG.get('mutagen_prefer_albumartist'):
-                tags['artist'] = safe_get(audio, 'ALBUMARTIST') or safe_get(audio, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
+                tags['artist'] = safe_get(
+                    audio, 'ALBUMARTIST') or safe_get(
+                    audio, 'ARTIST', default=tags.get(
+                        'artist', 'Unbekannt'))
             else:
                 tags['artist'] = safe_get(audio, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
-                
+
             tags['title'] = safe_get(audio, 'TITLE', default=tags.get('title', name))
             tags['year'] = safe_get(audio, 'DATE')
             tags['genre'] = safe_get(audio, 'GENRE')
@@ -68,16 +74,17 @@ def parse(path, file_type, tags, name, mode='lightweight'):
             tags['codec'] = 'flac'
             if hasattr(audio.info, 'bits_per_sample') and audio.info.bits_per_sample:
                 tags['bitdepth'] = f"{audio.info.bits_per_sample} Bit"
-            
+
             # Chapters for FLAC/Vorbis
             chapters = []
             from .format_utils import natural_sort_key
-            chapter_keys = [k for k in audio.keys() if k.startswith('CHAPTER') and not k.endswith('NAME') and not k.endswith('URL')]
+            chapter_keys = [k for k in audio.keys() if k.startswith(
+                'CHAPTER') and not k.endswith('NAME') and not k.endswith('URL')]
             for k in sorted(chapter_keys, key=natural_sort_key):
                 idx = k.replace('CHAPTER', '')
                 start_val = audio.get(k)
                 title_val = audio.get(f"CHAPTER{idx}NAME")
-                
+
                 start_t = 0.0
                 if start_val and isinstance(start_val, list):
                     # Sometimes chapter times are formatted like HH:MM:SS.mmm
@@ -86,11 +93,11 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                         start_t = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
                     elif len(parts) == 2:
                         start_t = float(parts[0]) * 60 + float(parts[1])
-                
+
                 chapters.append({
                     'start': start_t,
                     'title': title_val[0] if title_val else f"Kapitel {len(chapters) + 1}",
-                    'end': 0.0 # Ogg/Flac chapters often don't have explicit ends, we can calculate later if needed
+                    'end': 0.0  # Ogg/Flac chapters often don't have explicit ends, we can calculate later if needed
                 })
             if chapters and not tags.get('chapters'):
                 from .format_utils import natural_sort_key
@@ -107,7 +114,7 @@ def parse(path, file_type, tags, name, mode='lightweight'):
             alb = audio.get('TALB')
             aart = audio.get('TPE2')
             dsc = audio.get('TPOS')
-            
+
             # Use preference for album artist
             if PARSER_CONFIG.get('mutagen_prefer_albumartist') and aart:
                 tags['artist'] = str(aart.text[0]) if hasattr(aart, 'text') else str(aart[0])
@@ -115,23 +122,29 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                 tags['artist'] = str(art.text[0]) if hasattr(art, 'text') else str(art[0])
             else:
                 tags['artist'] = tags.get('artist', 'Unbekannt')
-                
-            if tit: tags['title'] = str(tit.text[0]) if hasattr(tit, 'text') else str(tit[0])
-            if yr: tags['year'] = str(yr.text[0]) if hasattr(yr, 'text') else str(yr)
-            if gn: tags['genre'] = str(gn.text[0]) if hasattr(gn, 'text') else str(gn)
-            if alb: tags['album'] = str(alb.text[0]) if hasattr(alb, 'text') else str(alb[0])
-            if aart: tags['albumartist'] = str(aart.text[0]) if hasattr(aart, 'text') else str(aart[0])
-            if dsc: tags['disc'] = str(dsc.text[0]).split('/')[0] if hasattr(dsc, 'text') else str(dsc)
-            
+
+            if tit:
+                tags['title'] = str(tit.text[0]) if hasattr(tit, 'text') else str(tit[0])
+            if yr:
+                tags['year'] = str(yr.text[0]) if hasattr(yr, 'text') else str(yr)
+            if gn:
+                tags['genre'] = str(gn.text[0]) if hasattr(gn, 'text') else str(gn)
+            if alb:
+                tags['album'] = str(alb.text[0]) if hasattr(alb, 'text') else str(alb[0])
+            if aart:
+                tags['albumartist'] = str(aart.text[0]) if hasattr(aart, 'text') else str(aart[0])
+            if dsc:
+                tags['disc'] = str(dsc.text[0]).split('/')[0] if hasattr(dsc, 'text') else str(dsc)
+
             tr_val = str(tr.text[0]) if tr and hasattr(tr, 'text') else (str(tr) if tr else '')
             if '/' in tr_val:
                 tags['track'] = tr_val.split('/')[0]
                 tags['totaltracks'] = tr_val.split('/')[1]
             elif tr_val:
                 tags['track'] = tr_val
-                
+
             tags['codec'] = 'mp3'
-            
+
             # Chapters for MP3 (ID3 CHAP frames)
             chapters = []
             if hasattr(audio, 'tags'):
@@ -144,7 +157,7 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                         # Try to extract the TIT2 sub-frame from the CHAP frame
                         if hasattr(frame, 'sub_frames') and 'TIT2' in frame.sub_frames:
                             title = str(frame.sub_frames['TIT2'].text[0])
-                            
+
                         chapters.append({
                             'start': start_time,
                             'end': end_time,
@@ -154,38 +167,44 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                 # Sort by start time and then naturally by title
                 from .format_utils import natural_sort_key
                 tags['chapters'] = sorted(chapters, key=lambda x: (x['start'], natural_sort_key(x['title'])))
-            
+
         elif file_type in {'.m4a', '.alac', '.m4b', '.mp4'}:
             audio = MP4(path)
             audio_for_info = audio
-            
+
             if PARSER_CONFIG.get('mutagen_prefer_albumartist'):
-                tags['artist'] = safe_get(audio, 'aART') or safe_get(audio, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
+                tags['artist'] = safe_get(
+                    audio, 'aART') or safe_get(
+                    audio, '\xa9ART', default=tags.get(
+                        'artist', 'Unbekannt'))
             else:
                 tags['artist'] = safe_get(audio, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
-                
+
             tags['title'] = safe_get(audio, '\xa9nam', default=tags.get('title', name))
             tags['year'] = safe_get(audio, '\xa9day')
             tags['genre'] = safe_get(audio, '\xa9gen')
             tags['album'] = safe_get(audio, '\xa9alb')
             tags['albumartist'] = safe_get(audio, 'aART')
-            
+
             trkn = audio.get('trkn')
             if trkn and len(trkn) > 0 and isinstance(trkn[0], tuple):
-                if len(trkn[0]) > 0 and int(trkn[0][0]) > 0: tags['track'] = str(trkn[0][0])
-                if len(trkn[0]) > 1 and int(trkn[0][1]) > 0: tags['totaltracks'] = str(trkn[0][1])
+                if len(trkn[0]) > 0 and int(trkn[0][0]) > 0:
+                    tags['track'] = str(trkn[0][0])
+                if len(trkn[0]) > 1 and int(trkn[0][1]) > 0:
+                    tags['totaltracks'] = str(trkn[0][1])
             elif trkn and len(trkn) > 0:
                 tags['track'] = str(trkn[0])
-                
+
             disk = audio.get('disk')
             if disk and len(disk) > 0 and isinstance(disk[0], tuple):
-                if len(disk[0]) > 0 and int(disk[0][0]) > 0: tags['disc'] = str(disk[0][0])
+                if len(disk[0]) > 0 and int(disk[0][0]) > 0:
+                    tags['disc'] = str(disk[0][0])
             elif disk and len(disk) > 0:
                 tags['disc'] = str(disk[0])
-                
+
             raw_codec = getattr(audio.info, 'codec', None)
             tags['codec'] = str(raw_codec).lower() if raw_codec else file_type[1:].lower()
-            
+
             # Chapters for MP4
             chapters = []
             if audio.chapters:
@@ -196,18 +215,23 @@ def parse(path, file_type, tags, name, mode='lightweight'):
                         'end': chap.end if hasattr(chap, 'end') else 0.0
                     })
             if chapters and not tags.get('chapters'):
-                 from .format_utils import natural_sort_key
-                 tags['chapters'] = sorted(chapters, key=lambda x: (x['start'], natural_sort_key(x['title'])))
-                
+                from .format_utils import natural_sort_key
+                tags['chapters'] = sorted(chapters, key=lambda x: (x['start'], natural_sort_key(x['title'])))
+
         elif file_type in {'.ogg', '.opus', '.wav', '.aac', '.wma'}:
-            if file_type == '.ogg': audio = OggVorbis(path)
-            elif file_type == '.opus': audio = OggOpus(path)
-            elif file_type == '.wav': audio = WAVE(path)
-            elif file_type == '.aac': audio = AAC(path)
-            elif file_type == '.wma': audio = ASF(path)
-            
+            if file_type == '.ogg':
+                audio = OggVorbis(path)
+            elif file_type == '.opus':
+                audio = OggOpus(path)
+            elif file_type == '.wav':
+                audio = WAVE(path)
+            elif file_type == '.aac':
+                audio = AAC(path)
+            elif file_type == '.wma':
+                audio = ASF(path)
+
             audio_for_info = audio
-            
+
             tags['artist'] = safe_get(audio, 'artist', default=tags.get('artist', 'Unbekannt'))
             tags['title'] = safe_get(audio, 'title', default=tags.get('title', name))
             tags['year'] = safe_get(audio, 'date') or safe_get(audio, 'year')
@@ -216,22 +240,22 @@ def parse(path, file_type, tags, name, mode='lightweight'):
             tags['albumartist'] = safe_get(audio, 'albumartist')
             tags['track'] = safe_get(audio, 'tracknumber') or safe_get(audio, 'track')
             tags['disc'] = safe_get(audio, 'discnumber')
-        
+
         # Stream info elements
         if audio_for_info and hasattr(audio_for_info, 'info'):
             info = audio_for_info.info
             if hasattr(info, 'bitrate') and info.bitrate:
                 tags['bitrate'] = f"{int((info.bitrate + 500) // 1000)} kbps"
-            
+
             if not tags.get('codec'):
                 from .format_utils import format_codec
                 tags['codec'] = format_codec(tags.get('file_type') or file_type[1:])
-            
+
             # Samplerate
             if not tags.get('samplerate') and hasattr(info, 'sample_rate'):
                 from .format_utils import format_samplerate
                 tags['samplerate'] = format_samplerate(info.sample_rate)
-                
+
             # Bitdepth
             if not tags.get('bitdepth') and hasattr(info, 'bits_per_sample'):
                 from .format_utils import format_bitdepth
@@ -239,25 +263,25 @@ def parse(path, file_type, tags, name, mode='lightweight'):
 
         # Tag types
         if audio_for_info and hasattr(audio_for_info, 'tags') and audio_for_info.tags is not None:
-            
+
             if mode == 'full':
                 for k, v in audio_for_info.tags.items():
                     tags['full_tags'][f"mutagen_{k}"] = str(v)
-            
+
             tag_name = type(audio_for_info.tags).__name__
             if tag_name == 'ID3' and hasattr(audio_for_info.tags, 'version'):
                 tags['tagtype'] = f"ID3v{audio_for_info.tags.version[0]}.{audio_for_info.tags.version[1]}"
             elif tag_name == 'MP4Tags':
                 tags['tagtype'] = 'MP4Tags'
             elif tag_name == 'OggVComment':
-                tags['tagtype'] = 'OggVComment' #Vorbis Comment (Ogg)
+                tags['tagtype'] = 'OggVComment'  # Vorbis Comment (Ogg)
             elif tag_name == 'VCFLACDict':
-                tags['tagtype'] = 'VCFLACDict' #Vorbis Comment (FLAC)
+                tags['tagtype'] = 'VCFLACDict'  # Vorbis Comment (FLAC)
             elif tag_name == 'ASFTags':
-                tags['tagtype'] = 'ASFTags' #Windows Media Audio
+                tags['tagtype'] = 'ASFTags'  # Windows Media Audio
             else:
                 tags['tagtype'] = tag_name
-            
+
         # Cover Art
         if file_type == '.mp3' and audio_for_info:
             tags['has_art'] = 'Yes' if any(k.startswith('APIC') for k in audio_for_info.keys()) else 'No'
@@ -265,8 +289,8 @@ def parse(path, file_type, tags, name, mode='lightweight'):
             tags['has_art'] = 'Yes' if len(audio_for_info.pictures) > 0 else 'No'
         elif file_type in {'.m4a', '.alac', '.m4b'} and audio_for_info:
             tags['has_art'] = 'Yes' if 'covr' in audio_for_info.keys() else 'No'
-                
-    except Exception as e:
+
+    except Exception:
         pass
 
     return tags

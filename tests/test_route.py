@@ -13,20 +13,23 @@ import os
 
 MEDIA_DIR = "./media"
 
+
 @bottle.route('/media/<filepath:path>')
 def serve_media(filepath):
     print("ROUTE CALLED WITH:", filepath)
     ext = filepath.lower()
     if ext.endswith('.alac') or ext.endswith('.m4a'):
-        full_path = os.path.join(MEDIA_DIR, filepath)
+        os.path.join(MEDIA_DIR, filepath)
         cache_dir = os.path.join(MEDIA_DIR, '.cache')
         os.makedirs(cache_dir, exist_ok=True)
         return "ALAC handled"
     return "Not ALAC"
 
+
 def run_eel():
     eel.init('web')
     eel.start('index.html', mode=None, size=(100, 100), port=8082, block=False)
+
 
 t = threading.Thread(target=run_eel, daemon=True)
 t.start()
@@ -37,5 +40,5 @@ try:
     print("Response:", res)
 except Exception as e:
     print("Error:", e)
-    
+
 print("Cache exists:", os.path.exists("./media/.cache"))
