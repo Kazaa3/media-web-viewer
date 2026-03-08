@@ -42,10 +42,13 @@ class EnvironmentManager:
         self.venv_path = self.project_root / ".venv"
         self.is_debug = "--debug" in sys.argv
 
+    def is_conda(self) -> bool:
+        """Check if running in a Conda environment."""
+        return 'CONDA_PREFIX' in os.environ or os.environ.get('CONDA_DEFAULT_ENV') is not None
+
     def is_exclusive_venv(self) -> bool:
         """
-        Check if we are running in the project's own .venv.
-        Note: If running via Conda (p14), we might allow it if it's explicitly allowed.
+        Check if we are running in the project's own .venv or an allowed Conda env.
         """
         in_venv = sys.prefix != sys.base_prefix
         # Normalize paths for comparison
@@ -58,7 +61,8 @@ class EnvironmentManager:
             
         # Fallback for active Conda environments if they are named p14 (as per user setup)
         conda_env = os.environ.get('CONDA_DEFAULT_ENV')
-        if conda_env == 'p14':
+        if self.is_conda():
+            # If it's a conda env, we allow it (e.g., p14)
             return True
             
         return False
@@ -93,7 +97,7 @@ class EnvironmentManager:
             
         return errors
 
-    def get_missing_info(self):
+    def get_missing_info(self) -> tuple[list[str], list[str]]:
         """Returns (missing_pip_list, missing_apt_list)"""
         missing_pip = []
         missing_apt = []
@@ -149,8 +153,16 @@ class EnvironmentManager:
             print("\n❌ CRITICAL: Environment Integrity Check Failed", file=sys.stderr)
             for err in dep_errors:
                 print(f"   - {err}", file=sys.stderr)
-            print("\n   👉 Fix: Run './run.sh' to automatically install all dependencies.", file=sys.stderr)
-            print("   (Or use './run.sh --rebuild' to recreate the environment from scratch)", file=sys.stderr)
+            
+            fix_cmd = "./run.sh"
+            installer_hint = "automatically install all dependencies"
+            if self.is_conda():
+                installer_hint += " via conda/apt"
+            else:
+                installer_hint += " via pip/apt"
+                
+            print(f"\n   👉 Fix: Run '{fix_cmd}' to {installer_hint}.", file=sys.stderr)
+            print(f"   (Or use '{fix_cmd} --rebuild' to recreate the environment from scratch)", file=sys.stderr)
             sys.exit(1)
 
         if self.is_debug:
