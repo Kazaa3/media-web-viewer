@@ -2142,13 +2142,15 @@ mypy --strict parsers/ models.py
 
 **Packaging & Reinstall Verification:**
 ```bash
-# Verify all version references from VERSION_SYNC.json
+# Full release pipeline (recommended)
+python build_system.py --pipeline
+
+# Full pipeline including destructive reinstall validation
+python build_system.py --pipeline --destructive
+
+# Manual verification commands (optional)
 python tests/test_version_sync.py
-
-# Verify package build/reinstall checks (safe default)
 python tests/test_reinstall_deb.py
-
-# Optional destructive end-to-end check (purge + reinstall)
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
 

@@ -16,11 +16,19 @@ This version is automatically loaded and used across:
 - .deb package metadata (`packaging/DEBIAN/control`) – automatically updated by `build_deb.sh`
 - Build scripts (`build_deb.sh`)
 - Application GUI (Help/About/Footer)
+- Linux start menu entry (`packaging/usr/share/applications/media-web-viewer.desktop`)
+
+Version synchronization is validated via `VERSION_SYNC.json` (currently 11 tracked locations) and:
+
+```bash
+python tests/test_version_sync.py
+```
 
 To update the version:
 1. Edit the `VERSION` file in the project root.
-2. Run `bash build_deb.sh` to build the package with the new version.
-3. The documentation and application will reflect the change automatically.
+2. Run `python tests/test_version_sync.py` and resolve any mismatches.
+3. Run `bash build_deb.sh` to build the package with the new version.
+4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
 ---
 
 ## Table of Contents
@@ -227,7 +235,7 @@ The .deb package follows Debian standards:
 - `DEBIAN/prerm`: Pre-removal script (e.g., for cleanup)
 - `opt/media-web-viewer/`: The complete application code
 - `usr/bin/media-web-viewer`: Start script in PATH
-- `usr/share/applications/media-web-viewer.desktop`: Desktop menu entry
+- `usr/share/applications/media-web-viewer.desktop`: Desktop menu entry (shows app version in name)
 
 ### Installation and Usage
 
@@ -469,11 +477,18 @@ sudo apt purge media-web-viewer
 ```
 media-web-viewer/
 │
+├── VERSION                  # Master semantic version (single source of truth)
+├── VERSION_SYNC.json        # Version synchronization map (11 tracked locations)
 ├── main.py                  # Entry point, Eel setup, backend API functions
 ├── models.py                # MediaItem class with parsing and transcoding logic
 ├── db.py                    # SQLite database operations
+├── logger.py                # Logging configuration/helpers
+├── env_handler.py           # Environment/session handling
 ├── requirements.txt         # Python package dependencies
+├── environment.yml          # Conda environment definition
+├── pyproject.toml           # Project tooling configuration
 ├── DEPENDENCIES.md          # Complete dependency list with licenses
+├── INSTALL.md               # Installation guide
 ├── LICENSE.md               # GNU General Public License v3
 │
 ├── parsers/                 # Metadata extraction pipeline
@@ -492,14 +507,16 @@ media-web-viewer/
 │   ├── i18n.json            # German/English localization strings
 │   └── __init__.py
 │
-├── tests/                   # pytest unit test suite
-│   ├── test_*.py            # Individual test modules
-│   ├── parser_tests/        # Parser-specific tests
-│   └── integration_tests/   # End-to-end tests
+├── tests/                   # Automated validation suite
+│   ├── test_version_sync.py # Validates VERSION_SYNC.json tracked locations
+│   ├── test_reinstall_deb.py# .deb build/reinstall verification tests
+│   └── test_*.py            # Additional functional/unit/integration tests
 │
 ├── logbuch/                 # Development logbook (Markdown)
 │   ├── 01_Features.md       # Feature descriptions with bilingual titles
 │   ├── 00_Known_Issues.md   # Current and resolved issues
+│   ├── 53_Version_Synchronization_System.md # Version sync system docs
+│   ├── 54_Documentation_Completion_v132.md  # Latest documentation completion
 │   └── *.py                 # Scripts for logbook management
 │
 ├── packaging/               # .deb package structure
@@ -510,11 +527,18 @@ media-web-viewer/
 │   ├── opt/media-web-viewer/# Application files
 │   └── usr/
 │       ├── bin/             # Executable launcher
-│       └── share/           # Desktop integration
+│       └── share/           # Desktop integration (.desktop entry)
 │
 ├── build_deb.sh             # Script to build .deb package
+├── reinstall_deb.sh         # Purge old package + install newly built .deb
+├── build_system.py          # Unified build/test/lint workflow entry
 ├── build.py                 # PyInstaller build script
 ├── MediaWebViewer.spec      # PyInstaller specification
+├── install_launcher.sh      # Global launcher installation helper
+├── run.sh                   # Local launcher helper
+├── docs/                    # Generated/static documentation output
+├── build/                   # Build artifacts and staging outputs
+├── dist/                    # Distribution outputs (e.g., PyInstaller)
 │
 └── media/                   # Default media library directory (user-writable)
     └── .cache/              # Transcoded file cache
@@ -2115,6 +2139,20 @@ mypy --strict parsers/ models.py
 2. Pass all tests (>80% coverage)
 3. Update documentation
 4. Write descriptive commit messages
+
+**Packaging & Reinstall Verification:**
+```bash
+# Verify all version references from VERSION_SYNC.json
+python tests/test_version_sync.py
+
+# Verify package build/reinstall checks (safe default)
+python tests/test_reinstall_deb.py
+
+# Optional destructive end-to-end check (purge + reinstall)
+RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
+```
+
+The destructive mode runs `reinstall_deb.sh` and should be used only on systems where replacing the current installation is intended.
 
 ---
 

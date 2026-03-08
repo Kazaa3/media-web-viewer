@@ -352,6 +352,58 @@ class BuildSystem:
         
         return success
 
+    def run_pipeline(self, destructive: bool = False) -> bool:
+        """
+        Run release pipeline checks and build artifacts.
+
+        Pipeline steps:
+        1) Environment check
+        2) Version sync validation
+        3) Build Debian package
+        4) Reinstall validation tests (safe)
+        5) Optional destructive reinstall validation
+        """
+        self._print_banner(f"Release Pipeline - v{self.version}")
+
+        print(f"Destructive checks: {destructive}\n")
+
+        if not self.check_environment():
+            print("❌ Environment check failed")
+            return False
+
+        print("▶ Step 1/4: Version synchronization check")
+        if not self._run_command([sys.executable, "tests/test_version_sync.py"]):
+            print("\n❌ Version sync failed")
+            return False
+
+        print("▶ Step 2/4: Build Debian package")
+        if not self.build_debian_package():
+            print("\n❌ Debian build failed")
+            return False
+
+        print("▶ Step 3/4: Reinstall validation (safe)")
+        if not self._run_command([sys.executable, "tests/test_reinstall_deb.py"]):
+            print("\n❌ Reinstall validation failed")
+            return False
+
+        if destructive:
+            print("▶ Step 4/4: Reinstall validation (destructive)")
+            cmd = [
+                "bash",
+                "-lc",
+                f"RUN_DESTRUCTIVE_TESTS=1 {sys.executable} tests/test_reinstall_deb.py"
+            ]
+            if not self._run_command(cmd):
+                print("\n❌ Destructive reinstall validation failed")
+                return False
+        else:
+            print("▶ Step 4/4: Destructive reinstall validation skipped")
+
+        self._print_banner("✅ Pipeline Complete")
+        print(f"Version: {self.version}")
+        print("All pipeline steps passed.")
+        return True
+
 
 def main():
     """Main entry point for build system CLI."""
@@ -366,6 +418,8 @@ Examples:
   %(prog)s --build pyinstaller       Build PyInstaller executable
   %(prog)s --build all               Build all targets
   %(prog)s --full-build              Full build with tests
+    %(prog)s --pipeline                Run release pipeline (sync + build + reinstall tests)
+    %(prog)s --pipeline --destructive  Include destructive reinstall test
   %(prog)s --clean                   Clean build artifacts
   %(prog)s --clean-all               Deep clean (includes dist/)
         """
@@ -405,6 +459,18 @@ Examples:
         "--full-build",
         action="store_true",
         help="Complete build process (test + check + build)"
+    )
+
+    parser.add_argument(
+        "--pipeline",
+        action="store_true",
+        help="Run release pipeline (version sync, deb build, reinstall validation)"
+    )
+
+    parser.add_argument(
+        "--destructive",
+        action="store_true",
+        help="Enable destructive checks (used with --pipeline)"
     )
     
     parser.add_argument(
@@ -469,6 +535,9 @@ Examples:
     
     if args.full_build:
         success = build_sys.full_build(target="deb", skip_tests=args.skip_tests) and success
+
+    if args.pipeline:
+        success = build_sys.run_pipeline(destructive=args.destructive) and success
     
     return 0 if success else 1
 
