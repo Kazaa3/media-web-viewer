@@ -205,6 +205,49 @@ media-web-viewer/
 
 ---
 
+## Technology Tree
+
+Hierarchische Übersicht aller Systemschichten und Abhängigkeiten:
+
+```
+Media Web Viewer (v1.1.20)
+├── Frontend Layer
+│   ├── HTML5/CSS3 (Responsive Design, Glassmorphism)
+│   ├── Vanilla JavaScript (EEL Integration, Event Handling)
+│   └── i18n System (German/English, JSON-based localization)
+├── EEL Bridge
+│   ├── WebSocket Communication (@eel.expose decorators)
+│   ├── JSON Serialization (Python dict ↔ JS object)
+│   └── Callback Handling (Async/await patterns)
+├── Backend (Python 3.11+)
+│   ├── Eel Framework (Desktop GUI bridge)
+│   ├── Bottle Web Server (API routes, media streaming)
+│   ├── Threading Support (Background tasks, indexing)
+│   └── Exception Handling (Graceful error propagation)
+├── Data Processing
+│   ├── Parser Pipeline (Filename → Container → Mutagen → FFmpeg → pymediainfo)
+│   ├── Transcoding Engine (ALAC/WMA → FLAC/OGG conversion)
+│   ├── Category Detection (Smart media classification)
+│   └── Cover Art Extraction (Embedded images from containers)
+├── Data Persistence
+│   ├── SQLite Database (media_library.db with JSON columns)
+│   ├── JSON Config Files (settings.json, cache files)
+│   └── Debug Flags (Per-module configuration)
+├── System Integration
+│   ├── .deb Packaging (Debian/Ubuntu distribution)
+│   ├── FFmpeg Integration (Media transcoding, fallback parsing)
+│   ├── Tkinter Dialogs (File browser, system integration)
+│   └── File System Access (Media directory scanning)
+└── Development & Testing
+    ├── pytest Framework (Unit tests, fixtures)
+    ├── Coverage Tools (Code coverage reports)
+    ├── Black Formatter (PEP 8 code style)
+    ├── Flake8 Linter (Code quality checks)
+    └── Git Version Control (Change tracking)
+```
+
+---
+
 ## Parser Pipeline
 
 Each parser receives the current `tags` dict and only fills in missing values – it never overwrites data already found by an earlier parser.
@@ -216,6 +259,146 @@ Each parser receives the current `tags` dict and only fills in missing values �
 | 3 | `mutagen_parser` | Mutagen lib | ID3/MP4/Vorbis tags, bitrate, samplerate, cover detection |
 | 4 | `ffmpeg_parser` | FFmpeg CLI | Container format, codec, bit depth (fallback) |
 | 5 | `pymediainfo_parser` | pymediainfo | Supplementary / missing metadata |
+
+---
+
+## Player Tab
+
+### Übersicht
+Der Player Tab ist die Hauptoberfläche zum Durchsuchen und Abspielen deiner Mediathek. Er besteht aus mehreren Bereichen:
+
+### Itemlist (Linkes Panel)
+- **Funktion:** Zeigt alle verfügbaren Mediendateien in sortierter Liste
+- **Suche:** Suchfeld zum Filtern nach Titel, Künstler, Album
+- **Sortierung:** Nach Titel, Künstler, Hinzugefügt, Dauer
+- **Kategorisierung:** Visuelle Symbole (🎵 Audio, 💿 Album, 📚 Hörbuch, etc.)
+- **Kontextmenü:** Rechtsklick für Optionen (Wiedergeben, Löschen, Eigenschaften)
+
+### Player Controls (Unteres Panel)
+- **Play/Pause:** Spacebar oder Button zum Starten/Pausieren
+- **Navigation:** Nächster/Vorheriger Track (N/P oder Buttons)
+- **Fortschrittsleiste:** Klickbar zum Spulen, zeigt aktuelle/Gesamtdauer
+- **Lautstärke:** Slider (0-100%) mit +/- Tasten oder Mausrad
+- **Wiedergabemodus:** Repeat (Off/One/All), Shuffle
+
+### Premium Sidebar (Rechts)
+- **Cover Art:** Großes Albumcover aus Metadaten extrahiert
+- **Now Playing:** Aktueller Titel, Künstler, Album
+- **Track Info:** Dauer, Bitrate, Sample Rate, Codec
+- **Related Items:** Andere Tracks des gleichen Künstlers/Albums
+- **Playlist Info:** Aktuelle Playlist + Anzahl verbleibender Tracks
+
+### Now Playing Footer
+- **Track Name & Artist:** Ständig sichtbar beim Scrollen
+- **Mini-Controls:** Play/Pause, Next, Volume im Footer
+- **Progress:** Kleine Fortschrittsleiste mit Zeit
+- **Status Indicator:** Transkodierungsstatus, Buffering
+
+### Playback Features
+- **Continuous Playback:** Auto-Play nächster Track nach Abschluss
+- **Repeat Modes:** Off (keine Wiederholung) | One (Track wiederholen) | All (Playlist wiederholen)
+- **Shuffle:** Randomisierte Wiedergabereihenfolge
+- **Transcoding Indicator:** Sichtbarer Status bei ALAC/WMA-Konvertierung
+- **Error Handling:** Sichtbare Fehler bei unzugänglichen Dateien
+
+### Playlist Management
+- **Create Playlist:** Neuer Eintrag via "New Playlist" Button
+- **Add to Playlist:** Drag-and-drop oder Kontextmenü
+- **Save/Load:** Playlists lokal speichern (JSON-Format)
+- **Edit:** Einträge neu ordnen oder entfernen
+- **Delete:** Komplette Playlist löschen (mit Bestätigung)
+
+### Keyboard Shortcuts
+| Taste | Funktion |
+|-------|----------|
+| `Space` | Play/Pause |
+| `N` | Nächster Track |
+| `P` | Vorheriger Track |
+| `M` | Shuffle toggle |
+| `+` / `-` | Lautstärke (+/-) |
+| `Delete` | Aus Playlist entfernen |
+| `Ctrl+S` | Playlist speichern |
+| `Ctrl+L` | Playlist laden |
+| `?` | Shortcuts anzeigen |
+
+---
+
+## Wording & Terminology
+
+Einheitliche Terminologie für konsistente Dokumentation und UI-Texte.
+
+### UI Elements
+- **Itemlist**: Die Liste alle Mediendateien (linkes Panel)
+- **Item Modal**: Detailansicht mit bearbeitbaren Feldern (Popup)
+- **Player Footer**: Ständig sichtbarer Player unterhalb des Inhalts
+- **Premium Sidebar**: Rechtes Panel mit Cover Art und Metadaten
+- **Browse Tab**: Datei-Browser zum Hinzufügen von Verzeichnissen
+- **Options Tab**: Einstellungen für Scanner, Parser, Datenbank
+- **Logbook Tab**: Entwicklungs-Log und Features-Dokumentation
+
+### Media Categories
+- **🎵 Audio**: Einzelne Musikdatei ohne Album-Kontext
+- **💿 Album**: Musik mit Album-Metadaten (mehrere Tracks)
+- **💿 Single**: Musik mit mehreren Versionen (Remix, Cover, live)
+- **🔀 Compilation**: Verschiedene Künstler, erkannt via "Various Artists"
+- **🎻 Klassik**: Klassische Musik (Komponisten wie Beethoven, Mozart)
+- **📚 Hörbuch**: .m4b oder lange MP3-Dateien mit Kapitelstruktur
+- **🎬 Film/Serie**: Video-Dateien, erkannt via Dateiname oder Container
+- **📄 E-Book**: PDF, EPUB oder andere Dokumente
+
+### Technical Terms
+- **Container**: Audio/Video-Format der Datei (MP3, M4A, FLAC, etc.)
+- **Codec**: Algorithmus zum Komprimieren/Dekomprimieren von Daten
+- **Parser**: Komponente zum Extrahieren von Metadaten aus Dateien
+- **Transcoding**: Umwandlung von ALAC/WMA → FLAC/OGG für Browser
+- **Tag**: Metadaten-Feld (Title, Artist, Album, etc.)
+- **Bitrate**: Datenrate in kbps (kilobits pro Sekunde)
+- **Sample Rate**: Audio-Abtastfrequenz in Hz (44.1 kHz, 48 kHz, etc.)
+- **Cover Art**: Albumcover als eingebettetes Bild
+
+### Action Buttons
+- **Scan Now**: Startet sofortige Medien-Indizierung
+- **Add Directory**: Fügt neues Verzeichnis zum Scanner hinzu
+- **Play**: Startet Wiedergabe des ausgewählten Tracks
+- **Create Playlist**: Neue leere Playlist erstellen
+- **Save Changes**: Speichert Änderungen in Item Modal
+- **Delete**: Löscht Item aus Datenbank
+- **Test Stream**: Startet Test-Transkodierung
+- **Analyze**: Startet detaillierte Metadaten-Analyse
+
+---
+
+## Item Modal (Detail View)
+
+Detailansicht mit Metadaten für einzelne Mediendateien.
+
+### Read-Only Fields (Informationen)
+- **File Name**: Original-Dateiname
+- **File Path**: Vollständiger Dateipfad
+- **File Size**: Größe in MB
+- **Duration**: Länge des Tracks
+- **Container**: Format (MP3, M4A, FLAC, etc.)
+- **Codec**: Audio-Algorithmus (MP3, AAC, FLAC, etc.)
+- **Bitrate**: kbps (z.B. 320 kbps)
+- **Sample Rate**: Hz (z.B. 44100 Hz)
+- **Parser Times**: Dauer jedes Parser-Schritts (zur Performance-Analyse)
+
+### Editable Fields (Metadaten)
+- **Title**: Lied-/Kapitel-Titel
+- **Artist**: Künstler-Name
+- **Album**: Album-Name
+- **Year**: Veröffentlichungsjahr (YYYY)
+- **Genre**: Musikgenre (Rock, Pop, Pop, Jazz, etc.)
+- **Track**: Track-Nummer (z.B. 5 von 12)
+- **Disc**: Disc-Nummer bei Multi-CD (z.B. 1 von 2)
+- **Comments**: Beliebige Notizen (als JSON gespeichert)
+
+### Functional Buttons
+- **Save Changes**: Speichert alle Außenbearbeitungen
+- **Test Stream**: Testet Transkodierung (falls ALAC/WMA)
+- **Analyze**: Triggert vollständige Metadaten-Neu-Analyse
+- **Delete**: Entfernt Item komplett aus Datenbank (irreversibel)
+- **Cancel**: Bricht Änderungen ab
 
 ---
 
@@ -238,6 +421,155 @@ Files with ALAC or WMA codec cannot be played natively in browsers. The app dete
 - The "Danger Zone" in Options allows for:
     - **Clear DB**: Only empties the media database.
     - **App Reset**: Restores factory settings by deleting the database and config files.
+
+---
+
+## Standards & Good Practice
+
+Diese Sektion beschreibt Entwicklungsstandards und Best Practices für Contributions zu Media Web Viewer.
+
+### Code Style
+
+**Python (Backend):**
+- **Formatter:** Black (line length: 88 characters)
+- **Linter:** Flake8 (E501 line length disabled für Black)
+- **Type Hints:** Empfohlen für Function Signatures
+- **Docstrings:** Google-style docstrings für alle Functions
+- **Naming:** `snake_case` für Functions/Variables, `PascalCase` für Klassen
+
+```python
+# Best Practice Beispiel
+def extract_metadata(file_path: Path, mode: str = 'lightweight') -> dict:
+    """
+    Extract metadata from media file.
+    
+    Args:
+        file_path: Path to media file
+        mode: Parsing mode ('lightweight' oder 'full')
+        
+    Returns:
+        Dictionary containing metadata tags
+    """
+    tags = {}
+    # Implementation
+    return tags
+```
+
+**JavaScript/Frontend:**
+- **Format:** Semicolons und 2-space indentation
+- **Naming:** `camelCase` für Variables/Functions
+- **i18n:** Immer Lokalisierungs-Keys für User-facing Strings nutzen
+- **Comments:** `//` für inline comments
+
+```javascript
+// Best Practice Beispiel
+async function loadMediaLibrary() {
+    try {
+        const items = await eel.get_all_media()();
+        renderItemlist(items);
+    } catch (error) {
+        console.error('Failed to load library:', error);
+    }
+}
+```
+
+### Architecture Patterns
+
+**Parser Chain Pattern:**
+- Nie bestehende Metadaten überschreiben
+- Immer `if key not in tags` vor dem Hinzufügen prüfen
+- Modified tags dict zurückgeben
+- Beide `lightweight` und `full` Modi unterstützen
+
+**Database Operations:**
+- Parameterized Queries nutzen (SQL-Injection verhindern)
+- JSON Serialisierung/Deserialisierung immer handhaben
+- Proper error handling mit try/except
+- Database Operations im debug mode loggen
+
+**EEL Function Exposure:**
+- `@eel.expose` Decorator für alle Backend-Functions
+- JSON-serializable data zurückgeben (dicts, lists, primitives)
+- Error handling mit bedeutungsvollen Error Messages
+- Function signatures in Comments dokumentieren
+
+### Testing & Quality Assurance
+
+**Unit Tests:**
+- Tests in `tests/` directory schreiben
+- pytest Framework mit fixtures für Setup
+- Ziel: >80% code coverage
+- Sowohl success als auch failure cases testen
+
+```bash
+# Tests mit Coverage laufen
+pytest tests/ --cov=. --cov-report=html
+```
+
+**Code Quality Checks:**
+```bash
+# Format code mit Black
+black --line-length 88 .
+
+# Style check mit Flake8
+flake8 --max-line-length=88 .
+
+# Type checking mit mypy
+mypy --strict parsers/ models.py
+```
+
+**Vor dem Commit:**
+1. Alle code quality tools laufen
+2. Alle tests bestehen (>80% coverage)
+3. Dokumentation aktualisiert
+4. Aussagekräftige commit messages schreiben
+
+### Configuration Management
+
+**Configuration Files:**
+- Alle settings in JSON files speichern (nicht hardcoded)
+- Klare, beschreibende Key-Namen nutzen
+- Comments für komplexe Settings
+- Version schema, wenn Struktur ändert
+
+**Environment Variables:**
+- Für sensitive data (API keys, credentials) nutzen
+- Prefix mit `MEDIA_WEB_VIEWER_` für clarity
+- Alle environment variables in README dokumentieren
+
+### Documentation Standards
+
+**Markdown Files:**
+- ATX-style headings nutzen (`#`, `##`, etc.)
+- Code examples für komplexe Topics
+- Konsistente Terminologie (siehe Wording section)
+- Lines <100 characters für Readability halten
+
+**Docstrings:**
+- Public functions und classes dokumentieren
+- Type hints in docstring
+- Usage examples für komplexe functions
+- Related functions mit Links referenzieren
+
+### Error Handling
+
+**Best Practices:**
+- Spezifische exceptions catchen, nicht generic `Exception`
+- Errors mit appropriate severity level loggen
+- User-friendly error messages in UI
+- Debugging information für developers
+
+```python
+# Best Practice
+try:
+    result = parse_media(file_path)
+except FileNotFoundError:
+    logger.error(f"File not found: {file_path}")
+    raise UserError("Media file not found")
+except Exception as e:
+    logger.exception(f"Unexpected error parsing {file_path}: {e}")
+    raise
+```
 
 ---
 

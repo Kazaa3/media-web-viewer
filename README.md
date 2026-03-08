@@ -33,7 +33,7 @@ Media Web Viewer
 > Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.1.14_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
@@ -67,7 +67,7 @@ If you previously ran the app from source or want to reset all settings, note th
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall the clean version
-sudo dpkg -i media-web-viewer_1.1.14_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 
 # 3. Fix dependencies if needed
 sudo apt-get install -f
@@ -111,7 +111,7 @@ python main.py
 
 ```bash
 bash build_deb.sh
-sudo dpkg -i media-web-viewer_1.1.14_amd64.deb
+sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 ```
 
 ---
@@ -210,6 +210,6 @@ Files with ALAC or WMA codec cannot be played natively in browsers. The app dete
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for the full license text.
+This project is licensed under the GNU General Public License v3 (GPL-3.0). See [LICENSE.md](LICENSE.md) for the full license text.
 
 The MIT License is a permissive open-source license that allows you to use, modify, and distribute the software freely, as long as the original copyright notice and license are included in all copies or substantial portions of the software.
