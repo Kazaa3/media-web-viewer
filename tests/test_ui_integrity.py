@@ -76,6 +76,14 @@ class TestUIIntegrity(unittest.TestCase):
         for call_id in calls:
             self.assertIn(call_id, valid_keys, f"switchTab called with unknown ID '{call_id}'")
 
+    def test_sync_indicator_elements(self):
+        """
+        @test Verify that the sync indicator elements exist.
+        @details Checks for sync-indicator, sync-dot, and sync-text IDs.
+        """
+        for sid in ["sync-indicator", "sync-dot", "sync-text"]:
+            self.assertIn(f'id="{sid}"', self.content, f"Sync indicator ID '{sid}' missing")
+
     def test_sidebar_split_ids(self):
         """Ensure splitter and sidebar IDs used in JS exist in HTML."""
         required_ids = ["main-sidebar", "main-splitter", "main-split-container"]

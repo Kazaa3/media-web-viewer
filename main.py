@@ -342,6 +342,14 @@ def get_default_media_dir():
 
 
 @eel.expose
+def ping():
+    """
+    @brief Connectivity check.
+    @details Gibt eine Bestätigung zurück, dass das Backend erreichbar ist.
+    @return dict with status 'ok' and message 'pong'.
+    """
+    return {"status": "ok", "message": "pong"}
+
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
