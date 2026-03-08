@@ -949,6 +949,45 @@
                                     <strong>System:</strong> <span id="env-platform">-</span>
                                 </div>
                             </div>
+
+                            <!-- Conda Environments -->
+                            <div style="margin-top: 20px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">🐍 Conda Umgebungen</h4>
+                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- System Python Installations -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">🌐 System Python Installationen</h4>
+                                <div id="system-pythons-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Virtual Environments -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">📁 Lokale Virtual Environments</h4>
+                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Installed Packages -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                    📦 Installierte Pakete 
+                                    <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
+                                </h4>
+                                <div style="margin-bottom: 8px;">
+                                    <input type="text" id="package-search" placeholder="Paket suchen..." 
+                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;">
+                                </div>
+                                <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
@@ -2542,9 +2581,132 @@
                 } else {
                     statusEl.style.color = '#f4d';
                 }
+
+                // Display Conda Environments
+                const condaList = document.getElementById('conda-environments-list');
+                if (info.available_conda_environments && info.available_conda_environments.length > 0) {
+                    let condaHtml = '<div style="font-family: monospace;">';
+                    info.available_conda_environments.forEach(env => {
+                        const isCurrent = info.env_type === 'conda' && info.env_name === env.name;
+                        const isRecommended = env.recommended;
+                        const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
+                        const recBadge = isRecommended ? '<span style="color: #f80; font-weight: bold;">⭐ EMPFOHLEN</span>' : '';
+                        
+                        condaHtml += `
+                            <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
+                                <div style="font-weight: bold; color: #333;">${env.name} ${currentBadge} ${recBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${env.version}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${env.path}</div>
+                            </div>
+                        `;
+                    });
+                    condaHtml += '</div>';
+                    condaList.innerHTML = condaHtml;
+                } else {
+                    condaList.innerHTML = '<span style="color: #999;">Keine Conda-Umgebungen gefunden</span>';
+                }
+
+                // Display System Python Installations
+                const systemList = document.getElementById('system-pythons-list');
+                if (info.available_system_pythons && info.available_system_pythons.length > 0) {
+                    let systemHtml = '<div style="font-family: monospace;">';
+                    info.available_system_pythons.forEach(python => {
+                        systemHtml += `
+                            <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
+                                <div style="color: #666; font-size: 0.9em;">${python.version}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path}</div>
+                            </div>
+                        `;
+                    });
+                    systemHtml += '</div>';
+                    systemList.innerHTML = systemHtml;
+                } else {
+                    systemList.innerHTML = '<span style="color: #999;">Keine System-Python-Installationen gefunden</span>';
+                }
+
+                // Display Local Virtual Environments
+                const venvsList = document.getElementById('local-venvs-list');
+                if (info.local_venvs && info.local_venvs.length > 0) {
+                    let venvsHtml = '<div style="font-family: monospace;">';
+                    info.local_venvs.forEach(venv => {
+                        const isCurrent = venv.is_current;
+                        const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
+                        
+                        venvsHtml += `
+                            <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
+                                <div style="font-weight: bold; color: #333;">${venv.name} ${currentBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${venv.version}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path}</div>
+                            </div>
+                        `;
+                    });
+                    venvsHtml += '</div>';
+                    venvsList.innerHTML = venvsHtml;
+                } else {
+                    venvsList.innerHTML = '<span style="color: #999;">Keine lokalen Virtual Environments gefunden</span>';
+                }
+
+                // Display Installed Packages
+                const packagesList = document.getElementById('installed-packages-list');
+                const packageCount = document.getElementById('package-count');
+                
+                if (info.installed_packages && info.installed_packages.length > 0) {
+                    packageCount.textContent = `(${info.installed_packages.length})`;
+                    
+                    // Store packages globally for search functionality
+                    window.allPackages = info.installed_packages;
+                    
+                    // Initial render
+                    renderPackages(info.installed_packages);
+                    
+                    // Setup search
+                    const searchInput = document.getElementById('package-search');
+                    searchInput.addEventListener('input', (e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        if (searchTerm === '') {
+                            renderPackages(window.allPackages);
+                        } else {
+                            const filtered = window.allPackages.filter(pkg => 
+                                pkg.name.toLowerCase().includes(searchTerm) ||
+                                (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
+                            );
+                            renderPackages(filtered);
+                        }
+                    });
+                } else {
+                    packageCount.textContent = '(0)';
+                    packagesList.innerHTML = '<span style="color: #999;">Keine Pakete gefunden</span>';
+                }
+                
             } catch (e) {
                 console.error("Failed to load environment info:", e);
             }
+        }
+
+        function renderPackages(packages) {
+            const packagesList = document.getElementById('installed-packages-list');
+            
+            if (packages.length === 0) {
+                packagesList.innerHTML = '<span style="color: #999;">Keine passenden Pakete gefunden</span>';
+                return;
+            }
+            
+            let packagesHtml = '<table style="width: 100%; border-collapse: collapse;">';
+            packagesHtml += '<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Paket</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Version</th></tr></thead>';
+            packagesHtml += '<tbody>';
+            
+            packages.forEach((pkg, index) => {
+                const bgColor = index % 2 === 0 ? '#fff' : '#f5f5f5';
+                packagesHtml += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 4px 8px; border-bottom: 1px solid #eee;">${pkg.name}</td>
+                        <td style="padding: 4px 8px; border-bottom: 1px solid #eee; color: #666;">${pkg.version}</td>
+                    </tr>
+                `;
+            });
+            
+            packagesHtml += '</tbody></table>';
+            packagesList.innerHTML = packagesHtml;
         }
 
         function toggleDebugMenu() {

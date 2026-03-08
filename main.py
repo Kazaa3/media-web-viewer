@@ -256,9 +256,59 @@ def get_environment_info():
         
         return sorted(pythons, key=lambda x: x["version"])
     
+    def _get_installed_packages():
+        """Get list of installed packages in current environment."""
+        packages = []
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "list", "--format=json"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                packages_data = json.loads(result.stdout)
+                # Sort by name
+                packages = sorted(packages_data, key=lambda x: x["name"].lower())
+        except Exception as e:
+            logging.warning(f"Failed to get installed packages: {e}")
+        return packages
+    
+    def _find_local_venvs():
+        """Find local venv directories in common locations."""
+        venvs = []
+        venv_names = [".venv", "venv", "env", ".env"]
+        
+        # Check project directory
+        project_dir = Path(__file__).parent
+        for venv_name in venv_names:
+            venv_path = project_dir / venv_name
+            if venv_path.exists() and (venv_path / "bin" / "python").exists():
+                python_exe = venv_path / "bin" / "python"
+                try:
+                    result = subprocess.run(
+                        [str(python_exe), "--version"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2
+                    )
+                    version = result.stdout.strip() or result.stderr.strip()
+                    venvs.append({
+                        "name": venv_name,
+                        "path": str(venv_path),
+                        "version": version,
+                        "is_current": str(venv_path) == env_path
+                    })
+                except Exception:
+                    pass
+        
+        return venvs
+    
     # Discover available environments (cached/fast)
     conda_envs = _get_conda_environments()
     system_pythons = _get_system_pythons()
+    installed_packages = _get_installed_packages()
+    local_venvs = _find_local_venvs()
     
     # ===== Build Response =====
     return {
@@ -285,6 +335,11 @@ def get_environment_info():
         # Alternative Environments (Discovery Results)
         "available_conda_environments": conda_envs,
         "available_system_pythons": system_pythons,
+        "local_venvs": local_venvs,
+        
+        # Installed Packages
+        "installed_packages": installed_packages,
+        "package_count": len(installed_packages),
         
         # Recommendations
         "recommended_environment": {
