@@ -1785,7 +1785,7 @@ DATABASE (DB)
 
 ```bash
 # 1. Clone and enter directory
-git clone https://github.com/kaaza3/media-web-viewer.git
+git clone https://github.com/Kazaa3/media-web-viewer.git
 cd media-web-viewer
 
 # 2. Create virtual environment
@@ -2413,7 +2413,7 @@ git push origin main
 git push origin --delete feature/db-playlists
 
 # Example output:
-# To https://github.com/Kazaa3/gui_media_web_viewer.git
+# To https://github.com/Kazaa3/media-web-viewer.git
 #  - [deleted]         feature/db-playlists
 
 # Try to delete remote master branch
@@ -2431,7 +2431,7 @@ Fehler: Fehler beim Versenden einiger Referenzen
 **Cause:** The `master` branch is still the **default branch** on GitHub/GitLab.
 
 **Solution - Change Default Branch on GitHub:**
-1. Go to GitHub repository: `https://github.com/yourusername/gui_media_web_viewer`
+1. Go to GitHub repository: `https://github.com/yourusername/media-web-viewer`
 2. Click **Settings** tab
 3. Click **Branches** in left sidebar
 4. Under "Default branch", click the switch icon ↔️
@@ -2452,6 +2452,19 @@ git branch -a
 # * main
 #   remotes/origin/main
 #   remotes/public-origin/main
+```
+
+**Migration Status (8. März 2026):**
+- Old repository `Kazaa3/gui_media_web_viewer` was deleted.
+- Canonical repository is now `Kazaa3/media-web-viewer`.
+- Only `main` branch remains on the active remote.
+- Full commit history is preserved in `main`.
+
+**Current Verification Commands:**
+```bash
+git remote -v
+git branch -a
+git ls-remote --symref origin HEAD
 ```
 
 **Common Branch Management Commands:**
@@ -2543,8 +2556,8 @@ Screens/
 **Scenario 1: Fresh Clone**
 ```bash
 # After cloning repository
-git clone https://github.com/kazaa3/gui_media_web_viewer.git
-cd gui_media_web_viewer
+git clone https://github.com/Kazaa3/media-web-viewer.git
+cd media-web-viewer
 
 # No binaries present - this is normal!
 ls *.deb
@@ -2618,7 +2631,7 @@ ls media-web-viewer_*.deb
 # Instead use GitHub Releases for distribution
 
 # Option A: Manual upload to GitHub Releases
-# 1. Go to https://github.com/kazaa3/gui_media_web_viewer/releases
+# 1. Go to https://github.com/Kazaa3/media-web-viewer/releases
 # 2. Click "Create a new release"
 # 3. Upload the .deb file
 # 4. Add release notes
@@ -2703,8 +2716,8 @@ mv media-web-viewer_1.2.23_build.tar.gz ~/releases/
 **Complete rebuild from scratch:**
 ```bash
 # 1. Clone fresh repository
-git clone https://github.com/kazaa3/gui_media_web_viewer.git
-cd gui_media_web_viewer
+git clone https://github.com/Kazaa3/media-web-viewer.git
+cd media-web-viewer
 
 # 2. Install system dependencies
 sudo apt install ffmpeg libmediainfo0v5 python3-tk python3-dev build-essential python3-venv
@@ -2822,7 +2835,7 @@ jobs:
 
 **Developer:** kazaa3  
 **Location:** Germany  
-**Repository:** https://github.com/kaaza3/media-web-viewer
+**Repository:** https://github.com/Kazaa3/media-web-viewer
 
 ---
 
