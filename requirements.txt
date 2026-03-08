@@ -47,3 +47,4 @@ psutil>=5.9.0                  # BSD 3-Clause License - System and process utili
 future>=1.0.0                  # BSD 2-Clause License - Python 2/3 compatibility
 chardet>=5.0.0                 # LGPL License - Universal character encoding detector
 setuptools>=75.1.0             # MIT License - Installation and package management
+pyautogui>=0.9.54              # BSD License - GUI automation

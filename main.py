@@ -23,6 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 from models import MediaItem
 import db
 import eel
+import logging
 import sys
 import os
 import time
@@ -99,16 +100,32 @@ DEBUG_FLAGS = {
     "web": False
 }
 
-# Initialize logging early
-DEBUG_MODE = "--debug" in sys.argv
-logger.setup_logging(DEBUG_MODE)
+def initialize_debug_flags(args=None):
+    """
+    @brief Initializes debug mode and flags based on CLI arguments.
+    """
+    if args is None:
+        args = sys.argv
+    
+    debug_mode = "--debug" in args
+    logger.setup_logging(debug_mode)
+    
+    if debug_mode:
+        for key in DEBUG_FLAGS:
+            DEBUG_FLAGS[key] = True
+        logger.set_debug_flags(DEBUG_FLAGS)
+        logging.info("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+    else:
+        logger.set_debug_flags(DEBUG_FLAGS)
+
+# Initialize logging early with default sys.argv
+initialize_debug_flags()
 
 
 def debug_log(message: str) -> None:
     """
     @brief Universal logging helper (bridged to central logging system).
     """
-    import logging
     logging.info(message)
     # Eel callback if front-end is already listening
     try:
@@ -121,11 +138,7 @@ def debug_log(message: str) -> None:
 if DEBUG_FLAGS["start"]:
     debug_log("[Startup] main.py loading...")
 
-# Full Debug Mode: If --debug argument is passed, set all flags to True
-if "--debug" in sys.argv:
-    for key in DEBUG_FLAGS:
-        DEBUG_FLAGS[key] = True
-    debug_log("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+# Removed redundant debug flag processing (now in initialize_debug_flags)
 
 
 @eel.expose
@@ -379,8 +392,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
     count: int = 0
     for scan_root in scan_roots:
-        if DEBUG_FLAGS.get("scan"):
-            debug_log(f"\n[Scan] Starting scan of: {scan_root}")
+        logger.debug("scan", f"Starting scan of: {scan_root}")
 
         # Rekursiv suchen, um Medien in Unterordnern zu finden
         for f in scan_root.rglob('*'):
@@ -394,18 +406,15 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
                     continue
 
-                if DEBUG_FLAGS["scan"]:
-                    debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
+                logger.debug("scan", f"Verarbeite: {f.name}")
                 try:
-                    item = MediaItem(f.name, f, debug_flags=DEBUG_FLAGS, logger=debug_log)
+                    item = MediaItem(f.name, f)
                     item_dict = item.to_dict()
-                    if DEBUG_FLAGS["db"]:
-                        debug_log(f"[DB-Insert] {f.name} (Category: {item_dict.get('category')}) from {f.parent}")
+                    logger.debug("db", f"{f.name} (Category: {item_dict.get('category')}) from {f.parent}")
                     db.insert_media(item_dict)
                     count += 1
                 except Exception as e:
-                    if DEBUG_FLAGS["scan"]:
-                        debug_log(f"[Debug-Scan] Fehler bei {f.name}: {e}")
+                    logger.debug("scan", f"Fehler bei {f.name}: {e}")
                     # Ignoriere problematische Dateien, aber setze das Logging fort
                     continue
 
@@ -413,8 +422,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         eel.set_db_status(False)()
 
     elapsed = time.time() - start_time
-    if DEBUG_FLAGS.get("scan"):
-        debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
+    logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
 
     # Status in GUI ausblenden (redundant, already handled by guard above)
 
@@ -506,7 +514,7 @@ def open_in_explorer(path_str):
     """
     path_obj = Path(path_str)
     if not path_obj.exists():
-        print("Existiert nicht")
+        logging.warning("[FileExplorer] Path does not exist / Pfad existiert nicht")
         return {"error": "Nicht gefunden"}
 
     try:
@@ -522,7 +530,7 @@ def open_in_explorer(path_str):
             subprocess.run(['xdg-open', str(path_obj.parent)])
         return {"status": "ok"}
     except Exception as e:
-        print(f"Fehler beim Oeffnen: {e}")
+        logging.error(f"[FileExplorer] Error opening path / Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
 
 
@@ -576,7 +584,7 @@ def pick_folder():
         root.destroy()
         return folder_path if folder_path else None
     except Exception as e:
-        print(f"[Error] Folder picker failed: {e}")
+        logging.error(f"[System] Folder picker failed: {e}")
         return None
 
 
@@ -1108,7 +1116,7 @@ if __name__ == "__main__":
     try:
         eel.start("app.html", size=(1450, 800), block=False, port=0)
     except Exception as e:
-        print(f"[Startup-Error] eel.start failed: {e}")
+        logging.error(f"[Startup-Error] eel.start failed: {e}")
 
     # Server am Leben halten
     while True:
