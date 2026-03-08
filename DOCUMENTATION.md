@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.1.19  
+**Version:** 1.2.22  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.1.19
+1.2.22
 ```
 
 This version is automatically loaded and used across:
@@ -88,17 +88,22 @@ To update the version:
 ### 🔧 Developer & Testing Tools
 - **Test Suite:** Integrated pytest runner directly in the UI
 - **Debug Tools:** Real-time log viewer with configurable debug flags
+- **Environment Monitor:** Python version, virtual environment status, and system info displayed in Options tab
 - **Logbook System:** Built-in development documentation and feature tracking in Markdown (Planning/Planung, All/Alle, summary texts in both languages)
 - **Parser Performance Metrics:** Track timing and efficiency of each metadata parser
 - **Features Modal:** Refactored GUI for displaying feature updates and development notes (auto-loads from logbuch/ if files missing)
 
   - **English:** Latest feature updates and development notes
   - **Deutsch:** Neueste Feature-Updates und Entwicklungsnotizen
+
 ### 📦 System Integration
 - **Native Packaging:** Full `.deb` package for seamless Debian/Ubuntu installation
 - **Automatic Dependency Resolution:** Missing system libraries are auto-installed via apt
 - **Virtual Environment Isolation:** Optional self-contained Python environment
 - **Desktop Integration:** Desktop menu entry and system file dialogs via Tkinter
+- **Dual File Picker API:** 
+  - GUI-based file/folder selection with native OS dialogs (Tkinter)
+  - CLI-based alternatives for SSH/headless environments (no GUI dependencies)
 
 ---
 
@@ -136,7 +141,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.1.18_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -187,7 +192,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.1.18_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -1028,6 +1033,26 @@ const result = await eel.export_playlist_to_vlc(mediaNames, '/home/user/export.m
 console.log(`Exported to: ${result.path}`);
 ```
 
+### File Picker API (GUI - Tkinter)
+
+#### `pick_folder()`
+Opens a native folder selection dialog using Tkinter.
+
+**Returns:**
+- (str): Selected folder path or `None` if cancelled
+
+**Example:**
+```javascript
+const folder = await eel.pick_folder()();
+if (folder) {
+    console.log('Selected folder:', folder);
+}
+```
+
+**System Requirements:**
+- Requires `python3-tk` system package on Linux
+- Native OS dialogs (GTK on Linux, Aqua on macOS, Win32 on Windows)
+
 #### `pick_file(title: str, filetypes: list)`
 Opens a native file picker dialog (Tkinter-based).
 
@@ -1065,6 +1090,118 @@ const savePath = await eel.pick_save_file(
     'my_playlist.m3u8'
 )();
 ```
+
+### File Picker API (CLI - No GUI Dependencies)
+
+#### `pick_folder_cli(prompt: str)`
+Terminal-based folder selection without GUI dependencies (SSH/Headless compatible).
+
+**Parameters:**
+- `prompt` (str): Input prompt text (default: "Ordnerpfad eingeben")
+
+**Returns:**
+- (str): Validated folder path or `None` if cancelled/invalid
+
+**Example:**
+```python
+folder = pick_folder_cli("Bitte Scan-Verzeichnis angeben")
+# User sees:
+# > Bitte Scan-Verzeichnis angeben:
+# > (Standard: /home/user)
+# > /path/to/folder
+```
+
+**Features:**
+- Validates folder existence
+- Supports `~` for home directory (via `expanduser()`)
+- Keyboard interrupt handling (Ctrl+C)
+- Only Python stdlib (no tkinter required)
+
+#### `pick_file_cli(prompt: str, extensions: list)`
+Terminal-based file selection with optional extension filter.
+
+**Parameters:**
+- `prompt` (str): Input prompt text
+- `extensions` (list): Optional list of allowed extensions (e.g., `['.m3u8', '.m3u']`)
+
+**Returns:**
+- (str): Validated file path or `None`
+
+**Example:**
+```python
+file = pick_file_cli("Playlist importieren", ['.m3u8', '.m3u'])
+# User sees:
+# > Playlist importieren (Erlaubte Formate: .m3u8, .m3u):
+# > /home/user/playlist.m3u8
+```
+
+**Features:**
+- Validates: file exists, is a file, has correct extension
+- Case-insensitive extension check
+- User feedback on validation errors
+
+#### `pick_save_file_cli(prompt: str, default_name: str, extensions: list)`
+Terminal-based save file dialog with overwrite protection.
+
+**Parameters:**
+- `prompt` (str): Input prompt text
+- `default_name` (str): Default filename if user presses Enter
+- `extensions` (list): Optional list of allowed extensions
+
+**Returns:**
+- (str): Save path or `None`
+
+**Example:**
+```python
+path = pick_save_file_cli("Playlist exportieren", "library.m3u8", ['.m3u8'])
+# User sees:
+# > Playlist exportieren (Formate: .m3u8):
+# > (Standard: library.m3u8)
+# > /home/user/export.m3u8
+# > Datei 'export.m3u8' existiert. Überschreiben? (j/n): j
+```
+
+**Features:**
+- Automatic extension addition if missing
+- Overwrite confirmation for existing files
+- Directory creation prompt if parent doesn't exist
+- Empty input uses default filename
+
+### System Information API
+
+#### `get_environment_info()`
+Returns detailed information about the Python runtime environment.
+
+**Returns:**
+```python
+{
+    "python_version": "3.11.2",
+    "python_executable": "/opt/media-web-viewer/.venv/bin/python3",
+    "python_prefix": "/opt/media-web-viewer/.venv",
+    "python_base_prefix": "/usr",
+    "in_venv": True,                      # Boolean: virtual environment active
+    "venv_path": "/opt/media-web-viewer/.venv",  # or None
+    "platform": "Linux-6.1.0-amd64-x86_64-with-glibc2.36",
+    "platform_system": "Linux",
+    "platform_release": "6.1.0"
+}
+```
+
+**Example:**
+```javascript
+const env = await eel.get_environment_info()();
+console.log(`Python ${env.python_version}`);
+console.log(`Virtual Env: ${env.in_venv ? 'Yes' : 'No'}`);
+if (env.venv_path) {
+    console.log(`venv Path: ${env.venv_path}`);
+}
+```
+
+**Use Cases:**
+- Debugging deployment issues
+- Displaying environment info in Options tab
+- Verifying virtual environment activation
+- System diagnostics
 
 ### VLC Player Control
 
@@ -1297,7 +1434,7 @@ if debug and mode == 'full':
 
 ### Verification
 
-1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.1.19_amd64.deb`
+1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.2.22_amd64.deb`
 
 2. **UI Verification:** Version 1.1.19 displayed correctly, Feature Modal shows latest entry 42_Wording.
 
@@ -2013,7 +2150,7 @@ Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellunge
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
 
 # 3. Abhängigkeiten bei Bedarf reparieren
 sudo apt-get install -f
@@ -2214,18 +2351,18 @@ git config --global user.email "kazaa3@example.com"
 
 ---
 
-**Last Updated:** 7. März 2026  
-**Current Version:** 1.1.19
+**Last Updated:** 8. März 2026  
+**Current Version:** 1.2.22
 
 ---
 
 ## Verification
 
 ### Build Verification
-Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.1.19_amd64.deb`
+Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.2.22_amd64.deb`
 
 ### UI Verification
-The version 1.1.19 is correctly displayed in the application and the Feature Modal shows the latest entry 42_Wording.
+The version 1.2.22 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43) and File-Picker API (44).
 
 ---
 
