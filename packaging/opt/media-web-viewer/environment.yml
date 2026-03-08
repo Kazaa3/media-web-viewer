@@ -1,0 +1,25 @@
+name: media-web-viewer
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - ffmpeg
+  - mediainfo
+  - doxygen
+  - graphviz
+  - pip
+  - pip:
+    - eel
+    - bottle
+    - bottle-websocket
+    - mutagen
+    - pymediainfo
+    - gevent
+    - gevent-websocket
+    - psutil
+    - future
+    - chardet
+    - pytest
+    - pytest-cov
+    - doxypy

@@ -28,6 +28,10 @@ DB_DIR = Path.home() / ".media-web-viewer"
 DB_FILENAME = str(DB_DIR / "media_library.db")
 
 def init_db():
+    """
+    @brief Initializes the SQLite database and creates necessary tables.
+    @details Initialisiert die SQLite-Datenbank und erstellt die notwendigen Tabellen.
+    """
     DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -42,7 +46,11 @@ def init_db():
             category TEXT,
             is_transcoded BOOLEAN,
             transcoded_format TEXT,
-            tags TEXT
+            tags TEXT,
+            extension TEXT,
+            container TEXT,
+            tag_type TEXT,
+            codec TEXT
         )
     """)
 
@@ -63,17 +71,30 @@ def init_db():
         )
     """)
 
-    # Migration: Add category column if missing (for existing databases)
-    try:
-        cursor.execute("ALTER TABLE media ADD COLUMN category TEXT")
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass # Already exists
+    # Migration: Add columns if missing (for existing databases)
+    new_columns = [
+        ("category", "TEXT"),
+        ("extension", "TEXT"),
+        ("container", "TEXT"),
+        ("tag_type", "TEXT"),
+        ("codec", "TEXT")
+    ]
+    for col_name, col_type in new_columns:
+        try:
+            cursor.execute(f"ALTER TABLE media ADD COLUMN {col_name} {col_type}")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Already exists
 
     conn.commit()
     conn.close()
 
 def get_known_media_names():
+    """
+    @brief Retrieves all media names already present in the database.
+    @details Ruft alle bereits in der Datenbank vorhandenen Mediennamen ab.
+    @return A set of media names / Ein Set mit Mediennamen.
+    """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -83,18 +104,27 @@ def get_known_media_names():
     return names
 
 def clear_media():
+    """
+    @brief Deletes all entries from the media table.
+    @details Löscht alle Einträge aus der Tabelle 'media'.
+    """
     conn = sqlite3.connect(DB_FILENAME)
     conn.execute("DELETE FROM media")
     conn.commit()
     conn.close()
 
 def insert_media(item_dict):
+    """
+    @brief Inserts a new media item into the database.
+    @details Fügt ein neues Medien-Item in die Datenbank ein.
+    @param item_dict Metadata dictionary / Dictionary mit Metadaten.
+    """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            INSERT INTO media (name, path, type, duration, category, is_transcoded, transcoded_format, tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO media (name, path, type, duration, category, is_transcoded, transcoded_format, tags, extension, container, tag_type, codec)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -103,7 +133,11 @@ def insert_media(item_dict):
             item_dict.get('category', 'Audio'),
             item_dict['is_transcoded'],
             item_dict.get('transcoded_format'),
-            json.dumps(item_dict['tags'])
+            json.dumps(item_dict['tags']),
+            item_dict.get('extension'),
+            item_dict.get('container'),
+            item_dict.get('tag_type'),
+            item_dict.get('codec')
         ))
         conn.commit()
     except sqlite3.IntegrityError:
@@ -112,6 +146,11 @@ def insert_media(item_dict):
         conn.close()
 
 def get_all_media():
+    """
+    @brief Retrieves all media items from the database.
+    @details Ruft alle Medien-Items aus der Datenbank ab.
+    @return List of media dictionaries / Liste von Medien-Dictionaries.
+    """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     conn.row_factory = sqlite3.Row
@@ -127,6 +166,10 @@ def get_all_media():
             'type': row['type'],
             'duration': row['duration'],
             'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {}
@@ -135,15 +178,26 @@ def get_all_media():
     return media_list
 
 def get_media_path(name):
-    """Gibt den vollen Dateipfad für einen Mediennamen zurück."""
+    """
+    @brief Returns the full file path for a given media name.
+    @details Gibt den vollen Dateipfad für einen Mediennamen zurück.
+    @param name Media record name / Datenbank-Name.
+    @return Full filesystem path or None / Voller Pfad oder None.
+    """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     cursor.execute("SELECT path FROM media WHERE name = ?", (name,))
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else None
+
 def update_media_tags(name, tags_dict):
-    """Aktualisiert die Tags eines Medien-Items in der Datenbank."""
+    """
+    @brief Updates the tags of a media item in the database.
+    @details Aktualisiert die Tags eines Medien-Items in der Datenbank.
+    @param name Media record name / Datenbank-Name.
+    @param tags_dict New tags dictionary / Neues Dictionary mit Tags.
+    """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     cursor.execute("""
@@ -155,7 +209,13 @@ def update_media_tags(name, tags_dict):
     conn.close()
 
 def rename_media(old_name, new_name):
-    """Benennt ein Medium in der DB um (nur das Feld 'name')."""
+    """
+    @brief Renames a media item in the database.
+    @details Benennt ein Medium in der DB um.
+    @param old_name Current record name / Aktueller Name.
+    @param new_name New record name / Neuer Name.
+    @return Success status / Erfolgsstatus.
+    """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     try:
@@ -168,7 +228,11 @@ def rename_media(old_name, new_name):
         conn.close()
 
 def delete_media(name):
-    """Löscht ein Medium aus der DB."""
+    """
+    @brief Deletes a media item from the database.
+    @details Löscht ein Medium aus der DB.
+    @param name Media name / Medienname.
+    """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     try:
@@ -178,7 +242,11 @@ def delete_media(name):
         conn.close()
 
 def get_db_stats():
-    """Gibt Statistiken über die Datenbank zurück."""
+    """
+    @brief Returns statistics about the database.
+    @details Gibt Statistiken über die Datenbank zurück.
+    @return Stats dictionary / Dictionary mit Statistiken.
+    """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()

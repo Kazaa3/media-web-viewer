@@ -19,15 +19,19 @@ LOG_FILE = APP_DATA_DIR / "route_log.txt"
 CACHE_DIR = APP_DATA_DIR / "cache"
  
 def _log(msg):
-    try:
-        APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
-        with open(LOG_FILE, 'a') as f:
-            f.write(msg + "\n")
-    except Exception:
-        pass # Never crash due to logging failures
+    """
+    @brief Internal helper to log messages to the route log file.
+    @details Interner Helfer zum Loggen von Nachrichten in die Routen-Logdatei.
+    @param msg Message to log / Zu loggende Nachricht.
+    """
 
 def _resolve_path(filename):
-    """Resolve a filename to its full path via DB lookup, fallback to MEDIA_DIR."""
+    """
+    @brief Resolves a filename to its full filesystem path.
+    @details Auflöst einen Dateinamen in seinen vollen Pfad.
+    @param filename Name of the media file / Name der Datei.
+    @return Full path or None / Voller Pfad oder None.
+    """
     db_path = db.get_media_path(filename)
     if db_path:
         p = Path(db_path)
@@ -44,6 +48,12 @@ def log_request():
 
 @bottle.route('/media/<filepath:path>')
 def serve_media(filepath):
+    """
+    @brief Serves media files with optional on-the-fly transcoding.
+    @details Liefert Mediendateien aus, optional mit Live-Transkodierung (ALAC/WMA).
+    @param filepath Relative path or filename / Pfad oder Dateiname.
+    @return Static file or transcoding stream / Statische Datei oder Transkodierungs-Stream.
+    """
     mime_type, _ = mimetypes.guess_type(filepath)
     ext = filepath.lower()
     
@@ -108,6 +118,12 @@ def serve_media(filepath):
 
 @bottle.route('/cover/<filepath:path>')
 def serve_cover(filepath):
+    """
+    @brief Extracts and serves the embedded cover art from a media file.
+    @details Extrahiert und liefert das eingebettete Cover-Bild einer Mediendatei.
+    @param filepath Media filename or path / Medien-Dateiname oder Pfad.
+    @return Image data or 404 / Bilddaten oder 404.
+    """
     full_path = _resolve_path(filepath)
     if not full_path or not full_path.exists():
         return bottle.HTTPError(404, "File not found")
@@ -150,6 +166,12 @@ def serve_cover(filepath):
 
 @bottle.error(500)
 def error500(error):
+    """
+    @brief Custom 500 error handler with debug logging.
+    @details Benutzerdefinierter HTML 500 Fehler-Handler mit Debug-Logging.
+    @param error Error object / Fehler-Objekt.
+    @return Error message string / Fehlermeldungs-String.
+    """
     import traceback
     with open("/tmp/media_viewer_500.log", "a") as f:
         f.write("\n--- ERROR 500 ---\n")

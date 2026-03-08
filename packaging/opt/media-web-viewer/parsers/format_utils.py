@@ -23,7 +23,10 @@ PARSER_CONFIG = {
 }
 
 def load_parser_config():
-    """Loads parser configuration from disk."""
+    """
+    @brief Loads the parser configuration from the central JSON file.
+    @details Lädt die Parser-Konfiguration aus der zentralen JSON-Datei.
+    """
     global PARSER_CONFIG
     if CONFIG_FILE.exists():
         try:
@@ -38,7 +41,10 @@ def load_parser_config():
         save_parser_config()
 
 def save_parser_config():
-    """Saves parser configuration to disk."""
+    """
+    @brief Saves the current parser configuration to disk.
+    @details Speichert die aktuelle Parser-Konfiguration auf der Festplatte.
+    """
     try:
         os.makedirs(CONFIG_FILE.parent, exist_ok=True)
         with open(CONFIG_FILE, 'w') as f:
@@ -51,9 +57,10 @@ load_parser_config()
 
 def natural_sort_key(text):
     """
-    Helper for natural/numeric sorting. 
-    "Kapitel 2" comes before "Kapitel 10".
-    Handles None and numbers gracefully by converting all parts to (is_digit, value).
+    @brief Generates a key for natural/numeric sorting (e.g., 'Track 2' < 'Track 10').
+    @details Erzeugt einen Schlüssel für natürliche/numerische Sortierung.
+    @param text input string or number / Eingabe-String oder Zahl.
+    @return A list of sortable parts / Eine Liste sortierbarer Teile.
     """
     if text is None: return []
     if isinstance(text, (int, float)): return [(True, text)]
@@ -78,7 +85,12 @@ EBOOK_EXTENSIONS = {
 }
 
 def format_samplerate(hz):
-    """Standardizes sample rate display (e.g., 44100 -> 44.1 kHz)."""
+    """
+    @brief Standardizes sample rate display (e.g., 44100 -> 44.1 kHz).
+    @details Normalisiert die Anzeige der Samplerate.
+    @param hz Sample rate in Hz.
+    @return Formatted string (e.g., '44.1 kHz').
+    """
     try:
         hz = float(hz)
         khz = hz / 1000
@@ -88,8 +100,11 @@ def format_samplerate(hz):
 
 def format_codec(raw_codec, track_info=None):
     """
-    Standardizes codec naming.
-    Force lowercase for most, but uppercase PCM with details if track_info provided.
+    @brief Standardizes codec naming (lowercase, PCM details).
+    @details Normalisiert Codec-Namen (Kleinschreibung, PCM-Details).
+    @param raw_codec Raw codec string from parser / Roh-Codec-String.
+    @param track_info Optional PyMediainfo track object for PCM details / Optionales Track-Objekt für PCM-Details.
+    @return Standardized codec string / Normalisierter Codec-String.
     """
     if not raw_codec:
         return ""
@@ -121,7 +136,13 @@ def format_codec(raw_codec, track_info=None):
     return codec_map.get(codec, codec)
 
 def format_container(raw_container, file_type=None):
-    """Standardizes container naming."""
+    """
+    @brief Standardizes container naming (e.g., 'matroska' -> 'mkv').
+    @details Normalisiert Container-Namen.
+    @param raw_container Raw container string / Roh-Container-String.
+    @param file_type Optional extension for fallback / Optionale Extension für Fallback.
+    @return Standardized container string / Normalisierter Container-String.
+    """
     container = str(raw_container).lower().strip() if raw_container else ""
 
     if not container and file_type:
@@ -151,9 +172,14 @@ def format_container(raw_container, file_type=None):
     return container_map.get(container, container)
 
 def format_tagtype(raw_tagtype):
-    """Standardizes meta tag object types into human readable formats."""
+    """
+    @brief Standardizes meta tag types into human-readable formats (e.g., 'MP4Tags' -> 'm4tags').
+    @details Normalisiert Metadaten-Tag-Typen.
+    @param raw_tagtype Raw tag type string / Roh-Tagtyp-String.
+    @return Standardized tag type / Normalisierter Tagtyp.
+    """
     if not raw_tagtype:
-        return ""
+        return "plain"
         
     tag = str(raw_tagtype).strip()
     
@@ -163,10 +189,11 @@ def format_tagtype(raw_tagtype):
         
     tag_map = {
         'ID3': 'ID3',
-        'MP4Tags': 'MP4Tags',
-        'OggVComment': 'Vorbis Comment (Ogg)',
-        'VCFLACDict': 'Vorbis Comment (FLAC)',
-        'ASF': 'ASF',
+        'MP4Tags': 'm4tags',
+        'OggVComment': 'vorbis comment',
+        'VCFLACDict': 'vorbis comment',
+        'ASF': 'asf',
+        'ASFTags': 'asf',
         'APETag': 'APEv2'
     }
     
@@ -174,8 +201,13 @@ def format_tagtype(raw_tagtype):
 
 def format_bitdepth(bit_depth, codec=None, file_type=None, internal_fmt=None):
     """
-    Standardizes bit depth display.
-    Handles PCM mappings (e.g., 24-bit -> 24 Bit (s32)) and lossy fallbacks.
+    @brief Standardizes bit depth display (e.g., '24 Bit (s32)', '16 Bit (lossy)').
+    @details Normalisiert die Anzeige der Bit-Tiefe.
+    @param bit_depth Raw bit depth / Roh-Bittiefe.
+    @param codec Optional codec for context / Optionaler Codec.
+    @param file_type Optional extension for lossy detection / Optionale Extension für Lossy-Erkennung.
+    @param internal_fmt Optional FFmpeg internal format / Optionales FFmpeg-Internes Format.
+    @return Formatted bit depth string / Formatierter Bittiefe-String.
     """
     if not bit_depth:
         # Check for lossy extensions if bitdepth is missing

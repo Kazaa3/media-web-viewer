@@ -2,6 +2,15 @@ import re
 from pathlib import Path
 
 def parse(path, filename, tags=None, mode='lightweight'):
+    """
+    @brief Extracts metadata from the filename (e.g., 'Artist - Title').
+    @details Extrahiert Metadaten aus dem Dateinamen (z.B. 'Artist - Title').
+    @param path Absolute filesystem path / Absoluter Dateipfad.
+    @param filename Current working filename / Aktueller Dateiname.
+    @param tags Existing tags dictionary / Vorhandene Tags.
+    @param mode Extraction mode / Extraktionsmodus.
+    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
+    """
     if tags is None:
         tags = {
             'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
