@@ -1,19 +1,48 @@
+# ============================================================================
+# Media Web Viewer - .gitignore
+# ============================================================================
+
 # --- Python ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.so
 .Python
+*.py[cod]
+*$py.class
+
+# --- Testing ---
 .pytest_cache/
-.mypy_cache/
+.tox/
 .coverage
+.coverage.*
 htmlcov/
 .cache/
+coverage.xml
+*.cover
+.hypothesis/
+nosetests.xml
+test-results/
+junit.xml
+
+# --- Type Checking & Linting ---
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
 
 # --- Virtual Environments ---
 venv/
 env/
 .venv/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Conda ---
+.conda/
+*.conda
 
 # --- IDEs and Editors ---
 .idea/
@@ -21,30 +50,114 @@ env/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
 
 # --- Operating System ---
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
 # --- Packaging and Build ---
 build/
 dist/
+*.egg-info/
+*.egg
+*.whl
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- PyInstaller ---
 *.spec
+*.manifest
+
+# --- Debian Packages ---
 *.deb
-packaging/opt/media-web-viewer/media/
-packaging/opt/media-web-viewer/Screens/
+*.deb.*
+
+# Packaging staging directory (exclude compiled app during build)
+packaging/opt/
+!packaging/opt/.gitkeep
+
+# Keep DEBIAN control files and launcher
+!packaging/DEBIAN/
+!packaging/usr/
 
 # --- Documentation ---
 docs/html/
 docs/latex/
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
 
-# --- Project Specific ---
+# --- Logs ---
+*.log
+logs/
+logs/*.txt
+*.log.*
+app.log
+app.log.*
+
+# --- Database Files ---
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# --- Project Specific Media & Data ---
 media/*
 !media/.gitkeep
-media_library.db
-*.db
+!media/README.md
 Screens/
-*.log
-media/route_log.txt
+screenshots/
+
+# --- User Data Directory ---
+.media-web-viewer/
+
+# --- Environment & Config ---
 .env
-logs/*.txt
+.env.*
+*.env
+
+# --- Temporary Files ---
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.cache
+
+# --- Build System Artifacts ---
+*.tar.gz
+*.zip
+*.rar
+
+# --- macOS ---
+.AppleDouble
+.LSOverride
+Icon
+
+# --- Windows ---
+$RECYCLE.BIN/
+
+# --- Generated Files ---
+VERSION.bak
+*.orig
+
+# Keep important files
+!.gitkeep
+!requirements.txt
+!environment.yml
+

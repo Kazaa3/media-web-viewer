@@ -414,6 +414,7 @@
             }
             if (tabId === 'options') {
                 if (typeof loadDebugFlags === 'function') loadDebugFlags();
+                if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
                 loadScanDirs();
             }
             if (tabId === 'edit') {
@@ -926,6 +927,69 @@
                                 data-i18n="options_debug_all_off">Alle Flags aus</button>
                         </div>
 
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                            <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">Python-Umgebung</h3>
+                            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_environment_desc">
+                                Informationen über die aktuell verwendete Python-Umgebung.</p>
+                            
+                            <div id="environment-info" style="background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 8px; font-size: 0.85em; font-family: monospace;">
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Python-Version:</strong> <span id="env-python-version">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Umgebung:</strong> <span id="env-venv-status">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Umgebungspfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
+                                </div>
+                                <div>
+                                    <strong>System:</strong> <span id="env-platform">-</span>
+                                </div>
+                            </div>
+
+                            <!-- Conda Environments -->
+                            <div style="margin-top: 20px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">🐍 Conda Umgebungen</h4>
+                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- System Python Installations -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">🌐 System Python Installationen</h4>
+                                <div id="system-pythons-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Virtual Environments -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">📁 Lokale Virtual Environments</h4>
+                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Installed Packages -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                    📦 Installierte Pakete 
+                                    <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
+                                </h4>
+                                <div style="margin-bottom: 8px;">
+                                    <input type="text" id="package-search" placeholder="Paket suchen..." 
+                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;">
+                                </div>
+                                <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;">Lade...</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
                             <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;"
                                 data-i18n="options_danger_zone">Gefahrenzone (Reset)
@@ -1159,6 +1223,58 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- VLC Playlist Import/Export Section -->
+                    <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                            📼 VLC Playlist Integration
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <!-- Import Section -->
+                            <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; border: 1px solid #b3d9ff;">
+                                <h4 style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em;">
+                                    📥 Import VLC Playlist
+                                </h4>
+                                <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
+                                    Importiere eine m3u8/m3u-Playlist aus VLC in deine Bibliothek.
+                                </p>
+                                <button onclick="importVLCPlaylist()"
+                                    style="width: 100%; padding: 12px 20px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+                                    <span>📂</span> <span data-i18n="vlc_import">Playlist importieren</span>
+                                </button>
+                                <div id="import-status" style="margin-top: 10px; font-size: 0.85em; padding: 8px; border-radius: 4px; display: none;"></div>
+                            </div>
+
+                            <!-- Export Section -->
+                            <div style="background: #fff8f0; padding: 20px; border-radius: 8px; border: 1px solid #ffd9b3;">
+                                <h4 style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em;">
+                                    📤 Export to VLC
+                                </h4>
+                                <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
+                                    Exportiere die gesamte Bibliothek als m3u8-Playlist für VLC.
+                                </p>
+                                <button onclick="exportToVLC()"
+                                    style="width: 100%; padding: 12px 20px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+                                    <span>💾</span> <span data-i18n="vlc_export">Als Playlist exportieren</span>
+                                </button>
+                                <div id="export-status" style="margin-top: 10px; font-size: 0.85em; padding: 8px; border-radius: 4px; display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #2a7;">
+                            <div style="font-weight: bold; font-size: 0.9em; color: #333; margin-bottom: 5px;">
+                                💡 Verwendung
+                            </div>
+                            <ul style="font-size: 0.85em; color: #666; margin: 5px 0; padding-left: 20px; line-height: 1.6;">
+                                <li><strong>Import:</strong> Wähle eine .m3u8 oder .m3u Playlist aus VLC und importiere alle Tracks in deine Bibliothek.</li>
+                                <li><strong>Export:</strong> Speichere alle Medien aus deiner Bibliothek als VLC-kompatible Playlist.</li>
+                                <li>Die exportierte Playlist kann in VLC geöffnet werden: <code style="background: #e8e8e8; padding: 2px 6px; border-radius: 3px;">Medien → Datei öffnen</code></li>
+                            </ul>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -2431,6 +2547,168 @@
             loadDebugFlags();
         }
 
+        async function loadEnvironmentInfo() {
+            try {
+                const info = await eel.get_environment_info()();
+                
+                document.getElementById('env-python-version').textContent = info.python_version;
+                
+                // Display environment type and status
+                let statusText = '';
+                let isActive = false;
+                
+                if (info.env_type === 'conda') {
+                    statusText = `✅ Ja (Conda: ${info.env_name || 'unknown'})`;
+                    isActive = true;
+                } else if (info.env_type === 'venv') {
+                    statusText = `✅ Ja (Venv: ${info.env_name || 'unknown'})`;
+                    isActive = true;
+                } else {
+                    statusText = '❌ Nein (System Python)';
+                    isActive = false;
+                }
+                
+                document.getElementById('env-venv-status').textContent = statusText;
+                document.getElementById('env-venv-path').textContent = info.env_path || '-';
+                document.getElementById('env-python-exec').textContent = info.python_executable;
+                document.getElementById('env-platform').textContent = `${info.platform_system} ${info.platform_release}`;
+                
+                // Color code the venv status
+                const statusEl = document.getElementById('env-venv-status');
+                if (isActive) {
+                    statusEl.style.color = '#2a7';
+                    statusEl.style.fontWeight = 'bold';
+                } else {
+                    statusEl.style.color = '#f4d';
+                }
+
+                // Display Conda Environments
+                const condaList = document.getElementById('conda-environments-list');
+                if (info.available_conda_environments && info.available_conda_environments.length > 0) {
+                    let condaHtml = '<div style="font-family: monospace;">';
+                    info.available_conda_environments.forEach(env => {
+                        const isCurrent = info.env_type === 'conda' && info.env_name === env.name;
+                        const isRecommended = env.recommended;
+                        const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
+                        const recBadge = isRecommended ? '<span style="color: #f80; font-weight: bold;">⭐ EMPFOHLEN</span>' : '';
+                        
+                        condaHtml += `
+                            <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
+                                <div style="font-weight: bold; color: #333;">${env.name} ${currentBadge} ${recBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${env.version}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${env.path}</div>
+                            </div>
+                        `;
+                    });
+                    condaHtml += '</div>';
+                    condaList.innerHTML = condaHtml;
+                } else {
+                    condaList.innerHTML = '<span style="color: #999;">Keine Conda-Umgebungen gefunden</span>';
+                }
+
+                // Display System Python Installations
+                const systemList = document.getElementById('system-pythons-list');
+                if (info.available_system_pythons && info.available_system_pythons.length > 0) {
+                    let systemHtml = '<div style="font-family: monospace;">';
+                    info.available_system_pythons.forEach(python => {
+                        systemHtml += `
+                            <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
+                                <div style="color: #666; font-size: 0.9em;">${python.version}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path}</div>
+                            </div>
+                        `;
+                    });
+                    systemHtml += '</div>';
+                    systemList.innerHTML = systemHtml;
+                } else {
+                    systemList.innerHTML = '<span style="color: #999;">Keine System-Python-Installationen gefunden</span>';
+                }
+
+                // Display Local Virtual Environments
+                const venvsList = document.getElementById('local-venvs-list');
+                if (info.local_venvs && info.local_venvs.length > 0) {
+                    let venvsHtml = '<div style="font-family: monospace;">';
+                    info.local_venvs.forEach(venv => {
+                        const isCurrent = venv.is_current;
+                        const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
+                        
+                        venvsHtml += `
+                            <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
+                                <div style="font-weight: bold; color: #333;">${venv.name} ${currentBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${venv.version}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path}</div>
+                            </div>
+                        `;
+                    });
+                    venvsHtml += '</div>';
+                    venvsList.innerHTML = venvsHtml;
+                } else {
+                    venvsList.innerHTML = '<span style="color: #999;">Keine lokalen Virtual Environments gefunden</span>';
+                }
+
+                // Display Installed Packages
+                const packagesList = document.getElementById('installed-packages-list');
+                const packageCount = document.getElementById('package-count');
+                
+                if (info.installed_packages && info.installed_packages.length > 0) {
+                    packageCount.textContent = `(${info.installed_packages.length})`;
+                    
+                    // Store packages globally for search functionality
+                    window.allPackages = info.installed_packages;
+                    
+                    // Initial render
+                    renderPackages(info.installed_packages);
+                    
+                    // Setup search
+                    const searchInput = document.getElementById('package-search');
+                    searchInput.addEventListener('input', (e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        if (searchTerm === '') {
+                            renderPackages(window.allPackages);
+                        } else {
+                            const filtered = window.allPackages.filter(pkg => 
+                                pkg.name.toLowerCase().includes(searchTerm) ||
+                                (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
+                            );
+                            renderPackages(filtered);
+                        }
+                    });
+                } else {
+                    packageCount.textContent = '(0)';
+                    packagesList.innerHTML = '<span style="color: #999;">Keine Pakete gefunden</span>';
+                }
+                
+            } catch (e) {
+                console.error("Failed to load environment info:", e);
+            }
+        }
+
+        function renderPackages(packages) {
+            const packagesList = document.getElementById('installed-packages-list');
+            
+            if (packages.length === 0) {
+                packagesList.innerHTML = '<span style="color: #999;">Keine passenden Pakete gefunden</span>';
+                return;
+            }
+            
+            let packagesHtml = '<table style="width: 100%; border-collapse: collapse;">';
+            packagesHtml += '<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Paket</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">Version</th></tr></thead>';
+            packagesHtml += '<tbody>';
+            
+            packages.forEach((pkg, index) => {
+                const bgColor = index % 2 === 0 ? '#fff' : '#f5f5f5';
+                packagesHtml += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 4px 8px; border-bottom: 1px solid #eee;">${pkg.name}</td>
+                        <td style="padding: 4px 8px; border-bottom: 1px solid #eee; color: #666;">${pkg.version}</td>
+                    </tr>
+                `;
+            });
+            
+            packagesHtml += '</tbody></table>';
+            packagesList.innerHTML = packagesHtml;
+        }
+
         function toggleDebugMenu() {
             const modal = document.getElementById('debug-flags-modal');
             if (modal.style.display === 'none') {
@@ -2952,7 +3230,206 @@
             if (e.key === 'Escape') {
                 document.getElementById('about-imprint-modal').style.display = 'none';
             }
-        });// Initial load: wait a tick for Eel WebSocket to connect, then load data
+        });
+
+        // ============ VLC Integration Functions ============
+        
+        async function importVLCPlaylist() {
+            const statusDiv = document.getElementById('import-status');
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#e3f2fd';
+            statusDiv.style.color = '#1565c0';
+            statusDiv.innerHTML = '⏳ Wähle eine m3u8/m3u Playlist aus...';
+
+            try {
+                const filePath = await eel.pick_file('VLC Playlist auswählen', [
+                    ['M3U8 Playlists', '*.m3u8'],
+                    ['M3U Playlists', '*.m3u'],
+                    ['Alle Dateien', '*.*']
+                ])();
+
+                if (!filePath) {
+                    statusDiv.style.display = 'none';
+                    return;
+                }
+
+                statusDiv.innerHTML = '⏳ Importiere Playlist...';
+
+                const result = await eel.import_vlc_playlist(filePath)();
+
+                if (result.error) {
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.color = '#c62828';
+                    statusDiv.innerHTML = `❌ Fehler: ${result.error}`;
+                } else {
+                    statusDiv.style.background = '#e8f5e9';
+                    statusDiv.style.color = '#2e7d32';
+                    const imported = result.count || 0;
+                    const skipped = (result.skipped || []).length;
+                    const errors = (result.errors || []).length;
+                    
+                    let msg = `✅ Import abgeschlossen!<br>`;
+                    msg += `📥 ${imported} neue Tracks importiert`;
+                    if (skipped > 0) msg += `<br>⏩ ${skipped} bereits vorhanden`;
+                    if (errors > 0) msg += `<br>⚠️ ${errors} Fehler`;
+                    
+                    statusDiv.innerHTML = msg;
+                    
+                    // Reload library to show new items
+                    if (imported > 0) {
+                        setTimeout(() => {
+                            if (typeof loadLibrary === 'function') loadLibrary();
+                            if (typeof refreshLibrary === 'function') refreshLibrary();
+                        }, 1000);
+                    }
+                }
+            } catch (e) {
+                statusDiv.style.background = '#ffebee';
+                statusDiv.style.color = '#c62828';
+                statusDiv.innerHTML = `❌ Fehler: ${e.message || e}`;
+            }
+        }
+
+        async function exportToVLC() {
+            const statusDiv = document.getElementById('export-status');
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fff8f0';
+            statusDiv.style.color = '#e67e22';
+            statusDiv.innerHTML = '⏳ Lade Bibliothek...';
+
+            try {
+                // Get all media from library
+                const library = await eel.get_library()();
+                const mediaNames = (library.media || []).map(item => item.name);
+
+                if (mediaNames.length === 0) {
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.color = '#c62828';
+                    statusDiv.innerHTML = '⚠️ Keine Medien in der Bibliothek';
+                    return;
+                }
+
+                statusDiv.innerHTML = '⏳ Wähle Speicherort...';
+
+                // Pick save location
+                const filePath = await eel.pick_save_file('Playlist speichern als', [
+                    ['M3U8 Playlist', '*.m3u8'],
+                    ['Alle Dateien', '*.*']
+                ], 'meine_playlist.m3u8')();
+
+                if (!filePath) {
+                    statusDiv.style.display = 'none';
+                    return;
+                }
+
+                statusDiv.innerHTML = '⏳ Exportiere Playlist...';
+
+                const result = await eel.export_playlist_to_vlc(mediaNames, filePath)();
+
+                if (result.error) {
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.color = '#c62828';
+                    statusDiv.innerHTML = `❌ Fehler: ${result.error}`;
+                } else {
+                    statusDiv.style.background = '#e8f5e9';
+                    statusDiv.style.color = '#2e7d32';
+                    const exported = result.exported || 0;
+                    const missing = (result.missing || []).length;
+                    
+                    let msg = `✅ Export abgeschlossen!<br>`;
+                    msg += `💾 ${exported} Tracks exportiert`;
+                    if (missing > 0) msg += `<br>⚠️ ${missing} nicht gefunden`;
+                    msg += `<br>📂 Datei: <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
+                    
+                    statusDiv.innerHTML = msg;
+                }
+            } catch (e) {
+                statusDiv.style.background = '#ffebee';
+                statusDiv.style.color = '#c62828';
+                statusDiv.innerHTML = `❌ Fehler: ${e.message || e}`;
+            }
+        }
+
+        // Video Player Functions
+        // currentVideoPath already declared at line 2041
+        let isVLCMode = false;
+
+        function updateVideoMode() {
+            const toggle = document.getElementById('video-mode-toggle');
+            const statusLabel = document.getElementById('video-mode-status');
+            const videoPlayer = document.getElementById('video-player');
+            const vlcBtn = document.getElementById('btn-open-vlc');
+            
+            isVLCMode = toggle.checked;
+            
+            if (isVLCMode) {
+                statusLabel.textContent = 'VLC';
+                statusLabel.style.color = '#f90';
+                videoPlayer.style.display = 'none';
+                vlcBtn.style.display = 'flex';
+            } else {
+                statusLabel.textContent = 'Browser';
+                statusLabel.style.color = '#2a7';
+                videoPlayer.style.display = 'block';
+                vlcBtn.style.display = 'none';
+            }
+        }
+
+        async function playVideoFile(path) {
+            currentVideoPath = path;
+            const videoPlayer = document.getElementById('video-player');
+            const placeholder = document.getElementById('video-placeholder');
+            const vlcInfo = document.getElementById('vlc-info');
+            const vlcCurrentFile = document.getElementById('vlc-current-file');
+            
+            if (isVLCMode) {
+                // Play in external VLC
+                const result = await eel.play_vlc(path)();
+                if (result.error) {
+                    alert('VLC Fehler: ' + result.error);
+                } else {
+                    videoPlayer.style.display = 'none';
+                    placeholder.style.display = 'none';
+                    vlcInfo.style.display = 'block';
+                    vlcCurrentFile.textContent = path;
+                }
+            } else {
+                // Play in embedded browser player
+                videoPlayer.src = `file://${path}`;
+                videoPlayer.style.display = 'block';
+                placeholder.style.display = 'none';
+                vlcInfo.style.display = 'none';
+                videoPlayer.play();
+            }
+        }
+
+        async function stopVideo() {
+            const videoPlayer = document.getElementById('video-player');
+            const placeholder = document.getElementById('video-placeholder');
+            const vlcInfo = document.getElementById('vlc-info');
+            
+            if (isVLCMode) {
+                await eel.stop_vlc()();
+            } else {
+                videoPlayer.pause();
+                videoPlayer.src = '';
+            }
+            
+            videoPlayer.style.display = 'none';
+            placeholder.style.display = 'flex';
+            vlcInfo.style.display = 'none';
+            currentVideoPath = null;
+        }
+
+        async function switchToVLC() {
+            if (currentVideoPath) {
+                await playVideoFile(currentVideoPath);
+            }
+        }
+
+        // ============ End VLC Functions ============
+
+        // Initial load: wait a tick for Eel WebSocket to connect, then load data
         setTimeout(function () {
             loadLibrary();
             loadParserConfig();

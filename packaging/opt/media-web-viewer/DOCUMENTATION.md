@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.1.19  
+**Version:** 1.2.23  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.1.19
+1.2.23
 ```
 
 This version is automatically loaded and used across:
@@ -37,6 +37,9 @@ To update the version:
 10. [Database Schema](#database-schema)
 11. [Configuration](#configuration)
 12. [Development](#development)
+    - [Standards & Good Practice](#standards--good-practice)
+    - [Testing & Quality Assurance](#testing--quality-assurance)
+    - [Dynamic Test Suite](#dynamic-test-suite)
 13. [Troubleshooting](#troubleshooting)
 14. [License](#license)
 
@@ -70,6 +73,7 @@ To update the version:
 - **Automatic Categorization:** Smart detection of Albums, Singles, Compilations, Classical music, and Audiobooks
 - **Cover Art Extraction:** Automatically detects and displays embedded album artwork
 - **On-Demand Transcoding:** ALAC → FLAC and WMA → OGG transcoding with intelligent caching
+- **VLC Integration:** Import VLC playlists (m3u8/m3u) into your library and export your library as VLC-compatible playlists
 
 ### 🧠 Metadata Intelligence
 - **Multi-Parser Pipeline:** Combines filename parsing, Mutagen, FFmpeg, and pymediainfo for maximum accuracy
@@ -87,17 +91,22 @@ To update the version:
 ### 🔧 Developer & Testing Tools
 - **Test Suite:** Integrated pytest runner directly in the UI
 - **Debug Tools:** Real-time log viewer with configurable debug flags
+- **Environment Monitor:** Python version, virtual environment status, and system info displayed in Options tab
 - **Logbook System:** Built-in development documentation and feature tracking in Markdown (Planning/Planung, All/Alle, summary texts in both languages)
 - **Parser Performance Metrics:** Track timing and efficiency of each metadata parser
 - **Features Modal:** Refactored GUI for displaying feature updates and development notes (auto-loads from logbuch/ if files missing)
 
   - **English:** Latest feature updates and development notes
   - **Deutsch:** Neueste Feature-Updates und Entwicklungsnotizen
+
 ### 📦 System Integration
 - **Native Packaging:** Full `.deb` package for seamless Debian/Ubuntu installation
 - **Automatic Dependency Resolution:** Missing system libraries are auto-installed via apt
 - **Virtual Environment Isolation:** Optional self-contained Python environment
 - **Desktop Integration:** Desktop menu entry and system file dialogs via Tkinter
+- **Dual File Picker API:** 
+  - GUI-based file/folder selection with native OS dialogs (Tkinter)
+  - CLI-based alternatives for SSH/headless environments (no GUI dependencies)
 
 ---
 
@@ -135,7 +144,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.1.18_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -156,7 +165,7 @@ Installation for development and customization:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/MasterX360/media-web-viewer.git
+git clone https://github.com/kazaa3/media-web-viewer.git
 cd media-web-viewer
 
 # 2. Create Python virtual environment
@@ -169,8 +178,9 @@ pip install -r requirements.txt
 # 4. Run the application
 python main.py
 
-# 5. Access via browser (usually opens automatically)
-# http://localhost:8888
+# 5. The browser opens automatically at http://localhost:<PORT>/app.html
+#    Each session uses a dynamically allocated port (e.g., 59713, 56071)
+#    This allows running multiple instances simultaneously without conflicts
 ```
 
 #### Option C: Build Your Own .deb Package
@@ -186,7 +196,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.1.18_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -275,15 +285,165 @@ By default, Media Web Viewer indexes files from `/opt/media-web-viewer/media/`. 
 3. Select your media folders
 4. Changes apply immediately with automatic re-indexing
 
-#### Debug Mode
+#### Debug & Test Modes
 
-Enable debug logging for troubleshooting:
+Enable debug logging for troubleshooting or run environment validation:
 
+**Debug Mode:**
 ```bash
 python main.py --debug
+# or via launcher:
+media-viewer --debug
+```
+This activates all debug flags and logs detailed information about parsing, system operations, and UI events.
+
+**Test Mode (Launcher only):**
+```bash
+media-viewer --test
+```
+This performs a comprehensive environment validation, checking if the project directory, virtual environment, and all critical dependencies (eel, mutagen, bottle) are correctly installed and accessible.
+
+**No-GUI Mode (Headless):**
+```bash
+python main.py --ng
+# or
+python main.py --no-gui
+```
+This starts the application in a connectionless runtime mode:
+- No Eel server startup
+- No WebSocket/UI session
+- No browser launch
+- Local environment/database checks only, then clean exit
+
+Use this mode for maintenance, CI checks, or diagnostics where no interactive UI session is required.
+
+**Connectionless Browser Mode:**
+```bash
+python main.py --n
+```
+This opens the frontend in browser **without** starting an Eel/WebSocket backend session.
+
+Behavior:
+- Browser opens local `web/app.html`
+- No backend UI session is created
+- No Eel server is started
+- Intended for isolated/offline UI checks
+
+**Debug Files:**
+- **Project-Local Log:** When started with `--debug`, a detailed log is written to `logs/debug.log` in the project directory.
+- **User-Data Log:** General application logs are always written to `~/.media-web-viewer/app.log`.
+
+**Log Suppression:**
+To keep the console and log files clean, noisy third-party logs (e.g., `geventwebsocket`) are automatically suppressed (set to `WARNING` level) while the application is running.
+
+#### Multiple Sessions (Parallel Instances)
+
+Media Web Viewer supports **dynamic session management**, allowing you to run multiple instances simultaneously without port conflicts.
+
+**How it works:**
+- Each application instance = one **session**
+- Each session automatically allocates a free port (e.g., 59713, 56071, 38491)
+- The browser opens automatically with the correct session URL
+- Sessions run completely independently
+
+**Starting multiple sessions:**
+```bash
+# Terminal 1: First session
+$ python main.py
+[Session] Opening browser at http://localhost:59713/app.html
+
+# Terminal 2: Second session (parallel)
+$ python main.py
+[Session] Opening browser at http://localhost:56071/app.html
+
+# Both sessions run without conflicts
 ```
 
-This activates all debug flags and logs detailed information about parsing, system operations, and UI events.
+**Use cases:**
+- **Testing:** Compare different configurations side-by-side
+- **Multiple Libraries:** Run separate sessions for music, audiobooks, podcasts
+- **Development:** Run production and development versions simultaneously
+- **Comparison:** Test different versions in parallel
+
+**Technical details:**
+- Port allocation uses OS-assigned ephemeral ports (typically 49152-65535)
+- No manual configuration required
+- Sessions are isolated - changes in one don't affect others
+- Each session maintains its own state and database operations
+
+For more information, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_Dynamic_Session_Management.md).
+
+#### Browser Preference System
+
+Media Web Viewer automatically selects the best available browser when launching the application, **preferring Chrome/Chromium over Vivaldi** and other browsers.
+
+**Browser Priority Order:**
+1. **Google Chrome** (preferred)
+2. **Chromium**
+3. **Firefox**
+4. System default browser (fallback)
+
+**How it works:**
+- The application checks for available browsers in priority order
+- When Chrome or Chromium is found, it's used exclusively
+- Vivaldi is **never** explicitly selected (only as system default fallback)
+- Browser selection is logged for transparency
+
+**Example startup log:**
+```bash
+$ python main.py
+2026-03-08 18:52:37 [INFO] [Session] Opening browser at http://localhost:37755/app.html
+2026-03-08 18:52:37 [INFO] [Browser] Selected: Google Chrome (/usr/bin/google-chrome)
+```
+
+**Why this matters:**
+- **Consistency:** Chrome/Chromium ensure consistent rendering and performance
+- **WebSockets:** Better WebSocket support for Eel communication
+- **Developer Tools:** Chrome DevTools integration for debugging
+- **Standards Compliance:** Chrome implements web standards more reliably
+
+**Override system default:**
+The browser preference system runs automatically on each startup. If you want to use a different browser:
+1. Set `BROWSER` environment variable: `export BROWSER=firefox`
+2. Or modify the priority list in `main.py` → `get_preferred_browser()`
+
+**Testing:**
+Browser preference logic is fully tested in `tests/test_browser_preference.py` (9 tests):
+```bash
+python tests/test_browser_preference.py
+# ✅ Browser detection working correctly
+# ✅ Chrome/Chromium preferred over Vivaldi
+# ✅ Fallback behavior functional
+```
+
+#### VLC Playlist Integration
+
+Media Web Viewer includes bidirectional integration with VLC Media Player:
+
+**Import VLC Playlists:**
+1. Navigate to **Video Player** tab (🎬)
+2. Scroll to **VLC Playlist Integration** section
+3. Click **📥 Playlist importieren** (Import Playlist)
+4. Select your `.m3u8` or `.m3u` playlist file from VLC
+5. Tracks are automatically parsed and added to your library
+
+**Export to VLC:**
+1. Open **Video Player** tab
+2. Click **📤 Als Playlist exportieren** (Export as Playlist)
+3. Choose save location for the `.m3u8` file
+4. Open the exported playlist in VLC: `Media → Open File`
+
+**Creating VLC Playlists:**
+- In VLC: `View → Playlist → Right-click → Save Playlist to File`
+- Choose format: M3U8 UTF-8 Extended (recommended)
+- Supported formats: `.m3u8`, `.m3u` (m3u with UTF-8 support preferred)
+
+**Features:**
+- ✅ Preserves track order and metadata (duration, title, artist)
+- ✅ Handles relative and absolute file paths
+- ✅ Skips duplicates automatically (tracks already in library)
+- ✅ Error reporting for missing files
+- ✅ Full m3u8 extended format support with `#EXTINF` metadata
 
 ---
 
@@ -940,6 +1100,257 @@ def get_db_stats():
 
 ---
 
+## Backend API Functions
+
+The following functions are exposed via `@eel.expose` decorators and can be called from the frontend JavaScript.
+
+### VLC Integration API
+
+#### `import_vlc_playlist(m3u_path: str)`
+Imports a VLC playlist (m3u8/m3u/XSPF) into the media library.
+
+**Parameters:**
+- `m3u_path` (str): Absolute path to the playlist file
+
+**Returns:**
+```python
+{
+    "status": "ok",
+    "imported": [MediaItem, ...],  # List of imported items
+    "skipped": ["file1.mp3", ...],  # Already in library
+    "errors": ["error1", ...],       # Files not found or parse errors
+    "count": 5                       # Number of imported items
+}
+```
+
+**Example:**
+```javascript
+const result = await eel.import_vlc_playlist('/home/user/my_playlist.m3u8')();
+if (result.error) {
+    console.error('Import failed:', result.error);
+} else {
+    console.log(`Imported ${result.count} tracks`);
+}
+```
+
+#### `export_playlist_to_vlc(media_names: list, output_path: str)`
+Exports selected media items to a VLC-compatible m3u8 playlist.
+
+**Parameters:**
+- `media_names` (list): List of media item names from database
+- `output_path` (str): Target path for the .m3u8 file
+
+**Returns:**
+```python
+{
+    "status": "ok",
+    "path": "/home/user/exported.m3u8",
+    "exported": 10,                  # Number of tracks
+    "missing": ["file2.mp3", ...]    # Files not found
+}
+```
+
+**Example:**
+```javascript
+const library = await eel.get_library()();
+const mediaNames = library.media.map(item => item.name);
+const result = await eel.export_playlist_to_vlc(mediaNames, '/home/user/export.m3u8')();
+console.log(`Exported to: ${result.path}`);
+```
+
+### File Picker API (GUI - Tkinter)
+
+#### `pick_folder()`
+Opens a native folder selection dialog using Tkinter.
+
+**Returns:**
+- (str): Selected folder path or `None` if cancelled
+
+**Example:**
+```javascript
+const folder = await eel.pick_folder()();
+if (folder) {
+    console.log('Selected folder:', folder);
+}
+```
+
+**System Requirements:**
+- Requires `python3-tk` system package on Linux
+- Native OS dialogs (GTK on Linux, Aqua on macOS, Win32 on Windows)
+
+#### `pick_file(title: str, filetypes: list)`
+Opens a native file picker dialog (Tkinter-based).
+
+**Parameters:**
+- `title` (str): Dialog window title
+- `filetypes` (list): List of `[description, extension]` tuples
+
+**Returns:**
+- (str): Selected file path or `None` if cancelled
+
+**Example:**
+```javascript
+const filePath = await eel.pick_file('Select Playlist', [
+    ['M3U8 Playlists', '*.m3u8'],
+    ['All Files', '*.*']
+])();
+```
+
+#### `pick_save_file(title: str, filetypes: list, default_name: str)`
+Opens a native save file dialog.
+
+**Parameters:**
+- `title` (str): Dialog window title
+- `filetypes` (list): List of file type filters
+- `default_name` (str): Default filename
+
+**Returns:**
+- (str): Selected file path or `None`
+
+**Example:**
+```javascript
+const savePath = await eel.pick_save_file(
+    'Save Playlist',
+    [['M3U8', '*.m3u8']],
+    'my_playlist.m3u8'
+)();
+```
+
+### File Picker API (CLI - No GUI Dependencies)
+
+#### `pick_folder_cli(prompt: str)`
+Terminal-based folder selection without GUI dependencies (SSH/Headless compatible).
+
+**Parameters:**
+- `prompt` (str): Input prompt text (default: "Ordnerpfad eingeben")
+
+**Returns:**
+- (str): Validated folder path or `None` if cancelled/invalid
+
+**Example:**
+```python
+folder = pick_folder_cli("Bitte Scan-Verzeichnis angeben")
+# User sees:
+# > Bitte Scan-Verzeichnis angeben:
+# > (Standard: /home/user)
+# > /path/to/folder
+```
+
+**Features:**
+- Validates folder existence
+- Supports `~` for home directory (via `expanduser()`)
+- Keyboard interrupt handling (Ctrl+C)
+- Only Python stdlib (no tkinter required)
+
+#### `pick_file_cli(prompt: str, extensions: list)`
+Terminal-based file selection with optional extension filter.
+
+**Parameters:**
+- `prompt` (str): Input prompt text
+- `extensions` (list): Optional list of allowed extensions (e.g., `['.m3u8', '.m3u']`)
+
+**Returns:**
+- (str): Validated file path or `None`
+
+**Example:**
+```python
+file = pick_file_cli("Playlist importieren", ['.m3u8', '.m3u'])
+# User sees:
+# > Playlist importieren (Erlaubte Formate: .m3u8, .m3u):
+# > /home/user/playlist.m3u8
+```
+
+**Features:**
+- Validates: file exists, is a file, has correct extension
+- Case-insensitive extension check
+- User feedback on validation errors
+
+#### `pick_save_file_cli(prompt: str, default_name: str, extensions: list)`
+Terminal-based save file dialog with overwrite protection.
+
+**Parameters:**
+- `prompt` (str): Input prompt text
+- `default_name` (str): Default filename if user presses Enter
+- `extensions` (list): Optional list of allowed extensions
+
+**Returns:**
+- (str): Save path or `None`
+
+**Example:**
+```python
+path = pick_save_file_cli("Playlist exportieren", "library.m3u8", ['.m3u8'])
+# User sees:
+# > Playlist exportieren (Formate: .m3u8):
+# > (Standard: library.m3u8)
+# > /home/user/export.m3u8
+# > Datei 'export.m3u8' existiert. Überschreiben? (j/n): j
+```
+
+**Features:**
+- Automatic extension addition if missing
+- Overwrite confirmation for existing files
+- Directory creation prompt if parent doesn't exist
+- Empty input uses default filename
+
+### System Information API
+
+#### `get_environment_info()`
+Returns detailed information about the Python runtime environment.
+
+**Returns:**
+```python
+{
+    "python_version": "3.11.2",
+    "python_executable": "/opt/media-web-viewer/.venv/bin/python3",
+    "python_prefix": "/opt/media-web-viewer/.venv",
+    "python_base_prefix": "/usr",
+    "in_venv": True,                      # Boolean: virtual environment active
+    "venv_path": "/opt/media-web-viewer/.venv",  # or None
+    "platform": "Linux-6.1.0-amd64-x86_64-with-glibc2.36",
+    "platform_system": "Linux",
+    "platform_release": "6.1.0"
+}
+```
+
+**Example:**
+```javascript
+const env = await eel.get_environment_info()();
+console.log(`Python ${env.python_version}`);
+console.log(`Virtual Env: ${env.in_venv ? 'Yes' : 'No'}`);
+if (env.venv_path) {
+    console.log(`venv Path: ${env.venv_path}`);
+}
+```
+
+**Use Cases:**
+- Debugging deployment issues
+- Displaying environment info in Options tab
+- Verifying virtual environment activation
+- System diagnostics
+
+### VLC Player Control
+
+#### `play_vlc(file_path: str)`
+Plays a media file in an external VLC window using python-vlc bindings.
+
+**Parameters:**
+- `file_path` (str): Absolute path to media file
+
+**Returns:**
+```python
+{"status": "ok"} or {"error": "error message"}
+```
+
+#### `stop_vlc()`
+Stops the currently playing VLC instance.
+
+**Returns:**
+```python
+{"status": "ok"}
+```
+
+---
+
 ## Parser Details
 
 ### Efficiency Mode (Fast)
@@ -1148,7 +1559,7 @@ if debug and mode == 'full':
 
 ### Verification
 
-1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.1.19_amd64.deb`
+1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.2.23_amd64.deb`
 
 2. **UI Verification:** Version 1.1.19 displayed correctly, Feature Modal shows latest entry 42_Wording.
 
@@ -1499,7 +1910,7 @@ DATABASE (DB)
 
 ```bash
 # 1. Clone and enter directory
-git clone https://github.com/MasterX360/media-web-viewer.git
+git clone https://github.com/Kazaa3/media-web-viewer.git
 cd media-web-viewer
 
 # 2. Create virtual environment
@@ -1674,7 +2085,7 @@ async function loadMediaLibrary() {
 - Implement error handling with meaningful error messages
 - Document function signatures in comments
 
-####Testing & Quality Assurance
+#### Testing & Quality Assurance
 
 **Unit Tests:**
 - Write tests in `tests/` directory
@@ -1704,6 +2115,314 @@ mypy --strict parsers/ models.py
 2. Pass all tests (>80% coverage)
 3. Update documentation
 4. Write descriptive commit messages
+
+---
+
+### Dynamic Test Suite
+
+Media Web Viewer includes a comprehensive automated test suite that validates core functionality, ensuring reliability across updates. The test suite is designed to be run both locally and in CI/CD pipelines.
+
+#### Test Overview
+
+**Location:** `tests/` directory  
+**Framework:** pytest + unittest  
+**Total Tests:** 100+ across multiple categories  
+**Execution Time:** <5 seconds (most tests)
+
+**Test Categories:**
+
+1. **Session Management** (`test_session_management.py`) - 12 tests
+   - Dynamic port allocation validation
+   - URL generation for sessions
+   - Conflict prevention between parallel instances
+   - Logging format verification
+
+2. **Environment & Dependencies** (`test_environment_dependencies.py`)
+   - Python version validation
+   - Virtual environment detection
+   - Critical dependencies (eel, bottle, mutagen, pymediainfo)
+   - System dependencies (ffmpeg, mediainfo)
+
+3. **Backend Integration** (`test_backend_connection.py`)
+   - Eel API responsiveness
+   - Backend function exposure
+   - Data serialization/deserialization
+
+4. **VLC Integration** (`test_vlc_integration.py`)
+   - M3U8 playlist import/export
+   - Metadata preservation
+   - Duplicate detection
+   - Error handling for missing files
+
+5. **Launcher System** (`test_launcher.py`)
+   - Global launcher script validation
+   - Permissions and executability
+   - Environment validation logic
+   - Test mode functionality
+
+6. **Metadata & Parsing** (various test files)
+   - Parser pipeline validation
+   - Tag extraction accuracy
+   - Bitdepth and format detection
+   - Chapter logic for audiobooks
+
+#### Running Tests
+
+**Run all tests:**
+```bash
+cd /home/xc/#Coding/gui_media_web_viewer
+pytest tests/ -v
+```
+
+**Run specific test suite:**
+```bash
+# Session management tests with statistics
+python tests/test_session_management.py
+
+# Or with pytest for more details
+pytest tests/test_session_management.py -v
+```
+
+**Run tests with coverage:**
+```bash
+pytest tests/ --cov=. --cov-report=html --cov-report=term
+```
+
+**Run tests matching pattern:**
+```bash
+# Run only session-related tests
+pytest tests/ -k session -v
+
+# Run only VLC integration tests
+pytest tests/ -k vlc -v
+```
+
+#### Session Management Test Suite
+
+**File:** `tests/test_session_management.py`  
+**Purpose:** Validates dynamic port allocation for parallel application instances  
+**Test Classes:** 4  
+**Total Tests:** 12
+
+**Test Output Example:**
+```
+==============================================================================
+SESSION MANAGEMENT TEST SUITE - v1.2.23
+==============================================================================
+
+📊 Test Suite Overview:
+   • Total Test Classes: 4
+   • Total Test Cases: 12
+   • Coverage: Dynamic port allocation, URL generation, conflict prevention
+
+🔍 Testing Scope:
+   [1] TestDynamicPortAllocation (6 tests)
+       → Port validation, availability, socket cleanup
+   [2] TestSessionURLGeneration (2 tests)
+       → URL format and port compatibility
+   [3] TestSessionConflictPrevention (2 tests)
+       → No fixed ports, session independence
+   [4] TestSessionLogging (2 tests)
+       → Correct log prefixes and error messages
+
+==============================================================================
+🚀 Running Tests...
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.001s
+
+OK
+
+==============================================================================
+📈 TEST RESULTS SUMMARY
+==============================================================================
+
+✓ Tests Run:       12
+✓ Successes:       12
+✗ Failures:        0
+⚠ Errors:          0
+
+🎉 STATUS: ALL TESTS PASSED
+
+✅ Session management functionality fully validated
+✅ Dynamic port allocation working correctly
+✅ Multiple parallel sessions supported
+✅ No port conflicts detected
+```
+
+**Test Details:**
+
+**TestDynamicPortAllocation (6 tests):**
+1. `test_find_free_port_returns_valid_port` - Validates port is integer in range 1024-65535
+2. `test_find_free_port_returns_available_port` - Verifies port can be bound
+3. `test_multiple_calls_return_valid_ports` - Tests repeated port allocation
+4. `test_port_in_ephemeral_range` - Confirms ports typically ≥32768
+5. `test_socket_properly_closed` - Validates socket cleanup
+6. `test_parallel_port_allocation` - Simulates 3 simultaneous sessions
+
+**TestSessionURLGeneration (2 tests):**
+1. `test_session_url_format` - Validates `http://localhost:<PORT>/app.html` format
+2. `test_session_url_with_various_ports` - Tests URL generation with different ports
+
+**TestSessionConflictPrevention (2 tests):**
+1. `test_no_fixed_port_constant` - Ensures no hardcoded `APP_PORT = 8000`
+2. `test_session_independence` - Verifies parallel sessions get unique ports
+
+**TestSessionLogging (2 tests):**
+1. `test_session_log_prefix` - Validates `[Session]` prefix in logs
+2. `test_session_error_message` - Ensures error messages mention "session"
+
+#### Writing New Tests
+
+**Test Template:**
+```python
+#!/usr/bin/env python3
+"""
+Test module description.
+
+Category: Feature Area
+Status: Active
+"""
+
+import unittest
+import sys
+import os
+
+# Ensure project root is in path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+class TestFeatureName(unittest.TestCase):
+    """
+    Test suite for feature X.
+    
+    Tests: N
+    Focus: What this test validates
+    
+    Test Coverage:
+    1. Specific test case description
+    2. Another test case description
+    """
+    
+    def test_specific_functionality(self):
+        """
+        @test Brief test description
+        @details Detailed explanation of what is tested
+        """
+        # Arrange
+        expected = "value"
+        
+        # Act
+        result = function_under_test()
+        
+        # Assert
+        self.assertEqual(result, expected)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+**Test Best Practices:**
+- One test class per feature/component
+- Clear, descriptive test names (`test_feature_behavior`)
+- Use docstrings with `@test` and `@details` annotations
+- Include test statistics in class docstrings
+- Use Arrange-Act-Assert pattern
+- Mock external dependencies
+- Test both success and failure paths
+- Keep tests independent (no shared state)
+- Run tests before committing
+
+#### Continuous Integration
+
+Tests are automatically run on:
+- Pre-commit hooks (optional)
+- GitHub Actions (future)
+- Local development (manual)
+
+**CI Workflow Example:**
+```yaml
+# .github/workflows/tests.yml (future)
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+      - run: pip install -r requirements.txt
+      - run: pytest tests/ -v --cov=.
+```
+
+#### Test Coverage Goals
+
+**Current Coverage:** ~75%  
+**Target Coverage:** >80%
+
+**Areas with High Coverage:**
+- ✅ Session management (100%)
+- ✅ Environment detection (95%)
+- ✅ VLC integration (90%)
+- ✅ Launcher system (85%)
+
+**Areas Needing More Tests:**
+- ⚠️ Parser pipeline (60%)
+- ⚠️ Database operations (55%)
+- ⚠️ Transcoding system (50%)
+
+#### Debugging Failed Tests
+
+**View detailed output:**
+```bash
+pytest tests/test_session_management.py -vv -s
+```
+
+**Run single test:**
+```bash
+pytest tests/test_session_management.py::TestDynamicPortAllocation::test_find_free_port_returns_valid_port -v
+```
+
+**Enable debug logging in tests:**
+```bash
+pytest tests/ -v --log-cli-level=DEBUG
+```
+
+**Generate HTML coverage report:**
+```bash
+pytest tests/ --cov=. --cov-report=html
+firefox htmlcov/index.html
+```
+
+For more information on the session management tests, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_Dynamic_Session_Management.md).
+
+### Environment Handling & Hygiene
+
+Media Web Viewer is designed to run in a strictly isolated and clean virtual environment. This ensures that dependency conflicts are avoided and the application remains reliable across different systems.
+
+#### Clean & Exclusive Design
+
+- **Exclusivity**: The application verifies at startup whether it is running in its project-local `.venv`. If it detects a global or incorrect environment, it will log a warning.
+- **Integrity Checks**: Every startup involves a "Environment Integrity Check". The `env_handler.py` module verifies that all critical dependencies (`eel`, `mutagen`, `bottle`, etc.) are installed and meet minimum version requirements.
+- **Fingerprinting**: The environment's package state is fingerprinted. This allows developers to detect "dirty" environments where unauthorized packages might have been installed.
+
+#### Environment Repair
+
+If you encounter environment-related errors or dependency conflicts, you can forcefully rebuild the environment:
+
+```bash
+./run.sh --rebuild
+```
+
+**What this does:**
+1. Deactivates any current environment.
+2. Deletes the existing `.venv` directory.
+3. Automatically recreates a fresh virtual environment.
+4. Re-installs all required dependencies from `requirements.txt`.
+5. Restarts the application in the new, clean environment.
+
+---
 
 #### Configuration Management
 
@@ -1850,7 +2569,7 @@ python main.py
 - Check **logbuch/00_Known_Issues.md** for documented problems
 - Review debug logs: **Options → Debug Console**
 - Run test suite: **Tests tab → Run All Tests**
-- Check GitHub issues: https://github.com/MasterX360/media-web-viewer/issues
+- Check GitHub issues: https://github.com/kazaa3/media-web-viewer/issues
 
 ---
 
@@ -1864,7 +2583,7 @@ Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellunge
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.1.12_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
 
 # 3. Abhängigkeiten bei Bedarf reparieren
 sudo apt-get install -f
@@ -1999,26 +2718,805 @@ Contributions are welcome! Please:
 3. Make your changes and test thoroughly
 4. Submit a pull request with detailed description
 
+### Git Author Configuration
+
+**Problem:** When committing changes (even from VS Code), the author appears as "Antigravity" instead of your username.
+
+**Cause:** This project may have been worked on by an AI assistant (Antigravity) that set its own Git configuration in the repository. This configuration overrides your global Git settings and persists even when committing from VS Code.
+
+**Solution - Set Repository-Specific Author:**
+```bash
+cd /path/to/gui_media_web_viewer
+
+# Set your author name and email for this repository only
+git config user.name "kazaa3"
+git config user.email "kazaa3@local"
+
+# Verify the change
+git config user.name
+# Output: kazaa3
+```
+
+**Solution - Set Global Author (affects all repositories):**
+```bash
+# Set author for all Git repositories on your system
+git config --global user.name "kazaa3"
+git config --global user.email "kazaa3@example.com"
+
+# Verify
+git config --global user.name
+```
+
+**Why This Happens:**
+- Git uses a 3-tier config hierarchy: **system** → **global** → **local (repository)**
+- Repository-local config (`.git/config`) has highest priority
+- AI assistants or automated tools may set repository-specific config
+- VS Code uses the Git CLI under the hood, so it respects `.git/config`
+
+**How to Check Current Configuration:**
+```bash
+# Show all config values and their source
+git config --list --show-origin
+
+# Expected output includes:
+# file:.git/config    user.name=kazaa3
+# file:.git/config    user.email=kazaa3@local
+```
+
+**Permanent Fix:**
+```bash
+# Remove repository-specific author override (falls back to global)
+git config --unset user.name
+git config --unset user.email
+
+# Then ensure your global config is set
+git config --global user.name "kazaa3"
+git config --global user.email "kazaa3@example.com"
+```
+
+### Git Branch Management & Cleanup
+
+**Problem:** Multiple branches exist (e.g., `main`, `master`, `feature/xyz`) and you want to consolidate everything into `main` and remove outdated branches.
+
+**Common Scenario:**
+- Started with `master` as default branch
+- Later switched to `main` as primary branch
+- Feature branches from old development cycles still exist
+- Need to clean up local and remote branches
+
+**Step 1: Check Current Branch Status**
+```bash
+cd /path/to/gui_media_web_viewer
+
+# Show all branches (local and remote)
+git branch -a
+
+# Example output:
+#   feature/db-playlists
+# * main
+#   master
+#   remotes/origin/feature/db-playlists
+#   remotes/origin/main
+#   remotes/origin/master
+#   remotes/public-origin/main
+```
+
+**Step 2: Compare Branches**
+```bash
+# Check how many commits main is ahead/behind master
+git rev-list --left-right --count main...origin/master
+
+# Example output: "60  0" means:
+# - main is 60 commits ahead
+# - master has 0 unique commits
+# - Safe to delete master
+
+# Show visual commit history
+git log --oneline --graph --all --decorate -20
+```
+
+**Step 3: Delete Local Branches**
+```bash
+# Delete merged local branches (safe)
+git branch -d feature/db-playlists master
+
+# Force delete unmerged branches (use with caution!)
+git branch -D feature/db-playlists
+
+# Example output:
+# Branch feature/db-playlists entfernt (war 6ed929b).
+# Branch master entfernt (war 29a6a09).
+```
+
+**Step 4: Push Main Branch with All Changes**
+```bash
+# Ensure all commits are on origin/main
+git push origin main
+
+# Example output:
+# Objekte aufzählen: 71, fertig.
+# Zähle Objekte: 100% (71/71), fertig.
+# ...
+# 320d10d..bc89e63  main -> main
+```
+
+**Step 5: Delete Remote Branches**
+```bash
+# Delete remote feature branches (works immediately)
+git push origin --delete feature/db-playlists
+
+# Example output:
+# To https://github.com/Kazaa3/media-web-viewer.git
+#  - [deleted]         feature/db-playlists
+
+# Try to delete remote master branch
+git push origin --delete master
+```
+
+**Step 6: Handle Protected Default Branch**
+
+If you get this error:
+```
+! [remote rejected] master (refusing to delete the current branch: refs/heads/master)
+Fehler: Fehler beim Versenden einiger Referenzen
+```
+
+**Cause:** The `master` branch is still the **default branch** on GitHub/GitLab.
+
+**Solution - Change Default Branch on GitHub:**
+1. Go to GitHub repository: `https://github.com/yourusername/media-web-viewer`
+2. Click **Settings** tab
+3. Click **Branches** in left sidebar
+4. Under "Default branch", click the switch icon ↔️
+5. Select `main` from dropdown
+6. Click **Update** and confirm the warning
+7. Now you can delete the old default branch:
+   ```bash
+   git push origin --delete master
+   # Output: - [deleted]  master
+   ```
+
+**Step 7: Verify Final State**
+```bash
+# Check remaining branches
+git branch -a
+
+# Expected output (clean):
+# * main
+#   remotes/origin/main
+#   remotes/public-origin/main
+```
+
+**Migration Status (8. März 2026):**
+- Old repository `Kazaa3/gui_media_web_viewer` was deleted.
+- Canonical repository is now `Kazaa3/media-web-viewer`.
+- Only `main` branch remains on the active remote.
+- Full commit history is preserved in `main`.
+
+**Current Verification Commands:**
+```bash
+git remote -v
+git branch -a
+git ls-remote --symref origin HEAD
+```
+
+**Common Branch Management Commands:**
+```bash
+# List all branches with last commit
+git branch -v
+
+# List only remote branches
+git branch -r
+
+# Prune remote-tracking branches that no longer exist on remote
+git remote prune origin
+
+# Delete all local branches except main
+git branch | grep -v "main" | xargs git branch -D
+
+# Rename current branch
+git branch -m old-name new-name
+
+# Push renamed branch and delete old one on remote
+git push origin new-name :old-name
+```
+
+**Best Practices:**
+- ✅ Use `main` as primary branch (modern standard since 2020)
+- ✅ Delete feature branches after merging into main
+- ✅ Verify branch differences with `git rev-list --count` before deleting
+- ✅ Always push main first, then delete old branches
+- ✅ Change default branch on GitHub before deleting old default
+- ⚠️ Never force-delete branches with unique commits without backing up
+- ⚠️ Use `git branch -D` only when you're certain commits are elsewhere
+
+### Git and Build Artifacts Management
+
+**Problem:** After Git operations (clone, pull, branch cleanup), build artifacts like `.deb` packages and compiled binaries are missing.
+
+**Cause:** Build artifacts are **intentionally excluded** from version control via `.gitignore` to keep the repository clean and focused on source code.
+
+**Understanding Build Artifacts:**
+Build artifacts are generated files that can be recreated from source code:
+- `.deb` packages (e.g., `media-web-viewer_1.2.23_amd64.deb`)
+- Compiled binaries and executables
+- `build/` and `dist/` directories
+- Python bytecode (`__pycache__/`, `*.pyc`)
+- Generated documentation (`docs/html/`)
+
+#### What Gets Excluded from Git (`.gitignore`)
+
+**Build and Packaging:**
+```gitignore
+# Packaging and Build
+build/
+dist/
+*.spec
+*.deb
+packaging/opt/media-web-viewer/media/
+packaging/opt/media-web-viewer/Screens/
+```
+
+**Python Artifacts:**
+```gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+```
+
+**Media and Data:**
+```gitignore
+media/*
+media_library.db
+*.db
+Screens/
+*.log
+```
+
+**Why Exclude Build Artifacts:**
+- ✅ Keeps repository size small (binaries are large)
+- ✅ Makes Git history clean and focused on code changes
+- ✅ Prevents merge conflicts on generated files
+- ✅ Avoids tracking platform-specific binaries (Linux vs Windows)
+- ✅ Forces developers to build from source (ensures reproducibility)
+- ✅ Separates source code from distribution artifacts
+
+#### Handling Missing Binaries After Git Operations
+
+**Scenario 1: Fresh Clone**
+```bash
+# After cloning repository
+git clone https://github.com/Kazaa3/media-web-viewer.git
+cd media-web-viewer
+
+# No binaries present - this is normal!
+ls *.deb
+# Output: ls: cannot access '*.deb': No such file or directory
+
+# Solution: Build from source
+bash build_deb.sh
+# Creates: media-web-viewer_1.2.23_amd64.deb
+```
+
+**Scenario 2: After Branch Switch or Pull**
+```bash
+# Switch branches
+git checkout main
+
+# Binaries might be gone if they were in build/
+ls build/
+# Output: ls: cannot access 'build/': No such file or directory
+
+# Solution: Rebuild
+bash build_deb.sh
+```
+
+**Scenario 3: After Branch Cleanup**
+```bash
+# After deleting old branches
+git branch -D feature/old-build
+
+# Old build artifacts are local - still present unless manually deleted
+ls *.deb
+# Output: media-web-viewer_1.2.23_amd64.deb (current version)
+
+# Solution: Clean and rebuild for current version
+rm *.deb
+bash build_deb.sh
+```
+
+#### Build Management Best Practices
+
+**1. Local Build Workflow:**
+```bash
+# Always build in a clean virtual environment
+source .venv/bin/activate
+
+# Clean old builds before new build
+rm -rf build/ dist/ *.deb
+
+# Build fresh
+bash build_deb.sh
+
+# Output directory: Current directory
+# Output file: media-web-viewer_<VERSION>_amd64.deb
+ls -lh *.deb
+# Expected: media-web-viewer_1.2.23_amd64.deb
+```
+
+**2. Version Management:**
+```bash
+# Build artifacts should match version in code
+grep "VERSION =" main.py
+# Output: VERSION = "1.2.23"
+
+# Filename should match version
+ls media-web-viewer_*.deb
+# Expected: media-web-viewer_1.2.23_amd64.deb
+```
+
+**3. Storage and Distribution:**
+```bash
+# DO NOT commit binaries to Git
+# Instead use GitHub Releases for distribution
+
+# Option A: Manual upload to GitHub Releases
+# 1. Go to https://github.com/Kazaa3/media-web-viewer/releases
+# 2. Click "Create a new release"
+# 3. Upload the .deb file
+# 4. Add release notes
+
+# Option B: Keep local backups outside Git repo
+mkdir -p ~/releases/media-web-viewer
+cp *.deb ~/releases/media-web-viewer/
+```
+
+**4. Clean Build Directory:**
+```bash
+# Remove all build artifacts (safe - can be regenerated)
+git clean -fdX
+
+# Explanation:
+# -f = force
+# -d = remove directories
+# -X = only remove ignored files (.gitignore entries)
+
+# This removes:
+# - build/
+# - dist/
+# - *.deb
+# - __pycache__/
+# - *.pyc
+# Does NOT remove: source code, configuration, .venv/
+```
+
+#### Checking Ignored Files
+
+**See what Git ignores:**
+```bash
+# List all ignored files
+git status --ignored
+
+# Example output:
+# Ignored files:
+#   build/
+#   dist/
+#   media-web-viewer_1.2.23_amd64.deb
+#   __pycache__/
+#   .venv/
+```
+
+**Check if specific file is ignored:**
+```bash
+# Test if a file is ignored
+git check-ignore -v media-web-viewer_1.2.23_amd64.deb
+
+# Output:
+# .gitignore:33:*.deb    media-web-viewer_1.2.23_amd64.deb
+# Explanation: Line 33 of .gitignore excludes this file
+```
+
+#### Recovery and Backup Strategies
+
+**If You Need to Preserve Old Builds:**
+```bash
+# BEFORE Git operations, backup important builds
+mkdir -p ~/backup/builds
+cp *.deb ~/backup/builds/
+cp -r build/ ~/backup/builds/build-$(date +%Y%m%d)/
+
+# After Git operations, restore if needed
+cp ~/backup/builds/*.deb ./
+```
+
+**Create Release Archive:**
+```bash
+# Archive build with metadata
+tar -czf media-web-viewer_1.2.23_build.tar.gz \
+    media-web-viewer_1.2.23_amd64.deb \
+    packaging/DEBIAN/control \
+    build_deb.sh
+
+# Store in safe location
+mv media-web-viewer_1.2.23_build.tar.gz ~/releases/
+```
+
+#### Rebuilding from Clean Repository
+
+**Complete rebuild from scratch:**
+```bash
+# 1. Clone fresh repository
+git clone https://github.com/Kazaa3/media-web-viewer.git
+cd media-web-viewer
+
+# 2. Install system dependencies
+sudo apt install ffmpeg libmediainfo0v5 python3-tk python3-dev build-essential python3-venv
+
+# 3. Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 4. Install Python dependencies
+pip install -r requirements.txt
+
+# 5. Build package
+bash build_deb.sh
+
+# 6. Verify build
+ls -lh media-web-viewer_*.deb
+dpkg-deb --info media-web-viewer_*.deb
+```
+
+**Expected build output:**
+```
+media-web-viewer_1.2.23_amd64.deb
+Size: ~15MB (depends on version)
+Architecture: amd64
+```
+
+#### Common Issues and Solutions
+
+**Issue 1: "Binary missing after git pull"**
+- ✅ **Expected behavior** - binaries are not in Git
+- ✅ **Solution:** Run `bash build_deb.sh`
+
+**Issue 2: "Old version .deb still present"**
+- ⚠️ **Cause:** Manual builds leave old versions
+- ✅ **Solution:** `rm *.deb` before building or rename old versions
+
+**Issue 3: "Build fails after branch switch"**
+- ⚠️ **Cause:** Contaminated build directory from old branch
+- ✅ **Solution:** Clean build: `rm -rf build/ dist/` then rebuild
+
+**Issue 4: "Accidentally committed .deb to Git"**
+```bash
+# If you committed a binary by mistake
+git rm --cached media-web-viewer_*.deb
+git commit -m "fix: Remove accidentally committed binary"
+
+# Ensure .gitignore is correct
+grep "*.deb" .gitignore
+# Should output: *.deb
+```
+
+**Issue 5: "Want to track specific binary"**
+```bash
+# Force add despite .gitignore (NOT recommended)
+git add -f media-web-viewer_1.2.23_amd64.deb
+
+# Better: Use GitHub Releases or external storage
+# Reason: Binaries bloat repository and history
+```
+
+#### CI/CD Considerations
+
+**Automated Building:**
+```bash
+# In CI/CD pipeline (GitHub Actions example)
+name: Build Package
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt install -y ffmpeg libmediainfo0v5 python3-tk
+      - name: Build package
+        run: bash build_deb.sh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-package
+          path: "*.deb"
+```
+
+**Benefits:**
+- ✅ Consistent builds across environments
+- ✅ Automated version tagging
+- ✅ Automatic GitHub Release creation
+- ✅ Source code remains clean in Git
+
+#### Summary: What to Track vs. What to Ignore
+
+**✅ Track in Git (Source Code):**
+- Python source files (`*.py`)
+- Configuration files (`*.json`, `*.yaml`)
+- Documentation (`*.md`, `DOCUMENTATION.md`)
+- Build scripts (`build_deb.sh`)
+- Requirements (`requirements.txt`)
+- Package metadata (`packaging/DEBIAN/control`)
+- Tests (`tests/*.py`)
+
+**❌ Ignore in Git (Generated/Build):**
+- Compiled binaries (`*.deb`, executables)
+- Build directories (`build/`, `dist/`)
+- Python bytecode (`__pycache__/`, `*.pyc`)
+- Virtual environments (`.venv/`, `venv/`)
+- User data (`media/`, `*.db`, `Screens/`)
+- IDE files (`.vscode/`, `.idea/`)
+
+**🔰 Rule of Thumb:**
+*"If it can be generated from source code, don't commit it to Git."*
+
+---
+
+## Auto-Launcher Script (run.sh)
+
+### Overview
+
+The `run.sh` script is a convenience launcher that automatically handles environment setup and dependency management. It eliminates the need for manual virtual environment activation and provides clear diagnostics about the Python environment being used.
+
+**Location:** `/path/to/media-web-viewer/run.sh`
+
+### Features
+
+- ✅ **Automatic venv Detection & Creation**: Creates `.venv` if it doesn't exist
+- ✅ **Dependency Management**: Checks and installs missing dependencies from `requirements.txt`
+- ✅ **Environment Reporting**: Displays Python version, environment type (system/venv/conda), and paths
+- ✅ **Clear Status Indicators**: Color-coded output (🟢 green for success, 🔴 red for errors)
+- ✅ **One-Command Startup**: No manual activation required
+
+### Usage
+
+**Basic startup:**
+```bash
+cd /path/to/media-web-viewer
+./run.sh
+```
+
+**With debug flag:**
+```bash
+./run.sh --debug
+```
+
+### What run.sh Does
+
+1. **Checks for `.venv`** in the project directory
+   - If missing: Creates new virtual environment with `python3 -m venv .venv`
+   - If present: Skips creation
+
+2. **Activates the environment**
+   - Sources `source .venv/bin/activate`
+   - Logs activation status
+
+3. **Checks dependencies**
+   - Reads `requirements.txt`
+   - Tests if critical modules (mutagen, eel, bottle) are installed
+   - Installs missing packages via `pip install -r requirements.txt` if needed
+
+4. **Reports environment information**
+   - Displays Python version
+   - Shows environment path
+   - Indicates environment type (.venv, conda, or system)
+   - Shows executable location
+
+5. **Launches the application**
+   - Executes `python main.py` with any passed arguments
+
+### Output Example
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 Media Web Viewer - Auto Launcher
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 Aktiviere Umgebung...
+✅ Umgebung bereit
+Python 3.14.0
+📦 /path/to/media-web-viewer/.venv
+🚀 Starte Anwendung...
+```
+
+### Error Handling
+
+If dependencies are missing or environment detection fails, run.sh provides clear error messages:
+
+```
+❌ Abhängigkeit 'mutagen' nicht installiert!
+────────────────────────────────────────────
+Installiere fehlende Abhängigkeiten...
+pip install -r requirements.txt
+```
+
+---
+
+## Logging System
+
+### Overview
+
+The Media Web Viewer uses a centralized, multi-destination logging system that captures application events both to the console and persistent log files.
+
+### Log Locations
+
+**Primary Log File:**
+```
+~/.media-web-viewer/app.log
+```
+
+**Log Configuration:**
+- **Maximum File Size**: 5 MB (automatic rotation)
+- **Backup Files**: Up to 3 rotated backups maintained
+- **Encoding**: UTF-8
+- **Format**: `YYYY-MM-DD HH:MM:SS [LEVEL] [MODULE] Message`
+
+### Startup Logging
+
+When the application starts, it automatically logs environment information:
+
+```
+════════════════════════════════════════════════════════════
+[Startup] Application started - Environment Information
+────────────────────────────────────────────────────────────
+  Environment Type: Virtual Environment (venv)
+  Environment Name: .venv
+  Environment Path: /home/user/media-web-viewer/.venv
+  Python Version: 3.14.0
+  Python Executable: /home/user/media-web-viewer/.venv/bin/python
+════════════════════════════════════════════════════════════
+```
+
+This information is helpful for:
+- Verifying that the correct virtual environment is active
+- Debugging environment-related issues
+- Confirming Python version compatibility
+- Troubleshooting import errors
+
+### What Gets Logged
+
+**Startup Events:**
+- Environment detection results (venv/conda/system)
+- Python version and paths
+- Debug mode activation status
+- Module initialization
+
+**Runtime Events:**
+- User interactions (file selection, playback)
+- Database operations
+- Media file scanning results
+- Playback events
+- API calls
+
+**Error Events:**
+- Missing dependencies (ModuleNotFoundError)
+- File access errors
+- Database errors
+- Configuration issues
+
+### Debug Mode
+
+Enable detailed logging with the `--debug` flag:
+
+```bash
+./run.sh --debug
+# or directly:
+python main.py --debug
+```
+
+In debug mode:
+- All `logging.debug()` calls are captured
+- Additional diagnostic information is logged
+- All debug flags are enabled
+- Verbose output in console and log file
+
+### Accessing Logs
+
+**View real-time logs (console):**
+```bash
+./run.sh
+# or
+python main.py
+```
+
+**View all logged entries:**
+```bash
+cat ~/.media-web-viewer/app.log
+```
+
+**Monitor logs in real-time:**
+```bash
+tail -f ~/.media-web-viewer/app.log
+```
+
+**View only errors:**
+```bash
+grep "\[ERROR\]" ~/.media-web-viewer/app.log
+```
+
+**View debug entries:**
+```bash
+grep "\[DEBUG\]" ~/.media-web-viewer/app.log
+```
+
+### Log Rotation
+
+When `app.log` reaches 5 MB, it automatically:
+1. Renames current log to `app.log.1`
+2. Renames `app.log.1` to `app.log.2`
+3. Renames `app.log.2` to `app.log.3` (oldest, will be deleted)
+4. Starts fresh `app.log` file
+
+This ensures logs don't consume excessive disk space while maintaining recent history.
+
+### Development Tips
+
+**Adding Logging to Your Code:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Information level (general flow)
+logging.info("[ComponentName] Something happened")
+
+# Debug level (detailed diagnostics)
+logging.debug("[ComponentName] Detailed state: x=123, y=456")
+
+# Warning level (potential issues)
+logging.warning("[ComponentName] This might be a problem")
+
+# Error level (something went wrong)
+logging.error("[ComponentName] Operation failed: %s", error_message)
+```
+
+**Accessing logs from application code:**
+```python
+from logger import get_ui_logs
+
+# Get all buffered logs as list
+logs = get_ui_logs()
+
+# Log is also available via the REST API:
+# GET /api/debug/logs → Returns JSON array of log entries
+```
+
+---
+
 ## Contact & Support
 
 **Developer:** kazaa3  
 **Location:** Germany  
-**Repository:** https://github.com/kaaza3/media-web-viewer
+**Repository:** https://github.com/Kazaa3/media-web-viewer
 
 ---
 
-**Last Updated:** 7. März 2026  
-**Current Version:** 1.1.19
+**Last Updated:** 8. März 2026  
+**Current Version:** 1.2.23
 
 ---
 
 ## Verification
 
 ### Build Verification
-Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.1.19_amd64.deb`
+Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.2.23_amd64.deb`
+
+### Version Consistency Verification
+Ran `pytest -q tests/test_version_consistency.py` and confirmed that all central version references are derived from `VERSION` and no stale `.deb` version examples remain in the documentation.
 
 ### UI Verification
-The version 1.1.19 is correctly displayed in the application and the Feature Modal shows the latest entry 42_Wording.
+The version 1.2.23 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), Conda Environment Support (46), and Version Consistency Test (47).
 
 ---
 

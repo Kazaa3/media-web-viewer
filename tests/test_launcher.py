@@ -322,6 +322,8 @@ def test_launcher_help_output():
             "usage",
             "media-viewer",
             "--test",
+            "--n",
+            "--ng",
             "--help",
             "project",
         ]
@@ -339,6 +341,44 @@ def test_launcher_help_output():
         pytest.fail("Launcher help command timed out")
     except subprocess.CalledProcessError as e:
         pytest.fail(f"Launcher help command failed: {e}")
+
+
+def test_launcher_mode_ng_executes_successfully():
+    """
+    Test that launcher forwards --ng to main.py and exits successfully.
+    """
+    result = subprocess.run(
+        [str(LAUNCHER_SCRIPT), "--ng"],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+    assert result.returncode == 0, (
+        f"Launcher --ng failed with exit code {result.returncode}\n"
+        f"Stdout: {result.stdout}\n"
+        f"Stderr: {result.stderr}"
+    )
+
+
+def test_launcher_mode_n_executes_successfully():
+    """
+    Test that launcher forwards --n to main.py and exits successfully.
+    """
+    result = subprocess.run(
+        [str(LAUNCHER_SCRIPT), "--n"],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+    assert result.returncode == 0, (
+        f"Launcher --n failed with exit code {result.returncode}\n"
+        f"Stdout: {result.stdout}\n"
+        f"Stderr: {result.stderr}"
+    )
 
 
 # =============================================================================

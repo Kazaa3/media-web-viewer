@@ -4,6 +4,9 @@ from pathlib import Path
 
 # Mock main.debug_log for bridge test if needed, or just test logger directly
 
+PROJECT_ROOT = Path(__file__).parent.parent
+DEBUG_LOG_PATH = PROJECT_ROOT / "logs" / "debug.log"
+
 def test_logging_setup():
     """Verifies that logging is correctly initialized."""
     logger.setup_logging(debug_mode=True)
@@ -51,3 +54,27 @@ def test_ui_log_buffer_limit():
     
     ui_logs = logger.get_ui_logs()
     assert len(ui_logs) == logger.MAX_BUFFER_SIZE
+
+
+def test_project_debug_log_file():
+    """Verifies that debug logs are written to logs/debug.log in debug mode."""
+    # Ensure logs directory exists for the test
+    DEBUG_LOG_PATH.parent.mkdir(exist_ok=True)
+    if DEBUG_LOG_PATH.exists():
+        DEBUG_LOG_PATH.unlink()
+
+    logger.setup_logging(debug_mode=True)
+    test_msg = "LOGGING_TEST_PROJECT_DEBUG_MESSAGE"
+    logging.debug(test_msg)
+
+    assert DEBUG_LOG_PATH.exists()
+    with open(DEBUG_LOG_PATH, "r", encoding='utf-8') as f:
+        content = f.read()
+    assert test_msg in content
+
+
+def test_gevent_log_suppression():
+    """Verifies that geventwebsocket logs are suppressed (set to WARNING)."""
+    logger.setup_logging(debug_mode=False)
+    gevent_logger = logging.getLogger("geventwebsocket.handler")
+    assert gevent_logger.level == logging.WARNING

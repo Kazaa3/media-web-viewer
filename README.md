@@ -26,6 +26,52 @@ python main.py
 - Database: SQLite (`media_library.db`)
 - Media Tooling: Mutagen, pymediainfo, FFmpeg
 
+## Startup Modes
+
+### Normal Mode (Full Backend)
+```bash
+python main.py
+# → Starts Eel/WebSocket server, opens browser automatically
+```
+
+### Headless Mode (No GUI)
+```bash
+python main.py --ng
+# → Initializes DB, shows stats, exits (for scripts/CI)
+```
+
+### Connectionless Mode (Frontend Only)
+```bash
+python main.py --n
+# → Opens UI in browser without backend (for UI development)
+```
+
+## Build System
+
+### Quick Build
+```bash
+# Build Debian package
+python build_system.py --build deb
+
+# Build standalone executable
+python build_system.py --build pyinstaller
+
+# Full build with tests
+python build_system.py --full-build
+```
+
+### Development
+```bash
+# Run tests
+python build_system.py --test
+
+# Code quality checks
+python build_system.py --lint --type-check
+
+# Clean build artifacts
+python build_system.py --clean-all
+```
+
 ## Docs
 - Technical Manual: [DOCUMENTATION.md](DOCUMENTATION.md)
 - Dependencies & licenses: [DEPENDENCIES.md](DEPENDENCIES.md)

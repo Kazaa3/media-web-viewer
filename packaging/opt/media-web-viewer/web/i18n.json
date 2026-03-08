@@ -206,6 +206,8 @@
         "options_debug_desc": "Im Options-Reiter können die Flags für das Logging gesetzt werden.",
         "options_debug_all_on": "Alle Flags an",
         "options_debug_all_off": "Alle Flags aus",
+        "options_environment": "Python-Umgebung",
+        "options_environment_desc": "Informationen über die aktuell verwendete Python-Umgebung.",
         "debug_db_desc": "Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank und die Frontend gesendet wir."
     },
     "en": {
@@ -234,8 +236,8 @@
         "btn_scan_media": "Scan Media",
         "options_title": "Options",
         "options_general_debug": "General & Debug",
-        "options_general_debug_desc": "Manage technical parameters and debug flags here.",
-        "options_scan_dirs": "Index Directories",
+        "options_general_debug_desc": "Manage technical parameters and debug flags here.",        "options_environment": "Python Environment",
+        "options_environment_desc": "Information about the currently used Python environment.",        "options_scan_dirs": "Index Directories",
         "options_scan_dirs_desc": "Folders automatically scanned for media on startup or when 'Scan' is clicked. The 'media' subfolder in the app directory is indexed by default. Add additional folders here:",
         "options_add_dir": "➕ Add Directory",
         "options_appearance": "Appearance",
