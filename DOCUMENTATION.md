@@ -2341,6 +2341,149 @@ git config --global user.name "kazaa3"
 git config --global user.email "kazaa3@example.com"
 ```
 
+### Git Branch Management & Cleanup
+
+**Problem:** Multiple branches exist (e.g., `main`, `master`, `feature/xyz`) and you want to consolidate everything into `main` and remove outdated branches.
+
+**Common Scenario:**
+- Started with `master` as default branch
+- Later switched to `main` as primary branch
+- Feature branches from old development cycles still exist
+- Need to clean up local and remote branches
+
+**Step 1: Check Current Branch Status**
+```bash
+cd /path/to/gui_media_web_viewer
+
+# Show all branches (local and remote)
+git branch -a
+
+# Example output:
+#   feature/db-playlists
+# * main
+#   master
+#   remotes/origin/feature/db-playlists
+#   remotes/origin/main
+#   remotes/origin/master
+#   remotes/public-origin/main
+```
+
+**Step 2: Compare Branches**
+```bash
+# Check how many commits main is ahead/behind master
+git rev-list --left-right --count main...origin/master
+
+# Example output: "60  0" means:
+# - main is 60 commits ahead
+# - master has 0 unique commits
+# - Safe to delete master
+
+# Show visual commit history
+git log --oneline --graph --all --decorate -20
+```
+
+**Step 3: Delete Local Branches**
+```bash
+# Delete merged local branches (safe)
+git branch -d feature/db-playlists master
+
+# Force delete unmerged branches (use with caution!)
+git branch -D feature/db-playlists
+
+# Example output:
+# Branch feature/db-playlists entfernt (war 6ed929b).
+# Branch master entfernt (war 29a6a09).
+```
+
+**Step 4: Push Main Branch with All Changes**
+```bash
+# Ensure all commits are on origin/main
+git push origin main
+
+# Example output:
+# Objekte aufzählen: 71, fertig.
+# Zähle Objekte: 100% (71/71), fertig.
+# ...
+# 320d10d..bc89e63  main -> main
+```
+
+**Step 5: Delete Remote Branches**
+```bash
+# Delete remote feature branches (works immediately)
+git push origin --delete feature/db-playlists
+
+# Example output:
+# To https://github.com/Kazaa3/gui_media_web_viewer.git
+#  - [deleted]         feature/db-playlists
+
+# Try to delete remote master branch
+git push origin --delete master
+```
+
+**Step 6: Handle Protected Default Branch**
+
+If you get this error:
+```
+! [remote rejected] master (refusing to delete the current branch: refs/heads/master)
+Fehler: Fehler beim Versenden einiger Referenzen
+```
+
+**Cause:** The `master` branch is still the **default branch** on GitHub/GitLab.
+
+**Solution - Change Default Branch on GitHub:**
+1. Go to GitHub repository: `https://github.com/yourusername/gui_media_web_viewer`
+2. Click **Settings** tab
+3. Click **Branches** in left sidebar
+4. Under "Default branch", click the switch icon ↔️
+5. Select `main` from dropdown
+6. Click **Update** and confirm the warning
+7. Now you can delete the old default branch:
+   ```bash
+   git push origin --delete master
+   # Output: - [deleted]  master
+   ```
+
+**Step 7: Verify Final State**
+```bash
+# Check remaining branches
+git branch -a
+
+# Expected output (clean):
+# * main
+#   remotes/origin/main
+#   remotes/public-origin/main
+```
+
+**Common Branch Management Commands:**
+```bash
+# List all branches with last commit
+git branch -v
+
+# List only remote branches
+git branch -r
+
+# Prune remote-tracking branches that no longer exist on remote
+git remote prune origin
+
+# Delete all local branches except main
+git branch | grep -v "main" | xargs git branch -D
+
+# Rename current branch
+git branch -m old-name new-name
+
+# Push renamed branch and delete old one on remote
+git push origin new-name :old-name
+```
+
+**Best Practices:**
+- ✅ Use `main` as primary branch (modern standard since 2020)
+- ✅ Delete feature branches after merging into main
+- ✅ Verify branch differences with `git rev-list --count` before deleting
+- ✅ Always push main first, then delete old branches
+- ✅ Change default branch on GitHub before deleting old default
+- ⚠️ Never force-delete branches with unique commits without backing up
+- ⚠️ Use `git branch -D` only when you're certain commits are elsewhere
+
 ---
 
 ## Contact & Support
