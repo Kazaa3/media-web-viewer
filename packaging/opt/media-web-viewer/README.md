@@ -1,4 +1,4 @@
-# Media Web Viewer (v1.2.22)
+# Media Web Viewer (v1.1.23)
 
 Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 

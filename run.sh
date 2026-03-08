@@ -77,6 +77,20 @@ echo ""
 # Start the application
 echo -e "${BLUE}🚀 Starte Media Web Viewer...${NC}"
 
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo ""
+    echo "Usage: ./run.sh [option]"
+    echo ""
+    echo "Options:"
+    echo "  --debug       Start with full debug flags"
+    echo "  --n           Connectionless browser mode (browser without backend session)"
+    echo "  --ng          No-GUI mode (no browser, no Eel/WebSocket)"
+    echo "  --rebuild     Recreate virtual environment and dependencies"
+    echo "  --help, -h    Show this help"
+    echo ""
+    exit 0
+fi
+
 # Handle Rebuild flag
 if [[ "$1" == "--rebuild" ]]; then
     echo -e "${YELLOW}♻️  Rebuilding environment as requested...${NC}"
@@ -84,6 +98,12 @@ if [[ "$1" == "--rebuild" ]]; then
     rm -rf "$VENV_DIR"
     echo -e "${GREEN}✅ .venv gelöscht. Starte neu...${NC}"
     exec bash "$0"
+fi
+
+if [[ "$1" == "--ng" ]]; then
+    echo -e "${YELLOW}ℹ️  No-GUI mode aktiv (--ng)${NC}"
+elif [[ "$1" == "--n" ]]; then
+    echo -e "${YELLOW}ℹ️  Connectionless browser mode aktiv (--n)${NC}"
 fi
 
 echo ""

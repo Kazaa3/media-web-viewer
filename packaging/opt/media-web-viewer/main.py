@@ -19,13 +19,77 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # main.py – Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
 
-# Benötigte Module importieren
-from models import MediaItem
-import db
-import eel
-import logging
 import sys
 import os
+import platform
+
+def _detect_python_environment():
+    """
+    Detect current Python environment: system, venv, or conda.
+    Returns tuple: (env_type, env_name, env_path, python_version, python_executable)
+    """
+    python_version = platform.python_version()
+    python_executable = sys.executable
+    
+    # Check for conda
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+    conda_prefix = os.environ.get('CONDA_PREFIX')
+    
+    if conda_env and conda_prefix:
+        return ('conda', conda_env, conda_prefix, python_version, python_executable)
+    
+    # Check for venv
+    in_venv = sys.prefix != sys.base_prefix
+    venv_env = os.environ.get('VIRTUAL_ENV')
+    
+    if in_venv or venv_env:
+        env_path = venv_env or sys.prefix
+        env_name = Path(env_path).name if env_path else 'venv'
+        return ('venv', env_name, env_path, python_version, python_executable)
+    
+    # System Python
+    return ('system', None, sys.prefix, python_version, python_executable)
+
+# Benötigte Module importieren
+try:
+    from models import MediaItem
+    import db
+except ModuleNotFoundError as exc:
+    from pathlib import Path
+    
+    missing_module = exc.name or "unknown"
+    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    
+    # Build environment info string
+    if env_type == 'conda':
+        current_env = f"🐍 Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
+    elif env_type == 'venv':
+        current_env = f"📦 Venv: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
+    else:
+        current_env = f"⚙️  System Python {py_ver}\n   Python: {py_exec}"
+    
+    print(
+        f"\n❌ Abhängigkeit '{missing_module}' nicht installiert!\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📍 Aktuelle Umgebung:\n   {current_env}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"✅ Lösung: Starte mit der Projekt-Umgebung:\n\n"
+        f"   cd /home/xc/#Coding/gui_media_web_viewer\n"
+        f"   source .venv/bin/activate\n"
+        f"   python main.py\n\n"
+        f"Falls .venv fehlt:\n"
+        f"   python3 -m venv .venv\n"
+        f"   source .venv/bin/activate\n"
+        f"   pip install -r requirements.txt\n\n"
+        f"Alternative: Mit Conda (falls verfügbar):\n"
+        f"   conda activate <env-name>\n"
+        f"   pip install -r requirements.txt\n"
+        f"   python main.py\n"
+    )
+    raise SystemExit(1) from exc
+
+import eel
+import logging
 import time
 import subprocess
 import re
@@ -36,6 +100,7 @@ from parsers.format_utils import (
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
 )
 import logger
+import env_handler
 try:
     import vlc
     HAS_VLC = True
@@ -53,7 +118,7 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.2.21"  # Fallback
+    VERSION = "1.2.23"  # Fallback
 
 
 @eel.expose
@@ -64,6 +129,227 @@ def get_version():
     @return Version string / Versions-String.
     """
     return VERSION
+
+
+@eel.expose
+def get_environment_info():
+    """
+    @brief Returns comprehensive information about the Python environment.
+    @details Gibt detaillierte Informationen über die Python-Umgebung zurück, 
+             inklusive aktuelle Umgebung, System Python Installationen, und Conda Umgebungen.
+    @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
+    """
+    import platform
+    import subprocess
+    import json
+    
+    # ===== Current Environment =====
+    # Check if we're in a virtual environment (venv/virtualenv)
+    in_venv = sys.prefix != sys.base_prefix
+    venv_path = sys.prefix if in_venv else None
+    
+    # Get VIRTUAL_ENV environment variable (more reliable for venv)
+    venv_env = os.environ.get('VIRTUAL_ENV', None)
+    
+    # Check for Conda environment
+    conda_env_name = os.environ.get('CONDA_DEFAULT_ENV', None)
+    conda_prefix = os.environ.get('CONDA_PREFIX', None)
+    in_conda = conda_env_name is not None or conda_prefix is not None
+    
+    # Determine current environment type and path
+    env_type = None
+    env_path = None
+    env_name = None
+    
+    if in_conda:
+        env_type = "conda"
+        env_path = conda_prefix
+        env_name = conda_env_name
+    elif in_venv or venv_env:
+        env_type = "venv"
+        env_path = venv_path or venv_env
+        env_name = Path(env_path).name if env_path else None
+    else:
+        env_type = "system"
+    
+    # Build current environment info
+    current_env = {
+        "type": env_type,
+        "name": env_name,
+        "path": env_path,
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+    }
+    
+    # ===== Alternative Environments Discovery =====
+    
+    def _get_conda_environments():
+        """Get list of available Conda environments."""
+        environments = []
+        try:
+            result = subprocess.run(
+                ["conda", "env", "list", "--json"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                for env_path in data.get("envs", []):
+                    env_name = Path(env_path).name
+                    env_python = Path(env_path) / "bin" / "python"
+                    
+                    if env_python.exists():
+                        try:
+                            v_result = subprocess.run(
+                                [str(env_python), "--version"],
+                                capture_output=True,
+                                text=True,
+                                timeout=2
+                            )
+                            version = v_result.stdout.strip() or v_result.stderr.strip()
+                            is_recommended = env_name == "p14"
+                            
+                            environments.append({
+                                "name": env_name,
+                                "path": env_path,
+                                "version": version,
+                                "recommended": is_recommended
+                            })
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+        return sorted(environments, key=lambda x: x["name"])
+    
+    def _get_system_pythons():
+        """Get list of system Python installations."""
+        pythons = []
+        search_paths = ["/usr/bin", "/usr/local/bin", "/opt/python"]
+        seen_versions = set()
+        
+        for search_path in search_paths:
+            search_dir = Path(search_path)
+            if not search_dir.exists():
+                continue
+            
+            for python_exe in search_dir.glob("python*"):
+                if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+                    continue
+                
+                try:
+                    result = subprocess.run(
+                        [str(python_exe), "--version"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2
+                    )
+                    version = result.stdout.strip() or result.stderr.strip()
+                    
+                    if version and version not in seen_versions:
+                        seen_versions.add(version)
+                        pythons.append({
+                            "path": str(python_exe),
+                            "version": version
+                        })
+                except Exception:
+                    pass
+        
+        return sorted(pythons, key=lambda x: x["version"])
+    
+    def _get_installed_packages():
+        """Get list of installed packages in current environment."""
+        packages = []
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "list", "--format=json"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                packages_data = json.loads(result.stdout)
+                # Sort by name
+                packages = sorted(packages_data, key=lambda x: x["name"].lower())
+        except Exception as e:
+            logging.warning(f"Failed to get installed packages: {e}")
+        return packages
+    
+    def _find_local_venvs():
+        """Find local venv directories in common locations."""
+        venvs = []
+        venv_names = [".venv", "venv", "env", ".env"]
+        
+        # Check project directory
+        project_dir = Path(__file__).parent
+        for venv_name in venv_names:
+            venv_path = project_dir / venv_name
+            if venv_path.exists() and (venv_path / "bin" / "python").exists():
+                python_exe = venv_path / "bin" / "python"
+                try:
+                    result = subprocess.run(
+                        [str(python_exe), "--version"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2
+                    )
+                    version = result.stdout.strip() or result.stderr.strip()
+                    venvs.append({
+                        "name": venv_name,
+                        "path": str(venv_path),
+                        "version": version,
+                        "is_current": str(venv_path) == env_path
+                    })
+                except Exception:
+                    pass
+        
+        return venvs
+    
+    # Discover available environments (cached/fast)
+    conda_envs = _get_conda_environments()
+    system_pythons = _get_system_pythons()
+    installed_packages = _get_installed_packages()
+    local_venvs = _find_local_venvs()
+    
+    # ===== Build Response =====
+    return {
+        # Current Environment (Primary)
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+        "python_prefix": sys.prefix,
+        "python_base_prefix": sys.base_prefix,
+        "in_venv": in_venv,
+        "venv_path": venv_path or venv_env,
+        "in_conda": in_conda,
+        "conda_env_name": conda_env_name,
+        "conda_prefix": conda_prefix,
+        "env_type": env_type,
+        "env_path": env_path,
+        "env_name": env_name,
+        "platform": platform.platform(),
+        "platform_system": platform.system(),
+        "platform_release": platform.release(),
+        
+        # Current Environment (Detailed)
+        "current_environment": current_env,
+        
+        # Alternative Environments (Discovery Results)
+        "available_conda_environments": conda_envs,
+        "available_system_pythons": system_pythons,
+        "local_venvs": local_venvs,
+        
+        # Installed Packages
+        "installed_packages": installed_packages,
+        "package_count": len(installed_packages),
+        
+        # Recommendations
+        "recommended_environment": {
+            "name": "p14",
+            "type": "conda",
+            "python_version": "3.14.2",
+            "reason": "Latest stable Python release for Media Web Viewer"
+        }
+    }
 
 
 # Konfiguration
@@ -127,6 +413,136 @@ def initialize_debug_flags(args=None):
 
 # Initialize logging early with default sys.argv
 initialize_debug_flags()
+
+
+def is_no_gui_mode(args: list[str] | None = None) -> bool:
+    """
+    Check whether no-GUI mode is enabled.
+
+    No-GUI mode disables UI/websocket/browser startup and runs
+    the app in a connectionless local-only mode.
+    """
+    if args is None:
+        args = sys.argv
+    return "--ng" in args or "--no-gui" in args or "--sessionless" in args
+
+
+def is_connectionless_browser_mode(args: list[str] | None = None) -> bool:
+    """
+    Check whether browser-based connectionless mode is enabled.
+
+    In this mode the app opens the frontend in browser without starting
+    Eel/WebSocket backend session.
+    """
+    if args is None:
+        args = sys.argv
+    return "--n" in args
+
+
+def get_preferred_browser():
+    """
+    Get the preferred browser controller for launching the application.
+
+    Preference order:
+    1. Google Chrome
+    2. Chromium
+    3. Firefox
+    4. Default system browser
+
+    Returns:
+        webbrowser.BaseBrowser: Browser controller instance
+    """
+    import webbrowser
+    import shutil
+
+    browser_candidates = [
+        ('google-chrome', 'Google Chrome'),
+        ('chromium-browser', 'Chromium'),
+        ('chromium', 'Chromium'),
+        ('firefox', 'Firefox'),
+    ]
+
+    for browser_cmd, browser_name in browser_candidates:
+        browser_path = shutil.which(browser_cmd)
+        if browser_path:
+            logging.info(f"[Browser] Selected: {browser_name} ({browser_path})")
+            try:
+                return webbrowser.get(f'{browser_path} %s')
+            except Exception as e:
+                logging.warning(f"[Browser] Failed to register {browser_name}: {e}")
+                continue
+
+    logging.warning("[Browser] Using system default browser (Vivaldi or other)")
+    return webbrowser
+
+
+def run_sessionless_mode() -> dict:
+    """
+    Execute sessionless startup flow and return status information.
+    """
+    db.init_db()
+    stats = db.get_db_stats()
+    legacy_dbs = db.list_legacy_databases()
+    return {
+        "mode": "no-gui",
+        "active_db": str(db.get_active_db_path()),
+        "total_items": int(stats.get("total_items", 0)),
+        "legacy_db_count": len(legacy_dbs),
+        "scan_dirs": PARSER_CONFIG.get("scan_dirs", []),
+    }
+
+
+def run_connectionless_browser_mode() -> dict:
+    """
+    Execute connectionless browser mode and return status information.
+
+    Opens web/app.html directly in browser without starting Eel.
+    """
+    db.init_db()
+    stats = db.get_db_stats()
+    app_file = (Path(__file__).parent / "web" / "app.html").resolve()
+    app_url = app_file.as_uri()
+
+    browser = get_preferred_browser()
+    browser.open(app_url)
+
+    return {
+        "mode": "connectionless-browser",
+        "active_db": str(db.get_active_db_path()),
+        "total_items": int(stats.get("total_items", 0)),
+        "app_url": app_url,
+        "scan_dirs": PARSER_CONFIG.get("scan_dirs", []),
+    }
+
+# Ensure we are running in a clean and exclusive environment
+env_handler.validate_safe_startup()
+
+# Log environment information at startup
+def _log_environment_info():
+    """Log Python environment details at startup."""
+    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    
+    logging.info("═" * 60)
+    logging.info("[Startup] Application started - Environment Information")
+    logging.info("─" * 60)
+    
+    if env_type == 'conda':
+        logging.info(f"  Environment Type: Conda")
+        logging.info(f"  Environment Name: {env_name}")
+        logging.info(f"  Environment Path: {env_path}")
+    elif env_type == 'venv':
+        logging.info(f"  Environment Type: Virtual Environment (venv)")
+        logging.info(f"  Environment Name: {env_name}")
+        logging.info(f"  Environment Path: {env_path}")
+    else:
+        logging.info(f"  Environment Type: System Python")
+        logging.info(f"  Environment Path: {env_path}")
+    
+    logging.info(f"  Python Version: {py_ver}")
+    logging.info(f"  Python Executable: {py_exec}")
+    logging.info("═" * 60)
+
+_log_environment_info()
 
 
 def debug_log(message: str) -> None:
@@ -281,6 +697,11 @@ def reset_app_data():
                 deleted.append(str(p))
             except Exception as e:
                 debug_log(f"[Error] Reset failed for {p}: {e}")
+
+    # Remove legacy database files from old locations
+    legacy_deleted = db.cleanup_legacy_databases()
+    for p in legacy_deleted:
+        deleted.append(p)
 
     # Re-initialize to avoid crash on next actions
     db.init_db()
@@ -614,7 +1035,7 @@ def add_file_to_library(file_path):
     if p.name in known:
         return {"status": "exists", "name": p.name}
 
-    item = MediaItem(p.name, p, debug_flags=DEBUG_FLAGS, logger=debug_log)
+    item = MediaItem(p.name, p)
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
@@ -662,6 +1083,322 @@ def stop_vlc():
     if VLC_PLAYER:
         VLC_PLAYER.stop()
     return {"status": "ok"}
+
+
+@eel.expose
+def import_vlc_playlist(m3u_path: str):
+    """
+    @brief Imports a VLC playlist (m3u8/m3u/XSPF) into the library.
+    @details Importiert eine VLC-Playlist (m3u8/m3u/XSPF) in die Bibliothek.
+    @param m3u_path Path to the playlist file / Pfad zur Playlist-Datei.
+    @return Dictionary with imported media items / Dictionary mit importierten Items.
+    """
+    if not HAS_M3U8:
+        return {"error": "python-m3u8 Modul ist nicht installiert. Bitte installieren: pip install m3u8"}
+    
+    try:
+        playlist_file = Path(m3u_path)
+        if not playlist_file.exists():
+            return {"error": "Playlist-Datei nicht gefunden"}
+        
+        # Load playlist
+        playlist = m3u8.load(str(playlist_file))
+        
+        imported = []
+        skipped = []
+        errors = []
+        
+        for segment in playlist.segments:
+            if not segment.uri:
+                continue
+                
+            # Convert URI to absolute path if relative
+            media_path = Path(segment.uri)
+            if not media_path.is_absolute():
+                media_path = playlist_file.parent / media_path
+            
+            if not media_path.exists():
+                errors.append(f"Datei nicht gefunden: {media_path.name}")
+                continue
+            
+            # Check if already in library
+            known = db.get_known_media_names()
+            if media_path.name in known:
+                skipped.append(media_path.name)
+                continue
+            
+            # Parse and add to library
+            try:
+                item = MediaItem(media_path.name, media_path)
+                item_dict = item.to_dict()
+                db.insert_media(item_dict)
+                imported.append(item_dict)
+            except Exception as e:
+                errors.append(f"{media_path.name}: {str(e)}")
+        
+        if DEBUG_FLAGS["player"]:
+            debug_log(f"[VLC Import] {len(imported)} importiert, {len(skipped)} übersprungen, {len(errors)} Fehler")
+        
+        return {
+            "status": "ok",
+            "imported": imported,
+            "skipped": skipped,
+            "errors": errors,
+            "count": len(imported)
+        }
+    except Exception as e:
+        logging.error(f"[VLC Import] Error: {e}")
+        return {"error": str(e)}
+
+
+@eel.expose
+def export_playlist_to_vlc(media_names: list, output_path: str):
+    """
+    @brief Exports selected media items to a VLC-compatible m3u8 playlist.
+    @details Exportiert ausgewählte Medien in eine VLC-kompatible m3u8 Playlist.
+    @param media_names List of media item names from database / Liste von Medien-Namen aus der DB.
+    @param output_path Target path for the .m3u8 file / Ziel-Pfad für die .m3u8-Datei.
+    @return Status dictionary / Status-Dictionary.
+    """
+    try:
+        playlist_file = Path(output_path)
+        if not playlist_file.suffix:
+            playlist_file = playlist_file.with_suffix('.m3u8')
+        
+        lines = ["#EXTM3U\n"]
+        exported = 0
+        missing = []
+        
+        # Get all media and create a lookup dict
+        all_media = db.get_all_media()
+        media_dict = {item['name']: item for item in all_media}
+        
+        for name in media_names:
+            item_dict = media_dict.get(name)
+            if not item_dict:
+                missing.append(name)
+                continue
+            
+            file_path = item_dict.get("path", "")
+            if not file_path or not Path(file_path).exists():
+                missing.append(name)
+                continue
+            
+            # Add EXTINF metadata line (duration, title)
+            duration = item_dict.get("duration", 0) or -1
+            title = item_dict.get("title") or name
+            artist = item_dict.get("artist", "")
+            extinf_title = f"{artist} - {title}" if artist else title
+            
+            lines.append(f"#EXTINF:{duration},{extinf_title}\n")
+            lines.append(f"{file_path}\n")
+            exported += 1
+        
+        playlist_file.write_text("".join(lines), encoding='utf-8')
+        
+        if DEBUG_FLAGS["player"]:
+            debug_log(f"[VLC Export] {exported} Tracks nach {playlist_file.name} exportiert")
+        
+        return {
+            "status": "ok",
+            "path": str(playlist_file),
+            "exported": exported,
+            "missing": missing
+        }
+    except Exception as e:
+        logging.error(f"[VLC Export] Error: {e}")
+        return {"error": str(e)}
+
+
+@eel.expose
+def pick_file(title="Datei auswählen", filetypes=None):
+    """
+    @brief Opens a native file picker dialog.
+    @details Öffnet einen nativen Datei-Auswahldialog.
+    @param title Dialog title / Dialog-Titel.
+    @param filetypes List of (description, extension) tuples / Liste von Dateifiltern.
+    @return Selected file path or None / Gewählter Pfad oder None.
+    """
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        
+        if filetypes:
+            file_path = filedialog.askopenfilename(title=title, filetypes=filetypes)
+        else:
+            file_path = filedialog.askopenfilename(title=title)
+        
+        root.destroy()
+        return file_path if file_path else None
+    except Exception as e:
+        logging.error(f"[System] File picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_save_file(title="Datei speichern", filetypes=None, default_name="playlist.m3u8"):
+    """
+    @brief Opens a native file save dialog.
+    @details Öffnet einen nativen Datei-Speichern-Dialog.
+    @param title Dialog title / Dialog-Titel.
+    @param filetypes List of (description, extension) tuples / Liste von Dateifiltern.
+    @param default_name Default filename / Standard-Dateiname.
+    @return Selected file path or None / Gewählter Pfad oder None.
+    """
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        
+        if filetypes:
+            file_path = filedialog.asksaveasfilename(
+                title=title, 
+                filetypes=filetypes,
+                defaultextension=".m3u8",
+                initialfile=default_name
+            )
+        else:
+            file_path = filedialog.asksaveasfilename(
+                title=title,
+                initialfile=default_name
+            )
+        
+        root.destroy()
+        return file_path if file_path else None
+    except Exception as e:
+        logging.error(f"[System] File save picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_folder_cli(prompt="Ordnerpfad eingeben"):
+    """
+    @brief CLI-based folder picker without GUI dependencies.
+    @details CLI-basierter Ordner-Picker ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @param prompt Input prompt text / Eingabe-Prompt-Text.
+    @return Valid folder path or None / Gültiger Ordnerpfad oder None.
+    """
+    try:
+        print(f"\n{prompt}:")
+        print(f"(Standard: {Path.home()})")
+        user_input = input("> ").strip()
+        
+        if not user_input:
+            return str(Path.home())
+        
+        folder_path = Path(user_input).expanduser().resolve()
+        
+        if folder_path.exists() and folder_path.is_dir():
+            return str(folder_path)
+        else:
+            print(f"Fehler: '{folder_path}' ist kein gültiger Ordner.")
+            return None
+    except (KeyboardInterrupt, EOFError):
+        print("\nAbgebrochen.")
+        return None
+    except Exception as e:
+        logging.error(f"[System] CLI folder picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_file_cli(prompt="Dateipfad eingeben", extensions=None):
+    """
+    @brief CLI-based file picker without GUI dependencies.
+    @details CLI-basierter Datei-Picker ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @param prompt Input prompt text / Eingabe-Prompt-Text.
+    @param extensions Optional list of allowed extensions / Optionale Liste erlaubter Endungen.
+    @return Valid file path or None / Gültiger Dateipfad oder None.
+    """
+    try:
+        ext_info = ""
+        if extensions:
+            ext_info = f" (Erlaubte Formate: {', '.join(extensions)})"
+        
+        print(f"\n{prompt}{ext_info}:")
+        user_input = input("> ").strip()
+        
+        if not user_input:
+            return None
+        
+        file_path = Path(user_input).expanduser().resolve()
+        
+        if not file_path.exists():
+            print(f"Fehler: Datei '{file_path}' nicht gefunden.")
+            return None
+        
+        if not file_path.is_file():
+            print(f"Fehler: '{file_path}' ist keine Datei.")
+            return None
+        
+        if extensions and file_path.suffix.lower() not in extensions:
+            print(f"Fehler: Dateiformat '{file_path.suffix}' nicht erlaubt.")
+            return None
+        
+        return str(file_path)
+    except (KeyboardInterrupt, EOFError):
+        print("\nAbgebrochen.")
+        return None
+    except Exception as e:
+        logging.error(f"[System] CLI file picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_save_file_cli(prompt="Speicherpfad eingeben", default_name="output.txt", extensions=None):
+    """
+    @brief CLI-based save file dialog without GUI dependencies.
+    @details CLI-basierter Speichern-Dialog ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @param prompt Input prompt text / Eingabe-Prompt-Text.
+    @param default_name Default filename / Standard-Dateiname.
+    @param extensions Optional list of allowed extensions / Optionale Liste erlaubter Endungen.
+    @return Valid save path or None / Gültiger Speicherpfad oder None.
+    """
+    try:
+        ext_info = ""
+        if extensions:
+            ext_info = f" (Formate: {', '.join(extensions)})"
+        
+        print(f"\n{prompt}{ext_info}:")
+        print(f"(Standard: {default_name})")
+        user_input = input("> ").strip()
+        
+        if not user_input:
+            user_input = default_name
+        
+        save_path = Path(user_input).expanduser().resolve()
+        
+        # Add extension if missing
+        if extensions and save_path.suffix.lower() not in extensions:
+            save_path = save_path.with_suffix(extensions[0])
+        
+        # Check if parent directory exists
+        if not save_path.parent.exists():
+            print(f"Fehler: Verzeichnis '{save_path.parent}' existiert nicht.")
+            create = input("Verzeichnis erstellen? (j/n): ").strip().lower()
+            if create == 'j':
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                return None
+        
+        # Warn if file exists
+        if save_path.exists():
+            overwrite = input(f"Datei '{save_path.name}' existiert. Überschreiben? (j/n): ").strip().lower()
+            if overwrite != 'j':
+                return None
+        
+        return str(save_path)
+    except (KeyboardInterrupt, EOFError):
+        print("\nAbgebrochen.")
+        return None
+    except Exception as e:
+        logging.error(f"[System] CLI save file picker failed: {e}")
+        return None
 
 
 @eel.expose
@@ -1093,6 +1830,9 @@ def run_gui_tests():
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
+    no_gui_mode = is_no_gui_mode(sys.argv)
+    connectionless_browser_mode = is_connectionless_browser_mode(sys.argv)
+
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
     # Only print on startup if a debug flag is active (though usually all are False initially)
@@ -1103,10 +1843,35 @@ if __name__ == "__main__":
 
     db.init_db()
 
+    legacy_dbs = db.list_legacy_databases()
+    if legacy_dbs:
+        logging.warning("[DB] Legacy database files detected (ignored by app):")
+        for legacy_db in legacy_dbs:
+            logging.warning(f"[DB]  - {legacy_db}")
+        logging.warning("[DB] Use reset_app_data() to remove legacy DB files.")
+
     # Ensure scan dirs exist and start initial indexing
-    config_dirs = PARSER_CONFIG.get("scan_dirs", [SCAN_MEDIA_DIR])
+    config_dirs = PARSER_CONFIG.get("scan_dirs", [])
     for d in config_dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
+
+    if no_gui_mode:
+        sessionless_info = run_sessionless_mode()
+        logging.info("[NoGUI] Mode enabled (--ng / --no-gui / --sessionless).")
+        logging.info(f"[NoGUI] Active DB: {sessionless_info['active_db']}")
+        logging.info(f"[NoGUI] Library entries: {sessionless_info['total_items']}")
+        logging.info(f"[NoGUI] Configured scan dirs: {sessionless_info['scan_dirs']}")
+        logging.info("[NoGUI] No Eel/WebSocket/Browser started. Exiting.")
+        raise SystemExit(0)
+
+    if connectionless_browser_mode:
+        mode_info = run_connectionless_browser_mode()
+        logging.info("[Mode-N] Connectionless browser mode enabled (--n).")
+        logging.info(f"[Mode-N] Active DB: {mode_info['active_db']}")
+        logging.info(f"[Mode-N] Library entries: {mode_info['total_items']}")
+        logging.info(f"[Mode-N] Opened local UI: {mode_info['app_url']}")
+        logging.info("[Mode-N] No Eel/WebSocket backend started. Exiting.")
+        raise SystemExit(0)
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
@@ -1119,14 +1884,35 @@ if __name__ == "__main__":
 
     if DEBUG_FLAGS["start"]:
         debug_log("[Startup] Starting Eel UI...")
+    
+    # Find a free port dynamically to allow multiple sessions
+    import socket
+    def find_free_port():
+        """Find and return a free port for this session."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.listen(1)
+            port = s.getsockname()[1]
+        return port
+    
+    session_port = find_free_port()
+    
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
-    # port=0 sucht automatisch einen freien Port
     try:
-        logger.debug("websocket", "Starting Eel server (bottle/gevent)...")
-        eel.start("app.html", size=(1450, 800), block=False, port=0)
+        logger.debug("websocket", f"Starting Eel server session on port {session_port}...")
+        eel.start("app.html", mode=None, size=(1450, 800), block=False, port=session_port)
+        
+        # Open browser explicitly after Eel starts with session-specific URL
+        session_url = f"http://localhost:{session_port}/app.html"
+        logging.info(f"[Session] Opening browser at {session_url}")
+        
+        # Use preferred browser (Chrome/Chromium over Vivaldi)
+        browser = get_preferred_browser()
+        browser.open(session_url)
+        
     except Exception as e:
-        logging.error(f"[Startup-Error] eel.start failed: {e}")
+        logging.error(f"[Startup-Error] Failed to start session: {e}")
 
     # Server am Leben halten
     while True:

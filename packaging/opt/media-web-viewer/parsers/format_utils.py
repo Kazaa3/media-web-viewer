@@ -15,7 +15,7 @@ PARSER_CONFIG: dict[str, Any] = {
     "parser_mode": "lightweight",
     "debug_scan": True,
     "debug_parser": True,
-    "scan_dirs": [str(Path(__file__).resolve().parent.parent / "media")],
+    "scan_dirs": [],
     "language": "de",
     "mutagen_prefer_albumartist": True,
     "mutagen_extract_lyrics": False,
@@ -23,6 +23,48 @@ PARSER_CONFIG: dict[str, Any] = {
     "ffmpeg_deep_analysis": False,
     "ffmpeg_extract_thumbnails": True
 }
+
+
+def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
+    """
+    Sanitize configured scan directories.
+
+    - keep only existing directories
+    - remove duplicates
+    - exclude internal project directories like logbuch and dist
+    """
+    if not isinstance(scan_dirs, list):
+        return []
+
+    project_root = Path(__file__).resolve().parent.parent
+    blocked_dirs = {
+        (project_root / "logbuch").resolve(),
+        (project_root / "dist").resolve(),
+        (project_root / ".git").resolve(),
+        (project_root / ".venv").resolve(),
+        (project_root / "packaging").resolve(),
+    }
+
+    sanitized: list[str] = []
+    seen: set[Path] = set()
+
+    for raw_dir in scan_dirs:
+        if not isinstance(raw_dir, str) or not raw_dir.strip():
+            continue
+
+        candidate = Path(raw_dir).expanduser().resolve()
+
+        if not candidate.exists() or not candidate.is_dir():
+            continue
+        if candidate in blocked_dirs:
+            continue
+        if candidate in seen:
+            continue
+
+        seen.add(candidate)
+        sanitized.append(str(candidate))
+
+    return sanitized
 
 
 def load_parser_config() -> None:
@@ -36,6 +78,7 @@ def load_parser_config() -> None:
             with open(CONFIG_FILE, 'r') as f:
                 loaded = json.load(f)
                 PARSER_CONFIG.update(loaded)
+                PARSER_CONFIG["scan_dirs"] = sanitize_scan_dirs(PARSER_CONFIG.get("scan_dirs", []))
         except Exception as e:
             print(f"Error loading config: {e}")
     else:
@@ -50,6 +93,7 @@ def save_parser_config() -> None:
     @details Speichert die aktuelle Parser-Konfiguration auf der Festplatte.
     """
     try:
+        PARSER_CONFIG["scan_dirs"] = sanitize_scan_dirs(PARSER_CONFIG.get("scan_dirs", []))
         os.makedirs(CONFIG_FILE.parent, exist_ok=True)
         with open(CONFIG_FILE, 'w') as f:
             json.dump(PARSER_CONFIG, f, indent=4)
