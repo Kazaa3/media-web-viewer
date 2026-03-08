@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.2.22  
+**Version:** 1.2.23  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.2.22
+1.2.23
 ```
 
 This version is automatically loaded and used across:
@@ -141,7 +141,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -192,7 +192,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -1434,7 +1434,7 @@ if debug and mode == 'full':
 
 ### Verification
 
-1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.2.22_amd64.deb`
+1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.2.23_amd64.deb`
 
 2. **UI Verification:** Version 1.1.19 displayed correctly, Feature Modal shows latest entry 42_Wording.
 
@@ -2150,7 +2150,7 @@ Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellunge
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
 
 # 3. Abhängigkeiten bei Bedarf reparieren
 sudo apt-get install -f
@@ -2484,6 +2484,338 @@ git push origin new-name :old-name
 - ⚠️ Never force-delete branches with unique commits without backing up
 - ⚠️ Use `git branch -D` only when you're certain commits are elsewhere
 
+### Git and Build Artifacts Management
+
+**Problem:** After Git operations (clone, pull, branch cleanup), build artifacts like `.deb` packages and compiled binaries are missing.
+
+**Cause:** Build artifacts are **intentionally excluded** from version control via `.gitignore` to keep the repository clean and focused on source code.
+
+**Understanding Build Artifacts:**
+Build artifacts are generated files that can be recreated from source code:
+- `.deb` packages (e.g., `media-web-viewer_1.2.23_amd64.deb`)
+- Compiled binaries and executables
+- `build/` and `dist/` directories
+- Python bytecode (`__pycache__/`, `*.pyc`)
+- Generated documentation (`docs/html/`)
+
+#### What Gets Excluded from Git (`.gitignore`)
+
+**Build and Packaging:**
+```gitignore
+# Packaging and Build
+build/
+dist/
+*.spec
+*.deb
+packaging/opt/media-web-viewer/media/
+packaging/opt/media-web-viewer/Screens/
+```
+
+**Python Artifacts:**
+```gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+```
+
+**Media and Data:**
+```gitignore
+media/*
+media_library.db
+*.db
+Screens/
+*.log
+```
+
+**Why Exclude Build Artifacts:**
+- ✅ Keeps repository size small (binaries are large)
+- ✅ Makes Git history clean and focused on code changes
+- ✅ Prevents merge conflicts on generated files
+- ✅ Avoids tracking platform-specific binaries (Linux vs Windows)
+- ✅ Forces developers to build from source (ensures reproducibility)
+- ✅ Separates source code from distribution artifacts
+
+#### Handling Missing Binaries After Git Operations
+
+**Scenario 1: Fresh Clone**
+```bash
+# After cloning repository
+git clone https://github.com/kazaa3/gui_media_web_viewer.git
+cd gui_media_web_viewer
+
+# No binaries present - this is normal!
+ls *.deb
+# Output: ls: cannot access '*.deb': No such file or directory
+
+# Solution: Build from source
+bash build_deb.sh
+# Creates: media-web-viewer_1.2.23_amd64.deb
+```
+
+**Scenario 2: After Branch Switch or Pull**
+```bash
+# Switch branches
+git checkout main
+
+# Binaries might be gone if they were in build/
+ls build/
+# Output: ls: cannot access 'build/': No such file or directory
+
+# Solution: Rebuild
+bash build_deb.sh
+```
+
+**Scenario 3: After Branch Cleanup**
+```bash
+# After deleting old branches
+git branch -D feature/old-build
+
+# Old build artifacts are local - still present unless manually deleted
+ls *.deb
+# Output: media-web-viewer_1.2.21_amd64.deb (old version)
+
+# Solution: Clean and rebuild for current version
+rm *.deb
+bash build_deb.sh
+```
+
+#### Build Management Best Practices
+
+**1. Local Build Workflow:**
+```bash
+# Always build in a clean virtual environment
+source .venv/bin/activate
+
+# Clean old builds before new build
+rm -rf build/ dist/ *.deb
+
+# Build fresh
+bash build_deb.sh
+
+# Output directory: Current directory
+# Output file: media-web-viewer_<VERSION>_amd64.deb
+ls -lh *.deb
+# Expected: media-web-viewer_1.2.23_amd64.deb
+```
+
+**2. Version Management:**
+```bash
+# Build artifacts should match version in code
+grep "VERSION =" main.py
+# Output: VERSION = "1.2.23"
+
+# Filename should match version
+ls media-web-viewer_*.deb
+# Expected: media-web-viewer_1.2.23_amd64.deb
+```
+
+**3. Storage and Distribution:**
+```bash
+# DO NOT commit binaries to Git
+# Instead use GitHub Releases for distribution
+
+# Option A: Manual upload to GitHub Releases
+# 1. Go to https://github.com/kazaa3/gui_media_web_viewer/releases
+# 2. Click "Create a new release"
+# 3. Upload the .deb file
+# 4. Add release notes
+
+# Option B: Keep local backups outside Git repo
+mkdir -p ~/releases/media-web-viewer
+cp *.deb ~/releases/media-web-viewer/
+```
+
+**4. Clean Build Directory:**
+```bash
+# Remove all build artifacts (safe - can be regenerated)
+git clean -fdX
+
+# Explanation:
+# -f = force
+# -d = remove directories
+# -X = only remove ignored files (.gitignore entries)
+
+# This removes:
+# - build/
+# - dist/
+# - *.deb
+# - __pycache__/
+# - *.pyc
+# Does NOT remove: source code, configuration, .venv/
+```
+
+#### Checking Ignored Files
+
+**See what Git ignores:**
+```bash
+# List all ignored files
+git status --ignored
+
+# Example output:
+# Ignored files:
+#   build/
+#   dist/
+#   media-web-viewer_1.2.23_amd64.deb
+#   __pycache__/
+#   .venv/
+```
+
+**Check if specific file is ignored:**
+```bash
+# Test if a file is ignored
+git check-ignore -v media-web-viewer_1.2.23_amd64.deb
+
+# Output:
+# .gitignore:33:*.deb    media-web-viewer_1.2.23_amd64.deb
+# Explanation: Line 33 of .gitignore excludes this file
+```
+
+#### Recovery and Backup Strategies
+
+**If You Need to Preserve Old Builds:**
+```bash
+# BEFORE Git operations, backup important builds
+mkdir -p ~/backup/builds
+cp *.deb ~/backup/builds/
+cp -r build/ ~/backup/builds/build-$(date +%Y%m%d)/
+
+# After Git operations, restore if needed
+cp ~/backup/builds/*.deb ./
+```
+
+**Create Release Archive:**
+```bash
+# Archive build with metadata
+tar -czf media-web-viewer_1.2.23_build.tar.gz \
+    media-web-viewer_1.2.23_amd64.deb \
+    packaging/DEBIAN/control \
+    build_deb.sh
+
+# Store in safe location
+mv media-web-viewer_1.2.23_build.tar.gz ~/releases/
+```
+
+#### Rebuilding from Clean Repository
+
+**Complete rebuild from scratch:**
+```bash
+# 1. Clone fresh repository
+git clone https://github.com/kazaa3/gui_media_web_viewer.git
+cd gui_media_web_viewer
+
+# 2. Install system dependencies
+sudo apt install ffmpeg libmediainfo0v5 python3-tk python3-dev build-essential python3-venv
+
+# 3. Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 4. Install Python dependencies
+pip install -r requirements.txt
+
+# 5. Build package
+bash build_deb.sh
+
+# 6. Verify build
+ls -lh media-web-viewer_*.deb
+dpkg-deb --info media-web-viewer_*.deb
+```
+
+**Expected build output:**
+```
+media-web-viewer_1.2.23_amd64.deb
+Size: ~15MB (depends on version)
+Architecture: amd64
+```
+
+#### Common Issues and Solutions
+
+**Issue 1: "Binary missing after git pull"**
+- ✅ **Expected behavior** - binaries are not in Git
+- ✅ **Solution:** Run `bash build_deb.sh`
+
+**Issue 2: "Old version .deb still present"**
+- ⚠️ **Cause:** Manual builds leave old versions
+- ✅ **Solution:** `rm *.deb` before building or rename old versions
+
+**Issue 3: "Build fails after branch switch"**
+- ⚠️ **Cause:** Contaminated build directory from old branch
+- ✅ **Solution:** Clean build: `rm -rf build/ dist/` then rebuild
+
+**Issue 4: "Accidentally committed .deb to Git"**
+```bash
+# If you committed a binary by mistake
+git rm --cached media-web-viewer_*.deb
+git commit -m "fix: Remove accidentally committed binary"
+
+# Ensure .gitignore is correct
+grep "*.deb" .gitignore
+# Should output: *.deb
+```
+
+**Issue 5: "Want to track specific binary"**
+```bash
+# Force add despite .gitignore (NOT recommended)
+git add -f media-web-viewer_1.2.23_amd64.deb
+
+# Better: Use GitHub Releases or external storage
+# Reason: Binaries bloat repository and history
+```
+
+#### CI/CD Considerations
+
+**Automated Building:**
+```bash
+# In CI/CD pipeline (GitHub Actions example)
+name: Build Package
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt install -y ffmpeg libmediainfo0v5 python3-tk
+      - name: Build package
+        run: bash build_deb.sh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-package
+          path: "*.deb"
+```
+
+**Benefits:**
+- ✅ Consistent builds across environments
+- ✅ Automated version tagging
+- ✅ Automatic GitHub Release creation
+- ✅ Source code remains clean in Git
+
+#### Summary: What to Track vs. What to Ignore
+
+**✅ Track in Git (Source Code):**
+- Python source files (`*.py`)
+- Configuration files (`*.json`, `*.yaml`)
+- Documentation (`*.md`, `DOCUMENTATION.md`)
+- Build scripts (`build_deb.sh`)
+- Requirements (`requirements.txt`)
+- Package metadata (`packaging/DEBIAN/control`)
+- Tests (`tests/*.py`)
+
+**❌ Ignore in Git (Generated/Build):**
+- Compiled binaries (`*.deb`, executables)
+- Build directories (`build/`, `dist/`)
+- Python bytecode (`__pycache__/`, `*.pyc`)
+- Virtual environments (`.venv/`, `venv/`)
+- User data (`media/`, `*.db`, `Screens/`)
+- IDE files (`.vscode/`, `.idea/`)
+
+**🔰 Rule of Thumb:**
+*"If it can be generated from source code, don't commit it to Git."*
+
 ---
 
 ## Contact & Support
@@ -2495,17 +2827,17 @@ git push origin new-name :old-name
 ---
 
 **Last Updated:** 8. März 2026  
-**Current Version:** 1.2.22
+**Current Version:** 1.2.23
 
 ---
 
 ## Verification
 
 ### Build Verification
-Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.2.22_amd64.deb`
+Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.2.23_amd64.deb`
 
 ### UI Verification
-The version 1.2.22 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43) and File-Picker API (44).
+The version 1.2.23 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), and Conda Environment Support (46).
 
 ---
 
