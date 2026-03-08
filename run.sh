@@ -51,14 +51,38 @@ source "$VENV_DIR/bin/activate" || {
     exit 1
 }
 
-# Check if requirements are installed
-if ! python -c "import mutagen, eel, bottle" 2>/dev/null; then
-    echo -e "${YELLOW}📥 Installiere Abhängigkeiten...${NC}"
-    pip install -q -r "$REQUIREMENTS" || {
-        echo -e "${RED}❌ Fehler bei pip install!${NC}"
-        exit 1
-    }
-    echo -e "${GREEN}✅ Abhängigkeiten installiert${NC}"
+# Advanced Dependency Check (Python & System)
+echo -e "${BLUE}🔍 Prüfe Abhängigkeiten...${NC}"
+MISSING_PIP=$(python check_environment.py --list-missing-pip)
+MISSING_APT=$(python check_environment.py --list-missing-apt)
+
+if [[ -n "$MISSING_PIP" || -n "$MISSING_APT" ]]; then
+    echo -e "${YELLOW}⚠️  Fehlende Abhängigkeiten gefunden:${NC}"
+    if [[ -n "$MISSING_PIP" ]]; then
+        echo -e "   📦 Python: $MISSING_PIP"
+    fi
+    if [[ -n "$MISSING_APT" ]]; then
+        echo -e "   🔧 System: $MISSING_APT"
+    fi
+    
+    echo -e ""
+    read -p "Sollen die fehlenden Abhängigkeiten jetzt installiert werden? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ -n "$MISSING_PIP" ]]; then
+            echo -e "${BLUE}📥 Installiere Python-Packages...${NC}"
+            pip install $MISSING_PIP
+        fi
+        if [[ -n "$MISSING_APT" ]]; then
+            echo -e "${BLUE}📥 Installiere System-Packages (sudo erforderlich)...${NC}"
+            sudo apt update && sudo apt install -y $MISSING_APT
+        fi
+        echo -e "${GREEN}✅ Installation abgeschlossen.${NC}"
+    else
+        echo -e "${RED}❌ Abbruch. Die App wird möglicherweise nicht korrekt funktionieren.${NC}"
+    fi
+else
+    echo -e "${GREEN}✅ Alle Abhängigkeiten erfüllt.${NC}"
 fi
 
 # Show environment info

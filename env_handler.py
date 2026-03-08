@@ -78,47 +78,45 @@ class EnvironmentManager:
             return "unknown"
 
     def verify_dependencies(self) -> List[str]:
-        """
-        Strictly verifies that critical dependencies are installed and versions are sufficient.
-        Also checks for critical system binaries and browser availability.
-        Returns a list of error messages.
-        """
+        """Strictly verifies that critical dependencies are installed."""
+        missing_pip, missing_apt = self.get_missing_info()
         errors = []
-        try:
-            from importlib.metadata import version, PackageNotFoundError
-            for pkg, min_ver in CRITICAL_DEPENDENCIES.items():
-                try:
-                    version(pkg)
-                except PackageNotFoundError:
-                    errors.append(f"Missing critical Python package: {pkg} (>= {min_ver})")
+        for pkg in missing_pip:
+            errors.append(f"Missing critical Python package: {pkg}")
+        if missing_apt:
+            errors.append(f"Missing critical system binaries: {', '.join(missing_apt)}")
             
-            # Check system binaries
-            import shutil
-            missing_binaries = []
-            for binary in CRITICAL_BINARIES:
-                if not shutil.which(binary):
-                    missing_binaries.append(binary)
-            
-            if missing_binaries:
-                apt_map = {
-                    "ffmpeg": "ffmpeg",
-                    "mediainfo": "mediainfo",
-                    "update-mime-database": "shared-mime-info",
-                    "gdk-pixbuf-query-loaders": "libgdk-pixbuf2.0-0"
-                }
-                needed_pkgs = sorted(list(set(apt_map.get(b, b) for b in missing_binaries)))
-                errors.append(f"Missing critical system binaries: {', '.join(missing_binaries)}")
-                errors.append(f"👉 Fix: sudo apt install {' '.join(needed_pkgs)}")
-
-            # Check browser binaries (at least one must be present)
-            if not any(shutil.which(b) for b in BROWSER_BINARIES):
-                errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
-                errors.append("👉 Fix: sudo apt install google-chrome-stable OR chromium-browser")
-                
-        except Exception as e:
-            errors.append(f"Environmental integrity check failed: {e}")
+        # Check browser binaries (at least one must be present)
+        import shutil
+        if not any(shutil.which(b) for b in BROWSER_BINARIES):
+            errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
             
         return errors
+
+    def get_missing_info(self):
+        """Returns (missing_pip_list, missing_apt_list)"""
+        missing_pip = []
+        missing_apt = []
+        
+        from importlib.metadata import version, PackageNotFoundError
+        for pkg, min_ver in CRITICAL_DEPENDENCIES.items():
+            try:
+                version(pkg)
+            except PackageNotFoundError:
+                missing_pip.append(f"{pkg}>={min_ver}")
+        
+        import shutil
+        apt_map = {
+            "ffmpeg": "ffmpeg",
+            "mediainfo": "mediainfo",
+            "update-mime-database": "shared-mime-info",
+            "gdk-pixbuf-query-loaders": "libgdk-pixbuf2.0-0"
+        }
+        for binary, pkg in apt_map.items():
+            if not shutil.which(binary):
+                missing_apt.append(pkg)
+        
+        return sorted(list(set(missing_pip))), sorted(list(set(missing_apt)))
 
     def validate_safe_startup(self):
         """
@@ -151,7 +149,8 @@ class EnvironmentManager:
             print("\n❌ CRITICAL: Environment Integrity Check Failed", file=sys.stderr)
             for err in dep_errors:
                 print(f"   - {err}", file=sys.stderr)
-            print("\n   Try running: ./run.sh --rebuild", file=sys.stderr)
+            print("\n   👉 Fix: Run './run.sh' to automatically install all dependencies.", file=sys.stderr)
+            print("   (Or use './run.sh --rebuild' to recreate the environment from scratch)", file=sys.stderr)
             sys.exit(1)
 
         if self.is_debug:

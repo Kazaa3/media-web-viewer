@@ -265,4 +265,14 @@ def main():
 
 
 if __name__ == '__main__':
+    if "--list-missing-pip" in sys.argv:
+        from env_handler import EnvironmentManager
+        pip_missing, _ = EnvironmentManager().get_missing_info()
+        print(" ".join(pip_missing))
+        sys.exit(0)
+    if "--list-missing-apt" in sys.argv:
+        from env_handler import EnvironmentManager
+        _, apt_missing = EnvironmentManager().get_missing_info()
+        print(" ".join(apt_missing))
+        sys.exit(0)
     main()
