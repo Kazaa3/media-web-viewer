@@ -1,18 +1,26 @@
-# Kategorie: System
-# Eingabewerte: Python-Umgebung, installierte Packages
-# Ausgabewerte: Test-Ergebnisse (Pass/Fail)
-# Testdateien: requirements.txt
-# Kommentar: Überprüft venv-Aktivierung und Dependencies für korrekte Ausführung
+# Kategorie: System / Environment
+# Eingabewerte: Python-Umgebung, installierte Packages, System-Tools
+# Ausgabewerte: Test-Ergebnisse (Pass/Fail/Skip), Environment-Report
+# Testdateien: requirements.txt, .venv/, main.py
+# Kommentar: Comprehensive test suite für Python venv, Dependencies und System-Tools Validierung
 
 """
 Test Suite für Python-Umgebung und Dependencies
 
-Prüft:
-- Virtual Environment Aktivierung
-- Python-Version
-- Kritische Dependencies (mutagen, eel, bottle, etc.)
-- Optionale Dependencies (vlc, m3u8)
-- System-Tools (ffmpeg, mediainfo)
+Diese Test-Suite überprüft die vollständige Python-Umgebung und alle Dependencies:
+
+Kategorien:
+- TestPythonEnvironment: Python-Version, venv-Aktivierung, Projekt-Struktur
+- TestCriticalDependencies: Pflicht-Packages (eel, bottle, mutagen, pymediainfo, gevent, pytest)
+- TestOptionalDependencies: Optional-Packages (python-vlc, m3u8, psutil)
+- TestSystemDependencies: System-Tools (ffmpeg, mediainfo, python3-tk)
+- TestRequirementsTxt: requirements.txt Konsistenz-Check
+- TestBackendIntegration: main.py Import und get_environment_info() Test
+
+Verwendung:
+    pytest tests/test_environment_dependencies.py -v
+    # oder direkt:
+    python tests/test_environment_dependencies.py
 """
 
 import pytest
