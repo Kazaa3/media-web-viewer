@@ -72,6 +72,19 @@ python build_system.py --lint --type-check
 python build_system.py --clean-all
 ```
 
+## Release Verification
+
+```bash
+# Version sync check (includes desktop entry in Linux start menu)
+python tests/test_version_sync.py
+
+# Reinstall checks (safe default)
+python tests/test_reinstall_deb.py
+
+# Optional destructive check: purge old package + reinstall new .deb
+RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
+```
+
 ## Docs
 - Technical Manual: [DOCUMENTATION.md](DOCUMENTATION.md)
 - Dependencies & licenses: [DEPENDENCIES.md](DEPENDENCIES.md)

@@ -127,10 +127,22 @@ class EnvironmentManager:
             "ffmpeg": "ffmpeg",
             "mediainfo": "mediainfo",
             "update-mime-database": "shared-mime-info",
-            "gdk-pixbuf-query-loaders": "libgdk-pixbuf2.0-0"
+            "gdk-pixbuf-query-loaders": "libgdk-pixbuf-2.0-0"
         }
         for binary, apt_pkg in apt_map.items():
-            if not shutil.which(binary):
+            binary_found = bool(shutil.which(binary))
+
+            # Debian/Ubuntu often install gdk-pixbuf-query-loaders outside PATH.
+            # Accept known system locations to avoid false negatives.
+            if binary == "gdk-pixbuf-query-loaders" and not binary_found:
+                known_locations = [
+                    Path("/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"),
+                    Path("/usr/lib/aarch64-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"),
+                    Path("/usr/lib/i386-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"),
+                ]
+                binary_found = any(path.exists() for path in known_locations)
+
+            if not binary_found:
                 missing_apt.append(apt_pkg)
                 if apt_pkg in APT_TO_CONDA_MAP:
                     missing_conda.append(APT_TO_CONDA_MAP[apt_pkg])
