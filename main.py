@@ -460,9 +460,9 @@ def get_preferred_browser():
     Get the preferred browser controller for launching the application.
 
     Preference order:
-    1. Google Chrome
-    2. Chromium
-    3. Firefox
+    1. Chromium
+    2. Firefox
+    3. Google Chrome
     4. Default system browser
 
     Returns:
@@ -472,11 +472,11 @@ def get_preferred_browser():
     import shutil
 
     browser_candidates = [
-        ('google-chrome', 'Google Chrome'),
-        ('chrome', 'Google Chrome'),
         ('chromium-browser', 'Chromium'),
         ('chromium', 'Chromium'),
         ('firefox', 'Firefox'),
+        ('google-chrome', 'Google Chrome'),
+        ('chrome', 'Google Chrome'),
     ]
 
     for browser_cmd, browser_name in browser_candidates:
@@ -2098,13 +2098,10 @@ if __name__ == "__main__":
         session_url = f"http://localhost:{session_port}/app.html"
         logging.info(f"[Session] Opening browser at {session_url}")
         
-        # Launch Chrome/Chromium in app mode (standalone window without browser UI)
+        # Launch Chromium in app mode (standalone window without browser UI)
         import shutil
         browser_found = False
         browser_candidates = [
-            'google-chrome-stable',
-            'google-chrome',
-            'chrome',
             'chromium-browser',
             'chromium',
         ]
@@ -2131,7 +2128,7 @@ if __name__ == "__main__":
                     continue
         
         if not browser_found:
-            logging.warning("[Browser] Chrome/Chromium not found, falling back to default browser")
+            logging.warning("[Browser] Chromium not found, falling back to preferred browser")
             browser = get_preferred_browser()
             browser.open(session_url)
         
