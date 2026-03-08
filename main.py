@@ -614,7 +614,7 @@ def add_file_to_library(file_path):
     if p.name in known:
         return {"status": "exists", "name": p.name}
 
-    item = MediaItem(p.name, p, debug_flags=DEBUG_FLAGS, logger=debug_log)
+    item = MediaItem(p.name, p)
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
@@ -662,6 +662,196 @@ def stop_vlc():
     if VLC_PLAYER:
         VLC_PLAYER.stop()
     return {"status": "ok"}
+
+
+@eel.expose
+def import_vlc_playlist(m3u_path: str):
+    """
+    @brief Imports a VLC playlist (m3u8/m3u/XSPF) into the library.
+    @details Importiert eine VLC-Playlist (m3u8/m3u/XSPF) in die Bibliothek.
+    @param m3u_path Path to the playlist file / Pfad zur Playlist-Datei.
+    @return Dictionary with imported media items / Dictionary mit importierten Items.
+    """
+    if not HAS_M3U8:
+        return {"error": "python-m3u8 Modul ist nicht installiert. Bitte installieren: pip install m3u8"}
+    
+    try:
+        playlist_file = Path(m3u_path)
+        if not playlist_file.exists():
+            return {"error": "Playlist-Datei nicht gefunden"}
+        
+        # Load playlist
+        playlist = m3u8.load(str(playlist_file))
+        
+        imported = []
+        skipped = []
+        errors = []
+        
+        for segment in playlist.segments:
+            if not segment.uri:
+                continue
+                
+            # Convert URI to absolute path if relative
+            media_path = Path(segment.uri)
+            if not media_path.is_absolute():
+                media_path = playlist_file.parent / media_path
+            
+            if not media_path.exists():
+                errors.append(f"Datei nicht gefunden: {media_path.name}")
+                continue
+            
+            # Check if already in library
+            known = db.get_known_media_names()
+            if media_path.name in known:
+                skipped.append(media_path.name)
+                continue
+            
+            # Parse and add to library
+            try:
+                item = MediaItem(media_path.name, media_path)
+                item_dict = item.to_dict()
+                db.insert_media(item_dict)
+                imported.append(item_dict)
+            except Exception as e:
+                errors.append(f"{media_path.name}: {str(e)}")
+        
+        if DEBUG_FLAGS["player"]:
+            debug_log(f"[VLC Import] {len(imported)} importiert, {len(skipped)} übersprungen, {len(errors)} Fehler")
+        
+        return {
+            "status": "ok",
+            "imported": imported,
+            "skipped": skipped,
+            "errors": errors,
+            "count": len(imported)
+        }
+    except Exception as e:
+        logging.error(f"[VLC Import] Error: {e}")
+        return {"error": str(e)}
+
+
+@eel.expose
+def export_playlist_to_vlc(media_names: list, output_path: str):
+    """
+    @brief Exports selected media items to a VLC-compatible m3u8 playlist.
+    @details Exportiert ausgewählte Medien in eine VLC-kompatible m3u8 Playlist.
+    @param media_names List of media item names from database / Liste von Medien-Namen aus der DB.
+    @param output_path Target path for the .m3u8 file / Ziel-Pfad für die .m3u8-Datei.
+    @return Status dictionary / Status-Dictionary.
+    """
+    try:
+        playlist_file = Path(output_path)
+        if not playlist_file.suffix:
+            playlist_file = playlist_file.with_suffix('.m3u8')
+        
+        lines = ["#EXTM3U\n"]
+        exported = 0
+        missing = []
+        
+        # Get all media and create a lookup dict
+        all_media = db.get_all_media()
+        media_dict = {item['name']: item for item in all_media}
+        
+        for name in media_names:
+            item_dict = media_dict.get(name)
+            if not item_dict:
+                missing.append(name)
+                continue
+            
+            file_path = item_dict.get("path", "")
+            if not file_path or not Path(file_path).exists():
+                missing.append(name)
+                continue
+            
+            # Add EXTINF metadata line (duration, title)
+            duration = item_dict.get("duration", 0) or -1
+            title = item_dict.get("title") or name
+            artist = item_dict.get("artist", "")
+            extinf_title = f"{artist} - {title}" if artist else title
+            
+            lines.append(f"#EXTINF:{duration},{extinf_title}\n")
+            lines.append(f"{file_path}\n")
+            exported += 1
+        
+        playlist_file.write_text("".join(lines), encoding='utf-8')
+        
+        if DEBUG_FLAGS["player"]:
+            debug_log(f"[VLC Export] {exported} Tracks nach {playlist_file.name} exportiert")
+        
+        return {
+            "status": "ok",
+            "path": str(playlist_file),
+            "exported": exported,
+            "missing": missing
+        }
+    except Exception as e:
+        logging.error(f"[VLC Export] Error: {e}")
+        return {"error": str(e)}
+
+
+@eel.expose
+def pick_file(title="Datei auswählen", filetypes=None):
+    """
+    @brief Opens a native file picker dialog.
+    @details Öffnet einen nativen Datei-Auswahldialog.
+    @param title Dialog title / Dialog-Titel.
+    @param filetypes List of (description, extension) tuples / Liste von Dateifiltern.
+    @return Selected file path or None / Gewählter Pfad oder None.
+    """
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        
+        if filetypes:
+            file_path = filedialog.askopenfilename(title=title, filetypes=filetypes)
+        else:
+            file_path = filedialog.askopenfilename(title=title)
+        
+        root.destroy()
+        return file_path if file_path else None
+    except Exception as e:
+        logging.error(f"[System] File picker failed: {e}")
+        return None
+
+
+@eel.expose
+def pick_save_file(title="Datei speichern", filetypes=None, default_name="playlist.m3u8"):
+    """
+    @brief Opens a native file save dialog.
+    @details Öffnet einen nativen Datei-Speichern-Dialog.
+    @param title Dialog title / Dialog-Titel.
+    @param filetypes List of (description, extension) tuples / Liste von Dateifiltern.
+    @param default_name Default filename / Standard-Dateiname.
+    @return Selected file path or None / Gewählter Pfad oder None.
+    """
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        
+        if filetypes:
+            file_path = filedialog.asksaveasfilename(
+                title=title, 
+                filetypes=filetypes,
+                defaultextension=".m3u8",
+                initialfile=default_name
+            )
+        else:
+            file_path = filedialog.asksaveasfilename(
+                title=title,
+                initialfile=default_name
+            )
+        
+        root.destroy()
+        return file_path if file_path else None
+    except Exception as e:
+        logging.error(f"[System] File save picker failed: {e}")
+        return None
 
 
 @eel.expose
