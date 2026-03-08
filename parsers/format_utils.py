@@ -8,6 +8,13 @@ from pathlib import Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
 
 
+def get_default_scan_dir() -> Path:
+    """
+    Return the project default scan directory (<project_root>/media).
+    """
+    return (Path(__file__).resolve().parent.parent / "media").resolve()
+
+
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG: dict[str, Any] = {
@@ -15,7 +22,7 @@ PARSER_CONFIG: dict[str, Any] = {
     "parser_mode": "lightweight",
     "debug_scan": True,
     "debug_parser": True,
-    "scan_dirs": [],
+    "scan_dirs": [str(get_default_scan_dir())],
     "language": "de",
     "mutagen_prefer_albumartist": True,
     "mutagen_extract_lyrics": False,
@@ -33,8 +40,10 @@ def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
     - remove duplicates
     - exclude internal project directories like logbuch and dist
     """
+    default_scan_dir = get_default_scan_dir()
+
     if not isinstance(scan_dirs, list):
-        return []
+        scan_dirs = []
 
     project_root = Path(__file__).resolve().parent.parent
     blocked_dirs = {
@@ -54,6 +63,8 @@ def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
 
         candidate = Path(raw_dir).expanduser().resolve()
 
+        if candidate == default_scan_dir:
+            candidate.mkdir(parents=True, exist_ok=True)
         if not candidate.exists() or not candidate.is_dir():
             continue
         if candidate in blocked_dirs:
@@ -63,6 +74,11 @@ def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
 
         seen.add(candidate)
         sanitized.append(str(candidate))
+
+    # Ensure default media directory is always available as baseline scan dir
+    default_scan_dir.mkdir(parents=True, exist_ok=True)
+    if str(default_scan_dir) not in sanitized:
+        sanitized.insert(0, str(default_scan_dir))
 
     return sanitized
 

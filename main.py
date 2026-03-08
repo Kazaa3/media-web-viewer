@@ -862,6 +862,28 @@ def get_default_media_dir():
     """
     return SCAN_MEDIA_DIR
 
+
+@eel.expose
+def ensure_default_scan_dir():
+    """
+    @brief Ensures the default media directory is present in scan_dirs.
+    @details Stellt sicher, dass der Standard-Medienordner in scan_dirs enthalten ist.
+    @return Status dictionary with updated directory list / Status-Dictionary mit aktualisierter Liste.
+    """
+    default_dir = str(Path(SCAN_MEDIA_DIR).resolve())
+    Path(default_dir).mkdir(parents=True, exist_ok=True)
+
+    dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
+    normalized_dirs = [str(Path(d).resolve()) for d in dirs if isinstance(d, str) and d.strip()]
+
+    if default_dir not in normalized_dirs:
+        normalized_dirs.insert(0, default_dir)
+
+    PARSER_CONFIG["scan_dirs"] = normalized_dirs
+    save_parser_config()
+
+    return {"status": "ok", "dirs": PARSER_CONFIG.get("scan_dirs", [])}
+
 # Funktion, um Medien zu scannen und an die GUI zu senden
 
 
@@ -934,7 +956,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         eel.set_db_status(False)()
 
     elapsed = time.time() - start_time
-    logger.debug("performance", f"Scan of {scan_root or 'all'} took {elapsed:.2f} seconds.")
+    scanned_target = ", ".join(str(p) for p in scan_roots) if scan_roots else "none"
+    logger.debug("performance", f"Scan of {scanned_target} took {elapsed:.2f} seconds.")
     logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
 
     # Status in GUI ausblenden (redundant, already handled by guard above)
@@ -1934,7 +1957,8 @@ if __name__ == "__main__":
             logging.warning(f"[DB]  - {legacy_db}")
         logging.warning("[DB] Use reset_app_data() to remove legacy DB files.")
 
-    # Ensure scan dirs exist and start initial indexing
+    # Ensure default scan dir is present and all scan dirs exist
+    ensure_default_scan_dir()
     config_dirs = PARSER_CONFIG.get("scan_dirs", [])
     for d in config_dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
