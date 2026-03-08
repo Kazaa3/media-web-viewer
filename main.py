@@ -415,16 +415,65 @@ def initialize_debug_flags(args=None):
 initialize_debug_flags()
 
 
-def is_sessionless_mode(args: list[str] | None = None) -> bool:
+def is_no_gui_mode(args: list[str] | None = None) -> bool:
     """
-    Check whether sessionless mode is enabled.
+    Check whether no-GUI mode is enabled.
 
-    Sessionless mode disables UI/websocket/browser startup and runs
+    No-GUI mode disables UI/websocket/browser startup and runs
     the app in a connectionless local-only mode.
     """
     if args is None:
         args = sys.argv
-    return "--n" in args or "--sessionless" in args
+    return "--ng" in args or "--no-gui" in args or "--sessionless" in args
+
+
+def is_connectionless_browser_mode(args: list[str] | None = None) -> bool:
+    """
+    Check whether browser-based connectionless mode is enabled.
+
+    In this mode the app opens the frontend in browser without starting
+    Eel/WebSocket backend session.
+    """
+    if args is None:
+        args = sys.argv
+    return "--n" in args
+
+
+def get_preferred_browser():
+    """
+    Get the preferred browser controller for launching the application.
+
+    Preference order:
+    1. Google Chrome
+    2. Chromium
+    3. Firefox
+    4. Default system browser
+
+    Returns:
+        webbrowser.BaseBrowser: Browser controller instance
+    """
+    import webbrowser
+    import shutil
+
+    browser_candidates = [
+        ('google-chrome', 'Google Chrome'),
+        ('chromium-browser', 'Chromium'),
+        ('chromium', 'Chromium'),
+        ('firefox', 'Firefox'),
+    ]
+
+    for browser_cmd, browser_name in browser_candidates:
+        browser_path = shutil.which(browser_cmd)
+        if browser_path:
+            logging.info(f"[Browser] Selected: {browser_name} ({browser_path})")
+            try:
+                return webbrowser.get(f'{browser_path} %s')
+            except Exception as e:
+                logging.warning(f"[Browser] Failed to register {browser_name}: {e}")
+                continue
+
+    logging.warning("[Browser] Using system default browser (Vivaldi or other)")
+    return webbrowser
 
 
 def run_sessionless_mode() -> dict:
@@ -435,10 +484,33 @@ def run_sessionless_mode() -> dict:
     stats = db.get_db_stats()
     legacy_dbs = db.list_legacy_databases()
     return {
-        "mode": "sessionless",
+        "mode": "no-gui",
         "active_db": str(db.get_active_db_path()),
         "total_items": int(stats.get("total_items", 0)),
         "legacy_db_count": len(legacy_dbs),
+        "scan_dirs": PARSER_CONFIG.get("scan_dirs", []),
+    }
+
+
+def run_connectionless_browser_mode() -> dict:
+    """
+    Execute connectionless browser mode and return status information.
+
+    Opens web/app.html directly in browser without starting Eel.
+    """
+    db.init_db()
+    stats = db.get_db_stats()
+    app_file = (Path(__file__).parent / "web" / "app.html").resolve()
+    app_url = app_file.as_uri()
+
+    browser = get_preferred_browser()
+    browser.open(app_url)
+
+    return {
+        "mode": "connectionless-browser",
+        "active_db": str(db.get_active_db_path()),
+        "total_items": int(stats.get("total_items", 0)),
+        "app_url": app_url,
         "scan_dirs": PARSER_CONFIG.get("scan_dirs", []),
     }
 
@@ -1758,7 +1830,8 @@ def run_gui_tests():
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
-    sessionless_mode = is_sessionless_mode(sys.argv)
+    no_gui_mode = is_no_gui_mode(sys.argv)
+    connectionless_browser_mode = is_connectionless_browser_mode(sys.argv)
 
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
@@ -1782,13 +1855,22 @@ if __name__ == "__main__":
     for d in config_dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
 
-    if sessionless_mode:
+    if no_gui_mode:
         sessionless_info = run_sessionless_mode()
-        logging.info("[Sessionless] Mode enabled (--n / --sessionless).")
-        logging.info(f"[Sessionless] Active DB: {sessionless_info['active_db']}")
-        logging.info(f"[Sessionless] Library entries: {sessionless_info['total_items']}")
-        logging.info(f"[Sessionless] Configured scan dirs: {sessionless_info['scan_dirs']}")
-        logging.info("[Sessionless] No Eel/WebSocket/Browser started. Exiting.")
+        logging.info("[NoGUI] Mode enabled (--ng / --no-gui / --sessionless).")
+        logging.info(f"[NoGUI] Active DB: {sessionless_info['active_db']}")
+        logging.info(f"[NoGUI] Library entries: {sessionless_info['total_items']}")
+        logging.info(f"[NoGUI] Configured scan dirs: {sessionless_info['scan_dirs']}")
+        logging.info("[NoGUI] No Eel/WebSocket/Browser started. Exiting.")
+        raise SystemExit(0)
+
+    if connectionless_browser_mode:
+        mode_info = run_connectionless_browser_mode()
+        logging.info("[Mode-N] Connectionless browser mode enabled (--n).")
+        logging.info(f"[Mode-N] Active DB: {mode_info['active_db']}")
+        logging.info(f"[Mode-N] Library entries: {mode_info['total_items']}")
+        logging.info(f"[Mode-N] Opened local UI: {mode_info['app_url']}")
+        logging.info("[Mode-N] No Eel/WebSocket backend started. Exiting.")
         raise SystemExit(0)
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
@@ -1812,46 +1894,6 @@ if __name__ == "__main__":
             s.listen(1)
             port = s.getsockname()[1]
         return port
-    
-    def get_preferred_browser():
-        """
-        Get the preferred browser controller for launching the application.
-        
-        Preference order:
-        1. Google Chrome
-        2. Chromium
-        3. Firefox
-        4. Default system browser
-        
-        Returns:
-            webbrowser.BaseBrowser: Browser controller instance
-        """
-        import webbrowser
-        import shutil
-        
-        # Priority list of browsers
-        browser_candidates = [
-            ('google-chrome', 'Google Chrome'),
-            ('chromium-browser', 'Chromium'),
-            ('chromium', 'Chromium'),
-            ('firefox', 'Firefox'),
-        ]
-        
-        for browser_cmd, browser_name in browser_candidates:
-            browser_path = shutil.which(browser_cmd)
-            if browser_path:
-                logging.info(f"[Browser] Selected: {browser_name} ({browser_path})")
-                try:
-                    # Register and get browser controller
-                    browser_controller = webbrowser.get(f'{browser_path} %s')
-                    return browser_controller
-                except Exception as e:
-                    logging.warning(f"[Browser] Failed to register {browser_name}: {e}")
-                    continue
-        
-        # Fallback to default browser
-        logging.warning("[Browser] Using system default browser (Vivaldi or other)")
-        return webbrowser
     
     session_port = find_free_port()
     
