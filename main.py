@@ -598,6 +598,11 @@ def reset_app_data():
             except Exception as e:
                 debug_log(f"[Error] Reset failed for {p}: {e}")
 
+    # Remove legacy database files from old locations
+    legacy_deleted = db.cleanup_legacy_databases()
+    for p in legacy_deleted:
+        deleted.append(p)
+
     # Re-initialize to avoid crash on next actions
     db.init_db()
     save_parser_config()  # Create default config
@@ -1735,8 +1740,15 @@ if __name__ == "__main__":
 
     db.init_db()
 
+    legacy_dbs = db.list_legacy_databases()
+    if legacy_dbs:
+        logging.warning("[DB] Legacy database files detected (ignored by app):")
+        for legacy_db in legacy_dbs:
+            logging.warning(f"[DB]  - {legacy_db}")
+        logging.warning("[DB] Use reset_app_data() to remove legacy DB files.")
+
     # Ensure scan dirs exist and start initial indexing
-    config_dirs = PARSER_CONFIG.get("scan_dirs", [SCAN_MEDIA_DIR])
+    config_dirs = PARSER_CONFIG.get("scan_dirs", [])
     for d in config_dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
 
