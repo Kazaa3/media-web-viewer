@@ -2575,7 +2575,7 @@ git branch -D feature/old-build
 
 # Old build artifacts are local - still present unless manually deleted
 ls *.deb
-# Output: media-web-viewer_1.2.21_amd64.deb (old version)
+# Output: media-web-viewer_1.2.23_amd64.deb (current version)
 
 # Solution: Clean and rebuild for current version
 rm *.deb
@@ -2836,8 +2836,11 @@ jobs:
 ### Build Verification
 Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.2.23_amd64.deb`
 
+### Version Consistency Verification
+Ran `pytest -q tests/test_version_consistency.py` and confirmed that all central version references are derived from `VERSION` and no stale `.deb` version examples remain in the documentation.
+
 ### UI Verification
-The version 1.2.23 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), and Conda Environment Support (46).
+The version 1.2.23 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), Conda Environment Support (46), and Version Consistency Test (47).
 
 ---
 
