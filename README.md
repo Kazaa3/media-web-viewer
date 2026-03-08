@@ -1,89 +1,34 @@
 # Media Web Viewer (v1.2.22)
 
-Media Web Viewer is a sleek, modern desktop application for browsing and playing media libraries (music, audiobooks, and basic video support). Built with Python (Eel) and Vanilla JS/HTML/CSS, it prioritizes a premium user experience and detailed metadata extraction.
+Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 
----
+## Quick Start
 
-## 🚀 Quick Start
-
-### Installation via .deb (Debian / Ubuntu)
-Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
+### Debian/Ubuntu (.deb)
 ```bash
 sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
-sudo apt-get install -f   # Installs missing system dependencies
-media-web-viewer          # Start the app
+sudo apt-get install -f
+media-web-viewer
 ```
 
-The `.deb` package creates an isolated runtime environment at `/opt/media-web-viewer/.venv`
-during installation and starts the app from `/opt/media-web-viewer`.
-
-
-### Run from Source
+### From Source
 ```bash
-# Clone and enter directory
 git clone https://github.com/Kazaa3/media-web-viewer.git
 cd media-web-viewer
-
-# Install dependencies and run
 mamba env create -f environment.yml
 mamba activate media-web-viewer
 python main.py
 ```
 
----
+## Core Stack
+- Backend: Python 3.11+, Bottle, Eel
+- Frontend: HTML5/CSS3, Vanilla JavaScript
+- Database: SQLite (`media_library.db`)
+- Media Tooling: Mutagen, pymediainfo, FFmpeg
 
-## ✨ Key Features
-- **Smart Metadata Extraction**: Multi-parser pipeline (`mutagen`, `pymediainfo`, `ffmpeg`).
-- **Audiobook Support**: Specialized `.m4b` handling with chapter navigation.
-- **On-the-Fly Transcoding**: Transparent ALAC/WMA → FLAC/OGG conversion.
-- **Modern UI**: Glassmorphism design with responsive Vanilla JS/CSS.
-- **Integrated Tools**: Built-in test suite, dev-logbook, and metadata editor.
-
----
-
-## 🛠️ Technical Overview
-- **Backend**: Python 3.11+ using the **Bottle** framework and **Eel** bridge (gesetzt).
-- **Frontend**: Responsive HTML5/CSS3 and Vanilla JavaScript.
-- **GUI Choice**: Web UI via Eel/Bottle; no Tkinter-based application UI.
-- **Persistence**: SQLite database (`media_library.db`) with optimized JSON storage.
-- **Packaging**: Native Debian packaging for deep Linux integration.
-
----
-
-## 📖 Documentation
-For a deep dive into the technical architecture, database schema, and development standards, please refer to:
-👉 **[DOCUMENTATION.md](DOCUMENTATION.md)**
-
----
-
-## 🏗️ Project Structure
-```text
-media-web-viewer/
-├── VERSION               ← Central version number
-├── Doxyfile              ← Doxygen configuration
-├── environment.yml       ← Conda/Mamba environment setup
-├── main.py               ← App entry point & Backend API
-├── models.py             ← MediaItem data model
-├── db.py                 ← Persistence layer layer
-├── parsers/              ← Metadata extraction pipeline
-│   ├── media_parser.py   ← Parser orchestrator
-│   ├── filename_parser.py
-│   ├── container_parser.py
-│   ├── mutagen_parser.py
-│   ├── ffmpeg_parser.py
-│   ├── pymediainfo_parser.py
-│   └── format_utils.py   ← Config & formatting
-├── web/                  ← Frontend (HTML/CSS/JS)
-│   ├── app.html          ← Main UI
-│   └── app_bottle.py     ← API & Streaming
-├── tests/                ← Unit & Integration tests
-├── logbuch/              ← Dev-log entries
-└── packaging/            ← .deb build files
-```
-
----
-
-## ⚖️ License
-This project is licensed under the **GNU General Public License v3 (GPL-3.0)**. See [LICENSE.md](LICENSE.md) for details.
+## Docs
+- Technical Manual: [DOCUMENTATION.md](DOCUMENTATION.md)
+- Dependencies & licenses: [DEPENDENCIES.md](DEPENDENCIES.md)
+- License: [LICENSE.md](LICENSE.md)
 
 Developed by **kazaa3**.
