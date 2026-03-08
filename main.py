@@ -22,6 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import sys
 import os
 import platform
+from pathlib import Path
 
 def _detect_python_environment():
     """
@@ -55,26 +56,42 @@ try:
     from models import MediaItem
     import db
 except ModuleNotFoundError as exc:
-    from pathlib import Path
-    
     missing_module = exc.name or "unknown"
+    project_dir = Path(__file__).resolve().parent
+    local_venv_python = project_dir / ".venv" / "bin" / "python"
+    already_reexecuted = os.environ.get("MWV_AUTO_REEXEC") == "1"
+
+    # Auto-fallback: if started with wrong interpreter, re-exec with local .venv Python.
+    if (
+        not already_reexecuted
+        and local_venv_python.is_file()
+        and os.access(local_venv_python, os.X_OK)
+        and Path(sys.executable).resolve() != local_venv_python.resolve()
+    ):
+        print(
+            f"\nℹ️ Fehlende Abhängigkeit '{missing_module}' in aktueller Umgebung erkannt.\n"
+            f"→ Starte automatisch neu mit Projekt-Umgebung:\n"
+            f"  {local_venv_python}\n"
+        )
+        os.environ["MWV_AUTO_REEXEC"] = "1"
+        os.execv(str(local_venv_python), [str(local_venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
+
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
-    
-    # Build environment info string
+
     if env_type == 'conda':
         current_env = f"🐍 Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
     elif env_type == 'venv':
         current_env = f"📦 Venv: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
     else:
         current_env = f"⚙️  System Python {py_ver}\n   Python: {py_exec}"
-    
+
     print(
         f"\n❌ Abhängigkeit '{missing_module}' nicht installiert!\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"📍 Aktuelle Umgebung:\n   {current_env}\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"✅ Lösung: Starte mit der Projekt-Umgebung:\n\n"
-        f"   cd /home/xc/#Coding/gui_media_web_viewer\n"
+        f"   cd {project_dir}\n"
         f"   source .venv/bin/activate\n"
         f"   python main.py\n\n"
         f"Falls .venv fehlt:\n"
@@ -94,7 +111,6 @@ import time
 import subprocess
 import re
 from typing import cast
-from pathlib import Path
 from parsers.format_utils import (
     PARSER_CONFIG, load_parser_config, save_parser_config,
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
