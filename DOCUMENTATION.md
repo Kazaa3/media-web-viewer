@@ -254,6 +254,7 @@ Media Web Viewer (v1.1.20)
     ├── Coverage Tools (Code coverage reports)
     ├── Black Formatter (PEP 8 code style)
     ├── Flake8 Linter (Code quality checks)
+    ├── PyAutoGUI (Potential for automated UI testing)
     └── Git Version Control (Change tracking)
 ```
 
