@@ -341,7 +341,7 @@ python -c "from main import VERSION; print(f'Version: {VERSION}')"
 python build_system.py --test
 
 # Check dependencies
-python -c "import eel, bottle, mutagen, pymediainfo; print('All dependencies OK')"
+python -c "import eel, bottle, bottle_websocket, mutagen, pymediainfo, m3u8; print('All dependencies OK')"
 ```
 
 ### Configure Application
@@ -375,6 +375,53 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 ```
+
+---
+
+**Issue:** Missing package like `m3u8` or `bottle_websocket`
+
+**Typical errors:**
+- `ModuleNotFoundError: No module named 'm3u8'`
+- `ModuleNotFoundError: No module named 'bottle_websocket'`
+
+**Quick fix:**
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt --upgrade --force-reinstall
+
+# Verify
+python -c "import m3u8, bottle_websocket; print('imports ok')"
+```
+
+**Feature scope note:**
+- Missing `m3u8` mainly affects VLC playlist import/export.
+- Missing `bottle_websocket` affects UI/backend websocket bridge features.
+
+---
+
+**Issue:** Dependency errors remain unclear or environment is contaminated
+
+Use a fresh external probe environment:
+
+```bash
+# From project root
+python3 -m venv /tmp/mwv_dep_probe_env
+
+# Run probe test in clean env (outside project .venv)
+/tmp/mwv_dep_probe_env/bin/python tests/test_dependency_probe.py \
+    2>&1 | tee logs/dependency_probe_fresh_venv.log
+
+# Install full requirements into probe env and re-test
+/tmp/mwv_dep_probe_env/bin/pip install -r requirements.txt
+/tmp/mwv_dep_probe_env/bin/python tests/test_dependency_probe.py \
+    2>&1 | tee logs/dependency_probe_after_install.log
+```
+
+Probe files:
+- `tests/test_dependency_probe.py`
+- `logs/dependency_probe_report.json`
+- `logs/dependency_probe_fresh_venv.log`
+- `logs/dependency_probe_after_install.log`
 
 ---
 
