@@ -70,6 +70,7 @@ To update the version:
 - **Automatic Categorization:** Smart detection of Albums, Singles, Compilations, Classical music, and Audiobooks
 - **Cover Art Extraction:** Automatically detects and displays embedded album artwork
 - **On-Demand Transcoding:** ALAC → FLAC and WMA → OGG transcoding with intelligent caching
+- **VLC Integration:** Import VLC playlists (m3u8/m3u) into your library and export your library as VLC-compatible playlists
 
 ### 🧠 Metadata Intelligence
 - **Multi-Parser Pipeline:** Combines filename parsing, Mutagen, FFmpeg, and pymediainfo for maximum accuracy
@@ -284,6 +285,35 @@ python main.py --debug
 ```
 
 This activates all debug flags and logs detailed information about parsing, system operations, and UI events.
+
+#### VLC Playlist Integration
+
+Media Web Viewer includes bidirectional integration with VLC Media Player:
+
+**Import VLC Playlists:**
+1. Navigate to **Video Player** tab (🎬)
+2. Scroll to **VLC Playlist Integration** section
+3. Click **📥 Playlist importieren** (Import Playlist)
+4. Select your `.m3u8` or `.m3u` playlist file from VLC
+5. Tracks are automatically parsed and added to your library
+
+**Export to VLC:**
+1. Open **Video Player** tab
+2. Click **📤 Als Playlist exportieren** (Export as Playlist)
+3. Choose save location for the `.m3u8` file
+4. Open the exported playlist in VLC: `Media → Open File`
+
+**Creating VLC Playlists:**
+- In VLC: `View → Playlist → Right-click → Save Playlist to File`
+- Choose format: M3U8 UTF-8 Extended (recommended)
+- Supported formats: `.m3u8`, `.m3u` (m3u with UTF-8 support preferred)
+
+**Features:**
+- ✅ Preserves track order and metadata (duration, title, artist)
+- ✅ Handles relative and absolute file paths
+- ✅ Skips duplicates automatically (tracks already in library)
+- ✅ Error reporting for missing files
+- ✅ Full m3u8 extended format support with `#EXTINF` metadata
 
 ---
 
@@ -936,6 +966,125 @@ def delete_media(name):
 
 def get_db_stats():
     # Return database statistics
+```
+
+---
+
+## Backend API Functions
+
+The following functions are exposed via `@eel.expose` decorators and can be called from the frontend JavaScript.
+
+### VLC Integration API
+
+#### `import_vlc_playlist(m3u_path: str)`
+Imports a VLC playlist (m3u8/m3u/XSPF) into the media library.
+
+**Parameters:**
+- `m3u_path` (str): Absolute path to the playlist file
+
+**Returns:**
+```python
+{
+    "status": "ok",
+    "imported": [MediaItem, ...],  # List of imported items
+    "skipped": ["file1.mp3", ...],  # Already in library
+    "errors": ["error1", ...],       # Files not found or parse errors
+    "count": 5                       # Number of imported items
+}
+```
+
+**Example:**
+```javascript
+const result = await eel.import_vlc_playlist('/home/user/my_playlist.m3u8')();
+if (result.error) {
+    console.error('Import failed:', result.error);
+} else {
+    console.log(`Imported ${result.count} tracks`);
+}
+```
+
+#### `export_playlist_to_vlc(media_names: list, output_path: str)`
+Exports selected media items to a VLC-compatible m3u8 playlist.
+
+**Parameters:**
+- `media_names` (list): List of media item names from database
+- `output_path` (str): Target path for the .m3u8 file
+
+**Returns:**
+```python
+{
+    "status": "ok",
+    "path": "/home/user/exported.m3u8",
+    "exported": 10,                  # Number of tracks
+    "missing": ["file2.mp3", ...]    # Files not found
+}
+```
+
+**Example:**
+```javascript
+const library = await eel.get_library()();
+const mediaNames = library.media.map(item => item.name);
+const result = await eel.export_playlist_to_vlc(mediaNames, '/home/user/export.m3u8')();
+console.log(`Exported to: ${result.path}`);
+```
+
+#### `pick_file(title: str, filetypes: list)`
+Opens a native file picker dialog (Tkinter-based).
+
+**Parameters:**
+- `title` (str): Dialog window title
+- `filetypes` (list): List of `[description, extension]` tuples
+
+**Returns:**
+- (str): Selected file path or `None` if cancelled
+
+**Example:**
+```javascript
+const filePath = await eel.pick_file('Select Playlist', [
+    ['M3U8 Playlists', '*.m3u8'],
+    ['All Files', '*.*']
+])();
+```
+
+#### `pick_save_file(title: str, filetypes: list, default_name: str)`
+Opens a native save file dialog.
+
+**Parameters:**
+- `title` (str): Dialog window title
+- `filetypes` (list): List of file type filters
+- `default_name` (str): Default filename
+
+**Returns:**
+- (str): Selected file path or `None`
+
+**Example:**
+```javascript
+const savePath = await eel.pick_save_file(
+    'Save Playlist',
+    [['M3U8', '*.m3u8']],
+    'my_playlist.m3u8'
+)();
+```
+
+### VLC Player Control
+
+#### `play_vlc(file_path: str)`
+Plays a media file in an external VLC window using python-vlc bindings.
+
+**Parameters:**
+- `file_path` (str): Absolute path to media file
+
+**Returns:**
+```python
+{"status": "ok"} or {"error": "error message"}
+```
+
+#### `stop_vlc()`
+Stops the currently playing VLC instance.
+
+**Returns:**
+```python
+{"status": "ok"}
 ```
 
 ---
