@@ -5,7 +5,7 @@ A local desktop media player and library manager with an embedded web-based GUI.
 ## Technology Stack
 
 ```
-Media Web Viewer
+Media Web Viewer (1.2.20)
 ├── Backend (Python 3.11+)
 │   ├── Eel Framework (Electron-like GUI)
 │   ├── Bottle Web Framework (Media streaming)
@@ -33,7 +33,7 @@ Media Web Viewer
 > Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
 
 ```bash
-sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.20_amd64.deb
 sudo apt-get install -f   # installs missing dependencies if needed
 
 # Start the app
@@ -67,7 +67,7 @@ If you previously ran the app from source or want to reset all settings, note th
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall the clean version
-sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.20_amd64.deb
 
 # 3. Fix dependencies if needed
 sudo apt-get install -f
@@ -111,7 +111,7 @@ python main.py
 
 ```bash
 bash build_deb.sh
-sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.20_amd64.deb
 ```
 
 ---
@@ -157,7 +157,7 @@ The application automatically categorizes indexed items based on metadata and fi
 
 ```
 media-web-viewer/
-├── VERSION               ← Central version number (e.g. 1.1.20)
+├── VERSION               ← Central version number (e.g. 1.2.20)
 ├── main.py               ← Entry point, Eel setup, all backend API functions
 ├── models.py             ← MediaItem data model (parsing, transcoding logic)
 ├── db.py                 ← SQLite database logic (init, insert, query, clear)
