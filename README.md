@@ -5,23 +5,13 @@ A local desktop media player and library manager with an embedded web-based GUI.
 ## Technology Stack
 
 ```
-Media Web Viewer
-├── Backend (Python 3.11+)
-│   ├── Eel Framework (Electron-like GUI)
-│   ├── Bottle Web Framework (Media streaming)
-│   ├── SQLite Database (Local storage)
-│   └── FFmpeg (Transcoding)
-├── Frontend (Web Technologies)
-│   ├── HTML5/CSS3 (Responsive UI)
-│   ├── Vanilla JavaScript (No frameworks)
-│   └── Web Audio API (Playback)
-├── Parsers (Metadata Extraction)
-│   ├── Mutagen (Audio tags)
-│   ├── pymediainfo (Media info)
-│   └── FFmpeg (Fallback parsing)
-└── Packaging
-    ├── .deb (Debian/Ubuntu)
-    └── PyInstaller (Standalone exe)
+Media Web Viewer (v1.1.20)
+├── Frontend Layer (HTML5/CSS3, Vanilla JS, i18n)
+├── EEL Bridge (WebSocket, JSON Serialization)
+├── Backend (Python 3.11+, Eel, Bottle)
+├── Data Processing (Parser Pipeline, Transcoding)
+├── Data Persistence (SQLite, JSON Config)
+└── System Integration (.deb, FFmpeg, Tkinter Dialogs)
 ```
 
 ---
@@ -187,13 +177,13 @@ media-web-viewer/
 
 Each parser receives the current `tags` dict and only fills in missing values – it never overwrites data already found by an earlier parser.
 
-| Order | Parser | Source | Provides |
-|:-----:|--------|--------|----------|
-| 1 | `filename_parser` | Filename | title, artist, file size |
-| 2 | `container_parser` | Container format | container format |
-| 3 | `mutagen_parser` | Mutagen lib | ID3/MP4/Vorbis tags, bitrate, samplerate, cover detection |
-| 4 | `ffmpeg_parser` | FFmpeg CLI | Container format, codec, bit depth (fallback) |
-| 5 | `pymediainfo_parser` | pymediainfo | Supplementary / missing metadata |
+| Order | Parser | Source | Library/Tool | Provides |
+|:-----:|--------|--------|--------------|----------|
+| 1 | `filename_parser` | Dateiname | Regex | Titel, Künstler, Jahr, Release-Typ |
+| 2 | `container_parser` | Container-Header | Python | Container-Format (MKV, MP4) |
+| 3 | `mutagen_parser` | Audio-Tags | Mutagen | ID3/MP4/Vorbis, Bitrate, Cover, Kapitel |
+| 4 | `ffmpeg_parser` | FFmpeg CLI | FFmpeg | Codec, Bit-Tiefe, Fallback-Metadaten |
+| 5 | `pymediainfo_parser` | MediaInfo | pymediainfo | Detailierte technische Infos |
 
 ---
 

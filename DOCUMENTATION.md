@@ -5,7 +5,7 @@ Media Web Viewer is a sleek, modern desktop application for browsing and playing
 
 A local desktop media player and library manager with an embedded web-based GUI. Built with Python, [Eel](https://github.com/python-eel/Eel), and the [Bottle](https://bottlepy.org/) web framework. Supports a wide range of audio formats including MP3, M4A, M4B (Audiobooks), FLAC, OGG, WAV, ALAC, and WMA.
 
-Media Web Viewer is a comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities.
+Media Web Viewer is a comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities. A central `DOCUMENTATION.md` provides all technical and operational details.
 
 ### Global Versioning
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
@@ -26,6 +26,17 @@ This version is automatically loaded and used across the backend, .deb package m
 ## Technical Architecture
 - **Backend**: Python 3.11+ with Bottle server and Eel bridge.
 - **Frontend**: Modern Vanilla JavaScript with declarative i18n system, CSS3 (Glassmorphism), and dynamic event handling.
+
+## Technologiewahl
+Die Wahl der Technologien für den Media Web Viewer wurde strategisch getroffen, um eine moderne Benutzererfahrung mit einer robusten Datenverarbeitung zu kombinieren.
+
+### Warum Python als Backend?
+Python wurde als primäre Backend-Sprache gewählt, da es hervorragende Bibliotheken für die Medienverarbeitung (Mutagen, pymediainfo) bietet, eine einfache Systemintegration ermöglicht (FFmpeg, SQLite) und plattformunabhängig ist.
+
+### Warum Eel & Bottle statt Tkinter?
+Obwohl Python native GUI-Frameworks wie Tkinter bietet, wurde bewusst ein webbasierter Ansatz gewählt:
+- **Moderne Ästhetik**: Mit HTML5/CSS3 (Glassmorphism) lassen sich UI-Designs umsetzen, die mit Tkinter nicht realisierbar wären.
+- **Tkinter-Einschränkung**: Tkinter wird im Projekt **nur** für native System-Dialoge (Ordnerauswahl) genutzt, um eine konsistente Integration zu gewährleisten. Für die eigentliche App-Oberfläche ist es **nicht gewünscht**.
 
 ### Imprint
 - **Developer**: kazaa3
@@ -153,7 +164,7 @@ sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 - **Logbook:** Built-in development log and documentation viewer (Bilingual).
 - **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art').
 - **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`.
-- **Internationalisierung**: Full documentation and UI support for German and English.
+- **Internationalisierung (i18n)**: Full documentation and UI support for German and English based on the [Internationalisierung Standards](https://de.wikipedia.org/wiki/Internationalisierung_(Softwareentwicklung)).
 - **Natural Sorting**: Intelligent numerical sorting for chapters and titles.
 
 ---
@@ -248,17 +259,16 @@ Media Web Viewer (v1.1.20)
 
 ---
 
-## Parser Pipeline
+| Order | Parser | Source | Library/Tool | Provides |
+|:-----:|--------|--------|--------------|----------|
+| 1 | `filename_parser` | Dateiname | Regex | Titel, Künstler, Jahr, Release-Typ |
+| 2 | `container_parser` | Container-Header | Python | Container-Format (MKV, MP4) |
+| 3 | `mutagen_parser` | Audio-Tags | Mutagen | ID3/MP4/Vorbis, Bitrate, Cover, Kapitel |
+| 4 | `ffmpeg_parser` | FFmpeg CLI | FFmpeg | Codec, Bit-Tiefe, Fallback-Metadaten |
+| 5 | `pymediainfo_parser` | MediaInfo | pymediainfo | Detailierte technische Infos |
 
-Each parser receives the current `tags` dict and only fills in missing values – it never overwrites data already found by an earlier parser.
-
-| Order | Parser | Source | Provides |
-|:-----:|--------|--------|----------|
-| 1 | `filename_parser` | Filename | title, artist, file size |
-| 2 | `container_parser` | Container format | container format |
-| 3 | `mutagen_parser` | Mutagen lib | ID3/MP4/Vorbis tags, bitrate, samplerate, cover detection |
-| 4 | `ffmpeg_parser` | FFmpeg CLI | Container format, codec, bit depth (fallback) |
-| 5 | `pymediainfo_parser` | pymediainfo | Supplementary / missing metadata |
+### Parser-Logik & Interne Tests
+Jeder Parser arbeitet additiv. Das System nutzt interne Tests in `tests/parser_tests/`, um die Genauigkeit der Extraktion für verschiedene Formate (WAV, MP3, M4A, etc.) sicherzustellen. Die Parser nutzen Tools wie `grep` in Log-Files zur Fehlersuche während der Entwicklung.
 
 ---
 
@@ -343,8 +353,10 @@ Einheitliche Terminologie für konsistente Dokumentation und UI-Texte.
 - **🔀 Compilation**: Verschiedene Künstler, erkannt via "Various Artists"
 - **🎻 Klassik**: Klassische Musik (Komponisten wie Beethoven, Mozart)
 - **📚 Hörbuch**: .m4b oder lange MP3-Dateien mit Kapitelstruktur
-- **🎬 Film/Serie**: Video-Dateien, erkannt via Dateiname oder Container
-- **📄 E-Book**: PDF, EPUB oder andere Dokumente
+- **🎬 Film/Serie**: Video-Dateien, erkannt via Dateiname oder Container (z.B. IMDB-ID)
+- **📄 E-Book**: PDF, EPUB oder andere Dokumente (z.B. ISBN-Metadaten)
+- **🎞️ Schnittfassung**: Spezielle Versionen (Standard, Extended, Director's Cut)
+- **🌍 Release-Region**: Informationen zum Release-Format (PAL, NTSC, Region B)
 
 ### Technical Terms
 - **Container**: Audio/Video-Format der Datei (MP3, M4A, FLAC, etc.)
@@ -365,6 +377,7 @@ Einheitliche Terminologie für konsistente Dokumentation und UI-Texte.
 - **Delete**: Löscht Item aus Datenbank
 - **Test Stream**: Startet Test-Transkodierung
 - **Analyze**: Startet detaillierte Metadaten-Analyse
+- **Stability and UI Refinement**: Kontext-Button für Stabilitäts-Checks (ersetzt "Test Billing")
 
 ---
 
@@ -621,7 +634,17 @@ eel.start('index.html')
 ---
 
 ## Python als Backend
-Python dient als robustes Backend für alle Kernlogiken, Metadaten-Extraktion, Datenbankoperationen und Systemintegrationen. Die Architektur nutzt Pythons Stärken in der Datenverarbeitung und bietet eine nahtlose Brücke zum Web-Frontend.
+Python dient als robustes Backend für alle Kernlogiken, Metadaten-Extraktion, Datenbankoperationen und Systemintegrationen.
+
+### Logging & Debugging
+- **Logging**: Das System nutzt strukturierte Logs mit verschiedenen Leveln (INFO, DEBUG, ERROR).
+- **Private Daten**: Logs schließen sensible Benutzerdaten (z.B. absolute Pfade in externen APIs) standardmäßig aus.
+- **Entwicklungstools**: Schnelles Durchsuchen von Logs via `grep` oder integriertem Logview.
+
+### Entwicklungs-Umgebungen
+Für effizientes Testen werden oft zwei Umgebungen parallel genutzt:
+1. **Prod-Umgebung**: Installiertes `.deb` Paket zur Verifikation der Systemintegration.
+2. **Dev-Umgebung**: Lokale Source-Ausführung für schnelles Iterieren und Debugging.
 
 ---
 
@@ -631,6 +654,12 @@ Das Projekt wird als Debian-Paket (.deb) für Debian/Ubuntu-Systeme gebaut. Das 
 2. **Kopieren**: Projektcode via `rsync` synchronisieren (ohne Junk).
 3. **Rechte**: `chmod 755` für Skripte.
 4. **Build**: `dpkg-deb --build` mit automatischer Versionsinjektion.
+
+### Ausführungsumgebung (.deb)
+Wenn das Paket installiert und ausgeführt wird:
+- **Pfad**: Die Anwendung liegt unter `/opt/media-web-viewer/`.
+- **Start-Skript**: Ein Wrapper in `/usr/bin/media-web-viewer` aktiviert die virtuelle Umgebung und startet `main.py`.
+- **Benutzerdaten**: Die SQLite-Datenbank und Konfigurationsdateien werden im Home-Verzeichnis unter `~/.media-web-viewer` bzw. `~/.config/gui_media_web_viewer` abgelegt.
 
 ---
 
@@ -689,7 +718,11 @@ def to_dict(self):
 ---
 
 ## Dictionary & JSON Storage
-Medien-Metadaten werden intern als Python-Dictionaries (`dict`) verwaltet und für die Persistenz in der Datenbank oder API-Kommunikation als JSON-Strings (`json`) serialisiert.
+Medien-Metadaten werden intern als Python-Dictionaries (`dict`) verwaltet. Dies ermöglicht einen schnellen Zugriff und einfache Manipulation während der Laufzeit.
+
+Für die Persistenz (Datenbank) und die API-Kommunikation werden diese Dictionaries als JSON-Strings (`json`) serialisiert:
+- **Python zu JS**: `json.dumps(data_dict)` konvertiert Dictionaries in Strings, die via Eel an das Frontend gesendet werden.
+- **Speicherung**: In der SQLite-Datenbank werden komplexe Tags (z.B. Chapters) direkt als JSON-Strings in Textspalten abgelegt.
 
 ---
 
@@ -720,6 +753,28 @@ Die Anwendung nutzt spezielle HTML-Kommentare in Markdown-Dateien für das Featu
 - `Title_DE / EN`: Bilinguale Titel.
 - `Summary_DE / EN`: Bilinguale Zusammenfassungen.
 - `Status`: Aktueller Status (COMPLETED, ACTIVE, PLAN, TASK, DOCS).
+- `Version`: Zielversion des Features/Fixes.
+
+### Beispiel-Eintrag
+```markdown
+---
+Title_DE: Feature-Modal Optimierung v1.1.19
+Title_EN: Feature Modal Refinement v1.1.19
+Status: COMPLETED
+Category: UI
+Version: 1.1.19
+Summary_DE: Das Feature-Modal wurde vollständig dynamisiert und übersetzt.
+Summary_EN: The feature modal has been fully dynamized and translated.
+---
+```
+
+### Kategorisierungs-Logik (`loadFeatureStatus`)
+Das Modal trennt Einträge automatisch in folgende Sektionen:
+1. **Latest Updates**: Die letzten 3 Einträge mit Status `COMPLETED`.
+2. **Open Bugs**: Alle Einträge, die nicht `COMPLETED` sind und die Kategorie `Bug` haben.
+3. **Open Features**: Einträge, die nicht `COMPLETED` sind und Kategorien wie `Feature`, `Task` oder `Planung` haben.
+4. **Completed**: Alle restlichen abgeschlossenen Einträge.
+5. **Documentation**: Ein spezieller Eintrag für die Projekt-Dokumentation (z.B. `31_Project_Documentation`).
 
 ---
 
@@ -729,7 +784,19 @@ Die Anwendung nutzt spezielle HTML-Kommentare in Markdown-Dateien für das Featu
 Erlaubte Metadaten-Felder: `title`, `artist`, `album`, `year`, `genre`, `track`, `totaltracks`, `disc`, `codec`, `bitrate`, `samplerate`, etc.
 
 ### Blacklist
-Ignorierte Dateien: Systemdateien, Cover-Bilder (als Datei), Junk-Daten.
+Ignorierte Dateien: Systemdateien, Cover-Bilder (als Datei), Junk-Daten (z.B. 'captcha', 'thumb').
+
+### Erweiterte Medien-Metadaten
+Zusätzlich zu Standard-Tags unterstützt der Viewer:
+- **IMDB**: Verlinkung zu Filmdatenbanken (via ID).
+- **ISBN**: Mehrere ISBN-Nummern für E-Books/Hörbücher.
+- **Schnittfassungen**: Unterscheidung zwischen Standard, Extended, Director's Cut etc.
+- **Regions-Codes**: Release-Informationen (z.B. PAL DVD, Blu-ray Region B).
+- **Dateityp-Spezifika**:
+    - `wav`: Plain audio data extraction.
+    - `mp3`: Unterstützung für ID3v1/v2.2/v2.3/v2.4.
+    - `mkv`: Extraktion von AAC/DTS Audio-Streams.
+    - `m4b`: Volle Kapitel-Unterstützung mit `m4tags`.
 
 ---
 
@@ -737,7 +804,7 @@ Ignorierte Dateien: Systemdateien, Cover-Bilder (als Datei), Junk-Daten.
 Doxygen eignet sich hervorragend zur automatischen Generierung von Code-Dokumentationen aus Python-Docstrings.
 1. Installiere `doxygen` und `graphviz`.
 2. Erstelle ein `Doxyfile` mit `INPUT = ../src`.
-3. Nutze standardisierte Docstrings in den Python-Skripten.
+3. **Zweisprachige Docstrings**: Wir nutzen zweisprachige Docstrings (DE/EN) in den Python-Skripten, um eine internationale Entwicklerbasis zu unterstützen.
 4. Führe `doxygen Doxyfile` aus, um HTML-Dokumente zu generieren.
 
 ---
