@@ -66,6 +66,35 @@ def get_version():
     return VERSION
 
 
+@eel.expose
+def get_environment_info():
+    """
+    @brief Returns information about the Python environment.
+    @details Gibt Informationen über die Python-Umgebung zurück (venv, Version, Pfade).
+    @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
+    """
+    import platform
+    
+    # Check if we're in a virtual environment
+    in_venv = sys.prefix != sys.base_prefix
+    venv_path = sys.prefix if in_venv else None
+    
+    # Get VIRTUAL_ENV environment variable (more reliable)
+    venv_env = os.environ.get('VIRTUAL_ENV', None)
+    
+    return {
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+        "python_prefix": sys.prefix,
+        "python_base_prefix": sys.base_prefix,
+        "in_venv": in_venv,
+        "venv_path": venv_path or venv_env,
+        "platform": platform.platform(),
+        "platform_system": platform.system(),
+        "platform_release": platform.release()
+    }
+
+
 # Konfiguration
 # 1. Ort für den automatischen Bibliotheks-Scan
 SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
