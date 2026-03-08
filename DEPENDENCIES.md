@@ -14,12 +14,12 @@ All third-party dependencies used in this project are listed below with their re
 | **bottle** | >=0.13.0 | MIT | Lightweight WSGI web framework for REST API and routing |
 | **bottle-websocket** | >=0.2.9 | MIT | WebSocket support plugin for Bottle framework |
 
-### Audio & Media Metadata
-
 | Package | Version | License | Purpose |
 |---------|---------|---------|---------|
 | **mutagen** | >=1.47.0 | GPL v2 | Audio metadata extraction and manipulation (ID3, Vorbis, etc.) |
 | **pymediainfo** | >=7.0.1 | MIT | Media file information parsing using libmediainfo |
+| **m3u8** | >=4.1.0 | MIT | m3u8 playlist parsing and manipulation |
+| **python-vlc** | >=3.0.18121 | MIT | VLC media player bindings for external video playback |
 
 ### Async & Communication
 

@@ -32,9 +32,20 @@ from typing import cast
 from pathlib import Path
 from parsers.format_utils import (
     PARSER_CONFIG, load_parser_config, save_parser_config,
-    AUDIO_EXTENSIONS
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
 )
 import logger
+try:
+    import vlc
+    HAS_VLC = True
+except ImportError:
+    HAS_VLC = False
+
+try:
+    import m3u8
+    HAS_M3U8 = True
+except ImportError:
+    HAS_M3U8 = False
 
 # Version laden
 VERSION_FILE = Path(__file__).parent / "VERSION"
@@ -529,9 +540,10 @@ def browse_dir(dir_path=None):
                 continue
             if entry.is_dir():
                 items.append({"name": entry.name, "path": str(entry), "type": "folder"})
-            elif entry.suffix.lower() in AUDIO_EXTENSIONS:
+            elif entry.suffix.lower() in AUDIO_EXTENSIONS or entry.suffix.lower() in VIDEO_EXTENSIONS:
                 size_mb = entry.stat().st_size / (1024 * 1024)
-                items.append({"name": entry.name, "path": str(entry), "type": "file", "size": f"{size_mb:.1f} MB"})
+                item_type = "video" if entry.suffix.lower() in VIDEO_EXTENSIONS else "audio"
+                items.append({"name": entry.name, "path": str(entry), "type": item_type, "size": f"{size_mb:.1f} MB"})
     except PermissionError:
         return {"error": "Keine Berechtigung", "path": dir_path}
 
@@ -571,8 +583,8 @@ def add_file_to_library(file_path):
     p = Path(file_path)
     if not p.exists() or not p.is_file():
         return {"error": "Datei nicht gefunden"}
-    if p.suffix.lower() not in AUDIO_EXTENSIONS:
-        return {"error": "Kein unterstütztes Audioformat"}
+    if p.suffix.lower() not in AUDIO_EXTENSIONS and p.suffix.lower() not in VIDEO_EXTENSIONS:
+        return {"error": "Kein unterstütztes Audio- oder Videoformat"}
 
     known = db.get_known_media_names()
     if p.name in known:
@@ -582,6 +594,50 @@ def add_file_to_library(file_path):
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
+
+# VLC Player Instance (Global)
+VLC_INSTANCE = None
+VLC_PLAYER = None
+
+
+@eel.expose
+def play_vlc(file_path: str):
+    """
+    @brief Plays a media file in an external VLC window.
+    @details Spielt eine Mediendatei in einem externen VLC-Fenster ab.
+    """
+    global VLC_INSTANCE, VLC_PLAYER
+    if not HAS_VLC:
+        return {"error": "python-vlc ist nicht installiert"}
+
+    try:
+        if VLC_INSTANCE is None:
+            VLC_INSTANCE = vlc.Instance()
+        
+        if VLC_PLAYER is not None:
+            VLC_PLAYER.stop()
+
+        VLC_PLAYER = VLC_INSTANCE.media_player_new()
+        media = VLC_INSTANCE.media_new(file_path)
+        VLC_PLAYER.set_media(media)
+        VLC_PLAYER.play()
+        
+        logger.get_ui_logger().info(f"VLC: Spiele {file_path}")
+        return {"status": "ok"}
+    except Exception as e:
+        logger.get_ui_logger().error(f"VLC Fehler: {e}")
+        return {"error": str(e)}
+
+
+@eel.expose
+def stop_vlc():
+    """
+    @brief Stops the VLC player.
+    """
+    global VLC_PLAYER
+    if VLC_PLAYER:
+        VLC_PLAYER.stop()
+    return {"status": "ok"}
 
 
 @eel.expose
@@ -597,39 +653,41 @@ def get_test_suites():
 
     suites = []
     for f in sorted(test_dir.glob("*.py")):
-        if f.name.startswith("test_") or f.name.startswith("benchmark_"):
-            try:
-                content = f.read_text(encoding='utf-8')
-            except Exception:
-                content = ""
+        if f.name.startswith("__"):
+            continue
+        # Include all .py files in tests/ as they might be utility scripts the user wants
+        try:
+            content = f.read_text(encoding='utf-8')
+        except Exception:
+            content = ""
 
-            metadata = {
-                "category": "-",
-                "inputs": "-",
-                "outputs": "-",
-                "files": "-",
-                "comment": "-"
-            }
+        metadata = {
+            "category": "-",
+            "inputs": "-",
+            "outputs": "-",
+            "files": "-",
+            "comment": "-"
+        }
 
-            for line in content.splitlines():
-                if line.startswith("# Kategorie:"):
-                    metadata["category"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Eingabewerte:"):
-                    metadata["inputs"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Ausgabewerte:"):
-                    metadata["outputs"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Testdateien:"):
-                    metadata["files"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Kommentar:"):
-                    metadata["comment"] = line.split(":", 1)[1].strip()
+        for line in content.splitlines():
+            if line.startswith("# Kategorie:"):
+                metadata["category"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Eingabewerte:"):
+                metadata["inputs"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Ausgabewerte:"):
+                metadata["outputs"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Testdateien:"):
+                metadata["files"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Kommentar:"):
+                metadata["comment"] = line.split(":", 1)[1].strip()
 
-            display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
-            suites.append({
-                "id": f.name,
-                "name": display_name,
-                "path": str(f),
-                "metadata": metadata
-            })
+        display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
+        suites.append({
+            "id": f.name,
+            "name": display_name,
+            "path": str(f),
+            "metadata": metadata
+        })
     return suites
 
 
@@ -1040,7 +1098,7 @@ if __name__ == "__main__":
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
     try:
-        eel.start("app.html", size=(1350, 800), block=False, port=0)
+        eel.start("app.html", size=(1450, 800), block=False, port=0)
     except Exception as e:
         print(f"[Startup-Error] eel.start failed: {e}")
 

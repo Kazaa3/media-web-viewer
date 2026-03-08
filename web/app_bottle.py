@@ -115,6 +115,12 @@ def serve_media(filepath):
 
     if ext.endswith('.flac'):
         mime_type = 'audio/flac'
+    elif ext.endswith('.mkv'):
+        mime_type = 'video/x-matroska'
+    elif ext.endswith('.mp4'):
+        mime_type = 'video/mp4'
+    elif ext.endswith('.webm'):
+        mime_type = 'video/webm'
 
     if mime_type:
         return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)

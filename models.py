@@ -61,6 +61,7 @@ class MediaItem:
 
         # New separated metadata fields
         self.extension = self.type[1:] if self.type.startswith('.') else self.type
+        self.media_type = "video" if self.type in VIDEO_EXTENSIONS else "audio"
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)
@@ -178,7 +179,7 @@ class MediaItem:
             'path': str(self.path),
             'duration': duration_str,
             'tags': filtered_tags,
-            'type': self.type[1:] if self.type.startswith('.') else self.type,
+            'type': self.media_type,
             'extension': self.extension,
             'container': self.container,
             'tag_type': self.tag_type,
