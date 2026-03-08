@@ -414,6 +414,34 @@ def initialize_debug_flags(args=None):
 # Initialize logging early with default sys.argv
 initialize_debug_flags()
 
+
+def is_sessionless_mode(args: list[str] | None = None) -> bool:
+    """
+    Check whether sessionless mode is enabled.
+
+    Sessionless mode disables UI/websocket/browser startup and runs
+    the app in a connectionless local-only mode.
+    """
+    if args is None:
+        args = sys.argv
+    return "--n" in args or "--sessionless" in args
+
+
+def run_sessionless_mode() -> dict:
+    """
+    Execute sessionless startup flow and return status information.
+    """
+    db.init_db()
+    stats = db.get_db_stats()
+    legacy_dbs = db.list_legacy_databases()
+    return {
+        "mode": "sessionless",
+        "active_db": str(db.get_active_db_path()),
+        "total_items": int(stats.get("total_items", 0)),
+        "legacy_db_count": len(legacy_dbs),
+        "scan_dirs": PARSER_CONFIG.get("scan_dirs", []),
+    }
+
 # Ensure we are running in a clean and exclusive environment
 env_handler.validate_safe_startup()
 
@@ -1730,6 +1758,8 @@ def run_gui_tests():
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
+    sessionless_mode = is_sessionless_mode(sys.argv)
+
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
     # Only print on startup if a debug flag is active (though usually all are False initially)
@@ -1751,6 +1781,15 @@ if __name__ == "__main__":
     config_dirs = PARSER_CONFIG.get("scan_dirs", [])
     for d in config_dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
+
+    if sessionless_mode:
+        sessionless_info = run_sessionless_mode()
+        logging.info("[Sessionless] Mode enabled (--n / --sessionless).")
+        logging.info(f"[Sessionless] Active DB: {sessionless_info['active_db']}")
+        logging.info(f"[Sessionless] Library entries: {sessionless_info['total_items']}")
+        logging.info(f"[Sessionless] Configured scan dirs: {sessionless_info['scan_dirs']}")
+        logging.info("[Sessionless] No Eel/WebSocket/Browser started. Exiting.")
+        raise SystemExit(0)
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint

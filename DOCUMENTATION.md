@@ -303,6 +303,20 @@ media-viewer --test
 ```
 This performs a comprehensive environment validation, checking if the project directory, virtual environment, and all critical dependencies (eel, mutagen, bottle) are correctly installed and accessible.
 
+**Sessionless Mode (Connectionless):**
+```bash
+python main.py --n
+# or
+python main.py --sessionless
+```
+This starts the application in a connectionless runtime mode:
+- No Eel server startup
+- No WebSocket/UI session
+- No browser launch
+- Local environment/database checks only, then clean exit
+
+Use this mode for maintenance, CI checks, or diagnostics where no interactive UI session is required.
+
 **Debug Files:**
 - **Project-Local Log:** When started with `--debug`, a detailed log is written to `logs/debug.log` in the project directory.
 - **User-Data Log:** General application logs are always written to `~/.media-web-viewer/app.log`.
