@@ -203,6 +203,21 @@ class TestSystemDependencies:
         except subprocess.TimeoutExpired:
             pytest.skip("⚠️ mediainfo timeout")
     
+    def test_browser_available(self):
+        """@test Webbrowser für Eel UI (Chrome/Chromium empfohlen)"""
+        import shutil
+        browsers = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium", "firefox"]
+        found = any(shutil.which(b) for b in browsers)
+        if found:
+            # Try to find which one
+            for b in browsers:
+                path = shutil.which(b)
+                if path:
+                    print(f"✅ Browser gefunden: {b} ({path})")
+                    break
+        else:
+            pytest.fail("❌ Kein unterstützter Browser gefunden (Chrome/Chromium/Firefox erforderlich)")
+    
     def test_python3_tk_available(self):
         """@test python3-tk für native Datei-Dialoge"""
         try:

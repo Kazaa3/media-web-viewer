@@ -92,6 +92,7 @@ class BuildSystem:
             "main.py exists": (self.root / "main.py").exists(),
             "web/ directory exists": (self.root / "web").is_dir(),
             "VERSION file exists": (self.root / "VERSION").exists(),
+            "Browser available (Chrome/Chromium/Firefox)": self._check_browser_available(),
         }
         
         all_passed = True
@@ -103,6 +104,11 @@ class BuildSystem:
         
         print()
         return all_passed
+
+    def _check_browser_available(self) -> bool:
+        """Check if at least one compatible browser is available."""
+        browsers = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium", "firefox"]
+        return any(shutil.which(b) for b in browsers)
     
     def run_tests(self, verbose: bool = False) -> bool:
         """
@@ -237,16 +243,19 @@ class BuildSystem:
             "*.egg-info",
         ]
         
-        removed = []
+        removed: list[str] = []
         
         # Remove pattern-based artifacts
         for pattern in patterns:
             for item in self.root.rglob(pattern):
-                if item.is_dir():
-                    shutil.rmtree(item)
-                else:
-                    item.unlink()
-                removed.append(str(item.relative_to(self.root)))
+                try:
+                    if item.is_dir():
+                        shutil.rmtree(item)
+                    else:
+                        item.unlink()
+                    removed.append(str(item.relative_to(self.root)))
+                except Exception as e:
+                    print(f"⚠️ Could not remove {item}: {e}")
         
         # Remove build directories if full clean
         if full:
