@@ -19,13 +19,77 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 # main.py – Entry point: initializes Eel, exposes API functions to the frontend, and starts the app.
 
-# Benötigte Module importieren
-from models import MediaItem
-import db
-import eel
-import logging
 import sys
 import os
+import platform
+
+def _detect_python_environment():
+    """
+    Detect current Python environment: system, venv, or conda.
+    Returns tuple: (env_type, env_name, env_path, python_version, python_executable)
+    """
+    python_version = platform.python_version()
+    python_executable = sys.executable
+    
+    # Check for conda
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+    conda_prefix = os.environ.get('CONDA_PREFIX')
+    
+    if conda_env and conda_prefix:
+        return ('conda', conda_env, conda_prefix, python_version, python_executable)
+    
+    # Check for venv
+    in_venv = sys.prefix != sys.base_prefix
+    venv_env = os.environ.get('VIRTUAL_ENV')
+    
+    if in_venv or venv_env:
+        env_path = venv_env or sys.prefix
+        env_name = Path(env_path).name if env_path else 'venv'
+        return ('venv', env_name, env_path, python_version, python_executable)
+    
+    # System Python
+    return ('system', None, sys.prefix, python_version, python_executable)
+
+# Benötigte Module importieren
+try:
+    from models import MediaItem
+    import db
+except ModuleNotFoundError as exc:
+    from pathlib import Path
+    
+    missing_module = exc.name or "unknown"
+    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    
+    # Build environment info string
+    if env_type == 'conda':
+        current_env = f"🐍 Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
+    elif env_type == 'venv':
+        current_env = f"📦 Venv: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
+    else:
+        current_env = f"⚙️  System Python {py_ver}\n   Python: {py_exec}"
+    
+    print(
+        f"\n❌ Abhängigkeit '{missing_module}' nicht installiert!\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📍 Aktuelle Umgebung:\n   {current_env}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"✅ Lösung: Starte mit der Projekt-Umgebung:\n\n"
+        f"   cd /home/xc/#Coding/gui_media_web_viewer\n"
+        f"   source .venv/bin/activate\n"
+        f"   python main.py\n\n"
+        f"Falls .venv fehlt:\n"
+        f"   python3 -m venv .venv\n"
+        f"   source .venv/bin/activate\n"
+        f"   pip install -r requirements.txt\n\n"
+        f"Alternative: Mit Conda (falls verfügbar):\n"
+        f"   conda activate <env-name>\n"
+        f"   pip install -r requirements.txt\n"
+        f"   python main.py\n"
+    )
+    raise SystemExit(1) from exc
+
+import eel
+import logging
 import time
 import subprocess
 import re
