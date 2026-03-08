@@ -157,7 +157,7 @@ Installation for development and customization:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/MasterX360/media-web-viewer.git
+git clone https://github.com/kazaa3/media-web-viewer.git
 cd media-web-viewer
 
 # 2. Create Python virtual environment
@@ -1648,7 +1648,7 @@ DATABASE (DB)
 
 ```bash
 # 1. Clone and enter directory
-git clone https://github.com/MasterX360/media-web-viewer.git
+git clone https://github.com/kaaza3/media-web-viewer.git
 cd media-web-viewer
 
 # 2. Create virtual environment
@@ -1999,7 +1999,7 @@ python main.py
 - Check **logbuch/00_Known_Issues.md** for documented problems
 - Review debug logs: **Options → Debug Console**
 - Run test suite: **Tests tab → Run All Tests**
-- Check GitHub issues: https://github.com/MasterX360/media-web-viewer/issues
+- Check GitHub issues: https://github.com/kazaa3/media-web-viewer/issues
 
 ---
 
