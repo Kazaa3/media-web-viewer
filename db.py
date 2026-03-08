@@ -21,10 +21,81 @@ import sqlite3
 import json
 
 from pathlib import Path
+from typing import Iterable
 
 # Use a user-writable path for the database
 DB_DIR = Path.home() / ".media-web-viewer"
 DB_FILENAME = str(DB_DIR / "media_library.db")
+
+
+def get_active_db_path() -> Path:
+    """
+    Return the active database path used by the application.
+    """
+    return Path(DB_FILENAME).resolve()
+
+
+def get_legacy_db_candidates(
+    *,
+    project_root: Path | None = None,
+    home_dir: Path | None = None,
+    cwd: Path | None = None,
+) -> list[Path]:
+    """
+    Return known legacy database locations that may contain stale data.
+    """
+    module_dir = Path(__file__).resolve().parent
+    project = (project_root or module_dir).resolve()
+    home = (home_dir or Path.home()).resolve()
+    current = (cwd or Path.cwd()).resolve()
+
+    candidates = [
+        home / "media_library.db",
+        project / "media_library.db",
+        project / "dist" / "media_library.db",
+        current / "media_library.db",
+        project.parent / "media_library.db",
+    ]
+
+    seen: set[Path] = set()
+    unique_candidates: list[Path] = []
+    for candidate in candidates:
+        candidate_resolved = candidate.resolve()
+        if candidate_resolved not in seen:
+            seen.add(candidate_resolved)
+            unique_candidates.append(candidate_resolved)
+    return unique_candidates
+
+
+def list_legacy_databases(candidates: Iterable[Path] | None = None) -> list[Path]:
+    """
+    Return existing legacy database files excluding the active DB path.
+    """
+    active_db = get_active_db_path()
+    check_candidates = list(candidates) if candidates is not None else get_legacy_db_candidates()
+
+    existing: list[Path] = []
+    for candidate in check_candidates:
+        resolved = candidate.resolve()
+        if resolved == active_db:
+            continue
+        if resolved.exists() and resolved.is_file():
+            existing.append(resolved)
+    return existing
+
+
+def cleanup_legacy_databases(candidates: Iterable[Path] | None = None) -> list[str]:
+    """
+    Remove legacy database files and return deleted file paths.
+    """
+    deleted: list[str] = []
+    for legacy_db in list_legacy_databases(candidates=candidates):
+        try:
+            legacy_db.unlink()
+            deleted.append(str(legacy_db))
+        except Exception:
+            continue
+    return deleted
 
 
 def init_db():
