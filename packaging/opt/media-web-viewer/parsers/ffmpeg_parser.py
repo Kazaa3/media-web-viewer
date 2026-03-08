@@ -1,5 +1,6 @@
 import subprocess
 import re
+from typing import Any
 
 
 def parse(path, file_type, tags, mode='lightweight'):
@@ -74,18 +75,18 @@ def parse(path, file_type, tags, mode='lightweight'):
 
         # Chapter parsing
         if not tags.get('chapters'):
-            chapters = []
+            ffmpeg_chapters: list[dict[str, Any]] = []
             lines = output.split('\n')
-            current_chapter = None
+            current_chapter: Any = None
             for line in lines:
                 chap_match = re.search(r"Chapter\s+#\d+:\d+:\s+start\s+([\d.]+),\s+end\s+([\d.]+)", line)
                 if chap_match:
                     if current_chapter:
-                        chapters.append(current_chapter)
+                        ffmpeg_chapters.append(current_chapter)
                     current_chapter = {
                         'start': float(chap_match.group(1)),
                         'end': float(chap_match.group(2)),
-                        'title': f"Kapitel {len(chapters) + 1}"
+                        'title': f"Kapitel {len(ffmpeg_chapters) + 1}"
                     }
                     continue
 
@@ -94,16 +95,12 @@ def parse(path, file_type, tags, mode='lightweight'):
                     current_chapter['title'] = title_match.group(1).strip()
 
             if current_chapter:
-                chapters.append(current_chapter)
+                ffmpeg_chapters.append(current_chapter)
 
-            if chapters:
+            if ffmpeg_chapters:
                 from .format_utils import natural_sort_key
-                tags['chapters'] = sorted(
-                    chapters, key=lambda x: (
-                        x.get(
-                            'start', 0.0), natural_sort_key(
-                            x.get(
-                                'title', ''))))
+                tags['chapters'] = sorted(ffmpeg_chapters, key=lambda x: (
+                    x.get('start', 0.0), natural_sort_key(x.get('title', ''))))
 
     except Exception:
         pass

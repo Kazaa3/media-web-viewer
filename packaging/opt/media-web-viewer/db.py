@@ -126,7 +126,8 @@ def insert_media(item_dict):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            INSERT INTO media (name, path, type, duration, category, is_transcoded, transcoded_format, tags, extension, container, tag_type, codec)
+            INSERT INTO media (name, path, type, duration, category, is_transcoded,
+                             transcoded_format, tags, extension, container, tag_type, codec)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],

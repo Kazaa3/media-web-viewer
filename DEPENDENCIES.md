@@ -42,6 +42,8 @@ All third-party dependencies used in this project are listed below with their re
 |---------|---------|---------|---------|
 | **pytest** | >=8.0.0 | MIT | Testing framework for Python |
 | **pytest-cov** | >=4.1.0 | MIT | Code coverage measurement plugin for pytest |
+| **flake8** | >=7.0.0 | MIT | Linting and style checks (PEP8-focused) |
+| **mypy** | >=1.9.0 | MIT | Static type checking for type annotations / TypedDict |
 | **markdown** | >=3.5.0 | BSD | Markdown parsing for documentation validation tests |
 
 ## License Compatibility
@@ -61,7 +63,6 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 |---------|---------|---------|---|---------|---------------|
 | **ffmpeg** | latest | LGPL v2.1 / GPL | ✅ GPLv3 | Audio/video transcoding and metadata extraction | `sudo apt install ffmpeg` |
 | **libmediainfo0v5** | latest | BSD 2-Clause | ✅ GPLv3 | Media file information library (required by pymediainfo) | `sudo apt install libmediainfo0v5` |
-| **python3-tk** | system | Python Software Foundation | ✅ GPLv3 | Tkinter for system file dialogs | `sudo apt install python3-tk` |
 | **doxygen** | latest | GPL v2 | ✅ GPLv3 | Documentation generator | `sudo apt install doxygen` |
 
 **License Compatibility Note:** All system dependencies are compatible with GNU General Public License v3 (GPL-3.0). FFmpeg's LGPL v2.1 is compatible with GPLv3, and BSD licenses are permissive allowing use under GPLv3.
@@ -70,13 +71,13 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 python3-tk doxygen
+sudo apt install ffmpeg libmediainfo0v5 doxygen
 ```
 
 ### Installation of System Dependencies (Fedora/RHEL)
 
 ```bash
-sudo dnf install ffmpeg mediainfo python3-tkinter doxygen
+sudo dnf install ffmpeg mediainfo doxygen
 ```
 
 ### Installation of System Dependencies (macOS)
@@ -107,12 +108,12 @@ For full license texts, refer to the individual package repositories:
 For Debian/Ubuntu:
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 python3-tk doxygen
+sudo apt install ffmpeg libmediainfo0v5 doxygen
 ```
 
 For Fedora/RHEL:
 ```bash
-sudo dnf install ffmpeg mediainfo python3-tkinter doxygen
+sudo dnf install ffmpeg mediainfo doxygen
 ```
 
 ### Step 2: Install Python Packages
@@ -130,8 +131,11 @@ To verify all dependencies are correctly installed:
 # Check Python packages
 pip list
 
+# Check lint/type tools
+flake8 --version
+mypy --version
+
 # Check system tools
 ffmpeg -version
 mediainfo --version
-python3 -c "import tkinter; print('Tkinter installed')"
 ```

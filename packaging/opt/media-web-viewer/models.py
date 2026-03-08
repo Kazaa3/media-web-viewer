@@ -18,8 +18,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from pathlib import Path
-from parsers.format_utils import PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+from parsers.format_utils import (
+    PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
+    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+)
 from parsers import media_parser
+import logger
+
+# Get specialized logger for models
+log = logger.get_logger("models")
 
 # In General & Debug:
 # Comments are stored as dictionaries and imported as JSON.
@@ -32,35 +39,29 @@ class MediaItem:
     @details Repräsentiert eine einzelne Mediendatei mit umfassenden Metadaten.
     """
 
-    def __init__(self, name, path, debug_flags=None, logger=None):
+    def __init__(self, name, path):
         """
         @brief Initializes a MediaItem and triggers metadata extraction.
         @details Initialisiert ein MediaItem und startet die Metadaten-Extraktion.
         @param name File basename / Basis-Dateiname.
         @param path Absolute filesystem path / Absoluter Dateipfad.
-        @param debug_flags Optional dict for debugging / Optionales Dict für Debugging.
-        @param logger Optional logging function / Optionale Logging-Funktion.
         """
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
 
-        # Default fallbacks if not provided
-        self.debug_flags = debug_flags or {"parser": False}
-        self.logger = logger or print
-
+        # Debug mode is handled centrally through logger level
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
         self.duration, self.tags = media_parser.extract_metadata(
             self.path,
             self.name,
-            debug=self.debug_flags.get("parser", False),
-            mode=parser_mode,
-            logger=self.logger
+            mode=parser_mode
         )
         self.category = self.get_category()
 
         # New separated metadata fields
         self.extension = self.type[1:] if self.type.startswith('.') else self.type
+        self.media_type = "video" if self.type in VIDEO_EXTENSIONS else "audio"
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)
@@ -122,20 +123,12 @@ class MediaItem:
 
     def show_info(self):
         """
-        @brief Prints the media item information to the console.
-        @details Gibt die Medien-Informationen in der Konsole aus.
+        @brief Logs the media item information.
+        @details Schreibt die Medien-Informationen in das Log.
         """
         info_dict = self.to_dict()
-        print(f"Name: {info_dict['name']}")
-        print(f"Path: {info_dict['path']}")
-        print(f"Duration: {info_dict['duration']}")
-        print(f"Type: {info_dict['type']}")
-        print(f"Category: {info_dict['category']}")
-        print(f"Is Transcoded: {info_dict['is_transcoded']}")
-        if info_dict['transcoded_format']:
-            print(f"Transcoded Format: {info_dict['transcoded_format']}")
-        print(f"Tags: {info_dict['tags']}")
-        print()
+        log.info(f"MediaItem Info: {info_dict['name']} | Path: {info_dict['path']} | Category: {info_dict['category']}")
+        log.debug(f"Full Tags for {info_dict['name']}: {info_dict['tags']}")
 
     def to_dict(self):
         """
@@ -178,7 +171,7 @@ class MediaItem:
             'path': str(self.path),
             'duration': duration_str,
             'tags': filtered_tags,
-            'type': self.type[1:] if self.type.startswith('.') else self.type,
+            'type': self.media_type,
             'extension': self.extension,
             'container': self.container,
             'tag_type': self.tag_type,

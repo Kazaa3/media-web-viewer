@@ -1,3 +1,4 @@
+from typing import Any
 import re
 import os
 import json
@@ -6,9 +7,10 @@ from pathlib import Path
 # Config File Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
 
+
 # Central Parser Configuration
 # This avoids circular imports with main.py
-PARSER_CONFIG = {
+PARSER_CONFIG: dict[str, Any] = {
     "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
     "parser_mode": "lightweight",
     "debug_scan": True,
@@ -23,7 +25,7 @@ PARSER_CONFIG = {
 }
 
 
-def load_parser_config():
+def load_parser_config() -> None:
     """
     @brief Loads the parser configuration from the central JSON file.
     @details Lädt die Parser-Konfiguration aus der zentralen JSON-Datei.
@@ -42,7 +44,7 @@ def load_parser_config():
         save_parser_config()
 
 
-def save_parser_config():
+def save_parser_config() -> None:
     """
     @brief Saves the current parser configuration to disk.
     @details Speichert die aktuelle Parser-Konfiguration auf der Festplatte.
@@ -59,7 +61,7 @@ def save_parser_config():
 load_parser_config()
 
 
-def natural_sort_key(text):
+def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
     """
     @brief Generates a key for natural/numeric sorting (e.g., 'Track 2' < 'Track 10').
     @details Erzeugt einen Schlüssel für natürliche/numerische Sortierung.
@@ -82,21 +84,9 @@ AUDIO_EXTENSIONS = {
     '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
 }
 VIDEO_EXTENSIONS = {
-    '.mp4',
-    '.avi',
-    '.mov',
-    '.mkv',
-    '.webm',
-    '.flv',
-    '.wmv',
-    '.mpg',
-    '.mpeg',
-    '.m4v',
-    '.3gp',
-    '.3g2',
-    '.ogv',
-    '.mts',
-    '.m2ts'}
+    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
+}
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
 }
@@ -105,7 +95,7 @@ EBOOK_EXTENSIONS = {
 }
 
 
-def format_samplerate(hz):
+def format_samplerate(hz: Any) -> str:
     """
     @brief Standardizes sample rate display (e.g., 44100 -> 44.1 kHz).
     @details Normalisiert die Anzeige der Samplerate.
@@ -120,7 +110,7 @@ def format_samplerate(hz):
         return ""
 
 
-def format_codec(raw_codec, track_info=None):
+def format_codec(raw_codec: Any, track_info: Any = None) -> str:
     """
     @brief Standardizes codec naming (lowercase, PCM details).
     @details Normalisiert Codec-Namen (Kleinschreibung, PCM-Details).
@@ -153,12 +143,12 @@ def format_codec(raw_codec, track_info=None):
 
     # Special case for PCM if it already looks like PCM_S16LE
     if codec.startswith('pcm_'):
-        return raw_codec.upper()
+        return str(raw_codec).upper()
 
     return codec_map.get(codec, codec)
 
 
-def format_container(raw_container, file_type=None):
+def format_container(raw_container: Any, file_type: str | None = None) -> str:
     """
     @brief Standardizes container naming (e.g., 'matroska' -> 'mkv').
     @details Normalisiert Container-Namen.
@@ -169,7 +159,7 @@ def format_container(raw_container, file_type=None):
     container = str(raw_container).lower().strip() if raw_container else ""
 
     if not container and file_type:
-        container = file_type[1:].lower()
+        container = file_type[1:].lower() if file_type else ""
 
     # Handle ambiguous FFmpeg container outputs
     if container == 'matroska,webm':
@@ -190,12 +180,12 @@ def format_container(raw_container, file_type=None):
 
     # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
     if container in ('id3', 'wav') and file_type:
-        return file_type[1:].lower()
+        return file_type[1:].lower() if file_type else ""
 
     return container_map.get(container, container)
 
 
-def format_tagtype(raw_tagtype):
+def format_tagtype(raw_tagtype: Any) -> str:
     """
     @brief Standardizes meta tag types into human-readable formats (e.g., 'MP4Tags' -> 'm4tags').
     @details Normalisiert Metadaten-Tag-Typen.
@@ -214,17 +204,21 @@ def format_tagtype(raw_tagtype):
     tag_map = {
         'ID3': 'ID3',
         'MP4Tags': 'm4tags',
-        'OggVComment': 'vorbis comment',
-        'VCFLACDict': 'vorbis comment',
+        'OggVComment': 'OggVComment',
+        'VCFLACDict': 'VCFLACDict',
         'ASF': 'asf',
-        'ASFTags': 'asf',
         'APETag': 'APEv2'
     }
 
     return tag_map.get(tag, tag)
 
 
-def format_bitdepth(bit_depth, codec=None, file_type=None, internal_fmt=None):
+def format_bitdepth(
+    bit_depth: Any,
+    codec: Any = None,
+    file_type: str | None = None,
+    internal_fmt: str | None = None
+) -> str:
     """
     @brief Standardizes bit depth display (e.g., '24 Bit (s32)', '16 Bit (lossy)').
     @details Normalisiert die Anzeige der Bit-Tiefe.

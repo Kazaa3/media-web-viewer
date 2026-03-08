@@ -6,6 +6,7 @@
 
 from parsers import filename_parser, mutagen_parser, pymediainfo_parser, ffmpeg_parser
 import time
+from typing import Any
 import glob
 from pathlib import Path
 import sys
@@ -38,7 +39,7 @@ def benchmark_parsers():
 
         # filename parser
         t0 = time.time()
-        tags_filename = filename_parser.parse(path_obj, name, tags={})
+        filename_parser.parse(path_obj, name, tags={})
         t_filename = time.time() - t0
         total_times["filename"] += t_filename
         print(f"  filename    : {t_filename:.4f} sec")
@@ -66,7 +67,7 @@ def benchmark_parsers():
 
         # container parser
         t0 = time.time()
-        tags_container = {}
+        tags_container: dict[str, Any] = {}
         if not tags_container.get('container'):
             tags_container['container'] = file_type[1:].lower()
             if not tags_container.get('codec'):

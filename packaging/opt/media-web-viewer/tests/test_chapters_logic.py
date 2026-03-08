@@ -6,14 +6,15 @@
 
 import os
 import sys
+from typing import Any
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
-def test_chapter_order():
+def test_chapter_order() -> None:
     """Verifies that chapters are sorted correctly by start time."""
-    chapters = [
+    chapters: list[dict[str, Any]] = [
         {"title": "Chapter 2", "start": 120, "end": 240},
         {"title": "Chapter 1", "start": 0, "end": 120},
         {"title": "Chapter 3", "start": 240, "end": 360}
@@ -26,19 +27,19 @@ def test_chapter_order():
     assert sorted_chapters[2]['title'] == "Chapter 3"
 
 
-def test_chapter_boundaries():
+def test_chapter_boundaries() -> None:
     """Verifies that chapter end times don't overlap or leave gaps if intended."""
     # This is a placeholder for more complex logic if we add it to models/parsers later
-    chapters = [
+    chapters: list[dict[str, Any]] = [
         {"title": "C1", "start": 0, "end": 10},
         {"title": "C2", "start": 10, "end": 20}
     ]
     assert chapters[0]['end'] == chapters[1]['start']
 
 
-def test_chapter_duration_positive():
+def test_chapter_duration_positive() -> None:
     """Ensures end time is always greater than start time."""
-    chapters = [
+    chapters: list[dict[str, Any]] = [
         {"title": "C1", "start": 10, "end": 20},
         {"title": "C2", "start": 5, "end": 15}
     ]

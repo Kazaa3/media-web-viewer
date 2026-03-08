@@ -1,4 +1,4 @@
-# Media Web Viewer (v1.2.21)
+# Media Web Viewer (v1.2.22)
 
 Media Web Viewer is a sleek, modern desktop application for browsing and playing media libraries (music, audiobooks, and basic video support). Built with Python (Eel) and Vanilla JS/HTML/CSS, it prioritizes a premium user experience and detailed metadata extraction.
 
@@ -9,10 +9,14 @@ Media Web Viewer is a sleek, modern desktop application for browsing and playing
 ### Installation via .deb (Debian / Ubuntu)
 Download the latest `.deb` from [Releases](https://github.com/MasterX360/media-web-viewer/releases) and run:
 ```bash
-sudo dpkg -i media-web-viewer_1.2.21_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.22_amd64.deb
 sudo apt-get install -f   # Installs missing system dependencies
 media-web-viewer          # Start the app
 ```
+
+The `.deb` package creates an isolated runtime environment at `/opt/media-web-viewer/.venv`
+during installation and starts the app from `/opt/media-web-viewer`.
+
 
 ### Run from Source
 ```bash
@@ -38,8 +42,9 @@ python main.py
 ---
 
 ## 🛠️ Technical Overview
-- **Backend**: Python 3.11+ using the **Bottle** framework and **Eel** bridge.
+- **Backend**: Python 3.11+ using the **Bottle** framework and **Eel** bridge (gesetzt).
 - **Frontend**: Responsive HTML5/CSS3 and Vanilla JavaScript.
+- **GUI Choice**: Web UI via Eel/Bottle; no Tkinter-based application UI.
 - **Persistence**: SQLite database (`media_library.db`) with optimized JSON storage.
 - **Packaging**: Native Debian packaging for deep Linux integration.
 
