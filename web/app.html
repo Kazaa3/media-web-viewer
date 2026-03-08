@@ -518,17 +518,20 @@
             }
             const nameInput = document.getElementById('logbuch-editor-name');
             const contentInput = document.getElementById('logbuch-editor-content');
+            const statusInput = document.getElementById('logbuch-editor-status');
             const title = document.getElementById('logbuch-editor-title');
 
             if (name) {
                 title.innerText = `${t('logbook_edit_prefix')}${name}`;
                 nameInput.value = name;
                 contentInput.value = content || '';
+                if (statusInput) statusInput.value = extractLogbookStatus(content || '');
                 nameInput.disabled = true;
             } else {
                 title.innerText = t('logbook_edit_title_new');
                 nameInput.value = '';
-                contentInput.value = '<!-- Category: Planung -->\n\n# Neuer Eintrag\n\n';
+                contentInput.value = '<!-- Category: Planung -->\n<!-- Status: ACTIVE -->\n\n# Neuer Eintrag\n\n';
+                if (statusInput) statusInput.value = 'ACTIVE';
                 nameInput.disabled = false;
             }
 
@@ -538,7 +541,9 @@
 
         async function saveLogbookEntry() {
             const name = document.getElementById('logbuch-editor-name').value.trim();
-            const content = document.getElementById('logbuch-editor-content').value;
+            const rawContent = document.getElementById('logbuch-editor-content').value;
+            const selectedStatus = (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase();
+            const content = upsertLogbookStatus(rawContent, selectedStatus);
             if (!name) {
                 alert(t('test_name_required'));
                 return;
@@ -569,6 +574,24 @@
             }
         }
 
+        function extractLogbookStatus(markdown) {
+            const fromComment = markdown.match(/<!--\s*Status\s*:\s*([^>]+)\s*-->/i);
+            if (fromComment && fromComment[1]) return fromComment[1].trim().toUpperCase();
+            const fromMarkdown = markdown.match(/^\*\*Status:\*\*\s*(.+)$/im);
+            if (fromMarkdown && fromMarkdown[1]) return fromMarkdown[1].trim().toUpperCase();
+            return 'ACTIVE';
+        }
+
+        function upsertLogbookStatus(markdown, status) {
+            if (/<!--\s*Status\s*:\s*[^>]+\s*-->/i.test(markdown)) {
+                return markdown.replace(/<!--\s*Status\s*:\s*[^>]+\s*-->/i, `<!-- Status: ${status} -->`);
+            }
+            if (/^\*\*Status:\*\*\s*.+$/im.test(markdown)) {
+                return markdown.replace(/^\*\*Status:\*\*\s*.+$/im, `**Status:** ${status}`);
+            }
+            return `<!-- Status: ${status} -->\n${markdown}`;
+        }
+
         async function loadLogbuchTab() {
             const list = document.getElementById('logbuch-tab-list');
             if (!list) return;
@@ -580,6 +603,7 @@
                     list.innerHTML = `<div style="color:#999;font-style:italic;">${t('logbook_no_entries_found')}</div>`;
                 } else {
                     const categoryFilter = document.getElementById('logbuch-category-filter');
+                    const statusFilter = document.getElementById('logbuch-status-filter');
                     if (categoryFilter) {
                         categoryFilter.innerHTML = '';
                         // Always add "All" first
@@ -603,6 +627,21 @@
                             opt.value = displayCat; // Use localized name as filter value
                             opt.text = displayCat;
                             categoryFilter.appendChild(opt);
+                        });
+                    }
+                    if (statusFilter) {
+                        statusFilter.innerHTML = '';
+                        const allStatus = document.createElement('option');
+                        allStatus.value = 'ALL';
+                        allStatus.text = t('logbook_status_all');
+                        statusFilter.appendChild(allStatus);
+
+                        const statuses = Array.from(new Set(currentLogbuchEntries.map(e => (e.status || 'ACTIVE').toUpperCase()))).sort();
+                        statuses.forEach(status => {
+                            const opt = document.createElement('option');
+                            opt.value = status;
+                            opt.text = status;
+                            statusFilter.appendChild(opt);
                         });
                     }
                     renderLogbuchEntries(currentLogbuchEntries);
@@ -679,6 +718,8 @@
             const list = document.getElementById('logbuch-tab-list');
             const filter = document.getElementById('logbuch-category-filter');
             const selectedCategory = filter ? filter.value : 'Alle';
+            const statusFilter = document.getElementById('logbuch-status-filter');
+            const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
             list.innerHTML = '';
             const grouped = {};
 
@@ -688,6 +729,7 @@
                 const localizedCat = t(catKey) !== catKey ? t(catKey) : cat;
 
                 if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return;
+                if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return;
 
                 if (!grouped[localizedCat]) grouped[localizedCat] = [];
                 grouped[localizedCat].push(e);
@@ -699,11 +741,13 @@
                 catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
                 catHeader.innerText = localizedCat;
                 list.appendChild(catHeader);
-                grouped[localizedCat].forEach(entry => {
+                grouped[localizedCat]
+                    .sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0))
+                    .forEach(entry => {
                     const btn = document.createElement('div');
                     btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
                     const nameEl = document.createElement('span');
-                    nameEl.innerText = entry.name;
+                    nameEl.innerText = `${entry.name} [${(entry.status || 'ACTIVE').toUpperCase()}]`;
                     nameEl.style.flex = '1';
                     btn.appendChild(nameEl);
                     const deleteBtn = document.createElement('button');
@@ -1381,6 +1425,13 @@
                                 <option value="Alle" data-i18n="logbook_category_all">Alle Kategorien</option>
                             </select>
                         </div>
+                        <div style="margin-bottom: 15px;">
+                            <select id="logbuch-status-filter"
+                                onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
+                                <option value="ALL" data-i18n="logbook_status_all">Alle Status</option>
+                            </select>
+                        </div>
                         <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
                             <!-- populated by JS -->
                             <div style="color: #999; font-style: italic;" data-i18n="logbook_loading_items">Lade Einträge...</div>
@@ -1599,6 +1650,17 @@
                 <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
                     data-i18n="[placeholder]logbook_edit_placeholder_name">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.9em; font-weight: bold; color: #555;" data-i18n="logbook_edit_status_label">Status</label>
+                <select id="logbuch-editor-status"
+                    style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-family: monospace;">
+                    <option value="ACTIVE" data-i18n="status_active">ACTIVE</option>
+                    <option value="PLAN" data-i18n="status_plan">PLAN</option>
+                    <option value="COMPLETED" data-i18n="status_completed">COMPLETED</option>
+                    <option value="DOCS" data-i18n="status_docs">DOCS</option>
+                    <option value="BUG" data-i18n="status_bug">BUG</option>
+                </select>
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
                 <label style="font-size: 0.9em; font-weight: bold; color: #555;"
@@ -2825,16 +2887,16 @@
             container.innerHTML = `<div style="text-align: center; color: #888; padding: 20px;">${t('logbook_loading_items')}</div>`;
 
             try {
-                const entries = await eel.list_logbook_entries()();
+                const entries = await eel.list_feature_modal_items()();
                 container.innerHTML = '';
 
-                // Documentation Link at the top
                 // Filter: Show only entries that have a summary
                 let allItems = entries.filter(e => e.summary && e.summary.trim() !== "");
-
-                const allSorted = [...allItems].filter(f => f.name !== '31_Project_Documentation').reverse();
+                const allSorted = [...allItems].sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0));
                 const latest = allSorted.slice(0, 3);
                 const latestNames = latest.map(l => l.name);
+
+                const rootItems = allItems.filter(f => f.source === 'root' && !latestNames.includes(f.name));
 
                 // 1. Bugs (Known Issues + entries categorized as Bug)
                 const bugItems = allItems.filter(f =>
@@ -2858,9 +2920,10 @@
                     f.status === "COMPLETED" &&
                     !latestNames.includes(f.name) &&
                     f.name !== '31_Project_Documentation' &&
+                    f.source !== 'root' &&
                     f.name !== '00_Known_Issues' &&
                     !(f.category && f.category.toLowerCase() === 'bug')
-                ).reverse();
+                ).sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0));
 
                 if (allItems.length === 0) {
                     container.innerHTML += `<div style="text-align: center; color: #888; padding: 20px;">${t('logbook_empty_desc')}</div>`;
@@ -2869,6 +2932,7 @@
 
                 // Render Sections
                 renderFeatureSection(container, t('logbook_section_latest'), latest, true);
+                renderFeatureSection(container, t('feature_section_root_docs'), rootItems);
                 renderFeatureSection(container, t('logbook_section_bugs'), bugItems);
                 renderFeatureSection(container, t('logbook_section_features'), featureItems);
                 renderFeatureSection(container, t('logbook_btn_documentation'), docItems);
@@ -2891,7 +2955,7 @@
             items.forEach(feat => {
                 const featDiv = document.createElement('div');
                 featDiv.style.cssText = "display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 12px; border-radius: 8px; transition: all 0.2s; border: 1px solid transparent;";
-                featDiv.onclick = () => openLogbook(feat.name);
+                featDiv.onclick = () => openLogbook(feat.name, feat.source || 'logbuch', feat.filename || feat.name);
                 featDiv.onmouseover = () => { featDiv.style.background = '#f9f9f9'; featDiv.style.borderColor = '#eee'; featDiv.style.transform = 'translateX(4px)'; };
                 featDiv.onmouseout = () => { featDiv.style.background = 'transparent'; featDiv.style.borderColor = 'transparent'; featDiv.style.transform = 'translateX(0)'; };
 
@@ -2931,7 +2995,7 @@
             }
         }
 
-        async function openLogbook(featureName) {
+        async function openLogbook(featureName, source = 'logbuch', filename = null) {
             const modal = document.getElementById('logbook-modal');
             const titleElement = document.getElementById('logbook-title');
             const contentElement = document.getElementById('logbook-content');
@@ -2945,7 +3009,8 @@
             modal.style.display = 'block';
 
             try {
-                let markdown = await eel.get_logbook_entry(featureName)();
+                const entryRef = source === 'root' ? (filename || featureName) : featureName;
+                let markdown = await eel.get_logbook_entry(entryRef, source)();
 
                 // Bilingual split logic
                 if (markdown.includes('<!-- lang-split -->')) {

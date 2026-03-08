@@ -1672,15 +1672,28 @@ def delete_test(filename):
 
 
 @eel.expose
-def get_logbook_entry(feature_name):
+def get_logbook_entry(feature_name, source="logbuch"):
     """
     @brief Reads a markdown file from the logbook or the README.
     @details Liest eine Markdown-Datei aus dem Logbuch oder die README ein.
     @param feature_name Entry name or 'README' / Name des Eintrags oder 'README'.
     @return Content string (Markdown) / Inhalts-String (Markdown).
     """
-    if feature_name.upper() == "README" or feature_name.upper() == "README.MD":
-        log_file = Path(__file__).parent / "README.md"
+    root_dir = Path(__file__).parent
+    if source == "root":
+        allowed_root_files = {
+            "README.md",
+            "DOCUMENTATION.md",
+            "INSTALL.md",
+            "DEPENDENCIES.md",
+            "LICENSE.md",
+        }
+        requested = feature_name if feature_name.endswith(".md") else f"{feature_name}.md"
+        if requested not in allowed_root_files:
+            return f"<h1>Error</h1><p>Root entry '{feature_name}' not allowed.</p>"
+        log_file = root_dir / requested
+    elif feature_name.upper() == "README" or feature_name.upper() == "README.MD":
+        log_file = root_dir / "README.md"
     else:
         log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
         if not log_file.exists():
@@ -1711,6 +1724,22 @@ def list_logbook_entries():
         return []
 
     entries = []
+
+    def _normalize_status(status_raw: str) -> str:
+        s = (status_raw or "").strip().upper()
+        if not s:
+            return "ACTIVE"
+        if any(k in s for k in ["COMPLETE", "COMPLETED", "DONE", "ABGESCHLOSSEN", "FERTIG"]):
+            return "COMPLETED"
+        if any(k in s for k in ["PLAN", "PLANNING", "IDEA"]):
+            return "PLAN"
+        if any(k in s for k in ["DOC", "DOCS", "DOCUMENTATION"]):
+            return "DOCS"
+        if any(k in s for k in ["BUG", "ISSUE", "FIXME"]):
+            return "BUG"
+        if any(k in s for k in ["ACTIVE", "IN_PROGRESS", "IN PROGRESS", "TODO", "TASK", "OPEN"]):
+            return "ACTIVE"
+        return s
     # Natural sort by filename
     for f in sorted(log_dir.glob("*.md")):
         try:
@@ -1718,7 +1747,7 @@ def list_logbook_entries():
                 lines = [fp.readline() for _ in range(20)]  # Mehr Zeilen lesen um alles zu finden
                 category = "Sonstiges"
                 summary = ""
-                status = "COMPLETED"  # Default
+                status = "ACTIVE"  # Default
                 title = f.stem
 
                 title_de = ""
@@ -1753,12 +1782,18 @@ def list_logbook_entries():
                         elif key == "Summary":
                             summary = val
 
+                    md_status_match = re.match(r'^\*\*Status:\*\*\s*(.+)$', line)
+                    if md_status_match:
+                        status = md_status_match.group(1).strip()
+
                     if line.startswith("# "):
                         title = line.replace("# ", "").strip()
 
                 # Special case for Known Issues
                 if f.name == "00_Known_Issues.md":
                     category = "Bug"
+                    if status == "ACTIVE":
+                        status = "BUG"
 
                 # Fallbacks
                 if not title_de:
@@ -1784,7 +1819,10 @@ def list_logbook_entries():
                     "summary": summary,
                     "summary_de": summary_de,
                     "summary_en": summary_en,
-                    "status": status
+                    "status": _normalize_status(status),
+                    "source": "logbuch",
+                    "modified_ts": f.stat().st_mtime,
+                    "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(f.stat().st_mtime)),
                 })
         except Exception:
             entries.append({
@@ -1793,10 +1831,53 @@ def list_logbook_entries():
                 "title": f.stem,
                 "category": "Fehler",
                 "summary": "",
-                "status": "ERROR"
+                "status": "ERROR",
+                "source": "logbuch",
+                "modified_ts": 0,
+                "modified_iso": "",
             })
 
     return entries
+
+
+@eel.expose
+def list_feature_modal_items():
+    """
+    Returns feature modal items from logbook plus selected markdown files from the project root.
+    """
+    items = list_logbook_entries()
+
+    root_dir = Path(__file__).parent
+    root_docs = [
+        ("README.md", "README", "Project overview and quick start."),
+        ("DOCUMENTATION.md", "Documentation", "Detailed technical documentation."),
+        ("INSTALL.md", "Installation", "Installation and setup instructions."),
+        ("DEPENDENCIES.md", "Dependencies", "Dependency list and runtime requirements."),
+        ("LICENSE.md", "License", "License and legal information."),
+    ]
+
+    for filename, title, summary in root_docs:
+        path = root_dir / filename
+        if not path.exists():
+            continue
+        mtime = path.stat().st_mtime
+        items.append({
+            "name": filename,
+            "filename": filename,
+            "title": title,
+            "title_de": title,
+            "title_en": title,
+            "category": "Docs",
+            "summary": summary,
+            "summary_de": summary,
+            "summary_en": summary,
+            "status": "DOCS",
+            "source": "root",
+            "modified_ts": mtime,
+            "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mtime)),
+        })
+
+    return items
 
 
 @eel.expose
@@ -1822,6 +1903,8 @@ def save_logbook_entry(filename, content):
     file_path = log_dir / filename
 
     try:
+        if "Status:" not in content and "<!-- Status:" not in content:
+            content = f"<!-- Status: ACTIVE -->\n{content}"
         file_path.write_text(content, encoding='utf-8')
         return {"status": "ok", "filename": filename}
     except Exception as e:
