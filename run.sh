@@ -70,8 +70,17 @@ if [[ -n "$MISSING_PIP" || -n "$MISSING_APT" ]]; then
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         if [[ -n "$MISSING_PIP" ]]; then
-            echo -e "${BLUE}📥 Installiere Python-Packages...${NC}"
-            pip install $MISSING_PIP
+            if [[ -n "$CONDA_PREFIX" ]]; then
+                echo -e "${BLUE}📥 Installiere Python-Packages via Conda...${NC}"
+                # Clean version specifiers for conda if needed, but conda usually handles >=
+                conda install -y $MISSING_PIP || {
+                    echo -e "${YELLOW}⚠️  Conda installation fehlgeschlagen. Versuche pip fallback...${NC}"
+                    pip install $MISSING_PIP
+                }
+            else
+                echo -e "${BLUE}📥 Installiere Python-Packages via pip...${NC}"
+                pip install $MISSING_PIP
+            fi
         fi
         if [[ -n "$MISSING_APT" ]]; then
             echo -e "${BLUE}📥 Installiere System-Packages (sudo erforderlich)...${NC}"
