@@ -4,13 +4,14 @@
 # Testdateien: Temporäre .md Dateien in /logbuch
 # Kommentar: Verifiziert, dass die Metadaten-Extraktion für DE und EN korrekt funktioniert.
 
-from main import list_logbook_entries
 import sys
 import os
 from pathlib import Path
 
 # Pfad zum Projekt-Root hinzufügen
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from main import list_logbook_entries
 
 
 def test_bilingual_metadata_extraction():

@@ -9,8 +9,8 @@
 #
 # TEST-SUITES:
 # ------------
-# 1. test_i18n_completeness.py - i18n Basis-Validierung (8 Tests)
-# 2. test_i18n_deep_scan.py    - i18n Deep Scan (7 Tests)
+# 1. test_i18n_completeness.py - i18n Basis-Validierung (9 Tests)
+# 2. test_i18n_deep_scan.py    - i18n Deep Scan (8 Tests)
 # 3. test_ui_events.py          - UI Events & Interaktionen (10 Tests)
 #
 # VERWENDUNG:
@@ -43,11 +43,11 @@ echo "🧪 Media Web Viewer - Complete Test Suite"
 echo "================================================================================"
 echo ""
 echo "Führt alle Test-Suites aus:"
-echo "  1️⃣  i18n Completeness (8 Tests)"
-echo "  2️⃣  i18n Deep Scan (7 Tests)"
+echo "  1️⃣  i18n Completeness (9 Tests)"
+echo "  2️⃣  i18n Deep Scan (8 Tests)"
 echo "  3️⃣  UI Events (10 Tests)"
 echo ""
-echo "Gesamt: 25 Tests"
+echo "Gesamt: 27 Tests"
 echo ""
 echo "================================================================================"
 echo ""
@@ -66,12 +66,12 @@ echo ""
 
 if python tests/test_i18n_completeness.py; then
     echo -e "${GREEN}✅ i18n Completeness: PASSED${NC}"
-    ((passed_tests+=8))
+    ((passed_tests+=9))
 else
     echo -e "${RED}❌ i18n Completeness: FAILED${NC}"
-    ((failed_tests+=8))
+    ((failed_tests+=9))
 fi
-((total_tests+=8))
+((total_tests+=9))
 
 # Test 2: i18n Deep Scan
 echo ""
@@ -82,13 +82,13 @@ echo ""
 
 if python tests/test_i18n_deep_scan.py; then
     echo -e "${GREEN}✅ i18n Deep Scan: PASSED${NC}"
-    ((passed_tests+=7))
+    ((passed_tests+=8))
 else
     echo -e "${YELLOW}⚠️  i18n Deep Scan: PASSED with WARNINGS${NC}"
-    ((passed_tests+=6))
+    ((passed_tests+=7))
     ((failed_tests+=1))
 fi
-((total_tests+=7))
+((total_tests+=8))
 
 # Test 3: UI Events
 echo ""
@@ -135,8 +135,8 @@ if [ $failed_tests -eq 0 ]; then
     echo ""
     echo "🎉 Gratulation! Alle Tests bestanden!"
     echo ""
-    echo "   ✅ i18n Completeness  → 8/8 Tests"
-    echo "   ✅ i18n Deep Scan     → 7/7 Tests"
+    echo "   ✅ i18n Completeness  → 9/9 Tests"
+    echo "   ✅ i18n Deep Scan     → 8/8 Tests"
     echo "   ✅ UI Events          → 10/10 Tests"
     echo ""
     echo "   Die App ist vollständig getestet und produktionsreif!"
@@ -147,7 +147,7 @@ elif [ $failed_tests -eq 1 ]; then
     echo -e "${YELLOW}⚠️  TESTS PASSED WITH WARNINGS ⚠️${NC}"
     echo "================================================================================"
     echo ""
-    echo "24 von 25 Tests bestanden (96% Pass Rate)"
+    echo "26 von 27 Tests bestanden (96% Pass Rate)"
     echo ""
     echo "Die meisten Tests sind OK, aber es gibt ein paar nicht-kritische Warnungen."
     echo "Diese können später behoben werden."

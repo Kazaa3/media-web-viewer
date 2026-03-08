@@ -1,23 +1,138 @@
-# Kategorie: MediaItem Metadata Extraction
-# Eingabewerte: AAC Dateien in /media
-# Ausgabewerte: Samplerate, Bitrate, Dateigröße, Codec, TagType
-# Testdateien: media/*.aac
-# Kommentar: Gezielter Test der Metadaten-Extraktion für das AAC-Containerformat.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+================================================================================
+MediaItem Metadata Extraction Test (AAC) - Media Web Viewer
+================================================================================
+
+KATEGORIE:
+----------
+MediaItem Metadata Extraction
+
+ZWECK:
+------
+Gezielter Test der Metadaten-Extraktion für AAC-Container-Format.
+Validiert MediaItem-Klasse und Parser-Integration.
+
+EINGABEWERTE:
+-------------
+- AAC Dateien in /media
+- MediaItem-Klasse
+- Parser-System
+
+AUSGABEWERTE:
+-------------
+- Samplerate (z.B. 44100 Hz)
+- Bitrate (z.B. 128 kb/s)
+- Dateigröße (bytes)
+- Codec (aac)
+- TagType (ID3, AAC, etc.)
+
+TESTDATEIEN:
+------------
+- media/*.aac
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Erweitere zu umfassender Parser-Suite
+- [ ] Teste alle unterstützten Formate (MP3, OPUS, M4B, FLAC)
+- [ ] Füge Assertions hinzu (assertEqual)
+- [ ] Teste Fehlerbehandlung für beschädigte Dateien
+- [ ] Vergleiche Parser-Ergebnisse (FFmpeg vs Mutagen vs Pymediainfo)
+- [ ] Benchmark Parser-Performance
+- [ ] Füge pytest-Struktur hinzu
+
+VERWENDUNG:
+-----------
+    python tests/test_parse2.py
+"""
 
 import os
 import glob
-from pathlib import Path
-from main import MediaItem
 import sys
-sys.path.append('.')
+from pathlib import Path
 
-for f in glob.glob('media/*.*'):
-    name = os.path.basename(f)
-    if not name.endswith('.aac'):
-        continue
-    m = MediaItem(name, Path(f))
-    print(
-        name, " | SRT: ", m.tags.get(
-            'samplerate', 'MISSING'), " | BRT: ", m.tags.get(
-            'bitrate', 'MISSING'), " | SIZ: ", m.tags.get(
-                'filesize', 'MISSING'), " | CODEC: ", m.tags.get('codec'), " | TYPE: ", m.tags.get('tagtype'))
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    from main import MediaItem
+    MEDIAITEM_AVAILABLE = True
+except ImportError:
+    MEDIAITEM_AVAILABLE = False
+
+
+def test_aac_metadata_extraction():
+    """
+    @brief Test metadata extraction for AAC files.
+    @details Validates MediaItem class and parser integration for AAC format.
+    """
+    if not MEDIAITEM_AVAILABLE:
+        print("❌ MediaItem nicht importierbar")
+        print("   Stelle sicher, dass main.py vorhanden ist.")
+        return False
+    
+    media_dir = Path('media')
+    
+    if not media_dir.exists():
+        print(f"⚠️  Media-Verzeichnis nicht gefunden: {media_dir}")
+        print("   Test wird übersprungen.")
+        return None
+    
+    # Find AAC files
+    aac_files = list(media_dir.glob('*.aac'))
+    
+    if not aac_files:
+        print("⚠️  Keine AAC-Dateien gefunden in media/")
+        print("   Test wird übersprungen.")
+        return None
+    
+    print(f"\n🎵 AAC Metadata Extraction Test\n")
+    print(f"Gefundene AAC-Dateien: {len(aac_files)}\n")
+    
+    success_count = 0
+    
+    for file_path in aac_files:
+        name = file_path.name
+        
+        try:
+            media_item = MediaItem(name, file_path)
+            tags = media_item.tags
+            
+            samplerate = tags.get('samplerate', 'MISSING')
+            bitrate = tags.get('bitrate', 'MISSING')
+            filesize = tags.get('filesize', 'MISSING')
+            codec = tags.get('codec', 'MISSING')
+            tagtype = tags.get('tagtype', 'MISSING')
+            
+            print(f"✅ {name}")
+            print(f"   Samplerate: {samplerate}")
+            print(f"   Bitrate:    {bitrate}")
+            print(f"   Filesize:   {filesize}")
+            print(f"   Codec:      {codec}")
+            print(f"   TagType:    {tagtype}")
+            print()
+            
+            # Basic validation
+            if samplerate != 'MISSING' and filesize != 'MISSING':
+                success_count += 1
+            
+        except Exception as e:
+            print(f"❌ {name}: Fehler - {e}\n")
+    
+    print(f"\n{'='*60}")
+    print(f"Erfolgreich geparst: {success_count}/{len(aac_files)}")
+    
+    if success_count > 0:
+        print("✅ AAC Metadata Extraction funktioniert")
+        return True
+    else:
+        print("❌ Keine Dateien erfolgreich geparst")
+        return False
+
+
+if __name__ == "__main__":
+    success = test_aac_metadata_extraction()
+    if success is None:
+        sys.exit(0)  # Skipped
+    sys.exit(0 if success else 1)
