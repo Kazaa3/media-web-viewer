@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Database Integration Test / Backup & Restore
+# Eingabewerte: Aktuelle Datenbank, Test-Items für Backup/Restore, clear_media() Funktion
+# Ausgabewerte: DB-Zustand vor/nach Clear (Anzahl Items), Backup-Dateien, Restore-Status
+# Testdateien: Keine (arbeitet mit aktiver DB und temporären Backups)
+# Kommentar: Validiert clear_media() und stellt sicher dass DB nach Test wieder in Ursprungszustand zurückversetzt wird.
 """
 ================================================================================
 Database Clear & Backup Test - Media Web Viewer

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Format Test (MKV)
+# Eingabewerte: FFmpeg Output (stderr)
+# Ausgabewerte: Bitrate (kb/s)
+# Testdateien: Keine (Temporäre test.mkv)
+# Kommentar: Prüft ob FFmpeg-Metadaten korrekt für MKV Container geparst werden können (erstellt temporäre test.mkv mit lavfi).
 """
 ================================================================================
 MKV Container Parsing Test - Media Web Viewer

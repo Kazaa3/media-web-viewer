@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Python Environments Test
+# Eingabewerte: Conda environments, venv locations, System Python
+# Ausgabewerte: Environment detection, Activation status
+# Testdateien: Keine (System scan)
+# Kommentar: Testet Python-Environment-Erkennung (Conda, venv, System).
 """
 test_python_environments.py - Comprehensive Python environment discovery and analysis.
 

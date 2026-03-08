@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: UI / Event Handler Test
+# Eingabewerte: web/app.html, JavaScript Event-Handler, Button/Input/Link Elemente
+# Ausgabewerte: Event Handler Statistics (45 Buttons, 11 Inputs), Eel Backend Calls (53 Aufrufe, 42 unique)
+# Testdateien: web/app.html
+# Kommentar: Validiert UI-Events - Button Click-Handler, Input Change-Handler, Keyboard Shortcuts, Modal Handler, Form Validation (10/10 Tests).
 """
 ================================================================================
 UI Events Test Suite - Vollständige Event-Handler Validierung

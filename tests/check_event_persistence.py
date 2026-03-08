@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Integration Test / Data Persistence
+# Eingabewerte: Test-MediaItem mit Tag-Dictionary, Simuliertes Update-Event, Datenbank-Operationen
+# Ausgabewerte: Updated Tags in DB, Retrieved Tags nach Reload, Vergleich Original vs. Updated vs. Retrieved
+# Testdateien: Keine (temporärer DB-Eintrag)
+# Kommentar: Validiert dass Daten nach Update-Event korrekt in DB geschrieben werden (User-Event → Backend → DB Flow).
 """
 ================================================================================
 Event Persistence Test - Media Web Viewer

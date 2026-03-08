@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Environment Isolation Test
+# Eingabewerte: DB paths, Environment variables, Isolation settings
+# Ausgabewerte: Isolation validation, Path separation
+# Testdateien: Keine (Environment testing)
+# Kommentar: Testet Environment-Isolation zwischen verschiedenen Umgebungen.
 """
 Tests for Environment Isolation and Hygiene.
 """

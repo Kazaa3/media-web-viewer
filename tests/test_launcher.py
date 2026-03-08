@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Launcher Test
+# Eingabewerte: install_launcher.sh
+# Ausgabewerte: Desktop launcher creation
+# Testdateien: install_launcher.sh
+# Kommentar: Testet Desktop-Launcher-Installation.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test Suite for Global Launcher Script
 ======================================

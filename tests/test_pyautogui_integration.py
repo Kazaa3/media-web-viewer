@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: PyAutoGUI Integration Test
+# Eingabewerte: PyAutoGUI library
+# Ausgabewerte: UI automation results
+# Testdateien: Keine
+# Kommentar: Testet PyAutoGUI-Integration.
 import unittest
 import pyautogui
 import os

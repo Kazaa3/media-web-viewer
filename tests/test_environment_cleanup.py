@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Environment Cleanup Test
+# Eingabewerte: Legacy database locations
+# Ausgabewerte: Cleanup results
+# Testdateien: ~/.media-web-viewer/media_library.db
+# Kommentar: Testet Environment-Cleanup.
+#!/usr/bin/env python3
 """
 Test suite for environment cleanliness and database isolation.
 

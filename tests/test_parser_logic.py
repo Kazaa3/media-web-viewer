@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Parser Test
+# Eingabewerte: Dateinamen, Pfade
+# Ausgabewerte: Extrahierte Tags (Artist, Title)
+# Testdateien: Keine (Dateinamen-Simulation)
+# Kommentar: Prüft die RegEx-basierte Extraktion von Metadaten aus Dateinamen (filename_parser.py Modul).
 """
 ================================================================================
 Filename Parser Logic Test - Media Web Viewer

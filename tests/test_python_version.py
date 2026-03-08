@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Python Version Test
+# Eingabewerte: sys.version_info
+# Ausgabewerte: Python version validation (>= 3.10)
+# Testdateien: Keine (Runtime check)
+# Kommentar: Prüft dass Python Version >= 3.10 ist.
 """
 test_python_version.py - Validates Python version compatibility for Media Web Viewer.
 

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Sessionless Mode Test
+# Eingabewerte: --ng, --n flags
+# Ausgabewerte: No-GUI mode validation
+# Testdateien: Keine
+# Kommentar: Testet Sessionless/No-GUI Mode.
+#!/usr/bin/env python3
 """
 Test suite for no-GUI and connectionless browser modes (--ng / --n).
 

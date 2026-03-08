@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Version Synchronization Test
+# Eingabewerte: VERSION file, VERSION_SYNC.json, pyproject.toml, MediaWebViewer.spec, DEBIAN/control
+# Ausgabewerte: Version-Konsistenz über alle Dateien, Format-Validierung
+# Testdateien: VERSION, VERSION_SYNC.json, pyproject.toml, MediaWebViewer.spec, packaging/DEBIAN/control
+# Kommentar: Prüft dass Version in allen konfigurierten Dateien synchron ist (VERSION file als Master).
 """
 Test suite for version synchronization across the project.
 Reads VERSION_SYNC.json and verifies all locations have the correct version.

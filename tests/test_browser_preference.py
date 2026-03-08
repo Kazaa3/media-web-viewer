@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Browser Preference Test
+# Eingabewerte: Browser configuration
+# Ausgabewerte: Browser selection
+# Testdateien: Keine
+# Kommentar: Testet Browser-Preference-System.
+#!/usr/bin/env python3
 """
 Test suite for browser selection and preference system.
 

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: DEB Reinstall Test
+# Eingabewerte: .deb package
+# Ausgabewerte: Installation results
+# Testdateien: build/*.deb
+# Kommentar: Testet DEB-Package-Reinstallation.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test suite for .deb package reinstallation workflow
 Tests the build_deb.sh + reinstall_deb.sh pipeline

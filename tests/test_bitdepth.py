@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Unit Test / Bit-Depth Detection
+# Eingabewerte: Pfad zur FLAC / MP3
+# Ausgabewerte: Pymediainfo Ausgaben
+# Testdateien: Keine (Mock / Dummy)
+# Kommentar: Prüft BitDepth extraction mit PyMediaInfo (16-bit, 24-bit, 32-bit int und float).
 """
 ================================================================================
 Bit-Depth Detection Test (PyMediaInfo) - Media Web Viewer
