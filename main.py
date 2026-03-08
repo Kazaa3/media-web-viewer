@@ -23,6 +23,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import eel # Electron-like Python Library for building desktop apps with web technologies
 import sys
 import os
+from typing import Any, cast
 import json
 import time
 import subprocess
@@ -39,7 +40,9 @@ try:
 except Exception:
     VERSION = "1.2.21" # Fallback
 
-@eel.expose("get_version")
+
+@eel.expose
+
 def get_version():
     """
     @brief Returns the current version number.
@@ -82,18 +85,10 @@ DEBUG_FLAGS = {
     "web": False
 }
 
-# Full Debug Mode: If --debug argument is passed, set all flags to True
-if "--debug" in sys.argv:
-    for key in DEBUG_FLAGS:
-        DEBUG_FLAGS[key] = True
-    debug_log("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+LOG_BUFFER: list[str] = []
 
-LOG_BUFFER = []
 
-if DEBUG_FLAGS["start"]:
-    debug_log("[Startup] main.py loading...")
-
-def debug_log(message):
+def debug_log(message: str) -> None:
     """
     @brief Internal helper to print and buffer log messages for the UI.
     @details Interner Helfer zum Drucken und Puffern von Log-Nachrichten für die UI.
@@ -105,7 +100,18 @@ def debug_log(message):
     if hasattr(eel, 'log_to_debug'):
         eel.log_to_debug(message)()
 
+if DEBUG_FLAGS["start"]:
+    debug_log("[Startup] main.py loading...")
+
+# Full Debug Mode: If --debug argument is passed, set all flags to True
+if "--debug" in sys.argv:
+    for key in DEBUG_FLAGS:
+        DEBUG_FLAGS[key] = True
+    debug_log("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+
+
 @eel.expose
+
 def get_debug_logs():
     """
     @brief Returns the entire log history as a single string.
@@ -114,7 +120,9 @@ def get_debug_logs():
     """
     return "\n".join(LOG_BUFFER)
 
-@eel.expose("get_debug_flags")
+
+@eel.expose
+
 def get_debug_flags():
     """
     @brief Returns the current internal debug flags.
@@ -123,7 +131,9 @@ def get_debug_flags():
     """
     return DEBUG_FLAGS
 
-@eel.expose("set_debug_flag")
+
+@eel.expose
+
 def set_debug_flag(key, value):
     """
     @brief Sets a specific debug flag.
@@ -135,7 +145,9 @@ def set_debug_flag(key, value):
         DEBUG_FLAGS[key] = value
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
-@eel.expose("set_all_debug_flags")
+
+@eel.expose
+
 def set_all_debug_flags(value):
     """
     @brief Activates or deactivates all debug flags simultaneously.
@@ -146,7 +158,9 @@ def set_all_debug_flags(value):
         DEBUG_FLAGS[key] = value
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
 
-@eel.expose("get_language")
+
+@eel.expose
+
 def get_language():
     """
     @brief Returns the currently selected UI language.
@@ -155,7 +169,9 @@ def get_language():
     """
     return PARSER_CONFIG.get("language", "de")
 
-@eel.expose("set_language")
+
+@eel.expose
+
 def set_language(lang):
     """
     @brief Sets the UI language of the application.
@@ -182,7 +198,9 @@ from web import app_bottle
 from models import MediaItem
 
 
-@eel.expose("get_library")
+
+@eel.expose
+
 def get_library():
     """
     @brief Returns all media items from the database without re-scanning.
@@ -191,7 +209,9 @@ def get_library():
     """
     return {"media": db.get_all_media()}
 
-@eel.expose("clear_database")
+
+@eel.expose
+
 def clear_database():
     """
     @brief Deletes all entries from the library database.
@@ -203,7 +223,9 @@ def clear_database():
     db.clear_media()
     return {"status": "ok", "message": "Datenbank geleert", "media": []}
 
-@eel.expose("reset_app_data")
+
+@eel.expose
+
 def reset_app_data():
     """
     @brief Wipes the database and configuration files (private user data).
@@ -241,7 +263,9 @@ def reset_app_data():
         debug_log(f"[System] Reset complete. Deleted: {', '.join(deleted)}")
     return {"status": "ok", "deleted": deleted}
 
-@eel.expose("update_tags")
+
+@eel.expose
+
 def update_tags(name, tags_dict):
     """
     @brief Saves customized tags for a media item in the database.
@@ -255,7 +279,9 @@ def update_tags(name, tags_dict):
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
-@eel.expose("rename_media")
+
+@eel.expose
+
 def rename_media(old_name, new_name):
     """
     @brief Renames a media record in the database.
@@ -276,7 +302,9 @@ def rename_media(old_name, new_name):
     else:
         return {"status": "error", "message": "Name bereits vorhanden oder Fehler"}
 
+
 @eel.expose
+
 def delete_media(name):
     """
     @brief Deletes a media item from the database.
@@ -285,7 +313,9 @@ def delete_media(name):
     """
     return db.delete_media(name)
 
+
 @eel.expose
+
 def get_db_stats():
     """
     @brief Returns statistical information about the database content.
@@ -294,7 +324,9 @@ def get_db_stats():
     """
     return db.get_db_stats()
 
-@eel.expose("get_default_media_dir")
+
+@eel.expose
+
 def get_default_media_dir():
     """
     @brief Returns the default media directory (absolute path).
@@ -304,7 +336,9 @@ def get_default_media_dir():
     return SCAN_MEDIA_DIR
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
-@eel.expose("scan_media")
+
+@eel.expose
+
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
@@ -387,7 +421,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         "stats": {"count": count, "time_seconds": elapsed}
     }
 
-@eel.expose("get_parser_config")
+
+@eel.expose
+
 def get_parser_config():
     """
     @brief Returns the current parser configuration to the frontend.
@@ -396,7 +432,9 @@ def get_parser_config():
     """
     return PARSER_CONFIG
 
-@eel.expose("update_parser_config")
+
+@eel.expose
+
 def update_parser_config(new_config):
     """
     @brief Updates the parser configuration and saves it to disk.
@@ -408,7 +446,9 @@ def update_parser_config(new_config):
     save_parser_config()
     return {"status": "ok"}
 
-@eel.expose("add_scan_dir")
+
+@eel.expose
+
 def add_scan_dir():
     """
     @brief Opens a dialog to select a new directory for library scanning.
@@ -417,7 +457,7 @@ def add_scan_dir():
     """
     new_dir = pick_folder()
     if new_dir:
-        dirs = PARSER_CONFIG.get("scan_dirs", [])
+        dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
         if new_dir not in dirs:
             dirs.append(new_dir)
             PARSER_CONFIG["scan_dirs"] = dirs
@@ -425,7 +465,9 @@ def add_scan_dir():
             return {"status": "ok", "dirs": dirs}
     return {"status": "cancel"}
 
-@eel.expose("remove_scan_dir")
+
+@eel.expose
+
 def remove_scan_dir(dir_path):
     """
     @brief Removes a directory from the scan list in the configuration.
@@ -433,7 +475,7 @@ def remove_scan_dir(dir_path):
     @param dir_path Path to remove / Zu entfernender Pfad.
     @return Status dictionary / Status-Dictionary.
     """
-    dirs = PARSER_CONFIG.get("scan_dirs", [])
+    dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
     if dir_path in dirs:
         dirs.remove(dir_path)
         PARSER_CONFIG["scan_dirs"] = dirs
@@ -441,7 +483,9 @@ def remove_scan_dir(dir_path):
         return {"status": "ok", "dirs": dirs}
     return {"status": "error", "message": "Pfad nicht in Liste"}
 
-@eel.expose("play_media")
+
+@eel.expose
+
 def play_media(path):
     """
     @brief Triggers media playback (handled client-side by the browser).
@@ -453,7 +497,9 @@ def play_media(path):
         debug_log(f"[Debug-Player] Spiele ab: {path}")
     return {"status": "play", "path": path} # Bestätigung
 
-@eel.expose("open_in_explorer")
+
+@eel.expose
+
 def open_in_explorer(path_str):
     """
     @brief Opens a specific file or folder in the system's native file explorer.
@@ -469,7 +515,10 @@ def open_in_explorer(path_str):
     try:
         # Check OS and open accordingly
         if os.name == 'nt':  # Windows
-            os.startfile(path_str)
+            # Use getattr to satisfy mypy on non-Windows systems
+            startfile = getattr(os, 'startfile', None)
+            if startfile:
+                startfile(path_str)
         elif sys.platform == 'darwin':  # macOS
             subprocess.run(['open', '-R', path_str])
         else:  # Linux (freedesktop)
@@ -479,7 +528,9 @@ def open_in_explorer(path_str):
         print(f"Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
 
-@eel.expose("browse_dir")
+
+@eel.expose
+
 def browse_dir(dir_path=None):
     """
     @brief Lists folders and audio files for the in-app file browser.
@@ -510,7 +561,9 @@ def browse_dir(dir_path=None):
     parent = str(target.parent) if target.parent != target else None
     return {"path": str(target), "parent": parent, "items": items}
 
-@eel.expose("pick_folder")
+
+@eel.expose
+
 def pick_folder():
     """
     @brief Opens a native OS folder selection dialog using Tkinter.
@@ -530,7 +583,9 @@ def pick_folder():
         print(f"[Error] Folder picker failed: {e}")
         return None
 
-@eel.expose("add_file_to_library")
+
+@eel.expose
+
 def add_file_to_library(file_path):
     """
     @brief Adds a single file from the browser to the library.
@@ -553,7 +608,9 @@ def add_file_to_library(file_path):
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
 
+
 @eel.expose
+
 def get_test_suites():
     """
     @brief Discovers all test files in the tests/ directory and extracts metadata.
@@ -596,7 +653,9 @@ def get_test_suites():
             })
     return suites
 
+
 @eel.expose
+
 def update_test_metadata(filename, metadata):
     """
     @brief Updates the metadata comments in a specific test file.
@@ -644,7 +703,9 @@ def update_test_metadata(filename, metadata):
     except Exception as e:
         return {"error": str(e)}
 
+
 @eel.expose
+
 def create_new_test(name):
     """
     @brief Creates a new test file based on a template.
@@ -674,6 +735,7 @@ def create_new_test(name):
 
 import pytest
 
+
 def {safe_name}():
     # Hier Test-Code schreiben
     assert True
@@ -684,7 +746,9 @@ def {safe_name}():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 @eel.expose
+
 def delete_test(filename):
     """
     @brief Deletes a specific test file from the disk.
@@ -704,7 +768,9 @@ def delete_test(filename):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 @eel.expose
+
 def get_logbook_entry(feature_name):
     """
     @brief Reads a markdown file from the logbook or the README.
@@ -731,7 +797,9 @@ def get_logbook_entry(feature_name):
     except Exception as e:
         return f"<h1>Error</h1><p>{str(e)}</p>"
 
+
 @eel.expose
+
 def list_logbook_entries():
     """
     @brief Returns a list of all markdown files in the logbook folder with metadata.
@@ -819,7 +887,9 @@ def list_logbook_entries():
     
     return entries
 
+
 @eel.expose
+
 def save_logbook_entry(filename, content):
     """
     @brief Saves or updates a logbook entry file.
@@ -847,7 +917,9 @@ def save_logbook_entry(filename, content):
     except Exception as e:
         return {"error": str(e)}
 
+
 @eel.expose
+
 def delete_logbook_entry(filename):
     """
     @brief Deletes a logbook entry from the disk.
@@ -875,7 +947,9 @@ def delete_logbook_entry(filename):
     except Exception as e:
         return {"error": str(e)}
 
+
 @eel.expose
+
 def run_tests(test_files):
     """
     @brief Executes selected pytest suites and returns the results.
@@ -941,7 +1015,9 @@ def run_tests(test_files):
     except Exception as e:
         return {"error": str(e)}
 
+
 @eel.expose
+
 def run_gui_tests():
     """
     @brief Placeholder for GUI tests (handled via the agent).

@@ -18,6 +18,7 @@ APP_DATA_DIR = Path.home() / ".media-web-viewer"
 LOG_FILE = APP_DATA_DIR / "route_log.txt"
 CACHE_DIR = APP_DATA_DIR / "cache"
  
+
 def _log(msg):
     """
     @brief Internal helper to log messages to the route log file.
@@ -38,6 +39,7 @@ def _log(msg):
     except Exception:
         pass
 
+
 def _resolve_path(filename):
     """
     @brief Resolves a filename to its full filesystem path.
@@ -56,10 +58,12 @@ def _resolve_path(filename):
     return None
 
 @bottle.hook('before_request')
+
 def log_request():
     _log(f"REQ IN: {bottle.request.url}")
 
 @bottle.route('/media/<filepath:path>')
+
 def serve_media(filepath):
     """
     @brief Serves media files with optional on-the-fly transcoding.
@@ -130,6 +134,7 @@ def serve_media(filepath):
     return bottle.static_file(full_path.name, root=str(full_path.parent))
 
 @bottle.route('/cover/<filepath:path>')
+
 def serve_cover(filepath):
     """
     @brief Extracts and serves the embedded cover art from a media file.
@@ -148,27 +153,28 @@ def serve_cover(filepath):
     
     try:
         if file_type == '.mp3':
-            audio = MP3(str(full_path))
-            # APIC contains the picture in ID3v2
-            for tag in audio.tags.values():
-                if tag.FrameID == 'APIC':
-                    img_data = tag.data
-                    mime_type = tag.mime
-                    break
+            audio_mp3 = MP3(str(full_path))
+            if audio_mp3.tags:
+                # APIC contains the picture in ID3v2
+                for tag in audio_mp3.tags.values():
+                    if hasattr(tag, 'FrameID') and tag.FrameID == 'APIC':
+                        img_data = tag.data
+                        mime_type = tag.mime
+                        break
         elif file_type == '.flac':
-            audio = FLAC(str(full_path))
-            if audio.pictures:
-                img_data = audio.pictures[0].data
-                mime_type = audio.pictures[0].mime
+            audio_flac = FLAC(str(full_path))
+            if audio_flac.pictures:
+                img_data = audio_flac.pictures[0].data
+                mime_type = audio_flac.pictures[0].mime
         elif file_type in {'.m4a', '.alac', '.m4b'}:
-            audio = MP4(str(full_path))
-            if 'covr' in audio.tags and audio.tags['covr']:
-                img_data = bytes(audio.tags['covr'][0])
+            audio_mp4 = MP4(str(full_path))
+            if audio_mp4.tags and 'covr' in audio_mp4.tags and audio_mp4.tags['covr']:
+                img_data = bytes(audio_mp4.tags['covr'][0])
                 if img_data.startswith(b'\x89PNG\r\n\x1a\n'):
                     mime_type = 'image/png'
                 else:
                     mime_type = 'image/jpeg'
-    except Exception as e:
+    except Exception:
         pass
         
     if img_data:
@@ -178,6 +184,7 @@ def serve_cover(filepath):
     return bottle.HTTPError(404, "No cover found")
 
 @bottle.error(500)
+
 def error500(error):
     """
     @brief Custom 500 error handler with debug logging.

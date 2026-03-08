@@ -6,9 +6,11 @@ from pathlib import Path
 # Config File Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
 
+from typing import Any
+
 # Central Parser Configuration
 # This avoids circular imports with main.py
-PARSER_CONFIG = {
+PARSER_CONFIG: dict[str, Any] = {
     "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
     "parser_mode": "lightweight",
     "debug_scan": True,
