@@ -1,61 +1,49 @@
-media/*.flac
-media/*.m4a
-media/*.alac
-media/*.wav
-media/*.m4a
-media/*.m4b
-media/*.mp3
-media/*.aac
-media/*.ogg
-media/*.wav
-media/*.opus
-media/*.wma
-media/*.WMA
-media/*.webm
-media/*.mp4
-media/*.m4v
-media/*.mkv
-
+# --- Python ---
 __pycache__/
 *.pyc
-**/*.pyc
-media/.cache/
-media/route_log.txt
-*.db
-Screens/
-
-# IDEs
-.idea/
-.vscode/
-
-# Virtual environments
-venv/
-env/
-.venv/
-
-# Env vars
-.env
-
-# Packaging
-build/
-dist/
-*.spec
-*.deb
-
-
-
-packaging/opt/media-web-viewer/media/
-packaging/opt/media-web-viewer/media/*.wma
-
-# Testing and Type Checking
+*.pyo
+*.pyd
+.Python
 .pytest_cache/
 .mypy_cache/
 .coverage
 htmlcov/
+.cache/
 
-# Logs
-*.log
+# --- Virtual Environments ---
+venv/
+env/
+.venv/
 
-# OS files
+# --- IDEs and Editors ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Operating System ---
 .DS_Store
 Thumbs.db
+
+# --- Packaging and Build ---
+build/
+dist/
+*.spec
+*.deb
+packaging/opt/media-web-viewer/media/
+packaging/opt/media-web-viewer/Screens/
+
+# --- Documentation ---
+docs/html/
+docs/latex/
+
+# --- Project Specific ---
+media/*
+!media/.gitkeep
+media_library.db
+*.db
+Screens/
+*.log
+media/route_log.txt
+.env
