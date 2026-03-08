@@ -14,6 +14,7 @@ from typing import List
 APP_DATA_DIR = Path.home() / ".media-web-viewer"
 APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = APP_DATA_DIR / "app.log"
+DEBUG_LOG_FILE = Path(__file__).parent / "logs" / "debug.log"
 
 # UI Log Buffer (accessible by Eel)
 LOG_BUFFER: List[str] = []
@@ -68,7 +69,7 @@ def setup_logging(debug_mode: bool = False):
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
-    # 2. Rotating File Handler
+    # 2. Rotating File Handler (User Data)
     try:
         file_handler = logging.handlers.RotatingFileHandler(
             LOG_FILE, maxBytes=5*1024*1024, backupCount=3, encoding='utf-8'
@@ -78,10 +79,26 @@ def setup_logging(debug_mode: bool = False):
     except Exception as e:
         print(f"Failed to initialize file logger: {e}")
 
-    # 3. UI Buffer Handler
+    # 3. Project-Local Debug File Handler (only if debug_mode is True)
+    if debug_mode:
+        try:
+            DEBUG_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            debug_file_handler = logging.handlers.RotatingFileHandler(
+                DEBUG_LOG_FILE, maxBytes=10*1024*1024, backupCount=1, encoding='utf-8'
+            )
+            debug_file_handler.setFormatter(formatter)
+            root_logger.addHandler(debug_file_handler)
+            logging.info(f"Project-local debug log initialized at: {DEBUG_LOG_FILE}")
+        except Exception as e:
+            print(f"Failed to initialize project-local debug logger: {e}")
+
+    # 4. UI Buffer Handler
     ui_handler = UIHandler()
     ui_handler.setFormatter(formatter)
     root_logger.addHandler(ui_handler)
+
+    # Suppress noisy third-party logs
+    logging.getLogger("geventwebsocket.handler").setLevel(logging.WARNING)
 
     logging.info("Logging system initialized.")
     if debug_mode:
