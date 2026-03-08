@@ -1,7 +1,10 @@
+from typing import Any
+
+from pathlib import Path
 from pymediainfo import MediaInfo
 
 
-def parse(path, file_type, tags, mode='lightweight'):
+def parse(path: str | Path, file_type: str, tags: dict[str, Any], mode: str = 'lightweight') -> dict[str, Any]:
     """
     Parses container-level metadata specifically designed to identify
     embedded details such as MKV streams or nested audio.

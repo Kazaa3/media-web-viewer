@@ -9,28 +9,28 @@ from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 
-# Add parent dir so we can import db
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import logger
+import logging
+
+# Get specialized logger for web component
+log = logger.get_logger("web")
 
 APP_ROOT = Path(__file__).resolve().parent.parent
 MEDIA_DIR = APP_ROOT / "media"
-APP_DATA_DIR = Path.home() / ".media-web-viewer"
-LOG_FILE = APP_DATA_DIR / "route_log.txt"
-CACHE_DIR = APP_DATA_DIR / "cache"
+CACHE_DIR = logger.APP_DATA_DIR / "cache"
 
 
 def _log(msg):
     """
-    @brief Internal helper to log messages to the route log file.
-    @details Interner Helfer zum Loggen von Nachrichten in die Routen-Logdatei.
-    @param msg Message to log / Zu loggende Nachricht.
+    @brief Internal helper (legacy proxy) for logging.
     """
+    log.info(msg)
 
 
 def _resolve_path(filename):
     """
     @brief Resolves a filename to its full filesystem path.
-    @details Auflöst einen Dateinamen in seinen vollen Pfad.
+    @details Löst einen Dateinamen in seinen vollen Pfad auf.
     @param filename Name of the media file / Name der Datei.
     @return Full path or None / Voller Pfad oder None.
     """
@@ -48,6 +48,7 @@ def _resolve_path(filename):
 @bottle.hook('before_request')
 def log_request():
     _log(f"REQ IN: {bottle.request.url}")
+    logger.debug("network", f"HTTP Request: {bottle.request.method} {bottle.request.url}")
 
 
 @bottle.route('/media/<filepath:path>')
@@ -74,9 +75,19 @@ def serve_media(filepath):
         transcode_format = 'ogg'
         needs_transcoding = True
 
-    ext = filepath.lower()
-    _log(f"ROUTE CALLED: filepath={filepath}, ext={ext}")
+    transcode_format = None
+    logger.debug("network", f"serve_media: filepath={filepath}")
 
+    if filepath.endswith('.flac_transcoded'):
+        filepath = filepath[:-16]
+        transcode_format = 'flac'
+        needs_transcoding = True
+    elif filepath.endswith('.ogg_transcoded'):
+        filepath = filepath[:-15]
+        transcode_format = 'ogg'
+        needs_transcoding = True
+
+    ext = filepath.lower()
     full_path = _resolve_path(filepath)
     if not full_path:
         return bottle.HTTPError(404, "File not found")
@@ -98,6 +109,7 @@ def serve_media(filepath):
 
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
+            logger.debug("transcode", f"Transcoding required: {full_path} to {transcode_format}")
             try:
                 subprocess.run(
                     ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn'] + ffmpeg_args + [str(tmp_path)],
@@ -105,8 +117,10 @@ def serve_media(filepath):
                 )
                 tmp_path.replace(cache_path)
                 _log("TRANSCODING SUCCESS")
+                logger.debug("transcode", f"Transcoding success: {cache_path}")
             except subprocess.CalledProcessError as e:
                 _log(f"TRANSCODING FAILED: {e.stderr}")
+                logger.debug("transcode", f"Transcoding failed for {full_path}: {e.stderr}")
                 if tmp_path.exists():
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")
@@ -115,6 +129,12 @@ def serve_media(filepath):
 
     if ext.endswith('.flac'):
         mime_type = 'audio/flac'
+    elif ext.endswith('.mkv'):
+        mime_type = 'video/x-matroska'
+    elif ext.endswith('.mp4'):
+        mime_type = 'video/mp4'
+    elif ext.endswith('.webm'):
+        mime_type = 'video/webm'
 
     if mime_type:
         return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)
@@ -140,22 +160,23 @@ def serve_cover(filepath):
 
     try:
         if file_type == '.mp3':
-            audio = MP3(str(full_path))
-            # APIC contains the picture in ID3v2
-            for tag in audio.tags.values():
-                if tag.FrameID == 'APIC':
-                    img_data = tag.data
-                    mime_type = tag.mime
-                    break
+            audio_mp3 = MP3(str(full_path))
+            if audio_mp3.tags:
+                # APIC contains the picture in ID3v2
+                for tag in audio_mp3.tags.values():
+                    if hasattr(tag, 'FrameID') and tag.FrameID == 'APIC':
+                        img_data = tag.data
+                        mime_type = tag.mime
+                        break
         elif file_type == '.flac':
-            audio = FLAC(str(full_path))
-            if audio.pictures:
-                img_data = audio.pictures[0].data
-                mime_type = audio.pictures[0].mime
+            audio_flac = FLAC(str(full_path))
+            if audio_flac.pictures:
+                img_data = audio_flac.pictures[0].data
+                mime_type = audio_flac.pictures[0].mime
         elif file_type in {'.m4a', '.alac', '.m4b'}:
-            audio = MP4(str(full_path))
-            if 'covr' in audio.tags and audio.tags['covr']:
-                img_data = bytes(audio.tags['covr'][0])
+            audio_mp4 = MP4(str(full_path))
+            if audio_mp4.tags and 'covr' in audio_mp4.tags and audio_mp4.tags['covr']:
+                img_data = bytes(audio_mp4.tags['covr'][0])
                 if img_data.startswith(b'\x89PNG\r\n\x1a\n'):
                     mime_type = 'image/png'
                 else:
@@ -179,8 +200,5 @@ def error500(error):
     @return Error message string / Fehlermeldungs-String.
     """
     import traceback
-    with open("/tmp/media_viewer_500.log", "a") as f:
-        f.write("\n--- ERROR 500 ---\n")
-        f.write(traceback.format_exc())
-        f.write(f"URL: {bottle.request.url}\n")
-    return "Internal Server Error (Details logged to /tmp/media_viewer_500.log)"
+    log.error("\n--- ERROR 500 ---\n%s\nURL: %s", traceback.format_exc(), bottle.request.url)
+    return "Internal Server Error (Details logged to app.log)"

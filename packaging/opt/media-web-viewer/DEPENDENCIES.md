@@ -14,12 +14,12 @@ All third-party dependencies used in this project are listed below with their re
 | **bottle** | >=0.13.0 | MIT | Lightweight WSGI web framework for REST API and routing |
 | **bottle-websocket** | >=0.2.9 | MIT | WebSocket support plugin for Bottle framework |
 
-### Audio & Media Metadata
-
 | Package | Version | License | Purpose |
 |---------|---------|---------|---------|
 | **mutagen** | >=1.47.0 | GPL v2 | Audio metadata extraction and manipulation (ID3, Vorbis, etc.) |
 | **pymediainfo** | >=7.0.1 | MIT | Media file information parsing using libmediainfo |
+| **m3u8** | >=4.1.0 | MIT | m3u8 playlist parsing and manipulation |
+| **python-vlc** | >=3.0.18121 | MIT | VLC media player bindings for external video playback |
 
 ### Async & Communication
 
@@ -42,6 +42,9 @@ All third-party dependencies used in this project are listed below with their re
 |---------|---------|---------|---------|
 | **pytest** | >=8.0.0 | MIT | Testing framework for Python |
 | **pytest-cov** | >=4.1.0 | MIT | Code coverage measurement plugin for pytest |
+| **flake8** | >=7.0.0 | MIT | Linting and style checks (PEP8-focused) |
+| **mypy** | >=1.9.0 | MIT | Static type checking for type annotations / TypedDict |
+| **markdown** | >=3.5.0 | BSD | Markdown parsing for documentation validation tests |
 
 ## License Compatibility
 
@@ -60,7 +63,7 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 |---------|---------|---------|---|---------|---------------|
 | **ffmpeg** | latest | LGPL v2.1 / GPL | ✅ GPLv3 | Audio/video transcoding and metadata extraction | `sudo apt install ffmpeg` |
 | **libmediainfo0v5** | latest | BSD 2-Clause | ✅ GPLv3 | Media file information library (required by pymediainfo) | `sudo apt install libmediainfo0v5` |
-| **python3-tk** | system | Python Software Foundation | ✅ GPLv3 | Tkinter for system file dialogs | `sudo apt install python3-tk` |
+| **doxygen** | latest | GPL v2 | ✅ GPLv3 | Documentation generator | `sudo apt install doxygen` |
 
 **License Compatibility Note:** All system dependencies are compatible with GNU General Public License v3 (GPL-3.0). FFmpeg's LGPL v2.1 is compatible with GPLv3, and BSD licenses are permissive allowing use under GPLv3.
 
@@ -68,19 +71,19 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 python3-tk
+sudo apt install ffmpeg libmediainfo0v5 doxygen
 ```
 
 ### Installation of System Dependencies (Fedora/RHEL)
 
 ```bash
-sudo dnf install ffmpeg mediainfo python3-tkinter
+sudo dnf install ffmpeg mediainfo doxygen
 ```
 
 ### Installation of System Dependencies (macOS)
 
 ```bash
-brew install ffmpeg mediainfo
+brew install ffmpeg mediainfo doxygen
 ```
 
 ## Additional Information
@@ -105,12 +108,12 @@ For full license texts, refer to the individual package repositories:
 For Debian/Ubuntu:
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 python3-tk
+sudo apt install ffmpeg libmediainfo0v5 doxygen
 ```
 
 For Fedora/RHEL:
 ```bash
-sudo dnf install ffmpeg mediainfo python3-tkinter
+sudo dnf install ffmpeg mediainfo doxygen
 ```
 
 ### Step 2: Install Python Packages
@@ -128,8 +131,11 @@ To verify all dependencies are correctly installed:
 # Check Python packages
 pip list
 
+# Check lint/type tools
+flake8 --version
+mypy --version
+
 # Check system tools
 ffmpeg -version
 mediainfo --version
-python3 -c "import tkinter; print('Tkinter installed')"
 ```

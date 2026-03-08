@@ -3,7 +3,7 @@
 # See LICENSE.md and DEPENDENCIES.md for details
 # 
 # PYTHON PACKAGE DEPENDENCIES AND THEIR LICENSES:
-# - MIT License: eel, bottle, bottle-websocket, pymediainfo, gevent, gevent-websocket, pytest, pytest-cov
+# - MIT License: eel, bottle, bottle-websocket, pymediainfo, gevent, gevent-websocket, pytest, pytest-cov, flake8, mypy
 # - GPL v2: mutagen (compatible with GPL v3)
 # - BSD 3-Clause: psutil
 # - BSD 2-Clause: future
@@ -11,13 +11,12 @@
 # SYSTEM DEPENDENCIES (must be installed separately):
 # - ffmpeg: LGPL v2.1 / GPL - Audio/Video transcoding and metadata extraction ✅ GPL-3.0 compatible
 # - libmediainfo0v5: BSD 2-Clause - Media information library (via apt/package manager) ✅ GPL-3.0 compatible
-# - python3-tk: Python Software Foundation - Python Tkinter for system file dialogs ✅ GPL-3.0 compatible
 # - doxygen: GPL v2 - Documentation generator ✅ GPL-3.0 compatible
 #
 # All dependencies are compatible with GPL-3.0
 #
 # Installation:
-#   sudo apt install ffmpeg libmediainfo0v5 python3-tk doxygen  # Debian/Ubuntu
+#   sudo apt install ffmpeg libmediainfo0v5 doxygen  # Debian/Ubuntu
 #   pip install -r requirements.txt
 
 # Web Framework & Desktop GUI

@@ -1,33 +1,37 @@
 import time
+from typing import Any
 from pathlib import Path
 from . import filename_parser
 from . import mutagen_parser
 from . import pymediainfo_parser
 from . import ffmpeg_parser
 from . import container_parser
+import logger
+import logging
+
+# Get specialized logger for parser component
+log = logger.get_logger("parser")
 
 
-def extract_metadata(path, filename, debug=False, mode='lightweight', logger=print):
+def extract_metadata(path, filename, mode='lightweight'):
     """
     @brief Orchestrates the metadata extraction process using a sequential parser chain.
     @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
     @param path Path to the media file / Pfad zur Mediendatei.
     @param filename Original filename for fallback parsing / Originaldateiname für Fallback-Parsing.
-    @param debug Enable verbose logging / Aktiviere ausführliches Logging.
     @param mode Extraction mode ('lightweight' or 'full') / Extraktionsmodus ('lightweight' oder 'full').
-    @param logger Logger function / Logging-Funktion.
     @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
-    if debug:
-        logger(f"[Debug-Parser] Starte Parsing für '{filename}' (Mode: {mode})")
-    if debug and mode == 'full':
-        logger(f"[Debug-Parser] 🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
+    log.debug(f"Starte Parsing für '{filename}' (Mode: {mode})")
+    logger.debug("metadata", f"Extraction requested for: {filename} (Mode: {mode})")
+    if mode == 'full':
+        log.debug(f"🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
 
-    tags = {
+    tags: dict[str, Any] = {
         'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
         'codec': '', 'size': '', 'tagtype': '', 'container': '',
         'has_art': 'No', 'title': '', 'artist': '', 'album': '',
@@ -40,8 +44,10 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     duration = 0
     parser_times = {}
 
+    from typing import cast
     # Iterate dynamically through the user-configured parser chain
-    parser_chain = PARSER_CONFIG.get("parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"])
+    parser_chain = cast(list[str], PARSER_CONFIG.get(
+        "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"]))
 
     for parser_name in parser_chain:
         # If in lightweight mode, check if we still need critical information, otherwise skip heavy parsers.
@@ -59,32 +65,36 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
 
         if parser_name == "filename":
             t0 = time.time()
-            tags = filename_parser.parse(path_obj, filename, tags=tags, mode=mode)
+            tags = cast(dict[str, Any], filename_parser.parse(
+                path_obj, filename, tags=tags, mode=mode))
             parser_times["filename"] = time.time() - t0
 
         elif parser_name == "container":
             if needs_more_info:
                 t0 = time.time()
-                tags = container_parser.parse(path_obj, file_type, tags, mode=mode)
+                tags = cast(dict[str, Any], container_parser.parse(
+                    path_obj, file_type, tags, mode=mode))
 
                 # Fallback block mostly handled inside ffmpeg, but isolated here for config flexibility
                 if not tags.get('container'):
-                    tags['container'] = file_type[1:].lower()
+                    tags['container'] = file_type[1:].lower() if file_type else ""
                     if not tags.get('codec'):
-                        tags['codec'] = file_type[1:].lower()
+                        tags['codec'] = file_type[1:].lower() if file_type else ""
                 parser_times["container"] = time.time() - t0
             else:
                 parser_times["container"] = 0.0
 
         elif parser_name == "mutagen":
             t0 = time.time()
-            tags = mutagen_parser.parse(path_obj, file_type, tags, filename, mode=mode)
+            tags = cast(dict[str, Any], mutagen_parser.parse(
+                path_obj, file_type, tags, filename, mode=mode))
             parser_times["mutagen"] = time.time() - t0
 
         elif parser_name == "pymediainfo":
             if needs_more_info:
                 t0 = time.time()
-                tags = pymediainfo_parser.parse(path_obj, file_type, tags, mode=mode)
+                tags = cast(dict[str, Any], pymediainfo_parser.parse(
+                    path_obj, file_type, tags, mode=mode))
                 parser_times["pymediainfo"] = time.time() - t0
             else:
                 parser_times["pymediainfo"] = 0.0
@@ -92,7 +102,8 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
         elif parser_name == "ffmpeg":
             if needs_more_info:
                 t0 = time.time()
-                tags = ffmpeg_parser.parse(path_obj, file_type, tags, mode=mode)
+                tags = cast(dict[str, Any], ffmpeg_parser.parse(
+                    path_obj, file_type, tags, mode=mode))
                 parser_times["ffmpeg"] = time.time() - t0
             else:
                 parser_times["ffmpeg"] = 0.0
@@ -121,16 +132,12 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     if tags.get('chapters') and isinstance(tags['chapters'], list):
         from .format_utils import natural_sort_key
         # Priority: 1. Natural Title, 2. Start Time
-        tags['chapters'] = sorted(
-            tags['chapters'], key=lambda x: (
-                natural_sort_key(
-                    x.get(
-                        'title', '')), x.get(
-                    'start', 0.0)))
-        if logger and debug:
+        tags['chapters'] = sorted(tags['chapters'], key=lambda x: (
+            natural_sort_key(x.get('title', '')), x.get('start', 0.0)))
+        if log.isEnabledFor(logging.DEBUG):
             first_chaps = [c.get('title') for c in tags['chapters'][:5]]
-            logger(f"[Parser] Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
+            log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
     tags['_parser_times'] = parser_times
-
+    logger.debug("metadata", f"Metadata extraction complete for {filename}. Parsers: {list(parser_times.keys())}")
     return duration, tags

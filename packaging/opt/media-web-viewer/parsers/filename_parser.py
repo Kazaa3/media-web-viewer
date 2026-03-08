@@ -1,8 +1,14 @@
 import re
 from pathlib import Path
+from typing import Any
 
 
-def parse(path, filename, tags=None, mode='lightweight'):
+def parse(
+    path: str | Path,
+    filename: str,
+    tags: dict[str, Any] | None = None,
+    mode: str = 'lightweight'
+) -> dict[str, Any]:
     """
     @brief Extracts metadata from the filename (e.g., 'Artist - Title').
     @details Extrahiert Metadaten aus dem Dateinamen (z.B. 'Artist - Title').

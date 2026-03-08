@@ -22,14 +22,31 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Benötigte Module importieren
 from models import MediaItem
 import db
-import eel  # Electron-like Python Library for building desktop apps with web technologies
+import eel
+import logging
 import sys
 import os
+import time
 import subprocess
-import io
+import re
+from typing import cast
 from pathlib import Path
-import re  # For MKV parsing
-from parsers.format_utils import PARSER_CONFIG, load_parser_config, save_parser_config, AUDIO_EXTENSIONS
+from parsers.format_utils import (
+    PARSER_CONFIG, load_parser_config, save_parser_config,
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
+)
+import logger
+try:
+    import vlc
+    HAS_VLC = True
+except ImportError:
+    HAS_VLC = False
+
+try:
+    import m3u8
+    HAS_M3U8 = True
+except ImportError:
+    HAS_M3U8 = False
 
 # Version laden
 VERSION_FILE = Path(__file__).parent / "VERSION"
@@ -39,7 +56,7 @@ except Exception:
     VERSION = "1.2.21"  # Fallback
 
 
-@eel.expose("get_version")
+@eel.expose
 def get_version():
     """
     @brief Returns the current version number.
@@ -78,32 +95,57 @@ DEBUG_FLAGS = {
     "scan": False,
     "player": False,
     "db": False,
-    "tests": False
+    "tests": False,
+    "api": False,
+    "web": False,
+    "i18n": False,
+    "websocket": False,
+    "performance": False,
+    "metadata": False,
+    "transcode": False,
+    "file_ops": False,
+    "network": False
 }
 
-# Full Debug Mode: If --debug argument is passed, set all flags to True
-if "--debug" in sys.argv:
-    for key in DEBUG_FLAGS:
-        DEBUG_FLAGS[key] = True
-    print("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+def initialize_debug_flags(args=None):
+    """
+    @brief Initializes debug mode and flags based on CLI arguments.
+    """
+    if args is None:
+        args = sys.argv
+    
+    debug_mode = "--debug" in args
+    logger.setup_logging(debug_mode)
+    
+    if debug_mode:
+        for key in DEBUG_FLAGS:
+            DEBUG_FLAGS[key] = True
+        logger.set_debug_flags(DEBUG_FLAGS)
+        logging.info("[System] Full Debug-Mode activated (--debug). All flags set to True.")
+    else:
+        logger.set_debug_flags(DEBUG_FLAGS)
 
-LOG_BUFFER = []
+# Initialize logging early with default sys.argv
+initialize_debug_flags()
+
+
+def debug_log(message: str) -> None:
+    """
+    @brief Universal logging helper (bridged to central logging system).
+    """
+    logging.info(message)
+    # Eel callback if front-end is already listening
+    try:
+        if hasattr(eel, 'log_to_debug'):
+            eel.log_to_debug(message)()
+    except Exception:
+        pass
+
 
 if DEBUG_FLAGS["start"]:
     debug_log("[Startup] main.py loading...")
 
-
-def debug_log(message):
-    """
-    @brief Internal helper to print and buffer log messages for the UI.
-    @details Interner Helfer zum Drucken und Puffern von Log-Nachrichten für die UI.
-    @param message Log message / Log-Nachricht.
-    """
-    print(message)
-    LOG_BUFFER.append(str(message))
-    # Eel-Aufruf (asynchron, wir warten nicht) - nur wenn verbunden/registriert
-    if hasattr(eel, 'log_to_debug'):
-        eel.log_to_debug(message)()
+# Removed redundant debug flag processing (now in initialize_debug_flags)
 
 
 @eel.expose
@@ -113,10 +155,10 @@ def get_debug_logs():
     @details Gibt den gesamten bisherigen Log-Verlauf als String zurück.
     @return Multi-line log string / Mehrzeiliger Log-String.
     """
-    return "\n".join(LOG_BUFFER)
+    return "\n".join(logger.get_ui_logs())
 
 
-@eel.expose("get_debug_flags")
+@eel.expose
 def get_debug_flags():
     """
     @brief Returns the current internal debug flags.
@@ -126,7 +168,7 @@ def get_debug_flags():
     return DEBUG_FLAGS
 
 
-@eel.expose("set_debug_flag")
+@eel.expose
 def set_debug_flag(key, value):
     """
     @brief Sets a specific debug flag.
@@ -139,7 +181,7 @@ def set_debug_flag(key, value):
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
 
-@eel.expose("set_all_debug_flags")
+@eel.expose
 def set_all_debug_flags(value):
     """
     @brief Activates or deactivates all debug flags simultaneously.
@@ -151,7 +193,7 @@ def set_all_debug_flags(value):
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
 
 
-@eel.expose("get_language")
+@eel.expose
 def get_language():
     """
     @brief Returns the currently selected UI language.
@@ -161,7 +203,7 @@ def get_language():
     return PARSER_CONFIG.get("language", "de")
 
 
-@eel.expose("set_language")
+@eel.expose
 def set_language(lang):
     """
     @brief Sets the UI language of the application.
@@ -179,13 +221,16 @@ def set_language(lang):
 # Benutzerdefinierte Module
 
 # Eigene Parser
+# from parsers import media_parser (Importing for side effects if needed, but unused here)
+
 
 # Eigene bottle Web-Routen
+# from web import app_bottle (Importing for side effects if needed, but unused here)
 
 # Models
 
 
-@eel.expose("get_library")
+@eel.expose
 def get_library():
     """
     @brief Returns all media items from the database without re-scanning.
@@ -195,7 +240,7 @@ def get_library():
     return {"media": db.get_all_media()}
 
 
-@eel.expose("clear_database")
+@eel.expose
 def clear_database():
     """
     @brief Deletes all entries from the library database.
@@ -208,7 +253,7 @@ def clear_database():
     return {"status": "ok", "message": "Datenbank geleert", "media": []}
 
 
-@eel.expose("reset_app_data")
+@eel.expose
 def reset_app_data():
     """
     @brief Wipes the database and configuration files (private user data).
@@ -247,7 +292,7 @@ def reset_app_data():
     return {"status": "ok", "deleted": deleted}
 
 
-@eel.expose("update_tags")
+@eel.expose
 def update_tags(name, tags_dict):
     """
     @brief Saves customized tags for a media item in the database.
@@ -256,13 +301,13 @@ def update_tags(name, tags_dict):
     @param tags_dict Dictionary of tags to update / Zu aktualisierende Tags.
     @return Status dictionary / Status-Dictionary.
     """
-    if DEBUG_FLAGS["db"]:
-        debug_log(f"[Debug-DB] Aktualisiere DB Tags für: {name}")
+    if DEBUG_FLAGS["db"] or DEBUG_FLAGS["metadata"]:
+        logger.debug("metadata", f"Updating tags for {name}: {tags_dict}")
     db.update_media_tags(name, tags_dict)
     return {"status": "ok"}
 
 
-@eel.expose("rename_media")
+@eel.expose
 def rename_media(old_name, new_name):
     """
     @brief Renames a media record in the database.
@@ -274,8 +319,7 @@ def rename_media(old_name, new_name):
     if not new_name or new_name.strip() == "":
         return {"status": "error", "message": "Name darf nicht leer sein"}
 
-    if DEBUG_FLAGS["db"]:
-        debug_log(f"[Debug-DB] Benenne um: {old_name} -> {new_name}")
+    logger.debug("file_ops", f"Renaming record: {old_name} -> {new_name}")
 
     success = db.rename_media(old_name, new_name)
     if success:
@@ -291,6 +335,7 @@ def delete_media(name):
     @details Löscht ein Medium aus der DB.
     @param name Media record name / Datenbank-Name.
     """
+    logger.debug("file_ops", f"Deleting record: {name}")
     return db.delete_media(name)
 
 
@@ -304,7 +349,7 @@ def get_db_stats():
     return db.get_db_stats()
 
 
-@eel.expose("get_default_media_dir")
+@eel.expose
 def get_default_media_dir():
     """
     @brief Returns the default media directory (absolute path).
@@ -316,7 +361,15 @@ def get_default_media_dir():
 # Funktion, um Medien zu scannen und an die GUI zu senden
 
 
-@eel.expose("scan_media")
+@eel.expose
+def ping():
+    """
+    @brief Connectivity check.
+    @details Gibt eine Bestätigung zurück, dass das Backend erreichbar ist.
+    @return dict with status 'ok' and message 'pong'.
+    """
+    return {"status": "ok", "message": "pong"}
+
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
@@ -325,13 +378,6 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     @param clear_db If True, clears the database before scanning / Falls True, leert die Datenbank vor dem Scan.
     @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
-    import time
-    start_time = time.time()
-
-    # Status in GUI anzeigen (falls verbunden)
-    if hasattr(eel, 'set_db_status'):
-        eel.set_db_status(True)()
-
     start_time = time.time()
     # DB optional leeren
     if clear_db:
@@ -351,10 +397,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             else:
                 debug_log(f"[Scan] Skipping non-existent directory: {d}")
 
-    count = 0
+    count: int = 0
     for scan_root in scan_roots:
-        if DEBUG_FLAGS.get("scan"):
-            debug_log(f"\n[Scan] Starting scan of: {scan_root}")
+        logger.debug("scan", f"Starting scan of: {scan_root}")
 
         # Rekursiv suchen, um Medien in Unterordnern zu finden
         for f in scan_root.rglob('*'):
@@ -368,18 +413,15 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
                     continue
 
-                if DEBUG_FLAGS["scan"]:
-                    debug_log(f"[Debug-Scan] Verarbeite: {f.name}")
+                logger.debug("scan", f"Verarbeite: {f.name}")
                 try:
                     item = MediaItem(f.name, f)
                     item_dict = item.to_dict()
-                    if DEBUG_FLAGS["db"]:
-                        debug_log(f"[DB-Insert] {f.name} (Category: {item_dict.get('category')}) from {f.parent}")
+                    logger.debug("db", f"{f.name} (Category: {item_dict.get('category')}) from {f.parent}")
                     db.insert_media(item_dict)
                     count += 1
                 except Exception as e:
-                    if DEBUG_FLAGS["scan"]:
-                        debug_log(f"[Debug-Scan] Fehler bei {f.name}: {e}")
+                    logger.debug("scan", f"Fehler bei {f.name}: {e}")
                     # Ignoriere problematische Dateien, aber setze das Logging fort
                     continue
 
@@ -387,8 +429,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         eel.set_db_status(False)()
 
     elapsed = time.time() - start_time
-    if DEBUG_FLAGS.get("scan"):
-        debug_log(f"\n[Indexing] Scan complete. Processed {count} files in {elapsed:.2f} seconds.\n")
+    logger.debug("performance", f"Scan of {scan_root or 'all'} took {elapsed:.2f} seconds.")
+    logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
 
     # Status in GUI ausblenden (redundant, already handled by guard above)
 
@@ -399,7 +441,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     }
 
 
-@eel.expose("get_parser_config")
+@eel.expose
 def get_parser_config():
     """
     @brief Returns the current parser configuration to the frontend.
@@ -409,7 +451,7 @@ def get_parser_config():
     return PARSER_CONFIG
 
 
-@eel.expose("update_parser_config")
+@eel.expose
 def update_parser_config(new_config):
     """
     @brief Updates the parser configuration and saves it to disk.
@@ -422,7 +464,7 @@ def update_parser_config(new_config):
     return {"status": "ok"}
 
 
-@eel.expose("add_scan_dir")
+@eel.expose
 def add_scan_dir():
     """
     @brief Opens a dialog to select a new directory for library scanning.
@@ -431,7 +473,7 @@ def add_scan_dir():
     """
     new_dir = pick_folder()
     if new_dir:
-        dirs = PARSER_CONFIG.get("scan_dirs", [])
+        dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
         if new_dir not in dirs:
             dirs.append(new_dir)
             PARSER_CONFIG["scan_dirs"] = dirs
@@ -440,7 +482,7 @@ def add_scan_dir():
     return {"status": "cancel"}
 
 
-@eel.expose("remove_scan_dir")
+@eel.expose
 def remove_scan_dir(dir_path):
     """
     @brief Removes a directory from the scan list in the configuration.
@@ -448,7 +490,7 @@ def remove_scan_dir(dir_path):
     @param dir_path Path to remove / Zu entfernender Pfad.
     @return Status dictionary / Status-Dictionary.
     """
-    dirs = PARSER_CONFIG.get("scan_dirs", [])
+    dirs = cast(list[str], PARSER_CONFIG.get("scan_dirs", []))
     if dir_path in dirs:
         dirs.remove(dir_path)
         PARSER_CONFIG["scan_dirs"] = dirs
@@ -457,7 +499,7 @@ def remove_scan_dir(dir_path):
     return {"status": "error", "message": "Pfad nicht in Liste"}
 
 
-@eel.expose("play_media")
+@eel.expose
 def play_media(path):
     """
     @brief Triggers media playback (handled client-side by the browser).
@@ -470,7 +512,7 @@ def play_media(path):
     return {"status": "play", "path": path}  # Bestätigung
 
 
-@eel.expose("open_in_explorer")
+@eel.expose
 def open_in_explorer(path_str):
     """
     @brief Opens a specific file or folder in the system's native file explorer.
@@ -480,24 +522,27 @@ def open_in_explorer(path_str):
     """
     path_obj = Path(path_str)
     if not path_obj.exists():
-        print("Existiert nicht")
+        logging.warning("[FileExplorer] Path does not exist / Pfad existiert nicht")
         return {"error": "Nicht gefunden"}
 
     try:
         # Check OS and open accordingly
         if os.name == 'nt':  # Windows
-            os.startfile(path_str)
+            # Use getattr to satisfy mypy on non-Windows systems
+            startfile = getattr(os, 'startfile', None)
+            if startfile:
+                startfile(path_str)
         elif sys.platform == 'darwin':  # macOS
             subprocess.run(['open', '-R', path_str])
         else:  # Linux (freedesktop)
             subprocess.run(['xdg-open', str(path_obj.parent)])
         return {"status": "ok"}
     except Exception as e:
-        print(f"Fehler beim Oeffnen: {e}")
+        logging.error(f"[FileExplorer] Error opening path / Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
 
 
-@eel.expose("browse_dir")
+@eel.expose
 def browse_dir(dir_path=None):
     """
     @brief Lists folders and audio files for the in-app file browser.
@@ -519,9 +564,10 @@ def browse_dir(dir_path=None):
                 continue
             if entry.is_dir():
                 items.append({"name": entry.name, "path": str(entry), "type": "folder"})
-            elif entry.suffix.lower() in AUDIO_EXTENSIONS:
+            elif entry.suffix.lower() in AUDIO_EXTENSIONS or entry.suffix.lower() in VIDEO_EXTENSIONS:
                 size_mb = entry.stat().st_size / (1024 * 1024)
-                items.append({"name": entry.name, "path": str(entry), "type": "file", "size": f"{size_mb:.1f} MB"})
+                item_type = "video" if entry.suffix.lower() in VIDEO_EXTENSIONS else "audio"
+                items.append({"name": entry.name, "path": str(entry), "type": item_type, "size": f"{size_mb:.1f} MB"})
     except PermissionError:
         return {"error": "Keine Berechtigung", "path": dir_path}
 
@@ -529,7 +575,7 @@ def browse_dir(dir_path=None):
     return {"path": str(target), "parent": parent, "items": items}
 
 
-@eel.expose("pick_folder")
+@eel.expose
 def pick_folder():
     """
     @brief Opens a native OS folder selection dialog using Tkinter.
@@ -546,11 +592,11 @@ def pick_folder():
         root.destroy()
         return folder_path if folder_path else None
     except Exception as e:
-        print(f"[Error] Folder picker failed: {e}")
+        logging.error(f"[System] Folder picker failed: {e}")
         return None
 
 
-@eel.expose("add_file_to_library")
+@eel.expose
 def add_file_to_library(file_path):
     """
     @brief Adds a single file from the browser to the library.
@@ -561,8 +607,8 @@ def add_file_to_library(file_path):
     p = Path(file_path)
     if not p.exists() or not p.is_file():
         return {"error": "Datei nicht gefunden"}
-    if p.suffix.lower() not in AUDIO_EXTENSIONS:
-        return {"error": "Kein unterstütztes Audioformat"}
+    if p.suffix.lower() not in AUDIO_EXTENSIONS and p.suffix.lower() not in VIDEO_EXTENSIONS:
+        return {"error": "Kein unterstütztes Audio- oder Videoformat"}
 
     known = db.get_known_media_names()
     if p.name in known:
@@ -572,6 +618,50 @@ def add_file_to_library(file_path):
     item_dict = item.to_dict()
     db.insert_media(item_dict)
     return {"status": "added", "item": item_dict}
+
+# VLC Player Instance (Global)
+VLC_INSTANCE = None
+VLC_PLAYER = None
+
+
+@eel.expose
+def play_vlc(file_path: str):
+    """
+    @brief Plays a media file in an external VLC window.
+    @details Spielt eine Mediendatei in einem externen VLC-Fenster ab.
+    """
+    global VLC_INSTANCE, VLC_PLAYER
+    if not HAS_VLC:
+        return {"error": "python-vlc ist nicht installiert"}
+
+    try:
+        if VLC_INSTANCE is None:
+            VLC_INSTANCE = vlc.Instance()
+        
+        if VLC_PLAYER is not None:
+            VLC_PLAYER.stop()
+
+        VLC_PLAYER = VLC_INSTANCE.media_player_new()
+        media = VLC_INSTANCE.media_new(file_path)
+        VLC_PLAYER.set_media(media)
+        VLC_PLAYER.play()
+        
+        logger.get_ui_logger().info(f"VLC: Spiele {file_path}")
+        return {"status": "ok"}
+    except Exception as e:
+        logger.get_ui_logger().error(f"VLC Fehler: {e}")
+        return {"error": str(e)}
+
+
+@eel.expose
+def stop_vlc():
+    """
+    @brief Stops the VLC player.
+    """
+    global VLC_PLAYER
+    if VLC_PLAYER:
+        VLC_PLAYER.stop()
+    return {"status": "ok"}
 
 
 @eel.expose
@@ -587,39 +677,41 @@ def get_test_suites():
 
     suites = []
     for f in sorted(test_dir.glob("*.py")):
-        if f.name.startswith("test_") or f.name.startswith("benchmark_"):
-            try:
-                content = f.read_text(encoding='utf-8')
-            except Exception:
-                content = ""
+        if f.name.startswith("__"):
+            continue
+        # Include all .py files in tests/ as they might be utility scripts the user wants
+        try:
+            content = f.read_text(encoding='utf-8')
+        except Exception:
+            content = ""
 
-            metadata = {
-                "category": "-",
-                "inputs": "-",
-                "outputs": "-",
-                "files": "-",
-                "comment": "-"
-            }
+        metadata = {
+            "category": "-",
+            "inputs": "-",
+            "outputs": "-",
+            "files": "-",
+            "comment": "-"
+        }
 
-            for line in content.splitlines():
-                if line.startswith("# Kategorie:"):
-                    metadata["category"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Eingabewerte:"):
-                    metadata["inputs"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Ausgabewerte:"):
-                    metadata["outputs"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Testdateien:"):
-                    metadata["files"] = line.split(":", 1)[1].strip()
-                elif line.startswith("# Kommentar:"):
-                    metadata["comment"] = line.split(":", 1)[1].strip()
+        for line in content.splitlines():
+            if line.startswith("# Kategorie:"):
+                metadata["category"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Eingabewerte:"):
+                metadata["inputs"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Ausgabewerte:"):
+                metadata["outputs"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Testdateien:"):
+                metadata["files"] = line.split(":", 1)[1].strip()
+            elif line.startswith("# Kommentar:"):
+                metadata["comment"] = line.split(":", 1)[1].strip()
 
-            display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
-            suites.append({
-                "id": f.name,
-                "name": display_name,
-                "path": str(f),
-                "metadata": metadata
-            })
+        display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
+        suites.append({
+            "id": f.name,
+            "name": display_name,
+            "path": str(f),
+            "metadata": metadata
+        })
     return suites
 
 
@@ -701,6 +793,7 @@ def create_new_test(name):
 # Kommentar: Neuer Test
 
 import pytest
+
 
 def {safe_name}():
     # Hier Test-Code schreiben
@@ -928,7 +1021,6 @@ def run_tests(test_files):
     @param test_files List of test filenames / Liste von Test-Dateinamen.
     @return Result dictionary with passes/fails and output / Ergebnis-Dictionary.
     """
-    import pytest  # Nur lokal importieren – nicht als globale Abhängigkeit
     if DEBUG_FLAGS.get("tests"):
         debug_log(f"[Tests] Running files: {test_files}")
 
@@ -945,8 +1037,6 @@ def run_tests(test_files):
     if not valid_files:
         return {"error": "Keine gültigen Test-Dateien gefunden."}
 
-    # Capture stdout to get pytest report
-    io.StringIO()
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).parent)
@@ -964,7 +1054,6 @@ def run_tests(test_files):
         output = result.stdout + "\n" + result.stderr
 
         # Parse output for passed/failed
-        import re
         passes = 0
         fails = 0
         match = re.search(r'==.*?\s(\d+)\s+passed', output)
@@ -1007,10 +1096,10 @@ if __name__ == "__main__":
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
     # Only print on startup if a debug flag is active (though usually all are False initially)
-    # Append to LOG_BUFFER silently so it's visible in the debug window later
-    LOG_BUFFER.append(startup_cmd)
+    # Append to log silently so it's visible in the debug window later
+    debug_log(startup_cmd)
     if any(DEBUG_FLAGS.values()):
-        print(startup_cmd)
+        debug_log(startup_cmd)
 
     db.init_db()
 
@@ -1026,16 +1115,18 @@ if __name__ == "__main__":
 
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
+    logger.debug("websocket", f"Eel initialized with root: {web_dir}")
 
     if DEBUG_FLAGS["start"]:
-        print("[Startup] Starting Eel UI...")
+        debug_log("[Startup] Starting Eel UI...")
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     # port=0 sucht automatisch einen freien Port
     try:
-        eel.start("app.html", size=(1350, 800), block=False, port=0)
+        logger.debug("websocket", "Starting Eel server (bottle/gevent)...")
+        eel.start("app.html", size=(1450, 800), block=False, port=0)
     except Exception as e:
-        print(f"[Startup-Error] eel.start failed: {e}")
+        logging.error(f"[Startup-Error] eel.start failed: {e}")
 
     # Server am Leben halten
     while True:

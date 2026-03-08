@@ -23,5 +23,5 @@ def check_file(path):
 # check_file("media/01 - Einfach & Leicht.mp3")
 # check_file("media/02 We the People….flac")
 # check_file("media/2007 - M.A.S.K/03. The Secret.m4a")
-  # ALAC
+# ALAC
 check_file("media/20-The Emerald Abyss.wav")

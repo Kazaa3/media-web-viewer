@@ -1,7 +1,10 @@
 from pymediainfo import MediaInfo
+from typing import Any
+
+from pathlib import Path
 
 
-def parse(path, file_type, tags, mode='lightweight'):
+def parse(path: str | Path, file_type: str, tags: dict[str, Any], mode: str = 'lightweight') -> dict[str, Any]:
     """
     @brief Extracts metadata using PyMediaInfo (fallback/supplement).
     @details Extrahiert Metadaten mittels PyMediaInfo als Fallback oder Ergänzung.
@@ -36,7 +39,8 @@ def parse(path, file_type, tags, mode='lightweight'):
                 tags['container'] = general_track.format.lower()
 
             # Title, Artist, Album fallbacks
-            if not tags.get('title') or tags.get('title') == path.name:
+            path_obj = Path(path)
+            if not tags.get('title') or tags.get('title') == path_obj.name:
                 tags['title'] = general_track.title or tags.get('title')
             if not tags.get('artist') or tags.get('artist') == 'Unbekannt':
                 tags['artist'] = general_track.performer or tags.get('artist')
@@ -93,12 +97,8 @@ def parse(path, file_type, tags, mode='lightweight'):
 
             if chapters:
                 from .format_utils import natural_sort_key
-                tags['chapters'] = sorted(
-                    chapters, key=lambda x: (
-                        x.get(
-                            'start', 0.0), natural_sort_key(
-                            x.get(
-                                'title', ''))))
+                tags['chapters'] = sorted(chapters, key=lambda x: (
+                    x.get('start', 0.0), natural_sort_key(x.get('title', ''))))
 
     except Exception:
         pass
