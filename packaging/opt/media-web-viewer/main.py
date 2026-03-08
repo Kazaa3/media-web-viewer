@@ -37,11 +37,15 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.1.19" # Fallback
+    VERSION = "1.2.21" # Fallback
 
 @eel.expose("get_version")
 def get_version():
-    """Gibt die aktuelle Versionsnummer zurück."""
+    """
+    @brief Returns the current version number.
+    @details Gibt die aktuelle Versionsnummer zurück.
+    @return Version string / Versions-String.
+    """
     return VERSION
 
 # Konfiguration
@@ -88,6 +92,11 @@ if DEBUG_FLAGS["start"]:
     debug_log("[Startup] main.py loading...")
 
 def debug_log(message):
+    """
+    @brief Internal helper to print and buffer log messages for the UI.
+    @details Interner Helfer zum Drucken und Puffern von Log-Nachrichten für die UI.
+    @param message Log message / Log-Nachricht.
+    """
     print(message)
     LOG_BUFFER.append(str(message))
     # Eel-Aufruf (asynchron, wir warten nicht) - nur wenn verbunden/registriert
@@ -96,34 +105,62 @@ def debug_log(message):
 
 @eel.expose
 def get_debug_logs():
-    """Gibt den gesamten bisherigen Log-Verlauf als String zurück."""
+    """
+    @brief Returns the entire log history as a single string.
+    @details Gibt den gesamten bisherigen Log-Verlauf als String zurück.
+    @return Multi-line log string / Mehrzeiliger Log-String.
+    """
     return "\n".join(LOG_BUFFER)
 
 @eel.expose("get_debug_flags")
 def get_debug_flags():
+    """
+    @brief Returns the current internal debug flags.
+    @details Gibt die aktuell gesetzten internen Debug-Flags zurück.
+    @return Dictionary of debug flags / Dictionary der Debug-Flags.
+    """
     return DEBUG_FLAGS
 
 @eel.expose("set_debug_flag")
 def set_debug_flag(key, value):
+    """
+    @brief Sets a specific debug flag.
+    @details Setzt ein spezifisches Debug-Flag.
+    @param key Flag name / Name des Flags.
+    @param value Boolean value / Boole'scher Wert.
+    """
     if key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = value
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
 @eel.expose("set_all_debug_flags")
 def set_all_debug_flags(value):
-    """Aktiviert oder deaktiviert alle Debug-Flags gleichzeitig."""
+    """
+    @brief Activates or deactivates all debug flags simultaneously.
+    @details Aktiviert oder deaktiviert alle Debug-Flags gleichzeitig.
+    @param value Boolean value / Boole'scher Wert.
+    """
     for key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = value
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
 
 @eel.expose("get_language")
 def get_language():
-    """Gibt die aktuell gewählte Sprache zurück."""
+    """
+    @brief Returns the currently selected UI language.
+    @details Gibt die aktuell gewählte Sprache zurück.
+    @return Language code (e.g. 'de', 'en') / Sprachcode.
+    """
     return PARSER_CONFIG.get("language", "de")
 
 @eel.expose("set_language")
 def set_language(lang):
-    """Setzt die Sprache der Anwendung."""
+    """
+    @brief Sets the UI language of the application.
+    @details Setzt die Sprache der Anwendung.
+    @param lang Language code / Sprachcode.
+    @return True if successful / True falls erfolgreich.
+    """
     PARSER_CONFIG["language"] = lang
     save_parser_config()
     if DEBUG_FLAGS["system"]:
@@ -145,12 +182,20 @@ from models import MediaItem
 
 @eel.expose("get_library")
 def get_library():
-    """Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen."""
+    """
+    @brief Returns all media items from the database without re-scanning.
+    @details Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen.
+    @return Dict with list of media items / Dokument mit Medien-Liste.
+    """
     return {"media": db.get_all_media()}
 
 @eel.expose("clear_database")
 def clear_database():
-    """Löscht alle Einträge aus der Bibliothek-Datenbank."""
+    """
+    @brief Deletes all entries from the library database.
+    @details Löscht alle Einträge aus der Bibliothek-Datenbank.
+    @return Status dictionary / Status-Dictionary.
+    """
     if DEBUG_FLAGS["db"]:
         debug_log("[Debug-DB] Tabelle wird geleert...")
     db.clear_media()
@@ -158,7 +203,11 @@ def clear_database():
 
 @eel.expose("reset_app_data")
 def reset_app_data():
-    """Löscht Datenbank und Konfigurationsdateien (Private Daten)."""
+    """
+    @brief Wipes the database and configuration files (private user data).
+    @details Löscht Datenbank und Konfigurationsdateien (Private Daten).
+    @return Status dictionary with list of deleted paths / Status-Dictionary.
+    """
     import shutil
     from pathlib import Path
     
@@ -192,7 +241,13 @@ def reset_app_data():
 
 @eel.expose("update_tags")
 def update_tags(name, tags_dict):
-    """Speichert angepasste Tags für ein Item in der DB."""
+    """
+    @brief Saves customized tags for a media item in the database.
+    @details Speichert angepasste Tags für ein Item in der DB.
+    @param name Media record name / Datenbank-Name des Eintrags.
+    @param tags_dict Dictionary of tags to update / Zu aktualisierende Tags.
+    @return Status dictionary / Status-Dictionary.
+    """
     if DEBUG_FLAGS["db"]:
         debug_log(f"[Debug-DB] Aktualisiere DB Tags für: {name}")
     db.update_media_tags(name, tags_dict)
@@ -200,7 +255,13 @@ def update_tags(name, tags_dict):
 
 @eel.expose("rename_media")
 def rename_media(old_name, new_name):
-    """Benennt ein Medium in der DB um."""
+    """
+    @brief Renames a media record in the database.
+    @details Benennt ein Medium in der DB um.
+    @param old_name Current name / Aktueller Name.
+    @param new_name Target name / Neuer Name.
+    @return Status dictionary / Status-Dictionary.
+    """
     if not new_name or new_name.strip() == "":
         return {"status": "error", "message": "Name darf nicht leer sein"}
     
@@ -215,21 +276,41 @@ def rename_media(old_name, new_name):
 
 @eel.expose
 def delete_media(name):
+    """
+    @brief Deletes a media item from the database.
+    @details Löscht ein Medium aus der DB.
+    @param name Media record name / Datenbank-Name.
+    """
     return db.delete_media(name)
 
 @eel.expose
 def get_db_stats():
+    """
+    @brief Returns statistical information about the database content.
+    @details Gibt Statistiken über den Inhalt der Datenbank zurück.
+    @return Stats dictionary / Statistik-Dictionary.
+    """
     return db.get_db_stats()
 
 @eel.expose("get_default_media_dir")
 def get_default_media_dir():
-    """Gibt den voreingestellten Medienordner (absolute Pfad) zurück."""
+    """
+    @brief Returns the default media directory (absolute path).
+    @details Gibt den voreingestellten Medienordner (absoluter Pfad) zurück.
+    @return Path string / Pfad-String.
+    """
     return SCAN_MEDIA_DIR
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
 @eel.expose("scan_media")
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
-    """Scannt rekursiv einen Ordner und indexiert Audiodateien. Optionaler Reset der DB."""
+    """
+    @brief Scans a directory recursively and indexes audio files.
+    @details Scannt rekursiv einen Ordner und indexiert Audiodateien. Optionaler Reset der DB.
+    @param dir_path Optional path to scan / Optionaler Pfad zum Scannen.
+    @param clear_db If True, clears the database before scanning / Falls True, leert die Datenbank vor dem Scan.
+    @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
+    """
     import time
     start_time = time.time()
     
@@ -306,19 +387,32 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
 @eel.expose("get_parser_config")
 def get_parser_config():
-    """Gibt die aktuelle Parser-Konfiguration an das Frontend zurück."""
+    """
+    @brief Returns the current parser configuration to the frontend.
+    @details Gibt die aktuelle Parser-Konfiguration an das Frontend zurück.
+    @return Configuration dictionary / Konfigurations-Dictionary.
+    """
     return PARSER_CONFIG
 
 @eel.expose("update_parser_config")
 def update_parser_config(new_config):
-    """Aktualisiert die Konfiguration und speichert sie auf Festplatte."""
+    """
+    @brief Updates the parser configuration and saves it to disk.
+    @details Aktualisiert die Konfiguration und speichert sie auf Festplatte.
+    @param new_config Dictionary with updated settings / Dictionary mit neuen Einstellungen.
+    @return Status dictionary / Status-Dictionary.
+    """
     PARSER_CONFIG.update(new_config)
     save_parser_config()
     return {"status": "ok"}
 
 @eel.expose("add_scan_dir")
 def add_scan_dir():
-    """Öffnet einen Dialog zur Auswahl eines neuen Scan-Verzeichnisses."""
+    """
+    @brief Opens a dialog to select a new directory for library scanning.
+    @details Öffnet einen Dialog zur Auswahl eines neuen Scan-Verzeichnisses.
+    @return Status dictionary with updated directory list / Status-Dictionary mit aktualisierter Liste.
+    """
     new_dir = pick_folder()
     if new_dir:
         dirs = PARSER_CONFIG.get("scan_dirs", [])
@@ -331,25 +425,40 @@ def add_scan_dir():
 
 @eel.expose("remove_scan_dir")
 def remove_scan_dir(dir_path):
-    """Entfernt ein Verzeichnis aus der Scan-Liste."""
+    """
+    @brief Removes a directory from the scan list in the configuration.
+    @details Entfernt ein Verzeichnis aus der Scan-Liste in der Konfiguration.
+    @param dir_path Path to remove / Zu entfernender Pfad.
+    @return Status dictionary / Status-Dictionary.
+    """
     dirs = PARSER_CONFIG.get("scan_dirs", [])
     if dir_path in dirs:
         dirs.remove(dir_path)
         PARSER_CONFIG["scan_dirs"] = dirs
         save_parser_config()
         return {"status": "ok", "dirs": dirs}
-    return {"status": "error", "message": "Pfand nicht in Liste"}
+    return {"status": "error", "message": "Pfad nicht in Liste"}
 
 @eel.expose("play_media")
 def play_media(path):
-    """GUI ruft das an – aber HTML5 Audio handhabt Abspielen client-seitig."""
+    """
+    @brief Triggers media playback (handled client-side by the browser).
+    @details Triggert die Medienwiedergabe (wird clientseitig vom Browser gehandhabt).
+    @param path Media URL or path / Medien-URL oder Pfad.
+    @return Confirmation dictionary / Bestätigungs-Dictionary.
+    """
     if DEBUG_FLAGS["player"]:
         debug_log(f"[Debug-Player] Spiele ab: {path}")
     return {"status": "play", "path": path} # Bestätigung
 
 @eel.expose("open_in_explorer")
 def open_in_explorer(path_str):
-    print(f"Versuche zu oeffnen: {path_str}")
+    """
+    @brief Opens a specific file or folder in the system's native file explorer.
+    @details Öffnet eine Datei oder einen Ordner im nativen Datei-Explorer des Systems.
+    @param path_str Absolute path / Absoluter Pfad.
+    @return Status or error dictionary / Status- oder Fehler-Dictionary.
+    """
     path_obj = Path(path_str)
     if not path_obj.exists():
         print("Existiert nicht")
@@ -370,7 +479,12 @@ def open_in_explorer(path_str):
 
 @eel.expose("browse_dir")
 def browse_dir(dir_path=None):
-    """Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser."""
+    """
+    @brief Lists folders and audio files for the in-app file browser.
+    @details Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser.
+    @param dir_path Directory path / Verzeichnispfad.
+    @return Dictionary with path info and item list / Dictionary mit Pfad-Infos und Element-Liste.
+    """
     if not dir_path:
         dir_path = BROWSER_DEFAULT_DIR
     
@@ -396,7 +510,11 @@ def browse_dir(dir_path=None):
 
 @eel.expose("pick_folder")
 def pick_folder():
-    """Öffnet einen nativen Ordner-Auswahldialog."""
+    """
+    @brief Opens a native OS folder selection dialog using Tkinter.
+    @details Öffnet einen nativen Ordner-Auswahldialog mittels Tkinter.
+    @return Selected path or None / Gewählter Pfad oder None.
+    """
     try:
         import tkinter as tk
         from tkinter import filedialog
@@ -412,7 +530,12 @@ def pick_folder():
 
 @eel.expose("add_file_to_library")
 def add_file_to_library(file_path):
-    """Fügt eine einzelne Datei aus dem Datei-Browser der Bibliothek hinzu."""
+    """
+    @brief Adds a single file from the browser to the library.
+    @details Fügt eine einzelne Datei aus dem Datei-Browser der Bibliothek hinzu.
+    @param file_path Absolute path / Absoluter Pfad.
+    @return Status dictionary / Status-Dictionary.
+    """
     p = Path(file_path)
     if not p.exists() or not p.is_file():
         return {"error": "Datei nicht gefunden"}
@@ -430,7 +553,11 @@ def add_file_to_library(file_path):
 
 @eel.expose
 def get_test_suites():
-    """Discover all test files in the tests/ directory and extract metadata."""
+    """
+    @brief Discovers all test files in the tests/ directory and extracts metadata.
+    @details Findet alle Testdateien im Verzeichnis tests/ und extrahiert deren Metadaten.
+    @return List of test suite objects / Liste von Test-Suite-Objekten.
+    """
     test_dir = Path(__file__).parent / "tests"
     if not test_dir.exists():
         return []
@@ -469,7 +596,13 @@ def get_test_suites():
 
 @eel.expose
 def update_test_metadata(filename, metadata):
-    """Updates the metadata comments in a test file."""
+    """
+    @brief Updates the metadata comments in a specific test file.
+    @details Aktualisiert die Metadaten-Kommentare in einer bestimmten Testdatei.
+    @param filename Name of the test file / Name der Testdatei.
+    @param metadata Dictionary of metadata fields / Dictionary der Metadaten-Felder.
+    @return Status or error dictionary / Status- oder Fehler-Dictionary.
+    """
     test_dir = Path(__file__).parent / "tests"
     file_path = test_dir / filename
     
@@ -511,7 +644,12 @@ def update_test_metadata(filename, metadata):
 
 @eel.expose
 def create_new_test(name):
-    """Creates a new test file with a basic template."""
+    """
+    @brief Creates a new test file based on a template.
+    @details Erstellt eine neue Testdatei basierend auf einem Template.
+    @param name Base name for the test / Basisname des Tests.
+    @return Status or filename dictionary / Status- oder Dateinamen-Dictionary.
+    """
     test_dir = Path(__file__).parent / "tests"
     test_dir.mkdir(parents=True, exist_ok=True)
     
@@ -546,7 +684,12 @@ def {safe_name}():
 
 @eel.expose
 def delete_test(filename):
-    """Löscht eine Test-Datei."""
+    """
+    @brief Deletes a specific test file from the disk.
+    @details Löscht eine bestimmte Testdatei von der Festplatte.
+    @param filename Test file name / Name der Testdatei.
+    @return Status or error dictionary / Status- oder Fehler-Dictionary.
+    """
     test_dir = Path(__file__).parent / "tests"
     file_path = test_dir / filename
     
@@ -561,7 +704,12 @@ def delete_test(filename):
 
 @eel.expose
 def get_logbook_entry(feature_name):
-    """Read a markdown file from the logbuch directory or README from main dir."""
+    """
+    @brief Reads a markdown file from the logbook or the README.
+    @details Liest eine Markdown-Datei aus dem Logbuch oder die README ein.
+    @param feature_name Entry name or 'README' / Name des Eintrags oder 'README'.
+    @return Content string (Markdown) / Inhalts-String (Markdown).
+    """
     if feature_name.upper() == "README" or feature_name.upper() == "README.MD":
         log_file = Path(__file__).parent / "README.md"
     else:
@@ -583,7 +731,11 @@ def get_logbook_entry(feature_name):
 
 @eel.expose
 def list_logbook_entries():
-    """Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück."""
+    """
+    @brief Returns a list of all markdown files in the logbook folder with metadata.
+    @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück.
+    @return List of logbook entry objects / Liste von Logbuch-Eintrag-Objekten.
+    """
     log_dir = Path(__file__).parent / "logbuch"
     if not log_dir.exists():
         return []
@@ -624,7 +776,7 @@ def list_logbook_entries():
                         elif key == "Summary_EN": summary_en = val
                         elif key == "Summary": summary = val
                     
-                    if line.startswith("# ") and not (title_de or title_en):
+                    if line.startswith("# "):
                         title = line.replace("# ", "").strip()
                 
                 # Special case for Known Issues
@@ -667,7 +819,13 @@ def list_logbook_entries():
 
 @eel.expose
 def save_logbook_entry(filename, content):
-    """Speichert oder aktualisiert einen Logbuch-Eintrag."""
+    """
+    @brief Saves or updates a logbook entry file.
+    @details Speichert oder aktualisiert einen Logbuch-Eintrag.
+    @param filename Target filename / Ziel-Dateiname.
+    @param content Markdown content / Markdown-Inhalt.
+    @return Status or error dictionary / Status- oder Fehler-Dictionary.
+    """
     log_dir = Path(__file__).parent / "logbuch"
     log_dir.mkdir(parents=True, exist_ok=True)
     
@@ -689,7 +847,12 @@ def save_logbook_entry(filename, content):
 
 @eel.expose
 def delete_logbook_entry(filename):
-    """Löscht einen Logbuch-Eintrag."""
+    """
+    @brief Deletes a logbook entry from the disk.
+    @details Löscht einen Logbuch-Eintrag.
+    @param filename Entry filename / Dateiname des Eintrags.
+    @return Status or error dictionary / Status- oder Fehler-Dictionary.
+    """
     log_dir = Path(__file__).parent / "logbuch"
     
     if not filename.endswith('.md'):
@@ -712,7 +875,12 @@ def delete_logbook_entry(filename):
 
 @eel.expose
 def run_tests(test_files):
-    """Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück."""
+    """
+    @brief Executes selected pytest suites and returns the results.
+    @details Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück.
+    @param test_files List of test filenames / Liste von Test-Dateinamen.
+    @return Result dictionary with passes/fails and output / Ergebnis-Dictionary.
+    """
     import pytest  # Nur lokal importieren – nicht als globale Abhängigkeit
     if DEBUG_FLAGS.get("tests"):
         debug_log(f"[Tests] Running files: {test_files}")
@@ -773,7 +941,11 @@ def run_tests(test_files):
 
 @eel.expose
 def run_gui_tests():
-    """Dummy-Funktion für GUI-Tests (da diese über den Agenten laufen)."""
+    """
+    @brief Placeholder for GUI tests (handled via the agent).
+    @details Dummy-Funktion für GUI-Tests (da diese über den Agenten laufen).
+    @return Info dictionary / Info-Dictionary.
+    """
     # In einer realen App würde man hier vielleicht Selenium/Playwright fernsteuern.
     # Hier geben wir einfach einen Hinweis zurück.
     return {

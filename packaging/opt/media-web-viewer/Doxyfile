@@ -1,0 +1,47 @@
+# Doxyfile for Media Web Viewer
+# Optimized for Python and bilingual documentation
+
+PROJECT_NAME           = "Media Web Viewer"
+PROJECT_NUMBER         = 1.2.21
+PROJECT_BRIEF          = "A sleek, modern desktop application for browsing and playing media libraries."
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+ALLOW_UNICODE_NAMES    = YES
+OUTPUT_LANGUAGE        = English
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = YES
+
+# Input settings
+INPUT                  = . parsers web
+FILE_PATTERNS          = *.py *.js
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */.venv/* */.git/* */media/* */dist/* */build/* */packaging/* */logbuch/* */tests/*
+EXCLUDE                = main.py # Exclude main entry point if it's too messy for docs
+
+# Python specific settings
+OPTIMIZE_OUTPUT_JAVA   = YES
+AUTOLINK_SUPPORT       = YES
+PYTHON_DOCSTRING       = YES
+
+# Extraction settings
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+
+# Built-in customization
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+
+# Bilingual Support (Custom Tags if needed, but standard is just mixed languages)
+# We will use standard docstrings with both languages.
+
+# Graphviz Support (if available)
+HAVE_DOT               = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UNDEFINED_METHODS      = YES
+DOT_GRAPH_MAX_NODES    = 50
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_TRANSPARENT        = YES

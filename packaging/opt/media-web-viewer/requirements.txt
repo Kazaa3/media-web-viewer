@@ -39,4 +39,5 @@ pytest-cov>=4.1.0              # MIT License - Coverage plugin for pytest
 # System & Utilities
 psutil>=5.9.0                  # BSD 3-Clause License - System and process utilities
 future>=1.0.0                  # BSD 2-Clause License - Python 2/3 compatibility
-chardet>=5.0.0                 # LGPL License - Universal character encoding detector ✅ GPL-3.0 compatible
+chardet>=5.0.0                 # LGPL License - Universal character encoding detector
+setuptools>=75.1.0             # MIT License - Installation and package management

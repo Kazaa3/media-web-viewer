@@ -8,8 +8,14 @@ from . import container_parser
 
 def extract_metadata(path, filename, debug=False, mode='lightweight', logger=print):
     """
-    Zentraler Parser, der Redundanzen vermeidet und FFmpeg-Subprozesse
-    für die Indexierung überflüssig macht.
+    @brief Orchestrates the metadata extraction process using a sequential parser chain.
+    @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
+    @param path Path to the media file / Pfad zur Mediendatei.
+    @param filename Original filename for fallback parsing / Originaldateiname für Fallback-Parsing.
+    @param debug Enable verbose logging / Aktiviere ausführliches Logging.
+    @param mode Extraction mode ('lightweight' or 'full') / Extraktionsmodus ('lightweight' oder 'full').
+    @param logger Logger function / Logging-Funktion.
+    @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
     if debug:
         logger(f"[Debug-Parser] Starte Parsing für '{filename}' (Mode: {mode})")
@@ -20,7 +26,13 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
     
-    tags = {}
+    tags = {
+        'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
+        'codec': '', 'size': '', 'tagtype': '', 'container': '',
+        'has_art': 'No', 'title': '', 'artist': '', 'album': '',
+        'date': '', 'genre': '', 'track': '', 'totaltracks': '',
+        'disc': '', 'totaldiscs': ''
+    }
     if mode == 'full':
         tags['full_tags'] = {}
         
@@ -102,8 +114,7 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
         tags['codec'] = format_codec(tags['codec'])
     if tags.get('container'):
         tags['container'] = format_container(tags['container'], file_type)
-    if tags.get('tagtype'):
-        tags['tagtype'] = format_tagtype(tags['tagtype'])
+    tags['tagtype'] = format_tagtype(tags.get('tagtype'))
         
     # Final Chapter Sort (Natural & Chronological)
     if tags.get('chapters') and isinstance(tags['chapters'], list):
