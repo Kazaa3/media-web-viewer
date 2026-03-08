@@ -1,4 +1,5 @@
 import time
+from typing import Any
 from pathlib import Path
 from . import filename_parser
 from . import mutagen_parser
@@ -26,7 +27,7 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
     
-    tags = {
+    tags: dict[str, Any] = {
         'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
         'codec': '', 'size': '', 'tagtype': '', 'container': '',
         'has_art': 'No', 'title': '', 'artist': '', 'album': '',
@@ -39,8 +40,9 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     duration = 0
     parser_times = {}
     
+    from typing import cast
     # Iterate dynamically through the user-configured parser chain
-    parser_chain = PARSER_CONFIG.get("parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"])
+    parser_chain = cast(list[str], PARSER_CONFIG.get("parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"]))
     
     for parser_name in parser_chain:
         # If in lightweight mode, check if we still need critical information, otherwise skip heavy parsers.
