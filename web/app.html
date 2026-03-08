@@ -937,10 +937,10 @@
                                     <strong>Python-Version:</strong> <span id="env-python-version">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>Virtuelle Umgebung:</strong> <span id="env-venv-status">-</span>
+                                    <strong>Umgebung:</strong> <span id="env-venv-status">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>venv-Pfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                    <strong>Umgebungspfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
                                     <strong>Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
@@ -2513,14 +2513,30 @@
                 const info = await eel.get_environment_info()();
                 
                 document.getElementById('env-python-version').textContent = info.python_version;
-                document.getElementById('env-venv-status').textContent = info.in_venv ? '✅ Ja' : '❌ Nein';
-                document.getElementById('env-venv-path').textContent = info.venv_path || '-';
+                
+                // Display environment type and status
+                let statusText = '';
+                let isActive = false;
+                
+                if (info.env_type === 'conda') {
+                    statusText = `✅ Ja (Conda: ${info.env_name || 'unknown'})`;
+                    isActive = true;
+                } else if (info.env_type === 'venv') {
+                    statusText = `✅ Ja (Venv: ${info.env_name || 'unknown'})`;
+                    isActive = true;
+                } else {
+                    statusText = '❌ Nein (System Python)';
+                    isActive = false;
+                }
+                
+                document.getElementById('env-venv-status').textContent = statusText;
+                document.getElementById('env-venv-path').textContent = info.env_path || '-';
                 document.getElementById('env-python-exec').textContent = info.python_executable;
                 document.getElementById('env-platform').textContent = `${info.platform_system} ${info.platform_release}`;
                 
                 // Color code the venv status
                 const statusEl = document.getElementById('env-venv-status');
-                if (info.in_venv) {
+                if (isActive) {
                     statusEl.style.color = '#2a7';
                     statusEl.style.fontWeight = 'bold';
                 } else {

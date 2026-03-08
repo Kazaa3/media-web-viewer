@@ -70,17 +70,38 @@ def get_version():
 def get_environment_info():
     """
     @brief Returns information about the Python environment.
-    @details Gibt Informationen über die Python-Umgebung zurück (venv, Version, Pfade).
+    @details Gibt Informationen über die Python-Umgebung zurück (venv, conda, Version, Pfade).
     @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
     """
     import platform
     
-    # Check if we're in a virtual environment
+    # Check if we're in a virtual environment (venv/virtualenv)
     in_venv = sys.prefix != sys.base_prefix
     venv_path = sys.prefix if in_venv else None
     
-    # Get VIRTUAL_ENV environment variable (more reliable)
+    # Get VIRTUAL_ENV environment variable (more reliable for venv)
     venv_env = os.environ.get('VIRTUAL_ENV', None)
+    
+    # Check for Conda environment
+    conda_env_name = os.environ.get('CONDA_DEFAULT_ENV', None)
+    conda_prefix = os.environ.get('CONDA_PREFIX', None)
+    in_conda = conda_env_name is not None or conda_prefix is not None
+    
+    # Determine environment type and path
+    env_type = None
+    env_path = None
+    env_name = None
+    
+    if in_conda:
+        env_type = "conda"
+        env_path = conda_prefix
+        env_name = conda_env_name
+    elif in_venv or venv_env:
+        env_type = "venv"
+        env_path = venv_path or venv_env
+        env_name = Path(env_path).name if env_path else None
+    else:
+        env_type = "system"
     
     return {
         "python_version": platform.python_version(),
@@ -89,6 +110,12 @@ def get_environment_info():
         "python_base_prefix": sys.base_prefix,
         "in_venv": in_venv,
         "venv_path": venv_path or venv_env,
+        "in_conda": in_conda,
+        "conda_env_name": conda_env_name,
+        "conda_prefix": conda_prefix,
+        "env_type": env_type,
+        "env_path": env_path,
+        "env_name": env_name,
         "platform": platform.platform(),
         "platform_system": platform.system(),
         "platform_release": platform.release()

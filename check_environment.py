@@ -41,20 +41,38 @@ def check_python_version():
 
 
 def check_venv():
-    """Prüft Virtual Environment"""
+    """Prüft Virtual Environment (venv oder conda)"""
     print("\n📦 Virtual Environment Check:")
+    
+    # Check for venv
     in_venv = sys.prefix != sys.base_prefix
     venv_env = os.environ.get('VIRTUAL_ENV', None)
     
-    if in_venv or venv_env:
-        print(f"   Status: ✅ Aktiv")
-        print(f"   Pfad: {sys.prefix if in_venv else venv_env}")
+    # Check for conda
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV', None)
+    conda_prefix = os.environ.get('CONDA_PREFIX', None)
+    
+    in_any_env = in_venv or venv_env or conda_env or conda_prefix
+    
+    if in_any_env:
+        if conda_env:
+            print(f"   Status: ✅ Aktiv (Conda)")
+            print(f"   Conda Environment: {conda_env}")
+            if conda_prefix:
+                print(f"   Pfad: {conda_prefix}")
+        elif in_venv:
+            print(f"   Status: ✅ Aktiv (Venv)")
+            print(f"   Pfad: {sys.prefix}")
+        elif venv_env:
+            print(f"   Status: ✅ Aktiv (Venv via VIRTUAL_ENV)")
+            print(f"   Pfad: {venv_env}")
         return True
     else:
         print(f"   Status: ❌ NICHT AKTIV")
-        print(f"   ⚠️  WARNUNG: Du solltest das venv aktivieren:")
+        print(f"   ⚠️  WARNUNG: Du solltest venv oder conda aktivieren:")
         print(f"      cd {Path(__file__).parent}")
-        print(f"      source .venv/bin/activate")
+        print(f"      source .venv/bin/activate  # für venv")
+        print(f"      conda activate <env-name>  # für conda")
         return False
 
 
