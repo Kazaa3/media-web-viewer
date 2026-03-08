@@ -65,6 +65,8 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 | **libmediainfo0v5** | latest | BSD 2-Clause | ✅ GPLv3 | Media file information library (required by pymediainfo) | `sudo apt install libmediainfo0v5` |
 | **doxygen** | latest | GPL v2 | ✅ GPLv3 | Documentation generator | `sudo apt install doxygen` |
 | **google-chrome-stable** | latest | Proprietary | ✅ Compatible | Web browser for Eel UI | `sudo apt install google-chrome-stable` |
+| **shared-mime-info** | latest | LGPL-2.1+ | ✅ GPLv3 | MIME database for file type detection | `sudo apt install shared-mime-info` |
+| **libgdk-pixbuf2.0-0** | latest | LGPL-2.1+ | ✅ GPLv3 | GDK Pixbuf loaders for image support | `sudo apt install libgdk-pixbuf2.0-0` |
 
 **License Compatibility Note:** All system dependencies are compatible with GNU General Public License v3 (GPL-3.0). FFmpeg's LGPL v2.1 is compatible with GPLv3, and BSD licenses are permissive allowing use under GPLv3.
 
@@ -72,7 +74,7 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 doxygen google-chrome-stable
+sudo apt install ffmpeg libmediainfo0v5 doxygen google-chrome-stable shared-mime-info libgdk-pixbuf2.0-0
 ```
 
 ### Installation of System Dependencies (Fedora/RHEL)
@@ -109,7 +111,7 @@ For full license texts, refer to the individual package repositories:
 For Debian/Ubuntu:
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 doxygen google-chrome-stable
+sudo apt install ffmpeg libmediainfo0v5 doxygen google-chrome-stable shared-mime-info libgdk-pixbuf2.0-0
 ```
 
 For Fedora/RHEL:

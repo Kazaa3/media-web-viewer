@@ -141,9 +141,12 @@ def check_system_tools():
     print("\n🔧 System Tools Check:")
     
     tools = [
-        ('ffmpeg', ['ffmpeg', '-version']),
-        ('mediainfo', ['mediainfo', '--version']),
-        ('chrome/browser', None),
+        ("ffmpeg", ["ffmpeg", "-version"]),
+        ("mediainfo", ["mediainfo", "--version"]),
+        ("mime-db", ["update-mime-database", "--version"]),
+        ("pixbuf", ["gdk-pixbuf-query-loaders", "--version"]),
+        ("browser", None)
+,
     ]
     
     for tool_name, command in tools:

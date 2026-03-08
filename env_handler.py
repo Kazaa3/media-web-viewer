@@ -25,7 +25,12 @@ CRITICAL_DEPENDENCIES = {
 }
 
 # System binaries that should be present
-CRITICAL_BINARIES = ["ffmpeg", "mediainfo"]
+CRITICAL_BINARIES = [
+    "ffmpeg", 
+    "mediainfo", 
+    "update-mime-database",  # from shared-mime-info
+    "gdk-pixbuf-query-loaders" # from libgdk-pixbuf2.0-0
+]
 BROWSER_BINARIES = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium"]
 
 class EnvironmentManager:
@@ -89,13 +94,26 @@ class EnvironmentManager:
             
             # Check system binaries
             import shutil
+            missing_binaries = []
             for binary in CRITICAL_BINARIES:
                 if not shutil.which(binary):
-                    errors.append(f"Missing critical system binary: {binary}")
+                    missing_binaries.append(binary)
             
+            if missing_binaries:
+                apt_map = {
+                    "ffmpeg": "ffmpeg",
+                    "mediainfo": "mediainfo",
+                    "update-mime-database": "shared-mime-info",
+                    "gdk-pixbuf-query-loaders": "libgdk-pixbuf2.0-0"
+                }
+                needed_pkgs = sorted(list(set(apt_map.get(b, b) for b in missing_binaries)))
+                errors.append(f"Missing critical system binaries: {', '.join(missing_binaries)}")
+                errors.append(f"👉 Fix: sudo apt install {' '.join(needed_pkgs)}")
+
             # Check browser binaries (at least one must be present)
             if not any(shutil.which(b) for b in BROWSER_BINARIES):
                 errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
+                errors.append("👉 Fix: sudo apt install google-chrome-stable OR chromium-browser")
                 
         except Exception as e:
             errors.append(f"Environmental integrity check failed: {e}")

@@ -22,7 +22,7 @@
 # All dependencies are compatible with GPL-3.0
 #
 # Installation:
-#   sudo apt install ffmpeg libmediainfo0v5 doxygen vlc google-chrome-stable  # Debian/Ubuntu
+#   sudo apt install ffmpeg libmediainfo0v5 doxygen vlc google-chrome-stable shared-mime-info libgdk-pixbuf2.0-0  # Debian/Ubuntu
 #   pip install -r requirements.txt
 
 # Web Framework & Desktop GUI
