@@ -9,6 +9,7 @@ dependencies:
   - doxygen
   - graphviz
   - google-chrome
+  - vlc
   - pip
   - pip:
     - eel
