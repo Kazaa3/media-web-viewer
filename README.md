@@ -25,6 +25,7 @@ python main.py
 - Frontend: HTML5/CSS3, Vanilla JavaScript
 - Database: SQLite (`media_library.db`)
 - Media Tooling: Mutagen, pymediainfo, FFmpeg
+- VLC Support: m3u8 (playlist import/export), python-vlc
 
 ## Startup Modes
 
