@@ -82,7 +82,8 @@ def check_package(package_name, import_name=None):
         import_name = package_name
     
     try:
-        module = __import__(import_name)
+        import importlib
+        module = importlib.import_module(import_name)
         version = getattr(module, '__version__', None) or \
                  getattr(module, 'version_string', None) or \
                  getattr(module, 'VERSION', 'unknown')
@@ -142,10 +143,13 @@ def check_system_tools():
     tools = [
         ('ffmpeg', ['ffmpeg', '-version']),
         ('mediainfo', ['mediainfo', '--version']),
+        ('chrome/browser', None),
     ]
     
     for tool_name, command in tools:
         try:
+            if command is None:
+                raise FileNotFoundError
             result = subprocess.run(command, 
                                   capture_output=True, 
                                   text=True, 
@@ -156,9 +160,24 @@ def check_system_tools():
             else:
                 print(f"   ❌ {tool_name:15s} nicht funktionsfähig")
         except FileNotFoundError:
-            print(f"   ❌ {tool_name:15s} NICHT GEFUNDEN")
-            if tool_name == 'ffmpeg':
-                print(f"      Fix: sudo apt install ffmpeg")
+            if tool_name == 'chrome/browser':
+                # Special check for browsers
+                import shutil
+                browsers = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium", "firefox"]
+                found = False
+                for b in browsers:
+                    path = shutil.which(b)
+                    if path:
+                        print(f"   ✅ {'browser':15s} gefunden: {b}")
+                        found = True
+                        break
+                if not found:
+                    print(f"   ❌ {'browser':15s} NICHT GEFUNDEN")
+                    print(f"      Fix: sudo apt install google-chrome-stable")
+            else:
+                print(f"   ❌ {tool_name:15s} NICHT GEFUNDEN")
+                if tool_name == 'ffmpeg':
+                    print(f"      Fix: sudo apt install ffmpeg")
         except subprocess.TimeoutExpired:
             print(f"   ❌ {tool_name:15s} timeout")
     

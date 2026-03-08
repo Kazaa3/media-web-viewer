@@ -68,7 +68,7 @@ class EnvironmentManager:
             pkg_list = sorted([f"{d.metadata['Name']}=={d.version}" for d in distributions()])
             fingerprint_str = "|".join(pkg_list)
             digest = hashlib.sha256(fingerprint_str.encode()).hexdigest()
-            return str(digest)[:12]
+            return digest[:12]
         except Exception:
             return "unknown"
 
