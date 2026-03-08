@@ -281,15 +281,23 @@ By default, Media Web Viewer indexes files from `/opt/media-web-viewer/media/`. 
 3. Select your media folders
 4. Changes apply immediately with automatic re-indexing
 
-#### Debug Mode
+#### Debug & Test Modes
 
-Enable debug logging for troubleshooting:
+Enable debug logging for troubleshooting or run environment validation:
 
+**Debug Mode:**
 ```bash
 python main.py --debug
+# or via launcher:
+media-viewer --debug
 ```
-
 This activates all debug flags and logs detailed information about parsing, system operations, and UI events.
+
+**Test Mode (Launcher only):**
+```bash
+media-viewer --test
+```
+This performs a comprehensive environment validation, checking if the project directory, virtual environment, and all critical dependencies (eel, mutagen, bottle) are correctly installed and accessible.
 
 **Debug Files:**
 - **Project-Local Log:** When started with `--debug`, a detailed log is written to `logs/debug.log` in the project directory.
