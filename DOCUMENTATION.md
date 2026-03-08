@@ -477,11 +477,18 @@ sudo apt purge media-web-viewer
 ```
 media-web-viewer/
 │
+├── VERSION                  # Master semantic version (single source of truth)
+├── VERSION_SYNC.json        # Version synchronization map (11 tracked locations)
 ├── main.py                  # Entry point, Eel setup, backend API functions
 ├── models.py                # MediaItem class with parsing and transcoding logic
 ├── db.py                    # SQLite database operations
+├── logger.py                # Logging configuration/helpers
+├── env_handler.py           # Environment/session handling
 ├── requirements.txt         # Python package dependencies
+├── environment.yml          # Conda environment definition
+├── pyproject.toml           # Project tooling configuration
 ├── DEPENDENCIES.md          # Complete dependency list with licenses
+├── INSTALL.md               # Installation guide
 ├── LICENSE.md               # GNU General Public License v3
 │
 ├── parsers/                 # Metadata extraction pipeline
@@ -500,14 +507,16 @@ media-web-viewer/
 │   ├── i18n.json            # German/English localization strings
 │   └── __init__.py
 │
-├── tests/                   # pytest unit test suite
-│   ├── test_*.py            # Individual test modules
-│   ├── parser_tests/        # Parser-specific tests
-│   └── integration_tests/   # End-to-end tests
+├── tests/                   # Automated validation suite
+│   ├── test_version_sync.py # Validates VERSION_SYNC.json tracked locations
+│   ├── test_reinstall_deb.py# .deb build/reinstall verification tests
+│   └── test_*.py            # Additional functional/unit/integration tests
 │
 ├── logbuch/                 # Development logbook (Markdown)
 │   ├── 01_Features.md       # Feature descriptions with bilingual titles
 │   ├── 00_Known_Issues.md   # Current and resolved issues
+│   ├── 53_Version_Synchronization_System.md # Version sync system docs
+│   ├── 54_Documentation_Completion_v132.md  # Latest documentation completion
 │   └── *.py                 # Scripts for logbook management
 │
 ├── packaging/               # .deb package structure
@@ -518,11 +527,18 @@ media-web-viewer/
 │   ├── opt/media-web-viewer/# Application files
 │   └── usr/
 │       ├── bin/             # Executable launcher
-│       └── share/           # Desktop integration
+│       └── share/           # Desktop integration (.desktop entry)
 │
 ├── build_deb.sh             # Script to build .deb package
+├── reinstall_deb.sh         # Purge old package + install newly built .deb
+├── build_system.py          # Unified build/test/lint workflow entry
 ├── build.py                 # PyInstaller build script
 ├── MediaWebViewer.spec      # PyInstaller specification
+├── install_launcher.sh      # Global launcher installation helper
+├── run.sh                   # Local launcher helper
+├── docs/                    # Generated/static documentation output
+├── build/                   # Build artifacts and staging outputs
+├── dist/                    # Distribution outputs (e.g., PyInstaller)
 │
 └── media/                   # Default media library directory (user-writable)
     └── .cache/              # Transcoded file cache
