@@ -16,7 +16,8 @@
     - [x] Interaktive News-Bar im Header.
     - [x] Vollständige Projekt-Dokumentation (`DOCUMENTATION.md`).
     - [x] Dynamisches und bilinguales Feature-Modal.
-    - [x] Features Modal hat nicht automatisch die neusten EInträge (42 fehlt)
+    - [x] Features Modal hat nicht automatisch die neusten EInträge (42 
+fehlt)
 
 ## Offene Punkte
 - [x] Globale Versionierung (zentrale Stelle statt 3 Dateien).
@@ -24,6 +25,7 @@
 - [ ] Edit aktuaisuerng / bib
 - [x] logbuch einträge filterung wenn header fehlt führt zu fehlenden einträgen
 - [x] Sortierung neuer log einträge erfolgt bei abgescjlossen. neue sind aber noch offfen. neuen status einführen
+- [x] 
 - [ ] logtab. fixe elemente für tag felder auf gui
 - [ ] Test: Verifizierung .deb mit Version
 - [ ] Hörbuch Tag (Backend) muss vereinheitlicht werden.

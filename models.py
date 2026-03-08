@@ -26,7 +26,19 @@ from parsers import media_parser
 # dict (JSON missing like in a few versions before)
 
 class MediaItem:
+    """
+    @brief Represents a single media file with comprehensive metadata.
+    @details Repräsentiert eine einzelne Mediendatei mit umfassenden Metadaten.
+    """
     def __init__(self, name, path, debug_flags=None, logger=None):
+        """
+        @brief Initializes a MediaItem and triggers metadata extraction.
+        @details Initialisiert ein MediaItem und startet die Metadaten-Extraktion.
+        @param name File basename / Basis-Dateiname.
+        @param path Absolute filesystem path / Absoluter Dateipfad.
+        @param debug_flags Optional dict for debugging / Optionales Dict für Debugging.
+        @param logger Optional logging function / Optionale Logging-Funktion.
+        """
         self.name = name
         self.path = Path(path)
         self.type = self.path.suffix.lower()
@@ -44,9 +56,19 @@ class MediaItem:
             logger=self.logger
         )
         self.category = self.get_category()
+        
+        # New separated metadata fields
+        self.extension = self.type[1:] if self.type.startswith('.') else self.type
+        self.container = self.tags.get('container', self.extension)
+        self.tag_type = self.tags.get('tagtype', 'plain')
+        self.codec = self.tags.get('codec', self.extension)
 
     def get_category(self):
-        """Detects the category of the media item based on extension and metadata tags."""
+        """
+        @brief Detects the category of the media item based on extension and metadata tags.
+        @details Erkennt die Kategorie basierend auf Dateiendung und Metadaten-Tags.
+        @return Category string (e.g., 'Album', 'Hörbuch', 'Film').
+        """
         ext = self.type.lower()
         path_str = str(self.path).lower()
         tags = self.tags or {}
@@ -92,7 +114,10 @@ class MediaItem:
         return 'Unbekannt'
 
     def show_info(self):
-        """Prints the media item information in a formatted way."""
+        """
+        @brief Prints the media item information to the console.
+        @details Gibt die Medien-Informationen in der Konsole aus.
+        """
         info_dict = self.to_dict()
         print(f"Name: {info_dict['name']}")
         print(f"Path: {info_dict['path']}")
@@ -106,10 +131,10 @@ class MediaItem:
         print()
 
     def to_dict(self):
-        """_summary_
-
-        Returns:
-            _type_: _description_
+        """
+        @brief Converts the MediaItem into a dictionary for UI and Database.
+        @details Konvertiert das MediaItem in ein Dictionary für UI und Datenbank.
+        @return A dictionary containing all serialized metadata / Ein Dictionary mit allen Metadaten.
         """
         hours, remainder = divmod(self.duration, 3600)
         mins, secs = divmod(remainder, 60)
@@ -147,6 +172,10 @@ class MediaItem:
             'duration': duration_str,
             'tags': filtered_tags,
             'type': self.type[1:] if self.type.startswith('.') else self.type,
+            'extension': self.extension,
+            'container': self.container,
+            'tag_type': self.tag_type,
+            'codec': self.codec,
             'category': self.category,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format
