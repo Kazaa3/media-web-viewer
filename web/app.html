@@ -551,9 +551,9 @@
             if (res.status === 'ok') {
                 closeLogbookEditor();
                 loadLogbuchTab();
-                alert(i18n('logbook_saved'));
+                alert(t('logbook_saved'));
             } else {
-                alert(i18n('logbook_error') + res.error);
+                alert(t('logbook_error') + res.error);
             }
         }
 
@@ -563,7 +563,7 @@
                 loadLogbuchTab();
                 document.getElementById('logbuch-tab-title').innerText = 'Willkommen im Logbuch';
                 document.getElementById('logbuch-tab-content').innerText = 'Wähle links einen Eintrag aus, um ihn zu lesen.';
-                alert(i18n('logbook_deleted'));
+                alert(t('logbook_deleted'));
             } else {
                 alert('Fehler: ' + res.error);
             }
@@ -1981,7 +1981,7 @@
             let list = document.getElementById('library-list');
             list.innerHTML = '';
             if (!result.media || result.media.length === 0) {
-                list.innerHTML = '<p style="padding: 20px; color: #999;">Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media".</p>';
+                list.innerHTML = `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`;
                 return;
             }
             result.media.forEach(item => {
@@ -2462,7 +2462,8 @@
                 html += renderOptionRow('ffmpeg_deep_analysis', t('parser_opt_ffmpeg_deep'));
                 html += renderOptionRow('ffmpeg_extract_thumbnails', t('parser_opt_ffmpeg_thumbs'));
             } else {
-                html = `<p style="color: #666; font-style: italic; padding: 10px;">Keine spezifischen Optionen für "${t('parser_' + parserId)}" verfügbar.</p>`;
+                const parserName = t('parser_' + parserId);
+                html = `<p style="color: #666; font-style: italic; padding: 10px;">${t('parser_no_options').replace('{parser}', parserName)}</p>`;
             }
 
             container.innerHTML = html;
@@ -3046,7 +3047,7 @@
         async function loadTestSuites() {
             const container = document.getElementById('test-suites-container');
             if (!container) return;
-            container.innerHTML = '<div style="color: #999; font-style: italic;">Lade Tests...</div>';
+            container.innerHTML = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${t('test_loading')}</div>`;
             try {
                 let suites = [];
                 try {
