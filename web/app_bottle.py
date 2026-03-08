@@ -9,35 +9,22 @@ from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 
-# Add parent dir so we can import db
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import logger
+import logging
+
+# Get specialized logger for web component
+log = logger.get_logger("web")
 
 APP_ROOT = Path(__file__).resolve().parent.parent
 MEDIA_DIR = APP_ROOT / "media"
-APP_DATA_DIR = Path.home() / ".media-web-viewer"
-LOG_FILE = APP_DATA_DIR / "route_log.txt"
-CACHE_DIR = APP_DATA_DIR / "cache"
+CACHE_DIR = logger.APP_DATA_DIR / "cache"
 
 
 def _log(msg):
     """
-    @brief Internal helper to log messages to the route log file.
-    @details Interner Helfer zum Loggen von Nachrichten in die Routen-Logdatei.
-    @param msg Message to log / Zu loggende Nachricht.
+    @brief Internal helper (legacy proxy) for logging.
     """
-    try:
-        with open(LOG_FILE, "a", encoding='utf-8') as f:
-            f.write(f"{msg}\n")
-
-        # Avoid circular import by importing main inside the function
-        import __main__ as main
-        if hasattr(main, 'DEBUG_FLAGS') and main.DEBUG_FLAGS.get("web"):
-            if hasattr(main, 'debug_log'):
-                main.debug_log(f"[Web] {msg}")
-            else:
-                print(f"[Web] {msg}")
-    except Exception:
-        pass
+    log.info(msg)
 
 
 def _resolve_path(filename):
@@ -193,8 +180,5 @@ def error500(error):
     @return Error message string / Fehlermeldungs-String.
     """
     import traceback
-    with open("/tmp/media_viewer_500.log", "a") as f:
-        f.write("\n--- ERROR 500 ---\n")
-        f.write(traceback.format_exc())
-        f.write(f"URL: {bottle.request.url}\n")
-    return "Internal Server Error (Details logged to /tmp/media_viewer_500.log)"
+    log.error("\n--- ERROR 500 ---\n%s\nURL: %s", traceback.format_exc(), bottle.request.url)
+    return "Internal Server Error (Details logged to app.log)"
