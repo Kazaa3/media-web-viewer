@@ -165,9 +165,111 @@ def test_package_installation_status():
     return True
 
 
+def test_installed_version_matches_current_build():
+    """Test that installed package version matches VERSION file exactly."""
+    print("\n🧪 Test 6: Installed Version Matches Current Build")
+
+    version_path = Path(__file__).parent.parent / "VERSION"
+    with open(version_path, 'r') as f:
+        expected_version = f.read().strip()
+
+    result = run_command(
+        "dpkg-query -W -f='${Status} ${Version}\\n' media-web-viewer",
+        check=False
+    )
+
+    if result.returncode != 0:
+        print("❌ Package media-web-viewer is not installed")
+        print("   Run ./reinstall_deb.sh to purge old package and install current build")
+        return False
+
+    output = result.stdout.strip()
+    parts = output.split()
+
+    if len(parts) < 4:
+        print(f"❌ Unexpected dpkg-query output: {output}")
+        return False
+
+    installed_state = " ".join(parts[:3])
+    installed_version = parts[3]
+
+    if installed_state != "install ok installed":
+        print(f"❌ Package state is not fully installed: {installed_state}")
+        return False
+
+    if installed_version != expected_version:
+        print(
+            f"❌ Installed version mismatch: installed={installed_version}, "
+            f"expected={expected_version}"
+        )
+        print("   Run ./reinstall_deb.sh to purge old package and install current build")
+        return False
+
+    print(f"✅ Installed version matches current build: {installed_version}")
+    return True
+
+
+def test_destructive_reinstall_e2e_optional():
+    """Optionally run full purge+install flow when explicitly enabled."""
+    print("\n🧪 Test 7: Destructive Reinstall E2E (optional)")
+
+    if os.getenv("RUN_DESTRUCTIVE_TESTS", "0") != "1":
+        print("ℹ️  Skipped (set RUN_DESTRUCTIVE_TESTS=1 to enable)")
+        return True
+
+    project_root = Path(__file__).parent.parent
+    reinstall_script = project_root / "reinstall_deb.sh"
+
+    if not reinstall_script.exists():
+        print("❌ reinstall_deb.sh not found")
+        return False
+
+    print("⚠️  Running destructive reinstall via reinstall_deb.sh...")
+    result = run_command(f"{reinstall_script}", check=False)
+
+    if result.returncode != 0:
+        print("❌ reinstall_deb.sh failed")
+        print("   stdout:")
+        print(result.stdout)
+        print("   stderr:")
+        print(result.stderr)
+        return False
+
+    version_path = project_root / "VERSION"
+    with open(version_path, 'r') as f:
+        expected_version = f.read().strip()
+
+    verify_result = run_command(
+        "dpkg-query -W -f='${Status} ${Version}\\n' media-web-viewer",
+        check=False
+    )
+
+    if verify_result.returncode != 0:
+        print("❌ Package media-web-viewer not installed after reinstall")
+        return False
+
+    output = verify_result.stdout.strip().split()
+    if len(output) < 4:
+        print(f"❌ Unexpected dpkg-query output after reinstall: {verify_result.stdout.strip()}")
+        return False
+
+    installed_state = " ".join(output[:3])
+    installed_version = output[3]
+
+    if installed_state != "install ok installed" or installed_version != expected_version:
+        print(
+            f"❌ Reinstall verification failed: state={installed_state}, "
+            f"version={installed_version}, expected={expected_version}"
+        )
+        return False
+
+    print(f"✅ Destructive reinstall successful: {installed_version}")
+    return True
+
+
 def test_reinstall_script_dry_run():
     """Test reinstall script without actually running it (check syntax)."""
-    print("\n🧪 Test 6: Reinstall Script Syntax")
+    print("\n🧪 Test 8: Reinstall Script Syntax")
     
     script_path = Path(__file__).parent.parent / "reinstall_deb.sh"
     
@@ -195,6 +297,8 @@ def main():
         test_reinstall_script_exists,
         test_deb_package_structure,
         test_package_installation_status,
+        test_installed_version_matches_current_build,
+        test_destructive_reinstall_e2e_optional,
         test_reinstall_script_dry_run,
     ]
     

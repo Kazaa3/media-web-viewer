@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "sync_locations": [
     {
       "file": "main.py",
@@ -36,6 +36,12 @@
       "file": "README.md",
       "line_pattern": "sudo dpkg -i media-web-viewer_${version}_amd64.deb",
       "description": "README installation command example",
+      "required": true
+    },
+    {
+      "file": "packaging/usr/share/applications/media-web-viewer.desktop",
+      "line_pattern": "Name=Media Web Viewer (v${version})",
+      "description": "Linux start menu application name with version",
       "required": true
     },
     {

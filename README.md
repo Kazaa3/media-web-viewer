@@ -1,4 +1,4 @@
-# Media Web Viewer (v1.3.1)
+# Media Web Viewer (v1.3.2)
 
 Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 
@@ -6,7 +6,7 @@ Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMEN
 
 ### Debian/Ubuntu (.deb)
 ```bash
-sudo dpkg -i media-web-viewer_1.3.1_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
 sudo apt-get install -f
 media-web-viewer
 ```
@@ -70,6 +70,19 @@ python build_system.py --lint --type-check
 
 # Clean build artifacts
 python build_system.py --clean-all
+```
+
+## Release Verification
+
+```bash
+# Version sync check (includes desktop entry in Linux start menu)
+python tests/test_version_sync.py
+
+# Reinstall checks (safe default)
+python tests/test_reinstall_deb.py
+
+# Optional destructive check: purge old package + reinstall new .deb
+RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
 
 ## Docs

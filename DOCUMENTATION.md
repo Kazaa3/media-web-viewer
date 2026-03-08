@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.1  
+**Version:** 1.3.2  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.1
+1.3.2
 ```
 
 This version is automatically loaded and used across:
@@ -16,11 +16,19 @@ This version is automatically loaded and used across:
 - .deb package metadata (`packaging/DEBIAN/control`) – automatically updated by `build_deb.sh`
 - Build scripts (`build_deb.sh`)
 - Application GUI (Help/About/Footer)
+- Linux start menu entry (`packaging/usr/share/applications/media-web-viewer.desktop`)
+
+Version synchronization is validated via `VERSION_SYNC.json` (currently 11 tracked locations) and:
+
+```bash
+python tests/test_version_sync.py
+```
 
 To update the version:
 1. Edit the `VERSION` file in the project root.
-2. Run `bash build_deb.sh` to build the package with the new version.
-3. The documentation and application will reflect the change automatically.
+2. Run `python tests/test_version_sync.py` and resolve any mismatches.
+3. Run `bash build_deb.sh` to build the package with the new version.
+4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
 ---
 
 ## Table of Contents
@@ -144,7 +152,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.3.1_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -196,7 +204,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.3.1_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -227,13 +235,13 @@ The .deb package follows Debian standards:
 - `DEBIAN/prerm`: Pre-removal script (e.g., for cleanup)
 - `opt/media-web-viewer/`: The complete application code
 - `usr/bin/media-web-viewer`: Start script in PATH
-- `usr/share/applications/media-web-viewer.desktop`: Desktop menu entry
+- `usr/share/applications/media-web-viewer.desktop`: Desktop menu entry (shows app version in name)
 
 ### Installation and Usage
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_1.3.1_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -527,7 +535,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.1)
+Media Web Viewer (v1.3.2)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -1559,9 +1567,9 @@ if debug and mode == 'full':
 
 ### Verification
 
-1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.3.1_amd64.deb`
+1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.3.2_amd64.deb`
 
-2. **UI Verification:** Version 1.3.1 displayed correctly, Feature Modal shows latest entry 42_Wording.
+2. **UI Verification:** Version 1.3.2 displayed correctly, Feature Modal shows latest entry 42_Wording.
 
 ---
 
@@ -2116,6 +2124,20 @@ mypy --strict parsers/ models.py
 3. Update documentation
 4. Write descriptive commit messages
 
+**Packaging & Reinstall Verification:**
+```bash
+# Verify all version references from VERSION_SYNC.json
+python tests/test_version_sync.py
+
+# Verify package build/reinstall checks (safe default)
+python tests/test_reinstall_deb.py
+
+# Optional destructive end-to-end check (purge + reinstall)
+RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
+```
+
+The destructive mode runs `reinstall_deb.sh` and should be used only on systems where replacing the current installation is intended.
+
 ---
 
 ### Dynamic Test Suite
@@ -2207,7 +2229,7 @@ pytest tests/ -k vlc -v
 **Test Output Example:**
 ```
 ==============================================================================
-SESSION MANAGEMENT TEST SUITE - v1.3.1
+SESSION MANAGEMENT TEST SUITE - v1.3.2
 ==============================================================================
 
 📊 Test Suite Overview:
@@ -2583,7 +2605,7 @@ Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellunge
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.3.1_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
 
 # 3. Abhängigkeiten bei Bedarf reparieren
 sudo apt-get install -f
@@ -2683,7 +2705,7 @@ For support, see Contact & Support section below.
 
 ## About
 
-**Media Web Viewer v1.3.1**  
+**Media Web Viewer v1.3.2**  
 A modern desktop media player and library manager.  
 Built with Python, Eel, and Bottle.  
 Licensed under GNU GPL-3.0.
@@ -2938,7 +2960,7 @@ git push origin new-name :old-name
 
 **Understanding Build Artifacts:**
 Build artifacts are generated files that can be recreated from source code:
-- `.deb` packages (e.g., `media-web-viewer_1.3.1_amd64.deb`)
+- `.deb` packages (e.g., `media-web-viewer_1.3.2_amd64.deb`)
 - Compiled binaries and executables
 - `build/` and `dist/` directories
 - Python bytecode (`__pycache__/`, `*.pyc`)
@@ -2998,7 +3020,7 @@ ls *.deb
 
 # Solution: Build from source
 bash build_deb.sh
-# Creates: media-web-viewer_1.3.1_amd64.deb
+# Creates: media-web-viewer_1.3.2_amd64.deb
 ```
 
 **Scenario 2: After Branch Switch or Pull**
@@ -3021,7 +3043,7 @@ git branch -D feature/old-build
 
 # Old build artifacts are local - still present unless manually deleted
 ls *.deb
-# Output: media-web-viewer_1.3.1_amd64.deb (current version)
+# Output: media-web-viewer_1.3.2_amd64.deb (current version)
 
 # Solution: Clean and rebuild for current version
 rm *.deb
@@ -3044,18 +3066,18 @@ bash build_deb.sh
 # Output directory: Current directory
 # Output file: media-web-viewer_<VERSION>_amd64.deb
 ls -lh *.deb
-# Expected: media-web-viewer_1.3.1_amd64.deb
+# Expected: media-web-viewer_1.3.2_amd64.deb
 ```
 
 **2. Version Management:**
 ```bash
 # Build artifacts should match version in code
 grep "VERSION =" main.py
-# Output: VERSION = "1.3.1"
+# Output: VERSION = "1.3.2"
 
 # Filename should match version
 ls media-web-viewer_*.deb
-# Expected: media-web-viewer_1.3.1_amd64.deb
+# Expected: media-web-viewer_1.3.2_amd64.deb
 ```
 
 **3. Storage and Distribution:**
@@ -3104,7 +3126,7 @@ git status --ignored
 # Ignored files:
 #   build/
 #   dist/
-#   media-web-viewer_1.3.1_amd64.deb
+#   media-web-viewer_1.3.2_amd64.deb
 #   __pycache__/
 #   .venv/
 ```
@@ -3112,10 +3134,10 @@ git status --ignored
 **Check if specific file is ignored:**
 ```bash
 # Test if a file is ignored
-git check-ignore -v media-web-viewer_1.3.1_amd64.deb
+git check-ignore -v media-web-viewer_1.3.2_amd64.deb
 
 # Output:
-# .gitignore:33:*.deb    media-web-viewer_1.3.1_amd64.deb
+# .gitignore:33:*.deb    media-web-viewer_1.3.2_amd64.deb
 # Explanation: Line 33 of .gitignore excludes this file
 ```
 
@@ -3135,13 +3157,13 @@ cp ~/backup/builds/*.deb ./
 **Create Release Archive:**
 ```bash
 # Archive build with metadata
-tar -czf media-web-viewer_1.3.1_build.tar.gz \
-    media-web-viewer_1.3.1_amd64.deb \
+tar -czf media-web-viewer_1.3.2_build.tar.gz \
+    media-web-viewer_1.3.2_amd64.deb \
     packaging/DEBIAN/control \
     build_deb.sh
 
 # Store in safe location
-mv media-web-viewer_1.3.1_build.tar.gz ~/releases/
+mv media-web-viewer_1.3.2_build.tar.gz ~/releases/
 ```
 
 #### Rebuilding from Clean Repository
@@ -3172,7 +3194,7 @@ dpkg-deb --info media-web-viewer_*.deb
 
 **Expected build output:**
 ```
-media-web-viewer_1.3.1_amd64.deb
+media-web-viewer_1.3.2_amd64.deb
 Size: ~15MB (depends on version)
 Architecture: amd64
 ```
@@ -3205,7 +3227,7 @@ grep "*.deb" .gitignore
 **Issue 5: "Want to track specific binary"**
 ```bash
 # Force add despite .gitignore (NOT recommended)
-git add -f media-web-viewer_1.3.1_amd64.deb
+git add -f media-web-viewer_1.3.2_amd64.deb
 
 # Better: Use GitHub Releases or external storage
 # Reason: Binaries bloat repository and history
@@ -3542,15 +3564,15 @@ bash build_deb.sh
 **Output:**
 ```
 ================================================================================
-  Building Debian Package (v1.3.1)
+  Building Debian Package (v1.3.2)
 ================================================================================
 
 ==> Preparing staging area...
-==> Building .deb package: media-web-viewer_1.3.1_amd64.deb
-dpkg-deb: building package 'media-web-viewer' in 'media-web-viewer_1.3.1_amd64.deb'.
+==> Building .deb package: media-web-viewer_1.3.2_amd64.deb
+dpkg-deb: building package 'media-web-viewer' in 'media-web-viewer_1.3.2_amd64.deb'.
 
-✅ Debian package created: media-web-viewer_1.3.1_amd64.deb
-   Install: sudo dpkg -i media-web-viewer_1.3.1_amd64.deb
+✅ Debian package created: media-web-viewer_1.3.2_amd64.deb
+   Install: sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
 ```
 
 ### Building Standalone Executables
@@ -3563,13 +3585,13 @@ python build_system.py --build pyinstaller
 **Manual PyInstaller Build:**
 ```bash
 # Single file executable
-python -m eel main.py web --onefile --name MediaWebViewer-1.3.1
+python -m eel main.py web --onefile --name MediaWebViewer-1.3.2
 
 # With console window (for debugging)
-python -m eel main.py web --onefile --name MediaWebViewer-1.3.1 --console
+python -m eel main.py web --onefile --name MediaWebViewer-1.3.2 --console
 
 # Directory build (faster startup)
-python -m eel main.py web --name MediaWebViewer-1.3.1
+python -m eel main.py web --name MediaWebViewer-1.3.2
 ```
 
 **Output Location:**
@@ -3582,14 +3604,14 @@ python -m eel main.py web --name MediaWebViewer-1.3.1
 ```bash
 # Build on Linux → Linux executable
 python build_system.py --build pyinstaller
-# Output: dist/MediaWebViewer-1.3.1 (ELF binary)
+# Output: dist/MediaWebViewer-1.3.2 (ELF binary)
 ```
 
 **Windows (Cross-Compilation):**
 ```bash
 # Build on Windows → Windows .exe
 python build_system.py --build pyinstaller
-# Output: dist/MediaWebViewer-1.3.1.exe
+# Output: dist/MediaWebViewer-1.3.2.exe
 
 # Or with Wine on Linux (requires PyInstaller + Wine setup)
 pyinstaller MediaWebViewer.spec --clean
@@ -3599,7 +3621,7 @@ pyinstaller MediaWebViewer.spec --clean
 ```bash
 # Build on macOS → macOS .app bundle
 python build_system.py --build pyinstaller
-# Output: dist/MediaWebViewer-1.3.1.app
+# Output: dist/MediaWebViewer-1.3.2.app
 ```
 
 ### Full Build Workflow
@@ -3607,7 +3629,7 @@ python build_system.py --build pyinstaller
 **Complete Release Process:**
 ```bash
 # 1. Update version
-echo "1.3.1" > VERSION
+echo "1.3.2" > VERSION
 
 # 2. Run full build with tests
 python build_system.py --full-build
@@ -3615,7 +3637,7 @@ python build_system.py --full-build
 # Result:
 # ✅ Environment check passed
 # ✅ All tests passed (XX tests in X.XXXs)
-# ✅ Debian package created: media-web-viewer_1.3.1_amd64.deb
+# ✅ Debian package created: media-web-viewer_1.3.2_amd64.deb
 ```
 
 **CI/CD Pipeline Example:**
@@ -3822,20 +3844,20 @@ Each session returns:
 ---
 
 **Last Updated:** 8. März 2026  
-**Current Version:** 1.3.1
+**Current Version:** 1.3.2
 
 ---
 
 ## Verification
 
 ### Build Verification
-Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.3.1_amd64.deb`
+Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.3.2_amd64.deb`
 
 ### Version Consistency Verification
 Ran `pytest -q tests/test_version_consistency.py` and confirmed that all central version references are derived from `VERSION` and no stale `.deb` version examples remain in the documentation.
 
 ### UI Verification
-The version 1.3.1 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), Conda Environment Support (46), and Version Consistency Test (47).
+The version 1.3.2 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), Conda Environment Support (46), and Version Consistency Test (47).
 
 ---
 
