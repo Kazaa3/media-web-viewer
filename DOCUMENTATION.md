@@ -127,8 +127,23 @@ Before installing Media Web Viewer, ensure your system meets these requirements:
 #### System Dependencies (Linux/Debian/Ubuntu)
 ```bash
 sudo apt update
-sudo apt install ffmpeg libmediainfo0v5 python3-tk python3-dev build-essential
+sudo apt install ffmpeg libmediainfo0v5 mediainfo python3-tk python3-dev build-essential
 ```
+
+**Required for VLC Integration:**
+```bash
+sudo apt install vlc libvlc-dev
+```
+
+#### Python Packages (Virtual Environment)
+
+Required packages are automatically installed via `requirements.txt`, but for manual setup:
+
+```bash
+pip install m3u8>=4.1.0 python-vlc>=3.0.18121
+```
+
+**Note:** The `m3u8` package is **required** for VLC playlist support (import/export). If missing, the application will fail to start.
 
 #### Alternative Platforms
 **Fedora/RHEL:**
@@ -510,6 +525,8 @@ media-web-viewer/
 ├── tests/                   # Automated validation suite
 │   ├── test_version_sync.py # Validates VERSION_SYNC.json tracked locations
 │   ├── test_reinstall_deb.py# .deb build/reinstall verification tests
+│   ├── test_pipeline.py     # Pipeline infrastructure validation
+│   ├── test_browser_launch.py # Chrome app mode and VLC dependencies
 │   └── test_*.py            # Additional functional/unit/integration tests
 │
 ├── logbuch/                 # Development logbook (Markdown)
@@ -517,6 +534,8 @@ media-web-viewer/
 │   ├── 00_Known_Issues.md   # Current and resolved issues
 │   ├── 53_Version_Synchronization_System.md # Version sync system docs
 │   ├── 54_Documentation_Completion_v132.md  # Latest documentation completion
+│   ├── 55_Release_Pipeline_Integration.md   # CI/CD pipeline implementation
+│   ├── 56_Chrome_App_Mode_and_VLC_Dependencies.md # Standalone browser fix
 │   └── *.py                 # Scripts for logbook management
 │
 ├── packaging/               # .deb package structure
@@ -2603,6 +2622,51 @@ python main.py
 1. Hard refresh browser: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (macOS)
 2. Clear browser cache for localhost:8888
 3. Restart application
+
+#### Missing m3u8 Package / VLC Support Broken
+
+**Error:** `ImportError: No module named 'm3u8'` or VLC playlist features not working
+
+**Cause:** Missing required `m3u8` Python package for VLC playlist import/export
+
+**Solution:**
+```bash
+# Activate virtual environment (if using venv)
+source .venv/bin/activate
+
+# Install missing package
+pip install m3u8>=4.1.0
+
+# Verify installation
+python -c "import m3u8; print(m3u8.__version__)"
+```
+
+#### Browser Opens as Tab Instead of Standalone App
+
+**Cause:** Chrome/Chromium not found or incorrect browser launch configuration
+
+**Symptoms:**
+- Application opens in existing browser window as new tab
+- Browser UI (tabs, address bar) visible instead of clean app window
+
+**Solution:**
+```bash
+# Ensure Chrome/Chromium is installed
+sudo apt install google-chrome-stable  # or chromium-browser
+
+# Verify Chrome is in PATH
+which google-chrome-stable
+
+# Test app mode manually
+google-chrome-stable --app=http://localhost:8888 --new-window
+
+# If still failing, check main.py browser launch code (lines ~1985-2015)
+```
+
+**Technical Details:**
+- App uses `subprocess.Popen()` with `--app` flag for standalone window
+- Fallback to system default browser if Chrome/Chromium not found
+- See `logbuch/56_Chrome_App_Mode_and_VLC_Dependencies.md` for implementation details
 
 ### Getting Help
 

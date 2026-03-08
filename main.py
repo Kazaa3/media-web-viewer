@@ -1990,9 +1990,42 @@ if __name__ == "__main__":
         session_url = f"http://localhost:{session_port}/app.html"
         logging.info(f"[Session] Opening browser at {session_url}")
         
-        # Use preferred browser (Chrome/Chromium over Vivaldi)
-        browser = get_preferred_browser()
-        browser.open(session_url)
+        # Launch Chrome/Chromium in app mode (standalone window without browser UI)
+        import shutil
+        browser_found = False
+        browser_candidates = [
+            'google-chrome-stable',
+            'google-chrome',
+            'chrome',
+            'chromium-browser',
+            'chromium',
+        ]
+        
+        for browser_cmd in browser_candidates:
+            browser_path = shutil.which(browser_cmd)
+            if browser_path:
+                logging.info(f"[Browser] Launching {browser_cmd} in app mode")
+                try:
+                    subprocess.Popen([
+                        browser_path,
+                        f'--app={session_url}',
+                        '--new-window',
+                        '--no-first-run',
+                        '--no-default-browser-check',
+                    ], 
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                    )
+                    browser_found = True
+                    break
+                except Exception as e:
+                    logging.warning(f"[Browser] Failed to launch {browser_cmd}: {e}")
+                    continue
+        
+        if not browser_found:
+            logging.warning("[Browser] Chrome/Chromium not found, falling back to default browser")
+            browser = get_preferred_browser()
+            browser.open(session_url)
         
     except Exception as e:
         logging.error(f"[Startup-Error] Failed to start session: {e}")
