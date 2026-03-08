@@ -133,12 +133,16 @@ def get_version():
 @eel.expose
 def get_environment_info():
     """
-    @brief Returns information about the Python environment.
-    @details Gibt Informationen über die Python-Umgebung zurück (venv, conda, Version, Pfade).
+    @brief Returns comprehensive information about the Python environment.
+    @details Gibt detaillierte Informationen über die Python-Umgebung zurück, 
+             inklusive aktuelle Umgebung, System Python Installationen, und Conda Umgebungen.
     @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
     """
     import platform
+    import subprocess
+    import json
     
+    # ===== Current Environment =====
     # Check if we're in a virtual environment (venv/virtualenv)
     in_venv = sys.prefix != sys.base_prefix
     venv_path = sys.prefix if in_venv else None
@@ -151,7 +155,7 @@ def get_environment_info():
     conda_prefix = os.environ.get('CONDA_PREFIX', None)
     in_conda = conda_env_name is not None or conda_prefix is not None
     
-    # Determine environment type and path
+    # Determine current environment type and path
     env_type = None
     env_path = None
     env_name = None
@@ -167,7 +171,98 @@ def get_environment_info():
     else:
         env_type = "system"
     
+    # Build current environment info
+    current_env = {
+        "type": env_type,
+        "name": env_name,
+        "path": env_path,
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+    }
+    
+    # ===== Alternative Environments Discovery =====
+    
+    def _get_conda_environments():
+        """Get list of available Conda environments."""
+        environments = []
+        try:
+            result = subprocess.run(
+                ["conda", "env", "list", "--json"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                for env_path in data.get("envs", []):
+                    env_name = Path(env_path).name
+                    env_python = Path(env_path) / "bin" / "python"
+                    
+                    if env_python.exists():
+                        try:
+                            v_result = subprocess.run(
+                                [str(env_python), "--version"],
+                                capture_output=True,
+                                text=True,
+                                timeout=2
+                            )
+                            version = v_result.stdout.strip() or v_result.stderr.strip()
+                            is_recommended = env_name == "p14"
+                            
+                            environments.append({
+                                "name": env_name,
+                                "path": env_path,
+                                "version": version,
+                                "recommended": is_recommended
+                            })
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+        return sorted(environments, key=lambda x: x["name"])
+    
+    def _get_system_pythons():
+        """Get list of system Python installations."""
+        pythons = []
+        search_paths = ["/usr/bin", "/usr/local/bin", "/opt/python"]
+        seen_versions = set()
+        
+        for search_path in search_paths:
+            search_dir = Path(search_path)
+            if not search_dir.exists():
+                continue
+            
+            for python_exe in search_dir.glob("python*"):
+                if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+                    continue
+                
+                try:
+                    result = subprocess.run(
+                        [str(python_exe), "--version"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2
+                    )
+                    version = result.stdout.strip() or result.stderr.strip()
+                    
+                    if version and version not in seen_versions:
+                        seen_versions.add(version)
+                        pythons.append({
+                            "path": str(python_exe),
+                            "version": version
+                        })
+                except Exception:
+                    pass
+        
+        return sorted(pythons, key=lambda x: x["version"])
+    
+    # Discover available environments (cached/fast)
+    conda_envs = _get_conda_environments()
+    system_pythons = _get_system_pythons()
+    
+    # ===== Build Response =====
     return {
+        # Current Environment (Primary)
         "python_version": platform.python_version(),
         "python_executable": sys.executable,
         "python_prefix": sys.prefix,
@@ -182,7 +277,22 @@ def get_environment_info():
         "env_name": env_name,
         "platform": platform.platform(),
         "platform_system": platform.system(),
-        "platform_release": platform.release()
+        "platform_release": platform.release(),
+        
+        # Current Environment (Detailed)
+        "current_environment": current_env,
+        
+        # Alternative Environments (Discovery Results)
+        "available_conda_environments": conda_envs,
+        "available_system_pythons": system_pythons,
+        
+        # Recommendations
+        "recommended_environment": {
+            "name": "p14",
+            "type": "conda",
+            "python_version": "3.14.2",
+            "reason": "Latest stable Python release for Media Web Viewer"
+        }
     }
 
 
