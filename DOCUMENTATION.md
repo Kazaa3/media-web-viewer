@@ -164,8 +164,8 @@ sudo dpkg -i media-web-viewer_1.1.20_amd64.deb
 - **Logbook:** Built-in development log and documentation viewer (Bilingual).
 - **Automatic Blacklist:** Built-in filter to ignore system files and junk (e.g., 'captcha', 'thumb', 'cover art').
 - **Native System Integration:** Fully packaged `.deb` with auto-resolution of dependencies like `ffmpeg`.
-- **Internationalisierung (i18n)**: Full documentation and UI support for German and English based on the [Internationalisierung Standards](https://de.wikipedia.org/wiki/Internationalisierung_(Softwareentwicklung)).
-- **Natural Sorting**: Intelligent numerical sorting for chapters and titles.
+- **Internationalisierung (i18n)**: Full documentation and UI support for German and English based on [i18n standards](https://de.wikipedia.org/wiki/Internationalisierung_(Softwareentwicklung)).
+- **i18n Initialization**: Fixed `ReferenceError: i18n is not defined` by ensuring `i18n.json` is loaded before JS execution.
 
 ---
 
@@ -359,6 +359,13 @@ Einheitliche Terminologie für konsistente Dokumentation und UI-Texte.
 - **🎞️ Schnittfassung**: Spezielle Versionen (Standard, Extended, Director's Cut)
 - **🌍 Release-Region**: Informationen zum Release-Format (PAL, NTSC, Region B)
 
+### Specific Data Type Examples
+- **WAV (Plain)**: Uncompressed audio data extraction.
+- **MP3 (Plain)**: Standard MPEG Layer III audio.
+- **MP3 (ID3v2.2)**: Support for legacy ID3 tag versions.
+- **MKV (AAC)**: Matroska container with Advanced Audio Coding.
+- **M4B (m4tags)**: Audiobook containers with specialized chapter tags.
+
 ### Technical Terms
 - **Container**: Audio/Video-Format der Datei (MP3, M4A, FLAC, etc.)
 - **Codec**: Algorithmus zum Komprimieren/Dekomprimieren von Daten
@@ -369,16 +376,26 @@ Einheitliche Terminologie für konsistente Dokumentation und UI-Texte.
 - **Sample Rate**: Audio-Abtastfrequenz in Hz (44.1 kHz, 48 kHz, etc.)
 - **Cover Art**: Albumcover als eingebettetes Bild
 
+### Options Tab (Settings)
+The Options tab is organized into a two-column layout:
+- **Left Column**: Scan directories, scanner controls, and database management.
+- **Right Column (General & Debug)**: Manage technical parameters and debug flags.
+    - **SYSTEM**: Core application flags.
+    - **SCAN**: Scanner behavior toggles.
+    - **PARSER**: Metadata extraction verbosity.
+    - **PLAYER**: Playback engine debugging.
+    - **DB**: Database query logging.
+
 ### Action Buttons
-- **Scan Now**: Startet sofortige Medien-Indizierung
-- **Add Directory**: Fügt neues Verzeichnis zum Scanner hinzu
-- **Play**: Startet Wiedergabe des ausgewählten Tracks
-- **Create Playlist**: Neue leere Playlist erstellen
-- **Save Changes**: Speichert Änderungen in Item Modal
-- **Delete**: Löscht Item aus Datenbank
-- **Test Stream**: Startet Test-Transkodierung
-- **Analyze**: Startet detaillierte Metadaten-Analyse
-- **Stability and UI Refinement**: Kontext-Button für Stabilitäts-Checks (ersetzt "Test Billing")
+- **Scan Now**: Startet sofortige Medien-Indizierung.
+- **Add Directory**: Fügt neues Verzeichnis zum Scanner hinzu.
+- **Play**: Startet Wiedergabe des ausgewählten Tracks.
+- **Create Playlist**: Neue leere Playlist erstellen.
+- **Save Changes**: Speichert Änderungen im Item Modal. Zeigt Bestätigung: `Eintrag gespeichert!`.
+- **Delete**: Löscht Item aus Datenbank.
+- **Test Stream**: Startet Test-Transkodierung.
+- **Analyze**: Startet detaillierte Metadaten-Analyse.
+- **Stability and UI Refinement**: Kontext-Button für Stabilitäts-Checks (ersetzt "Test Billing").
 
 ---
 
@@ -639,8 +656,15 @@ Python dient als robustes Backend für alle Kernlogiken, Metadaten-Extraktion, D
 
 ### Logging & Debugging
 - **Logging**: Das System nutzt strukturierte Logs mit verschiedenen Leveln (INFO, DEBUG, ERROR).
-- **Private Daten**: Logs schließen sensible Benutzerdaten (z.B. absolute Pfade in externen APIs) standardmäßig aus.
-- **Entwicklungstools**: Schnelles Durchsuchen von Logs via `grep` oder integriertem Logview.
+- **Flag-Integration**: `[Debug-Parser]` Ausgaben erscheinen nur, wenn der `parser`-Flag aktiviert ist.
+- **Private Daten**: Logs schließen sensible Benutzerdaten standardmäßig aus.
+- **Entwicklungstools**: Schnelles Durchsuchen von Logs via `grep`.
+
+### Developer Cheat Sheet (Commands)
+- **Grep**: `grep "[Debug-Parser]" app.log` - Filtert Parser-spezifische Meldungen.
+- **Pytest**: `pytest tests/` - Führt die Test-Suite aus.
+- **Find**: `find media/ -name "*.mp3"` - Sucht nach bestimmten Dateitypen.
+- **Tail**: `tail -f app.log` - Echtzeit-Log-Überwachung.
 
 ### Entwicklungs-Umgebungen
 Für effizientes Testen werden oft zwei Umgebungen parallel genutzt:
@@ -771,11 +795,16 @@ Summary_EN: The feature modal has been fully dynamized and translated.
 
 ### Kategorisierungs-Logik (`loadFeatureStatus`)
 Das Modal trennt Einträge automatisch in folgende Sektionen:
-1. **Latest Updates**: Die letzten 3 Einträge mit Status `COMPLETED`.
-2. **Open Bugs**: Alle Einträge, die nicht `COMPLETED` sind und die Kategorie `Bug` haben.
-3. **Open Features**: Einträge, die nicht `COMPLETED` sind und Kategorien wie `Feature`, `Task` oder `Planung` haben.
+1. **Latest Updates**: Die letzten 3 Einträge mit Status `COMPLETED` und vorhandener Zusammenfassung.
+2. **Open Bugs**: Alle Einträge ungleich `COMPLETED` mit Kategorie `Bug`.
+3. **Open Features**: Einträge ungleich `COMPLETED` (Feature, Task, Planung).
 4. **Completed**: Alle restlichen abgeschlossenen Einträge.
-5. **Documentation**: Ein spezieller Eintrag für die Projekt-Dokumentation (z.B. `31_Project_Documentation`).
+5. **Documentation**: Spezieller Eintrag `31_Project_Documentation`.
+
+### Korrekturen & Bugfixes (v1.1.20)
+- **Debug-Logs**: Parser-Logs hängen nun korrekt an den Flags und fluten nicht mehr die Standard-Ausgabe.
+- **Entry 42 (Wording)**: Metadaten ergänzt, damit der Eintrag korrekt im Modal erscheint.
+- **i18n Scope**: `ReferenceError` behoben durch korrekte Scoping-Reihenfolge in `app.html`.
 
 ---
 
