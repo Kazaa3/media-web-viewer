@@ -1748,23 +1748,32 @@ if __name__ == "__main__":
     if DEBUG_FLAGS["start"]:
         debug_log("[Startup] Starting Eel UI...")
     
-    # Use a fixed port for reliable browser opening
-    APP_PORT = 8000
+    # Find a free port dynamically to allow multiple sessions
+    import socket
+    def find_free_port():
+        """Find and return a free port for this session."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.listen(1)
+            port = s.getsockname()[1]
+        return port
+    
+    session_port = find_free_port()
     
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     try:
-        logger.debug("websocket", f"Starting Eel server on port {APP_PORT}...")
-        eel.start("app.html", mode=None, size=(1450, 800), block=False, port=APP_PORT)
+        logger.debug("websocket", f"Starting Eel server session on port {session_port}...")
+        eel.start("app.html", mode=None, size=(1450, 800), block=False, port=session_port)
         
-        # Open browser explicitly after Eel starts
+        # Open browser explicitly after Eel starts with session-specific URL
         import webbrowser
-        app_url = f"http://localhost:{APP_PORT}/app.html"
-        logging.info(f"Opening browser at {app_url}")
-        webbrowser.open(app_url)
+        session_url = f"http://localhost:{session_port}/app.html"
+        logging.info(f"[Session] Opening browser at {session_url}")
+        webbrowser.open(session_url)
         
     except Exception as e:
-        logging.error(f"[Startup-Error] eel.start failed: {e}")
+        logging.error(f"[Startup-Error] Failed to start session: {e}")
 
     # Server am Leben halten
     while True:
