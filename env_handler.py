@@ -34,15 +34,19 @@ CRITICAL_BINARIES = [
 BROWSER_BINARIES = ["google-chrome-stable", "google-chrome", "chrome", "chromium-browser", "chromium"]
 
 # Mappings for Conda-specific package names
+# These are used to satisfy requirements via conda instead of pip/apt
+PIP_TO_CONDA_MAP = {
+    "python-vlc": "vlc-python",
+    "gevent-websocket": "gevent-websocket",
+    "m3u8": "m3u8",
+    "psutil": "psutil"
+}
+
 APT_TO_CONDA_MAP = {
     "shared-mime-info": "shared-mime-info",
     "libgdk-pixbuf2.0-0": "gdk-pixbuf",
     "mediainfo": "mediainfo",
     "ffmpeg": "ffmpeg"
-}
-PIP_TO_CONDA_MAP = {
-    "python-vlc": "vlc-python",  # sometimes needed
-    "gevent-websocket": "gevent-websocket"
 }
 
 class EnvironmentManager:
@@ -93,40 +97,32 @@ class EnvironmentManager:
         except Exception:
             return "unknown"
 
-    def verify_dependencies(self) -> List[str]:
-        """Strictly verifies that critical dependencies are installed."""
-        missing_pip, missing_apt = self.get_missing_info()
-        errors = []
-        for pkg in missing_pip:
-            errors.append(f"Missing critical Python package: {pkg}")
-        if missing_apt:
-            errors.append(f"Missing critical system binaries: {', '.join(missing_apt)}")
-            
-        # Check browser binaries (at least one must be present)
-        import shutil
-        if not any(shutil.which(b) for b in BROWSER_BINARIES):
-            errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
-            
-        return errors
-
-    def get_missing_info(self) -> tuple[list[str], list[str]]:
-        """Returns (missing_pip_list, missing_apt_list)"""
+    def get_missing_info(self) -> tuple[list[str], list[str], list[str]]:
+        """
+        Returns (missing_pip, missing_apt, missing_conda)
+        - missing_pip: Packages that MUST or SHOULD be installed via pip (standard env)
+        - missing_apt: Binaries that MUST be installed via apt (standard env)
+        - missing_conda: All missing items that CAN be installed via conda (conda env)
+        """
         missing_pip = []
         missing_apt = []
-        is_conda = self.is_conda()
+        missing_conda = []
         
         from importlib.metadata import version, PackageNotFoundError
+        import shutil
+
+        # 1. Process Python Dependencies
         for pkg, min_ver in CRITICAL_DEPENDENCIES.items():
             try:
                 version(pkg)
             except PackageNotFoundError:
-                if is_conda and pkg in PIP_TO_CONDA_MAP:
-                    missing_pip.append(f"{PIP_TO_CONDA_MAP[pkg]}>={min_ver}")
-                else:
-                    missing_pip.append(f"{pkg}>={min_ver}")
-        
-        import shutil
-        # Check system binaries
+                full_spec = f"{pkg}>={min_ver}"
+                missing_pip.append(full_spec)
+                # If we have a conda mapping OR if it's likely available in conda-forge
+                conda_name = PIP_TO_CONDA_MAP.get(pkg, pkg)
+                missing_conda.append(f"{conda_name}>={min_ver}")
+
+        # 2. Process System Dependencies
         apt_map = {
             "ffmpeg": "ffmpeg",
             "mediainfo": "mediainfo",
@@ -135,12 +131,42 @@ class EnvironmentManager:
         }
         for binary, apt_pkg in apt_map.items():
             if not shutil.which(binary):
-                if is_conda and apt_pkg in APT_TO_CONDA_MAP:
-                    missing_apt.append(APT_TO_CONDA_MAP[apt_pkg])
+                missing_apt.append(apt_pkg)
+                if apt_pkg in APT_TO_CONDA_MAP:
+                    missing_conda.append(APT_TO_CONDA_MAP[apt_pkg])
                 else:
-                    missing_apt.append(apt_pkg)
+                    # Fallback if no mapping but we are in conda: 
+                    # some things like ffmpeg have same name
+                    missing_conda.append(apt_pkg)
         
-        return sorted(list(set(missing_pip))), sorted(list(set(missing_apt)))
+        return (
+            sorted(list(set(missing_pip))), 
+            sorted(list(set(missing_apt))), 
+            sorted(list(set(missing_conda)))
+        )
+
+    def verify_dependencies(self) -> List[str]:
+        """Strictly verifies that critical dependencies are installed."""
+        missing_pip, missing_apt, _ = self.get_missing_info()
+        errors = []
+        for pkg in missing_pip:
+            errors.append(f"Missing critical Python package: {pkg}")
+        for pkg in missing_apt:
+            errors.append(f"Missing critical system binary/package: {pkg}")
+            
+        # Check browser binaries (at least one must be present)
+        import shutil
+        if not any(shutil.which(b) for b in BROWSER_BINARIES):
+            errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
+            
+        return errors
+            
+        # Check browser binaries (at least one must be present)
+        import shutil
+        if not any(shutil.which(b) for b in BROWSER_BINARIES):
+            errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
+            
+        return errors
 
     def validate_safe_startup(self):
         """

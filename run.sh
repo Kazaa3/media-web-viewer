@@ -53,34 +53,42 @@ source "$VENV_DIR/bin/activate" || {
 
 # Advanced Dependency Check (Python & System)
 echo -e "${BLUE}🔍 Prüfe Abhängigkeiten...${NC}"
-MISSING_PIP=$(python check_environment.py --list-missing-pip)
-MISSING_APT=$(python check_environment.py --list-missing-apt)
+# Get missing dependencies from our check script
+if [[ -n "$CONDA_PREFIX" ]]; then
+    MISSING_CONDA=$(python check_environment.py --list-missing-conda)
+else
+    MISSING_PIP=$(python check_environment.py --list-missing-pip)
+    MISSING_APT=$(python check_environment.py --list-missing-apt)
+fi
 
-if [[ -n "$MISSING_PIP" || -n "$MISSING_APT" ]]; then
+if [[ -z "$MISSING_PIP" && -z "$MISSING_APT" && -z "$MISSING_CONDA" ]]; then
+    echo -e "${GREEN}✅ Alle Abhängigkeiten erfüllt.${NC}"
+else
     echo -e "${YELLOW}⚠️  Fehlende Abhängigkeiten gefunden:${NC}"
+    if [[ -n "$MISSING_CONDA" ]]; then
+        echo -e "   📦 Conda: $MISSING_CONDA"
+    fi
     if [[ -n "$MISSING_PIP" ]]; then
-        echo -e "   📦 Python: $MISSING_PIP"
+        echo -e "   📦 Python (pip): $MISSING_PIP"
     fi
     if [[ -n "$MISSING_APT" ]]; then
-        echo -e "   🔧 System: $MISSING_APT"
+        echo -e "   🔧 System (apt): $MISSING_APT"
     fi
     
-    echo -e ""
+    echo ""
     read -p "Sollen die fehlenden Abhängigkeiten jetzt installiert werden? (y/n) " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ -n "$MISSING_CONDA" ]]; then
+            echo -e "${BLUE}📥 Installiere Abhängigkeiten via Conda (conda-forge preferiert)...${NC}"
+            conda install -y -c conda-forge $MISSING_CONDA || {
+                echo -e "${RED}❌ Conda installation fehlgeschlagen.${NC}"
+                exit 1
+            }
+        fi
         if [[ -n "$MISSING_PIP" ]]; then
-            if [[ -n "$CONDA_PREFIX" ]]; then
-                echo -e "${BLUE}📥 Installiere Python-Packages via Conda (conda-forge preferiert)...${NC}"
-                # Use conda-forge as it contains most modern requirements
-                conda install -y -c conda-forge $MISSING_PIP || {
-                    echo -e "${YELLOW}⚠️  Conda installation fehlgeschlagen (evtl. im falschen Channel?). Versuche pip fallback...${NC}"
-                    pip install $MISSING_PIP
-                }
-            else
-                echo -e "${BLUE}📥 Installiere Python-Packages via pip...${NC}"
-                pip install $MISSING_PIP
-            fi
+            echo -e "${BLUE}📥 Installiere Python-Packages via pip...${NC}"
+            pip install $MISSING_PIP
         fi
         if [[ -n "$MISSING_APT" ]]; then
             echo -e "${BLUE}📥 Installiere System-Packages (sudo erforderlich)...${NC}"
@@ -90,8 +98,6 @@ if [[ -n "$MISSING_PIP" || -n "$MISSING_APT" ]]; then
     else
         echo -e "${RED}❌ Abbruch. Die App wird möglicherweise nicht korrekt funktionieren.${NC}"
     fi
-else
-    echo -e "${GREEN}✅ Alle Abhängigkeiten erfüllt.${NC}"
 fi
 
 # Show environment info
