@@ -25,7 +25,7 @@ fehlt)
 - [ ] Edit aktuaisuerng / bib
 - [x] logbuch einträge filterung wenn header fehlt führt zu fehlenden einträgen
 - [x] Sortierung neuer log einträge erfolgt bei abgescjlossen. neue sind aber noch offfen. neuen status einführen
-- [x] 
+- [x] -md ist kein uni code format
 - [ ] logtab. fixe elemente für tag felder auf gui
 - [ ] Test: Verifizierung .deb mit Version
 - [ ] Hörbuch Tag (Backend) muss vereinheitlicht werden.
