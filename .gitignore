@@ -47,3 +47,4 @@ Screens/
 *.log
 media/route_log.txt
 .env
+logs/*.txt
