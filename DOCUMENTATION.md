@@ -1,4 +1,4 @@
-# Technical Documentation: Media Web Viewer (v1.2.21)
+# Technical Documentation: Media Web Viewer (v1.2.22)
 
 ## 1. Technical Architecture & Data Flow
 Media Web Viewer follows a decoupled architecture using Python for the heavy lifting and Vanilla JS for the presentation layer.
@@ -137,7 +137,7 @@ Detailed overview of the project's file organization:
 
 ```text
 media-web-viewer/
-├── VERSION               ← Central version number (1.2.21)
+├── VERSION               ← Central version number (1.2.22)
 ├── Doxyfile              ← Doxygen configuration
 ├── environment.yml       ← Conda/Mamba environment setup
 ├── main.py               ← App entry point & Backend API
@@ -173,7 +173,7 @@ media-web-viewer/
 Hierarchical overview of the system layers and dependencies:
 
 ```text
-Media Web Viewer (v1.2.21)
+Media Web Viewer (v1.2.22)
 ├── Frontend Layer
 │   ├── HTML5/CSS3 (Responsive Design, Glassmorphism)
 │   ├── Vanilla JavaScript (EEL Integration, Event Handling)
@@ -210,4 +210,33 @@ Media Web Viewer (v1.2.21)
 ```
 
 ---
-*Technical Manual v1.2.21. Developed by kazaa3.*
+
+## 10. Logging & Debugging System (v1.2.22+)
+The application uses a centralized, multi-target logging system designed for both developers and end-users.
+
+### Log Targets
+- **Console**: Standard output for CLI debugging.
+- **File**: Persisted to `~/.media-web-viewer/app.log` (Rotating, 5MB max, 3 backups).
+- **UI Buffer**: A circular buffer (1000 lines) accessible via the "Debug Logs" tab in the GUI.
+
+### Functional Debugging (DEBUG_FLAGS)
+Debugging is granular. Instead of a single toggle, the system uses `DEBUG_FLAGS` to enable logs for specific components:
+
+| Flag | Component | Responsibility |
+|------|-----------|----------------|
+| `system` | Core | Overrides all other flags (Force all logs). |
+| `scan` | Parser | Detailed file indexing and regex matching info. |
+| `db` | Database | SQL queries and record insertion details. |
+| `web` | Server | HTTP requests and transcoding process logs. |
+
+### Usage in Code
+```python
+import logger
+# Basic logging
+logger.get_logger("component").info("Standard message")
+# Flag-controlled debugging
+logger.debug("scan", "Attempting to parse complex filename...")
+```
+
+---
+*Technical Manual v1.2.22. Developed by kazaa3.*

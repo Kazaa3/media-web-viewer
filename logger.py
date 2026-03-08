@@ -19,6 +19,14 @@ LOG_FILE = APP_DATA_DIR / "app.log"
 LOG_BUFFER: List[str] = []
 MAX_BUFFER_SIZE = 1000
 
+# Reference to DEBUG_FLAGS from main (initialized during setup)
+_debug_flags = {}
+
+def set_debug_flags(flags: dict):
+    """Update internal reference to debug flags."""
+    global _debug_flags
+    _debug_flags = flags
+
 
 class UIHandler(logging.Handler):
     """
@@ -85,6 +93,16 @@ def get_logger(name: str):
     Returns a logger instance for a specific module.
     """
     return logging.getLogger(f"app.{name}")
+
+
+def debug(component: str, message: str):
+    """
+    Log a message if the corresponding DEBUG_FLAGS component is active.
+    @param component Key in DEBUG_FLAGS (e.g. 'scan', 'db')
+    @param message The log message.
+    """
+    if _debug_flags.get(component) or _debug_flags.get("system"):
+        logging.debug(f"[{component}] {message}")
 
 
 def get_ui_logs() -> List[str]:

@@ -123,20 +123,12 @@ class MediaItem:
 
     def show_info(self):
         """
-        @brief Prints the media item information to the console.
-        @details Gibt die Medien-Informationen in der Konsole aus.
+        @brief Logs the media item information.
+        @details Schreibt die Medien-Informationen in das Log.
         """
         info_dict = self.to_dict()
-        print(f"Name: {info_dict['name']}")
-        print(f"Path: {info_dict['path']}")
-        print(f"Duration: {info_dict['duration']}")
-        print(f"Type: {info_dict['type']}")
-        print(f"Category: {info_dict['category']}")
-        print(f"Is Transcoded: {info_dict['is_transcoded']}")
-        if info_dict['transcoded_format']:
-            print(f"Transcoded Format: {info_dict['transcoded_format']}")
-        print(f"Tags: {info_dict['tags']}")
-        print()
+        log.info(f"MediaItem Info: {info_dict['name']} | Path: {info_dict['path']} | Category: {info_dict['category']}")
+        log.debug(f"Full Tags for {info_dict['name']}: {info_dict['tags']}")
 
     def to_dict(self):
         """
