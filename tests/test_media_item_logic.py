@@ -29,7 +29,7 @@ def test_media_item_to_dict():
     assert d['name'] == "test"
     assert d['duration'] == "1:01:01"
     assert d['tags']['title'] == "Test Title"
-    assert d['type'] == "mp3"
+    assert d['type'] == "audio"
     assert not d['is_transcoded']
 
 

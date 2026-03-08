@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.2.23  
+**Version:** 1.2.24  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.2.23
+1.2.24
 ```
 
 This version is automatically loaded and used across:
@@ -196,7 +196,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.2.23_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.24_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -233,7 +233,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_VERSION_amd64.deb
+sudo dpkg -i media-web-viewer_1.2.24_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
