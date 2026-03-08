@@ -42,20 +42,24 @@ class TestEnvironmentIsolation(unittest.TestCase):
         self.manager.venv_path = Path('/tmp/.venv')
         self.assertTrue(self.manager.is_exclusive_venv())
 
-    def test_dependency_verification_all_present(self):
+    @patch('shutil.which', return_value="/usr/bin/mock")
+    def test_dependency_verification_all_present(self, mock_which):
         """Verifies that no errors are returned if all critical dependencies are present."""
         # Mock importlib.metadata.version to always return a version
         with patch('importlib.metadata.version', return_value="1.0.0"):
             errors = self.manager.verify_dependencies()
             self.assertEqual(len(errors), 0)
 
-    def test_dependency_verification_missing(self):
+    @patch('shutil.which', return_value=None)
+    def test_dependency_verification_missing(self, mock_which):
         """Verifies that errors are returned if a critical dependency is missing."""
         from importlib.metadata import PackageNotFoundError
         with patch('importlib.metadata.version', side_effect=PackageNotFoundError):
             errors = self.manager.verify_dependencies()
             self.assertGreater(len(errors), 0)
-            self.assertTrue(any("Missing critical dependency" in err for err in errors))
+            self.assertTrue(any("Missing critical Python package" in err for err in errors) or 
+                            any("Missing critical system binary" in err for err in errors) or
+                            any("No suitable browser found" in err for err in errors))
 
 if __name__ == '__main__':
     unittest.main()
