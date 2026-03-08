@@ -291,6 +291,13 @@ python main.py --debug
 
 This activates all debug flags and logs detailed information about parsing, system operations, and UI events.
 
+**Debug Files:**
+- **Project-Local Log:** When started with `--debug`, a detailed log is written to `logs/debug.log` in the project directory.
+- **User-Data Log:** General application logs are always written to `~/.media-web-viewer/app.log`.
+
+**Log Suppression:**
+To keep the console and log files clean, noisy third-party logs (e.g., `geventwebsocket`) are automatically suppressed (set to `WARNING` level) while the application is running.
+
 #### VLC Playlist Integration
 
 Media Web Viewer includes bidirectional integration with VLC Media Player:
