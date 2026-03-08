@@ -12,12 +12,14 @@ from mutagen.dsdiff import DSDIFF # DSD Interchange File Format: .dsf-Dateien
 from mutagen.dsf import DSF # DSD Stream File: .dsd-Dateien
 
 def safe_get(audio_obj, key, default=''):
-    val = audio_obj.get(key)
-    if not val:
-        return default
-    if isinstance(val, list) and len(val) > 0:
-        return str(val[0])
-    return str(val)
+    """
+    @brief Safely retrieves a metadata key from a Mutagen object.
+    @details Ruft sicher einen Metadaten-Key aus einem Mutagen-Objekt ab.
+    @param audio_obj Mutagen audio object / Mutagen Audio-Objekt.
+    @param key Metadata key / Metadaten-Schlüssel.
+    @param default Default value / Standardwert.
+    @return Value as string / Wert als String.
+    """
 
 def format_samplerate(hz):
     try:
@@ -28,6 +30,16 @@ def format_samplerate(hz):
         return ""
 
 def parse(path, file_type, tags, name, mode='lightweight'):
+    """
+    @brief Extracts tags using Mutagen (ID3, FLAC, Vorbis, MP4).
+    @details Extrahiert Tags mittels Mutagen (ID3, FLAC, Vorbis, MP4).
+    @param path Absolute path / Absoluter Pfad.
+    @param file_type Extension (e.g., '.mp3') / Dateiendung.
+    @param tags Existing tags dictionary / Vorhandene Tags.
+    @param name Original filename / Originaldateiname.
+    @param mode Extraction mode / Extraktionsmodus.
+    @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
+    """
     from .format_utils import PARSER_CONFIG
     audio_for_info = None
     

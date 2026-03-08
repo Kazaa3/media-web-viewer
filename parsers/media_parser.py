@@ -26,7 +26,13 @@ def extract_metadata(path, filename, debug=False, mode='lightweight', logger=pri
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
     
-    tags = {}
+    tags = {
+        'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
+        'codec': '', 'size': '', 'tagtype': '', 'container': '',
+        'has_art': 'No', 'title': '', 'artist': '', 'album': '',
+        'date': '', 'genre': '', 'track': '', 'totaltracks': '',
+        'disc': '', 'totaldiscs': ''
+    }
     if mode == 'full':
         tags['full_tags'] = {}
         

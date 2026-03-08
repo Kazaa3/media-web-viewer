@@ -106,7 +106,7 @@ def get_known_media_names():
 def clear_media():
     """
     @brief Deletes all entries from the media table.
-    @details Löscht alle Einträge aus der 'media' Tabelle.
+    @details Löscht alle Einträge aus der Tabelle 'media'.
     """
     conn = sqlite3.connect(DB_FILENAME)
     conn.execute("DELETE FROM media")
@@ -181,8 +181,8 @@ def get_media_path(name):
     """
     @brief Returns the full file path for a given media name.
     @details Gibt den vollen Dateipfad für einen Mediennamen zurück.
-    @param name Media name / Medienname.
-    @return Full path or None / Voller Pfad oder None.
+    @param name Media record name / Datenbank-Name.
+    @return Full filesystem path or None / Voller Pfad oder None.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -195,7 +195,7 @@ def update_media_tags(name, tags_dict):
     """
     @brief Updates the tags of a media item in the database.
     @details Aktualisiert die Tags eines Medien-Items in der Datenbank.
-    @param name Media name / Medienname.
+    @param name Media record name / Datenbank-Name.
     @param tags_dict New tags dictionary / Neues Dictionary mit Tags.
     """
     conn = sqlite3.connect(DB_FILENAME)
@@ -212,8 +212,8 @@ def rename_media(old_name, new_name):
     """
     @brief Renames a media item in the database.
     @details Benennt ein Medium in der DB um.
-    @param old_name Current name / Aktueller Name.
-    @param new_name New name / Neuer Name.
+    @param old_name Current record name / Aktueller Name.
+    @param new_name New record name / Neuer Name.
     @return Success status / Erfolgsstatus.
     """
     conn = sqlite3.connect(DB_FILENAME)
