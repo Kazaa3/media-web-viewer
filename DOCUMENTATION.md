@@ -378,8 +378,8 @@ For more information, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_
 Media Web Viewer automatically selects the best available browser when launching the application, **preferring Chrome/Chromium over Vivaldi** and other browsers.
 
 **Browser Priority Order:**
-1. **Google Chrome** (preferred)
-2. **Chromium**
+1. **Google Chrome** (`google-chrome` or `chrome`)
+2. **Chromium** (`chromium-browser` or `chromium`)
 3. **Firefox**
 4. System default browser (fallback)
 
