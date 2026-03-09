@@ -359,93 +359,52 @@ def get_environment_info():
         
         return venvs
     
-    try:
-        # Discover available environments (cached/fast)
-        conda_envs = _get_conda_environments()
-        system_pythons = _get_system_pythons()
-        installed_packages = _get_installed_packages()
-        local_venvs = _find_local_venvs()
-    except Exception as e:
-        logging.error(f"Error discovering environments: {e}")
-        conda_envs = []
-        system_pythons = []
-        installed_packages = []
-        local_venvs = []
+    # Discover available environments (cached/fast)
+    conda_envs = _get_conda_environments()
+    system_pythons = _get_system_pythons()
+    installed_packages = _get_installed_packages()
+    local_venvs = _find_local_venvs()
     
     # ===== Build Response =====
-    try:
-        return {
-            # Current Environment (Primary)
-            "python_version": platform.python_version(),
-            "python_executable": sys.executable,
-            "python_prefix": sys.prefix,
-            "python_base_prefix": sys.base_prefix,
-            "in_venv": in_venv,
-            "venv_path": venv_path or venv_env,
-            "in_conda": in_conda,
-            "conda_env_name": conda_env_name,
-            "conda_prefix": conda_prefix,
-            "has_conda_context": bool(conda_env_name or conda_prefix),
-            "env_type": env_type,
-            "env_path": env_path,
-            "env_name": env_name,
-            "platform": platform.platform(),
-            "platform_system": platform.system(),
-            "platform_release": platform.release(),
-            
-            # Current Environment (Detailed)
-            "current_environment": current_env,
-            
-            # Alternative Environments (Discovery Results)
-            "available_conda_environments": conda_envs,
-            "available_system_pythons": system_pythons,
-            "local_venvs": local_venvs,
-            
-            # Installed Packages
-            "installed_packages": installed_packages,
-            "package_count": len(installed_packages),
-            
-            # Recommendations
-            "recommended_environment": {
-                "name": "p14",
-                "type": "conda",
-                "python_version": "3.14.2",
-                "reason": "Latest stable Python release for Media Web Viewer"
-            }
+    return {
+        # Current Environment (Primary)
+        "python_version": platform.python_version(),
+        "python_executable": sys.executable,
+        "python_prefix": sys.prefix,
+        "python_base_prefix": sys.base_prefix,
+        "in_venv": in_venv,
+        "venv_path": venv_path or venv_env,
+        "in_conda": in_conda,
+        "conda_env_name": conda_env_name,
+        "conda_prefix": conda_prefix,
+        "has_conda_context": bool(conda_env_name or conda_prefix),
+        "env_type": env_type,
+        "env_path": env_path,
+        "env_name": env_name,
+        "platform": platform.platform(),
+        "platform_system": platform.system(),
+        "platform_release": platform.release(),
+        
+        # Current Environment (Detailed)
+        "current_environment": current_env,
+        
+        # Alternative Environments (Discovery Results)
+        "available_conda_environments": conda_envs,
+        "available_system_pythons": system_pythons,
+        "local_venvs": local_venvs,
+        
+        # Installed Packages
+        "installed_packages": installed_packages,
+        "package_count": len(installed_packages),
+        
+        # Recommendations
+        "recommended_environment": {
+            "name": "p14",
+            "type": "conda",
+            "python_version": "3.14.2",
+            "reason": "Latest stable Python release for Media Web Viewer"
         }
-    except Exception as e:
-        logging.error(f"Error building environment response: {e}")
-        # Return minimal safe response
-        return {
-            "python_version": platform.python_version(),
-            "python_executable": sys.executable,
-            "python_prefix": sys.prefix,
-            "python_base_prefix": sys.base_prefix,
-            "in_venv": False,
-            "venv_path": None,
-            "in_conda": False,
-            "conda_env_name": None,
-            "conda_prefix": None,
-            "has_conda_context": False,
-            "env_type": "system",
-            "env_path": None,
-            "env_name": None,
-            "platform": platform.platform(),
-            "platform_system": platform.system(),
-            "platform_release": platform.release(),
-            "current_environment": current_env,
-            "available_conda_environments": [],
-            "available_system_pythons": [],
-            "local_venvs": [],
-            "installed_packages": [],
-            "package_count": 0,
-            "recommended_environment": {
-                "name": "p14",
-                "type": "conda",
-                "python_version": "3.14.2",
-                "reason": "Latest stable Python release for Media Web Viewer"
-            }
-        }
+    }
 
 
 # Konfiguration
@@ -573,6 +532,44 @@ def get_preferred_browser():
     return webbrowser
 
 
+def open_session_url(url: str) -> bool:
+    """Open a session URL in app-mode window when possible, else fallback browser."""
+    import shutil
+
+    browser_candidates = [
+        'chromium-browser',
+        'chromium',
+    ]
+
+    for browser_cmd in browser_candidates:
+        browser_path = shutil.which(browser_cmd)
+        if browser_path:
+            logging.info(f"[Browser] Launching {browser_cmd} in app mode")
+            try:
+                subprocess.Popen([
+                    browser_path,
+                    f'--app={url}',
+                    '--new-window',
+                    '--no-first-run',
+                    '--no-default-browser-check',
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+                )
+                return True
+            except Exception as e:
+                logging.warning(f"[Browser] Failed to launch {browser_cmd}: {e}")
+
+    logging.warning("[Browser] Chromium not found, falling back to preferred browser")
+    try:
+        browser = get_preferred_browser()
+        browser.open(url)
+        return True
+    except Exception as e:
+        logging.warning(f"[Browser] Fallback browser launch failed: {e}")
+        return False
+
+
 def run_sessionless_mode() -> dict:
     """
     Execute sessionless startup flow and return status information.
@@ -623,43 +620,66 @@ def check_running_sessions() -> list[dict]:
         list[dict]: List of active sessions with pid, port, and command info
     """
     import psutil
-    
+
     sessions = []
     current_pid = os.getpid()
-    
+    pid_to_port: dict[int, int] = {}
+
+    try:
+        for conn in psutil.net_connections(kind='tcp'):
+            if conn.status != 'LISTEN':
+                continue
+            if not conn.pid or conn.pid == current_pid:
+                continue
+
+            laddr = conn.laddr
+            host = None
+            port = None
+
+            if hasattr(laddr, 'ip') and hasattr(laddr, 'port'):
+                host = laddr.ip
+                port = laddr.port
+            elif isinstance(laddr, tuple) and len(laddr) >= 2:
+                host, port = laddr[0], laddr[1]
+
+            if host not in ('127.0.0.1', '::1', '0.0.0.0'):
+                continue
+            if isinstance(port, int) and conn.pid not in pid_to_port:
+                pid_to_port[conn.pid] = port
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
+        pass
+
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            # Skip current process
-            if proc.info['pid'] == current_pid:
+            pid = proc.info['pid']
+            if pid == current_pid:
                 continue
-                
-            # Check if it's a Python process running main.py
+
             cmdline = proc.info.get('cmdline') or []
             if not cmdline:
                 continue
-                
-            # Look for main.py in command line
+
             if any('main.py' in str(arg) for arg in cmdline):
-                # Try to find listening port
-                port = None
-                try:
-                    connections = proc.connections()
-                    for conn in connections:
-                        if conn.status == 'LISTEN' and conn.laddr.ip == '127.0.0.1':
-                            port = conn.laddr.port
-                            break
-                except (psutil.AccessDenied, psutil.NoSuchProcess):
-                    pass
-                
                 sessions.append({
-                    'pid': proc.info['pid'],
-                    'port': port,
+                    'pid': pid,
+                    'port': pid_to_port.get(pid),
                     'cmdline': ' '.join(cmdline),
                 })
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-    
+
     return sessions
+
+
+def is_session_url_reachable(url: str, timeout: float = 1.0) -> bool:
+    """Check whether an existing session URL responds in time."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            return 200 <= int(getattr(response, 'status', 200)) < 500
+    except Exception:
+        return False
 
 
 def is_port_in_use(port: int) -> bool:
@@ -2224,12 +2244,28 @@ if __name__ == "__main__":
     if existing_sessions:
         existing = existing_sessions[0]
         existing_url = f"http://localhost:{existing['port']}/app.html"
+
+        if is_session_url_reachable(existing_url, timeout=0.8):
+            logging.warning(
+                f"[Session] Existing session detected (PID {existing['pid']}, port {existing['port']}). "
+                "Skipping new window launch."
+            )
+            logging.info(f"[Session] Existing session URL: {existing_url}")
+
+            if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
+                logging.info("[Session] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
+            else:
+                try:
+                    if open_session_url(existing_url):
+                        logging.info("[Session] Opened existing session URL.")
+                except Exception as e:
+                    logging.warning(f"[Session] Failed to open existing session URL: {e}")
+
+            raise SystemExit(0)
+
         logging.warning(
-            f"[Session] Existing session detected (PID {existing['pid']}, port {existing['port']}). "
-            "Skipping new window launch."
+            f"[Session] Ignoring stale session candidate (PID {existing['pid']}, port {existing['port']}) - URL unreachable."
         )
-        logging.info(f"[Session] Existing session URL: {existing_url}")
-        raise SystemExit(0)
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
@@ -2265,39 +2301,7 @@ if __name__ == "__main__":
         session_url = f"http://localhost:{session_port}/app.html"
         logging.info(f"[Session] Opening browser at {session_url}")
         
-        # Launch Chromium in app mode (standalone window without browser UI)
-        import shutil
-        browser_found = False
-        browser_candidates = [
-            'chromium-browser',
-            'chromium',
-        ]
-        
-        for browser_cmd in browser_candidates:
-            browser_path = shutil.which(browser_cmd)
-            if browser_path:
-                logging.info(f"[Browser] Launching {browser_cmd} in app mode")
-                try:
-                    subprocess.Popen([
-                        browser_path,
-                        f'--app={session_url}',
-                        '--new-window',
-                        '--no-first-run',
-                        '--no-default-browser-check',
-                    ], 
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                    )
-                    browser_found = True
-                    break
-                except Exception as e:
-                    logging.warning(f"[Browser] Failed to launch {browser_cmd}: {e}")
-                    continue
-        
-        if not browser_found:
-            logging.warning("[Browser] Chromium not found, falling back to preferred browser")
-            browser = get_preferred_browser()
-            browser.open(session_url)
+        open_session_url(session_url)
         
     except Exception as e:
         logging.error(f"[Startup-Error] Failed to start session: {e}")

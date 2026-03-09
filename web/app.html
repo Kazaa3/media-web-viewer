@@ -3093,7 +3093,8 @@
                 const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];
                 const safeInstalledPackages = Array.isArray(info.installed_packages) ? info.installed_packages : [];
                 
-                document.getElementById('env-python-version').textContent = info.python_version;
+                const envPythonVersionEl = document.getElementById('env-python-version');
+                if (envPythonVersionEl) envPythonVersionEl.textContent = info.python_version || '-';
                 
                 // Display environment type and status
                 let statusText = '';
@@ -3114,41 +3115,52 @@
                     isActive = false;
                 }
                 
-                document.getElementById('env-venv-status').textContent = statusText;
-                document.getElementById('env-venv-path').textContent = info.env_path || '-';
-                document.getElementById('env-python-exec').textContent = info.python_executable;
-                document.getElementById('env-platform').textContent = `${info.platform_system} ${info.platform_release}`;
+                const envVenvStatusEl = document.getElementById('env-venv-status');
+                const envVenvPathEl = document.getElementById('env-venv-path');
+                const envPythonExecEl = document.getElementById('env-python-exec');
+                const envPlatformEl = document.getElementById('env-platform');
+
+                if (envVenvStatusEl) envVenvStatusEl.textContent = statusText;
+                if (envVenvPathEl) envVenvPathEl.textContent = info.env_path || '-';
+                if (envPythonExecEl) envPythonExecEl.textContent = info.python_executable || '-';
+                if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
                 
                 // Color code the venv status
                 const statusEl = document.getElementById('env-venv-status');
-                if (isActive) {
-                    statusEl.style.color = '#2a7';
-                    statusEl.style.fontWeight = 'bold';
-                } else {
-                    statusEl.style.color = '#f4d';
+                if (statusEl) {
+                    if (isActive) {
+                        statusEl.style.color = '#2a7';
+                        statusEl.style.fontWeight = 'bold';
+                    } else {
+                        statusEl.style.color = '#f4d';
+                    }
                 }
 
                 // Display Conda Environments
                 const condaList = document.getElementById('conda-environments-list');
-                if (safeCondaEnvs.length > 0) {
+                if (condaList && safeCondaEnvs.length > 0) {
                     let condaHtml = '<div style="font-family: monospace;">';
                     safeCondaEnvs.forEach(env => {
-                        const isCurrent = info.env_type === 'conda' && info.env_name === env.name;
-                        const isRecommended = env.recommended;
+                        if (!env || typeof env !== 'object') return;
+                        const envName = env.name || '-';
+                        const envVersion = env.version || '-';
+                        const envPath = env.path || '-';
+                        const isCurrent = info.env_type === 'conda' && info.env_name === envName;
+                        const isRecommended = !!env.recommended;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
                         const recBadge = isRecommended ? '<span style="color: #f80; font-weight: bold;">⭐ EMPFOHLEN</span>' : '';
                         
                         condaHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${env.name} ${currentBadge} ${recBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${env.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${env.path}</div>
+                                <div style="font-weight: bold; color: #333;">${envName} ${currentBadge} ${recBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${envVersion}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${envPath}</div>
                             </div>
                         `;
                     });
                     condaHtml += '</div>';
                     condaList.innerHTML = condaHtml;
-                } else {
+                } else if (condaList) {
                     condaList.innerHTML = `<span style="color: #999;">${t('env_no_conda_envs')}</span>`;
                 }
 
@@ -3156,8 +3168,9 @@
                 const globalPythonList = document.getElementById('system-python-global-list');
                 const localPythonList = document.getElementById('system-python-local-list');
 
-                const globalPythons = safeSystemPythons.filter(p => String(p.path || '').startsWith('/usr/bin/'));
-                const localPythons = safeSystemPythons.filter(p => !String(p.path || '').startsWith('/usr/bin/'));
+                const validSystemPythons = safeSystemPythons.filter(p => p && typeof p === 'object');
+                const globalPythons = validSystemPythons.filter(p => String(p.path || '').startsWith('/usr/bin/'));
+                const localPythons = validSystemPythons.filter(p => !String(p.path || '').startsWith('/usr/bin/'));
 
                 const renderPythonList = (container, rows, emptyText) => {
                     if (!container) return;
@@ -3167,10 +3180,11 @@
                     }
                     let html = '<div style="font-family: monospace;">';
                     rows.forEach(python => {
+                        if (!python || typeof python !== 'object') return;
                         html += `
                             <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
-                                <div style="color: #666; font-size: 0.9em;">${python.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path}</div>
+                                <div style="color: #666; font-size: 0.9em;">${python.version || '-'}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path || '-'}</div>
                             </div>
                         `;
                     });
@@ -3183,23 +3197,24 @@
 
                 // Display Local Virtual Environments
                 const venvsList = document.getElementById('local-venvs-list');
-                if (safeLocalVenvs.length > 0) {
+                if (venvsList && safeLocalVenvs.length > 0) {
                     let venvsHtml = '<div style="font-family: monospace;">';
                     safeLocalVenvs.forEach(venv => {
+                        if (!venv || typeof venv !== 'object') return;
                         const isCurrent = venv.is_current;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
                         
                         venvsHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${venv.name} ${currentBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${venv.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path}</div>
+                                <div style="font-weight: bold; color: #333;">${venv.name || '-'} ${currentBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${venv.version || '-'}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path || '-'}</div>
                             </div>
                         `;
                     });
                     venvsHtml += '</div>';
                     venvsList.innerHTML = venvsHtml;
-                } else {
+                } else if (venvsList) {
                     venvsList.innerHTML = `<span style="color: #999;">${t('env_no_local_venvs')}</span>`;
                 }
 
@@ -3207,7 +3222,7 @@
                 const packagesList = document.getElementById('installed-packages-list');
                 const packageCount = document.getElementById('package-count');
                 
-                if (safeInstalledPackages.length > 0) {
+                if (safeInstalledPackages.length > 0 && packagesList && packageCount) {
                     packageCount.textContent = `(${safeInstalledPackages.length})`;
                     
                     // Store packages globally for search functionality
@@ -3225,8 +3240,8 @@
                                 renderPackages(window.allPackages);
                             } else {
                                 const filtered = window.allPackages.filter(pkg => 
-                                    pkg.name.toLowerCase().includes(searchTerm) ||
-                                    (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
+                                    String(pkg.name || '').toLowerCase().includes(searchTerm) ||
+                                    String(pkg.version || '').toLowerCase().includes(searchTerm)
                                 );
                                 renderPackages(filtered);
                             }
@@ -3234,8 +3249,8 @@
                         searchInput.dataset.bound = '1';
                     }
                 } else {
-                    packageCount.textContent = '(0)';
-                    packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
+                    if (packageCount) packageCount.textContent = '(0)';
+                    if (packagesList) packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
                 }
                 
             } catch (e) {
