@@ -1,9 +1,14 @@
 # Logbuch-Eintrag 53: Version Synchronization System
 
 ## Status
-**Datum:** 2026-03-08  
-**Version:** 1.3.1  
-**Status:** ✅ Abgeschlossen (Erweitert mit 10 Locations)  
+**Datum:** 2026-03-09  
+**Version:** 1.3.4  
+**Status:** ✅ Abgeschlossen (Erweitert auf 15 Locations inkl. Logbuch-Header + Auto-Update-Skript)  
+
+**Aktueller Stand (konsolidiert):**
+- `VERSION_SYNC.json` überwacht aktuell **15** Sync-Locations.
+- `update_version.py` automatisiert Version-Bumps über alle konfigurierten Stellen.
+- `tests/test_version_sync.py` ist der verbindliche Release-Gate-Check.
 
 ## Problemstellung
 Bei jedem Version-Update musste manuell daran gedacht werden, die Version an mehreren Stellen im Projekt zu ändern:
@@ -22,7 +27,7 @@ Zentrale JSON-Konfigurationsdatei, die alle Synchronisations-Punkte definiert:
 **Struktur:**
 ```json
 {
-  "version": "1.3.1",
+  "version": "1.3.4",
   "sync_locations": [
     {
       "file": "main.py",
@@ -61,10 +66,10 @@ Umfassende Validierung aller Version-Synchronisations-Punkte:
 **Test-Ausgabe:**
 ```
 🧪 Media Web Viewer - Version Synchronization Test Suite
-📌 Master version from VERSION file: 1.3.1
-✅ Version format valid: 1.3.1 matches ^\d+\.\d+\.\d+$
+📌 Master version from VERSION file: 1.3.4
+✅ Version format valid: 1.3.4 matches ^\d+\.\d+\.\d+$
 🔄 Checking VERSION_SYNC.json consistency... ✅
-📝 Checking 10 sync locations... ✅ All passed
+📝 Checking 15 sync locations... ✅ All passed
 ✅ Version synchronization test PASSED
 ```
 
@@ -74,7 +79,7 @@ Test erkennt zuverlässig Inkonsistenzen:
 **Szenario:** Version in main.py absichtlich auf 1.2.0 gesetzt
 ```
 ❌ Errors (1):
-   - main.py: Version 1.3.1 not found
+  - main.py: Version 1.3.4 not found
 💡 How to fix:
    1. Check VERSION_SYNC.json for all required locations
    2. Update each file with the correct version pattern
@@ -83,21 +88,42 @@ Test erkennt zuverlässig Inkonsistenzen:
 
 ## Workflow-Integration
 
+## Update (2026-03-09)
+
+Das ursprünglich geplante Auto-Update-Skript ist jetzt umgesetzt.
+
+### Automatischer Version-Bump (empfohlen)
+```bash
+# 1) VERSION + VERSION_SYNC.json + alle konfigurierten Locations aktualisieren
+python update_version.py --new-version 1.3.5
+
+# 2) Konsistenz validieren
+python tests/test_version_sync.py
+
+# 3) Optional: kompletter Release-Check
+python build_system.py --pipeline
+```
+
+### Hinweise
+- `update_version.py` nutzt `VERSION_SYNC.json` als Quellenliste für alle zu synchronisierenden Stellen.
+- Der Test `tests/test_version_sync.py` bleibt die verbindliche Validierung vor Build/Tag.
+- Die Sync-Coverage enthält jetzt auch `logbuch/00_Known_Issues.md` (Titel-Metadaten + sichtbare Header).
+
 ### Manuelle Version-Updates:
 ```bash
 # 1. Version in VERSION Datei ändern
-echo "1.4.0" > VERSION
+echo "X.Y.Z" > VERSION
 
 # 2. VERSION_SYNC.json aktualisieren
-vim VERSION_SYNC.json  # version: "1.4.0"
+vim VERSION_SYNC.json  # version: "X.Y.Z"
 
 # 3. Test ausführen (zeigt alle zu ändernden Stellen)
 python tests/test_version_sync.py
 
 # 4. Alle gemeldeten Stellen aktualisieren
-vim main.py  # VERSION = "1.4.0"
-vim packaging/DEBIAN/control  # Version: 1.4.0
-vim DOCUMENTATION.md  # **Version:** 1.4.0
+vim main.py  # VERSION = "X.Y.Z"
+vim packaging/DEBIAN/control  # Version: X.Y.Z
+vim DOCUMENTATION.md  # **Version:** X.Y.Z
 
 # 5. Validierung
 python tests/test_version_sync.py  # ✅ All checks passed
@@ -152,12 +178,12 @@ Neue Sync-Location hinzufügen:
 - 🚀 **Future-Ready** - Basis für auto-update Script
 
 ## Bekannte Einschränkungen
-1. **Manuelle Updates nötig** - Noch kein automatisches Update-Script
+1. **Template-basierte Ersetzbarkeit nötig** - nur Einträge mit `${version}`-Pattern können automatisch ersetzt werden
 2. **Exact Pattern Match** - Whitespace-sensitiv (könnte flexibler sein)
 3. **Single Version Global** - Keine per-component Versionierung
 
 ## Ausblick / Todo
-- [x] **Auto-Update Script:** `update_version.py --new-version 1.4.0` → updated alle Stellen automatisch
+- [x] **Auto-Update Script:** `update_version.py --new-version X.Y.Z` → updated alle Stellen automatisch
 - [ ] **Pre-commit Hook:** Automatische Validierung vor Git Commit
 - [ ] **Version History:** Track in VERSION_SYNC.json wer wann was geändert hat
 - [ ] **Regex Pattern Support:** Flexiblere Pattern-Matching-Optionen
@@ -166,16 +192,16 @@ Neue Sync-Location hinzufügen:
 
 ### ✅ Positive Test (alle sync):
 ```
-📊 Test Results: 10 locations checked
+📊 Test Results: 15 locations checked
 ✅ All version checks passed!
-   Version 1.3.1 is synchronized across all locations.
+  Version 1.3.4 is synchronized across all locations.
 ```
 
 ### ❌ Negative Test (Inkonsistenz erkannt):
 ```
 📊 Test Results:
 ❌ Errors (1):
-   - main.py: Version 1.3.1 not found
+  - main.py: Version 1.3.4 not found
 ```
 
 ## Erweiterungen (2026-03-08)
@@ -189,23 +215,23 @@ Nach der initialen Implementation wurden zusätzliche 4 Locations in DOCUMENTATI
 - **Current Version:** `**Current Version:** ${version}` - Zeile 3825
 
 **Resultat:**
-- Sync Locations: 6 → **10** (+4 optional)
+- Sync Locations (historischer Verlauf): 6 → 10 → 11 → **15**
 - Test Coverage: 100% aller kritischen und dokumentierten Stellen
-- Alle ~27 Vorkommen in DOCUMENTATION.md auf 1.3.1 aktualisiert
+- Aktueller Stand: Version-Strings auf **1.3.4** synchronisiert
 
 ## Dateien
 
 ### Neu erstellt:
-- `VERSION_SYNC.json` - Metadaten-Konfiguration (71 Zeilen, 2.3 KB)
-- `tests/test_version_sync.py` - Test Suite (239 Zeilen, 9.3 KB)
+- `VERSION_SYNC.json` - Metadaten-Konfiguration
+- `tests/test_version_sync.py` - Test Suite
 
 ### Modifiziert:
-- `main.py` - Version korrigiert auf 1.3.1 (war 1.3.0)
-- `README.md` - Version aktualisiert: 2 Stellen (v1.1.23 → v1.3.1)
-- `DOCUMENTATION.md` - Version aktualisiert: ~27 Stellen (1.1.14, 1.2.23, 1.2.24 → 1.3.1)
+- `main.py` - Fallback-Version synchronisiert
+- `README.md` - Release-/Installationsversionen synchronisiert
+- `DOCUMENTATION.md` - Versionsreferenzen und Workflow synchronisiert
 
 ## Zusammenfassung
-Erfolgreiche Implementierung eines robusten Version-Synchronisations-Systems mit **10 überwachten Locations** (6 required, 4 optional). Alle kritischen Stellen werden automatisch validiert. System ist bereit für CI/CD Integration und zukünftiges Auto-Update-Tooling. **Alle Tests bestehen ✅**.
+Erfolgreiche Implementierung eines robusten Version-Synchronisations-Systems mit aktuell **15 überwachten Locations** (required + optional). Alle kritischen Stellen werden automatisch validiert, inklusive Logbuch-Header in `00_Known_Issues.md`. Das System enthält jetzt ein aktives Auto-Update-Tooling (`update_version.py`) plus CI/CD-fähigen Gate-Test. **Alle Tests bestehen ✅**.
 
 ## Verwendung
 
