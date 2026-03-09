@@ -516,11 +516,45 @@ def get_environment_info(force_refresh=False):
             except Exception:
                 python_vlc_version = None
 
+        ffmpeg_version = None
+        if ffmpeg_path:
+            try:
+                ffmpeg_result = subprocess.run(
+                    [ffmpeg_path, "-version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (ffmpeg_result.stdout or "").splitlines()[0] if ffmpeg_result.stdout else ""
+                match = re.search(r"ffmpeg version\s+([^\s]+)", first_line, re.IGNORECASE)
+                ffmpeg_version = match.group(1) if match else None
+            except Exception:
+                ffmpeg_version = None
+
+        ffprobe_version = None
+        if ffprobe_path:
+            try:
+                ffprobe_result = subprocess.run(
+                    [ffprobe_path, "-version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (ffprobe_result.stdout or "").splitlines()[0] if ffprobe_result.stdout else ""
+                match = re.search(r"ffprobe version\s+([^\s]+)", first_line, re.IGNORECASE)
+                ffprobe_version = match.group(1) if match else None
+            except Exception:
+                ffprobe_version = None
+
         return {
             "ffmpeg_cli_available": bool(ffmpeg_path),
             "ffmpeg_cli_path": ffmpeg_path,
+            "ffmpeg_cli_version": ffmpeg_version,
             "ffprobe_cli_available": bool(ffprobe_path),
             "ffprobe_cli_path": ffprobe_path,
+            "ffprobe_cli_version": ffprobe_version,
             "browser_available": bool(browser_path),
             "browser_name": browser_name,
             "browser_path": browser_path,
