@@ -62,6 +62,19 @@ class TestInstalledPackagesUI(unittest.TestCase):
         for snippet in required_snippets:
             self.assertIn(snippet, self.app_html)
 
+    def test_js_load_environment_info_has_timeout_and_error_fallback(self):
+        """Environment loading must not remain stuck in Loading... on backend failure."""
+        required_snippets = [
+            "const info = await Promise.race([",
+            "Environment info timeout",
+            "if (!info || typeof info !== 'object')",
+            "const failText = `<span style=\"color: #c62828;\">${t('common_error_loading')}</span>`;",
+            "const fallbackNoData = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
+            "if (packagesList) packagesList.innerHTML = fallbackNoData;",
+        ]
+        for snippet in required_snippets:
+            self.assertIn(snippet, self.app_html)
+
     def test_i18n_keys_for_installed_packages_exist_de_en(self):
         """DE and EN must both include required package-related i18n keys."""
         required_keys = [
