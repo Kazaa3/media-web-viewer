@@ -1699,6 +1699,7 @@ def get_logbook_entry(feature_name, source="logbuch"):
     if source == "root":
         allowed_root_files = {
             "README.md",
+            "DOCUMENTATION.md",
             "INSTALL.md",
             "DEPENDENCIES.md",
             "LICENSE.md",
@@ -1864,11 +1865,15 @@ def list_feature_modal_items():
     """
     Returns feature modal items from logbook plus selected markdown files from the project root.
     """
-    items = list_logbook_entries()
+    items = [
+        item for item in list_logbook_entries()
+        if item.get("filename") != "31_Project_Documentation.md"
+    ]
 
     root_dir = Path(__file__).parent
     root_docs = [
         ("README.md", "README", "Project overview and quick start."),
+        ("DOCUMENTATION.md", "Documentation", "Detailed technical documentation."),
         ("INSTALL.md", "Installation", "Installation and setup instructions."),
         ("DEPENDENCIES.md", "Dependencies", "Dependency list and runtime requirements."),
         ("LICENSE.md", "License", "License and legal information."),
