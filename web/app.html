@@ -1265,6 +1265,15 @@
                                 <div style="margin-bottom: 8px;">
                                     <strong data-i18n="env_label_tools">Tools:</strong> <span id="env-tools-status" style="word-break: break-all;">-</span>
                                 </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_core_packages">Core Packages:</strong> <span id="env-core-packages-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_test_tools">Tests:</strong> <span id="env-test-tools-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_requirements_list">Requirements:</strong> <span id="env-requirements-list" style="word-break: break-all;">-</span>
+                                </div>
                                 <div>
                                     <strong data-i18n="env_label_system">System:</strong> <span id="env-platform">-</span>
                                 </div>
@@ -3204,6 +3213,9 @@
                 const envPythonExecEl = document.getElementById('env-python-exec');
                 const envMediainfoStatusEl = document.getElementById('env-mediainfo-status');
                 const envToolsStatusEl = document.getElementById('env-tools-status');
+                const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');
+                const envTestToolsStatusEl = document.getElementById('env-test-tools-status');
+                const envRequirementsListEl = document.getElementById('env-requirements-list');
                 const envPlatformEl = document.getElementById('env-platform');
 
                 const mediaInfoStatus = info.mediainfo_status || {};
@@ -3236,11 +3248,64 @@
                     `${mutagenOk ? '✅' : '❌'} mutagen${mutagenVer ? ` ${mutagenVer}` : ''}`,
                 ].join(' | ');
 
+                const packageVersionMap = new Map();
+                safeInstalledPackages.forEach(pkg => {
+                    if (!pkg || typeof pkg !== 'object') return;
+                    const name = String(pkg.name || '').trim().toLowerCase();
+                    const version = String(pkg.version || '').trim();
+                    if (!name) return;
+                    packageVersionMap.set(name, version || '-');
+                });
+
+                const corePackages = [
+                    ['bottle', 'bottle'],
+                    ['bottle-websocket', 'bottle-websocket'],
+                    ['eel', 'Eel'],
+                    ['m3u8', 'm3u8'],
+                    ['gevent', 'gevent'],
+                ];
+                const coreText = corePackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const testPackages = [
+                    ['pytest', 'pytest'],
+                    ['pytest-cov', 'pytest-cov'],
+                ];
+                const testToolsText = testPackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const requirementsStatusPreview = info.requirements_status && typeof info.requirements_status === 'object'
+                    ? info.requirements_status
+                    : null;
+                const requirementsInstalledPreview = Array.isArray(requirementsStatusPreview?.installed)
+                    ? requirementsStatusPreview.installed
+                    : [];
+                const requirementsMissingPreview = Array.isArray(requirementsStatusPreview?.missing)
+                    ? requirementsStatusPreview.missing
+                    : [];
+                const requirementsListText = requirementsStatusPreview?.available
+                    ? [
+                        requirementsInstalledPreview.length > 0 ? `✅ ${requirementsInstalledPreview.join(', ')}` : '',
+                        requirementsMissingPreview.length > 0 ? `❌ ${requirementsMissingPreview.join(', ')}` : ''
+                    ].filter(Boolean).join(' | ') || '-'
+                    : t('env_requirements_not_found');
+
                 if (envVenvStatusEl) envVenvStatusEl.textContent = statusText;
                 if (envVenvPathEl) envVenvPathEl.textContent = info.env_path || '-';
                 if (envPythonExecEl) envPythonExecEl.textContent = info.python_executable || '-';
                 if (envMediainfoStatusEl) envMediainfoStatusEl.textContent = mediaInfoText;
                 if (envToolsStatusEl) envToolsStatusEl.textContent = toolsText;
+                if (envCorePackagesStatusEl) envCorePackagesStatusEl.textContent = coreText;
+                if (envTestToolsStatusEl) envTestToolsStatusEl.textContent = testToolsText;
+                if (envRequirementsListEl) envRequirementsListEl.textContent = requirementsListText;
                 if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
                 
                 // Color code the venv status
