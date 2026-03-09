@@ -1765,6 +1765,7 @@ def list_logbook_entries():
                 summary = ""
                 status = "ACTIVE"  # Default
                 title = f.stem
+                pinned = False  # Default
 
                 title_de = ""
                 title_en = ""
@@ -1787,6 +1788,8 @@ def list_logbook_entries():
                             category = val
                         elif key == "Status":
                             status = val
+                        elif key == "Pinned":
+                            pinned = val.lower() in ["true", "yes", "1"]
                         elif key == "Title_DE":
                             title_de = val
                         elif key == "Title_EN":
@@ -1836,6 +1839,7 @@ def list_logbook_entries():
                     "summary_de": summary_de,
                     "summary_en": summary_en,
                     "status": _normalize_status(status),
+                    "pinned": pinned,
                     "source": "logbuch",
                     "modified_ts": f.stat().st_mtime,
                     "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(f.stat().st_mtime)),

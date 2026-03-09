@@ -5,6 +5,7 @@
 <!-- Summary_EN: Central overview of planned and delivered features -->
 <!-- Status: active -->
 <!-- Date: 2026-03-09 -->
+<!-- Pinned: true -->
 
 # Features
 
