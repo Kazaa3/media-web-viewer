@@ -138,6 +138,12 @@ try:
 except Exception:
     VERSION = "1.3.4"  # Fallback
 
+_ENV_INFO_CACHE = {
+    "data": None,
+    "ts": 0.0,
+}
+_ENV_INFO_CACHE_TTL_SECONDS = 8.0
+
 
 @eel.expose
 def get_version():
@@ -150,7 +156,35 @@ def get_version():
 
 
 @eel.expose
-def get_environment_info():
+def api_ping(client_ts=None, payload_size=0):
+    """
+    @brief Lightweight ping endpoint for Eel roundtrip latency diagnostics.
+    @details Minimal payload endpoint to measure frontend↔backend roundtrip and payload transfer time.
+    @param client_ts Optional client timestamp / Optionaler Client-Timestamp.
+    @param payload_size Optional echo payload size in bytes (0..200000) / Optionale Echo-Payload.
+    @return Dictionary with timestamps and payload size / Dictionary mit Zeitstempeln und Payload-Größe.
+    """
+    now_ms = int(time.time() * 1000)
+
+    try:
+        size = int(payload_size)
+    except Exception:
+        size = 0
+
+    size = max(0, min(size, 200000))
+    payload = "x" * size if size > 0 else ""
+
+    return {
+        "status": "ok",
+        "server_ts": now_ms,
+        "client_ts": client_ts,
+        "payload_size": size,
+        "payload": payload,
+    }
+
+
+@eel.expose
+def get_environment_info(force_refresh=False):
     """
     @brief Returns comprehensive information about the Python environment.
     @details Gibt detaillierte Informationen über die Python-Umgebung zurück, 
@@ -160,6 +194,11 @@ def get_environment_info():
     import platform
     import subprocess
     import json
+
+    now = time.time()
+    if not force_refresh and _ENV_INFO_CACHE["data"] is not None:
+        if (now - float(_ENV_INFO_CACHE["ts"])) <= _ENV_INFO_CACHE_TTL_SECONDS:
+            return _ENV_INFO_CACHE["data"]
     
     # ===== Current Environment =====
     # Check if we're in a virtual environment (venv/virtualenv)
@@ -366,7 +405,7 @@ def get_environment_info():
     local_venvs = _find_local_venvs()
     
     # ===== Build Response =====
-    return {
+    result = {
         # Current Environment (Primary)
         "python_version": platform.python_version(),
         "python_executable": sys.executable,
@@ -405,6 +444,10 @@ def get_environment_info():
             "reason": "Latest stable Python release for Media Web Viewer"
         }
     }
+
+    _ENV_INFO_CACHE["data"] = result
+    _ENV_INFO_CACHE["ts"] = time.time()
+    return result
 
 
 # Konfiguration

@@ -73,6 +73,30 @@ Regression coverage:
     - `eel.start(..., mode=False)` check
     - UI trace bridge + test run re-entry guard check
 
+### Performance Diagnostics (Backend / Frontend / Bottle / Eel)
+
+To analyze GUI sluggishness in separate layers, the project now includes dedicated probes:
+
+- **Backend probe (Eel-exposed):** `api_ping(client_ts=None, payload_size=0)` in `main.py`
+    - Measures roundtrip timing and optional payload transfer overhead
+    - Payload is clamped to `0..200000` bytes
+
+- **Bottle transport probe:** `GET /health` in `web/app_bottle.py`
+    - Lightweight endpoint for pure HTTP latency checks
+
+- **Frontend diagnostics hook:** `window.runLatencyDiagnostics(payloadSize=0, samples=5)` in `web/app.html`
+    - Measures separately:
+        - frontend frame latency (`requestAnimationFrame`)
+        - Eel roundtrip latency (`eel.api_ping`)
+        - Bottle HTTP latency (`fetch('/health')`)
+
+Additional startup responsiveness optimization:
+- `get_environment_info()` now uses a short-lived cache (`8s` TTL) to avoid repeated expensive environment scans when switching tabs.
+
+Separate test coverage for these probes:
+- `tests/test_performance_probes.py`
+- `tests/test_bottle_health_latency.py`
+
 ---
 
 ## Table of Contents
