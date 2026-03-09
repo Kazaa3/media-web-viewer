@@ -253,6 +253,8 @@ main (M1 – AudioPlayer, released)
 
 ## Related Entries
 
+- [60_Milestone_1_AudioPlayer_Abschluss_und_Technische_Nachdoku.md](60_Milestone_1_AudioPlayer_Abschluss_und_Technische_Nachdoku.md) – M1 completion and technical backfill
+- [61_Branching_Entscheidung_M2_und_Agent_Workflow.md](61_Branching_Entscheidung_M2_und_Agent_Workflow.md) – Binding M2 branch workflow
 - [01_Features.md](01_Features.md) – Planned features
 - [53_Version_Synchronization_System.md](53_Version_Synchronization_System.md) – Version sync system
 - [55_Release_Pipeline_Integration.md](55_Release_Pipeline_Integration.md) – Release pipeline
