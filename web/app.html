@@ -643,7 +643,7 @@
                 if (summaryDeInput) summaryDeInput.value = meta.summaryDe;
                 if (summaryEnInput) summaryEnInput.value = meta.summaryEn;
                 if (dateInput) dateInput.value = meta.date;
-                nameInput.disabled = true;
+                nameInput.disabled = false;
             } else {
                 title.innerText = t('logbook_edit_title_new');
                 nameInput.value = '';
@@ -680,11 +680,18 @@
                 return;
             }
 
-            // If we are editing, overwrite the original file. If new, use the input name.
-            const filenameToSave = currentLogbookEditFilename || name;
+            const originalName = (currentLogbookEditFilename || '').replace(/\.md$/i, '');
+            const isRename = !!currentLogbookEditFilename && originalName !== name;
+            const filenameToSave = name;
 
             const res = await eel.save_logbook_entry(filenameToSave, content)();
             if (res.status === 'ok') {
+                if (isRename) {
+                    const delRes = await eel.delete_logbook_entry(currentLogbookEditFilename)();
+                    if (delRes.status !== 'ok') {
+                        alert((t('common_error') || 'Fehler: ') + (delRes.error || 'Alte Datei konnte nicht gelöscht werden'));
+                    }
+                }
                 closeLogbookEditor();
                 loadLogbuchTab();
                 alert(t('logbook_saved'));
