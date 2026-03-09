@@ -18,7 +18,7 @@ This version is automatically loaded and used across:
 - Application GUI (Help/About/Footer)
 - Linux start menu entry (`packaging/usr/share/applications/media-web-viewer.desktop`)
 
-Version synchronization is validated via `VERSION_SYNC.json` (currently 15 tracked locations) and:
+Version synchronization is validated via `VERSION_SYNC.json` (currently 11 tracked locations) and:
 
 ```bash
 python tests/test_version_sync.py
@@ -33,28 +33,98 @@ python tests/test_version_sync.py && echo "VERSION SYNC OK"
 If the test fails, align all reported locations first and rebuild artifacts afterwards.
 
 To update the version:
-1. Run `python update_version.py --new-version X.Y.Z` in the project root.
+1. Edit the `VERSION` file in the project root.
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
 
-Quick example:
+### Release Notes (v1.3.4)
 
-```bash
-python update_version.py --new-version 1.3.5
-python tests/test_version_sync.py
-python build_system.py --pipeline
-```
+Highlights of this release:
+
+- **media_type / subtype**: `releases` gains `media_type` (`Audio|Video|Document|Image`)
+  and `subtype` (from the new `release_subtypes` DB table).
+- **release_subtypes table**: User-editable list of valid subtypes per media_type, seeded
+  with built-in defaults (Album, Film, Series, EBook, …).  Custom subtypes can be added
+  via `add_release_subtype()`.
+- **Multi-language titles** (`release_titles`): Each release can store titles in any
+  number of languages (ISO 639-1 codes + `'original'`).  Required for film titles in
+  German / English / original language.
+- **Cover images** (`release_covers`): Front, back, disc, inlay, poster covers can be
+  attached to a release or a specific disc/item.  Supports local paths and scraped URLs
+  (IMDb, TMDb, MusicBrainz, CoverArtArchive).
+- **Multi-disc support** (`release_items`): Each item now carries `disc_number`,
+  `disc_type` (`Film|Bonus|Soundtrack|Extra|Document`), and `disc_label`.  Handles
+  releases like: Disc 1 = Film ISO, Disc 2 = BD Bonus, Disc 3 = DVD Bonus, Disc 4 = CD
+  Soundtrack, or EBook with PDF + EPUB + MOBI items.
+- **Video-specific fields** (`releases`): `video_standard` (PAL / NTSC / SECAM),
+  `region` (ISO 3166-1 alpha-2: DE, UK, US, JP, …), `container_type`
+  (Blu-ray / PAL DVD / NTSC DVD / VCD / HD DVD / WMV DVD / Digital), `disc_format`
+  (ISO / BIN / MKV / MP4 / …), `total_discs`.
+- **parent_release_id**: A release can reference a parent release for bonus content.
+- **release_identifiers table**: Multiple ISBNs, UPCs, barcodes, IMDb IDs, MusicBrainz
+  IDs, etc. per release.
+- **scraper_sources table**: Plugin registry for scraper sources; seeded with IMDb, TMDb,
+  MusicBrainz, CoverArtArchive, OpenLibrary, GoogleBooks. Additional plugins can be
+  registered with `register_scraper_source()`.
+- **Migration**: Existing v1.3.4 databases are upgraded transparently by `init_db()`.
+- **75 tests** (48 new in steps 17–27).
+- **New public API** in `db.py`:
+    - `insert_release(…, media_type, subtype, parent_release_id, video_standard, region, container_type, disc_format, total_discs)`
+    - `assign_item_to_release(…, disc_number, disc_type, disc_label)`
+    - `get_all_releases(…, media_type, subtype)` / `search_releases(…, media_type, subtype)`
+    - Identifiers: `add_release_identifier`, `get_release_identifiers`, `remove_release_identifier`, `get_releases_by_identifier`
+    - Subtypes: `get_release_subtypes`, `add_release_subtype`, `remove_release_subtype`
+    - Titles: `set_release_title`, `get_release_titles`, `remove_release_title`
+    - Covers: `add_release_cover`, `get_release_covers`, `remove_release_cover`
+    - Scrapers: `get_scraper_sources`, `register_scraper_source`, `set_scraper_source_enabled`
 
 ### Release Notes (v1.3.4)
 
 Highlights of this release:
-- Introduced a dedicated `tags` table in SQLite (EAV schema: `media_id`, `key`, `value`)
-  replacing the previous JSON blob stored in `media.tags`
-- Added automatic migration: existing JSON tag data is moved to the new table on first run
-- Added `get_media_tags(name)` for direct per-item tag retrieval
-- Added `get_tags_by_key(key)` for querying all media sharing a specific tag key
-- `media.tags` JSON column is kept in sync for backward compatibility
+- **Releases database (v1.3.4)**: Introduced `releases` and `release_items` tables so
+  that filesystem items (media rows) can be grouped into logical releases – music albums,
+  films, audiobooks, documents.
+- Each release stores only **minimal status information** (title, type, year, cut, status).
+  All scraper-enriched metadata lives in a `scraper_data` JSON column (Python dict →
+  `json.dumps`), ready to be populated by future scrapers.
+- `release_items` links one or more media items to a release with an optional `position`
+  (track number for music, disc / file order for films).  A media item can belong to
+  exactly one release.
+- Scale-aware design: three covering indexes (`type`, `status`, `year` on `releases`;
+  `release_id+position` on `release_items`) support queries over 100,000+ films and
+  500,000+ music files.
+- New public API in `db.py`:
+    - `insert_release(title, release_type, year, cut, status, scraper_data)`
+    - `get_release(release_id)`
+    - `get_all_releases(release_type, status)`
+    - `update_release_scraper_data(release_id, scraper_data, status)`
+    - `update_release_status(release_id, status)`
+    - `delete_release(release_id)` — cascades to release_items
+    - `assign_item_to_release(release_id, media_name, position)`
+    - `remove_item_from_release(media_name)`
+    - `get_release_items(release_id)`
+    - `get_item_release(media_name)`
+    - `search_releases(query, release_type)`
+- Test suite extended to 27 tests (14 new release tests, steps 9–16).
+
+### Release Notes (v1.3.4)
+
+Highlights of this release:
+- **Tags Database (v1.3.4)**: Introduced a dedicated `media_tags` table in SQLite for
+  proper, queryable tag storage. Individual tag key-value pairs are now stored as
+  relational rows instead of a single JSON blob, enabling SQL-level filtering and search.
+- New public API in `db.py`:
+    - `search_media_by_tag(key, value)` — find all media by tag key and value
+    - `get_all_tag_keys()` — list every distinct tag key in the library
+    - `get_tag_values(key)` — list all distinct values for a given key
+    - `get_tag_value(name, key)` — retrieve one tag value for a specific media item
+- Automatic migration: `init_db()` populates `media_tags` from existing JSON blobs so
+  legacy databases are seamlessly upgraded without data loss.
+- `get_db_stats()` now also reports `total_tag_entries`.
+- `delete_media()` removes associated `media_tags` rows to prevent orphaned data.
+- Comprehensive test suite in `tests/test_db_logic.py` with 13 step-by-step tests
+  covering insert, query, update, delete, migration and statistics.
 
 ### Release Notes (v1.3.3)
 
@@ -67,40 +137,6 @@ Highlights of this release:
     - global Promise handler now suppresses noisy `NotSupportedError` popups
     - unsupported sources are shown as readable UI status (`player_unsupported_source`)
 - Removed duplicate video function definitions in frontend to prevent handler overrides
-
-### Stability Notes (Test-Tab / Single-Window)
-
-Recent stability hardening for the integrated Test tab includes:
-- Explicit single-window startup behavior by disabling Eel auto-launch (`eel.start(..., mode=False)`) and using one manual Chromium app launch path.
-- Keepalive loop hardening against unload-related `SystemExit` events.
-- Frontend-to-backend UI tracing (`ui_trace`) for tab-switch/unload root-cause analysis in terminal logs.
-- Test-run re-entry guard (no concurrent multi-click test starts).
-
-Regression coverage:
-- `tests/test_ui_session_stability.py`
-    - keepalive `BaseException` guard check
-    - single browser launch path check
-    - `eel.start(..., mode=False)` check
-    - UI trace bridge + test run re-entry guard check
-
----
-
-### Milestone Roadmap
-
-The project is developed in three dedicated branches, one per milestone:
-
-| Milestone | Name              | Branch                          | Status       |
-|-----------|-------------------|---------------------------------|--------------|
-| M1        | AudioPlayer       | `main`                          | ✅ Released  |
-| M2        | Media Library     | `milestone/2-medienbibliothek`  | 🟡 Active    |
-| M3        | New GUI           | `milestone/3-neue-gui`          | 📋 Planned   |
-
-**M1 – AudioPlayer** (`main`): functional player, full metadata parsing, multi-platform builds, CI/CD — released as `v1.3.3`.
-
-**M2 – Media Library** (`milestone/2-medienbibliothek`): relational tags table, library search/filtering, playlist management — this branch, `v1.3.4+`.  
-See [`logbuch/59_Milestone_2_Medienbibliothek.md`](logbuch/59_Milestone_2_Medienbibliothek.md) for full design notes.
-
-**M3 – New GUI** (`milestone/3-neue-gui`): migration to a modern frontend framework — planned, starts after M2 merges into `main`.
 
 ---
 
@@ -243,7 +279,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.4_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -295,7 +331,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.4_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -332,7 +368,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.4_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -569,8 +605,7 @@ sudo apt purge media-web-viewer
 media-web-viewer/
 │
 ├── VERSION                  # Master semantic version (single source of truth)
-├── VERSION_SYNC.json        # Version synchronization map (15 tracked locations)
-├── update_version.py        # Automated version bump based on VERSION_SYNC.json
+├── VERSION_SYNC.json        # Version synchronization map (11 tracked locations)
 ├── main.py                  # Entry point, Eel setup, backend API functions
 ├── models.py                # MediaItem class with parsing and transcoding logic
 ├── db.py                    # SQLite database operations
@@ -1877,9 +1912,41 @@ CREATE TABLE playlist_media (
 );
 ```
 
+### Table: `media_tags` *(since v1.3.4)*
+
+Stores individual tag key-value pairs as relational rows, enabling SQL-level queries
+and filtering (e.g. find all tracks by an artist or of a given genre).
+
+```sql
+CREATE TABLE media_tags (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    media_id INTEGER NOT NULL,          -- FK to media
+    key      TEXT NOT NULL,             -- Tag key  (e.g. 'artist', 'genre')
+    value    TEXT,                      -- Tag value (stored as string)
+    FOREIGN KEY(media_id) REFERENCES media(id) ON DELETE CASCADE,
+    UNIQUE(media_id, key)
+);
+
+CREATE INDEX idx_media_tags_key_value ON media_tags(key, value);
+```
+
+**Public API (db.py):**
+
+| Function | Description |
+|---|---|
+| `search_media_by_tag(key, value)` | Return media names matching a tag key/value (substring) |
+| `get_all_tag_keys()` | Return sorted list of all distinct tag keys |
+| `get_tag_values(key)` | Return sorted list of all distinct values for a key |
+| `get_tag_value(name, key)` | Return single tag value for a specific media item |
+
 ### Tags Storage
 
-The `tags` column stores metadata as JSON. Example:
+The `tags` column on the `media` table retains the full tag set as a JSON blob for
+backward compatibility and fast full-tag retrieval. The `media_tags` table is kept
+in sync automatically by `insert_media()`, `update_media_tags()`, and `delete_media()`.
+Legacy databases are upgraded transparently the first time `init_db()` runs.
+
+Example JSON stored in `tags`:
 
 ```json
 {
@@ -1903,6 +1970,183 @@ The `tags` column stores metadata as JSON. Example:
     }
 }
 ```
+
+### Table: `releases` *(since v1.3.4, extended v1.3.4)*
+
+Groups one or more filesystem items into a logical release (album, film, audiobook, ebook bundle, …).
+
+```sql
+CREATE TABLE releases (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    title             TEXT NOT NULL,                    -- Primary title
+    type              TEXT NOT NULL DEFAULT 'Music',    -- Legacy v1.3.4 type (kept for compat)
+    media_type        TEXT NOT NULL DEFAULT 'Audio',    -- Audio | Video | Document | Image
+    subtype           TEXT,                             -- e.g. Album, Film, EBook (→ release_subtypes)
+    year              INTEGER,
+    cut               TEXT,                             -- 'Director''s Cut', 'Extended Cut', …
+    status            TEXT NOT NULL DEFAULT 'pending',  -- pending | scraped | verified | ignored
+    scraper_data      TEXT,                             -- JSON: scraper-provided metadata
+    parent_release_id INTEGER,                          -- FK to releases.id (bonus content)
+    video_standard    TEXT,                             -- PAL | NTSC | SECAM
+    region            TEXT,                             -- ISO 3166-1 alpha-2 (DE, UK, US, JP, …)
+    container_type    TEXT,                             -- Blu-ray | PAL DVD | NTSC DVD | VCD | HD DVD | WMV DVD | Digital
+    disc_format       TEXT,                             -- ISO | BIN | MKV | MP4 | …
+    total_discs       INTEGER,
+    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(parent_release_id) REFERENCES releases(id) ON DELETE SET NULL
+);
+```
+
+**Valid `media_type` / `subtype` combinations** (subtypes are user-extensible):
+
+| `media_type` | Built-in `subtype` values |
+|---|---|
+| `Audio`    | Album, Compilation, Audiobook, Classical, Soundtrack, Single, EP, Live |
+| `Video`    | Film, Series, Documentary, Trailer, BonusContent, Short |
+| `Document` | EBook, Manual, Article, Comic |
+| `Image`    | Photo, Artwork, Cover |
+
+### Table: `release_items` *(since v1.3.4, extended v1.3.4)*
+
+Bridge table linking filesystem items to a release.  Each item carries optional disc metadata for multi-disc releases (films, CD+DVD combos, multi-format ebook bundles, …).
+
+```sql
+CREATE TABLE release_items (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id  INTEGER NOT NULL,
+    media_id    INTEGER NOT NULL,
+    position    INTEGER,           -- Global sort position
+    disc_number INTEGER,           -- Disc number (1, 2, 3, …) for multi-disc sets
+    disc_type   TEXT,              -- Film | Bonus | Soundtrack | Extra | Document
+    disc_label  TEXT,              -- e.g. 'Disc 1 – Extended Cut'
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    FOREIGN KEY(media_id)   REFERENCES media(id)    ON DELETE CASCADE,
+    UNIQUE(media_id)
+);
+```
+
+**Multi-disc example – Blu-ray Collector's Edition (6 discs):**
+
+| disc_number | disc_type  | disc_label                     |
+|-------------|------------|-------------------------------|
+| 1 | Film       | Disc 1 – Film (Blu-ray)        |
+| 2 | Film       | Disc 2 – Film Part 2 (Blu-ray) |
+| 3 | Bonus      | Disc 3 – BD Bonus              |
+| 4 | Bonus      | Disc 4 – DVD Bonus             |
+| 5 | Bonus      | Disc 5 – DVD Bonus 2           |
+| 6 | Soundtrack | Disc 6 – Soundtrack Audio CD   |
+
+### Table: `release_identifiers` *(since v1.3.4)*
+
+Multiple external identifiers per release (ISBN-13, UPC, Barcode, IMDb, MusicBrainz, …).
+
+```sql
+CREATE TABLE release_identifiers (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id INTEGER NOT NULL,
+    id_type    TEXT NOT NULL,  -- ISBN-13 | ISBN-10 | UPC | EAN | Barcode | IMDb | TMDb | MusicBrainz | ASIN | …
+    value      TEXT NOT NULL,
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    UNIQUE(release_id, id_type, value)
+);
+```
+
+### Table: `release_subtypes` *(since v1.3.4)*
+
+User-editable list of valid subtype names per `media_type`.  Seeded with built-in defaults on first `init_db()`; custom entries can be added at any time.
+
+```sql
+CREATE TABLE release_subtypes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    media_type TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(media_type, name)
+);
+```
+
+### Table: `release_titles` *(since v1.3.4)*
+
+Multi-language titles for a release.  Language codes follow ISO 639-1; use `'original'` for the original-language title.
+
+```sql
+CREATE TABLE release_titles (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id INTEGER NOT NULL,
+    language   TEXT NOT NULL,   -- 'de', 'en', 'fr', …  or 'original'
+    title      TEXT NOT NULL,
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    UNIQUE(release_id, language)
+);
+```
+
+### Table: `release_covers` *(since v1.3.4)*
+
+Cover / artwork images attached to a release or a specific `release_items` row.
+
+```sql
+CREATE TABLE release_covers (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id INTEGER,          -- FK to releases  (NULL if item-level)
+    item_id    INTEGER,          -- FK to release_items  (NULL if release-level)
+    cover_type TEXT NOT NULL DEFAULT 'front',  -- front | back | disc | inlay | poster | screenshot | …
+    path       TEXT,             -- Local filesystem path
+    url        TEXT,             -- Remote URL (from scraper)
+    source     TEXT NOT NULL DEFAULT 'local',  -- local | imdb | tmdb | musicbrainz | coverartarchive | …
+    width      INTEGER,
+    height     INTEGER,
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    FOREIGN KEY(item_id) REFERENCES release_items(id) ON DELETE CASCADE
+);
+```
+
+### Table: `scraper_sources` *(since v1.3.4)*
+
+Plugin registry for media scrapers.  Seeded with IMDb, TMDb, MusicBrainz, CoverArtArchive, OpenLibrary, GoogleBooks.
+
+```sql
+CREATE TABLE scraper_sources (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL UNIQUE,  -- 'IMDb', 'TMDb', 'MusicBrainz', custom …
+    media_type TEXT,                   -- 'Video' | 'Audio' | 'Document' | NULL (universal)
+    base_url   TEXT,
+    enabled    BOOLEAN NOT NULL DEFAULT 1,
+    priority   INTEGER NOT NULL DEFAULT 0,
+    config     TEXT                    -- JSON plugin config
+);
+```
+
+**Public API (db.py) – releases:**
+
+| Function | Description |
+|---|---|
+| `insert_release(title, release_type, year, cut, status, scraper_data, *, media_type, subtype, parent_release_id, video_standard, region, container_type, disc_format, total_discs)` | Create a new release |
+| `get_release(release_id)` | Retrieve a release incl. titles and identifiers |
+| `get_all_releases(release_type, status, media_type, subtype)` | List with optional filters |
+| `update_release_scraper_data(release_id, scraper_data, status)` | Store scraper result |
+| `update_release_status(release_id, status)` | Change status |
+| `delete_release(release_id)` | Delete release + all dependent rows |
+| `assign_item_to_release(release_id, media_name, position, *, disc_number, disc_type, disc_label)` | Link item to release |
+| `remove_item_from_release(media_name)` | Unlink item |
+| `get_release_items(release_id)` | All items ordered by disc/position |
+| `get_item_release(media_name)` | Release for an item (incl. titles & identifiers) |
+| `search_releases(query, release_type, media_type, subtype)` | Substring search |
+| `add_release_identifier(release_id, id_type, value)` | Add ISBN/UPC/IMDb/… |
+| `get_release_identifiers(release_id)` | List identifiers |
+| `remove_release_identifier(release_id, id_type, value)` | Remove identifier |
+| `get_releases_by_identifier(id_type, value)` | Find by identifier |
+| `get_release_subtypes(media_type)` | List valid subtypes |
+| `add_release_subtype(media_type, name, sort_order)` | Add custom subtype |
+| `remove_release_subtype(media_type, name)` | Remove subtype |
+| `set_release_title(release_id, language, title)` | Set a language title |
+| `get_release_titles(release_id)` | All titles as {lang: title} |
+| `remove_release_title(release_id, language)` | Remove a language title |
+| `add_release_cover(release_id, item_id, cover_type, path, url, source, width, height)` | Add cover |
+| `get_release_covers(release_id, item_id)` | List covers |
+| `remove_release_cover(cover_id)` | Remove cover |
+| `get_scraper_sources(media_type, enabled_only)` | List scraper plugins |
+| `register_scraper_source(name, media_type, base_url, priority, config)` | Register plugin |
+| `set_scraper_source_enabled(name, enabled)` | Enable/disable plugin |
 
 ---
 
@@ -2950,7 +3194,7 @@ If you’ve previously run the app from source or want to reset all settings, no
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall a clean version
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.4_amd64.deb
 
 # 3. Fix dependencies if necessar
 sudo apt-get install -f
