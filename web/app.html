@@ -3218,6 +3218,9 @@
                 const ffmpegPath = toolsStatus.ffmpeg_cli_path || '';
                 const ffprobeOk = !!toolsStatus.ffprobe_cli_available;
                 const ffprobePath = toolsStatus.ffprobe_cli_path || '';
+                const browserOk = !!toolsStatus.browser_available;
+                const browserName = toolsStatus.browser_name || 'browser';
+                const browserPath = toolsStatus.browser_path || '';
                 const vlcPyOk = !!toolsStatus.python_vlc_available;
                 const vlcPyVer = toolsStatus.python_vlc_version || '';
                 const vlcCliOk = !!toolsStatus.vlc_cli_available;
@@ -3227,6 +3230,7 @@
                 const toolsText = [
                     `${ffmpegOk ? '✅' : '❌'} ffmpeg${ffmpegPath ? ` (${ffmpegPath})` : ''}`,
                     `${ffprobeOk ? '✅' : '❌'} ffprobe${ffprobePath ? ` (${ffprobePath})` : ''}`,
+                    `${browserOk ? '✅' : '❌'} ${browserName}${browserPath ? ` (${browserPath})` : ''}`,
                     `${vlcPyOk ? '✅' : '❌'} python-vlc${vlcPyVer ? ` ${vlcPyVer}` : ''}`,
                     `${vlcCliOk ? '✅' : '❌'} vlc${vlcCliPath ? ` (${vlcCliPath})` : ''}`,
                     `${mutagenOk ? '✅' : '❌'} mutagen${mutagenVer ? ` ${mutagenVer}` : ''}`,

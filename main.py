@@ -482,6 +482,22 @@ def get_environment_info(force_refresh=False):
         ffmpeg_path = shutil.which("ffmpeg")
         ffprobe_path = shutil.which("ffprobe")
         vlc_cli_path = shutil.which("vlc")
+        browser_candidates = [
+            ("google-chrome", "google-chrome"),
+            ("google-chrome-stable", "google-chrome-stable"),
+            ("chromium", "chromium"),
+            ("chromium-browser", "chromium-browser"),
+            ("firefox", "firefox"),
+        ]
+
+        browser_name = None
+        browser_path = None
+        for candidate_name, binary in browser_candidates:
+            found = shutil.which(binary)
+            if found:
+                browser_name = candidate_name
+                browser_path = found
+                break
 
         mutagen_available = False
         mutagen_version = None
@@ -505,6 +521,9 @@ def get_environment_info(force_refresh=False):
             "ffmpeg_cli_path": ffmpeg_path,
             "ffprobe_cli_available": bool(ffprobe_path),
             "ffprobe_cli_path": ffprobe_path,
+            "browser_available": bool(browser_path),
+            "browser_name": browser_name,
+            "browser_path": browser_path,
             "vlc_cli_available": bool(vlc_cli_path),
             "vlc_cli_path": vlc_cli_path,
             "python_vlc_available": python_vlc_available,
