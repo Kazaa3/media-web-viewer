@@ -1552,6 +1552,50 @@
                         </div>
                     </div>
 
+                    <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                            🎬 VLC Ribbon
+                        </h3>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                            <button id="vlc-ribbon-dnd-btn" onclick="setVlcRibbonMode('dnd')"
+                                style="padding: 8px 12px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                                Variante 1: Drag & Drop
+                            </button>
+                            <button id="vlc-ribbon-stream-btn" onclick="setVlcRibbonMode('stream')"
+                                style="padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; color: #666; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                                Variante 2: Streaming
+                            </button>
+                        </div>
+
+                        <div id="vlc-dnd-panel" style="display: block;">
+                            <div id="vlc-drop-zone"
+                                style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 20px; text-align: center; font-weight: 600; transition: all 0.2s;">
+                                Datei hier hineinziehen, um sie in VLC zu öffnen
+                            </div>
+                            <div style="margin-top: 10px; text-align: center;">
+                                <button onclick="pickAndPlayInVLC()"
+                                    style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    📂 Datei auswählen
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="vlc-stream-panel" style="display: none;">
+                            <div style="display: flex; gap: 10px;">
+                                <input id="vlc-stream-url" type="text" placeholder="https://... | rtsp://... | rtmp://..."
+                                    style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;" />
+                                <button onclick="playVLCStream()"
+                                    style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                    ▶ Stream starten
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="vlc-ribbon-status"
+                            style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;"></div>
+                    </div>
+
                     <!-- VLC Playlist Import/Export Section -->
                     <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
                         <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;" data-i18n="vlc_playlist_integration">
@@ -2597,7 +2641,7 @@
             document.getElementById('btn-open-vlc').style.display = 'flex';
         }
 
-        async function startVLC(filePath) {
+        async function startVLC(filePath, displayName = null) {
             const video = document.getElementById('video-player');
             video.pause();
             video.style.display = 'none';
@@ -2606,7 +2650,8 @@
             hideUnsupportedVideoHint();
 
             document.getElementById('vlc-info').style.display = 'block';
-            document.getElementById('vlc-current-file').innerText = currentVideoItem.name;
+            const shownName = displayName || (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
+            document.getElementById('vlc-current-file').innerText = shownName;
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
@@ -3821,6 +3866,135 @@
         });
 
         // ============ VLC Integration Functions ============
+
+        let vlcRibbonMode = 'dnd';
+
+        function setVlcRibbonStatus(message, kind = 'info') {
+            const el = document.getElementById('vlc-ribbon-status');
+            if (!el) return;
+            el.style.display = 'block';
+            if (kind === 'error') {
+                el.style.background = '#ffebee';
+                el.style.color = '#b71c1c';
+            } else if (kind === 'ok') {
+                el.style.background = '#e8f5e9';
+                el.style.color = '#2e7d32';
+            } else {
+                el.style.background = '#e3f2fd';
+                el.style.color = '#1565c0';
+            }
+            el.textContent = message;
+        }
+
+        function setVlcRibbonMode(mode) {
+            vlcRibbonMode = mode === 'stream' ? 'stream' : 'dnd';
+
+            const dndBtn = document.getElementById('vlc-ribbon-dnd-btn');
+            const streamBtn = document.getElementById('vlc-ribbon-stream-btn');
+            const dndPanel = document.getElementById('vlc-dnd-panel');
+            const streamPanel = document.getElementById('vlc-stream-panel');
+
+            if (!dndBtn || !streamBtn || !dndPanel || !streamPanel) return;
+
+            if (vlcRibbonMode === 'dnd') {
+                dndPanel.style.display = 'block';
+                streamPanel.style.display = 'none';
+                dndBtn.style.borderColor = '#2a7';
+                dndBtn.style.background = '#e8f5e9';
+                dndBtn.style.color = '#2a7';
+                streamBtn.style.borderColor = '#ddd';
+                streamBtn.style.background = '#f9f9f9';
+                streamBtn.style.color = '#666';
+            } else {
+                dndPanel.style.display = 'none';
+                streamPanel.style.display = 'block';
+                streamBtn.style.borderColor = '#8e44ad';
+                streamBtn.style.background = '#f3e5f5';
+                streamBtn.style.color = '#6a1b9a';
+                dndBtn.style.borderColor = '#ddd';
+                dndBtn.style.background = '#f9f9f9';
+                dndBtn.style.color = '#666';
+            }
+        }
+
+        function initVlcDropZone() {
+            const zone = document.getElementById('vlc-drop-zone');
+            if (!zone || zone.dataset.bound === '1') return;
+            zone.dataset.bound = '1';
+
+            ['dragenter', 'dragover'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    zone.style.borderColor = '#2a7';
+                    zone.style.background = '#e8f5e9';
+                    zone.style.color = '#1b5e20';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                zone.addEventListener(evt, () => {
+                    zone.style.borderColor = '#90caf9';
+                    zone.style.background = '#f7fbff';
+                    zone.style.color = '#1e5d87';
+                });
+            });
+
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                const droppedFile = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null;
+                if (!droppedFile) {
+                    setVlcRibbonStatus('Keine Datei erkannt.', 'error');
+                    return;
+                }
+
+                const droppedPath = droppedFile.path || '';
+                if (!droppedPath) {
+                    setVlcRibbonStatus('Drag&Drop liefert hier keinen lokalen Pfad. Bitte „Datei auswählen“ nutzen.', 'error');
+                    return;
+                }
+
+                await startVLC(droppedPath, droppedFile.name || droppedPath);
+                setVlcRibbonStatus(`VLC gestartet: ${droppedFile.name || droppedPath}`, 'ok');
+            });
+        }
+
+        async function pickAndPlayInVLC() {
+            try {
+                const filePath = await eel.pick_file('VLC: Videodatei wählen', [
+                    ['Video Files', '*.mp4 *.mkv *.webm *.mov *.avi *.m4v *.flv *.wmv'],
+                    ['All Files', '*.*']
+                ])();
+
+                if (!filePath) return;
+
+                const name = String(filePath).split('/').pop();
+                await startVLC(filePath, name || filePath);
+                setVlcRibbonStatus(`VLC gestartet: ${name || filePath}`, 'ok');
+            } catch (e) {
+                setVlcRibbonStatus(`Fehler beim Öffnen: ${e && e.message ? e.message : e}`, 'error');
+            }
+        }
+
+        async function playVLCStream() {
+            const input = document.getElementById('vlc-stream-url');
+            const url = input ? input.value.trim() : '';
+            if (!url) {
+                setVlcRibbonStatus('Bitte eine Stream-URL eingeben.', 'error');
+                return;
+            }
+            const valid = /^(https?:\/\/|rtsp:\/\/|rtmp:\/\/|mms:\/\/)/i.test(url);
+            if (!valid) {
+                setVlcRibbonStatus('Ungültige URL. Erlaubt: http(s), rtsp, rtmp, mms.', 'error');
+                return;
+            }
+
+            try {
+                await startVLC(url, url);
+                setVlcRibbonStatus('Streaming in VLC gestartet.', 'ok');
+            } catch (e) {
+                setVlcRibbonStatus(`Streaming-Fehler: ${e && e.message ? e.message : e}`, 'error');
+            }
+        }
         
         async function importVLCPlaylist() {
             const statusDiv = document.getElementById('import-status');
@@ -3947,6 +4121,8 @@
             loadDebugFlags();
             loadTestSuites();
             loadFeatureStatus();
+            initVlcDropZone();
+            setVlcRibbonMode('dnd');
             restoreLastActiveTab();
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {
