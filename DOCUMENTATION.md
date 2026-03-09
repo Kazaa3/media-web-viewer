@@ -517,12 +517,6 @@ Media Web Viewer includes bidirectional integration with VLC Media Player:
 
 ---
 
-### π©πͺ Deutsch (German)
-
-Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
-
-Die Installer richtet automatisch eine Python Virtual Environment ein und installiert alle Abhängigkeiten.
-
 **Deinstallation:**
 ```bash
 # Konfiguration beibehalten
