@@ -5,6 +5,7 @@
 <!-- Summary_EN: Central list of open bugs and technical issues -->
 <!-- Status: active -->
 <!-- Date: 2026-03-09 -->
+<!-- Pinned: true -->
 
 # Bekannte Probleme
 

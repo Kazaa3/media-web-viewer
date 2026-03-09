@@ -587,12 +587,13 @@
                 summaryDe: getTag('Summary_DE', ''),
                 summaryEn: getTag('Summary_EN', ''),
                 status: (getTag('Status', 'ACTIVE') || 'ACTIVE').toUpperCase(),
-                date: getTag('Date', new Date().toISOString().slice(0, 10))
+                date: getTag('Date', new Date().toISOString().slice(0, 10)),
+                pinned: getTag('Pinned', 'false').toLowerCase() === 'true'
             };
         }
 
         function stripLogbookFixedTags(markdown) {
-            const keys = ['Category', 'Title_DE', 'Title_EN', 'Summary_DE', 'Summary_EN', 'Status', 'Date'];
+            const keys = ['Category', 'Title_DE', 'Title_EN', 'Summary_DE', 'Summary_EN', 'Status', 'Date', 'Pinned'];
             let cleaned = markdown || '';
             keys.forEach(k => {
                 cleaned = cleaned.replace(new RegExp(`^\\s*<!--\\s*${k}\\s*:\\s*.*?-->\\s*\\n?`, 'gim'), '');
@@ -601,7 +602,7 @@
         }
 
         function buildLogbookFixedTagsBlock(meta) {
-            return [
+            const tags = [
                 `<!-- Category: ${meta.category || 'Planung'} -->`,
                 `<!-- Title_DE: ${meta.titleDe || ''} -->`,
                 `<!-- Title_EN: ${meta.titleEn || ''} -->`,
@@ -609,7 +610,11 @@
                 `<!-- Summary_EN: ${meta.summaryEn || ''} -->`,
                 `<!-- Status: ${(meta.status || 'ACTIVE').toUpperCase()} -->`,
                 `<!-- Date: ${meta.date || new Date().toISOString().slice(0, 10)} -->`
-            ].join('\n');
+            ];
+            if (meta.pinned) {
+                tags.push(`<!-- Pinned: true -->`);
+            }
+            return tags.join('\n');
         }
 
         function openLogbookEditor(name, filename, content) {
@@ -862,7 +867,13 @@
                 catHeader.innerText = localizedCat;
                 list.appendChild(catHeader);
                 grouped[localizedCat]
-                    .sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0))
+                    .sort((a, b) => {
+                        // Pinned entries first
+                        if (a.pinned && !b.pinned) return -1;
+                        if (!a.pinned && b.pinned) return 1;
+                        // Then sort by modified timestamp
+                        return (b.modified_ts || 0) - (a.modified_ts || 0);
+                    })
                     .forEach(entry => {
                     const btn = document.createElement('div');
                     btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
@@ -870,6 +881,14 @@
                     nameEl.innerText = entry.name;
                     nameEl.style.flex = '1';
                     btn.appendChild(nameEl);
+                    // Add pin icon for pinned entries
+                    if (entry.pinned) {
+                        const pinEl = document.createElement('span');
+                        pinEl.innerText = '📌';
+                        pinEl.style.cssText = 'margin-left: 8px; font-size: 0.9em; opacity: 0.7;';
+                        pinEl.title = 'Pinned';
+                        btn.appendChild(pinEl);
+                    }
                     const iconEl = document.createElement('span');
                     iconEl.innerText = getLogbookStatusIcon(entry.status || 'ACTIVE');
                     iconEl.style.cssText = 'margin-left: 8px; margin-right: 10px; font-size: 1.05em; opacity: 0.9;';
