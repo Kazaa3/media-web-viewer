@@ -1269,6 +1269,9 @@
                                     <strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span id="env-ffmpeg-status" style="word-break: break-all;">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_ffprobe">FFprobe:</strong> <span id="env-ffprobe-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
                                     <strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span id="env-mediainfo-status" style="word-break: break-all;">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
@@ -3232,6 +3235,7 @@
                 const envMediainfoStatusEl = document.getElementById('env-mediainfo-status');
                 const envMutagenStatusEl = document.getElementById('env-mutagen-status');
                 const envFfmpegStatusEl = document.getElementById('env-ffmpeg-status');
+                const envFfprobeStatusEl = document.getElementById('env-ffprobe-status');
                 const envGuiStatusEl = document.getElementById('env-gui-status');
                 const envMediaplayerStatusEl = document.getElementById('env-mediaplayer-status');
                 const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');
@@ -3258,6 +3262,7 @@
                 const browserOk = !!toolsStatus.browser_available;
                 const browserName = toolsStatus.browser_name || 'browser';
                 const browserPath = toolsStatus.browser_path || '';
+                const browserVer = toolsStatus.browser_version || '';
                 const vlcPyOk = !!toolsStatus.python_vlc_available;
                 const vlcPyVer = toolsStatus.python_vlc_version || '';
                 const vlcCliOk = !!toolsStatus.vlc_cli_available;
@@ -3275,13 +3280,11 @@
                 const mutagenText = `${mutagenOk ? '✅' : '❌'} mutagen${mutagenVer ? ` ${mutagenVer}` : ''}`;
 
                 // FFmpeg tools
-                const ffmpegText = [
-                    `${ffmpegOk ? '✅' : '❌'} ffmpeg${ffmpegVer ? ` ${ffmpegVer}` : ''}${ffmpegPath ? ` (${ffmpegPath})` : ''}`,
-                    `${ffprobeOk ? '✅' : '❌'} ffprobe${ffprobeVer ? ` ${ffprobeVer}` : ''}${ffprobePath ? ` (${ffprobePath})` : ''}`,
-                ].join(' | ');
+                const ffmpegText = `${ffmpegOk ? '✅' : '❌'} ffmpeg${ffmpegVer ? ` ${ffmpegVer}` : ''}${ffmpegPath ? ` (${ffmpegPath})` : ''}`;
+                const ffprobeText = `${ffprobeOk ? '✅' : '❌'} ffprobe${ffprobeVer ? ` ${ffprobeVer}` : ''}${ffprobePath ? ` (${ffprobePath})` : ''}`;
 
                 // GUI: Browser
-                const guiText = `${browserOk ? '✅' : '❌'} ${browserName}${browserPath ? ` (${browserPath})` : ''}`;
+                const guiText = `${browserOk ? '✅' : '❌'} ${browserName}${browserVer ? ` ${browserVer}` : ''}${browserPath ? ` (${browserPath})` : ''}`;
 
                 // Mediaplayer: VLC
                 const mediaplayerText = [
@@ -3423,6 +3426,7 @@
                 if (envMediainfoStatusEl) envMediainfoStatusEl.textContent = mediaInfoText;
                 if (envMutagenStatusEl) envMutagenStatusEl.textContent = mutagenText;
                 if (envFfmpegStatusEl) envFfmpegStatusEl.textContent = ffmpegText;
+                if (envFfprobeStatusEl) envFfprobeStatusEl.textContent = ffprobeText;
                 if (envGuiStatusEl) envGuiStatusEl.textContent = guiText;
                 if (envMediaplayerStatusEl) envMediaplayerStatusEl.textContent = mediaplayerText;
                 if (envCorePackagesStatusEl) envCorePackagesStatusEl.textContent = coreText;

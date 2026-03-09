@@ -492,12 +492,28 @@ def get_environment_info(force_refresh=False):
 
         browser_name = None
         browser_path = None
+        browser_version = None
         for candidate_name, binary in browser_candidates:
             found = shutil.which(binary)
             if found:
                 browser_name = candidate_name
                 browser_path = found
                 break
+
+        if browser_path:
+            try:
+                browser_result = subprocess.run(
+                    [browser_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (browser_result.stdout or "").splitlines()[0] if browser_result.stdout else ""
+                match = re.search(r"(\d+\.\d+(?:\.\d+){1,3})", first_line)
+                browser_version = match.group(1) if match else None
+            except Exception:
+                browser_version = None
 
         mutagen_available = False
         mutagen_version = None
@@ -558,6 +574,7 @@ def get_environment_info(force_refresh=False):
             "browser_available": bool(browser_path),
             "browser_name": browser_name,
             "browser_path": browser_path,
+            "browser_version": browser_version,
             "vlc_cli_available": bool(vlc_cli_path),
             "vlc_cli_path": vlc_cli_path,
             "python_vlc_available": python_vlc_available,

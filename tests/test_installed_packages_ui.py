@@ -39,6 +39,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="system-python-local-list"', self.app_html)
         self.assertIn('id="env-mutagen-status"', self.app_html)
         self.assertIn('id="env-ffmpeg-status"', self.app_html)
+        self.assertIn('id="env-ffprobe-status"', self.app_html)
         self.assertIn('id="env-gui-status"', self.app_html)
         self.assertIn('id="env-mediaplayer-status"', self.app_html)
         self.assertIn('id="env-core-packages-status"', self.app_html)
@@ -80,12 +81,14 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const requirementsStatusList = document.getElementById('requirements-status-list');",
             "const envMutagenStatusEl = document.getElementById('env-mutagen-status');",
             "const envFfmpegStatusEl = document.getElementById('env-ffmpeg-status');",
+            "const envFfprobeStatusEl = document.getElementById('env-ffprobe-status');",
             "const envGuiStatusEl = document.getElementById('env-gui-status');",
             "const envMediaplayerStatusEl = document.getElementById('env-mediaplayer-status');",
             "const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');",
             "const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');",
             "const ffmpegVer = toolsStatus.ffmpeg_cli_version || '';",
             "const ffprobeVer = toolsStatus.ffprobe_cli_version || '';",
+            "const browserVer = toolsStatus.browser_version || '';",
             "const corePackages = [",
             "['bottle', 'bottle']",
             "['bottle-websocket', 'bottle-websocket']",
@@ -167,6 +170,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "env_requirements_last_checked_error",
             "env_label_mutagen",
             "env_label_ffmpeg",
+            "env_label_ffprobe",
             "env_label_gui",
             "env_label_mediaplayer",
             "env_label_core_packages",
