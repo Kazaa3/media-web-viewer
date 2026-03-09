@@ -340,6 +340,7 @@ Gate suite:
 - `tests/test_performance_probes.py`
 - `tests/test_bottle_health_latency.py`
 - `tests/test_installed_packages_ui.py`
+- `tests/test_environment_packages_fallback.py`
 - `tests/test_ui_session_stability.py`
 
 If one of these tests fails, the build aborts immediately.

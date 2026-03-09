@@ -1,7 +1,15 @@
 var searchData=
 [
-  ['init_5fdb_0',['init_db',['../namespacedb.html#aca31edca03ea605ebf05131dc748e9ad',1,'db']]],
-  ['insert_5fmedia_1',['insert_media',['../namespacedb.html#a78830533b18edd090d6f38ab3c6c25de',1,'db']]],
-  ['is_5fconda_2',['is_conda',['../classenv__handler_1_1EnvironmentManager.html#a598522a8d1de38fd03d2b8560e373763',1,'env_handler::EnvironmentManager']]],
-  ['is_5fexclusive_5fvenv_3',['is_exclusive_venv',['../classenv__handler_1_1EnvironmentManager.html#adfe3d5312e4d85e5cfe8a92d5ec935bd',1,'env_handler::EnvironmentManager']]]
+  ['get_5factive_5fdb_5fpath_0',['get_active_db_path',['../namespacedb.html#afda0ee7f9f7de94bce73a8fefd8e92af',1,'db']]],
+  ['get_5fall_5fmedia_1',['get_all_media',['../namespacedb.html#af01a5b723dec9fa1414ec167edf450df',1,'db']]],
+  ['get_5fcategory_2',['get_category',['../classmodels_1_1MediaItem.html#a2877bc4684a99d7a895677b97d0b27aa',1,'models::MediaItem']]],
+  ['get_5fdb_5fstats_3',['get_db_stats',['../namespacedb.html#a0c3c4a87df2618a89f3a6ae23cbc1daf',1,'db']]],
+  ['get_5fdefault_5fscan_5fdir_4',['get_default_scan_dir',['../namespaceparsers_1_1format__utils.html#a8238824fd3ab542445e4146f0a5b9c13',1,'parsers::format_utils']]],
+  ['get_5fenvironment_5ffingerprint_5',['get_environment_fingerprint',['../classenv__handler_1_1EnvironmentManager.html#a26bd5f86fff14ad26c648b9e0efac50c',1,'env_handler::EnvironmentManager']]],
+  ['get_5fknown_5fmedia_5fnames_6',['get_known_media_names',['../namespacedb.html#a7eeec3ecdf0ac231f232e600289e7f98',1,'db']]],
+  ['get_5flegacy_5fdb_5fcandidates_7',['get_legacy_db_candidates',['../namespacedb.html#ac02d9e6d797a8eabb884d79e09ff9afa',1,'db']]],
+  ['get_5flogger_8',['get_logger',['../namespacelogger.html#a3f5f27591f87bfda99a6bf55dfeee0d1',1,'logger']]],
+  ['get_5fmedia_5fpath_9',['get_media_path',['../namespacedb.html#ae086efa84c66012a57a072cd82a63601',1,'db']]],
+  ['get_5fmissing_5finfo_10',['get_missing_info',['../classenv__handler_1_1EnvironmentManager.html#a31ec0b2eb4dd733648775cd0a67a102e',1,'env_handler::EnvironmentManager']]],
+  ['get_5fui_5flogs_11',['get_ui_logs',['../namespacelogger.html#a440d826268051e65be4cf2f17661d130',1,'logger']]]
 ];

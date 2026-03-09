@@ -1,12 +1,11 @@
 var searchData=
 [
-  ['main_0',['main',['../namespacebuild__system.html#a867f984f69b917b208ff39189fea409b',1,'build_system.main()'],['../namespacecheck__environment.html#a5b065befd921970edf7bdcd8ee2be39b',1,'check_environment.main()']]],
-  ['max_5fbuffer_5fsize_1',['MAX_BUFFER_SIZE',['../namespacelogger.html#a1eec9bd54e5fd8599f4038089dc1b60e',1,'logger']]],
-  ['media_5fdir_2',['MEDIA_DIR',['../namespaceweb_1_1app__bottle.html#a3299b2cf2d9656baf8e7c46696daa424',1,'web::app_bottle']]],
-  ['media_5fparser_2epy_3',['media_parser.py',['../media__parser_8py.html',1,'']]],
-  ['media_5ftype_4',['media_type',['../classmodels_1_1MediaItem.html#aca4098a7a2054b688eb44f86de50df2b',1,'models::MediaItem']]],
-  ['mediaitem_5',['MediaItem',['../classmodels_1_1MediaItem.html',1,'models']]],
-  ['models_6',['models',['../namespacemodels.html',1,'']]],
-  ['models_2epy_7',['models.py',['../models_8py.html',1,'']]],
-  ['mutagen_5fparser_2epy_8',['mutagen_parser.py',['../mutagen__parser_8py.html',1,'']]]
+  ['list_5flegacy_5fdatabases_0',['list_legacy_databases',['../namespacedb.html#aac9ca910dcb369014907f5ac0adfc2c5',1,'db']]],
+  ['load_5fjson_1',['load_json',['../namespaceupdate__version.html#a9dc4a059d21726b7fd9755a35f9ab731',1,'update_version']]],
+  ['load_5fparser_5fconfig_2',['load_parser_config',['../namespaceparsers_1_1format__utils.html#ab34ea02502e47c8ce19d20f33bb23bb4',1,'parsers::format_utils']]],
+  ['log_3',['log',['../namespacemodels.html#a4756d09009053a0ee9911bc6beee24d7',1,'models.log()'],['../namespaceparsers_1_1media__parser.html#aacd968fc8a62b167f1bb7955a4b6aed7',1,'parsers.media_parser.log()'],['../namespaceweb_1_1app__bottle.html#a2aed0214be0fa244dfcfe63c7df83236',1,'web.app_bottle.log()']]],
+  ['log_5ffile_4',['LOG_FILE',['../namespacelogger.html#af487cec8e55bd029c76aacebd6d9a435',1,'logger']]],
+  ['log_5frequest_5',['log_request',['../namespaceweb_1_1app__bottle.html#a4726cccd73922f4d3baacaa3fbff34ca',1,'web::app_bottle']]],
+  ['logger_6',['logger',['../namespacelogger.html',1,'']]],
+  ['logger_2epy_7',['logger.py',['../logger_8py.html',1,'']]]
 ];

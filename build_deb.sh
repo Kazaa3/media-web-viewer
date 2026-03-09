@@ -34,6 +34,7 @@ if [ "$SKIP_BUILD_TESTS" != "1" ]; then
         "$SCRIPT_DIR/tests/test_performance_probes.py" \
         "$SCRIPT_DIR/tests/test_bottle_health_latency.py" \
         "$SCRIPT_DIR/tests/test_installed_packages_ui.py" \
+        "$SCRIPT_DIR/tests/test_environment_packages_fallback.py" \
         "$SCRIPT_DIR/tests/test_ui_session_stability.py"
     echo "==> Build-Test-Gate: OK"
 else
