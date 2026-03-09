@@ -31,7 +31,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="package-search"', self.app_html)
         self.assertIn('id="installed-packages-list"', self.app_html)
         self.assertIn('data-i18n="options_requirements_status"', self.app_html)
+        self.assertIn('data-i18n="options_requirements_refresh"', self.app_html)
         self.assertIn('id="requirements-count"', self.app_html)
+        self.assertIn('id="requirements-last-checked"', self.app_html)
         self.assertIn('id="requirements-status-list"', self.app_html)
         self.assertIn('id="system-python-global-list"', self.app_html)
         self.assertIn('id="system-python-local-list"', self.app_html)
@@ -64,9 +66,13 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "window.allPackagesSearch = safeInstalledPackages.map(pkg => ({",
             "renderPackages(safeInstalledPackages);",
             "const requirementsCount = document.getElementById('requirements-count');",
+            "const requirementsLastChecked = document.getElementById('requirements-last-checked');",
             "const requirementsStatusList = document.getElementById('requirements-status-list');",
             "const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'",
             "requirementsCount.textContent = `(${installedCount}/${total})`;",
+            "requirementsLastChecked.textContent = `${t('env_requirements_last_checked')}: ${now.toLocaleTimeString()}`;",
+            "onclick=\"loadEnvironmentInfo(true)\"",
+            "const requestForceRefresh = !!forceRefresh;",
             "const searchInput = document.getElementById('package-search');",
             "searchInput.addEventListener('input', (e) => {",
             "if (packageSearchTimer) clearTimeout(packageSearchTimer);",
@@ -92,6 +98,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const fallbackNoData = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
             "if (packageSource) packageSource.textContent = '[source: error]';",
             "if (requirementsCount) requirementsCount.textContent = '(0/0)';",
+            "if (requirementsLastChecked) requirementsLastChecked.textContent = t('env_requirements_last_checked_error');",
             "if (requirementsStatusList) requirementsStatusList.innerHTML = failText;",
             "if (packagesList) packagesList.innerHTML = fallbackNoData;",
         ]
@@ -107,9 +114,13 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "env_no_packages_found",
             "env_no_matching_packages",
             "options_requirements_status",
+            "options_requirements_refresh",
             "env_requirements_not_found",
             "env_requirements_all_present",
             "env_requirements_missing",
+            "env_requirements_last_checked",
+            "env_requirements_last_checked_never",
+            "env_requirements_last_checked_error",
             "env_table_package",
             "env_table_version",
         ]

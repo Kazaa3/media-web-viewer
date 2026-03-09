@@ -143,7 +143,7 @@ wheel      0.42.0
 
     def test_05_frontend_async_eel_call_exists(self):
         """Test: Frontend makes async call to backend via eel."""
-        self.assertIn("async function loadEnvironmentInfo()", self.html_code)
+        self.assertRegex(self.html_code, r"async function loadEnvironmentInfo\([^)]*\)")
         self.assertIn("await eel.get_environment_info()", self.html_code)
 
     def test_06_frontend_normalization_function_exists(self):
@@ -187,7 +187,7 @@ wheel      0.42.0
         """Test: Frontend displays the package data source."""
         # Verify source display logic exists in loadEnvironmentInfo
         # Search for the function and package-source within reasonable proximity
-        load_env_exists = 'async function loadEnvironmentInfo()' in self.html_code
+        load_env_exists = re.search(r'async function loadEnvironmentInfo\([^)]*\)', self.html_code) is not None
         self.assertTrue(load_env_exists, "loadEnvironmentInfo function should exist")
         
         # Verify package-source element is referenced in the code
@@ -197,7 +197,7 @@ wheel      0.42.0
     def test_10_frontend_retry_mechanism_on_empty_packages(self):
         """Test: Frontend retries with force_refresh when packages are empty."""
         load_env_match = re.search(
-            r'async function loadEnvironmentInfo\(\)\s*{(.*?)\n\s*}(?:\n|$)',
+            r'async function loadEnvironmentInfo\([^)]*\)\s*{(.*?)\n\s*}(?:\n|$)',
             self.html_code,
             re.DOTALL
         )
@@ -229,7 +229,7 @@ wheel      0.42.0
     def test_12_async_flow_error_handling(self):
         """Test: Frontend async flow includes error handling."""
         load_env_match = re.search(
-            r'async function loadEnvironmentInfo\(\)\s*{(.*?)\n\s*}(?:\n|$)',
+            r'async function loadEnvironmentInfo\([^)]*\)\s*{(.*?)\n\s*}(?:\n|$)',
             self.html_code,
             re.DOTALL
         )
@@ -292,7 +292,7 @@ wheel      0.42.0
     def test_17_async_promise_chain_integrity(self):
         """Test: Frontend async operations form complete promise chain."""
         load_env_match = re.search(
-            r'async function loadEnvironmentInfo\(\).*?}',
+            r'async function loadEnvironmentInfo\([^)]*\).*?}',
             self.html_code,
             re.DOTALL
         )
@@ -313,7 +313,7 @@ wheel      0.42.0
 
     def test_19_package_count_display_binding(self):
         """Test: Frontend displays package count from backend."""
-        load_env_exists = 'async function loadEnvironmentInfo()' in self.html_code
+        load_env_exists = re.search(r'async function loadEnvironmentInfo\([^)]*\)', self.html_code) is not None
         self.assertTrue(load_env_exists, "loadEnvironmentInfo function should exist")
         
         # Should reference package-count element

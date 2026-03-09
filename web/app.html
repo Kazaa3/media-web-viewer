@@ -1290,6 +1290,14 @@
                                     ✅ requirements.txt Status
                                     <span id="requirements-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
                                 </h4>
+                                <div style="margin-bottom: 8px;">
+                                    <button onclick="loadEnvironmentInfo(true)"
+                                        style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
+                                        data-i18n="options_requirements_refresh">
+                                        🔄 Jetzt neu prüfen
+                                    </button>
+                                </div>
+                                <div id="requirements-last-checked" style="margin-bottom: 8px; color: #777; font-size: 0.78em;" data-i18n="env_requirements_last_checked_never">Noch nicht geprüft</div>
                                 <div id="requirements-status-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
@@ -3139,13 +3147,16 @@
             return normalized;
         }
 
-        async function loadEnvironmentInfo() {
+        async function loadEnvironmentInfo(forceRefresh = false) {
             try {
-                let info = await eel.get_environment_info()();
+                const requestForceRefresh = !!forceRefresh;
+                let info = requestForceRefresh
+                    ? await eel.get_environment_info(true)()
+                    : await eel.get_environment_info()();
 
                 const initialPackages = normalizeInstalledPackages(info?.installed_packages);
                 const hasInitialPackages = initialPackages.length > 0;
-                if (!hasInitialPackages) {
+                if (!requestForceRefresh && !hasInitialPackages) {
                     try {
                         const refreshed = await eel.get_environment_info(true)();
                         if (refreshed) info = refreshed;
@@ -3345,12 +3356,17 @@
 
                 // Display requirements.txt status
                 const requirementsCount = document.getElementById('requirements-count');
+                const requirementsLastChecked = document.getElementById('requirements-last-checked');
                 const requirementsStatusList = document.getElementById('requirements-status-list');
                 const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'
                     ? info.requirements_status
                     : null;
 
                 if (requirementsCount && requirementsStatusList) {
+                    if (requirementsLastChecked) {
+                        const now = new Date();
+                        requirementsLastChecked.textContent = `${t('env_requirements_last_checked')}: ${now.toLocaleTimeString()}`;
+                    }
                     const available = !!requirementsStatus?.available;
                     const missing = Array.isArray(requirementsStatus?.missing) ? requirementsStatus.missing : [];
                     const installedCount = Number(requirementsStatus?.installed_count || 0);
@@ -3380,6 +3396,7 @@
                 const packageCount = document.getElementById('package-count');
                 const packageSource = document.getElementById('package-source');
                 const requirementsCount = document.getElementById('requirements-count');
+                const requirementsLastChecked = document.getElementById('requirements-last-checked');
                 const requirementsStatusList = document.getElementById('requirements-status-list');
                 const condaList = document.getElementById('conda-environments-list');
                 const globalPythonList = document.getElementById('system-python-global-list');
@@ -3390,6 +3407,7 @@
                 if (packageCount) packageCount.textContent = '(0)';
                 if (packageSource) packageSource.textContent = '[source: error]';
                 if (requirementsCount) requirementsCount.textContent = '(0/0)';
+                if (requirementsLastChecked) requirementsLastChecked.textContent = t('env_requirements_last_checked_error');
                 if (requirementsStatusList) requirementsStatusList.innerHTML = failText;
                 if (condaList) condaList.innerHTML = failText;
                 if (globalPythonList) globalPythonList.innerHTML = failText;
