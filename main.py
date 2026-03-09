@@ -23,6 +23,7 @@ import sys
 import os
 import platform
 from pathlib import Path
+import antigravity  # For fun and easter egg purposes
 
 def _detect_python_environment():
     """
@@ -135,7 +136,7 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.3.3"  # Fallback
+    VERSION = "1.3.4"  # Fallback
 
 
 @eel.expose
