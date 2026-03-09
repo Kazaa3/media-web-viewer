@@ -859,13 +859,13 @@
                 return true;
             });
 
-            // Sort: Pinned entries first, then by date (newest first)
+            // Sort: Pinned entries first, then alphanumerically by filename
             filteredEntries.sort((a, b) => {
                 // Pinned entries first
                 if (a.pinned && !b.pinned) return -1;
                 if (!a.pinned && b.pinned) return 1;
-                // Then sort by modified timestamp (newest first)
-                return (b.modified_ts || 0) - (a.modified_ts || 0);
+                // Then sort alphanumerically by filename
+                return (a.filename || a.name || '').localeCompare(b.filename || b.name || '', undefined, {numeric: true, sensitivity: 'base'});
             });
 
             // Render all entries in flat list
