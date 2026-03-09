@@ -83,9 +83,10 @@ def test_static_file_fixed():
 
 if __name__ == "__main__":
     setup_module()
-    print(f"Server läuft auf Port {TEST_PORT}")
     try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        pass
+        test_ping()
+        test_echo_query()
+        test_static_file_fixed()
+        print("✅ test_network.py passed")
+    finally:
+        teardown_module()

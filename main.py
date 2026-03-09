@@ -546,7 +546,7 @@ def check_running_sessions() -> list[dict]:
     sessions = []
     current_pid = os.getpid()
     
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'connections']):
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
             # Skip current process
             if proc.info['pid'] == current_pid:

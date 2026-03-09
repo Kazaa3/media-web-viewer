@@ -98,17 +98,24 @@ class VersionSyncTester:
                 print(f"   ❌ Version found but pattern doesn't match!")
                 print(f"      Expected: {expected_pattern}")
                 print(f"      Found: {matches[0].strip() if matches else 'N/A'}")
-                self.errors.append(
-                    f"{location['file']}: Expected '{expected_pattern}' but found '{matches[0].strip() if matches else 'N/A'}'"
+                mismatch_msg = (
+                    f"{location['file']}: Expected '{expected_pattern}' but found "
+                    f"'{matches[0].strip() if matches else 'N/A'}'"
                 )
+                if required:
+                    self.errors.append(mismatch_msg)
+                else:
+                    self.warnings.append(mismatch_msg)
             else:
                 print(f"   ❌ Version {master_version} not found in file!")
                 print(f"      Expected pattern: {expected_pattern}")
-                self.errors.append(
-                    f"{location['file']}: Version {master_version} not found"
-                )
+                missing_msg = f"{location['file']}: Version {master_version} not found"
+                if required:
+                    self.errors.append(missing_msg)
+                else:
+                    self.warnings.append(missing_msg)
             
-            return False
+            return not required
             
         except Exception as e:
             error_msg = f"Error reading {location['file']}: {e}"

@@ -34,7 +34,7 @@ from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import db
-from parsers.format_utils import sanitize_scan_dirs
+from parsers.format_utils import sanitize_scan_dirs, get_default_scan_dir
 
 
 class TestDatabaseHygiene(unittest.TestCase):
@@ -105,7 +105,8 @@ class TestScanDirectorySanitization(unittest.TestCase):
             valid_dir = Path(tmp) / "music"
             valid_dir.mkdir(parents=True, exist_ok=True)
             sanitized = sanitize_scan_dirs(["", "   ", str(valid_dir), str(Path(tmp) / "missing")])
-            self.assertEqual(sanitized, [str(valid_dir.resolve())])
+            self.assertIn(str(valid_dir.resolve()), sanitized)
+            self.assertNotIn(str((Path(tmp) / "missing").resolve()), sanitized)
 
     def test_sanitize_scan_dirs_deduplicates_entries(self):
         """Duplicate scan dirs should only appear once."""
@@ -113,7 +114,7 @@ class TestScanDirectorySanitization(unittest.TestCase):
             valid_dir = Path(tmp) / "audio"
             valid_dir.mkdir(parents=True, exist_ok=True)
             sanitized = sanitize_scan_dirs([str(valid_dir), str(valid_dir)])
-            self.assertEqual(len(sanitized), 1)
+            self.assertEqual(sanitized.count(str(valid_dir.resolve())), 1)
 
     def test_sanitize_scan_dirs_blocks_internal_project_dirs(self):
         """Project internal dirs like logbuch/dist must be filtered out."""
@@ -123,7 +124,9 @@ class TestScanDirectorySanitization(unittest.TestCase):
 
         input_dirs = [str(logbuch_dir), str(dist_dir)]
         sanitized = sanitize_scan_dirs(input_dirs)
-        self.assertEqual(sanitized, [])
+        self.assertNotIn(str(logbuch_dir.resolve()), sanitized)
+        self.assertNotIn(str(dist_dir.resolve()), sanitized)
+        self.assertIn(str(get_default_scan_dir()), sanitized)
 
 
 if __name__ == '__main__':

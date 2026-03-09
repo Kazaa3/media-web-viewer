@@ -497,7 +497,7 @@ python build_system.py --build pyinstaller
 python build_system.py --build pyinstaller
 
 # Auf Linux mit Wine (erfordert PyInstaller + Wine Setup)
-pyinstaller MediaWebViewer.spec --clean --target-arch=win_amd64
+python -m PyInstaller MediaWebViewer.spec --clean --target-arch=win_amd64
 ```
 
 **macOS:**
