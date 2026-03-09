@@ -27,6 +27,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
         """Installed Packages section and key element IDs must exist."""
         self.assertIn('data-i18n="options_installed_packages"', self.app_html)
         self.assertIn('id="package-count"', self.app_html)
+        self.assertIn('id="package-source"', self.app_html)
         self.assertIn('id="package-search"', self.app_html)
         self.assertIn('id="installed-packages-list"', self.app_html)
         self.assertIn('id="system-python-global-list"', self.app_html)
@@ -53,6 +54,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
         required_snippets = [
             "const packagesList = document.getElementById('installed-packages-list');",
             "const packageCount = document.getElementById('package-count');",
+            "const packageSource = document.getElementById('package-source');",
+            "const sourceText = String(info.installed_packages_source || 'unknown');",
+            "if (packageSource) packageSource.textContent = `[source: ${sourceText}]`;",
             "window.allPackages = safeInstalledPackages;",
             "window.allPackagesSearch = safeInstalledPackages.map(pkg => ({",
             "renderPackages(safeInstalledPackages);",
@@ -75,9 +79,11 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];",
             "const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];",
             "const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];",
-            "const safeInstalledPackages = Array.isArray(info.installed_packages) ? info.installed_packages : [];",
+            "const safeInstalledPackages = normalizeInstalledPackages(info.installed_packages);",
+            "function normalizeInstalledPackages(rawPackages) {",
             "const failText = `<span style=\"color: #c62828;\">${t('common_error_loading')}</span>`;",
             "const fallbackNoData = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
+            "if (packageSource) packageSource.textContent = '[source: error]';",
             "if (packagesList) packagesList.innerHTML = fallbackNoData;",
         ]
         for snippet in required_snippets:

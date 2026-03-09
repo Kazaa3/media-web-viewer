@@ -353,6 +353,23 @@ def get_environment_info(force_refresh=False):
     def _get_installed_packages():
         """Get list of installed packages in current environment."""
         packages = []
+        source = "none"
+
+        def _parse_columns_output(raw_text: str):
+            parsed = []
+            lines = [line.strip() for line in (raw_text or "").splitlines() if line.strip()]
+            if not lines:
+                return parsed
+            for line in lines:
+                if line.lower().startswith("package") and "version" in line.lower():
+                    continue
+                if set(line) <= set("- "):
+                    continue
+                parts = line.split()
+                if len(parts) >= 2:
+                    parsed.append({"name": parts[0], "version": parts[1]})
+            return parsed
+
         try:
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
@@ -365,20 +382,45 @@ def get_environment_info(force_refresh=False):
                     packages_data = json.loads(result.stdout)
                     # Sort by name
                     packages = sorted(packages_data, key=lambda x: x.get("name", "").lower())
+                    source = "pip_list_json"
                 except (json.JSONDecodeError, TypeError, KeyError):
                     logging.warning("Failed to parse pip list JSON")
                     packages = _get_packages_fallback()
+                    source = "importlib_or_pkg_resources"
             else:
                 err = (result.stderr or result.stdout or "pip list failed").strip()
                 logging.warning(f"pip list returned non-zero exit status ({result.returncode}): {err}")
-                packages = _get_packages_fallback()
+                # Fallback 1: pip list (columns) parsing
+                try:
+                    fallback_result = subprocess.run(
+                        [sys.executable, "-m", "pip", "list", "--format=columns", "--disable-pip-version-check"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    if fallback_result.returncode == 0:
+                        packages = sorted(
+                            _parse_columns_output(fallback_result.stdout),
+                            key=lambda x: x.get("name", "").lower()
+                        )
+                        if packages:
+                            source = "pip_list_columns"
+                except Exception:
+                    pass
+
+                # Fallback 2: importlib/pkg_resources
+                if not packages:
+                    packages = _get_packages_fallback()
+                    source = "importlib_or_pkg_resources"
         except subprocess.TimeoutExpired:
             logging.warning("pip list timeout - using fallback")
             packages = _get_packages_fallback()
+            source = "importlib_or_pkg_resources"
         except Exception as e:
             logging.warning(f"Failed to get installed packages: {e}")
             packages = _get_packages_fallback()
-        return packages
+            source = "importlib_or_pkg_resources"
+        return packages, source
     
     def _find_local_venvs():
         """Find local venv directories in common locations."""
@@ -439,9 +481,10 @@ def get_environment_info(force_refresh=False):
     # Discover available environments (cached/fast)
     conda_envs = _get_conda_environments()
     system_pythons = _get_system_pythons()
-    installed_packages = _get_installed_packages()
+    installed_packages, installed_packages_source = _get_installed_packages()
     if not installed_packages:
         installed_packages = _get_packages_fallback()
+        installed_packages_source = "importlib_or_pkg_resources"
     local_venvs = _find_local_venvs()
     mediainfo_status = _get_mediainfo_status()
     
@@ -476,6 +519,7 @@ def get_environment_info(force_refresh=False):
         # Installed Packages
         "installed_packages": installed_packages,
         "package_count": len(installed_packages),
+        "installed_packages_source": installed_packages_source,
         "mediainfo_status": mediainfo_status,
         
         # Recommendations
@@ -2326,6 +2370,19 @@ if __name__ == "__main__":
         raise SystemExit(0)
 
     existing_sessions = [s for s in check_running_sessions() if s.get('port')]
+    current_project_root = str(Path(__file__).resolve().parent)
+    same_project_sessions = [
+        s for s in existing_sessions
+        if current_project_root in str(s.get('cmdline', ''))
+    ]
+
+    if existing_sessions and not same_project_sessions:
+        logging.info(
+            "[Session] Ignoring running sessions from other project/install paths. "
+            f"Current project root: {current_project_root}"
+        )
+
+    existing_sessions = same_project_sessions
     if existing_sessions:
         existing = existing_sessions[0]
         existing_url = f"http://localhost:{existing['port']}/app.html"

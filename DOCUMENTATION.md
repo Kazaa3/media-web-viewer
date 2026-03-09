@@ -112,7 +112,19 @@ Build-process status:
     - `tests/test_performance_probes.py`
     - `tests/test_bottle_health_latency.py`
     - `tests/test_installed_packages_ui.py`
+        - `tests/test_environment_packages_fallback.py`
     - `tests/test_ui_session_stability.py`
+
+Environment package-list robustness:
+- Backend fallback chain in `get_environment_info()`:
+    1. `pip list --format=json`
+    2. `pip list --format=columns` parsing fallback
+    3. `importlib.metadata` / `pkg_resources` fallback
+- Frontend safety retry in `loadEnvironmentInfo()`: if initial package list is empty, it automatically retries with `get_environment_info(true)`.
+
+Anchor before next runtime fix:
+- Current release-prep baseline is documented in `logbuch/93_Anker_PreFix_Package_Display_Runtime.md`.
+- This anchor separates validated test/backend state from the upcoming live-runtime package-display fix.
 
 ---
 
