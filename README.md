@@ -181,6 +181,15 @@ scripts/cleanup_build_artifacts.sh
 scripts/cleanup_build_artifacts.sh --execute
 ```
 
+If generated artifacts were already committed in the past, remove them from the Git index once (files stay local):
+
+```bash
+git rm -r --cached -- packaging/opt/media-web-viewer
+git rm --cached -- __pycache__/main.cpython-314.pyc
+git rm --cached -- media-web-viewer_1.3.3_amd64.deb
+git commit -m "chore: untrack generated packaging/cache artifacts"
+```
+
 ## Docs
 - Technical Manual: [DOCUMENTATION.md](DOCUMENTATION.md)
 - Dependencies & licenses: [DEPENDENCIES.md](DEPENDENCIES.md)
