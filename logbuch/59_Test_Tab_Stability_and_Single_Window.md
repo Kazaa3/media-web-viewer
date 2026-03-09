@@ -29,6 +29,7 @@ Beim Ausführen von Tests im `Tests`-Tab trat ein instabiles Verhalten auf:
 - `eel.start(...)` auf `mode=False` gestellt, damit **kein** automatischer Eel-Browserstart erfolgt und nur der manuelle Chromium-App-Launch aktiv bleibt (Single-Window-Quelle).
 - Mehrfachinstanz-Guard ergänzt: Bei bereits laufender Session wird kein neues Fenster mehr gestartet.
 - Browser-Open-Seiteneffekte während UI-Testläufen unterdrückt: `run_tests(...)` setzt `MWV_DISABLE_BROWSER_OPEN=1`, `run_connectionless_browser_mode()` respektiert den Flag.
+- Live-Output-Streaming für Testläufe: `run_tests(...)` streamt Pytest-Ausgabe zeilenweise über Eel (`append_test_output`) statt nur am Ende ein Gesamtergebnis zu liefern.
 
 ### Frontend (`web/app.html` + Packaging-Spiegel)
 - Test-Output robuster (vertikales Scrolling, Zeilenumbruch, große Ausgabe abgeschnitten).
@@ -40,6 +41,9 @@ Beim Ausführen von Tests im `Tests`-Tab trat ein instabiles Verhalten auf:
   - Connection-State-Übergänge
   - JS Errors/Unhandled Rejections
 - Trace wird zusätzlich ins Backend-Log weitergeleitet.
+- Testausgabe wird jetzt während der Laufzeit fortlaufend aktualisiert (kein statisches "Starting tests..." bis zum Laufende).
+- Interaktive/browser-nahe Tests sind standardmäßig **nicht** vorausgewählt (weiterhin manuell aktivierbar), um unbeabsichtigte Fenster/Tab-Sideeffects zu vermeiden.
+- Hinweisbanner im Test-Tab ergänzt: Interaktive Browser-Tests sind standardmäßig deaktiviert.
 
 ## Tests
 Neue Regression-Testdatei:
@@ -53,10 +57,12 @@ Abgedeckte Checks:
 5. `eel.start("app.html", mode=False, ...)` als Schutz gegen Doppel-Fenster erzwungen.
 6. Existing-Session-Guard verhindert zweites Fenster beim erneuten Start.
 7. Browser-Open-Suppression (`MWV_DISABLE_BROWSER_OPEN`) für UI-Test-Subprozesse aktiv.
+8. Interaktive/browser-nahe Tests sind im Test-Tab standardmäßig nicht vorausgewählt.
+9. Frontend-Bridge `append_test_output` für Live-Testausgabe vorhanden.
 
 Ergebnis:
 - `python -m pytest tests/test_ui_session_stability.py -q`
-- **6 passed**
+- **9 passed**
 
 ## Ergebnis
 Der bekannte Sprung aus dem `Tests`-Tab in den `Player` durch Session-Abbruch wurde technisch abgesichert und reproduzierbar dokumentiert. Die Regression ist jetzt testbar und dauerhaft über die Test-Suite abgedeckt.

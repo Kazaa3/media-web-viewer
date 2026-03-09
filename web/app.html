@@ -3260,6 +3260,31 @@
             }
         }
 
+        let __testOutputBuffer = '';
+        function appendTestOutputChunk(chunk) {
+            const resultsContainer = document.getElementById('test-results-container');
+            const outputArea = document.getElementById('test-output');
+            if (!outputArea) return;
+
+            if (resultsContainer) {
+                resultsContainer.style.display = 'block';
+            }
+
+            const maxOutputChars = 250000;
+            const truncatedPrefix = '[Ausgabe gekürzt - nur die letzten Zeichen werden angezeigt]\n\n';
+            __testOutputBuffer += chunk;
+            if (__testOutputBuffer.length > maxOutputChars) {
+                __testOutputBuffer = truncatedPrefix + __testOutputBuffer.slice(-maxOutputChars);
+            }
+            outputArea.textContent = __testOutputBuffer;
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        eel.expose(append_test_output);
+        function append_test_output(message) {
+            appendTestOutputChunk(String(message || ''));
+        }
+
         // ============ Resizable Splitter Logic ============
         (function () {
             function initSplitter(splitterId, leftPaneId, containerId) {
@@ -3460,19 +3485,8 @@
                 });
             }
 
-            const maxOutputChars = 250000;
-            const truncatedPrefix = '[Ausgabe gekürzt - nur die letzten Zeichen werden angezeigt]\n\n';
-            let outputBuffer = '';
-            const appendOutput = (chunk) => {
-                outputBuffer += chunk;
-                if (outputBuffer.length > maxOutputChars) {
-                    outputBuffer = truncatedPrefix + outputBuffer.slice(-maxOutputChars);
-                }
-                outputArea.textContent = outputBuffer;
-                outputArea.scrollTop = outputArea.scrollHeight;
-            };
-
-            appendOutput(`${t('test_run_starting')}\n`);
+            __testOutputBuffer = '';
+            appendTestOutputChunk(`${t('test_run_starting')}\n`);
             summaryBadge.style.display = 'none';
             summaryBadge.textContent = '';
 
@@ -3483,9 +3497,9 @@
                 if (selectedFiles.length > 0) {
                     const result = await eel.run_tests(selectedFiles)();
                     if (result.error) {
-                        appendOutput(`${t('test_run_error')}${result.error}\n`);
+                        appendTestOutputChunk(`${t('test_run_error')}${result.error}\n`);
                     } else {
-                        appendOutput(`[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`);
+                        appendTestOutputChunk(`\n[Python Tests - Exit Code: ${result.exit_code}]\n`);
                         if (result.passes !== undefined) totalPasses += result.passes;
                         if (result.fails !== undefined) totalFails += result.fails;
                     }
@@ -3494,9 +3508,9 @@
                 if (guiTest) {
                     try {
                         const guiRes = await eel.run_gui_tests()();
-                        appendOutput(`\n\n[GUI-Tests] ${guiRes.message}`);
+                        appendTestOutputChunk(`\n\n[GUI-Tests] ${guiRes.message}`);
                     } catch (e) {
-                        appendOutput(`\n\n[GUI-Tests] ${t('test_run_system_error')}${e}`);
+                        appendTestOutputChunk(`\n\n[GUI-Tests] ${t('test_run_system_error')}${e}`);
                     }
                 }
 
@@ -3513,7 +3527,7 @@
                     }
                 }
             } catch (e) {
-                appendOutput(`${t('test_run_system_error')}${e}\n`);
+                appendTestOutputChunk(`${t('test_run_system_error')}${e}\n`);
             } finally {
                 isTestRunInProgress = false;
                 if (runBtn) {
