@@ -324,6 +324,23 @@ The project is built as a Debian package (.deb) for Debian/Ubuntu systems to ena
 
 ### Build Process in Detail
 
+#### Pre-Build Test Gate (mandatory by default)
+
+Before `dpkg-deb` packaging starts, `build_deb.sh` executes a targeted regression/performance gate:
+
+- `tests/test_performance_probes.py`
+- `tests/test_bottle_health_latency.py`
+- `tests/test_installed_packages_ui.py`
+- `tests/test_ui_session_stability.py`
+
+If one of these tests fails, the build aborts immediately.
+
+Optional override (not recommended except emergency/local debugging):
+
+```bash
+SKIP_BUILD_TESTS=1 bash build_deb.sh
+```
+
 1. **Prepare Staging Area:** The script creates or empties the `packaging/` folder and sets up the structure.
 2. **Copy Source Code:** Using `rsync`, the entire project code is copied to `packaging/opt/media-web-viewer/`, excluding unwanted files like `.git`, `.venv`, `__pycache__`, build artifacts, and media files.
 3. **Make Scripts Executable:** The DEBIAN scripts (`postinst`, `prerm`) and the start script (`usr/bin/media-web-viewer`) are made executable with `chmod 755`.
