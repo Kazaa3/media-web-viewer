@@ -1272,6 +1272,7 @@
                                 <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_installed_packages">
                                     📦 Installierte Pakete (aktive Umgebung)
                                     <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
+                                    <span id="package-source" style="color: #999; font-weight: normal; font-size: 0.8em; margin-left: 8px;">[source: -]</span>
                                 </h4>
                                 <div style="margin-bottom: 8px;">
                                     <input type="text" id="package-search" placeholder="Search packages..." 
@@ -3085,9 +3086,43 @@
 
         let packageSearchTimer = null;
 
+        function normalizeInstalledPackages(rawPackages) {
+            const normalized = [];
+
+            if (Array.isArray(rawPackages)) {
+                rawPackages.forEach(pkg => {
+                    if (!pkg || typeof pkg !== 'object') return;
+                    const name = String(pkg.name ?? pkg.Name ?? pkg.project_name ?? pkg.projectName ?? '').trim();
+                    const version = String(pkg.version ?? pkg.Version ?? pkg.ver ?? '').trim();
+                    if (!name) return;
+                    normalized.push({ name, version: version || '-' });
+                });
+            } else if (rawPackages && typeof rawPackages === 'object') {
+                Object.entries(rawPackages).forEach(([name, version]) => {
+                    const pkgName = String(name || '').trim();
+                    if (!pkgName) return;
+                    normalized.push({ name: pkgName, version: String(version ?? '-').trim() || '-' });
+                });
+            }
+
+            normalized.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            return normalized;
+        }
+
         async function loadEnvironmentInfo() {
             try {
-                const info = await eel.get_environment_info()();
+                let info = await eel.get_environment_info()();
+
+                const initialPackages = normalizeInstalledPackages(info?.installed_packages);
+                const hasInitialPackages = initialPackages.length > 0;
+                if (!hasInitialPackages) {
+                    try {
+                        const refreshed = await eel.get_environment_info(true)();
+                        if (refreshed) info = refreshed;
+                    } catch (refreshErr) {
+                        console.warn('Environment info force-refresh failed:', refreshErr);
+                    }
+                }
 
                 if (!info || typeof info !== 'object') {
                     throw new Error('Invalid environment info response');
@@ -3096,7 +3131,7 @@
                 const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];
                 const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];
                 const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];
-                const safeInstalledPackages = Array.isArray(info.installed_packages) ? info.installed_packages : [];
+                const safeInstalledPackages = normalizeInstalledPackages(info.installed_packages);
                 
                 const envPythonVersionEl = document.getElementById('env-python-version');
                 if (envPythonVersionEl) envPythonVersionEl.textContent = info.python_version || '-';
@@ -3235,6 +3270,9 @@
                 // Display Installed Packages
                 const packagesList = document.getElementById('installed-packages-list');
                 const packageCount = document.getElementById('package-count');
+                const packageSource = document.getElementById('package-source');
+                const sourceText = String(info.installed_packages_source || 'unknown');
+                if (packageSource) packageSource.textContent = `[source: ${sourceText}]`;
                 
                 if (safeInstalledPackages.length > 0 && packagesList && packageCount) {
                     packageCount.textContent = `(${safeInstalledPackages.length})`;
@@ -3281,6 +3319,7 @@
                 const fallbackNoData = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
 
                 const packageCount = document.getElementById('package-count');
+                const packageSource = document.getElementById('package-source');
                 const condaList = document.getElementById('conda-environments-list');
                 const globalPythonList = document.getElementById('system-python-global-list');
                 const localPythonList = document.getElementById('system-python-local-list');
@@ -3288,6 +3327,7 @@
                 const packagesList = document.getElementById('installed-packages-list');
 
                 if (packageCount) packageCount.textContent = '(0)';
+                if (packageSource) packageSource.textContent = '[source: error]';
                 if (condaList) condaList.innerHTML = failText;
                 if (globalPythonList) globalPythonList.innerHTML = failText;
                 if (localPythonList) localPythonList.innerHTML = failText;
