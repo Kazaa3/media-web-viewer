@@ -45,6 +45,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="env-dev-tools-status"', self.app_html)
         self.assertIn('id="env-build-tools-status"', self.app_html)
         self.assertIn('id="env-requirements-list"', self.app_html)
+        self.assertIn('id="env-base-dependencies-status"', self.app_html)
 
     def test_search_input_has_i18n_placeholder_binding(self):
         """Search input must bind placeholder via i18n key."""
@@ -79,7 +80,10 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const envMutagenStatusEl = document.getElementById('env-mutagen-status');",
             "const envGuiStatusEl = document.getElementById('env-gui-status');",
             "const envMediaplayerStatusEl = document.getElementById('env-mediaplayer-status');",
+            "const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');",
             "const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');",
+            "const ffmpegVer = toolsStatus.ffmpeg_cli_version || '';",
+            "const ffprobeVer = toolsStatus.ffprobe_cli_version || '';",
             "const corePackages = [",
             "['bottle', 'bottle']",
             "['bottle-websocket', 'bottle-websocket']",
@@ -102,6 +106,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "['setuptools', 'setuptools']",
             "['packaging', 'packaging']",
             "['psutil', 'psutil']",
+            "const categorizedKeys = new Set([",
+            "const baseDependencies = safeInstalledPackages",
+            "const baseDependenciesText = baseDependencies.length > 0",
             "const requirementsListText = requirementsStatusPreview?.available",
             "const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'",
             "requirementsCount.textContent = `(${installedCount}/${total})`;",
@@ -164,6 +171,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "env_label_dev_tools",
             "env_label_build_tools",
             "env_label_requirements_list",
+            "env_label_base_dependencies",
             "env_table_package",
             "env_table_version",
         ]

@@ -1286,6 +1286,9 @@
                                 <div style="margin-bottom: 8px;">
                                     <strong data-i18n="env_label_requirements_list">Requirements:</strong> <span id="env-requirements-list" style="word-break: break-all;">-</span>
                                 </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_base_dependencies">Base-Dependencies:</strong> <span id="env-base-dependencies-status" style="word-break: break-all;">-</span>
+                                </div>
                                 <div>
                                     <strong data-i18n="env_label_system">System:</strong> <span id="env-platform">-</span>
                                 </div>
@@ -3232,6 +3235,7 @@
                 const envDevToolsStatusEl = document.getElementById('env-dev-tools-status');
                 const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');
                 const envRequirementsListEl = document.getElementById('env-requirements-list');
+                const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');
                 const envPlatformEl = document.getElementById('env-platform');
 
                 const mediaInfoStatus = info.mediainfo_status || {};
@@ -3243,8 +3247,10 @@
                 const toolsStatus = info.tools_status || {};
                 const ffmpegOk = !!toolsStatus.ffmpeg_cli_available;
                 const ffmpegPath = toolsStatus.ffmpeg_cli_path || '';
+                const ffmpegVer = toolsStatus.ffmpeg_cli_version || '';
                 const ffprobeOk = !!toolsStatus.ffprobe_cli_available;
                 const ffprobePath = toolsStatus.ffprobe_cli_path || '';
+                const ffprobeVer = toolsStatus.ffprobe_cli_version || '';
                 const browserOk = !!toolsStatus.browser_available;
                 const browserName = toolsStatus.browser_name || 'browser';
                 const browserPath = toolsStatus.browser_path || '';
@@ -3259,8 +3265,8 @@
                 const mediaInfoText = [
                     `${pyMediaInfoOk ? '✅' : '❌'} pymediainfo${pyMediaInfoVer ? ` ${pyMediaInfoVer}` : ''}`,
                     `${mediaInfoCliOk ? '✅' : '❌'} mediainfo${mediaInfoCliPath ? ` (${mediaInfoCliPath})` : ''}`,
-                    `${ffmpegOk ? '✅' : '❌'} ffmpeg${ffmpegPath ? ` (${ffmpegPath})` : ''}`,
-                    `${ffprobeOk ? '✅' : '❌'} ffprobe${ffprobePath ? ` (${ffprobePath})` : ''}`,
+                    `${ffmpegOk ? '✅' : '❌'} ffmpeg${ffmpegVer ? ` ${ffmpegVer}` : ''}${ffmpegPath ? ` (${ffmpegPath})` : ''}`,
+                    `${ffprobeOk ? '✅' : '❌'} ffprobe${ffprobeVer ? ` ${ffprobeVer}` : ''}${ffprobePath ? ` (${ffprobePath})` : ''}`,
                 ].join(' | ');
 
                 // Mutagen
@@ -3361,6 +3367,32 @@
                     })
                     .join(' | ');
 
+                const categorizedKeys = new Set([
+                    ...corePackages.map(([pkgKey]) => pkgKey),
+                    ...testPackages.map(([pkgKey]) => pkgKey),
+                    ...devPackages.map(([pkgKey]) => pkgKey),
+                    ...buildPackages.map(([pkgKey]) => pkgKey),
+                    'pymediainfo',
+                    'mutagen',
+                    'python-vlc',
+                ]);
+
+                const baseDependencies = safeInstalledPackages
+                    .filter(pkg => {
+                        if (!pkg || typeof pkg !== 'object') return false;
+                        const key = String(pkg.name || '').trim().toLowerCase();
+                        return key && !categorizedKeys.has(key);
+                    })
+                    .map(pkg => {
+                        const label = String(pkg.name || '').trim();
+                        const version = String(pkg.version || '').trim();
+                        return `${label}${version ? ` ${version}` : ''}`;
+                    });
+
+                const baseDependenciesText = baseDependencies.length > 0
+                    ? `✅ ${baseDependencies.join(', ')}`
+                    : '-';
+
                 const requirementsStatusPreview = info.requirements_status && typeof info.requirements_status === 'object'
                     ? info.requirements_status
                     : null;
@@ -3389,6 +3421,7 @@
                 if (envDevToolsStatusEl) envDevToolsStatusEl.textContent = devToolsText;
                 if (envBuildToolsStatusEl) envBuildToolsStatusEl.textContent = buildToolsText;
                 if (envRequirementsListEl) envRequirementsListEl.textContent = requirementsListText;
+                if (envBaseDependenciesStatusEl) envBaseDependenciesStatusEl.textContent = baseDependenciesText;
                 if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
                 
                 // Color code the venv status

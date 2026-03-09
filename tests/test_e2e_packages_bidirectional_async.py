@@ -458,7 +458,9 @@ wheel      0.42.0
 
         expected_keys = [
             "ffmpeg_cli_available",
+            "ffmpeg_cli_version",
             "ffprobe_cli_available",
+            "ffprobe_cli_version",
             "browser_available",
             "browser_name",
             "browser_path",
@@ -474,10 +476,14 @@ wheel      0.42.0
         self.assertIn('id="env-mutagen-status"', self.html_code)
         self.assertIn('id="env-gui-status"', self.html_code)
         self.assertIn('id="env-mediaplayer-status"', self.html_code)
+        self.assertIn('id="env-base-dependencies-status"', self.html_code)
+        self.assertIn("env_label_base_dependencies", self.html_code)
         self.assertIn("env_label_mutagen", self.html_code)
         self.assertIn("env_label_gui", self.html_code)
         self.assertIn("env_label_mediaplayer", self.html_code)
         self.assertIn("info.tools_status", self.html_code)
+        self.assertIn("ffmpeg_cli_version", self.html_code)
+        self.assertIn("ffprobe_cli_version", self.html_code)
 
         # Ensure commonly displayed tool labels are part of render string
         self.assertIn("ffmpeg", self.html_code)
