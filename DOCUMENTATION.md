@@ -62,6 +62,25 @@ Highlights of this release:
 
 ---
 
+### Milestone Roadmap
+
+The project is developed in three dedicated branches, one per milestone:
+
+| Milestone | Name              | Branch                          | Status       |
+|-----------|-------------------|---------------------------------|--------------|
+| M1        | AudioPlayer       | `main`                          | ✅ Released  |
+| M2        | Media Library     | `milestone/2-medienbibliothek`  | 🟡 Active    |
+| M3        | New GUI           | `milestone/3-neue-gui`          | 📋 Planned   |
+
+**M1 – AudioPlayer** (`main`): functional player, full metadata parsing, multi-platform builds, CI/CD — released as `v1.3.3`.
+
+**M2 – Media Library** (`milestone/2-medienbibliothek`): relational tags table, library search/filtering, playlist management — this branch, `v1.3.4+`.  
+See [`logbuch/59_Milestone_2_Medienbibliothek.md`](logbuch/59_Milestone_2_Medienbibliothek.md) for full design notes.
+
+**M3 – New GUI** (`milestone/3-neue-gui`): migration to a modern frontend framework — planned, starts after M2 merges into `main`.
+
+---
+
 ## Table of Contents
 
 1. [Overview](#overview)
