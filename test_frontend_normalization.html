@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Normalization Test</title>
+</head>
+<body>
+    <h1>Testing normalizeInstalledPackages</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Copy the exact normalization function from app.html
+        function normalizeInstalledPackages(rawPackages) {
+            const normalized = [];
+
+            if (typeof rawPackages === 'string') {
+                const trimmed = rawPackages.trim();
+                if (trimmed) {
+                    try {
+                        rawPackages = JSON.parse(trimmed);
+                    } catch (_) {
+                        rawPackages = [];
+                    }
+                }
+            }
+
+            if (rawPackages && typeof rawPackages === 'object' && !Array.isArray(rawPackages)) {
+                if (Array.isArray(rawPackages.packages)) {
+                    rawPackages = rawPackages.packages;
+                } else if (Array.isArray(rawPackages.installed_packages)) {
+                    rawPackages = rawPackages.installed_packages;
+                }
+            }
+
+            if (Array.isArray(rawPackages)) {
+                rawPackages.forEach(pkg => {
+                    if (!pkg || typeof pkg !== 'object') return;
+                    const name = String(pkg.name ?? pkg.Name ?? pkg.project_name ?? pkg.projectName ?? '').trim();
+                    const version = String(pkg.version ?? pkg.Version ?? pkg.ver ?? '').trim();
+                    if (!name) return;
+                    normalized.push({ name, version: version || '-' });
+                });
+            } else if (rawPackages && typeof rawPackages === 'object') {
+                Object.entries(rawPackages).forEach(([name, version]) => {
+                    const pkgName = String(name || '').trim();
+                    if (!pkgName) return;
+                    normalized.push({ name: pkgName, version: String(version ?? '-').trim() || '-' });
+                });
+            }
+
+            normalized.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            return normalized;
+        }
+        
+        // Test with exact data structure from backend
+        const testData = [
+            {'name': 'altgraph', 'version': '0.17.5'},
+            {'name': 'bottle', 'version': '0.13.4'},
+            {'name': 'bottle-websocket', 'version': '0.2.9'}
+        ];
+        
+        const result = normalizeInstalledPackages(testData);
+        
+        document.getElementById('output').innerHTML = `
+            <h2>Input:</h2>
+            <pre>${JSON.stringify(testData, null, 2)}</pre>
+            
+            <h2>Output:</h2>
+            <pre>${JSON.stringify(result, null, 2)}</pre>
+            
+            <h2>Result:</h2>
+            <p>Count: ${result.length}</p>
+            <p>Success: ${result.length === 3 ? 'YES ✓' : 'NO ✗'}</p>
+        `;
+    </script>
+</body>
+</html>
