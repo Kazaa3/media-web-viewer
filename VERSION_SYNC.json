@@ -45,6 +45,30 @@
       "required": true
     },
     {
+      "file": "logbuch/00_Known_Issues.md",
+      "line_pattern": "<!-- Title_DE: Bekannte Probleme (Stand v${version}) -->",
+      "description": "Known Issues metadata title (German)",
+      "required": true
+    },
+    {
+      "file": "logbuch/00_Known_Issues.md",
+      "line_pattern": "<!-- Title_EN: Known Issues (Status v${version}) -->",
+      "description": "Known Issues metadata title (English)",
+      "required": true
+    },
+    {
+      "file": "logbuch/00_Known_Issues.md",
+      "line_pattern": "# Bekannte Probleme (Stand v${version})",
+      "description": "Known Issues visible heading (German)",
+      "required": true
+    },
+    {
+      "file": "logbuch/00_Known_Issues.md",
+      "line_pattern": "# Known Issues (Status v${version})",
+      "description": "Known Issues visible heading (English)",
+      "required": true
+    },
+    {
       "file": "DOCUMENTATION.md",
       "line_pattern": "Media Web Viewer (v${version})",
       "description": "Documentation architecture tree header",
@@ -79,12 +103,12 @@
   },
   "update_instructions": {
     "steps": [
-      "1. Edit VERSION file with new version number",
+      "1. Run: python update_version.py --new-version X.Y.Z",
       "2. Run: python tests/test_version_sync.py",
-      "3. If test fails, update all locations listed in sync_locations",
+      "3. If test fails, fix reported locations or adjust VERSION_SYNC.json",
       "4. Re-run test to verify all versions are synchronized"
     ],
-    "automated_tool": "Future: Create update_version.py script to automate this"
+    "automated_tool": "python update_version.py --new-version X.Y.Z"
   },
   "metadata": {
     "last_updated": "2026-03-09",

@@ -157,7 +157,7 @@ Neue Sync-Location hinzufügen:
 3. **Single Version Global** - Keine per-component Versionierung
 
 ## Ausblick / Todo
-- [ ] **Auto-Update Script:** `update_version.py --new-version 1.4.0` → updated alle Stellen automatisch
+- [x] **Auto-Update Script:** `update_version.py --new-version 1.4.0` → updated alle Stellen automatisch
 - [ ] **Pre-commit Hook:** Automatische Validierung vor Git Commit
 - [ ] **Version History:** Track in VERSION_SYNC.json wer wann was geändert hat
 - [ ] **Regex Pattern Support:** Flexiblere Pattern-Matching-Optionen

@@ -18,7 +18,7 @@ This version is automatically loaded and used across:
 - Application GUI (Help/About/Footer)
 - Linux start menu entry (`packaging/usr/share/applications/media-web-viewer.desktop`)
 
-Version synchronization is validated via `VERSION_SYNC.json` (currently 11 tracked locations) and:
+Version synchronization is validated via `VERSION_SYNC.json` (currently 15 tracked locations) and:
 
 ```bash
 python tests/test_version_sync.py
@@ -561,7 +561,7 @@ sudo apt purge media-web-viewer
 media-web-viewer/
 │
 ├── VERSION                  # Master semantic version (single source of truth)
-├── VERSION_SYNC.json        # Version synchronization map (11 tracked locations)
+├── VERSION_SYNC.json        # Version synchronization map (15 tracked locations)
 ├── main.py                  # Entry point, Eel setup, backend API functions
 ├── models.py                # MediaItem class with parsing and transcoding logic
 ├── db.py                    # SQLite database operations
