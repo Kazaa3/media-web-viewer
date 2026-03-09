@@ -1724,6 +1724,11 @@
 
                 applyTranslations(currentLanguage);
 
+                // Refresh runtime status labels that are not bound via data-i18n
+                if (typeof checkConnection === 'function') {
+                    checkConnection();
+                }
+
                 // Re-render key sections so placeholders are translated in fallback mode too
                 if (typeof loadLibrary === 'function') {
                     loadLibrary();
@@ -1759,6 +1764,12 @@
                 // Support \n in JSON strings
                 return translations[currentLanguage][key].replace(/\\n/g, '\n');
             }
+
+            // Fallback to German base translations
+            if (translations.de && translations.de[key]) {
+                return translations.de[key].replace(/\\n/g, '\n');
+            }
+
             return key;
         }
 
@@ -2124,39 +2135,52 @@
         }
 
         async function scan(targetDir = null, clearDb = true) {
-            let result = await eel.scan_media(targetDir, clearDb)();
-            let list = document.getElementById('media-list');
-            list.innerHTML = '';
+            const scanBtn = document.getElementById('scan-btn');
+            const status = document.getElementById('status');
 
-            // Populate Debug Tab with perf timing
-            document.getElementById('debug-output').textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media, null, 2);
-            result.media.forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'media-item';
-                let tags = item.tags;
-                let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                let trackStr = tags.track ? 'Track ' + tags.track : '';
-                if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+            if (typeof set_db_status === 'function') {
+                set_db_status(true);
+            }
+            if (scanBtn) {
+                scanBtn.disabled = true;
+                scanBtn.style.opacity = '0.7';
+                scanBtn.style.cursor = 'wait';
+            }
+            if (status) {
+                status.textContent = t('db_updating');
+            }
 
-                let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+            try {
+                let result = await eel.scan_media(targetDir, clearDb)();
 
-                div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
-                    <div class="media-info">
-                        <strong>${tags.title}</strong> 
-                        <span>${tags.artist}</span>
-                        <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
-                    </div>
-                `;
-
-                let mediaUrl = '/media/' + encodeURIComponent(item.name);
-                if (item.is_transcoded && item.transcoded_format) {
-                    mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                // Populate Debug Tab with perf timing
+                const debugOutput = document.getElementById('debug-output');
+                if (debugOutput && result && result.stats) {
+                    debugOutput.textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media || [], null, 2);
                 }
 
-                div.onclick = () => play(item, mediaUrl);
-                list.appendChild(div);
-            });
+                // Always reload canonical library view after scan
+                if (typeof loadLibrary === 'function') {
+                    loadLibrary();
+                }
+                if (typeof loadEditItems === 'function') {
+                    loadEditItems();
+                }
+            } catch (e) {
+                console.error('[scan] Error during scan:', e);
+                if (status) {
+                    status.textContent = `${t('common_error')} ${e.message || e}`;
+                }
+            } finally {
+                if (typeof set_db_status === 'function') {
+                    set_db_status(false);
+                }
+                if (scanBtn) {
+                    scanBtn.disabled = false;
+                    scanBtn.style.opacity = '1';
+                    scanBtn.style.cursor = 'pointer';
+                }
+            }
         }
 
         function play(item, path) {
@@ -2778,11 +2802,15 @@
                 let statusText = '';
                 let isActive = false;
                 
-                if (info.env_type === 'conda') {
-                    statusText = `✅ Ja (Conda: ${info.env_name || 'unknown'})`;
+                if (info.env_type === 'venv') {
+                    if (info.has_conda_context) {
+                        statusText = `✅ Ja (Venv: ${info.env_name || 'unknown'}, Conda-Kontext: ${info.conda_env_name || 'unknown'})`;
+                    } else {
+                        statusText = `✅ Ja (Venv: ${info.env_name || 'unknown'})`;
+                    }
                     isActive = true;
-                } else if (info.env_type === 'venv') {
-                    statusText = `✅ Ja (Venv: ${info.env_name || 'unknown'})`;
+                } else if (info.env_type === 'conda') {
+                    statusText = `✅ Ja (Conda: ${info.env_name || 'unknown'})`;
                     isActive = true;
                 } else {
                     statusText = '❌ Nein (System Python)';

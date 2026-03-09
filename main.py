@@ -32,13 +32,6 @@ def _detect_python_environment():
     python_version = platform.python_version()
     python_executable = sys.executable
     
-    # Check for conda
-    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
-    conda_prefix = os.environ.get('CONDA_PREFIX')
-    
-    if conda_env and conda_prefix:
-        return ('conda', conda_env, conda_prefix, python_version, python_executable)
-    
     # Check for venv
     in_venv = sys.prefix != sys.base_prefix
     venv_env = os.environ.get('VIRTUAL_ENV')
@@ -47,6 +40,13 @@ def _detect_python_environment():
         env_path = venv_env or sys.prefix
         env_name = Path(env_path).name if env_path else 'venv'
         return ('venv', env_name, env_path, python_version, python_executable)
+
+    # Check for conda
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+    conda_prefix = os.environ.get('CONDA_PREFIX')
+    
+    if conda_env and conda_prefix:
+        return ('conda', conda_env, conda_prefix, python_version, python_executable)
     
     # System Python
     return ('system', None, sys.prefix, python_version, python_executable)
@@ -172,19 +172,20 @@ def get_environment_info():
     conda_prefix = os.environ.get('CONDA_PREFIX', None)
     in_conda = conda_env_name is not None or conda_prefix is not None
     
-    # Determine current environment type and path
+    # Determine active runtime environment type and path
+    # Priority: active interpreter/venv > conda shell context > system
     env_type = None
     env_path = None
     env_name = None
     
-    if in_conda:
-        env_type = "conda"
-        env_path = conda_prefix
-        env_name = conda_env_name
-    elif in_venv or venv_env:
+    if in_venv or venv_env:
         env_type = "venv"
         env_path = venv_path or venv_env
         env_name = Path(env_path).name if env_path else None
+    elif in_conda:
+        env_type = "conda"
+        env_path = conda_prefix
+        env_name = conda_env_name
     else:
         env_type = "system"
     
@@ -339,6 +340,7 @@ def get_environment_info():
         "in_conda": in_conda,
         "conda_env_name": conda_env_name,
         "conda_prefix": conda_prefix,
+        "has_conda_context": bool(conda_env_name or conda_prefix),
         "env_type": env_type,
         "env_path": env_path,
         "env_name": env_name,
@@ -906,6 +908,13 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
     start_time = time.time()
+
+    if hasattr(eel, 'set_db_status'):
+        try:
+            eel.set_db_status(True)()
+        except Exception:
+            pass
+
     # DB optional leeren
     if clear_db:
         db.clear_media()
@@ -925,48 +934,50 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 debug_log(f"[Scan] Skipping non-existent directory: {d}")
 
     count: int = 0
-    for scan_root in scan_roots:
-        logger.debug("scan", f"Starting scan of: {scan_root}")
+    try:
+        for scan_root in scan_roots:
+            logger.debug("scan", f"Starting scan of: {scan_root}")
 
-        # Rekursiv suchen, um Medien in Unterordnern zu finden
-        for f in scan_root.rglob('*'):
-            if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
-                # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
-                if '.cache' in f.parts:
-                    continue
+            # Rekursiv suchen, um Medien in Unterordnern zu finden
+            for f in scan_root.rglob('*'):
+                if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
+                    # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
+                    if '.cache' in f.parts:
+                        continue
 
-                # Blacklist für unerwünschte Dateien (Cover-Art, Captcha, etc.)
-                name_lower = f.name.lower()
-                if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
-                    continue
+                    # Blacklist für unerwünschte Dateien (Cover-Art, Captcha, etc.)
+                    name_lower = f.name.lower()
+                    if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
+                        continue
 
-                logger.debug("scan", f"Verarbeite: {f.name}")
-                try:
-                    item = MediaItem(f.name, f)
-                    item_dict = item.to_dict()
-                    logger.debug("db", f"{f.name} (Category: {item_dict.get('category')}) from {f.parent}")
-                    db.insert_media(item_dict)
-                    count += 1
-                except Exception as e:
-                    logger.debug("scan", f"Fehler bei {f.name}: {e}")
-                    # Ignoriere problematische Dateien, aber setze das Logging fort
-                    continue
+                    logger.debug("scan", f"Verarbeite: {f.name}")
+                    try:
+                        item = MediaItem(f.name, f)
+                        item_dict = item.to_dict()
+                        logger.debug("db", f"{f.name} (Category: {item_dict.get('category')}) from {f.parent}")
+                        db.insert_media(item_dict)
+                        count += 1
+                    except Exception as e:
+                        logger.debug("scan", f"Fehler bei {f.name}: {e}")
+                        # Ignoriere problematische Dateien, aber setze das Logging fort
+                        continue
 
-    if hasattr(eel, 'set_db_status'):
-        eel.set_db_status(False)()
+        elapsed = time.time() - start_time
+        scanned_target = ", ".join(str(p) for p in scan_roots) if scan_roots else "none"
+        logger.debug("performance", f"Scan of {scanned_target} took {elapsed:.2f} seconds.")
+        logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
 
-    elapsed = time.time() - start_time
-    scanned_target = ", ".join(str(p) for p in scan_roots) if scan_roots else "none"
-    logger.debug("performance", f"Scan of {scanned_target} took {elapsed:.2f} seconds.")
-    logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
-
-    # Status in GUI ausblenden (redundant, already handled by guard above)
-
-    # Liefere gescannten Stand direkt aus der DB zurück
-    return {
-        "media": db.get_all_media(),
-        "stats": {"count": count, "time_seconds": elapsed}
-    }
+        # Liefere gescannten Stand direkt aus der DB zurück
+        return {
+            "media": db.get_all_media(),
+            "stats": {"count": count, "time_seconds": elapsed}
+        }
+    finally:
+        if hasattr(eel, 'set_db_status'):
+            try:
+                eel.set_db_status(False)()
+            except Exception:
+                pass
 
 
 @eel.expose

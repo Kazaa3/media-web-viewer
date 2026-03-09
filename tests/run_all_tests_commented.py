@@ -27,6 +27,7 @@ Output:
     - Empfehlungen für Test-Erweiterungen
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -116,12 +117,22 @@ class TestRunner:
         Status: PASSED, FAILED, SKIPPED, ERROR
         """
         try:
+            project_root = str(self.tests_dir.parent)
+            env = dict(os.environ)
+            existing_pythonpath = env.get("PYTHONPATH", "")
+            env["PYTHONPATH"] = (
+                f"{project_root}:{existing_pythonpath}"
+                if existing_pythonpath
+                else project_root
+            )
+
             result = subprocess.run(
                 [sys.executable, str(test_file)],
                 capture_output=True,
                 text=True,
                 timeout=30,
-                cwd=self.tests_dir.parent
+                cwd=self.tests_dir.parent,
+                env=env,
             )
             
             output = result.stdout + result.stderr
@@ -186,7 +197,11 @@ class TestRunner:
     
     def run_all_tests(self):
         """Run all test files and collect results."""
-        test_files = sorted(self.tests_dir.glob("test_*.py"))
+        patterns = ["test_*.py", "check_*.py", "parse_*.py", "benchmark_*.py"]
+        discovered: set[Path] = set()
+        for pattern in patterns:
+            discovered.update(self.tests_dir.glob(pattern))
+        test_files = sorted(discovered)
         total = len(test_files)
         
         print(f"\n{Color.BOLD}{Color.CYAN}{'='*80}")

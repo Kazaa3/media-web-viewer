@@ -5,17 +5,20 @@
 # Kommentar: Misst die Geschwindigkeit von pymediainfo, mutagen, ffmpeg etc.
 
 from typing import Any
-from parsers import filename_parser, mutagen_parser, pymediainfo_parser, ffmpeg_parser
 import time
 import glob
 from pathlib import Path
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from parsers import filename_parser, mutagen_parser, pymediainfo_parser, ffmpeg_parser
 
 
-media_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'media'))
+media_dir = os.path.join(PROJECT_ROOT, 'media')
 files = glob.glob(os.path.join(media_dir, '*.*'))
 
 parser_times = {
