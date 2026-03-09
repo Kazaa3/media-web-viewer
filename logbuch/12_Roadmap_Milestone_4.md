@@ -20,7 +20,6 @@ Ein visuell beeindruckendes, blitzschnelles Interface, das Desktop-App-Standards
 
 ---
 
-*Wichtige Notiz: Auch die `antigravity` Bibliothek wurde in diesem Zuge für zukünftige Easter-Eggs in den Code integriert. 🚀*
 
 <!-- lang-split -->
 
@@ -38,5 +37,3 @@ With increasing complexity, classic JavaScript with manual DOM manipulation reac
 A visually stunning, lightning-fast interface that redefines desktop app standards. Milestone 4 is the final piece of the puzzle for a premium user experience.
 
 ---
-
-*Important Note: The `antigravity` library was also integrated into the code for future easter eggs. 🚀*
