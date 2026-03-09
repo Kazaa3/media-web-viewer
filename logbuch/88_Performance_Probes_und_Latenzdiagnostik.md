@@ -68,3 +68,41 @@ Die GUI wirkte träge. Für die nächste Optimierungsrunde wurde zuerst eine sau
 
 ## Nächster Schritt (geplant)
 Mit dieser Messbasis folgt als eigener Schritt die eigentliche Performance-Optimierung pro Layer (Backend, Frontend, Bottle/Eel-Transport), inklusive Vorher/Nachher-Messung.
+
+---
+
+## Update 09.03.2026 – Post-Optimierungs-Snapshot #1
+
+### Umgesetzte Optimierungen in dieser Runde
+- `web/app_bottle.py`: Unbedingtes Request-Info-Logging im Hook entfernt (nur noch Debug-Trace), um Request-Pfad-Overhead zu reduzieren.
+- `web/app.html`: Package-Suche optimiert:
+  - vor-normalisierte Suchfelder (`window.allPackagesSearch`)
+  - Debounce (`120ms`) statt Filterung bei jedem einzelnen Keypress
+
+### Messung (lokal, `.venv`, 09.03.2026)
+Messskript: direkter Probe-Lauf für `api_ping`, `get_environment_info` (cold/warm) und `GET /health`.
+
+- **api_ping (Payload 4096, n=20)**
+  - avg: `0.002 ms`
+  - median: `0.001 ms`
+  - p95: `0.012 ms`
+
+- **get_environment_info (n=1 cold + n=10 warm)**
+  - cold: `4160.203 ms`
+  - warm avg: `0.003 ms`
+  - warm median: `0.001 ms`
+  - warm p95: `0.017 ms`
+
+- **Bottle /health (n=20)**
+  - avg: `2.762 ms`
+  - median: `0.527 ms`
+  - p95: `44.568 ms`
+
+### Einordnung
+- Der große Unterschied zwischen **cold** und **warm** bei `get_environment_info` bestätigt den gewünschten Effekt des 8s-Caches.
+- `/health` zeigt lokal eine sehr niedrige Median-Latenz; höhere p95-Werte sind im lokalen Single-Process-/wsgiref-Setup erwartbar (Scheduling/Jitter).
+
+### Abschlussstatus dieser Runde
+- Messbasis ist aktiv und getestet.
+- Erste konkrete Optimierungen sind umgesetzt und validiert.
+- Nächster Schritt bleibt die echte Vorher/Nachher-UI-Messung über `runLatencyDiagnostics(...)` im laufenden App-Fenster.
