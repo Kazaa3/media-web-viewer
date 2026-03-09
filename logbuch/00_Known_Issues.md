@@ -17,6 +17,16 @@
 - Neue Bugs zuerst hier erfassen.
 - Nach Fix in „Behoben“ verschieben oder auf den zugehörigen Eintrag verlinken.
 
+## Aktuelle offene Bugs (Stand 2026-03-09)
+*Aktuell keine kritischen Bugs gemeldet.*
+
+## Technische Schulden
+- Parser-Pipeline benötigt Refactoring (siehe [Eintrag 15](15_Parser_Pipeline_Rework.md))
+- Scraper-Integration ausstehend (siehe [Eintrag 80](80_Scraper_Integration_und_Qualitaet.md))
+
+## Behobene Probleme (heute)
+- Branch Protection für main eingerichtet ✅ ([Eintrag 60](60_Branch_Protection_main.md))
+
 <!-- lang-split -->
 
 # Known Issues
@@ -27,4 +37,14 @@
 
 ## Working rule
 - Add new bugs here first.
-- After fixing, move to “Resolved” or link to the related entry.
+- After fixing, move to "Resolved" or link to the related entry.
+
+## Current Open Bugs (as of 2026-03-09)
+*Currently no critical bugs reported.*
+
+## Technical Debt
+- Parser pipeline needs refactoring (see [Entry 15](15_Parser_Pipeline_Rework.md))
+- Scraper integration pending (see [Entry 80](80_Scraper_Integration_und_Qualitaet.md))
+
+## Resolved Issues (today)
+- Branch protection for main set up ✅ ([Entry 60](60_Branch_Protection_main.md))
