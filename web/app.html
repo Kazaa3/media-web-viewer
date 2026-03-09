@@ -1272,6 +1272,12 @@
                                     <strong data-i18n="env_label_test_tools">Tests:</strong> <span id="env-test-tools-status" style="word-break: break-all;">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_dev_tools">Development Tools:</strong> <span id="env-dev-tools-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_build_tools">Build & Packaging:</strong> <span id="env-build-tools-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
                                     <strong data-i18n="env_label_requirements_list">Requirements:</strong> <span id="env-requirements-list" style="word-break: break-all;">-</span>
                                 </div>
                                 <div>
@@ -3215,6 +3221,8 @@
                 const envToolsStatusEl = document.getElementById('env-tools-status');
                 const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');
                 const envTestToolsStatusEl = document.getElementById('env-test-tools-status');
+                const envDevToolsStatusEl = document.getElementById('env-dev-tools-status');
+                const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');
                 const envRequirementsListEl = document.getElementById('env-requirements-list');
                 const envPlatformEl = document.getElementById('env-platform');
 
@@ -3282,6 +3290,32 @@
                     })
                     .join(' | ');
 
+                const devPackages = [
+                    ['mypy', 'mypy'],
+                    ['flake8', 'flake8'],
+                    ['coverage', 'coverage'],
+                ];
+                const devToolsText = devPackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const buildPackages = [
+                    ['pyinstaller', 'PyInstaller'],
+                    ['wheel', 'wheel'],
+                    ['setuptools', 'setuptools'],
+                    ['packaging', 'packaging'],
+                    ['markdown', 'Markdown'],
+                ];
+                const buildToolsText = buildPackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
                 const requirementsStatusPreview = info.requirements_status && typeof info.requirements_status === 'object'
                     ? info.requirements_status
                     : null;
@@ -3305,6 +3339,8 @@
                 if (envToolsStatusEl) envToolsStatusEl.textContent = toolsText;
                 if (envCorePackagesStatusEl) envCorePackagesStatusEl.textContent = coreText;
                 if (envTestToolsStatusEl) envTestToolsStatusEl.textContent = testToolsText;
+                if (envDevToolsStatusEl) envDevToolsStatusEl.textContent = devToolsText;
+                if (envBuildToolsStatusEl) envBuildToolsStatusEl.textContent = buildToolsText;
                 if (envRequirementsListEl) envRequirementsListEl.textContent = requirementsListText;
                 if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
                 

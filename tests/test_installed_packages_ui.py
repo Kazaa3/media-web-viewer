@@ -39,6 +39,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="system-python-local-list"', self.app_html)
         self.assertIn('id="env-core-packages-status"', self.app_html)
         self.assertIn('id="env-test-tools-status"', self.app_html)
+        self.assertIn('id="env-dev-tools-status"', self.app_html)
+        self.assertIn('id="env-build-tools-status"', self.app_html)
         self.assertIn('id="env-requirements-list"', self.app_html)
 
     def test_search_input_has_i18n_placeholder_binding(self):
@@ -74,6 +76,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const envToolsStatusEl = document.getElementById('env-tools-status');",
             "const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');",
             "const envTestToolsStatusEl = document.getElementById('env-test-tools-status');",
+            "const envDevToolsStatusEl = document.getElementById('env-dev-tools-status');",
+            "const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');",
             "const envRequirementsListEl = document.getElementById('env-requirements-list');",
             "const corePackages = [",
             "['bottle', 'bottle']",
@@ -84,6 +88,16 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const testPackages = [",
             "['pytest', 'pytest']",
             "['pytest-cov', 'pytest-cov']",
+            "const devPackages = [",
+            "['mypy', 'mypy']",
+            "['flake8', 'flake8']",
+            "['coverage', 'coverage']",
+            "const buildPackages = [",
+            "['pyinstaller', 'PyInstaller']",
+            "['wheel', 'wheel']",
+            "['setuptools', 'setuptools']",
+            "['packaging', 'packaging']",
+            "['markdown', 'Markdown']",
             "const requirementsListText = requirementsStatusPreview?.available",
             "const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'",
             "requirementsCount.textContent = `(${installedCount}/${total})`;",
@@ -140,6 +154,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "env_requirements_last_checked_error",
             "env_label_core_packages",
             "env_label_test_tools",
+            "env_label_dev_tools",
+            "env_label_build_tools",
             "env_label_requirements_list",
             "env_table_package",
             "env_table_version",
