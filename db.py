@@ -102,7 +102,6 @@ def init_db():
     """
     @brief Initializes the SQLite database and creates necessary tables.
     @details Initialisiert die SQLite-Datenbank und erstellt die notwendigen Tabellen.
-             Since v1.3.4 a dedicated 'tags' table replaces the JSON blob in media.tags.
     """
     DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
@@ -143,25 +142,6 @@ def init_db():
         )
     """)
 
-    # v1.3.4: Dedicated tags table (EAV schema)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            media_id INTEGER NOT NULL,
-            key TEXT NOT NULL,
-            value TEXT,
-            FOREIGN KEY(media_id) REFERENCES media(id) ON DELETE CASCADE,
-            UNIQUE(media_id, key)
-        )
-    """)
-
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_tags_media_id ON tags(media_id)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_tags_key ON tags(key)"
-    )
-
     # Migration: Add columns if missing (for existing databases)
     new_columns = [
         ("category", "TEXT"),
@@ -178,35 +158,7 @@ def init_db():
             pass  # Already exists
 
     conn.commit()
-
-    # v1.3.4 migration: populate 'tags' table from existing JSON blobs
-    _migrate_json_tags_to_table(cursor)
-    conn.commit()
     conn.close()
-
-
-def _migrate_json_tags_to_table(cursor):
-    """
-    @brief One-time migration: moves tag data from media.tags JSON blob into
-           the dedicated tags table.
-    @details Einmalige Migration: Überträgt Tag-Daten aus dem JSON-Blob
-             media.tags in die dedizierte tags-Tabelle.
-    @param cursor Active database cursor / Aktiver Datenbank-Cursor.
-    """
-    cursor.execute("SELECT id, tags FROM media WHERE tags IS NOT NULL AND tags != ''")
-    rows = cursor.fetchall()
-    for media_id, tags_json in rows:
-        try:
-            tags_dict = json.loads(tags_json)
-        except (json.JSONDecodeError, TypeError):
-            continue
-        if not isinstance(tags_dict, dict):
-            continue
-        for key, value in tags_dict.items():
-            cursor.execute("""
-                INSERT OR IGNORE INTO tags (media_id, key, value)
-                VALUES (?, ?, ?)
-            """, (media_id, key, _tag_value_to_str(value)))
 
 
 def get_known_media_names():
@@ -235,42 +187,15 @@ def clear_media():
     conn.close()
 
 
-def _tag_value_to_str(value) -> str:
-    """
-    @brief Serializes a single tag value to a string for database storage.
-    @details Serialisiert einen Tag-Wert als String für die Datenbankspeicherung.
-             Plain strings are stored as-is; everything else is JSON-encoded.
-    @param value Tag value to serialize / Zu serialisierender Tag-Wert.
-    @return String representation / String-Darstellung.
-    """
-    return value if isinstance(value, str) else json.dumps(value)
-
-
-def _tag_value_from_str(raw_value):
-    """
-    @brief Deserializes a tag value from its stored string representation.
-    @details Deserialisiert einen Tag-Wert aus seiner gespeicherten String-Darstellung.
-             JSON-encoded values are decoded; plain strings are returned as-is.
-    @param raw_value Stored string value / Gespeicherter String-Wert.
-    @return Deserialized value / Deserialisierter Wert.
-    """
-    try:
-        return json.loads(raw_value)
-    except (json.JSONDecodeError, TypeError):
-        return raw_value
-
-
 def insert_media(item_dict):
     """
     @brief Inserts a new media item into the database.
     @details Fügt ein neues Medien-Item in die Datenbank ein.
-             Since v1.3.4 tags are also written to the dedicated tags table.
     @param item_dict Metadata dictionary / Dictionary mit Metadaten.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     try:
-        tags_dict = item_dict.get('tags') or {}
         cursor.execute("""
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
                              transcoded_format, tags, extension, container, tag_type, codec)
@@ -283,16 +208,12 @@ def insert_media(item_dict):
             item_dict.get('category', 'Audio'),
             item_dict['is_transcoded'],
             item_dict.get('transcoded_format'),
-            json.dumps(tags_dict),
+            json.dumps(item_dict['tags']),
             item_dict.get('extension'),
             item_dict.get('container'),
             item_dict.get('tag_type'),
             item_dict.get('codec')
         ))
-        media_id = cursor.lastrowid
-
-        # v1.3.4: Write individual tag rows to the dedicated tags table
-        _write_tags_for_media(cursor, media_id, tags_dict)
         conn.commit()
     except sqlite3.IntegrityError:
         pass  # Schon vorhanden
@@ -300,28 +221,10 @@ def insert_media(item_dict):
         conn.close()
 
 
-def _write_tags_for_media(cursor, media_id, tags_dict):
-    """
-    @brief Writes all key/value pairs from tags_dict into the tags table for
-           the given media_id, replacing any existing rows for that media item.
-    @details Schreibt alle Schlüssel-Wert-Paare aus tags_dict in die tags-Tabelle
-             für die angegebene media_id und ersetzt vorhandene Einträge.
-    @param cursor Active database cursor / Aktiver Datenbank-Cursor.
-    @param media_id Primary key of the media row / Primärschlüssel des Media-Eintrags.
-    @param tags_dict Dictionary of tag key/value pairs / Tag-Dictionary.
-    """
-    cursor.execute("DELETE FROM tags WHERE media_id = ?", (media_id,))
-    for key, value in tags_dict.items():
-        cursor.execute("""
-            INSERT INTO tags (media_id, key, value) VALUES (?, ?, ?)
-        """, (media_id, key, _tag_value_to_str(value)))
-
-
 def get_all_media():
     """
     @brief Retrieves all media items from the database.
     @details Ruft alle Medien-Items aus der Datenbank ab.
-             Since v1.3.4 tags are read from the dedicated tags table.
     @return List of media dictionaries / Liste von Medien-Dictionaries.
     """
     init_db()
@@ -333,13 +236,6 @@ def get_all_media():
 
     media_list = []
     for row in rows:
-        tags = _load_tags_for_media(cursor, row['id'])
-        # Fall back to legacy JSON blob if the tags table has no entries yet
-        if not tags and row['tags']:
-            try:
-                tags = json.loads(row['tags'])
-            except (json.JSONDecodeError, TypeError):
-                tags = {}
         media_list.append({
             'name': row['name'],
             'path': row['path'],
@@ -352,22 +248,10 @@ def get_all_media():
             'codec': row['codec'],
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
-            'tags': tags
+            'tags': json.loads(row['tags']) if row['tags'] else {}
         })
     conn.close()
     return media_list
-
-
-def _load_tags_for_media(cursor, media_id):
-    """
-    @brief Loads tags for a single media item from the dedicated tags table.
-    @details Lädt Tags für ein einzelnes Medien-Item aus der dedizierten tags-Tabelle.
-    @param cursor Active database cursor / Aktiver Datenbank-Cursor.
-    @param media_id Primary key of the media row / Primärschlüssel des Media-Eintrags.
-    @return Dictionary of tag key/value pairs / Tag-Dictionary.
-    """
-    cursor.execute("SELECT key, value FROM tags WHERE media_id = ?", (media_id,))
-    return {key: _tag_value_from_str(value) for key, value in cursor.fetchall()}
 
 
 def get_media_path(name):
@@ -389,76 +273,18 @@ def update_media_tags(name, tags_dict):
     """
     @brief Updates the tags of a media item in the database.
     @details Aktualisiert die Tags eines Medien-Items in der Datenbank.
-             Since v1.3.4 tags are stored in the dedicated tags table and the
-             legacy JSON blob in media.tags is kept in sync for compatibility.
     @param name Media record name / Datenbank-Name.
     @param tags_dict New tags dictionary / Neues Dictionary mit Tags.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
-    # Keep JSON blob in sync for backward compatibility
     cursor.execute("""
         UPDATE media
         SET tags = ?
         WHERE name = ?
     """, (json.dumps(tags_dict), name))
-    cursor.execute("SELECT id FROM media WHERE name = ?", (name,))
-    row = cursor.fetchone()
-    if row:
-        _write_tags_for_media(cursor, row[0], tags_dict)
     conn.commit()
     conn.close()
-
-
-def get_media_tags(name):
-    """
-    @brief Returns the tags dictionary for a single media item.
-    @details Gibt das Tags-Dictionary für ein einzelnes Medien-Item zurück.
-             Reads from the dedicated tags table (v1.3.4+).
-    @param name Media record name / Datenbank-Name.
-    @return Dictionary of tag key/value pairs, or empty dict if not found.
-    """
-    conn = sqlite3.connect(DB_FILENAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, tags FROM media WHERE name = ?", (name,))
-    row = cursor.fetchone()
-    if row is None:
-        conn.close()
-        return {}
-    media_id, legacy_tags_json = row
-    tags = _load_tags_for_media(cursor, media_id)
-    if not tags and legacy_tags_json:
-        try:
-            tags = json.loads(legacy_tags_json)
-        except (json.JSONDecodeError, TypeError):
-            tags = {}
-    conn.close()
-    return tags
-
-
-def get_tags_by_key(key):
-    """
-    @brief Returns all media items that have the given tag key, with their values.
-    @details Gibt alle Medien-Items zurück, die den angegebenen Tag-Schlüssel
-             besitzen, zusammen mit den zugehörigen Werten.
-    @param key Tag key to search for / Zu suchender Tag-Schlüssel.
-    @return List of dicts with 'name' and 'value' / Liste von Dicts mit Name und Wert.
-    """
-    init_db()
-    conn = sqlite3.connect(DB_FILENAME)
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT m.name, t.value
-        FROM tags t
-        JOIN media m ON m.id = t.media_id
-        WHERE t.key = ?
-        ORDER BY m.name
-    """, (key,))
-    results = []
-    for media_name, raw_value in cursor.fetchall():
-        results.append({'name': media_name, 'value': _tag_value_from_str(raw_value)})
-    conn.close()
-    return results
 
 
 def rename_media(old_name, new_name):

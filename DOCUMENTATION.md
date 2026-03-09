@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.4  
+**Version:** 1.3.3  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.4
+1.3.3
 ```
 
 This version is automatically loaded and used across:
@@ -46,16 +46,6 @@ python tests/test_version_sync.py
 python build_system.py --pipeline
 ```
 
-### Release Notes (v1.3.4)
-
-Highlights of this release:
-- Introduced a dedicated `tags` table in SQLite (EAV schema: `media_id`, `key`, `value`)
-  replacing the previous JSON blob stored in `media.tags`
-- Added automatic migration: existing JSON tag data is moved to the new table on first run
-- Added `get_media_tags(name)` for direct per-item tag retrieval
-- Added `get_tags_by_key(key)` for querying all media sharing a specific tag key
-- `media.tags` JSON column is kept in sync for backward compatibility
-
 ### Release Notes (v1.3.3)
 
 Highlights of this release:
@@ -82,25 +72,6 @@ Regression coverage:
     - single browser launch path check
     - `eel.start(..., mode=False)` check
     - UI trace bridge + test run re-entry guard check
-
----
-
-### Milestone Roadmap
-
-The project is developed in three dedicated branches, one per milestone:
-
-| Milestone | Name              | Branch                          | Status       |
-|-----------|-------------------|---------------------------------|--------------|
-| M1        | AudioPlayer       | `main`                          | ✅ Released  |
-| M2        | Media Library     | `milestone/2-medienbibliothek`  | 🟡 Active    |
-| M3        | New GUI           | `milestone/3-neue-gui`          | 📋 Planned   |
-
-**M1 – AudioPlayer** (`main`): functional player, full metadata parsing, multi-platform builds, CI/CD — released as `v1.3.3`.
-
-**M2 – Media Library** (`milestone/2-medienbibliothek`): relational tags table, library search/filtering, playlist management — this branch, `v1.3.4+`.  
-See [`logbuch/59_Milestone_2_Medienbibliothek.md`](logbuch/59_Milestone_2_Medienbibliothek.md) for full design notes.
-
-**M3 – New GUI** (`milestone/3-neue-gui`): migration to a modern frontend framework — planned, starts after M2 merges into `main`.
 
 ---
 
@@ -647,7 +618,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.4)
+Media Web Viewer (v1.3.3)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -2391,7 +2362,7 @@ pytest tests/ -k vlc -v
 **Test Output Example:**
 ```
 ==============================================================================
-SESSION MANAGEMENT TEST SUITE - v1.3.4
+SESSION MANAGEMENT TEST SUITE - v1.3.2
 ==============================================================================
 
 📊 Test Suite Overview:
@@ -3914,7 +3885,7 @@ bash build_deb.sh
 **Output:**
 ```
 ================================================================================
-  Building Debian Package (v1.3.4)
+  Building Debian Package (v1.3.2)
 ================================================================================
 
 ==> Preparing staging area...
@@ -4194,7 +4165,7 @@ Each session returns:
 ---
 
 **Last Updated:** 8. März 2026  
-**Current Version:** 1.3.4
+**Current Version:** 1.3.2
 
 ---
 
