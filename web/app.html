@@ -1284,6 +1284,17 @@
                                 </div>
                             </div>
 
+                            <!-- requirements.txt Status -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_requirements_status">
+                                    ✅ requirements.txt Status
+                                    <span id="requirements-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
+                                </h4>
+                                <div id="requirements-status-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
                             <h4 style="font-size: 0.95em; margin-top: 22px; margin-bottom: 8px; color: #444;">Vorhandene Umgebungen</h4>
 
                             <!-- Global Python Installations -->
@@ -3089,6 +3100,25 @@
         function normalizeInstalledPackages(rawPackages) {
             const normalized = [];
 
+            if (typeof rawPackages === 'string') {
+                const trimmed = rawPackages.trim();
+                if (trimmed) {
+                    try {
+                        rawPackages = JSON.parse(trimmed);
+                    } catch (_) {
+                        rawPackages = [];
+                    }
+                }
+            }
+
+            if (rawPackages && typeof rawPackages === 'object' && !Array.isArray(rawPackages)) {
+                if (Array.isArray(rawPackages.packages)) {
+                    rawPackages = rawPackages.packages;
+                } else if (Array.isArray(rawPackages.installed_packages)) {
+                    rawPackages = rawPackages.installed_packages;
+                }
+            }
+
             if (Array.isArray(rawPackages)) {
                 rawPackages.forEach(pkg => {
                     if (!pkg || typeof pkg !== 'object') return;
@@ -3312,6 +3342,35 @@
                     if (packageCount) packageCount.textContent = '(0)';
                     if (packagesList) packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
                 }
+
+                // Display requirements.txt status
+                const requirementsCount = document.getElementById('requirements-count');
+                const requirementsStatusList = document.getElementById('requirements-status-list');
+                const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'
+                    ? info.requirements_status
+                    : null;
+
+                if (requirementsCount && requirementsStatusList) {
+                    const available = !!requirementsStatus?.available;
+                    const missing = Array.isArray(requirementsStatus?.missing) ? requirementsStatus.missing : [];
+                    const installedCount = Number(requirementsStatus?.installed_count || 0);
+                    const total = Number(requirementsStatus?.total || (installedCount + missing.length));
+                    requirementsCount.textContent = `(${installedCount}/${total})`;
+
+                    if (!available) {
+                        requirementsStatusList.innerHTML = `<span style="color: #999;">${t('env_requirements_not_found')}</span>`;
+                    } else if (missing.length === 0) {
+                        requirementsStatusList.innerHTML = `<span style="color: #2a7; font-weight: bold;">${t('env_requirements_all_present')}</span>`;
+                    } else {
+                        const missingHtml = missing
+                            .map(name => `<div style="margin: 3px 0; color: #c62828;">• ${name}</div>`)
+                            .join('');
+                        requirementsStatusList.innerHTML = `
+                            <div style="margin-bottom: 6px; color: #c62828; font-weight: bold;">${t('env_requirements_missing')}</div>
+                            ${missingHtml}
+                        `;
+                    }
+                }
                 
             } catch (e) {
                 console.error("Failed to load environment info:", e);
@@ -3320,6 +3379,8 @@
 
                 const packageCount = document.getElementById('package-count');
                 const packageSource = document.getElementById('package-source');
+                const requirementsCount = document.getElementById('requirements-count');
+                const requirementsStatusList = document.getElementById('requirements-status-list');
                 const condaList = document.getElementById('conda-environments-list');
                 const globalPythonList = document.getElementById('system-python-global-list');
                 const localPythonList = document.getElementById('system-python-local-list');
@@ -3328,6 +3389,8 @@
 
                 if (packageCount) packageCount.textContent = '(0)';
                 if (packageSource) packageSource.textContent = '[source: error]';
+                if (requirementsCount) requirementsCount.textContent = '(0/0)';
+                if (requirementsStatusList) requirementsStatusList.innerHTML = failText;
                 if (condaList) condaList.innerHTML = failText;
                 if (globalPythonList) globalPythonList.innerHTML = failText;
                 if (localPythonList) localPythonList.innerHTML = failText;

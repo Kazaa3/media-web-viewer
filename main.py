@@ -477,6 +477,80 @@ def get_environment_info(force_refresh=False):
             "mediainfo_cli_available": bool(cli_path),
             "mediainfo_cli_path": cli_path,
         }
+
+    def _get_requirements_status():
+        """Get install status for requirements.txt packages in current interpreter."""
+        import importlib.util
+
+        requirements_file = Path(__file__).parent / "requirements.txt"
+        status = {
+            "available": requirements_file.exists(),
+            "total": 0,
+            "installed_count": 0,
+            "missing_count": 0,
+            "installed": [],
+            "missing": [],
+        }
+
+        if not requirements_file.exists():
+            return status
+
+        import_overrides = {
+            "python-vlc": "vlc",
+            "bottle-websocket": "bottle_websocket",
+            "gevent-websocket": "geventwebsocket",
+            "pytest-cov": "pytest_cov",
+            "pyinstaller": "PyInstaller",
+        }
+
+        requirement_names = []
+        try:
+            for raw_line in requirements_file.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith(("-r", "--")):
+                    continue
+
+                line = line.split(" #", 1)[0].split(";", 1)[0].strip()
+                if not line:
+                    continue
+
+                if " @ " in line:
+                    package_name = line.split(" @ ", 1)[0].strip()
+                else:
+                    package_name = re.split(r"(==|>=|<=|~=|!=|>|<)", line, maxsplit=1)[0].strip()
+
+                if package_name:
+                    requirement_names.append(package_name)
+        except Exception as e:
+            status["error"] = str(e)
+            return status
+
+        installed = []
+        missing = []
+        for package_name in requirement_names:
+            import_name = import_overrides.get(package_name.lower(), package_name.replace("-", "_"))
+            if not import_name:
+                missing.append(package_name)
+                continue
+            try:
+                if importlib.util.find_spec(import_name) is not None:
+                    installed.append(package_name)
+                else:
+                    missing.append(package_name)
+            except Exception:
+                missing.append(package_name)
+
+        installed.sort(key=str.lower)
+        missing.sort(key=str.lower)
+
+        status["installed"] = installed
+        status["missing"] = missing
+        status["total"] = len(requirement_names)
+        status["installed_count"] = len(installed)
+        status["missing_count"] = len(missing)
+        return status
     
     # Discover available environments (cached/fast)
     conda_envs = _get_conda_environments()
@@ -487,6 +561,7 @@ def get_environment_info(force_refresh=False):
         installed_packages_source = "importlib_or_pkg_resources"
     local_venvs = _find_local_venvs()
     mediainfo_status = _get_mediainfo_status()
+    requirements_status = _get_requirements_status()
     
     # ===== Build Response =====
     result = {
@@ -521,6 +596,7 @@ def get_environment_info(force_refresh=False):
         "package_count": len(installed_packages),
         "installed_packages_source": installed_packages_source,
         "mediainfo_status": mediainfo_status,
+        "requirements_status": requirements_status,
         
         # Recommendations
         "recommended_environment": {
@@ -2370,10 +2446,25 @@ if __name__ == "__main__":
         raise SystemExit(0)
 
     existing_sessions = [s for s in check_running_sessions() if s.get('port')]
-    current_project_root = str(Path(__file__).resolve().parent)
+    current_project_root = Path(__file__).resolve().parent
+
+    def _session_project_root(session: dict) -> Path | None:
+        cmdline = str(session.get('cmdline', '') or '')
+        if not cmdline:
+            return None
+
+        for token in cmdline.split():
+            token_clean = token.strip("'\"")
+            if token_clean.endswith('main.py'):
+                try:
+                    return Path(token_clean).resolve().parent
+                except Exception:
+                    return None
+        return None
+
     same_project_sessions = [
         s for s in existing_sessions
-        if current_project_root in str(s.get('cmdline', ''))
+        if _session_project_root(s) == current_project_root
     ]
 
     if existing_sessions and not same_project_sessions:

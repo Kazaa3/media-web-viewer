@@ -136,6 +136,7 @@ wheel      0.42.0
         """Test: Backend includes source metadata in response."""
         # Verify the backend tracks and returns the source of package data
         self.assertIn("installed_packages_source", self.main_code)
+        self.assertIn("requirements_status", self.main_code)
         self.assertIn("pip_list_json", self.main_code)
         self.assertIn("pip_list_columns", self.main_code)
         self.assertIn("importlib_or_pkg_resources", self.main_code)
@@ -157,14 +158,14 @@ wheel      0.42.0
 
     def test_07_frontend_normalization_handles_multiple_formats(self):
         """Test: Frontend normalization handles array and object formats."""
-        # Extract normalization logic pattern
+        # Extract full normalization function block
         norm_match = re.search(
-            r'function normalizeInstalledPackages\(rawPackages\)\s*{(.*?)\n\s*}',
+            r'function normalizeInstalledPackages\(rawPackages\).*?(?=\n\s*async function loadEnvironmentInfo|\Z)',
             self.html_code,
             re.DOTALL
         )
         self.assertIsNotNone(norm_match)
-        norm_body = norm_match.group(1)
+        norm_body = norm_match.group(0)
         
         # Verify handling of multiple field names (name/Name/project_name)
         self.assertIn("pkg.name", norm_body)
@@ -179,6 +180,8 @@ wheel      0.42.0
         self.assertIn('id="package-source"', self.html_code)
         self.assertIn('id="installed-packages-list"', self.html_code)
         self.assertIn('id="package-search"', self.html_code)
+        self.assertIn('id="requirements-count"', self.html_code)
+        self.assertIn('id="requirements-status-list"', self.html_code)
 
     def test_09_frontend_displays_package_source(self):
         """Test: Frontend displays the package data source."""
