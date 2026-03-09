@@ -17,7 +17,14 @@ class TestCoreRuntimePackages(unittest.TestCase):
         self.main_path = self.root / "main.py"
         self.requirements_text = self.requirements_path.read_text(encoding="utf-8")
         self.main_code = self.main_path.read_text(encoding="utf-8")
-        self.core_packages = ["bottle", "bottle-websocket", "eel", "m3u8", "gevent"]
+        self.core_packages = [
+            "bottle",
+            "bottle-websocket",
+            "eel",
+            "m3u8",
+            "gevent",
+            "gevent-websocket",
+        ]
 
     @classmethod
     def setUpClass(cls):

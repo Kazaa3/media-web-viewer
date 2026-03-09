@@ -3290,6 +3290,10 @@
                     ['eel', 'Eel'],
                     ['m3u8', 'm3u8'],
                     ['gevent', 'gevent'],
+                    ['gevent-websocket', 'gevent-websocket'],
+                    ['greenlet', 'greenlet'],
+                    ['zope.event', 'zope.event'],
+                    ['zope.interface', 'zope.interface'],
                 ];
                 const coreText = corePackages
                     .map(([pkgKey, pkgLabel]) => {
@@ -3301,6 +3305,18 @@
                 const testPackages = [
                     ['pytest', 'pytest'],
                     ['pytest-cov', 'pytest-cov'],
+                    ['coverage', 'coverage'],
+                    ['pluggy', 'pluggy'],
+                    ['iniconfig', 'iniconfig'],
+                    ['pyautogui', 'PyAutoGUI'],
+                    ['pygetwindow', 'PyGetWindow'],
+                    ['pymsgbox', 'PyMsgBox'],
+                    ['pyrect', 'PyRect'],
+                    ['pyscreeze', 'PyScreeze'],
+                    ['mouseinfo', 'MouseInfo'],
+                    ['pytweening', 'pytweening'],
+                    ['python3-xlib', 'python3-xlib'],
+                    ['pyperclip', 'pyperclip'],
                 ];
                 const testToolsText = testPackages
                     .map(([pkgKey, pkgLabel]) => {
@@ -3311,8 +3327,13 @@
 
                 const devPackages = [
                     ['mypy', 'mypy'],
+                    ['mypy_extensions', 'mypy_extensions'],
+                    ['typing_extensions', 'typing_extensions'],
                     ['flake8', 'flake8'],
-                    ['coverage', 'coverage'],
+                    ['pycodestyle', 'pycodestyle'],
+                    ['pyflakes', 'pyflakes'],
+                    ['mccabe', 'mccabe'],
+                    ['pathspec', 'pathspec'],
                 ];
                 const devToolsText = devPackages
                     .map(([pkgKey, pkgLabel]) => {
@@ -3323,10 +3344,15 @@
 
                 const buildPackages = [
                     ['pyinstaller', 'PyInstaller'],
+                    ['pyinstaller-hooks-contrib', 'pyinstaller-hooks-contrib'],
+                    ['altgraph', 'altgraph'],
                     ['wheel', 'wheel'],
                     ['setuptools', 'setuptools'],
                     ['packaging', 'packaging'],
                     ['markdown', 'Markdown'],
+                    ['psutil', 'psutil'],
+                    ['chardet', 'chardet'],
+                    ['future', 'future'],
                 ];
                 const buildToolsText = buildPackages
                     .map(([pkgKey, pkgLabel]) => {
