@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.3  
+**Version:** 1.3.4  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.3
+1.3.4
 ```
 
 This version is automatically loaded and used across:
@@ -37,6 +37,24 @@ To update the version:
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+### Release Notes (v1.3.4)
+
+Highlights of this release:
+- **Tags Database (v1.3.4)**: Introduced a dedicated `media_tags` table in SQLite for
+  proper, queryable tag storage. Individual tag key-value pairs are now stored as
+  relational rows instead of a single JSON blob, enabling SQL-level filtering and search.
+- New public API in `db.py`:
+    - `search_media_by_tag(key, value)` — find all media by tag key and value
+    - `get_all_tag_keys()` — list every distinct tag key in the library
+    - `get_tag_values(key)` — list all distinct values for a given key
+    - `get_tag_value(name, key)` — retrieve one tag value for a specific media item
+- Automatic migration: `init_db()` populates `media_tags` from existing JSON blobs so
+  legacy databases are seamlessly upgraded without data loss.
+- `get_db_stats()` now also reports `total_tag_entries`.
+- `delete_media()` removes associated `media_tags` rows to prevent orphaned data.
+- Comprehensive test suite in `tests/test_db_logic.py` with 13 step-by-step tests
+  covering insert, query, update, delete, migration and statistics.
 
 ### Release Notes (v1.3.3)
 
@@ -594,7 +612,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.3)
+Media Web Viewer (v1.3.4)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -1824,9 +1842,41 @@ CREATE TABLE playlist_media (
 );
 ```
 
+### Table: `media_tags` *(since v1.3.4)*
+
+Stores individual tag key-value pairs as relational rows, enabling SQL-level queries
+and filtering (e.g. find all tracks by an artist or of a given genre).
+
+```sql
+CREATE TABLE media_tags (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    media_id INTEGER NOT NULL,          -- FK to media
+    key      TEXT NOT NULL,             -- Tag key  (e.g. 'artist', 'genre')
+    value    TEXT,                      -- Tag value (stored as string)
+    FOREIGN KEY(media_id) REFERENCES media(id) ON DELETE CASCADE,
+    UNIQUE(media_id, key)
+);
+
+CREATE INDEX idx_media_tags_key_value ON media_tags(key, value);
+```
+
+**Public API (db.py):**
+
+| Function | Description |
+|---|---|
+| `search_media_by_tag(key, value)` | Return media names matching a tag key/value (substring) |
+| `get_all_tag_keys()` | Return sorted list of all distinct tag keys |
+| `get_tag_values(key)` | Return sorted list of all distinct values for a key |
+| `get_tag_value(name, key)` | Return single tag value for a specific media item |
+
 ### Tags Storage
 
-The `tags` column stores metadata as JSON. Example:
+The `tags` column on the `media` table retains the full tag set as a JSON blob for
+backward compatibility and fast full-tag retrieval. The `media_tags` table is kept
+in sync automatically by `insert_media()`, `update_media_tags()`, and `delete_media()`.
+Legacy databases are upgraded transparently the first time `init_db()` runs.
+
+Example JSON stored in `tags`:
 
 ```json
 {
@@ -2338,7 +2388,7 @@ pytest tests/ -k vlc -v
 **Test Output Example:**
 ```
 ==============================================================================
-SESSION MANAGEMENT TEST SUITE - v1.3.2
+SESSION MANAGEMENT TEST SUITE - v1.3.4
 ==============================================================================
 
 📊 Test Suite Overview:
@@ -3861,7 +3911,7 @@ bash build_deb.sh
 **Output:**
 ```
 ================================================================================
-  Building Debian Package (v1.3.2)
+  Building Debian Package (v1.3.4)
 ================================================================================
 
 ==> Preparing staging area...
@@ -4141,7 +4191,7 @@ Each session returns:
 ---
 
 **Last Updated:** 8. März 2026  
-**Current Version:** 1.3.2
+**Current Version:** 1.3.4
 
 ---
 
