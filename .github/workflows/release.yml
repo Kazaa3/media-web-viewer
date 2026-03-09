@@ -16,6 +16,7 @@ permissions:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -107,6 +108,7 @@ jobs:
 
   create-release:
     needs: [build-linux, build-windows]
+    if: ${{ always() && needs.build-windows.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
