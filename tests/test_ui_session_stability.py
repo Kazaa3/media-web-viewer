@@ -55,6 +55,11 @@ class TestUiSessionStability(unittest.TestCase):
         self.assertIn("const isInteractiveBrowserTest = (suiteId)", self.app_html)
         self.assertIn("const checkedAttr = isInteractiveBrowserTest(suite.id) ? '' : 'checked';", self.app_html)
 
+    def test_live_test_output_bridge_exposed(self):
+        """Frontend must expose append_test_output for real-time test output streaming."""
+        self.assertIn("eel.expose(append_test_output);", self.app_html)
+        self.assertIn("function append_test_output(message)", self.app_html)
+
     def test_ui_trace_bridged_to_backend_logs(self):
         """UI trace must be forwarded from frontend to backend terminal logs."""
         self.assertIn("@eel.expose\ndef ui_trace(message):", self.main_py)

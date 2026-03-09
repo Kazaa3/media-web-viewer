@@ -1985,44 +1985,54 @@ def run_tests(test_files):
     env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
-    # Use a worker thread + eel.sleep() loop to keep websocket responsive while tests run.
+    # Stream output lines live to frontend for real-time refresh.
     try:
-        result_holder = {}
-        error_holder = {}
+        process = subprocess.Popen(
+            [sys.executable, "-m", "pytest", "-q"] + valid_files,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env,
+            cwd=str(Path(__file__).parent),
+            bufsize=1,
+            universal_newlines=True,
+        )
 
-        def _run_pytest_subprocess():
-            try:
-                result_holder["result"] = subprocess.run(
-                    [sys.executable, "-m", "pytest", "-q"] + valid_files,
-                    capture_output=True,
-                    text=True,
-                    env=env,
-                    cwd=str(Path(__file__).parent),
-                    timeout=900
-                )
-            except subprocess.TimeoutExpired as exc:
-                error_holder["error"] = RuntimeError(
-                    f"Testlauf-Timeout nach {int(exc.timeout)}s"
-                )
-            except Exception as exc:
-                error_holder["error"] = exc
+        output_lines = []
+        start_time = time.time()
+        timeout_seconds = 900
 
-        worker = threading.Thread(target=_run_pytest_subprocess, daemon=True)
-        worker.start()
+        while True:
+            if process.stdout is None:
+                break
 
-        while worker.is_alive():
-            time.sleep(0.05)
+            line = process.stdout.readline()
+            if line:
+                output_lines.append(line)
+                try:
+                    if hasattr(eel, "append_test_output"):
+                        eel.append_test_output(line)()
+                except Exception:
+                    pass
+            elif process.poll() is not None:
+                break
 
-        worker.join()
+            if time.time() - start_time > timeout_seconds:
+                process.kill()
+                raise RuntimeError(f"Testlauf-Timeout nach {timeout_seconds}s")
 
-        if "error" in error_holder:
-            raise error_holder["error"]
+        if process.stdout is not None:
+            tail = process.stdout.read()
+            if tail:
+                output_lines.append(tail)
+                try:
+                    if hasattr(eel, "append_test_output"):
+                        eel.append_test_output(tail)()
+                except Exception:
+                    pass
 
-        result = result_holder.get("result")
-        if result is None:
-            return {"error": "Testprozess konnte nicht gestartet werden."}
-
-        output = result.stdout + "\n" + result.stderr
+        result_code = process.wait()
+        output = ''.join(output_lines)
         max_output_chars = 120000
         if len(output) > max_output_chars:
             output = (
@@ -2043,7 +2053,7 @@ def run_tests(test_files):
         summary = f"{passes} passed, {fails} failed"
 
         return {
-            "exit_code": result.returncode,
+            "exit_code": result_code,
             "output": output,
             "summary": summary,
             "passes": passes,
