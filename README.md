@@ -67,7 +67,9 @@ python build_system.py --full-build
 ```
 
 Note on build quality gate:
-- `build_deb.sh` now runs a mandatory targeted test gate before packaging:
+- `build_deb.sh` runs a mandatory targeted test gate before packaging.
+- `build_system.py --build deb|pyinstaller|all` runs the same targeted gate before artifact creation.
+- `build.py` (PyInstaller helper) also runs the same gate.
 	- `tests/test_performance_probes.py`
 	- `tests/test_bottle_health_latency.py`
 	- `tests/test_installed_packages_ui.py`
@@ -76,6 +78,9 @@ Note on build quality gate:
 
 ```bash
 SKIP_BUILD_TESTS=1 bash build_deb.sh
+python build_system.py --build deb --skip-build-gate
+python build_system.py --build pyinstaller --skip-build-gate
+SKIP_BUILD_TESTS=1 python build.py
 ```
 
 ### Development

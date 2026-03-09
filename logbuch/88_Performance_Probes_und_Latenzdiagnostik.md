@@ -122,3 +122,20 @@ Der gewünschte Build-Qualitätsfilter wurde integriert:
 
 Lokale Validierung der Gate-Suite:
 - `20 passed` (09.03.2026)
+
+## Update 09.03.2026 – Vereinheitlichung aller Build-Wege
+
+Zusätzlich zur Shell-Integration wurde das Gate jetzt über alle Build-Einstiegspunkte vereinheitlicht:
+
+- `build_system.py`
+  - zentrales `run_build_test_gate()` ergänzt
+  - aktiv für `--build deb`, `--build pyinstaller`, `--build all`, `--full-build`, `--pipeline`
+  - neuer expliziter Override: `--skip-build-gate`
+
+- `build.py`
+  - führt dieselbe Gate-Suite vor dem PyInstaller-Lauf aus
+  - Override via `SKIP_BUILD_TESTS=1`
+
+Ergebnis:
+- konsistente Mindest-Qualität über **alle** Build-Pfade
+- identische Gate-Suite statt divergierender Build-Prüfungen
