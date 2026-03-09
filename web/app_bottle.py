@@ -47,7 +47,7 @@ def _resolve_path(filename):
 
 @bottle.hook('before_request')
 def log_request():
-    _log(f"REQ IN: {bottle.request.url}")
+    # Keep request tracing lightweight: avoid unconditional INFO logging per request.
     logger.debug("network", f"HTTP Request: {bottle.request.method} {bottle.request.url}")
 
 

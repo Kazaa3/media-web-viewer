@@ -3080,6 +3080,8 @@
             loadDebugFlags();
         }
 
+        let packageSearchTimer = null;
+
         async function loadEnvironmentInfo() {
             try {
                 const info = await eel.get_environment_info()();
@@ -3227,6 +3229,11 @@
                     
                     // Store packages globally for search functionality
                     window.allPackages = safeInstalledPackages;
+                    window.allPackagesSearch = safeInstalledPackages.map(pkg => ({
+                        nameLc: String(pkg.name || '').toLowerCase(),
+                        versionLc: String(pkg.version || '').toLowerCase(),
+                        raw: pkg,
+                    }));
                     
                     // Initial render
                     renderPackages(safeInstalledPackages);
@@ -3236,15 +3243,18 @@
                     if (searchInput && searchInput.dataset.bound !== '1') {
                         searchInput.addEventListener('input', (e) => {
                             const searchTerm = e.target.value.toLowerCase();
-                            if (searchTerm === '') {
-                                renderPackages(window.allPackages);
-                            } else {
-                                const filtered = window.allPackages.filter(pkg => 
-                                    String(pkg.name || '').toLowerCase().includes(searchTerm) ||
-                                    String(pkg.version || '').toLowerCase().includes(searchTerm)
-                                );
-                                renderPackages(filtered);
-                            }
+                            if (packageSearchTimer) clearTimeout(packageSearchTimer);
+                            packageSearchTimer = setTimeout(() => {
+                                if (searchTerm === '') {
+                                    renderPackages(window.allPackages);
+                                } else {
+                                    const rows = Array.isArray(window.allPackagesSearch) ? window.allPackagesSearch : [];
+                                    const filtered = rows
+                                        .filter(row => row.nameLc.includes(searchTerm) || row.versionLc.includes(searchTerm))
+                                        .map(row => row.raw);
+                                    renderPackages(filtered);
+                                }
+                            }, 120);
                         });
                         searchInput.dataset.bound = '1';
                     }
