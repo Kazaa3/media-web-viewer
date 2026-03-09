@@ -1,11 +1,11 @@
 <!-- Category: Architecture -->
-<!-- Title_DE: 01 Das Skelett: Der erste Wireframe -->
-<!-- Title_EN: 01 The Skeleton: The first wireframe -->
+<!-- Title_DE: 02 Das Skelett: Der erste Wireframe -->
+<!-- Title_EN: 02 The Skeleton: The first wireframe -->
 <!-- Summary_DE: Rückblick auf den allerersten funktionsfähigen Stand der Anwendung. -->
 <!-- Summary_EN: Retrospective on the very first functional state of the application. -->
 <!-- Status: COMPLETED -->
 
-# 01 Das Skelett: Der erste Wireframe
+# 02 Das Skelett: Der erste Wireframe
 
 Jedes große Projekt beginnt mit einem ersten Schritt. Beim *Media Web Viewer* war dies der "Wireframe"-Stand (Commit `d09a463`).
 
@@ -22,7 +22,7 @@ Dieser Stand markiert den Moment, in dem die Theorie ("Wir bauen einen Web-Playe
 
 <!-- lang-split -->
 
-# 01 The Skeleton: The first wireframe
+# 02 The Skeleton: The first wireframe
 
 Every great project starts with a first step. For the *Media Web Viewer*, this was the "Wireframe" state (Commit `d09a463`).
 
