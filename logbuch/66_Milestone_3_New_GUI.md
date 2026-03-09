@@ -1,5 +1,10 @@
-<!-- Category: ROADMAP -->
-<!-- Status: PLANNED -->
+<!-- Category: roadmap -->
+<!-- Title_DE: Meilenstein 3 - New GUI -->
+<!-- Title_EN: Milestone 3 - New GUI -->
+<!-- Summary_DE: Geplante UI/UX-Modernisierung mit inkrementeller Migration -->
+<!-- Summary_EN: Planned UI/UX modernization with incremental migration -->
+<!-- Status: planned -->
+<!-- Date: 2026-03-09 -->
 
 # Meilenstein 3 – New GUI
 
@@ -37,6 +42,5 @@ Nicht Teil von M3:
 - Sichtbare Konsistenz der UI-Komponenten über die Hauptansichten
 - Änderungen sind im Logbuch und in der Hauptdokumentation nachgeführt
 
-## Status
-- Stand 2026-03-09: **PLANNED**
-- Umsetzung startet nach Stabilisierung/Abnahme der M2-Datenbasis
+## Zeitrahmen
+- Geplanter Start nach Stabilisierung/Abnahme der M2-Datenbasis
