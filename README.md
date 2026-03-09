@@ -139,6 +139,24 @@ scripts/cleanup_build_artifacts.sh
 scripts/cleanup_build_artifacts.sh --execute
 ```
 
+## Milestones / Roadmap
+
+The project is developed in three dedicated branches, one per milestone:
+
+| Milestone | Name              | Branch                          | Status       |
+|-----------|-------------------|---------------------------------|--------------|
+| M1        | AudioPlayer       | `main`                          | ✅ Released  |
+| M2        | Media Library     | `milestone/2-medienbibliothek`  | 🟡 Active    |
+| M3        | New GUI           | `milestone/3-neue-gui`          | 📋 Planned   |
+
+**M1 – AudioPlayer** (`main`): functional player, full metadata parsing, CI/CD, multi-platform builds (released as `v1.3.3`).
+
+**M2 – Media Library** (`milestone/2-medienbibliothek`): relational tags database, library search & filtering, playlist management (this branch, `v1.3.4+`).
+
+**M3 – New GUI** (`milestone/3-neue-gui`): migration to a modern frontend framework (planned, starts after M2 is merged).
+
+See [`logbuch/59_Milestone_2_Medienbibliothek.md`](logbuch/59_Milestone_2_Medienbibliothek.md) for the full M2 design notes.
+
 ## Docs
 - Technical Manual: [DOCUMENTATION.md](DOCUMENTATION.md)
 - Dependencies & licenses: [DEPENDENCIES.md](DEPENDENCIES.md)
