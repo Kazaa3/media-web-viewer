@@ -3072,14 +3072,16 @@
 
         async function loadEnvironmentInfo() {
             try {
-                const info = await Promise.race([
-                    eel.get_environment_info()(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Environment info timeout')), 12000))
-                ]);
+                const info = await eel.get_environment_info()();
 
                 if (!info || typeof info !== 'object') {
                     throw new Error('Invalid environment info response');
                 }
+
+                const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];
+                const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];
+                const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];
+                const safeInstalledPackages = Array.isArray(info.installed_packages) ? info.installed_packages : [];
                 
                 document.getElementById('env-python-version').textContent = info.python_version;
                 
@@ -3118,9 +3120,9 @@
 
                 // Display Conda Environments
                 const condaList = document.getElementById('conda-environments-list');
-                if (info.available_conda_environments && info.available_conda_environments.length > 0) {
+                if (safeCondaEnvs.length > 0) {
                     let condaHtml = '<div style="font-family: monospace;">';
-                    info.available_conda_environments.forEach(env => {
+                    safeCondaEnvs.forEach(env => {
                         const isCurrent = info.env_type === 'conda' && info.env_name === env.name;
                         const isRecommended = env.recommended;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
@@ -3142,9 +3144,9 @@
 
                 // Display System Python Installations
                 const systemList = document.getElementById('system-pythons-list');
-                if (info.available_system_pythons && info.available_system_pythons.length > 0) {
+                if (safeSystemPythons.length > 0) {
                     let systemHtml = '<div style="font-family: monospace;">';
-                    info.available_system_pythons.forEach(python => {
+                    safeSystemPythons.forEach(python => {
                         systemHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
                                 <div style="color: #666; font-size: 0.9em;">${python.version}</div>
@@ -3160,9 +3162,9 @@
 
                 // Display Local Virtual Environments
                 const venvsList = document.getElementById('local-venvs-list');
-                if (info.local_venvs && info.local_venvs.length > 0) {
+                if (safeLocalVenvs.length > 0) {
                     let venvsHtml = '<div style="font-family: monospace;">';
-                    info.local_venvs.forEach(venv => {
+                    safeLocalVenvs.forEach(venv => {
                         const isCurrent = venv.is_current;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
                         
@@ -3184,14 +3186,14 @@
                 const packagesList = document.getElementById('installed-packages-list');
                 const packageCount = document.getElementById('package-count');
                 
-                if (info.installed_packages && info.installed_packages.length > 0) {
-                    packageCount.textContent = `(${info.installed_packages.length})`;
+                if (safeInstalledPackages.length > 0) {
+                    packageCount.textContent = `(${safeInstalledPackages.length})`;
                     
                     // Store packages globally for search functionality
-                    window.allPackages = info.installed_packages;
+                    window.allPackages = safeInstalledPackages;
                     
                     // Initial render
-                    renderPackages(info.installed_packages);
+                    renderPackages(safeInstalledPackages);
                     
                     // Setup search
                     const searchInput = document.getElementById('package-search');
