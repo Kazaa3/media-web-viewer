@@ -4,6 +4,7 @@ from pathlib import Path
 from . import filename_parser
 from . import mutagen_parser
 from . import pymediainfo_parser
+from . import ffprobe_parser
 from . import ffmpeg_parser
 from . import container_parser
 import logger
@@ -47,7 +48,7 @@ def extract_metadata(path, filename, mode='lightweight'):
     from typing import cast
     # Iterate dynamically through the user-configured parser chain
     parser_chain = cast(list[str], PARSER_CONFIG.get(
-        "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"]))
+        "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"]))
 
     for parser_name in parser_chain:
         # If in lightweight mode, check if we still need critical information, otherwise skip heavy parsers.
@@ -98,6 +99,15 @@ def extract_metadata(path, filename, mode='lightweight'):
                 parser_times["pymediainfo"] = time.time() - t0
             else:
                 parser_times["pymediainfo"] = 0.0
+
+        elif parser_name == "ffprobe":
+            if needs_more_info:
+                t0 = time.time()
+                tags = cast(dict[str, Any], ffprobe_parser.parse(
+                    path_obj, file_type, tags, mode=mode))
+                parser_times["ffprobe"] = time.time() - t0
+            else:
+                parser_times["ffprobe"] = 0.0
 
         elif parser_name == "ffmpeg":
             if needs_more_info:
