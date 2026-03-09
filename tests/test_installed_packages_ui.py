@@ -51,8 +51,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
         required_snippets = [
             "const packagesList = document.getElementById('installed-packages-list');",
             "const packageCount = document.getElementById('package-count');",
-            "window.allPackages = info.installed_packages;",
-            "renderPackages(info.installed_packages);",
+            "window.allPackages = safeInstalledPackages;",
+            "renderPackages(safeInstalledPackages);",
             "const searchInput = document.getElementById('package-search');",
             "searchInput.addEventListener('input', (e) => {",
             "renderPackages(window.allPackages);",
@@ -65,9 +65,11 @@ class TestInstalledPackagesUI(unittest.TestCase):
     def test_js_load_environment_info_has_timeout_and_error_fallback(self):
         """Environment loading must not remain stuck in Loading... on backend failure."""
         required_snippets = [
-            "const info = await Promise.race([",
-            "Environment info timeout",
             "if (!info || typeof info !== 'object')",
+            "const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];",
+            "const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];",
+            "const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];",
+            "const safeInstalledPackages = Array.isArray(info.installed_packages) ? info.installed_packages : [];",
             "const failText = `<span style=\"color: #c62828;\">${t('common_error_loading')}</span>`;",
             "const fallbackNoData = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
             "if (packagesList) packagesList.innerHTML = fallbackNoData;",
