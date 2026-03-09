@@ -440,6 +440,8 @@ def get_environment_info(force_refresh=False):
     conda_envs = _get_conda_environments()
     system_pythons = _get_system_pythons()
     installed_packages = _get_installed_packages()
+    if not installed_packages:
+        installed_packages = _get_packages_fallback()
     local_venvs = _find_local_venvs()
     mediainfo_status = _get_mediainfo_status()
     
