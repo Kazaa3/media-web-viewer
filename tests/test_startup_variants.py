@@ -241,15 +241,16 @@ class TestBrowserPreference(unittest.TestCase):
         mock_which.assert_any_call('google-chrome')
     
     @patch('shutil.which')
-    @patch('webbrowser')
-    def test_get_preferred_browser_fallback(self, mock_webbrowser, mock_which):
+    def test_get_preferred_browser_fallback(self, mock_which):
         """Test browser fallback when preferred browsers not available."""
         mock_which.return_value = None  # No browsers found
         
         result = main.get_preferred_browser()
+
+        import webbrowser
         
         # Should return default webbrowser module
-        self.assertEqual(result, mock_webbrowser)
+        self.assertIs(result, webbrowser)
 
 
 class TestCommandLineUsage(unittest.TestCase):

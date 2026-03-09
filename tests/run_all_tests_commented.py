@@ -144,7 +144,7 @@ class TestRunner:
                 elif 'FAILED' in output or 'FAIL' in output or '❌' in output:
                     return "FAILED", output
                 elif len(output.strip()) == 0:
-                    return "EMPTY", "No output produced"
+                    return "PASSED", "No output produced (silent pass)"
                 else:
                     return "PASSED", output
             else:

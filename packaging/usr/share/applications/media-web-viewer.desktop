@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Media Web Viewer (v1.3.2)
+Name=Media Web Viewer (v1.3.3)
 Comment=Lokaler Mediaplayer mit Metadaten-Verwaltung
 Exec=media-web-viewer
 Icon=preferences-desktop-multimedia

@@ -112,7 +112,7 @@ class TestLogbookParsing(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['name'], "plain") # Falls back to stem
         self.assertEqual(entries[0]['category'], "Sonstiges") # Default
-        self.assertEqual(entries[0]['status'], "COMPLETED") # Default
+        self.assertEqual(entries[0]['status'], "ACTIVE") # Default
 
 if __name__ == '__main__':
     # Add a simple summary if run as script

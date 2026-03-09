@@ -3911,7 +3911,7 @@ python build_system.py --build pyinstaller
 # Output: dist/MediaWebViewer-1.3.2.exe
 
 # Or with Wine on Linux (requires PyInstaller + Wine setup)
-pyinstaller MediaWebViewer.spec --clean
+python -m PyInstaller MediaWebViewer.spec --clean
 ```
 
 **macOS:**
