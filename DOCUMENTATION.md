@@ -106,12 +106,13 @@ Implemented in this round:
 - Reduced request-path overhead in `web/app_bottle.py` by removing unconditional per-request info logs.
 - Optimized package search in `web/app.html` with pre-normalized search fields + 120ms debounce.
 
-Build-process recommendation:
-- Integrate a mandatory targeted test gate into the build pipeline before packaging, for example:
+Build-process status:
+- A mandatory targeted pre-build gate is now active across all build entry points.
+- Gate suite:
     - `tests/test_performance_probes.py`
     - `tests/test_bottle_health_latency.py`
     - `tests/test_installed_packages_ui.py`
-    - plus existing critical startup/session regression tests.
+    - `tests/test_ui_session_stability.py`
 
 ---
 
@@ -2270,11 +2271,21 @@ python build_system.py --pipeline
 # Full pipeline including destructive reinstall validation
 python build_system.py --pipeline --destructive
 
+# Emergency/local override for targeted pre-build gate (not recommended)
+python build_system.py --pipeline --skip-build-gate
+
 # Manual verification commands (optional)
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
+
+Pipeline order in code (`build_system.py`):
+1. Environment check
+2. Version synchronization check (`tests/test_version_sync.py`)
+3. Debian build (`build_deb.sh`) including targeted pre-build gate by default
+4. Safe reinstall validation (`tests/test_reinstall_deb.py`)
+5. Optional destructive reinstall validation (`--destructive`)
 
 The destructive mode runs `reinstall_deb.sh` and should be used only on systems where replacing the current installation is intended.
 
