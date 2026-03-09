@@ -18,7 +18,14 @@
 - Nach Fix in „Behoben“ verschieben oder auf den zugehörigen Eintrag verlinken.
 
 ## Aktuelle offene Bugs (Stand 2026-03-09)
-*Aktuell keine kritischen Bugs gemeldet.*
+
+### GUI-Bugs
+- **Logbuch Markdown-Rendering**: HTML-Darstellung von Markdown nicht optimal, Listen/Links/Code werden falsch gerendert
+- Weitere GUI-Probleme vorhanden (Detailanalyse ausstehend)
+
+### Kleinere Bugs
+- Diverse kleinere Probleme, die zunächst zurückgestellt werden
+- Priorisierung steht noch aus
 
 ## Technische Schulden
 - Parser-Pipeline benötigt Refactoring (siehe [Eintrag 15](15_Parser_Pipeline_Rework.md))
@@ -40,7 +47,14 @@
 - After fixing, move to "Resolved" or link to the related entry.
 
 ## Current Open Bugs (as of 2026-03-09)
-*Currently no critical bugs reported.*
+
+### GUI Bugs
+- **Logbook Markdown Rendering**: HTML display of Markdown not optimal, lists/links/code rendered incorrectly
+- Additional GUI problems exist (detailed analysis pending)
+
+### Minor Bugs
+- Various minor issues deferred for now
+- Prioritization pending
 
 ## Technical Debt
 - Parser pipeline needs refactoring (see [Entry 15](15_Parser_Pipeline_Rework.md))
