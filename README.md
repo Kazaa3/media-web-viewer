@@ -93,6 +93,16 @@ python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
 
+## Version Update (Automated)
+
+```bash
+# 1) Update VERSION + all configured sync locations
+python update_version.py --new-version 1.3.5
+
+# 2) Verify sync is fully consistent
+python tests/test_version_sync.py
+```
+
 ## CI/CD Pipelines
 
 ### Main Branch Artifacts (no GitHub Release)
@@ -113,18 +123,23 @@ git push origin main --tags
 
 ### Release Checklist (recommended)
 ```bash
-# 1) Verify version consistency
+# 1) Update project version
+python update_version.py --new-version 1.3.5
+
+# 2) Verify version consistency
 python tests/test_version_sync.py
 
-# 2) Run release validation pipeline
+# 3) Run release validation pipeline
 python build_system.py --pipeline
 
-# 3) Commit release-related changes
-git add VERSION main.py .github/workflows/release.yml .github/workflows/ci-artifacts.yml
-git commit -m "Release v1.3.3"
+# 4) Commit release-related changes
+git add VERSION VERSION_SYNC.json update_version.py
+git add main.py README.md DOCUMENTATION.md
+git add .github/workflows/release.yml .github/workflows/ci-artifacts.yml
+git commit -m "Release v1.3.5"
 
-# 4) Create and push release tag
-git tag -a v1.3.3 -m "Release v1.3.3"
+# 5) Create and push release tag
+git tag -a v1.3.5 -m "Release v1.3.5"
 git push origin main --tags
 ```
 

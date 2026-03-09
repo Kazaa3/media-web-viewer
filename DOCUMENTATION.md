@@ -33,10 +33,18 @@ python tests/test_version_sync.py && echo "VERSION SYNC OK"
 If the test fails, align all reported locations first and rebuild artifacts afterwards.
 
 To update the version:
-1. Edit the `VERSION` file in the project root.
+1. Run `python update_version.py --new-version X.Y.Z` in the project root.
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+Quick example:
+
+```bash
+python update_version.py --new-version 1.3.5
+python tests/test_version_sync.py
+python build_system.py --pipeline
+```
 
 ### Release Notes (v1.3.4)
 
@@ -562,6 +570,7 @@ media-web-viewer/
 │
 ├── VERSION                  # Master semantic version (single source of truth)
 ├── VERSION_SYNC.json        # Version synchronization map (15 tracked locations)
+├── update_version.py        # Automated version bump based on VERSION_SYNC.json
 ├── main.py                  # Entry point, Eel setup, backend API functions
 ├── models.py                # MediaItem class with parsing and transcoding logic
 ├── db.py                    # SQLite database operations
