@@ -1,7 +1,12 @@
-<!-- Category: INFRASTRUCTURE -->
-<!-- Status: COMPLETED -->
+<!-- Category: infrastructure -->
+<!-- Title_DE: Branch Protection für main -->
+<!-- Title_EN: Branch protection for main -->
+<!-- Summary_DE: GitHub-Branch-Protection für main aktiviert und verifiziert -->
+<!-- Summary_EN: GitHub branch protection for main enabled and verified -->
+<!-- Status: completed -->
+<!-- Date: 2026-03-09 -->
 
-# Branch Protection für `main` aktiviert
+# Branch Protection für `main`
 
 ## Kontext
 GitHub meldete für das Repository:

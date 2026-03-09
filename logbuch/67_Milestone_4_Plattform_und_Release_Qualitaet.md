@@ -1,5 +1,10 @@
-<!-- Category: ROADMAP -->
-<!-- Status: PLANNED -->
+<!-- Category: roadmap -->
+<!-- Title_DE: Meilenstein 4 - Plattform- und Release-Qualität -->
+<!-- Title_EN: Milestone 4 - Platform and release quality -->
+<!-- Summary_DE: Geplante Härtung von Build, Release, Betrieb und Validierung -->
+<!-- Summary_EN: Planned hardening of build, release, operations, and validation -->
+<!-- Status: planned -->
+<!-- Date: 2026-03-09 -->
 
 # Meilenstein 4 – Plattform- und Release-Qualität
 
@@ -37,6 +42,5 @@ Nicht Teil von M4:
 - Kritische Build-/Install-Pfade sind automatisiert getestet
 - Release-Dokumentation deckt Build, Validierung und Rollback vollständig ab
 
-## Status
-- Stand 2026-03-09: **PLANNED**
-- Umsetzung nach M3-Umsetzung und M2-Stabilisierung
+## Zeitrahmen
+- Geplante Umsetzung nach M3-Umsetzung und M2-Stabilisierung
