@@ -37,6 +37,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="requirements-status-list"', self.app_html)
         self.assertIn('id="system-python-global-list"', self.app_html)
         self.assertIn('id="system-python-local-list"', self.app_html)
+        self.assertIn('id="env-core-packages-status"', self.app_html)
+        self.assertIn('id="env-test-tools-status"', self.app_html)
+        self.assertIn('id="env-requirements-list"', self.app_html)
 
     def test_search_input_has_i18n_placeholder_binding(self):
         """Search input must bind placeholder via i18n key."""
@@ -68,6 +71,20 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const requirementsCount = document.getElementById('requirements-count');",
             "const requirementsLastChecked = document.getElementById('requirements-last-checked');",
             "const requirementsStatusList = document.getElementById('requirements-status-list');",
+            "const envToolsStatusEl = document.getElementById('env-tools-status');",
+            "const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');",
+            "const envTestToolsStatusEl = document.getElementById('env-test-tools-status');",
+            "const envRequirementsListEl = document.getElementById('env-requirements-list');",
+            "const corePackages = [",
+            "['bottle', 'bottle']",
+            "['bottle-websocket', 'bottle-websocket']",
+            "['eel', 'Eel']",
+            "['m3u8', 'm3u8']",
+            "['gevent', 'gevent']",
+            "const testPackages = [",
+            "['pytest', 'pytest']",
+            "['pytest-cov', 'pytest-cov']",
+            "const requirementsListText = requirementsStatusPreview?.available",
             "const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'",
             "requirementsCount.textContent = `(${installedCount}/${total})`;",
             "requirementsLastChecked.textContent = `${t('env_requirements_last_checked')}: ${now.toLocaleTimeString()}`;",
@@ -121,6 +138,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "env_requirements_last_checked",
             "env_requirements_last_checked_never",
             "env_requirements_last_checked_error",
+            "env_label_core_packages",
+            "env_label_test_tools",
+            "env_label_requirements_list",
             "env_table_package",
             "env_table_version",
         ]
