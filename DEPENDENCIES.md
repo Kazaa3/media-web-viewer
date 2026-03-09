@@ -70,6 +70,11 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 
 **License Compatibility Note:** All system dependencies are compatible with GNU General Public License v3 (GPL-3.0). FFmpeg's LGPL v2.1 is compatible with GPLv3, and BSD licenses are permissive allowing use under GPLv3.
 
+**Runtime dependency model for MediaInfo:**
+- Install `pymediainfo` via `pip` in your active Python environment (venv/conda).
+- Install `mediainfo` / `libmediainfo` via the OS package manager (`apt`, `dnf`, `brew`).
+- The system library/CLI is not part of the Python venv; both layers are required for reliable metadata parsing.
+
 ### Installation of System Dependencies (Debian/Ubuntu)
 
 ```bash

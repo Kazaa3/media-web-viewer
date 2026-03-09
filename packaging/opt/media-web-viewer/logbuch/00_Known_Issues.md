@@ -1,63 +1,64 @@
-<!-- Category: Bug -->
-<!-- Title_DE: Bekannte Probleme (Stand v1.1.20) -->
-<!-- Title_EN: Known Issues (Status v1.1.20) -->
-<!-- Summary_DE: Aktueller Stand der Fehlerbehebung und offene Punkte. -->
-<!-- Summary_EN: Current status of bug fixes and open points. -->
-<!-- Status: PLAN -->
+<!-- Category: bug -->
+<!-- Title_DE: Bekannte Probleme (Stand v1.3.3) -->
+<!-- Title_EN: Known Issues (Status v1.3.3) -->
+<!-- Summary_DE: Zentrale Liste offener Bugs und technischer Probleme -->
+<!-- Summary_EN: Central list of open bugs and technical issues -->
+<!-- Status: active -->
+<!-- Date: 2026-03-09 -->
+<!-- Pinned: true -->
 
-# Bekannte Probleme (Stand v1.1.20)
-
-## Behobene Probleme
-- [x] Unnötige Konsolenausgaben beim Scan (jetzt hinter `db`-Flag).
-- [x] Pfad-Konflikte nach Neuinstallation (Dokumentation für Reset hinzugefügt).
-- [x] Fehlende System-Abhängigkeiten in der `.deb` (jetzt in `control` hinterlegt).
-- [x] **v1.1.18/1.1.19 Highlights**:
-    - [x] Umplatzierung der "Danger Zone" (Reset) in den Optionen.
-    - [x] Interaktive News-Bar im Header.
-    - [x] Vollständige Projekt-Dokumentation (`DOCUMENTATION.md`).
-    - [x] Dynamisches und bilinguales Feature-Modal.
-    - [x] Features Modal hat nicht automatisch die neusten EInträge (42 
-fehlt)
+# Bekannte Probleme (Stand v1.3.3)
 
 ## Offene Punkte
-- [x] Globale Versionierung (zentrale Stelle statt 3 Dateien).
-- [x] Versioneurung fehlt in doku
-- [ ] Edit aktuaisuerng / bib
-- [x] logbuch einträge filterung wenn header fehlt führt zu fehlenden einträgen
-- [x] Sortierung neuer log einträge erfolgt bei abgescjlossen. neue sind aber noch offfen. neuen status einführen
-- [x] -md ist kein uni code format
-- Keine Medien in der Bibliothek. Füge Dateien über den Browser-Tab hinzu oder klicke "Scan Media". String in
-- [ ] logtab. fixe elemente für tag felder auf gui
-- [ ] Test: Verifizierung .deb mit Version
-- [ ] Hörbuch Tag (Backend) muss vereinheitlicht werden.
-- [ ] Parser-Optionen: "Filename" und "Container" Details noch auf Deutsch.
-- [ ] Edit-Menü: Metadaten-Speicher-Popups automatisch ausblenden.
-- [ ] Refresh im Edit-Menü nach Speichern verbessern.
-- [ ] Standardsprache aus Systemsprache ermitteln.
-- [ ] Parser Rewrite (Meilenstein Performance).
-- [ ] Kein automatischer Refresh der UI bei Dateioperationen (manueller Scan nötig).
-- [ ] Container Parser (mkv audio Erkennung via pymediainfo verbessern).
-- [ ] Medienbibliothek: Skalierbarkeit (>10.000 Einträge).
+- Laufende Bugs und technische Schulden werden hier gesammelt.
+- Detailanalysen können in separaten Logbuch-Einträgen dokumentiert werden.
+
+## Arbeitsregel
+- Neue Bugs zuerst hier erfassen.
+- Nach Fix in „Behoben“ verschieben oder auf den zugehörigen Eintrag verlinken.
+
+## Aktuelle offene Bugs (Stand 2026-03-09)
+
+### GUI-Bugs
+- Weitere GUI-Probleme vorhanden (Detailanalyse ausstehend)
+
+### Kleinere Bugs
+- Diverse kleinere Probleme, die zunächst zurückgestellt werden
+- Priorisierung steht noch aus
+
+## Technische Schulden
+- Parser-Pipeline benötigt Refactoring (siehe [Eintrag 15](15_Parser_Pipeline_Rework.md))
+- Scraper-Integration ausstehend (siehe [Eintrag 80](80_Scraper_Integration_und_Qualitaet.md))
+
+## Behobene Probleme (heute)
+- **Logbuch Markdown-Rendering**: marked.js integriert für korrekte HTML-Darstellung ✅ ([Eintrag 82](82_Logbuch_Markdown_Rendering.md))
+- Branch Protection für main eingerichtet ✅ ([Eintrag 60](60_Branch_Protection_main.md))
 
 <!-- lang-split -->
 
-# Known Issues (Status v1.1.20)
+# Known Issues (Status v1.3.3)
 
-## Fixed Issues
-- [x] Unnecessary console output during scan (now behind `db` flag).
-- [x] Path conflicts after re-installation (added documentation for reset).
-- [x] Missing system dependencies in the `.deb` (now listed in `control`).
-- [x] **v1.1.18/1.1.19 Highlights**:
-    - [x] Relocation of "Danger Zone" in options.
-    - [x] Interactive News Bar in header.
-    - [x] Full project documentation (`DOCUMENTATION.md`).
-    - [x] Dynamic and bilingual feature modal.
+## Open items
+- Ongoing bugs and technical debt are tracked here.
+- Detailed analyses can be documented in dedicated logbook entries.
 
-## Open Tasks
-- [x] Global versioning system.
-- [x] Eintrag gespeichert! noch deutsch nach logbook edit
-- [ ] Logging file
-- [x] debug flags
-- [ ] Standardize audiobook tags in backend.
-- [ ] No automatic UI refresh on file system changes.
-- [ ] Scalability for very large libraries.
+## Working rule
+- Add new bugs here first.
+- After fixing, move to "Resolved" or link to the related entry.
+
+## Current Open Bugs (as of 2026-03-09)
+
+### GUI Bugs
+- Additional GUI problems exist (detailed analysis pending)
+
+### Minor Bugs
+- Various minor issues deferred for now
+- Prioritization pending
+
+## Technical Debt
+- Parser pipeline needs refactoring (see [Entry 15](15_Parser_Pipeline_Rework.md))
+- Scraper integration pending (see [Entry 80](80_Scraper_Integration_und_Qualitaet.md))
+
+## Resolved Issues (today)
+- **Logbook Markdown Rendering**: marked.js integrated for correct HTML display ✅ ([Entry 82](82_Logbuch_Markdown_Rendering.md))
+- Branch protection for main set up ✅ ([Entry 60](60_Branch_Protection_main.md))

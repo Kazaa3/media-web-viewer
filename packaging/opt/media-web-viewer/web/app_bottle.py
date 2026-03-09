@@ -47,8 +47,22 @@ def _resolve_path(filename):
 
 @bottle.hook('before_request')
 def log_request():
-    _log(f"REQ IN: {bottle.request.url}")
+    # Keep request tracing lightweight: avoid unconditional INFO logging per request.
     logger.debug("network", f"HTTP Request: {bottle.request.method} {bottle.request.url}")
+
+
+@bottle.route('/health')
+def health_check():
+    """
+    @brief Lightweight health endpoint for HTTP latency diagnostics.
+    @details Sehr leichter Endpunkt zur Messung der Bottle/HTTP-Latenz.
+    @return Status dictionary / Status-Dictionary.
+    """
+    return {
+        "status": "ok",
+        "service": "media-web-viewer",
+        "timestamp": int(__import__('time').time() * 1000),
+    }
 
 
 @bottle.route('/media/<filepath:path>')

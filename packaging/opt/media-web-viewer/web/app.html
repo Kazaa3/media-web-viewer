@@ -3,6 +3,7 @@
 
 <head>
     <title data-i18n="app_title">Media Player</title> <!-- ohne: -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -564,6 +565,59 @@
             currentLogbookEditFilename = null;
         }
 
+        function getLogbookStatusIcon(status) {
+            const normalized = (status || 'ACTIVE').toUpperCase();
+            if (normalized === 'COMPLETED') return '✅';
+            if (normalized === 'PLAN') return '🧭';
+            if (normalized === 'DOCS') return '📘';
+            if (normalized === 'BUG') return '🐞';
+            return '🟢';
+        }
+
+        function extractLogbookMeta(markdown) {
+            const getTag = (tag, fallback = '') => {
+                const re = new RegExp(`<!--\\s*${tag}\\s*:\\s*([^>]+?)\\s*-->`, 'i');
+                const m = (markdown || '').match(re);
+                return m && m[1] ? m[1].trim() : fallback;
+            };
+
+            return {
+                category: getTag('Category', 'Planung'),
+                titleDe: getTag('Title_DE', ''),
+                titleEn: getTag('Title_EN', ''),
+                summaryDe: getTag('Summary_DE', ''),
+                summaryEn: getTag('Summary_EN', ''),
+                status: (getTag('Status', 'ACTIVE') || 'ACTIVE').toUpperCase(),
+                date: getTag('Date', new Date().toISOString().slice(0, 10)),
+                pinned: getTag('Pinned', 'false').toLowerCase() === 'true'
+            };
+        }
+
+        function stripLogbookFixedTags(markdown) {
+            const keys = ['Category', 'Title_DE', 'Title_EN', 'Summary_DE', 'Summary_EN', 'Status', 'Date', 'Pinned'];
+            let cleaned = markdown || '';
+            keys.forEach(k => {
+                cleaned = cleaned.replace(new RegExp(`^\\s*<!--\\s*${k}\\s*:\\s*.*?-->\\s*\\n?`, 'gim'), '');
+            });
+            return cleaned.trimStart();
+        }
+
+        function buildLogbookFixedTagsBlock(meta) {
+            const tags = [
+                `<!-- Category: ${meta.category || 'Planung'} -->`,
+                `<!-- Title_DE: ${meta.titleDe || ''} -->`,
+                `<!-- Title_EN: ${meta.titleEn || ''} -->`,
+                `<!-- Summary_DE: ${meta.summaryDe || ''} -->`,
+                `<!-- Summary_EN: ${meta.summaryEn || ''} -->`,
+                `<!-- Status: ${(meta.status || 'ACTIVE').toUpperCase()} -->`,
+                `<!-- Date: ${meta.date || new Date().toISOString().slice(0, 10)} -->`
+            ];
+            if (meta.pinned) {
+                tags.push(`<!-- Pinned: true -->`);
+            }
+            return tags.join('\n');
+        }
+
         function openLogbookEditor(name, filename, content) {
             currentLogbookEditName = name;
             currentLogbookEditFilename = filename;
@@ -575,19 +629,38 @@
             const nameInput = document.getElementById('logbuch-editor-name');
             const contentInput = document.getElementById('logbuch-editor-content');
             const statusInput = document.getElementById('logbuch-editor-status');
+            const categoryInput = document.getElementById('logbuch-editor-category');
+            const titleDeInput = document.getElementById('logbuch-editor-title-de');
+            const titleEnInput = document.getElementById('logbuch-editor-title-en');
+            const summaryDeInput = document.getElementById('logbuch-editor-summary-de');
+            const summaryEnInput = document.getElementById('logbuch-editor-summary-en');
+            const dateInput = document.getElementById('logbuch-editor-date');
             const title = document.getElementById('logbuch-editor-title');
 
             if (name) {
+                const meta = extractLogbookMeta(content || '');
                 title.innerText = `${t('logbook_edit_prefix')}${name}`;
                 nameInput.value = name;
-                contentInput.value = content || '';
-                if (statusInput) statusInput.value = extractLogbookStatus(content || '');
-                nameInput.disabled = true;
+                contentInput.value = stripLogbookFixedTags(content || '');
+                if (statusInput) statusInput.value = meta.status;
+                if (categoryInput) categoryInput.value = meta.category;
+                if (titleDeInput) titleDeInput.value = meta.titleDe;
+                if (titleEnInput) titleEnInput.value = meta.titleEn;
+                if (summaryDeInput) summaryDeInput.value = meta.summaryDe;
+                if (summaryEnInput) summaryEnInput.value = meta.summaryEn;
+                if (dateInput) dateInput.value = meta.date;
+                nameInput.disabled = false;
             } else {
                 title.innerText = t('logbook_edit_title_new');
                 nameInput.value = '';
-                contentInput.value = '<!-- Category: Planung -->\n<!-- Status: ACTIVE -->\n\n# Neuer Eintrag\n\n';
+                contentInput.value = '# Neuer Eintrag\n\n';
                 if (statusInput) statusInput.value = 'ACTIVE';
+                if (categoryInput) categoryInput.value = 'Planung';
+                if (titleDeInput) titleDeInput.value = '';
+                if (titleEnInput) titleEnInput.value = '';
+                if (summaryDeInput) summaryDeInput.value = '';
+                if (summaryEnInput) summaryEnInput.value = '';
+                if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
                 nameInput.disabled = false;
             }
 
@@ -597,19 +670,34 @@
 
         async function saveLogbookEntry() {
             const name = document.getElementById('logbuch-editor-name').value.trim();
-            const rawContent = document.getElementById('logbuch-editor-content').value;
-            const selectedStatus = (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase();
-            const content = upsertLogbookStatus(rawContent, selectedStatus);
+            const bodyContent = document.getElementById('logbuch-editor-content').value || '';
+            const meta = {
+                category: document.getElementById('logbuch-editor-category').value.trim() || 'Planung',
+                titleDe: document.getElementById('logbuch-editor-title-de').value.trim(),
+                titleEn: document.getElementById('logbuch-editor-title-en').value.trim(),
+                summaryDe: document.getElementById('logbuch-editor-summary-de').value.trim(),
+                summaryEn: document.getElementById('logbuch-editor-summary-en').value.trim(),
+                status: (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase(),
+                date: document.getElementById('logbuch-editor-date').value.trim() || new Date().toISOString().slice(0, 10)
+            };
+            const content = `${buildLogbookFixedTagsBlock(meta)}\n\n${bodyContent.trimStart()}`;
             if (!name) {
                 alert(t('test_name_required'));
                 return;
             }
 
-            // If we are editing, overwrite the original file. If new, use the input name.
-            const filenameToSave = currentLogbookEditFilename || name;
+            const originalName = (currentLogbookEditFilename || '').replace(/\.md$/i, '');
+            const isRename = !!currentLogbookEditFilename && originalName !== name;
+            const filenameToSave = name;
 
             const res = await eel.save_logbook_entry(filenameToSave, content)();
             if (res.status === 'ok') {
+                if (isRename) {
+                    const delRes = await eel.delete_logbook_entry(currentLogbookEditFilename)();
+                    if (delRes.status !== 'ok') {
+                        alert((t('common_error') || 'Fehler: ') + (delRes.error || 'Alte Datei konnte nicht gelöscht werden'));
+                    }
+                }
                 closeLogbookEditor();
                 loadLogbuchTab();
                 alert(t('logbook_saved'));
@@ -628,24 +716,6 @@
             } else {
                 alert(t('common_error') + res.error);
             }
-        }
-
-        function extractLogbookStatus(markdown) {
-            const fromComment = markdown.match(/<!--\s*Status\s*:\s*([^>]+)\s*-->/i);
-            if (fromComment && fromComment[1]) return fromComment[1].trim().toUpperCase();
-            const fromMarkdown = markdown.match(/^\*\*Status:\*\*\s*(.+)$/im);
-            if (fromMarkdown && fromMarkdown[1]) return fromMarkdown[1].trim().toUpperCase();
-            return 'ACTIVE';
-        }
-
-        function upsertLogbookStatus(markdown, status) {
-            if (/<!--\s*Status\s*:\s*[^>]+\s*-->/i.test(markdown)) {
-                return markdown.replace(/<!--\s*Status\s*:\s*[^>]+\s*-->/i, `<!-- Status: ${status} -->`);
-            }
-            if (/^\*\*Status:\*\*\s*.+$/im.test(markdown)) {
-                return markdown.replace(/^\*\*Status:\*\*\s*.+$/im, `**Status:** ${status}`);
-            }
-            return `<!-- Status: ${status} -->\n${markdown}`;
         }
 
         async function loadLogbuchTab() {
@@ -777,59 +847,72 @@
             const statusFilter = document.getElementById('logbuch-status-filter');
             const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
             list.innerHTML = '';
-            const grouped = {};
 
-            entries.forEach(e => {
+            // Filter entries
+            const filteredEntries = entries.filter(e => {
                 const cat = e.category || 'Misc';
                 const catKey = `cat_${cat.toLowerCase()}`;
                 const localizedCat = t(catKey) !== catKey ? t(catKey) : cat;
 
-                if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return;
-                if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return;
+                if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return false;
+                if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return false;
 
-                if (!grouped[localizedCat]) grouped[localizedCat] = [];
-                grouped[localizedCat].push(e);
+                return true;
             });
 
-            const sortedCategories = Object.keys(grouped).sort();
-            sortedCategories.forEach(localizedCat => {
-                const catHeader = document.createElement('div');
-                catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
-                catHeader.innerText = localizedCat;
-                list.appendChild(catHeader);
-                grouped[localizedCat]
-                    .sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0))
-                    .forEach(entry => {
-                    const btn = document.createElement('div');
-                    btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
-                    const nameEl = document.createElement('span');
-                    nameEl.innerText = `${entry.name} [${(entry.status || 'ACTIVE').toUpperCase()}]`;
-                    nameEl.style.flex = '1';
-                    btn.appendChild(nameEl);
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerText = '✕';
-                    deleteBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-size: 1.1em; padding: 0; width: 24px; height: 24px; opacity: 0.3; transition: opacity 0.2s;';
-                    deleteBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        const msg = t('logbook_delete_confirm').replace('{name}', entry.name);
-                        if (confirm(msg)) {
-                            deleteLogbookEntry(entry.filename);
-                        }
-                    };
-                    btn.appendChild(deleteBtn);
-                    btn.onmouseover = () => {
-                        btn.style.background = '#eef2ff';
-                        deleteBtn.style.opacity = '1';
-                    };
-                    btn.onmouseout = () => {
-                        btn.style.background = '#f5f5f5';
-                        deleteBtn.style.opacity = '0.3';
-                    };
-                    btn.onclick = async () => {
-                        loadLogbuchContent(entry.name, entry.filename);
-                    };
-                    list.appendChild(btn);
-                });
+            // Sort: Pinned entries first, then alphanumerically by filename
+            filteredEntries.sort((a, b) => {
+                // Pinned entries first
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                // Then sort alphanumerically by filename
+                return (a.filename || a.name || '').localeCompare(b.filename || b.name || '', undefined, {numeric: true, sensitivity: 'base'});
+            });
+
+            // Render all entries in flat list
+            filteredEntries.forEach(entry => {
+                const btn = document.createElement('div');
+                btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
+                const nameEl = document.createElement('span');
+                nameEl.innerText = entry.name;
+                nameEl.style.flex = '1';
+                btn.appendChild(nameEl);
+                // Add pin icon for pinned entries
+                if (entry.pinned) {
+                    const pinEl = document.createElement('span');
+                    pinEl.innerText = '📌';
+                    pinEl.style.cssText = 'margin-left: 8px; font-size: 0.9em; opacity: 0.7;';
+                    pinEl.title = 'Pinned';
+                    btn.appendChild(pinEl);
+                }
+                const iconEl = document.createElement('span');
+                iconEl.innerText = getLogbookStatusIcon(entry.status || 'ACTIVE');
+                iconEl.style.cssText = 'margin-left: 8px; margin-right: 10px; font-size: 1.05em; opacity: 0.9;';
+                iconEl.title = (entry.status || 'ACTIVE').toUpperCase();
+                btn.appendChild(iconEl);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerText = '✕';
+                deleteBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-size: 1.1em; padding: 0; width: 24px; height: 24px; opacity: 0.3; transition: opacity 0.2s;';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const msg = t('logbook_delete_confirm').replace('{name}', entry.name);
+                    if (confirm(msg)) {
+                        deleteLogbookEntry(entry.filename);
+                    }
+                };
+                btn.appendChild(deleteBtn);
+                btn.onmouseover = () => {
+                    btn.style.background = '#eef2ff';
+                    deleteBtn.style.opacity = '1';
+                };
+                btn.onmouseout = () => {
+                    btn.style.background = '#f5f5f5';
+                    deleteBtn.style.opacity = '0.3';
+                };
+                btn.onclick = async () => {
+                    loadLogbuchContent(entry.name, entry.filename);
+                };
+                list.appendChild(btn);
             });
         }
 
@@ -840,13 +923,40 @@
             content.innerHTML = `<div style="color:#999;">${t('edit_loading')}</div>`;
             try {
                 const markdown = await eel.get_logbook_entry(name)();
-                let html = markdown
-                    .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
-                    .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '<br><br>');
-                content.innerHTML = html;
+                const meta = extractLogbookMeta(markdown || '');
+                const visibleBody = stripLogbookFixedTags(markdown || '');
+                const tagsHtml = `
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+                        <span style="padding:4px 8px; border-radius:999px; background:#eef2ff; color:#334; font-size:0.8em;">🏷️ ${meta.category || '-'}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f1f5f9; color:#334; font-size:0.8em;">${getLogbookStatusIcon(meta.status)} ${(meta.status || 'ACTIVE').toUpperCase()}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f8fafc; color:#445; font-size:0.8em;">🇩🇪 ${meta.titleDe || '-'}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f8fafc; color:#445; font-size:0.8em;">🇬🇧 ${meta.titleEn || '-'}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f8fafc; color:#445; font-size:0.8em;">📅 ${meta.date || '-'}</span>
+                    </div>
+                `;
+                // Use marked.js for proper markdown rendering if available, fallback to simple parsing
+                let html;
+                if (typeof marked !== 'undefined') {
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true,
+                        headerIds: false,
+                        mangle: false
+                    });
+                    html = marked.parse(visibleBody);
+                } else {
+                    // Fallback to simple parsing
+                    html = visibleBody
+                        .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
+                        .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '<br><br>');
+                }
+                
+                // Wrap content with styling
+                const styledHtml = `<div style="line-height: 1.6; color: #333;">${html}</div>`;
+                content.innerHTML = tagsHtml + styledHtml;
                 const editBtn = document.createElement('button');
                 editBtn.innerText = t('edit_btn_edit');
                 editBtn.style.cssText = 'margin-top: 20px; padding: 8px 16px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
@@ -1154,34 +1264,10 @@
                                 </div>
                             </div>
 
-                            <!-- Conda Environments -->
-                            <div style="margin-top: 20px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_conda_envs">🐍 Conda Umgebungen</h4>
-                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- System Python Installations -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_system_python_installs">🌐 System Python Installationen</h4>
-                                <div id="system-pythons-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- Local Virtual Environments -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_local_venvs">📁 Lokale Virtual Environments</h4>
-                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- Installed Packages -->
+                            <!-- Installed Packages (active environment) -->
                             <div style="margin-top: 15px;">
                                 <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_installed_packages">
-                                    📦 Installierte Pakete
+                                    📦 Installierte Pakete (aktive Umgebung)
                                     <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
                                 </h4>
                                 <div style="margin-bottom: 8px;">
@@ -1190,6 +1276,40 @@
                                         data-i18n="[placeholder]packages_search_placeholder">
                                 </div>
                                 <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <h4 style="font-size: 0.95em; margin-top: 22px; margin-bottom: 8px; color: #444;">Vorhandene Umgebungen</h4>
+
+                            <!-- Global Python Installations -->
+                            <div style="margin-top: 8px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">1. 🌐 Python Global</h4>
+                                <div id="system-python-global-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Python Installations -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">2. 🏠 Python Local</h4>
+                                <div id="system-python-local-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Conda Environments -->
+                            <div style="margin-top: 20px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_conda_envs">3. 🐍 Conda Umgebungen</h4>
+                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Virtual Environments -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_local_venvs">4. 📁 Lokale Virtual Environments</h4>
+                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
@@ -1440,6 +1560,50 @@
                                 <span>🚀</span> <span data-i18n="vlc_btn_extern">In VLC öffnen</span>
                             </button>
                         </div>
+                    </div>
+
+                    <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                            🎬 VLC Ribbon
+                        </h3>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                            <button id="vlc-ribbon-dnd-btn" onclick="setVlcRibbonMode('dnd')"
+                                style="padding: 8px 12px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                                Variante 1: Drag & Drop
+                            </button>
+                            <button id="vlc-ribbon-stream-btn" onclick="setVlcRibbonMode('stream')"
+                                style="padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; color: #666; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                                Variante 2: Streaming
+                            </button>
+                        </div>
+
+                        <div id="vlc-dnd-panel" style="display: block;">
+                            <div id="vlc-drop-zone"
+                                style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 20px; text-align: center; font-weight: 600; transition: all 0.2s;">
+                                Datei hier hineinziehen, um sie in VLC zu öffnen
+                            </div>
+                            <div style="margin-top: 10px; text-align: center;">
+                                <button onclick="pickAndPlayInVLC()"
+                                    style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    📂 Datei auswählen
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="vlc-stream-panel" style="display: none;">
+                            <div style="display: flex; gap: 10px;">
+                                <input id="vlc-stream-url" type="text" placeholder="https://... | rtsp://... | rtmp://..."
+                                    style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;" />
+                                <button onclick="playVLCStream()"
+                                    style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                    ▶ Stream starten
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="vlc-ribbon-status"
+                            style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;"></div>
                     </div>
 
                     <!-- VLC Playlist Import/Export Section -->
@@ -1733,6 +1897,35 @@
                 <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
                     data-i18n="[placeholder]logbook_edit_placeholder_name">
+            </div>
+            <div style="border: 1px solid #e7e7e7; border-radius: 8px; padding: 12px; background: #fafafa; display: flex; flex-direction: column; gap: 10px;">
+                <div style="font-size: 0.85em; font-weight: bold; color: #555; text-transform: uppercase;">Feste Tags (editierbar)</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <label style="font-size: 0.78em; color:#666;">Category</label>
+                        <input type="text" id="logbuch-editor-category" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <label style="font-size: 0.78em; color:#666;">Date</label>
+                        <input type="text" id="logbuch-editor-date" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Title_DE</label>
+                        <input type="text" id="logbuch-editor-title-de" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Title_EN</label>
+                        <input type="text" id="logbuch-editor-title-en" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Summary_DE</label>
+                        <input type="text" id="logbuch-editor-summary-de" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Summary_EN</label>
+                        <input type="text" id="logbuch-editor-summary-en" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                </div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 <label style="font-size: 0.9em; font-weight: bold; color: #555;" data-i18n="logbook_edit_status_label">Status</label>
@@ -2458,7 +2651,7 @@
             document.getElementById('btn-open-vlc').style.display = 'flex';
         }
 
-        async function startVLC(filePath) {
+        async function startVLC(filePath, displayName = null) {
             const video = document.getElementById('video-player');
             video.pause();
             video.style.display = 'none';
@@ -2467,7 +2660,8 @@
             hideUnsupportedVideoHint();
 
             document.getElementById('vlc-info').style.display = 'block';
-            document.getElementById('vlc-current-file').innerText = currentVideoItem.name;
+            const shownName = displayName || (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
+            document.getElementById('vlc-current-file').innerText = shownName;
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
@@ -2886,11 +3080,23 @@
             loadDebugFlags();
         }
 
+        let packageSearchTimer = null;
+
         async function loadEnvironmentInfo() {
             try {
                 const info = await eel.get_environment_info()();
+
+                if (!info || typeof info !== 'object') {
+                    throw new Error('Invalid environment info response');
+                }
+
+                const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];
+                const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];
+                const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];
+                const safeInstalledPackages = Array.isArray(info.installed_packages) ? info.installed_packages : [];
                 
-                document.getElementById('env-python-version').textContent = info.python_version;
+                const envPythonVersionEl = document.getElementById('env-python-version');
+                if (envPythonVersionEl) envPythonVersionEl.textContent = info.python_version || '-';
                 
                 // Display environment type and status
                 let statusText = '';
@@ -2911,81 +3117,106 @@
                     isActive = false;
                 }
                 
-                document.getElementById('env-venv-status').textContent = statusText;
-                document.getElementById('env-venv-path').textContent = info.env_path || '-';
-                document.getElementById('env-python-exec').textContent = info.python_executable;
-                document.getElementById('env-platform').textContent = `${info.platform_system} ${info.platform_release}`;
+                const envVenvStatusEl = document.getElementById('env-venv-status');
+                const envVenvPathEl = document.getElementById('env-venv-path');
+                const envPythonExecEl = document.getElementById('env-python-exec');
+                const envPlatformEl = document.getElementById('env-platform');
+
+                if (envVenvStatusEl) envVenvStatusEl.textContent = statusText;
+                if (envVenvPathEl) envVenvPathEl.textContent = info.env_path || '-';
+                if (envPythonExecEl) envPythonExecEl.textContent = info.python_executable || '-';
+                if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
                 
                 // Color code the venv status
                 const statusEl = document.getElementById('env-venv-status');
-                if (isActive) {
-                    statusEl.style.color = '#2a7';
-                    statusEl.style.fontWeight = 'bold';
-                } else {
-                    statusEl.style.color = '#f4d';
+                if (statusEl) {
+                    if (isActive) {
+                        statusEl.style.color = '#2a7';
+                        statusEl.style.fontWeight = 'bold';
+                    } else {
+                        statusEl.style.color = '#f4d';
+                    }
                 }
 
                 // Display Conda Environments
                 const condaList = document.getElementById('conda-environments-list');
-                if (info.available_conda_environments && info.available_conda_environments.length > 0) {
+                if (condaList && safeCondaEnvs.length > 0) {
                     let condaHtml = '<div style="font-family: monospace;">';
-                    info.available_conda_environments.forEach(env => {
-                        const isCurrent = info.env_type === 'conda' && info.env_name === env.name;
-                        const isRecommended = env.recommended;
+                    safeCondaEnvs.forEach(env => {
+                        if (!env || typeof env !== 'object') return;
+                        const envName = env.name || '-';
+                        const envVersion = env.version || '-';
+                        const envPath = env.path || '-';
+                        const isCurrent = info.env_type === 'conda' && info.env_name === envName;
+                        const isRecommended = !!env.recommended;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
                         const recBadge = isRecommended ? '<span style="color: #f80; font-weight: bold;">⭐ EMPFOHLEN</span>' : '';
                         
                         condaHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${env.name} ${currentBadge} ${recBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${env.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${env.path}</div>
+                                <div style="font-weight: bold; color: #333;">${envName} ${currentBadge} ${recBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${envVersion}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${envPath}</div>
                             </div>
                         `;
                     });
                     condaHtml += '</div>';
                     condaList.innerHTML = condaHtml;
-                } else {
+                } else if (condaList) {
                     condaList.innerHTML = `<span style="color: #999;">${t('env_no_conda_envs')}</span>`;
                 }
 
-                // Display System Python Installations
-                const systemList = document.getElementById('system-pythons-list');
-                if (info.available_system_pythons && info.available_system_pythons.length > 0) {
-                    let systemHtml = '<div style="font-family: monospace;">';
-                    info.available_system_pythons.forEach(python => {
-                        systemHtml += `
+                // Display System Python Installations split into Global / Local
+                const globalPythonList = document.getElementById('system-python-global-list');
+                const localPythonList = document.getElementById('system-python-local-list');
+
+                const validSystemPythons = safeSystemPythons.filter(p => p && typeof p === 'object');
+                const globalPythons = validSystemPythons.filter(p => String(p.path || '').startsWith('/usr/bin/'));
+                const localPythons = validSystemPythons.filter(p => !String(p.path || '').startsWith('/usr/bin/'));
+
+                const renderPythonList = (container, rows, emptyText) => {
+                    if (!container) return;
+                    if (!rows || rows.length === 0) {
+                        container.innerHTML = `<span style="color: #999;">${emptyText}</span>`;
+                        return;
+                    }
+                    let html = '<div style="font-family: monospace;">';
+                    rows.forEach(python => {
+                        if (!python || typeof python !== 'object') return;
+                        html += `
                             <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
-                                <div style="color: #666; font-size: 0.9em;">${python.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path}</div>
+                                <div style="color: #666; font-size: 0.9em;">${python.version || '-'}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path || '-'}</div>
                             </div>
                         `;
                     });
-                    systemHtml += '</div>';
-                    systemList.innerHTML = systemHtml;
-                } else {
-                    systemList.innerHTML = `<span style="color: #999;">${t('env_no_system_pythons')}</span>`;
-                }
+                    html += '</div>';
+                    container.innerHTML = html;
+                };
+
+                renderPythonList(globalPythonList, globalPythons, t('env_no_system_pythons'));
+                renderPythonList(localPythonList, localPythons, t('env_no_system_pythons'));
 
                 // Display Local Virtual Environments
                 const venvsList = document.getElementById('local-venvs-list');
-                if (info.local_venvs && info.local_venvs.length > 0) {
+                if (venvsList && safeLocalVenvs.length > 0) {
                     let venvsHtml = '<div style="font-family: monospace;">';
-                    info.local_venvs.forEach(venv => {
+                    safeLocalVenvs.forEach(venv => {
+                        if (!venv || typeof venv !== 'object') return;
                         const isCurrent = venv.is_current;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
                         
                         venvsHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${venv.name} ${currentBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${venv.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path}</div>
+                                <div style="font-weight: bold; color: #333;">${venv.name || '-'} ${currentBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${venv.version || '-'}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path || '-'}</div>
                             </div>
                         `;
                     });
                     venvsHtml += '</div>';
                     venvsList.innerHTML = venvsHtml;
-                } else {
+                } else if (venvsList) {
                     venvsList.innerHTML = `<span style="color: #999;">${t('env_no_local_venvs')}</span>`;
                 }
 
@@ -2993,36 +3224,63 @@
                 const packagesList = document.getElementById('installed-packages-list');
                 const packageCount = document.getElementById('package-count');
                 
-                if (info.installed_packages && info.installed_packages.length > 0) {
-                    packageCount.textContent = `(${info.installed_packages.length})`;
+                if (safeInstalledPackages.length > 0 && packagesList && packageCount) {
+                    packageCount.textContent = `(${safeInstalledPackages.length})`;
                     
                     // Store packages globally for search functionality
-                    window.allPackages = info.installed_packages;
+                    window.allPackages = safeInstalledPackages;
+                    window.allPackagesSearch = safeInstalledPackages.map(pkg => ({
+                        nameLc: String(pkg.name || '').toLowerCase(),
+                        versionLc: String(pkg.version || '').toLowerCase(),
+                        raw: pkg,
+                    }));
                     
                     // Initial render
-                    renderPackages(info.installed_packages);
+                    renderPackages(safeInstalledPackages);
                     
                     // Setup search
                     const searchInput = document.getElementById('package-search');
-                    searchInput.addEventListener('input', (e) => {
-                        const searchTerm = e.target.value.toLowerCase();
-                        if (searchTerm === '') {
-                            renderPackages(window.allPackages);
-                        } else {
-                            const filtered = window.allPackages.filter(pkg => 
-                                pkg.name.toLowerCase().includes(searchTerm) ||
-                                (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
-                            );
-                            renderPackages(filtered);
-                        }
-                    });
+                    if (searchInput && searchInput.dataset.bound !== '1') {
+                        searchInput.addEventListener('input', (e) => {
+                            const searchTerm = e.target.value.toLowerCase();
+                            if (packageSearchTimer) clearTimeout(packageSearchTimer);
+                            packageSearchTimer = setTimeout(() => {
+                                if (searchTerm === '') {
+                                    renderPackages(window.allPackages);
+                                } else {
+                                    const rows = Array.isArray(window.allPackagesSearch) ? window.allPackagesSearch : [];
+                                    const filtered = rows
+                                        .filter(row => row.nameLc.includes(searchTerm) || row.versionLc.includes(searchTerm))
+                                        .map(row => row.raw);
+                                    renderPackages(filtered);
+                                }
+                            }, 120);
+                        });
+                        searchInput.dataset.bound = '1';
+                    }
                 } else {
-                    packageCount.textContent = '(0)';
-                    packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
+                    if (packageCount) packageCount.textContent = '(0)';
+                    if (packagesList) packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
                 }
                 
             } catch (e) {
                 console.error("Failed to load environment info:", e);
+                const failText = `<span style="color: #c62828;">${t('common_error_loading')}</span>`;
+                const fallbackNoData = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
+
+                const packageCount = document.getElementById('package-count');
+                const condaList = document.getElementById('conda-environments-list');
+                const globalPythonList = document.getElementById('system-python-global-list');
+                const localPythonList = document.getElementById('system-python-local-list');
+                const venvsList = document.getElementById('local-venvs-list');
+                const packagesList = document.getElementById('installed-packages-list');
+
+                if (packageCount) packageCount.textContent = '(0)';
+                if (condaList) condaList.innerHTML = failText;
+                if (globalPythonList) globalPythonList.innerHTML = failText;
+                if (localPythonList) localPythonList.innerHTML = failText;
+                if (venvsList) venvsList.innerHTML = failText;
+                if (packagesList) packagesList.innerHTML = fallbackNoData;
             }
         }
 
@@ -3050,6 +3308,57 @@
             
             packagesHtml += '</tbody></table>';
             packagesList.innerHTML = packagesHtml;
+        }
+
+        window.runLatencyDiagnostics = async function(payloadSize = 0, samples = 5) {
+            const count = Math.max(1, Math.min(30, Number(samples) || 5));
+            const size = Math.max(0, Math.min(200000, Number(payloadSize) || 0));
+
+            const frontendSamples = [];
+            const eelSamples = [];
+            const bottleSamples = [];
+
+            const measureFrame = () => new Promise((resolve) => {
+                const start = performance.now();
+                requestAnimationFrame(() => resolve(performance.now() - start));
+            });
+
+            const measureEel = async () => {
+                const start = performance.now();
+                await eel.api_ping(Date.now(), size)();
+                return performance.now() - start;
+            };
+
+            const measureBottle = async () => {
+                const start = performance.now();
+                await fetch('/health', { cache: 'no-store' });
+                return performance.now() - start;
+            };
+
+            for (let i = 0; i < count; i++) {
+                frontendSamples.push(await measureFrame());
+                eelSamples.push(await measureEel());
+                bottleSamples.push(await measureBottle());
+            }
+
+            const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+            const p95 = (arr) => {
+                const sorted = [...arr].sort((a, b) => a - b);
+                const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+                return sorted[idx];
+            };
+
+            const result = {
+                samples: count,
+                payloadSize: size,
+                frontend: { avgMs: Number(avg(frontendSamples).toFixed(2)), p95Ms: Number(p95(frontendSamples).toFixed(2)) },
+                eelRoundtrip: { avgMs: Number(avg(eelSamples).toFixed(2)), p95Ms: Number(p95(eelSamples).toFixed(2)) },
+                bottleHttp: { avgMs: Number(avg(bottleSamples).toFixed(2)), p95Ms: Number(p95(bottleSamples).toFixed(2)) },
+                raw: { frontendSamples, eelSamples, bottleSamples },
+            };
+
+            console.info('[LatencyDiagnostics]', result);
+            return result;
         }
 
         function toggleDebugMenu() {
@@ -3682,6 +3991,135 @@
         });
 
         // ============ VLC Integration Functions ============
+
+        let vlcRibbonMode = 'dnd';
+
+        function setVlcRibbonStatus(message, kind = 'info') {
+            const el = document.getElementById('vlc-ribbon-status');
+            if (!el) return;
+            el.style.display = 'block';
+            if (kind === 'error') {
+                el.style.background = '#ffebee';
+                el.style.color = '#b71c1c';
+            } else if (kind === 'ok') {
+                el.style.background = '#e8f5e9';
+                el.style.color = '#2e7d32';
+            } else {
+                el.style.background = '#e3f2fd';
+                el.style.color = '#1565c0';
+            }
+            el.textContent = message;
+        }
+
+        function setVlcRibbonMode(mode) {
+            vlcRibbonMode = mode === 'stream' ? 'stream' : 'dnd';
+
+            const dndBtn = document.getElementById('vlc-ribbon-dnd-btn');
+            const streamBtn = document.getElementById('vlc-ribbon-stream-btn');
+            const dndPanel = document.getElementById('vlc-dnd-panel');
+            const streamPanel = document.getElementById('vlc-stream-panel');
+
+            if (!dndBtn || !streamBtn || !dndPanel || !streamPanel) return;
+
+            if (vlcRibbonMode === 'dnd') {
+                dndPanel.style.display = 'block';
+                streamPanel.style.display = 'none';
+                dndBtn.style.borderColor = '#2a7';
+                dndBtn.style.background = '#e8f5e9';
+                dndBtn.style.color = '#2a7';
+                streamBtn.style.borderColor = '#ddd';
+                streamBtn.style.background = '#f9f9f9';
+                streamBtn.style.color = '#666';
+            } else {
+                dndPanel.style.display = 'none';
+                streamPanel.style.display = 'block';
+                streamBtn.style.borderColor = '#8e44ad';
+                streamBtn.style.background = '#f3e5f5';
+                streamBtn.style.color = '#6a1b9a';
+                dndBtn.style.borderColor = '#ddd';
+                dndBtn.style.background = '#f9f9f9';
+                dndBtn.style.color = '#666';
+            }
+        }
+
+        function initVlcDropZone() {
+            const zone = document.getElementById('vlc-drop-zone');
+            if (!zone || zone.dataset.bound === '1') return;
+            zone.dataset.bound = '1';
+
+            ['dragenter', 'dragover'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    zone.style.borderColor = '#2a7';
+                    zone.style.background = '#e8f5e9';
+                    zone.style.color = '#1b5e20';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                zone.addEventListener(evt, () => {
+                    zone.style.borderColor = '#90caf9';
+                    zone.style.background = '#f7fbff';
+                    zone.style.color = '#1e5d87';
+                });
+            });
+
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                const droppedFile = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null;
+                if (!droppedFile) {
+                    setVlcRibbonStatus('Keine Datei erkannt.', 'error');
+                    return;
+                }
+
+                const droppedPath = droppedFile.path || '';
+                if (!droppedPath) {
+                    setVlcRibbonStatus('Drag&Drop liefert hier keinen lokalen Pfad. Bitte „Datei auswählen“ nutzen.', 'error');
+                    return;
+                }
+
+                await startVLC(droppedPath, droppedFile.name || droppedPath);
+                setVlcRibbonStatus(`VLC gestartet: ${droppedFile.name || droppedPath}`, 'ok');
+            });
+        }
+
+        async function pickAndPlayInVLC() {
+            try {
+                const filePath = await eel.pick_file('VLC: Videodatei wählen', [
+                    ['Video Files', '*.mp4 *.mkv *.webm *.mov *.avi *.m4v *.flv *.wmv'],
+                    ['All Files', '*.*']
+                ])();
+
+                if (!filePath) return;
+
+                const name = String(filePath).split('/').pop();
+                await startVLC(filePath, name || filePath);
+                setVlcRibbonStatus(`VLC gestartet: ${name || filePath}`, 'ok');
+            } catch (e) {
+                setVlcRibbonStatus(`Fehler beim Öffnen: ${e && e.message ? e.message : e}`, 'error');
+            }
+        }
+
+        async function playVLCStream() {
+            const input = document.getElementById('vlc-stream-url');
+            const url = input ? input.value.trim() : '';
+            if (!url) {
+                setVlcRibbonStatus('Bitte eine Stream-URL eingeben.', 'error');
+                return;
+            }
+            const valid = /^(https?:\/\/|rtsp:\/\/|rtmp:\/\/|mms:\/\/)/i.test(url);
+            if (!valid) {
+                setVlcRibbonStatus('Ungültige URL. Erlaubt: http(s), rtsp, rtmp, mms.', 'error');
+                return;
+            }
+
+            try {
+                await startVLC(url, url);
+                setVlcRibbonStatus('Streaming in VLC gestartet.', 'ok');
+            } catch (e) {
+                setVlcRibbonStatus(`Streaming-Fehler: ${e && e.message ? e.message : e}`, 'error');
+            }
+        }
         
         async function importVLCPlaylist() {
             const statusDiv = document.getElementById('import-status');
@@ -3808,6 +4246,8 @@
             loadDebugFlags();
             loadTestSuites();
             loadFeatureStatus();
+            initVlcDropZone();
+            setVlcRibbonMode('dnd');
             restoreLastActiveTab();
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {

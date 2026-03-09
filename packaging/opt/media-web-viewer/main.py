@@ -23,6 +23,7 @@ import sys
 import os
 import platform
 from pathlib import Path
+#import antigravity  # For fun and easter egg purposes
 
 def _detect_python_environment():
     """
@@ -109,6 +110,7 @@ import eel
 import logging
 import time
 import subprocess
+import threading
 import re
 from typing import cast
 from parsers.format_utils import (
@@ -136,6 +138,12 @@ try:
 except Exception:
     VERSION = "1.3.3"  # Fallback
 
+_ENV_INFO_CACHE = {
+    "data": None,
+    "ts": 0.0,
+}
+_ENV_INFO_CACHE_TTL_SECONDS = 8.0
+
 
 @eel.expose
 def get_version():
@@ -148,7 +156,35 @@ def get_version():
 
 
 @eel.expose
-def get_environment_info():
+def api_ping(client_ts=None, payload_size=0):
+    """
+    @brief Lightweight ping endpoint for Eel roundtrip latency diagnostics.
+    @details Minimal payload endpoint to measure frontend↔backend roundtrip and payload transfer time.
+    @param client_ts Optional client timestamp / Optionaler Client-Timestamp.
+    @param payload_size Optional echo payload size in bytes (0..200000) / Optionale Echo-Payload.
+    @return Dictionary with timestamps and payload size / Dictionary mit Zeitstempeln und Payload-Größe.
+    """
+    now_ms = int(time.time() * 1000)
+
+    try:
+        size = int(payload_size)
+    except Exception:
+        size = 0
+
+    size = max(0, min(size, 200000))
+    payload = "x" * size if size > 0 else ""
+
+    return {
+        "status": "ok",
+        "server_ts": now_ms,
+        "client_ts": client_ts,
+        "payload_size": size,
+        "payload": payload,
+    }
+
+
+@eel.expose
+def get_environment_info(force_refresh=False):
     """
     @brief Returns comprehensive information about the Python environment.
     @details Gibt detaillierte Informationen über die Python-Umgebung zurück, 
@@ -158,6 +194,11 @@ def get_environment_info():
     import platform
     import subprocess
     import json
+
+    now = time.time()
+    if not force_refresh and _ENV_INFO_CACHE["data"] is not None:
+        if (now - float(_ENV_INFO_CACHE["ts"])) <= _ENV_INFO_CACHE_TTL_SECONDS:
+            return _ENV_INFO_CACHE["data"]
     
     # ===== Current Environment =====
     # Check if we're in a virtual environment (venv/virtualenv)
@@ -208,34 +249,37 @@ def get_environment_info():
                 ["conda", "env", "list", "--json"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=3
             )
             if result.returncode == 0:
-                data = json.loads(result.stdout)
-                for env_path in data.get("envs", []):
-                    env_name = Path(env_path).name
-                    env_python = Path(env_path) / "bin" / "python"
-                    
-                    if env_python.exists():
-                        try:
-                            v_result = subprocess.run(
-                                [str(env_python), "--version"],
-                                capture_output=True,
-                                text=True,
-                                timeout=2
-                            )
-                            version = v_result.stdout.strip() or v_result.stderr.strip()
-                            is_recommended = env_name == "p14"
-                            
-                            environments.append({
-                                "name": env_name,
-                                "path": env_path,
-                                "version": version,
-                                "recommended": is_recommended
-                            })
-                        except Exception:
-                            pass
-        except Exception:
+                try:
+                    data = json.loads(result.stdout)
+                    for env_path in data.get("envs", []):
+                        env_name = Path(env_path).name
+                        env_python = Path(env_path) / "bin" / "python"
+                        
+                        if env_python.exists():
+                            try:
+                                v_result = subprocess.run(
+                                    [str(env_python), "--version"],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=1
+                                )
+                                version = v_result.stdout.strip() or v_result.stderr.strip()
+                                is_recommended = env_name == "p14"
+                                
+                                environments.append({
+                                    "name": env_name,
+                                    "path": env_path,
+                                    "version": version,
+                                    "recommended": is_recommended
+                                })
+                            except (subprocess.TimeoutExpired, Exception):
+                                pass
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
             pass
         return sorted(environments, key=lambda x: x["name"])
     
@@ -246,33 +290,51 @@ def get_environment_info():
         seen_versions = set()
         
         for search_path in search_paths:
-            search_dir = Path(search_path)
-            if not search_dir.exists():
-                continue
-            
-            for python_exe in search_dir.glob("python*"):
-                if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+            try:
+                search_dir = Path(search_path)
+                if not search_dir.exists():
                     continue
                 
-                try:
-                    result = subprocess.run(
-                        [str(python_exe), "--version"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2
-                    )
-                    version = result.stdout.strip() or result.stderr.strip()
+                for python_exe in search_dir.glob("python*"):
+                    if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+                        continue
                     
-                    if version and version not in seen_versions:
-                        seen_versions.add(version)
-                        pythons.append({
-                            "path": str(python_exe),
-                            "version": version
-                        })
-                except Exception:
-                    pass
+                    try:
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+                        
+                        if version and version not in seen_versions:
+                            seen_versions.add(version)
+                            pythons.append({
+                                "path": str(python_exe),
+                                "version": version
+                            })
+                    except (subprocess.TimeoutExpired, Exception):
+                        pass
+            except Exception:
+                pass
         
         return sorted(pythons, key=lambda x: x["version"])
+    
+    def _get_packages_fallback():
+        """Fallback method to get packages if pip list fails."""
+        packages = []
+        try:
+            import pkg_resources
+            for dist in pkg_resources.working_set:
+                packages.append({
+                    "name": dist.project_name,
+                    "version": dist.version
+                })
+            packages = sorted(packages, key=lambda x: x["name"].lower())
+        except Exception:
+            pass
+        return packages
     
     def _get_installed_packages():
         """Get list of installed packages in current environment."""
@@ -282,14 +344,22 @@ def get_environment_info():
                 [sys.executable, "-m", "pip", "list", "--format=json"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=5
             )
             if result.returncode == 0:
-                packages_data = json.loads(result.stdout)
-                # Sort by name
-                packages = sorted(packages_data, key=lambda x: x["name"].lower())
+                try:
+                    packages_data = json.loads(result.stdout)
+                    # Sort by name
+                    packages = sorted(packages_data, key=lambda x: x.get("name", "").lower())
+                except (json.JSONDecodeError, TypeError, KeyError):
+                    logging.warning("Failed to parse pip list JSON")
+                    packages = _get_packages_fallback()
+        except subprocess.TimeoutExpired:
+            logging.warning("pip list timeout - using fallback")
+            packages = _get_packages_fallback()
         except Exception as e:
             logging.warning(f"Failed to get installed packages: {e}")
+            packages = _get_packages_fallback()
         return packages
     
     def _find_local_venvs():
@@ -297,28 +367,34 @@ def get_environment_info():
         venvs = []
         venv_names = [".venv", "venv", "env", ".env"]
         
-        # Check project directory
-        project_dir = Path(__file__).parent
-        for venv_name in venv_names:
-            venv_path = project_dir / venv_name
-            if venv_path.exists() and (venv_path / "bin" / "python").exists():
-                python_exe = venv_path / "bin" / "python"
+        try:
+            # Check project directory
+            project_dir = Path(__file__).parent
+            for venv_name in venv_names:
                 try:
-                    result = subprocess.run(
-                        [str(python_exe), "--version"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2
-                    )
-                    version = result.stdout.strip() or result.stderr.strip()
-                    venvs.append({
-                        "name": venv_name,
-                        "path": str(venv_path),
-                        "version": version,
-                        "is_current": str(venv_path) == env_path
-                    })
+                    venv_path = project_dir / venv_name
+                    if venv_path.exists() and (venv_path / "bin" / "python").exists():
+                        python_exe = venv_path / "bin" / "python"
+                        try:
+                            result = subprocess.run(
+                                [str(python_exe), "--version"],
+                                capture_output=True,
+                                text=True,
+                                timeout=1
+                            )
+                            version = result.stdout.strip() or result.stderr.strip()
+                            venvs.append({
+                                "name": venv_name,
+                                "path": str(venv_path),
+                                "version": version,
+                                "is_current": str(venv_path) == env_path
+                            })
+                        except (subprocess.TimeoutExpired, Exception):
+                            pass
                 except Exception:
                     pass
+        except Exception:
+            pass
         
         return venvs
     
@@ -329,7 +405,7 @@ def get_environment_info():
     local_venvs = _find_local_venvs()
     
     # ===== Build Response =====
-    return {
+    result = {
         # Current Environment (Primary)
         "python_version": platform.python_version(),
         "python_executable": sys.executable,
@@ -368,6 +444,10 @@ def get_environment_info():
             "reason": "Latest stable Python release for Media Web Viewer"
         }
     }
+
+    _ENV_INFO_CACHE["data"] = result
+    _ENV_INFO_CACHE["ts"] = time.time()
+    return result
 
 
 # Konfiguration
@@ -495,6 +575,44 @@ def get_preferred_browser():
     return webbrowser
 
 
+def open_session_url(url: str) -> bool:
+    """Open a session URL in app-mode window when possible, else fallback browser."""
+    import shutil
+
+    browser_candidates = [
+        'chromium-browser',
+        'chromium',
+    ]
+
+    for browser_cmd in browser_candidates:
+        browser_path = shutil.which(browser_cmd)
+        if browser_path:
+            logging.info(f"[Browser] Launching {browser_cmd} in app mode")
+            try:
+                subprocess.Popen([
+                    browser_path,
+                    f'--app={url}',
+                    '--new-window',
+                    '--no-first-run',
+                    '--no-default-browser-check',
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+                )
+                return True
+            except Exception as e:
+                logging.warning(f"[Browser] Failed to launch {browser_cmd}: {e}")
+
+    logging.warning("[Browser] Chromium not found, falling back to preferred browser")
+    try:
+        browser = get_preferred_browser()
+        browser.open(url)
+        return True
+    except Exception as e:
+        logging.warning(f"[Browser] Fallback browser launch failed: {e}")
+        return False
+
+
 def run_sessionless_mode() -> dict:
     """
     Execute sessionless startup flow and return status information.
@@ -522,8 +640,11 @@ def run_connectionless_browser_mode() -> dict:
     app_file = (Path(__file__).parent / "web" / "app.html").resolve()
     app_url = app_file.as_uri()
 
-    browser = get_preferred_browser()
-    browser.open(app_url)
+    if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
+        logging.info("[Mode-N] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
+    else:
+        browser = get_preferred_browser()
+        browser.open(app_url)
 
     return {
         "mode": "connectionless-browser",
@@ -542,43 +663,66 @@ def check_running_sessions() -> list[dict]:
         list[dict]: List of active sessions with pid, port, and command info
     """
     import psutil
-    
+
     sessions = []
     current_pid = os.getpid()
-    
+    pid_to_port: dict[int, int] = {}
+
+    try:
+        for conn in psutil.net_connections(kind='tcp'):
+            if conn.status != 'LISTEN':
+                continue
+            if not conn.pid or conn.pid == current_pid:
+                continue
+
+            laddr = conn.laddr
+            host = None
+            port = None
+
+            if hasattr(laddr, 'ip') and hasattr(laddr, 'port'):
+                host = laddr.ip
+                port = laddr.port
+            elif isinstance(laddr, tuple) and len(laddr) >= 2:
+                host, port = laddr[0], laddr[1]
+
+            if host not in ('127.0.0.1', '::1', '0.0.0.0'):
+                continue
+            if isinstance(port, int) and conn.pid not in pid_to_port:
+                pid_to_port[conn.pid] = port
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
+        pass
+
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            # Skip current process
-            if proc.info['pid'] == current_pid:
+            pid = proc.info['pid']
+            if pid == current_pid:
                 continue
-                
-            # Check if it's a Python process running main.py
+
             cmdline = proc.info.get('cmdline') or []
             if not cmdline:
                 continue
-                
-            # Look for main.py in command line
+
             if any('main.py' in str(arg) for arg in cmdline):
-                # Try to find listening port
-                port = None
-                try:
-                    connections = proc.connections()
-                    for conn in connections:
-                        if conn.status == 'LISTEN' and conn.laddr.ip == '127.0.0.1':
-                            port = conn.laddr.port
-                            break
-                except (psutil.AccessDenied, psutil.NoSuchProcess):
-                    pass
-                
                 sessions.append({
-                    'pid': proc.info['pid'],
-                    'port': port,
+                    'pid': pid,
+                    'port': pid_to_port.get(pid),
                     'cmdline': ' '.join(cmdline),
                 })
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-    
+
     return sessions
+
+
+def is_session_url_reachable(url: str, timeout: float = 1.0) -> bool:
+    """Check whether an existing session URL responds in time."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            return 200 <= int(getattr(response, 'status', 200)) < 500
+    except Exception:
+        return False
 
 
 def is_port_in_use(port: int) -> bool:
@@ -1760,6 +1904,7 @@ def list_logbook_entries():
                 summary = ""
                 status = "ACTIVE"  # Default
                 title = f.stem
+                pinned = False  # Default
 
                 title_de = ""
                 title_en = ""
@@ -1782,6 +1927,8 @@ def list_logbook_entries():
                             category = val
                         elif key == "Status":
                             status = val
+                        elif key == "Pinned":
+                            pinned = val.lower() in ["true", "yes", "1"]
                         elif key == "Title_DE":
                             title_de = val
                         elif key == "Title_EN":
@@ -1831,6 +1978,7 @@ def list_logbook_entries():
                     "summary_de": summary_de,
                     "summary_en": summary_en,
                     "status": _normalize_status(status),
+                    "pinned": pinned,
                     "source": "logbuch",
                     "modified_ts": f.stat().st_mtime,
                     "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(f.stat().st_mtime)),
@@ -1856,7 +2004,10 @@ def list_feature_modal_items():
     """
     Returns feature modal items from logbook plus selected markdown files from the project root.
     """
-    items = list_logbook_entries()
+    items = [
+        item for item in list_logbook_entries()
+        if item.get("filename") != "31_Project_Documentation.md"
+    ]
 
     root_dir = Path(__file__).parent
     root_docs = [
@@ -1978,33 +2129,78 @@ def run_tests(test_files):
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).parent)
+    env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
+    # Stream output lines live to frontend for real-time refresh.
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "-v"] + valid_files,
-            capture_output=True,
+        process = subprocess.Popen(
+            [sys.executable, "-m", "pytest", "-q"] + valid_files,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             env=env,
-            cwd=str(Path(__file__).parent)
+            cwd=str(Path(__file__).parent),
+            bufsize=1,
+            universal_newlines=True,
         )
 
-        output = result.stdout + "\n" + result.stderr
+        output_lines = []
+        start_time = time.time()
+        timeout_seconds = 900
 
-        # Parse output for passed/failed
+        while True:
+            if process.stdout is None:
+                break
+
+            line = process.stdout.readline()
+            if line:
+                output_lines.append(line)
+                try:
+                    if hasattr(eel, "append_test_output"):
+                        eel.append_test_output(line)()
+                except Exception:
+                    pass
+            elif process.poll() is not None:
+                break
+
+            if time.time() - start_time > timeout_seconds:
+                process.kill()
+                raise RuntimeError(f"Testlauf-Timeout nach {timeout_seconds}s")
+
+        if process.stdout is not None:
+            tail = process.stdout.read()
+            if tail:
+                output_lines.append(tail)
+                try:
+                    if hasattr(eel, "append_test_output"):
+                        eel.append_test_output(tail)()
+                except Exception:
+                    pass
+
+        result_code = process.wait()
+        output = ''.join(output_lines)
+        max_output_chars = 120000
+        if len(output) > max_output_chars:
+            output = (
+                "[Output truncated: showing last part only]\n\n"
+                + output[-max_output_chars:]
+            )
+
+        # Parse output for passed/failed (supports both verbose and -q pytest formats)
         passes = 0
         fails = 0
-        match = re.search(r'==.*?\s(\d+)\s+passed', output)
+        match = re.search(r'(\d+)\s+passed', output)
         if match:
             passes = int(match.group(1))
-        match_fails = re.search(r'==.*?\s(\d+)\s+failed', output)
+        match_fails = re.search(r'(\d+)\s+failed', output)
         if match_fails:
             fails = int(match_fails.group(1))
 
         summary = f"{passes} passed, {fails} failed"
 
         return {
-            "exit_code": result.returncode,
+            "exit_code": result_code,
             "output": output,
             "summary": summary,
             "passes": passes,
@@ -2027,6 +2223,18 @@ def run_gui_tests():
         "status": "info",
         "message": "GUI-Tests müssen über den Antigravity-Agenten (Browser Subagent) gestartet werden."
     }
+
+
+@eel.expose
+def ui_trace(message):
+    """
+    Receives frontend UI trace lines and writes them to backend logs.
+    """
+    try:
+        logging.info(f"[UI-Trace] {message}")
+    except Exception:
+        pass
+    return {"status": "ok"}
 
 
 # Main-Funktion, die die Eel-App startet
@@ -2075,6 +2283,33 @@ if __name__ == "__main__":
         logging.info("[Mode-N] No Eel/WebSocket backend started. Exiting.")
         raise SystemExit(0)
 
+    existing_sessions = [s for s in check_running_sessions() if s.get('port')]
+    if existing_sessions:
+        existing = existing_sessions[0]
+        existing_url = f"http://localhost:{existing['port']}/app.html"
+
+        if is_session_url_reachable(existing_url, timeout=0.8):
+            logging.warning(
+                f"[Session] Existing session detected (PID {existing['pid']}, port {existing['port']}). "
+                "Skipping new window launch."
+            )
+            logging.info(f"[Session] Existing session URL: {existing_url}")
+
+            if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
+                logging.info("[Session] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
+            else:
+                try:
+                    if open_session_url(existing_url):
+                        logging.info("[Session] Opened existing session URL.")
+                except Exception as e:
+                    logging.warning(f"[Session] Failed to open existing session URL: {e}")
+
+            raise SystemExit(0)
+
+        logging.warning(
+            f"[Session] Ignoring stale session candidate (PID {existing['pid']}, port {existing['port']}) - URL unreachable."
+        )
+
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
     import threading
@@ -2103,49 +2338,24 @@ if __name__ == "__main__":
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     try:
         logger.debug("websocket", f"Starting Eel server session on port {session_port}...")
-        eel.start("app.html", mode=None, size=(1450, 800), block=False, port=session_port)
+        eel.start("app.html", mode=False, size=(1450, 800), block=False, port=session_port)
         
         # Open browser explicitly after Eel starts with session-specific URL
         session_url = f"http://localhost:{session_port}/app.html"
         logging.info(f"[Session] Opening browser at {session_url}")
         
-        # Launch Chromium in app mode (standalone window without browser UI)
-        import shutil
-        browser_found = False
-        browser_candidates = [
-            'chromium-browser',
-            'chromium',
-        ]
-        
-        for browser_cmd in browser_candidates:
-            browser_path = shutil.which(browser_cmd)
-            if browser_path:
-                logging.info(f"[Browser] Launching {browser_cmd} in app mode")
-                try:
-                    subprocess.Popen([
-                        browser_path,
-                        f'--app={session_url}',
-                        '--new-window',
-                        '--no-first-run',
-                        '--no-default-browser-check',
-                    ], 
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                    )
-                    browser_found = True
-                    break
-                except Exception as e:
-                    logging.warning(f"[Browser] Failed to launch {browser_cmd}: {e}")
-                    continue
-        
-        if not browser_found:
-            logging.warning("[Browser] Chromium not found, falling back to preferred browser")
-            browser = get_preferred_browser()
-            browser.open(session_url)
+        open_session_url(session_url)
         
     except Exception as e:
         logging.error(f"[Startup-Error] Failed to start session: {e}")
 
-    # Server am Leben halten
+    # Server am Leben halten (robust gegen temporäre Frontend-Disconnects)
     while True:
-        eel.sleep(1.0)
+        try:
+            eel.sleep(1.0)
+        except KeyboardInterrupt:
+            logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
+            raise
+        except BaseException as e:
+            logging.warning(f"[WebSocket] keepalive recovered from base error: {type(e).__name__}: {e}")
+            time.sleep(1.0)

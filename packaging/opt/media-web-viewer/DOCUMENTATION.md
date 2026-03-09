@@ -18,7 +18,7 @@ This version is automatically loaded and used across:
 - Application GUI (Help/About/Footer)
 - Linux start menu entry (`packaging/usr/share/applications/media-web-viewer.desktop`)
 
-Version synchronization is validated via `VERSION_SYNC.json` (currently 11 tracked locations) and:
+Version synchronization is validated via `VERSION_SYNC.json` (currently 15 tracked locations) and:
 
 ```bash
 python tests/test_version_sync.py
@@ -33,10 +33,18 @@ python tests/test_version_sync.py && echo "VERSION SYNC OK"
 If the test fails, align all reported locations first and rebuild artifacts afterwards.
 
 To update the version:
-1. Edit the `VERSION` file in the project root.
+1. Run `python update_version.py --new-version X.Y.Z` in the project root.
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+Quick example:
+
+```bash
+python update_version.py --new-version 1.3.5
+python tests/test_version_sync.py
+python build_system.py --pipeline
+```
 
 ### Release Notes (v1.3.3)
 
@@ -49,6 +57,62 @@ Highlights of this release:
     - global Promise handler now suppresses noisy `NotSupportedError` popups
     - unsupported sources are shown as readable UI status (`player_unsupported_source`)
 - Removed duplicate video function definitions in frontend to prevent handler overrides
+
+### Stability Notes (Test-Tab / Single-Window)
+
+Recent stability hardening for the integrated Test tab includes:
+- Explicit single-window startup behavior by disabling Eel auto-launch (`eel.start(..., mode=False)`) and using one manual Chromium app launch path.
+- Keepalive loop hardening against unload-related `SystemExit` events.
+- Frontend-to-backend UI tracing (`ui_trace`) for tab-switch/unload root-cause analysis in terminal logs.
+- Test-run re-entry guard (no concurrent multi-click test starts).
+
+Regression coverage:
+- `tests/test_ui_session_stability.py`
+    - keepalive `BaseException` guard check
+    - single browser launch path check
+    - `eel.start(..., mode=False)` check
+    - UI trace bridge + test run re-entry guard check
+
+### Performance Diagnostics (Backend / Frontend / Bottle / Eel)
+
+To analyze GUI sluggishness in separate layers, the project now includes dedicated probes:
+
+- **Backend probe (Eel-exposed):** `api_ping(client_ts=None, payload_size=0)` in `main.py`
+    - Measures roundtrip timing and optional payload transfer overhead
+    - Payload is clamped to `0..200000` bytes
+
+- **Bottle transport probe:** `GET /health` in `web/app_bottle.py`
+    - Lightweight endpoint for pure HTTP latency checks
+
+- **Frontend diagnostics hook:** `window.runLatencyDiagnostics(payloadSize=0, samples=5)` in `web/app.html`
+    - Measures separately:
+        - frontend frame latency (`requestAnimationFrame`)
+        - Eel roundtrip latency (`eel.api_ping`)
+        - Bottle HTTP latency (`fetch('/health')`)
+
+Additional startup responsiveness optimization:
+- `get_environment_info()` now uses a short-lived cache (`8s` TTL) to avoid repeated expensive environment scans when switching tabs.
+
+Separate test coverage for these probes:
+- `tests/test_performance_probes.py`
+- `tests/test_bottle_health_latency.py`
+
+Latest local snapshot (09.03.2026, `.venv`, post-optimization #1):
+- `api_ping` (payload 4096, n=20): avg `0.002 ms`, median `0.001 ms`, p95 `0.012 ms`
+- `get_environment_info`: cold `4160.203 ms`, warm avg `0.003 ms`, warm median `0.001 ms`, warm p95 `0.017 ms`
+- `GET /health` (n=20): avg `2.762 ms`, median `0.527 ms`, p95 `44.568 ms`
+
+Implemented in this round:
+- Reduced request-path overhead in `web/app_bottle.py` by removing unconditional per-request info logs.
+- Optimized package search in `web/app.html` with pre-normalized search fields + 120ms debounce.
+
+Build-process status:
+- A mandatory targeted pre-build gate is now active across all build entry points.
+- Gate suite:
+    - `tests/test_performance_probes.py`
+    - `tests/test_bottle_health_latency.py`
+    - `tests/test_installed_packages_ui.py`
+    - `tests/test_ui_session_stability.py`
 
 ---
 
@@ -260,6 +324,32 @@ The project is built as a Debian package (.deb) for Debian/Ubuntu systems to ena
 - `rsync` (for copying files)
 
 ### Build Process in Detail
+
+#### Pre-Build Test Gate (mandatory by default)
+
+Before build artifacts are created, the project executes a targeted regression/performance gate:
+
+- `build_deb.sh` (before `dpkg-deb` packaging)
+- `build_system.py --build deb|pyinstaller|all` (before each build target)
+- `build.py` (before PyInstaller helper build)
+
+Gate suite:
+
+- `tests/test_performance_probes.py`
+- `tests/test_bottle_health_latency.py`
+- `tests/test_installed_packages_ui.py`
+- `tests/test_ui_session_stability.py`
+
+If one of these tests fails, the build aborts immediately.
+
+Optional override (not recommended except emergency/local debugging):
+
+```bash
+SKIP_BUILD_TESTS=1 bash build_deb.sh
+python build_system.py --build deb --skip-build-gate
+python build_system.py --build pyinstaller --skip-build-gate
+SKIP_BUILD_TESTS=1 python build.py
+```
 
 1. **Prepare Staging Area:** The script creates or empties the `packaging/` folder and sets up the structure.
 2. **Copy Source Code:** Using `rsync`, the entire project code is copied to `packaging/opt/media-web-viewer/`, excluding unwanted files like `.git`, `.venv`, `__pycache__`, build artifacts, and media files.
@@ -494,12 +584,6 @@ Media Web Viewer includes bidirectional integration with VLC Media Player:
 
 ---
 
-### π©πͺ Deutsch (German)
-
-Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
-
-Die Installer richtet automatisch eine Python Virtual Environment ein und installiert alle Abhängigkeiten.
-
 **Deinstallation:**
 ```bash
 # Konfiguration beibehalten
@@ -517,7 +601,8 @@ sudo apt purge media-web-viewer
 media-web-viewer/
 │
 ├── VERSION                  # Master semantic version (single source of truth)
-├── VERSION_SYNC.json        # Version synchronization map (11 tracked locations)
+├── VERSION_SYNC.json        # Version synchronization map (15 tracked locations)
+├── update_version.py        # Automated version bump based on VERSION_SYNC.json
 ├── main.py                  # Entry point, Eel setup, backend API functions
 ├── models.py                # MediaItem class with parsing and transcoding logic
 ├── db.py                    # SQLite database operations
@@ -2186,11 +2271,21 @@ python build_system.py --pipeline
 # Full pipeline including destructive reinstall validation
 python build_system.py --pipeline --destructive
 
+# Emergency/local override for targeted pre-build gate (not recommended)
+python build_system.py --pipeline --skip-build-gate
+
 # Manual verification commands (optional)
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
+
+Pipeline order in code (`build_system.py`):
+1. Environment check
+2. Version synchronization check (`tests/test_version_sync.py`)
+3. Debian build (`build_deb.sh`) including targeted pre-build gate by default
+4. Safe reinstall validation (`tests/test_reinstall_deb.py`)
+5. Optional destructive reinstall validation (`--destructive`)
 
 The destructive mode runs `reinstall_deb.sh` and should be used only on systems where replacing the current installation is intended.
 

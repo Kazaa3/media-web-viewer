@@ -1,13 +1,17 @@
 <!-- Category: bug -->
-<!-- Title_DE: Bekannte Probleme -->
-<!-- Title_EN: Known issues -->
+<!-- Title_DE: Bekannte Probleme (Stand v1.3.3) -->
+<!-- Title_EN: Known Issues (Status v1.3.3) -->
 <!-- Summary_DE: Zentrale Liste offener Bugs und technischer Probleme -->
 <!-- Summary_EN: Central list of open bugs and technical issues -->
-<!-- Status: active -->
+<!-- Status: ACTIVE -->
 <!-- Date: 2026-03-09 -->
-<!-- Pinned: true -->
 
-# Bekannte Probleme
+# Bekannte Probleme (Stand v1.3.3)
+
+- DB zu Debug & DB
+
+
+
 
 ## Offene Punkte
 - Laufende Bugs und technische Schulden werden hier gesammelt.
@@ -36,7 +40,7 @@
 
 <!-- lang-split -->
 
-# Known Issues
+# Known Issues (Status v1.3.3)
 
 ## Open items
 - Ongoing bugs and technical debt are tracked here.
