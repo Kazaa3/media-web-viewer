@@ -174,7 +174,8 @@ jobs:
             - MediaInfo (for metadata extraction)
           draft: false
           prerelease: false
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
+          overwrite_files: true
           files: |
             artifacts/MediaWebViewer-Linux/*
             artifacts/MediaWebViewer-Windows/*
