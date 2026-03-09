@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.4  
+**Version:** 1.3.5  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.4
+1.3.5
 ```
 
 This version is automatically loaded and used across:
@@ -37,6 +37,35 @@ To update the version:
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+### Release Notes (v1.3.5)
+
+Highlights of this release:
+- **Releases database (v1.3.5)**: Introduced `releases` and `release_items` tables so
+  that filesystem items (media rows) can be grouped into logical releases – music albums,
+  films, audiobooks, documents.
+- Each release stores only **minimal status information** (title, type, year, cut, status).
+  All scraper-enriched metadata lives in a `scraper_data` JSON column (Python dict →
+  `json.dumps`), ready to be populated by future scrapers.
+- `release_items` links one or more media items to a release with an optional `position`
+  (track number for music, disc / file order for films).  A media item can belong to
+  exactly one release.
+- Scale-aware design: three covering indexes (`type`, `status`, `year` on `releases`;
+  `release_id+position` on `release_items`) support queries over 100,000+ films and
+  500,000+ music files.
+- New public API in `db.py`:
+    - `insert_release(title, release_type, year, cut, status, scraper_data)`
+    - `get_release(release_id)`
+    - `get_all_releases(release_type, status)`
+    - `update_release_scraper_data(release_id, scraper_data, status)`
+    - `update_release_status(release_id, status)`
+    - `delete_release(release_id)` — cascades to release_items
+    - `assign_item_to_release(release_id, media_name, position)`
+    - `remove_item_from_release(media_name)`
+    - `get_release_items(release_id)`
+    - `get_item_release(media_name)`
+    - `search_releases(query, release_type)`
+- Test suite extended to 27 tests (14 new release tests, steps 9–16).
 
 ### Release Notes (v1.3.4)
 
@@ -209,7 +238,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.5_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -261,7 +290,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.5_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -298,7 +327,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.5_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -612,7 +641,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.4)
+Media Web Viewer (v1.3.5)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -1901,6 +1930,87 @@ Example JSON stored in `tags`:
 }
 ```
 
+### Table: `releases` *(since v1.3.5)*
+
+Groups one or more media items into a logical release (album, film, audiobook, …).
+Only minimal status fields are stored as columns; all scraper-enriched data lives in
+the `scraper_data` JSON column (Python dict → `json.dumps`).
+
+```sql
+CREATE TABLE releases (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    title        TEXT NOT NULL,               -- Album / film title
+    type         TEXT NOT NULL DEFAULT 'Music', -- Music | Film | EBook | Document
+    year         INTEGER,                     -- Release year
+    cut          TEXT,                        -- Film cut ('Director''s Cut', …)
+    status       TEXT NOT NULL DEFAULT 'pending', -- pending | scraped | verified | ignored
+    scraper_data TEXT,                        -- JSON blob: scraper-provided metadata
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Covering indexes for large-scale queries
+CREATE INDEX idx_releases_type   ON releases(type);
+CREATE INDEX idx_releases_status ON releases(status);
+CREATE INDEX idx_releases_year   ON releases(year);
+```
+
+**`scraper_data` example (music album):**
+
+```json
+{
+    "musicbrainz_id": "abc-123",
+    "cover_art_url": "https://coverartarchive.org/...",
+    "genres": ["Rock", "Alternative"],
+    "label": "Island Records",
+    "barcode": "602435388946"
+}
+```
+
+**`scraper_data` example (film):**
+
+```json
+{
+    "tmdb_id": 438631,
+    "imdb_id": "tt1160419",
+    "overview": "Paul Atreides …",
+    "poster_path": "/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+    "runtime_minutes": 155
+}
+```
+
+### Table: `release_items` *(since v1.3.5)*
+
+Bridge table that links filesystem items (rows in `media`) to their parent release.
+A media item can belong to exactly one release.
+
+```sql
+CREATE TABLE release_items (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id  INTEGER NOT NULL,   -- FK to releases
+    media_id    INTEGER NOT NULL,   -- FK to media (the filesystem item / Path)
+    position    INTEGER,            -- Track # for music, disc/file order for films
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    FOREIGN KEY(media_id)   REFERENCES media(id)    ON DELETE CASCADE,
+    UNIQUE(media_id)                -- One item → one release
+);
+CREATE INDEX idx_release_items_release ON release_items(release_id, position);
+```
+
+**Public API (db.py) – releases:**
+
+| Function | Description |
+|---|---|
+| `insert_release(title, type, year, cut, status, scraper_data)` | Create a new release |
+| `get_release(release_id)` | Retrieve a release by id |
+| `get_all_releases(release_type, status)` | List releases with optional filters |
+| `update_release_scraper_data(release_id, scraper_data, status)` | Store scraper result |
+| `update_release_status(release_id, status)` | Change status field |
+| `delete_release(release_id)` | Delete release + bridge rows |
+| `assign_item_to_release(release_id, media_name, position)` | Link item to release |
+| `remove_item_from_release(media_name)` | Unlink item from its release |
+| `get_release_items(release_id)` | Get all items of a release (ordered by position) |
+| `get_item_release(media_name)` | Get the release an item belongs to |
+| `search_releases(query, release_type)` | Substring search on release titles |
+
 ---
 
 ## Configuration
@@ -2388,7 +2498,7 @@ pytest tests/ -k vlc -v
 **Test Output Example:**
 ```
 ==============================================================================
-SESSION MANAGEMENT TEST SUITE - v1.3.4
+SESSION MANAGEMENT TEST SUITE - v1.3.5
 ==============================================================================
 
 📊 Test Suite Overview:
@@ -2947,7 +3057,7 @@ If you’ve previously run the app from source or want to reset all settings, no
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall a clean version
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.5_amd64.deb
 
 # 3. Fix dependencies if necessar
 sudo apt-get install -f
@@ -3911,7 +4021,7 @@ bash build_deb.sh
 **Output:**
 ```
 ================================================================================
-  Building Debian Package (v1.3.4)
+  Building Debian Package (v1.3.5)
 ================================================================================
 
 ==> Preparing staging area...
@@ -4191,7 +4301,7 @@ Each session returns:
 ---
 
 **Last Updated:** 8. März 2026  
-**Current Version:** 1.3.4
+**Current Version:** 1.3.5
 
 ---
 

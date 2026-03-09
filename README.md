@@ -1,4 +1,4 @@
-# Media Web Viewer (v1.3.4)
+# Media Web Viewer (v1.3.5)
 
 Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 
@@ -6,7 +6,7 @@ Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMEN
 
 ### Debian/Ubuntu (.deb)
 ```bash
-sudo dpkg -i media-web-viewer_1.3.4_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.5_amd64.deb
 sudo apt-get install -f
 media-web-viewer
 ```
