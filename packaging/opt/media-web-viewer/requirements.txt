@@ -17,12 +17,13 @@
 # - libmediainfo0v5: BSD 2-Clause - Media information library (via apt/package manager) ✅ GPL-3.0 compatible
 # - doxygen: GPL v2 - Documentation generator ✅ GPL-3.0 compatible
 # - vlc: GPL v2+ - VLC media player (optional, for external playback) ✅ GPL-3.0 compatible
-# - google-chrome-stable: Proprietary - Web browser for Eel UI ✅ Compatible
+# - chromium-browser / chromium: BSD/LGPL components - Preferred web browser for Eel UI ✅ Compatible
+# - google-chrome-stable: Proprietary - Optional alternative browser ✅ Compatible
 #
 # All dependencies are compatible with GPL-3.0
 #
 # Installation:
-#   sudo apt install ffmpeg libmediainfo0v5 doxygen vlc google-chrome-stable shared-mime-info libgdk-pixbuf2.0-0  # Debian/Ubuntu
+#   sudo apt install ffmpeg libmediainfo0v5 doxygen vlc chromium-browser shared-mime-info libgdk-pixbuf2.0-0  # Debian/Ubuntu
 #   pip install -r requirements.txt
 
 # Web Framework & Desktop GUI

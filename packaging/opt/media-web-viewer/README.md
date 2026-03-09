@@ -1,4 +1,4 @@
-# Media Web Viewer (v1.3.2)
+# Media Web Viewer (v1.3.3)
 
 Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 
@@ -6,7 +6,7 @@ Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMEN
 
 ### Debian/Ubuntu (.deb)
 ```bash
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 sudo apt-get install -f
 media-web-viewer
 ```
@@ -47,6 +47,11 @@ python main.py --n
 # → Opens UI in browser without backend (for UI development)
 ```
 
+## Playback Fallback Behavior
+- Browser playback errors like `NotSupportedError` (unsupported codec/source) are handled gracefully.
+- The UI now shows a readable status message instead of a noisy global promise popup.
+- Recommended fallback: switch to **VLC mode** for unsupported media sources.
+
 ## Build System
 
 ### Quick Build
@@ -86,6 +91,52 @@ python build_system.py --pipeline --destructive
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
+```
+
+## CI/CD Pipelines
+
+### Main Branch Artifacts (no GitHub Release)
+On every push to `main`, the workflow [ci-artifacts.yml](.github/workflows/ci-artifacts.yml) builds and uploads:
+- Linux executable (`dist/MediaWebViewer`)
+- Debian package (`media-web-viewer_*_amd64.deb`)
+
+### Tagged Release (auto-publish to GitHub Releases)
+When you push a tag like `v1.3.3`, the workflow [release.yml](.github/workflows/release.yml):
+- builds Linux executable + Debian package + Windows `.exe`
+- creates/updates the GitHub Release
+- uploads all binaries as release assets
+
+```bash
+git tag -a v1.3.3 -m "Release v1.3.3"
+git push origin main --tags
+```
+
+### Release Checklist (recommended)
+```bash
+# 1) Verify version consistency
+python tests/test_version_sync.py
+
+# 2) Run release validation pipeline
+python build_system.py --pipeline
+
+# 3) Commit release-related changes
+git add VERSION main.py .github/workflows/release.yml .github/workflows/ci-artifacts.yml
+git commit -m "Release v1.3.3"
+
+# 4) Create and push release tag
+git tag -a v1.3.3 -m "Release v1.3.3"
+git push origin main --tags
+```
+
+### Local Build Artifact Cleanup
+Use the cleanup helper to keep only recent artifacts locally:
+
+```bash
+# Preview
+scripts/cleanup_build_artifacts.sh
+
+# Execute cleanup (default: keep 5 deb, 2 dist binaries)
+scripts/cleanup_build_artifacts.sh --execute
 ```
 
 ## Docs
