@@ -210,34 +210,37 @@ def get_environment_info():
                 ["conda", "env", "list", "--json"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=3
             )
             if result.returncode == 0:
-                data = json.loads(result.stdout)
-                for env_path in data.get("envs", []):
-                    env_name = Path(env_path).name
-                    env_python = Path(env_path) / "bin" / "python"
-                    
-                    if env_python.exists():
-                        try:
-                            v_result = subprocess.run(
-                                [str(env_python), "--version"],
-                                capture_output=True,
-                                text=True,
-                                timeout=2
-                            )
-                            version = v_result.stdout.strip() or v_result.stderr.strip()
-                            is_recommended = env_name == "p14"
-                            
-                            environments.append({
-                                "name": env_name,
-                                "path": env_path,
-                                "version": version,
-                                "recommended": is_recommended
-                            })
-                        except Exception:
-                            pass
-        except Exception:
+                try:
+                    data = json.loads(result.stdout)
+                    for env_path in data.get("envs", []):
+                        env_name = Path(env_path).name
+                        env_python = Path(env_path) / "bin" / "python"
+                        
+                        if env_python.exists():
+                            try:
+                                v_result = subprocess.run(
+                                    [str(env_python), "--version"],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=1
+                                )
+                                version = v_result.stdout.strip() or v_result.stderr.strip()
+                                is_recommended = env_name == "p14"
+                                
+                                environments.append({
+                                    "name": env_name,
+                                    "path": env_path,
+                                    "version": version,
+                                    "recommended": is_recommended
+                                })
+                            except (subprocess.TimeoutExpired, Exception):
+                                pass
+                except (json.JSONDecodeError, KeyError):
+                    pass
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
             pass
         return sorted(environments, key=lambda x: x["name"])
     
@@ -248,33 +251,51 @@ def get_environment_info():
         seen_versions = set()
         
         for search_path in search_paths:
-            search_dir = Path(search_path)
-            if not search_dir.exists():
-                continue
-            
-            for python_exe in search_dir.glob("python*"):
-                if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+            try:
+                search_dir = Path(search_path)
+                if not search_dir.exists():
                     continue
                 
-                try:
-                    result = subprocess.run(
-                        [str(python_exe), "--version"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2
-                    )
-                    version = result.stdout.strip() or result.stderr.strip()
+                for python_exe in search_dir.glob("python*"):
+                    if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+                        continue
                     
-                    if version and version not in seen_versions:
-                        seen_versions.add(version)
-                        pythons.append({
-                            "path": str(python_exe),
-                            "version": version
-                        })
-                except Exception:
-                    pass
+                    try:
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+                        
+                        if version and version not in seen_versions:
+                            seen_versions.add(version)
+                            pythons.append({
+                                "path": str(python_exe),
+                                "version": version
+                            })
+                    except (subprocess.TimeoutExpired, Exception):
+                        pass
+            except Exception:
+                pass
         
         return sorted(pythons, key=lambda x: x["version"])
+    
+    def _get_packages_fallback():
+        """Fallback method to get packages if pip list fails."""
+        packages = []
+        try:
+            import pkg_resources
+            for dist in pkg_resources.working_set:
+                packages.append({
+                    "name": dist.project_name,
+                    "version": dist.version
+                })
+            packages = sorted(packages, key=lambda x: x["name"].lower())
+        except Exception:
+            pass
+        return packages
     
     def _get_installed_packages():
         """Get list of installed packages in current environment."""
@@ -284,14 +305,22 @@ def get_environment_info():
                 [sys.executable, "-m", "pip", "list", "--format=json"],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=5
             )
             if result.returncode == 0:
-                packages_data = json.loads(result.stdout)
-                # Sort by name
-                packages = sorted(packages_data, key=lambda x: x["name"].lower())
+                try:
+                    packages_data = json.loads(result.stdout)
+                    # Sort by name
+                    packages = sorted(packages_data, key=lambda x: x.get("name", "").lower())
+                except (json.JSONDecodeError, TypeError, KeyError):
+                    logging.warning("Failed to parse pip list JSON")
+                    packages = _get_packages_fallback()
+        except subprocess.TimeoutExpired:
+            logging.warning("pip list timeout - using fallback")
+            packages = _get_packages_fallback()
         except Exception as e:
             logging.warning(f"Failed to get installed packages: {e}")
+            packages = _get_packages_fallback()
         return packages
     
     def _find_local_venvs():
@@ -299,77 +328,124 @@ def get_environment_info():
         venvs = []
         venv_names = [".venv", "venv", "env", ".env"]
         
-        # Check project directory
-        project_dir = Path(__file__).parent
-        for venv_name in venv_names:
-            venv_path = project_dir / venv_name
-            if venv_path.exists() and (venv_path / "bin" / "python").exists():
-                python_exe = venv_path / "bin" / "python"
+        try:
+            # Check project directory
+            project_dir = Path(__file__).parent
+            for venv_name in venv_names:
                 try:
-                    result = subprocess.run(
-                        [str(python_exe), "--version"],
-                        capture_output=True,
-                        text=True,
-                        timeout=2
-                    )
-                    version = result.stdout.strip() or result.stderr.strip()
-                    venvs.append({
-                        "name": venv_name,
-                        "path": str(venv_path),
-                        "version": version,
-                        "is_current": str(venv_path) == env_path
-                    })
+                    venv_path = project_dir / venv_name
+                    if venv_path.exists() and (venv_path / "bin" / "python").exists():
+                        python_exe = venv_path / "bin" / "python"
+                        try:
+                            result = subprocess.run(
+                                [str(python_exe), "--version"],
+                                capture_output=True,
+                                text=True,
+                                timeout=1
+                            )
+                            version = result.stdout.strip() or result.stderr.strip()
+                            venvs.append({
+                                "name": venv_name,
+                                "path": str(venv_path),
+                                "version": version,
+                                "is_current": str(venv_path) == env_path
+                            })
+                        except (subprocess.TimeoutExpired, Exception):
+                            pass
                 except Exception:
                     pass
+        except Exception:
+            pass
         
         return venvs
     
-    # Discover available environments (cached/fast)
-    conda_envs = _get_conda_environments()
-    system_pythons = _get_system_pythons()
-    installed_packages = _get_installed_packages()
-    local_venvs = _find_local_venvs()
+    try:
+        # Discover available environments (cached/fast)
+        conda_envs = _get_conda_environments()
+        system_pythons = _get_system_pythons()
+        installed_packages = _get_installed_packages()
+        local_venvs = _find_local_venvs()
+    except Exception as e:
+        logging.error(f"Error discovering environments: {e}")
+        conda_envs = []
+        system_pythons = []
+        installed_packages = []
+        local_venvs = []
     
     # ===== Build Response =====
-    return {
-        # Current Environment (Primary)
-        "python_version": platform.python_version(),
-        "python_executable": sys.executable,
-        "python_prefix": sys.prefix,
-        "python_base_prefix": sys.base_prefix,
-        "in_venv": in_venv,
-        "venv_path": venv_path or venv_env,
-        "in_conda": in_conda,
-        "conda_env_name": conda_env_name,
-        "conda_prefix": conda_prefix,
-        "has_conda_context": bool(conda_env_name or conda_prefix),
-        "env_type": env_type,
-        "env_path": env_path,
-        "env_name": env_name,
-        "platform": platform.platform(),
-        "platform_system": platform.system(),
-        "platform_release": platform.release(),
-        
-        # Current Environment (Detailed)
-        "current_environment": current_env,
-        
-        # Alternative Environments (Discovery Results)
-        "available_conda_environments": conda_envs,
-        "available_system_pythons": system_pythons,
-        "local_venvs": local_venvs,
-        
-        # Installed Packages
-        "installed_packages": installed_packages,
-        "package_count": len(installed_packages),
-        
-        # Recommendations
-        "recommended_environment": {
-            "name": "p14",
-            "type": "conda",
-            "python_version": "3.14.2",
-            "reason": "Latest stable Python release for Media Web Viewer"
+    try:
+        return {
+            # Current Environment (Primary)
+            "python_version": platform.python_version(),
+            "python_executable": sys.executable,
+            "python_prefix": sys.prefix,
+            "python_base_prefix": sys.base_prefix,
+            "in_venv": in_venv,
+            "venv_path": venv_path or venv_env,
+            "in_conda": in_conda,
+            "conda_env_name": conda_env_name,
+            "conda_prefix": conda_prefix,
+            "has_conda_context": bool(conda_env_name or conda_prefix),
+            "env_type": env_type,
+            "env_path": env_path,
+            "env_name": env_name,
+            "platform": platform.platform(),
+            "platform_system": platform.system(),
+            "platform_release": platform.release(),
+            
+            # Current Environment (Detailed)
+            "current_environment": current_env,
+            
+            # Alternative Environments (Discovery Results)
+            "available_conda_environments": conda_envs,
+            "available_system_pythons": system_pythons,
+            "local_venvs": local_venvs,
+            
+            # Installed Packages
+            "installed_packages": installed_packages,
+            "package_count": len(installed_packages),
+            
+            # Recommendations
+            "recommended_environment": {
+                "name": "p14",
+                "type": "conda",
+                "python_version": "3.14.2",
+                "reason": "Latest stable Python release for Media Web Viewer"
+            }
         }
-    }
+    except Exception as e:
+        logging.error(f"Error building environment response: {e}")
+        # Return minimal safe response
+        return {
+            "python_version": platform.python_version(),
+            "python_executable": sys.executable,
+            "python_prefix": sys.prefix,
+            "python_base_prefix": sys.base_prefix,
+            "in_venv": False,
+            "venv_path": None,
+            "in_conda": False,
+            "conda_env_name": None,
+            "conda_prefix": None,
+            "has_conda_context": False,
+            "env_type": "system",
+            "env_path": None,
+            "env_name": None,
+            "platform": platform.platform(),
+            "platform_system": platform.system(),
+            "platform_release": platform.release(),
+            "current_environment": current_env,
+            "available_conda_environments": [],
+            "available_system_pythons": [],
+            "local_venvs": [],
+            "installed_packages": [],
+            "package_count": 0,
+            "recommended_environment": {
+                "name": "p14",
+                "type": "conda",
+                "python_version": "3.14.2",
+                "reason": "Latest stable Python release for Media Web Viewer"
+            }
+        }
 
 
 # Konfiguration
