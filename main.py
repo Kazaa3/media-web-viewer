@@ -905,6 +905,35 @@ def is_port_in_use(port: int) -> bool:
         except OSError:
             return True
 
+
+def _ensure_project_venv_active() -> None:
+    """Re-exec into local project .venv interpreter when available."""
+    if os.environ.get("MWV_DISABLE_AUTO_VENV") == "1":
+        return
+    if os.environ.get("MWV_AUTO_VENV_REEXEC") == "1":
+        return
+
+    project_dir = Path(__file__).resolve().parent
+    venv_python = project_dir / ".venv" / "bin" / "python"
+    if not (venv_python.is_file() and os.access(venv_python, os.X_OK)):
+        return
+
+    try:
+        current_exec = Path(sys.executable).resolve()
+        target_exec = venv_python.resolve()
+    except Exception:
+        return
+
+    if current_exec == target_exec:
+        return
+
+    logging.info(f"[Startup] Re-exec into project .venv interpreter: {target_exec}")
+    os.environ["MWV_AUTO_VENV_REEXEC"] = "1"
+    os.execv(str(target_exec), [str(target_exec), str(Path(__file__).resolve()), *sys.argv[1:]])
+
+
+_ensure_project_venv_active()
+
 # Ensure we are running in a clean and exclusive environment
 env_handler.validate_safe_startup()
 
