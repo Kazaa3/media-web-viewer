@@ -109,6 +109,7 @@ import eel
 import logging
 import time
 import subprocess
+import threading
 import re
 from typing import cast
 from parsers.format_utils import (
@@ -522,8 +523,11 @@ def run_connectionless_browser_mode() -> dict:
     app_file = (Path(__file__).parent / "web" / "app.html").resolve()
     app_url = app_file.as_uri()
 
-    browser = get_preferred_browser()
-    browser.open(app_url)
+    if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
+        logging.info("[Mode-N] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
+    else:
+        browser = get_preferred_browser()
+        browser.open(app_url)
 
     return {
         "mode": "connectionless-browser",
@@ -1978,26 +1982,61 @@ def run_tests(test_files):
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).parent)
+    env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
+    # Use a worker thread + eel.sleep() loop to keep websocket responsive while tests run.
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "-v"] + valid_files,
-            capture_output=True,
-            text=True,
-            env=env,
-            cwd=str(Path(__file__).parent)
-        )
+        result_holder = {}
+        error_holder = {}
+
+        def _run_pytest_subprocess():
+            try:
+                result_holder["result"] = subprocess.run(
+                    [sys.executable, "-m", "pytest", "-q"] + valid_files,
+                    capture_output=True,
+                    text=True,
+                    env=env,
+                    cwd=str(Path(__file__).parent),
+                    timeout=900
+                )
+            except subprocess.TimeoutExpired as exc:
+                error_holder["error"] = RuntimeError(
+                    f"Testlauf-Timeout nach {int(exc.timeout)}s"
+                )
+            except Exception as exc:
+                error_holder["error"] = exc
+
+        worker = threading.Thread(target=_run_pytest_subprocess, daemon=True)
+        worker.start()
+
+        while worker.is_alive():
+            time.sleep(0.05)
+
+        worker.join()
+
+        if "error" in error_holder:
+            raise error_holder["error"]
+
+        result = result_holder.get("result")
+        if result is None:
+            return {"error": "Testprozess konnte nicht gestartet werden."}
 
         output = result.stdout + "\n" + result.stderr
+        max_output_chars = 120000
+        if len(output) > max_output_chars:
+            output = (
+                "[Output truncated: showing last part only]\n\n"
+                + output[-max_output_chars:]
+            )
 
-        # Parse output for passed/failed
+        # Parse output for passed/failed (supports both verbose and -q pytest formats)
         passes = 0
         fails = 0
-        match = re.search(r'==.*?\s(\d+)\s+passed', output)
+        match = re.search(r'(\d+)\s+passed', output)
         if match:
             passes = int(match.group(1))
-        match_fails = re.search(r'==.*?\s(\d+)\s+failed', output)
+        match_fails = re.search(r'(\d+)\s+failed', output)
         if match_fails:
             fails = int(match_fails.group(1))
 
@@ -2027,6 +2066,18 @@ def run_gui_tests():
         "status": "info",
         "message": "GUI-Tests müssen über den Antigravity-Agenten (Browser Subagent) gestartet werden."
     }
+
+
+@eel.expose
+def ui_trace(message):
+    """
+    Receives frontend UI trace lines and writes them to backend logs.
+    """
+    try:
+        logging.info(f"[UI-Trace] {message}")
+    except Exception:
+        pass
+    return {"status": "ok"}
 
 
 # Main-Funktion, die die Eel-App startet
@@ -2075,6 +2126,17 @@ if __name__ == "__main__":
         logging.info("[Mode-N] No Eel/WebSocket backend started. Exiting.")
         raise SystemExit(0)
 
+    existing_sessions = [s for s in check_running_sessions() if s.get('port')]
+    if existing_sessions:
+        existing = existing_sessions[0]
+        existing_url = f"http://localhost:{existing['port']}/app.html"
+        logging.warning(
+            f"[Session] Existing session detected (PID {existing['pid']}, port {existing['port']}). "
+            "Skipping new window launch."
+        )
+        logging.info(f"[Session] Existing session URL: {existing_url}")
+        raise SystemExit(0)
+
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
     import threading
@@ -2103,7 +2165,7 @@ if __name__ == "__main__":
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     try:
         logger.debug("websocket", f"Starting Eel server session on port {session_port}...")
-        eel.start("app.html", mode=None, size=(1450, 800), block=False, port=session_port)
+        eel.start("app.html", mode=False, size=(1450, 800), block=False, port=session_port)
         
         # Open browser explicitly after Eel starts with session-specific URL
         session_url = f"http://localhost:{session_port}/app.html"
@@ -2146,6 +2208,13 @@ if __name__ == "__main__":
     except Exception as e:
         logging.error(f"[Startup-Error] Failed to start session: {e}")
 
-    # Server am Leben halten
+    # Server am Leben halten (robust gegen temporäre Frontend-Disconnects)
     while True:
-        eel.sleep(1.0)
+        try:
+            eel.sleep(1.0)
+        except KeyboardInterrupt:
+            logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
+            raise
+        except BaseException as e:
+            logging.warning(f"[WebSocket] keepalive recovered from base error: {type(e).__name__}: {e}")
+            time.sleep(1.0)
