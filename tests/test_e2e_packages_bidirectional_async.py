@@ -464,6 +464,7 @@ wheel      0.42.0
             "browser_available",
             "browser_name",
             "browser_path",
+            "browser_version",
             "python_vlc_available",
             "vlc_cli_available",
             "mutagen_available",
@@ -475,6 +476,7 @@ wheel      0.42.0
         """Test: Frontend renders the separated Mutagen/GUI/Mediaplayer status rows in Options tab."""
         self.assertIn('id="env-mutagen-status"', self.html_code)
         self.assertIn('id="env-gui-status"', self.html_code)
+        self.assertIn('id="env-ffprobe-status"', self.html_code)
         self.assertIn('id="env-mediaplayer-status"', self.html_code)
         self.assertIn('id="env-base-dependencies-status"', self.html_code)
         self.assertIn("env_label_base_dependencies", self.html_code)
