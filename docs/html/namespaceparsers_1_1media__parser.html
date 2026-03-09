@@ -68,19 +68,25 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">parsers.media_parser Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a1ebd7429bdb6252f04feef4be1b32a09"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1media__parser.html#a1ebd7429bdb6252f04feef4be1b32a09">extract_metadata</a> (path, filename, debug=False, mode='lightweight', logger=print)</td></tr>
-<tr class="separator:a1ebd7429bdb6252f04feef4be1b32a09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff27a082a34af8c6b45f292e9efa1cc8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1media__parser.html#aff27a082a34af8c6b45f292e9efa1cc8">extract_metadata</a> (path, filename, mode='lightweight')</td></tr>
+<tr class="separator:aff27a082a34af8c6b45f292e9efa1cc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:aacd968fc8a62b167f1bb7955a4b6aed7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1media__parser.html#aacd968fc8a62b167f1bb7955a4b6aed7">log</a> = <a class="el" href="namespacelogger.html#a3f5f27591f87bfda99a6bf55dfeee0d1">logger.get_logger</a>(&quot;parser&quot;)</td></tr>
+<tr class="separator:aacd968fc8a62b167f1bb7955a4b6aed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a1ebd7429bdb6252f04feef4be1b32a09" name="a1ebd7429bdb6252f04feef4be1b32a09"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1ebd7429bdb6252f04feef4be1b32a09">&#9670;&nbsp;</a></span>extract_metadata()</h2>
+<a id="aff27a082a34af8c6b45f292e9efa1cc8" name="aff27a082a34af8c6b45f292e9efa1cc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff27a082a34af8c6b45f292e9efa1cc8">&#9670;&nbsp;</a></span>extract_metadata()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -101,19 +107,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>debug</em> = <code>False</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>mode</em> = <code>'lightweight'</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>logger</em> = <code>print</code>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code>'lightweight'</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -126,11 +120,24 @@ Functions</h2></td></tr>
 @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
 @param path Path to the media file / Pfad zur Mediendatei.
 @param filename Original filename for fallback parsing / Originaldateiname für Fallback-Parsing.
-@param debug Enable verbose logging / Aktiviere ausführliches Logging.
 @param mode Extraction mode ('lightweight' or 'full') / Extraktionsmodus ('lightweight' oder 'full').
-@param logger Logger function / Logging-Funktion.
 @return Tuple (duration, tags) / Tupel (Dauer, Tags).
 </pre> 
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="aacd968fc8a62b167f1bb7955a4b6aed7" name="aacd968fc8a62b167f1bb7955a4b6aed7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aacd968fc8a62b167f1bb7955a4b6aed7">&#9670;&nbsp;</a></span>log</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">parsers.media_parser.log = <a class="el" href="namespacelogger.html#a3f5f27591f87bfda99a6bf55dfeee0d1">logger.get_logger</a>(&quot;parser&quot;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 </div>
 </div>
 </div><!-- contents -->

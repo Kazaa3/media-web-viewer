@@ -24,6 +24,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 import unittest
 import sys
+import os
 import socket
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
@@ -204,8 +205,9 @@ class TestConnectionlessBrowserMode(unittest.TestCase):
         mock_stats.return_value = {"total_items": 42}
         mock_browser_instance = Mock()
         mock_browser.return_value = mock_browser_instance
-        
-        main.run_connectionless_browser_mode()
+
+        with patch.dict(os.environ, {"MWV_DISABLE_BROWSER_OPEN": "0"}):
+            main.run_connectionless_browser_mode()
         
         mock_browser_instance.open.assert_called_once()
     

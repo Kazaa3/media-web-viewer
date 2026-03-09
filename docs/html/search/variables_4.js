@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['log_5ffile_0',['LOG_FILE',['../namespaceweb_1_1app__bottle.html#a22f683bbd47078378ff959d421b7afd0',1,'web::app_bottle']]],
-  ['logger_1',['logger',['../classmodels_1_1MediaItem.html#a11c26a638f44d23688007bae1f6467e7',1,'models::MediaItem']]]
+  ['db_5fdir_0',['DB_DIR',['../namespacedb.html#ad1373066037f089e684850ce61bc94cb',1,'db']]],
+  ['db_5ffilename_1',['DB_FILENAME',['../namespacedb.html#a15ee25a5d9c8191a198ce909d1b5280f',1,'db']]],
+  ['debug_5flog_5ffile_2',['DEBUG_LOG_FILE',['../namespacelogger.html#a4f188caa831336e2a58adde25f0f9d0d',1,'logger']]],
+  ['document_5fextensions_3',['DOCUMENT_EXTENSIONS',['../namespaceparsers_1_1format__utils.html#abaa4efa3e4d0197bf97593d0d27d21fe',1,'parsers::format_utils']]]
 ];

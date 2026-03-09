@@ -18,6 +18,7 @@
     - [x] Dynamisches und bilinguales Feature-Modal.
     - [x] Features Modal hat nicht automatisch die neusten EInträge (42 
 fehlt)
+- [x] Test-Tab-Sprung/Session-Abbruch durch Browser-Unload + mögliches Doppel-Fenster (Fix: `eel.start(..., mode=False)`, robuster Keepalive, UI-Trace). Siehe `logbuch/59_Test_Tab_Stability_and_Single_Window.md`.
 
 ## Offene Punkte
 - [x] Globale Versionierung (zentrale Stelle statt 3 Dateien).

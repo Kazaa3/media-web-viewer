@@ -72,6 +72,14 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:afda0ee7f9f7de94bce73a8fefd8e92af"><td class="memItemLeft" align="right" valign="top">Path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedb.html#afda0ee7f9f7de94bce73a8fefd8e92af">get_active_db_path</a> ()</td></tr>
+<tr class="separator:afda0ee7f9f7de94bce73a8fefd8e92af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac02d9e6d797a8eabb884d79e09ff9afa"><td class="memItemLeft" align="right" valign="top">list[Path]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedb.html#ac02d9e6d797a8eabb884d79e09ff9afa">get_legacy_db_candidates</a> (*Path|None project_root=None, Path|None home_dir=None, Path|None cwd=None)</td></tr>
+<tr class="separator:ac02d9e6d797a8eabb884d79e09ff9afa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac9ca910dcb369014907f5ac0adfc2c5"><td class="memItemLeft" align="right" valign="top">list[Path]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedb.html#aac9ca910dcb369014907f5ac0adfc2c5">list_legacy_databases</a> (Iterable[Path]|None candidates=None)</td></tr>
+<tr class="separator:aac9ca910dcb369014907f5ac0adfc2c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e0dccd1f6dcbb663e8013d0c9573304"><td class="memItemLeft" align="right" valign="top">list[str]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedb.html#a6e0dccd1f6dcbb663e8013d0c9573304">cleanup_legacy_databases</a> (Iterable[Path]|None candidates=None)</td></tr>
+<tr class="separator:a6e0dccd1f6dcbb663e8013d0c9573304"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca31edca03ea605ebf05131dc748e9ad"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedb.html#aca31edca03ea605ebf05131dc748e9ad">init_db</a> ()</td></tr>
 <tr class="separator:aca31edca03ea605ebf05131dc748e9ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7eeec3ecdf0ac231f232e600289e7f98"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacedb.html#a7eeec3ecdf0ac231f232e600289e7f98">get_known_media_names</a> ()</td></tr>
@@ -101,6 +109,25 @@ Variables</h2></td></tr>
 <tr class="separator:a15ee25a5d9c8191a198ce909d1b5280f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a6e0dccd1f6dcbb663e8013d0c9573304" name="a6e0dccd1f6dcbb663e8013d0c9573304"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e0dccd1f6dcbb663e8013d0c9573304">&#9670;&nbsp;</a></span>cleanup_legacy_databases()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> list[str] db.cleanup_legacy_databases </td>
+          <td>(</td>
+          <td class="paramtype">Iterable[Path] | None &#160;</td>
+          <td class="paramname"><em>candidates</em> = <code>None</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Remove legacy database files and return deleted file paths.
+</pre> 
+</div>
+</div>
 <a id="a512380abea32e16f85768f1305cb3d88" name="a512380abea32e16f85768f1305cb3d88"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a512380abea32e16f85768f1305cb3d88">&#9670;&nbsp;</a></span>clear_media()</h2>
 
@@ -138,6 +165,24 @@ Variables</h2></td></tr>
 <pre class="fragment">@brief Deletes a media item from the database.
 @details Löscht ein Medium aus der DB.
 @param name Media name / Medienname.
+</pre> 
+</div>
+</div>
+<a id="afda0ee7f9f7de94bce73a8fefd8e92af" name="afda0ee7f9f7de94bce73a8fefd8e92af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afda0ee7f9f7de94bce73a8fefd8e92af">&#9670;&nbsp;</a></span>get_active_db_path()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> Path db.get_active_db_path </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Return the active database path used by the application.
 </pre> 
 </div>
 </div>
@@ -201,6 +246,41 @@ Variables</h2></td></tr>
 </pre> 
 </div>
 </div>
+<a id="ac02d9e6d797a8eabb884d79e09ff9afa" name="ac02d9e6d797a8eabb884d79e09ff9afa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac02d9e6d797a8eabb884d79e09ff9afa">&#9670;&nbsp;</a></span>get_legacy_db_candidates()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> list[Path] db.get_legacy_db_candidates </td>
+          <td>(</td>
+          <td class="paramtype">*Path | None &#160;</td>
+          <td class="paramname"><em>project_root</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Path | None &#160;</td>
+          <td class="paramname"><em>home_dir</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Path | None &#160;</td>
+          <td class="paramname"><em>cwd</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Return known legacy database locations that may contain stale data.
+</pre> 
+</div>
+</div>
 <a id="ae086efa84c66012a57a072cd82a63601" name="ae086efa84c66012a57a072cd82a63601"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae086efa84c66012a57a072cd82a63601">&#9670;&nbsp;</a></span>get_media_path()</h2>
 
@@ -260,6 +340,25 @@ Variables</h2></td></tr>
 <pre class="fragment">@brief Inserts a new media item into the database.
 @details Fügt ein neues Medien-Item in die Datenbank ein.
 @param item_dict Metadata dictionary / Dictionary mit Metadaten.
+</pre> 
+</div>
+</div>
+<a id="aac9ca910dcb369014907f5ac0adfc2c5" name="aac9ca910dcb369014907f5ac0adfc2c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac9ca910dcb369014907f5ac0adfc2c5">&#9670;&nbsp;</a></span>list_legacy_databases()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> list[Path] db.list_legacy_databases </td>
+          <td>(</td>
+          <td class="paramtype">Iterable[Path] | None &#160;</td>
+          <td class="paramname"><em>candidates</em> = <code>None</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Return existing legacy database files excluding the active DB path.
 </pre> 
 </div>
 </div>

@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['cache_5fdir_0',['CACHE_DIR',['../namespaceweb_1_1app__bottle.html#ae90d472218331b8bcc8c933558075243',1,'web::app_bottle']]],
-  ['category_1',['category',['../classmodels_1_1MediaItem.html#a55974d958c564530b92cda17726f733c',1,'models::MediaItem']]],
-  ['codec_2',['codec',['../classmodels_1_1MediaItem.html#acfd01d648ac3c86679eab0facca3f96e',1,'models::MediaItem']]],
-  ['config_5ffile_3',['CONFIG_FILE',['../namespaceparsers_1_1format__utils.html#a0f143518ed7c01a27655fcaff442ebaf',1,'parsers::format_utils']]],
-  ['container_4',['container',['../classmodels_1_1MediaItem.html#a2e7aee43d8c30ba40f53c3d059ec398b',1,'models::MediaItem']]]
+  ['app_5fdata_5fdir_0',['APP_DATA_DIR',['../namespacelogger.html#a36d993ae316f785499976de9e60f56af',1,'logger']]],
+  ['app_5froot_1',['APP_ROOT',['../namespaceweb_1_1app__bottle.html#a21fa9048944fae1280ec4d17ef015acd',1,'web::app_bottle']]],
+  ['apt_5fmissing_2',['apt_missing',['../namespacecheck__environment.html#a44ad27b26e690771db37d2be0ee8a8f8',1,'check_environment']]],
+  ['apt_5fto_5fconda_5fmap_3',['APT_TO_CONDA_MAP',['../namespaceenv__handler.html#a1e14f85d8df5a30c866e25dc02ba6d63',1,'env_handler']]],
+  ['audio_5fextensions_4',['AUDIO_EXTENSIONS',['../namespaceparsers_1_1format__utils.html#a2d49b39041220103809de52614a1bc2b',1,'parsers::format_utils']]]
 ];

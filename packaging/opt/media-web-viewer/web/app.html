@@ -424,8 +424,58 @@
         let currentLogbuchEntries = [];
         let currentLogbookEditName = null;
         let currentLogbookEditFilename = null;
+        let lastSyncState = null;
+
+        function appendUiTrace(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const line = `[UI-Trace ${timestamp}] ${message}`;
+            console.warn(line);
+
+            try {
+                if (typeof eel !== 'undefined' && typeof eel.ui_trace === 'function') {
+                    eel.ui_trace(line)();
+                }
+            } catch (e) {
+                // Keep tracing non-blocking
+            }
+
+            const debugOutput = document.getElementById('debug-output');
+            if (debugOutput) {
+                const prefix = debugOutput.textContent && !debugOutput.textContent.endsWith('\n') ? '\n' : '';
+                debugOutput.textContent += `${prefix}${line}\n`;
+                debugOutput.scrollTop = debugOutput.scrollHeight;
+            }
+
+            const resultsContainer = document.getElementById('test-results-container');
+            const testOutput = document.getElementById('test-output');
+            if (resultsContainer && testOutput && resultsContainer.style.display !== 'none') {
+                const prefix = testOutput.textContent && !testOutput.textContent.endsWith('\n') ? '\n' : '';
+                testOutput.textContent += `${prefix}${line}\n`;
+                testOutput.scrollTop = testOutput.scrollHeight;
+            }
+        }
+
+        function getTabButton(tabId) {
+            return document.querySelector(`.tab-btn[onclick*="switchTab('${tabId}'"]`);
+        }
+
+        function restoreLastActiveTab() {
+            try {
+                const savedTab = localStorage.getItem('mwv_active_tab');
+                if (!savedTab) return;
+                const savedBtn = getTabButton(savedTab);
+                if (savedBtn) {
+                    switchTab(savedTab, savedBtn);
+                }
+            } catch (e) {
+                // Ignore storage/access errors
+            }
+        }
 
         function switchTab(tabId, btn) {
+            const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
+            appendUiTrace(`switchTab: ${previousTab} → ${tabId}`);
+
             // Reset all tabs
             document.querySelectorAll('.tab-content').forEach(el => {
                 el.classList.remove('active');
@@ -459,6 +509,12 @@
             }
             if (btn) {
                 btn.classList.add('active');
+            }
+
+            try {
+                localStorage.setItem('mwv_active_tab', tabId);
+            } catch (e) {
+                // Ignore storage/access errors
             }
 
             const sidebar = document.querySelector('.sidebar');
@@ -1293,7 +1349,7 @@
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <span id="test-run-summary"
                             style="font-weight: bold; font-size: 1.1em; color: #444; background: #f0f0f0; padding: 6px 12px; border-radius: 6px; display: none;"></span>
-                        <button onclick="runSelectedTests()"
+                        <button id="run-selected-tests-btn" onclick="runSelectedTests()"
                             style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
                             data-i18n="test_run_selected">
                             ▶ Ausgewählte Tests ausführen
@@ -1304,6 +1360,11 @@
                             ➕ Neuer Test
                         </button>
                     </div>
+                </div>
+
+                <div style="margin-bottom: 16px; padding: 10px 12px; border-radius: 8px; background: #fff8e1; border: 1px solid #ffe082; color: #6d4c41; font-size: 0.9em;"
+                    data-i18n="test_interactive_hint">
+                    Hinweis: Interaktive Browser-Tests sind standardmäßig deaktiviert und können bei Bedarf manuell aktiviert werden.
                 </div>
 
                 <div id="test-suites-container"
@@ -1317,7 +1378,7 @@
                         (Logs):
                     </h3>
                     <pre id="test-output"
-                        style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
+                        style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
                 </div>
             </div>
 
@@ -3259,6 +3320,20 @@
         async function loadTestSuites() {
             const container = document.getElementById('test-suites-container');
             if (!container) return;
+
+            const isInteractiveBrowserTest = (suiteId) => {
+                const name = String(suiteId || '').toLowerCase();
+                const patterns = [
+                    'test_route',
+                    'test_network',
+                    'run_app',
+                    'pyautogui',
+                    'selenium',
+                    'gui_test'
+                ];
+                return patterns.some(pattern => name.includes(pattern));
+            };
+
             container.innerHTML = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${t('test_loading')}</div>`;
             try {
                 let suites = [];
@@ -3295,7 +3370,8 @@
                     if (suite.isGuiTest) {
                         checkboxHtml = `<input type="checkbox" id="test-gui" style="width: 20px; height: 20px; cursor: pointer;">`;
                     } else {
-                        checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" checked style="width: 20px; height: 20px; cursor: pointer;">`;
+                        const checkedAttr = isInteractiveBrowserTest(suite.id) ? '' : 'checked';
+                        checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" ${checkedAttr} style="width: 20px; height: 20px; cursor: pointer;">`;
                     }
 
                     const m = suite.metadata || {};
@@ -3353,53 +3429,97 @@
             }
         }
 
+        let isTestRunInProgress = false;
+
         async function runSelectedTests() {
+            if (isTestRunInProgress) {
+                return;
+            }
+
             const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
             const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
             const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
+            const runBtn = document.getElementById('run-selected-tests-btn');
+            isTestRunInProgress = true;
+            if (runBtn) {
+                runBtn.disabled = true;
+                runBtn.style.opacity = '0.65';
+                runBtn.style.cursor = 'wait';
+            }
 
             const resultsContainer = document.getElementById('test-results-container');
             const outputArea = document.getElementById('test-output');
             const summaryBadge = document.getElementById('test-run-summary');
 
-            if (resultsContainer) resultsContainer.style.display = 'block';
-            outputArea.textContent = "Tests werden gestartet...\n";
+            if (!outputArea || !summaryBadge) return;
+
+            if (resultsContainer) {
+                resultsContainer.style.display = 'block';
+                requestAnimationFrame(() => {
+                    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+
+            const maxOutputChars = 250000;
+            const truncatedPrefix = '[Ausgabe gekürzt - nur die letzten Zeichen werden angezeigt]\n\n';
+            let outputBuffer = '';
+            const appendOutput = (chunk) => {
+                outputBuffer += chunk;
+                if (outputBuffer.length > maxOutputChars) {
+                    outputBuffer = truncatedPrefix + outputBuffer.slice(-maxOutputChars);
+                }
+                outputArea.textContent = outputBuffer;
+                outputArea.scrollTop = outputArea.scrollHeight;
+            };
+
+            appendOutput(`${t('test_run_starting')}\n`);
             summaryBadge.style.display = 'none';
             summaryBadge.textContent = '';
 
             let totalPasses = 0;
             let totalFails = 0;
 
-            if (selectedFiles.length > 0) {
-                try {
+            try {
+                if (selectedFiles.length > 0) {
                     const result = await eel.run_tests(selectedFiles)();
                     if (result.error) {
-                        outputArea.textContent += `${t('test_run_error')}${result.error}\n`;
+                        appendOutput(`${t('test_run_error')}${result.error}\n`);
                     } else {
-                        outputArea.textContent += `[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`;
+                        appendOutput(`[Python Tests - Exit Code: ${result.exit_code}]\n${result.output}\n`);
                         if (result.passes !== undefined) totalPasses += result.passes;
                         if (result.fails !== undefined) totalFails += result.fails;
                     }
-                } catch (e) {
-                    outputArea.textContent += `${t('test_run_system_error')}${e}\n`;
                 }
-            }
 
-            if (guiTest) {
-                const guiRes = await eel.run_gui_tests()();
-                outputArea.textContent += `\n\n[GUI-Tests] ${guiRes.message}`;
-            }
+                if (guiTest) {
+                    try {
+                        const guiRes = await eel.run_gui_tests()();
+                        appendOutput(`\n\n[GUI-Tests] ${guiRes.message}`);
+                    } catch (e) {
+                        appendOutput(`\n\n[GUI-Tests] ${t('test_run_system_error')}${e}`);
+                    }
+                }
 
-            if (selectedFiles.length > 0) {
-                summaryBadge.style.display = 'inline-block';
-                if (totalFails > 0) {
-                    summaryBadge.textContent = `❌ ${totalFails} Failed, ${totalPasses} Passed`;
-                    summaryBadge.style.background = '#ffebee';
-                    summaryBadge.style.color = '#c62828';
-                } else {
-                    summaryBadge.textContent = `✅ Alle ${totalPasses} Tests Passed`;
-                    summaryBadge.style.background = '#e8f5e9';
-                    summaryBadge.style.color = '#2e7d32';
+                if (selectedFiles.length > 0) {
+                    summaryBadge.style.display = 'inline-block';
+                    if (totalFails > 0) {
+                        summaryBadge.textContent = `❌ ${totalFails} Failed, ${totalPasses} Passed`;
+                        summaryBadge.style.background = '#ffebee';
+                        summaryBadge.style.color = '#c62828';
+                    } else {
+                        summaryBadge.textContent = `✅ Alle ${totalPasses} Tests Passed`;
+                        summaryBadge.style.background = '#e8f5e9';
+                        summaryBadge.style.color = '#2e7d32';
+                    }
+                }
+            } catch (e) {
+                appendOutput(`${t('test_run_system_error')}${e}\n`);
+            } finally {
+                isTestRunInProgress = false;
+                if (runBtn) {
+                    runBtn.disabled = false;
+                    runBtn.style.opacity = '1';
+                    runBtn.style.cursor = 'pointer';
                 }
             }
         }
@@ -3472,6 +3592,10 @@
                 indicator.style.background = '#ffebee';
                 text.innerText = t('sync_offline_no_backend');
                 text.style.color = '#c62828';
+                if (lastSyncState !== 'missing-backend') {
+                    appendUiTrace('sync-state: missing backend (eel unavailable)');
+                }
+                lastSyncState = 'missing-backend';
                 return;
             }
 
@@ -3483,6 +3607,10 @@
                     indicator.style.background = '#e8f5e9';
                     text.innerText = t('sync_synchronized');
                     text.style.color = '#2e7d32';
+                    if (lastSyncState !== 'ok') {
+                        appendUiTrace('sync-state: synchronized');
+                    }
+                    lastSyncState = 'ok';
                 } else {
                     throw new Error("Invalid response");
                 }
@@ -3491,8 +3619,30 @@
                 indicator.style.background = '#fff3e0';
                 text.innerText = t('sync_connection_lost');
                 text.style.color = '#e65100';
+                if (lastSyncState !== 'lost') {
+                    appendUiTrace(`sync-state: connection lost (${e && e.message ? e.message : e})`);
+                }
+                lastSyncState = 'lost';
             }
         }
+
+        (function initUiTraceHooks() {
+            window.addEventListener('beforeunload', () => appendUiTrace('window event: beforeunload'));
+            window.addEventListener('pagehide', () => appendUiTrace('window event: pagehide'));
+            window.addEventListener('unload', () => appendUiTrace('window event: unload'));
+            document.addEventListener('visibilitychange', () => appendUiTrace(`visibilitychange: ${document.visibilityState}`));
+            window.addEventListener('error', (e) => appendUiTrace(`js-error: ${e.message}`));
+            window.addEventListener('unhandledrejection', (e) => {
+                const reason = e && e.reason ? (e.reason.message || e.reason) : 'unknown';
+                appendUiTrace(`unhandled-rejection: ${reason}`);
+            });
+
+            const originalReload = window.location.reload.bind(window.location);
+            window.location.reload = function () {
+                appendUiTrace('location.reload() called');
+                return originalReload();
+            };
+        })();
 
         // Check connection every 5 seconds
         setInterval(checkConnection, 5000);
@@ -3644,6 +3794,7 @@
             loadDebugFlags();
             loadTestSuites();
             loadFeatureStatus();
+            restoreLastActiveTab();
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {
             try {

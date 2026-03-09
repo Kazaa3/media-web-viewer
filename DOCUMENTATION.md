@@ -50,6 +50,21 @@ Highlights of this release:
     - unsupported sources are shown as readable UI status (`player_unsupported_source`)
 - Removed duplicate video function definitions in frontend to prevent handler overrides
 
+### Stability Notes (Test-Tab / Single-Window)
+
+Recent stability hardening for the integrated Test tab includes:
+- Explicit single-window startup behavior by disabling Eel auto-launch (`eel.start(..., mode=False)`) and using one manual Chromium app launch path.
+- Keepalive loop hardening against unload-related `SystemExit` events.
+- Frontend-to-backend UI tracing (`ui_trace`) for tab-switch/unload root-cause analysis in terminal logs.
+- Test-run re-entry guard (no concurrent multi-click test starts).
+
+Regression coverage:
+- `tests/test_ui_session_stability.py`
+    - keepalive `BaseException` guard check
+    - single browser launch path check
+    - `eel.start(..., mode=False)` check
+    - UI trace bridge + test run re-entry guard check
+
 ---
 
 ## Table of Contents
