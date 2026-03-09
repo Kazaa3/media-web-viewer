@@ -97,6 +97,22 @@ Separate test coverage for these probes:
 - `tests/test_performance_probes.py`
 - `tests/test_bottle_health_latency.py`
 
+Latest local snapshot (09.03.2026, `.venv`, post-optimization #1):
+- `api_ping` (payload 4096, n=20): avg `0.002 ms`, median `0.001 ms`, p95 `0.012 ms`
+- `get_environment_info`: cold `4160.203 ms`, warm avg `0.003 ms`, warm median `0.001 ms`, warm p95 `0.017 ms`
+- `GET /health` (n=20): avg `2.762 ms`, median `0.527 ms`, p95 `44.568 ms`
+
+Implemented in this round:
+- Reduced request-path overhead in `web/app_bottle.py` by removing unconditional per-request info logs.
+- Optimized package search in `web/app.html` with pre-normalized search fields + 120ms debounce.
+
+Build-process recommendation:
+- Integrate a mandatory targeted test gate into the build pipeline before packaging, for example:
+    - `tests/test_performance_probes.py`
+    - `tests/test_bottle_health_latency.py`
+    - `tests/test_installed_packages_ui.py`
+    - plus existing critical startup/session regression tests.
+
 ---
 
 ## Table of Contents
