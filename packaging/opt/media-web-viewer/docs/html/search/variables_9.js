@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['video_5fextensions_0',['VIDEO_EXTENSIONS',['../namespaceparsers_1_1format__utils.html#ab1e0f2c9b5ba168285096fbfe94697f6',1,'parsers::format_utils']]]
+  ['name_0',['name',['../classmodels_1_1MediaItem.html#a66455d2b72d18cdc71e39b80d18861f8',1,'models::MediaItem']]]
 ];

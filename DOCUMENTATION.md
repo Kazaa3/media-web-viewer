@@ -231,6 +231,8 @@ pip install m3u8>=4.1.0 python-vlc>=3.0.18121
 
 Critical runtime packages include `eel`, `bottle`, `bottle-websocket`, `mutagen`, `pymediainfo`, `gevent`, and `gevent-websocket`.
 
+`pymediainfo` must be installed in the active Python environment (venv/conda), while `mediainfo` / `libmediainfo` are system-level dependencies and are **not** installed inside the venv.
+
 **Note:** The `m3u8` package is required for **VLC playlist import/export**. If missing, the app can still start, but playlist features will fail.
 
 #### Alternative Platforms
@@ -757,6 +759,11 @@ Media Web Viewer (v1.3.3)
   Filename  Mutagen  FFmpeg  pymediainfo Container
   Parser    Parser   Parser    Parser      Parser
 ```
+
+Performance note for parser evaluation:
+- The `ffmpeg` parser usually has higher latency than `pymediainfo`, because it runs an external CLI subprocess (`ffmpeg`) per probe.
+- `pymediainfo` uses `libmediainfo` bindings and is typically faster for lightweight metadata reads.
+- Keep `ffmpeg` as a deeper fallback/verification parser, not as first fast-path parser.
 
 ### Communication Flow
 

@@ -1259,6 +1259,9 @@
                                 <div style="margin-bottom: 8px;">
                                     <strong data-i18n="env_label_python_executable">Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
                                 </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span id="env-mediainfo-status" style="word-break: break-all;">-</span>
+                                </div>
                                 <div>
                                     <strong data-i18n="env_label_system">System:</strong> <span id="env-platform">-</span>
                                 </div>
@@ -3120,11 +3123,20 @@
                 const envVenvStatusEl = document.getElementById('env-venv-status');
                 const envVenvPathEl = document.getElementById('env-venv-path');
                 const envPythonExecEl = document.getElementById('env-python-exec');
+                const envMediainfoStatusEl = document.getElementById('env-mediainfo-status');
                 const envPlatformEl = document.getElementById('env-platform');
+
+                const mediaInfoStatus = info.mediainfo_status || {};
+                const pyMediaInfoOk = !!mediaInfoStatus.pymediainfo_available;
+                const pyMediaInfoVer = mediaInfoStatus.pymediainfo_version || '';
+                const mediaInfoCliOk = !!mediaInfoStatus.mediainfo_cli_available;
+                const mediaInfoCliPath = mediaInfoStatus.mediainfo_cli_path || '';
+                const mediaInfoText = `${pyMediaInfoOk ? '✅' : '❌'} pymediainfo${pyMediaInfoVer ? ` ${pyMediaInfoVer}` : ''} | ${mediaInfoCliOk ? '✅' : '❌'} mediainfo${mediaInfoCliPath ? ` (${mediaInfoCliPath})` : ''}`;
 
                 if (envVenvStatusEl) envVenvStatusEl.textContent = statusText;
                 if (envVenvPathEl) envVenvPathEl.textContent = info.env_path || '-';
                 if (envPythonExecEl) envPythonExecEl.textContent = info.python_executable || '-';
+                if (envMediainfoStatusEl) envMediainfoStatusEl.textContent = mediaInfoText;
                 if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
                 
                 // Color code the venv status

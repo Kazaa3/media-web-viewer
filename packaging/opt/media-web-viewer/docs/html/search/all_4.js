@@ -6,7 +6,8 @@ var searchData=
   ['db_2epy_3',['db.py',['../db_8py.html',1,'']]],
   ['db_5fdir_4',['DB_DIR',['../namespacedb.html#ad1373066037f089e684850ce61bc94cb',1,'db']]],
   ['db_5ffilename_5',['DB_FILENAME',['../namespacedb.html#a15ee25a5d9c8191a198ce909d1b5280f',1,'db']]],
-  ['debug_5fflags_6',['debug_flags',['../classmodels_1_1MediaItem.html#a9d8023285ffff8334a370e4b14fe553e',1,'models::MediaItem']]],
-  ['delete_5fmedia_7',['delete_media',['../namespacedb.html#a3e85459c93d3cff3d706deb90f9fc048',1,'db']]],
-  ['document_5fextensions_8',['DOCUMENT_EXTENSIONS',['../namespaceparsers_1_1format__utils.html#abaa4efa3e4d0197bf97593d0d27d21fe',1,'parsers::format_utils']]]
+  ['debug_6',['debug',['../namespacelogger.html#a288d7e8bd38c763645d11328ddf978cf',1,'logger']]],
+  ['debug_5flog_5ffile_7',['DEBUG_LOG_FILE',['../namespacelogger.html#a4f188caa831336e2a58adde25f0f9d0d',1,'logger']]],
+  ['delete_5fmedia_8',['delete_media',['../namespacedb.html#a3e85459c93d3cff3d706deb90f9fc048',1,'db']]],
+  ['document_5fextensions_9',['DOCUMENT_EXTENSIONS',['../namespaceparsers_1_1format__utils.html#abaa4efa3e4d0197bf97593d0d27d21fe',1,'parsers::format_utils']]]
 ];

@@ -66,6 +66,23 @@ python build_system.py --build pyinstaller
 python build_system.py --full-build
 ```
 
+Note on build quality gate:
+- `build_deb.sh` runs a mandatory targeted test gate before packaging.
+- `build_system.py --build deb|pyinstaller|all` runs the same targeted gate before artifact creation.
+- `build.py` (PyInstaller helper) also runs the same gate.
+	- `tests/test_performance_probes.py`
+	- `tests/test_bottle_health_latency.py`
+	- `tests/test_installed_packages_ui.py`
+	- `tests/test_ui_session_stability.py`
+- Explicit override (not recommended):
+
+```bash
+SKIP_BUILD_TESTS=1 bash build_deb.sh
+python build_system.py --build deb --skip-build-gate
+python build_system.py --build pyinstaller --skip-build-gate
+SKIP_BUILD_TESTS=1 python build.py
+```
+
 ### Development
 ```bash
 # Run tests
@@ -87,10 +104,30 @@ python build_system.py --pipeline
 # Optional: include destructive reinstall validation
 python build_system.py --pipeline --destructive
 
+# Optional emergency override for targeted pre-build gate
+python build_system.py --pipeline --skip-build-gate
+
 # Manual checks (if needed)
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
+```
+
+Pipeline order in `build_system.py`:
+1. Environment check
+2. Version sync test
+3. Debian build (with targeted pre-build gate by default)
+4. Safe reinstall validation
+5. Optional destructive reinstall validation
+
+## Version Update (Automated)
+
+```bash
+# 1) Update VERSION + all configured sync locations
+python update_version.py --new-version 1.3.5
+
+# 2) Verify sync is fully consistent
+python tests/test_version_sync.py
 ```
 
 ## CI/CD Pipelines
@@ -113,18 +150,23 @@ git push origin main --tags
 
 ### Release Checklist (recommended)
 ```bash
-# 1) Verify version consistency
+# 1) Update project version
+python update_version.py --new-version 1.3.5
+
+# 2) Verify version consistency
 python tests/test_version_sync.py
 
-# 2) Run release validation pipeline
+# 3) Run release validation pipeline
 python build_system.py --pipeline
 
-# 3) Commit release-related changes
-git add VERSION main.py .github/workflows/release.yml .github/workflows/ci-artifacts.yml
-git commit -m "Release v1.3.3"
+# 4) Commit release-related changes
+git add VERSION VERSION_SYNC.json update_version.py
+git add main.py README.md DOCUMENTATION.md
+git add .github/workflows/release.yml .github/workflows/ci-artifacts.yml
+git commit -m "Release v1.3.5"
 
-# 4) Create and push release tag
-git tag -a v1.3.3 -m "Release v1.3.3"
+# 5) Create and push release tag
+git tag -a v1.3.5 -m "Release v1.3.5"
 git push origin main --tags
 ```
 

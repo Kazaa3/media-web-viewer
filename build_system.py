@@ -252,9 +252,10 @@ class BuildSystem:
             print("❌ build_deb.sh not found")
             return False
         
-        cmd = ["bash", str(build_script)]
-        if skip_build_gate:
-            cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
+        # Avoid duplicate gate execution:
+        # - build_system.py already ran run_build_test_gate() above
+        # - therefore always skip shell-level gate when called via this wrapper
+        cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
         success = self._run_command(cmd)
         
         if success:

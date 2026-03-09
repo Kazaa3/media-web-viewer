@@ -11,10 +11,34 @@ DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
 STAGING="$SCRIPT_DIR/packaging"
 APP_DEST="$STAGING/opt/$PACKAGE_NAME"
 
+# Build-Test-Gate (default: enabled)
+# Set SKIP_BUILD_TESTS=1 to skip this gate explicitly.
+SKIP_BUILD_TESTS="${SKIP_BUILD_TESTS:-0}"
+
 # Update control file version
 sed -i "s/^Version:.*/Version: $VERSION/" "$STAGING/DEBIAN/control"
 
 echo "==> Bereite Staging-Bereich vor..."
+
+if [ "$SKIP_BUILD_TESTS" != "1" ]; then
+    echo "==> Führe Build-Test-Gate aus..."
+    if [ -n "$VIRTUAL_ENV" ] && [ -x "$VIRTUAL_ENV/bin/python" ]; then
+        PYTHON_BIN="$VIRTUAL_ENV/bin/python"
+    elif [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
+        PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python"
+    else
+        PYTHON_BIN="python3"
+    fi
+
+    "$PYTHON_BIN" -m pytest -q \
+        "$SCRIPT_DIR/tests/test_performance_probes.py" \
+        "$SCRIPT_DIR/tests/test_bottle_health_latency.py" \
+        "$SCRIPT_DIR/tests/test_installed_packages_ui.py" \
+        "$SCRIPT_DIR/tests/test_ui_session_stability.py"
+    echo "==> Build-Test-Gate: OK"
+else
+    echo "==> Build-Test-Gate übersprungen (SKIP_BUILD_TESTS=1)"
+fi
 
 # Sauber starten
 rm -rf "$APP_DEST"

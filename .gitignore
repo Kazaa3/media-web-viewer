@@ -88,6 +88,9 @@ pip-delete-this-directory.txt
 packaging/opt/
 !packaging/opt/.gitkeep
 
+# Explicitly ignore full build mirror content generated in packaging/opt/media-web-viewer
+packaging/opt/media-web-viewer/
+
 # Keep DEBIAN control files and launcher
 !packaging/DEBIAN/
 !packaging/usr/
@@ -138,6 +141,10 @@ screenshots/
 *.backup
 *~
 .cache
+
+# --- Local Benchmarks ---
+benchmarks/
+benchmark-output/
 
 # --- Build System Artifacts ---
 *.tar.gz

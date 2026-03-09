@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['web_5fscraper_2epy_0',['web_scraper.py',['../web__scraper_8py.html',1,'']]]
+  ['pymediainfo_5fparser_2epy_0',['pymediainfo_parser.py',['../pymediainfo__parser_8py.html',1,'']]]
 ];

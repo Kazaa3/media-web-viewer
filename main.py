@@ -112,6 +112,7 @@ import time
 import subprocess
 import threading
 import re
+import shutil
 from typing import cast
 from parsers.format_utils import (
     PARSER_CONFIG, load_parser_config, save_parser_config,
@@ -136,7 +137,7 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.3.4"  # Fallback
+    VERSION = "1.3.3"  # Fallback
 
 _ENV_INFO_CACHE = {
     "data": None,
@@ -325,15 +326,28 @@ def get_environment_info(force_refresh=False):
         """Fallback method to get packages if pip list fails."""
         packages = []
         try:
-            import pkg_resources
-            for dist in pkg_resources.working_set:
+            from importlib import metadata
+            for dist in metadata.distributions():
+                name = dist.metadata.get("Name") or dist.metadata.get("name")
+                version = dist.version
+                if not name:
+                    continue
                 packages.append({
-                    "name": dist.project_name,
-                    "version": dist.version
+                    "name": name,
+                    "version": version
                 })
             packages = sorted(packages, key=lambda x: x["name"].lower())
         except Exception:
-            pass
+            try:
+                import pkg_resources
+                for dist in pkg_resources.working_set:
+                    packages.append({
+                        "name": dist.project_name,
+                        "version": dist.version
+                    })
+                packages = sorted(packages, key=lambda x: x["name"].lower())
+            except Exception:
+                pass
         return packages
     
     def _get_installed_packages():
@@ -341,7 +355,7 @@ def get_environment_info(force_refresh=False):
         packages = []
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "list", "--format=json"],
+                [sys.executable, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
                 capture_output=True,
                 text=True,
                 timeout=5
@@ -354,6 +368,10 @@ def get_environment_info(force_refresh=False):
                 except (json.JSONDecodeError, TypeError, KeyError):
                     logging.warning("Failed to parse pip list JSON")
                     packages = _get_packages_fallback()
+            else:
+                err = (result.stderr or result.stdout or "pip list failed").strip()
+                logging.warning(f"pip list returned non-zero exit status ({result.returncode}): {err}")
+                packages = _get_packages_fallback()
         except subprocess.TimeoutExpired:
             logging.warning("pip list timeout - using fallback")
             packages = _get_packages_fallback()
@@ -397,12 +415,33 @@ def get_environment_info(force_refresh=False):
             pass
         
         return venvs
+
+    def _get_mediainfo_status():
+        """Get runtime status for pymediainfo (python) and mediainfo (system)."""
+        cli_path = shutil.which("mediainfo")
+        pymediainfo_available = False
+        pymediainfo_version = None
+
+        try:
+            import pymediainfo  # type: ignore
+            pymediainfo_available = True
+            pymediainfo_version = getattr(pymediainfo, "__version__", None)
+        except Exception:
+            pymediainfo_available = False
+
+        return {
+            "pymediainfo_available": pymediainfo_available,
+            "pymediainfo_version": pymediainfo_version,
+            "mediainfo_cli_available": bool(cli_path),
+            "mediainfo_cli_path": cli_path,
+        }
     
     # Discover available environments (cached/fast)
     conda_envs = _get_conda_environments()
     system_pythons = _get_system_pythons()
     installed_packages = _get_installed_packages()
     local_venvs = _find_local_venvs()
+    mediainfo_status = _get_mediainfo_status()
     
     # ===== Build Response =====
     result = {
@@ -435,6 +474,7 @@ def get_environment_info(force_refresh=False):
         # Installed Packages
         "installed_packages": installed_packages,
         "package_count": len(installed_packages),
+        "mediainfo_status": mediainfo_status,
         
         # Recommendations
         "recommended_environment": {

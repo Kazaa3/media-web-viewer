@@ -139,3 +139,37 @@ Zusätzlich zur Shell-Integration wurde das Gate jetzt über alle Build-Einstieg
 Ergebnis:
 - konsistente Mindest-Qualität über **alle** Build-Pfade
 - identische Gate-Suite statt divergierender Build-Prüfungen
+
+## Update 09.03.2026 – Benchmark Debug-Konsole vs. DB-Schreiben
+
+Auf Wunsch wurde vor dem Pipeline-Lauf ein gezielter Schreib-Latenztest ergänzt und ausgeführt.
+
+Neues Skript:
+- `tests/benchmark_debug_db_write_speed.py`
+
+Messung A – Debug-Log-Schreibpfad (500 Samples, `logger.debug("db", ...)`):
+- avg: `0.0225 ms`
+- median: `0.0221 ms`
+- p95: `0.0265 ms`
+
+Messung B – DB-Schreibpfad (300 Samples, `db.insert_media(...)` auf temp SQLite):
+- avg: `8.2807 ms`
+- median: `8.0917 ms`
+- p95: `9.6027 ms`
+
+Direkter Konsolen-Check (echter Stream, 80 Samples):
+- avg: `0.0479 ms`
+- median: `0.0463 ms`
+- p95: `0.0596 ms`
+
+Einordnung:
+- DB-Insert ist im Schnitt ca. `368x` langsamer als ein Debug-Log-Eintrag.
+- Der echte Konsolenpfad bleibt ebenfalls deutlich unter 1 ms pro Debug-Eintrag.
+
+## Update 09.03.2026 – Pipeline-Verifikation nach Benchmark
+
+- `build_system.py --pipeline` erfolgreich durchgelaufen (non-destructive).
+- Vorherige Version-Sync-Blocker wurden behoben:
+  - `main.py` Fallback-Version auf `1.3.3`
+  - `logbuch/00_Known_Issues.md` Version-Header/Title auf Sync-Pattern angepasst
+- Build-Gate-Doppellauf entfernt: bei Aufruf über `build_system.py` wird `build_deb.sh` mit `SKIP_BUILD_TESTS=1` gestartet, da das Gate bereits im Wrapper lief.

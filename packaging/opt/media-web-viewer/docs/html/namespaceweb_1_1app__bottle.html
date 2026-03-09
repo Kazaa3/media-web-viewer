@@ -91,15 +91,13 @@ Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
+<tr class="memitem:a2aed0214be0fa244dfcfe63c7df83236"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#a2aed0214be0fa244dfcfe63c7df83236">log</a> = <a class="el" href="namespacelogger.html#a3f5f27591f87bfda99a6bf55dfeee0d1">logger.get_logger</a>(&quot;web&quot;)</td></tr>
+<tr class="separator:a2aed0214be0fa244dfcfe63c7df83236"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21fa9048944fae1280ec4d17ef015acd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#a21fa9048944fae1280ec4d17ef015acd">APP_ROOT</a> = Path(__file__).resolve().parent.parent</td></tr>
 <tr class="separator:a21fa9048944fae1280ec4d17ef015acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3299b2cf2d9656baf8e7c46696daa424"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#a3299b2cf2d9656baf8e7c46696daa424">MEDIA_DIR</a> = <a class="el" href="namespaceweb_1_1app__bottle.html#a21fa9048944fae1280ec4d17ef015acd">APP_ROOT</a> / &quot;media&quot;</td></tr>
 <tr class="separator:a3299b2cf2d9656baf8e7c46696daa424"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae489120f961dcfe946eb97df39853950"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#ae489120f961dcfe946eb97df39853950">APP_DATA_DIR</a> = Path.home() / &quot;.media-web-viewer&quot;</td></tr>
-<tr class="separator:ae489120f961dcfe946eb97df39853950"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22f683bbd47078378ff959d421b7afd0"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#a22f683bbd47078378ff959d421b7afd0">LOG_FILE</a> = <a class="el" href="namespaceweb_1_1app__bottle.html#ae489120f961dcfe946eb97df39853950">APP_DATA_DIR</a> / &quot;route_log.txt&quot;</td></tr>
-<tr class="separator:a22f683bbd47078378ff959d421b7afd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae90d472218331b8bcc8c933558075243"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#ae90d472218331b8bcc8c933558075243">CACHE_DIR</a> = <a class="el" href="namespaceweb_1_1app__bottle.html#ae489120f961dcfe946eb97df39853950">APP_DATA_DIR</a> / &quot;cache&quot;</td></tr>
+<tr class="memitem:ae90d472218331b8bcc8c933558075243"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1app__bottle.html#ae90d472218331b8bcc8c933558075243">CACHE_DIR</a> = <a class="el" href="namespacelogger.html#a36d993ae316f785499976de9e60f56af">logger.APP_DATA_DIR</a> / &quot;cache&quot;</td></tr>
 <tr class="separator:ae90d472218331b8bcc8c933558075243"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -126,9 +124,7 @@ Variables</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<pre class="fragment">@brief Internal helper to log messages to the route log file.
-@details Interner Helfer zum Loggen von Nachrichten in die Routen-Logdatei.
-@param msg Message to log / Zu loggende Nachricht.
+<pre class="fragment">@brief Internal helper (legacy proxy) for logging.
 </pre> 
 </div>
 </div>
@@ -156,7 +152,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <pre class="fragment">@brief Resolves a filename to its full filesystem path.
-@details Auflöst einen Dateinamen in seinen vollen Pfad.
+@details Löst einen Dateinamen in seinen vollen Pfad auf.
 @param filename Name of the media file / Name der Datei.
 @return Full path or None / Voller Pfad oder None.
 </pre> 
@@ -246,20 +242,6 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
-<a id="ae489120f961dcfe946eb97df39853950" name="ae489120f961dcfe946eb97df39853950"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae489120f961dcfe946eb97df39853950">&#9670;&nbsp;</a></span>APP_DATA_DIR</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">string web.app_bottle.APP_DATA_DIR = Path.home() / &quot;.media-web-viewer&quot;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a21fa9048944fae1280ec4d17ef015acd" name="a21fa9048944fae1280ec4d17ef015acd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a21fa9048944fae1280ec4d17ef015acd">&#9670;&nbsp;</a></span>APP_ROOT</h2>
 
@@ -281,21 +263,21 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">string web.app_bottle.CACHE_DIR = <a class="el" href="namespaceweb_1_1app__bottle.html#ae489120f961dcfe946eb97df39853950">APP_DATA_DIR</a> / &quot;cache&quot;</td>
+          <td class="memname">string web.app_bottle.CACHE_DIR = <a class="el" href="namespacelogger.html#a36d993ae316f785499976de9e60f56af">logger.APP_DATA_DIR</a> / &quot;cache&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a22f683bbd47078378ff959d421b7afd0" name="a22f683bbd47078378ff959d421b7afd0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a22f683bbd47078378ff959d421b7afd0">&#9670;&nbsp;</a></span>LOG_FILE</h2>
+<a id="a2aed0214be0fa244dfcfe63c7df83236" name="a2aed0214be0fa244dfcfe63c7df83236"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2aed0214be0fa244dfcfe63c7df83236">&#9670;&nbsp;</a></span>log</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">string web.app_bottle.LOG_FILE = <a class="el" href="namespaceweb_1_1app__bottle.html#ae489120f961dcfe946eb97df39853950">APP_DATA_DIR</a> / &quot;route_log.txt&quot;</td>
+          <td class="memname">web.app_bottle.log = <a class="el" href="namespacelogger.html#a3f5f27591f87bfda99a6bf55dfeee0d1">logger.get_logger</a>(&quot;web&quot;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
