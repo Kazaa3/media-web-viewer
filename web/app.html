@@ -1279,9 +1279,6 @@
                                         style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
                                         data-i18n="[placeholder]packages_search_placeholder">
                                 </div>
-                                <div id="packages-debug-info" style="background: #fff3cd; border: 1px solid #ffc107; padding: 8px; border-radius: 4px; font-size: 0.7em; margin-bottom: 8px; font-family: monospace; display: none;">
-                                    <strong>🔍 DEBUG:</strong> <span id="debug-info-text">Waiting for data...</span>
-                                </div>
                                 <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
@@ -3157,39 +3154,7 @@
                     ? await eel.get_environment_info(true)()
                     : await eel.get_environment_info()();
 
-                console.log('🔍 FRONTEND-TRACE: Received info from backend:', {
-                    info_type: typeof info,
-                    is_null: info === null,
-                    is_undefined: info === undefined,
-                    has_installed_packages: info?.installed_packages !== undefined,
-                    installed_packages_type: typeof info?.installed_packages,
-                    installed_packages_length: Array.isArray(info?.installed_packages) ? info.installed_packages.length : 'NOT_ARRAY',
-                    package_count: info?.package_count,
-                    requirements_status: info?.requirements_status,
-                    first_package: Array.isArray(info?.installed_packages) && info.installed_packages.length > 0 ? info.installed_packages[0] : 'NONE'
-                });
-                
-                // Also show in UI
-                const debugDiv = document.getElementById('packages-debug-info');
-                const debugText = document.getElementById('debug-info-text');
-                if (debugDiv && debugText) {
-                    debugDiv.style.display = 'block';
-                    const pkgCount = Array.isArray(info?.installed_packages) ? info.installed_packages.length : 0;
-                    debugText.textContent = `Backend response received | installed_packages: ${typeof info?.installed_packages} | length: ${pkgCount} | package_count: ${info?.package_count || 'N/A'}`;
-                }
-
                 const initialPackages = normalizeInstalledPackages(info?.installed_packages);
-                console.log('🔍 FRONTEND-TRACE: After normalization:', {
-                    normalized_length: initialPackages.length,
-                    first_normalized: initialPackages.length > 0 ? initialPackages[0] : 'EMPTY'
-                });
-                
-                // Update debug info after normalization
-                if (debugDiv && debugText) {
-                    const pkgCount = Array.isArray(info?.installed_packages) ? info.installed_packages.length : 0;
-                    debugText.textContent = `Backend: ${pkgCount} pkgs → Normalized: ${initialPackages.length} pkgs | First: ${initialPackages[0]?.name || 'NONE'}`;
-                }
-                
                 const hasInitialPackages = initialPackages.length > 0;
                 if (!requestForceRefresh && !hasInitialPackages) {
                     try {
@@ -3349,22 +3314,6 @@
                 const packageSource = document.getElementById('package-source');
                 const sourceText = String(info.installed_packages_source || 'unknown');
                 if (packageSource) packageSource.textContent = `[source: ${sourceText}]`;
-                
-                console.log('🔍 FRONTEND-TRACE: Package display check:', {
-                    safeInstalledPackages_length: safeInstalledPackages.length,
-                    packagesList_exists: !!packagesList,
-                    packageCount_exists: !!packageCount,
-                    will_render: safeInstalledPackages.length > 0 && packagesList && packageCount
-                });
-                
-                // Update debug info with rendering decision
-                const debugDiv2 = document.getElementById('packages-debug-info');
-                const debugText2 = document.getElementById('debug-info-text');
-                if (debugDiv2 && debugText2) {
-                    const willRender = safeInstalledPackages.length > 0 && packagesList && packageCount;
-                    const reason = !willRender ? (safeInstalledPackages.length === 0 ? 'safeInstalledPackages is EMPTY' : (!packagesList ? 'packagesList not found' : 'packageCount not found')) : 'OK';
-                    debugText2.textContent = `Safe packages: ${safeInstalledPackages.length} | packagesList: ${!!packagesList} | packageCount: ${!!packageCount} | Render: ${willRender} | ${reason}`;
-                }
                 
                 if (safeInstalledPackages.length > 0 && packagesList && packageCount) {
                     packageCount.textContent = `(${safeInstalledPackages.length})`;

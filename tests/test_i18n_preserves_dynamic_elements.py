@@ -200,13 +200,6 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             self.assertIn(f'id="{element_id}"', self.html_code,
                          f"Element with id='{element_id}' should exist in HTML")
 
-    def test_07_debug_info_elements_exist(self):
-        """Test: Debug diagnostic elements added for troubleshooting exist."""
-        self.assertIn('id="packages-debug-info"', self.html_code,
-                     "Debug info panel should exist for troubleshooting")
-        self.assertIn('id="debug-info-text"', self.html_code,
-                     "Debug info text element should exist")
-
     def test_08_no_data_i18n_on_container_with_dynamic_children(self):
         """Test: Critical package/requirements elements don't have data-i18n on parent."""
         # Focus only on the critical elements that broke package display
