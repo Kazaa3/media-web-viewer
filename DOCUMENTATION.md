@@ -2355,6 +2355,23 @@ scripts/cleanup_build_artifacts.sh
 scripts/cleanup_build_artifacts.sh --execute
 ```
 
+#### Repository Cleanup (already tracked artifacts)
+
+`.gitignore` prevents new generated artifacts from being tracked, but artifacts that were committed earlier must be removed from the Git index once.
+
+```bash
+# Keep files locally, remove only from git index
+git rm -r --cached -- packaging/opt/media-web-viewer
+git rm --cached -- __pycache__/main.cpython-314.pyc
+git rm --cached -- media-web-viewer_1.3.3_amd64.deb
+
+# Verify and commit cleanup
+git status --short
+git commit -m "chore: untrack generated packaging/cache artifacts"
+```
+
+After this commit, these paths remain local but are no longer tracked and won't reappear in future commits.
+
 #### Test Overview
 
 **Location:** `tests/` directory  
