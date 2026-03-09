@@ -6,14 +6,24 @@
 # Testdateien: Alle media/*.mp*, *.mkv, *.we* Dateien
 # Kommentar: Erstellt MediaItem für alle gefundenen Media-Dateien und dumpt Tags (diagnostischer Test für Parser-Integration).
 import glob
-from main import MediaItem
 import sys
 import os
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from main import MediaItem
 
 for d in ['/usr/lib/python3/dist-packages', '/usr/local/lib/python3.10/dist-packages']:
     sys.path.append(os.path.join(d, 'site-packages'))
 
-files = glob.glob("media/*.mp*") + glob.glob("media/*.mkv") + glob.glob("media/*.we*")
+media_dir = os.path.join(PROJECT_ROOT, "media")
+files = (
+    glob.glob(os.path.join(media_dir, "*.mp*"))
+    + glob.glob(os.path.join(media_dir, "*.mkv"))
+    + glob.glob(os.path.join(media_dir, "*.we*"))
+)
 for f in files:
     try:
         item = MediaItem(f, f)
