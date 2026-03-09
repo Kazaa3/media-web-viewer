@@ -23,7 +23,7 @@ import sys
 import os
 import platform
 from pathlib import Path
-import antigravity  # For fun and easter egg purposes
+#import antigravity  # For fun and easter egg purposes
 
 def _detect_python_environment():
     """
