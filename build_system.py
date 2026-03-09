@@ -20,6 +20,7 @@ import os
 import subprocess
 import argparse
 import shutil
+import textwrap
 from pathlib import Path
 from typing import Optional
 
@@ -453,20 +454,21 @@ def main():
     parser = argparse.ArgumentParser(
         description="Media Web Viewer Build System",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s --info                    Show project information
-  %(prog)s --test                    Run tests only
-  %(prog)s --build deb               Build Debian package
-  %(prog)s --build pyinstaller       Build PyInstaller executable
-  %(prog)s --build all               Build all targets
-  %(prog)s --full-build              Full build with tests
-    %(prog)s --full-build --skip-build-gate  Full build but skip targeted pre-build gate
-    %(prog)s --pipeline                Run release pipeline (sync + build + reinstall tests)
-    %(prog)s --pipeline --destructive  Include destructive reinstall test
-  %(prog)s --clean                   Clean build artifacts
-  %(prog)s --clean-all               Deep clean (includes dist/)
-        """
+                epilog=textwrap.dedent("""
+                        Examples:
+                            %(prog)s --info                          Show project information
+                            %(prog)s --test                          Run tests only
+                            %(prog)s --build deb                     Build Debian package
+                            %(prog)s --build pyinstaller             Build PyInstaller executable
+                            %(prog)s --build all                     Build all targets
+                            %(prog)s --full-build                    Full build with tests
+                            %(prog)s --full-build --skip-build-gate Skip targeted pre-build gate in full build
+                            %(prog)s --pipeline                      Run release pipeline (sync + build + reinstall tests)
+                            %(prog)s --pipeline --destructive        Include destructive reinstall test
+                            %(prog)s --pipeline --skip-build-gate    Skip targeted pre-build gate in pipeline build step
+                            %(prog)s --clean                         Clean build artifacts
+                            %(prog)s --clean-all                     Deep clean (includes dist/)
+                """)
     )
     
     parser.add_argument(
@@ -526,7 +528,7 @@ Examples:
     parser.add_argument(
         "--skip-build-gate",
         action="store_true",
-        help="Skip targeted pre-build gate tests for build commands"
+        help="Skip targeted pre-build gate tests for build/pipeline commands"
     )
     
     parser.add_argument(

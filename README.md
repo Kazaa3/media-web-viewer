@@ -104,11 +104,21 @@ python build_system.py --pipeline
 # Optional: include destructive reinstall validation
 python build_system.py --pipeline --destructive
 
+# Optional emergency override for targeted pre-build gate
+python build_system.py --pipeline --skip-build-gate
+
 # Manual checks (if needed)
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
+
+Pipeline order in `build_system.py`:
+1. Environment check
+2. Version sync test
+3. Debian build (with targeted pre-build gate by default)
+4. Safe reinstall validation
+5. Optional destructive reinstall validation
 
 ## Version Update (Automated)
 
