@@ -106,3 +106,19 @@ Messskript: direkter Probe-Lauf für `api_ping`, `get_environment_info` (cold/wa
 - Messbasis ist aktiv und getestet.
 - Erste konkrete Optimierungen sind umgesetzt und validiert.
 - Nächster Schritt bleibt die echte Vorher/Nachher-UI-Messung über `runLatencyDiagnostics(...)` im laufenden App-Fenster.
+
+## Update 09.03.2026 – Test-Gate im Build-Prozess
+
+Der gewünschte Build-Qualitätsfilter wurde integriert:
+
+- `build_deb.sh` führt vor dem Packaging standardmäßig ein Test-Gate aus.
+- Gate-Suite:
+  - `tests/test_performance_probes.py`
+  - `tests/test_bottle_health_latency.py`
+  - `tests/test_installed_packages_ui.py`
+  - `tests/test_ui_session_stability.py`
+- Verhalten: Bei Fehlschlag wird der Build sofort abgebrochen (`set -e`).
+- Expliziter Override für lokale Notfälle/Debugging: `SKIP_BUILD_TESTS=1 bash build_deb.sh`
+
+Lokale Validierung der Gate-Suite:
+- `20 passed` (09.03.2026)
