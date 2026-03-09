@@ -10,6 +10,8 @@ var searchData=
   ['get_5flegacy_5fdb_5fcandidates_7',['get_legacy_db_candidates',['../namespacedb.html#ac02d9e6d797a8eabb884d79e09ff9afa',1,'db']]],
   ['get_5flogger_8',['get_logger',['../namespacelogger.html#a3f5f27591f87bfda99a6bf55dfeee0d1',1,'logger']]],
   ['get_5fmedia_5fpath_9',['get_media_path',['../namespacedb.html#ae086efa84c66012a57a072cd82a63601',1,'db']]],
-  ['get_5fmissing_5finfo_10',['get_missing_info',['../classenv__handler_1_1EnvironmentManager.html#a31ec0b2eb4dd733648775cd0a67a102e',1,'env_handler::EnvironmentManager']]],
-  ['get_5fui_5flogs_11',['get_ui_logs',['../namespacelogger.html#a440d826268051e65be4cf2f17661d130',1,'logger']]]
+  ['get_5fmedia_5ftags_10',['get_media_tags',['../namespacedb.html#ad09eadb15d6ca3a35534c1b0447eee35',1,'db']]],
+  ['get_5fmissing_5finfo_11',['get_missing_info',['../classenv__handler_1_1EnvironmentManager.html#a31ec0b2eb4dd733648775cd0a67a102e',1,'env_handler::EnvironmentManager']]],
+  ['get_5ftags_5fby_5fkey_12',['get_tags_by_key',['../namespacedb.html#a659eee8ab6eb82fe14b4e4e46a7b1b0f',1,'db']]],
+  ['get_5fui_5flogs_13',['get_ui_logs',['../namespacelogger.html#a440d826268051e65be4cf2f17661d130',1,'logger']]]
 ];

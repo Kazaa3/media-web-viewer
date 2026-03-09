@@ -1,11 +1,11 @@
 <!-- Category: Bug -->
-<!-- Title_DE: Bekannte Probleme (Stand v1.1.20) -->
-<!-- Title_EN: Known Issues (Status v1.1.20) -->
+<!-- Title_DE: Bekannte Probleme (Stand v1.3.4) -->
+<!-- Title_EN: Known Issues (Status v1.3.4) -->
 <!-- Summary_DE: Aktueller Stand der Fehlerbehebung und offene Punkte. -->
 <!-- Summary_EN: Current status of bug fixes and open points. -->
 <!-- Status: PLAN -->
 
-# Bekannte Probleme (Stand v1.1.20)
+# Bekannte Probleme (Stand v1.3.4)
 
 ## Behobene Probleme
 - [x] Unnötige Konsolenausgaben beim Scan (jetzt hinter `db`-Flag).
@@ -42,7 +42,7 @@ fehlt)
 
 <!-- lang-split -->
 
-# Known Issues (Status v1.1.20)
+# Known Issues (Status v1.3.4)
 
 ## Fixed Issues
 - [x] Unnecessary console output during scan (now behind `db` flag).
