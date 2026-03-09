@@ -20,7 +20,6 @@
 ## Aktuelle offene Bugs (Stand 2026-03-09)
 
 ### GUI-Bugs
-- **Logbuch Markdown-Rendering**: HTML-Darstellung von Markdown nicht optimal, Listen/Links/Code werden falsch gerendert
 - Weitere GUI-Probleme vorhanden (Detailanalyse ausstehend)
 
 ### Kleinere Bugs
@@ -32,6 +31,7 @@
 - Scraper-Integration ausstehend (siehe [Eintrag 80](80_Scraper_Integration_und_Qualitaet.md))
 
 ## Behobene Probleme (heute)
+- **Logbuch Markdown-Rendering**: marked.js integriert für korrekte HTML-Darstellung ✅ ([Eintrag 82](82_Logbuch_Markdown_Rendering.md))
 - Branch Protection für main eingerichtet ✅ ([Eintrag 60](60_Branch_Protection_main.md))
 
 <!-- lang-split -->
@@ -49,7 +49,6 @@
 ## Current Open Bugs (as of 2026-03-09)
 
 ### GUI Bugs
-- **Logbook Markdown Rendering**: HTML display of Markdown not optimal, lists/links/code rendered incorrectly
 - Additional GUI problems exist (detailed analysis pending)
 
 ### Minor Bugs
@@ -61,4 +60,5 @@
 - Scraper integration pending (see [Entry 80](80_Scraper_Integration_und_Qualitaet.md))
 
 ## Resolved Issues (today)
+- **Logbook Markdown Rendering**: marked.js integrated for correct HTML display ✅ ([Entry 82](82_Logbuch_Markdown_Rendering.md))
 - Branch protection for main set up ✅ ([Entry 60](60_Branch_Protection_main.md))
