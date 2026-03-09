@@ -3072,7 +3072,14 @@
 
         async function loadEnvironmentInfo() {
             try {
-                const info = await eel.get_environment_info()();
+                const info = await Promise.race([
+                    eel.get_environment_info()(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Environment info timeout')), 12000))
+                ]);
+
+                if (!info || typeof info !== 'object') {
+                    throw new Error('Invalid environment info response');
+                }
                 
                 document.getElementById('env-python-version').textContent = info.python_version;
                 
@@ -3188,18 +3195,21 @@
                     
                     // Setup search
                     const searchInput = document.getElementById('package-search');
-                    searchInput.addEventListener('input', (e) => {
-                        const searchTerm = e.target.value.toLowerCase();
-                        if (searchTerm === '') {
-                            renderPackages(window.allPackages);
-                        } else {
-                            const filtered = window.allPackages.filter(pkg => 
-                                pkg.name.toLowerCase().includes(searchTerm) ||
-                                (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
-                            );
-                            renderPackages(filtered);
-                        }
-                    });
+                    if (searchInput && searchInput.dataset.bound !== '1') {
+                        searchInput.addEventListener('input', (e) => {
+                            const searchTerm = e.target.value.toLowerCase();
+                            if (searchTerm === '') {
+                                renderPackages(window.allPackages);
+                            } else {
+                                const filtered = window.allPackages.filter(pkg => 
+                                    pkg.name.toLowerCase().includes(searchTerm) ||
+                                    (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
+                                );
+                                renderPackages(filtered);
+                            }
+                        });
+                        searchInput.dataset.bound = '1';
+                    }
                 } else {
                     packageCount.textContent = '(0)';
                     packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
@@ -3207,6 +3217,20 @@
                 
             } catch (e) {
                 console.error("Failed to load environment info:", e);
+                const failText = `<span style="color: #c62828;">${t('common_error_loading')}</span>`;
+                const fallbackNoData = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
+
+                const packageCount = document.getElementById('package-count');
+                const condaList = document.getElementById('conda-environments-list');
+                const systemList = document.getElementById('system-pythons-list');
+                const venvsList = document.getElementById('local-venvs-list');
+                const packagesList = document.getElementById('installed-packages-list');
+
+                if (packageCount) packageCount.textContent = '(0)';
+                if (condaList) condaList.innerHTML = failText;
+                if (systemList) systemList.innerHTML = failText;
+                if (venvsList) venvsList.innerHTML = failText;
+                if (packagesList) packagesList.innerHTML = fallbackNoData;
             }
         }
 
