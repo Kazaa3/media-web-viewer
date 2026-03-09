@@ -451,6 +451,36 @@ wheel      0.42.0
         self.assertEqual(call_results[1][0]["name"], "package-1")
         self.assertEqual(call_results[2][0]["name"], "package-2")
 
+    def test_23_backend_tools_status_structure(self):
+        """Test: Backend environment API includes tools_status metadata."""
+        self.assertIn('"tools_status"', self.main_code)
+        self.assertIn("_get_runtime_tools_status", self.main_code)
+
+        expected_keys = [
+            "ffmpeg_cli_available",
+            "ffprobe_cli_available",
+            "browser_available",
+            "browser_name",
+            "browser_path",
+            "python_vlc_available",
+            "vlc_cli_available",
+            "mutagen_available",
+        ]
+        for key in expected_keys:
+            self.assertIn(f'"{key}"', self.main_code)
+
+    def test_24_frontend_tools_status_rendering(self):
+        """Test: Frontend renders the aggregated tools status row in Options tab."""
+        self.assertIn('id="env-tools-status"', self.html_code)
+        self.assertIn("env_label_tools", self.html_code)
+        self.assertIn("info.tools_status", self.html_code)
+
+        # Ensure commonly displayed tool labels are part of render string
+        self.assertIn("ffmpeg", self.html_code)
+        self.assertIn("ffprobe", self.html_code)
+        self.assertIn("python-vlc", self.html_code)
+        self.assertIn("mutagen", self.html_code)
+
 
 if __name__ == "__main__":
     unittest.main()

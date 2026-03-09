@@ -292,6 +292,9 @@ class TestUIDebugTools(unittest.TestCase):
         func_body = get_env_info_match.group(0)
         self.assertIn('"tools_status"', func_body)
         self.assertIn('_get_runtime_tools_status', func_body)
+        self.assertIn('"browser_available"', self.main_code)
+        self.assertIn('"browser_name"', self.main_code)
+        self.assertIn('"browser_path"', self.main_code)
 
 
 class TestUIDebuggingWorkflow(unittest.TestCase):
