@@ -132,6 +132,7 @@ class TestUIDebugTools(unittest.TestCase):
             'installed-packages-list',
             'requirements-count',
             'requirements-status-list',
+            'env-tools-status',
         ]
         
         for element_id in critical_elements:
@@ -279,6 +280,18 @@ class TestUIDebugTools(unittest.TestCase):
             i18n_test_code = i18n_test_file.read_text(encoding="utf-8")
             self.assertIn('package-count', i18n_test_code)
             self.assertIn('innerHTML', i18n_test_code)
+
+    def test_19_backend_includes_tools_status(self):
+        """Test: Backend response includes aggregated runtime tools status."""
+        get_env_info_match = re.search(
+            r'def get_environment_info.*?return result',
+            self.main_code,
+            re.DOTALL
+        )
+        self.assertIsNotNone(get_env_info_match)
+        func_body = get_env_info_match.group(0)
+        self.assertIn('"tools_status"', func_body)
+        self.assertIn('_get_runtime_tools_status', func_body)
 
 
 class TestUIDebuggingWorkflow(unittest.TestCase):

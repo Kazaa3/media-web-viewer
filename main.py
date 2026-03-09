@@ -478,6 +478,41 @@ def get_environment_info(force_refresh=False):
             "mediainfo_cli_path": cli_path,
         }
 
+    def _get_runtime_tools_status():
+        ffmpeg_path = shutil.which("ffmpeg")
+        ffprobe_path = shutil.which("ffprobe")
+        vlc_cli_path = shutil.which("vlc")
+
+        mutagen_available = False
+        mutagen_version = None
+        try:
+            import mutagen  # type: ignore
+            mutagen_available = True
+            mutagen_version = getattr(mutagen, "version_string", None) or getattr(mutagen, "__version__", None)
+        except Exception:
+            mutagen_available = False
+
+        python_vlc_available = bool(globals().get("HAS_VLC", False))
+        python_vlc_version = None
+        if python_vlc_available:
+            try:
+                python_vlc_version = getattr(vlc, "__version__", None)
+            except Exception:
+                python_vlc_version = None
+
+        return {
+            "ffmpeg_cli_available": bool(ffmpeg_path),
+            "ffmpeg_cli_path": ffmpeg_path,
+            "ffprobe_cli_available": bool(ffprobe_path),
+            "ffprobe_cli_path": ffprobe_path,
+            "vlc_cli_available": bool(vlc_cli_path),
+            "vlc_cli_path": vlc_cli_path,
+            "python_vlc_available": python_vlc_available,
+            "python_vlc_version": python_vlc_version,
+            "mutagen_available": mutagen_available,
+            "mutagen_version": mutagen_version,
+        }
+
     def _get_requirements_status():
         """Get install status for requirements.txt packages in current interpreter."""
         import importlib.util
@@ -561,6 +596,7 @@ def get_environment_info(force_refresh=False):
         installed_packages_source = "importlib_or_pkg_resources"
     local_venvs = _find_local_venvs()
     mediainfo_status = _get_mediainfo_status()
+    tools_status = _get_runtime_tools_status()
     requirements_status = _get_requirements_status()
     
     # ===== Build Response =====
@@ -596,6 +632,7 @@ def get_environment_info(force_refresh=False):
         "package_count": len(installed_packages),
         "installed_packages_source": installed_packages_source,
         "mediainfo_status": mediainfo_status,
+        "tools_status": tools_status,
         "requirements_status": requirements_status,
         
         # Recommendations
