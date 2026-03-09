@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.5  
+**Version:** 1.3.7  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -37,6 +37,47 @@ To update the version:
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+### Release Notes (v1.3.7)
+
+Highlights of this release:
+
+- **media_type / subtype**: `releases` gains `media_type` (`Audio|Video|Document|Image`)
+  and `subtype` (from the new `release_subtypes` DB table).
+- **release_subtypes table**: User-editable list of valid subtypes per media_type, seeded
+  with built-in defaults (Album, Film, Series, EBook, …).  Custom subtypes can be added
+  via `add_release_subtype()`.
+- **Multi-language titles** (`release_titles`): Each release can store titles in any
+  number of languages (ISO 639-1 codes + `'original'`).  Required for film titles in
+  German / English / original language.
+- **Cover images** (`release_covers`): Front, back, disc, inlay, poster covers can be
+  attached to a release or a specific disc/item.  Supports local paths and scraped URLs
+  (IMDb, TMDb, MusicBrainz, CoverArtArchive).
+- **Multi-disc support** (`release_items`): Each item now carries `disc_number`,
+  `disc_type` (`Film|Bonus|Soundtrack|Extra|Document`), and `disc_label`.  Handles
+  releases like: Disc 1 = Film ISO, Disc 2 = BD Bonus, Disc 3 = DVD Bonus, Disc 4 = CD
+  Soundtrack, or EBook with PDF + EPUB + MOBI items.
+- **Video-specific fields** (`releases`): `video_standard` (PAL / NTSC / SECAM),
+  `region` (ISO 3166-1 alpha-2: DE, UK, US, JP, …), `container_type`
+  (Blu-ray / PAL DVD / NTSC DVD / VCD / HD DVD / WMV DVD / Digital), `disc_format`
+  (ISO / BIN / MKV / MP4 / …), `total_discs`.
+- **parent_release_id**: A release can reference a parent release for bonus content.
+- **release_identifiers table**: Multiple ISBNs, UPCs, barcodes, IMDb IDs, MusicBrainz
+  IDs, etc. per release.
+- **scraper_sources table**: Plugin registry for scraper sources; seeded with IMDb, TMDb,
+  MusicBrainz, CoverArtArchive, OpenLibrary, GoogleBooks. Additional plugins can be
+  registered with `register_scraper_source()`.
+- **Migration**: Existing v1.3.5 databases are upgraded transparently by `init_db()`.
+- **75 tests** (48 new in steps 17–27).
+- **New public API** in `db.py`:
+    - `insert_release(…, media_type, subtype, parent_release_id, video_standard, region, container_type, disc_format, total_discs)`
+    - `assign_item_to_release(…, disc_number, disc_type, disc_label)`
+    - `get_all_releases(…, media_type, subtype)` / `search_releases(…, media_type, subtype)`
+    - Identifiers: `add_release_identifier`, `get_release_identifiers`, `remove_release_identifier`, `get_releases_by_identifier`
+    - Subtypes: `get_release_subtypes`, `add_release_subtype`, `remove_release_subtype`
+    - Titles: `set_release_title`, `get_release_titles`, `remove_release_title`
+    - Covers: `add_release_cover`, `get_release_covers`, `remove_release_cover`
+    - Scrapers: `get_scraper_sources`, `register_scraper_source`, `set_scraper_source_enabled`
 
 ### Release Notes (v1.3.5)
 
@@ -641,7 +682,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.5)
+Media Web Viewer (v1.3.7)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -1930,86 +1971,182 @@ Example JSON stored in `tags`:
 }
 ```
 
-### Table: `releases` *(since v1.3.5)*
+### Table: `releases` *(since v1.3.5, extended v1.3.7)*
 
-Groups one or more media items into a logical release (album, film, audiobook, …).
-Only minimal status fields are stored as columns; all scraper-enriched data lives in
-the `scraper_data` JSON column (Python dict → `json.dumps`).
+Groups one or more filesystem items into a logical release (album, film, audiobook, ebook bundle, …).
 
 ```sql
 CREATE TABLE releases (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    title        TEXT NOT NULL,               -- Album / film title
-    type         TEXT NOT NULL DEFAULT 'Music', -- Music | Film | EBook | Document
-    year         INTEGER,                     -- Release year
-    cut          TEXT,                        -- Film cut ('Director''s Cut', …)
-    status       TEXT NOT NULL DEFAULT 'pending', -- pending | scraped | verified | ignored
-    scraper_data TEXT,                        -- JSON blob: scraper-provided metadata
-    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    title             TEXT NOT NULL,                    -- Primary title
+    type              TEXT NOT NULL DEFAULT 'Music',    -- Legacy v1.3.5 type (kept for compat)
+    media_type        TEXT NOT NULL DEFAULT 'Audio',    -- Audio | Video | Document | Image
+    subtype           TEXT,                             -- e.g. Album, Film, EBook (→ release_subtypes)
+    year              INTEGER,
+    cut               TEXT,                             -- 'Director''s Cut', 'Extended Cut', …
+    status            TEXT NOT NULL DEFAULT 'pending',  -- pending | scraped | verified | ignored
+    scraper_data      TEXT,                             -- JSON: scraper-provided metadata
+    parent_release_id INTEGER,                          -- FK to releases.id (bonus content)
+    video_standard    TEXT,                             -- PAL | NTSC | SECAM
+    region            TEXT,                             -- ISO 3166-1 alpha-2 (DE, UK, US, JP, …)
+    container_type    TEXT,                             -- Blu-ray | PAL DVD | NTSC DVD | VCD | HD DVD | WMV DVD | Digital
+    disc_format       TEXT,                             -- ISO | BIN | MKV | MP4 | …
+    total_discs       INTEGER,
+    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(parent_release_id) REFERENCES releases(id) ON DELETE SET NULL
 );
--- Covering indexes for large-scale queries
-CREATE INDEX idx_releases_type   ON releases(type);
-CREATE INDEX idx_releases_status ON releases(status);
-CREATE INDEX idx_releases_year   ON releases(year);
 ```
 
-**`scraper_data` example (music album):**
+**Valid `media_type` / `subtype` combinations** (subtypes are user-extensible):
 
-```json
-{
-    "musicbrainz_id": "abc-123",
-    "cover_art_url": "https://coverartarchive.org/...",
-    "genres": ["Rock", "Alternative"],
-    "label": "Island Records",
-    "barcode": "602435388946"
-}
-```
+| `media_type` | Built-in `subtype` values |
+|---|---|
+| `Audio`    | Album, Compilation, Audiobook, Classical, Soundtrack, Single, EP, Live |
+| `Video`    | Film, Series, Documentary, Trailer, BonusContent, Short |
+| `Document` | EBook, Manual, Article, Comic |
+| `Image`    | Photo, Artwork, Cover |
 
-**`scraper_data` example (film):**
+### Table: `release_items` *(since v1.3.5, extended v1.3.7)*
 
-```json
-{
-    "tmdb_id": 438631,
-    "imdb_id": "tt1160419",
-    "overview": "Paul Atreides …",
-    "poster_path": "/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
-    "runtime_minutes": 155
-}
-```
-
-### Table: `release_items` *(since v1.3.5)*
-
-Bridge table that links filesystem items (rows in `media`) to their parent release.
-A media item can belong to exactly one release.
+Bridge table linking filesystem items to a release.  Each item carries optional disc metadata for multi-disc releases (films, CD+DVD combos, multi-format ebook bundles, …).
 
 ```sql
 CREATE TABLE release_items (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    release_id  INTEGER NOT NULL,   -- FK to releases
-    media_id    INTEGER NOT NULL,   -- FK to media (the filesystem item / Path)
-    position    INTEGER,            -- Track # for music, disc/file order for films
+    release_id  INTEGER NOT NULL,
+    media_id    INTEGER NOT NULL,
+    position    INTEGER,           -- Global sort position
+    disc_number INTEGER,           -- Disc number (1, 2, 3, …) for multi-disc sets
+    disc_type   TEXT,              -- Film | Bonus | Soundtrack | Extra | Document
+    disc_label  TEXT,              -- e.g. 'Disc 1 – Extended Cut'
     FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
     FOREIGN KEY(media_id)   REFERENCES media(id)    ON DELETE CASCADE,
-    UNIQUE(media_id)                -- One item → one release
+    UNIQUE(media_id)
 );
-CREATE INDEX idx_release_items_release ON release_items(release_id, position);
+```
+
+**Multi-disc example – Blu-ray Collector's Edition (6 discs):**
+
+| disc_number | disc_type  | disc_label                     |
+|-------------|------------|-------------------------------|
+| 1 | Film       | Disc 1 – Film (Blu-ray)        |
+| 2 | Film       | Disc 2 – Film Part 2 (Blu-ray) |
+| 3 | Bonus      | Disc 3 – BD Bonus              |
+| 4 | Bonus      | Disc 4 – DVD Bonus             |
+| 5 | Bonus      | Disc 5 – DVD Bonus 2           |
+| 6 | Soundtrack | Disc 6 – Soundtrack Audio CD   |
+
+### Table: `release_identifiers` *(since v1.3.7)*
+
+Multiple external identifiers per release (ISBN-13, UPC, Barcode, IMDb, MusicBrainz, …).
+
+```sql
+CREATE TABLE release_identifiers (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id INTEGER NOT NULL,
+    id_type    TEXT NOT NULL,  -- ISBN-13 | ISBN-10 | UPC | EAN | Barcode | IMDb | TMDb | MusicBrainz | ASIN | …
+    value      TEXT NOT NULL,
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    UNIQUE(release_id, id_type, value)
+);
+```
+
+### Table: `release_subtypes` *(since v1.3.7)*
+
+User-editable list of valid subtype names per `media_type`.  Seeded with built-in defaults on first `init_db()`; custom entries can be added at any time.
+
+```sql
+CREATE TABLE release_subtypes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    media_type TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(media_type, name)
+);
+```
+
+### Table: `release_titles` *(since v1.3.7)*
+
+Multi-language titles for a release.  Language codes follow ISO 639-1; use `'original'` for the original-language title.
+
+```sql
+CREATE TABLE release_titles (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id INTEGER NOT NULL,
+    language   TEXT NOT NULL,   -- 'de', 'en', 'fr', …  or 'original'
+    title      TEXT NOT NULL,
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    UNIQUE(release_id, language)
+);
+```
+
+### Table: `release_covers` *(since v1.3.7)*
+
+Cover / artwork images attached to a release or a specific `release_items` row.
+
+```sql
+CREATE TABLE release_covers (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    release_id INTEGER,          -- FK to releases  (NULL if item-level)
+    item_id    INTEGER,          -- FK to release_items  (NULL if release-level)
+    cover_type TEXT NOT NULL DEFAULT 'front',  -- front | back | disc | inlay | poster | screenshot | …
+    path       TEXT,             -- Local filesystem path
+    url        TEXT,             -- Remote URL (from scraper)
+    source     TEXT NOT NULL DEFAULT 'local',  -- local | imdb | tmdb | musicbrainz | coverartarchive | …
+    width      INTEGER,
+    height     INTEGER,
+    FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+    FOREIGN KEY(item_id) REFERENCES release_items(id) ON DELETE CASCADE
+);
+```
+
+### Table: `scraper_sources` *(since v1.3.7)*
+
+Plugin registry for media scrapers.  Seeded with IMDb, TMDb, MusicBrainz, CoverArtArchive, OpenLibrary, GoogleBooks.
+
+```sql
+CREATE TABLE scraper_sources (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL UNIQUE,  -- 'IMDb', 'TMDb', 'MusicBrainz', custom …
+    media_type TEXT,                   -- 'Video' | 'Audio' | 'Document' | NULL (universal)
+    base_url   TEXT,
+    enabled    BOOLEAN NOT NULL DEFAULT 1,
+    priority   INTEGER NOT NULL DEFAULT 0,
+    config     TEXT                    -- JSON plugin config
+);
 ```
 
 **Public API (db.py) – releases:**
 
 | Function | Description |
 |---|---|
-| `insert_release(title, type, year, cut, status, scraper_data)` | Create a new release |
-| `get_release(release_id)` | Retrieve a release by id |
-| `get_all_releases(release_type, status)` | List releases with optional filters |
+| `insert_release(title, release_type, year, cut, status, scraper_data, *, media_type, subtype, parent_release_id, video_standard, region, container_type, disc_format, total_discs)` | Create a new release |
+| `get_release(release_id)` | Retrieve a release incl. titles and identifiers |
+| `get_all_releases(release_type, status, media_type, subtype)` | List with optional filters |
 | `update_release_scraper_data(release_id, scraper_data, status)` | Store scraper result |
-| `update_release_status(release_id, status)` | Change status field |
-| `delete_release(release_id)` | Delete release + bridge rows |
-| `assign_item_to_release(release_id, media_name, position)` | Link item to release |
-| `remove_item_from_release(media_name)` | Unlink item from its release |
-| `get_release_items(release_id)` | Get all items of a release (ordered by position) |
-| `get_item_release(media_name)` | Get the release an item belongs to |
-| `search_releases(query, release_type)` | Substring search on release titles |
+| `update_release_status(release_id, status)` | Change status |
+| `delete_release(release_id)` | Delete release + all dependent rows |
+| `assign_item_to_release(release_id, media_name, position, *, disc_number, disc_type, disc_label)` | Link item to release |
+| `remove_item_from_release(media_name)` | Unlink item |
+| `get_release_items(release_id)` | All items ordered by disc/position |
+| `get_item_release(media_name)` | Release for an item (incl. titles & identifiers) |
+| `search_releases(query, release_type, media_type, subtype)` | Substring search |
+| `add_release_identifier(release_id, id_type, value)` | Add ISBN/UPC/IMDb/… |
+| `get_release_identifiers(release_id)` | List identifiers |
+| `remove_release_identifier(release_id, id_type, value)` | Remove identifier |
+| `get_releases_by_identifier(id_type, value)` | Find by identifier |
+| `get_release_subtypes(media_type)` | List valid subtypes |
+| `add_release_subtype(media_type, name, sort_order)` | Add custom subtype |
+| `remove_release_subtype(media_type, name)` | Remove subtype |
+| `set_release_title(release_id, language, title)` | Set a language title |
+| `get_release_titles(release_id)` | All titles as {lang: title} |
+| `remove_release_title(release_id, language)` | Remove a language title |
+| `add_release_cover(release_id, item_id, cover_type, path, url, source, width, height)` | Add cover |
+| `get_release_covers(release_id, item_id)` | List covers |
+| `remove_release_cover(cover_id)` | Remove cover |
+| `get_scraper_sources(media_type, enabled_only)` | List scraper plugins |
+| `register_scraper_source(name, media_type, base_url, priority, config)` | Register plugin |
+| `set_scraper_source_enabled(name, enabled)` | Enable/disable plugin |
 
 ---
 

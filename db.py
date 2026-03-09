@@ -108,6 +108,10 @@ def init_db():
              Since v1.3.5 a releases table groups media items into logical releases
              (albums, films, audiobooks, etc.) with minimal status fields and a
              JSON scraper_data column for scraper-enriched metadata.
+             Since v1.3.7 releases have media_type, subtype (from a user-editable DB
+             list), multi-language titles, cover images, multi-disc support, video
+             standard/region/container-type columns, a release_identifiers table, and a
+             scraper_sources plugin registry.
     """
     DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
@@ -166,44 +170,49 @@ def init_db():
         ON media_tags(key, value)
     """)
 
-    # v1.3.5: Releases table – groups items into logical releases.
-    # Stores only minimal status information; all scraper-enriched metadata
-    # goes into the JSON scraper_data column.
+    # v1.3.5 / v1.3.7: Releases table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS releases (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            title       TEXT NOT NULL,
-            type        TEXT NOT NULL DEFAULT 'Music',
-            year        INTEGER,
-            cut         TEXT,
-            status      TEXT NOT NULL DEFAULT 'pending',
-            scraper_data TEXT,
-            created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            title             TEXT NOT NULL,
+            type              TEXT NOT NULL DEFAULT 'Music',
+            media_type        TEXT NOT NULL DEFAULT 'Audio',
+            subtype           TEXT,
+            year              INTEGER,
+            cut               TEXT,
+            status            TEXT NOT NULL DEFAULT 'pending',
+            scraper_data      TEXT,
+            parent_release_id INTEGER,
+            video_standard    TEXT,
+            region            TEXT,
+            container_type    TEXT,
+            disc_format       TEXT,
+            total_discs       INTEGER,
+            created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY(parent_release_id) REFERENCES releases(id) ON DELETE SET NULL
         )
     """)
 
-    # Indexes for large-scale queries (100k+ films, 500k+ music files)
     cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_releases_type
-        ON releases(type)
+        CREATE INDEX IF NOT EXISTS idx_releases_type       ON releases(type)
     """)
     cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_releases_status
-        ON releases(status)
+        CREATE INDEX IF NOT EXISTS idx_releases_status     ON releases(status)
     """)
     cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_releases_year
-        ON releases(year)
+        CREATE INDEX IF NOT EXISTS idx_releases_year       ON releases(year)
     """)
 
-    # v1.3.5: Bridge table – links media items (files) to their parent release.
-    # A media item can belong to exactly one release.
+    # v1.3.5 / v1.3.7: Bridge table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS release_items (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             release_id  INTEGER NOT NULL,
             media_id    INTEGER NOT NULL,
             position    INTEGER,
+            disc_number INTEGER,
+            disc_type   TEXT,
+            disc_label  TEXT,
             FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
             FOREIGN KEY(media_id)  REFERENCES media(id)    ON DELETE CASCADE,
             UNIQUE(media_id)
@@ -215,15 +224,128 @@ def init_db():
         ON release_items(release_id, position)
     """)
 
+    # v1.3.7: External identifiers (ISBN-13, UPC, IMDb, MusicBrainz, …)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS release_identifiers (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            release_id INTEGER NOT NULL,
+            id_type    TEXT NOT NULL,
+            value      TEXT NOT NULL,
+            FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+            UNIQUE(release_id, id_type, value)
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_release_identifiers_type_value
+        ON release_identifiers(id_type, value)
+    """)
+
+    # v1.3.7: User-manageable list of valid subtypes per media_type.
+    # Seeded once with defaults; users/admins can add/remove entries.
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS release_subtypes (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            media_type TEXT NOT NULL,
+            name       TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(media_type, name)
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_release_subtypes_media_type
+        ON release_subtypes(media_type, sort_order)
+    """)
+
+    # v1.3.7: Multi-language titles (ISO 639-1 language codes + 'original')
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS release_titles (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            release_id INTEGER NOT NULL,
+            language   TEXT NOT NULL,
+            title      TEXT NOT NULL,
+            FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+            UNIQUE(release_id, language)
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_release_titles_release
+        ON release_titles(release_id)
+    """)
+
+    # v1.3.7: Cover images (front/back/disc/inlay/…) for releases and items
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS release_covers (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            release_id INTEGER,
+            item_id    INTEGER,
+            cover_type TEXT NOT NULL DEFAULT 'front',
+            path       TEXT,
+            url        TEXT,
+            source     TEXT NOT NULL DEFAULT 'local',
+            width      INTEGER,
+            height     INTEGER,
+            FOREIGN KEY(release_id) REFERENCES releases(id) ON DELETE CASCADE,
+            FOREIGN KEY(item_id) REFERENCES release_items(id) ON DELETE CASCADE
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_release_covers_release
+        ON release_covers(release_id)
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_release_covers_item
+        ON release_covers(item_id)
+    """)
+
+    # v1.3.7: Scraper plugin registry (IMDb, TMDb, MusicBrainz, …)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scraper_sources (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            name       TEXT NOT NULL UNIQUE,
+            media_type TEXT,
+            base_url   TEXT,
+            enabled    BOOLEAN NOT NULL DEFAULT 1,
+            priority   INTEGER NOT NULL DEFAULT 0,
+            config     TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_scraper_sources_media_type
+        ON scraper_sources(media_type, priority)
+    """)
+
     conn.commit()
 
+    # -----------------------------------------------------------------------
     # Migration: Add columns if missing (for existing databases)
+    # -----------------------------------------------------------------------
+    _migrate_media_columns(cursor, conn)
+    _migrate_releases_columns(cursor, conn)
+    _migrate_release_items_columns(cursor, conn)
+
+    # Migration: Populate media_tags from existing JSON tags column
+    _migrate_tags_to_table(cursor, conn)
+
+    # Migration: Populate media_type from legacy type column
+    _migrate_release_media_type(cursor, conn)
+
+    # Seed release_subtypes with built-in defaults (idempotent)
+    _seed_release_subtypes(cursor, conn)
+
+    # Seed scraper_sources with well-known defaults (idempotent)
+    _seed_scraper_sources(cursor, conn)
+
+    conn.commit()
+    conn.close()
+
+
+def _migrate_media_columns(cursor, conn):
     new_columns = [
         ("category", "TEXT"),
         ("extension", "TEXT"),
         ("container", "TEXT"),
         ("tag_type", "TEXT"),
-        ("codec", "TEXT")
+        ("codec", "TEXT"),
     ]
     for col_name, col_type in new_columns:
         try:
@@ -232,11 +354,51 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # Already exists
 
-    # Migration: Populate media_tags from existing JSON tags column
-    _migrate_tags_to_table(cursor, conn)
 
+def _migrate_releases_columns(cursor, conn):
+    new_cols = [
+        ("media_type",        "TEXT"),
+        ("subtype",           "TEXT"),
+        ("parent_release_id", "INTEGER"),
+        ("video_standard",    "TEXT"),
+        ("region",            "TEXT"),
+        ("container_type",    "TEXT"),
+        ("disc_format",       "TEXT"),
+        ("total_discs",       "INTEGER"),
+    ]
+    for col_name, col_type in new_cols:
+        try:
+            cursor.execute(f"ALTER TABLE releases ADD COLUMN {col_name} {col_type}")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # Already exists
+
+    # Create indexes now that columns are guaranteed present
+    for idx_sql in (
+        "CREATE INDEX IF NOT EXISTS idx_releases_media_type ON releases(media_type)",
+        "CREATE INDEX IF NOT EXISTS idx_releases_subtype    ON releases(subtype)",
+    ):
+        try:
+            cursor.execute(idx_sql)
+        except sqlite3.OperationalError:
+            pass
     conn.commit()
-    conn.close()
+
+
+def _migrate_release_items_columns(cursor, conn):
+    new_cols = [
+        ("disc_number", "INTEGER"),
+        ("disc_type",   "TEXT"),
+        ("disc_label",  "TEXT"),
+    ]
+    for col_name, col_type in new_cols:
+        try:
+            cursor.execute(
+                f"ALTER TABLE release_items ADD COLUMN {col_name} {col_type}"
+            )
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
 
 
 def _migrate_tags_to_table(cursor, conn):
@@ -266,6 +428,100 @@ def _migrate_tags_to_table(cursor, conn):
                 f"(malformed JSON): {exc}",
                 file=sys.stderr,
             )
+
+
+# Mapping from v1.3.5 legacy `type` values to the v1.3.7 `media_type` column.
+_LEGACY_TYPE_TO_MEDIA_TYPE = {
+    'Music':    'Audio',
+    'Film':     'Video',
+    'EBook':    'Document',
+    'Document': 'Document',
+    'Audio':    'Audio',
+    'Video':    'Video',
+    'Image':    'Image',
+}
+
+# Default subtypes seeded into release_subtypes on first init.
+_DEFAULT_SUBTYPES: dict[str, list[tuple[str, int]]] = {
+    'Audio': [
+        ('Album', 10), ('Compilation', 20), ('Audiobook', 30), ('Classical', 40),
+        ('Soundtrack', 50), ('Single', 60), ('EP', 70), ('Live', 80),
+    ],
+    'Video': [
+        ('Film', 10), ('Series', 20), ('Documentary', 30), ('Trailer', 40),
+        ('BonusContent', 50), ('Short', 60),
+    ],
+    'Document': [
+        ('EBook', 10), ('Manual', 20), ('Article', 30), ('Comic', 40),
+    ],
+    'Image': [
+        ('Photo', 10), ('Artwork', 20), ('Cover', 30),
+    ],
+}
+
+# Default scraper sources seeded on first init.
+_DEFAULT_SCRAPER_SOURCES: list[dict] = [
+    {'name': 'IMDb',         'media_type': 'Video',    'base_url': 'https://www.imdb.com',               'priority': 10},
+    {'name': 'TMDb',         'media_type': 'Video',    'base_url': 'https://api.themoviedb.org/3',        'priority': 20},
+    {'name': 'MusicBrainz',  'media_type': 'Audio',    'base_url': 'https://musicbrainz.org',             'priority': 10},
+    {'name': 'CoverArtArchive', 'media_type': 'Audio', 'base_url': 'https://coverartarchive.org',         'priority': 20},
+    {'name': 'OpenLibrary',  'media_type': 'Document', 'base_url': 'https://openlibrary.org',             'priority': 10},
+    {'name': 'GoogleBooks',  'media_type': 'Document', 'base_url': 'https://www.googleapis.com/books/v1', 'priority': 20},
+]
+
+
+def _migrate_release_media_type(cursor, conn):
+    """
+    @brief Populates media_type from the legacy type column for existing releases.
+    @details Befüllt media_type aus dem alten type-Feld (v1.3.7-Migration).
+    """
+    cursor.execute("""
+        SELECT id, type FROM releases
+        WHERE media_type IS NULL OR media_type = ''
+    """)
+    rows = cursor.fetchall()
+    for release_id, legacy_type in rows:
+        media_type = _LEGACY_TYPE_TO_MEDIA_TYPE.get(legacy_type, 'Audio')
+        cursor.execute(
+            "UPDATE releases SET media_type = ? WHERE id = ?",
+            (media_type, release_id),
+        )
+    conn.commit()
+
+
+def _seed_release_subtypes(cursor, conn):
+    """
+    @brief Seeds the release_subtypes table with default values (idempotent).
+    @details Befüllt release_subtypes mit Standard-Einträgen (v1.3.7).
+    """
+    for media_type, entries in _DEFAULT_SUBTYPES.items():
+        for name, sort_order in entries:
+            try:
+                cursor.execute(
+                    "INSERT INTO release_subtypes (media_type, name, sort_order) "
+                    "VALUES (?, ?, ?)",
+                    (media_type, name, sort_order),
+                )
+            except sqlite3.IntegrityError:
+                pass  # Already exists
+    conn.commit()
+
+
+def _seed_scraper_sources(cursor, conn):
+    """
+    @brief Seeds the scraper_sources table with well-known defaults (idempotent).
+    @details Befüllt scraper_sources mit Standard-Scrapern (v1.3.7).
+    """
+    for src in _DEFAULT_SCRAPER_SOURCES:
+        try:
+            cursor.execute(
+                "INSERT INTO scraper_sources (name, media_type, base_url, priority) "
+                "VALUES (?, ?, ?, ?)",
+                (src['name'], src['media_type'], src['base_url'], src['priority']),
+            )
+        except sqlite3.IntegrityError:
+            pass  # Already exists
+    conn.commit()
 
 
 def get_known_media_names():
@@ -577,44 +833,66 @@ def get_tag_value(name, key):
 
 
 # ===========================================================================
-# Release API (v1.3.5)
+# Release API (v1.3.5 / v1.3.7)
 # ===========================================================================
 # A Release groups one or more filesystem items (media rows) into a logical
-# unit – e.g. a music album, a film, an audiobook.  The table stores only
-# minimal status fields; all scraper-enriched data lives in scraper_data
-# (a Python dict serialised to JSON via json.dumps).
+# unit – e.g. a music album, a film, an audiobook, or an ebook bundle.
 #
-# Valid values for `type`:   Music | Film | EBook | Document
-# Valid values for `status`: pending | scraped | verified | ignored
+# media_type:    Audio | Video | Document | Image
+# subtype:       defined per media_type in the release_subtypes table
+#
+# Video-specific:
+#   video_standard:  PAL | NTSC | SECAM
+#   region:          ISO 3166-1 alpha-2 country code (DE, UK, US, JP, …)
+#   container_type:  Blu-ray | PAL DVD | NTSC DVD | VCD | HD DVD | WMV DVD | Digital
+#   disc_format:     ISO | BIN | MKV | MP4 | AVI | …
+#   total_discs:     integer number of discs in the release
+#
+# status: pending | scraped | verified | ignored
 # ===========================================================================
 
 
 def insert_release(title, release_type='Music', year=None, cut=None,
-                   status='pending', scraper_data=None):
+                   status='pending', scraper_data=None, *,
+                   media_type=None, subtype=None, parent_release_id=None,
+                   video_standard=None, region=None, container_type=None,
+                   disc_format=None, total_discs=None):
     """
     @brief Inserts a new release record into the database.
-    @details Legt einen neuen Release-Datensatz in der Datenbank an (v1.3.5).
-    @param title   Release title (album name, film title, …).
-    @param release_type  Media type: 'Music', 'Film', 'EBook', 'Document'.
-    @param year    Release year (integer or None).
-    @param cut     Cut/edition string for films ('Theatrical Cut', …) or None.
-    @param status  Scraper status: 'pending' | 'scraped' | 'verified' | 'ignored'.
-    @param scraper_data  Optional dict with scraper-provided metadata.
-    @return Newly created release id / Neue Release-ID.
+    @details Legt einen neuen Release-Datensatz an (v1.3.5/v1.3.7).
+    @param title             Release title.
+    @param release_type      Legacy type kept for backward compat ('Music', 'Film', …).
+    @param year              Release year (integer or None).
+    @param cut               Cut/edition string ('Director''s Cut', 'Extended Cut', …).
+    @param status            'pending' | 'scraped' | 'verified' | 'ignored'.
+    @param scraper_data      Optional dict with scraper-provided metadata.
+    @param media_type        'Audio' | 'Video' | 'Document' | 'Image'.  Derived from
+                             release_type when omitted.
+    @param subtype           Subtype name from release_subtypes (e.g. 'Album', 'Film').
+    @param parent_release_id FK to releases.id for bonus-content / child releases.
+    @param video_standard    'PAL' | 'NTSC' | 'SECAM' (Video releases).
+    @param region            ISO 3166-1 alpha-2 country code, e.g. 'DE', 'US'.
+    @param container_type    Physical/logical container: 'Blu-ray', 'PAL DVD', …
+    @param disc_format       File format of the disc image: 'ISO', 'BIN', 'MKV', …
+    @param total_discs       Number of discs in the release.
+    @return Newly created release id.
     """
+    if media_type is None:
+        media_type = _LEGACY_TYPE_TO_MEDIA_TYPE.get(release_type, 'Audio')
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO releases (title, type, year, cut, status, scraper_data)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO releases
+            (title, type, media_type, subtype, year, cut, status, scraper_data,
+             parent_release_id, video_standard, region, container_type,
+             disc_format, total_discs)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        title,
-        release_type,
-        year,
-        cut,
-        status,
+        title, release_type, media_type, subtype, year, cut, status,
         json.dumps(scraper_data) if scraper_data is not None else None,
+        parent_release_id, video_standard, region, container_type,
+        disc_format, total_discs,
     ))
     conn.commit()
     release_id = cursor.lastrowid
@@ -624,10 +902,10 @@ def insert_release(title, release_type='Music', year=None, cut=None,
 
 def get_release(release_id):
     """
-    @brief Returns a single release record as a dictionary.
-    @details Gibt einen Release-Datensatz als Dictionary zurück (v1.3.5).
+    @brief Returns a single release record as a dictionary, including titles and identifiers.
+    @details Gibt einen Release-Datensatz inkl. Titeln und Identifikatoren zurück (v1.3.7).
     @param release_id  Primary key of the release.
-    @return Release dict or None / Release-Dict oder None.
+    @return Release dict or None.
     """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
@@ -635,39 +913,52 @@ def get_release(release_id):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM releases WHERE id = ?", (release_id,))
     row = cursor.fetchone()
-    conn.close()
     if row is None:
+        conn.close()
         return None
-    return _release_row_to_dict(row)
+    result = _release_row_to_dict(row)
+    result['identifiers'] = _fetch_identifiers(cursor, release_id)
+    result['titles'] = _fetch_titles(cursor, release_id)
+    conn.close()
+    return result
 
 
-def get_all_releases(release_type=None, status=None):
+def get_all_releases(release_type=None, status=None, media_type=None,
+                     subtype=None):
     """
     @brief Returns all release records, with optional filters.
-    @details Gibt alle Release-Datensätze zurück (v1.3.5).
-    @param release_type  Optional type filter ('Music', 'Film', …).
-    @param status        Optional status filter ('pending', 'scraped', …).
-    @return List of release dicts / Liste von Release-Dictionaries.
+    @details Gibt alle Release-Datensätze zurück (v1.3.5/v1.3.7).
+    @param release_type  Optional legacy type filter.
+    @param status        Optional status filter.
+    @param media_type    Optional 'Audio' | 'Video' | 'Document' | 'Image' filter.
+    @param subtype       Optional subtype filter.
+    @return List of release dicts.
     """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    query = "SELECT * FROM releases"
-    params = []
-    filters = []
+    sql = "SELECT * FROM releases"
+    params: list = []
+    filters: list[str] = []
     if release_type is not None:
         filters.append("type = ?")
         params.append(release_type)
+    if media_type is not None:
+        filters.append("media_type = ?")
+        params.append(media_type)
+    if subtype is not None:
+        filters.append("subtype = ?")
+        params.append(subtype)
     if status is not None:
         filters.append("status = ?")
         params.append(status)
     if filters:
-        query += " WHERE " + " AND ".join(filters)
-    query += " ORDER BY title"
+        sql += " WHERE " + " AND ".join(filters)
+    sql += " ORDER BY title"
 
-    cursor.execute(query, params)
+    cursor.execute(sql, params)
     rows = cursor.fetchall()
     conn.close()
     return [_release_row_to_dict(r) for r in rows]
@@ -680,7 +971,7 @@ def update_release_scraper_data(release_id, scraper_data, status='scraped'):
     @param release_id   Primary key of the release.
     @param scraper_data Python dict with scraper-provided metadata.
     @param status       New status value (default: 'scraped').
-    @return True if the record was found and updated / True wenn aktualisiert.
+    @return True if the record was found and updated.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -713,29 +1004,36 @@ def update_release_status(release_id, status):
 
 def delete_release(release_id):
     """
-    @brief Deletes a release and its release_items bridge rows.
-    @details Löscht einen Release inkl. release_items-Einträge (v1.3.5).
+    @brief Deletes a release and all dependent rows (items, identifiers, titles, covers).
+    @details Löscht einen Release inkl. aller abhängigen Einträge (v1.3.5/v1.3.7).
     @param release_id  Primary key of the release.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM release_items WHERE release_id = ?", (release_id,))
-        cursor.execute("DELETE FROM releases WHERE id = ?", (release_id,))
+        cursor.execute("DELETE FROM release_covers      WHERE release_id = ?", (release_id,))
+        cursor.execute("DELETE FROM release_identifiers WHERE release_id = ?", (release_id,))
+        cursor.execute("DELETE FROM release_titles      WHERE release_id = ?", (release_id,))
+        cursor.execute("DELETE FROM release_items       WHERE release_id = ?", (release_id,))
+        cursor.execute("DELETE FROM releases            WHERE id = ?",         (release_id,))
         conn.commit()
     finally:
         conn.close()
 
 
-def assign_item_to_release(release_id, media_name, position=None):
+def assign_item_to_release(release_id, media_name, position=None, *,
+                           disc_number=None, disc_type=None, disc_label=None):
     """
     @brief Assigns a media item (file) to a release.
-    @details Weist einem Release ein Medien-Item zu (v1.3.5).
+    @details Weist einem Release ein Medien-Item zu (v1.3.5/v1.3.7).
              A media item can belong to exactly one release.
     @param release_id   Release primary key.
     @param media_name   Unique name of the media item (media.name).
-    @param position     Track / disc position within the release (optional).
-    @return True if successfully assigned / True wenn erfolgreich zugewiesen.
+    @param position     Track / global position within the release.
+    @param disc_number  Disc number for multi-disc releases (1, 2, …).
+    @param disc_type    'Film' | 'Bonus' | 'Soundtrack' | 'Extra' | 'Document'.
+    @param disc_label   Human-readable disc label, e.g. 'Disc 1 – Extended Cut'.
+    @return True if successfully assigned.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -746,9 +1044,10 @@ def assign_item_to_release(release_id, media_name, position=None):
             return False
         media_id = row[0]
         cursor.execute("""
-            INSERT OR REPLACE INTO release_items (release_id, media_id, position)
-            VALUES (?, ?, ?)
-        """, (release_id, media_id, position))
+            INSERT OR REPLACE INTO release_items
+                (release_id, media_id, position, disc_number, disc_type, disc_label)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (release_id, media_id, position, disc_number, disc_type, disc_label))
         conn.commit()
         return True
     except sqlite3.IntegrityError:
@@ -762,7 +1061,7 @@ def remove_item_from_release(media_name):
     @brief Removes a media item from its current release.
     @details Entfernt ein Medien-Item aus seinem Release (v1.3.5).
     @param media_name  Unique name of the media item.
-    @return True if a row was removed / True wenn eine Zeile entfernt wurde.
+    @return True if a row was removed.
     """
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -779,10 +1078,10 @@ def remove_item_from_release(media_name):
 
 def get_release_items(release_id):
     """
-    @brief Returns all media items belonging to a release, ordered by position.
-    @details Gibt alle Medien-Items eines Releases zurück (v1.3.5).
+    @brief Returns all media items belonging to a release, ordered by disc/position.
+    @details Gibt alle Medien-Items eines Releases zurück (v1.3.5/v1.3.7).
     @param release_id  Release primary key.
-    @return List of dicts with media fields + position.
+    @return List of dicts with media fields + position + disc metadata.
     """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
@@ -791,11 +1090,12 @@ def get_release_items(release_id):
     cursor.execute("""
         SELECT m.name, m.path, m.type, m.duration, m.category, m.extension,
                m.container, m.tag_type, m.codec, m.is_transcoded,
-               m.transcoded_format, m.tags, ri.position
+               m.transcoded_format, m.tags,
+               ri.position, ri.disc_number, ri.disc_type, ri.disc_label
         FROM release_items ri
         JOIN media m ON m.id = ri.media_id
         WHERE ri.release_id = ?
-        ORDER BY ri.position, m.name
+        ORDER BY ri.disc_number, ri.position, m.name
     """, (release_id,))
     rows = cursor.fetchall()
     conn.close()
@@ -803,19 +1103,22 @@ def get_release_items(release_id):
     result = []
     for row in rows:
         result.append({
-            'name': row['name'],
-            'path': row['path'],
-            'type': row['type'],
-            'duration': row['duration'],
-            'category': row['category'],
-            'extension': row['extension'],
-            'container': row['container'],
-            'tag_type': row['tag_type'],
-            'codec': row['codec'],
-            'is_transcoded': bool(row['is_transcoded']),
+            'name':             row['name'],
+            'path':             row['path'],
+            'type':             row['type'],
+            'duration':         row['duration'],
+            'category':         row['category'],
+            'extension':        row['extension'],
+            'container':        row['container'],
+            'tag_type':         row['tag_type'],
+            'codec':            row['codec'],
+            'is_transcoded':    bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {},
-            'position': row['position'],
+            'tags':             json.loads(row['tags']) if row['tags'] else {},
+            'position':         row['position'],
+            'disc_number':      row['disc_number'],
+            'disc_type':        row['disc_type'],
+            'disc_label':       row['disc_label'],
         })
     return result
 
@@ -823,9 +1126,9 @@ def get_release_items(release_id):
 def get_item_release(media_name):
     """
     @brief Returns the release a media item belongs to, or None.
-    @details Gibt den Release eines Medien-Items zurück (v1.3.5).
+    @details Gibt den Release eines Medien-Items zurück (v1.3.5/v1.3.7).
     @param media_name  Unique name of the media item.
-    @return Release dict or None.
+    @return Release dict (including identifiers and titles) or None.
     """
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
@@ -839,16 +1142,24 @@ def get_item_release(media_name):
         WHERE m.name = ?
     """, (media_name,))
     row = cursor.fetchone()
+    if row is None:
+        conn.close()
+        return None
+    result = _release_row_to_dict(row)
+    result['identifiers'] = _fetch_identifiers(cursor, result['id'])
+    result['titles']      = _fetch_titles(cursor, result['id'])
     conn.close()
-    return _release_row_to_dict(row) if row else None
+    return result
 
 
-def search_releases(query, release_type=None):
+def search_releases(query, release_type=None, media_type=None, subtype=None):
     """
     @brief Full-text substring search on release titles.
-    @details Sucht in Release-Titeln nach einer Zeichenkette (v1.3.5).
+    @details Sucht in Release-Titeln nach einer Zeichenkette (v1.3.5/v1.3.7).
     @param query        Substring to search for.
-    @param release_type Optional type filter.
+    @param release_type Optional legacy type filter.
+    @param media_type   Optional media_type filter ('Audio', 'Video', …).
+    @param subtype      Optional subtype filter.
     @return List of matching release dicts.
     """
     init_db()
@@ -856,28 +1167,49 @@ def search_releases(query, release_type=None):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
+    sql = "SELECT * FROM releases WHERE title LIKE ?"
+    params: list = [f"%{query}%"]
     if release_type is not None:
-        cursor.execute("""
-            SELECT * FROM releases
-            WHERE title LIKE ? AND type = ?
-            ORDER BY title
-        """, (f"%{query}%", release_type))
-    else:
-        cursor.execute("""
-            SELECT * FROM releases
-            WHERE title LIKE ?
-            ORDER BY title
-        """, (f"%{query}%",))
+        sql += " AND type = ?"
+        params.append(release_type)
+    if media_type is not None:
+        sql += " AND media_type = ?"
+        params.append(media_type)
+    if subtype is not None:
+        sql += " AND subtype = ?"
+        params.append(subtype)
+    sql += " ORDER BY title"
 
+    cursor.execute(sql, params)
     rows = cursor.fetchall()
     conn.close()
     return [_release_row_to_dict(r) for r in rows]
 
 
+def _fetch_identifiers(cursor, release_id):
+    """Returns identifiers for a release as list of {id_type, value} dicts."""
+    cursor.execute("""
+        SELECT id_type, value FROM release_identifiers
+        WHERE release_id = ?
+        ORDER BY id_type, value
+    """, (release_id,))
+    return [{'id_type': r[0], 'value': r[1]} for r in cursor.fetchall()]
+
+
+def _fetch_titles(cursor, release_id):
+    """Returns multi-language titles as {language: title} dict."""
+    cursor.execute("""
+        SELECT language, title FROM release_titles
+        WHERE release_id = ?
+        ORDER BY language
+    """, (release_id,))
+    return {r[0]: r[1] for r in cursor.fetchall()}
+
+
 def _release_row_to_dict(row):
     """
     @brief Converts a releases table row to a Python dictionary.
-    @details Wandelt eine releases-Zeile in ein Dictionary um.
+    @details Wandelt eine releases-Zeile in ein Dictionary um (v1.3.5/v1.3.7).
     @param row  sqlite3.Row from the releases table.
     @return Release dict with scraper_data deserialized.
     """
@@ -886,13 +1218,425 @@ def _release_row_to_dict(row):
         scraper_parsed = json.loads(scraper_raw) if scraper_raw else None
     except (json.JSONDecodeError, TypeError):
         scraper_parsed = scraper_raw
+
+    keys = row.keys()
     return {
-        'id': row['id'],
-        'title': row['title'],
-        'type': row['type'],
-        'year': row['year'],
-        'cut': row['cut'],
-        'status': row['status'],
-        'scraper_data': scraper_parsed,
-        'created_at': row['created_at'],
+        'id':                row['id'],
+        'title':             row['title'],
+        'type':              row['type'],
+        'media_type':        row['media_type']        if 'media_type'        in keys else None,
+        'subtype':           row['subtype']           if 'subtype'           in keys else None,
+        'year':              row['year'],
+        'cut':               row['cut'],
+        'status':            row['status'],
+        'scraper_data':      scraper_parsed,
+        'parent_release_id': row['parent_release_id'] if 'parent_release_id' in keys else None,
+        'video_standard':    row['video_standard']    if 'video_standard'    in keys else None,
+        'region':            row['region']            if 'region'            in keys else None,
+        'container_type':    row['container_type']    if 'container_type'    in keys else None,
+        'disc_format':       row['disc_format']       if 'disc_format'       in keys else None,
+        'total_discs':       row['total_discs']       if 'total_discs'       in keys else None,
+        'created_at':        row['created_at'],
     }
+
+
+# ===========================================================================
+# Release Identifiers API (v1.3.7)
+# ===========================================================================
+# A release can carry any number of external identifiers:
+#   ISBN-13, ISBN-10, ISBN, ISSN, DOI
+#   UPC, EAN, Barcode, Catalog
+#   IMDb, TMDb, MusicBrainz, ASIN
+# ===========================================================================
+
+
+def add_release_identifier(release_id, id_type, value):
+    """
+    @brief Adds an external identifier to a release.
+    @param release_id  Release primary key.
+    @param id_type     Identifier type, e.g. 'ISBN-13', 'UPC', 'IMDb'.
+    @param value       Identifier value string.
+    @return True if newly inserted, False if it already existed.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO release_identifiers (release_id, id_type, value)
+            VALUES (?, ?, ?)
+        """, (release_id, id_type, value))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def get_release_identifiers(release_id):
+    """
+    @brief Returns all identifiers for a release.
+    @param release_id  Release primary key.
+    @return List of {'id_type': ..., 'value': ...} dicts.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_type, value FROM release_identifiers
+        WHERE release_id = ?
+        ORDER BY id_type, value
+    """, (release_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [{'id_type': r[0], 'value': r[1]} for r in rows]
+
+
+def remove_release_identifier(release_id, id_type, value):
+    """
+    @brief Removes a specific identifier from a release.
+    @return True if a row was removed.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM release_identifiers
+            WHERE release_id = ? AND id_type = ? AND value = ?
+        """, (release_id, id_type, value))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def get_releases_by_identifier(id_type, value):
+    """
+    @brief Returns all releases that carry a specific identifier.
+    @param id_type  Identifier type string.
+    @param value    Identifier value to match exactly.
+    @return List of release dicts.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT r.* FROM releases r
+        JOIN release_identifiers ri ON ri.release_id = r.id
+        WHERE ri.id_type = ? AND ri.value = ?
+        ORDER BY r.title
+    """, (id_type, value))
+    rows = cursor.fetchall()
+    conn.close()
+    return [_release_row_to_dict(r) for r in rows]
+
+
+# ===========================================================================
+# Release Subtypes API (v1.3.7)
+# ===========================================================================
+# The release_subtypes table is the authoritative list of valid subtype values
+# per media_type.  Users/admins can add custom entries; built-in defaults are
+# seeded on init_db().
+# ===========================================================================
+
+
+def get_release_subtypes(media_type=None):
+    """
+    @brief Returns the list of defined subtypes, optionally filtered by media_type.
+    @param media_type  Optional filter ('Audio', 'Video', 'Document', 'Image').
+    @return List of {'media_type': ..., 'name': ..., 'sort_order': ...} dicts.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    if media_type is not None:
+        cursor.execute("""
+            SELECT media_type, name, sort_order FROM release_subtypes
+            WHERE media_type = ?
+            ORDER BY sort_order, name
+        """, (media_type,))
+    else:
+        cursor.execute("""
+            SELECT media_type, name, sort_order FROM release_subtypes
+            ORDER BY media_type, sort_order, name
+        """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [{'media_type': r[0], 'name': r[1], 'sort_order': r[2]} for r in rows]
+
+
+def add_release_subtype(media_type, name, sort_order=0):
+    """
+    @brief Adds a new subtype entry to the release_subtypes table.
+    @param media_type   'Audio' | 'Video' | 'Document' | 'Image'.
+    @param name         Subtype name (e.g. 'Extended Cut').
+    @param sort_order   Display sort order (default 0).
+    @return True if newly inserted, False if already existed.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO release_subtypes (media_type, name, sort_order)
+            VALUES (?, ?, ?)
+        """, (media_type, name, sort_order))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def remove_release_subtype(media_type, name):
+    """
+    @brief Removes a subtype entry from the release_subtypes table.
+    @return True if a row was removed.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM release_subtypes WHERE media_type = ? AND name = ?
+        """, (media_type, name))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+# ===========================================================================
+# Release Titles API (v1.3.7)
+# ===========================================================================
+# Film titles exist in multiple languages (German, English, original, …).
+# Language codes follow ISO 639-1 ('de', 'en', 'fr', …).
+# Use 'original' for the original-language title.
+# ===========================================================================
+
+
+def set_release_title(release_id, language, title):
+    """
+    @brief Sets (inserts or replaces) a language-specific title for a release.
+    @param release_id  Release primary key.
+    @param language    ISO 639-1 code (e.g. 'de', 'en') or 'original'.
+    @param title       Title string in that language.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT OR REPLACE INTO release_titles (release_id, language, title)
+            VALUES (?, ?, ?)
+        """, (release_id, language, title))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_release_titles(release_id):
+    """
+    @brief Returns all language-specific titles for a release.
+    @param release_id  Release primary key.
+    @return Dict {language: title}, e.g. {'de': 'Der Pate', 'en': 'The Godfather'}.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT language, title FROM release_titles
+        WHERE release_id = ?
+        ORDER BY language
+    """, (release_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {r[0]: r[1] for r in rows}
+
+
+def remove_release_title(release_id, language):
+    """
+    @brief Removes the title for a specific language.
+    @return True if a row was removed.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM release_titles WHERE release_id = ? AND language = ?
+        """, (release_id, language))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+# ===========================================================================
+# Release Covers API (v1.3.7)
+# ===========================================================================
+# Covers / artwork can be attached to a release or to a specific release_item.
+# cover_type: front | back | disc | inlay | spine | poster | screenshot | …
+# source:     local | scraper | imdb | tmdb | musicbrainz | coverartarchive | …
+# ===========================================================================
+
+
+def add_release_cover(release_id=None, item_id=None, cover_type='front',
+                      path=None, url=None, source='local',
+                      width=None, height=None):
+    """
+    @brief Adds a cover image entry for a release or a release item.
+    @param release_id  Release primary key (may be None if item_id given).
+    @param item_id     release_items primary key (may be None if release_id given).
+    @param cover_type  'front' | 'back' | 'disc' | 'inlay' | 'poster' | …
+    @param path        Local filesystem path (optional).
+    @param url         Remote URL from scraper (optional).
+    @param source      Origin: 'local' | 'imdb' | 'tmdb' | 'musicbrainz' | …
+    @param width       Image width in pixels (optional).
+    @param height      Image height in pixels (optional).
+    @return Newly created cover id.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO release_covers
+                (release_id, item_id, cover_type, path, url, source, width, height)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (release_id, item_id, cover_type, path, url, source, width, height))
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_release_covers(release_id=None, item_id=None):
+    """
+    @brief Returns all cover entries for a release or item.
+    @param release_id  Filter by release (optional).
+    @param item_id     Filter by release_item (optional).
+    @return List of cover dicts.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    if release_id is not None and item_id is not None:
+        cursor.execute("""
+            SELECT * FROM release_covers
+            WHERE release_id = ? AND item_id = ?
+            ORDER BY cover_type
+        """, (release_id, item_id))
+    elif release_id is not None:
+        cursor.execute("""
+            SELECT * FROM release_covers WHERE release_id = ?
+            ORDER BY cover_type
+        """, (release_id,))
+    elif item_id is not None:
+        cursor.execute("""
+            SELECT * FROM release_covers WHERE item_id = ?
+            ORDER BY cover_type
+        """, (item_id,))
+    else:
+        return []
+
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def remove_release_cover(cover_id):
+    """
+    @brief Removes a cover entry by its primary key.
+    @return True if a row was removed.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM release_covers WHERE id = ?", (cover_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+# ===========================================================================
+# Scraper Sources API (v1.3.7)
+# ===========================================================================
+# The scraper_sources table is the plugin registry for media scrapers.
+# Well-known sources (IMDb, TMDb, MusicBrainz, …) are seeded on init_db().
+# ===========================================================================
+
+
+def get_scraper_sources(media_type=None, enabled_only=False):
+    """
+    @brief Returns registered scraper sources, ordered by priority.
+    @param media_type   Optional filter ('Video', 'Audio', 'Document', or None for all).
+    @param enabled_only Return only enabled sources when True.
+    @return List of scraper source dicts.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    sql = "SELECT * FROM scraper_sources"
+    params: list = []
+    filters: list[str] = []
+    if media_type is not None:
+        filters.append("(media_type = ? OR media_type IS NULL)")
+        params.append(media_type)
+    if enabled_only:
+        filters.append("enabled = 1")
+    if filters:
+        sql += " WHERE " + " AND ".join(filters)
+    sql += " ORDER BY priority, name"
+
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def register_scraper_source(name, media_type=None, base_url=None,
+                             priority=0, config=None):
+    """
+    @brief Registers a new scraper source / plugin.
+    @param name        Unique name, e.g. 'MyIMDbPlugin'.
+    @param media_type  'Video' | 'Audio' | 'Document' | 'Image' | None (all).
+    @param base_url    Base URL for the API endpoint.
+    @param priority    Lower value = higher priority.
+    @param config      Optional dict with plugin-specific configuration.
+    @return Scraper source id.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT OR REPLACE INTO scraper_sources
+                (name, media_type, base_url, priority, config)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            name, media_type, base_url, priority,
+            json.dumps(config) if config is not None else None,
+        ))
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def set_scraper_source_enabled(name, enabled):
+    """
+    @brief Enables or disables a scraper source.
+    @return True if the row was found and updated.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE scraper_sources SET enabled = ? WHERE name = ?
+        """, (1 if enabled else 0, name))
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()

@@ -544,3 +544,535 @@ def test_film_release_multiple_formats(temp_db):
     items = db.get_release_items(rid)
     assert len(items) == 3
     assert items[0]['name'] == 'dune.mkv'
+
+
+# ===========================================================================
+# v1.3.7 Tests – media_type / subtype / identifiers / disc / titles / covers
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Step 17: media_type and subtype stored on insert
+# ---------------------------------------------------------------------------
+
+def test_insert_release_media_type_and_subtype(temp_db):
+    rid = db.insert_release('Kind of Blue', release_type='Music', year=1959,
+                             media_type='Audio', subtype='Album')
+    r = db.get_release(rid)
+    assert r['media_type'] == 'Audio'
+    assert r['subtype'] == 'Album'
+
+
+def test_insert_release_derives_media_type_from_release_type(temp_db):
+    cases = [('Music', 'Audio'), ('Film', 'Video'), ('EBook', 'Document')]
+    for rtype, expected in cases:
+        rid = db.insert_release(f'Test {rtype}', release_type=rtype)
+        assert db.get_release(rid)['media_type'] == expected, \
+            f"Expected {expected} for release_type={rtype!r}"
+
+
+def test_insert_release_audio_subtypes(temp_db):
+    for sub in ['Album', 'Compilation', 'Audiobook', 'Classical', 'Soundtrack',
+                'Single', 'EP', 'Live']:
+        rid = db.insert_release(f'{sub} release', media_type='Audio', subtype=sub)
+        assert db.get_release(rid)['subtype'] == sub
+
+
+def test_insert_release_video_subtypes(temp_db):
+    for sub in ['Film', 'Series', 'Documentary', 'Trailer', 'BonusContent', 'Short']:
+        rid = db.insert_release(f'{sub} release', release_type='Film',
+                                 media_type='Video', subtype=sub)
+        r = db.get_release(rid)
+        assert r['media_type'] == 'Video' and r['subtype'] == sub
+
+
+def test_insert_release_document_subtype(temp_db):
+    rid = db.insert_release('Clean Code', release_type='EBook',
+                             media_type='Document', subtype='EBook', year=2008)
+    r = db.get_release(rid)
+    assert r['media_type'] == 'Document' and r['subtype'] == 'EBook'
+
+
+# ---------------------------------------------------------------------------
+# Step 18: Video-specific fields (video_standard, region, container_type, …)
+# ---------------------------------------------------------------------------
+
+def test_video_pal_de_release(temp_db):
+    rid = db.insert_release('Der Pate', release_type='Film', year=1972,
+                             media_type='Video', subtype='Film',
+                             video_standard='PAL', region='DE',
+                             container_type='PAL DVD', disc_format='ISO',
+                             total_discs=2)
+    r = db.get_release(rid)
+    assert r['video_standard'] == 'PAL'
+    assert r['region'] == 'DE'
+    assert r['container_type'] == 'PAL DVD'
+    assert r['disc_format'] == 'ISO'
+    assert r['total_discs'] == 2
+
+
+def test_video_ntsc_us_release(temp_db):
+    rid = db.insert_release('Blade Runner', release_type='Film', year=1982,
+                             media_type='Video', subtype='Film',
+                             video_standard='NTSC', region='US',
+                             container_type='NTSC DVD', disc_format='ISO')
+    r = db.get_release(rid)
+    assert r['video_standard'] == 'NTSC'
+    assert r['region'] == 'US'
+
+
+def test_bluray_release(temp_db):
+    rid = db.insert_release('Dune', release_type='Film', year=2021,
+                             media_type='Video', subtype='Film',
+                             container_type='Blu-ray', disc_format='ISO',
+                             total_discs=3)
+    r = db.get_release(rid)
+    assert r['container_type'] == 'Blu-ray'
+    assert r['total_discs'] == 3
+
+
+def test_video_standard_defaults_none(temp_db):
+    rid = db.insert_release('Basic Release', media_type='Audio', subtype='Album')
+    r = db.get_release(rid)
+    assert r['video_standard'] is None
+    assert r['region'] is None
+
+
+# ---------------------------------------------------------------------------
+# Step 19: parent_release_id for bonus content
+# ---------------------------------------------------------------------------
+
+def test_parent_release_id(temp_db):
+    parent = db.insert_release('Dune', media_type='Video', subtype='Film', year=2021)
+    bonus  = db.insert_release('Dune – Behind the Scenes', media_type='Video',
+                                subtype='BonusContent', parent_release_id=parent)
+    r = db.get_release(bonus)
+    assert r['parent_release_id'] == parent
+    assert r['subtype'] == 'BonusContent'
+
+
+def test_parent_release_id_default_none(temp_db):
+    rid = db.insert_release('Normal Album', media_type='Audio', subtype='Album')
+    assert db.get_release(rid)['parent_release_id'] is None
+
+
+# ---------------------------------------------------------------------------
+# Step 20: Multi-disc releases (disc_number, disc_type, disc_label)
+# ---------------------------------------------------------------------------
+
+def _film_item(name, ext='iso'):
+    return {
+        'name': name, 'path': f'/films/{name}', 'type': ext,
+        'duration': '2:00:00', 'is_transcoded': False, 'tags': {},
+    }
+
+
+def test_multi_disc_release(temp_db):
+    """A film release can span Disc 1 (Film), Disc 2 (Bonus), Disc 3 (Soundtrack)."""
+    rid = db.insert_release('Blade Runner 2049', media_type='Video', subtype='Film',
+                             total_discs=3)
+    for fname, disc, dtype, label in [
+        ('br2049_d1.iso', 1, 'Film',       'Disc 1 – Film'),
+        ('br2049_d2.iso', 2, 'Bonus',      'Disc 2 – Bonus'),
+        ('br2049_d3.flac', 3, 'Soundtrack', 'Disc 3 – Soundtrack CD'),
+    ]:
+        db.insert_media(_film_item(fname, fname.split('.')[-1]))
+        db.assign_item_to_release(rid, fname, position=disc,
+                                   disc_number=disc, disc_type=dtype, disc_label=label)
+
+    items = db.get_release_items(rid)
+    assert len(items) == 3
+    disc1 = next(i for i in items if i['disc_number'] == 1)
+    assert disc1['disc_type'] == 'Film'
+    assert disc1['disc_label'] == 'Disc 1 – Film'
+    disc3 = next(i for i in items if i['disc_number'] == 3)
+    assert disc3['disc_type'] == 'Soundtrack'
+
+
+def test_multi_disc_ordering(temp_db):
+    """Items are ordered by disc_number then position."""
+    rid = db.insert_release('Film', media_type='Video')
+    for disc in [3, 1, 2]:
+        name = f'disc{disc}.iso'
+        db.insert_media(_film_item(name))
+        db.assign_item_to_release(rid, name, position=1, disc_number=disc)
+    items = db.get_release_items(rid)
+    assert [i['disc_number'] for i in items] == [1, 2, 3]
+
+
+def test_document_multi_format(temp_db):
+    """An EBook purchase can have PDF, EPUB and MOBI as separate items (Disc=format)."""
+    rid = db.insert_release('Clean Code', media_type='Document', subtype='EBook')
+    for fmt, pos in [('pdf', 1), ('epub', 2), ('mobi', 3)]:
+        name = f'clean_code.{fmt}'
+        db.insert_media({
+            'name': name, 'path': f'/books/{name}', 'type': fmt,
+            'duration': '', 'is_transcoded': False, 'tags': {},
+        })
+        db.assign_item_to_release(rid, name, position=pos,
+                                   disc_type='Document', disc_label=fmt.upper())
+    items = db.get_release_items(rid)
+    assert len(items) == 3
+    labels = [i['disc_label'] for i in items]
+    assert 'PDF' in labels and 'EPUB' in labels
+
+
+# ---------------------------------------------------------------------------
+# Step 21: release_identifiers (ISBN, UPC, Barcode, IMDb, …)
+# ---------------------------------------------------------------------------
+
+def test_add_and_get_identifiers(temp_db):
+    rid = db.insert_release('Clean Code', media_type='Document', subtype='EBook')
+    db.add_release_identifier(rid, 'ISBN-13', '9780132350884')
+    db.add_release_identifier(rid, 'ASIN',    'B001GSTOAM')
+
+    ids = db.get_release_identifiers(rid)
+    assert len(ids) == 2
+    imap = {i['id_type']: i['value'] for i in ids}
+    assert imap['ISBN-13'] == '9780132350884'
+
+
+def test_barcode_as_identifier(temp_db):
+    rid = db.insert_release('The Dark Knight', media_type='Video', subtype='Film')
+    db.add_release_identifier(rid, 'Barcode', '5051429701172')
+    db.add_release_identifier(rid, 'IMDb',    'tt0468569')
+    ids = db.get_release_identifiers(rid)
+    types = [i['id_type'] for i in ids]
+    assert 'Barcode' in types and 'IMDb' in types
+
+
+def test_duplicate_identifier_returns_false(temp_db):
+    rid = db.insert_release('Album', media_type='Audio')
+    db.add_release_identifier(rid, 'UPC', '123456789012')
+    assert db.add_release_identifier(rid, 'UPC', '123456789012') is False
+    assert len(db.get_release_identifiers(rid)) == 1
+
+
+def test_multiple_isbn_editions(temp_db):
+    rid = db.insert_release('Lord of the Rings', media_type='Document', subtype='EBook')
+    for isbn in ['9780618640157', '9780544003415']:
+        db.add_release_identifier(rid, 'ISBN-13', isbn)
+    vals = [i['value'] for i in db.get_release_identifiers(rid) if i['id_type'] == 'ISBN-13']
+    assert len(vals) == 2
+
+
+def test_remove_identifier(temp_db):
+    rid = db.insert_release('Book', media_type='Document')
+    db.add_release_identifier(rid, 'ISBN-13', '9780132350884')
+    db.add_release_identifier(rid, 'ASIN', 'B001GSTOAM')
+    assert db.remove_release_identifier(rid, 'ASIN', 'B001GSTOAM') is True
+    ids = db.get_release_identifiers(rid)
+    assert len(ids) == 1 and ids[0]['id_type'] == 'ISBN-13'
+
+
+def test_get_releases_by_identifier(temp_db):
+    r1 = db.insert_release('Album 1', media_type='Audio')
+    r2 = db.insert_release('Album 2', media_type='Audio')
+    db.add_release_identifier(r1, 'MusicBrainz', 'mb-001')
+    db.add_release_identifier(r2, 'MusicBrainz', 'mb-001')
+    results = db.get_releases_by_identifier('MusicBrainz', 'mb-001')
+    assert len(results) == 2
+
+
+def test_get_release_includes_identifiers(temp_db):
+    rid = db.insert_release('Dune', media_type='Document', subtype='EBook')
+    db.add_release_identifier(rid, 'ISBN-13', '9780441013593')
+    r = db.get_release(rid)
+    assert 'identifiers' in r
+    assert r['identifiers'][0]['value'] == '9780441013593'
+
+
+def test_delete_release_removes_identifiers(temp_db):
+    rid = db.insert_release('Book', media_type='Document')
+    db.add_release_identifier(rid, 'ISBN-13', '9780000000000')
+    db.delete_release(rid)
+    assert db.get_release_identifiers(rid) == []
+
+
+# ---------------------------------------------------------------------------
+# Step 22: release_subtypes (user-editable, seeded with defaults)
+# ---------------------------------------------------------------------------
+
+def test_default_subtypes_seeded(temp_db):
+    audio = db.get_release_subtypes('Audio')
+    names = [s['name'] for s in audio]
+    assert 'Album' in names and 'Audiobook' in names and 'EP' in names
+
+
+def test_default_video_subtypes_seeded(temp_db):
+    video = db.get_release_subtypes('Video')
+    names = [s['name'] for s in video]
+    assert 'Film' in names and 'Series' in names and 'BonusContent' in names
+
+
+def test_add_custom_subtype(temp_db):
+    assert db.add_release_subtype('Video', 'Extended Cut', sort_order=15) is True
+    video = db.get_release_subtypes('Video')
+    names = [s['name'] for s in video]
+    assert 'Extended Cut' in names
+
+
+def test_add_duplicate_subtype_returns_false(temp_db):
+    assert db.add_release_subtype('Audio', 'Album') is False
+
+
+def test_remove_subtype(temp_db):
+    db.add_release_subtype('Video', 'TestType', sort_order=99)
+    assert db.remove_release_subtype('Video', 'TestType') is True
+    names = [s['name'] for s in db.get_release_subtypes('Video')]
+    assert 'TestType' not in names
+
+
+def test_get_all_subtypes(temp_db):
+    all_subs = db.get_release_subtypes()
+    media_types = {s['media_type'] for s in all_subs}
+    assert {'Audio', 'Video', 'Document', 'Image'}.issubset(media_types)
+
+
+# ---------------------------------------------------------------------------
+# Step 23: release_titles (multi-language)
+# ---------------------------------------------------------------------------
+
+def test_set_and_get_release_titles(temp_db):
+    rid = db.insert_release('The Godfather', media_type='Video', subtype='Film')
+    db.set_release_title(rid, 'en', 'The Godfather')
+    db.set_release_title(rid, 'de', 'Der Pate')
+    db.set_release_title(rid, 'original', 'The Godfather')
+
+    titles = db.get_release_titles(rid)
+    assert titles['de'] == 'Der Pate'
+    assert titles['en'] == 'The Godfather'
+    assert titles['original'] == 'The Godfather'
+
+
+def test_replace_release_title(temp_db):
+    rid = db.insert_release('Test', media_type='Video')
+    db.set_release_title(rid, 'de', 'Alt')
+    db.set_release_title(rid, 'de', 'Neu')
+    assert db.get_release_titles(rid)['de'] == 'Neu'
+
+
+def test_remove_release_title(temp_db):
+    rid = db.insert_release('Film', media_type='Video')
+    db.set_release_title(rid, 'en', 'Film')
+    db.set_release_title(rid, 'de', 'Film DE')
+    assert db.remove_release_title(rid, 'de') is True
+    assert 'de' not in db.get_release_titles(rid)
+    assert 'en' in db.get_release_titles(rid)
+
+
+def test_get_release_includes_titles(temp_db):
+    rid = db.insert_release('Fight Club', media_type='Video', subtype='Film')
+    db.set_release_title(rid, 'en', 'Fight Club')
+    db.set_release_title(rid, 'de', 'Fight Club')
+    r = db.get_release(rid)
+    assert 'titles' in r
+    assert r['titles']['en'] == 'Fight Club'
+
+
+def test_delete_release_removes_titles(temp_db):
+    rid = db.insert_release('Film', media_type='Video')
+    db.set_release_title(rid, 'en', 'Film')
+    db.delete_release(rid)
+    assert db.get_release_titles(rid) == {}
+
+
+# ---------------------------------------------------------------------------
+# Step 24: release_covers
+# ---------------------------------------------------------------------------
+
+def test_add_and_get_cover(temp_db):
+    rid = db.insert_release('Thriller', media_type='Audio', subtype='Album')
+    cid = db.add_release_cover(release_id=rid, cover_type='front',
+                                path='/covers/thriller_front.jpg',
+                                source='local', width=600, height=600)
+    assert isinstance(cid, int) and cid > 0
+
+    covers = db.get_release_covers(release_id=rid)
+    assert len(covers) == 1
+    assert covers[0]['cover_type'] == 'front'
+    assert covers[0]['width'] == 600
+
+
+def test_multiple_covers_per_release(temp_db):
+    rid = db.insert_release('Album', media_type='Audio')
+    db.add_release_cover(release_id=rid, cover_type='front',
+                          url='https://example.com/front.jpg', source='musicbrainz')
+    db.add_release_cover(release_id=rid, cover_type='back',
+                          url='https://example.com/back.jpg', source='musicbrainz')
+    covers = db.get_release_covers(release_id=rid)
+    assert len(covers) == 2
+    types = {c['cover_type'] for c in covers}
+    assert 'front' in types and 'back' in types
+
+
+def test_cover_from_imdb(temp_db):
+    rid = db.insert_release('The Godfather', media_type='Video', subtype='Film')
+    db.add_release_cover(release_id=rid, cover_type='poster',
+                          url='https://m.media-amazon.com/images/M/MV5BMWMwM.jpg',
+                          source='imdb')
+    covers = db.get_release_covers(release_id=rid)
+    assert covers[0]['source'] == 'imdb'
+
+
+def test_remove_cover(temp_db):
+    rid = db.insert_release('Album', media_type='Audio')
+    cid = db.add_release_cover(release_id=rid, cover_type='front',
+                                path='/covers/front.jpg')
+    assert db.remove_release_cover(cid) is True
+    assert db.get_release_covers(release_id=rid) == []
+
+
+def test_delete_release_removes_covers(temp_db):
+    rid = db.insert_release('Album', media_type='Audio')
+    db.add_release_cover(release_id=rid, cover_type='front', path='/c/f.jpg')
+    db.delete_release(rid)
+    assert db.get_release_covers(release_id=rid) == []
+
+
+# ---------------------------------------------------------------------------
+# Step 25: scraper_sources (plugin registry)
+# ---------------------------------------------------------------------------
+
+def test_default_scraper_sources_seeded(temp_db):
+    sources = db.get_scraper_sources()
+    names = [s['name'] for s in sources]
+    assert 'IMDb' in names
+    assert 'TMDb' in names
+    assert 'MusicBrainz' in names
+    assert 'OpenLibrary' in names
+
+
+def test_scraper_sources_filter_by_media_type(temp_db):
+    video = db.get_scraper_sources(media_type='Video')
+    names = [s['name'] for s in video]
+    assert 'IMDb' in names
+    assert 'MusicBrainz' not in names
+
+
+def test_register_custom_scraper_source(temp_db):
+    sid = db.register_scraper_source('MyIMDbPlugin', media_type='Video',
+                                      base_url='https://api.example.com',
+                                      priority=5)
+    assert isinstance(sid, int)
+    sources = db.get_scraper_sources(media_type='Video')
+    names = [s['name'] for s in sources]
+    assert 'MyIMDbPlugin' in names
+
+
+def test_disable_scraper_source(temp_db):
+    assert db.set_scraper_source_enabled('IMDb', False) is True
+    enabled = db.get_scraper_sources(media_type='Video', enabled_only=True)
+    names = [s['name'] for s in enabled]
+    assert 'IMDb' not in names
+
+
+def test_enable_scraper_source(temp_db):
+    db.set_scraper_source_enabled('IMDb', False)
+    db.set_scraper_source_enabled('IMDb', True)
+    enabled = db.get_scraper_sources(media_type='Video', enabled_only=True)
+    names = [s['name'] for s in enabled]
+    assert 'IMDb' in names
+
+
+# ---------------------------------------------------------------------------
+# Step 26: get_all_releases and search_releases with new filters
+# ---------------------------------------------------------------------------
+
+def test_get_all_releases_filter_by_media_type(temp_db):
+    db.insert_release('Album A', media_type='Audio', subtype='Album')
+    db.insert_release('Film B',  media_type='Video', subtype='Film')
+    assert len(db.get_all_releases(media_type='Audio')) == 1
+    assert len(db.get_all_releases(media_type='Video')) == 1
+
+
+def test_get_all_releases_filter_by_subtype(temp_db):
+    db.insert_release('Album A', media_type='Audio', subtype='Album')
+    db.insert_release('Comp B',  media_type='Audio', subtype='Compilation')
+    assert len(db.get_all_releases(subtype='Album')) == 1
+    assert len(db.get_all_releases(subtype='Compilation')) == 1
+
+
+def test_search_releases_media_type_filter(temp_db):
+    db.insert_release('Dark Shadows', media_type='Video', subtype='Film')
+    db.insert_release('Dark Side',    media_type='Audio', subtype='Album')
+    video = db.search_releases('Dark', media_type='Video')
+    assert len(video) == 1 and video[0]['title'] == 'Dark Shadows'
+
+
+def test_search_releases_subtype_filter(temp_db):
+    db.insert_release('Breaking Bad',    media_type='Video', subtype='Series')
+    db.insert_release('Breaking Point',  media_type='Video', subtype='Film')
+    series = db.search_releases('Breaking', subtype='Series')
+    assert len(series) == 1 and series[0]['subtype'] == 'Series'
+
+
+# ---------------------------------------------------------------------------
+# Step 27: Migration – v1.3.5 database upgraded automatically
+# ---------------------------------------------------------------------------
+
+def test_migration_v135_to_v137(tmp_path):
+    """
+    A v1.3.5 database without the new columns is upgraded transparently by
+    init_db(): new columns appear, media_type is populated from type, and
+    release_subtypes / scraper_sources tables are created and seeded.
+    """
+    import sqlite3 as _sqlite3
+
+    legacy_db = str(tmp_path / "legacy.db")
+    original_db = db.DB_FILENAME
+
+    conn = _sqlite3.connect(legacy_db)
+    conn.execute("""
+        CREATE TABLE media (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE, path TEXT, type TEXT, duration TEXT,
+            category TEXT, is_transcoded BOOLEAN, transcoded_format TEXT,
+            tags TEXT, extension TEXT, container TEXT, tag_type TEXT, codec TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE releases (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            type TEXT NOT NULL DEFAULT 'Music',
+            year INTEGER, cut TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            scraper_data TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE release_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            release_id INTEGER NOT NULL, media_id INTEGER NOT NULL,
+            position INTEGER, UNIQUE(media_id)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE media_tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            media_id INTEGER NOT NULL, key TEXT NOT NULL, value TEXT,
+            UNIQUE(media_id, key)
+        )
+    """)
+    conn.execute("""INSERT INTO releases (title, type) VALUES ('Legacy Album', 'Music')""")
+    conn.execute("""INSERT INTO releases (title, type) VALUES ('Legacy Film', 'Film')""")
+    conn.commit()
+    conn.close()
+
+    db.DB_FILENAME = legacy_db
+    try:
+        db.init_db()
+
+        releases = {r['title']: r for r in db.get_all_releases()}
+        assert releases['Legacy Album']['media_type'] == 'Audio'
+        assert releases['Legacy Film']['media_type'] == 'Video'
+
+        # New tables must exist and be seeded
+        audio_subs = db.get_release_subtypes('Audio')
+        assert any(s['name'] == 'Album' for s in audio_subs)
+
+        scrapers = db.get_scraper_sources()
+        assert any(s['name'] == 'IMDb' for s in scrapers)
+    finally:
+        db.DB_FILENAME = original_db
