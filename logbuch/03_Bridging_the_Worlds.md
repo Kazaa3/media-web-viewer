@@ -1,11 +1,11 @@
 <!-- Category: Architecture -->
-<!-- Title_DE: 02 Brückenschlag: Warum Eel & Python? -->
-<!-- Title_EN: 02 Bridging the Worlds: Why Eel & Python? -->
+<!-- Title_DE: 03 Brückenschlag: Warum Eel & Python? -->
+<!-- Title_EN: 03 Bridging the Worlds: Why Eel & Python? -->
 <!-- Summary_DE: Die strategische Entscheidung für die Hybrid-Architektur. -->
 <!-- Summary_EN: The strategic decision for the hybrid architecture. -->
 <!-- Status: COMPLETED -->
 
-# 02 Brückenschlag: Warum Eel & Python?
+# 03 Brückenschlag: Warum Eel & Python?
 
 Nach dem ersten erfolgreichen Wireframe stellte sich die Frage: Wie bauen wir eine App, die sich wie moderne Web-Software anfühlt, aber die Power eines lokalen Systems hat?
 
@@ -21,7 +21,7 @@ Dieser Brückenschlag erlaubt es uns, die Komplexität im Backend (Python) zu ka
 
 <!-- lang-split -->
 
-# 02 Bridging the Worlds: Why Eel & Python?
+# 03 Bridging the Worlds: Why Eel & Python?
 
 After the first successful wireframe, the question arose: How do we build an app that feels like modern web software but has the power of a local system?
 
