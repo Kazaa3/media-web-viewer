@@ -470,9 +470,13 @@ wheel      0.42.0
             self.assertIn(f'"{key}"', self.main_code)
 
     def test_24_frontend_tools_status_rendering(self):
-        """Test: Frontend renders the aggregated tools status row in Options tab."""
-        self.assertIn('id="env-tools-status"', self.html_code)
-        self.assertIn("env_label_tools", self.html_code)
+        """Test: Frontend renders the separated Mutagen/GUI/Mediaplayer status rows in Options tab."""
+        self.assertIn('id="env-mutagen-status"', self.html_code)
+        self.assertIn('id="env-gui-status"', self.html_code)
+        self.assertIn('id="env-mediaplayer-status"', self.html_code)
+        self.assertIn("env_label_mutagen", self.html_code)
+        self.assertIn("env_label_gui", self.html_code)
+        self.assertIn("env_label_mediaplayer", self.html_code)
         self.assertIn("info.tools_status", self.html_code)
 
         # Ensure commonly displayed tool labels are part of render string

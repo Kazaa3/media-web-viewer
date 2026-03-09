@@ -37,6 +37,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="requirements-status-list"', self.app_html)
         self.assertIn('id="system-python-global-list"', self.app_html)
         self.assertIn('id="system-python-local-list"', self.app_html)
+        self.assertIn('id="env-mutagen-status"', self.app_html)
+        self.assertIn('id="env-gui-status"', self.app_html)
+        self.assertIn('id="env-mediaplayer-status"', self.app_html)
         self.assertIn('id="env-core-packages-status"', self.app_html)
         self.assertIn('id="env-test-tools-status"', self.app_html)
         self.assertIn('id="env-dev-tools-status"', self.app_html)
@@ -73,12 +76,10 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const requirementsCount = document.getElementById('requirements-count');",
             "const requirementsLastChecked = document.getElementById('requirements-last-checked');",
             "const requirementsStatusList = document.getElementById('requirements-status-list');",
-            "const envToolsStatusEl = document.getElementById('env-tools-status');",
+            "const envMutagenStatusEl = document.getElementById('env-mutagen-status');",
+            "const envGuiStatusEl = document.getElementById('env-gui-status');",
+            "const envMediaplayerStatusEl = document.getElementById('env-mediaplayer-status');",
             "const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');",
-            "const envTestToolsStatusEl = document.getElementById('env-test-tools-status');",
-            "const envDevToolsStatusEl = document.getElementById('env-dev-tools-status');",
-            "const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');",
-            "const envRequirementsListEl = document.getElementById('env-requirements-list');",
             "const corePackages = [",
             "['bottle', 'bottle']",
             "['bottle-websocket', 'bottle-websocket']",
@@ -152,6 +153,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "env_requirements_last_checked",
             "env_requirements_last_checked_never",
             "env_requirements_last_checked_error",
+            "env_label_mutagen",
+            "env_label_gui",
+            "env_label_mediaplayer",
             "env_label_core_packages",
             "env_label_test_tools",
             "env_label_dev_tools",
