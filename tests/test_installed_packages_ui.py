@@ -30,6 +30,9 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="package-source"', self.app_html)
         self.assertIn('id="package-search"', self.app_html)
         self.assertIn('id="installed-packages-list"', self.app_html)
+        self.assertIn('data-i18n="options_requirements_status"', self.app_html)
+        self.assertIn('id="requirements-count"', self.app_html)
+        self.assertIn('id="requirements-status-list"', self.app_html)
         self.assertIn('id="system-python-global-list"', self.app_html)
         self.assertIn('id="system-python-local-list"', self.app_html)
 
@@ -60,6 +63,10 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "window.allPackages = safeInstalledPackages;",
             "window.allPackagesSearch = safeInstalledPackages.map(pkg => ({",
             "renderPackages(safeInstalledPackages);",
+            "const requirementsCount = document.getElementById('requirements-count');",
+            "const requirementsStatusList = document.getElementById('requirements-status-list');",
+            "const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'",
+            "requirementsCount.textContent = `(${installedCount}/${total})`;",
             "const searchInput = document.getElementById('package-search');",
             "searchInput.addEventListener('input', (e) => {",
             "if (packageSearchTimer) clearTimeout(packageSearchTimer);",
@@ -84,6 +91,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "const failText = `<span style=\"color: #c62828;\">${t('common_error_loading')}</span>`;",
             "const fallbackNoData = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
             "if (packageSource) packageSource.textContent = '[source: error]';",
+            "if (requirementsCount) requirementsCount.textContent = '(0/0)';",
+            "if (requirementsStatusList) requirementsStatusList.innerHTML = failText;",
             "if (packagesList) packagesList.innerHTML = fallbackNoData;",
         ]
         for snippet in required_snippets:
@@ -97,6 +106,10 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "common_loading_short",
             "env_no_packages_found",
             "env_no_matching_packages",
+            "options_requirements_status",
+            "env_requirements_not_found",
+            "env_requirements_all_present",
+            "env_requirements_missing",
             "env_table_package",
             "env_table_version",
         ]
