@@ -29,6 +29,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
         self.assertIn('id="package-count"', self.app_html)
         self.assertIn('id="package-search"', self.app_html)
         self.assertIn('id="installed-packages-list"', self.app_html)
+        self.assertIn('id="system-python-global-list"', self.app_html)
+        self.assertIn('id="system-python-local-list"', self.app_html)
 
     def test_search_input_has_i18n_placeholder_binding(self):
         """Search input must bind placeholder via i18n key."""
@@ -57,6 +59,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "searchInput.addEventListener('input', (e) => {",
             "renderPackages(window.allPackages);",
             "window.allPackages.filter(pkg =>",
+            "const globalPythonList = document.getElementById('system-python-global-list');",
+            "const localPythonList = document.getElementById('system-python-local-list');",
             "packagesList.innerHTML = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
         ]
         for snippet in required_snippets:

@@ -1264,34 +1264,10 @@
                                 </div>
                             </div>
 
-                            <!-- Conda Environments -->
-                            <div style="margin-top: 20px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_conda_envs">🐍 Conda Umgebungen</h4>
-                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- System Python Installations -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_system_python_installs">🌐 System Python Installationen</h4>
-                                <div id="system-pythons-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- Local Virtual Environments -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_local_venvs">📁 Lokale Virtual Environments</h4>
-                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- Installed Packages -->
+                            <!-- Installed Packages (active environment) -->
                             <div style="margin-top: 15px;">
                                 <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_installed_packages">
-                                    📦 Installierte Pakete
+                                    📦 Installierte Pakete (aktive Umgebung)
                                     <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
                                 </h4>
                                 <div style="margin-bottom: 8px;">
@@ -1300,6 +1276,40 @@
                                         data-i18n="[placeholder]packages_search_placeholder">
                                 </div>
                                 <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <h4 style="font-size: 0.95em; margin-top: 22px; margin-bottom: 8px; color: #444;">Vorhandene Umgebungen</h4>
+
+                            <!-- Global Python Installations -->
+                            <div style="margin-top: 8px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">1. 🌐 Python Global</h4>
+                                <div id="system-python-global-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Python Installations -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">2. 🏠 Python Local</h4>
+                                <div id="system-python-local-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Conda Environments -->
+                            <div style="margin-top: 20px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_conda_envs">3. 🐍 Conda Umgebungen</h4>
+                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Virtual Environments -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_local_venvs">4. 📁 Lokale Virtual Environments</h4>
+                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
@@ -3142,23 +3152,34 @@
                     condaList.innerHTML = `<span style="color: #999;">${t('env_no_conda_envs')}</span>`;
                 }
 
-                // Display System Python Installations
-                const systemList = document.getElementById('system-pythons-list');
-                if (safeSystemPythons.length > 0) {
-                    let systemHtml = '<div style="font-family: monospace;">';
-                    safeSystemPythons.forEach(python => {
-                        systemHtml += `
+                // Display System Python Installations split into Global / Local
+                const globalPythonList = document.getElementById('system-python-global-list');
+                const localPythonList = document.getElementById('system-python-local-list');
+
+                const globalPythons = safeSystemPythons.filter(p => String(p.path || '').startsWith('/usr/bin/'));
+                const localPythons = safeSystemPythons.filter(p => !String(p.path || '').startsWith('/usr/bin/'));
+
+                const renderPythonList = (container, rows, emptyText) => {
+                    if (!container) return;
+                    if (!rows || rows.length === 0) {
+                        container.innerHTML = `<span style="color: #999;">${emptyText}</span>`;
+                        return;
+                    }
+                    let html = '<div style="font-family: monospace;">';
+                    rows.forEach(python => {
+                        html += `
                             <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
                                 <div style="color: #666; font-size: 0.9em;">${python.version}</div>
                                 <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path}</div>
                             </div>
                         `;
                     });
-                    systemHtml += '</div>';
-                    systemList.innerHTML = systemHtml;
-                } else {
-                    systemList.innerHTML = `<span style="color: #999;">${t('env_no_system_pythons')}</span>`;
-                }
+                    html += '</div>';
+                    container.innerHTML = html;
+                };
+
+                renderPythonList(globalPythonList, globalPythons, t('env_no_system_pythons'));
+                renderPythonList(localPythonList, localPythons, t('env_no_system_pythons'));
 
                 // Display Local Virtual Environments
                 const venvsList = document.getElementById('local-venvs-list');
@@ -3224,13 +3245,15 @@
 
                 const packageCount = document.getElementById('package-count');
                 const condaList = document.getElementById('conda-environments-list');
-                const systemList = document.getElementById('system-pythons-list');
+                const globalPythonList = document.getElementById('system-python-global-list');
+                const localPythonList = document.getElementById('system-python-local-list');
                 const venvsList = document.getElementById('local-venvs-list');
                 const packagesList = document.getElementById('installed-packages-list');
 
                 if (packageCount) packageCount.textContent = '(0)';
                 if (condaList) condaList.innerHTML = failText;
-                if (systemList) systemList.innerHTML = failText;
+                if (globalPythonList) globalPythonList.innerHTML = failText;
+                if (localPythonList) localPythonList.innerHTML = failText;
                 if (venvsList) venvsList.innerHTML = failText;
                 if (packagesList) packagesList.innerHTML = fallbackNoData;
             }
