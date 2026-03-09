@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.2  
+**Version:** 1.3.3  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.2
+1.3.3
 ```
 
 This version is automatically loaded and used across:
@@ -24,11 +24,32 @@ Version synchronization is validated via `VERSION_SYNC.json` (currently 11 track
 python tests/test_version_sync.py
 ```
 
+Quick release gate (recommended before tagging):
+
+```bash
+python tests/test_version_sync.py && echo "VERSION SYNC OK"
+```
+
+If the test fails, align all reported locations first and rebuild artifacts afterwards.
+
 To update the version:
 1. Edit the `VERSION` file in the project root.
 2. Run `python tests/test_version_sync.py` and resolve any mismatches.
 3. Run `bash build_deb.sh` to build the package with the new version.
 4. Reinstall with `./reinstall_deb.sh` (optional but recommended for local verification).
+
+### Release Notes (v1.3.3)
+
+Highlights of this release:
+- Added automated CI/CD workflows for:
+    - main-branch build artifacts (`ci-artifacts.yml`)
+    - tagged binary releases (`release.yml`)
+- Added local build artifact cleanup helper (`scripts/cleanup_build_artifacts.sh`)
+- Improved media playback error handling in frontend:
+    - global Promise handler now suppresses noisy `NotSupportedError` popups
+    - unsupported sources are shown as readable UI status (`player_unsupported_source`)
+- Removed duplicate video function definitions in frontend to prevent handler overrides
+
 ---
 
 ## Table of Contents
@@ -48,6 +69,7 @@ To update the version:
     - [Standards & Good Practice](#standards--good-practice)
     - [Testing & Quality Assurance](#testing--quality-assurance)
     - [Dynamic Test Suite](#dynamic-test-suite)
+    - [CI/CD Automation](#cicd-automation)
 13. [Troubleshooting](#troubleshooting)
 14. [License](#license)
 
@@ -143,7 +165,9 @@ Required packages are automatically installed via `requirements.txt`, but for ma
 pip install m3u8>=4.1.0 python-vlc>=3.0.18121
 ```
 
-**Note:** The `m3u8` package is **required** for VLC playlist support (import/export). If missing, the application will fail to start.
+Critical runtime packages include `eel`, `bottle`, `bottle-websocket`, `mutagen`, `pymediainfo`, `gevent`, and `gevent-websocket`.
+
+**Note:** The `m3u8` package is required for **VLC playlist import/export**. If missing, the app can still start, but playlist features will fail.
 
 #### Alternative Platforms
 **Fedora/RHEL:**
@@ -167,7 +191,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -219,7 +243,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -256,7 +280,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -398,17 +422,17 @@ For more information, see [logbuch/48_Dynamic_Session_Management.md](logbuch/48_
 
 #### Browser Preference System
 
-Media Web Viewer automatically selects the best available browser when launching the application, **preferring Chrome/Chromium over Vivaldi** and other browsers.
+Media Web Viewer automatically selects the best available browser when launching the application, with **Chromium as the fixed primary choice**.
 
 **Browser Priority Order:**
-1. **Google Chrome** (`google-chrome` or `chrome`)
-2. **Chromium** (`chromium-browser` or `chromium`)
-3. **Firefox**
+1. **Chromium** (`chromium-browser` or `chromium`)
+2. **Firefox**
+3. **Google Chrome** (`google-chrome` or `chrome`)
 4. System default browser (fallback)
 
 **How it works:**
 - The application checks for available browsers in priority order
-- When Chrome or Chromium is found, it's used exclusively
+- Chromium is the preferred project browser (app mode)
 - Vivaldi is **never** explicitly selected (only as system default fallback)
 - Browser selection is logged for transparency
 
@@ -416,11 +440,11 @@ Media Web Viewer automatically selects the best available browser when launching
 ```bash
 $ python main.py
 2026-03-08 18:52:37 [INFO] [Session] Opening browser at http://localhost:37755/app.html
-2026-03-08 18:52:37 [INFO] [Browser] Selected: Google Chrome (/usr/bin/google-chrome)
+2026-03-08 18:52:37 [INFO] [Browser] Selected: Chromium (/usr/bin/chromium)
 ```
 
 **Why this matters:**
-- **Consistency:** Chrome/Chromium ensure consistent rendering and performance
+- **Consistency:** Chromium ensures consistent rendering and performance
 - **WebSockets:** Better WebSocket support for Eel communication
 - **Developer Tools:** Chrome DevTools integration for debugging
 - **Standards Compliance:** Chrome implements web standards more reliably
@@ -570,7 +594,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.2)
+Media Web Viewer (v1.3.3)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -605,7 +629,7 @@ Media Web Viewer (v1.3.2)
 │   ├── SQLite Database (media_library.db)
 │   ├── JSON Metadata Storage
 │   ├── Config Files (config.json, parser_config.json)
-│   └── Debug Flags (debug_flags.json)
+│   └── Runtime Debug Flags (in-memory via `DEBUG_FLAGS`)
 │
 ├── System Integration
 │   ├── .deb Packaging (Debian/Ubuntu)
@@ -795,21 +819,34 @@ The **Player** tab is the primary interface for media playback and library brows
 
 **Main Components:**
 
-1. **Itemlist (Left Panel)**
+1. **Itemlist (Right Panel)**
    - Displays all indexed media items
    - Shows: Title, Artist, Album, Duration
    - Sorted by category (Album, Single, Compilation, Classical, Audiobook)
    - Real-time search and filtering
    - Context menu for quick actions (Play, Edit, Delete)
 
-2. **Player Controls (Center)**
+2. **Player Controls (Footer)****
+   - Currently playing track information
+   - Mini player controls
+ - **Progress Bar:** Seek to any position
+   - Volume indicator
+   - Playback time slider
    - **Play/Pause Button:** Toggle playback
    - **Previous/Next Buttons:** Navigate tracks
-   - **Progress Bar:** Seek to any position
    - **Volume Slider:** Adjust playback volume
    - **Time Display:** Current / Total duration
+- **Seek Precision:** Millisecond-accurate seeking
 
-3. **Premium Sidebar (Right Panel)**
+#Missing
+**Playback Features:**
+
+- **Continuous Playback:** Automatically plays next track in queue
+- **Repeat Modes:** Off, Repeat All, Repeat One
+- **Shuffle:** Randomize track order
+- **Volume Control:** 0-100%, mute option
+
+3. **Premium Sidebar (Left Panel)**
    - **Cover Art:** Embedded album artwork (fallback to default icon)
    - **Metadata Display:** 
      - Title, Artist, Album
@@ -817,21 +854,8 @@ The **Player** tab is the primary interface for media playback and library brows
      - Codec, Bitrate, Sample Rate
      - Container Format
    - **Related Info:** Album year, artist image (if available)
+   - **Transcoding Status:** Shows when playing converted files (ALAC→FLAC, WMA→OGG)
 
-4. **Now Playing Footer**
-   - Currently playing track information
-   - Mini player controls
-   - Volume indicator
-   - Playback time slider
-
-**Playback Features:**
-
-- **Continuous Playback:** Automatically plays next track in queue
-- **Repeat Modes:** Off, Repeat All, Repeat One
-- **Shuffle:** Randomize track order
-- **Volume Control:** 0-100%, mute option
-- **Seek Precision:** Millisecond-accurate seeking
-- **Transcoding Status:** Shows when playing converted files (ALAC→FLAC, WMA→OGG)
 
 **Playlist Management:**
 
@@ -881,12 +905,25 @@ Customize how metadata is extracted:
 Monitor application behavior and troubleshoot issues:
 
 1. Go to **Options → Debug Console**
-2. Select debug flags to enable:
-   - `parser`: Metadata parsing operations
-   - `ui`: User interface updates
-   - `db`: Database operations
-   - `system`: System and file operations
-3. View real-time logs and performance metrics
+2. Enable flags for the component you want to inspect
+3. Reproduce the issue (scan, playback, edit, etc.)
+4. Read live logs in the UI and correlate with file logs
+
+Current logging architecture:
+- `logger.py` initializes a centralized Python logging pipeline
+- Logs are written to:
+    - user log: `~/.media-web-viewer/app.log` (rotating)
+    - project debug log: `logs/debug.log` (only in `--debug` mode)
+    - in-memory UI buffer (`logger.LOG_BUFFER`, max 1000 entries)
+- Frontend pulls logs via exposed backend API (`get_debug_logs()`)
+
+Debug activation modes:
+- `python main.py --debug` → sets all debug flags to `True`
+- UI toggles (`set_debug_flag`, `set_all_debug_flags`) for targeted debugging
+
+Note:
+- There is no persistent `debug_flags.json` runtime source in current implementation.
+- Active flags are held in memory (`DEBUG_FLAGS` in `main.py`).
 
 #### Running Tests
 
@@ -907,7 +944,7 @@ The user interface is implemented using EEL, which provides a seamless bridge be
 ### Architecture Overview
 
 - **Backend:** Python with EEL and Bottle servers
-- **Frontend:** Vanilla JavaScript, HTML5, CSS3 with Glassmorphism effects
+- **Frontend:** Vanilla JavaScript, HTML5, CSS3 with Glassmorphism effects in Chrome
 - **Communication:** Bidirectional via WebSocket (EEL) and HTTP (Bottle)
 - **Styling:** Responsive design with dynamic event handling
 
@@ -1874,27 +1911,22 @@ The `tags` column stores metadata as JSON. Example:
 }
 ```
 
-#### debug_flags.json (Debug Configuration)
+#### Runtime Debug Flags (`main.py`)
 
-```json
-{
-  "parser": false,      // Metadata parsing operations
-  "ui": false,          // User interface updates
-  "db": false,          // Database operations
-  "system": false,      // System and file operations
-  "player": false       // Playback and transcoding operations
-}
-```
+`DEBUG_FLAGS` is defined in `main.py` and controls component-specific debug output at runtime.
+
+Active flag set:
+- `system`, `ui`, `lib`, `browser`, `edit`, `options`, `start`, `parser`, `scan`, `player`, `db`, `tests`, `api`, `web`, `i18n`, `websocket`, `performance`, `metadata`, `transcode`, `file_ops`, `network`
 
 ### Debug Flags Details
 
 Debug flags enable detailed logging for specific application components:
 
-- **parser**: Logs metadata parsing pipeline operations, parser chain execution, tag extraction
-- **ui**: Logs user interface updates, event listeners, DOM modifications
-- **db**: Logs database operations, SQLite queries, data persistence
-- **system**: Logs system file operations, directory scanning, file I/O
-- **player**: Logs playback operations, transcoding processes, audio stream handling
+- **parser / metadata / transcode**: Parser pipeline, metadata extraction, transcoding decisions
+- **ui / web / websocket / i18n**: Frontend communication, websocket events, localization state
+- **db / lib / scan / file_ops**: Library scans, DB writes/reads, file operations
+- **player / browser / network**: Playback paths, browser behavior, external process/network-related messages
+- **system / start / performance / api / tests / options / edit**: Startup flow, performance traces, API and feature workflows
 
 Enable with: `python main.py --debug` (activates all flags)
 
@@ -1916,33 +1948,20 @@ The **Options** tab provides access to critical application settings, split into
 Manage technical parameters and debug flags here:
 
 ```
-SYSTEM
+Debug Flags (Runtime)
+├── Enable/disable single flag
+├── Enable all / disable all
+└── Verify output in Debug Console
+
+Database Debug View
+├── DB statistics
+├── Item dictionary snapshot
+└── Live backend log stream
+
+Operational Controls
 ├── Scan Directory
 ├── Clear Database
 └── Reset Application
-
-SCAN
-├── Parser Mode
-├── Auto-Index Interval
-└── Blacklist Management
-
-PARSER
-├── Chain Configuration
-├── Enable/Disable Parsers
-├── Parser Reordering
-└── Performance Metrics
-
-PLAYER
-├── Playback Settings
-├── Transcoding Options
-├── Cache Management
-└── Stream Quality
-
-DATABASE (DB)
-├── Database Statistics
-├── Optimize Database
-├── Backup Configuration
-└── Recovery Options
 ```
 
 ---
@@ -2181,6 +2200,59 @@ The destructive mode runs `reinstall_deb.sh` and should be used only on systems 
 
 Media Web Viewer includes a comprehensive automated test suite that validates core functionality, ensuring reliability across updates. The test suite is designed to be run both locally and in CI/CD pipelines.
 
+### CI/CD Automation
+
+The project ships with two active GitHub Actions workflows:
+
+1. `ci-artifacts.yml` (main branch artifacts)
+2. `release.yml` (tagged release with binary publication)
+
+#### Main Artifact Pipeline
+
+**Workflow:** `.github/workflows/ci-artifacts.yml`  
+**Trigger:** push to `main`, manual dispatch
+
+Build outputs:
+- Linux executable: `dist/MediaWebViewer`
+- Debian package: `media-web-viewer_*_amd64.deb`
+
+Artifacts are stored in the GitHub Actions run and can be downloaded without creating a GitHub Release.
+
+#### Tagged Release Pipeline
+
+**Workflow:** `.github/workflows/release.yml`  
+**Trigger:** tag push `v*` (e.g. `v1.3.3`), manual dispatch
+
+Build outputs:
+- Linux executable
+- Debian package
+- Windows executable
+
+Release behavior:
+- Automatically creates/updates a GitHub Release
+- Uploads all binaries as release assets
+
+#### Release Trigger Commands
+
+```bash
+git add .
+git commit -m "Release v1.3.3"
+git tag -a v1.3.3 -m "Release v1.3.3"
+git push origin main --tags
+```
+
+#### Local Artifact Cleanup
+
+To avoid artifact accumulation in the local repository, use:
+
+```bash
+# Dry-run
+scripts/cleanup_build_artifacts.sh
+
+# Execute cleanup (defaults: keep 5 deb, keep 2 dist binaries)
+scripts/cleanup_build_artifacts.sh --execute
+```
+
 #### Test Overview
 
 **Location:** `tests/` directory  
@@ -2395,25 +2467,22 @@ if __name__ == '__main__':
 
 Tests are automatically run on:
 - Pre-commit hooks (optional)
-- GitHub Actions (future)
+- GitHub Actions (active)
 - Local development (manual)
 
-**CI Workflow Example:**
-```yaml
-# .github/workflows/tests.yml (future)
-name: Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.12
-      - run: pip install -r requirements.txt
-      - run: pytest tests/ -v --cov=.
-```
+**Implemented Workflows:**
+
+1. **Main branch artifact workflow** (`.github/workflows/ci-artifacts.yml`)
+     - Trigger: push to `main` and manual dispatch
+     - Builds Linux executable (`dist/MediaWebViewer`)
+     - Builds Debian package (`media-web-viewer_*_amd64.deb`)
+     - Uploads both as GitHub Actions artifacts
+
+2. **Release workflow** (`.github/workflows/release.yml`)
+     - Trigger: tags `v*` (e.g. `v1.3.3`) and manual dispatch
+     - Builds Linux executable, Debian package, and Windows executable
+     - Creates/updates GitHub Release automatically
+     - Uploads binaries as release assets
 
 #### Test Coverage Goals
 
@@ -2569,6 +2638,83 @@ pip install -r requirements.txt --force-reinstall
 python3 --version
 ```
 
+#### Missing Python Package (ModuleNotFoundError / ImportError)
+
+**Typical errors:**
+- `ModuleNotFoundError: No module named 'm3u8'`
+- `ModuleNotFoundError: No module named 'bottle_websocket'`
+- `ModuleNotFoundError: No module named 'eel'`
+- `No module named PyInstaller` (during build)
+
+**Cause:**
+- Wrong Python environment active (system Python instead of project `.venv`)
+- Incomplete dependency installation
+- Package was removed or upgraded inconsistently
+
+**Solution (recommended):**
+```bash
+# 1) Activate project environment
+cd /path/to/gui_media_web_viewer
+source .venv/bin/activate
+
+# 2) Reinstall complete dependency set
+pip install -r requirements.txt --upgrade --force-reinstall
+
+# 3) Verify critical imports
+python -c "import eel, bottle, bottle_websocket, mutagen, pymediainfo, m3u8; print('imports ok')"
+```
+
+**Install a single missing package quickly:**
+```bash
+pip install m3u8
+pip install bottle-websocket
+pip install eel
+pip install pyinstaller
+```
+
+**Verify interpreter alignment:**
+```bash
+which python
+python -c "import sys; print(sys.executable)"
+```
+
+Expected: path points to `.../gui_media_web_viewer/.venv/bin/python`.
+
+#### Dependency Probe in Fresh External venv (Recommended)
+
+Use this when package errors are unclear or environment contamination is suspected.
+
+```bash
+# Create clean venv outside project
+python3 -m venv /tmp/mwv_dep_probe_env
+
+# Run dependency probe test with log output
+/tmp/mwv_dep_probe_env/bin/python tests/test_dependency_probe.py \
+    2>&1 | tee logs/dependency_probe_fresh_venv.log
+```
+
+Probe test file:
+- `tests/test_dependency_probe.py`
+
+Current probe scope:
+- Python imports: `eel`, `bottle`, `bottle_websocket`, `mutagen`, `pymediainfo`, `m3u8`, `vlc`, `psutil`, `future`, `tkinter`, `gevent`, `geventwebsocket`
+- Subprocess tools: `ffmpeg -version`, `vlc --version`, and browser checks for `chromium`, `firefox`, `chrome` via `--version`
+
+Generated logs/reports:
+- `logs/dependency_probe_fresh_venv.log`
+- `logs/dependency_probe_report.json`
+
+To verify the fix after reinstalling requirements:
+
+```bash
+/tmp/mwv_dep_probe_env/bin/pip install -r requirements.txt
+/tmp/mwv_dep_probe_env/bin/python tests/test_dependency_probe.py \
+    2>&1 | tee logs/dependency_probe_after_install.log
+```
+
+Expected after successful install:
+- `✅ Alle kritischen Abhängigkeiten vorhanden`
+
 #### Files Not Appearing in Library
 
 **Cause:** Directory not added or not indexed
@@ -2588,6 +2734,53 @@ python3 --version
 2. Check file format support in browser
 3. Try playing from **Edit** tab → **Test Stream** button
 4. Check debug logs for FFmpeg errors
+
+#### Uncaught Promise: NotSupportedError (No supported source)
+
+**Error (Browser Console):** `Uncaught Promise: NotSupportedError: Failed to load because no supported source was found.`
+
+**Cause:**
+- The browser cannot decode the selected media codec/container.
+- Typical cases: uncommon codecs in audio/video, unsupported MKV variants, invalid source URL.
+
+**Current Behavior (Implemented):**
+- The global Promise handler in `web/app.html` detects this specific media error.
+- Instead of showing a blocking generic alert, it:
+    1. suppresses the noisy global promise popup,
+    2. logs a warning to console,
+    3. updates UI status with a user-facing message (`player_unsupported_source`).
+- In the **Video tab**, an inline warning hint is displayed below the embedded player and the **"In VLC öffnen"** button is visually highlighted to guide the fallback path.
+
+**Global Promise Handler (Reference Implementation):**
+```javascript
+function isUnsupportedMediaError(reason) {
+    const text = String(reason || '');
+    return text.includes('NotSupportedError') || text.includes('no supported source was found');
+}
+
+window.addEventListener('unhandledrejection', function (event) {
+    if (isUnsupportedMediaError(event.reason)) {
+        console.warn('Unsupported media source rejected by browser:', event.reason);
+        const statusEl = document.getElementById('status');
+        if (statusEl) {
+            statusEl.textContent = t('player_unsupported_source');
+        }
+        event.preventDefault();
+        return;
+    }
+    alert('Uncaught Promise: ' + event.reason);
+});
+```
+
+**User Workarounds:**
+1. Switch to **VLC mode** for video playback.
+2. Use transcoded/compatible format when available.
+3. Verify FFmpeg and parser outputs in Debug Console.
+
+**Developer Notes:**
+- Keep explicit `.play().catch(...)` handling where playback is triggered.
+- Avoid duplicated function definitions for video controls in `web/app.html`, because later declarations override earlier safe handlers.
+- i18n key for this case: `player_unsupported_source` in `web/i18n.json`.
 
 #### Database Corrupted / Duplicate Entries
 
@@ -2627,7 +2820,7 @@ python main.py
 
 **Error:** `ImportError: No module named 'm3u8'` or VLC playlist features not working
 
-**Cause:** Missing required `m3u8` Python package for VLC playlist import/export
+**Cause:** Missing `m3u8` Python package for VLC playlist import/export
 
 **Solution:**
 ```bash
@@ -2641,9 +2834,30 @@ pip install m3u8>=4.1.0
 python -c "import m3u8; print(m3u8.__version__)"
 ```
 
+**Scope:**
+- Affects VLC playlist import/export only
+- Core media scanning and playback can still work without `m3u8`
+
+#### Missing bottle-websocket Package / WebSocket Bridge Broken
+
+**Error:** `ModuleNotFoundError: No module named 'bottle_websocket'`
+
+**Cause:** Missing `bottle-websocket` dependency (Python package name) for Bottle WebSocket bridge.
+
+**Solution:**
+```bash
+source .venv/bin/activate
+pip install bottle-websocket>=0.2.9
+python -c "import bottle_websocket; print('bottle_websocket ok')"
+```
+
+**Notes:**
+- This package maps to import name `bottle_websocket`.
+- If this is missing, UI/backend WebSocket interactions can fail or not initialize correctly.
+
 #### Browser Opens as Tab Instead of Standalone App
 
-**Cause:** Chrome/Chromium not found or incorrect browser launch configuration
+**Cause:** Chromium not found or incorrect browser launch configuration
 
 **Symptoms:**
 - Application opens in existing browser window as new tab
@@ -2651,21 +2865,21 @@ python -c "import m3u8; print(m3u8.__version__)"
 
 **Solution:**
 ```bash
-# Ensure Chrome/Chromium is installed
-sudo apt install google-chrome-stable  # or chromium-browser
+# Ensure Chromium is installed
+sudo apt install chromium-browser   # oder: chromium
 
-# Verify Chrome is in PATH
-which google-chrome-stable
+# Verify Chromium is in PATH
+which chromium-browser
 
 # Test app mode manually
-google-chrome-stable --app=http://localhost:8888 --new-window
+chromium-browser --app=http://localhost:8888 --new-window
 
 # If still failing, check main.py browser launch code (lines ~1985-2015)
 ```
 
 **Technical Details:**
 - App uses `subprocess.Popen()` with `--app` flag for standalone window
-- Fallback to system default browser if Chrome/Chromium not found
+- Fallback to preferred/system browser if Chromium is not found
 - See `logbuch/56_Chrome_App_Mode_and_VLC_Dependencies.md` for implementation details
 
 ### Getting Help
@@ -2675,21 +2889,17 @@ google-chrome-stable --app=http://localhost:8888 --new-window
 - Run test suite: **Tests tab → Run All Tests**
 - Check GitHub issues: https://github.com/kazaa3/media-web-viewer/issues
 
----
-
-### Deutsch Troubleshooting
-
-#### Von vorne anfangen
-Falls du die App zuvor aus dem Quellcode ausgeführt hast oder alle Einstellungen zurücksetzen möchtest, beachte, dass `apt purge` **keine** Dateien in deinem Home-Verzeichnis entfernt. Um wirklich "von Null" zu starten:
+#### Starting from scratch
+If you’ve previously run the app from source or want to reset all settings, note that apt purge does not remove files in your home directory. To truly start “from zero”:
 
 ```bash
-# 1. Alte Benutzerkonfiguration und Datenbank entfernen
+# 1. Remove old user configuration and database
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
-# 2. Saubere Version neu installieren
-sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+# 2. Reinstall a clean version
+sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
 
-# 3. Abhängigkeiten bei Bedarf reparieren
+# 3. Fix dependencies if necessar
 sudo apt-get install -f
 ```
 
@@ -2702,7 +2912,7 @@ Media Web Viewer is licensed under the **GNU General Public License v3 (GPL-3.0)
 This means:
 - ✅ You can freely use, modify, and distribute the software
 - ✅ You must include the license text and copyright notice
-- ✅ Any modifications or derived works must also be GPL-3.0
+- ✅ Any modifications or derivned works must also be GPL-3.0
 - ✅ Source code must be made available to users
 
 See [LICENSE.md](LICENSE.md) for the complete license text.
@@ -2826,7 +3036,7 @@ Contributions are welcome! Please:
 
 **Problem:** When committing changes (even from VS Code), the author appears as "Antigravity" instead of your username.
 
-**Cause:** This project may have been worked on by an AI assistant (Antigravity) that set its own Git configuration in the repository. This configuration overrides your global Git settings and persists even when committing from VS Code.
+**Cause:** This project have been worked on by an AI assistant (Antigravity) that set its own Git configuration in the repository. This configuration overrides your global Git settings and persists even when committing from VS Code.
 
 **Solution - Set Repository-Specific Author:**
 ```bash
@@ -3148,26 +3358,31 @@ bash build_deb.sh
 # Output directory: Current directory
 # Output file: media-web-viewer_<VERSION>_amd64.deb
 ls -lh *.deb
-# Expected: media-web-viewer_1.3.2_amd64.deb
+# Expected: media-web-viewer_1.3.3_amd64.deb
 ```
 
 **2. Version Management:**
 ```bash
 # Build artifacts should match version in code
 grep "VERSION =" main.py
-# Output: VERSION = "1.3.2"
+# Output: VERSION = "1.3.3"
 
 # Filename should match version
 ls media-web-viewer_*.deb
-# Expected: media-web-viewer_1.3.2_amd64.deb
+# Expected: media-web-viewer_1.3.3_amd64.deb
 ```
 
 **3. Storage and Distribution:**
 ```bash
 # DO NOT commit binaries to Git
-# Instead use GitHub Releases for distribution
+# Use GitHub Actions + GitHub Releases for distribution
 
-# Option A: Manual upload to GitHub Releases
+# Recommended (automated):
+# 1) git tag -a v1.3.3 -m "Release v1.3.3"
+# 2) git push origin main --tags
+# 3) .github/workflows/release.yml builds and uploads binaries automatically
+
+# Option A: Manual upload to GitHub Releases (fallback)
 # 1. Go to https://github.com/Kazaa3/media-web-viewer/releases
 # 2. Click "Create a new release"
 # 3. Upload the .deb file
