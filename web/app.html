@@ -3181,6 +3181,7 @@
         const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"];
         let currentParserChain = [];
         let currentParserOptions = {};
+        let currentParserMapping = {};
 
         function loadParserConfig() {
             eel.get_parser_config()((config) => {
@@ -3206,6 +3207,12 @@
                         statusText.innerText = config.parser_mode === "full" ? t('parser_mode_full') : t('parser_mode_light');
                     }
                 }
+
+                // Initialize mapping
+                eel.get_parser_mapping()((mapping) => {
+                    console.log("Parser mapping loaded:", mapping);
+                    currentParserMapping = mapping;
+                });
 
                 // Initialize categories
                 const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
@@ -3297,6 +3304,25 @@
             } else {
                 const parserName = t('parser_' + parserId);
                 html = `<p style="color: #666; font-style: italic; padding: 10px;">${t('parser_no_options').replace('{parser}', parserName)}</p>`;
+            }
+
+            // Find and show supported extensions
+            const extensions = [];
+            for (const ext in currentParserMapping) {
+                if (currentParserMapping[ext].includes(parserId)) {
+                    extensions.push(ext);
+                }
+            }
+
+            if (extensions.length > 0) {
+                html += `
+                    <div style="margin-top: 25px; padding: 18px; background: rgba(0,0,0,0.03); border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.85em; color: #888; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">${t('parser_supported_types')}</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            ${extensions.map(ext => `<span style="background: #fff; color: #555; padding: 4px 10px; border-radius: 6px; font-size: 0.8em; font-weight: 600; font-family: 'JetBrains Mono', 'Courier New', monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);">${ext}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
             }
 
             container.innerHTML = html;
