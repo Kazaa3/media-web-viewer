@@ -44,10 +44,26 @@ screenshot.save('screenshot.png')
 - Siehe auch `logbuch/GUI_Test_Strategien.md` für weitere Testansätze (Playwright, Selenium, MCP-Agent).
 
 ## Hinweise
-- PyAutoGUI ist plattformübergreifend, aber einige Funktionen können je nach OS variieren.
-- Für fortgeschrittene Tests: Bildvergleich (`pyautogui.locateOnScreen`) und Multi-Monitor-Unterstützung.
 
+## Integration mit pytest und Xvfb
+### pytest
+PyAutoGUI-Tests lassen sich mit pytest automatisieren:
+```python
+def test_button_click():
+	pyautogui.moveTo(100, 200)
+	pyautogui.click()
+	# Hier kann z.B. ein Screenshot oder eine UI-Validierung erfolgen
+```
+
+### Xvfb (Virtuelles Display)
+Für CI/CD-Umgebungen ohne echten Desktop empfiehlt sich Xvfb:
+- Installation: `sudo apt-get install xvfb`
+- Starten: `Xvfb :99 & export DISPLAY=:99`
+- Danach können PyAutoGUI-Tests ausgeführt werden.
+
+### Playwright/Selenium
+PyAutoGUI kann mit Playwright oder Selenium kombiniert werden, um komplexe UI-Tests zu automatisieren:
+- Playwright/Selenium steuern Browser, PyAutoGUI kann für native OS-Dialoge oder Screenshots genutzt werden.
+- Beispiel: Erst Browser mit Playwright öffnen, dann mit PyAutoGUI einen Dateidialog bedienen.
 ---
-**Weitere Ressourcen:**
-- [PyAutoGUI Dokumentation](https://pyautogui.readthedocs.io/)
 - [GUI_Test_Strategien.md](GUI_Test_Strategien.md)
