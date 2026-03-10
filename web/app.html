@@ -20,7 +20,7 @@
                     get_library: { media: [] },
                     get_db_stats: { total_items: 0, categories: {} },
                     get_parser_config: {
-                        parser_chain: ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
+                        parser_chain: ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
                         parser_mode: 'lightweight',
                         scan_dirs: []
                     },
@@ -2875,7 +2875,7 @@
         }
 
         // Parser GUI Logic
-        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"];
         let currentParserChain = [];
         let currentParserOptions = {};
 
@@ -2892,7 +2892,7 @@
                 if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
                     currentParserChain = config.parser_chain;
                 } else {
-                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"];
                 }
 
                 if (config && config.parser_mode) {
