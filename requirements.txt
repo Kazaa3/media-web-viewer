@@ -38,6 +38,7 @@ m3u8>=4.1.0                    # MIT License - m3u8 playlist parsing
 python-vlc>=3.0.18121          # LGPL 2.1+ - VLC Python bindings
 pycdlib>=1.14.0                # LGPL 2.1+ - ISO/Disk Image parsing
 isoparser>=0.2.0               # MIT License - ISO structure parsing
+Pillow>=10.2.0                 # HPND License - Image processing (Artwork, Mocks)
 
 # Async & WebSocket Support
 gevent>=25.9.1                 # MIT License - Coroutine-based networking
@@ -61,3 +62,4 @@ chardet>=5.0.0                 # LGPL License - Universal character encoding det
 setuptools>=75.1.0             # MIT License - Installation and package management
 pyautogui>=0.9.54              # BSD License - GUI automation
 six>=1.16.0                    # MIT License - Python 2/3 compatibility (for isoparser)
+scapy>=2.5.0                   # GPL v2 - Network packet manipulation

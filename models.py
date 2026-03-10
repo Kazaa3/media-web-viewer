@@ -193,91 +193,13 @@ class MediaItem:
 
     def extract_artwork(self) -> Optional[str]:
         """
-        @brief Extracts embedded artwork (cover) from media files using ffmpeg.
-        @details Extrahiert eingebettete Cover-Bilder mittels ffmpeg.
-        @return Path to the extracted image or None / Pfad zum extrahierten Bild oder None.
+        @brief Extracts embedded artwork (cover) from media files.
+        @details Extrahiert eingebettete Cover-Bilder.
+        @return Path to the extracted image or None.
         """
-        if PARSER_CONFIG.get('ffmpeg_extract_thumbnails') is False:
-            return None
-        
+        from parsers.artwork_extractor import extractor
         logical = getattr(self, 'logical_type', 'Unbekannt')
-        # Check if art is reported or if it's a type that likely has a thumbnail/cover
-        has_art_tag = self.tags.get('has_art') == 'Yes'
-        can_have_art = logical in ('Video', 'Abbild', 'Audio') or has_art_tag
-        
-        if not can_have_art:
-            return None
-
-        import subprocess
-        import hashlib
-        
-        cache_dir = Path.home() / '.cache' / 'gui_media_web_viewer' / 'art'
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Use filename + size as hash for caching
-        try:
-            st_size = self.path.stat().st_size
-            st_mtime = self.path.stat().st_mtime
-        except Exception:
-            st_size = 0
-            st_mtime = 0
-            
-        file_hash = hashlib.md5(f"{self.path}{st_size}{st_mtime}".encode()).hexdigest()
-        art_file = cache_dir / f"{file_hash}.jpg"
-        
-        if art_file.exists():
-            return str(art_file)
-
-        # Skip real extraction if file doesn't exist (e.g. in tests)
-        if not self.path.exists():
-            return None
-
-        # Strategy Selection
-        success = False
-        try:
-            if logical == 'Video':
-                # Strategy: Try attachment first (typically covers in MKV/MP4), then falling back to Frame extraction
-                # 1. Try to extract 'cover.jpg' or 'cover.png' from attachments (common in MKV)
-                # We use a trick: map 0:t:0 (first attachment) if it's an image. 
-                # But simpler: just use ffmpeg to dump the first video stream that is MJPEG/PNG
-                cmd_attach = [
-                    "ffmpeg", "-i", str(self.path),
-                    "-map", "0:v", "-c:v", "copy", "-vframes", "1",
-                    "-y", str(art_file)
-                ]
-                # If that fails or produces nothing, we do real thumbnailing
-                res = subprocess.run(cmd_attach, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3)
-                if not (art_file.exists() and art_file.stat().st_size > 0):
-                    # 2. Thumbnailing (ss 5s to avoid black)
-                    cmd_thumb = [
-                        "ffmpeg", "-i", str(self.path),
-                        "-ss", "00:00:05",
-                        "-vframes", "1",
-                        "-q:v", "4",
-                        "-vf", "scale=w=400:h=400:force_original_aspect_ratio=decrease",
-                        "-y", str(art_file)
-                    ]
-                    subprocess.run(cmd_thumb, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
-            
-            elif logical == 'Audio' or has_art_tag:
-                # Audio extraction
-                cmd_audio = [
-                    "ffmpeg", "-i", str(self.path),
-                    "-an", "-vcodec", "copy",
-                    "-y", str(art_file)
-                ]
-                subprocess.run(cmd_audio, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
-            
-            elif logical == 'Abbild':
-                # ISO/IMG - maybe one day extract from filesystem, for now just skip or placeholder
-                pass
-
-            if art_file.exists() and art_file.stat().st_size > 0:
-                success = True
-        except Exception as e:
-            log.debug(f"Artwork extraction failed for {self.name}: {e}")
-            
-        return str(art_file) if success else None
+        return extractor.extract(self.path, self.tags, logical)
 
     def show_info(self):
         """
