@@ -1674,6 +1674,16 @@ def get_parser_config():
 
 
 @eel.expose
+def get_parser_mapping():
+    """
+    @brief Returns the parser-to-filetype mapping.
+    @return Mapping dictionary / Mapping-Dictionary.
+    """
+    from parsers.media_parser import PARSER_MAPPING
+    return PARSER_MAPPING
+
+
+@eel.expose
 def update_parser_config(new_config):
     """
     @brief Updates the parser configuration and saves it to disk.

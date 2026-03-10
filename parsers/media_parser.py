@@ -14,6 +14,43 @@ import logging
 log = logger.get_logger("parser")
 
 
+# Mapping which parsers are responsible for which file types (extensions including dot)
+# If a file type is not in this mapping, all parsers in the chain will be attempted (legacy behavior).
+# If a file type IS in this mapping, only the listed parsers will be executed.
+PARSER_MAPPING = {
+    # --- AUDIO ---
+    ".mp3":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "eyed3", "music_tag"],
+    ".flac": ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+    ".m4a":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+    ".m4b":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+    ".ogg":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+    ".wav":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+    ".wma":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
+    
+    # --- VIDEO ---
+    ".mkv":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "ebml", "mkvparse", "enzyme", "pymkv"],
+    ".mp4":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "enzyme"],
+    ".m4v":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".avi":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".mov":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".webm": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".wmv":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".mpg":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".mpeg": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
+    
+    # --- ISO & IMAGES ---
+    ".iso":    ["filename", "isoparser", "pycdlib", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".jpg":    ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".jpeg":   ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".png":    ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".webp":   ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
+    
+    # --- DOCUMENTS & EBOOKS ---
+    ".pdf":    ["filename", "pymediainfo", "ffprobe"],
+    ".epub":   ["filename", "pymediainfo", "ffprobe"],
+}
+
+
 def extract_metadata(path, filename, mode='lightweight', file_type=None):
     """
     @brief Orchestrates the metadata extraction process using a sequential parser chain.
@@ -48,7 +85,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
     from typing import cast
     # Iterate dynamically through the user-configured parser chain
     parser_chain = cast(list[str], PARSER_CONFIG.get(
-        "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"]))
+        "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser"]))
 
     # Neue Iteration: Alle verfügbaren Parser als optionale Schritte
     from . import isoparser_parser
@@ -90,6 +127,10 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
             active_steps.append(step)
 
     for step_name, step_func in active_steps:
+        # 1. Mapping check: skip if parser is not for this file type
+        if file_type in PARSER_MAPPING and step_name not in PARSER_MAPPING[file_type]:
+            continue
+
         # Skip if we already have enough information (for lightweight mode)
         # or if mode is 'full' we always continue to gather all tags.
         if mode != 'full':
@@ -116,7 +157,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
             t0 = time.time()
             try:
                 if step_func:
-                    # Only run isoparser if enabled and file is .iso
+                    # Config override (e.g. disable isoparser globally)
                     if step_name == "isoparser" and not isoparser_enabled:
                         parser_times[step_name] = 0.0
                         success = True
@@ -126,7 +167,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                         path_obj, file_type, current_tags, filename, mode=mode))
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "ebml" and ebml_enabled and file_type == ".mkv":
+                elif step_name == "ebml" and ebml_enabled:
                     from ebml.container import File
                     ebml_file = File(str(path_obj))
                     segment = next(ebml_file.children_named("Segment"), None)
@@ -145,20 +186,20 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                     log.debug(f"EBML parser finished for '{filename}'")
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "mkvparse" and mkvparse_enabled and file_type == ".mkv":
+                elif step_name == "mkvparse" and mkvparse_enabled:
                     import mkvparse
                     with open(str(path_obj), 'rb') as f:
                         mkvparse.parse(f, lambda elem, data: log.debug(f"mkvparse: {elem} {data}"))
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "enzyme" and enzyme_enabled and file_type in [".mkv", ".mp4"]:
+                elif step_name == "enzyme" and enzyme_enabled:
                     import enzyme
                     movie = enzyme.Movie(str(path_obj))
                     current_tags['enzyme_tracks'] = movie.tracks
                     current_tags['enzyme_duration'] = movie.duration
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "pycdlib" and pycdlib_enabled and file_type == ".iso":
+                elif step_name == "pycdlib" and pycdlib_enabled:
                     import pycdlib
                     iso = pycdlib.PyCdlib()
                     iso.open(str(path_obj))
@@ -166,13 +207,13 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                     iso.close()
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "pymkv" and pymkv_enabled and file_type == ".mkv":
+                elif step_name == "pymkv" and pymkv_enabled:
                     import pymkv
                     mkv = pymkv.MKVFile(str(path_obj))
                     current_tags['pymkv_tracks'] = mkv.tracks
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "tinytag" and tinytag_enabled and file_type in [".mp3", ".m4a", ".ogg", ".flac", ".wav", ".wma"]:
+                elif step_name == "tinytag" and tinytag_enabled:
                     from tinytag import TinyTag
                     tag = TinyTag.get(str(path_obj))
                     current_tags['tinytag_title'] = tag.title
@@ -180,7 +221,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                     current_tags['tinytag_duration'] = tag.duration
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "eyed3" and eyed3_enabled and file_type == ".mp3":
+                elif step_name == "eyed3" and eyed3_enabled:
                     import eyed3
                     audiofile = eyed3.load(str(path_obj))
                     if audiofile and audiofile.tag:
@@ -190,7 +231,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                         current_tags['eyed3_duration'] = audiofile.info.time_secs if audiofile.info else None
                     parser_times[step_name] = time.time() - t0
                     success = True
-                elif step_name == "music_tag" and music_tag_enabled and file_type in [".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma"]:
+                elif step_name == "music_tag" and music_tag_enabled:
                     import music_tag
                     f = music_tag.load_file(str(path_obj))
                     current_tags['music_tag_title'] = f['title'].value
