@@ -42,7 +42,9 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str, m
         try:
             iso = isoparser.parse(str(path_obj))
             if hasattr(iso, 'volume_descriptors') and 'primary' in iso.volume_descriptors:
-                tags['iso_volume_label'] = iso.volume_descriptors['primary'].volume_id
+                pvd = iso.volume_descriptors['primary']
+                # isoparser/pycdlib might use volume_id or volume_identifier
+                tags['iso_volume_label'] = getattr(pvd, 'volume_id', getattr(pvd, 'volume_identifier', 'Unknown'))
             
             all_files = list(iso.root.children) if hasattr(iso, 'root') else []
             tags['iso_files_count'] = len(all_files)
