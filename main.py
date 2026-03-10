@@ -1682,6 +1682,15 @@ def get_parser_mapping():
     from parsers.media_parser import PARSER_MAPPING
     return PARSER_MAPPING
 
+@eel.expose
+def get_slow_parsers():
+    """
+    @brief Returns the list of parsers considered slow.
+    @return List of parser IDs.
+    """
+    from parsers.format_utils import SLOW_PARSERS
+    return list(SLOW_PARSERS)
+
 
 @eel.expose
 def update_parser_config(new_config):

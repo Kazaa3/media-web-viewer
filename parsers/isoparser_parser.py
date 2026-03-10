@@ -20,6 +20,13 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str, m
     """
     if file_type != ".iso":
         return tags
+
+    from .format_utils import PARSER_CONFIG, SLOW_PARSERS
+    is_slow = "isoparser" in SLOW_PARSERS or "pycdlib" in SLOW_PARSERS
+    fast_scan = PARSER_CONFIG.get("fast_scan_enabled", True)
+
+    if is_slow and mode != 'full' and fast_scan:
+        return tags
     
     tags['container'] = 'iso'
     tags['tagtype'] = 'iso'

@@ -65,6 +65,7 @@ def get_default_scan_dir() -> Path:
 PARSER_CONFIG: dict[str, Any] = {
     "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"],
     "parser_mode": "lightweight",
+    "fast_scan_enabled": True,  # New global fast-scan toggle
     "debug_scan": True,
     "debug_parser": True,
     "scan_dirs": [str(get_default_scan_dir())],
@@ -74,10 +75,18 @@ PARSER_CONFIG: dict[str, Any] = {
     "pymediainfo_full_scan": False,
     "ffmpeg_deep_analysis": False,
     "ffmpeg_extract_thumbnails": True,
-    "enable_isoparser_parser": True,
+    "enable_isoparser_parser": False, # Disabled by default (slow)
+    "enable_pycdlib_parser": False,   # Disabled by default (slow)
+    "enable_ebml_parser": False,     # Disabled by default (slow)
+    "enable_mkvparse_parser": False,  # Disabled by default (slow)
+    "enable_enzyme_parser": False,    # Disabled by default (slow)
+    "enable_pymkv_parser": False,     # Disabled by default (slow)
     "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild"],
     "displayed_categories": ["audio"]
 }
+
+# Parser which are known to be slow on certain files (ISO, MKV etc)
+SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
 
 
 def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
