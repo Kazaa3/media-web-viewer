@@ -33,11 +33,50 @@ def test_layer_stacking():
 ```
 
 ## Best Practices
-- Nutze pytest für einfache und wiederholbare Tests.
-- Vermeide echte Netzwerkpakete im CI/CD; nutze Simulation.
-- Layer-Stacking und Paket-Parsing sind ideale Einstiegstests.
-- Für fortgeschrittene Checks: sniff(), send(), sr() nur mit Vorsicht und ggf. Mocking.
+## Fortgeschrittene Netzwerk- und Integrationstests
+### Mocking von Netzwerkverkehr
+Für CI/CD und sichere Tests empfiehlt sich das Mocken von send/sniff/sr:
+```python
+import pytest
+from unittest.mock import patch
+from scapy.all import IP, ICMP, send
 
+def test_send_mock():
+    pkt = IP(dst="8.8.8.8") / ICMP()
+    with patch("scapy.all.send") as mock_send:
+        send(pkt)
+        mock_send.assert_called_once()
+```
+
+### Integration mit anderen Modulen
+Scapy kann mit eigenen Netzwerkmodulen oder APIs kombiniert werden:
+```python
+import pytest
+from scapy.all import IP, TCP
+from my_network_module import analyze_packet
+
+def test_packet_integration():
+    pkt = IP(dst="192.168.1.1") / TCP(dport=80)
+    result = analyze_packet(pkt)
+    assert result == "HTTP"
+```
+
+### Sniffing und Analyse (nur lokal/mit Mocking)
+```python
+from scapy.all import sniff
+import pytest
+
+def test_sniff_mock(monkeypatch):
+    def fake_sniff(*args, **kwargs):
+        return ["dummy_packet"]
+    monkeypatch.setattr("scapy.all.sniff", fake_sniff)
+    packets = sniff(count=1)
+    assert packets == ["dummy_packet"]
+```
+
+### Hinweise
+- Für Integrationstests: Netzwerkfunktionen mocken, um CI/CD zu ermöglichen.
+- Kombinierbar mit pytest, unittest.mock und monkeypatch.
 ## Integration in Media Web Viewer
 - Testdatei: `tests/test_scapy_basic.py` enthält Basis-Checks.
 - Erweiterbar für Integrationstests mit anderen Netzwerkmodulen.
