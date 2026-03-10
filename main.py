@@ -745,7 +745,7 @@ def get_environment_info(force_refresh=False):
             "pyinstaller": "PyInstaller",
         }
 
-        requirement_names = []
+        requirement_names = set()
         try:
             for raw_line in requirements_file.read_text(encoding="utf-8").splitlines():
                 line = raw_line.strip()
@@ -764,7 +764,7 @@ def get_environment_info(force_refresh=False):
                     package_name = re.split(r"(==|>=|<=|~=|!=|>|<)", line, maxsplit=1)[0].strip()
 
                 if package_name:
-                    requirement_names.append(package_name)
+                    requirement_names.add(package_name)
         except Exception as e:
             status["error"] = str(e)
             return status
