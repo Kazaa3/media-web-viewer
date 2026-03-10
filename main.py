@@ -1362,7 +1362,9 @@ def get_library():
         "images": ["Bilder"],
         "documents": ["Dokument"],
         "ebooks": ["E-Book"],
-        "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray"]
+        "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray", 
+                   "PAL DVD (Abbild)", "NTSC DVD (Abbild)", "DVD (Abbild)", "Blu-ray (Abbild)", 
+                   "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild"]
     }
     
     allowed_internal_cats = []
