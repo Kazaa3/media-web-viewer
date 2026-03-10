@@ -35,6 +35,7 @@ Ein neuer Test `tests/test_image_differentiation.py` verifiziert die korrekte Be
 - `S3gold1_g.bin` (735MB) -> **CD-ROM (Abbild)**
 - `1411_c_von_a_bis.iso` (134MB) -> **CD-ROM (Abbild)**
 - `4_KOENIGE.iso` (6.8GB) -> **DVD (Abbild)**
+- `Going Raw - JUDITA_169_OPTION.ISO` (1.2GB) -> **DVD (Abbild)**
 - `OLE_DB_ODBC.iso` (24MB) -> **Disk-Abbild**
 
 ## Fazit

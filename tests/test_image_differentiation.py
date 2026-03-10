@@ -10,6 +10,13 @@ class TestImageDifferentiation(unittest.TestCase):
             fmt = detect_file_format(p)
             self.assertEqual(fmt, "DVD (Abbild)")
 
+    def test_small_dvd_detection(self):
+        # Going Raw is 1.2GB -> DVD
+        p = Path("./media/Going Raw - JUDITA_169_OPTION.ISO")
+        if p.exists():
+            fmt = detect_file_format(p)
+            self.assertEqual(fmt, "DVD (Abbild)")
+
     def test_cd_rom_detection(self):
         # 1411_c_von_a_bis.iso is 134MB -> CD-ROM
         p = Path("./media/1411_c_von_a_bis.iso")
