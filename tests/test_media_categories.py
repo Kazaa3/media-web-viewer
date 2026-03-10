@@ -8,6 +8,15 @@ class TestMediaCategories(unittest.TestCase):
         # Ensure we don't trigger real scans if possible, but MediaItem calls extract_metadata
         pass
 
+    def test_parser_imports(self):
+        """Verify that the new ISO parsers are available."""
+        try:
+            import pycdlib
+            import isoparser
+            print(f"✅ pycdlib and isoparser are available")
+        except ImportError as e:
+            self.fail(f"❌ Missing dependency: {e}")
+
     def test_audio_category(self):
         # We can't easily mock the entire parser chain without a lot of setup,
         # so we'll test the detection logic if we can.
