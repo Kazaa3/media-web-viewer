@@ -63,7 +63,7 @@ def get_default_scan_dir() -> Path:
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG: dict[str, Any] = {
-    "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"],
+    "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
     "parser_mode": "lightweight",
     "fast_scan_enabled": True,  # New global fast-scan toggle
     "debug_scan": True,
