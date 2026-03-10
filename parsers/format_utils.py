@@ -1,3 +1,30 @@
+def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
+    """
+    @brief Determines the standardized file format for a given media file.
+    @details Unterscheidet und standardisiert das Dateiformat je nach Typ (Audio, Video, ISO, etc.).
+    @param path Path object to the file.
+    @param tags Optional metadata tags for content detection.
+    @return Standardized file format string (e.g., 'MP3', 'MKV', 'ISO', 'FLAC', 'PAL DVD').
+    """
+    ext = path.suffix.lower()
+    if ext in AUDIO_EXTENSIONS:
+        return ext[1:].upper()
+    if ext in VIDEO_EXTENSIONS:
+        return ext[1:].upper()
+    if ext == '.iso':
+        # Try to detect content (PAL DVD, Blu-ray, etc.)
+        if tags:
+            volume_id = tags.get('pycdlib_volume_id', '').lower()
+            if 'pal' in volume_id:
+                return 'PAL DVD (ISO)'
+            if 'blu' in volume_id or 'bd' in volume_id:
+                return 'Blu-ray (ISO)'
+        return 'ISO'
+    if ext in EBOOK_EXTENSIONS:
+        return ext[1:].upper()
+    if ext in DOCUMENT_EXTENSIONS:
+        return ext[1:].upper()
+    return ext[1:].upper() if ext else 'UNKNOWN'
 from typing import Any
 import re
 import os
