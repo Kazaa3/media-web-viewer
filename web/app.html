@@ -3342,12 +3342,14 @@
                         output.style.display = 'none';
                     }, 3000);
                 } else {
-                    output.textContent += `\n\n${t('env_requirements_install_error')}\n${res.error || 'Unknown error'}`;
+                    const errorDetail = (typeof res.error === 'object') ? JSON.stringify(res.error) : (res.error || 'Unknown error');
+                    output.textContent += `\n\n${t('env_requirements_install_error')}\n${errorDetail}`;
                     btn.disabled = false;
                     btn.textContent = t('env_requirements_install_btn');
                 }
             } catch (err) {
-                output.textContent += `\n\nError: ${err}`;
+                const errMsg = (err instanceof Error) ? err.message : (typeof err === 'object' ? JSON.stringify(err) : String(err));
+                output.textContent += `\n\nError: ${errMsg}`;
                 btn.disabled = false;
                 btn.textContent = t('env_requirements_install_btn');
             }

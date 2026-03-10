@@ -92,5 +92,30 @@ class TestPipInstall(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         mock_run.assert_not_called()
 
+    @patch('subprocess.run')
+    @patch('main.logger')
+    @patch('main._get_requirements_status')
+    def test_pip_install_packages_verification_fail(self, mock_status, mock_logger, mock_run):
+        # Setup mock for pip success
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "Successfully installed Pillow"
+        mock_result.stderr = ""
+        mock_run.return_value = mock_result
+        
+        # Setup mock for verification failure (still missing)
+        mock_status.return_value = {
+            "available": True,
+            "missing": ["Pillow"],
+            "installed": []
+        }
+        
+        # Call function
+        result = main.pip_install_packages(["Pillow"])
+        
+        # Verify
+        self.assertEqual(result["status"], "error")
+        self.assertIn("Verification failed", result["error"])
+
 if __name__ == '__main__':
     unittest.main()

@@ -282,11 +282,23 @@ def pip_install_packages(packages):
             # After installation, we should probably clear the environment info cache
             _ENV_INFO_CACHE["data"] = None
             _ENV_INFO_CACHE["ts"] = 0.0
-            return {
-                "status": "ok",
-                "output": result.stdout,
-                "installed": packages
-            }
+            # Double check if they are really installed now
+            status = _get_requirements_status() # Assuming _get_requirements_status is defined elsewhere
+            still_missing = []
+            for p in packages:
+                # Normalize names for comparison (requirements.txt might have case differences)
+                if any(p.lower() == m.lower() for m in status.get("missing", [])):
+                    still_missing.append(p)
+            
+            if still_missing:
+                logger.error(f"[PIP] Installation reported success but packages still missing: {still_missing}")
+                return {
+                    "status": "error", 
+                    "error": f"Verification failed. Packages still missing: {', '.join(still_missing)}",
+                    "output": result.stdout
+                }
+            
+            return {"status": "ok", "output": result.stdout, "installed": packages}
         else:
             error_msg = result.stderr or result.stdout or "Unknown pip error"
             logger.error(f"Failed to install packages: {error_msg}")
@@ -302,6 +314,81 @@ def pip_install_packages(packages):
     except Exception as e:
         logger.error(f"Error during pip install: {str(e)}")
         return {"status": "error", "error": str(e)}
+def _get_requirements_status():
+    """Get install status for requirements.txt packages in current interpreter."""
+    import importlib.util
+
+    requirements_file = Path(__file__).parent / "requirements.txt"
+    status = {
+        "available": requirements_file.exists(),
+        "total": 0,
+        "installed_count": 0,
+        "missing_count": 0,
+        "installed": [],
+        "missing": [],
+    }
+
+    if not requirements_file.exists():
+        return status
+
+    import_overrides = {
+        "python-vlc": "vlc",
+        "bottle-websocket": "bottle_websocket",
+        "gevent-websocket": "geventwebsocket",
+        "pytest-cov": "pytest_cov",
+        "pyinstaller": "PyInstaller",
+        "pillow": "PIL",
+    }
+
+    requirement_names = set()
+    try:
+        for raw_line in requirements_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith(("-r", "--")):
+                continue
+
+            line = line.split(" #", 1)[0].split(";", 1)[0].strip()
+            if not line:
+                continue
+
+            if " @ " in line:
+                package_name = line.split(" @ ", 1)[0].strip()
+            else:
+                package_name = re.split(r"(==|>=|<=|~=|!=|>|<)", line, maxsplit=1)[0].strip()
+
+            if package_name:
+                requirement_names.add(package_name)
+    except Exception as e:
+        status["error"] = str(e)  # type: ignore
+        return status
+
+    installed = []
+    missing = []
+    for package_name in requirement_names:
+        import_name = import_overrides.get(package_name.lower(), package_name.replace("-", "_"))
+        if not import_name:
+            missing.append(package_name)
+            continue
+        try:
+            if importlib.util.find_spec(import_name) is not None:
+                installed.append(package_name)
+            else:
+                missing.append(package_name)
+        except Exception:
+            missing.append(package_name)
+
+    installed.sort(key=str.lower)
+    missing.sort(key=str.lower)
+
+    status["installed"] = installed
+    status["missing"] = missing
+    status["total"] = len(requirement_names)
+    status["installed_count"] = len(installed)
+    status["missing_count"] = len(missing)
+    return status
+
 
 
 @eel.expose
@@ -720,80 +807,9 @@ def get_environment_info(force_refresh=False):
             "mutagen_version": mutagen_version,
         }
 
-    def _get_requirements_status():
-        """Get install status for requirements.txt packages in current interpreter."""
-        import importlib.util
 
-        requirements_file = Path(__file__).parent / "requirements.txt"
-        status = {
-            "available": requirements_file.exists(),
-            "total": 0,
-            "installed_count": 0,
-            "missing_count": 0,
-            "installed": [],
-            "missing": [],
-        }
 
-        if not requirements_file.exists():
-            return status
-
-        import_overrides = {
-            "python-vlc": "vlc",
-            "bottle-websocket": "bottle_websocket",
-            "gevent-websocket": "geventwebsocket",
-            "pytest-cov": "pytest_cov",
-            "pyinstaller": "PyInstaller",
-        }
-
-        requirement_names = set()
-        try:
-            for raw_line in requirements_file.read_text(encoding="utf-8").splitlines():
-                line = raw_line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if line.startswith(("-r", "--")):
-                    continue
-
-                line = line.split(" #", 1)[0].split(";", 1)[0].strip()
-                if not line:
-                    continue
-
-                if " @ " in line:
-                    package_name = line.split(" @ ", 1)[0].strip()
-                else:
-                    package_name = re.split(r"(==|>=|<=|~=|!=|>|<)", line, maxsplit=1)[0].strip()
-
-                if package_name:
-                    requirement_names.add(package_name)
-        except Exception as e:
-            status["error"] = str(e)
-            return status
-
-        installed = []
-        missing = []
-        for package_name in requirement_names:
-            import_name = import_overrides.get(package_name.lower(), package_name.replace("-", "_"))
-            if not import_name:
-                missing.append(package_name)
-                continue
-            try:
-                if importlib.util.find_spec(import_name) is not None:
-                    installed.append(package_name)
-                else:
-                    missing.append(package_name)
-            except Exception:
-                missing.append(package_name)
-
-        installed.sort(key=str.lower)
-        missing.sort(key=str.lower)
-
-        status["installed"] = installed
-        status["missing"] = missing
-        status["total"] = len(requirement_names)
-        status["installed_count"] = len(installed)
-        status["missing_count"] = len(missing)
-        return status
-    
+    # Discovery logic
     # Discover available environments (cached/fast)
     conda_envs = _get_conda_environments()
     system_pythons = _get_system_pythons()
