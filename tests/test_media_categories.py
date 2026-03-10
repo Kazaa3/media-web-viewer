@@ -61,6 +61,28 @@ class TestMediaCategories(unittest.TestCase):
             self.assertEqual(item.logical_type, 'Bilder')
             self.assertEqual(item.category, 'Bilder')
 
+    def test_mkv_category(self):
+        """Test that MKV files are correctly categorized as Video/Film."""
+        from unittest.mock import patch
+        with patch('parsers.media_parser.extract_metadata') as mock_extract:
+            mock_extract.return_value = (3600, {'container': 'mkv', 'video_codec': 'h264'})
+            item = MediaItem('movie.mkv', '/tmp/movie.mkv')
+            self.assertEqual(item.logical_type, 'Video')
+            self.assertEqual(item.category, 'Film')
+
+    def test_image_with_cover_extraction_logic(self):
+        """Test that the logic for identifying files with embedded art works."""
+        from unittest.mock import patch
+        with patch('parsers.media_parser.extract_metadata') as mock_extract:
+            # Simulate an MP3 with embedded art
+            mock_extract.return_value = (180, {'has_art': 'Yes', 'artist': 'Artist', 'album': 'Album'})
+            item = MediaItem('song.mp3', '/tmp/song.mp3')
+            self.assertEqual(item.tags.get('has_art'), 'Yes')
+            # The category should still be Album
+            self.assertEqual(item.category, 'Album')
+            # Check if art_path is defined
+            self.assertTrue(hasattr(item, 'art_path'))
+
     def test_audio_extensions_coverage(self):
         """Test that all audio extensions are correctly categorized as 'Audio'."""
         from unittest.mock import patch
