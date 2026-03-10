@@ -1,3 +1,23 @@
+## Logbuch-Eintrag: media_format.py
+
+Ab 10.03.2026 gibt es eine zentrale Datei `media_format.py`, die das Format-Objekt für jede Mediendatei bereitstellt. Die Klasse `MediaFormat` erkennt und klassifiziert Typ, Format und Content für alle gängigen Medien:
+
+- Audio-CD, PAL DVD, NTSC DVD, WMV DVD, HD DVD, Blu-ray, Daten-Disc, ISO-Image
+- Audio/Video/Dokument/E-Book: Standardformate (MP3, FLAC, MKV, PDF, EPUB ...)
+
+Die Content-Erkennung erfolgt anhand typischer Merkmale wie Volume-ID, Container oder Dateiendung. Das Format-Objekt kann in allen Modulen genutzt werden und sorgt für eine zentrale, nachvollziehbare Klassifikation und Trennung von Typ, Format und Inhalt.
+
+Die Erweiterung ist dokumentiert, getestet und für UI, Datenbank und weitere Verarbeitung verfügbar.
+### Dateiformat: Zentrale Definition und Standardisierung
+
+Ab 10.03.2026 wird das Dateiformat für jede Mediendatei zentral über die Funktion `detect_file_format(path, tags)` definiert und standardisiert. Diese Funktion erkennt und benennt das Format für alle Typen (Audio, Video, ISO, Dokumente, E-Books) und Spezialfälle wie PAL DVD oder Blu-ray.
+
+- Audio: z.B. MP3, FLAC, OGG, WAV, M4A, ALAC, OPUS, AAC, WMA, M4B
+- Video: z.B. MP4, AVI, MOV, MKV, WEBM, FLV, WMV, MPG, MPEG, M4V, 3GP, 3G2, OGV, MTS, M2TS
+- ISO: ISO, PAL DVD (ISO), Blu-ray (ISO) – Content wird über Volume-ID erkannt
+- E-Book/Dokument: EPUB, MOBI, AZW, FB2, PDF, DOC, DOCX, TXT, MD, HTML, HTM
+
+Die MediaItem-Klasse nutzt diese Funktion für das Feld `file_format`, sodass die Formatdefinition für alle Typen einheitlich und nachvollziehbar ist. Die Trennung und Definition ist dokumentiert und im Code umgesetzt.
 # Parser-Pipeline: Optimierung & Dokumentation
 
 ## Übersicht
@@ -48,6 +68,18 @@ PARSER_CONFIG = {
 ---
 Stand: 10.03.2026
 Automatisierte Dokumentation
+
+## Meilenstein: Logische Trennung von Typ, Format und Inhalt
+
+Ab 10.03.2026 ist die Parser-Pipeline so erweitert, dass eine klare logische Trennung zwischen Dateipfad (Path-Objekt), Dateiformat und dem tatsächlichen Inhalt besteht. Dies ermöglicht z.B. die Unterscheidung:
+
+- Typ: Image (logisch, z.B. ISO)
+- Format: ISO (Dateiformat)
+- Inhalt: PAL DVD (detektiert durch Parser, z.B. pycdlib Volume-ID)
+
+Diese Felder werden im MediaItem als `logical_type`, `file_format` und `content_type` geführt und stehen für UI, Datenbank und weitere Verarbeitung zur Verfügung. Die Trennung erleichtert die Klassifikation und gezielte Behandlung komplexer Medien wie ISO-Images mit spezifischem Inhalt (PAL DVD, Blu-ray etc.).
+
+Die neue Architektur ist dokumentiert und getestet. Empfehlungen und Benchmarks berücksichtigen ab sofort diese logische Trennung.
 
 ## Parser-Abhängigkeiten & benötigte Pakete
 

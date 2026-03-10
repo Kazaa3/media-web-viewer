@@ -59,13 +59,43 @@ class MediaItem:
         )
         self.category = self.get_category()
 
+        # Logical separation: type, format, content
+        from parsers.format_utils import detect_file_format
+        self.logical_type = self.detect_logical_type()
+        self.file_format = detect_file_format(self.path, self.tags)
+        self.content_type = self.detect_content_type()
+
         # New separated metadata fields
-        self.extension = self.type[1:] if self.type.startswith('.') else self.type
-        self.media_type = "video" if self.type in VIDEO_EXTENSIONS else "audio"
+        self.extension = self.file_format
+        self.media_type = self.logical_type
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)
 
+    def detect_logical_type(self):
+        ext = self.type.lower()
+        if ext == '.iso':
+            return 'Image'
+        if ext in VIDEO_EXTENSIONS:
+            return 'Video'
+        if ext in AUDIO_EXTENSIONS:
+            return 'Audio'
+        if ext in EBOOK_EXTENSIONS:
+            return 'E-Book'
+        if ext in DOCUMENT_EXTENSIONS:
+            return 'Dokument'
+        return 'Unbekannt'
+
+    def detect_content_type(self):
+        ext = self.type.lower()
+        tags = self.tags or {}
+        # ISO: try to detect PAL DVD
+        if ext == '.iso':
+            volume_id = tags.get('pycdlib_volume_id', '').lower()
+            if 'pal' in volume_id or 'dvd' in volume_id:
+                return 'PAL DVD'
+            return 'ISO Image'
+        return self.category
     def get_category(self):
         """
         @brief Detects the category of the media item based on extension and metadata tags.
@@ -177,6 +207,9 @@ class MediaItem:
             'tag_type': self.tag_type,
             'codec': self.codec,
             'category': self.category,
+            'logical_type': self.logical_type,
+            'file_format': self.file_format,
+            'content_type': self.content_type,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format
         }
