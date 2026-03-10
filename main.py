@@ -2648,10 +2648,6 @@ def run_tests(test_files):
 
 @eel.expose
 def run_gui_tests():
-from typing import Dict, Any
-import logging
-
-def run_gui_tests() -> Dict[str, Any]:
     """
     @brief Placeholder for GUI tests (handled via the agent).
     @details Dummy-Funktion für GUI-Tests (da diese über den Agenten laufen).
