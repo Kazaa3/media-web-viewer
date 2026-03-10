@@ -14,7 +14,7 @@ import logging
 log = logger.get_logger("parser")
 
 
-def extract_metadata(path, filename, mode='lightweight'):
+def extract_metadata(path, filename, mode='lightweight', file_type=None):
     """
     @brief Orchestrates the metadata extraction process using a sequential parser chain.
     @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.

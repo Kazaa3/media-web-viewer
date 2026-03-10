@@ -43,3 +43,24 @@ Die Auswahl basiert auf den Benchmark-Ergebnissen und der Metadatenqualität. F�
 ---
 10.03.2026
 Automatischer Eintrag durch Benchmark-Tool.
+## Benchmark-Ergebnisse (PAL DVD ISO & alle Dateien)
+
+- Die Benchmark-Auswertung zeigt, dass für ISO/PAL DVD-Dateien pycdlib und isoparser als spezialisierte Parser integriert sind.
+- isoparser und pycdlib liefern robuste Fehlerbehandlung für beschädigte oder nicht unterstützte ISOs.
+- Für PAL DVD ISO wurden keine schwerwiegenden Fehler protokolliert, alle Parser liefern konsistente Ergebnisse.
+- Mutagen wirft für viele Dateien einen Fehler: `parse() missing 1 required positional argument: 'name'`. Dies betrifft alle Dateitypen und sollte im Mutagen-Parser behoben werden (Parameterübergabe prüfen).
+- Die Ausführungszeiten variieren: ffmpeg und isoparser sind sehr schnell, mutagen und pymediainfo robust, aber mutagen benötigt Fix für Argumente.
+- Die JSON-Ergebnisse enthalten für jede Datei: Laufzeit, Parser-spezifische Zeiten, Metadaten, Fehler.
+
+### Empfehlungen
+- Für ISO/PAL DVD: pycdlib und isoparser aktivieren, beide liefern zuverlässige Ergebnisse und Fehlerbehandlung.
+- Für Audio: mutagen, pymediainfo, music-tag, tinytag, eyed3 (mutagen-Fehler beheben).
+- Für Video: ffprobe, enzyme, ebml, mkvparse, pymkv.
+- Fallback: ffmpeg.
+- Fehlerbehandlung und Logging für alle Parser sicherstellen.
+- Benchmark regelmäßig ausführen und JSON-Ergebnisse prüfen.
+
+### ToDo
+- Mutagen-Parser: Argumentübergabe fixen ("name"-Parameter).
+- Ergebnisse und Empfehlungen im Logbuch dokumentieren.
+- Parser-Konfiguration regelmäßig überprüfen und anpassen.
