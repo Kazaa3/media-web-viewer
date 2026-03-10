@@ -32,105 +32,105 @@ class ArtworkExtractor:
         if PARSER_CONFIG.get('ffmpeg_extract_thumbnails') is False:
             return None
 
-        # 1. Validation and Setup
         if not path.exists():
             return None
 
         try:
             st = path.stat()
+            # Cache key includes mtime and size to detect changes
             file_hash = hashlib.md5(f"{path}{st.st_size}{st.st_mtime}".encode()).hexdigest()
         except Exception:
             return None
 
         art_file = self.cache_dir / f"{file_hash}.jpg"
-        if art_file.exists():
+        if art_file.exists() and art_file.stat().st_size > 0:
             return str(art_file)
 
-        # 2. Strategy Selection
         success = False
-        
-        # Priority 1: Container-specific "Native" extraction
-        if logical_type == 'Audio':
+        ext = path.suffix.lower()
+
+        # Strategy 1: Mutagen (High quality, fast for Audio/Audiobooks)
+        if logical_type == 'Audio' or ext in ('.m4b', '.m4a', '.mp3'):
             success = self._extract_audio_art(path, art_file)
-        
-        # Priority 2: FFmpeg (General fallback for video and embedded image streams)
+
+        # Strategy 2: FFmpeg Attachment/Stream Extraction (Great for MKV/MP4)
         if not success:
-            if logical_type == 'Video':
-                success = self._extract_video_art(path, art_file)
-            elif tags.get('has_art') == 'Yes':
-                success = self._extract_generic_embedded(path, art_file)
+            success = self._extract_embedded_streams(path, art_file)
+
+        # Strategy 3: Video Thumbnailing (Last resort for Video)
+        if not success and logical_type == 'Video':
+            success = self._extract_video_thumbnail(path, art_file)
 
         return str(art_file) if success and art_file.exists() and art_file.stat().st_size > 0 else None
 
     def _extract_audio_art(self, path: Path, out_path: Path) -> bool:
         """
-        Extract art from audio files.
+        Extract art from audio files using mutagen.
+        Handles multiple APIC/covr tags.
         """
-        # Try mutagen first (pure python, can be faster for tags)
         try:
             from mutagen import File
             audio = File(str(path))
-            if audio and audio.tags:
-                # Check for various tag formats
-                # ID3 (MP3)
-                if hasattr(audio.tags, 'getall'):
-                    pics = audio.tags.getall('APIC')
-                    if pics:
-                        with open(out_path, 'wb') as f:
-                            f.write(pics[0].data)
-                        return True
-                # FLAC
-                if hasattr(audio, 'pictures') and audio.pictures:
-                    with open(out_path, 'wb') as f:
-                        f.write(audio.pictures[0].data)
-                    return True
-                # MP4 (M4A/M4B)
-                if 'covr' in audio.tags:
-                    with open(out_path, 'wb') as f:
-                        f.write(audio.tags['covr'][0])
-                    return True
+            if not audio or not audio.tags:
+                return False
+
+            best_data = None
+            
+            # ID3 (MP3)
+            if hasattr(audio.tags, 'getall'):
+                pics = audio.tags.getall('APIC')
+                if pics:
+                    # Preference: 3 (Cover Front), then others
+                    for p in pics:
+                        if getattr(p, 'type', 0) == 3:
+                            best_data = p.data
+                            break
+                    if not best_data:
+                        best_data = pics[0].data
+
+            # FLAC
+            elif hasattr(audio, 'pictures') and audio.pictures:
+                # Use first picture
+                best_data = audio.pictures[0].data
+
+            # MP4 (M4B/M4A)
+            elif 'covr' in audio.tags:
+                covr = audio.tags['covr']
+                if covr:
+                    best_data = covr[0]
+
+            if best_data:
+                with open(out_path, 'wb') as f:
+                    f.write(best_data)
+                return True
         except Exception as e:
-            log.debug(f"Mutagen extraction failed for {path.name}: {e}")
+            log.debug(f"Mutagen failed for {path.name}: {e}")
 
-        # Fallback to FFmpeg for audio art extraction
+        return False
+
+    def _extract_embedded_streams(self, path: Path, out_path: Path) -> bool:
+        """
+        Try to extract video/image streams (covers/attachments).
+        Works well for MKV/MP4 with multiple embedded pictures.
+        """
+        # 1. Broad stream mapping (picks first attached pic)
         return self._run_ffmpeg([
-            "ffmpeg", "-i", str(path),
-            "-an", "-vcodec", "copy",
-            "-y", str(out_path)
-        ], timeout=5)
-
-    def _extract_video_art(self, path: Path, out_path: Path) -> bool:
-        """
-        Extract art from video files (Attachments or Frames).
-        """
-        # Try attachments first (common in MKV)
-        success = self._run_ffmpeg([
             "ffmpeg", "-i", str(path),
             "-map", "0:v", "-c:v", "copy", "-vframes", "1",
             "-y", str(out_path)
-        ], timeout=3)
+        ], timeout=5)
 
-        if not success or not out_path.exists():
-            # Real thumbnailing
-            success = self._run_ffmpeg([
-                "ffmpeg", "-i", str(path),
-                "-ss", "00:00:05", # Seek for non-black frame
-                "-vframes", "1",
-                "-vf", "scale=w=400:h=400:force_original_aspect_ratio=decrease",
-                "-y", str(out_path)
-            ], timeout=7)
-        
-        return success
-
-    def _extract_generic_embedded(self, path: Path, out_path: Path) -> bool:
+    def _extract_video_thumbnail(self, path: Path, out_path: Path) -> bool:
         """
-        Fallback embedded stream extraction.
+        Create a thumbnail from a video frame.
         """
         return self._run_ffmpeg([
             "ffmpeg", "-i", str(path),
-            "-map", "0:v:0", "-c:v", "copy", "-vframes", "1",
+            "-ss", "00:00:07",
+            "-vframes", "1",
+            "-vf", "scale=w=480:h=480:force_original_aspect_ratio=decrease",
             "-y", str(out_path)
-        ], timeout=5)
+        ], timeout=8)
 
     def _run_ffmpeg(self, cmd: list, timeout: int) -> bool:
         try:
