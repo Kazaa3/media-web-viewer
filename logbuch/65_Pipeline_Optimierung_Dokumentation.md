@@ -48,3 +48,25 @@ PARSER_CONFIG = {
 ---
 Stand: 10.03.2026
 Automatisierte Dokumentation
+
+## Parser-Abhängigkeiten & benötigte Pakete
+
+| Parser-Modul      | Benötigtes Paket         | Bemerkung                |
+|-------------------|-------------------------|--------------------------|
+| filename_parser   | -                       | Nur Python-Standard      |
+| container_parser  | pymediainfo             | MediaInfo-Wrapper        |
+| mutagen_parser    | mutagen                 | Audio-Tag-Bibliothek     |
+| pymediainfo_parser| pymediainfo             | MediaInfo-Wrapper        |
+| ffprobe_parser    | ffprobe (CLI)           | Systemtool, Python-Subprocess |
+| ffmpeg_parser     | ffmpeg (CLI)            | Systemtool, Python-Subprocess |
+| ebml              | ebml                    | MKV/EBML-Parsing         |
+| mkvparse          | mkvparse                | MKV-Parsing              |
+| enzyme            | enzyme                  | Video-Parsing            |
+| pycdlib           | pycdlib                 | ISO-Parsing              |
+| pymkv             | pymkv                   | MKV-Parsing              |
+| tinytag           | tinytag                 | Audio-Tag-Bibliothek     |
+| eyed3             | eyed3                   | MP3-Tag-Bibliothek       |
+| music-tag         | music-tag               | Audio-Tag-Bibliothek     |
+| isoparser_parser  | isoparser, six          | ISO-Parsing, six für Kompatibilität |
+
+Jeder Parser benötigt das jeweilige Paket (siehe requirements.txt), ggf. Systemtools (ffprobe/ffmpeg) und Zusatzpakete wie six für isoparser. Die Tabelle gibt einen schnellen Überblick, was für Tests und Betrieb installiert sein muss.
