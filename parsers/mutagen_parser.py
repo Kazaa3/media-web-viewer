@@ -39,7 +39,7 @@ def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any],
-    name: str,
+    filename: str,
     mode: str = 'lightweight'
 ) -> dict[str, Any]:
     """
@@ -48,7 +48,7 @@ def parse(
     @param path Absolute path / Absoluter Pfad.
     @param file_type Extension (e.g., '.mp3') / Dateiendung.
     @param tags Existing tags dictionary / Vorhandene Tags.
-    @param name Original filename / Originaldateiname.
+    @param filename Original filename / Originaldateiname.
     @param mode Extraction mode / Extraktionsmodus.
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
@@ -70,7 +70,7 @@ def parse(
             else:
                 tags['artist'] = safe_get(audio_flac, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
 
-            tags['title'] = safe_get(audio_flac, 'TITLE', default=tags.get('title', name))
+            tags['title'] = safe_get(audio_flac, 'TITLE', default=tags.get('title', filename))
             tags['year'] = safe_get(audio_flac, 'DATE')
             tags['genre'] = safe_get(audio_flac, 'GENRE')
             tags['track'] = safe_get(audio_flac, 'TRACKNUMBER')
@@ -179,7 +179,7 @@ def parse(
             else:
                 tags['artist'] = safe_get(audio_mp4, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
 
-            tags['title'] = safe_get(audio_mp4, '\xa9nam', default=tags.get('title', name))
+            tags['title'] = safe_get(audio_mp4, '\xa9nam', default=tags.get('title', filename))
             tags['year'] = safe_get(audio_mp4, '\xa9day')
             tags['genre'] = safe_get(audio_mp4, '\xa9gen')
             tags['album'] = safe_get(audio_mp4, '\xa9alb')
@@ -234,7 +234,7 @@ def parse(
 
             if audio_misc:
                 tags['artist'] = safe_get(audio_misc, 'artist', default=tags.get('artist', 'Unbekannt'))
-                tags['title'] = safe_get(audio_misc, 'title', default=tags.get('title', name))
+                tags['title'] = safe_get(audio_misc, 'title', default=tags.get('title', filename))
                 tags['year'] = safe_get(audio_misc, 'date') or safe_get(audio_misc, 'year')
                 tags['genre'] = safe_get(audio_misc, 'genre')
                 tags['album'] = safe_get(audio_misc, 'album')

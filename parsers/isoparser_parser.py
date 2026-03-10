@@ -2,7 +2,7 @@ from isoparser.iso import ISO  # isoparser requires 'six' package
 from typing import Any
 from pathlib import Path
 
-def parse(path_obj: Path, file_type: str, tags: dict[str, Any], mode: str = 'lightweight') -> dict[str, Any]:
+def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str, mode: str = 'lightweight') -> dict[str, Any]:
     """
     Parses ISO files using isoparser and extracts basic metadata.
     Handles both Path and file object, logs errors for corrupted files.

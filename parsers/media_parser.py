@@ -80,120 +80,127 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
     music_tag_enabled = PARSER_CONFIG.get("enable_music_tag_parser", False)
     isoparser_enabled = PARSER_CONFIG.get("enable_isoparser_parser", True)  # default enabled
 
-    for step_name, step_func in parser_steps:
-        needs_more_info = True if mode == 'full' else (
-            not tags.get('samplerate')
-            or not tags.get('bitrate')
-            or not tags.get('bitdepth')
-            or not tags.get('codec')
-            or tags.get('codec') == file_type[1:].lower()
-            or not tags.get('container')
-            or not duration
-            or (file_type in ['.m4b', '.mkv', '.m4a', '.mp4'] and not tags.get('chapters'))
-        )
+    MAX_RETRIES = PARSER_CONFIG.get("parser_max_retries", 2)
 
-        t0 = time.time()
-        try:
-            if step_func:
-                # Only run isoparser if enabled and file is .iso
-                if step_name == "isoparser" and not isoparser_enabled:
-                    parser_times[step_name] = 0.0
-                    continue
-                tags = cast(dict[str, Any], step_func(
-                    path_obj, file_type, tags, mode=mode))
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "ebml" and ebml_enabled and file_type == ".mkv":
-                from ebml.container import File
-                ebml_file = File(str(path_obj))
-                segment = next(ebml_file.children_named("Segment"), None)
-                if segment:
-                    tags['ebml_title'] = getattr(segment, 'title', None)
-                    tags['ebml_duration'] = getattr(segment, 'duration', None)
-                    tags['ebml_tracks'] = [
-                        {
-                            'type': getattr(track, 'track_type', None),
-                            'language': getattr(track, 'language', None),
-                            'codec_id': getattr(track, 'codec_id', None)
-                        }
-                        for track in getattr(segment, 'tracks', [])
-                    ]
-                    tags['ebml_chapters'] = getattr(segment, 'chapters', None)
-                log.debug(f"EBML parser finished for '{filename}'")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "mkvparse" and mkvparse_enabled and file_type == ".mkv":
-                import mkvparse
-                # Beispiel: mkvparse kann Streams und Tracks extrahieren
-                try:
+    for step_name, step_func in parser_steps:
+        # Skip if we already have enough information (for lightweight mode)
+        # or if mode is 'full' we always continue to gather all tags.
+        if mode != 'full':
+            has_essential = (
+                tags.get('samplerate')
+                and tags.get('bitrate')
+                and tags.get('bitdepth')
+                and tags.get('codec')
+                and tags.get('codec') != file_type[1:].lower()
+                and tags.get('container')
+                and duration
+            )
+            # M4B / MKV often need chapters which filename parser can't provide
+            needs_chapters = file_type in ['.m4b', '.mkv', '.m4a', '.mp4'] and not tags.get('chapters')
+            
+            if has_essential and not needs_chapters:
+                continue
+
+        attempt = 0
+        success = False
+        while attempt <= MAX_RETRIES and not success:
+            t0 = time.time()
+            try:
+                if step_func:
+                    # Only run isoparser if enabled and file is .iso
+                    if step_name == "isoparser" and not isoparser_enabled:
+                        parser_times[step_name] = 0.0
+                        success = True
+                        continue
+                    
+                    tags = cast(dict[str, Any], step_func(
+                        path_obj, file_type, tags, filename, mode=mode))
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "ebml" and ebml_enabled and file_type == ".mkv":
+                    from ebml.container import File
+                    ebml_file = File(str(path_obj))
+                    segment = next(ebml_file.children_named("Segment"), None)
+                    if segment:
+                        tags['ebml_title'] = getattr(segment, 'title', None)
+                        tags['ebml_duration'] = getattr(segment, 'duration', None)
+                        tags['ebml_tracks'] = [
+                            {
+                                'type': getattr(track, 'track_type', None),
+                                'language': getattr(track, 'language', None),
+                                'codec_id': getattr(track, 'codec_id', None)
+                            }
+                            for track in getattr(segment, 'tracks', [])
+                        ]
+                        tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                    log.debug(f"EBML parser finished for '{filename}'")
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "mkvparse" and mkvparse_enabled and file_type == ".mkv":
+                    import mkvparse
                     with open(str(path_obj), 'rb') as f:
                         mkvparse.parse(f, lambda elem, data: log.debug(f"mkvparse: {elem} {data}"))
-                except Exception as e:
-                    log.error(f"mkvparse error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "enzyme" and enzyme_enabled and file_type in [".mkv", ".mp4"]:
-                import enzyme
-                try:
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "enzyme" and enzyme_enabled and file_type in [".mkv", ".mp4"]:
+                    import enzyme
                     movie = enzyme.Movie(str(path_obj))
                     tags['enzyme_tracks'] = movie.tracks
                     tags['enzyme_duration'] = movie.duration
-                except Exception as e:
-                    log.error(f"enzyme error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "pycdlib" and pycdlib_enabled and file_type == ".iso":
-                import pycdlib
-                try:
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "pycdlib" and pycdlib_enabled and file_type == ".iso":
+                    import pycdlib
                     iso = pycdlib.PyCdlib()
                     iso.open(str(path_obj))
                     tags['pycdlib_volume_id'] = iso.get_volume_id()
                     iso.close()
-                except Exception as e:
-                    log.error(f"pycdlib error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "pymkv" and pymkv_enabled and file_type == ".mkv":
-                import pymkv
-                try:
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "pymkv" and pymkv_enabled and file_type == ".mkv":
+                    import pymkv
                     mkv = pymkv.MKVFile(str(path_obj))
                     tags['pymkv_tracks'] = mkv.tracks
-                except Exception as e:
-                    log.error(f"pymkv error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "tinytag" and tinytag_enabled and file_type in [".mp3", ".m4a", ".ogg", ".flac", ".wav", ".wma"]:
-                from tinytag import TinyTag
-                try:
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "tinytag" and tinytag_enabled and file_type in [".mp3", ".m4a", ".ogg", ".flac", ".wav", ".wma"]:
+                    from tinytag import TinyTag
                     tag = TinyTag.get(str(path_obj))
                     tags['tinytag_title'] = tag.title
                     tags['tinytag_artist'] = tag.artist
                     tags['tinytag_duration'] = tag.duration
-                except Exception as e:
-                    log.error(f"tinytag error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "eyed3" and eyed3_enabled and file_type == ".mp3":
-                import eyed3
-                try:
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "eyed3" and eyed3_enabled and file_type == ".mp3":
+                    import eyed3
                     audiofile = eyed3.load(str(path_obj))
                     if audiofile and audiofile.tag:
                         tags['eyed3_title'] = audiofile.tag.title
                         tags['eyed3_artist'] = audiofile.tag.artist
                         tags['eyed3_album'] = audiofile.tag.album
                         tags['eyed3_duration'] = audiofile.info.time_secs if audiofile.info else None
-                except Exception as e:
-                    log.error(f"eyed3 error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            elif step_name == "music_tag" and music_tag_enabled and file_type in [".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma"]:
-                try:
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                elif step_name == "music_tag" and music_tag_enabled and file_type in [".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma"]:
                     import music_tag
                     f = music_tag.load_file(str(path_obj))
                     tags['music_tag_title'] = f['title'].value
                     tags['music_tag_artist'] = f['artist'].value
                     tags['music_tag_album'] = f['album'].value
                     tags['music_tag_duration'] = f['duration'].value
-                except Exception as e:
-                    log.error(f"music_tag error for '{filename}': {e}")
-                parser_times[step_name] = time.time() - t0
-            else:
-                parser_times[step_name] = 0.0
-        except Exception as e:
-            log.error(f"{step_name} parser error for '{filename}': {e}")
-            parser_times[step_name] = time.time() - t0
+                    parser_times[step_name] = time.time() - t0
+                    success = True
+                else:
+                    parser_times[step_name] = 0.0
+                    success = True
+            except Exception as e:
+                attempt += 1
+                if attempt <= MAX_RETRIES:
+                    log.warning(f"Parser {step_name} failed (Attempt {attempt}/{MAX_RETRIES+1}) for '{filename}': {e}. Retrying...")
+                    time.sleep(0.05 * attempt)
+                else:
+                    log.error(f"{step_name} parser error after {MAX_RETRIES} retries for '{filename}': {e}")
+                    parser_times[step_name] = time.time() - t0
 
         # Update duration safely after each potential parser
         if 'duration' in tags and tags['duration'] and not duration:

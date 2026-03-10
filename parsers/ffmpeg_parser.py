@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 
-def parse(path, file_type, tags, mode='lightweight'):
+def parse(path, file_type, tags, filename, mode='lightweight'):
     """
     @brief Extracts metadata using FFmpeg CLI (last-resort fallback).
     @details Extrahiert Metadaten mittels FFmpeg CLI (letzte Instanz Fallback).
