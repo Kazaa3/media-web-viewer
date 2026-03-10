@@ -102,3 +102,19 @@ Die neue Architektur ist dokumentiert und getestet. Empfehlungen und Benchmarks 
 | isoparser_parser  | isoparser, six          | ISO-Parsing, six für Kompatibilität |
 
 Jeder Parser benötigt das jeweilige Paket (siehe requirements.txt), ggf. Systemtools (ffprobe/ffmpeg) und Zusatzpakete wie six für isoparser. Die Tabelle gibt einen schnellen Überblick, was für Tests und Betrieb installiert sein muss.
+
+---
+**Milestone: Buildsystem, Environment, DB, Hygiene**
+
+**build_system.py**
+Komplexes Buildsystem für Media Web Viewer. Automatisiert Tests, Lint, Typprüfung, PyInstaller- und Debian-Builds, Clean, Info, Pipeline. CLI mit epilog, targeted pre-build gate, Banner-Ausgabe, Version-Handling, Artefakt-Cleaning, Info-Display. Modular, robust, dokumentiert.
+
+**check_environment.py**
+Schnelles Environment-Check-Skript. Prüft Python-Version, venv/conda, kritische und optionale Dependencies, System-Tools (ffmpeg, mediainfo, browser), tkinter, main.py-Import. Gibt Zusammenfassung und empfohlene Fixes aus. CLI mit --list-missing-pip/apt/conda.
+
+**db.py**
+SQLite-Datenbankmodul. Initialisiert DB, Migration für neue Felder, Insert/Update/Delete/Query für Medien und Playlists, Legacy-DB-Cleanup, Statistiken, Tag-Update, Rename, Delete. Nutzt user-writable Pfad (~/.media-web-viewer). Robust, migrationssicher, dokumentiert.
+
+**env_handler.py**
+Umfassendes Environment- und Hygiene-Management. Validiert exklusive venv/conda, prüft kritische Python- und System-Dependencies, Browser, generiert Environment-Fingerprint, gibt fehlende Pakete für pip/apt/conda aus, strikte Startup-Validierung mit Fix-Hinweis. Modular, robust, dokumentiert.
+---
