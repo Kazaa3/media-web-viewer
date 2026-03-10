@@ -71,6 +71,7 @@ Dieser Dokument bietet einen Überblick über alle automatisierten Tests im Proj
 - `test_parse.py`, `test_parse2.py` - Media-File-Parsing
 - `test_separated_fields.py` - Field-Extraction
 - `test_bitdepth.py` - Audio-Bitdepth-Detection
+74: - `test_pip_install.py` - Pip-Install-Backend
 
 #### Sorting & Filtering
 - `test_sorting_advanced.py` - Natural Sorting Algorithms
@@ -104,7 +105,8 @@ Dieser Dokument bietet einen Überblick über alle automatisierten Tests im Proj
 | UI Session Stability | 8 | 0.15s | ✅ |
 | Installed Packages UI | 6 | 0.08s | ✅ |
 | Environment Fallback | 12 | 0.22s | ✅ |
-| **Gesamt** | **60+** | **<5s** | ✅ |
+| Pip Install Backend | 3 | 0.01s | ✅ |
+| **Gesamt** | **63+** | **<5s** | ✅ |
 
 ### Coverage-Bereiche
 

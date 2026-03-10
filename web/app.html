@@ -1384,12 +1384,20 @@
                                     <span id="requirements-count"
                                         style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
                                 </h4>
-                                <div style="margin-bottom: 8px;">
+                                <div style="margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
                                     <button onclick="loadEnvironmentInfo(true)"
                                         style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
                                         data-i18n="options_requirements_refresh">
                                         🔄 Jetzt neu prüfen
                                     </button>
+                                    <button id="btn-install-missing" onclick="installMissingPackages()"
+                                        style="display: none; padding: 6px 10px; background: #2a7; color: #fff; border: 1px solid #286; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold;"
+                                        data-i18n="env_requirements_install_btn">
+                                        📦 Fehlende Pakete installieren
+                                    </button>
+                                </div>
+                                <div id="pip-install-output"
+                                    style="display: none; margin-bottom: 10px; background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #444;">
                                 </div>
                                 <div id="requirements-last-checked"
                                     style="margin-bottom: 8px; color: #777; font-size: 0.78em;"
@@ -3309,6 +3317,42 @@
             return normalized;
         }
 
+        async function installMissingPackages() {
+            const btn = document.getElementById('btn-install-missing');
+            const output = document.getElementById('pip-install-output');
+            const missingJson = btn ? btn.dataset.missingPackages : null;
+            if (!missingJson) return;
+
+            const packages = JSON.parse(missingJson);
+            if (!packages || packages.length === 0) return;
+
+            btn.disabled = true;
+            btn.textContent = t('env_requirements_installing');
+            output.style.display = 'block';
+            output.textContent = `> pip install ${packages.join(' ')}\n...`;
+
+            try {
+                const res = await eel.pip_install_packages(packages)();
+                if (res.status === 'ok') {
+                    output.textContent += `\n\n${res.output}\n\n${t('env_requirements_install_success')}`;
+                    btn.textContent = t('env_requirements_install_success');
+                    // Reload info after short delay
+                    setTimeout(() => {
+                        loadEnvironmentInfo(true);
+                        output.style.display = 'none';
+                    }, 3000);
+                } else {
+                    output.textContent += `\n\n${t('env_requirements_install_error')}\n${res.error || 'Unknown error'}`;
+                    btn.disabled = false;
+                    btn.textContent = t('env_requirements_install_btn');
+                }
+            } catch (err) {
+                output.textContent += `\n\nError: ${err}`;
+                btn.disabled = false;
+                btn.textContent = t('env_requirements_install_btn');
+            }
+        }
+
         async function loadEnvironmentInfo(forceRefresh = false) {
             try {
                 const requestForceRefresh = !!forceRefresh;
@@ -3549,6 +3593,17 @@
                         requirementsMissingPreview.length > 0 ? `❌ ${requirementsMissingPreview.join(', ')}` : ''
                     ].filter(Boolean).join(' | ') || '-'
                     : t('env_requirements_not_found');
+
+                // Show/Hide Install button based on missing packages
+                const btnInstallMissing = document.getElementById('btn-install-missing');
+                if (btnInstallMissing) {
+                    if (requirementsMissingPreview.length > 0) {
+                        btnInstallMissing.style.display = 'inline-block';
+                        btnInstallMissing.dataset.missingPackages = JSON.stringify(requirementsMissingPreview);
+                    } else {
+                        btnInstallMissing.style.display = 'none';
+                    }
+                }
 
                 if (envVenvStatusEl) envVenvStatusEl.textContent = statusText;
                 if (envVenvPathEl) envVenvPathEl.textContent = info.env_path || '-';

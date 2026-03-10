@@ -253,6 +253,58 @@ def api_ping(client_ts=None, payload_size=0):
 
 
 @eel.expose
+def pip_install_packages(packages):
+    """
+    @brief Installs a list of Python packages via pip.
+    @param packages List of package names to install.
+    @return Dictionary with status, output, and error message if any.
+    """
+    if not packages:
+        return {"status": "ok", "message": "No packages to install"}
+    
+    if isinstance(packages, str):
+        packages = [packages]
+
+    try:
+        # Using sys.executable to ensure we install in the current environment
+        cmd = [sys.executable, "-m", "pip", "install", *packages]
+        logger.info(f"Running pip install: {' '.join(cmd)}")
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300 # 5 minutes timeout for installation
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Successfully installed packages: {', '.join(packages)}")
+            # After installation, we should probably clear the environment info cache
+            _ENV_INFO_CACHE["data"] = None
+            _ENV_INFO_CACHE["ts"] = 0.0
+            return {
+                "status": "ok",
+                "output": result.stdout,
+                "installed": packages
+            }
+        else:
+            error_msg = result.stderr or result.stdout or "Unknown pip error"
+            logger.error(f"Failed to install packages: {error_msg}")
+            return {
+                "status": "error",
+                "error": error_msg,
+                "output": result.stdout
+            }
+            
+    except subprocess.TimeoutExpired:
+        logger.error("Pip install timed out")
+        return {"status": "error", "error": "Installation timed out"}
+    except Exception as e:
+        logger.error(f"Error during pip install: {str(e)}")
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
 def get_environment_info(force_refresh=False):
     """
     @brief Returns comprehensive information about the Python environment.
