@@ -19,28 +19,39 @@ def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
         return ext[1:].upper()
     if ext in IMAGE_EXTENSIONS:
         return ext[1:].upper()
-    if ext == '.iso':
+    if ext in DISK_IMAGE_EXTENSIONS:
         # Try to detect content (PAL DVD, Blu-ray, etc.)
+        size_gb = os.path.getsize(path) / (1024**3) if path.exists() else 0
+        
         if tags:
-            volume_id = tags.get('pycdlib_volume_id', '').lower()
-            standard = tags.get('standard', '').lower()
-            container = tags.get('container', '').lower()
-            title = tags.get('title', '').lower()
+            volume_id = str(tags.get('pycdlib_volume_id', '') or '').lower()
+            standard = str(tags.get('standard', '') or '').lower()
+            container = str(tags.get('container', '') or '').lower()
+            title = str(tags.get('title', '') or '').lower()
 
             # Video Priorities
             if 'pal' in volume_id or 'pal' in standard:
-                return 'PAL DVD (ISO)'
+                return 'PAL DVD (Abbild)'
             if 'ntsc' in volume_id or 'ntsc' in standard:
-                return 'NTSC DVD (ISO)'
+                return 'NTSC DVD (Abbild)'
             if 'dvd video' in container or 'video_ts' in title:
-                return 'DVD (ISO)'
+                return 'DVD (Abbild)'
             if any(k in volume_id for k in ['blu', 'bd', 'brd']):
-                return 'Blu-ray (ISO)'
+                return 'Blu-ray (Abbild)'
             
             # Audio Priorities
             if any(k in volume_id for k in ['sacd', 'audio cd', 'cda']):
                 return 'Audio-CD (Abbild)'
-        return 'Abbild'
+        
+        # Heuristics based on size if no tags
+        if size_gb > 9.0:
+            return 'Blu-ray (Abbild)'
+        if size_gb > 1.0:
+            return 'DVD (Abbild)'
+        if size_gb > 0.1:
+            return 'CD-ROM (Abbild)'
+            
+        return 'Disk-Abbild'
     if ext in EBOOK_EXTENSIONS:
         return ext[1:].upper()
     if ext in DOCUMENT_EXTENSIONS:
@@ -151,6 +162,10 @@ def load_parser_config() -> None:
             with open(CONFIG_FILE, 'r') as f:
                 loaded = json.load(f)
                 PARSER_CONFIG.update(loaded)
+                # Ensure parser_chain is never empty if it was intended to have defaults
+                if not PARSER_CONFIG.get("parser_chain"):
+                     PARSER_CONFIG["parser_chain"] = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"]
+                
                 PARSER_CONFIG["scan_dirs"] = sanitize_scan_dirs(PARSER_CONFIG.get("scan_dirs", []))
         except Exception as e:
             print(f"Error loading config: {e}")
@@ -202,10 +217,13 @@ AUDIO_EXTENSIONS = {
 }
 VIDEO_EXTENSIONS = {
     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
-    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.iso'
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
 }
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
+}
+DISK_IMAGE_EXTENSIONS = {
+    '.iso', '.bin', '.img', '.cue', '.nrg', '.mdf'
 }
 EBOOK_EXTENSIONS = {
     '.epub', '.mobi', '.azw', '.fb2'

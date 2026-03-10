@@ -39,6 +39,8 @@ PARSER_MAPPING = {
     ".mpeg": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
     
     ".iso":    ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".bin":    ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
+    ".img":    ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
     ".jpg":    ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
     ".jpeg":   ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
     ".png":    ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
