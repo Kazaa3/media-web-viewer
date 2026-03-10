@@ -35,10 +35,9 @@ for f in files:
     try:
         tags, times = media_parser.extract_metadata(
             os.path.abspath(f),
-            file_type=file_type,
-            filename=name,
+            name,
             mode="full",
-            PARSER_CONFIG=PARSER_CONFIG
+            file_type=file_type,
         )
         duration = time.time() - t0
         results[name] = {
