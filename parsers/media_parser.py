@@ -70,6 +70,10 @@ def extract_metadata(path, filename, mode='lightweight'):
                 path_obj, filename, tags=tags, mode=mode))
             parser_times["filename"] = time.time() - t0
 
+
+                    # Optional EBML parser config
+                    ebml_enabled = PARSER_CONFIG.get("enable_ebml_parser", False)
+
         elif parser_name == "container":
             if needs_more_info:
                 t0 = time.time()
@@ -120,6 +124,32 @@ def extract_metadata(path, filename, mode='lightweight'):
 
         # Update duration safely after each potential parser
         if 'duration' in tags and tags['duration'] and not duration:
+                        # Optional EBML parser for MKV
+                        elif parser_name == "ebml":
+                            if ebml_enabled and file_type == ".mkv":
+                                t0 = time.time()
+                                try:
+                                    from ebml.container import File
+                                    ebml_file = File(str(path_obj))
+                                    segment = next(ebml_file.children_named("Segment"), None)
+                                    if segment:
+                                        tags['ebml_title'] = getattr(segment, 'title', None)
+                                        tags['ebml_duration'] = getattr(segment, 'duration', None)
+                                        tags['ebml_tracks'] = [
+                                            {
+                                                'type': getattr(track, 'track_type', None),
+                                                'language': getattr(track, 'language', None),
+                                                'codec_id': getattr(track, 'codec_id', None)
+                                            }
+                                            for track in getattr(segment, 'tracks', [])
+                                        ]
+                                        tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                                    log.debug(f"EBML parser finished for '{filename}'")
+                                except Exception as e:
+                                    log.error(f"EBML parser error for '{filename}': {e}")
+                                parser_times["ebml"] = time.time() - t0
+                            else:
+                                parser_times["ebml"] = 0.0
             try:
                 duration = int(tags['duration'])
             except (ValueError, TypeError):
