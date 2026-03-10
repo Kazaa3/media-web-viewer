@@ -564,6 +564,22 @@ def get_environment_info(force_refresh=False):
             except Exception:
                 ffprobe_version = None
 
+        vlc_cli_version = None
+        if vlc_cli_path:
+            try:
+                vlc_result = subprocess.run(
+                    [vlc_cli_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (vlc_result.stdout or "").splitlines()[0] if vlc_result.stdout else ""
+                match = re.search(r"(\d+\.\d+(?:\.\d+){1,3})", first_line)
+                vlc_cli_version = match.group(1) if match else None
+            except Exception:
+                vlc_cli_version = None
+
         return {
             "ffmpeg_cli_available": bool(ffmpeg_path),
             "ffmpeg_cli_path": ffmpeg_path,
@@ -577,6 +593,7 @@ def get_environment_info(force_refresh=False):
             "browser_version": browser_version,
             "vlc_cli_available": bool(vlc_cli_path),
             "vlc_cli_path": vlc_cli_path,
+            "vlc_cli_version": vlc_cli_version,
             "python_vlc_available": python_vlc_available,
             "python_vlc_version": python_vlc_version,
             "mutagen_available": mutagen_available,

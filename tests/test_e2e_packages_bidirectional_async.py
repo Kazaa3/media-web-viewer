@@ -467,6 +467,7 @@ wheel      0.42.0
             "browser_version",
             "python_vlc_available",
             "vlc_cli_available",
+            "vlc_cli_version",
             "mutagen_available",
         ]
         for key in expected_keys:

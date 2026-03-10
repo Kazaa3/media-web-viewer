@@ -3267,6 +3267,7 @@
                 const vlcPyVer = toolsStatus.python_vlc_version || '';
                 const vlcCliOk = !!toolsStatus.vlc_cli_available;
                 const vlcCliPath = toolsStatus.vlc_cli_path || '';
+                const vlcCliVer = toolsStatus.vlc_cli_version || '';
                 const mutagenOk = !!toolsStatus.mutagen_available;
                 const mutagenVer = toolsStatus.mutagen_version || '';
 
@@ -3289,7 +3290,7 @@
                 // Mediaplayer: VLC
                 const mediaplayerText = [
                     `${vlcPyOk ? '✅' : '❌'} python-vlc${vlcPyVer ? ` ${vlcPyVer}` : ''}`,
-                    `${vlcCliOk ? '✅' : '❌'} vlc${vlcCliPath ? ` (${vlcCliPath})` : ''}`,
+                    `${vlcCliOk ? '✅' : '❌'} vlc${vlcCliVer ? ` ${vlcCliVer}` : ''}${vlcCliPath ? ` (${vlcCliPath})` : ''}`,
                 ].join(' | ');
 
                 const packageVersionMap = new Map();
