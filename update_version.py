@@ -71,7 +71,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--new-version",
         required=True,
-        help="Target version in semantic format (e.g. 1.3.5)",
+        help="Target version in semantic format (e.g. <version>)",
     )
     parser.add_argument(
         "--dry-run",
@@ -87,6 +87,8 @@ def main() -> int:
     root = Path(__file__).resolve().parent
     version_file = root / "VERSION"
     sync_file = root / "VERSION_SYNC.json"
+        # Example usage for version 1.01:
+        # python update_version.py --new-version 1.01
 
     if not version_file.exists():
         print(f"❌ Missing VERSION file: {version_file}")
@@ -201,6 +203,25 @@ def main() -> int:
         print("\n🧪 Dry-run only: no files were written")
 
     print("\n✅ Version update completed")
+
+    # Automatischer Version-Check
+    print("\n🚦 Running version sync check...")
+    import subprocess
+    try:
+        result = subprocess.run([
+            sys.executable, "tests/test_version_sync.py"
+        ], capture_output=True, text=True)
+        print(result.stdout)
+        if result.returncode != 0:
+            print("❌ Version sync check failed!")
+            print(result.stderr)
+            return result.returncode
+        else:
+            print("✅ Version sync check passed.")
+    except Exception as e:
+        print(f"❌ Error running version sync check: {e}")
+        return 1
+
     return 0
 
 

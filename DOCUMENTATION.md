@@ -1,6 +1,6 @@
 # Media Web Viewer - Comprehensive Documentation
 
-**Version:** 1.3.3  
+**Version:** ${VERSION}  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-1.3.3
+${VERSION}
 ```
 
 This version is automatically loaded and used across:
@@ -41,12 +41,12 @@ To update the version:
 Quick example:
 
 ```bash
-python update_version.py --new-version 1.3.5
+
 python tests/test_version_sync.py
 python build_system.py --pipeline
 ```
 
-### Release Notes (v1.3.3)
+### Release Notes (v)
 
 Highlights of this release:
 - Added automated CI/CD workflows for:
@@ -72,6 +72,67 @@ Regression coverage:
     - single browser launch path check
     - `eel.start(..., mode=False)` check
     - UI trace bridge + test run re-entry guard check
+
+### Performance Diagnostics (Backend / Frontend / Bottle / Eel)
+
+To analyze GUI sluggishness in separate layers, the project now includes dedicated probes:
+
+- **Backend probe (Eel-exposed):** `api_ping(client_ts=None, payload_size=0)` in `main.py`
+    - Measures roundtrip timing and optional payload transfer overhead
+    - Payload is clamped to `0..200000` bytes
+
+- **Bottle transport probe:** `GET /health` in `web/app_bottle.py`
+    - Lightweight endpoint for pure HTTP latency checks
+
+- **Frontend diagnostics hook:** `window.runLatencyDiagnostics(payloadSize=0, samples=5)` in `web/app.html`
+    - Measures separately:
+        - frontend frame latency (`requestAnimationFrame`)
+        - Eel roundtrip latency (`eel.api_ping`)
+        - Bottle HTTP latency (`fetch('/health')`)
+
+Additional startup responsiveness optimization:
+- `get_environment_info()` now uses a short-lived cache (`8s` TTL) to avoid repeated expensive environment scans when switching tabs.
+
+Separate test coverage for these probes:
+- `tests/test_performance_probes.py`
+- `tests/test_bottle_health_latency.py`
+
+Latest local snapshot (09.03.2026, `.venv`, post-optimization #1):
+- `api_ping` (payload 4096, n=20): avg `0.002 ms`, median `0.001 ms`, p95 `0.012 ms`
+- `get_environment_info`: cold `4160.203 ms`, warm avg `0.003 ms`, warm median `0.001 ms`, warm p95 `0.017 ms`
+- `GET /health` (n=20): avg `2.762 ms`, median `0.527 ms`, p95 `44.568 ms`
+
+Implemented in this round:
+- Reduced request-path overhead in `web/app_bottle.py` by removing unconditional per-request info logs.
+- Optimized package search in `web/app.html` with pre-normalized search fields + 120ms debounce.
+
+Build-process status:
+- A mandatory targeted pre-build gate is now active across all build entry points.
+- Gate suite:
+    - `tests/test_performance_probes.py`
+    - `tests/test_bottle_health_latency.py`
+    - `tests/test_installed_packages_ui.py`
+        - `tests/test_environment_packages_fallback.py`
+    - `tests/test_ui_session_stability.py`
+
+Environment package-list robustness:
+- Backend fallback chain in `get_environment_info()`:
+    1. `pip list --format=json`
+    2. `pip list --format=columns` parsing fallback
+    3. `importlib.metadata` / `pkg_resources` fallback
+- Frontend safety retry in `loadEnvironmentInfo()`: if initial package list is empty, it automatically retries with `get_environment_info(true)`.
+
+Anchor before next runtime fix:
+- Current release-prep baseline is documented in `logbuch/93_Anker_PreFix_Package_Display_Runtime.md`.
+- This anchor separates validated test/backend state from the upcoming live-runtime package-display fix.
+
+---
+
+## Logbuch-Legende: Dict goes Docker
+
+Was kommt als Nächstes? Vielleicht: „Dict goes Docker“! Denn wenn Dict schon das Herzstück des Media-Web-Viewers ist, warum nicht gleich als Container? Flexible Datenstrukturen, die in jedem Docker-Image laufen – egal ob Python, Eel, Bottle oder SQL. Bald gibt es Logbuch-Legenden über Dicts, die als Microservice die Welt erobern. 😄
+
+Bleib dran – die nächste Legende wird geschrieben!
 
 ---
 
@@ -190,6 +251,8 @@ pip install m3u8>=4.1.0 python-vlc>=3.0.18121
 
 Critical runtime packages include `eel`, `bottle`, `bottle-websocket`, `mutagen`, `pymediainfo`, `gevent`, and `gevent-websocket`.
 
+`pymediainfo` must be installed in the active Python environment (venv/conda), while `mediainfo` / `libmediainfo` are system-level dependencies and are **not** installed inside the venv.
+
 **Note:** The `m3u8` package is required for **VLC playlist import/export**. If missing, the app can still start, but playlist features will fail.
 
 #### Alternative Platforms
@@ -214,7 +277,7 @@ The easiest way to install Media Web Viewer on Debian/Ubuntu:
 # https://github.com/kazaa3/media-web-viewer/releases
 
 # 2. Install the package
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_${VERSION} _amd64.deb
 
 # 3. Resolve any missing dependencies
 sudo apt-get install -f
@@ -266,7 +329,7 @@ sudo apt install dpkg-deb rsync
 bash build_deb.sh
 
 # 4. Install your custom package
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_${VERSION}_amd64.deb
 sudo apt-get install -f
 ```
 
@@ -283,6 +346,33 @@ The project is built as a Debian package (.deb) for Debian/Ubuntu systems to ena
 - `rsync` (for copying files)
 
 ### Build Process in Detail
+
+#### Pre-Build Test Gate (mandatory by default)
+
+Before build artifacts are created, the project executes a targeted regression/performance gate:
+
+- `build_deb.sh` (before `dpkg-deb` packaging)
+- `build_system.py --build deb|pyinstaller|all` (before each build target)
+- `build.py` (before PyInstaller helper build)
+
+Gate suite:
+
+- `tests/test_performance_probes.py`
+- `tests/test_bottle_health_latency.py`
+- `tests/test_installed_packages_ui.py`
+- `tests/test_environment_packages_fallback.py`
+- `tests/test_ui_session_stability.py`
+
+If one of these tests fails, the build aborts immediately.
+
+Optional override (not recommended except emergency/local debugging):
+
+```bash
+SKIP_BUILD_TESTS=1 bash build_deb.sh
+python build_system.py --build deb --skip-build-gate
+python build_system.py --build pyinstaller --skip-build-gate
+SKIP_BUILD_TESTS=1 python build.py
+```
 
 1. **Prepare Staging Area:** The script creates or empties the `packaging/` folder and sets up the structure.
 2. **Copy Source Code:** Using `rsync`, the entire project code is copied to `packaging/opt/media-web-viewer/`, excluding unwanted files like `.git`, `.venv`, `__pycache__`, build artifacts, and media files.
@@ -303,7 +393,7 @@ The .deb package follows Debian standards:
 
 After building, install the package with:
 ```bash
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_${VERSION}_amd64.deb
 sudo apt-get install -f  # If dependencies are missing
 ```
 
@@ -517,12 +607,6 @@ Media Web Viewer includes bidirectional integration with VLC Media Player:
 
 ---
 
-### π©πͺ Deutsch (German)
-
-Ein lokaler Desktop-Medienplayer und Bibliotheksverwalter mit einer eingebetteten webbasierten GUI. Entwickelt mit Python, [Eel](https://github.com/python-eel/Eel) und dem [Bottle](https://bottlepy.org/) Web-Framework. Unterstützt eine Vielzahl von Audioformaten, darunter MP3, M4A, M4B (Hörbücher), FLAC, OGG, WAV, ALAC und WMA.
-
-Die Installer richtet automatisch eine Python Virtual Environment ein und installiert alle Abhängigkeiten.
-
 **Deinstallation:**
 ```bash
 # Konfiguration beibehalten
@@ -618,7 +702,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (v1.3.3)
+Media Web Viewer (${VERSION})
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)
@@ -696,6 +780,11 @@ Media Web Viewer (v1.3.3)
   Filename  Mutagen  FFmpeg  pymediainfo Container
   Parser    Parser   Parser    Parser      Parser
 ```
+
+Performance note for parser evaluation:
+- The `ffmpeg` parser usually has higher latency than `pymediainfo`, because it runs an external CLI subprocess (`ffmpeg`) per probe.
+- `pymediainfo` uses `libmediainfo` bindings and is typically faster for lightweight metadata reads.
+- Keep `ffmpeg` as a deeper fallback/verification parser, not as first fast-path parser.
 
 ### Communication Flow
 
@@ -1663,9 +1752,9 @@ if debug and mode == 'full':
 
 ### Verification
 
-1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_1.3.2_amd64.deb`
+1. **Build Verification:** Ran `bash build_deb.sh` and confirmed package: `media-web-viewer_{VERSION}_amd64.deb`
 
-2. **UI Verification:** Version 1.3.2 displayed correctly, Feature Modal shows latest entry 42_Wording.
+2. **UI Verification:** Version {VERSION} displayed correctly, Feature Modal shows latest entry 42_Wording.
 
 ---
 
@@ -1745,11 +1834,11 @@ Parser configuration is stored in `~/.media-web-viewer/parser_config.json`:
 
 Each parser accesses specific libraries and contributes to internal testing:
 
-- **Filename Parser:** Pure Python string processing, no external libraries
-- **Container Parser:** Uses `os.path.splitext()` and custom format detection
-- **Mutagen Parser:** Accesses `mutagen` library for ID3/Vorbis/MP4 tag reading
-- **FFmpeg Parser:** Calls `ffmpeg` CLI tool via `subprocess`, parses JSON output
-- **pymediainfo Parser:** Uses `pymediainfo` library (MediaInfo wrapper)
+- **Filename Parser:** Pure Python string processing, no external libraries. Parses filename patterns for metadata hints.
+- **Container Parser:** Uses `os.path.splitext()` and custom format detection for container type identification.
+- **Mutagen Parser:** Accesses `mutagen` library for ID3/Vorbis/MP4 tag reading. Supports multiple audio formats.
+- **FFmpeg Parser:** Calls `ffmpeg` CLI tool via `subprocess`, parses JSON output for codec and bitrate information.
+- **pymediainfo Parser:** Uses `pymediainfo` library (MediaInfo wrapper) for supplementary container and track information.
 
 Internal tests validate each parser's output against known test files, ensuring reliability and performance metrics.
 
@@ -2001,15 +2090,7 @@ cd media-web-viewer
 
 # 2. Create virtual environment
 python3 -m venv .venv
-source .venv/bin/activate
-
-# 3. Install dev dependencies
-pip install -r requirements.txt
-
-# 4. Install additional dev tools (optional)
-pip install black flake8 mypy pytest-watch
-
-# 5. Run tests
+source .ven
 pytest tests/
 
 # 6. Start in debug mode
@@ -2210,11 +2291,21 @@ python build_system.py --pipeline
 # Full pipeline including destructive reinstall validation
 python build_system.py --pipeline --destructive
 
+# Emergency/local override for targeted pre-build gate (not recommended)
+python build_system.py --pipeline --skip-build-gate
+
 # Manual verification commands (optional)
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
+
+Pipeline order in code (`build_system.py`):
+1. Environment check
+2. Version synchronization check (`tests/test_version_sync.py`)
+3. Debian build (`build_deb.sh`) including targeted pre-build gate by default
+4. Safe reinstall validation (`tests/test_reinstall_deb.py`)
+5. Optional destructive reinstall validation (`--destructive`)
 
 The destructive mode runs `reinstall_deb.sh` and should be used only on systems where replacing the current installation is intended.
 
@@ -2245,7 +2336,7 @@ Artifacts are stored in the GitHub Actions run and can be downloaded without cre
 #### Tagged Release Pipeline
 
 **Workflow:** `.github/workflows/release.yml`  
-**Trigger:** tag push `v*` (e.g. `v1.3.3`), manual dispatch
+**Trigger:** tag push `v*` (e.g. `v${VERSION}`), manual dispatch
 
 Build outputs:
 - Linux executable
@@ -2260,8 +2351,8 @@ Release behavior:
 
 ```bash
 git add .
-git commit -m "Release v1.3.3"
-git tag -a v1.3.3 -m "Release v1.3.3"
+git commit -m "Release v{VERSION}"
+git tag -a v{VERSION} -m "Release v{VERSION}"
 git push origin main --tags
 ```
 
@@ -2276,6 +2367,23 @@ scripts/cleanup_build_artifacts.sh
 # Execute cleanup (defaults: keep 5 deb, keep 2 dist binaries)
 scripts/cleanup_build_artifacts.sh --execute
 ```
+
+#### Repository Cleanup (already tracked artifacts)
+
+`.gitignore` prevents new generated artifacts from being tracked, but artifacts that were committed earlier must be removed from the Git index once.
+
+```bash
+# Keep files locally, remove only from git index
+git rm -r --cached -- packaging/opt/media-web-viewer
+git rm --cached -- __pycache__/main.cpython-314.pyc
+git rm --cached -- media-web-viewer_{VERSION}_amd64.deb
+
+# Verify and commit cleanup
+git status --short
+git commit -m "chore: untrack generated packaging/cache artifacts"
+```
+
+After this commit, these paths remain local but are no longer tracked and won't reappear in future commits.
 
 #### Test Overview
 
@@ -2362,7 +2470,7 @@ pytest tests/ -k vlc -v
 **Test Output Example:**
 ```
 ==============================================================================
-SESSION MANAGEMENT TEST SUITE - v1.3.2
+SESSION MANAGEMENT TEST SUITE - v{VERSION}
 ==============================================================================
 
 📊 Test Suite Overview:
@@ -2503,7 +2611,7 @@ Tests are automatically run on:
      - Uploads both as GitHub Actions artifacts
 
 2. **Release workflow** (`.github/workflows/release.yml`)
-     - Trigger: tags `v*` (e.g. `v1.3.3`) and manual dispatch
+     - Trigger: tags `v*` (e.g. `v{VERSION}`) and manual dispatch
      - Builds Linux executable, Debian package, and Windows executable
      - Creates/updates GitHub Release automatically
      - Uploads binaries as release assets
@@ -2630,7 +2738,7 @@ except Exception as e:
 1. Create `parsers/my_parser.py`:
 ```python
 def parse(path, file_type, tags, mode='lightweight'):
-    \"\"\"Parse metadata using custom logic\"\"\"
+    """Parse metadata using custom logic."""
     # Extract metadata
     tags['my_field'] = 'value'
     return tags
@@ -2921,7 +3029,7 @@ If you’ve previously run the app from source or want to reset all settings, no
 rm -rf ~/.config/gui_media_web_viewer ~/.media-web-viewer
 
 # 2. Reinstall a clean version
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_{VERSION}_amd64.deb
 
 # 3. Fix dependencies if necessar
 sudo apt-get install -f
@@ -3021,7 +3129,7 @@ For support, see Contact & Support section below.
 
 ## About
 
-**Media Web Viewer v1.3.2**  
+**Media Web Viewer v{VERSION}**  
 A modern desktop media player and library manager.  
 Built with Python, Eel, and Bottle.  
 Licensed under GNU GPL-3.0.
@@ -3276,7 +3384,7 @@ git push origin new-name :old-name
 
 **Understanding Build Artifacts:**
 Build artifacts are generated files that can be recreated from source code:
-- `.deb` packages (e.g., `media-web-viewer_1.3.2_amd64.deb`)
+- `.deb` packages (e.g., `media-web-viewer_{VERSION}_amd64.deb`)
 - Compiled binaries and executables
 - `build/` and `dist/` directories
 - Python bytecode (`__pycache__/`, `*.pyc`)
@@ -3336,7 +3444,7 @@ ls *.deb
 
 # Solution: Build from source
 bash build_deb.sh
-# Creates: media-web-viewer_1.3.2_amd64.deb
+# Creates: media-web-viewer_{VERSION}_amd64.deb
 ```
 
 **Scenario 2: After Branch Switch or Pull**
@@ -3359,7 +3467,7 @@ git branch -D feature/old-build
 
 # Old build artifacts are local - still present unless manually deleted
 ls *.deb
-# Output: media-web-viewer_1.3.2_amd64.deb (current version)
+# Output: media-web-viewer_{VERSION}_amd64.deb (current version)
 
 # Solution: Clean and rebuild for current version
 rm *.deb
@@ -3382,18 +3490,18 @@ bash build_deb.sh
 # Output directory: Current directory
 # Output file: media-web-viewer_<VERSION>_amd64.deb
 ls -lh *.deb
-# Expected: media-web-viewer_1.3.3_amd64.deb
+# Expected: media-web-viewer_{VERSION}_amd64.deb
 ```
 
 **2. Version Management:**
 ```bash
 # Build artifacts should match version in code
 grep "VERSION =" main.py
-# Output: VERSION = "1.3.3"
+# Output: VERSION = "{VERSION}"
 
 # Filename should match version
 ls media-web-viewer_*.deb
-# Expected: media-web-viewer_1.3.3_amd64.deb
+# Expected: media-web-viewer_{VERSION}_amd64.deb
 ```
 
 **3. Storage and Distribution:**
@@ -3402,7 +3510,7 @@ ls media-web-viewer_*.deb
 # Use GitHub Actions + GitHub Releases for distribution
 
 # Recommended (automated):
-# 1) git tag -a v1.3.3 -m "Release v1.3.3"
+# 1) git tag -a v{VERSION} -m "Release v{VERSION}"
 # 2) git push origin main --tags
 # 3) .github/workflows/release.yml builds and uploads binaries automatically
 
@@ -3447,7 +3555,7 @@ git status --ignored
 # Ignored files:
 #   build/
 #   dist/
-#   media-web-viewer_1.3.2_amd64.deb
+#   media-web-viewer_{VERSION}_amd64.deb
 #   __pycache__/
 #   .venv/
 ```
@@ -3455,10 +3563,10 @@ git status --ignored
 **Check if specific file is ignored:**
 ```bash
 # Test if a file is ignored
-git check-ignore -v media-web-viewer_1.3.2_amd64.deb
+git check-ignore -v media-web-viewer_{VERSION}_amd64.deb
 
 # Output:
-# .gitignore:33:*.deb    media-web-viewer_1.3.2_amd64.deb
+# .gitignore:33:*.deb    media-web-viewer_{VERSION}_amd64.deb
 # Explanation: Line 33 of .gitignore excludes this file
 ```
 
@@ -3478,13 +3586,13 @@ cp ~/backup/builds/*.deb ./
 **Create Release Archive:**
 ```bash
 # Archive build with metadata
-tar -czf media-web-viewer_1.3.2_build.tar.gz \
-    media-web-viewer_1.3.2_amd64.deb \
+tar -czf media-web-viewer_{VERSION}_build.tar.gz \
+    media-web-viewer_{VERSION}_amd64.deb \
     packaging/DEBIAN/control \
     build_deb.sh
 
 # Store in safe location
-mv media-web-viewer_1.3.2_build.tar.gz ~/releases/
+mv media-web-viewer_{VERSION}_build.tar.gz ~/releases/
 ```
 
 #### Rebuilding from Clean Repository
@@ -3515,7 +3623,7 @@ dpkg-deb --info media-web-viewer_*.deb
 
 **Expected build output:**
 ```
-media-web-viewer_1.3.2_amd64.deb
+media-web-viewer_{VERSION}_amd64.deb
 Size: ~15MB (depends on version)
 Architecture: amd64
 ```
@@ -3548,7 +3656,7 @@ grep "*.deb" .gitignore
 **Issue 5: "Want to track specific binary"**
 ```bash
 # Force add despite .gitignore (NOT recommended)
-git add -f media-web-viewer_1.3.2_amd64.deb
+git add -f media-web-viewer_{VERSION}_amd64.deb
 
 # Better: Use GitHub Releases or external storage
 # Reason: Binaries bloat repository and history
@@ -3700,10 +3808,10 @@ The Media Web Viewer uses a centralized, multi-destination logging system that c
 ```
 
 **Log Configuration:**
-- **Maximum File Size**: 5 MB (automatic rotation)
-- **Backup Files**: Up to 3 rotated backups maintained
-- **Encoding**: UTF-8
-- **Format**: `YYYY-MM-DD HH:MM:SS [LEVEL] [MODULE] Message`
+- **Maximum File Size:** 5 MB (automatic rotation)
+- **Backup Files:** Up to 3 rotated backups maintained
+- **Encoding:** UTF-8
+- **Format:** `YYYY-MM-DD HH:MM:SS [LEVEL] [MODULE] Message`
 
 ### Startup Logging
 
@@ -3885,15 +3993,15 @@ bash build_deb.sh
 **Output:**
 ```
 ================================================================================
-  Building Debian Package (v1.3.2)
+  Building Debian Package (v{VERSION})
 ================================================================================
 
 ==> Preparing staging area...
-==> Building .deb package: media-web-viewer_1.3.2_amd64.deb
-dpkg-deb: building package 'media-web-viewer' in 'media-web-viewer_1.3.2_amd64.deb'.
+==> Building .deb package: media-web-viewer_{VERSION}_amd64.deb
+dpkg-deb: building package 'media-web-viewer' in 'media-web-viewer_{VERSION}_amd64.deb'.
 
-✅ Debian package created: media-web-viewer_1.3.2_amd64.deb
-   Install: sudo dpkg -i media-web-viewer_1.3.2_amd64.deb
+✅ Debian package created: media-web-viewer_{VERSION}_amd64.deb
+   Install: sudo dpkg -i media-web-viewer_{VERSION}_amd64.deb
 ```
 
 ### Building Standalone Executables
@@ -3906,13 +4014,13 @@ python build_system.py --build pyinstaller
 **Manual PyInstaller Build:**
 ```bash
 # Single file executable
-python -m eel main.py web --onefile --name MediaWebViewer-1.3.2
+python -m eel main.py web --onefile --name MediaWebViewer-{VERSION}
 
 # With console window (for debugging)
-python -m eel main.py web --onefile --name MediaWebViewer-1.3.2 --console
+python -m eel main.py web --onefile --name MediaWebViewer-{VERSION} --console
 
 # Directory build (faster startup)
-python -m eel main.py web --name MediaWebViewer-1.3.2
+python -m eel main.py web --name MediaWebViewer-{VERSION}
 ```
 
 **Output Location:**
@@ -3925,14 +4033,14 @@ python -m eel main.py web --name MediaWebViewer-1.3.2
 ```bash
 # Build on Linux → Linux executable
 python build_system.py --build pyinstaller
-# Output: dist/MediaWebViewer-1.3.2 (ELF binary)
+# Output: dist/MediaWebViewer-{VERSION} (ELF binary)
 ```
 
 **Windows (Cross-Compilation):**
 ```bash
 # Build on Windows → Windows .exe
 python build_system.py --build pyinstaller
-# Output: dist/MediaWebViewer-1.3.2.exe
+# Output: dist/MediaWebViewer-{VERSION}.exe
 
 # Or with Wine on Linux (requires PyInstaller + Wine setup)
 python -m PyInstaller MediaWebViewer.spec --clean
@@ -3942,7 +4050,7 @@ python -m PyInstaller MediaWebViewer.spec --clean
 ```bash
 # Build on macOS → macOS .app bundle
 python build_system.py --build pyinstaller
-# Output: dist/MediaWebViewer-1.3.2.app
+# Output: dist/MediaWebViewer-{VERSION}.app
 ```
 
 ### Full Build Workflow
@@ -3950,7 +4058,7 @@ python build_system.py --build pyinstaller
 **Complete Release Process:**
 ```bash
 # 1. Update version
-echo "1.3.2" > VERSION
+echo "{VERSION}" > VERSION
 
 # 2. Run full build with tests
 python build_system.py --full-build
@@ -3958,7 +4066,7 @@ python build_system.py --full-build
 # Result:
 # ✅ Environment check passed
 # ✅ All tests passed (XX tests in X.XXXs)
-# ✅ Debian package created: media-web-viewer_1.3.2_amd64.deb
+# ✅ Debian package created: media-web-viewer_{VERSION}_amd64.deb
 ```
 
 **CI/CD Pipeline Example:**
@@ -4165,20 +4273,20 @@ Each session returns:
 ---
 
 **Last Updated:** 8. März 2026  
-**Current Version:** 1.3.2
+**Current Version:** {VERSION}
 
 ---
 
 ## Verification
 
 ### Build Verification
-Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_1.3.2_amd64.deb`
+Ran `bash build_deb.sh` and confirmed the generated package: `media-web-viewer_{VERSION}_amd64.deb`
 
 ### Version Consistency Verification
 Ran `pytest -q tests/test_version_consistency.py` and confirmed that all central version references are derived from `VERSION` and no stale `.deb` version examples remain in the documentation.
 
 ### UI Verification
-The version 1.3.2 is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), Conda Environment Support (46), and Version Consistency Test (47).
+The version {VERSION} is correctly displayed in the application and the Feature Modal shows the latest entries including VLC Integration (43), File-Picker API (44), Environment Info Display (45), Conda Environment Support (46), and Version Consistency Test (47).
 
 ---
 

@@ -1,6 +1,6 @@
-# Third-Party Dependencies and Licenses
+# Third-Party Dependencies and Licenses (v1.34)
 
-Media Web Viewer is licensed under the **GNU General Public License v3 (GPL-3.0)**.
+Media Web Viewer (v1.34) is licensed under the **GNU General Public License v3 (GPL-3.0)**.
 
 All third-party dependencies used in this project are listed below with their respective licenses. All dependencies are compatible with GPL-3.0.
 
@@ -20,6 +20,8 @@ All third-party dependencies used in this project are listed below with their re
 | **pymediainfo** | >=7.0.1 | MIT | Media file information parsing using libmediainfo |
 | **m3u8** | >=4.1.0 | MIT | m3u8 playlist parsing and manipulation |
 | **python-vlc** | >=3.0.18121 | MIT | VLC media player bindings for external video playback |
+| **pycdlib** | >=1.14.0 | LGPL v2 | ISO/Disk Image metadata and directory structure parsing |
+| **isoparser** | >=0.2.0 | MIT | ISO 9660 structure and metadata parsing |
 
 ### Async & Communication
 
@@ -35,6 +37,7 @@ All third-party dependencies used in this project are listed below with their re
 | **psutil** | >=5.9.0 | BSD 3-Clause | Cross-platform system and process utilities |
 | **future** | >=1.0.0 | BSD 2-Clause | Python 2/3 compatibility layer |
 | **chardet** | >=5.0.0 | LGPL | Universal character encoding detector for text files and metadata |
+| **six** | >=1.16.0 | MIT | Python 2 and 3 compatibility library (required by isoparser) |
 
 ## Development Dependencies
 
@@ -53,7 +56,7 @@ All dependencies are compatible with GPLv3:
 - **MIT License**: Permissive, fully compatible with GPLv3 ✅
 - **GPL v2**: Compatible with GPL v3 (mutagen can be used under GPLv3) ✅
 - **BSD Licenses**: Permissive, fully compatible with GPLv3 ✅
-- **LGPL**: Compatible with GPLv3 (chardet can be used under GPLv3) ✅
+- **LGPL**: Compatible with GPLv3 (chardet and pycdlib can be used under GPLv3) ✅
 
 ## System Dependencies
 
@@ -69,6 +72,11 @@ Besides Python packages, Media Web Viewer also requires the following system-lev
 | **libgdk-pixbuf2.0-0** | latest | LGPL-2.1+ | ✅ GPLv3 | GDK Pixbuf loaders for image support | `sudo apt install libgdk-pixbuf2.0-0` |
 
 **License Compatibility Note:** All system dependencies are compatible with GNU General Public License v3 (GPL-3.0). FFmpeg's LGPL v2.1 is compatible with GPLv3, and BSD licenses are permissive allowing use under GPLv3.
+
+**Runtime dependency model for MediaInfo:**
+- Install `pymediainfo` via `pip` in your active Python environment (venv/conda).
+- Install `mediainfo` / `libmediainfo` via the OS package manager (`apt`, `dnf`, `brew`).
+- The system library/CLI is not part of the Python venv; both layers are required for reliable metadata parsing.
 
 ### Installation of System Dependencies (Debian/Ubuntu)
 

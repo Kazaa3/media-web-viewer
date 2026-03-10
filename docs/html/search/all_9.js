@@ -1,10 +1,8 @@
 var searchData=
 [
-  ['list_5flegacy_5fdatabases_0',['list_legacy_databases',['../namespacedb.html#aac9ca910dcb369014907f5ac0adfc2c5',1,'db']]],
-  ['load_5fparser_5fconfig_1',['load_parser_config',['../namespaceparsers_1_1format__utils.html#ab34ea02502e47c8ce19d20f33bb23bb4',1,'parsers::format_utils']]],
-  ['log_2',['log',['../namespacemodels.html#a4756d09009053a0ee9911bc6beee24d7',1,'models.log()'],['../namespaceparsers_1_1media__parser.html#aacd968fc8a62b167f1bb7955a4b6aed7',1,'parsers.media_parser.log()'],['../namespaceweb_1_1app__bottle.html#a2aed0214be0fa244dfcfe63c7df83236',1,'web.app_bottle.log()']]],
-  ['log_5ffile_3',['LOG_FILE',['../namespacelogger.html#af487cec8e55bd029c76aacebd6d9a435',1,'logger']]],
-  ['log_5frequest_4',['log_request',['../namespaceweb_1_1app__bottle.html#a4726cccd73922f4d3baacaa3fbff34ca',1,'web::app_bottle']]],
-  ['logger_5',['logger',['../namespacelogger.html',1,'']]],
-  ['logger_2epy_6',['logger.py',['../logger_8py.html',1,'']]]
+  ['init_5fdb_0',['init_db',['../namespacedb.html#aca31edca03ea605ebf05131dc748e9ad',1,'db']]],
+  ['insert_5fmedia_1',['insert_media',['../namespacedb.html#a78830533b18edd090d6f38ab3c6c25de',1,'db']]],
+  ['is_5fconda_2',['is_conda',['../classenv__handler_1_1EnvironmentManager.html#a598522a8d1de38fd03d2b8560e373763',1,'env_handler::EnvironmentManager']]],
+  ['is_5fdebug_3',['is_debug',['../classenv__handler_1_1EnvironmentManager.html#a16342497c3d4d047cf077cdeee7d7cc9',1,'env_handler::EnvironmentManager']]],
+  ['is_5fexclusive_5fvenv_4',['is_exclusive_venv',['../classenv__handler_1_1EnvironmentManager.html#adfe3d5312e4d85e5cfe8a92d5ec935bd',1,'env_handler::EnvironmentManager']]]
 ];

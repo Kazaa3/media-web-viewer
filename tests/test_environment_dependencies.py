@@ -230,9 +230,23 @@ class TestSystemDependencies:
     def test_pixbuf_loaders_available(self):
         """@test libgdk-pixbuf2.0-0 muss installiert sein"""
         import shutil
-        if not shutil.which("gdk-pixbuf-query-loaders"):
+        loader_tool = shutil.which("gdk-pixbuf-query-loaders")
+        
+        # Fallback for common Linux paths if not in PATH
+        if not loader_tool:
+            common_paths = [
+                "/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders",
+                "/usr/lib/i386-linux-gnu/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders",
+                "/usr/lib/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
+            ]
+            for p in common_paths:
+                if os.path.exists(p):
+                    loader_tool = p
+                    break
+                    
+        if not loader_tool:
             pytest.fail("❌ gdk-pixbuf-query-loaders nicht gefunden (libgdk-pixbuf2.0-0 fehlt)\n   Fix: sudo apt install libgdk-pixbuf2.0-0")
-        print("✅ gdk-pixbuf-query-loaders gefunden")
+        print(f"✅ gdk-pixbuf-query-loaders gefunden: {loader_tool}")
     
     def test_python3_tk_available(self):
         """@test python3-tk für native Datei-Dialoge"""
@@ -289,6 +303,12 @@ class TestRequirementsTxt:
                 import_name = 'vlc'
             elif package_name == 'bottle-websocket':
                 import_name = 'bottle_websocket'
+            elif package_name == 'gevent-websocket':
+                import_name = 'geventwebsocket'
+            elif package_name == 'pytest-cov':
+                import_name = 'pytest_cov'
+            elif package_name == 'pyinstaller':
+                import_name = 'PyInstaller'
             
             # Try to import
             try:

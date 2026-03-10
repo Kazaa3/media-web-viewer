@@ -151,6 +151,16 @@ class EnvironmentManager:
                     # some things like ffmpeg have same name
                     missing_conda.append(apt_pkg)
         
+        # 3. Process Tkinter (System-level for Python GUI)
+        try:
+            import tkinter
+        except ImportError:
+            # tkinter is a system package on Linux (python3-tk)
+            missing_apt.append("python3-tk")
+            if self.is_conda():
+                # On conda it's usually 'tk'
+                missing_conda.append("tk")
+
         return (
             sorted(list(set(missing_pip))), 
             sorted(list(set(missing_apt))), 

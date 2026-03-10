@@ -1,8 +1,53 @@
+from pathlib import Path
 from typing import Any
 import re
 import os
 import json
-from pathlib import Path
+
+def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
+    """
+    @brief Determines the standardized file format for a given media file.
+    @details Unterscheidet und standardisiert das Dateiformat je nach Typ (Audio, Video, ISO, etc.).
+    @param path Path object to the file.
+    @param tags Optional metadata tags for content detection.
+    @return Standardized file format string (e.g., 'MP3', 'MKV', 'ISO', 'FLAC', 'PAL DVD').
+    """
+    ext = path.suffix.lower()
+    if ext in AUDIO_EXTENSIONS:
+        return ext[1:].upper()
+    if ext in VIDEO_EXTENSIONS:
+        return ext[1:].upper()
+    if ext in IMAGE_EXTENSIONS:
+        return ext[1:].upper()
+    if ext == '.iso':
+        # Try to detect content (PAL DVD, Blu-ray, etc.)
+        if tags:
+            volume_id = tags.get('pycdlib_volume_id', '').lower()
+            standard = tags.get('standard', '').lower()
+            container = tags.get('container', '').lower()
+            title = tags.get('title', '').lower()
+
+            # Video Priorities
+            if 'pal' in volume_id or 'pal' in standard:
+                return 'PAL DVD (ISO)'
+            if 'ntsc' in volume_id or 'ntsc' in standard:
+                return 'NTSC DVD (ISO)'
+            if 'dvd video' in container or 'video_ts' in title:
+                return 'DVD (ISO)'
+            if any(k in volume_id for k in ['blu', 'bd', 'brd']):
+                return 'Blu-ray (ISO)'
+            
+            # Audio Priorities
+            if any(k in volume_id for k in ['sacd', 'audio cd', 'cda']):
+                return 'Audio-CD (Abbild)'
+        return 'Abbild'
+    if ext in EBOOK_EXTENSIONS:
+        return ext[1:].upper()
+    if ext in DOCUMENT_EXTENSIONS:
+        return ext[1:].upper()
+    if ext in IMAGE_EXTENSIONS:
+        return ext[1:].upper()
+    return ext[1:].upper() if ext else 'UNKNOWN'
 
 # Config File Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
@@ -18,7 +63,7 @@ def get_default_scan_dir() -> Path:
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG: dict[str, Any] = {
-    "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
+    "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser"],
     "parser_mode": "lightweight",
     "debug_scan": True,
     "debug_parser": True,
@@ -28,7 +73,9 @@ PARSER_CONFIG: dict[str, Any] = {
     "mutagen_extract_lyrics": False,
     "pymediainfo_full_scan": False,
     "ffmpeg_deep_analysis": False,
-    "ffmpeg_extract_thumbnails": True
+    "ffmpeg_extract_thumbnails": True,
+    "enable_isoparser_parser": True,
+    "indexed_categories": ["audio", "audiobook"]
 }
 
 
@@ -145,13 +192,16 @@ AUDIO_EXTENSIONS = {
 }
 VIDEO_EXTENSIONS = {
     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
-    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.iso'
 }
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
 }
 EBOOK_EXTENSIONS = {
     '.epub', '.mobi', '.azw', '.fb2'
+}
+IMAGE_EXTENSIONS = {
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'
 }
 
 

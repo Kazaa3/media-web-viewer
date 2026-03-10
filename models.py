@@ -18,9 +18,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from pathlib import Path
+from typing import Optional, Any
 from parsers.format_utils import (
     PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
-    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS
 )
 from parsers import media_parser
 import logger
@@ -48,7 +49,10 @@ class MediaItem:
         """
         self.name = name
         self.path = Path(path)
-        self.type = self.path.suffix.lower()
+        if self.path.is_dir():
+            self.type = 'Folder'
+        else:
+            self.type = self.path.suffix.lower()
 
         # Debug mode is handled centrally through logger level
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
@@ -59,13 +63,57 @@ class MediaItem:
         )
         self.category = self.get_category()
 
+        # Logical separation: type, format, content
+        from parsers.format_utils import detect_file_format
+        self.logical_type = self.detect_logical_type()
+        self.file_format = detect_file_format(self.path, self.tags)
+        self.content_type = self.detect_content_type()
+
+        # Extract artwork if enabled
+        self.art_path = self.extract_artwork()
+        self.has_artwork = self.art_path is not None
+        self.is_missing_cover = not self.has_artwork
+
         # New separated metadata fields
-        self.extension = self.type[1:] if self.type.startswith('.') else self.type
-        self.media_type = "video" if self.type in VIDEO_EXTENSIONS else "audio"
+        self.extension = self.file_format
+        self.media_type = self.logical_type
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)
 
+    def detect_logical_type(self):
+        ext = self.type.lower()
+        if ext == '.iso':
+            return 'Abbild'
+        if self.type == 'Folder':
+            # Check if it contains media indicators
+            if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists():
+                return 'Ordner' # Categorized as folder, but content will be 'Film'
+            if any(self.path.glob('*.iso')):
+                return 'Ordner'
+            return 'Ordner'
+        if ext in VIDEO_EXTENSIONS:
+            return 'Video'
+        if ext in AUDIO_EXTENSIONS:
+            return 'Audio'
+        if ext in IMAGE_EXTENSIONS:
+            return 'Bilder'
+        if ext in EBOOK_EXTENSIONS:
+            return 'E-Book'
+        if ext in DOCUMENT_EXTENSIONS:
+            return 'Dokument'
+        return 'Unbekannt'
+
+    def detect_content_type(self):
+        ext = self.type.lower()
+        tags = self.tags or {}
+        # ISO: try to detect PAL DVD
+        if ext == '.iso':
+            volume_id = tags.get('pycdlib_volume_id', '').lower()
+            if 'pal' in volume_id or 'dvd' in volume_id:
+                return 'PAL DVD'
+            return 'Disk Image'
+        return self.category
     def get_category(self):
         """
         @brief Detects the category of the media item based on extension and metadata tags.
@@ -75,21 +123,45 @@ class MediaItem:
         ext = self.type.lower()
         path_str = str(self.path).lower()
         tags = self.tags or {}
+        logical = self.detect_logical_type()
 
-        # 1. Video / E-Book / Document (Non-Audio)
-        if ext in VIDEO_EXTENSIONS:
+        # 1. Folders / Video / DVD / ISO
+        if logical == 'Ordner':
+            # Sub-classification for folders
+            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
+                return 'Serie'
+            if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists() or any(self.path.glob('*.iso')):
+                return 'Film'
+            return 'Ordner'
+
+        if logical == 'Video':
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
                 return 'Serie'
             return 'Film'
+        
+        if logical == 'Abbild':
+            # Use content_type from format_utils if available via metadata
+            from parsers.format_utils import detect_file_format
+            fmt = detect_file_format(self.path, tags)
+            if 'DVD' in fmt:
+                return 'Film'
+            if 'SACD' in fmt or 'Audio-CD' in fmt:
+                return 'Album'
+            return 'Abbild'
+
         if ext in EBOOK_EXTENSIONS:
             return 'E-Book'
         if ext in DOCUMENT_EXTENSIONS:
             return 'Dokument'
+        if ext in IMAGE_EXTENSIONS:
+            return 'Bilder'
 
         # 2. Audio Parser Logic
         if ext in AUDIO_EXTENSIONS or ext == '.m4b':
             # Priority 1: Hörbuch (m4b extension or keyword in path/genre)
-            genre = tags.get('genre', '').lower()
+            genre = (tags.get('genre') or '').lower()
+            album = (tags.get('album') or '').lower()
+            artist = (tags.get('artist') or '').lower()
             if ext == '.m4b' or any(
                 k in path_str for k in [
                     'hörbuch',
@@ -120,6 +192,16 @@ class MediaItem:
             return 'Audio'
 
         return 'Unbekannt'
+
+    def extract_artwork(self) -> Optional[str]:
+        """
+        @brief Extracts embedded artwork (cover) from media files.
+        @details Extrahiert eingebettete Cover-Bilder.
+        @return Path to the extracted image or None.
+        """
+        from parsers.artwork_extractor import extractor
+        logical = getattr(self, 'logical_type', 'Unbekannt')
+        return extractor.extract(self.path, self.tags, logical)
 
     def show_info(self):
         """
@@ -162,7 +244,9 @@ class MediaItem:
         whitelist = {
             'title', 'artist', 'album', 'year', 'genre', 'track', 'totaltracks',
             'disc', 'codec', 'bitdepth', 'samplerate', 'bitrate', 'size',
-            'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation'
+            'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation',
+            'resolution', 'width', 'height', 'fps', 'video_codec', 'audio_track_count',
+            'subtitle_count', 'subtitle_languages', 'language'
         }
         filtered_tags = {k: v for k, v in self.tags.items() if k in whitelist}
 
@@ -177,6 +261,11 @@ class MediaItem:
             'tag_type': self.tag_type,
             'codec': self.codec,
             'category': self.category,
+            'logical_type': self.logical_type,
+            'file_format': self.file_format,
+            'content_type': self.content_type,
+            'art_path': self.art_path,
+            'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format
         }

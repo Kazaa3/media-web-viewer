@@ -3,6 +3,7 @@
 
 <head>
     <title data-i18n="app_title">Media Player</title> <!-- ohne: -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -19,7 +20,7 @@
                     get_library: { media: [] },
                     get_db_stats: { total_items: 0, categories: {} },
                     get_parser_config: {
-                        parser_chain: ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"],
+                        parser_chain: ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
                         parser_mode: 'lightweight',
                         scan_dirs: []
                     },
@@ -564,6 +565,59 @@
             currentLogbookEditFilename = null;
         }
 
+        function getLogbookStatusIcon(status) {
+            const normalized = (status || 'ACTIVE').toUpperCase();
+            if (normalized === 'COMPLETED') return '✅';
+            if (normalized === 'PLAN') return '🧭';
+            if (normalized === 'DOCS') return '📘';
+            if (normalized === 'BUG') return '🐞';
+            return '🟢';
+        }
+
+        function extractLogbookMeta(markdown) {
+            const getTag = (tag, fallback = '') => {
+                const re = new RegExp(`<!--\\s*${tag}\\s*:\\s*([^>]+?)\\s*-->`, 'i');
+                const m = (markdown || '').match(re);
+                return m && m[1] ? m[1].trim() : fallback;
+            };
+
+            return {
+                category: getTag('Category', 'Planung'),
+                titleDe: getTag('Title_DE', ''),
+                titleEn: getTag('Title_EN', ''),
+                summaryDe: getTag('Summary_DE', ''),
+                summaryEn: getTag('Summary_EN', ''),
+                status: (getTag('Status', 'ACTIVE') || 'ACTIVE').toUpperCase(),
+                date: getTag('Date', new Date().toISOString().slice(0, 10)),
+                pinned: getTag('Pinned', 'false').toLowerCase() === 'true'
+            };
+        }
+
+        function stripLogbookFixedTags(markdown) {
+            const keys = ['Category', 'Title_DE', 'Title_EN', 'Summary_DE', 'Summary_EN', 'Status', 'Date', 'Pinned'];
+            let cleaned = markdown || '';
+            keys.forEach(k => {
+                cleaned = cleaned.replace(new RegExp(`^\\s*<!--\\s*${k}\\s*:\\s*.*?-->\\s*\\n?`, 'gim'), '');
+            });
+            return cleaned.trimStart();
+        }
+
+        function buildLogbookFixedTagsBlock(meta) {
+            const tags = [
+                `<!-- Category: ${meta.category || 'Planung'} -->`,
+                `<!-- Title_DE: ${meta.titleDe || ''} -->`,
+                `<!-- Title_EN: ${meta.titleEn || ''} -->`,
+                `<!-- Summary_DE: ${meta.summaryDe || ''} -->`,
+                `<!-- Summary_EN: ${meta.summaryEn || ''} -->`,
+                `<!-- Status: ${(meta.status || 'ACTIVE').toUpperCase()} -->`,
+                `<!-- Date: ${meta.date || new Date().toISOString().slice(0, 10)} -->`
+            ];
+            if (meta.pinned) {
+                tags.push(`<!-- Pinned: true -->`);
+            }
+            return tags.join('\n');
+        }
+
         function openLogbookEditor(name, filename, content) {
             currentLogbookEditName = name;
             currentLogbookEditFilename = filename;
@@ -575,19 +629,38 @@
             const nameInput = document.getElementById('logbuch-editor-name');
             const contentInput = document.getElementById('logbuch-editor-content');
             const statusInput = document.getElementById('logbuch-editor-status');
+            const categoryInput = document.getElementById('logbuch-editor-category');
+            const titleDeInput = document.getElementById('logbuch-editor-title-de');
+            const titleEnInput = document.getElementById('logbuch-editor-title-en');
+            const summaryDeInput = document.getElementById('logbuch-editor-summary-de');
+            const summaryEnInput = document.getElementById('logbuch-editor-summary-en');
+            const dateInput = document.getElementById('logbuch-editor-date');
             const title = document.getElementById('logbuch-editor-title');
 
             if (name) {
+                const meta = extractLogbookMeta(content || '');
                 title.innerText = `${t('logbook_edit_prefix')}${name}`;
                 nameInput.value = name;
-                contentInput.value = content || '';
-                if (statusInput) statusInput.value = extractLogbookStatus(content || '');
-                nameInput.disabled = true;
+                contentInput.value = stripLogbookFixedTags(content || '');
+                if (statusInput) statusInput.value = meta.status;
+                if (categoryInput) categoryInput.value = meta.category;
+                if (titleDeInput) titleDeInput.value = meta.titleDe;
+                if (titleEnInput) titleEnInput.value = meta.titleEn;
+                if (summaryDeInput) summaryDeInput.value = meta.summaryDe;
+                if (summaryEnInput) summaryEnInput.value = meta.summaryEn;
+                if (dateInput) dateInput.value = meta.date;
+                nameInput.disabled = false;
             } else {
                 title.innerText = t('logbook_edit_title_new');
                 nameInput.value = '';
-                contentInput.value = '<!-- Category: Planung -->\n<!-- Status: ACTIVE -->\n\n# Neuer Eintrag\n\n';
+                contentInput.value = '# Neuer Eintrag\n\n';
                 if (statusInput) statusInput.value = 'ACTIVE';
+                if (categoryInput) categoryInput.value = 'Planung';
+                if (titleDeInput) titleDeInput.value = '';
+                if (titleEnInput) titleEnInput.value = '';
+                if (summaryDeInput) summaryDeInput.value = '';
+                if (summaryEnInput) summaryEnInput.value = '';
+                if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
                 nameInput.disabled = false;
             }
 
@@ -597,19 +670,34 @@
 
         async function saveLogbookEntry() {
             const name = document.getElementById('logbuch-editor-name').value.trim();
-            const rawContent = document.getElementById('logbuch-editor-content').value;
-            const selectedStatus = (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase();
-            const content = upsertLogbookStatus(rawContent, selectedStatus);
+            const bodyContent = document.getElementById('logbuch-editor-content').value || '';
+            const meta = {
+                category: document.getElementById('logbuch-editor-category').value.trim() || 'Planung',
+                titleDe: document.getElementById('logbuch-editor-title-de').value.trim(),
+                titleEn: document.getElementById('logbuch-editor-title-en').value.trim(),
+                summaryDe: document.getElementById('logbuch-editor-summary-de').value.trim(),
+                summaryEn: document.getElementById('logbuch-editor-summary-en').value.trim(),
+                status: (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase(),
+                date: document.getElementById('logbuch-editor-date').value.trim() || new Date().toISOString().slice(0, 10)
+            };
+            const content = `${buildLogbookFixedTagsBlock(meta)}\n\n${bodyContent.trimStart()}`;
             if (!name) {
                 alert(t('test_name_required'));
                 return;
             }
 
-            // If we are editing, overwrite the original file. If new, use the input name.
-            const filenameToSave = currentLogbookEditFilename || name;
+            const originalName = (currentLogbookEditFilename || '').replace(/\.md$/i, '');
+            const isRename = !!currentLogbookEditFilename && originalName !== name;
+            const filenameToSave = name;
 
             const res = await eel.save_logbook_entry(filenameToSave, content)();
             if (res.status === 'ok') {
+                if (isRename) {
+                    const delRes = await eel.delete_logbook_entry(currentLogbookEditFilename)();
+                    if (delRes.status !== 'ok') {
+                        alert((t('common_error') || 'Fehler: ') + (delRes.error || 'Alte Datei konnte nicht gelöscht werden'));
+                    }
+                }
                 closeLogbookEditor();
                 loadLogbuchTab();
                 alert(t('logbook_saved'));
@@ -628,24 +716,6 @@
             } else {
                 alert(t('common_error') + res.error);
             }
-        }
-
-        function extractLogbookStatus(markdown) {
-            const fromComment = markdown.match(/<!--\s*Status\s*:\s*([^>]+)\s*-->/i);
-            if (fromComment && fromComment[1]) return fromComment[1].trim().toUpperCase();
-            const fromMarkdown = markdown.match(/^\*\*Status:\*\*\s*(.+)$/im);
-            if (fromMarkdown && fromMarkdown[1]) return fromMarkdown[1].trim().toUpperCase();
-            return 'ACTIVE';
-        }
-
-        function upsertLogbookStatus(markdown, status) {
-            if (/<!--\s*Status\s*:\s*[^>]+\s*-->/i.test(markdown)) {
-                return markdown.replace(/<!--\s*Status\s*:\s*[^>]+\s*-->/i, `<!-- Status: ${status} -->`);
-            }
-            if (/^\*\*Status:\*\*\s*.+$/im.test(markdown)) {
-                return markdown.replace(/^\*\*Status:\*\*\s*.+$/im, `**Status:** ${status}`);
-            }
-            return `<!-- Status: ${status} -->\n${markdown}`;
         }
 
         async function loadLogbuchTab() {
@@ -777,59 +847,72 @@
             const statusFilter = document.getElementById('logbuch-status-filter');
             const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
             list.innerHTML = '';
-            const grouped = {};
 
-            entries.forEach(e => {
+            // Filter entries
+            const filteredEntries = entries.filter(e => {
                 const cat = e.category || 'Misc';
                 const catKey = `cat_${cat.toLowerCase()}`;
                 const localizedCat = t(catKey) !== catKey ? t(catKey) : cat;
 
-                if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return;
-                if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return;
+                if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return false;
+                if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return false;
 
-                if (!grouped[localizedCat]) grouped[localizedCat] = [];
-                grouped[localizedCat].push(e);
+                return true;
             });
 
-            const sortedCategories = Object.keys(grouped).sort();
-            sortedCategories.forEach(localizedCat => {
-                const catHeader = document.createElement('div');
-                catHeader.style.cssText = 'font-weight: bold; color: #666; font-size: 0.8em; text-transform: uppercase; margin-bottom: 8px; margin-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd;';
-                catHeader.innerText = localizedCat;
-                list.appendChild(catHeader);
-                grouped[localizedCat]
-                    .sort((a, b) => (b.modified_ts || 0) - (a.modified_ts || 0))
-                    .forEach(entry => {
-                    const btn = document.createElement('div');
-                    btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
-                    const nameEl = document.createElement('span');
-                    nameEl.innerText = `${entry.name} [${(entry.status || 'ACTIVE').toUpperCase()}]`;
-                    nameEl.style.flex = '1';
-                    btn.appendChild(nameEl);
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerText = '✕';
-                    deleteBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-size: 1.1em; padding: 0; width: 24px; height: 24px; opacity: 0.3; transition: opacity 0.2s;';
-                    deleteBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        const msg = t('logbook_delete_confirm').replace('{name}', entry.name);
-                        if (confirm(msg)) {
-                            deleteLogbookEntry(entry.filename);
-                        }
-                    };
-                    btn.appendChild(deleteBtn);
-                    btn.onmouseover = () => {
-                        btn.style.background = '#eef2ff';
-                        deleteBtn.style.opacity = '1';
-                    };
-                    btn.onmouseout = () => {
-                        btn.style.background = '#f5f5f5';
-                        deleteBtn.style.opacity = '0.3';
-                    };
-                    btn.onclick = async () => {
-                        loadLogbuchContent(entry.name, entry.filename);
-                    };
-                    list.appendChild(btn);
-                });
+            // Sort: Pinned entries first, then alphanumerically by filename
+            filteredEntries.sort((a, b) => {
+                // Pinned entries first
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                // Then sort alphanumerically by filename
+                return (a.filename || a.name || '').localeCompare(b.filename || b.name || '', undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            // Render all entries in flat list
+            filteredEntries.forEach(entry => {
+                const btn = document.createElement('div');
+                btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center;';
+                const nameEl = document.createElement('span');
+                nameEl.innerText = entry.name;
+                nameEl.style.flex = '1';
+                btn.appendChild(nameEl);
+                // Add pin icon for pinned entries
+                if (entry.pinned) {
+                    const pinEl = document.createElement('span');
+                    pinEl.innerText = '📌';
+                    pinEl.style.cssText = 'margin-left: 8px; font-size: 0.9em; opacity: 0.7;';
+                    pinEl.title = 'Pinned';
+                    btn.appendChild(pinEl);
+                }
+                const iconEl = document.createElement('span');
+                iconEl.innerText = getLogbookStatusIcon(entry.status || 'ACTIVE');
+                iconEl.style.cssText = 'margin-left: 8px; margin-right: 10px; font-size: 1.05em; opacity: 0.9;';
+                iconEl.title = (entry.status || 'ACTIVE').toUpperCase();
+                btn.appendChild(iconEl);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerText = '✕';
+                deleteBtn.style.cssText = 'background: transparent; border: none; color: #c33; cursor: pointer; font-size: 1.1em; padding: 0; width: 24px; height: 24px; opacity: 0.3; transition: opacity 0.2s;';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const msg = t('logbook_delete_confirm').replace('{name}', entry.name);
+                    if (confirm(msg)) {
+                        deleteLogbookEntry(entry.filename);
+                    }
+                };
+                btn.appendChild(deleteBtn);
+                btn.onmouseover = () => {
+                    btn.style.background = '#eef2ff';
+                    deleteBtn.style.opacity = '1';
+                };
+                btn.onmouseout = () => {
+                    btn.style.background = '#f5f5f5';
+                    deleteBtn.style.opacity = '0.3';
+                };
+                btn.onclick = async () => {
+                    loadLogbuchContent(entry.name, entry.filename);
+                };
+                list.appendChild(btn);
             });
         }
 
@@ -840,13 +923,40 @@
             content.innerHTML = `<div style="color:#999;">${t('edit_loading')}</div>`;
             try {
                 const markdown = await eel.get_logbook_entry(name)();
-                let html = markdown
-                    .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
-                    .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '<br><br>');
-                content.innerHTML = html;
+                const meta = extractLogbookMeta(markdown || '');
+                const visibleBody = stripLogbookFixedTags(markdown || '');
+                const tagsHtml = `
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+                        <span style="padding:4px 8px; border-radius:999px; background:#eef2ff; color:#334; font-size:0.8em;">🏷️ ${meta.category || '-'}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f1f5f9; color:#334; font-size:0.8em;">${getLogbookStatusIcon(meta.status)} ${(meta.status || 'ACTIVE').toUpperCase()}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f8fafc; color:#445; font-size:0.8em;">🇩🇪 ${meta.titleDe || '-'}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f8fafc; color:#445; font-size:0.8em;">🇬🇧 ${meta.titleEn || '-'}</span>
+                        <span style="padding:4px 8px; border-radius:999px; background:#f8fafc; color:#445; font-size:0.8em;">📅 ${meta.date || '-'}</span>
+                    </div>
+                `;
+                // Use marked.js for proper markdown rendering if available, fallback to simple parsing
+                let html;
+                if (typeof marked !== 'undefined') {
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true,
+                        headerIds: false,
+                        mangle: false
+                    });
+                    html = marked.parse(visibleBody);
+                } else {
+                    // Fallback to simple parsing
+                    html = visibleBody
+                        .replace(/^# (.*$)/gim, '<h1 style="margin-top:0; color: #1a1a1a; font-size: 1.5em;">$1</h1>')
+                        .replace(/^## (.*$)/gim, '<h2 style="margin-top:20px; color: #333; font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 5px;">$1</h2>')
+                        .replace(/^\- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '<br><br>');
+                }
+
+                // Wrap content with styling
+                const styledHtml = `<div style="line-height: 1.6; color: #333;">${html}</div>`;
+                content.innerHTML = tagsHtml + styledHtml;
                 const editBtn = document.createElement('button');
                 editBtn.innerText = t('edit_btn_edit');
                 editBtn.style.cssText = 'margin-top: 20px; padding: 8px 16px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
@@ -1095,6 +1205,41 @@
                         </div>
 
                         <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_indexed_types">
+                                Indexierte Medientypen</div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
+                                data-i18n="options_indexed_types_desc">Wähle aus, welche Dateitypen beim Scan indexiert
+                                werden sollen.</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-audio" value="audio" onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_audio">Audio</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-video" value="video" onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_video">Video</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-images" value="images"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_images">Bilder</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-documents" value="documents"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_documents">Dokumente</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-ebooks" value="ebooks"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_ebooks">E-Books</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-abbild" value="abbild"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_abbild">ISO-Abbilder</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div
                             style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 500;" data-i18n="options_language">Sprache / Language</div>
@@ -1132,64 +1277,166 @@
                         </div>
 
                         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                            <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">Python-Umgebung</h3>
-                            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_environment_desc">
+                            <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
+                                Python-Umgebung</h3>
+                            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
+                                data-i18n="options_environment_desc">
                                 Informationen über die aktuell verwendete Python-Umgebung.</p>
-                            
-                            <div id="environment-info" style="background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 8px; font-size: 0.85em; font-family: monospace;">
+
+                            <div id="environment-info"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 8px; font-size: 0.85em; font-family: monospace;">
                                 <div style="margin-bottom: 8px;">
-                                    <strong data-i18n="env_label_python_version">Python-Version:</strong> <span id="env-python-version">-</span>
+                                    <strong data-i18n="env_label_python_version">Python-Version:</strong> <span
+                                        id="env-python-version">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong data-i18n="env_label_environment">Umgebung:</strong> <span id="env-venv-status">-</span>
+                                    <strong data-i18n="env_label_environment">Umgebung:</strong> <span
+                                        id="env-venv-status">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong data-i18n="env_label_environment_path">Umgebungspfad:</strong> <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                    <strong data-i18n="env_label_environment_path">Umgebungspfad:</strong> <span
+                                        id="env-venv-path" style="word-break: break-all;">-</span>
                                 </div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong data-i18n="env_label_python_executable">Python-Executable:</strong> <span id="env-python-exec" style="word-break: break-all;">-</span>
+                                    <strong data-i18n="env_label_python_executable">Python-Executable:</strong> <span
+                                        id="env-python-exec" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_gui">Browser:</strong> <span id="env-gui-status"
+                                        style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_mutagen">Mutagen:</strong> <span
+                                        id="env-mutagen-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span id="env-ffmpeg-status"
+                                        style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_ffprobe">FFprobe:</strong> <span
+                                        id="env-ffprobe-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span
+                                        id="env-mediainfo-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_mediaplayer">Mediaplayer:</strong> <span
+                                        id="env-mediaplayer-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_core_packages">Core Packages:</strong> <span
+                                        id="env-core-packages-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_test_tools">Tests:</strong> <span
+                                        id="env-test-tools-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_dev_tools">Development Tools:</strong> <span
+                                        id="env-dev-tools-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_build_tools">Build & Packaging:</strong> <span
+                                        id="env-build-tools-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_base_dependencies">Base-Dependencies:</strong> <span
+                                        id="env-base-dependencies-status" style="word-break: break-all;">-</span>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong data-i18n="env_label_requirements_list">Requirements:</strong> <span
+                                        id="env-requirements-list" style="word-break: break-all;">-</span>
                                 </div>
                                 <div>
-                                    <strong data-i18n="env_label_system">System:</strong> <span id="env-platform">-</span>
+                                    <strong data-i18n="env_label_system">System:</strong> <span
+                                        id="env-platform">-</span>
+                                </div>
+                            </div>
+
+                            <!-- Installed Packages (active environment) -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                    <span data-i18n="options_installed_packages">📦 Installierte Pakete (aktive
+                                        Umgebung)</span>
+                                    <span id="package-count"
+                                        style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
+                                    <span id="package-source"
+                                        style="color: #999; font-weight: normal; font-size: 0.8em; margin-left: 8px;">[source:
+                                        -]</span>
+                                </h4>
+                                <div style="margin-bottom: 8px;">
+                                    <input type="text" id="package-search" placeholder="Search packages..."
+                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
+                                        data-i18n="[placeholder]packages_search_placeholder">
+                                </div>
+                                <div id="installed-packages-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- requirements.txt Status -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                    <span data-i18n="options_requirements_status">✅ requirements.txt Status</span>
+                                    <span id="requirements-count"
+                                        style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
+                                </h4>
+                                <div style="margin-bottom: 8px;">
+                                    <button onclick="loadEnvironmentInfo(true)"
+                                        style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
+                                        data-i18n="options_requirements_refresh">
+                                        🔄 Jetzt neu prüfen
+                                    </button>
+                                </div>
+                                <div id="requirements-last-checked"
+                                    style="margin-bottom: 8px; color: #777; font-size: 0.78em;"
+                                    data-i18n="env_requirements_last_checked_never">Noch nicht geprüft</div>
+                                <div id="requirements-status-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <h4 style="font-size: 0.95em; margin-top: 22px; margin-bottom: 8px; color: #444;">Vorhandene
+                                Umgebungen</h4>
+
+                            <!-- Global Python Installations -->
+                            <div style="margin-top: 8px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">1. 🌐 Python Global</h4>
+                                <div id="system-python-global-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Python Installations -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">2. 🏠 Python Local</h4>
+                                <div id="system-python-local-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
 
                             <!-- Conda Environments -->
                             <div style="margin-top: 20px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_conda_envs">🐍 Conda Umgebungen</h4>
-                                <div id="conda-environments-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- System Python Installations -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_system_python_installs">🌐 System Python Installationen</h4>
-                                <div id="system-pythons-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                    data-i18n="options_conda_envs">3. 🐍 Conda Umgebungen</h4>
+                                <div id="conda-environments-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
 
                             <!-- Local Virtual Environments -->
                             <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_local_venvs">📁 Lokale Virtual Environments</h4>
-                                <div id="local-venvs-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
-                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                </div>
-                            </div>
-
-                            <!-- Installed Packages -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;" data-i18n="options_installed_packages">
-                                    📦 Installierte Pakete
-                                    <span id="package-count" style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
-                                </h4>
-                                <div style="margin-bottom: 8px;">
-                                    <input type="text" id="package-search" placeholder="Search packages..." 
-                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
-                                        data-i18n="[placeholder]packages_search_placeholder">
-                                </div>
-                                <div id="installed-packages-list" style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                    data-i18n="options_local_venvs">4. 📁 Lokale Virtual Environments</h4>
+                                <div id="local-venvs-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
@@ -1242,7 +1489,8 @@
                             <div>
                                 <div style="font-weight: 500;" data-i18n="parser_mode_label">Effizienz-Modus</div>
                                 <div id="parser-mode-status"
-                                    style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;" data-i18n="parser_mode_light">
+                                    style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;"
+                                    data-i18n="parser_mode_light">
                                     Leichtgewicht (Schnell)</div>
                                 <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
                                     data-i18n="parser_mode_desc">
@@ -1317,9 +1565,11 @@
 
                         <div id="debug-items-dict-container"
                             style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 2px; border-radius: 10px; font-size: 0.85em; overflow: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                            <div style="background: #1e1e1e; height: 100%; border-radius: 8px; padding: 15px; overflow: auto;">
+                            <div
+                                style="background: #1e1e1e; height: 100%; border-radius: 8px; padding: 15px; overflow: auto;">
                                 <pre id="debug-items-json"
-                                    style="background: transparent; padding: 0; margin: 0; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; color: #d4d4d4;" data-i18n="debug_loading_data">Lade Daten...</pre>
+                                    style="background: transparent; padding: 0; margin: 0; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; color: #d4d4d4;"
+                                    data-i18n="debug_loading_data">Lade Daten...</pre>
                             </div>
                         </div>
                     </div>
@@ -1331,7 +1581,8 @@
                         style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                         <span data-i18n="debug_console">Konsole / Logs</span>
                         <button onclick="document.getElementById('debug-output').innerText = ''"
-                            style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;" data-i18n="common_clear">Clear</button>
+                            style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
+                            data-i18n="common_clear">Clear</button>
                     </div>
                     <div style="flex: 1; overflow-y: auto; padding: 0;">
                         <pre id="debug-output"
@@ -1364,7 +1615,8 @@
 
                 <div style="margin-bottom: 16px; padding: 10px 12px; border-radius: 8px; background: #fff8e1; border: 1px solid #ffe082; color: #6d4c41; font-size: 0.9em;"
                     data-i18n="test_interactive_hint">
-                    Hinweis: Interaktive Browser-Tests sind standardmäßig deaktiviert und können bei Bedarf manuell aktiviert werden.
+                    Hinweis: Interaktive Browser-Tests sind standardmäßig deaktiviert und können bei Bedarf manuell
+                    aktiviert werden.
                 </div>
 
                 <div id="test-suites-container"
@@ -1401,7 +1653,8 @@
                                     <input type="checkbox" id="video-mode-toggle" onchange="updateVideoMode()">
                                     <span class="slider round"></span>
                                 </label>
-                                <span id="video-mode-status" style="font-size: 0.9em; min-width: 80px;" data-i18n="video_mode_browser">Browser</span>
+                                <span id="video-mode-status" style="font-size: 0.9em; min-width: 80px;"
+                                    data-i18n="video_mode_browser">Browser</span>
                             </div>
                         </div>
 
@@ -1442,51 +1695,117 @@
                         </div>
                     </div>
 
+                    <div
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
+                        <h3
+                            style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                            🎬 VLC Ribbon
+                        </h3>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                            <button id="vlc-ribbon-dnd-btn" onclick="setVlcRibbonMode('dnd')"
+                                style="padding: 8px 12px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                                Variante 1: Drag & Drop
+                            </button>
+                            <button id="vlc-ribbon-stream-btn" onclick="setVlcRibbonMode('stream')"
+                                style="padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; color: #666; border-radius: 8px; cursor: pointer; font-weight: 700;">
+                                Variante 2: Streaming
+                            </button>
+                        </div>
+
+                        <div id="vlc-dnd-panel" style="display: block;">
+                            <div id="vlc-drop-zone"
+                                style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 20px; text-align: center; font-weight: 600; transition: all 0.2s;">
+                                Datei hier hineinziehen, um sie in VLC zu öffnen
+                            </div>
+                            <div style="margin-top: 10px; text-align: center;">
+                                <button onclick="pickAndPlayInVLC()"
+                                    style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    📂 Datei auswählen
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="vlc-stream-panel" style="display: none;">
+                            <div style="display: flex; gap: 10px;">
+                                <input id="vlc-stream-url" type="text"
+                                    placeholder="https://... | rtsp://... | rtmp://..."
+                                    style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;" />
+                                <button onclick="playVLCStream()"
+                                    style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                    ▶ Stream starten
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="vlc-ribbon-status"
+                            style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;">
+                        </div>
+                    </div>
+
                     <!-- VLC Playlist Import/Export Section -->
-                    <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
-                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;" data-i18n="vlc_playlist_integration">
+                    <div
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;"
+                            data-i18n="vlc_playlist_integration">
                             📼 VLC Playlist Integration
                         </h3>
-                        
+
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                             <!-- Import Section -->
-                            <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; border: 1px solid #b3d9ff;">
-                                <h4 style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em;" data-i18n="vlc_import_section_title">
+                            <div
+                                style="background: #f0f8ff; padding: 20px; border-radius: 8px; border: 1px solid #b3d9ff;">
+                                <h4 style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em;"
+                                    data-i18n="vlc_import_section_title">
                                     📥 Import VLC Playlist
                                 </h4>
                                 <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
-                                    <span data-i18n="vlc_import_desc">Importiere eine m3u8/m3u-Playlist aus VLC in deine Bibliothek.</span>
+                                    <span data-i18n="vlc_import_desc">Importiere eine m3u8/m3u-Playlist aus VLC in deine
+                                        Bibliothek.</span>
                                 </p>
                                 <button onclick="importVLCPlaylist()"
                                     style="width: 100%; padding: 12px 20px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
                                     <span>📂</span> <span data-i18n="vlc_import">Playlist importieren</span>
                                 </button>
-                                <div id="import-status" style="margin-top: 10px; font-size: 0.85em; padding: 8px; border-radius: 4px; display: none;"></div>
+                                <div id="import-status"
+                                    style="margin-top: 10px; font-size: 0.85em; padding: 8px; border-radius: 4px; display: none;">
+                                </div>
                             </div>
 
                             <!-- Export Section -->
-                            <div style="background: #fff8f0; padding: 20px; border-radius: 8px; border: 1px solid #ffd9b3;">
-                                <h4 style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em;" data-i18n="vlc_export_section_title">
+                            <div
+                                style="background: #fff8f0; padding: 20px; border-radius: 8px; border: 1px solid #ffd9b3;">
+                                <h4 style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em;"
+                                    data-i18n="vlc_export_section_title">
                                     📤 Export to VLC
                                 </h4>
                                 <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
-                                    <span data-i18n="vlc_export_desc">Exportiere die gesamte Bibliothek als m3u8-Playlist für VLC.</span>
+                                    <span data-i18n="vlc_export_desc">Exportiere die gesamte Bibliothek als
+                                        m3u8-Playlist für VLC.</span>
                                 </p>
                                 <button onclick="exportToVLC()"
                                     style="width: 100%; padding: 12px 20px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
                                     <span>💾</span> <span data-i18n="vlc_export">Als Playlist exportieren</span>
                                 </button>
-                                <div id="export-status" style="margin-top: 10px; font-size: 0.85em; padding: 8px; border-radius: 4px; display: none;"></div>
+                                <div id="export-status"
+                                    style="margin-top: 10px; font-size: 0.85em; padding: 8px; border-radius: 4px; display: none;">
+                                </div>
                             </div>
                         </div>
 
                         <!-- Info Box -->
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #2a7;">
-                            <div style="font-weight: bold; font-size: 0.9em; color: #333; margin-bottom: 5px;" data-i18n="vlc_usage_title">💡 Verwendung</div>
-                            <ul style="font-size: 0.85em; color: #666; margin: 5px 0; padding-left: 20px; line-height: 1.6;">
-                                <li data-i18n="vlc_usage_import">Import: Wähle eine .m3u8 oder .m3u Playlist aus VLC und importiere alle Tracks in deine Bibliothek.</li>
-                                <li data-i18n="vlc_usage_export">Export: Speichere alle Medien aus deiner Bibliothek als VLC-kompatible Playlist.</li>
-                                <li data-i18n="vlc_usage_open_in_vlc">Die exportierte Playlist kann in VLC geöffnet werden: Medien → Datei öffnen</li>
+                        <div
+                            style="background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #2a7;">
+                            <div style="font-weight: bold; font-size: 0.9em; color: #333; margin-bottom: 5px;"
+                                data-i18n="vlc_usage_title">💡 Verwendung</div>
+                            <ul
+                                style="font-size: 0.85em; color: #666; margin: 5px 0; padding-left: 20px; line-height: 1.6;">
+                                <li data-i18n="vlc_usage_import">Import: Wähle eine .m3u8 oder .m3u Playlist aus VLC und
+                                    importiere alle Tracks in deine Bibliothek.</li>
+                                <li data-i18n="vlc_usage_export">Export: Speichere alle Medien aus deiner Bibliothek als
+                                    VLC-kompatible Playlist.</li>
+                                <li data-i18n="vlc_usage_open_in_vlc">Die exportierte Playlist kann in VLC geöffnet
+                                    werden: Medien → Datei öffnen</li>
                             </ul>
                         </div>
                     </div>
@@ -1517,7 +1836,8 @@
                         </div>
                         <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
                             <!-- populated by JS -->
-                            <div style="color: #999; font-style: italic;" data-i18n="logbook_loading_items">Lade Einträge...</div>
+                            <div style="color: #999; font-style: italic;" data-i18n="logbook_loading_items">Lade
+                                Einträge...</div>
                         </div>
                         <button onclick="openLogbookEditor()"
                             style="width: 100%; padding: 10px; margin-top: 15px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s;"
@@ -1573,7 +1893,8 @@
             <div id="sync-indicator" title="Backend Status" data-i18n="[title]sync_backend_status"
                 style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #eee; border-radius: 20px; transition: all 0.3s ease;">
                 <div id="sync-dot" style="width: 8px; height: 8px; background: #999; border-radius: 50%;"></div>
-                <span id="sync-text" style="font-size: 0.85em; font-weight: 500;" data-i18n="sync_initializing">Initialisierung...</span>
+                <span id="sync-text" style="font-size: 0.85em; font-weight: 500;"
+                    data-i18n="sync_initializing">Initialisierung...</span>
             </div>
             <a id="imprint-link" href="#" onclick="openAboutImprint()"
                 style="color: #888; text-decoration: none; font-size: 0.8em;" data-i18n="common_about_imprint">Über &
@@ -1641,7 +1962,8 @@
         style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
         <div
             style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;" data-i18n="logbook_modal_title">Logbuch:
+            <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;"
+                data-i18n="logbook_modal_title">Logbuch:
                 Feature
                 Name
             </h3>
@@ -1649,7 +1971,8 @@
                 style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.5em; opacity: 0.7; transition: opacity 0.2s;">✕</button>
         </div>
         <div id="logbook-content"
-            style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;" data-i18n="logbook_loading">
+            style="padding: 30px; font-size: 1em; line-height: 1.6; color: #444; max-height: 600px; overflow-y: auto;"
+            data-i18n="logbook_loading">
             Lade Details...
         </div>
         <div
@@ -1734,8 +2057,47 @@
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
                     data-i18n="[placeholder]logbook_edit_placeholder_name">
             </div>
+            <div
+                style="border: 1px solid #e7e7e7; border-radius: 8px; padding: 12px; background: #fafafa; display: flex; flex-direction: column; gap: 10px;">
+                <div style="font-size: 0.85em; font-weight: bold; color: #555; text-transform: uppercase;">Feste Tags
+                    (editierbar)</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <label style="font-size: 0.78em; color:#666;">Category</label>
+                        <input type="text" id="logbuch-editor-category"
+                            style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <label style="font-size: 0.78em; color:#666;">Date</label>
+                        <input type="text" id="logbuch-editor-date"
+                            style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
+                            placeholder="YYYY-MM-DD">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Title_DE</label>
+                        <input type="text" id="logbuch-editor-title-de"
+                            style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Title_EN</label>
+                        <input type="text" id="logbuch-editor-title-en"
+                            style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Summary_DE</label>
+                        <input type="text" id="logbuch-editor-summary-de"
+                            style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
+                        <label style="font-size: 0.78em; color:#666;">Summary_EN</label>
+                        <input type="text" id="logbuch-editor-summary-en"
+                            style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
+                    </div>
+                </div>
+            </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 0.9em; font-weight: bold; color: #555;" data-i18n="logbook_edit_status_label">Status</label>
+                <label style="font-size: 0.9em; font-weight: bold; color: #555;"
+                    data-i18n="logbook_edit_status_label">Status</label>
                 <select id="logbuch-editor-status"
                     style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-family: monospace;">
                     <option value="ACTIVE" data-i18n="status_active">ACTIVE</option>
@@ -2458,7 +2820,7 @@
             document.getElementById('btn-open-vlc').style.display = 'flex';
         }
 
-        async function startVLC(filePath) {
+        async function startVLC(filePath, displayName = null) {
             const video = document.getElementById('video-player');
             video.pause();
             video.style.display = 'none';
@@ -2467,7 +2829,8 @@
             hideUnsupportedVideoHint();
 
             document.getElementById('vlc-info').style.display = 'block';
-            document.getElementById('vlc-current-file').innerText = currentVideoItem.name;
+            const shownName = displayName || (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
+            document.getElementById('vlc-current-file').innerText = shownName;
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
@@ -2593,13 +2956,13 @@
                     let artistDisplay = tags.artist || t('lib_unknown_artist');
                     let itemName = item.name || item.filename || "unknown";
 
-                    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument'];
+                    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image'];
                     let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
                     div.innerHTML = `
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
-                            <span>${artistDisplay}${catBadge}</span>
+                            <span>${artistDisplay}</span>${catBadge}
                             <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
                         </div>
                     `;
@@ -2625,7 +2988,7 @@
         }
 
         // Parser GUI Logic
-        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"];
         let currentParserChain = [];
         let currentParserOptions = {};
 
@@ -2642,7 +3005,7 @@
                 if (config && config.parser_chain && Array.isArray(config.parser_chain)) {
                     currentParserChain = config.parser_chain;
                 } else {
-                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffmpeg"];
+                    currentParserChain = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"];
                 }
 
                 if (config && config.parser_mode) {
@@ -2652,6 +3015,14 @@
                     if (statusText) {
                         statusText.innerText = config.parser_mode === "full" ? t('parser_mode_full') : t('parser_mode_light');
                     }
+                }
+
+                if (config && config.indexed_categories) {
+                    const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+                    cats.forEach(cat => {
+                        const cb = document.getElementById('cat-' + cat);
+                        if (cb) cb.checked = config.indexed_categories.includes(cat);
+                    });
                 }
 
                 renderParserList();
@@ -2822,11 +3193,19 @@
                 statusText.style.color = newMode === "full" ? "#e67e22" : "#2a7"; // Orange for Intensive, Green for Fast
             }
 
+            const indexedCats = [];
+            const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+            cats.forEach(cat => {
+                const cb = document.getElementById('cat-' + cat);
+                if (cb && cb.checked) indexedCats.push(cat);
+            });
+
             // Prepare the full config object
             const finalConfig = {
                 ...currentParserOptions,
                 "parser_chain": newChain,
-                "parser_mode": newMode
+                "parser_mode": newMode,
+                "indexed_categories": indexedCats
             };
 
             console.log("Saving full parser config:", finalConfig);
@@ -2886,16 +3265,84 @@
             loadDebugFlags();
         }
 
-        async function loadEnvironmentInfo() {
+        let packageSearchTimer = null;
+
+        function normalizeInstalledPackages(rawPackages) {
+            const normalized = [];
+
+            if (typeof rawPackages === 'string') {
+                const trimmed = rawPackages.trim();
+                if (trimmed) {
+                    try {
+                        rawPackages = JSON.parse(trimmed);
+                    } catch (_) {
+                        rawPackages = [];
+                    }
+                }
+            }
+
+            if (rawPackages && typeof rawPackages === 'object' && !Array.isArray(rawPackages)) {
+                if (Array.isArray(rawPackages.packages)) {
+                    rawPackages = rawPackages.packages;
+                } else if (Array.isArray(rawPackages.installed_packages)) {
+                    rawPackages = rawPackages.installed_packages;
+                }
+            }
+
+            if (Array.isArray(rawPackages)) {
+                rawPackages.forEach(pkg => {
+                    if (!pkg || typeof pkg !== 'object') return;
+                    const name = String(pkg.name ?? pkg.Name ?? pkg.project_name ?? pkg.projectName ?? '').trim();
+                    const version = String(pkg.version ?? pkg.Version ?? pkg.ver ?? '').trim();
+                    if (!name) return;
+                    normalized.push({ name, version: version || '-' });
+                });
+            } else if (rawPackages && typeof rawPackages === 'object') {
+                Object.entries(rawPackages).forEach(([name, version]) => {
+                    const pkgName = String(name || '').trim();
+                    if (!pkgName) return;
+                    normalized.push({ name: pkgName, version: String(version ?? '-').trim() || '-' });
+                });
+            }
+
+            normalized.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            return normalized;
+        }
+
+        async function loadEnvironmentInfo(forceRefresh = false) {
             try {
-                const info = await eel.get_environment_info()();
-                
-                document.getElementById('env-python-version').textContent = info.python_version;
-                
+                const requestForceRefresh = !!forceRefresh;
+                let info = requestForceRefresh
+                    ? await eel.get_environment_info(true)()
+                    : await eel.get_environment_info()();
+
+                const initialPackages = normalizeInstalledPackages(info?.installed_packages);
+                const hasInitialPackages = initialPackages.length > 0;
+                if (!requestForceRefresh && !hasInitialPackages) {
+                    try {
+                        const refreshed = await eel.get_environment_info(true)();
+                        if (refreshed) info = refreshed;
+                    } catch (refreshErr) {
+                        console.warn('Environment info force-refresh failed:', refreshErr);
+                    }
+                }
+
+                if (!info || typeof info !== 'object') {
+                    throw new Error('Invalid environment info response');
+                }
+
+                const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];
+                const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];
+                const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];
+                const safeInstalledPackages = normalizeInstalledPackages(info.installed_packages);
+
+                const envPythonVersionEl = document.getElementById('env-python-version');
+                if (envPythonVersionEl) envPythonVersionEl.textContent = info.python_version || '-';
+
                 // Display environment type and status
                 let statusText = '';
                 let isActive = false;
-                
+
                 if (info.env_type === 'venv') {
                     if (info.has_conda_context) {
                         statusText = `✅ Ja (Venv: ${info.env_name || 'unknown'}, Conda-Kontext: ${info.conda_env_name || 'unknown'})`;
@@ -2910,134 +3357,430 @@
                     statusText = '❌ Nein (System Python)';
                     isActive = false;
                 }
-                
-                document.getElementById('env-venv-status').textContent = statusText;
-                document.getElementById('env-venv-path').textContent = info.env_path || '-';
-                document.getElementById('env-python-exec').textContent = info.python_executable;
-                document.getElementById('env-platform').textContent = `${info.platform_system} ${info.platform_release}`;
-                
+
+                const envVenvStatusEl = document.getElementById('env-venv-status');
+                const envVenvPathEl = document.getElementById('env-venv-path');
+                const envPythonExecEl = document.getElementById('env-python-exec');
+                const envMediainfoStatusEl = document.getElementById('env-mediainfo-status');
+                const envMutagenStatusEl = document.getElementById('env-mutagen-status');
+                const envFfmpegStatusEl = document.getElementById('env-ffmpeg-status');
+                const envFfprobeStatusEl = document.getElementById('env-ffprobe-status');
+                const envGuiStatusEl = document.getElementById('env-gui-status');
+                const envMediaplayerStatusEl = document.getElementById('env-mediaplayer-status');
+                const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');
+                const envTestToolsStatusEl = document.getElementById('env-test-tools-status');
+                const envDevToolsStatusEl = document.getElementById('env-dev-tools-status');
+                const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');
+                const envRequirementsListEl = document.getElementById('env-requirements-list');
+                const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');
+                const envPlatformEl = document.getElementById('env-platform');
+
+                const mediaInfoStatus = info.mediainfo_status || {};
+                const pyMediaInfoOk = !!mediaInfoStatus.pymediainfo_available;
+                const pyMediaInfoVer = mediaInfoStatus.pymediainfo_version || '';
+                const mediaInfoCliOk = !!mediaInfoStatus.mediainfo_cli_available;
+                const mediaInfoCliPath = mediaInfoStatus.mediainfo_cli_path || '';
+
+                const toolsStatus = info.tools_status || {};
+                const ffmpegOk = !!toolsStatus.ffmpeg_cli_available;
+                const ffmpegPath = toolsStatus.ffmpeg_cli_path || '';
+                const ffmpegVer = toolsStatus.ffmpeg_cli_version || '';
+                const ffprobeOk = !!toolsStatus.ffprobe_cli_available;
+                const ffprobePath = toolsStatus.ffprobe_cli_path || '';
+                const ffprobeVer = toolsStatus.ffprobe_cli_version || '';
+                const browserOk = !!toolsStatus.browser_available;
+                const browserName = toolsStatus.browser_name || 'browser';
+                const browserPath = toolsStatus.browser_path || '';
+                const browserVer = toolsStatus.browser_version || '';
+                const vlcPyOk = !!toolsStatus.python_vlc_available;
+                const vlcPyVer = toolsStatus.python_vlc_version || '';
+                const vlcCliOk = !!toolsStatus.vlc_cli_available;
+                const vlcCliPath = toolsStatus.vlc_cli_path || '';
+                const vlcCliVer = toolsStatus.vlc_cli_version || '';
+                const mutagenOk = !!toolsStatus.mutagen_available;
+                const mutagenVer = toolsStatus.mutagen_version || '';
+
+                // MediaInfo: pymediainfo + mediainfo CLI
+                const mediaInfoText = [
+                    `${pyMediaInfoOk ? '✅' : '❌'} pymediainfo${pyMediaInfoVer ? ` ${pyMediaInfoVer}` : ''}`,
+                    `${mediaInfoCliOk ? '✅' : '❌'} mediainfo${mediaInfoCliPath ? ` (${mediaInfoCliPath})` : ''}`,
+                ].join(' | ');
+
+                // Mutagen
+                const mutagenText = `${mutagenOk ? '✅' : '❌'} mutagen${mutagenVer ? ` ${mutagenVer}` : ''}`;
+
+                // FFmpeg tools
+                const ffmpegText = `${ffmpegOk ? '✅' : '❌'} ffmpeg${ffmpegVer ? ` ${ffmpegVer}` : ''}${ffmpegPath ? ` (${ffmpegPath})` : ''}`;
+                const ffprobeText = `${ffprobeOk ? '✅' : '❌'} ffprobe${ffprobeVer ? ` ${ffprobeVer}` : ''}${ffprobePath ? ` (${ffprobePath})` : ''}`;
+
+                // GUI: Browser
+                const guiText = `${browserOk ? '✅' : '❌'} ${browserName}${browserVer ? ` ${browserVer}` : ''}${browserPath ? ` (${browserPath})` : ''}`;
+
+                // Mediaplayer: VLC
+                const mediaplayerText = [
+                    `${vlcPyOk ? '✅' : '❌'} python-vlc${vlcPyVer ? ` ${vlcPyVer}` : ''}`,
+                    `${vlcCliOk ? '✅' : '❌'} vlc${vlcCliVer ? ` ${vlcCliVer}` : ''}${vlcCliPath ? ` (${vlcCliPath})` : ''}`,
+                ].join(' | ');
+
+                const packageVersionMap = new Map();
+                safeInstalledPackages.forEach(pkg => {
+                    if (!pkg || typeof pkg !== 'object') return;
+                    const name = String(pkg.name || '').trim().toLowerCase();
+                    const version = String(pkg.version || '').trim();
+                    if (!name) return;
+                    packageVersionMap.set(name, version || '-');
+                });
+
+                const corePackages = [
+                    ['bottle', 'bottle'],
+                    ['bottle-websocket', 'bottle-websocket'],
+                    ['eel', 'Eel'],
+                    ['m3u8', 'm3u8'],
+                    ['gevent', 'gevent'],
+                    ['gevent-websocket', 'gevent-websocket'],
+                    ['greenlet', 'greenlet'],
+                    ['zope.event', 'zope.event'],
+                    ['zope.interface', 'zope.interface'],
+                ];
+                const coreText = corePackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const testPackages = [
+                    ['pytest', 'pytest'],
+                    ['pytest-cov', 'pytest-cov'],
+                    ['coverage', 'coverage'],
+                    ['pluggy', 'pluggy'],
+                    ['iniconfig', 'iniconfig'],
+                    ['pyautogui', 'PyAutoGUI'],
+                    ['pygetwindow', 'PyGetWindow'],
+                    ['pymsgbox', 'PyMsgBox'],
+                    ['pyrect', 'PyRect'],
+                    ['pyscreeze', 'PyScreeze'],
+                    ['mouseinfo', 'MouseInfo'],
+                    ['pytweening', 'pytweening'],
+                    ['python3-xlib', 'python3-xlib'],
+                    ['pyperclip', 'pyperclip'],
+                ];
+                const testToolsText = testPackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const devPackages = [
+                    ['mypy', 'mypy'],
+                    ['mypy_extensions', 'mypy_extensions'],
+                    ['typing_extensions', 'typing_extensions'],
+                    ['flake8', 'flake8'],
+                    ['pycodestyle', 'pycodestyle'],
+                    ['pyflakes', 'pyflakes'],
+                    ['mccabe', 'mccabe'],
+                    ['pathspec', 'pathspec'],
+                ];
+                const devToolsText = devPackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const buildPackages = [
+                    ['pyinstaller', 'PyInstaller'],
+                    ['pyinstaller-hooks-contrib', 'pyinstaller-hooks-contrib'],
+                    ['altgraph', 'altgraph'],
+                    ['wheel', 'wheel'],
+                    ['setuptools', 'setuptools'],
+                    ['packaging', 'packaging'],
+                    ['markdown', 'Markdown'],
+                    ['psutil', 'psutil'],
+                    ['chardet', 'chardet'],
+                    ['future', 'future'],
+                ];
+                const buildToolsText = buildPackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+
+                const categorizedKeys = new Set([
+                    ...corePackages.map(([pkgKey]) => pkgKey),
+                    ...testPackages.map(([pkgKey]) => pkgKey),
+                    ...devPackages.map(([pkgKey]) => pkgKey),
+                    ...buildPackages.map(([pkgKey]) => pkgKey),
+                    'pymediainfo',
+                    'mutagen',
+                    'python-vlc',
+                ]);
+
+                const baseDependencies = safeInstalledPackages
+                    .filter(pkg => {
+                        if (!pkg || typeof pkg !== 'object') return false;
+                        const key = String(pkg.name || '').trim().toLowerCase();
+                        return key && !categorizedKeys.has(key);
+                    })
+                    .map(pkg => {
+                        const label = String(pkg.name || '').trim();
+                        const version = String(pkg.version || '').trim();
+                        return `${label}${version ? ` ${version}` : ''}`;
+                    });
+
+                const baseDependenciesText = baseDependencies.length > 0
+                    ? `✅ ${baseDependencies.join(', ')}`
+                    : '-';
+
+                const requirementsStatusPreview = info.requirements_status && typeof info.requirements_status === 'object'
+                    ? info.requirements_status
+                    : null;
+                const requirementsInstalledPreview = Array.isArray(requirementsStatusPreview?.installed)
+                    ? requirementsStatusPreview.installed
+                    : [];
+                const requirementsMissingPreview = Array.isArray(requirementsStatusPreview?.missing)
+                    ? requirementsStatusPreview.missing
+                    : [];
+                const requirementsListText = requirementsStatusPreview?.available
+                    ? [
+                        requirementsInstalledPreview.length > 0 ? `✅ ${requirementsInstalledPreview.join(', ')}` : '',
+                        requirementsMissingPreview.length > 0 ? `❌ ${requirementsMissingPreview.join(', ')}` : ''
+                    ].filter(Boolean).join(' | ') || '-'
+                    : t('env_requirements_not_found');
+
+                if (envVenvStatusEl) envVenvStatusEl.textContent = statusText;
+                if (envVenvPathEl) envVenvPathEl.textContent = info.env_path || '-';
+                if (envPythonExecEl) envPythonExecEl.textContent = info.python_executable || '-';
+                if (envMediainfoStatusEl) envMediainfoStatusEl.textContent = mediaInfoText;
+                if (envMutagenStatusEl) envMutagenStatusEl.textContent = mutagenText;
+                if (envFfmpegStatusEl) envFfmpegStatusEl.textContent = ffmpegText;
+                if (envFfprobeStatusEl) envFfprobeStatusEl.textContent = ffprobeText;
+                if (envGuiStatusEl) envGuiStatusEl.textContent = guiText;
+                if (envMediaplayerStatusEl) envMediaplayerStatusEl.textContent = mediaplayerText;
+                if (envCorePackagesStatusEl) envCorePackagesStatusEl.textContent = coreText;
+                if (envTestToolsStatusEl) envTestToolsStatusEl.textContent = testToolsText;
+                if (envDevToolsStatusEl) envDevToolsStatusEl.textContent = devToolsText;
+                if (envBuildToolsStatusEl) envBuildToolsStatusEl.textContent = buildToolsText;
+                if (envRequirementsListEl) envRequirementsListEl.textContent = requirementsListText;
+                if (envBaseDependenciesStatusEl) envBaseDependenciesStatusEl.textContent = baseDependenciesText;
+                if (envPlatformEl) envPlatformEl.textContent = `${info.platform_system || '-'} ${info.platform_release || ''}`.trim();
+
                 // Color code the venv status
                 const statusEl = document.getElementById('env-venv-status');
-                if (isActive) {
-                    statusEl.style.color = '#2a7';
-                    statusEl.style.fontWeight = 'bold';
-                } else {
-                    statusEl.style.color = '#f4d';
+                if (statusEl) {
+                    if (isActive) {
+                        statusEl.style.color = '#2a7';
+                        statusEl.style.fontWeight = 'bold';
+                    } else {
+                        statusEl.style.color = '#f4d';
+                    }
                 }
 
                 // Display Conda Environments
                 const condaList = document.getElementById('conda-environments-list');
-                if (info.available_conda_environments && info.available_conda_environments.length > 0) {
+                if (condaList && safeCondaEnvs.length > 0) {
                     let condaHtml = '<div style="font-family: monospace;">';
-                    info.available_conda_environments.forEach(env => {
-                        const isCurrent = info.env_type === 'conda' && info.env_name === env.name;
-                        const isRecommended = env.recommended;
+                    safeCondaEnvs.forEach(env => {
+                        if (!env || typeof env !== 'object') return;
+                        const envName = env.name || '-';
+                        const envVersion = env.version || '-';
+                        const envPath = env.path || '-';
+                        const isCurrent = info.env_type === 'conda' && info.env_name === envName;
+                        const isRecommended = !!env.recommended;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
                         const recBadge = isRecommended ? '<span style="color: #f80; font-weight: bold;">⭐ EMPFOHLEN</span>' : '';
-                        
+
                         condaHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${env.name} ${currentBadge} ${recBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${env.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${env.path}</div>
+                                <div style="font-weight: bold; color: #333;">${envName} ${currentBadge} ${recBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${envVersion}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${envPath}</div>
                             </div>
                         `;
                     });
                     condaHtml += '</div>';
                     condaList.innerHTML = condaHtml;
-                } else {
+                } else if (condaList) {
                     condaList.innerHTML = `<span style="color: #999;">${t('env_no_conda_envs')}</span>`;
                 }
 
-                // Display System Python Installations
-                const systemList = document.getElementById('system-pythons-list');
-                if (info.available_system_pythons && info.available_system_pythons.length > 0) {
-                    let systemHtml = '<div style="font-family: monospace;">';
-                    info.available_system_pythons.forEach(python => {
-                        systemHtml += `
+                // Display System Python Installations split into Global / Local
+                const globalPythonList = document.getElementById('system-python-global-list');
+                const localPythonList = document.getElementById('system-python-local-list');
+
+                const validSystemPythons = safeSystemPythons.filter(p => p && typeof p === 'object');
+                const globalPythons = validSystemPythons.filter(p => String(p.path || '').startsWith('/usr/bin/'));
+                const localPythons = validSystemPythons.filter(p => !String(p.path || '').startsWith('/usr/bin/'));
+
+                const renderPythonList = (container, rows, emptyText) => {
+                    if (!container) return;
+                    if (!rows || rows.length === 0) {
+                        container.innerHTML = `<span style="color: #999;">${emptyText}</span>`;
+                        return;
+                    }
+                    let html = '<div style="font-family: monospace;">';
+                    rows.forEach(python => {
+                        if (!python || typeof python !== 'object') return;
+                        html += `
                             <div style="margin-bottom: 8px; padding: 6px; background: #fff; border-left: 3px solid #ddd; border-radius: 3px;">
-                                <div style="color: #666; font-size: 0.9em;">${python.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path}</div>
+                                <div style="color: #666; font-size: 0.9em;">${python.version || '-'}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${python.path || '-'}</div>
                             </div>
                         `;
                     });
-                    systemHtml += '</div>';
-                    systemList.innerHTML = systemHtml;
-                } else {
-                    systemList.innerHTML = `<span style="color: #999;">${t('env_no_system_pythons')}</span>`;
-                }
+                    html += '</div>';
+                    container.innerHTML = html;
+                };
+
+                renderPythonList(globalPythonList, globalPythons, t('env_no_system_pythons'));
+                renderPythonList(localPythonList, localPythons, t('env_no_system_pythons'));
 
                 // Display Local Virtual Environments
                 const venvsList = document.getElementById('local-venvs-list');
-                if (info.local_venvs && info.local_venvs.length > 0) {
+                if (venvsList && safeLocalVenvs.length > 0) {
                     let venvsHtml = '<div style="font-family: monospace;">';
-                    info.local_venvs.forEach(venv => {
+                    safeLocalVenvs.forEach(venv => {
+                        if (!venv || typeof venv !== 'object') return;
                         const isCurrent = venv.is_current;
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
-                        
+
                         venvsHtml += `
                             <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${venv.name} ${currentBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${venv.version}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path}</div>
+                                <div style="font-weight: bold; color: #333;">${venv.name || '-'} ${currentBadge}</div>
+                                <div style="color: #666; font-size: 0.9em;">${venv.version || '-'}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path || '-'}</div>
                             </div>
                         `;
                     });
                     venvsHtml += '</div>';
                     venvsList.innerHTML = venvsHtml;
-                } else {
+                } else if (venvsList) {
                     venvsList.innerHTML = `<span style="color: #999;">${t('env_no_local_venvs')}</span>`;
                 }
 
                 // Display Installed Packages
                 const packagesList = document.getElementById('installed-packages-list');
                 const packageCount = document.getElementById('package-count');
-                
-                if (info.installed_packages && info.installed_packages.length > 0) {
-                    packageCount.textContent = `(${info.installed_packages.length})`;
-                    
+                const packageSource = document.getElementById('package-source');
+                const sourceText = String(info.installed_packages_source || 'unknown');
+                if (packageSource) packageSource.textContent = `[source: ${sourceText}]`;
+
+                if (safeInstalledPackages.length > 0 && packagesList && packageCount) {
+                    packageCount.textContent = `(${safeInstalledPackages.length})`;
+
                     // Store packages globally for search functionality
-                    window.allPackages = info.installed_packages;
-                    
+                    window.allPackages = safeInstalledPackages;
+                    window.allPackagesSearch = safeInstalledPackages.map(pkg => ({
+                        nameLc: String(pkg.name || '').toLowerCase(),
+                        versionLc: String(pkg.version || '').toLowerCase(),
+                        raw: pkg,
+                    }));
+
                     // Initial render
-                    renderPackages(info.installed_packages);
-                    
+                    renderPackages(safeInstalledPackages);
+
                     // Setup search
                     const searchInput = document.getElementById('package-search');
-                    searchInput.addEventListener('input', (e) => {
-                        const searchTerm = e.target.value.toLowerCase();
-                        if (searchTerm === '') {
-                            renderPackages(window.allPackages);
-                        } else {
-                            const filtered = window.allPackages.filter(pkg => 
-                                pkg.name.toLowerCase().includes(searchTerm) ||
-                                (pkg.version && pkg.version.toLowerCase().includes(searchTerm))
-                            );
-                            renderPackages(filtered);
-                        }
-                    });
+                    if (searchInput && searchInput.dataset.bound !== '1') {
+                        searchInput.addEventListener('input', (e) => {
+                            const searchTerm = e.target.value.toLowerCase();
+                            if (packageSearchTimer) clearTimeout(packageSearchTimer);
+                            packageSearchTimer = setTimeout(() => {
+                                if (searchTerm === '') {
+                                    renderPackages(window.allPackages);
+                                } else {
+                                    const rows = Array.isArray(window.allPackagesSearch) ? window.allPackagesSearch : [];
+                                    const filtered = rows
+                                        .filter(row => row.nameLc.includes(searchTerm) || row.versionLc.includes(searchTerm))
+                                        .map(row => row.raw);
+                                    renderPackages(filtered);
+                                }
+                            }, 120);
+                        });
+                        searchInput.dataset.bound = '1';
+                    }
                 } else {
-                    packageCount.textContent = '(0)';
-                    packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
+                    if (packageCount) packageCount.textContent = '(0)';
+                    if (packagesList) packagesList.innerHTML = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
                 }
-                
+
+                // Display requirements.txt status
+                const requirementsCount = document.getElementById('requirements-count');
+                const requirementsLastChecked = document.getElementById('requirements-last-checked');
+                const requirementsStatusList = document.getElementById('requirements-status-list');
+                const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'
+                    ? info.requirements_status
+                    : null;
+
+                if (requirementsCount && requirementsStatusList) {
+                    if (requirementsLastChecked) {
+                        const now = new Date();
+                        requirementsLastChecked.textContent = `${t('env_requirements_last_checked')}: ${now.toLocaleTimeString()}`;
+                    }
+                    const available = !!requirementsStatus?.available;
+                    const missing = Array.isArray(requirementsStatus?.missing) ? requirementsStatus.missing : [];
+                    const installedCount = Number(requirementsStatus?.installed_count || 0);
+                    const total = Number(requirementsStatus?.total || (installedCount + missing.length));
+                    requirementsCount.textContent = `(${installedCount}/${total})`;
+
+                    if (!available) {
+                        requirementsStatusList.innerHTML = `<span style="color: #999;">${t('env_requirements_not_found')}</span>`;
+                    } else if (missing.length === 0) {
+                        requirementsStatusList.innerHTML = `<span style="color: #2a7; font-weight: bold;">${t('env_requirements_all_present')}</span>`;
+                    } else {
+                        const missingHtml = missing
+                            .map(name => `<div style="margin: 3px 0; color: #c62828;">• ${name}</div>`)
+                            .join('');
+                        requirementsStatusList.innerHTML = `
+                            <div style="margin-bottom: 6px; color: #c62828; font-weight: bold;">${t('env_requirements_missing')}</div>
+                            ${missingHtml}
+                        `;
+                    }
+                }
+
             } catch (e) {
                 console.error("Failed to load environment info:", e);
+                const failText = `<span style="color: #c62828;">${t('common_error_loading')}</span>`;
+                const fallbackNoData = `<span style="color: #999;">${t('env_no_packages_found')}</span>`;
+
+                const packageCount = document.getElementById('package-count');
+                const packageSource = document.getElementById('package-source');
+                const requirementsCount = document.getElementById('requirements-count');
+                const requirementsLastChecked = document.getElementById('requirements-last-checked');
+                const requirementsStatusList = document.getElementById('requirements-status-list');
+                const condaList = document.getElementById('conda-environments-list');
+                const globalPythonList = document.getElementById('system-python-global-list');
+                const localPythonList = document.getElementById('system-python-local-list');
+                const venvsList = document.getElementById('local-venvs-list');
+                const packagesList = document.getElementById('installed-packages-list');
+
+                if (packageCount) packageCount.textContent = '(0)';
+                if (packageSource) packageSource.textContent = '[source: error]';
+                if (requirementsCount) requirementsCount.textContent = '(0/0)';
+                if (requirementsLastChecked) requirementsLastChecked.textContent = t('env_requirements_last_checked_error');
+                if (requirementsStatusList) requirementsStatusList.innerHTML = failText;
+                if (condaList) condaList.innerHTML = failText;
+                if (globalPythonList) globalPythonList.innerHTML = failText;
+                if (localPythonList) localPythonList.innerHTML = failText;
+                if (venvsList) venvsList.innerHTML = failText;
+                if (packagesList) packagesList.innerHTML = fallbackNoData;
             }
         }
 
         function renderPackages(packages) {
             const packagesList = document.getElementById('installed-packages-list');
-            
+
             if (packages.length === 0) {
                 packagesList.innerHTML = `<span style="color: #999;">${t('env_no_matching_packages')}</span>`;
                 return;
             }
-            
+
             let packagesHtml = '<table style="width: 100%; border-collapse: collapse;">';
             packagesHtml += `<thead><tr style="background: #e0e0e0;"><th style="text-align: left; padding: 4px 8px; font-weight: bold;">${t('env_table_package')}</th><th style="text-align: left; padding: 4px 8px; font-weight: bold;">${t('env_table_version')}</th></tr></thead>`;
             packagesHtml += '<tbody>';
-            
+
             packages.forEach((pkg, index) => {
                 const bgColor = index % 2 === 0 ? '#fff' : '#f5f5f5';
                 packagesHtml += `
@@ -3047,9 +3790,60 @@
                     </tr>
                 `;
             });
-            
+
             packagesHtml += '</tbody></table>';
             packagesList.innerHTML = packagesHtml;
+        }
+
+        window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
+            const count = Math.max(1, Math.min(30, Number(samples) || 5));
+            const size = Math.max(0, Math.min(200000, Number(payloadSize) || 0));
+
+            const frontendSamples = [];
+            const eelSamples = [];
+            const bottleSamples = [];
+
+            const measureFrame = () => new Promise((resolve) => {
+                const start = performance.now();
+                requestAnimationFrame(() => resolve(performance.now() - start));
+            });
+
+            const measureEel = async () => {
+                const start = performance.now();
+                await eel.api_ping(Date.now(), size)();
+                return performance.now() - start;
+            };
+
+            const measureBottle = async () => {
+                const start = performance.now();
+                await fetch('/health', { cache: 'no-store' });
+                return performance.now() - start;
+            };
+
+            for (let i = 0; i < count; i++) {
+                frontendSamples.push(await measureFrame());
+                eelSamples.push(await measureEel());
+                bottleSamples.push(await measureBottle());
+            }
+
+            const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+            const p95 = (arr) => {
+                const sorted = [...arr].sort((a, b) => a - b);
+                const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+                return sorted[idx];
+            };
+
+            const result = {
+                samples: count,
+                payloadSize: size,
+                frontend: { avgMs: Number(avg(frontendSamples).toFixed(2)), p95Ms: Number(p95(frontendSamples).toFixed(2)) },
+                eelRoundtrip: { avgMs: Number(avg(eelSamples).toFixed(2)), p95Ms: Number(p95(eelSamples).toFixed(2)) },
+                bottleHttp: { avgMs: Number(avg(bottleSamples).toFixed(2)), p95Ms: Number(p95(bottleSamples).toFixed(2)) },
+                raw: { frontendSamples, eelSamples, bottleSamples },
+            };
+
+            console.info('[LatencyDiagnostics]', result);
+            return result;
         }
 
         function toggleDebugMenu() {
@@ -3682,7 +4476,136 @@
         });
 
         // ============ VLC Integration Functions ============
-        
+
+        let vlcRibbonMode = 'dnd';
+
+        function setVlcRibbonStatus(message, kind = 'info') {
+            const el = document.getElementById('vlc-ribbon-status');
+            if (!el) return;
+            el.style.display = 'block';
+            if (kind === 'error') {
+                el.style.background = '#ffebee';
+                el.style.color = '#b71c1c';
+            } else if (kind === 'ok') {
+                el.style.background = '#e8f5e9';
+                el.style.color = '#2e7d32';
+            } else {
+                el.style.background = '#e3f2fd';
+                el.style.color = '#1565c0';
+            }
+            el.textContent = message;
+        }
+
+        function setVlcRibbonMode(mode) {
+            vlcRibbonMode = mode === 'stream' ? 'stream' : 'dnd';
+
+            const dndBtn = document.getElementById('vlc-ribbon-dnd-btn');
+            const streamBtn = document.getElementById('vlc-ribbon-stream-btn');
+            const dndPanel = document.getElementById('vlc-dnd-panel');
+            const streamPanel = document.getElementById('vlc-stream-panel');
+
+            if (!dndBtn || !streamBtn || !dndPanel || !streamPanel) return;
+
+            if (vlcRibbonMode === 'dnd') {
+                dndPanel.style.display = 'block';
+                streamPanel.style.display = 'none';
+                dndBtn.style.borderColor = '#2a7';
+                dndBtn.style.background = '#e8f5e9';
+                dndBtn.style.color = '#2a7';
+                streamBtn.style.borderColor = '#ddd';
+                streamBtn.style.background = '#f9f9f9';
+                streamBtn.style.color = '#666';
+            } else {
+                dndPanel.style.display = 'none';
+                streamPanel.style.display = 'block';
+                streamBtn.style.borderColor = '#8e44ad';
+                streamBtn.style.background = '#f3e5f5';
+                streamBtn.style.color = '#6a1b9a';
+                dndBtn.style.borderColor = '#ddd';
+                dndBtn.style.background = '#f9f9f9';
+                dndBtn.style.color = '#666';
+            }
+        }
+
+        function initVlcDropZone() {
+            const zone = document.getElementById('vlc-drop-zone');
+            if (!zone || zone.dataset.bound === '1') return;
+            zone.dataset.bound = '1';
+
+            ['dragenter', 'dragover'].forEach(evt => {
+                zone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    zone.style.borderColor = '#2a7';
+                    zone.style.background = '#e8f5e9';
+                    zone.style.color = '#1b5e20';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                zone.addEventListener(evt, () => {
+                    zone.style.borderColor = '#90caf9';
+                    zone.style.background = '#f7fbff';
+                    zone.style.color = '#1e5d87';
+                });
+            });
+
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                const droppedFile = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null;
+                if (!droppedFile) {
+                    setVlcRibbonStatus('Keine Datei erkannt.', 'error');
+                    return;
+                }
+
+                const droppedPath = droppedFile.path || '';
+                if (!droppedPath) {
+                    setVlcRibbonStatus('Drag&Drop liefert hier keinen lokalen Pfad. Bitte „Datei auswählen“ nutzen.', 'error');
+                    return;
+                }
+
+                await startVLC(droppedPath, droppedFile.name || droppedPath);
+                setVlcRibbonStatus(`VLC gestartet: ${droppedFile.name || droppedPath}`, 'ok');
+            });
+        }
+
+        async function pickAndPlayInVLC() {
+            try {
+                const filePath = await eel.pick_file('VLC: Videodatei wählen', [
+                    ['Video Files', '*.mp4 *.mkv *.webm *.mov *.avi *.m4v *.flv *.wmv'],
+                    ['All Files', '*.*']
+                ])();
+
+                if (!filePath) return;
+
+                const name = String(filePath).split('/').pop();
+                await startVLC(filePath, name || filePath);
+                setVlcRibbonStatus(`VLC gestartet: ${name || filePath}`, 'ok');
+            } catch (e) {
+                setVlcRibbonStatus(`Fehler beim Öffnen: ${e && e.message ? e.message : e}`, 'error');
+            }
+        }
+
+        async function playVLCStream() {
+            const input = document.getElementById('vlc-stream-url');
+            const url = input ? input.value.trim() : '';
+            if (!url) {
+                setVlcRibbonStatus('Bitte eine Stream-URL eingeben.', 'error');
+                return;
+            }
+            const valid = /^(https?:\/\/|rtsp:\/\/|rtmp:\/\/|mms:\/\/)/i.test(url);
+            if (!valid) {
+                setVlcRibbonStatus('Ungültige URL. Erlaubt: http(s), rtsp, rtmp, mms.', 'error');
+                return;
+            }
+
+            try {
+                await startVLC(url, url);
+                setVlcRibbonStatus('Streaming in VLC gestartet.', 'ok');
+            } catch (e) {
+                setVlcRibbonStatus(`Streaming-Fehler: ${e && e.message ? e.message : e}`, 'error');
+            }
+        }
+
         async function importVLCPlaylist() {
             const statusDiv = document.getElementById('import-status');
             statusDiv.style.display = 'block';
@@ -3716,14 +4639,14 @@
                     const imported = result.count || 0;
                     const skipped = (result.skipped || []).length;
                     const errors = (result.errors || []).length;
-                    
+
                     let msg = `✅ ${t('vlc_import_completed')}<br>`;
                     msg += `📥 ${imported} ${t('vlc_tracks_imported_suffix')}`;
                     if (skipped > 0) msg += `<br>⏩ ${skipped} ${t('vlc_tracks_already_present_suffix')}`;
                     if (errors > 0) msg += `<br>⚠️ ${errors} ${t('vlc_errors_suffix')}`;
-                    
+
                     statusDiv.innerHTML = msg;
-                    
+
                     // Reload library to show new items
                     if (imported > 0) {
                         setTimeout(() => {
@@ -3784,12 +4707,12 @@
                     statusDiv.style.color = '#2e7d32';
                     const exported = result.exported || 0;
                     const missing = (result.missing || []).length;
-                    
+
                     let msg = `✅ ${t('vlc_export_completed')}<br>`;
                     msg += `💾 ${exported} ${t('vlc_tracks_exported_suffix')}`;
                     if (missing > 0) msg += `<br>⚠️ ${missing} ${t('vlc_missing_suffix')}`;
                     msg += `<br>📂 ${t('common_file_label')} <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
-                    
+
                     statusDiv.innerHTML = msg;
                 }
             } catch (e) {
@@ -3808,19 +4731,33 @@
             loadDebugFlags();
             loadTestSuites();
             loadFeatureStatus();
+            initVlcDropZone();
+            setVlcRibbonMode('dnd');
             restoreLastActiveTab();
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Ensure eel is ready
+                if (typeof eel === 'undefined') return;
+
                 const version = await eel.get_version()();
+                const appName = await eel.get_app_name()();
+
                 document.getElementById('version-label').textContent = 'v' + version;
+
+                // Update app title in sidebar if it's there
+                const appTitleHeader = document.querySelector('h1[data-i18n="app_title"]');
+                if (appTitleHeader) appTitleHeader.textContent = appName;
+
+                document.title = appName;
+
                 // Update modal title if exists
                 const modalTitle = document.getElementById('about-imprint-title');
                 if (modalTitle) {
                     modalTitle.textContent = t('common_about_imprint') + ' v' + version;
                 }
             } catch (e) {
-                console.error("Could not fetch version:", e);
+                console.error("Could not fetch version/app info:", e);
             }
         });
     </script>

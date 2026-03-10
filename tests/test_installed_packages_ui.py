@@ -27,8 +27,27 @@ class TestInstalledPackagesUI(unittest.TestCase):
         """Installed Packages section and key element IDs must exist."""
         self.assertIn('data-i18n="options_installed_packages"', self.app_html)
         self.assertIn('id="package-count"', self.app_html)
+        self.assertIn('id="package-source"', self.app_html)
         self.assertIn('id="package-search"', self.app_html)
         self.assertIn('id="installed-packages-list"', self.app_html)
+        self.assertIn('data-i18n="options_requirements_status"', self.app_html)
+        self.assertIn('data-i18n="options_requirements_refresh"', self.app_html)
+        self.assertIn('id="requirements-count"', self.app_html)
+        self.assertIn('id="requirements-last-checked"', self.app_html)
+        self.assertIn('id="requirements-status-list"', self.app_html)
+        self.assertIn('id="system-python-global-list"', self.app_html)
+        self.assertIn('id="system-python-local-list"', self.app_html)
+        self.assertIn('id="env-mutagen-status"', self.app_html)
+        self.assertIn('id="env-ffmpeg-status"', self.app_html)
+        self.assertIn('id="env-ffprobe-status"', self.app_html)
+        self.assertIn('id="env-gui-status"', self.app_html)
+        self.assertIn('id="env-mediaplayer-status"', self.app_html)
+        self.assertIn('id="env-core-packages-status"', self.app_html)
+        self.assertIn('id="env-test-tools-status"', self.app_html)
+        self.assertIn('id="env-dev-tools-status"', self.app_html)
+        self.assertIn('id="env-build-tools-status"', self.app_html)
+        self.assertIn('id="env-requirements-list"', self.app_html)
+        self.assertIn('id="env-base-dependencies-status"', self.app_html)
 
     def test_search_input_has_i18n_placeholder_binding(self):
         """Search input must bind placeholder via i18n key."""
@@ -51,13 +70,85 @@ class TestInstalledPackagesUI(unittest.TestCase):
         required_snippets = [
             "const packagesList = document.getElementById('installed-packages-list');",
             "const packageCount = document.getElementById('package-count');",
-            "window.allPackages = info.installed_packages;",
-            "renderPackages(info.installed_packages);",
+            "const packageSource = document.getElementById('package-source');",
+            "const sourceText = String(info.installed_packages_source || 'unknown');",
+            "if (packageSource) packageSource.textContent = `[source: ${sourceText}]`;",
+            "window.allPackages = safeInstalledPackages;",
+            "window.allPackagesSearch = safeInstalledPackages.map(pkg => ({",
+            "renderPackages(safeInstalledPackages);",
+            "const requirementsCount = document.getElementById('requirements-count');",
+            "const requirementsLastChecked = document.getElementById('requirements-last-checked');",
+            "const requirementsStatusList = document.getElementById('requirements-status-list');",
+            "const envMutagenStatusEl = document.getElementById('env-mutagen-status');",
+            "const envFfmpegStatusEl = document.getElementById('env-ffmpeg-status');",
+            "const envFfprobeStatusEl = document.getElementById('env-ffprobe-status');",
+            "const envGuiStatusEl = document.getElementById('env-gui-status');",
+            "const envMediaplayerStatusEl = document.getElementById('env-mediaplayer-status');",
+            "const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');",
+            "const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');",
+            "const ffmpegVer = toolsStatus.ffmpeg_cli_version || '';",
+            "const ffprobeVer = toolsStatus.ffprobe_cli_version || '';",
+            "const browserVer = toolsStatus.browser_version || '';",
+            "const corePackages = [",
+            "['bottle', 'bottle']",
+            "['bottle-websocket', 'bottle-websocket']",
+            "['eel', 'Eel']",
+            "['m3u8', 'm3u8']",
+            "['gevent', 'gevent']",
+            "['greenlet', 'greenlet']",
+            "const testPackages = [",
+            "const vlcCliVer = toolsStatus.vlc_cli_version || '';",
+            "['pytest', 'pytest']",
+            "['pytest-cov', 'pytest-cov']",
+            "['coverage', 'coverage']",
+            "['pyautogui', 'PyAutoGUI']",
+            "const devPackages = [",
+            "['mypy', 'mypy']",
+            "['flake8', 'flake8']",
+            "['pycodestyle', 'pycodestyle']",
+            "const buildPackages = [",
+            "['pyinstaller', 'PyInstaller']",
+            "['wheel', 'wheel']",
+            "['setuptools', 'setuptools']",
+            "['packaging', 'packaging']",
+            "['psutil', 'psutil']",
+            "const categorizedKeys = new Set([",
+            "const baseDependencies = safeInstalledPackages",
+            "const baseDependenciesText = baseDependencies.length > 0",
+            "const requirementsListText = requirementsStatusPreview?.available",
+            "const requirementsStatus = info.requirements_status && typeof info.requirements_status === 'object'",
+            "requirementsCount.textContent = `(${installedCount}/${total})`;",
+            "requirementsLastChecked.textContent = `${t('env_requirements_last_checked')}: ${now.toLocaleTimeString()}`;",
+            "onclick=\"loadEnvironmentInfo(true)\"",
+            "const requestForceRefresh = !!forceRefresh;",
             "const searchInput = document.getElementById('package-search');",
             "searchInput.addEventListener('input', (e) => {",
+            "if (packageSearchTimer) clearTimeout(packageSearchTimer);",
             "renderPackages(window.allPackages);",
-            "window.allPackages.filter(pkg =>",
+            ".filter(row => row.nameLc.includes(searchTerm) || row.versionLc.includes(searchTerm))",
+            "const globalPythonList = document.getElementById('system-python-global-list');",
+            "const localPythonList = document.getElementById('system-python-local-list');",
             "packagesList.innerHTML = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
+        ]
+        for snippet in required_snippets:
+            self.assertIn(snippet, self.app_html)
+
+    def test_js_load_environment_info_has_timeout_and_error_fallback(self):
+        """Environment loading must not remain stuck in Loading... on backend failure."""
+        required_snippets = [
+            "if (!info || typeof info !== 'object')",
+            "const safeCondaEnvs = Array.isArray(info.available_conda_environments) ? info.available_conda_environments : [];",
+            "const safeSystemPythons = Array.isArray(info.available_system_pythons) ? info.available_system_pythons : [];",
+            "const safeLocalVenvs = Array.isArray(info.local_venvs) ? info.local_venvs : [];",
+            "const safeInstalledPackages = normalizeInstalledPackages(info.installed_packages);",
+            "function normalizeInstalledPackages(rawPackages) {",
+            "const failText = `<span style=\"color: #c62828;\">${t('common_error_loading')}</span>`;",
+            "const fallbackNoData = `<span style=\"color: #999;\">${t('env_no_packages_found')}</span>`;",
+            "if (packageSource) packageSource.textContent = '[source: error]';",
+            "if (requirementsCount) requirementsCount.textContent = '(0/0)';",
+            "if (requirementsLastChecked) requirementsLastChecked.textContent = t('env_requirements_last_checked_error');",
+            "if (requirementsStatusList) requirementsStatusList.innerHTML = failText;",
+            "if (packagesList) packagesList.innerHTML = fallbackNoData;",
         ]
         for snippet in required_snippets:
             self.assertIn(snippet, self.app_html)
@@ -70,6 +161,25 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "common_loading_short",
             "env_no_packages_found",
             "env_no_matching_packages",
+            "options_requirements_status",
+            "options_requirements_refresh",
+            "env_requirements_not_found",
+            "env_requirements_all_present",
+            "env_requirements_missing",
+            "env_requirements_last_checked",
+            "env_requirements_last_checked_never",
+            "env_requirements_last_checked_error",
+            "env_label_mutagen",
+            "env_label_ffmpeg",
+            "env_label_ffprobe",
+            "env_label_gui",
+            "env_label_mediaplayer",
+            "env_label_core_packages",
+            "env_label_test_tools",
+            "env_label_dev_tools",
+            "env_label_build_tools",
+            "env_label_requirements_list",
+            "env_label_base_dependencies",
             "env_table_package",
             "env_table_version",
         ]

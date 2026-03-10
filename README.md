@@ -1,4 +1,4 @@
-# Media Web Viewer (v1.3.3)
+# Media Web Viewer
 
 Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 
@@ -6,7 +6,7 @@ Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMEN
 
 ### Debian/Ubuntu (.deb)
 ```bash
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_<version>_amd64.deb
 sudo apt-get install -f
 media-web-viewer
 ```
@@ -66,6 +66,24 @@ python build_system.py --build pyinstaller
 python build_system.py --full-build
 ```
 
+Note on build quality gate:
+- `build_deb.sh` runs a mandatory targeted test gate before packaging.
+- `build_system.py --build deb|pyinstaller|all` runs the same targeted gate before artifact creation.
+- `build.py` (PyInstaller helper) also runs the same gate.
+	- `tests/test_performance_probes.py`
+	- `tests/test_bottle_health_latency.py`
+	- `tests/test_installed_packages_ui.py`
+	- `tests/test_environment_packages_fallback.py`
+	- `tests/test_ui_session_stability.py`
+- Explicit override (not recommended):
+
+```bash
+SKIP_BUILD_TESTS=1 bash build_deb.sh
+python build_system.py --build deb --skip-build-gate
+python build_system.py --build pyinstaller --skip-build-gate
+SKIP_BUILD_TESTS=1 python build.py
+```
+
 ### Development
 ```bash
 # Run tests
@@ -87,17 +105,27 @@ python build_system.py --pipeline
 # Optional: include destructive reinstall validation
 python build_system.py --pipeline --destructive
 
+# Optional emergency override for targeted pre-build gate
+python build_system.py --pipeline --skip-build-gate
+
 # Manual checks (if needed)
 python tests/test_version_sync.py
 python tests/test_reinstall_deb.py
 RUN_DESTRUCTIVE_TESTS=1 python tests/test_reinstall_deb.py
 ```
 
+Pipeline order in `build_system.py`:
+1. Environment check
+2. Version sync test
+3. Debian build (with targeted pre-build gate by default)
+4. Safe reinstall validation
+5. Optional destructive reinstall validation
+
 ## Version Update (Automated)
 
 ```bash
 # 1) Update VERSION + all configured sync locations
-python update_version.py --new-version 1.3.5
+python update_version.py --new-version ${VERSION}
 
 # 2) Verify sync is fully consistent
 python tests/test_version_sync.py
@@ -111,20 +139,20 @@ On every push to `main`, the workflow [ci-artifacts.yml](.github/workflows/ci-ar
 - Debian package (`media-web-viewer_*_amd64.deb`)
 
 ### Tagged Release (auto-publish to GitHub Releases)
-When you push a tag like `v1.3.3`, the workflow [release.yml](.github/workflows/release.yml):
+When you push a tag like `v${VERSION}`, the workflow [release.yml](.github/workflows/release.yml):
 - builds Linux executable + Debian package + Windows `.exe`
 - creates/updates the GitHub Release
 - uploads all binaries as release assets
 
 ```bash
-git tag -a v1.3.3 -m "Release v1.3.3"
+git tag -a v${VERSION} -m "Release v${VERSION}"
 git push origin main --tags
 ```
 
 ### Release Checklist (recommended)
 ```bash
 # 1) Update project version
-python update_version.py --new-version 1.3.5
+python update_version.py --new-version ${VERSION}
 
 # 2) Verify version consistency
 python tests/test_version_sync.py
@@ -136,10 +164,10 @@ python build_system.py --pipeline
 git add VERSION VERSION_SYNC.json update_version.py
 git add main.py README.md DOCUMENTATION.md
 git add .github/workflows/release.yml .github/workflows/ci-artifacts.yml
-git commit -m "Release v1.3.5"
+git commit -m "Release v${VERSION}"
 
 # 5) Create and push release tag
-git tag -a v1.3.5 -m "Release v1.3.5"
+git tag -a v${VERSION} -m "Release v${VERSION}"
 git push origin main --tags
 ```
 
@@ -152,6 +180,15 @@ scripts/cleanup_build_artifacts.sh
 
 # Execute cleanup (default: keep 5 deb, 2 dist binaries)
 scripts/cleanup_build_artifacts.sh --execute
+```
+
+If generated artifacts were already committed in the past, remove them from the Git index once (files stay local):
+
+```bash
+git rm -r --cached -- packaging/opt/media-web-viewer
+git rm --cached -- __pycache__/main.cpython-314.pyc
+git rm --cached -- media-web-viewer_${VERSION}_amd64.deb
+git commit -m "chore: untrack generated packaging/cache artifacts"
 ```
 
 ## Docs

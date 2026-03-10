@@ -20,12 +20,21 @@ import os
 import subprocess
 import argparse
 import shutil
+import textwrap
 from pathlib import Path
 from typing import Optional
 
 
 class BuildSystem:
     """Comprehensive build and test system for Media Web Viewer."""
+
+    BUILD_TEST_GATE = [
+        "tests/test_performance_probes.py",
+        "tests/test_bottle_health_latency.py",
+        "tests/test_installed_packages_ui.py",
+        "tests/test_environment_packages_fallback.py",
+        "tests/test_ui_session_stability.py",
+    ]
     
     def __init__(self, root_dir: Optional[Path] = None):
         """
@@ -127,6 +136,26 @@ class BuildSystem:
             cmd.append("-v")
         
         return self._run_command(cmd)
+
+    def run_build_test_gate(self, verbose: bool = False) -> bool:
+        """
+        Run the mandatory targeted pre-build quality gate.
+
+        Args:
+            verbose: Enable verbose output
+
+        Returns:
+            bool: True if gate passed
+        """
+        self._print_banner(f"Build Test Gate (v{self.version})")
+
+        cmd = [sys.executable, "-m", "pytest"]
+        if verbose:
+            cmd.append("-v")
+        else:
+            cmd.append("-q")
+        cmd.extend(self.BUILD_TEST_GATE)
+        return self._run_command(cmd)
     
     def run_linter(self) -> bool:
         """
@@ -159,7 +188,7 @@ class BuildSystem:
         
         return self._run_command(cmd)
     
-    def build_pyinstaller(self, onefile: bool = True, console: bool = False) -> bool:
+    def build_pyinstaller(self, onefile: bool = True, console: bool = False, skip_build_gate: bool = False) -> bool:
         """
         Build standalone executable with PyInstaller.
         
@@ -171,6 +200,13 @@ class BuildSystem:
             bool: True if build succeeded
         """
         self._print_banner(f"Building PyInstaller Executable (v{self.version})")
+
+        if not skip_build_gate:
+            if not self.run_build_test_gate():
+                print("\n❌ Build test gate failed - aborting PyInstaller build")
+                return False
+        else:
+            print("⚠️  Build test gate skipped (--skip-build-gate)")
         
         cmd = [
             sys.executable, "-m", "eel",
@@ -196,7 +232,7 @@ class BuildSystem:
         
         return success
     
-    def build_debian_package(self) -> bool:
+    def build_debian_package(self, skip_build_gate: bool = False) -> bool:
         """
         Build Debian package using build_deb.sh script.
         
@@ -204,13 +240,23 @@ class BuildSystem:
             bool: True if build succeeded
         """
         self._print_banner(f"Building Debian Package (v{self.version})")
+
+        if not skip_build_gate:
+            if not self.run_build_test_gate():
+                print("\n❌ Build test gate failed - aborting Debian build")
+                return False
+        else:
+            print("⚠️  Build test gate skipped (--skip-build-gate)")
         
         build_script = self.root / "build_deb.sh"
         if not build_script.exists():
             print("❌ build_deb.sh not found")
             return False
         
-        cmd = ["bash", str(build_script)]
+        # Avoid duplicate gate execution:
+        # - build_system.py already ran run_build_test_gate() above
+        # - therefore always skip shell-level gate when called via this wrapper
+        cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
         success = self._run_command(cmd)
         
         if success:
@@ -303,7 +349,7 @@ class BuildSystem:
         
         print()
     
-    def full_build(self, target: str = "deb", skip_tests: bool = False) -> bool:
+    def full_build(self, target: str = "deb", skip_tests: bool = False, skip_build_gate: bool = False) -> bool:
         """
         Complete build process: test, check, and build.
         
@@ -334,11 +380,11 @@ class BuildSystem:
         
         # Step 3: Build based on target
         if target == "deb":
-            success = self.build_debian_package()
+            success = self.build_debian_package(skip_build_gate=skip_build_gate)
         elif target == "pyinstaller":
-            success = self.build_pyinstaller()
+            success = self.build_pyinstaller(skip_build_gate=skip_build_gate)
         elif target == "all":
-            success = self.build_pyinstaller() and self.build_debian_package()
+            success = self.build_pyinstaller(skip_build_gate=skip_build_gate) and self.build_debian_package(skip_build_gate=skip_build_gate)
         else:
             print(f"❌ Unknown target: {target}")
             return False
@@ -352,14 +398,14 @@ class BuildSystem:
         
         return success
 
-    def run_pipeline(self, destructive: bool = False) -> bool:
+    def run_pipeline(self, destructive: bool = False, skip_build_gate: bool = False) -> bool:
         """
         Run release pipeline checks and build artifacts.
 
         Pipeline steps:
         1) Environment check
         2) Version sync validation
-        3) Build Debian package
+        3) Build Debian package (includes build gate by default)
         4) Reinstall validation tests (safe)
         5) Optional destructive reinstall validation
         """
@@ -377,7 +423,7 @@ class BuildSystem:
             return False
 
         print("▶ Step 2/4: Build Debian package")
-        if not self.build_debian_package():
+        if not self.build_debian_package(skip_build_gate=skip_build_gate):
             print("\n❌ Debian build failed")
             return False
 
@@ -410,19 +456,21 @@ def main():
     parser = argparse.ArgumentParser(
         description="Media Web Viewer Build System",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s --info                    Show project information
-  %(prog)s --test                    Run tests only
-  %(prog)s --build deb               Build Debian package
-  %(prog)s --build pyinstaller       Build PyInstaller executable
-  %(prog)s --build all               Build all targets
-  %(prog)s --full-build              Full build with tests
-    %(prog)s --pipeline                Run release pipeline (sync + build + reinstall tests)
-    %(prog)s --pipeline --destructive  Include destructive reinstall test
-  %(prog)s --clean                   Clean build artifacts
-  %(prog)s --clean-all               Deep clean (includes dist/)
-        """
+                epilog=textwrap.dedent("""
+                        Examples:
+                            %(prog)s --info                          Show project information
+                            %(prog)s --test                          Run tests only
+                            %(prog)s --build deb                     Build Debian package
+                            %(prog)s --build pyinstaller             Build PyInstaller executable
+                            %(prog)s --build all                     Build all targets
+                            %(prog)s --full-build                    Full build with tests
+                            %(prog)s --full-build --skip-build-gate Skip targeted pre-build gate in full build
+                            %(prog)s --pipeline                      Run release pipeline (sync + build + reinstall tests)
+                            %(prog)s --pipeline --destructive        Include destructive reinstall test
+                            %(prog)s --pipeline --skip-build-gate    Skip targeted pre-build gate in pipeline build step
+                            %(prog)s --clean                         Clean build artifacts
+                            %(prog)s --clean-all                     Deep clean (includes dist/)
+                """)
     )
     
     parser.add_argument(
@@ -478,6 +526,12 @@ Examples:
         action="store_true",
         help="Skip tests in full build"
     )
+
+    parser.add_argument(
+        "--skip-build-gate",
+        action="store_true",
+        help="Skip targeted pre-build gate tests for build/pipeline commands"
+    )
     
     parser.add_argument(
         "--clean",
@@ -527,17 +581,17 @@ Examples:
     
     if args.build:
         if args.build == "deb":
-            success = build_sys.build_debian_package() and success
+            success = build_sys.build_debian_package(skip_build_gate=args.skip_build_gate) and success
         elif args.build == "pyinstaller":
-            success = build_sys.build_pyinstaller() and success
+            success = build_sys.build_pyinstaller(skip_build_gate=args.skip_build_gate) and success
         elif args.build == "all":
-            success = build_sys.build_pyinstaller() and build_sys.build_debian_package() and success
+            success = build_sys.build_pyinstaller(skip_build_gate=args.skip_build_gate) and build_sys.build_debian_package(skip_build_gate=args.skip_build_gate) and success
     
     if args.full_build:
-        success = build_sys.full_build(target="deb", skip_tests=args.skip_tests) and success
+        success = build_sys.full_build(target="deb", skip_tests=args.skip_tests, skip_build_gate=args.skip_build_gate) and success
 
     if args.pipeline:
-        success = build_sys.run_pipeline(destructive=args.destructive) and success
+        success = build_sys.run_pipeline(destructive=args.destructive, skip_build_gate=args.skip_build_gate) and success
     
     return 0 if success else 1
 

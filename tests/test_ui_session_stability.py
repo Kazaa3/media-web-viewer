@@ -43,7 +43,9 @@ class TestUiSessionStability(unittest.TestCase):
         """Startup must guard against launching a second app window/session."""
         self.assertIn("existing_sessions = [s for s in check_running_sessions() if s.get('port')]", self.main_py)
         self.assertIn("Skipping new window launch.", self.main_py)
-        self.assertNotIn("browser.open(existing_url)", self.main_py)
+        self.assertIn("if is_session_url_reachable(existing_url, timeout=0.8):", self.main_py)
+        self.assertIn("open_session_url(existing_url)", self.main_py)
+        self.assertIn("Ignoring stale session candidate", self.main_py)
 
     def test_ui_test_runs_disable_browser_open_side_effects(self):
         """UI-triggered pytest subprocess must suppress browser.open side effects."""
