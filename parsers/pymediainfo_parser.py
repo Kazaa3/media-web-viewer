@@ -30,33 +30,57 @@ def parse(
         video_track = None
         menu_track = None
 
+        audio_tracks = []
+        video_tracks = []
+        subtitle_tracks = []
+
         for track in media_info.tracks:
             if track.track_type == "General":
                 general_track = track
             elif track.track_type == "Audio":
                 audio_track = track
+                audio_tracks.append(track)
             elif track.track_type == "Video":
                 video_track = track
+                video_tracks.append(track)
+            elif track.track_type == "Text":
+                subtitle_tracks.append(track)
             elif track.track_type == "Menu":
                 menu_track = track
 
-        if general_track:
-            if not tags.get('duration') and general_track.duration:
-                # duration is in ms
-                tags['duration'] = int(general_track.duration / 1000)
-            if not tags.get('container') and general_track.format:
-                tags['container'] = general_track.format.lower()
+        tags['audio_track_count'] = len(audio_tracks)
+        tags['video_track_count'] = len(video_tracks)
+        tags['subtitle_count'] = len(subtitle_tracks)
+        
+        # Subtitle languages
+        sub_langs = []
+        for st in subtitle_tracks:
+            lang = getattr(st, 'language', None)
+            if lang and lang not in sub_langs:
+                sub_langs.append(lang)
+        if sub_langs:
+            tags['subtitle_languages'] = ", ".join(sub_langs)
 
-            # Title, Artist, Album fallbacks
-            path_obj = Path(path)
-            if not tags.get('title') or tags.get('title') == path_obj.name:
-                tags['title'] = general_track.title or tags.get('title')
-            if not tags.get('artist') or tags.get('artist') == 'Unbekannt':
-                tags['artist'] = general_track.performer or tags.get('artist')
-            if not tags.get('album'):
-                tags['album'] = general_track.album or ''
-            if not tags.get('year'):
-                tags['year'] = general_track.recorded_date or ''
+        if general_track:
+            try:
+                if not tags.get('duration') and hasattr(general_track, 'duration') and general_track.duration:
+                    # duration is in ms
+                    tags['duration'] = int(general_track.duration / 1000)
+                if not tags.get('container') and hasattr(general_track, 'format') and general_track.format:
+                    tags['container'] = general_track.format.lower()
+
+                # Title, Artist, Album fallbacks
+                path_obj = Path(path)
+                if not tags.get('title') or tags.get('title') == path_obj.name:
+                    tags['title'] = getattr(general_track, 'title', None) or tags.get('title')
+                if not tags.get('artist') or tags.get('artist') == 'Unbekannt':
+                    tags['artist'] = getattr(general_track, 'performer', None) or tags.get('artist')
+                if not tags.get('album'):
+                    tags['album'] = getattr(general_track, 'album', '') or ''
+                if not tags.get('year'):
+                    tags['year'] = getattr(general_track, 'recorded_date', '') or ''
+            except Exception as e:
+                pass
 
         if audio_track:
             from .format_utils import format_codec, format_bitdepth, format_samplerate
