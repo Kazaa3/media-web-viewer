@@ -34,6 +34,7 @@
 | Video-Support | ${NEXT_VERSION} | HTML5 `<video>` | 🔮 Geplant |
 | MKV-Transcoding | ${NEXT_VERSION} | ffmpeg | 🔮 Geplant |
 | Playlist-Import | ${NEXT_VERSION} | m3u8 (✅ vorhanden) | 🔮 Geplant |
+| GUI-Modernisierung | ${FUTURE_VERSION} | Vue.js / Tailwind | 🔍 Recherche |
 | Chapter-Editing | ${FUTURE_VERSION} | python-ebml | 🔮 Recherchiert |
 | Waveform-Viz | ${FUTURE_VERSION} | Wavesurfer.js | 🔮 Recherchiert |
 | Lyrics-Lookup | ${FUTURE_VERSION} | lyricsgenius | 🔮 Recherchiert |
