@@ -125,7 +125,7 @@ Pipeline order in `build_system.py`:
 
 ```bash
 # 1) Update VERSION + all configured sync locations
-python update_version.py --new-version 1.3.5
+python update_version.py --new-version ${VERSION}
 
 # 2) Verify sync is fully consistent
 python tests/test_version_sync.py
@@ -139,20 +139,20 @@ On every push to `main`, the workflow [ci-artifacts.yml](.github/workflows/ci-ar
 - Debian package (`media-web-viewer_*_amd64.deb`)
 
 ### Tagged Release (auto-publish to GitHub Releases)
-When you push a tag like `v1.3.3`, the workflow [release.yml](.github/workflows/release.yml):
+When you push a tag like `v${VERSION}`, the workflow [release.yml](.github/workflows/release.yml):
 - builds Linux executable + Debian package + Windows `.exe`
 - creates/updates the GitHub Release
 - uploads all binaries as release assets
 
 ```bash
-git tag -a v1.3.3 -m "Release v1.3.3"
+git tag -a v${VERSION} -m "Release v${VERSION}"
 git push origin main --tags
 ```
 
 ### Release Checklist (recommended)
 ```bash
 # 1) Update project version
-python update_version.py --new-version 1.3.5
+python update_version.py --new-version ${VERSION}
 
 # 2) Verify version consistency
 python tests/test_version_sync.py
@@ -164,10 +164,10 @@ python build_system.py --pipeline
 git add VERSION VERSION_SYNC.json update_version.py
 git add main.py README.md DOCUMENTATION.md
 git add .github/workflows/release.yml .github/workflows/ci-artifacts.yml
-git commit -m "Release v1.3.5"
+git commit -m "Release v${VERSION}"
 
 # 5) Create and push release tag
-git tag -a v1.3.5 -m "Release v1.3.5"
+git tag -a v${VERSION} -m "Release v${VERSION}"
 git push origin main --tags
 ```
 
@@ -187,7 +187,7 @@ If generated artifacts were already committed in the past, remove them from the 
 ```bash
 git rm -r --cached -- packaging/opt/media-web-viewer
 git rm --cached -- __pycache__/main.cpython-314.pyc
-git rm --cached -- media-web-viewer_1.3.3_amd64.deb
+git rm --cached -- media-web-viewer_${VERSION}_amd64.deb
 git commit -m "chore: untrack generated packaging/cache artifacts"
 ```
 

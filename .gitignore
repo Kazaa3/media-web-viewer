@@ -1,3 +1,5 @@
+# --- Build Artifacts ---
+*.deb
 # ============================================================================
 # Media Web Viewer - .gitignore
 # ============================================================================
@@ -168,4 +170,85 @@ VERSION.bak
 !requirements.txt
 !environment.yml
 
-Notiz
+# --- Build & Distribution ---
+dist/
+build/
+*.egg-info/
+*.deb
+*.spec
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Editor/IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Documentation Backups ---
+DOCUMENTATION.md.disk-backup-*
+
+# --- Media ---
+media/
+
+# --- Misc ---
+*.bak
+*.tmp
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Artifacts ---
+media-web-viewer_*.deb
+
+# --- Screenshots ---
+Screens/
+
+# --- Packaging ---
+packaging/
+
+# --- Bug Reports ---
+bugs/
+
+# --- HTML Docs ---
+docs/html/
+
+# --- Test Artifacts ---
+performance_test.py
+
+# --- Logbuch ---
+logbuch/
+
+# --- Remove old builds ---
+reinstall_deb.sh
+
+# --- Ignore everything except source ---
+!main.py
+!models.py
+!db.py
+!env_handler.py
+!logger.py
+!media_format.py
+!parsers/
+!web/
+!tests/
+!requirements.txt
+!pyproject.toml
+!README.md
+!LICENSE.md
+!VERSION
+!update_version.py
+!build.py
+!build_system.py
+!build_deb.sh
+!build_exe.sh
+!check_environment.py
+!create_mocks.py
+!TECH_STACK.md
+!DEPENDENCIES.md
+!DOCUMENTATION.md
+!TEST_SUITE_SUMMARY.md
+!VERSION_SYNC.json

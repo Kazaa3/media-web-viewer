@@ -1,6 +1,6 @@
-# Tech Stack Quick Reference
+# Tech Stack Quick Reference (dict)
 
-**Version:** 1.3.3  
+**Version:** ${VERSION}  
 **Letzte Aktualisierung:** 10. März 2026
 
 ## Produktiv-Stack
@@ -31,11 +31,11 @@
 
 | Feature | Version | Technologie | Status |
 |---------|---------|-------------|--------|
-| Video-Support | 1.4.0 | HTML5 `<video>` | 🔮 Geplant |
-| MKV-Transcoding | 1.4.0 | ffmpeg | 🔮 Geplant |
-| Playlist-Import | 1.4.0 | m3u8 (✅ vorhanden) | 🔮 Geplant |
-| Chapter-Editing | 1.5.0 | python-ebml | 🔮 Recherchiert |
-| Waveform-Viz | 1.5.0 | Wavesurfer.js | 🔮 Recherchiert |
-| Lyrics-Lookup | 1.6.0 | lyricsgenius | 🔮 Recherchiert |
+| Video-Support | ${NEXT_VERSION} | HTML5 `<video>` | 🔮 Geplant |
+| MKV-Transcoding | ${NEXT_VERSION} | ffmpeg | 🔮 Geplant |
+| Playlist-Import | ${NEXT_VERSION} | m3u8 (✅ vorhanden) | 🔮 Geplant |
+| Chapter-Editing | ${FUTURE_VERSION} | python-ebml | 🔮 Recherchiert |
+| Waveform-Viz | ${FUTURE_VERSION} | Wavesurfer.js | 🔮 Recherchiert |
+| Lyrics-Lookup | ${FUTURE_VERSION} | lyricsgenius | 🔮 Recherchiert |
 
 Vollständige Dokumentation: [logbuch/96_Technologie_Stack_und_Zukunfts_Recherche.md](logbuch/96_Technologie_Stack_und_Zukunfts_Recherche.md)

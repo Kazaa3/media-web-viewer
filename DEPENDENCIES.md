@@ -1,6 +1,6 @@
-# Third-Party Dependencies and Licenses
+# Third-Party Dependencies and Licenses (v1.34)
 
-Media Web Viewer is licensed under the **GNU General Public License v3 (GPL-3.0)**.
+Media Web Viewer (v1.34) is licensed under the **GNU General Public License v3 (GPL-3.0)**.
 
 All third-party dependencies used in this project are listed below with their respective licenses. All dependencies are compatible with GPL-3.0.
 

@@ -1,4 +1,5 @@
 # Test Suite Summary - Media Web Viewer
+**Version:** ${VERSION}  
 
 ## 📊 Übersicht
 

@@ -1205,6 +1205,41 @@
                         </div>
 
                         <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_indexed_types">
+                                Indexierte Medientypen</div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
+                                data-i18n="options_indexed_types_desc">Wähle aus, welche Dateitypen beim Scan indexiert
+                                werden sollen.</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-audio" value="audio" onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_audio">Audio</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-video" value="video" onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_video">Video</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-images" value="images"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_images">Bilder</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-documents" value="documents"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_documents">Dokumente</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-ebooks" value="ebooks"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_ebooks">E-Books</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-abbild" value="abbild"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_abbild">ISO-Abbilder</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div
                             style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 500;" data-i18n="options_language">Sprache / Language</div>
@@ -2927,7 +2962,7 @@
                         <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
-                            <span>${artistDisplay}${catBadge}</span>
+                            <span>${artistDisplay}</span>${catBadge}
                             <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
                         </div>
                     `;
@@ -2980,6 +3015,14 @@
                     if (statusText) {
                         statusText.innerText = config.parser_mode === "full" ? t('parser_mode_full') : t('parser_mode_light');
                     }
+                }
+
+                if (config && config.indexed_categories) {
+                    const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+                    cats.forEach(cat => {
+                        const cb = document.getElementById('cat-' + cat);
+                        if (cb) cb.checked = config.indexed_categories.includes(cat);
+                    });
                 }
 
                 renderParserList();
@@ -3150,11 +3193,19 @@
                 statusText.style.color = newMode === "full" ? "#e67e22" : "#2a7"; // Orange for Intensive, Green for Fast
             }
 
+            const indexedCats = [];
+            const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+            cats.forEach(cat => {
+                const cb = document.getElementById('cat-' + cat);
+                if (cb && cb.checked) indexedCats.push(cat);
+            });
+
             // Prepare the full config object
             const finalConfig = {
                 ...currentParserOptions,
                 "parser_chain": newChain,
-                "parser_mode": newMode
+                "parser_mode": newMode,
+                "indexed_categories": indexedCats
             };
 
             console.log("Saving full parser config:", finalConfig);
@@ -4686,15 +4737,27 @@
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Ensure eel is ready
+                if (typeof eel === 'undefined') return;
+
                 const version = await eel.get_version()();
+                const appName = await eel.get_app_name()();
+
                 document.getElementById('version-label').textContent = 'v' + version;
+
+                // Update app title in sidebar if it's there
+                const appTitleHeader = document.querySelector('h1[data-i18n="app_title"]');
+                if (appTitleHeader) appTitleHeader.textContent = appName;
+
+                document.title = appName;
+
                 // Update modal title if exists
                 const modalTitle = document.getElementById('about-imprint-title');
                 if (modalTitle) {
                     modalTitle.textContent = t('common_about_imprint') + ' v' + version;
                 }
             } catch (e) {
-                console.error("Could not fetch version:", e);
+                console.error("Could not fetch version/app info:", e);
             }
         });
     </script>

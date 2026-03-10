@@ -74,7 +74,8 @@ PARSER_CONFIG: dict[str, Any] = {
     "pymediainfo_full_scan": False,
     "ffmpeg_deep_analysis": False,
     "ffmpeg_extract_thumbnails": True,
-    "enable_isoparser_parser": True
+    "enable_isoparser_parser": True,
+    "indexed_categories": ["audio", "audiobook"]
 }
 
 

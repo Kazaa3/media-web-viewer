@@ -102,6 +102,8 @@ def check_dependencies():
         ('mutagen', 'mutagen'),
         ('pymediainfo', 'pymediainfo'),
         ('gevent', 'gevent'),
+        ('Pillow', 'PIL'),
+        ('scapy', 'scapy'),
     ]
     
     optional_packages = [
