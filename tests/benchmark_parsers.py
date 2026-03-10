@@ -37,7 +37,7 @@ for f in files:
     # filename parser
     t0 = time.time()
     tags_in: dict[str, Any] = {}
-    tags_res = filename_parser.parse(path_obj, name, tags=tags_in)
+    tags_res = filename_parser.parse(path_obj, file_type, tags_in, name)
     parser_times["filename"] += (time.time() - t0)
 
     # mutagen parser
@@ -47,12 +47,12 @@ for f in files:
 
     # pymediainfo parser
     t0 = time.time()
-    tags_res = pymediainfo_parser.parse(path_obj, file_type, {})
+    tags_res = pymediainfo_parser.parse(path_obj, file_type, {}, name)
     parser_times["pymediainfo"] += (time.time() - t0)
 
     # ffmpeg parser
     t0 = time.time()
-    tags_res = ffmpeg_parser.parse(path_obj, file_type, {})
+    tags_res = ffmpeg_parser.parse(path_obj, file_type, {}, name)
     parser_times["ffmpeg"] += (time.time() - t0)
 
     # container parser

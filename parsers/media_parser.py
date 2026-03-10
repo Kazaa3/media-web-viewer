@@ -101,6 +101,8 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
             if has_essential and not needs_chapters:
                 continue
 
+        # Initialize local variables for the retry loop
+        current_tags = tags
         attempt = 0
         success = False
         while attempt <= MAX_RETRIES and not success:
@@ -113,8 +115,8 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                         success = True
                         continue
                     
-                    tags = cast(dict[str, Any], step_func(
-                        path_obj, file_type, tags, filename, mode=mode))
+                    current_tags = cast(dict[str, Any], step_func(
+                        path_obj, file_type, current_tags, filename, mode=mode))
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "ebml" and ebml_enabled and file_type == ".mkv":
@@ -122,9 +124,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                     ebml_file = File(str(path_obj))
                     segment = next(ebml_file.children_named("Segment"), None)
                     if segment:
-                        tags['ebml_title'] = getattr(segment, 'title', None)
-                        tags['ebml_duration'] = getattr(segment, 'duration', None)
-                        tags['ebml_tracks'] = [
+                        current_tags['ebml_title'] = getattr(segment, 'title', None)
+                        current_tags['ebml_duration'] = getattr(segment, 'duration', None)
+                        current_tags['ebml_tracks'] = [
                             {
                                 'type': getattr(track, 'track_type', None),
                                 'language': getattr(track, 'language', None),
@@ -132,7 +134,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                             }
                             for track in getattr(segment, 'tracks', [])
                         ]
-                        tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                        current_tags['ebml_chapters'] = getattr(segment, 'chapters', None)
                     log.debug(f"EBML parser finished for '{filename}'")
                     parser_times[step_name] = time.time() - t0
                     success = True
@@ -145,49 +147,49 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                 elif step_name == "enzyme" and enzyme_enabled and file_type in [".mkv", ".mp4"]:
                     import enzyme
                     movie = enzyme.Movie(str(path_obj))
-                    tags['enzyme_tracks'] = movie.tracks
-                    tags['enzyme_duration'] = movie.duration
+                    current_tags['enzyme_tracks'] = movie.tracks
+                    current_tags['enzyme_duration'] = movie.duration
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "pycdlib" and pycdlib_enabled and file_type == ".iso":
                     import pycdlib
                     iso = pycdlib.PyCdlib()
                     iso.open(str(path_obj))
-                    tags['pycdlib_volume_id'] = iso.get_volume_id()
+                    current_tags['pycdlib_volume_id'] = iso.get_volume_id()
                     iso.close()
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "pymkv" and pymkv_enabled and file_type == ".mkv":
                     import pymkv
                     mkv = pymkv.MKVFile(str(path_obj))
-                    tags['pymkv_tracks'] = mkv.tracks
+                    current_tags['pymkv_tracks'] = mkv.tracks
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "tinytag" and tinytag_enabled and file_type in [".mp3", ".m4a", ".ogg", ".flac", ".wav", ".wma"]:
                     from tinytag import TinyTag
                     tag = TinyTag.get(str(path_obj))
-                    tags['tinytag_title'] = tag.title
-                    tags['tinytag_artist'] = tag.artist
-                    tags['tinytag_duration'] = tag.duration
+                    current_tags['tinytag_title'] = tag.title
+                    current_tags['tinytag_artist'] = tag.artist
+                    current_tags['tinytag_duration'] = tag.duration
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "eyed3" and eyed3_enabled and file_type == ".mp3":
                     import eyed3
                     audiofile = eyed3.load(str(path_obj))
                     if audiofile and audiofile.tag:
-                        tags['eyed3_title'] = audiofile.tag.title
-                        tags['eyed3_artist'] = audiofile.tag.artist
-                        tags['eyed3_album'] = audiofile.tag.album
-                        tags['eyed3_duration'] = audiofile.info.time_secs if audiofile.info else None
+                        current_tags['eyed3_title'] = audiofile.tag.title
+                        current_tags['eyed3_artist'] = audiofile.tag.artist
+                        current_tags['eyed3_album'] = audiofile.tag.album
+                        current_tags['eyed3_duration'] = audiofile.info.time_secs if audiofile.info else None
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "music_tag" and music_tag_enabled and file_type in [".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma"]:
                     import music_tag
                     f = music_tag.load_file(str(path_obj))
-                    tags['music_tag_title'] = f['title'].value
-                    tags['music_tag_artist'] = f['artist'].value
-                    tags['music_tag_album'] = f['album'].value
-                    tags['music_tag_duration'] = f['duration'].value
+                    current_tags['music_tag_title'] = f['title'].value
+                    current_tags['music_tag_artist'] = f['artist'].value
+                    current_tags['music_tag_album'] = f['album'].value
+                    current_tags['music_tag_duration'] = f['duration'].value
                     parser_times[step_name] = time.time() - t0
                     success = True
                 else:
@@ -201,11 +203,13 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                 else:
                     log.error(f"{step_name} parser error after {MAX_RETRIES} retries for '{filename}': {e}")
                     parser_times[step_name] = time.time() - t0
+        
+        tags = current_tags
 
         # Update duration safely after each potential parser
         if 'duration' in tags and tags['duration'] and not duration:
             try:
-                duration = int(tags['duration'])
+                duration = int(float(tags['duration']))
             except (ValueError, TypeError):
                 duration = 0
 
@@ -245,4 +249,4 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
 
     tags['_parser_times'] = parser_times
     logger.debug("metadata", f"Metadata extraction complete for {filename}. Parsers: {list(parser_times.keys())}")
-    return duration, tags
+    return int(duration), cast(dict[str, Any], tags)
