@@ -203,6 +203,25 @@ def main() -> int:
         print("\n🧪 Dry-run only: no files were written")
 
     print("\n✅ Version update completed")
+
+    # Automatischer Version-Check
+    print("\n🚦 Running version sync check...")
+    import subprocess
+    try:
+        result = subprocess.run([
+            sys.executable, "tests/test_version_sync.py"
+        ], capture_output=True, text=True)
+        print(result.stdout)
+        if result.returncode != 0:
+            print("❌ Version sync check failed!")
+            print(result.stderr)
+            return result.returncode
+        else:
+            print("✅ Version sync check passed.")
+    except Exception as e:
+        print(f"❌ Error running version sync check: {e}")
+        return 1
+
     return 0
 
 
