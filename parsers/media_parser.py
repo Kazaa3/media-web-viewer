@@ -64,6 +64,8 @@ def extract_metadata(path, filename, mode='lightweight'):
         ("pycdlib", None),  # handled below
         ("pymkv", None),  # handled below
         ("tinytag", None),  # handled below
+        ("eyed3", None),  # handled below
+        ("music_tag", None),  # handled below
     ]
 
     ebml_enabled = PARSER_CONFIG.get("enable_ebml_parser", False)
@@ -72,6 +74,8 @@ def extract_metadata(path, filename, mode='lightweight'):
     pycdlib_enabled = PARSER_CONFIG.get("enable_pycdlib_parser", False)
     pymkv_enabled = PARSER_CONFIG.get("enable_pymkv_parser", False)
     tinytag_enabled = PARSER_CONFIG.get("enable_tinytag_parser", False)
+    eyed3_enabled = PARSER_CONFIG.get("enable_eyed3_parser", False)
+    music_tag_enabled = PARSER_CONFIG.get("enable_music_tag_parser", False)
 
     for step_name, step_func in parser_steps:
         needs_more_info = True if mode == 'full' else (
@@ -154,6 +158,29 @@ def extract_metadata(path, filename, mode='lightweight'):
                     tags['tinytag_duration'] = tag.duration
                 except Exception as e:
                     log.error(f"tinytag error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "eyed3" and eyed3_enabled and file_type == ".mp3":
+                import eyed3
+                try:
+                    audiofile = eyed3.load(str(path_obj))
+                    if audiofile and audiofile.tag:
+                        tags['eyed3_title'] = audiofile.tag.title
+                        tags['eyed3_artist'] = audiofile.tag.artist
+                        tags['eyed3_album'] = audiofile.tag.album
+                        tags['eyed3_duration'] = audiofile.info.time_secs if audiofile.info else None
+                except Exception as e:
+                    log.error(f"eyed3 error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "music_tag" and music_tag_enabled and file_type in [".mp3", ".flac", ".m4a", ".ogg", ".wav", ".wma"]:
+                try:
+                    import music_tag
+                    f = music_tag.load_file(str(path_obj))
+                    tags['music_tag_title'] = f['title'].value
+                    tags['music_tag_artist'] = f['artist'].value
+                    tags['music_tag_album'] = f['album'].value
+                    tags['music_tag_duration'] = f['duration'].value
+                except Exception as e:
+                    log.error(f"music_tag error for '{filename}': {e}")
                 parser_times[step_name] = time.time() - t0
             else:
                 parser_times[step_name] = 0.0
