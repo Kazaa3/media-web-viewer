@@ -107,30 +107,45 @@ except ModuleNotFoundError as exc:
     raise SystemExit(1) from exc
 
 import eel
-import logging
-import time
-import subprocess
-import threading
-import re
-import shutil
-from typing import cast
-from parsers.format_utils import (
-    PARSER_CONFIG, load_parser_config, save_parser_config,
-    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
-)
-import logger
-import env_handler
-try:
-    import vlc
-    HAS_VLC = True
-except ImportError:
-    HAS_VLC = False
+from logger import get_logger
 
-try:
-    import m3u8
-    HAS_M3U8 = True
-except ImportError:
-    HAS_M3U8 = False
+_logger = get_logger("click_events")
+
+@eel.expose
+def handle_click(event_type: str, payload: dict):
+    """
+    Generic click-event handler called from the frontend.
+    event_type: short string describing action (e.g. "pin", "play", "open")
+    payload: dict with additional data (e.g. {"id": 42})
+    """
+    try:
+        _logger.info("click event received", extra={"event": event_type, "payload": payload})
+        # simple dispatch examples (extend as needed)
+        if event_type == "pin":
+            media_id = payload.get("id")
+            # example: toggle pin state in db (implement db.toggle_pin if available)
+            try:
+                from db import toggle_pin
+                toggled = toggle_pin(media_id)
+                return {"ok": True, "action": "pin_toggled", "id": media_id, "toggled": toggled}
+            except Exception:
+                _logger.exception("pin action failed")
+                return {"ok": False, "error": "pin_failed"}
+        elif event_type == "play":
+            path = payload.get("path")
+            try:
+                play_media(path)  # assumes play_media is defined/exposed
+                return {"ok": True, "action": "play", "path": path}
+            except Exception:
+                _logger.exception("play action failed")
+                return {"ok": False, "error": "play_failed"}
+        else:
+            _logger.debug("unhandled click event", extra={"event": event_type})
+            return {"ok": True, "action": "noop", "event": event_type}
+    except Exception:
+        _logger.exception("handle_click unexpected error")
+        return {"ok": False, "error": "internal_error"}
+
 
 # Version laden
 VERSION_FILE = Path(__file__).parent / "VERSION"
@@ -1404,7 +1419,7 @@ def reset_app_data():
     # 1. ~/.media-web-viewer (Database)
     db_dir = db.DB_DIR
     # 2. ~/.config/gui_media_web_viewer (Parser Config)
-    config_dir = Path.home() / ".config" / "gui_media_web_viewer"
+    config_dir = Path.home() / ".config" / "gui_media_web_viewer"  # Programmname im config-Pfad für bessere Übersicht ändern
 
     for p in [db_dir, config_dir]:
         if p.exists():
@@ -2377,7 +2392,7 @@ def delete_test(filename):
     file_path = test_dir / filename
 
     if not file_path.exists():
-        return {"status": "error", "message": "Datei nicht gefunden"}
+        return {"error": "Datei nicht gefunden"}
 
     try:
         file_path.unlink()

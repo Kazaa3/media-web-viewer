@@ -53,3 +53,44 @@
 ---
 
 **For more details, see [README.md](../README.md) and [DOCUMENTATION.md](../DOCUMENTATION.md).**
+
+## Local development checklist
+- Create/activate venv: python -m venv .venv && source .venv/bin/activate
+- Install dev deps: pip install -r requirements-dev.txt
+- Run linters/type-check: python build_system.py --lint --type-check
+- Run unit tests: pytest tests/ -q
+- Run UI locally: python main.py (ensure browser installed)
+
+## Testing & CI details
+- Tests are split: unit (fast), integration (marked @pytest.mark.integration), and gate tests (targeted list in workflow).
+- CI jobs:
+  - lint (ruff/mypy)
+  - unit tests + pytest-cov (fail-under variable)
+  - integration (optional runners, Xvfb when required)
+  - build (wheel/sdist + PyInstaller spec)
+  - release pipeline (version sync → build → validate artifact)
+- Environment flags:
+  - ENABLE_INTEGRATION=1 to enable integration jobs locally
+  - ENABLE_XVFB=1 to run GUI tests under Xvfb in CI
+
+## Common issues & troubleshooting
+- gevent monkey-patch conflicts: only apply monkey.patch_all() in controlled startup path; document in env_handler.
+- Missing native binaries (ffprobe/vlc/mkvmerge): env_handler reports and parsers fallback to safer paths.
+- Headless GUI failures: use Xvfb or mark tests skipped; capture screenshots on failure.
+- PyInstaller misses: add hidden-imports and --add-data for web assets in spec.
+
+## Contribution & code style
+- Follow existing module layout (parsers/, ui/, tests/).
+- Small PRs with single concern; include tests for new behavior.
+- Update logbuch/*.md for architecture/requirements changes.
+- Sign-off: update CHANGELOG and bump VERSION via update_version.py for releases.
+
+## Release & versioning
+- Use setuptools_scm or update VERSION before release.
+- Run build_system.py --pipeline for full release flow.
+- Validate installed wheel and packaged artifact on clean runner before publishing.
+
+## Contact points
+- Repository maintainers listed in README.md; open issues for design decisions that affect runtime choices (gevent vs trio).
+
+# End of continuation
