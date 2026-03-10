@@ -71,6 +71,8 @@ class MediaItem:
 
         # Extract artwork if enabled
         self.art_path = self.extract_artwork()
+        self.has_artwork = self.art_path is not None
+        self.is_missing_cover = not self.has_artwork
 
         # New separated metadata fields
         self.extension = self.file_format
@@ -263,6 +265,7 @@ class MediaItem:
             'file_format': self.file_format,
             'content_type': self.content_type,
             'art_path': self.art_path,
+            'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format
         }
