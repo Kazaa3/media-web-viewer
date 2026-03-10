@@ -161,7 +161,13 @@ def load_parser_config() -> None:
         try:
             with open(CONFIG_FILE, 'r') as f:
                 loaded = json.load(f)
+                # Migration: Ensure all default keys exist
+                for key, value in PARSER_CONFIG.items():
+                    if key not in loaded:
+                        loaded[key] = value
+                
                 PARSER_CONFIG.update(loaded)
+                
                 # Ensure parser_chain is never empty if it was intended to have defaults
                 if not PARSER_CONFIG.get("parser_chain"):
                      PARSER_CONFIG["parser_chain"] = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"]

@@ -1392,7 +1392,9 @@ def get_library():
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
     all_media = db.get_all_media()
-    displayed_cats = PARSER_CONFIG.get("displayed_categories", ["audio"])
+    displayed_cats = PARSER_CONFIG.get("displayed_categories")
+    if not displayed_cats:
+        displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild"]
     
     # We map internal categories to the setting keys
     # logical_type: 'Audio', 'Video', 'Bilder', 'Dokument', 'E-Book', 'Abbild'
@@ -1612,10 +1614,13 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         from parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
         
         # Build all_exts based on configured categories
-        indexed_cats = PARSER_CONFIG.get("indexed_categories", ["audio", "audiobook"])
+        indexed_cats = PARSER_CONFIG.get("indexed_categories")
+        if not indexed_cats:
+            indexed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild"]
+        
         all_exts = set()
         
-        if "audio" in indexed_cats or "audiobook" in indexed_cats:
+        if "audio" in indexed_cats:
             all_exts |= AUDIO_EXTENSIONS
         if "video" in indexed_cats:
             all_exts |= VIDEO_EXTENSIONS
@@ -1626,7 +1631,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         if "ebooks" in indexed_cats:
             all_exts |= EBOOK_EXTENSIONS
         if "abbild" in indexed_cats:
-            all_exts.add('.iso')
+            from parsers.format_utils import DISK_IMAGE_EXTENSIONS
+            all_exts |= DISK_IMAGE_EXTENSIONS
         
         for scan_root in scan_roots:
             logger.debug("scan", f"Starting scan of: {scan_root}")
