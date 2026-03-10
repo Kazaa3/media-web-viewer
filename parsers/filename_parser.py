@@ -5,8 +5,9 @@ from typing import Any
 
 def parse(
     path: str | Path,
-    filename: str,
+    file_type: str,
     tags: dict[str, Any] | None = None,
+    filename: str = '',
     mode: str = 'lightweight'
 ) -> dict[str, Any]:
     """

@@ -4,7 +4,13 @@ from typing import Any
 from pathlib import Path
 
 
-def parse(path: str | Path, file_type: str, tags: dict[str, Any], mode: str = 'lightweight') -> dict[str, Any]:
+def parse(
+    path: str | Path,
+    file_type: str,
+    tags: dict[str, Any],
+    filename: str,
+    mode: str = 'lightweight'
+) -> dict[str, Any]:
     """
     @brief Extracts metadata using PyMediaInfo (fallback/supplement).
     @details Extrahiert Metadaten mittels PyMediaInfo als Fallback oder Ergänzung.
