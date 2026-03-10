@@ -1,4 +1,5 @@
 # Media Web Viewer
+${VERSION}
 
 Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
 
@@ -187,7 +188,7 @@ If generated artifacts were already committed in the past, remove them from the 
 ```bash
 git rm -r --cached -- packaging/opt/media-web-viewer
 git rm --cached -- __pycache__/main.cpython-314.pyc
-git rm --cached -- media-web-viewer_${VERSION}_amd64.deb
+git rm --cached -- media-web-viewer_v${VERSION}_amd64.deb
 git commit -m "chore: untrack generated packaging/cache artifacts"
 ```
 
