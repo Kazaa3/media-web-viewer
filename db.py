@@ -121,7 +121,8 @@ def init_db():
             extension TEXT,
             container TEXT,
             tag_type TEXT,
-            codec TEXT
+            codec TEXT,
+            has_artwork BOOLEAN DEFAULT 0
         )
     """)
 
@@ -198,8 +199,8 @@ def insert_media(item_dict):
     try:
         cursor.execute("""
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
-                             transcoded_format, tags, extension, container, tag_type, codec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             transcoded_format, tags, extension, container, tag_type, codec, has_artwork)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -212,7 +213,8 @@ def insert_media(item_dict):
             item_dict.get('extension'),
             item_dict.get('container'),
             item_dict.get('tag_type'),
-            item_dict.get('codec')
+            item_dict.get('codec'),
+            1 if item_dict.get('has_artwork') else 0
         ))
         conn.commit()
     except sqlite3.IntegrityError:
@@ -246,6 +248,7 @@ def get_all_media():
             'container': row['container'],
             'tag_type': row['tag_type'],
             'codec': row['codec'],
+            'has_artwork': bool(row['has_artwork']),
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {}
