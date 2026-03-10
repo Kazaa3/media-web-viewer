@@ -119,6 +119,7 @@ from parsers.format_utils import (
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
 )
 import env_handler
+import logger
 from logger import get_logger
 
 try:
