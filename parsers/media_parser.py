@@ -51,6 +51,7 @@ def extract_metadata(path, filename, mode='lightweight'):
         "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"]))
 
     # Neue Iteration: Alle verfügbaren Parser als optionale Schritte
+    from . import isoparser_parser
     parser_steps = [
         ("filename", filename_parser.parse),
         ("container", container_parser.parse),
@@ -58,6 +59,7 @@ def extract_metadata(path, filename, mode='lightweight'):
         ("pymediainfo", pymediainfo_parser.parse),
         ("ffprobe", ffprobe_parser.parse),
         ("ffmpeg", ffmpeg_parser.parse),
+        ("isoparser", isoparser_parser.parse),  # new alternative ISO parser
         ("ebml", None),  # handled below
         ("mkvparse", None),  # handled below
         ("enzyme", None),  # handled below
@@ -76,6 +78,7 @@ def extract_metadata(path, filename, mode='lightweight'):
     tinytag_enabled = PARSER_CONFIG.get("enable_tinytag_parser", False)
     eyed3_enabled = PARSER_CONFIG.get("enable_eyed3_parser", False)
     music_tag_enabled = PARSER_CONFIG.get("enable_music_tag_parser", False)
+    isoparser_enabled = PARSER_CONFIG.get("enable_isoparser_parser", True)  # default enabled
 
     for step_name, step_func in parser_steps:
         needs_more_info = True if mode == 'full' else (
@@ -92,6 +95,10 @@ def extract_metadata(path, filename, mode='lightweight'):
         t0 = time.time()
         try:
             if step_func:
+                # Only run isoparser if enabled and file is .iso
+                if step_name == "isoparser" and not isoparser_enabled:
+                    parser_times[step_name] = 0.0
+                    continue
                 tags = cast(dict[str, Any], step_func(
                     path_obj, file_type, tags, mode=mode))
                 parser_times[step_name] = time.time() - t0
