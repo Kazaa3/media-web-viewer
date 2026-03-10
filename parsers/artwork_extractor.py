@@ -35,6 +35,10 @@ class ArtworkExtractor:
         if not path.exists():
             return None
 
+        # Short-circuit for images: the image is its own artwork
+        if logical_type == 'Bilder':
+            return str(path)
+
         try:
             st = path.stat()
             # Cache key includes mtime and size to detect changes
