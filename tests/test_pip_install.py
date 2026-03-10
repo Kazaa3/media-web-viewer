@@ -24,7 +24,7 @@ sys.path.insert(0, str(project_root))
 with patch('os.execv'), \
      patch('subprocess.run') as mock_sub, \
      patch('sys.exit'), \
-     patch('main.logger'):
+     patch('main.logging'):
     
     # Import main - the patches above should prevent it from re-execing or exiting
     import main
@@ -32,7 +32,7 @@ with patch('os.execv'), \
 class TestPipInstall(unittest.TestCase):
 
     @patch('subprocess.run')
-    @patch('main.logger')
+    @patch('main.logging')
     def test_pip_install_packages_success(self, mock_logger, mock_run):
         # Setup mock
         mock_result = MagicMock()
@@ -65,7 +65,7 @@ class TestPipInstall(unittest.TestCase):
         )
 
     @patch('subprocess.run')
-    @patch('main.logger')
+    @patch('main.logging')
     def test_pip_install_packages_error(self, mock_logger, mock_run):
         # Setup mock
         mock_result = MagicMock()
@@ -83,7 +83,7 @@ class TestPipInstall(unittest.TestCase):
         self.assertIn("Could not find a version", result["error"])
 
     @patch('subprocess.run')
-    @patch('main.logger')
+    @patch('main.logging')
     def test_pip_install_packages_empty(self, mock_logger, mock_run):
         # Call function with empty list
         result = main.pip_install_packages([])
@@ -93,7 +93,7 @@ class TestPipInstall(unittest.TestCase):
         mock_run.assert_not_called()
 
     @patch('subprocess.run')
-    @patch('main.logger')
+    @patch('main.logging')
     @patch('main._get_requirements_status')
     def test_pip_install_packages_verification_fail(self, mock_status, mock_logger, mock_run):
         # Setup mock for pip success
