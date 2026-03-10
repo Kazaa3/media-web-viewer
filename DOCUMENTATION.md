@@ -41,7 +41,7 @@ To update the version:
 Quick example:
 
 ```bash
-python update_version.py --new-version 1.3.5
+
 python tests/test_version_sync.py
 python build_system.py --pipeline
 ```
