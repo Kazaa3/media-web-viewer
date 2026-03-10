@@ -27,6 +27,7 @@ def parse(
         media_info = MediaInfo.parse(path)
         general_track = None
         audio_track = None
+        video_track = None
         menu_track = None
 
         for track in media_info.tracks:
@@ -34,6 +35,8 @@ def parse(
                 general_track = track
             elif track.track_type == "Audio":
                 audio_track = track
+            elif track.track_type == "Video":
+                video_track = track
             elif track.track_type == "Menu":
                 menu_track = track
 
@@ -68,6 +71,13 @@ def parse(
 
             # Use centralized formatting for bitdepth
             tags['bitdepth'] = format_bitdepth(audio_track.bit_depth, codec=tags.get('codec'), file_type=file_type)
+
+        if video_track:
+            # Capture standard (PAL / NTSC) and frame rate
+            if not tags.get('standard') and hasattr(video_track, 'standard'):
+                tags['standard'] = video_track.standard
+            if not tags.get('frame_rate') and hasattr(video_track, 'frame_rate'):
+                tags['frame_rate'] = video_track.frame_rate
 
         if mode == 'full':
             for i, track in enumerate(media_info.tracks):
