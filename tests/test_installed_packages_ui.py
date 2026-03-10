@@ -97,6 +97,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
             "['gevent', 'gevent']",
             "['greenlet', 'greenlet']",
             "const testPackages = [",
+            "const vlcCliVer = toolsStatus.vlc_cli_version || '';",
             "['pytest', 'pytest']",
             "['pytest-cov', 'pytest-cov']",
             "['coverage', 'coverage']",

@@ -69,7 +69,11 @@ def health_check():
 def serve_media(filepath):
     """
     @brief Serves media files with optional on-the-fly transcoding.
-    @details Liefert Mediendateien aus, optional mit Live-Transkodierung (ALAC/WMA).
+    @details Liefert Mediendateien aus, optional mit Live-Transkodierung (ALAC→FLAC, WMA→OGG).
+             Uses FFmpeg for transcoding with optimized parameters:
+             - ALAC → FLAC: lossless, compression_level=5
+             - WMA → Opus: lossy, VBR, 128k bitrate
+             Transcoded files are cached in ~/.cache/MediaWebViewer/transcoded/
     @param filepath Relative path or filename / Pfad oder Dateiname.
     @return Static file or transcoding stream / Statische Datei oder Transkodierungs-Stream.
     """
@@ -89,17 +93,7 @@ def serve_media(filepath):
         transcode_format = 'ogg'
         needs_transcoding = True
 
-    transcode_format = None
-    logger.debug("network", f"serve_media: filepath={filepath}")
-
-    if filepath.endswith('.flac_transcoded'):
-        filepath = filepath[:-16]
-        transcode_format = 'flac'
-        needs_transcoding = True
-    elif filepath.endswith('.ogg_transcoded'):
-        filepath = filepath[:-15]
-        transcode_format = 'ogg'
-        needs_transcoding = True
+    logger.debug("network", f"serve_media: filepath={filepath}, needs_transcoding={needs_transcoding}, format={transcode_format}")
 
     ext = filepath.lower()
     full_path = _resolve_path(filepath)
@@ -115,26 +109,43 @@ def serve_media(filepath):
 
         # FFmpeg output format and MIME type
         if transcode_format == 'ogg':
-            ffmpeg_args = ['-c:a', 'libopus', '-b:a', '128k', '-f', 'ogg']
+            # WMA/others → Opus (efficient lossy codec)
+            ffmpeg_args = ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-compression_level', '10', '-f', 'ogg']
             serve_mime = 'audio/ogg'
         else:
-            ffmpeg_args = ['-f', 'flac']
+            # ALAC → FLAC (lossless → lossless, browser-compatible)
+            ffmpeg_args = ['-c:a', 'flac', '-compression_level', '5', '-f', 'flac']
             serve_mime = 'audio/flac'
 
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
             logger.debug("transcode", f"Transcoding required: {full_path} to {transcode_format}")
             try:
-                subprocess.run(
-                    ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn'] + ffmpeg_args + [str(tmp_path)],
-                    check=True, capture_output=True, text=True
+                result = subprocess.run(
+                    ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn', '-map', '0:a:0'] + ffmpeg_args + [str(tmp_path)],
+                    check=True, capture_output=True, text=True, timeout=120
                 )
-                tmp_path.replace(cache_path)
-                _log("TRANSCODING SUCCESS")
-                logger.debug("transcode", f"Transcoding success: {cache_path}")
+                if tmp_path.exists() and tmp_path.stat().st_size > 0:
+                    tmp_path.replace(cache_path)
+                    _log(f"TRANSCODING SUCCESS: {cache_path.stat().st_size} bytes")
+                    logger.debug("transcode", f"Transcoding success: {cache_path} ({cache_path.stat().st_size} bytes)")
+                else:
+                    raise RuntimeError("FFmpeg produced empty output")
+            except subprocess.TimeoutExpired:
+                _log(f"TRANSCODING TIMEOUT: {full_path}")
+                logger.debug("transcode", f"Transcoding timeout for {full_path}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                return bottle.HTTPError(504, "Transcoding Timeout")
             except subprocess.CalledProcessError as e:
                 _log(f"TRANSCODING FAILED: {e.stderr}")
-                logger.debug("transcode", f"Transcoding failed for {full_path}: {e.stderr}")
+                logger.debug("transcode", f"Transcoding failed for {full_path}: stderr={e.stderr}, returncode={e.returncode}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                return bottle.HTTPError(500, f"Transcoding Error: {e.stderr[:200]}")
+            except Exception as e:
+                _log(f"TRANSCODING ERROR: {e}")
+                logger.debug("transcode", f"Transcoding unexpected error for {full_path}: {e}")
                 if tmp_path.exists():
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")
