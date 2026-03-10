@@ -71,7 +71,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--new-version",
         required=True,
-        help="Target version in semantic format (e.g. 1.3.5)",
+        help="Target version in semantic format (e.g. <version>)",
     )
     parser.add_argument(
         "--dry-run",

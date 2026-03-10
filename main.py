@@ -138,6 +138,72 @@ try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
     VERSION = "1.3.3"  # Fallback
+# --- Imprint/Impressum API ---
+@eel.expose
+def get_imprint_info():
+    """
+    Returns license, version, and maintainer info for imprint/impressum tab.
+    """
+    return {
+        "version": VERSION,
+        "developer": "kazaa3",
+        "location": "Germany",
+        "privacy": "Local storage in SQLite. No data transmission to external servers.",
+        "license": "Open Source Project",
+    }
+
+# --- Environment Info API ---
+@eel.expose
+def get_environment_info_dict():
+    """
+    Returns full environment info dict for debug/console display.
+    """
+    import platform
+    import sys
+    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    return {
+        "env_type": env_type,
+        "env_name": env_name,
+        "env_path": env_path,
+        "python_version": py_ver,
+        "python_executable": py_exec,
+        "platform": platform.platform(),
+        "venv_active": sys.prefix != sys.base_prefix,
+        "cwd": str(Path.cwd()),
+        "os": platform.system(),
+        "release": platform.release(),
+        "machine": platform.machine(),
+        "debug_flags": DEBUG_FLAGS,
+    }
+
+# --- Debug Console API ---
+@eel.expose
+def get_debug_console():
+    """
+    Returns debug logs, environment info, and dicts for GUI console.
+    """
+    from logger import get_ui_logs
+    return {
+        "logs": get_ui_logs(),
+        "env": get_environment_info_dict(),
+        "version": VERSION,
+        "license": "GNU GPL-3.0",
+        "debug_flags": DEBUG_FLAGS,
+    }
+
+# --- Debug/Test API ---
+@eel.expose
+def run_debug_test():
+    """
+    Runs a simple debug test and returns result for GUI console.
+    """
+    import sys
+    return {
+        "test": "debug",
+        "python_version": sys.version,
+        "cwd": str(Path.cwd()),
+        "result": "OK",
+    }
 
 _ENV_INFO_CACHE = {
     "data": None,
@@ -2673,14 +2739,22 @@ if __name__ == "__main__":
             f"[Session] Ignoring stale session candidate (PID {existing['pid']}, port {existing['port']}) - URL unreachable."
         )
 
+
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint
     import threading
     threading.Thread(target=lambda: scan_media(dir_path=None, clear_db=True), daemon=True).start()
 
+    # Log environment info for GUI console
+    debug_log(f"[Startup] Environment Info: {get_environment_info_dict()}")
+
+
     web_dir = str(Path(__file__).parent / "web")
     eel.init(web_dir)
     logger.debug("websocket", f"Eel initialized with root: {web_dir}")
+
+    # GUI Console/Debug Tab: expose APIs for frontend
+    # Frontend should call get_debug_console(), get_environment_info_dict(), get_imprint_info()
 
     if DEBUG_FLAGS["start"]:
         debug_log("[Startup] Starting Eel UI...")
