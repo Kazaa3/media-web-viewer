@@ -216,25 +216,25 @@ def extract_metadata(path, filename, mode='lightweight'):
     tags['tagtype'] = format_tagtype(tags.get('tagtype'))
 
     # Final Chapter Sort (Natural & Chronological)
-        if tags.get('chapters') and isinstance(tags['chapters'], list):
-            from .format_utils import natural_sort_key
-            # Detect chapter variants
-            nero_variant = any('chapter' in c and 'start_time' in c for c in tags['chapters'])
-            apple_variant = any('title' in c and 'start' in c for c in tags['chapters'])
-            both_variants = nero_variant and apple_variant
-            variant_str = (
-                'Beide Varianten (Nero & Apple)' if both_variants else
-                'Nero-Variante' if nero_variant else
-                'Apple-Variante' if apple_variant else
-                'Unbekannte Variante'
-            )
-            log.info(f"Chapter variant detected: {variant_str} for '{filename}'")
-            # Priority: 1. Natural Title, 2. Start Time
-            tags['chapters'] = sorted(tags['chapters'], key=lambda x: (
-                natural_sort_key(x.get('title', '')), x.get('start', 0.0)))
-            if log.isEnabledFor(logging.DEBUG):
-                first_chaps = [c.get('title') for c in tags['chapters'][:5]]
-                log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
+    if tags.get('chapters') and isinstance(tags['chapters'], list):
+        from .format_utils import natural_sort_key
+        # Detect chapter variants
+        nero_variant = any('chapter' in c and 'start_time' in c for c in tags['chapters'])
+        apple_variant = any('title' in c and 'start' in c for c in tags['chapters'])
+        both_variants = nero_variant and apple_variant
+        variant_str = (
+            'Beide Varianten (Nero & Apple)' if both_variants else
+            'Nero-Variante' if nero_variant else
+            'Apple-Variante' if apple_variant else
+            'Unbekannte Variante'
+        )
+        log.info(f"Chapter variant detected: {variant_str} for '{filename}'")
+        # Priority: 1. Natural Title, 2. Start Time
+        tags['chapters'] = sorted(tags['chapters'], key=lambda x: (
+            natural_sort_key(x.get('title', '')), x.get('start', 0.0)))
+        if log.isEnabledFor(logging.DEBUG):
+            first_chaps = [c.get('title') for c in tags['chapters'][:5]]
+            log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
     tags['_parser_times'] = parser_times
     logger.debug("metadata", f"Metadata extraction complete for {filename}. Parsers: {list(parser_times.keys())}")
