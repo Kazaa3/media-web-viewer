@@ -107,7 +107,31 @@ except ModuleNotFoundError as exc:
     raise SystemExit(1) from exc
 
 import eel
+import logging
+import time
+import subprocess
+import threading
+import re
+import shutil
+from typing import cast
+from parsers.format_utils import (
+    PARSER_CONFIG, load_parser_config, save_parser_config,
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
+)
+import env_handler
 from logger import get_logger
+
+try:
+    import vlc
+    HAS_VLC = True
+except ImportError:
+    HAS_VLC = False
+
+try:
+    import m3u8
+    HAS_M3U8 = True
+except ImportError:
+    HAS_M3U8 = False
 
 _logger = get_logger("click_events")
 
