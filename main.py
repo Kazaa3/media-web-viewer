@@ -268,7 +268,7 @@ def pip_install_packages(packages):
     try:
         # Using sys.executable to ensure we install in the current environment
         cmd = [sys.executable, "-m", "pip", "install", *packages]
-        logger.info(f"Running pip install: {' '.join(cmd)}")
+        logging.info(f"Running pip install: {' '.join(cmd)}")
         
         result = subprocess.run(
             cmd,
@@ -278,7 +278,7 @@ def pip_install_packages(packages):
         )
         
         if result.returncode == 0:
-            logger.info(f"Successfully installed packages: {', '.join(packages)}")
+            logging.info(f"Successfully installed packages: {', '.join(packages)}")
             # After installation, we should probably clear the environment info cache
             _ENV_INFO_CACHE["data"] = None
             _ENV_INFO_CACHE["ts"] = 0.0
@@ -291,7 +291,7 @@ def pip_install_packages(packages):
                     still_missing.append(p)
             
             if still_missing:
-                logger.error(f"[PIP] Installation reported success but packages still missing: {still_missing}")
+                logging.error(f"[PIP] Installation reported success but packages still missing: {still_missing}")
                 return {
                     "status": "error", 
                     "error": f"Verification failed. Packages still missing: {', '.join(still_missing)}",
@@ -301,7 +301,7 @@ def pip_install_packages(packages):
             return {"status": "ok", "output": result.stdout, "installed": packages}
         else:
             error_msg = result.stderr or result.stdout or "Unknown pip error"
-            logger.error(f"Failed to install packages: {error_msg}")
+            logging.error(f"Failed to install packages: {error_msg}")
             return {
                 "status": "error",
                 "error": error_msg,
@@ -309,10 +309,10 @@ def pip_install_packages(packages):
             }
             
     except subprocess.TimeoutExpired:
-        logger.error("Pip install timed out")
+        logging.error("Pip install timed out")
         return {"status": "error", "error": "Installation timed out"}
     except Exception as e:
-        logger.error(f"Error during pip install: {str(e)}")
+        logging.error(f"Error during pip install: {str(e)}")
         return {"status": "error", "error": str(e)}
 def _get_requirements_status():
     """Get install status for requirements.txt packages in current interpreter."""
@@ -453,6 +453,7 @@ def get_environment_info(force_refresh=False):
         """Get list of available Conda environments."""
         environments = []
         try:
+            # Main conda call with reduced timeout (3s)
             result = subprocess.run(
                 ["conda", "env", "list", "--json"],
                 capture_output=True,
@@ -463,11 +464,12 @@ def get_environment_info(force_refresh=False):
                 try:
                     data = json.loads(result.stdout)
                     for env_path in data.get("envs", []):
-                        env_name = Path(env_path).name
-                        env_python = Path(env_path) / "bin" / "python"
-                        
-                        if env_python.exists():
-                            try:
+                        try:
+                            env_name = Path(env_path).name
+                            env_python = Path(env_path) / "bin" / "python"
+                            
+                            # Check existence and version with timeout (1s)
+                            if env_python.exists():
                                 v_result = subprocess.run(
                                     [str(env_python), "--version"],
                                     capture_output=True,
@@ -483,8 +485,8 @@ def get_environment_info(force_refresh=False):
                                     "version": version,
                                     "recommended": is_recommended
                                 })
-                            except (subprocess.TimeoutExpired, Exception):
-                                pass
+                        except (subprocess.TimeoutExpired, Exception):
+                            continue
                 except (json.JSONDecodeError, KeyError):
                     pass
         except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
@@ -503,11 +505,12 @@ def get_environment_info(force_refresh=False):
                 if not search_dir.exists():
                     continue
                 
-                for python_exe in search_dir.glob("python*"):
-                    if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
-                        continue
-                    
+                # Use a specific glob to avoid listing too many files
+                for python_exe in search_dir.glob("python3*"):
                     try:
+                        if not python_exe.is_file() or not os.access(python_exe, os.X_OK):
+                            continue
+                        
                         result = subprocess.run(
                             [str(python_exe), "--version"],
                             capture_output=True,
@@ -578,6 +581,7 @@ def get_environment_info(force_refresh=False):
             return parsed
 
         try:
+            # Primary method: pip list --format=json (timeout 5s)
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
                 capture_output=True,
@@ -587,17 +591,14 @@ def get_environment_info(force_refresh=False):
             if result.returncode == 0:
                 try:
                     packages_data = json.loads(result.stdout)
-                    # Sort by name
                     packages = sorted(packages_data, key=lambda x: x.get("name", "").lower())
                     source = "pip_list_json"
                 except (json.JSONDecodeError, TypeError, KeyError):
-                    logging.warning("Failed to parse pip list JSON")
+                    logging.warning("Failed to parse pip list JSON - falling back")
                     packages = _get_packages_fallback()
                     source = "importlib_or_pkg_resources"
             else:
-                err = (result.stderr or result.stdout or "pip list failed").strip()
-                logging.warning(f"pip list returned non-zero exit status ({result.returncode}): {err}")
-                # Fallback 1: pip list (columns) parsing
+                # Fallback 1: pip list (columns)
                 try:
                     fallback_result = subprocess.run(
                         [sys.executable, "-m", "pip", "list", "--format=columns", "--disable-pip-version-check"],
@@ -619,14 +620,11 @@ def get_environment_info(force_refresh=False):
                 if not packages:
                     packages = _get_packages_fallback()
                     source = "importlib_or_pkg_resources"
-        except subprocess.TimeoutExpired:
-            logging.warning("pip list timeout - using fallback")
+        except (subprocess.TimeoutExpired, Exception) as e:
+            logging.warning(f"pip list failed ({type(e).__name__}) - using importlib fallback")
             packages = _get_packages_fallback()
             source = "importlib_or_pkg_resources"
-        except Exception as e:
-            logging.warning(f"Failed to get installed packages: {e}")
-            packages = _get_packages_fallback()
-            source = "importlib_or_pkg_resources"
+            
         return packages, source
     
     def _find_local_venvs():
