@@ -14,11 +14,23 @@ Alle verfügbaren Parser-Module (filename, container, mutagen, pymediainfo, ffpr
 - Tinytag und eyed3 sind für MP3 sehr schnell, aber weniger umfassend.
 - ffmpeg ist als Fallback nützlich, aber langsam.
 
-## Empfehlung
-- Für Audio: Mutagen, pymediainfo, tinytag, eyed3.
-- Für Video/Kapitel: ffprobe, enzyme, ebml, mkvparse.
-- Für ISO: pycdlib.
-- Für allgemeine Robustheit: Fallback auf ffmpeg.
+
+## Empfehlung nach Dateityp
+
+| Dateityp         | Empfohlene Parser                |
+|------------------|----------------------------------|
+| MP3              | mutagen, pymediainfo, tinytag, eyed3, music-tag |
+| FLAC             | mutagen, pymediainfo, music-tag  |
+| M4A/M4B/MP4      | mutagen, pymediainfo, ffprobe, enzyme, music-tag |
+| OGG/OPUS         | mutagen, pymediainfo, tinytag, music-tag |
+| WAV              | mutagen, pymediainfo, tinytag, music-tag |
+| WMA              | mutagen, pymediainfo, music-tag  |
+| MKV              | ffprobe, enzyme, ebml, mkvparse, pymkv |
+| ISO              | pycdlib                          |
+| Video allgemein  | ffprobe, enzyme, pymediainfo     |
+| Fallback         | ffmpeg                           |
+
+Die Auswahl basiert auf den Benchmark-Ergebnissen und der Metadatenqualität. Für Audio empfiehlt sich die Kombination aus Mutagen, pymediainfo und music-tag (ggf. tinytag/eyed3 für MP3). Für Video und Kapitel sind ffprobe, enzyme und ebml/mkvparse optimal. ISO-Dateien sollten mit pycdlib analysiert werden. ffmpeg dient als universeller Fallback.
 
 ## Testskript
 - Siehe tests/benchmark_all_parsers.py
