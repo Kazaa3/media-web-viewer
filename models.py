@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from pathlib import Path
+from typing import Optional, Any
 from parsers.format_utils import (
     PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
     DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS
@@ -67,6 +68,9 @@ class MediaItem:
         self.logical_type = self.detect_logical_type()
         self.file_format = detect_file_format(self.path, self.tags)
         self.content_type = self.detect_content_type()
+
+        # Extract artwork if enabled
+        self.art_path = self.extract_artwork()
 
         # New separated metadata fields
         self.extension = self.file_format
@@ -187,6 +191,70 @@ class MediaItem:
 
         return 'Unbekannt'
 
+    def extract_artwork(self) -> Optional[str]:
+        """
+        @brief Extracts embedded artwork (cover) from media files using ffmpeg.
+        @details Extrahiert eingebettete Cover-Bilder mittels ffmpeg.
+        @return Path to the extracted image or None / Pfad zum extrahierten Bild oder None.
+        """
+        if PARSER_CONFIG.get('ffmpeg_extract_thumbnails') is False:
+            return None
+        
+        # Check if art exists or if it's a video (which we always want a thumbnail for)
+        logical = getattr(self, 'logical_type', 'Unbekannt')
+        if self.tags.get('has_art') != 'Yes' and logical not in ('Video', 'Abbild'):
+            return None
+
+        import subprocess
+        import hashlib
+        
+        cache_dir = Path.home() / '.cache' / 'gui_media_web_viewer' / 'art'
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Use filename + size as hash for caching
+        try:
+            st_size = self.path.stat().st_size
+        except Exception:
+            st_size = 0
+            
+        file_hash = hashlib.md5(f"{self.path}{st_size}".encode()).hexdigest()
+        art_file = cache_dir / f"{file_hash}.jpg"
+        
+        if art_file.exists():
+            return str(art_file)
+
+        # Skip real extraction if file doesn't exist (e.g. in tests)
+        if not self.path.exists():
+            return None
+
+        try:
+            # Extract video stream #0:v:0 (often used for covers in audio files or as thumbnail for video)
+            # -ss 00:00:01 for videos to get a non-black frame
+            if logical == 'Video':
+                 cmd = [
+                    "ffmpeg", "-i", str(self.path),
+                    "-ss", "00:00:05", # Seek a bit in to avoid black start
+                    "-vframes", "1",
+                    "-q:v", "2",
+                    "-y", str(art_file)
+                ]
+            else:
+                # Audio files: extract the embedded stream (album art)
+                cmd = [
+                    "ffmpeg", "-i", str(self.path),
+                    "-an", "-vcodec", "copy",
+                    "-y", str(art_file)
+                ]
+            
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+            
+            if art_file.exists() and art_file.stat().st_size > 0:
+                return str(art_file)
+        except Exception:
+            pass
+            
+        return None
+
     def show_info(self):
         """
         @brief Logs the media item information.
@@ -248,6 +316,7 @@ class MediaItem:
             'logical_type': self.logical_type,
             'file_format': self.file_format,
             'content_type': self.content_type,
+            'art_path': self.art_path,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format
         }
