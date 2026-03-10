@@ -149,7 +149,7 @@ def get_imprint_info():
         "developer": "kazaa3",
         "location": "Germany",
         "privacy": "Local storage in SQLite. No data transmission to external servers.",
-        "license": "Open Source Project",
+        "license": "GNU GPL-3.0",
     }
 
 # --- Environment Info API ---
@@ -2648,16 +2648,39 @@ def run_tests(test_files):
 
 @eel.expose
 def run_gui_tests():
+from typing import Dict, Any
+import logging
+
+def run_gui_tests() -> Dict[str, Any]:
     """
     @brief Placeholder for GUI tests (handled via the agent).
     @details Dummy-Funktion für GUI-Tests (da diese über den Agenten laufen).
     @return Info dictionary / Info-Dictionary.
+
+    Best Practices:
+      - In Produktion: Integriere Playwright oder Selenium für Eel-GUIs.
+      - Starte den Dev-Server und teste DOM-Interaktionen via Headless-Browser.
+      - Für MCP-Agenten: Nutze Inspector-Tool für Tool-Validierung und Event-Simulation.
+      - Alternativen: WebDriver (Selenium), CDP (Playwright), PyAutoGUI für Desktop.
+      - Eel expose() ermöglicht bidirektionale Python-JS-Calls für Test-Trigger.
     """
-    # In einer realen App würde man hier vielleicht Selenium/Playwright fernsteuern.
-    # Hier geben wir einfach einen Hinweis zurück.
+    logging.info("GUI-Tests: Siehe MCP-Agent oder Browser-Subagent für KlickEvents/DOM.")
     return {
         "status": "info",
-        "message": "GUI-Tests müssen über den Antigravity-Agenten (Browser Subagent) gestartet werden."
+        "message": "GUI-Tests müssen über den MCP-Agenten DOM / Browser Subagent / KlickEvents gestartet werden.",
+        "next_steps": [
+            "pip install playwright pytest",
+            "playwright install",
+            "Beispiel: pytest mit page.goto('http://localhost:8000') und page.click()",
+            "Alternativ: selenium, pyautogui, MCP Inspector"
+        ],
+        "protocols": {
+            "WebDriver": "REST/HTTP, Selenium, geeignet für Eel",
+            "CDP": "WebSocket, Playwright/Selenium4, direkter DOM-Zugriff",
+            "Eel expose": "Intern, Python-JS-Bridge, ideal für Test-Trigger",
+            "PyAutoGUI": "Pixel/Screen, Desktop-Automatisierung",
+            "MCP": "Agenten-basiert, Inspector für Event-Simulation"
+        }
     }
 
 
@@ -2831,3 +2854,22 @@ if __name__ == "__main__":
         except BaseException as e:
             logging.warning(f"[WebSocket] keepalive recovered from base error: {type(e).__name__}: {e}")
             time.sleep(1.0)
+
+
+    @eel.expose
+    def test_pyautogui():
+        """
+        Simple test for pyautogui integration.
+        Returns screen size and current mouse position.
+        """
+        try:
+            import pyautogui
+            screen_size = pyautogui.size()
+            mouse_pos = pyautogui.position()
+            return {
+                "status": "ok",
+                "screen_size": {"width": screen_size.width, "height": screen_size.height},
+                "mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
