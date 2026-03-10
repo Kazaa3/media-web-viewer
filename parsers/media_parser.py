@@ -50,9 +50,30 @@ def extract_metadata(path, filename, mode='lightweight'):
     parser_chain = cast(list[str], PARSER_CONFIG.get(
         "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"]))
 
-    for parser_name in parser_chain:
-        # If in lightweight mode, check if we still need critical information, otherwise skip heavy parsers.
-        # In full mode, we want ALL information from EVERY parser, so needs_more_info is always True.
+    # Neue Iteration: Alle verfügbaren Parser als optionale Schritte
+    parser_steps = [
+        ("filename", filename_parser.parse),
+        ("container", container_parser.parse),
+        ("mutagen", mutagen_parser.parse),
+        ("pymediainfo", pymediainfo_parser.parse),
+        ("ffprobe", ffprobe_parser.parse),
+        ("ffmpeg", ffmpeg_parser.parse),
+        ("ebml", None),  # handled below
+        ("mkvparse", None),  # handled below
+        ("enzyme", None),  # handled below
+        ("pycdlib", None),  # handled below
+        ("pymkv", None),  # handled below
+        ("tinytag", None),  # handled below
+    ]
+
+    ebml_enabled = PARSER_CONFIG.get("enable_ebml_parser", False)
+    mkvparse_enabled = PARSER_CONFIG.get("enable_mkvparse_parser", False)
+    enzyme_enabled = PARSER_CONFIG.get("enable_enzyme_parser", False)
+    pycdlib_enabled = PARSER_CONFIG.get("enable_pycdlib_parser", False)
+    pymkv_enabled = PARSER_CONFIG.get("enable_pymkv_parser", False)
+    tinytag_enabled = PARSER_CONFIG.get("enable_tinytag_parser", False)
+
+    for step_name, step_func in parser_steps:
         needs_more_info = True if mode == 'full' else (
             not tags.get('samplerate')
             or not tags.get('bitrate')
@@ -64,92 +85,84 @@ def extract_metadata(path, filename, mode='lightweight'):
             or (file_type in ['.m4b', '.mkv', '.m4a', '.mp4'] and not tags.get('chapters'))
         )
 
-        if parser_name == "filename":
-            t0 = time.time()
-            tags = cast(dict[str, Any], filename_parser.parse(
-                path_obj, filename, tags=tags, mode=mode))
-            parser_times["filename"] = time.time() - t0
-
-
-                    # Optional EBML parser config
-                    ebml_enabled = PARSER_CONFIG.get("enable_ebml_parser", False)
-
-        elif parser_name == "container":
-            if needs_more_info:
-                t0 = time.time()
-                tags = cast(dict[str, Any], container_parser.parse(
+        t0 = time.time()
+        try:
+            if step_func:
+                tags = cast(dict[str, Any], step_func(
                     path_obj, file_type, tags, mode=mode))
-
-                # Fallback block mostly handled inside ffmpeg, but isolated here for config flexibility
-                if not tags.get('container'):
-                    tags['container'] = file_type[1:].lower() if file_type else ""
-                    if not tags.get('codec'):
-                        tags['codec'] = file_type[1:].lower() if file_type else ""
-                parser_times["container"] = time.time() - t0
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "ebml" and ebml_enabled and file_type == ".mkv":
+                from ebml.container import File
+                ebml_file = File(str(path_obj))
+                segment = next(ebml_file.children_named("Segment"), None)
+                if segment:
+                    tags['ebml_title'] = getattr(segment, 'title', None)
+                    tags['ebml_duration'] = getattr(segment, 'duration', None)
+                    tags['ebml_tracks'] = [
+                        {
+                            'type': getattr(track, 'track_type', None),
+                            'language': getattr(track, 'language', None),
+                            'codec_id': getattr(track, 'codec_id', None)
+                        }
+                        for track in getattr(segment, 'tracks', [])
+                    ]
+                    tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                log.debug(f"EBML parser finished for '{filename}'")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "mkvparse" and mkvparse_enabled and file_type == ".mkv":
+                import mkvparse
+                # Beispiel: mkvparse kann Streams und Tracks extrahieren
+                try:
+                    with open(str(path_obj), 'rb') as f:
+                        mkvparse.parse(f, lambda elem, data: log.debug(f"mkvparse: {elem} {data}"))
+                except Exception as e:
+                    log.error(f"mkvparse error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "enzyme" and enzyme_enabled and file_type in [".mkv", ".mp4"]:
+                import enzyme
+                try:
+                    movie = enzyme.Movie(str(path_obj))
+                    tags['enzyme_tracks'] = movie.tracks
+                    tags['enzyme_duration'] = movie.duration
+                except Exception as e:
+                    log.error(f"enzyme error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "pycdlib" and pycdlib_enabled and file_type == ".iso":
+                import pycdlib
+                try:
+                    iso = pycdlib.PyCdlib()
+                    iso.open(str(path_obj))
+                    tags['pycdlib_volume_id'] = iso.get_volume_id()
+                    iso.close()
+                except Exception as e:
+                    log.error(f"pycdlib error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "pymkv" and pymkv_enabled and file_type == ".mkv":
+                import pymkv
+                try:
+                    mkv = pymkv.MKVFile(str(path_obj))
+                    tags['pymkv_tracks'] = mkv.tracks
+                except Exception as e:
+                    log.error(f"pymkv error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+            elif step_name == "tinytag" and tinytag_enabled and file_type in [".mp3", ".m4a", ".ogg", ".flac", ".wav", ".wma"]:
+                from tinytag import TinyTag
+                try:
+                    tag = TinyTag.get(str(path_obj))
+                    tags['tinytag_title'] = tag.title
+                    tags['tinytag_artist'] = tag.artist
+                    tags['tinytag_duration'] = tag.duration
+                except Exception as e:
+                    log.error(f"tinytag error for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
             else:
-                parser_times["container"] = 0.0
-
-        elif parser_name == "mutagen":
-            t0 = time.time()
-            tags = cast(dict[str, Any], mutagen_parser.parse(
-                path_obj, file_type, tags, filename, mode=mode))
-            parser_times["mutagen"] = time.time() - t0
-
-        elif parser_name == "pymediainfo":
-            if needs_more_info:
-                t0 = time.time()
-                tags = cast(dict[str, Any], pymediainfo_parser.parse(
-                    path_obj, file_type, tags, mode=mode))
-                parser_times["pymediainfo"] = time.time() - t0
-            else:
-                parser_times["pymediainfo"] = 0.0
-
-        elif parser_name == "ffprobe":
-            if needs_more_info:
-                t0 = time.time()
-                tags = cast(dict[str, Any], ffprobe_parser.parse(
-                    path_obj, file_type, tags, mode=mode))
-                parser_times["ffprobe"] = time.time() - t0
-            else:
-                parser_times["ffprobe"] = 0.0
-
-        elif parser_name == "ffmpeg":
-            if needs_more_info:
-                t0 = time.time()
-                tags = cast(dict[str, Any], ffmpeg_parser.parse(
-                    path_obj, file_type, tags, mode=mode))
-                parser_times["ffmpeg"] = time.time() - t0
-            else:
-                parser_times["ffmpeg"] = 0.0
+                parser_times[step_name] = 0.0
+        except Exception as e:
+            log.error(f"{step_name} parser error for '{filename}': {e}")
+            parser_times[step_name] = time.time() - t0
 
         # Update duration safely after each potential parser
         if 'duration' in tags and tags['duration'] and not duration:
-                        # Optional EBML parser for MKV
-                        elif parser_name == "ebml":
-                            if ebml_enabled and file_type == ".mkv":
-                                t0 = time.time()
-                                try:
-                                    from ebml.container import File
-                                    ebml_file = File(str(path_obj))
-                                    segment = next(ebml_file.children_named("Segment"), None)
-                                    if segment:
-                                        tags['ebml_title'] = getattr(segment, 'title', None)
-                                        tags['ebml_duration'] = getattr(segment, 'duration', None)
-                                        tags['ebml_tracks'] = [
-                                            {
-                                                'type': getattr(track, 'track_type', None),
-                                                'language': getattr(track, 'language', None),
-                                                'codec_id': getattr(track, 'codec_id', None)
-                                            }
-                                            for track in getattr(segment, 'tracks', [])
-                                        ]
-                                        tags['ebml_chapters'] = getattr(segment, 'chapters', None)
-                                    log.debug(f"EBML parser finished for '{filename}'")
-                                except Exception as e:
-                                    log.error(f"EBML parser error for '{filename}': {e}")
-                                parser_times["ebml"] = time.time() - t0
-                            else:
-                                parser_times["ebml"] = 0.0
             try:
                 duration = int(tags['duration'])
             except (ValueError, TypeError):
