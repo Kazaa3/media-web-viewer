@@ -144,5 +144,37 @@ class TestMediaCategories(unittest.TestCase):
                 self.assertEqual(item.logical_type, 'Ordner')
                 print(f"  -> Als normaler Ordner erkannt: {d.name}")
 
+    def test_real_iso_parsing(self):
+        """Verify parsing with a real (temporary) ISO file."""
+        import tempfile
+        import os
+        try:
+            import pycdlib
+            iso_path = os.path.join(tempfile.gettempdir(), 'test_real_parser.iso')
+            iso = pycdlib.PyCdlib()
+            # Minimal ISO creation
+            iso.new(interchange_level=3)
+            # Set a real volume ID (pycdlib expects 32 bytes for volume_identifier)
+            if hasattr(iso, 'pvd'):
+                iso.pvd.volume_identifier = b'TEST_ISO_LABEL'.ljust(32)
+            iso.write(iso_path)
+            iso.close()
+            
+            # Now test our MediaItem (which uses the parser)
+            item = MediaItem('test_real.iso', iso_path)
+            
+            self.assertEqual(item.logical_type, 'Abbild')
+            # Check if volume ID was captured by either pycdlib or isoparser
+            tags = item.tags
+            label = tags.get('pycdlib_volume_id') or tags.get('iso_volume_label')
+            self.assertIn('TEST_ISO_LABEL', str(label))
+            
+            if os.path.exists(iso_path):
+                os.remove(iso_path)
+        except ImportError:
+            self.skipTest("pycdlib not available for real ISO test")
+        except Exception as e:
+            self.fail(f"Real ISO parsing failed: {e}")
+
 if __name__ == '__main__':
     unittest.main()
