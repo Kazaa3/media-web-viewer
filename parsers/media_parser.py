@@ -82,7 +82,14 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
 
     MAX_RETRIES = PARSER_CONFIG.get("parser_max_retries", 2)
 
-    for step_name, step_func in parser_steps:
+    # Filter and sort parser_steps according to the configured parser_chain
+    active_steps = []
+    for p_id in parser_chain:
+        step = next((s for s in parser_steps if s[0] == p_id), None)
+        if step:
+            active_steps.append(step)
+
+    for step_name, step_func in active_steps:
         # Skip if we already have enough information (for lightweight mode)
         # or if mode is 'full' we always continue to gather all tags.
         if mode != 'full':
