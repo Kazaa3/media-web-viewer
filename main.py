@@ -1480,32 +1480,67 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
     count: int = 0
     try:
+        from parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+        all_exts = AUDIO_EXTENSIONS | VIDEO_EXTENSIONS | IMAGE_EXTENSIONS | DOCUMENT_EXTENSIONS | EBOOK_EXTENSIONS | {'.iso'}
+        
         for scan_root in scan_roots:
             logger.debug("scan", f"Starting scan of: {scan_root}")
 
-            # Rekursiv suchen, um Medien in Unterordnern zu finden
+            # Collect items to avoid sub-file duplicates
+            skip_subpaths: set[Path] = set()
+
+            # First pass: Identify "Media Folders" (DVD/BD/ISO-Folders)
+            for d in scan_root.rglob('*'):
+                if d.is_dir():
+                    is_media_folder = (d / 'VIDEO_TS').exists() or (d / 'BDMV').exists()
+                    if not is_media_folder:
+                        # Check if it contains an ISO
+                        if any(d.glob('*.iso')):
+                            is_media_folder = True
+
+                    if is_media_folder:
+                        logger.debug("scan", f"Erkennte Medien-Ordner: {d.name}")
+                        try:
+                            item = MediaItem(d.name, d)
+                            item_dict = item.to_dict()
+                            db.insert_media(item_dict)
+                            count += 1
+                            skip_subpaths.add(d)
+                        except Exception as e:
+                            logger.debug("scan", f"Fehler bei Ordner {d.name}: {e}")
+
+            # Second pass: Files
             for f in scan_root.rglob('*'):
-                if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS:
-                    # Überspringe den Transcoding-Cache, um Duplikate zu verhindern
-                    if '.cache' in f.parts:
+                if f.is_file():
+                    # Skip if parent is already a recognized media folder
+                    should_skip = False
+                    for p in skip_subpaths:
+                        if f.is_relative_to(p):
+                            should_skip = True
+                            break
+                    if should_skip:
                         continue
 
-                    # Blacklist für unerwünschte Dateien (Cover-Art, Captcha, etc.)
-                    name_lower = f.name.lower()
-                    if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
-                        continue
+                    ext = f.suffix.lower()
+                    if ext in all_exts:
+                        # Überspringe den Transcoding-Cache
+                        if '.cache' in f.parts:
+                            continue
 
-                    logger.debug("scan", f"Verarbeite: {f.name}")
-                    try:
-                        item = MediaItem(f.name, f)
-                        item_dict = item.to_dict()
-                        logger.debug("db", f"{f.name} (Category: {item_dict.get('category')}) from {f.parent}")
-                        db.insert_media(item_dict)
-                        count += 1
-                    except Exception as e:
-                        logger.debug("scan", f"Fehler bei {f.name}: {e}")
-                        # Ignoriere problematische Dateien, aber setze das Logging fort
-                        continue
+                        # Blacklist
+                        name_lower = f.name.lower()
+                        if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
+                            continue
+
+                        logger.debug("scan", f"Verarbeite: {f.name}")
+                        try:
+                            item = MediaItem(f.name, f)
+                            item_dict = item.to_dict()
+                            db.insert_media(item_dict)
+                            count += 1
+                        except Exception as e:
+                            logger.debug("scan", f"Fehler bei {f.name}: {e}")
+                            continue
 
         elapsed = time.time() - start_time
         scanned_target = ", ".join(str(p) for p in scan_roots) if scan_roots else "none"

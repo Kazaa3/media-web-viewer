@@ -7,7 +7,9 @@ Dieses Modul stellt die zentrale Klasse und Hilfsfunktionen zur Verfügung, um d
 from pathlib import Path
 from typing import Any
 
-from parsers.format_utils import AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, EBOOK_EXTENSIONS, DOCUMENT_EXTENSIONS
+from parsers.format_utils import (
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, EBOOK_EXTENSIONS, DOCUMENT_EXTENSIONS, IMAGE_EXTENSIONS
+)
 
 class MediaFormat:
     """
@@ -25,11 +27,15 @@ class MediaFormat:
     def detect_type(self) -> str:
         ext = self.extension
         if ext == '.iso':
-            return 'Image'
+            return 'ISO/Image'
         if ext in VIDEO_EXTENSIONS:
             return 'Video'
         if ext in AUDIO_EXTENSIONS:
             return 'Audio'
+        if ext == '.m4b' or any(k in str(self.path).lower() for k in ['h\u00f6rbuch', 'hörbuch', 'audiobook']):
+            return 'Hörbuch'
+        if ext in IMAGE_EXTENSIONS:
+            return 'Bilder'
         if ext in EBOOK_EXTENSIONS:
             return 'E-Book'
         if ext in DOCUMENT_EXTENSIONS:

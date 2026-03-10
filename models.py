@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from parsers.format_utils import (
     PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
-    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
+    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS
 )
 from parsers import media_parser
 import logger
@@ -48,7 +48,10 @@ class MediaItem:
         """
         self.name = name
         self.path = Path(path)
-        self.type = self.path.suffix.lower()
+        if self.path.is_dir():
+            self.type = 'Folder'
+        else:
+            self.type = self.path.suffix.lower()
 
         # Debug mode is handled centrally through logger level
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
@@ -75,11 +78,20 @@ class MediaItem:
     def detect_logical_type(self):
         ext = self.type.lower()
         if ext == '.iso':
-            return 'Image'
+            return 'Abbild'
+        if self.type == 'Folder':
+            # Check if it contains media indicators
+            if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists():
+                return 'Ordner' # Categorized as folder, but content will be 'Film'
+            if any(self.path.glob('*.iso')):
+                return 'Ordner'
+            return 'Ordner'
         if ext in VIDEO_EXTENSIONS:
             return 'Video'
         if ext in AUDIO_EXTENSIONS:
             return 'Audio'
+        if ext in IMAGE_EXTENSIONS:
+            return 'Bilder'
         if ext in EBOOK_EXTENSIONS:
             return 'E-Book'
         if ext in DOCUMENT_EXTENSIONS:
@@ -94,7 +106,7 @@ class MediaItem:
             volume_id = tags.get('pycdlib_volume_id', '').lower()
             if 'pal' in volume_id or 'dvd' in volume_id:
                 return 'PAL DVD'
-            return 'ISO Image'
+            return 'Disk Image'
         return self.category
     def get_category(self):
         """
@@ -105,21 +117,45 @@ class MediaItem:
         ext = self.type.lower()
         path_str = str(self.path).lower()
         tags = self.tags or {}
+        logical = self.detect_logical_type()
 
-        # 1. Video / E-Book / Document (Non-Audio)
-        if ext in VIDEO_EXTENSIONS:
+        # 1. Folders / Video / DVD / ISO
+        if logical == 'Ordner':
+            # Sub-classification for folders
+            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
+                return 'Serie'
+            if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists() or any(self.path.glob('*.iso')):
+                return 'Film'
+            return 'Ordner'
+
+        if logical == 'Video':
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
                 return 'Serie'
             return 'Film'
+        
+        if logical == 'Abbild':
+            # Use content_type from format_utils if available via metadata
+            from parsers.format_utils import detect_file_format
+            fmt = detect_file_format(self.path, tags)
+            if 'DVD' in fmt:
+                return 'Film'
+            if 'SACD' in fmt or 'Audio-CD' in fmt:
+                return 'Album'
+            return 'Abbild'
+
         if ext in EBOOK_EXTENSIONS:
             return 'E-Book'
         if ext in DOCUMENT_EXTENSIONS:
             return 'Dokument'
+        if ext in IMAGE_EXTENSIONS:
+            return 'Bilder'
 
         # 2. Audio Parser Logic
         if ext in AUDIO_EXTENSIONS or ext == '.m4b':
             # Priority 1: Hörbuch (m4b extension or keyword in path/genre)
-            genre = tags.get('genre', '').lower()
+            genre = (tags.get('genre') or '').lower()
+            album = (tags.get('album') or '').lower()
+            artist = (tags.get('artist') or '').lower()
             if ext == '.m4b' or any(
                 k in path_str for k in [
                     'hörbuch',
@@ -192,7 +228,9 @@ class MediaItem:
         whitelist = {
             'title', 'artist', 'album', 'year', 'genre', 'track', 'totaltracks',
             'disc', 'codec', 'bitdepth', 'samplerate', 'bitrate', 'size',
-            'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation'
+            'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation',
+            'resolution', 'width', 'height', 'fps', 'video_codec', 'audio_track_count',
+            'subtitle_count', 'subtitle_languages', 'language'
         }
         filtered_tags = {k: v for k, v in self.tags.items() if k in whitelist}
 
