@@ -1351,7 +1351,26 @@ def get_library():
     @details Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen.
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
-    return {"media": db.get_all_media()}
+    all_media = db.get_all_media()
+    displayed_cats = PARSER_CONFIG.get("displayed_categories", ["audio"])
+    
+    # We map internal categories to the setting keys
+    # logical_type: 'Audio', 'Video', 'Bilder', 'Dokument', 'E-Book', 'Abbild'
+    cat_map = {
+        "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single"],
+        "video": ["Video", "Film", "Serie"],
+        "images": ["Bilder"],
+        "documents": ["Dokument"],
+        "ebooks": ["E-Book"],
+        "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray"]
+    }
+    
+    allowed_internal_cats = []
+    for cat in displayed_cats:
+        allowed_internal_cats.extend(cat_map.get(cat, []))
+        
+    filtered_media = [item for item in all_media if item.get('category') in allowed_internal_cats]
+    return {"media": filtered_media}
 
 
 @eel.expose

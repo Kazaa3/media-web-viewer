@@ -75,7 +75,8 @@ PARSER_CONFIG: dict[str, Any] = {
     "ffmpeg_deep_analysis": False,
     "ffmpeg_extract_thumbnails": True,
     "enable_isoparser_parser": True,
-    "indexed_categories": ["audio", "audiobook"]
+    "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild"],
+    "displayed_categories": ["audio"]
 }
 
 

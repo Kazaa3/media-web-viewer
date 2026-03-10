@@ -1363,6 +1363,43 @@
                         </div>
 
                         <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_displayed_types">
+                                Dargestellte Medientypen</div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
+                                data-i18n="options_displayed_types_desc">Wähle aus, welche Dateitypen aktuell in der
+                                Bibliothek angezeigt werden.</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-audio" value="audio"
+                                        onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_audio">Audio</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-video" value="video"
+                                        onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_video">Video</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-images" value="images"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_images">Bilder</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-documents" value="documents"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_documents">Dokumente</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-ebooks" value="ebooks"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_ebooks">E-Books</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-abbild" value="abbild"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_abbild">ISO-Abbilder</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div
                             style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 500;" data-i18n="options_language">Sprache / Language</div>
@@ -3170,13 +3207,19 @@
                     }
                 }
 
-                if (config && config.indexed_categories) {
-                    const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
-                    cats.forEach(cat => {
-                        const cb = document.getElementById('cat-' + cat);
-                        if (cb) cb.checked = config.indexed_categories.includes(cat);
-                    });
-                }
+                // Initialize categories
+                const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+                cats.forEach(cat => {
+                    const cb = document.getElementById('cat-' + cat);
+                    if (cb && config.indexed_categories) {
+                        cb.checked = config.indexed_categories.includes(cat);
+                    }
+
+                    const dispCb = document.getElementById('disp-cat-' + cat);
+                    if (dispCb && config.displayed_categories) {
+                        dispCb.checked = config.displayed_categories.includes(cat);
+                    }
+                });
 
                 renderParserList();
             });
@@ -3353,12 +3396,19 @@
                 if (cb && cb.checked) indexedCats.push(cat);
             });
 
+            const displayedCats = [];
+            cats.forEach(cat => {
+                const cb = document.getElementById('disp-cat-' + cat);
+                if (cb && cb.checked) displayedCats.push(cat);
+            });
+
             // Prepare the full config object
             const finalConfig = {
                 ...currentParserOptions,
                 "parser_chain": newChain,
                 "parser_mode": newMode,
-                "indexed_categories": indexedCats
+                "indexed_categories": indexedCats,
+                "displayed_categories": displayedCats
             };
 
             console.log("Saving full parser config:", finalConfig);
