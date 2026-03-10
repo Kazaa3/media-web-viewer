@@ -15,8 +15,15 @@ def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
         # Try to detect content (PAL DVD, Blu-ray, etc.)
         if tags:
             volume_id = tags.get('pycdlib_volume_id', '').lower()
-            if 'pal' in volume_id:
+            standard = tags.get('standard', '').lower()
+            container = tags.get('container', '').lower()
+
+            if 'pal' in volume_id or 'pal' in standard:
                 return 'PAL DVD (ISO)'
+            if 'ntsc' in volume_id or 'ntsc' in standard:
+                return 'NTSC DVD (ISO)'
+            if 'dvd video' in container:
+                return 'DVD (ISO)'
             if 'blu' in volume_id or 'bd' in volume_id:
                 return 'Blu-ray (ISO)'
         return 'ISO'

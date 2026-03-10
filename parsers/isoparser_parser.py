@@ -10,14 +10,18 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str, m
     if file_type != ".iso":
         return tags
     try:
-        # isoparser expects a file object, not a string
-        with open(path_obj, 'rb') as f:
-            iso = ISO(f)
-            tags['iso_volume_label'] = iso.primary.volume_id
-            tags['iso_files_count'] = len(list(iso.files()))
-            tags['iso_file_list'] = [file.path for file in iso.files()][:10]  # Limit to 10 for preview
-            tags['container'] = 'iso'
-            tags['tagtype'] = 'iso'
+        import isoparser
+        iso = isoparser.parse(str(path_obj))
+        # primary is an attribute of the ISO object in isoparser 0.3
+        if hasattr(iso, 'volume_descriptors') and 'primary' in iso.volume_descriptors:
+            tags['iso_volume_label'] = iso.volume_descriptors['primary'].volume_id
+        
+        # files() returns a generator of record objects
+        all_files = list(iso.root.children) if hasattr(iso, 'root') else []
+        tags['iso_files_count'] = len(all_files)
+        tags['iso_file_list'] = [f.name for f in all_files][:10]
+        tags['container'] = 'iso'
+        tags['tagtype'] = 'iso'
     except Exception as e:
         tags['iso_error'] = f"isoparser: {e}"
     return tags
