@@ -103,7 +103,6 @@ Die neue Architektur ist dokumentiert und getestet. Empfehlungen und Benchmarks 
 
 Jeder Parser benötigt das jeweilige Paket (siehe requirements.txt), ggf. Systemtools (ffprobe/ffmpeg) und Zusatzpakete wie six für isoparser. Die Tabelle gibt einen schnellen Überblick, was für Tests und Betrieb installiert sein muss.
 
----
 **Milestone: Buildsystem, Environment, DB, Hygiene**
 
 **build_system.py**
@@ -117,4 +116,62 @@ SQLite-Datenbankmodul. Initialisiert DB, Migration für neue Felder, Insert/Upda
 
 **env_handler.py**
 Umfassendes Environment- und Hygiene-Management. Validiert exklusive venv/conda, prüft kritische Python- und System-Dependencies, Browser, generiert Environment-Fingerprint, gibt fehlende Pakete für pip/apt/conda aus, strikte Startup-Validierung mit Fix-Hinweis. Modular, robust, dokumentiert.
+**Milestone: Logging, Main, MediaFormat**
+
+**logger.py**
+Zentrales Logging-Modul. Initialisiert Logging mit Console, File, Debug-File und UI-Buffer. Rotierende Logfiles, Debug-Flags, UI-Log-Handler für Eel, suppress noisy logs. Modular, robust, für alle Module nutzbar.
+
+Hauptmodul, Einstiegspunkt. Initialisiert Eel, Logging, Environment-Check, Debug-Flags, Browser-Handling, Session-Management, DB-Init, Scan, API-Expose für Frontend. Automatische venv/conda-Erkennung und Re-Exec, robustes Environment- und Dependency-Handling, Threaded Media-Scan, flexible CLI-Modi (no-gui, connectionless-browser), Feature- und Logbuch-API.
+
+**media_format.py**
+Zentrale Definition und Standardisierung von Dateiformaten. MediaFormat-Klasse erkennt Typ, Format und Content für alle Medientypen (Audio, Video, ISO, Dokument, E-Book). Content-Erkennung für Spezialfälle (PAL DVD, Blu-ray, Daten-Disc, Audio-CD). Modular, für UI, DB und Parser nutzbar.
+---
+**Milestone: Build Scripts, Config, Versioning**
+
+**build_deb.sh**
+Baut .deb-Paket, prüft Build-Test-Gate, kopiert Quellcode ins Staging, setzt Version, macht DEBIAN-Skripte ausführbar, erzeugt Paket, gibt Installationshinweise aus. Robust, automatisiert, für Release und QA.
+
+**build_exe.sh**
+Baut standalone EXE für Windows/Linux mit PyInstaller, aktiviert venv, installiert PyInstaller, nutzt Spec-File, prüft Build-Erfolg. Automatisiert, für portable Distribution.
+
+**install_launcher.sh**
+Installiert globalen Launcher (media-viewer) in ~/.local/bin, prüft PATH, macht ausführbar, bietet automatische PATH-Konfiguration, gibt Usage und Test aus. Benutzerfreundlich, robust.
+
+**run.sh**
+Automatischer Environment-Setup und Launcher. Erkennt Python-Version, aktiviert venv, prüft und installiert fehlende Dependencies (pip/apt/conda), zeigt Umgebung, startet App mit CLI-Optionen (--debug, --ng, --n, --rebuild). Robust, benutzerfreundlich, für alle Plattformen.
+
+**update_version.py**
+Synchronisiert Version über alle konfigurierten Dateien (VERSION_SYNC.json), prüft und ersetzt Version-Strings, dry-run möglich, gibt Update-Summary aus. Automatisiert, robust, für Release-Management.
+
+**requirements.txt**
+Zentrale Python-Abhängigkeitsliste mit Lizenzhinweisen, System-Dependencies, Installationshinweisen. Kompatibel mit GPL-3.0, dokumentiert, für pip/apt/conda.
+
+**.flake8**
+Konfiguriert Flake8-Linter: max-line-length, exclude, ignore, per-file-ignores. Für saubere Codequalität und flexible Lint-Regeln.
+
+**.gitignore**
+Umfassende Ignore-Liste für Python, Tests, venv, Build, Logs, Datenbanken, Medien, Screenshots, User-Data, Benchmarks, Packaging. Schützt sensible und temporäre Dateien, hält Repo sauber.
+
+---
+**Milestone: Environment, Install, License, Spec, Project Config**
+
+**environment.yml**
+Conda-Umgebungsdatei: definiert Python-Version, System- und Pip-Abhängigkeiten, Channels, für schnelle Setup und reproduzierbare Umgebung. Kompatibel mit requirements.txt.
+
+**INSTALL.md**
+Installationsanleitung: Systemvoraussetzungen, Methoden (Debian-Paket, Standalone, Source, Conda), Troubleshooting, CI/CD, Build- und Run-Befehle. Detailliert, benutzerfreundlich, für alle Plattformen.
+
+**LICENSE.md**
+GPL-3.0 Lizenztext, vollständige Rechte und Pflichten, Kompatibilitätshinweise, Schutz der Nutzerfreiheit, für alle Programmteile und Abhängigkeiten.
+
+**MediaWebViewer.spec / MediaWebViewer-1.3.2.spec / MediaWebViewer-1.3.3.spec**
+PyInstaller-Spec-Files: Definieren Build-Konfiguration, Daten, Hidden-Imports, Name, Console-Optionen, für portable Executables. Versioniert, flexibel, für Release und QA.
+
+**pyproject.toml**
+Projektweite Konfiguration für Mypy (Type Checking), Python-Version, Warnungen, Import-Overrides. Für saubere Typprüfung und flexible Projektstruktur.
+---
+Konfiguriert Doxygen für Python und zweisprachige Dokumentation, HTML-Output, Graphviz, private/static extraction, optimiert für Projektstruktur und Docstring-Parsing.
+
+**VERSION_SYNC.json**
+Zentrale Version-Sync-Konfiguration: definiert alle zu synchronisierenden Version-Strings, Regex-Pattern, Update-Instructions, Metadaten. Für automatisierte Versionierung und Release-Consistency.
 ---
