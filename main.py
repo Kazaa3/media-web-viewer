@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Media Web Viewer - Desktop Media Player and Library Manager
+dict - Desktop Media Player and Library Manager
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -137,7 +137,7 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.3.3"  # Fallback
+    VERSION = "1.34"  # Fallback
 # --- Imprint/Impressum API ---
 @eel.expose
 def get_imprint_info():
@@ -150,7 +150,18 @@ def get_imprint_info():
         "location": "Germany",
         "privacy": "Local storage in SQLite. No data transmission to external servers.",
         "license": "GNU GPL-3.0",
+        "last_fix": "dict",
     }
+
+@eel.expose
+def get_version():
+    """Returns the application version."""
+    return VERSION
+
+@eel.expose
+def get_app_name():
+    """Returns the application name."""
+    return "dict"
 
 # --- Environment Info API ---
 @eel.expose
@@ -211,15 +222,6 @@ _ENV_INFO_CACHE = {
 }
 _ENV_INFO_CACHE_TTL_SECONDS = 8.0
 
-
-@eel.expose
-def get_version():
-    """
-    @brief Returns the current version number.
-    @details Gibt die aktuelle Versionsnummer zurück.
-    @return Version string / Versions-String.
-    """
-    return VERSION
 
 
 @eel.expose
@@ -1481,7 +1483,23 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     count: int = 0
     try:
         from parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
-        all_exts = AUDIO_EXTENSIONS | VIDEO_EXTENSIONS | IMAGE_EXTENSIONS | DOCUMENT_EXTENSIONS | EBOOK_EXTENSIONS | {'.iso'}
+        
+        # Build all_exts based on configured categories
+        indexed_cats = PARSER_CONFIG.get("indexed_categories", ["audio", "audiobook"])
+        all_exts = set()
+        
+        if "audio" in indexed_cats or "audiobook" in indexed_cats:
+            all_exts |= AUDIO_EXTENSIONS
+        if "video" in indexed_cats:
+            all_exts |= VIDEO_EXTENSIONS
+        if "images" in indexed_cats:
+            all_exts |= IMAGE_EXTENSIONS
+        if "documents" in indexed_cats:
+            all_exts |= DOCUMENT_EXTENSIONS
+        if "ebooks" in indexed_cats:
+            all_exts |= EBOOK_EXTENSIONS
+        if "abbild" in indexed_cats:
+            all_exts.add('.iso')
         
         for scan_root in scan_roots:
             logger.debug("scan", f"Starting scan of: {scan_root}")

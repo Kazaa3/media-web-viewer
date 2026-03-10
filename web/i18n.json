@@ -1,6 +1,6 @@
 {
     "de": {
-        "app_title": "Media Player",
+        "app_title": "dict",
         "nav_player": "Player",
         "nav_library": "Bibliothek",
         "nav_browser": "Browser",
@@ -213,7 +213,15 @@
         "logbook_edit_title_new": "Neuer Eintrag",
         "logbook_edit_prefix": "Bearbeite: ",
         "edit_placeholder_text": "Wähle links ein Element aus, um die Metadaten zu bearbeiten.",
-        "about_imprint_content": "<h2>Media Web Viewer</h2><p> Eine umfassende Desktop-Anwendung zur Verwaltung, Indexierung und Wiedergabe von Mediendateien mit hochperformanten Metadaten-Parsing-Funktionen.</p><h3>Hauptmerkmale</h3><p>Multi-Format Support, Intelligente Parser-Chain, Hörbuch-Support, Automatische Transkodierung, SQLite DB, Test-Suite, Logbuch.</p><h3>Technische Architektur</h3><p>Backend: Python mit Bottle-Server und Eel-Brücke. Frontend: Modernes JavaScript mit deklarativem i18n-System, CSS3 (Glassmorphism), dynamisches Event-Handling.</p><hr><h4>Impressum</h4><p>Entwickler: kazaa3 | Ort: Deutschland</p><p>Technologie: Entwickelt mit Python, Eel, Bottle und SQLite.</p><p>Datenschutz: Lokale Speicherung in SQLite. Keine Datenübertragung an externe Server.</p><p>Lizenz: Open Source Projekt.</p>",
+        "options_indexed_types": "Indexierte Medientypen",
+        "options_indexed_types_desc": "Wähle aus, welche Dateitypen beim Scan indexiert werden sollen.",
+        "cat_audio": "Audio",
+        "cat_video": "Video",
+        "cat_images": "Bilder",
+        "cat_documents": "Dokumente",
+        "cat_ebooks": "E-Books",
+        "cat_abbild": "ISO-Abbilder",
+        "about_imprint_content": "<h2>dict</h2><p> Eine umfassende Desktop-Anwendung zur Verwaltung, Indexierung und Wiedergabe von Mediendateien mit hochperformanten Metadaten-Parsing-Funktionen.</p><h3>Hauptmerkmale</h3><p>Multi-Format Support, Intelligente Parser-Chain, Hörbuch-Support, Automatische Transkodierung, SQLite DB, Test-Suite, Logbuch.</p><h3>Technische Architektur</h3><p>Backend: Python mit Bottle-Server und Eel-Brücke. Frontend: Modernes JavaScript mit deklarativem i18n-System, CSS3 (Glassmorphism), dynamisches Event-Handling.</p><hr><h4>Impressum</h4><p>Entwickler: kazaa3 | Ort: Deutschland</p><p>Technologie: Entwickelt mit Python, Eel, Bottle und SQLite.</p><p>Datenschutz: Lokale Speicherung in SQLite. Keine Datenübertragung an externe Server.</p><p>Lizenz: GNU GPLv3.</p>",
         "common_about_imprint": "Über & Impressum",
         "about_tech_stack_title": "Technische Architektur",
         "about_tech_stack_desc": "Backend: Python mit Bottle-Server und Eel-Brücke. Frontend: Modernes JavaScript mit deklarativem i18n-System, CSS3 (Glassmorphism), dynamisches Event-Handling.",
@@ -262,7 +270,7 @@
         "options_requirements_refresh": "🔄 Jetzt neu prüfen",
         "options_no_dirs_configured": "Keine Verzeichnisse konfiguriert.",
         "options_remove_dir_confirm": "Verzeichnis \"{path}\" wirklich entfernen?",
-        "debug_db_desc": "Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank und die Frontend gesendet wir.",
+        "debug_db_desc": "Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank und das Frontend gesendet wird.",
         "debug_db_loading_stats": "Lade Datenbank-Statistiken...",
         "debug_loading_data": "Lade Daten...",
         "vlc_btn_stop": "Stoppen",
@@ -343,7 +351,7 @@
         "logbook_modal_title": "Logbuch: Feature Name"
     },
     "en": {
-        "app_title": "Media Player",
+        "app_title": "dict",
         "nav_player": "Player",
         "nav_library": "Library",
         "nav_browser": "Browser",
@@ -683,6 +691,14 @@
         "sync_backend_status": "Backend Status",
         "sync_initializing": "Initializing...",
         "logbook_modal_title": "Logbook: Feature Name",
-        "about_imprint_content": "<h2>Media Web Viewer</h2><p> A comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities.</p><h3>Key Features</h3><p>Multi-format support, Intelligent parser chain, Audiobook support, Automatic transcoding, SQLite DB, Test suite, Logbook.</p><h3>Technical Architecture</h3><p>Backend: Python with Bottle server and Eel bridge. Frontend: Modern JavaScript with declarative i18n system, CSS3 (Glassmorphism), dynamic event handling.</p><hr><h4>Imprint</h4><p>Developer: kazaa3 | Location: Germany</p><p>Privacy: Local storage in SQLite. No data transmission to external servers.</p><p>License: Open Source Project.</p>"
+        "options_indexed_types": "Indexed Media Types",
+        "options_indexed_types_desc": "Choose which file types should be indexed during scan.",
+        "cat_audio": "Audio",
+        "cat_video": "Video",
+        "cat_images": "Images",
+        "cat_documents": "Documents",
+        "cat_ebooks": "E-Books",
+        "cat_abbild": "ISO Images",
+        "about_imprint_content": "<h2>dict</h2><p> A comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities.</p><h3>Key Features</h3><p>Multi-format support, Intelligent parser chain, Audiobook support, Automatic transcoding, SQLite DB, Test suite, Logbook.</p><h3>Technical Architecture</h3><p>Backend: Python with Bottle server and Eel bridge. Frontend: Modern JavaScript with declarative i18n system, CSS3 (Glassmorphism), dynamic event handling.</p><hr><h4>Imprint</h4><p>Developer: kazaa3 | Location: Germany</p><p>Privacy: Local storage in SQLite. No data transmission to external servers.</p><p>License: GNU GPLv3.</p>"
     }
 }

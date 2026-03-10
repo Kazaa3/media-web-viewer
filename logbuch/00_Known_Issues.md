@@ -8,10 +8,6 @@
 
 # Bekannte Probleme (Stand v1.3.3)
 
-- DB zu Debug & DB
-
-
-
 
 ## Offene Punkte
 - Laufende Bugs und technische Schulden werden hier gesammelt.
@@ -49,6 +45,9 @@
 ## Working rule
 - Add new bugs here first.
 - After fixing, move to "Resolved" or link to the related entry.
+- Datei: audio statt .m1a (Datei-Endung). Durch Datenbankänderung
+- get Imprint nicht verwendet, sondern i8n
+- 
 
 ## Current Open Bugs (as of 2026-03-09)
 

@@ -87,6 +87,8 @@ def main() -> int:
     root = Path(__file__).resolve().parent
     version_file = root / "VERSION"
     sync_file = root / "VERSION_SYNC.json"
+        # Example usage for version 1.01:
+        # python update_version.py --new-version 1.01
 
     if not version_file.exists():
         print(f"❌ Missing VERSION file: {version_file}")
