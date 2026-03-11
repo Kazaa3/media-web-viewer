@@ -36,7 +36,8 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str, m
         try:
             iso = pycdlib.PyCdlib()
             iso.open(str(path_obj))
-            tags['pycdlib_volume_id'] = iso.get_volume_id().decode('utf-8', 'ignore').strip()
+            pvd = iso.get_pvd()
+            tags['pycdlib_volume_id'] = pvd.volume_identifier.decode('utf-8', 'ignore').strip() if pvd else "Unknown"
             # Basic file count from root
             tags['iso_files_count'] = len(iso.list_children(iso_path='/'))
             iso.close()

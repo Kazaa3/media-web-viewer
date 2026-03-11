@@ -1393,7 +1393,9 @@ def get_library():
     """
     all_media = db.get_all_media()
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
-    if not displayed_cats:
+    # If explicitly None, default to everything (Legacy behavior or first run)
+    # If empty list [], it means the user unchecked EVERYTHING (Respect that)
+    if displayed_cats is None:
         displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild"]
     
     # We map internal categories to the setting keys
@@ -1406,7 +1408,8 @@ def get_library():
         "ebooks": ["E-Book"],
         "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray", 
                    "PAL DVD (Abbild)", "NTSC DVD (Abbild)", "DVD (Abbild)", "Blu-ray (Abbild)", 
-                   "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild"]
+                   "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild", "Film",
+                   "Spiel", "Beigabe", "Software"]
     }
     
     allowed_internal_cats = []

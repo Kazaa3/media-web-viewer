@@ -168,7 +168,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                     success = True
                 elif step_name == "ebml":
                     from ebml.container import File
-                    ebml_file = File(str(path_obj))
+                    ebml_file = File(path_obj.open('rb'))
                     segment = next(ebml_file.children_named("Segment"), None)
                     if segment:
                         current_tags['ebml_title'] = getattr(segment, 'title', None)
@@ -193,21 +193,27 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
                     success = True
                 elif step_name == "enzyme":
                     import enzyme
-                    movie = enzyme.Movie(str(path_obj))
-                    current_tags['enzyme_tracks'] = movie.tracks
-                    current_tags['enzyme_duration'] = movie.duration
+                    # Open stream in binary mode as required by enzyme/mkv.py
+                    with path_obj.open('rb') as f:
+                        movie = enzyme.MKV(f)
+                        current_tags['enzyme_tracks'] = movie.audio_tracks + movie.video_tracks
+                        current_tags['enzyme_duration'] = movie.info.duration.total_seconds() if movie.info and movie.info.duration else None
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "pycdlib":
                     import pycdlib
                     iso = pycdlib.PyCdlib()
                     iso.open(str(path_obj))
-                    current_tags['pycdlib_volume_id'] = iso.get_volume_id()
+                    pvd = iso.get_pvd()
+                    current_tags['pycdlib_volume_id'] = pvd.volume_identifier.decode('utf-8', 'ignore').strip() if pvd else "Unknown"
                     iso.close()
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "pymkv":
                     import pymkv
+                    import shutil
+                    if not shutil.which("mkvmerge"):
+                         raise FileNotFoundError("mkvmerge binary not found in PATH")
                     mkv = pymkv.MKVFile(str(path_obj))
                     current_tags['pymkv_tracks'] = mkv.tracks
                     parser_times[step_name] = time.time() - t0

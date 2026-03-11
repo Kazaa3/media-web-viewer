@@ -21,7 +21,8 @@ from pathlib import Path
 from typing import Optional, Any
 from parsers.format_utils import (
     PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
-    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS
+    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS,
+    DISK_IMAGE_EXTENSIONS
 )
 from parsers import media_parser
 import logger
@@ -83,7 +84,7 @@ class MediaItem:
 
     def detect_logical_type(self):
         ext = self.type.lower()
-        if ext == '.iso':
+        if ext in DISK_IMAGE_EXTENSIONS:
             return 'Abbild'
         if self.type == 'Folder':
             # Check if it contains media indicators
@@ -107,8 +108,8 @@ class MediaItem:
     def detect_content_type(self):
         ext = self.type.lower()
         tags = self.tags or {}
-        # ISO: try to detect PAL DVD
-        if ext == '.iso':
+        # ISO / Disk Image: try to detect PAL DVD
+        if ext in DISK_IMAGE_EXTENSIONS:
             volume_id = tags.get('pycdlib_volume_id', '').lower()
             if 'pal' in volume_id or 'dvd' in volume_id:
                 return 'PAL DVD'
@@ -143,10 +144,23 @@ class MediaItem:
             # Use content_type from format_utils if available via metadata
             from parsers.format_utils import detect_file_format
             fmt = detect_file_format(self.path, tags)
-            if 'DVD' in fmt:
-                return 'Film'
+            if 'DVD' in fmt or 'Blu-ray' in fmt:
+                return fmt
             if 'SACD' in fmt or 'Audio-CD' in fmt:
                 return 'Album'
+            
+            # Specialized detection for PC Games and Book Discs
+            vol_id = tags.get('pycdlib_volume_id', '').upper()
+            if any(k in vol_id for k in ['S3GOLD', 'GAME', 'PLAY', 'SPIEL', 'SIMS']):
+                return 'Spiel'
+            
+            path_lower = str(self.path).lower()
+            if any(k in path_lower for k in ['spiel', 'game', 'software']):
+                 return 'Spiel'
+                 
+            if any(k in path_lower for k in ['buch', 'book', 'beigabe']):
+                return 'Beigabe'
+                
             return 'Abbild'
 
         if ext in EBOOK_EXTENSIONS:

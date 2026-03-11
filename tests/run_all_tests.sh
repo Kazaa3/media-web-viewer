@@ -35,15 +35,22 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-if [ "$STAGE" == "0" ]; then
-    echo -e "${YELLOW}No stage specified. Defaulting to Stage 1 (Core Health).${NC}"
-    STAGE=1
+# Detector for Python interpreter
+if command -v python3 &>/dev/null; then
+    PYTHON_EXE="python3"
+else
+    PYTHON_EXE="python"
+fi
+
+# Ensure we use the interpreter from the active .venv if present
+if [ -n "$VIRTUAL_ENV" ]; then
+    PYTHON_EXE="$VIRTUAL_ENV/bin/python"
 fi
 
 run_test() {
     local file=$1
     echo -e "${BLUE}Running: $file...${NC}"
-    if python "$file"; then
+    if "$PYTHON_EXE" "$file"; then
         echo -e "${GREEN}PASS${NC}"
         return 0
     else

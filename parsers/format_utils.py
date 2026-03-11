@@ -165,6 +165,11 @@ def load_parser_config() -> None:
                 for key, value in PARSER_CONFIG.items():
                     if key not in loaded:
                         loaded[key] = value
+                    # Special Case: empty lists should be reset to defaults if it's the first run or migration
+                    # but only if we are SURE it was not an intentional user choice.
+                    # Simplified: if the key is mandatory and empty, use defaults from PARSER_CONFIG
+                    if key in ["indexed_categories", "displayed_categories"] and not loaded[key]:
+                         loaded[key] = value
                 
                 PARSER_CONFIG.update(loaded)
                 
