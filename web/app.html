@@ -1268,7 +1268,7 @@
                         <h2 style="margin: 0;" data-i18n="nav_playlist">Playlist</h2>
                         <span id="playlist-count" style="color: #666; font-size: 0.9em;">0 Items</span>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
                         <button onclick="savePlaylistUI()" class="sidebar-badge"
                             style="cursor: pointer; border: 1px solid #ddd; background: #f3f8ff; color: #2a62c9;">💾
                             Save</button>
@@ -1279,6 +1279,11 @@
                             style="cursor: pointer; border: 1px solid #ddd;">🔀 Shuffle</button>
                         <button onclick="clearPlaylist()" class="sidebar-badge"
                             style="cursor: pointer; border: 1px solid #ddd; color: #c0392b;">🗑️ Clear</button>
+                        <!-- Move current item up/down -->
+                        <button id="pl-move-up" onclick="moveCurrentUp()" class="sidebar-badge"
+                            style="cursor: pointer; border: 1px solid #ddd;">🔼 Move Up</button>
+                        <button id="pl-move-down" onclick="moveCurrentDown()" class="sidebar-badge"
+                            style="cursor: pointer; border: 1px solid #ddd;">🔽 Move Down</button>
                     </div>
                 </div>
                 <div id="playlist-list"></div>
@@ -2815,22 +2820,59 @@
         }
 
         // ============ Playlist UI Logic ============
-        function moveItemUp(index) {
-            if (index <= 0) return;
-            const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
-            [activeList[index - 1], activeList[index]] = [activeList[index], activeList[index - 1]];
-            if (playlistIndex === index) playlistIndex = index - 1;
-            else if (playlistIndex === index - 1) playlistIndex = index;
-            renderPlaylist();
+        async function moveItemUp(index) {
+            // Call backend to persist reorder, then refresh playlist from backend
+            try {
+                if (typeof eel === 'undefined') {
+                    // fallback to client-side if eel unavailable
+                    if (index <= 0) return;
+                    const activeListClient = isShuffle ? shuffledPlaylist : currentPlaylist;
+                    [activeListClient[index - 1], activeListClient[index]] = [activeListClient[index], activeListClient[index - 1]];
+                    if (playlistIndex === index) playlistIndex = index - 1;
+                    else if (playlistIndex === index - 1) playlistIndex = index;
+                    renderPlaylist();
+                    return;
+                }
+
+                const res = await eel.move_item_up(index)();
+                if (res && res.status === 'ok') {
+                    // refreshed state returned in res.items if provided
+                    const remote = await eel.get_current_playlist()();
+                    if (remote && remote.items) {
+                        currentPlaylist = remote.items.slice();
+                        playlistIndex = remote.index;
+                        renderPlaylist();
+                    }
+                }
+            } catch (e) {
+                console.error('moveItemUp error', e);
+            }
         }
 
-        function moveItemDown(index) {
-            const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
-            if (index >= activeList.length - 1) return;
-            [activeList[index], activeList[index + 1]] = [activeList[index + 1], activeList[index]];
-            if (playlistIndex === index) playlistIndex = index + 1;
-            else if (playlistIndex === index + 1) playlistIndex = index;
-            renderPlaylist();
+        async function moveItemDown(index) {
+            try {
+                if (typeof eel === 'undefined') {
+                    const activeListClient = isShuffle ? shuffledPlaylist : currentPlaylist;
+                    if (index >= activeListClient.length - 1) return;
+                    [activeListClient[index], activeListClient[index + 1]] = [activeListClient[index + 1], activeListClient[index]];
+                    if (playlistIndex === index) playlistIndex = index + 1;
+                    else if (playlistIndex === index + 1) playlistIndex = index;
+                    renderPlaylist();
+                    return;
+                }
+
+                const res = await eel.move_item_down(index)();
+                if (res && res.status === 'ok') {
+                    const remote = await eel.get_current_playlist()();
+                    if (remote && remote.items) {
+                        currentPlaylist = remote.items.slice();
+                        playlistIndex = remote.index;
+                        renderPlaylist();
+                    }
+                }
+            } catch (e) {
+                console.error('moveItemDown error', e);
+            }
         }
 
         function removeItem(index) {
@@ -2857,6 +2899,46 @@
                 playlistIndex--;
             }
             renderPlaylist();
+        }
+
+        async function moveCurrentUp() {
+            try {
+                if (playlistIndex === undefined || playlistIndex === -1) return;
+                if (typeof eel === 'undefined') {
+                    return moveItemUp(playlistIndex);
+                }
+                const res = await eel.move_current_up()();
+                if (res && res.status === 'ok') {
+                    const remote = await eel.get_current_playlist()();
+                    if (remote && remote.items) {
+                        currentPlaylist = remote.items.slice();
+                        playlistIndex = remote.index;
+                        renderPlaylist();
+                    }
+                }
+            } catch (e) {
+                console.error('moveCurrentUp error', e);
+            }
+        }
+
+        async function moveCurrentDown() {
+            try {
+                if (playlistIndex === undefined || playlistIndex === -1) return;
+                if (typeof eel === 'undefined') {
+                    return moveItemDown(playlistIndex);
+                }
+                const res = await eel.move_current_down()();
+                if (res && res.status === 'ok') {
+                    const remote = await eel.get_current_playlist()();
+                    if (remote && remote.items) {
+                        currentPlaylist = remote.items.slice();
+                        playlistIndex = remote.index;
+                        renderPlaylist();
+                    }
+                }
+            } catch (e) {
+                console.error('moveCurrentDown error', e);
+            }
         }
 
         function clearPlaylist() {

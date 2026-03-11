@@ -1987,6 +1987,57 @@ def move_current_down():
 
 
 @eel.expose
+def move_item_to(old_index: int, new_index: int):
+    """
+    Move an item from old_index to new_index within CURRENT_PLAYLIST.
+    Adjusts CURRENT_INDEX accordingly and returns updated playlist state.
+    """
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    try:
+        o = int(old_index)
+        n = int(new_index)
+    except Exception:
+        return {"status": "error", "message": "invalid index"}
+
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+
+    length = len(CURRENT_PLAYLIST)
+    if o < 0 or o >= length or n < 0:
+        return {"status": "error", "message": "index out of range"}
+
+    # clamp new index to [0, length-1] for insertion positions (allow append at length)
+    if n > length:
+        n = length
+
+    if o == n or (o == n - 1 and o < n):
+        # nothing to do (moving to same place)
+        return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+    try:
+        item = CURRENT_PLAYLIST.pop(o)
+        # If popping an earlier index shifts target left, insertion at n is still correct
+        if n > len(CURRENT_PLAYLIST):
+            n = len(CURRENT_PLAYLIST)
+        CURRENT_PLAYLIST.insert(n, item)
+
+        # Update CURRENT_INDEX
+        if CURRENT_INDEX == o:
+            CURRENT_INDEX = n
+        else:
+            if o < CURRENT_INDEX <= n:
+                # item moved forward past current item -> current shifts left
+                CURRENT_INDEX -= 1
+            elif n <= CURRENT_INDEX < o:
+                # item inserted before current -> current shifts right
+                CURRENT_INDEX += 1
+
+        return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
 def open_in_explorer(path_str):
     """
     @brief Opens a specific file or folder in the system's native file explorer.
