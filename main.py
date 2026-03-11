@@ -2188,6 +2188,55 @@ def move_item_down_by_key(key: str):
     return {"status": "error", "message": "item not found"}
 
 
+def _extract_key_from_obj(obj):
+    """Best-effort: extract a string key from a playlist item-like object.
+    Returns first non-empty candidate or None.
+    """
+    if not obj or not isinstance(obj, dict):
+        return None
+    for f in ('name', 'filename', 'path', 'id'):
+        v = obj.get(f)
+        if v and isinstance(v, (str, int)):
+            return str(v)
+    tags = obj.get('tags') or {}
+    if tags.get('title'):
+        return str(tags.get('title'))
+    # try nested keys
+    for k, v in obj.items():
+        if isinstance(v, str) and len(v) > 0:
+            return v
+    return None
+
+
+@eel.expose
+def move_item_up_by_obj(item_obj):
+    """Expose: accept a JS object representing the item, extract a key and move up."""
+    try:
+        # item_obj comes from Eel as a dict
+        key = _extract_key_from_obj(item_obj)
+        if not key:
+            print(f"[DEBUG] move_item_up_by_obj: could not extract key from {item_obj}")
+            return {"status": "error", "message": "no key extracted"}
+        return move_item_up_by_key(key)
+    except Exception as e:
+        print(f"[ERROR] move_item_up_by_obj exception: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def move_item_down_by_obj(item_obj):
+    """Expose: accept a JS object representing the item, extract a key and move down."""
+    try:
+        key = _extract_key_from_obj(item_obj)
+        if not key:
+            print(f"[DEBUG] move_item_down_by_obj: could not extract key from {item_obj}")
+            return {"status": "error", "message": "no key extracted"}
+        return move_item_down_by_key(key)
+    except Exception as e:
+        print(f"[ERROR] move_item_down_by_obj exception: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 @eel.expose
 def remove_playlist_item(index: int):
     """
