@@ -4,7 +4,7 @@ import re
 import os
 import json
 
-def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
+def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> str:
     """
     @brief Determines the standardized file format for a given media file.
     @details Unterscheidet und standardisiert das Dateiformat je nach Typ (Audio, Video, ISO, etc.).
@@ -12,37 +12,68 @@ def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
     @param tags Optional metadata tags for content detection.
     @return Standardized file format string (e.g., 'MP3', 'MKV', 'ISO', 'FLAC', 'PAL DVD').
     """
-    ext = path.suffix.lower()
+    try:
+        # Normalize path input
+        if path is None:
+            return 'UNKNOWN'
+        if not isinstance(path, Path):
+            path = Path(path)
+
+        ext = (path.suffix or '').lower()
+    except Exception:
+        return 'UNKNOWN'
+
+    # Helper to format extension string like '.mp3' -> 'MP3'
+    def _fmt(ext_raw: str) -> str:
+        if not ext_raw:
+            return 'UNKNOWN'
+        return ext_raw.lstrip('.').upper()
+
     if ext in AUDIO_EXTENSIONS:
-        return ext[1:].upper()
+        return _fmt(ext)
     if ext in VIDEO_EXTENSIONS:
-        return ext[1:].upper()
+        return _fmt(ext)
     if ext in IMAGE_EXTENSIONS:
-        return ext[1:].upper()
+        return _fmt(ext)
     if ext in DISK_IMAGE_EXTENSIONS:
         # Try to detect content (PAL DVD, Blu-ray, etc.)
-        size_gb = os.path.getsize(path) / (1024**3) if path.exists() else 0
-        
-        if tags:
-            volume_id = str(tags.get('pycdlib_volume_id', '') or '').lower()
-            standard = str(tags.get('standard', '') or '').lower()
-            container = str(tags.get('container', '') or '').lower()
-            title = str(tags.get('title', '') or '').lower()
+        try:
+            size_gb = 0.0
+            if path.exists():
+                try:
+                    size_gb = os.path.getsize(path) / (1024**3)
+                except (OSError, PermissionError):
+                    size_gb = 0.0
+        except Exception:
+            size_gb = 0.0
 
-            # Video Priorities
-            if 'pal' in volume_id or 'pal' in standard:
-                return 'PAL DVD (Abbild)'
-            if 'ntsc' in volume_id or 'ntsc' in standard:
-                return 'NTSC DVD (Abbild)'
-            if 'dvd video' in container or 'video_ts' in title:
-                return 'DVD (Abbild)'
-            if any(k in volume_id for k in ['blu', 'bd', 'brd']):
-                return 'Blu-ray (Abbild)'
-            
-            # Audio Priorities
-            if any(k in volume_id for k in ['sacd', 'audio cd', 'cda']):
-                return 'Audio-CD (Abbild)'
-        
+        tags = tags or {}
+        # Normalize tag retrieval to avoid crashes on weird types
+        def _tag(key: str) -> str:
+            try:
+                return str(tags.get(key, '') or '').lower()
+            except Exception:
+                return ''
+
+        volume_id = _tag('pycdlib_volume_id')
+        standard = _tag('standard')
+        container = _tag('container')
+        title = _tag('title')
+
+        # Video Priorities
+        if 'pal' in volume_id or 'pal' in standard:
+            return 'PAL DVD (Abbild)'
+        if 'ntsc' in volume_id or 'ntsc' in standard:
+            return 'NTSC DVD (Abbild)'
+        if 'dvd video' in container or 'video_ts' in title:
+            return 'DVD (Abbild)'
+        if any(k in volume_id for k in ['blu', 'bd', 'brd']):
+            return 'Blu-ray (Abbild)'
+
+        # Audio Priorities
+        if any(k in volume_id for k in ['sacd', 'audio cd', 'cda']):
+            return 'Audio-CD (Abbild)'
+
         # Heuristics based on size if no tags
         if size_gb > 9.0:
             return 'Blu-ray (Abbild)'
@@ -50,15 +81,21 @@ def detect_file_format(path: Path, tags: dict[str, Any] = None) -> str:
             return 'DVD (Abbild)'
         if size_gb > 0.1:
             return 'CD-ROM (Abbild)'
-            
+
         return 'Disk-Abbild'
     if ext in EBOOK_EXTENSIONS:
-        return ext[1:].upper()
+        return _fmt(ext)
     if ext in DOCUMENT_EXTENSIONS:
-        return ext[1:].upper()
+        return _fmt(ext)
     if ext in IMAGE_EXTENSIONS:
-        return ext[1:].upper()
-    return ext[1:].upper() if ext else 'UNKNOWN'
+        return _fmt(ext)
+    # Fallback: if no extension but path points to directory, try to infer
+    try:
+        if isinstance(path, Path) and path.is_dir():
+            return 'DIRECTORY'
+    except Exception:
+        pass
+    return _fmt(ext)
 
 # Config File Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
