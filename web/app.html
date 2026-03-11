@@ -1451,6 +1451,14 @@
                                     <input type="checkbox" id="cat-abbild" value="abbild"
                                         onchange="saveParserChainUI()"> <span data-i18n="cat_abbild">ISO-Abbilder</span>
                                 </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-spiel" value="spiel" onchange="saveParserChainUI()">
+                                    <span data-i18n="cat_spiel">PC-Spiele</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="cat-beigabe" value="beigabe"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_beigabe">Beigaben</span>
+                                </label>
                             </div>
                         </div>
 
@@ -1487,6 +1495,14 @@
                                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                     <input type="checkbox" id="disp-cat-abbild" value="abbild"
                                         onchange="saveParserChainUI()"> <span data-i18n="cat_abbild">ISO-Abbilder</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-spiel" value="spiel"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_spiel">PC-Spiele</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="disp-cat-beigabe" value="beigabe"
+                                        onchange="saveParserChainUI()"> <span data-i18n="cat_beigabe">Beigaben</span>
                                 </label>
                             </div>
                         </div>
@@ -3705,7 +3721,7 @@
                     });
 
                     // Initialize categories
-                    const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+                    const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
                     cats.forEach(cat => {
                         const cb = document.getElementById('cat-' + cat);
                         if (cb && config.indexed_categories) {
@@ -3909,7 +3925,7 @@
             }
 
             const indexedCats = [];
-            const cats = ["audio", "video", "images", "documents", "ebooks", "abbild"];
+            const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
             cats.forEach(cat => {
                 const cb = document.getElementById('cat-' + cat);
                 if (cb && cb.checked) indexedCats.push(cat);

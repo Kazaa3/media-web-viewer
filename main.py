@@ -3039,7 +3039,10 @@ if __name__ == "__main__":
             port = s.getsockname()[1]
         return port
     
-    session_port = find_free_port()
+    # Check for fixed port (useful for CI/Tests)
+    session_port = int(os.environ.get("MWV_PORT", 0))
+    if session_port == 0:
+        session_port = find_free_port()
     
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
