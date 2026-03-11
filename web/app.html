@@ -867,7 +867,11 @@
                     }
                 }
                 closeLogbookEditor();
-                loadLogbuchTab();
+                await loadLogbuchTab();
+                // Refresh content if we were viewing the same file
+                if (currentLogbookEditName) {
+                    loadLogbuchContent(name, filenameToSave);
+                }
                 alert(t('logbook_saved'));
             } else {
                 alert(t('logbook_error') + res.error);
@@ -877,7 +881,8 @@
         async function deleteLogbookEntry(filename) {
             const res = await eel.delete_logbook_entry(filename)();
             if (res.status === 'ok') {
-                loadLogbuchTab();
+                await loadLogbuchTab();
+                // Clear content area
                 document.getElementById('logbuch-tab-title').innerText = t('logbook_welcome');
                 document.getElementById('logbuch-tab-content').innerText = t('logbook_select_entry_text');
                 alert(t('logbook_deleted'));
@@ -886,13 +891,15 @@
             }
         }
 
-        async function loadLogbuchTab() {
+        async function loadLogbuchTab(retryCount) {
+            retryCount = retryCount || 0;
             const list = document.getElementById('logbuch-tab-list');
             if (!list) return;
-            list.innerHTML = `<div style="color:#999;">${t('logbook_loading_items')}</div>`;
+            if (retryCount === 0) list.innerHTML = `<div style="color:#999;">${t('logbook_loading_items')}</div>`;
             try {
                 const entries = await eel.list_logbook_entries()();
                 currentLogbuchEntries = entries || [];
+
                 if (!currentLogbuchEntries || currentLogbuchEntries.length === 0) {
                     list.innerHTML = `<div style="color:#999;font-style:italic;">${t('logbook_no_entries_found')}</div>`;
                 } else {
@@ -941,9 +948,15 @@
                     renderLogbuchEntries(currentLogbuchEntries);
                 }
             } catch (e) {
-                list.innerHTML = `<div style="color:#f44;">${t('logbook_error_loading_list')}</div>`;
+                console.error('[loadLogbuchTab] Error:', e);
+                if (retryCount < 3) {
+                    setTimeout(() => loadLogbuchTab(retryCount + 1), 500);
+                } else {
+                    list.innerHTML = `<div style="color:#f44;">${t('logbook_error_loading_list')}</div>`;
+                }
             }
         }
+
 
         async function loadScanDirs() {
             const container = document.getElementById('scan-dirs-list');
@@ -2547,11 +2560,11 @@
                     checkConnection();
                 }
 
-                // Re-render key sections so placeholders are translated in fallback mode too
-                if (typeof loadLibrary === 'function') {
-                    loadLibrary();
-                }
+                // Re-refresh current tab
+                const activeTab = localStorage.getItem('mwv_active_tab') || 'player';
+                switchTab(activeTab, getTabButton(activeTab));
             } catch (e) {
+
                 console.error('Failed to load translations:', e);
             }
         }
@@ -2607,62 +2620,73 @@
             }
         }
 
-        async function fbNavigate(dirPath) {
-            let result = await eel.browse_dir(dirPath || null)();
-            if (result.error) {
-                document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
-                return;
-            }
-            fbCurrentPath = result.path;
-            fbParentPath = result.parent;
-            document.getElementById('fb-path-input').value = result.path;
-            document.getElementById('fb-back').disabled = !result.parent;
-
-            let list = document.getElementById('fb-list');
-            list.innerHTML = '';
-
-            if (result.items.length === 0) {
-                list.innerHTML = `<p style="color: #999;">${t('fb_no_items')}</p>`;
-                return;
-            }
-
-            result.items.forEach(item => {
-                let row = document.createElement('div');
-                row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
-                row.onmouseover = () => row.style.background = '#f5f5f5';
-                row.onmouseout = () => row.style.background = '';
-
-                if (item.type === 'folder') {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
-                    row.onclick = () => fbNavigate(item.path);
-                } else {
-                    row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
-                    row.onclick = async () => {
-                        let statusEl = row.querySelector('.fb-status');
-                        statusEl.textContent = '⏳ …';
-                        let res = await eel.add_file_to_library(item.path)();
-                        if (res.status === 'added' || res.status === 'exists') {
-                            statusEl.textContent = res.status === 'added' ? t('fb_added') : t('fb_exists');
-                            statusEl.style.color = res.status === 'added' ? '#2a7' : '#c90';
-
-                            let finalItem = res.item;
-                            if (!finalItem) {
-                                const lib = await eel.get_library()();
-                                finalItem = lib.media.find(m => m.name === (res.name || item.name));
-                            }
-
-                            if (finalItem) {
-                                jumpToEdit(finalItem);
-                            }
-                        } else {
-                            statusEl.textContent = t('fb_error') + ' ' + (res.error || '');
-                            statusEl.style.color = '#c33';
-                        }
-                    };
+        async function fbNavigate(dirPath, retryCount) {
+            retryCount = retryCount || 0;
+            try {
+                let result = await eel.browse_dir(dirPath || null)();
+                if (result.error) {
+                    document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
+                    return;
                 }
-                list.appendChild(row);
-            });
+                fbCurrentPath = result.path;
+                fbParentPath = result.parent;
+                document.getElementById('fb-path-input').value = result.path;
+                document.getElementById('fb-back').disabled = !result.parent;
+
+                let list = document.getElementById('fb-list');
+                list.innerHTML = '';
+
+                if (result.items.length === 0) {
+                    list.innerHTML = `<p style="color: #999;">${t('fb_no_items')}</p>`;
+                    return;
+                }
+
+                result.items.forEach(item => {
+                    let row = document.createElement('div');
+                    row.style.cssText = 'display: flex; align-items: center; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.1s;';
+                    row.onmouseover = () => row.style.background = '#f5f5f5';
+                    row.onmouseout = () => row.style.background = '';
+
+                    if (item.type === 'folder') {
+                        row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">📁</span><span style="flex:1;">${item.name}</span>`;
+                        row.onclick = () => fbNavigate(item.path);
+                    } else {
+                        row.innerHTML = `<span style="font-size: 1.3em; margin-right: 10px;">🎵</span><span style="flex:1;" class="fb-name">${item.name}</span><span class="fb-status" style="color: #999; font-size: 0.85em;">${item.size}</span>`;
+                        row.onclick = async () => {
+                            let statusEl = row.querySelector('.fb-status');
+                            statusEl.textContent = '⏳ …';
+                            let res = await eel.add_file_to_library(item.path)();
+                            if (res.status === 'added' || res.status === 'exists') {
+                                statusEl.textContent = res.status === 'added' ? t('fb_added') : t('fb_exists');
+                                statusEl.style.color = res.status === 'added' ? '#2a7' : '#c90';
+
+                                let finalItem = res.item;
+                                if (!finalItem) {
+                                    const lib = await eel.get_library()();
+                                    finalItem = lib.media.find(m => m.name === (res.name || item.name));
+                                }
+                                if (finalItem && typeof loadLibrary === 'function') {
+                                    loadLibrary();
+                                }
+                            } else {
+                                statusEl.textContent = '❌ ' + (res.error || 'Fehler');
+                                statusEl.style.color = '#c33';
+                            }
+                        };
+                    }
+                    list.appendChild(row);
+                });
+            } catch (e) {
+                console.error('[fbNavigate] Error:', e);
+                if (retryCount < 3) {
+                    setTimeout(() => fbNavigate(dirPath, retryCount + 1), 1000);
+                } else {
+                    const list = document.getElementById('fb-list');
+                    if (list) list.innerHTML = `<p style="color: #c33;">❌ ${t('common_error')}${e.message}</p>`;
+                }
+            }
         }
+
 
         function fbBack() {
             if (fbParentPath) fbNavigate(fbParentPath);
@@ -2761,11 +2785,23 @@
         };
         let allLibraryItems = [];
 
-        async function loadEditItems() {
-            const result = await eel.get_library()();
-            allLibraryItems = result.media || [];
-            renderEditList(allLibraryItems);
+        async function loadEditItems(retryCount) {
+            retryCount = retryCount || 0;
+            try {
+                const result = await eel.get_library()();
+                allLibraryItems = result.media || [];
+                renderEditList(allLibraryItems);
+                if (allLibraryItems.length === 0 && retryCount < 3) {
+                    setTimeout(() => loadEditItems(retryCount + 1), 500);
+                }
+            } catch (e) {
+                console.error('[loadEditItems] Error:', e);
+                if (retryCount < 3) {
+                    setTimeout(() => loadEditItems(retryCount + 1), 1000);
+                }
+            }
         }
+
 
         function renderEditList(items) {
             const list = document.getElementById('edit-items-list');
@@ -4748,7 +4784,8 @@
             }
         }
 
-        async function loadTestSuites() {
+        async function loadTestSuites(retryCount) {
+            retryCount = retryCount || 0;
             const container = document.getElementById('test-suites-container');
             if (!container) return;
 
@@ -4765,17 +4802,19 @@
                 return patterns.some(pattern => name.includes(pattern));
             };
 
-            container.innerHTML = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${t('test_loading')}</div>`;
+            if (retryCount === 0) container.innerHTML = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${t('test_loading')}</div>`;
             try {
                 let suites = [];
-                try {
-                    const res = await eel.get_test_suites()();
-                    suites = res || [];
-                } catch (e) {
-                    console.error("Eel get_test_suites failed", e);
+                const res = await eel.get_test_suites()();
+                suites = res || [];
+
+                if (suites.length === 0 && retryCount < 3) {
+                    setTimeout(() => loadTestSuites(retryCount + 1), 1000);
+                    return;
                 }
 
                 container.innerHTML = '';
+
 
                 // Append the GUI Test as a fake suite
                 suites.push({
