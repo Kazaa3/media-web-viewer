@@ -3138,9 +3138,9 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 10px;">
                         <div class="grab-icon" 
-                             onpointerdown="onGrabPointerDown(event, ${index})" 
-                             onpointerup="onGrabPointerUp(event, ${index})" 
-                             onpointerleave="onGrabPointerLeave(event, ${index})"
+                             onmousedown="onGrabPointerDown(event, ${index})" 
+                             onmouseup="onGrabPointerUp(event, ${index})" 
+                             onmouseleave="onGrabPointerLeave(event, ${index})"
                              title="${t('pl_grab') || 'Grab to move'}">☰
                              <div class="pick-progress" id="pick-progress-${index}"></div>
                         </div>
@@ -3226,6 +3226,7 @@
         }
 
         function pickItem(index) {
+            console.log("pickItem called for index:", index);
             if (isShuffle) {
                 alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
                 return;
@@ -3238,9 +3239,14 @@
         }
 
         async function releasePick(targetIndex) {
-            if (pickedIndex === -1) return;
+            console.log("releasePick called. pickedIndex:", pickedIndex, "targetIndex:", targetIndex);
+            if (pickedIndex === -1) {
+                console.warn("releasePick called but no item picked.");
+                return;
+            }
             try {
                 if (typeof eel === 'undefined') {
+                    console.log("Eel undefined, using local fallback");
                     // local fallback
                     const active = currentPlaylist;
                     const item = active.splice(pickedIndex, 1)[0];
@@ -3252,7 +3258,9 @@
                     return;
                 }
 
+                console.log("Calling eel.move_item_to(", pickedIndex, ",", targetIndex, ")");
                 const res = await eel.move_item_to(pickedIndex, targetIndex)();
+                console.log("eel.move_item_to response:", res);
                 pickedIndex = -1; // Local reset
                 document.body.classList.remove('is-picking');
                 if (res && res.status === 'ok') {

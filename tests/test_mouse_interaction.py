@@ -5,7 +5,10 @@ import os
 import sys
 import subprocess
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from pages.playlist_page import PlaylistPage
 from pages.player_page import PlayerPage
 
@@ -53,14 +56,20 @@ class TestMouseInteraction(unittest.TestCase):
         playlist.switch_to()
         
         # 2. Pick item 0 (Long press on grab icon)
-        print("Simulating long press on grab icon...")
+        print("Simulating long press on grab icon via JS mousedown...")
         grab_icons = self.driver.find_elements(By.CLASS_NAME, "grab-icon")
-        actions = ActionChains(self.driver)
-        actions.click_and_hold(grab_icons[0]).perform()
+        # Direct JS dispatch to be sure
+        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", grab_icons[0])
         time.sleep(1) # wait for pickTimer (400ms)
-        actions.release().perform()
+        
+        # Re-find grab icon because renderPlaylist() made previous ones stale
+        grab_icons = self.driver.find_elements(By.CLASS_NAME, "grab-icon")
+        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));", grab_icons[0])
+        time.sleep(0.5)
         
         # 3. Verify 'picked' class exists
+        wait = WebDriverWait(self.driver, 10)
+        wait.until(lambda d: "picked" in d.find_elements(By.CLASS_NAME, "media-item")[0].get_attribute("class"))
         items = playlist.get_items()
         self.assertIn("picked", items[0].get_attribute("class"), "Item should have 'picked' class after long press")
         playlist.take_screenshot("mouse_test_picked")

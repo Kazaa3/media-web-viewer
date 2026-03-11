@@ -8,6 +8,8 @@ import sys
 import subprocess
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from pages.playlist_page import PlaylistPage
 
 class TestUIIntegrity(unittest.TestCase):
@@ -46,14 +48,18 @@ class TestUIIntegrity(unittest.TestCase):
         playlist.switch_to()
         
         # 1. Pick an item
+        wait = WebDriverWait(self.driver, 20)
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))
         items = playlist.get_items()
         if not items: self.skipTest("Empty playlist")
         
-        # Simulate long press (js for speed in this integrity test)
-        self.driver.execute_script("onGrabPointerDown({stopPropagation:()=>{}}, 0);")
-        time.sleep(1) # wait for pick
+        # Simulate long press via JS dispatch to trigger mousedown
+        grab_icon = items[0].find_element(By.CLASS_NAME, "grab-icon")
+        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", grab_icon)
+        time.sleep(1) # wait for pick (400ms)
         
         # Check if picked class is there
+        items = playlist.get_items() # re-fetch after renderPlaylist
         cls = items[0].get_attribute("class")
         self.assertIn("picked", cls)
         
@@ -68,14 +74,15 @@ class TestUIIntegrity(unittest.TestCase):
 
     def test_tab_switch_during_sync(self):
         """Verify tab switching doesn't break playlist sync log."""
+        wait = WebDriverWait(self.driver, 20)
         for _ in range(3):
-            self.driver.find_element(By.ID, "playlist-btn").click()
+            wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
             time.sleep(0.5)
-            self.driver.find_element(By.ID, "player-btn").click()
+            wait.until(EC.element_to_be_clickable((By.ID, "player-btn"))).click()
             time.sleep(0.5)
             
         # Ensure still on player and can go back
-        self.driver.find_element(By.ID, "playlist-btn").click()
+        wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
         time.sleep(1)
         self.assertTrue(self.driver.find_element(By.ID, "playlist-tab").is_displayed())
 

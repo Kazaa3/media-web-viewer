@@ -8,6 +8,8 @@ import sys
 import subprocess
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 class TestParserStalling(unittest.TestCase):
     @classmethod
@@ -44,11 +46,12 @@ class TestParserStalling(unittest.TestCase):
         
         # Try switching tabs rapidly
         tabs = ["playlist", "library", "player", "settings"]
+        wait = WebDriverWait(self.driver, 30)
         for tab in tabs:
-            btn = self.driver.find_element(By.ID, f"{tab}-btn")
+            btn = wait.until(EC.element_to_be_clickable((By.ID, f"{tab}-btn")))
             btn.click()
-            time.sleep(0.3)
-            tab_content = self.driver.find_element(By.ID, f"{tab}-tab")
+            time.sleep(0.5)
+            tab_content = wait.until(EC.visibility_of_element_located((By.ID, f"{tab}-tab")))
             self.assertTrue(tab_content.is_displayed(), f"Tab {tab} should be visible after click")
 
     def test_playlist_reorder_call_during_scan(self):
@@ -57,7 +60,8 @@ class TestParserStalling(unittest.TestCase):
         time.sleep(5) # wait for SOME items
         
         # Switch to playlist
-        self.driver.find_element(By.ID, "playlist-btn").click()
+        wait = WebDriverWait(self.driver, 30)
+        wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
         time.sleep(1)
         
         # Check if we have items. If not, we might need to wait more or have fixed media.
