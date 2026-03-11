@@ -3106,6 +3106,7 @@
                 div.className = 'media-item';
                 if (index === playlistIndex) div.classList.add('playing');
                 if (index === pickedIndex) div.classList.add('picked');
+                if (pickedIndex !== -1) div.style.cursor = 'cell'; // Indicate insert mode
 
                 let tags = item.tags || {};
                 let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
