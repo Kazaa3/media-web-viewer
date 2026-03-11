@@ -1415,23 +1415,27 @@
                             if ('mediaSession' in navigator) {
                                 const updateMediaMetadata = (meta) => {
                                     try {
+                                        const footerCover = document.getElementById('footer-cover');
+                                        const artworkSrc = footerCover && footerCover.src ? footerCover.src : '';
                                         navigator.mediaSession.metadata = new MediaMetadata({
                                             title: meta.title || '',
                                             artist: meta.artist || '',
                                             album: meta.album || '',
-                                            artwork: [{ src: document.getElementById('footer-cover').src, sizes: '96x96', type: 'image/png' }]
+                                            artwork: [{ src: artworkSrc, sizes: '96x96', type: 'image/png' }]
                                         });
                                     } catch (e) { console.warn('mediaSession metadata set failed', e); }
                                 };
 
-                                navigator.mediaSession.setActionHandler('play', () => document.getElementById('player').play());
-                                navigator.mediaSession.setActionHandler('pause', () => document.getElementById('player').pause());
+                                navigator.mediaSession.setActionHandler('play', () => { const p = document.getElementById('player'); if (p && p.play) p.play(); });
+                                navigator.mediaSession.setActionHandler('pause', () => { const p = document.getElementById('player'); if (p && p.pause) p.pause(); });
                                 navigator.mediaSession.setActionHandler('previoustrack', () => window.playPrev && window.playPrev());
                                 navigator.mediaSession.setActionHandler('nexttrack', () => window.playNext && window.playNext());
 
                                 // update metadata on track change (hook into existing player update path if available)
                                 const player = document.getElementById('player');
-                                player.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status')?.textContent }));
+                                if (player && player.addEventListener) {
+                                    player.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status') ? document.querySelector('#status').textContent : '' }));
+                                }
                             }
                             </script>
                             <script>
