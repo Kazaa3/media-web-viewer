@@ -13,8 +13,7 @@ __pycache__/
 .Python
 *.py[cod]
 *$py.class
-main.cpython-312.pyc
-__pycache__/main.cpython-312.pyc
+__pycache__/main.*.pyc
 
 # --- Testing ---
 .pytest_cache/

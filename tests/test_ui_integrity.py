@@ -81,6 +81,8 @@ class TestUIIntegrity(unittest.TestCase):
         valid_keys = re.findall(r"'([^']+)'\s*:", tab_map_str)
         
         for call_id in calls:
+            if call_id.startswith("${") and call_id.endswith("}"):
+                continue
             self.assertIn(call_id, valid_keys, f"switchTab called with unknown ID '{call_id}'")
 
     def test_sync_indicator_elements(self):

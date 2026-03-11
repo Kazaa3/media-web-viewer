@@ -70,7 +70,8 @@ class TestPlaylistUI(unittest.TestCase):
         )
 
     def take_screenshot(self, name):
-        ss_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"debug_playlist_{name}.png"))
+        screenshot_dir = os.environ.get("MWV_GUI_PICTURES_DIR", os.path.dirname(__file__))
+        ss_path = os.path.abspath(os.path.join(screenshot_dir, f"debug_playlist_{name}.png"))
         self.driver.save_screenshot(ss_path)
         print(f"Saved screenshot: {ss_path}")
 
@@ -118,7 +119,8 @@ class TestPlaylistUI(unittest.TestCase):
         self.assertEqual(names, ["Track A", "Track B", "Track C"])
 
         # 4. Click Move Down on Track A (index 0)
-        print("Clicking Move Down on Track A...")
+        print("Clicking Move Down on Track A (index 0)...")
+        # Move Up is buttons[0], Move Down is buttons[1], Remove is buttons[2] (excluding grab)
         self.driver.execute_script("document.querySelectorAll('#playlist-list .media-item')[0].querySelectorAll('button')[1].click()")
         time.sleep(2)
         
@@ -129,9 +131,21 @@ class TestPlaylistUI(unittest.TestCase):
         print(f"Names after move down: {names}")
         self.assertEqual(names, ["Track B", "Track A", "Track C"], "Move Down did not work visually")
 
-        # 5. Click Remove on Track C (now index 2)
-        print("Clicking Remove on Track C...")
-        self.driver.execute_script("document.querySelectorAll('#playlist-list .media-item')[2].querySelectorAll('button')[2].click()")
+        # 5. Click Move Up on Track C (now index 2)
+        print("Clicking Move Up on Track C (index 2)...")
+        self.driver.execute_script("document.querySelectorAll('#playlist-list .media-item')[2].querySelectorAll('button')[0].click()")
+        time.sleep(2)
+
+        self.take_screenshot("after_move_up")
+
+        items = self.driver.find_elements(By.CSS_SELECTOR, "#playlist-list .media-item")
+        names = [item.find_element(By.TAG_NAME, "strong").text for item in items]
+        print(f"Names after move up: {names}")
+        self.assertEqual(names, ["Track B", "Track C", "Track A"], "Move Up did not work visually")
+
+        # 6. Click Remove on Track B (now index 0)
+        print("Clicking Remove on Track B (index 0)...")
+        self.driver.execute_script("document.querySelectorAll('#playlist-list .media-item')[0].querySelectorAll('button')[2].click()")
         time.sleep(2)
         
         self.take_screenshot("after_remove")
@@ -139,7 +153,7 @@ class TestPlaylistUI(unittest.TestCase):
         items = self.driver.find_elements(By.CSS_SELECTOR, "#playlist-list .media-item")
         names = [item.find_element(By.TAG_NAME, "strong").text for item in items]
         print(f"Names after remove: {names}")
-        self.assertEqual(names, ["Track B", "Track A"], "Remove did not work visually")
+        self.assertEqual(names, ["Track C", "Track A"], "Remove did not work visually")
 
 
 if __name__ == "__main__":

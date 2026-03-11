@@ -2871,13 +2871,10 @@
                     console.debug('moveItemUp: server res=', res);
                 }
                 if (res && res.status === 'ok') {
-                    // refreshed state returned in res.items if provided
-                    const remote = await eel.get_current_playlist()();
-                    if (remote && remote.items) {
-                        currentPlaylist = remote.items.slice();
-                        playlistIndex = remote.index;
-                        renderPlaylist();
-                    }
+                    // Refreshed state returned in res.items if provided
+                    currentPlaylist = res.items.slice();
+                    playlistIndex = res.index;
+                    renderPlaylist();
                 }
             } catch (e) {
                 console.error('moveItemUp error', e);
@@ -2910,12 +2907,9 @@
                     console.debug('moveItemDown: server res=', res);
                 }
                 if (res && res.status === 'ok') {
-                    const remote = await eel.get_current_playlist()();
-                    if (remote && remote.items) {
-                        currentPlaylist = remote.items.slice();
-                        playlistIndex = remote.index;
-                        renderPlaylist();
-                    }
+                    currentPlaylist = res.items.slice();
+                    playlistIndex = res.index;
+                    renderPlaylist();
                 }
             } catch (e) {
                 console.error('moveItemDown error', e);
