@@ -22,7 +22,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import sys
 import os
 import platform
+import time
 from pathlib import Path
+
+# Performance Telemetry: Global startup anchor
+STARTUP_TIME = time.time()
 #import antigravity  # For fun and easter egg purposes
 
 def _detect_python_environment():
@@ -1707,6 +1711,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
     start_time = time.time()
+    logging.info(f"[Scan-Trace] Media Scan started at {time.strftime('%H:%M:%S', time.localtime(start_time))}")
 
     if hasattr(eel, 'set_db_status'):
         try:
@@ -1818,8 +1823,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
         elapsed = time.time() - start_time
         scanned_target = ", ".join(str(p) for p in scan_roots) if scan_roots else "none"
-        logger.debug("performance", f"Scan of {scanned_target} took {elapsed:.2f} seconds.")
-        logger.debug("scan", f"Scan complete. Processed {count} files in {elapsed:.2f} seconds.")
+        logging.info(f"[Scan-Trace] Scan of {scanned_target} took {elapsed:.2f} seconds.")
+        logging.info(f"[Scan-Trace] Scan complete. Processed {count} items in {elapsed:.2f} seconds.")
 
         # Liefere gescannten Stand direkt aus der DB zurück
         return {
@@ -3563,6 +3568,8 @@ if __name__ == "__main__":
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und sich sofort schließt.
     try:
+        startup_duration = time.time() - STARTUP_TIME
+        logging.info(f"[Startup-Trace] System ready for UI after {startup_duration:.2f}s.")
         logger.debug("websocket", f"Starting Eel server session on port {session_port}...")
         eel.start("app.html", mode=False, size=(1450, 800), block=False, port=session_port)
         

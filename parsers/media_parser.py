@@ -61,10 +61,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     @param mode Extraction mode ('lightweight' or 'full') / Extraktionsmodus ('lightweight' oder 'full').
     @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
-    log.debug(f"Starte Parsing für '{filename}' (Mode: {mode})")
-    logger.debug("metadata", f"Extraction requested for: {filename} (Mode: {mode})")
+    logging.info(f"[Parser-Trace] Starte Parsing für '{filename}' (Mode: {mode})")
     if mode == 'full':
-        log.debug(f"🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
+        logging.info(f"[Parser-Trace] 🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
@@ -305,7 +304,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
             first_chaps = [c.get('title') for c in tags['chapters'][:5]]
             log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
-    tags['_parser_times'] = parser_times
-    logger.debug("metadata", f"Metadata extraction complete for {filename}. Parsers: {list(parser_times.keys())}")
+    total_time = sum(parser_times.values())
+    logging.info(f"[Parser-Trace] Metadata extraction complete for {filename} in {total_time:.3f}s. Parsers: {list(parser_times.keys())}")
     # Backwards-compat: return (tags, parser_times) as older tests expect tags first
     return cast(dict[str, Any], tags), parser_times

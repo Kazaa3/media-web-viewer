@@ -288,7 +288,21 @@
             align-items: center;
             background: white;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+            position: relative;
+        }
+
+        .media-item.drop-target-before::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #3498db;
+            border-radius: 2px;
+            z-index: 10;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.8);
         }
 
         .media-item.playing {
@@ -3155,6 +3169,26 @@
                 `;
 
                 div.onclick = () => onPlaylistItemClick(index, item);
+
+                // --- Drag and Drop Handlers ---
+                div.onmouseenter = () => {
+                    if (pickedIndex !== -1 && pickedIndex !== index) {
+                        // console.log(`[Drag] Hovering over ${index} while ${pickedIndex} is picked`);
+                        div.classList.add('drop-target-before');
+                    }
+                };
+                div.onmouseleave = () => {
+                    div.classList.remove('drop-target-before', 'drop-target-after');
+                };
+                div.onmouseup = async (e) => {
+                    if (pickedIndex !== -1 && pickedIndex !== index) {
+                        e.stopPropagation();
+                        console.log(`[Drag] Dropped ${pickedIndex} onto ${index}`);
+                        appendUiTrace(`Drop ${pickedIndex} onto ${index}`);
+                        await releasePick(index);
+                    }
+                };
+
                 list.appendChild(div);
             });
         }
@@ -3179,40 +3213,64 @@
         function onGrabPointerDown(e, index) {
             e.stopPropagation();
             if (isShuffle) return;
+
+            ignoreNextMouseUp = false; // Reset state for a new interaction
+
+            console.log(`[Picking] mousedown on handle ${index}`);
+            try { appendUiTrace(`Grab-Down on ${index}`); } catch (e) { }
+
             // start long-press timer
             if (pickTimer) clearTimeout(pickTimer);
 
             const progress = document.getElementById(`pick-progress-${index}`);
-            if (progress) progress.style.width = '100%';
+            if (progress) {
+                progress.style.transition = 'width 0.4s linear';
+                progress.style.width = '100%';
+            }
 
             pickTimer = setTimeout(() => {
                 pickTimer = null;
+                ignoreNextMouseUp = true; // Mark that next mouseup on this item should be ignored (it just finished picking)
                 pickItem(index);
             }, 400);
         }
 
+        let ignoreNextMouseUp = false;
+
         function onGrabPointerUp(e, index) {
             e.stopPropagation();
-            clearPickProgress(index);
+            console.log(`[Picking] mouseup on handle ${index}, ignoreNext=${ignoreNextMouseUp}`);
+
             if (pickTimer) {
-                // short click -> select
+                // Was a short click
+                console.log(`[Picking] Short click detected, cancelling pick timer`);
                 clearTimeout(pickTimer);
                 pickTimer = null;
+                clearPickProgress(index);
+
+                // Optional: Auto-select on short grab-click
                 playlistIndex = index;
                 renderPlaylist();
-            } else {
-                // long-press already activated
-                if (pickedIndex === index) {
-                    cancelPick();
-                }
+            } else if (ignoreNextMouseUp) {
+                console.log(`[Picking] Ignoring mouseup after successful pick activation`);
+                ignoreNextMouseUp = false;
+            } else if (pickedIndex === index) {
+                // Long press was already successful, but user clicked again on same handle
+                console.log(`[Picking] Clicked on already picked handle ${index} -> cancelling`);
+                cancelPick();
             }
         }
 
         function onGrabPointerLeave(e, index) {
-            clearPickProgress(index);
+            // e.stopPropagation(); // Might break things
             if (pickTimer) {
-                clearTimeout(pickTimer);
-                pickTimer = null;
+                console.log(`[Picking] Mouse left handle ${index} during press - continuing timer for robustness`);
+                // We DON'T cancel here anymore. Only mouseup or a very far move should cancel.
+                // But for simplicity, we let the timer finish if they stay within reasonable bounds.
+                // If they release outside, we still have the mouseup on body or similar?
+                // Actually, let's keep it but make it less sensitive.
+
+                // If we want it to be REALLY robust, we should listen to mouseup on window.
             }
         }
 
@@ -3226,16 +3284,33 @@
         }
 
         function pickItem(index) {
-            console.log("pickItem called for index:", index);
+            console.log("pickItem activated for index:", index);
             if (isShuffle) {
                 alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
                 return;
             }
             pickedIndex = index;
             document.body.classList.add('is-picking');
+
+            // Visual confirmation
+            const list = document.getElementById('playlist-list');
+            if (list && list.children[index]) {
+                list.children[index].classList.add('picked-flash');
+                setTimeout(() => { if (list.children[index]) list.children[index].classList.remove('picked-flash'); }, 500);
+            }
+
             renderPlaylist();
             // announce
-            try { appendUiTrace(`Picked item ${index}`); } catch (e) { }
+            try { appendUiTrace(`PICK-SUCCESS: ${index}`); } catch (e) { }
+
+            // Robustness: if we never get a releasePick, cancel after 30s
+            if (window._pickAutoCancel) clearTimeout(window._pickAutoCancel);
+            window._pickAutoCancel = setTimeout(() => {
+                if (pickedIndex !== -1) {
+                    console.log("[Picking] Auto-cancelling pick after timeout");
+                    cancelPick();
+                }
+            }, 30000);
         }
 
         async function releasePick(targetIndex) {
@@ -3244,25 +3319,33 @@
                 console.warn("releasePick called but no item picked.");
                 return;
             }
+
+            // Adjust targetIndex for "insert before" semantics if moving from above
+            let finalTarget = targetIndex;
+            if (pickedIndex !== -1 && pickedIndex < targetIndex) {
+                finalTarget = targetIndex - 1;
+            }
+            if (finalTarget < 0) finalTarget = 0;
+
             try {
                 if (typeof eel === 'undefined') {
                     console.log("Eel undefined, using local fallback");
                     // local fallback
                     const active = currentPlaylist;
                     const item = active.splice(pickedIndex, 1)[0];
-                    active.splice(targetIndex, 0, item);
+                    active.splice(finalTarget, 0, item);
                     // update playlistIndex
                     playlistIndex = active.indexOf(item);
                     pickedIndex = -1;
-                    renderPlaylist();
+                    cancelPick(); // Cleanup classes
                     return;
                 }
 
-                console.log("Calling eel.move_item_to(", pickedIndex, ",", targetIndex, ")");
-                const res = await eel.move_item_to(pickedIndex, targetIndex)();
+                console.log("Calling eel.move_item_to(", pickedIndex, ",", finalTarget, ")");
+                const res = await eel.move_item_to(pickedIndex, finalTarget)();
                 console.log("eel.move_item_to response:", res);
                 pickedIndex = -1; // Local reset
-                document.body.classList.remove('is-picking');
+                cancelPick(); // Cleanup classes and state
                 if (res && res.status === 'ok') {
                     // Update current list from server state
                     currentPlaylist = res.items;
@@ -3275,14 +3358,20 @@
             } catch (e) {
                 console.error('releasePick error', e);
                 pickedIndex = -1;
-                document.body.classList.remove('is-picking');
-                renderPlaylist();
+                cancelPick();
             }
         }
 
         function cancelPick() {
             pickedIndex = -1;
+            ignoreNextMouseUp = false;
             document.body.classList.remove('is-picking');
+
+            // Comprehensive cleanup of all drag/drop visual baggage
+            document.querySelectorAll('.media-item').forEach(el => {
+                el.classList.remove('drop-target-before', 'drop-target-after', 'picked');
+            });
+
             if (pickTimer) { clearTimeout(pickTimer); pickTimer = null; }
             renderPlaylist();
         }
@@ -3664,6 +3753,11 @@
                 }
                 console.error('Audio playback failed:', e);
             });
+
+            // Synchronize backend index
+            if (typeof eel !== 'undefined' && typeof eel.jump_to_index === 'function') {
+                eel.jump_to_index(playlistIndex)().catch(console.error);
+            }
 
             // Update Status Bar
             document.getElementById('status').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
