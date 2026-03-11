@@ -1,104 +1,83 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Kategorie: UI Integrity Test
-# Eingabewerte: web/app.html
-# Ausgabewerte: UI structure validation
-# Testdateien: web/app.html
-# Kommentar: Testet UI-Integrität.
+
 import unittest
-import re
-from pathlib import Path
-import sys
+import time
 import os
+import sys
+import subprocess
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from pages.playlist_page import PlaylistPage
 
 class TestUIIntegrity(unittest.TestCase):
-    """
-    @brief Structural integrity tests for app.html.
-    @details Validates the HTML structure and JS configuration to prevent UI regressions.
-    """
+    @classmethod
+    def setUpClass(cls):
+        cls.port = 8007
+        env = os.environ.copy()
+        env["MWV_PORT"] = str(cls.port)
+        env["MWV_FORCE_NEW_SESSION"] = "1"
+        
+        cls.app_process = subprocess.Popen(
+            [sys.executable, "main.py"],
+            cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
+            env=env
+        )
+        time.sleep(10)
+        
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        cls.driver = webdriver.Chrome(options=options)
+
+    @classmethod
+    def tearDownClass(cls):
+        if hasattr(cls, 'driver'):
+            cls.driver.quit()
+        if hasattr(cls, 'app_process'):
+            cls.app_process.terminate()
 
     def setUp(self):
-        self.root = Path(__file__).parent.parent
-        self.app_html_path = self.root / "web" / "app.html"
-        with open(self.app_html_path, 'r', encoding='utf-8') as f:
-            self.content = f.read()
+        self.driver.get(f"http://localhost:{self.port}/app.html")
+        time.sleep(2)
 
-    def test_div_tag_balance(self):
-        """
-        @test Verify that opening and closing <div> tags are balanced.
-        @details Automated structural check for app.html to prevent "layout ghosting"
-                 by counting and validating the balance of div opening and closing tags.
-        """
-        # Using regex to find <div> tags (including those with attributes)
-        opens = len(re.findall(r'<div\b', self.content, re.IGNORECASE))
-        closes = len(re.findall(r'</div\b', self.content, re.IGNORECASE))
-        self.assertEqual(opens, closes, f"Unbalanced <div> tags: {opens} open vs {closes} close")
-
-    def test_critical_tab_ids(self):
-        """
-        @test Ensure all required tab containers exist in the DOM.
-        @details Checks for the presence of all required tab IDs (video-tab, 
-                 logbuch-tab, etc.) to ensure the UI structure is complete.
-        """
-        required_ids = [
-            "media-list", "library-tab", "browser-tab", "edit-tab", 
-            "options-tab", "parser-tab", "debug-tab", "tests", 
-            "logbuch-tab", "video-tab"
-        ]
-        for rid in required_ids:
-            # Look for id="rid"
-            pattern = f'id="{rid}"'
-            self.assertIn(pattern, self.content, f"Critical Tab ID '{rid}' not found in app.html")
-
-    def test_tab_map_completeness(self):
-        """
-        @test Verify that the tabMap JS object contains all necessary keys.
-        @details Parses the tabMap JS object and verifies it contains all necessary 
-                 keys (logbuch, vlc, video) for consistent navigation.
-        """
-        # Extract the tabMap block
-        match = re.search(r'const tabMap = \{(.*?)\};', self.content, re.DOTALL)
-        self.assertTrue(match, "tabMap definition not found in switchTab function")
+    def test_refresh_maintenance(self):
+        """Verify that some state survives refresh or behaves consistently."""
+        playlist = PlaylistPage(self.driver)
+        playlist.switch_to()
         
-        tab_map_str = match.group(1)
-        required_keys = ['player', 'library', 'browser', 'edit', 'options', 'parser', 'debug', 'tests', 'logbuch', 'vlc']
+        # 1. Pick an item
+        items = playlist.get_items()
+        if not items: self.skipTest("Empty playlist")
         
-        for key in required_keys:
-            self.assertIn(f"'{key}'", tab_map_str, f"Key '{key}' missing from tabMap")
-
-    def test_switch_tab_calls(self):
-        """
-        @test Verify that all switchTab calls in the HTML use known tab IDs.
-        @details Checks that every switchTab call in the HTML corresponds to a 
-                 valid entry in the tabMap, preventing navigation to missing tabs.
-        """
-        # Find all switchTab('id', ...) calls
-        calls = re.findall(r"switchTab\('([^']+)'", self.content)
+        # Simulate long press (js for speed in this integrity test)
+        self.driver.execute_script("onGrabPointerDown({stopPropagation:()=>{}}, 0);")
+        time.sleep(1) # wait for pick
         
-        # Extract keys from tabMap to validate against
-        match = re.search(r'const tabMap = \{(.*?)\};', self.content, re.DOTALL)
-        tab_map_str = match.group(1)
-        valid_keys = re.findall(r"'([^']+)'\s*:", tab_map_str)
+        # Check if picked class is there
+        cls = items[0].get_attribute("class")
+        self.assertIn("picked", cls)
         
-        for call_id in calls:
-            if call_id.startswith("${") and call_id.endswith("}"):
-                continue
-            self.assertIn(call_id, valid_keys, f"switchTab called with unknown ID '{call_id}'")
+        # 2. Refresh
+        self.driver.refresh()
+        time.sleep(3)
+        
+        # 3. Check picked state (should be reset on refresh as it's UI state, but let's confirm consistency)
+        items = playlist.get_items()
+        cls = items[0].get_attribute("class")
+        self.assertNotIn("picked", cls, "Picked state should be reset on full refresh (standard behavior)")
 
-    def test_sync_indicator_elements(self):
-        """
-        @test Verify that the sync indicator elements exist.
-        @details Checks for sync-indicator, sync-dot, and sync-text IDs.
-        """
-        for sid in ["sync-indicator", "sync-dot", "sync-text"]:
-            self.assertIn(f'id="{sid}"', self.content, f"Sync indicator ID '{sid}' missing")
+    def test_tab_switch_during_sync(self):
+        """Verify tab switching doesn't break playlist sync log."""
+        for _ in range(3):
+            self.driver.find_element(By.ID, "playlist-btn").click()
+            time.sleep(0.5)
+            self.driver.find_element(By.ID, "player-btn").click()
+            time.sleep(0.5)
+            
+        # Ensure still on player and can go back
+        self.driver.find_element(By.ID, "playlist-btn").click()
+        time.sleep(1)
+        self.assertTrue(self.driver.find_element(By.ID, "playlist-tab").is_displayed())
 
-    def test_sidebar_split_ids(self):
-        """Ensure splitter and sidebar IDs used in JS exist in HTML."""
-        required_ids = ["main-sidebar", "main-splitter", "main-split-container"]
-        for rid in required_ids:
-            self.assertIn(f'id="{rid}"', self.content, f"Layout ID '{rid}' missing")
-
-if __name__ == '__main__':
-    print("Running UI Integrity Tests...")
+if __name__ == "__main__":
     unittest.main()

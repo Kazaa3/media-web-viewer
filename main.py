@@ -2250,6 +2250,7 @@ def move_current_up():
     global CURRENT_INDEX
     if CURRENT_INDEX is None or CURRENT_INDEX < 0:
         return {"status": "error", "message": "no current item"}
+    logging.debug(f"[Playlist] move_current_up called. CURRENT_INDEX={CURRENT_INDEX}")
     return move_item_up(CURRENT_INDEX)
 
 
@@ -2259,6 +2260,7 @@ def move_current_down():
     global CURRENT_INDEX
     if CURRENT_INDEX is None or CURRENT_INDEX < 0:
         return {"status": "error", "message": "no current item"}
+    logging.debug(f"[Playlist] move_current_down called. CURRENT_INDEX={CURRENT_INDEX}")
     return move_item_down(CURRENT_INDEX)
 
 
@@ -2274,6 +2276,7 @@ def move_item_to(old_index: int, new_index: int):
         n = int(new_index)
     except Exception:
         return {"status": "error", "message": "invalid index"}
+    logging.debug(f"[Playlist] move_item_to called. old={o}, new={n}, CURRENT_INDEX={CURRENT_INDEX}")
 
     if not CURRENT_PLAYLIST:
         return {"status": "error", "message": "no playlist"}

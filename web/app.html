@@ -157,15 +157,37 @@
             margin-top: -2px;
         }
 
+        .media-item.picked {
+            background-color: rgba(52, 152, 219, 0.2) !important;
+            border: 1px dashed #3498db !important;
+        }
+
+        body.is-picking,
+        body.is-picking * {
+            cursor: cell !important;
+        }
+
         .grab-icon {
+            position: relative;
             cursor: grab;
-            padding: 4px;
-            border-radius: 4px;
-            color: #666;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .grab-icon:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+
+        .pick-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: #3498db;
+            width: 0%;
+            pointer-events: none;
+            transition: width 0.4s linear;
         }
 
         .sidebar-title {
@@ -1563,202 +1585,196 @@
 
                         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
                             <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
-                                <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
-                                    Python-Umgebung</h3>
-                                <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
-                                    data-i18n="options_environment_desc">
-                                    Informationen über die aktuell verwendete Python-Umgebung.</p>
+                                Python-Umgebung</h3>
+                            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
+                                data-i18n="options_environment_desc">
+                                Informationen über die aktuell verwendete Python-Umgebung.</p>
 
-                                <div class="kernarchitektur-section">
-                                    <h3 data-i18n="env_architecture_title">Kernarchitektur & Systemstatus</h3>
+                            <div class="kernarchitektur-section">
+                                <h3 data-i18n="env_architecture_title">Kernarchitektur & Systemstatus</h3>
 
-                                    <div class="arch-subgroup">
-                                        <h4>🎨 Front End</h4>
-                                        <ul>
-                                            <li><strong data-i18n="env_label_gui">Browser:</strong> <span
-                                                    id="env-gui-status">-</span></li>
-                                        </ul>
-                                    </div>
+                                <div class="arch-subgroup">
+                                    <h4>🎨 Front End</h4>
+                                    <ul>
+                                        <li><strong data-i18n="env_label_gui">Browser:</strong> <span
+                                                id="env-gui-status">-</span></li>
+                                    </ul>
+                                </div>
 
-                                    <hr>
+                                <hr>
 
-                                    <div class="arch-subgroup">
-                                        <h4>⚙️ Backend</h4>
-                                        <ul>
-                                            <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
-                                                <span id="env-python-version">-</span>
-                                            </li>
-                                            <li><strong data-i18n="env_label_environment">Umgebung:</strong> <span
-                                                    id="env-venv-status">-</span></li>
-                                            <li><strong data-i18n="env_label_system">System:</strong> <span
-                                                    id="env-platform">-</span></li>
-                                            <li><strong>Eel / WS:</strong> <span id="env-eel-status">✅ Eel | ✅
-                                                    Websocket</span></li>
-                                            <li><strong>Bottle / WS:</strong> <span id="env-bottle-status">-</span>
-                                            </li>
-                                            <li><strong>Gevent / Greenlet:</strong> <span
-                                                    id="env-gevent-status">-</span>
-                                            </li>
-                                            <li><strong data-i18n="env_label_python_executable">Python-Pfad:</strong>
-                                                <span id="env-python-exec" style="word-break: break-all;">-</span>
-                                            </li>
-                                            <li><strong data-i18n="env_label_environment_path">Env-Pfad:</strong>
-                                                <span id="env-venv-path" style="word-break: break-all;">-</span>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                <div class="arch-subgroup">
+                                    <h4>⚙️ Backend</h4>
+                                    <ul>
+                                        <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
+                                            <span id="env-python-version">-</span>
+                                        </li>
+                                        <li><strong data-i18n="env_label_environment">Umgebung:</strong> <span
+                                                id="env-venv-status">-</span></li>
+                                        <li><strong data-i18n="env_label_system">System:</strong> <span
+                                                id="env-platform">-</span></li>
+                                        <li><strong>Eel / WS:</strong> <span id="env-eel-status">✅ Eel | ✅
+                                                Websocket</span></li>
+                                        <li><strong>Bottle / WS:</strong> <span id="env-bottle-status">-</span>
+                                        </li>
+                                        <li><strong>Gevent / Greenlet:</strong> <span id="env-gevent-status">-</span>
+                                        </li>
+                                        <li><strong data-i18n="env_label_python_executable">Python-Pfad:</strong>
+                                            <span id="env-python-exec" style="word-break: break-all;">-</span>
+                                        </li>
+                                        <li><strong data-i18n="env_label_environment_path">Env-Pfad:</strong>
+                                            <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                                    <hr>
+                                <hr>
 
-                                    <div class="arch-subgroup">
-                                        <h4>🎬 Media-Handling</h4>
-                                        <ul>
-                                            <li><strong data-i18n="env_label_mediaplayer">Mediaplayer:</strong>
-                                                <span id="env-mediaplayer-status">-</span>
-                                            </li>
-                                            <li><strong data-i18n="env_label_mutagen">Mutagen:</strong> <span
-                                                    id="env-mutagen-status">-</span></li>
-                                            <li><strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span
-                                                    id="env-mediainfo-status">-</span></li>
-                                            <li><strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span
-                                                    id="env-ffmpeg-status">-</span></li>
-                                            <li><strong data-i18n="env_label_ffprobe">FFprobe:</strong> <span
-                                                    id="env-ffprobe-status">-</span></li>
-                                            <li><strong>Stream-Tools:</strong> <span
-                                                    id="env-stream-tools-status">-</span>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                <div class="arch-subgroup">
+                                    <h4>🎬 Media-Handling</h4>
+                                    <ul>
+                                        <li><strong data-i18n="env_label_mediaplayer">Mediaplayer:</strong>
+                                            <span id="env-mediaplayer-status">-</span>
+                                        </li>
+                                        <li><strong data-i18n="env_label_mutagen">Mutagen:</strong> <span
+                                                id="env-mutagen-status">-</span></li>
+                                        <li><strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span
+                                                id="env-mediainfo-status">-</span></li>
+                                        <li><strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span
+                                                id="env-ffmpeg-status">-</span></li>
+                                        <li><strong data-i18n="env_label_ffprobe">FFprobe:</strong> <span
+                                                id="env-ffprobe-status">-</span></li>
+                                        <li><strong>Stream-Tools:</strong> <span id="env-stream-tools-status">-</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                                    <hr>
+                                <hr>
 
-                                    <div class="arch-subgroup">
-                                        <h4 data-i18n="env_label_core_packages">Core Packages</h4>
-                                        <div style="margin-top: 10px;">
-                                            <div style="margin-bottom: 8px;">
-                                                <strong style="font-size: 0.85em; color: #666;"
-                                                    data-i18n="env_label_test_tools">Test-Tools:</strong>
-                                                <div id="env-test-tools-status"
-                                                    style="font-size: 0.8em; margin-top: 2px;">-
-                                                </div>
+                                <div class="arch-subgroup">
+                                    <h4 data-i18n="env_label_core_packages">Core Packages</h4>
+                                    <div style="margin-top: 10px;">
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="font-size: 0.85em; color: #666;"
+                                                data-i18n="env_label_test_tools">Test-Tools:</strong>
+                                            <div id="env-test-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
                                             </div>
-                                            <div style="margin-bottom: 8px;">
-                                                <strong style="font-size: 0.85em; color: #666;"
-                                                    data-i18n="env_label_dev_tools">Entwickler-Tools:</strong>
-                                                <div id="env-dev-tools-status"
-                                                    style="font-size: 0.8em; margin-top: 2px;">-
-                                                </div>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="font-size: 0.85em; color: #666;"
+                                                data-i18n="env_label_dev_tools">Entwickler-Tools:</strong>
+                                            <div id="env-dev-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
                                             </div>
-                                            <div style="margin-bottom: 8px;">
-                                                <strong style="font-size: 0.85em; color: #666;"
-                                                    data-i18n="env_label_build_tools">Build-Tools:</strong>
-                                                <div id="env-build-tools-status"
-                                                    style="font-size: 0.8em; margin-top: 2px;">
-                                                    -</div>
-                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="font-size: 0.85em; color: #666;"
+                                                data-i18n="env_label_build_tools">Build-Tools:</strong>
+                                            <div id="env-build-tools-status" style="font-size: 0.8em; margin-top: 2px;">
+                                                -</div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Installed Packages (active environment) -->
-                                <div style="margin-top: 15px;">
-                                    <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
-                                        <span data-i18n="options_installed_packages">📦 Installierte Pakete (aktive
-                                            Umgebung)</span>
-                                        <span id="package-count"
-                                            style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
-                                        <span id="package-source"
-                                            style="color: #999; font-weight: normal; font-size: 0.8em; margin-left: 8px;">[source:
-                                            -]</span>
-                                    </h4>
-                                    <div style="margin-bottom: 8px;">
-                                        <input type="text" id="package-search" placeholder="Search packages..."
-                                            style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
-                                            data-i18n="[placeholder]packages_search_placeholder">
-                                    </div>
-                                    <div id="installed-packages-list"
-                                        style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
-                                        <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                    </div>
+                            <!-- Installed Packages (active environment) -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                    <span data-i18n="options_installed_packages">📦 Installierte Pakete (aktive
+                                        Umgebung)</span>
+                                    <span id="package-count"
+                                        style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
+                                    <span id="package-source"
+                                        style="color: #999; font-weight: normal; font-size: 0.8em; margin-left: 8px;">[source:
+                                        -]</span>
+                                </h4>
+                                <div style="margin-bottom: 8px;">
+                                    <input type="text" id="package-search" placeholder="Search packages..."
+                                        style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
+                                        data-i18n="[placeholder]packages_search_placeholder">
                                 </div>
-
-                                <!-- requirements.txt Status -->
-                                <div style="margin-top: 15px;">
-                                    <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
-                                        <span data-i18n="options_requirements_status">✅ requirements.txt
-                                            Status</span>
-                                        <span id="requirements-count"
-                                            style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
-                                    </h4>
-                                    <div style="margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
-                                        <button onclick="loadEnvironmentInfo(true)"
-                                            style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
-                                            data-i18n="options_requirements_refresh">
-                                            🔄 Jetzt neu prüfen
-                                        </button>
-                                        <button id="btn-install-missing" onclick="installMissingPackages()"
-                                            style="display: none; padding: 6px 10px; background: #2a7; color: #fff; border: 1px solid #286; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold;"
-                                            data-i18n="env_requirements_install_btn">
-                                            📦 Fehlende Pakete installieren
-                                        </button>
-                                    </div>
-                                    <div id="pip-install-output"
-                                        style="display: none; margin-bottom: 10px; background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #444;">
-                                    </div>
-                                    <div id="requirements-last-checked"
-                                        style="margin-bottom: 8px; color: #777; font-size: 0.78em;"
-                                        data-i18n="env_requirements_last_checked_never">Noch nicht geprüft</div>
-                                    <div id="requirements-status-list"
-                                        style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
-                                        <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                    </div>
+                                <div id="installed-packages-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
+                            </div>
 
-                                <h4 style="font-size: 0.95em; margin-top: 22px; margin-bottom: 8px; color: #444;">
-                                    Vorhandene
-                                    Umgebungen</h4>
-
-                                <!-- Global Python Installations -->
-                                <div style="margin-top: 8px;">
-                                    <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">1. 🌐 Python
-                                        Global
-                                    </h4>
-                                    <div id="system-python-global-list"
-                                        style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
-                                        <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                    </div>
+                            <!-- requirements.txt Status -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                    <span data-i18n="options_requirements_status">✅ requirements.txt
+                                        Status</span>
+                                    <span id="requirements-count"
+                                        style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
+                                </h4>
+                                <div style="margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button onclick="loadEnvironmentInfo(true)"
+                                        style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
+                                        data-i18n="options_requirements_refresh">
+                                        🔄 Jetzt neu prüfen
+                                    </button>
+                                    <button id="btn-install-missing" onclick="installMissingPackages()"
+                                        style="display: none; padding: 6px 10px; background: #2a7; color: #fff; border: 1px solid #286; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold;"
+                                        data-i18n="env_requirements_install_btn">
+                                        📦 Fehlende Pakete installieren
+                                    </button>
                                 </div>
-
-                                <!-- Local Python Installations -->
-                                <div style="margin-top: 15px;">
-                                    <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">2. 🏠 Python
-                                        Local
-                                    </h4>
-                                    <div id="system-python-local-list"
-                                        style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
-                                        <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                    </div>
+                                <div id="pip-install-output"
+                                    style="display: none; margin-bottom: 10px; background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #444;">
                                 </div>
-
-                                <!-- Conda Environments -->
-                                <div style="margin-top: 20px;">
-                                    <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
-                                        data-i18n="options_conda_envs">3. 🐍 Conda Umgebungen</h4>
-                                    <div id="conda-environments-list"
-                                        style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                                        <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                    </div>
+                                <div id="requirements-last-checked"
+                                    style="margin-bottom: 8px; color: #777; font-size: 0.78em;"
+                                    data-i18n="env_requirements_last_checked_never">Noch nicht geprüft</div>
+                                <div id="requirements-status-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
+                            </div>
 
-                                <!-- Local Virtual Environments -->
-                                <div style="margin-top: 15px;">
-                                    <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
-                                        data-i18n="options_local_venvs">4. 📁 Lokale Virtual Environments</h4>
-                                    <div id="local-venvs-list"
-                                        style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
-                                        <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                                    </div>
+                            <h4 style="font-size: 0.95em; margin-top: 22px; margin-bottom: 8px; color: #444;">
+                                Vorhandene
+                                Umgebungen</h4>
+
+                            <!-- Global Python Installations -->
+                            <div style="margin-top: 8px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">1. 🌐 Python
+                                    Global
+                                </h4>
+                                <div id="system-python-global-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
+                            </div>
+
+                            <!-- Local Python Installations -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">2. 🏠 Python
+                                    Local
+                                </h4>
+                                <div id="system-python-local-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Conda Environments -->
+                            <div style="margin-top: 20px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                    data-i18n="options_conda_envs">3. 🐍 Conda Umgebungen</h4>
+                                <div id="conda-environments-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
+
+                            <!-- Local Virtual Environments -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                    data-i18n="options_local_venvs">4. 📁 Lokale Virtual Environments</h4>
+                                <div id="local-venvs-list"
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
+                                    <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
@@ -3121,7 +3137,13 @@
                         <span style="font-size: 0.8em;">${artistDisplay}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 10px;">
-                        <div class="grab-icon" onpointerdown="onGrabPointerDown(event, ${index})" onpointerup="onGrabPointerUp(event, ${index})" title="${t('pl_grab') || 'Grab to move'}">☰</div>
+                        <div class="grab-icon" 
+                             onpointerdown="onGrabPointerDown(event, ${index})" 
+                             onpointerup="onGrabPointerUp(event, ${index})" 
+                             onpointerleave="onGrabPointerLeave(event, ${index})"
+                             title="${t('pl_grab') || 'Grab to move'}">☰
+                             <div class="pick-progress" id="pick-progress-${index}"></div>
+                        </div>
                         <div class="playlist-controls" style="display: flex; gap: 5px;">
                             <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" 
                                 ${isShuffle ? 'disabled style="opacity:0.3; cursor:default;"' : 'style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;"'}>🔼</button>
@@ -3138,10 +3160,14 @@
         }
 
         // Pick-and-insert handlers
-        function onPlaylistItemClick(index, item) {
+        async function onPlaylistItemClick(index, item) {
             // If an item is picked, insert before clicked index
-            if (pickedIndex !== -1 && pickedIndex !== index) {
-                releasePick(index);
+            if (pickedIndex !== -1) {
+                if (pickedIndex !== index) {
+                    await releasePick(index);
+                } else {
+                    cancelPick();
+                }
                 return;
             }
             // Normal click: select and play
@@ -3152,8 +3178,13 @@
 
         function onGrabPointerDown(e, index) {
             e.stopPropagation();
+            if (isShuffle) return;
             // start long-press timer
             if (pickTimer) clearTimeout(pickTimer);
+
+            const progress = document.getElementById(`pick-progress-${index}`);
+            if (progress) progress.style.width = '100%';
+
             pickTimer = setTimeout(() => {
                 pickTimer = null;
                 pickItem(index);
@@ -3162,6 +3193,7 @@
 
         function onGrabPointerUp(e, index) {
             e.stopPropagation();
+            clearPickProgress(index);
             if (pickTimer) {
                 // short click -> select
                 clearTimeout(pickTimer);
@@ -3169,10 +3201,27 @@
                 playlistIndex = index;
                 renderPlaylist();
             } else {
-                // long-press already activated; toggle pick off if same
+                // long-press already activated
                 if (pickedIndex === index) {
                     cancelPick();
                 }
+            }
+        }
+
+        function onGrabPointerLeave(e, index) {
+            clearPickProgress(index);
+            if (pickTimer) {
+                clearTimeout(pickTimer);
+                pickTimer = null;
+            }
+        }
+
+        function clearPickProgress(index) {
+            const progress = document.getElementById(`pick-progress-${index}`);
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.width = '0%';
+                setTimeout(() => { if (progress) progress.style.transition = 'width 0.4s linear'; }, 50);
             }
         }
 
@@ -3182,6 +3231,7 @@
                 return;
             }
             pickedIndex = index;
+            document.body.classList.add('is-picking');
             renderPlaylist();
             // announce
             try { appendUiTrace(`Picked item ${index}`); } catch (e) { }
@@ -3203,14 +3253,13 @@
                 }
 
                 const res = await eel.move_item_to(pickedIndex, targetIndex)();
-                pickedIndex = -1;
+                pickedIndex = -1; // Local reset
+                document.body.classList.remove('is-picking');
                 if (res && res.status === 'ok') {
-                    const remote = await eel.get_current_playlist()();
-                    if (remote && remote.items) {
-                        currentPlaylist = remote.items.slice();
-                        playlistIndex = remote.index;
-                        renderPlaylist();
-                    }
+                    // Update current list from server state
+                    currentPlaylist = res.items;
+                    playlistIndex = res.index;
+                    renderPlaylist();
                 } else {
                     alert((t('common_error') || 'Error: ') + (res && res.message ? res.message : 'move failed'));
                     renderPlaylist();
@@ -3218,12 +3267,14 @@
             } catch (e) {
                 console.error('releasePick error', e);
                 pickedIndex = -1;
+                document.body.classList.remove('is-picking');
                 renderPlaylist();
             }
         }
 
         function cancelPick() {
             pickedIndex = -1;
+            document.body.classList.remove('is-picking');
             if (pickTimer) { clearTimeout(pickTimer); pickTimer = null; }
             renderPlaylist();
         }

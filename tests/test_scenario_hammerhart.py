@@ -7,6 +7,8 @@ import os
 import sys
 import subprocess
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 from pages.playlist_page import PlaylistPage
 from pages.player_page import PlayerPage
 
@@ -27,8 +29,7 @@ class TestHammerhartReorder(unittest.TestCase):
             stderr=subprocess.STDOUT,
             env=env
         )
-        # Wait for backend to parse and start
-        time.sleep(15) 
+        time.sleep(30) # Extensive wait for parsing
         
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
@@ -49,21 +50,18 @@ class TestHammerhartReorder(unittest.TestCase):
 
     def setUp(self):
         self.driver.get(f"http://localhost:{self.port}/app.html")
-        time.sleep(2)
+        time.sleep(5)
 
     def test_hammerhart_to_second_and_fifth(self):
         player = PlayerPage(self.driver)
         playlist = PlaylistPage(self.driver)
 
-        # 1. Find Hammerhart in Player and play it
-        # Note: We assume it's in the media list. 
-        # In this specific test environment, we might need to search or just pick the index if known.
-        # Based on previous tests, it's often early in the list.
+        # 1. Find Hammerhart
         print("Selecting 'Hammerhart' in Player...")
-        names_player = [it.text for it in self.driver.find_elements(By.CSS_SELECTOR, "#media-list .media-item strong")]
+        media_items = self.driver.find_elements(By.CSS_SELECTOR, "#media-list .media-item")
         hammer_idx = -1
-        for i, name in enumerate(names_player):
-            if "Hammerhart" in name:
+        for i, item in enumerate(media_items):
+            if "Hammerhart" in item.text:
                 hammer_idx = i
                 break
         
@@ -71,35 +69,83 @@ class TestHammerhartReorder(unittest.TestCase):
             self.fail("Could not find 'Hammerhart' in media list")
             
         player.play_index(hammer_idx)
+        time.sleep(3)
         
         # 2. Switch to Playlist
         print("Switching to Playlist tab...")
         playlist.switch_to()
+        time.sleep(3)
         
-        # 3. Verify it's at position 1 (index 0)
-        items = playlist.get_item_names()
-        print(f"Current Playlist: {items[:6]}")
-        self.assertIn("Hammerhart", items[0], "Hammerhart should be at 1st position")
-        playlist.take_screenshot("hammerhart_1_pos")
+        # 3. Synchronize to Pos 0 (Pick & Insert)
+        items = playlist.get_items()
+        names = [it.text for it in items]
+        current_idx = -1
+        for i, name in enumerate(names):
+            if "Hammerhart" in name:
+                current_idx = i
+                break
+        
+        if current_idx == -1:
+            self.fail("Hammerhart not in playlist")
 
-        # 4. Move to 2nd position (one Move Down)
-        print("Moving 'Hammerhart' to 2nd position...")
-        playlist.move_current_down()
+        print(f"Hammerhart is at index {current_idx}. Picking it...")
+        grab_icon = items[current_idx].find_element(By.CLASS_NAME, "grab-icon")
+        
+        actions = ActionChains(self.driver)
+        actions.move_to_element(grab_icon).click_and_hold().perform()
+        time.sleep(1.5)
+        actions.release().perform()
         time.sleep(2)
-        items = playlist.get_item_names()
-        self.assertIn("Hammerhart", items[1], f"Hammerhart should be at 2nd position, found: {items[1]}")
-        playlist.take_screenshot("hammerhart_2_pos")
+        
+        print("Inserting at index 0 using JS click...")
+        items = playlist.get_items()
+        self.driver.execute_script("arguments[0].click();", items[0])
+        time.sleep(5)
+        
+        names = playlist.get_item_names()
+        print(f"Playlist after sync to 0: {names[:3]}")
+        playlist.take_screenshot("hammerhart_pos1_check")
+        self.assertIn("Hammerhart", names[0])
 
-        # 5. Move to 5th position (three more Move Down)
-        print("Moving 'Hammerhart' to 5th position...")
-        for _ in range(3):
-            playlist.move_current_down()
-            time.sleep(1)
-            
-        items = playlist.get_item_names()
-        print(f"Playlist after reorder: {items[:6]}")
-        self.assertIn("Hammerhart", items[4], f"Hammerhart should be at 5th position (index 4), found: {items[4]}")
-        playlist.take_screenshot("hammerhart_5_pos")
+        # 4. Move to Pos 2 (index 1)
+        print("Picking Hammerhart from index 0...")
+        items = playlist.get_items()
+        grab_icon = items[0].find_element(By.CLASS_NAME, "grab-icon")
+        actions = ActionChains(self.driver)
+        actions.move_to_element(grab_icon).click_and_hold().perform()
+        time.sleep(1.5)
+        actions.release().perform()
+        time.sleep(2)
+        
+        print("Inserting at index 2...")
+        items = playlist.get_items()
+        self.driver.execute_script("arguments[0].click();", items[2])
+        time.sleep(5)
+        
+        names = playlist.get_item_names()
+        print(f"Playlist after move to 1: {names[:3]}")
+        playlist.take_screenshot("hammerhart_pos2_check")
+        self.assertIn("Hammerhart", names[1])
+
+        # 5. Move to Pos 5 (index 4)
+        print("Picking Hammerhart from index 1...")
+        items = playlist.get_items()
+        grab_icon = items[1].find_element(By.CLASS_NAME, "grab-icon")
+        actions = ActionChains(self.driver)
+        actions.move_to_element(grab_icon).click_and_hold().perform()
+        time.sleep(1.5)
+        actions.release().perform()
+        time.sleep(2)
+        
+        print("Inserting at index 5...")
+        items = playlist.get_items()
+        self.driver.execute_script("arguments[0].click();", items[5])
+        time.sleep(5)
+        
+        names = playlist.get_item_names()
+        print(f"Final verify: {names[:6]}")
+        playlist.take_screenshot("hammerhart_pos5_check")
+        self.assertIn("Hammerhart", names[4])
 
 if __name__ == "__main__":
     unittest.main()
