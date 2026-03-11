@@ -23,15 +23,14 @@ class TestRobustRefreshLogic(unittest.TestCase):
     @details Ensures that data is correctly returned and state is consistent after modifications.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.logbuch_dir = Path(__file__).parent.parent / "logbuch"
-        cls.logbuch_dir.mkdir(exist_ok=True)
-        cls.test_file_name = "test_refresh_logic_entry"
-        cls.test_file_path = cls.logbuch_dir / f"{cls.test_file_name}.md"
+    def setUp(self):
+        self.logbuch_dir = Path(__file__).parent.parent / "logbuch"
+        self.logbuch_dir.mkdir(exist_ok=True)
+        self.test_file_name = "test_refresh_logic_entry"
+        self.test_file_path = self.logbuch_dir / f"{self.test_file_name}.md"
 
     def tearDown(self):
-        if self.test_file_path.exists():
+        if hasattr(self, 'test_file_path') and self.test_file_path.exists():
             self.test_file_path.unlink()
 
     def test_logbook_listing_robustness(self):

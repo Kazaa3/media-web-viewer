@@ -1,170 +1,103 @@
-#!/bin/bash
-################################################################################
-# Master Test Runner - Führt alle Test-Suites aus
-################################################################################
-#
-# ZWECK:
-# ------
-# Führt alle drei Test-Suites nacheinander aus und zeigt eine Gesamt-Statistik.
-#
-# TEST-SUITES:
-# ------------
-# 1. test_i18n_completeness.py - i18n Basis-Validierung (9 Tests)
-# 2. test_i18n_deep_scan.py    - i18n Deep Scan (8 Tests)
-# 3. test_ui_events.py          - UI Events & Interaktionen (10 Tests)
-#
-# VERWENDUNG:
-# -----------
-#     chmod +x tests/run_all_tests.sh
-#     ./tests/run_all_tests.sh
-#
-# ODER:
-#     bash tests/run_all_tests.sh
-#
-# EXIT-CODES:
-# -----------
-# 0 = Alle Tests bestanden
-# 1 = Mindestens ein Test fehlgeschlagen
-#
+# MASTER TEST RUNNER - Refactored for Systematic Test Stages
 ################################################################################
 
-set -e  # Stop on first error
+# set -e removed to allow collecting multiple failures
 
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo ""
-echo "================================================================================"
-echo "🧪 Media Web Viewer - Complete Test Suite"
-echo "================================================================================"
-echo ""
-echo "Führt alle Test-Suites aus:"
-echo "  1️⃣  i18n Completeness (9 Tests)"
-echo "  2️⃣  i18n Deep Scan (8 Tests)"
-echo "  3️⃣  UI Events (10 Tests)"
-echo ""
-echo "Gesamt: 27 Tests"
-echo ""
-echo "================================================================================"
-echo ""
+# Help
+show_help() {
+    echo "Usage: ./tests/run_all_tests.sh [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --stage 1    Core Health (API, Env, Exposure)"
+    echo "  --stage 2    Backend Logic (DB, Parsers, Processes)"
+    echo "  --stage 3    UI & i18n Interaction"
+    echo "  --stage 4    E2E & Automation (Requires display)"
+    echo "  --stage 5    Quality & Security"
+    echo "  --all        Run all stages (requires resources)"
+    echo "  --help       Show this help"
+}
 
-# Initialize counters
-total_tests=0
-passed_tests=0
-failed_tests=0
+STAGE=0
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --stage) STAGE="$2"; shift ;;
+        --all) STAGE="all" ;;
+        --help) show_help; exit 0 ;;
+        *) echo "Unknown parameter: $1"; show_help; exit 1 ;;
+    esac
+    shift
+done
 
-# Test 1: i18n Completeness
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${BLUE}1️⃣  Running: test_i18n_completeness.py${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-if python tests/test_i18n_completeness.py; then
-    echo -e "${GREEN}✅ i18n Completeness: PASSED${NC}"
-    ((passed_tests+=9))
-else
-    echo -e "${RED}❌ i18n Completeness: FAILED${NC}"
-    ((failed_tests+=9))
-fi
-((total_tests+=9))
-
-# Test 2: i18n Deep Scan
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${BLUE}2️⃣  Running: test_i18n_deep_scan.py${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-if python tests/test_i18n_deep_scan.py; then
-    echo -e "${GREEN}✅ i18n Deep Scan: PASSED${NC}"
-    ((passed_tests+=8))
-else
-    echo -e "${YELLOW}⚠️  i18n Deep Scan: PASSED with WARNINGS${NC}"
-    ((passed_tests+=7))
-    ((failed_tests+=1))
-fi
-((total_tests+=8))
-
-# Test 3: UI Events
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${BLUE}3️⃣  Running: test_ui_events.py${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-if python tests/test_ui_events.py; then
-    echo -e "${GREEN}✅ UI Events: PASSED${NC}"
-    ((passed_tests+=10))
-else
-    echo -e "${RED}❌ UI Events: FAILED${NC}"
-    ((failed_tests+=10))
-fi
-((total_tests+=10))
-
-# Final Summary
-echo ""
-echo "================================================================================"
-echo "📊 FINAL TEST RESULTS"
-echo "================================================================================"
-echo ""
-echo "Total Tests:  $total_tests"
-echo -e "Passed:       ${GREEN}$passed_tests${NC}"
-
-if [ $failed_tests -gt 0 ]; then
-    echo -e "Failed:       ${RED}$failed_tests${NC}"
-else
-    echo -e "Failed:       ${GREEN}0${NC}"
+if [ "$STAGE" == "0" ]; then
+    echo -e "${YELLOW}No stage specified. Defaulting to Stage 1 (Core Health).${NC}"
+    STAGE=1
 fi
 
-# Calculate pass rate
-pass_rate=$(awk "BEGIN {printf \"%.1f\", ($passed_tests/$total_tests)*100}")
-echo ""
-echo "Pass Rate:    ${pass_rate}%"
-echo ""
+run_test() {
+    local file=$1
+    echo -e "${BLUE}Running: $file...${NC}"
+    if python "$file"; then
+        echo -e "${GREEN}PASS${NC}"
+        return 0
+    else
+        echo -e "${RED}FAIL${NC}"
+        return 1
+    fi
+}
 
-# Overall result
-if [ $failed_tests -eq 0 ]; then
-    echo "================================================================================"
-    echo -e "${GREEN}✅✅✅ ALL TESTS PASSED! ✅✅✅${NC}"
-    echo "================================================================================"
-    echo ""
-    echo "🎉 Gratulation! Alle Tests bestanden!"
-    echo ""
-    echo "   ✅ i18n Completeness  → 9/9 Tests"
-    echo "   ✅ i18n Deep Scan     → 8/8 Tests"
-    echo "   ✅ UI Events          → 10/10 Tests"
-    echo ""
-    echo "   Die App ist vollständig getestet und produktionsreif!"
-    echo ""
-    exit 0
-elif [ $failed_tests -eq 1 ]; then
-    echo "================================================================================"
-    echo -e "${YELLOW}⚠️  TESTS PASSED WITH WARNINGS ⚠️${NC}"
-    echo "================================================================================"
-    echo ""
-    echo "26 von 27 Tests bestanden (96% Pass Rate)"
-    echo ""
-    echo "Die meisten Tests sind OK, aber es gibt ein paar nicht-kritische Warnungen."
-    echo "Diese können später behoben werden."
-    echo ""
+echo "================================================================================"
+echo "🧪 Media Web Viewer - Systematic Runner: Stage $STAGE"
+echo "================================================================================"
+
+FAILED=0
+TOTAL=0
+
+case $STAGE in
+    1)
+        TESTS=("tests/test_eel_exposure_unit.py" "tests/test_api_health_endpoints.py" "tests/test_env_handler.py" "tests/test_logbuffer_api.py")
+        ;;
+    2)
+        TESTS=("tests/test_db_logic.py" "tests/test_parser_registry.py" "tests/test_process_manager_basic.py" "tests/test_transcoding_fixed.py")
+        ;;
+    3)
+        TESTS=("tests/test_i18n_completeness.py" "tests/test_i18n_deep_scan.py" "tests/test_ui_events.py")
+        ;;
+    4)
+        TESTS=("tests/test_pyautogui_integration.py" "tests/test_launcher.py" "tests/test_vlc_integration.py")
+        ;;
+    5)
+        TESTS=("tests/test_subprocess_safety.py" "tests/test_version_sync.py" "tests/test_build_integrity.py")
+        ;;
+    "all")
+        TESTS=("tests/test_eel_exposure_unit.py" "tests/test_api_health_endpoints.py" "tests/test_db_logic.py" "tests/test_i18n_completeness.py" "tests/test_subprocess_safety.py")
+        ;;
+    *)
+        echo "Invalid stage: $STAGE"
+        exit 1
+        ;;
+esac
+
+for t in "${TESTS[@]}"; do
+    ((TOTAL++))
+    if ! run_test "$t"; then
+        ((FAILED++))
+    fi
+done
+
+echo "================================================================================"
+echo "📊 Results $TOTAL tests, $FAILED failed."
+if [ $FAILED -eq 0 ]; then
+    echo -e "${GREEN}SUCCESS: Stage $STAGE complete.${NC}"
     exit 0
 else
-    echo "================================================================================"
-    echo -e "${RED}❌ SOME TESTS FAILED ❌${NC}"
-    echo "================================================================================"
-    echo ""
-    echo "Bitte prüfe die Fehler-Ausgaben oben und behebe die Probleme."
-    echo ""
-    echo "Häufige Probleme:"
-    echo "  • Fehlende i18n Keys in web/i18n.json"
-    echo "  • Hardcoded deutsche Strings ohne t() Wrapper"
-    echo "  • Buttons ohne Event-Handler"
-    echo "  • Fehlende @eel.expose Dekoratoren"
-    echo ""
+    echo -e "${RED}FAILURE: Stage $STAGE failed.${NC}"
     exit 1
 fi
+

@@ -1,4 +1,11 @@
+import os
+import sys
 import unittest
+from pathlib import Path
+
+# Add project root to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from env_handler import EnvironmentManager
 
 class TestEnvironmentManager(unittest.TestCase):
