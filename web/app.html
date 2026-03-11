@@ -3011,6 +3011,11 @@
             currentPlaylist = [];
             shuffledPlaylist = [];
             playlistIndex = -1;
+
+            // Note: Keep backend in sync
+            if (typeof eel !== 'undefined' && typeof eel.set_current_playlist === 'function') {
+                eel.set_current_playlist(currentPlaylist)().catch(console.error);
+            }
             const player = document.getElementById('player');
             if (player) {
                 player.pause();
@@ -3895,6 +3900,11 @@
                         const j = Math.floor(Math.random() * (i + 1));
                         [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
                     }
+                }
+
+                // Keep backend in sync with the dynamically loaded library list
+                if (typeof eel !== 'undefined' && typeof eel.set_current_playlist === 'function') {
+                    eel.set_current_playlist(currentPlaylist)().catch(console.error);
                 }
 
                 result.media.forEach((item, index) => {
