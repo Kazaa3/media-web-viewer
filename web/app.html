@@ -1434,6 +1434,25 @@
                                 player.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status')?.textContent }));
                             }
                             </script>
+                            <script>
+                            // Exposed helper for backend (Eel) to push metadata updates into the Media Session API
+                            function set_media_session(meta) {
+                                try {
+                                    if (!('mediaSession' in navigator)) return;
+                                    const artwork = (meta.artwork && meta.artwork.length) ? meta.artwork[0].src : document.getElementById('footer-cover').src;
+                                    navigator.mediaSession.metadata = new MediaMetadata({
+                                        title: meta.title || '',
+                                        artist: meta.artist || '',
+                                        album: meta.album || '',
+                                        artwork: [{ src: artwork, sizes: '96x96', type: 'image/png' }]
+                                    });
+                                } catch (e) {
+                                    console.warn('set_media_session failed', e);
+                                }
+                            }
+                            // make globally accessible for Eel
+                            window.set_media_session = set_media_session;
+                            </script>
                             <!-- Footer mit Impressum -->
                                     Sidebar anzeigen</div>
                                 <div style="font-size: 0.85em; color: #666; margin-top: 4px;"

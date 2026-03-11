@@ -1798,6 +1798,22 @@ def play_media(path):
     """
     if DEBUG_FLAGS["player"]:
         debug_log(f"[Debug-Player] Spiele ab: {path}")
+
+    # Try to update browser Media Session via Eel (best-effort)
+    try:
+        # Prepare minimal metadata
+        p = Path(path)
+        title = p.stem if p.name else str(path)
+        meta = {"title": title, "artist": "", "album": "", "artwork": [{"src": document.get('footer-cover') if False else ""}]}
+        # Eel call (if frontend exposes `set_media_session`)
+        try:
+            eel.set_media_session({"title": title})()
+        except Exception:
+            # If Eel or JS function not available, ignore silently
+            pass
+    except Exception:
+        pass
+
     return {"status": "play", "path": path}  # Bestätigung
 
 
