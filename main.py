@@ -2982,8 +2982,9 @@ if __name__ == "__main__":
             f"Current project root: {current_project_root}"
         )
 
+    # Check for existing sessions of this project (same root path)
     existing_sessions = same_project_sessions
-    if existing_sessions:
+    if existing_sessions and os.environ.get("MWV_FORCE_NEW_SESSION") != "1":
         existing = existing_sessions[0]
         existing_url = f"http://localhost:{existing['port']}/app.html"
 

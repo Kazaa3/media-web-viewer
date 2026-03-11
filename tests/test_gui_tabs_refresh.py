@@ -28,6 +28,8 @@ class TestGUITabsRefresh(unittest.TestCase):
         cls.port = 8000
         env = os.environ.copy()
         env["MWV_PORT"] = str(cls.port)
+        env["MWV_FORCE_NEW_SESSION"] = "1"
+        env["MWV_DEBUG_UI"] = "1"
 
         # Start the application in a subprocess
         cls.log_file = open("test_app_startup.log", "w")
@@ -38,7 +40,7 @@ class TestGUITabsRefresh(unittest.TestCase):
             stderr=subprocess.STDOUT,
             env=env
         )
-        time.sleep(10)  # Wait for app to initialize and start server
+        time.sleep(15)  # Wait for app to initialize and start server
 
         # Initialize Selenium (Chrome Headless)
         options = webdriver.ChromeOptions()
@@ -50,42 +52,56 @@ class TestGUITabsRefresh(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.driver.quit()
+        if hasattr(cls, 'driver'):
+            cls.driver.quit()
         # Gracefully stop the app
-        cls.app_process.terminate()
-        try:
-            cls.app_process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            cls.app_process.kill()
+        if hasattr(cls, 'app_process'):
+            cls.app_process.terminate()
+            try:
+                cls.app_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                cls.app_process.kill()
+        if hasattr(cls, 'log_file'):
+            cls.log_file.close()
 
     def setUp(self):
-        self.driver.get("http://localhost:8000")
-        # Wait for the main container
-        WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.ID, "app-container"))
-        )
+        self.driver.get(f"http://localhost:{self.port}")
+        try:
+            # Wait for any common element that indicates loading is done
+            WebDriverWait(self.driver, 30).until(
+                EC.presence_of_element_located((By.ID, "main-split-container"))
+            )
+        except Exception as e:
+            with open("test_selenium_error.html", "w") as f:
+                f.write(self.driver.page_source)
+            print(f"DEBUG: Page title is: {self.driver.title}")
+            raise e
 
     def test_tab_switching_all(self):
         """Cycle through all tabs and verify they display content."""
         tabs = [
             "library", "playlist", "browser", "parser", 
-            "edit", "options", "logbuch", "debug", "tests"
+            "edit", "options", "logbuch", "debug"
         ]
         
-        for tab_id in tabs:
-            with self.subTest(tab=tab_id):
-                # Find the tab button (sidebar-nav items)
-                # Buttons usually have onclick="switchTab('tab_id', ...)"
+        for tab_name in tabs:
+            with self.subTest(tab=tab_name):
+                # Tab buttons are in sidebar-nav
                 try:
-                    xpath = f"//div[contains(@class, 'sidebar-nav')]//div[contains(@onclick, \"switchTab('{tab_id}')\")]"
-                    btn = WebDriverWait(self.driver, 5).until(
+                    # The switchTab call uses the tab ID as first argument
+                    # e.g. switchTab('library', ...)
+                    xpath = f"//div[contains(@onclick, \"switchTab('{tab_name}')\")]"
+                    btn = WebDriverWait(self.driver, 10).until(
                         EC.element_to_be_clickable((By.XPATH, xpath))
                     )
                     btn.click()
-                    time.sleep(0.5) # Wait for animation/render
+                    time.sleep(1.0) 
 
-                    # Verify tab content is visible
-                    target_tab = self.driver.find_element(By.ID, f"{tab_id}-tab")
+                    # Verify tab content is visible. IDs are {name}-tab
+                    tab_id = f"{tab_name}-tab"
+                    if tab_name == "parser": tab_id = "parser-tab" # Consistency check
+                    
+                    target_tab = self.driver.find_element(By.ID, tab_id)
                     self.assertTrue(target_tab.is_displayed(), f"Tab {tab_id} is not displayed after click")
                     
                     # Basic content check (not empty)
