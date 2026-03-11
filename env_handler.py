@@ -142,7 +142,7 @@ class EnvironmentManager:
     """
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.resolve()
-        self.venv_path = self.project_root / ".venv"
+        self.venv_path = self.project_root / ".venv_testbed"
         self.is_debug = "--debug" in sys.argv
 
     def is_conda(self) -> bool:

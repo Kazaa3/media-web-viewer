@@ -63,10 +63,10 @@ try:
 except ModuleNotFoundError as exc:
     missing_module = exc.name or "unknown"
     project_dir = Path(__file__).resolve().parent
-    local_venv_python = project_dir / ".venv" / "bin" / "python"
+    local_venv_python = project_dir / ".venv_testbed" / "bin" / "python"
     already_reexecuted = os.environ.get("MWV_AUTO_REEXEC") == "1"
 
-    # Auto-fallback: if started with wrong interpreter, re-exec with local .venv Python.
+    # Auto-fallback: if started with wrong interpreter, re-exec with local .venv_testbed Python.
     if (
         not already_reexecuted
         and local_venv_python.is_file()
@@ -97,11 +97,11 @@ except ModuleNotFoundError as exc:
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"✅ Lösung: Starte mit der Projekt-Umgebung:\n\n"
         f"   cd {project_dir}\n"
-        f"   source .venv/bin/activate\n"
+        f"   source .venv_testbed/bin/activate\n"
         f"   python main.py\n\n"
-        f"Falls .venv fehlt:\n"
-        f"   python3 -m venv .venv\n"
-        f"   source .venv/bin/activate\n"
+        f"Falls .venv_testbed fehlt:\n"
+        f"   python3 -m venv .venv_testbed\n"
+        f"   source .venv_testbed/bin/activate\n"
         f"   pip install -r requirements.txt\n\n"
         f"Alternative: Mit Conda (falls verfügbar):\n"
         f"   conda activate <env-name>\n"

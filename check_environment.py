@@ -71,7 +71,7 @@ def check_venv():
         print(f"   Status: ❌ NICHT AKTIV")
         print(f"   ⚠️  WARNUNG: Du solltest venv oder conda aktivieren:")
         print(f"      cd {Path(__file__).parent}")
-        print(f"      source .venv/bin/activate  # für venv")
+        print(f"      source .venv_testbed/bin/activate  # für venv")
         print(f"      conda activate <env-name>  # für conda")
         return False
 
@@ -236,7 +236,7 @@ def print_summary(checks_passed):
         print("\n📋 Empfohlene Schritte:")
         if not checks_passed['venv']:
             print("   1. Aktiviere das venv:")
-            print("      $ source .venv/bin/activate")
+            print("      $ source .venv_testbed/bin/activate")
         if not checks_passed['dependencies']:
             print("   2. Installiere Dependencies:")
             print("      $ pip install -r requirements.txt")
