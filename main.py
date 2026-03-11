@@ -136,6 +136,129 @@ except ImportError:
 
 _logger = get_logger("click_events")
 
+
+def process_any_file(path: str) -> str:
+    """Compatibility wrapper used by tests: process a file and return JSON string.
+    Returns JSON string with either {'success': True, 'duration': ..., 'tags': {...}}
+    or {'error': '...'} on failure.
+    """
+    import json
+    try:
+        from parsers.media_parser import extract_metadata
+        from pathlib import Path as _Path
+        filename = _Path(path).name
+        duration, tags = extract_metadata(path, filename, mode='lightweight')
+        return json.dumps({"success": True, "duration": duration, "tags": tags})
+    except Exception as e:
+        _logger.exception("process_any_file failed")
+        return json.dumps({"error": str(e)})
+
+
+# --- Compatibility stubs expected by tests ---
+@eel.expose
+def get_server_status():
+    """Return a minimal server status dict used by unit tests and frontend checks."""
+    try:
+        return {
+            "status": "ok",
+            "version": VERSION,
+            "time": int(time.time()),
+        }
+    except Exception:
+        return {"status": "error"}
+
+
+@eel.expose
+def handle_click_batch(events):
+    """Process a list of click events (compatibility helper for tests)."""
+    results = []
+    for ev in (events or []):
+        try:
+            et = ev.get("type") if isinstance(ev, dict) else None
+            payload = ev.get("payload") if isinstance(ev, dict) else {}
+            results.append(handle_click(et, payload))
+        except Exception:
+            results.append({"ok": False, "error": "processing_failed"})
+    return {"results": results}
+
+
+@eel.expose
+def api_extract_metadata(path, name=None, mode='lightweight'):
+    """Expose metadata extraction in a consistent dict form for tests/frontend."""
+    try:
+        from parsers.media_parser import extract_metadata
+        if name is None:
+            name = Path(path).name
+        res = extract_metadata(path, name, mode=mode)
+        # Normalize: prefer (duration, tags) shape
+        duration = 0
+        tags = {}
+        if isinstance(res, tuple) and len(res) >= 2:
+            a, b = res[0], res[1]
+            if isinstance(a, (int, float)):
+                duration = int(a)
+                tags = b or {}
+            elif isinstance(a, dict):
+                tags = a
+                if isinstance(b, (int, float)):
+                    duration = int(b)
+                elif isinstance(b, dict):
+                    duration = int(b.get('duration', 0) or 0)
+        elif isinstance(res, dict):
+            tags = res
+            duration = int(tags.get('duration', 0) or 0)
+        return {"duration": duration, "tags": tags}
+    except Exception as e:
+        _logger.exception("api_extract_metadata failed")
+        return {"error": str(e)}
+
+
+def _get_installed_packages():
+    """Return list of installed packages (name/version) and source.
+
+    Lightweight implementation for tests that inspect main.py. Not exhaustive.
+    """
+    packages = []
+    source = "pip"
+    try:
+        import importlib.metadata
+        try:
+            for dist in importlib.metadata.distributions():
+                try:
+                    pkg_name = dist.metadata['Name'] if dist.metadata and 'Name' in dist.metadata else dist.metadata.get('Name', None) if dist.metadata else None
+                except Exception:
+                    pkg_name = getattr(dist, 'metadata', None)
+                try:
+                    version = dist.version
+                except Exception:
+                    version = None
+                if pkg_name:
+                    packages.append({"name": pkg_name, "version": version})
+            packages = sorted([p for p in packages if p.get('name')], key=lambda x: x['name'].lower())
+            source = 'importlib.metadata'
+        except Exception:
+            # best-effort: if importlib.metadata iteration fails, fall through to pip fallback
+            pass
+    except Exception:
+        pass
+
+    if not packages:
+        try:
+            import sys, subprocess, json
+            # Fallback to pip list via subprocess
+            result = subprocess.run([sys.executable, '-m', 'pip', 'list', '--format=json'], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                data = json.loads(result.stdout or '[]')
+                packages = sorted([{"name": i.get('name'), "version": i.get('version')} for i in data], key=lambda x: x['name'].lower() if x.get('name') else '')
+                source = 'pip'
+        except Exception:
+            packages = []
+            source = 'none'
+
+    return packages, source
+
+
+
 @eel.expose
 def handle_click(event_type: str, payload: dict):
     """

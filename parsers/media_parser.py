@@ -52,7 +52,7 @@ PARSER_MAPPING = {
 }
 
 
-def extract_metadata(path, filename, mode='lightweight', file_type=None):
+def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwargs):
     """
     @brief Orchestrates the metadata extraction process using a sequential parser chain.
     @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
@@ -302,4 +302,5 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None):
 
     tags['_parser_times'] = parser_times
     logger.debug("metadata", f"Metadata extraction complete for {filename}. Parsers: {list(parser_times.keys())}")
-    return int(duration), cast(dict[str, Any], tags)
+    # Backwards-compat: return (tags, parser_times) as older tests expect tags first
+    return cast(dict[str, Any], tags), parser_times

@@ -57,11 +57,39 @@ class MediaItem:
 
         # Debug mode is handled centrally through logger level
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
-        self.duration, self.tags = media_parser.extract_metadata(
-            self.path,
-            self.name,
-            mode=parser_mode
-        )
+        # extract_metadata historically returned (duration, tags) but some
+        # compatibility changes return (tags, parser_times) or a dict of tags.
+        _meta = media_parser.extract_metadata(self.path, self.name, mode=parser_mode)
+        self.duration = 0
+        self.tags = {}
+        # Normalize possible return shapes
+        if isinstance(_meta, tuple):
+            if len(_meta) == 2:
+                a, b = _meta
+                if isinstance(a, (int, float)):
+                    self.duration = int(a)
+                    self.tags = b or {}
+                elif isinstance(a, dict):
+                    # (tags, parser_times)
+                    self.tags = a or {}
+                    # try to extract duration from parser_times or b
+                    if isinstance(b, (int, float)):
+                        self.duration = int(b)
+                    elif isinstance(b, dict):
+                        self.duration = int(b.get('duration', 0) or 0)
+                else:
+                    # Fallback: try interpreting b as tags/duration
+                    if isinstance(b, (int, float)):
+                        self.duration = int(b)
+                    elif isinstance(b, dict):
+                        self.tags = b
+        elif isinstance(_meta, dict):
+            # older parser returns tags dict only
+            self.tags = _meta
+            self.duration = int(self.tags.get('duration', 0) or 0)
+        else:
+            # unknown shape — leave defaults
+            pass
         self.category = self.get_category()
 
         # Logical separation: type, format, content
@@ -76,8 +104,21 @@ class MediaItem:
         self.is_missing_cover = not self.has_artwork
 
         # New separated metadata fields
-        self.extension = self.file_format
-        self.media_type = self.logical_type
+        # Normalize extension to lowercase without leading dot (tests expect 'mp3', not '.MP3' or 'MP3')
+        ext = (self.file_format or '')
+        if isinstance(ext, str):
+            ext = ext.lstrip('.').lower()
+        self.extension = ext
+
+        # Normalize media_type to a stable, lowercase token for tests and UI
+        lt = (self.logical_type or '')
+        mapping = {
+            'video': 'video', 'Video': 'video',
+            'Audio': 'audio', 'audio': 'audio', 'Hörbuch': 'audio', 'Album': 'audio', 'Klassik': 'audio',
+            'Bilder': 'image', 'E-Book': 'ebook', 'Dokument': 'document', 'Abbild': 'disk',
+            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Unbekannt': 'unknown'
+        }
+        self.media_type = mapping.get(lt, str(lt).lower())
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)

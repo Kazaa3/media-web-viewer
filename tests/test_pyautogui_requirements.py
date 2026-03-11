@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_pyautogui_import_and_api():
     try:
         import pyautogui
@@ -9,4 +10,3 @@ def test_pyautogui_import_and_api():
     assert hasattr(pyautogui, "click")
     assert hasattr(pyautogui, "write") or hasattr(pyautogui, "typewrite")
     assert hasattr(pyautogui, "FAILSAFE")
-```

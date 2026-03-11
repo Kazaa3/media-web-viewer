@@ -76,6 +76,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a78c5b810108c02e39774170a3d9f2e14"><td class="memItemLeft" align="right" valign="top">str&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a78c5b810108c02e39774170a3d9f2e14">detect_file_format</a> (Path|str|None path, dict[str, Any] tags=None)</td></tr>
+<tr class="separator:a78c5b810108c02e39774170a3d9f2e14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8238824fd3ab542445e4146f0a5b9c13"><td class="memItemLeft" align="right" valign="top">Path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a8238824fd3ab542445e4146f0a5b9c13">get_default_scan_dir</a> ()</td></tr>
 <tr class="separator:a8238824fd3ab542445e4146f0a5b9c13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1768dc70d9f43dad3e1e03868bc3f824"><td class="memItemLeft" align="right" valign="top">list[str]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a1768dc70d9f43dad3e1e03868bc3f824">sanitize_scan_dirs</a> (Any scan_dirs)</td></tr>
@@ -101,16 +103,55 @@ Functions</h2></td></tr>
 Variables</h2></td></tr>
 <tr class="memitem:a0f143518ed7c01a27655fcaff442ebaf"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a0f143518ed7c01a27655fcaff442ebaf">CONFIG_FILE</a> = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'</td></tr>
 <tr class="separator:a0f143518ed7c01a27655fcaff442ebaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b8efb3f2baa25edae126181f02bdd11"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a6b8efb3f2baa25edae126181f02bdd11">SLOW_PARSERS</a> = {&quot;isoparser&quot;, &quot;pycdlib&quot;, &quot;ebml&quot;, &quot;mkvparse&quot;, &quot;enzyme&quot;, &quot;pymkv&quot;}</td></tr>
+<tr class="separator:a6b8efb3f2baa25edae126181f02bdd11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d49b39041220103809de52614a1bc2b"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a2d49b39041220103809de52614a1bc2b">AUDIO_EXTENSIONS</a></td></tr>
 <tr class="separator:a2d49b39041220103809de52614a1bc2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1e0f2c9b5ba168285096fbfe94697f6"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#ab1e0f2c9b5ba168285096fbfe94697f6">VIDEO_EXTENSIONS</a></td></tr>
 <tr class="separator:ab1e0f2c9b5ba168285096fbfe94697f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abaa4efa3e4d0197bf97593d0d27d21fe"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#abaa4efa3e4d0197bf97593d0d27d21fe">DOCUMENT_EXTENSIONS</a></td></tr>
 <tr class="separator:abaa4efa3e4d0197bf97593d0d27d21fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bacf83827d8cebcd613c674cc2d53c0"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a6bacf83827d8cebcd613c674cc2d53c0">DISK_IMAGE_EXTENSIONS</a></td></tr>
+<tr class="separator:a6bacf83827d8cebcd613c674cc2d53c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a66213441ddeb7ed8dc7780c650b1f8d5"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a66213441ddeb7ed8dc7780c650b1f8d5">EBOOK_EXTENSIONS</a></td></tr>
 <tr class="separator:a66213441ddeb7ed8dc7780c650b1f8d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e722c8509930af64db5dc1acfab31cd"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceparsers_1_1format__utils.html#a5e722c8509930af64db5dc1acfab31cd">IMAGE_EXTENSIONS</a></td></tr>
+<tr class="separator:a5e722c8509930af64db5dc1acfab31cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a78c5b810108c02e39774170a3d9f2e14" name="a78c5b810108c02e39774170a3d9f2e14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78c5b810108c02e39774170a3d9f2e14">&#9670;&nbsp;</a></span>detect_file_format()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"> str parsers.format_utils.detect_file_format </td>
+          <td>(</td>
+          <td class="paramtype">Path | str | None&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">dict[str, Any] &#160;</td>
+          <td class="paramname"><em>tags</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">@brief Determines the standardized file format for a given media file.
+@details Unterscheidet und standardisiert das Dateiformat je nach Typ (Audio, Video, ISO, etc.).
+@param path Path object to the file.
+@param tags Optional metadata tags for content detection.
+@return Standardized file format string (e.g., 'MP3', 'MKV', 'ISO', 'FLAC', 'PAL DVD').
+</pre> 
+</div>
+</div>
 <a id="a970dd659f63c3511089b1ee5f5d57c06" name="a970dd659f63c3511089b1ee5f5d57c06"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a970dd659f63c3511089b1ee5f5d57c06">&#9670;&nbsp;</a></span>format_bitdepth()</h2>
 
@@ -401,6 +442,23 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a6bacf83827d8cebcd613c674cc2d53c0" name="a6bacf83827d8cebcd613c674cc2d53c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6bacf83827d8cebcd613c674cc2d53c0">&#9670;&nbsp;</a></span>DISK_IMAGE_EXTENSIONS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">dictionary parsers.format_utils.DISK_IMAGE_EXTENSIONS</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"><span class="lineno">    1</span>=  {</div>
+<div class="line"><span class="lineno">    2</span>    <span class="stringliteral">&#39;.iso&#39;</span>, <span class="stringliteral">&#39;.bin&#39;</span>, <span class="stringliteral">&#39;.img&#39;</span>, <span class="stringliteral">&#39;.cue&#39;</span>, <span class="stringliteral">&#39;.nrg&#39;</span>, <span class="stringliteral">&#39;.mdf&#39;</span></div>
+<div class="line"><span class="lineno">    3</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="abaa4efa3e4d0197bf97593d0d27d21fe" name="abaa4efa3e4d0197bf97593d0d27d21fe"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abaa4efa3e4d0197bf97593d0d27d21fe">&#9670;&nbsp;</a></span>DOCUMENT_EXTENSIONS</h2>
 
@@ -433,6 +491,37 @@ Variables</h2></td></tr>
 <div class="line"><span class="lineno">    2</span>    <span class="stringliteral">&#39;.epub&#39;</span>, <span class="stringliteral">&#39;.mobi&#39;</span>, <span class="stringliteral">&#39;.azw&#39;</span>, <span class="stringliteral">&#39;.fb2&#39;</span></div>
 <div class="line"><span class="lineno">    3</span>}</div>
 </div><!-- fragment -->
+</div>
+</div>
+<a id="a5e722c8509930af64db5dc1acfab31cd" name="a5e722c8509930af64db5dc1acfab31cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e722c8509930af64db5dc1acfab31cd">&#9670;&nbsp;</a></span>IMAGE_EXTENSIONS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">dictionary parsers.format_utils.IMAGE_EXTENSIONS</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line"><span class="lineno">    1</span>=  {</div>
+<div class="line"><span class="lineno">    2</span>    <span class="stringliteral">&#39;.jpg&#39;</span>, <span class="stringliteral">&#39;.jpeg&#39;</span>, <span class="stringliteral">&#39;.png&#39;</span>, <span class="stringliteral">&#39;.gif&#39;</span>, <span class="stringliteral">&#39;.webp&#39;</span>, <span class="stringliteral">&#39;.bmp&#39;</span>, <span class="stringliteral">&#39;.tiff&#39;</span></div>
+<div class="line"><span class="lineno">    3</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a6b8efb3f2baa25edae126181f02bdd11" name="a6b8efb3f2baa25edae126181f02bdd11"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b8efb3f2baa25edae126181f02bdd11">&#9670;&nbsp;</a></span>SLOW_PARSERS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">dictionary parsers.format_utils.SLOW_PARSERS = {&quot;isoparser&quot;, &quot;pycdlib&quot;, &quot;ebml&quot;, &quot;mkvparse&quot;, &quot;enzyme&quot;, &quot;pymkv&quot;}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 </div>
 </div>
 <a id="ab1e0f2c9b5ba168285096fbfe94697f6" name="ab1e0f2c9b5ba168285096fbfe94697f6"></a>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['buildsystem_0',['BuildSystem',['../classbuild__system_1_1BuildSystem.html',1,'build_system']]]
+  ['artworkextractor_0',['ArtworkExtractor',['../classparsers_1_1artwork__extractor_1_1ArtworkExtractor.html',1,'parsers::artwork_extractor']]]
 ];

@@ -9,5 +9,6 @@ var searchData=
   ['check_5fvenv_6',['check_venv',['../namespacecheck__environment.html#a95450a0e07c30d9f568b1695907b20f6',1,'check_environment']]],
   ['clean_7',['clean',['../classbuild__system_1_1BuildSystem.html#a5339fe27c7eea489b252e47e55d45ccc',1,'build_system::BuildSystem']]],
   ['cleanup_5flegacy_5fdatabases_8',['cleanup_legacy_databases',['../namespacedb.html#a6e0dccd1f6dcbb663e8013d0c9573304',1,'db']]],
-  ['clear_5fmedia_9',['clear_media',['../namespacedb.html#a512380abea32e16f85768f1305cb3d88',1,'db']]]
+  ['clear_5fmedia_9',['clear_media',['../namespacedb.html#a512380abea32e16f85768f1305cb3d88',1,'db']]],
+  ['create_5fmocks_10',['create_mocks',['../namespacecreate__mocks.html#a3dc22262ba372627b204a577278f675c',1,'create_mocks']]]
 ];
