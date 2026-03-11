@@ -206,6 +206,8 @@ media-web-viewer_*.deb
 
 # --- Screenshots ---
 Screens/
+tests/gui/screenshots/
+tests/reference_screenshots/
 
 # --- Packaging ---
 packaging/
