@@ -1250,10 +1250,7 @@ def _ensure_project_venv_active() -> None:
     os.execv(str(target_exec), [str(target_exec), str(Path(__file__).resolve()), *sys.argv[1:]])
 
 
-_ensure_project_venv_active()
-
-# Ensure we are running in a clean and exclusive environment
-env_handler.validate_safe_startup()
+# Defer these calls to if __name__ == '__main__': block
 
 # Log environment information at startup
 def _log_environment_info():
@@ -2910,6 +2907,9 @@ def ui_trace(message):
 
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
+    _ensure_project_venv_active()
+    env_handler.validate_safe_startup()
+
     no_gui_mode = is_no_gui_mode(sys.argv)
     connectionless_browser_mode = is_connectionless_browser_mode(sys.argv)
 

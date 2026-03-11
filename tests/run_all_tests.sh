@@ -71,7 +71,7 @@ case $STAGE in
         TESTS=("tests/test_eel_exposure_unit.py" "tests/test_api_health_endpoints.py" "tests/test_env_handler.py" "tests/test_logbuffer_api.py")
         ;;
     2)
-        TESTS=("tests/test_db_logic.py" "tests/test_parser_registry.py" "tests/test_process_manager_basic.py" "tests/test_transcoding_fixed.py")
+        TESTS=("tests/test_db_logic.py" "tests/test_parser_registry.py" "tests/test_process_manager_basic.py" "tests/test_transcoding_fixed.py" "tests/test_robust_refresh_logic.py")
         ;;
     3)
         TESTS=("tests/test_i18n_completeness.py" "tests/test_i18n_deep_scan.py" "tests/test_ui_events.py")
@@ -81,6 +81,9 @@ case $STAGE in
         ;;
     5)
         TESTS=("tests/test_subprocess_safety.py" "tests/test_version_sync.py" "tests/test_build_integrity.py")
+        ;;
+    6)
+        TESTS=("tests/test_gui_tabs_refresh.py")
         ;;
     "all")
         TESTS=("tests/test_eel_exposure_unit.py" "tests/test_api_health_endpoints.py" "tests/test_db_logic.py" "tests/test_i18n_completeness.py" "tests/test_subprocess_safety.py")

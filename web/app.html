@@ -1410,7 +1410,31 @@
                             </label>
                             <div>
                                 <div style="font-weight: 500;" data-i18n="options_show_parser_times">Parser-Zeiten
-                                    in
+                            <!-- MediaSession handlers: improves Chrome native media controls -->
+                            <script>
+                            if ('mediaSession' in navigator) {
+                                const updateMediaMetadata = (meta) => {
+                                    try {
+                                        navigator.mediaSession.metadata = new MediaMetadata({
+                                            title: meta.title || '',
+                                            artist: meta.artist || '',
+                                            album: meta.album || '',
+                                            artwork: [{ src: document.getElementById('footer-cover').src, sizes: '96x96', type: 'image/png' }]
+                                        });
+                                    } catch (e) { console.warn('mediaSession metadata set failed', e); }
+                                };
+
+                                navigator.mediaSession.setActionHandler('play', () => document.getElementById('player').play());
+                                navigator.mediaSession.setActionHandler('pause', () => document.getElementById('player').pause());
+                                navigator.mediaSession.setActionHandler('previoustrack', () => window.playPrev && window.playPrev());
+                                navigator.mediaSession.setActionHandler('nexttrack', () => window.playNext && window.playNext());
+
+                                // update metadata on track change (hook into existing player update path if available)
+                                const player = document.getElementById('player');
+                                player.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status')?.textContent }));
+                            }
+                            </script>
+                            <!-- Footer mit Impressum -->
                                     Sidebar anzeigen</div>
                                 <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
                                     data-i18n="options_show_parser_times_desc">Zeigt unten links an, wie
@@ -2190,15 +2214,15 @@
         <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="display: flex; gap: 4px;">
-                    <button onclick="playPrev()" class="player-btn" data-i18n="[title]player_btn_prev">⏮️</button>
-                    <button onclick="playNext()" class="player-btn" data-i18n="[title]player_btn_next">⏭️</button>
+                    <button onclick="playPrev()" class="player-btn" data-i18n="[title]player_btn_prev" aria-label="player_prev">⏮️</button>
+                    <button onclick="playNext()" class="player-btn" data-i18n="[title]player_btn_next" aria-label="player_next">⏭️</button>
                 </div>
                 <audio id="player" controls style="flex: 1; height: 32px;"></audio>
                 <div style="display: flex; gap: 4px;">
                     <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn"
-                        data-i18n="[title]player_btn_shuffle">🔀</button>
+                        data-i18n="[title]player_btn_shuffle" aria-label="player_shuffle">🔀</button>
                     <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn"
-                        data-i18n="[title]player_btn_repeat">🔁</button>
+                        data-i18n="[title]player_btn_repeat" aria-label="player_repeat">🔁</button>
                 </div>
             </div>
             <div id="status" style="font-size: 0.85em;" data-i18n="player_select_song">Wählt ein Lied aus

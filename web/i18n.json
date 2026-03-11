@@ -375,7 +375,9 @@
         "vlc_usage_open_in_vlc": "Die exportierte Playlist kann in VLC geöffnet werden: Medien → Datei öffnen",
         "sync_backend_status": "Backend Status",
         "sync_initializing": "Initialisierung...",
-        "logbook_modal_title": "Logbuch: Feature Name"
+        "logbook_modal_title": "Logbuch: Feature Name",
+        "pl_empty_warning": "Die Playlist ist leer.",
+        "common_confirm_clear_playlist": "Möchtest du wirklich die Wiedergabeliste leeren?"
     },
     "en": {
         "app_title": "dict",
@@ -753,6 +755,8 @@
         "options_displayed_types": "Displayed Media Types",
         "options_displayed_types_desc": "Choose which file types are currently displayed in the library.",
         "env_architecture_title": "Core Architecture & System Status",
-        "about_imprint_content": "<h2>dict</h2><p> A comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities.</p><h3>Key Features</h3><p>Multi-format support, Intelligent parser chain, Audiobook support, Automatic transcoding, SQLite DB, Test suite, Logbook.</p><h3>Technical Architecture</h3><p>Backend: Python with Bottle server and Eel bridge. Frontend: Modern JavaScript with declarative i18n system, CSS3 (Glassmorphism), dynamic event handling.</p><hr><h4>Imprint</h4><p>Developer: kazaa3 | Location: Germany</p><p>Privacy: Local storage in SQLite. No data transmission to external servers.</p><p>License: GNU GPLv3</p>"
+        "about_imprint_content": "<h2>dict</h2><p> A comprehensive desktop application for managing, indexing, and playing media files with high-performance metadata parsing capabilities.</p><h3>Key Features</h3><p>Multi-format support, Intelligent parser chain, Audiobook support, Automatic transcoding, SQLite DB, Test suite, Logbook.</p><h3>Technical Architecture</h3><p>Backend: Python with Bottle server and Eel bridge. Frontend: Modern JavaScript with declarative i18n system, CSS3 (Glassmorphism), dynamic event handling.</p><hr><h4>Imprint</h4><p>Developer: kazaa3 | Location: Germany</p><p>Privacy: Local storage in SQLite. No data transmission to external servers.</p><p>License: GNU GPLv3</p>",
+        "pl_empty_warning": "The playlist is empty.",
+        "common_confirm_clear_playlist": "Are you sure you want to clear the playlist?"
     }
 }

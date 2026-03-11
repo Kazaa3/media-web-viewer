@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: GUI / Frontend-Backend Integration Test
-# Eingabewerte: Backend API (eel exposed functions)
+# Eingabewerte: Backend API (eel expoased functions)
 # Ausgabewerte: Logic consistency results
 # Testdateien: Temporary .md files in logbuch/
 # Kommentar: Verifies logic for robust refreshes and cross-tab consistency.
