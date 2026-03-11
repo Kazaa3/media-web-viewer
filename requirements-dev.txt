@@ -1,0 +1,7 @@
+# Development / CI-only requirements
+# Install into your active virtualenv for running GUI tests locally
+selenium>=4.10.0
+webdriver-manager>=4.0.0
+xvfbwrapper>=0.2.9
+pytest>=8.0.0
+pytest-cov>=4.1.0
