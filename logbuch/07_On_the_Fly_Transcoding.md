@@ -4,6 +4,8 @@
 <!-- Summary_DE: Web-Kompatibilität für jedes Format durch Echtzeit-Konvertierung mit FFmpeg. -->
 <!-- Summary_EN: Web compatibility for any format through real-time conversion with FFmpeg. -->
 <!-- Status: COMPLETED -->
+<!-- Anchor: 07_On_the_Fly_Transcoding -->
+<!-- Redundancy: Section covers real-time transcoding, FFmpeg, caching, latency. -->
 
 # 06 On-the-Fly Transcoding: Grenzen überwinden
 

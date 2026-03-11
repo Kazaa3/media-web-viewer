@@ -5,6 +5,9 @@
 <!-- Summary_EN: Expanding the player to support lossless and modern formats. -->
 <!-- Status: COMPLETED -->
 
+<!-- Anchor: 05_Handling_Audio_Formats -->
+<!-- Redundancy: Section covers format diversity, ALAC/M4A, metadata pipeline. -->
+
 # 04 Format-Vielfalt: ALAC, M4A & Co.
 
 Ein einfacher MP3-Player reicht nicht aus, wenn man eine hochwertige Musiksammlung verwaltet. Die nächste Stufe der Komplexität war die Unterstützung von Formaten, die jenseits des Standards liegen (Commit `2e020a9`).

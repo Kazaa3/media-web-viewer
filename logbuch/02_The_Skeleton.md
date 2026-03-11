@@ -5,6 +5,7 @@
 <!-- Summary_EN: Retrospective on the very first functional state of the application. -->
 <!-- Status: COMPLETED -->
 
+<!-- ANKER: Das Skelett -->
 # 02 Das Skelett: Der erste Wireframe
 
 Jedes große Projekt beginnt mit einem ersten Schritt. Beim *Media Web Viewer* war dies der "Wireframe"-Stand (Commit `d09a463`).
@@ -20,8 +21,22 @@ Dieser Stand markiert den Moment, in dem die Theorie ("Wir bauen einen Web-Playe
 
 *Fun Fact: In dieser frühen Phase wurde bereits die Basis für das Glassmorphism-Design gelegt, das bis heute das Gesicht der App prägt.*
 
+<!-- ANKER: Der minimalistische Anfang -->
+### Der minimalistische Anfang
+In dieser Phase gab es noch keinen Player, kein Transcoding und keine Datenbank. Das Ziel war rein technischer Natur:
+1. **Das Fenster öffnen:** Erstmals ein Eel-Fenster mit einer einfachen HTML-Seite anzeigen.
+2. **Die Dateiliste:** Python scannt ein Verzeichnis und übergibt eine flache Liste von Dateinamen an JavaScript.
+3. **Die Bindung:** Testen, ob Python-Funktionen zuverlässig vom Browser aus aufgerufen werden können.
+
+<!-- ANKER: Warum dokumentieren wir das? -->
+### Warum dokumentieren wir das?
+Dieser Stand markiert den Moment, in dem die Theorie ("Wir bauen einen Web-Player in Python") zur Realität wurde. Es war das Fundament, auf dem alle folgenden komplexen Schichten (Metadaten, SQL, Streaming) aufgebaut wurden.
+
+*Fun Fact: In dieser frühen Phase wurde bereits die Basis für das Glassmorphism-Design gelegt, das bis heute das Gesicht der App prägt.*
+
 <!-- lang-split -->
 
+<!-- ANKER: The Skeleton EN -->
 # 02 The Skeleton: The first wireframe
 
 Every great project starts with a first step. For the *Media Web Viewer*, this was the "Wireframe" state (Commit `d09a463`).

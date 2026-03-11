@@ -1,3 +1,12 @@
+<!-- Category: Integration -->
+<!-- Title_DE: Calibre Batch-API Best Practices -->
+<!-- Title_EN: Calibre Batch API Best Practices -->
+<!-- Summary_DE: Übersicht und Best-Practices für Batch-Import, Sortierung und Metadatenpflege mit Calibre Python-API, CLI und DB-Zugriff. -->
+<!-- Summary_EN: Overview and best practices for batch import, sorting, and metadata management using Calibre Python API, CLI, and DB access. -->
+<!-- Status: ACTIVE -->
+<!-- Anchor: Calibre_Batch_API_Best_Practices -->
+<!-- Redundancy: Section covers Calibre batch import, CLI, Python API, DB access, Eel integration, automation, recommendations. -->
+
 # Calibre Python-API: Batch-Sort/Add für Eel-App
 
 ## Beste Python-APIs für Batch

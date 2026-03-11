@@ -1,10 +1,11 @@
-<!-- Category: bug -->
+<!-- Category: Bug -->
 <!-- Title_DE: Bekannte Probleme (Stand v1.3.3) -->
 <!-- Title_EN: Known Issues (Status v1.3.3) -->
-<!-- Summary_DE: Zentrale Liste offener Bugs und technischer Probleme -->
-<!-- Summary_EN: Central list of open bugs and technical issues -->
+<!-- Summary_DE: Zentrale Liste offener Bugs und technischer Probleme. -->
+<!-- Summary_EN: Central list of open bugs and technical issues. -->
 <!-- Status: ACTIVE -->
-<!-- Date: 2026-03-09 -->
+<!-- Anchor: 00_Known_Issues -->
+<!-- Redundancy: Section covers known issues, bug tracking, technical debt, GUI bugs, parser pipeline, markdown rendering, branch protection. -->
 
 # Bekannte Probleme (Stand v1.3.3)
 

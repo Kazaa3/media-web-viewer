@@ -5,9 +5,12 @@
 <!-- Summary_EN: How the app learned to play music – the integration of Bottle. -->
 <!-- Status: COMPLETED -->
 
+<!-- Anchor: 04_The_First_Playback -->
+<!-- Redundancy: Section covers Bottle integration, media serving, GUI/data separation. -->
+
 # 03 Das erste Playback: Medien-Serving via Bottle
 
-Während Eel die Benutzeroberfläche steuert, reichte es für das Abspielen von Medien nicht aus, einfach nur Dateipfade an JavaScript zu senden. Der Browser benötigt einen richtigen Web-Endpunkt, um Binärdaten zu streamen.
+Während Eel die Benutzeroberfläche steuert, reichte es für das Abspielen von Medien nicht aus, einfach nur Dateipfade an JavaScript zu senden. Der Browser benötigt einen richtigen Web-Endpunkt, um Binärdaten zu stkJreamen.
 
 ### Der Medien-Server
 In Commit `c565084` wurde das **Bottle Web Framework** integriert. Bottle läuft parallel zu Eel im Hintergrund und erfüllt einen spezifischen Zweck:

@@ -5,6 +5,9 @@
 <!-- Summary_EN: Ensuring stability through strict environment validation (Venv/Conda). -->
 <!-- Status: COMPLETED -->
 
+<!-- Anchor: 09_Environment_and_Portability -->
+<!-- Redundancy: Section covers environment hygiene, venv/conda validation, auto-fix, binaries. -->
+
 # 08 Environment & Portabilität: Die "Exklusiv"-Strategie
 
 Python-Anwendungen leiden oft unter dem "Works on my machine"-Syndrom. Um dies zu verhindern, verfolgt der *Media Web Viewer* eine strikte Strategie der **Umgebungs-Hygiene**.

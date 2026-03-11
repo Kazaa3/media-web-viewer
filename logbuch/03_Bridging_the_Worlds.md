@@ -4,6 +4,8 @@
 <!-- Summary_DE: Die strategische Entscheidung für die Hybrid-Architektur. -->
 <!-- Summary_EN: The strategic decision for the hybrid architecture. -->
 <!-- Status: COMPLETED -->
+<!-- Anchor: 03_Bridging_the_Worlds -->
+<!-- Redundancy: Section covers Eel/Python bridge, architecture rationale, bidirectionality. -->
 
 # 03 Brückenschlag: Warum Eel & Python?
 

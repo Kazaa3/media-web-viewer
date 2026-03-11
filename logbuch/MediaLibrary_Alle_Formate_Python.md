@@ -79,6 +79,14 @@ FORMAT_HANDLERS = {
     'cbz': lambda fp: {'images': len([f for f in zipfile.ZipFile(fp).namelist() if f.lower().endswith(('.png','.jpg'))])},
     'cbr': lambda fp: {'images': len([f for f in rarfile.RarFile(fp).namelist() if f.lower().endswith(('.png','.jpg'))])},
     'html': lambda fp: {'title': BeautifulSoup(open(fp).read(), 'html.parser').title.string},
+# <!-- Category: Reference -->
+# <!-- Title_DE: Vollständige Format-Liste für Media-Library (Python) -->
+# <!-- Title_EN: Complete Format List for Media Library (Python) -->
+# <!-- Summary_DE: Übersicht aller relevanten E-Book-, Dokument-, Comic- und Exotenformate mit Python-Lösungen und Master-Router-Code. -->
+# <!-- Summary_EN: Overview of all relevant e-book, document, comic, and exotic formats with Python solutions and master router code. -->
+# <!-- Status: ACTIVE -->
+# <!-- Anchor: MediaLibrary_Alle_Formate_Python -->
+# <!-- Redundancy: Section covers format coverage, Python handlers, router, Calibre fallback, installation, and extension mapping. -->
 }
 
 @eel.expose

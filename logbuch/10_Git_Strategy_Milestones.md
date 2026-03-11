@@ -1,9 +1,11 @@
 <!-- Category: Process -->
-<!-- Title_DE: 09 Git-Strategie: Milestones & Branching -->
-<!-- Title_EN: 09 Git Strategy: Milestones & Branching -->
-<!-- Summary_DE: Wie wir mit Milestones und Branches skalieren und den main-Branch schützen. -->
-<!-- Summary_EN: How we scale with milestones and branches and protect the main branch. -->
+<!-- Title_DE: Git-Strategie: Milestones & Branching -->
+<!-- Title_EN: Git Strategy: Milestones & Branching -->
+<!-- Summary_DE: Skalierung mit Meilensteinen und Branches, Schutz des main-Branch. -->
+<!-- Summary_EN: Scaling with milestones and branches, protecting the main branch. -->
 <!-- Status: COMPLETED -->
+<!-- Anchor: 10_Git_Strategy_Milestones -->
+<!-- Redundancy: Section covers Git milestones, branch management, merge gates, scalability. -->
 
 # 09 Git-Strategie: Milestones & Branching
 

@@ -5,6 +5,7 @@
 <!-- Summary_EN: Evolution of metadata extraction – from Mutagen to FFmpeg fallback. -->
 <!-- Status: COMPLETED -->
 
+<!-- ANKER: Die Metadaten-Quest -->
 # 05 Die Metadaten-Quest: Jenseits von Dateinamen
 
 Ein Medienplayer ohne Titel, Album und Künstler ist nur eine Liste von Dateien. Die "Quest" nach akkuraten Informationen führte zu einer immer komplexeren Pipeline.
@@ -21,8 +22,24 @@ Wenn gar keine Tags vorhanden sind, versucht die App, Informationen aus der Verz
 ### Erkenntnis
 Metadaten-Extraktion ist keine exakte Wissenschaft, sondern ein Prozess der Annäherung. Diese Pipeline stellt sicher, dass der Nutzer in fast jedem Fall eine ansprechende Anzeige erhält.
 
+<!-- ANKER: Strategie der Redundanz -->
+### Die Strategie der Redundanz
+Da Tags oft fehlerhaft oder unvollständig sind, nutzt der *Media Web Viewer* eine mehrstufige Eskalationsstrategie:
+1. **Mutagen:** Der schnelle Standard für ID3-Tags, Vorbis-Kommentare und MP4-Tags.
+2. **PyMediaInfo:** Für technische Details (Bitrate, Sample-Rate), die in Standard-Tags oft fehlen.
+3. **FFmpeg Fallback:** Die "letzte Instanz". Wenn alles andere scheitert, extrahiert FFmpeg die Spurdauer und grundlegende Metadaten direkt aus dem Bitstream.
+
+<!-- ANKER: Filename Parsing & Covers -->
+### Filename Parsing & Covers
+Wenn gar keine Tags vorhanden sind, versucht die App, Informationen aus der Verzeichnisstruktur zu erraten. Parallel dazu sucht die Pipeline nach eingebetteten Covern oder Dateien wie `folder.jpg`, um die App visuell zum Leben zu erwecken.
+
+<!-- ANKER: Erkenntnis -->
+### Erkenntnis
+Metadaten-Extraktion ist keine exakte Wissenschaft, sondern ein Prozess der Annäherung. Diese Pipeline stellt sicher, dass der Nutzer in fast jedem Fall eine ansprechende Anzeige erhält.
+
 <!-- lang-split -->
 
+<!-- ANKER: The Metadata Quest EN -->
 # 05 The Metadata Quest: Beyond Filenames
 
 A media player without title, album, and artist is just a list of files. The "quest" for accurate information led to an increasingly complex pipeline.
