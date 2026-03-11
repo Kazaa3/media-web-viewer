@@ -1911,6 +1911,82 @@ def jump_to_index(index: int):
 
 
 @eel.expose
+def move_item_up(index: int):
+    """
+    Move playlist item at `index` one position up (towards start).
+    Adjusts `CURRENT_INDEX` if necessary. Returns status and updated playlist.
+    """
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    try:
+        idx = int(index)
+    except Exception:
+        return {"status": "error", "message": "invalid index"}
+
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    if idx <= 0 or idx >= len(CURRENT_PLAYLIST):
+        return {"status": "error", "message": "index out of range"}
+
+    # swap
+    CURRENT_PLAYLIST[idx - 1], CURRENT_PLAYLIST[idx] = CURRENT_PLAYLIST[idx], CURRENT_PLAYLIST[idx - 1]
+
+    # adjust current index if it was involved
+    if CURRENT_INDEX == idx:
+        CURRENT_INDEX = idx - 1
+    elif CURRENT_INDEX == idx - 1:
+        CURRENT_INDEX = idx
+
+    return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+
+@eel.expose
+def move_item_down(index: int):
+    """
+    Move playlist item at `index` one position down (towards end).
+    Adjusts `CURRENT_INDEX` if necessary. Returns status and updated playlist.
+    """
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    try:
+        idx = int(index)
+    except Exception:
+        return {"status": "error", "message": "invalid index"}
+
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    if idx < 0 or idx >= len(CURRENT_PLAYLIST) - 1:
+        return {"status": "error", "message": "index out of range"}
+
+    # swap
+    CURRENT_PLAYLIST[idx], CURRENT_PLAYLIST[idx + 1] = CURRENT_PLAYLIST[idx + 1], CURRENT_PLAYLIST[idx]
+
+    # adjust current index if it was involved
+    if CURRENT_INDEX == idx:
+        CURRENT_INDEX = idx + 1
+    elif CURRENT_INDEX == idx + 1:
+        CURRENT_INDEX = idx
+
+    return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+
+@eel.expose
+def move_current_up():
+    """Move the currently selected playlist item up by one position."""
+    global CURRENT_INDEX
+    if CURRENT_INDEX is None or CURRENT_INDEX < 0:
+        return {"status": "error", "message": "no current item"}
+    return move_item_up(CURRENT_INDEX)
+
+
+@eel.expose
+def move_current_down():
+    """Move the currently selected playlist item down by one position."""
+    global CURRENT_INDEX
+    if CURRENT_INDEX is None or CURRENT_INDEX < 0:
+        return {"status": "error", "message": "no current item"}
+    return move_item_down(CURRENT_INDEX)
+
+
+@eel.expose
 def open_in_explorer(path_str):
     """
     @brief Opens a specific file or folder in the system's native file explorer.
