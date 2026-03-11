@@ -1977,6 +1977,12 @@ def get_current_playlist():
     return {"items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
 
 
+# expose get_current_playlist to eel so frontend can refresh after reorder actions
+@eel.expose
+def get_current_playlist_exposed():
+    return get_current_playlist()
+
+
 def _play_index(idx: int):
     """Internal: play item at index if valid. Returns status dict."""
     global CURRENT_PLAYLIST, CURRENT_INDEX
@@ -2089,6 +2095,97 @@ def move_item_down(index: int):
         CURRENT_INDEX = idx
 
     return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+
+@eel.expose
+def move_item_up_by_key(key: str):
+    """Move the first playlist item matching `key` (name or path) up by one.
+    Returns the same structure as `move_item_up`.
+    """
+    global CURRENT_PLAYLIST
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    if not key:
+        return {"status": "error", "message": "invalid key"}
+    # find index by multiple candidate fields and fallbacks
+    def matches(it, key):
+        if not isinstance(it, dict):
+            return False
+        # exact fields
+        for f in ('name', 'filename', 'path', 'id'):
+            v = it.get(f)
+            if v and v == key:
+                return True
+        # tags.title
+        tags = it.get('tags') or {}
+        if tags.get('title') and tags.get('title') == key:
+            return True
+        # substring matches for path or name
+        for f in ('name', 'filename', 'path'):
+            v = it.get(f)
+            if v and isinstance(v, str) and key in v:
+                return True
+        return False
+
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        if matches(it, key):
+            print(f"[DEBUG] move_item_up_by_key: matched idx={idx} key={key} item={it}")
+            return move_item_up(idx)
+
+    # last resort: try matching by stringified dict values
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        try:
+            s = ' '.join(str(x) for x in it.values())
+            if key in s:
+                return move_item_up(idx)
+        except Exception:
+            continue
+
+    print(f"[DEBUG] move_item_up_by_key: no match for key={key}")
+    return {"status": "error", "message": "item not found"}
+
+
+@eel.expose
+def move_item_down_by_key(key: str):
+    """Move the first playlist item matching `key` (name or path) down by one.
+    Returns the same structure as `move_item_down`.
+    """
+    global CURRENT_PLAYLIST
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    if not key:
+        return {"status": "error", "message": "invalid key"}
+    def matches(it, key):
+        if not isinstance(it, dict):
+            return False
+        for f in ('name', 'filename', 'path', 'id'):
+            v = it.get(f)
+            if v and v == key:
+                return True
+        tags = it.get('tags') or {}
+        if tags.get('title') and tags.get('title') == key:
+            return True
+        for f in ('name', 'filename', 'path'):
+            v = it.get(f)
+            if v and isinstance(v, str) and key in v:
+                return True
+        return False
+
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        if matches(it, key):
+            print(f"[DEBUG] move_item_down_by_key: matched idx={idx} key={key} item={it}")
+            return move_item_down(idx)
+
+    for idx, it in enumerate(CURRENT_PLAYLIST):
+        try:
+            s = ' '.join(str(x) for x in it.values())
+            if key in s:
+                return move_item_down(idx)
+        except Exception:
+            continue
+
+    print(f"[DEBUG] move_item_down_by_key: no match for key={key}")
+    return {"status": "error", "message": "item not found"}
 
 
 @eel.expose

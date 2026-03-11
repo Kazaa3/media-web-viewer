@@ -2855,7 +2855,37 @@
                     return;
                 }
 
-                const res = await eel.move_item_up(index)();
+                // If shuffle is active, map the visible shuffled index to the
+                // actual index in `currentPlaylist` before calling the backend.
+                // Prefer server-side move-by-key to avoid index-mapping issues
+                let item = isShuffle ? shuffledPlaylist[index] : currentPlaylist[index];
+                let key = (item && (item.name || item.path)) || null;
+                if (!key) {
+                    console.debug('moveItemUp: no key for index', index);
+                    // fallback to index-based call if key unavailable
+                    const res = await eel.move_item_up(index)();
+                    console.debug('moveItemUp: index-fallback res=', res);
+                    if (res && res.status === 'ok') {
+                        const remote = await eel.get_current_playlist()();
+                        if (remote && remote.items) {
+                            currentPlaylist = remote.items.slice();
+                            playlistIndex = remote.index;
+                            renderPlaylist();
+                        }
+                    }
+                } else {
+                    console.debug('moveItemUp: calling move_item_up_by_key key=', key, 'index=', index, 'isShuffle=', isShuffle);
+                    const res = await eel.move_item_up_by_key(key)();
+                    console.debug('moveItemUp: server res=', res);
+                    if (res && res.status === 'ok') {
+                        const remote = await eel.get_current_playlist()();
+                        if (remote && remote.items) {
+                            currentPlaylist = remote.items.slice();
+                            playlistIndex = remote.index;
+                            renderPlaylist();
+                        }
+                    }
+                }
                 if (res && res.status === 'ok') {
                     // refreshed state returned in res.items if provided
                     const remote = await eel.get_current_playlist()();
@@ -2882,7 +2912,34 @@
                     return;
                 }
 
-                const res = await eel.move_item_down(index)();
+                // Map shuffled visible index to actual playlist index when needed.
+                let item = isShuffle ? shuffledPlaylist[index] : currentPlaylist[index];
+                let key = (item && (item.name || item.path)) || null;
+                if (!key) {
+                    console.debug('moveItemDown: no key for index', index);
+                    const res = await eel.move_item_down(index)();
+                    console.debug('moveItemDown: index-fallback res=', res);
+                    if (res && res.status === 'ok') {
+                        const remote = await eel.get_current_playlist()();
+                        if (remote && remote.items) {
+                            currentPlaylist = remote.items.slice();
+                            playlistIndex = remote.index;
+                            renderPlaylist();
+                        }
+                    }
+                } else {
+                    console.debug('moveItemDown: calling move_item_down_by_key key=', key, 'index=', index, 'isShuffle=', isShuffle);
+                    const res = await eel.move_item_down_by_key(key)();
+                    console.debug('moveItemDown: server res=', res);
+                    if (res && res.status === 'ok') {
+                        const remote = await eel.get_current_playlist()();
+                        if (remote && remote.items) {
+                            currentPlaylist = remote.items.slice();
+                            playlistIndex = remote.index;
+                            renderPlaylist();
+                        }
+                    }
+                }
                 if (res && res.status === 'ok') {
                     const remote = await eel.get_current_playlist()();
                     if (remote && remote.items) {
