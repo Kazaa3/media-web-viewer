@@ -148,23 +148,15 @@
         /* Playlist pick-and-insert visuals */
         .media-item.picked {
             outline: 2px dashed #2a7;
-            transform: translateY(-4px);
+            transform: scale(1.02);
             background: #fffef8;
+            z-index: 100;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
-        .playlist-insert-target {
-            border-top: 2px solid #2a7;
-            margin-top: -2px;
-        }
-
-        .media-item.picked {
-            background-color: rgba(52, 152, 219, 0.2) !important;
-            border: 1px dashed #3498db !important;
-        }
-
-        body.is-picking,
-        body.is-picking * {
-            cursor: cell !important;
+        body.is-picking {
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .grab-icon {
@@ -1237,21 +1229,30 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1 data-i18n="app_title">Media Player</h1>
             <div class="tab-buttons">
-                <button class="tab-btn active" onclick="switchTab('player', this)"
+                <button id="player-btn" class="tab-btn active" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
-                <button class="tab-btn" onclick="switchTab('library', this)" data-i18n="nav_library">Bibliothek</button>
-                <button class="tab-btn" onclick="switchTab('browser', this)" data-i18n="nav_browser">Browser</button>
-                <button class="tab-btn" onclick="switchTab('edit', this)" data-i18n="nav_edit">Edit</button>
-                <button class="tab-btn" onclick="switchTab('options', this)" data-i18n="nav_options">Optionen</button>
-                <button class="tab-btn" onclick="switchTab('parser', this)" data-i18n="nav_parser">Parser</button>
-                <button class="tab-btn" onclick="switchTab('debug', this)" data-i18n="nav_debug">Debug DB</button>
-                <button class="tab-btn" onclick="switchTab('tests', this)" data-i18n="nav_tests">Tests</button>
-                <button class="tab-btn" onclick="switchTab('logbuch', this)"
+                <button id="library-btn" class="tab-btn" onclick="switchTab('library', this)"
+                    data-i18n="nav_library">Bibliothek</button>
+                <button id="browser-btn" class="tab-btn" onclick="switchTab('browser', this)"
+                    data-i18n="nav_browser">Browser</button>
+                <button id="edit-btn" class="tab-btn" onclick="switchTab('edit', this)"
+                    data-i18n="nav_edit">Edit</button>
+                <button id="options-btn" class="tab-btn" onclick="switchTab('options', this)"
+                    data-i18n="nav_options">Optionen</button>
+                <button id="parser-btn" class="tab-btn" onclick="switchTab('parser', this)"
+                    data-i18n="nav_parser">Parser</button>
+                <button id="debug-btn" class="tab-btn" onclick="switchTab('debug', this)" data-i18n="nav_debug">Debug
+                    DB</button>
+                <button id="tests-btn" class="tab-btn" onclick="switchTab('tests', this)"
+                    data-i18n="nav_tests">Tests</button>
+                <button id="logbuch-btn" class="tab-btn" onclick="switchTab('logbuch', this)"
                     style="background: #e1f5fe; border-color: #0277bd; color: #0277bd;" data-i18n="nav_logbook">📓
                     Logbuch</button>
-                <button class="tab-btn" onclick="switchTab('playlist', this)" data-i18n="nav_playlist">📋
+                <button id="playlist-btn" class="tab-btn" onclick="switchTab('playlist', this)"
+                    data-i18n="nav_playlist">📋
                     Playlist</button>
-                <button class="tab-btn" onclick="switchTab('vlc', this)" data-i18n="nav_video">🎬 Video Player</button>
+                <button id="vlc-btn" class="tab-btn" onclick="switchTab('vlc', this)" data-i18n="nav_video">🎬 Video
+                    Player</button>
                 <button class="tab-btn" style="background: #fdf5e6; border-color: #f4d;" onclick="toggleDebugMenu()"
                     data-i18n="nav_flags">⚙️
                     Flags</button>
@@ -3151,13 +3152,12 @@
                         <span style="font-size: 0.8em;">${artistDisplay}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 10px;">
-                        <div class="grab-icon" 
-                             onmousedown="onGrabPointerDown(event, ${index})" 
-                             onmouseup="onGrabPointerUp(event, ${index})" 
-                             onmouseleave="onGrabPointerLeave(event, ${index})"
-                             title="${t('pl_grab') || 'Grab to move'}">☰
-                             <div class="pick-progress" id="pick-progress-${index}"></div>
-                        </div>
+                         <div class="grab-icon" 
+                              onmousedown="onGrabPointerDown(event, ${index})" 
+                              onmouseup="onGrabPointerUp(event, ${index})" 
+                              onmouseleave="onGrabPointerLeave(event, ${index})"
+                              title="${t('pl_grab') || 'Grab to move'}">☰
+                         </div>
                         <div class="playlist-controls" style="display: flex; gap: 5px;">
                             <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" 
                                 ${isShuffle ? 'disabled style="opacity:0.3; cursor:default;"' : 'style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;"'}>🔼</button>
@@ -3214,49 +3214,28 @@
             e.stopPropagation();
             if (isShuffle) return;
 
-            ignoreNextMouseUp = false; // Reset state for a new interaction
+            ignoreNextMouseUp = true;
+            console.log(`[Picking] Immediate pick on handle ${index}`);
+            try { appendUiTrace(`Grab-Down (Immediate) on ${index}`); } catch (e) { }
 
-            console.log(`[Picking] mousedown on handle ${index}`);
-            try { appendUiTrace(`Grab-Down on ${index}`); } catch (e) { }
-
-            // start long-press timer
-            if (pickTimer) clearTimeout(pickTimer);
-
-            const progress = document.getElementById(`pick-progress-${index}`);
-            if (progress) {
-                progress.style.transition = 'width 0.4s linear';
-                progress.style.width = '100%';
-            }
-
-            pickTimer = setTimeout(() => {
-                pickTimer = null;
-                ignoreNextMouseUp = true; // Mark that next mouseup on this item should be ignored (it just finished picking)
-                pickItem(index);
-            }, 400);
+            pickItem(index);
         }
 
         let ignoreNextMouseUp = false;
 
         function onGrabPointerUp(e, index) {
+            console.log(`[Picking] mouseup on handle ${index}, ignoreNext=${ignoreNextMouseUp}, pickedIndex=${pickedIndex}`);
+
+            if (pickedIndex !== -1 && pickedIndex !== index) {
+                // Let it bubble to div.onmouseup for drop
+                return;
+            }
+
             e.stopPropagation();
-            console.log(`[Picking] mouseup on handle ${index}, ignoreNext=${ignoreNextMouseUp}`);
 
-            if (pickTimer) {
-                // Was a short click
-                console.log(`[Picking] Short click detected, cancelling pick timer`);
-                clearTimeout(pickTimer);
-                pickTimer = null;
-                clearPickProgress(index);
-
-                // Optional: Auto-select on short grab-click
-                playlistIndex = index;
-                renderPlaylist();
-            } else if (ignoreNextMouseUp) {
-                console.log(`[Picking] Ignoring mouseup after successful pick activation`);
+            if (ignoreNextMouseUp) {
                 ignoreNextMouseUp = false;
             } else if (pickedIndex === index) {
-                // Long press was already successful, but user clicked again on same handle
-                console.log(`[Picking] Clicked on already picked handle ${index} -> cancelling`);
                 cancelPick();
             }
         }
@@ -3291,6 +3270,20 @@
             }
             pickedIndex = index;
             document.body.classList.add('is-picking');
+
+            // Add global cancel listener if user releases outside elements
+            const onGlobalUp = (e) => {
+                if (pickedIndex !== -1) {
+                    console.log("[Picking] Global mouseup detected - checking if we need to cancel");
+                    // If we are here, we might have missed a specific drop target mouseup
+                    // We'll give it a tiny delay to see if releasePick was called
+                    setTimeout(() => {
+                        if (pickedIndex !== -1) cancelPick();
+                    }, 50);
+                }
+                window.removeEventListener('mouseup', onGlobalUp);
+            };
+            window.addEventListener('mouseup', onGlobalUp);
 
             // Visual confirmation
             const list = document.getElementById('playlist-list');
@@ -3363,16 +3356,22 @@
         }
 
         function cancelPick() {
+            console.log("[Picking] cancelPick called, cleaning up state and classes");
+            try { appendUiTrace(`CANCEL-PICK (index was ${pickedIndex})`); } catch (e) { }
+
             pickedIndex = -1;
             ignoreNextMouseUp = false;
             document.body.classList.remove('is-picking');
 
-            // Comprehensive cleanup of all drag/drop visual baggage
+            if (pickTimer) { clearTimeout(pickTimer); pickTimer = null; }
+            if (window._pickAutoCancel) { clearTimeout(window._pickAutoCancel); window._pickAutoCancel = null; }
+
+            // Immediate DOM cleanup for speed
             document.querySelectorAll('.media-item').forEach(el => {
-                el.classList.remove('drop-target-before', 'drop-target-after', 'picked');
+                el.classList.remove('drop-target-before', 'drop-target-after', 'picked', 'picked-flash');
+                el.style.cursor = '';
             });
 
-            if (pickTimer) { clearTimeout(pickTimer); pickTimer = null; }
             renderPlaylist();
         }
 

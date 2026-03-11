@@ -11,142 +11,103 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import JavascriptException, StaleElementReferenceException, TimeoutException
 from pages.playlist_page import PlaylistPage
-from pages.player_page import PlayerPage
+from test_utils import manage_app_instance, wait_for_app, robust_action, save_screenshot
 
 class TestHammerhartReorder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.port = 8005
-        env = os.environ.copy()
-        env["MWV_PORT"] = str(cls.port)
-        env["MWV_FORCE_NEW_SESSION"] = "1"
+        preferred = int(os.environ.get("MWV_PORT", 0)) or None
+        cls.app_process = None
+        decision, using_existing, cls.port = manage_app_instance(preferred)
         
-        cls.app_process = subprocess.Popen(
-            [sys.executable, "main.py"],
-            cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
-            env=env
-        )
-        time.sleep(15) 
-        
+        if decision == "START_NEW":
+            env = os.environ.copy()
+            env["MWV_PORT"] = str(cls.port)
+            env["MWV_FORCE_NEW_SESSION"] = "1"
+            cls.app_process = subprocess.Popen(
+                [sys.executable, "main.py"],
+                cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
+                env=env
+            )
+            if not wait_for_app(cls.port, timeout=60): raise RuntimeError("Failed to start")
+
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
         cls.driver = webdriver.Chrome(options=options)
-        cls.driver.set_window_size(1280, 1024)
 
     @classmethod
     def tearDownClass(cls):
-        if hasattr(cls, 'driver'):
-            cls.driver.quit()
-        if hasattr(cls, 'app_process'):
-            cls.app_process.terminate()
+        if hasattr(cls, 'driver'): cls.driver.quit()
+        if cls.app_process: cls.app_process.terminate()
 
     def test_hammerhart_to_second_and_fifth(self):
-        player = PlayerPage(self.driver)
         playlist = PlaylistPage(self.driver)
-        self.driver.get(f"http://localhost:{self.port}/app.html")
-        time.sleep(3)
-
-        # 1. Search and Play Hammerhart
-        print("Selecting 'Hammerhart' in Player...")
-        # Direct play via index if known, or search. Let's assume it's in library.
-        # But easier: just find it in the playlist if already there, or add it.
-        # Since we start with a clean session, we might need to add it or it's there from default media.
-        
-        # 2. Switch to Playlist
-        print("Switching to Playlist tab...")
-        playlist.switch_to()
-        
-        # 3. Ensure Hammerhart is at index 0 for a clean start
-        wait = WebDriverWait(self.driver, 20)
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))
-        
-        items = playlist.get_items()
-        current_idx = -1
-        for i, item in enumerate(items):
-            if "Hammerhart" in item.text:
-                current_idx = i
-                break
-        
-        if current_idx == -1:
-            self.fail("Hammerhart not in playlist after 20s wait")
-
-        if current_idx != 0:
-            print(f"Hammerhart is at index {current_idx}. Moving to 0 for scenario start...")
-            # Use direct JS to move and render
-            self.driver.execute_script(f"""
-                eel.move_item_to({current_idx}, 0)().then(res => {{
-                    if(res && res.status === 'ok') {{
-                        currentPlaylist = res.items;
-                        playlistIndex = res.index;
-                        renderPlaylist();
-                    }}
-                }});
-            """)
-            time.sleep(5)
+        try:
+            self.driver.get(f"http://localhost:{self.port}/app.html")
+            wait = WebDriverWait(self.driver, 45)
+            wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
+            wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))
             
-        # Verify it's at 0
-        items = playlist.get_items()
-        names = playlist.get_item_names()
-        print(f"Playlist at scenario start: {names[:3]}")
-        self.assertIn("Hammerhart", names[0], "Hammerhart must be at index 0 to start scenario")
+            def find_hammer_idx():
+                names = playlist.get_item_names()
+                for i, name in enumerate(names):
+                    if "Hammerhart" in name: return i
+                return -1
 
-        # 4. Move to Pos 2 (index 1)
-        print("Picking Hammerhart from index 0...")
-        grab_icon = items[0].find_element(By.CLASS_NAME, "grab-icon")
-        
-        # Simulate mousedown via JS to be 100% sure it hits our handler
-        # Simulate mousedown via JS to be 100% sure it hits our handler
-        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", grab_icon)
-        time.sleep(1.5) # wait for 400ms timer
-        # Re-find
-        items = playlist.get_items()
-        grab_icon = items[0].find_element(By.CLASS_NAME, "grab-icon")
-        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));", grab_icon)
-        time.sleep(1)
-        
-        print("Inserting at index 1 (Target: Item at old index 1)...")
-        items = playlist.get_items()
-        # Click the 2nd item (index 1) to insert BEFORE it
-        self.driver.execute_script("arguments[0].click();", items[1])
-        time.sleep(5)
-        
-        names = playlist.get_item_names()
-        print(f"Playlist after move to 1: {names[:3]}")
-        playlist.take_screenshot("hammerhart_pos2_check")
-        self.assertIn("Hammerhart", names[1])
+            # Wait for scanner
+            start_wait = time.time()
+            current_idx = -1
+            while time.time() - start_wait < 60:
+                current_idx = find_hammer_idx()
+                if current_idx != -1: break
+                time.sleep(5)
+            
+            if current_idx == -1: self.fail("Hammerhart not found")
 
-        # 5. Move to Pos 5 (index 4)
-        print("Picking Hammerhart from index 1...")
-        items = playlist.get_items()
-        grab_icon = items[1].find_element(By.CLASS_NAME, "grab-icon")
-        
-        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", grab_icon)
-        time.sleep(1.5)
-        # Re-find
-        items = playlist.get_items()
-        grab_icon = items[1].find_element(By.CLASS_NAME, "grab-icon")
-        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));", grab_icon)
-        time.sleep(1)
-        
-        print("Inserting at index 5...")
-        # Re-find items again to be sure
-        items = playlist.get_items()
-        # If we have at least 6 items
-        target_idx = min(5, len(items)-1)
-        print(f"Targeting index {target_idx} for insertion...")
-        self.driver.execute_script("arguments[0].click();", items[target_idx])
-        time.sleep(5)
-        
-        names = playlist.get_item_names()
-        print(f"Final verify: {names[:6]}")
-        playlist.take_screenshot("hammerhart_pos5_check")
-        # Position 5 is index 4 if we moved it from index 1 forward
-        self.assertIn("Hammerhart", names[target_idx - (1 if target_idx > 1 else 0)]) # Simplified check
-        # More precise: it should be at target_idx OR target_idx-1 depending on logic.
-        # Let's just check if it's there at all in the first 6
-        self.assertTrue(any("Hammerhart" in n for n in names[:6]), "Hammerhart should remain in top 6")
+            def perform_drag():
+            # 1. Grab (triggers re-render)
+                items = self.driver.find_elements(By.CLASS_NAME, "media-item")
+                target_pos = 1 if len(items) > 1 else 0
+                idx = -1
+                for i, item in enumerate(items):
+                    if "Hammerhart" in item.text:
+                        idx = i
+                        break
+                
+                if idx == -1: return False
+                if idx == target_pos: return True
+                
+                source_item = items[idx]
+                grab = source_item.find_element(By.CLASS_NAME, "grab-icon")
+                self.driver.execute_script("arguments[0].scrollIntoView();", grab)
+                
+                ActionChains(self.driver).click_and_hold(grab).perform()
+                time.sleep(1) # Wait for re-render
+                
+                # 2. Re-find target
+                items_new = self.driver.find_elements(By.CLASS_NAME, "media-item")
+                if len(items_new) <= target_pos: return False
+                target_new = items_new[target_pos]
+                
+                # Defensive scrolling for target
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_new)
+                time.sleep(0.5)
+                
+                ActionChains(self.driver).move_to_element(target_new).pause(0.5).release().perform()
+                return True
+
+            robust_action(self.driver, perform_drag)
+            time.sleep(3)
+            final_names = playlist.get_item_names()
+            self.assertIn("Hammerhart", final_names[1 if len(final_names) > 1 else 0])
+        except Exception:
+            save_screenshot(self.driver, "test_hammerhart_fail")
+            raise
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,83 +10,79 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pages.playlist_page import PlaylistPage
-from pages.player_page import PlayerPage
+from test_utils import manage_app_instance, wait_for_app, robust_action, save_screenshot
 
 class TestMouseInteraction(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.port = 8006
-        env = os.environ.copy()
-        env["MWV_PORT"] = str(cls.port)
-        env["MWV_FORCE_NEW_SESSION"] = "1"
+        preferred = int(os.environ.get("MWV_PORT", 0)) or None
+        cls.app_process = None
+        decision, using_existing, cls.port = manage_app_instance(preferred)
         
-        cls.log_file = open("test_mouse.log", "w")
-        cls.app_process = subprocess.Popen(
-            [sys.executable, "main.py"],
-            cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
-            stdout=cls.log_file,
-            stderr=subprocess.STDOUT,
-            env=env
-        )
-        time.sleep(15) 
-        
+        if decision == "START_NEW":
+            env = os.environ.copy()
+            env["MWV_PORT"] = str(cls.port)
+            env["MWV_FORCE_NEW_SESSION"] = "1"
+            cls.app_process = subprocess.Popen(
+                [sys.executable, "main.py"],
+                cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "..")),
+                env=env
+            )
+            if not wait_for_app(cls.port): raise RuntimeError("Failed to start")
+
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
         cls.driver = webdriver.Chrome(options=options)
-        cls.driver.set_window_size(1280, 1024)
 
     @classmethod
     def tearDownClass(cls):
-        if hasattr(cls, 'driver'):
-            cls.driver.quit()
-        if hasattr(cls, 'app_process'):
-            cls.app_process.terminate()
-            cls.app_process.wait()
-        cls.log_file.close()
+        if hasattr(cls, 'driver'): cls.driver.quit()
+        if cls.app_process: cls.app_process.terminate()
+
+    def tearDown(self):
+        # Result detection for screenshot
+        # sys.exc_info() is often used but not always reliable in unittest
+        # Instead, we just take one if it's the last thing we do in a failed test
+        pass
 
     def test_pick_and_insert_flow(self):
-        player = PlayerPage(self.driver)
-        playlist = PlaylistPage(self.driver)
-        self.driver.get(f"http://localhost:{self.port}/app.html")
-        time.sleep(2)
+        try:
+            self.driver.get(f"http://localhost:{self.port}/app.html")
+            wait = WebDriverWait(self.driver, 45)
+            wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
+            wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))
+            
+            def perform_drag():
+            # 1. Grab (this triggers renderPlaylist() in JS!)
+                items = self.driver.find_elements(By.CLASS_NAME, "media-item")
+                if len(items) < 3: return False
+                grab = items[0].find_element(By.CLASS_NAME, "grab-icon")
+                
+                self.driver.execute_script("arguments[0].scrollIntoView();", grab)
+                ActionChains(self.driver).click_and_hold(grab).perform()
+                time.sleep(1) # Wait for DOM to re-render
+                
+                # 2. Re-find target after re-render!
+                items_new = self.driver.find_elements(By.CLASS_NAME, "media-item")
+                if len(items_new) < 3: return False
+                target_new = items_new[2]
+                
+                # Defensive scrolling for target
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", target_new)
+                time.sleep(0.5)
+                
+                ActionChains(self.driver).move_to_element(target_new).pause(0.5).release().perform()
+                return True
 
-        # 1. Populate
-        player.play_index(0)
-        playlist.switch_to()
-        
-        # 2. Pick item 0 (Long press on grab icon)
-        print("Simulating long press on grab icon via JS mousedown...")
-        grab_icons = self.driver.find_elements(By.CLASS_NAME, "grab-icon")
-        # Direct JS dispatch to be sure
-        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));", grab_icons[0])
-        time.sleep(1) # wait for pickTimer (400ms)
-        
-        # Re-find grab icon because renderPlaylist() made previous ones stale
-        grab_icons = self.driver.find_elements(By.CLASS_NAME, "grab-icon")
-        self.driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));", grab_icons[0])
-        time.sleep(0.5)
-        
-        # 3. Verify 'picked' class exists
-        wait = WebDriverWait(self.driver, 10)
-        wait.until(lambda d: "picked" in d.find_elements(By.CLASS_NAME, "media-item")[0].get_attribute("class"))
-        items = playlist.get_items()
-        self.assertIn("picked", items[0].get_attribute("class"), "Item should have 'picked' class after long press")
-        playlist.take_screenshot("mouse_test_picked")
-
-        # 4. Insert at position 3 (click index 2)
-        print("Clicking target item to insert...")
-        items[2].click()
-        time.sleep(2)
-        
-        # 5. Verify reorder
-        names = playlist.get_item_names()
-        print(f"Playlist after mouse reorder: {names[:5]}")
-        # Note: Logic is 'insert before targetIndex'. 
-        # If moving 0 to 2, it pops 0, then inserts before (new) 2.
-        # Check visually.
-        playlist.take_screenshot("mouse_test_final")
+            robust_action(self.driver, perform_drag)
+            time.sleep(2)
+            wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".media-item.picked")) == 0)
+        except Exception:
+            save_screenshot(self.driver, "test_mouse_interaction_fail")
+            raise
 
 if __name__ == "__main__":
-    from selenium.webdriver.common.by import By # ensure By is available
     unittest.main()

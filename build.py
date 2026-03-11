@@ -11,6 +11,12 @@ BUILD_TEST_GATE = [
     "tests/test_ui_session_stability.py",
 ]
 
+GUI_TEST_GATE = [
+    "tests/test_mouse_interaction.py",
+    "tests/test_scenario_hammerhart.py",
+    "tests/test_ui_integrity.py",
+]
+
 
 def run_build_test_gate() -> None:
     print("Führe Build-Test-Gate aus...")
@@ -23,10 +29,22 @@ def build_app():
     print("Starte den Build-Prozess mit PyInstaller über Eel...")
 
     skip_gate = str(os.environ.get("SKIP_BUILD_TESTS", "0")).strip() == "1"
+    run_gui = str(os.environ.get("RUN_GUI_TESTS", "0")).strip() == "1"
+
     if skip_gate:
         print("⚠️ Build-Test-Gate übersprungen (SKIP_BUILD_TESTS=1)")
     else:
         run_build_test_gate()
+
+    if run_gui:
+        print("🧪 Führe GUI-Test-Gate aus...")
+        try:
+            cmd = [sys.executable, "-m", "pytest", "-q", *GUI_TEST_GATE]
+            subprocess.run(cmd, check=True)
+            print("✅ GUI-Test-Gate bestanden")
+        except subprocess.CalledProcessError:
+            print("❌ GUI-Tests fehlgeschlagen. Build abgebrochen.")
+            sys.exit(1)
 
     # Der Befehl, um Eel mit Pyinstaller zusammenzufassen
     # --onefile: Alles in eine einzige ausführbare Datei packen

@@ -85,6 +85,9 @@ case $STAGE in
     6)
         TESTS=("tests/test_gui_tabs_refresh.py")
         ;;
+    7)
+        TESTS=("tests/test_mouse_interaction.py" "tests/test_scenario_hammerhart.py" "tests/test_ui_integrity.py")
+        ;;
     "all")
         TESTS=("tests/test_eel_exposure_unit.py" "tests/test_api_health_endpoints.py" "tests/test_db_logic.py" "tests/test_i18n_completeness.py" "tests/test_subprocess_safety.py")
         ;;
