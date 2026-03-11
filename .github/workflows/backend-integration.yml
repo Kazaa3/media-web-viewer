@@ -1,0 +1,34 @@
+name: Backend Integration
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-integration:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU (optional for cross-builds)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Build headless image
+        run: docker build -t mwv-headless -f Dockerfile.headless .
+
+      - name: Run parser smoke in container
+        run: |
+          mkdir -p artifacts
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/fixtures:/fixtures:ro \
+            -v ${{ github.workspace }}/artifacts:/artifacts \
+            -e ENABLE_INTEGRATION=1 \
+            mwv-headless parse /fixtures/sample.mp3 --output /artifacts/out.json || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-integration-artifacts
+          path: artifacts

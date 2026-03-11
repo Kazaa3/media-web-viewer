@@ -42,6 +42,8 @@
 - **[14] Logging-Modul statt print und True-Checks** - Umstellung auf strukturiertes Logging ✅
 - **[34] MVP-Ansatz und Tool-Evaluierung** - Frühphase mit MVP-Fokus und Tool-Tests ✅
 - **[60] Branch Protection für main** - GitHub-Branch-Protection aktiviert ✅
+- **[127] Erkennung von PC-Spielen und Buch-Beigaben** - Spezifische Kategorisierung ✅
+- **[128] Playlist-Management und UI-Optimierung** - Reordering, Clear und UI-Fixes ✅
 
 <!-- lang-split -->
 
@@ -80,3 +82,5 @@
 - **[14] Logging Module instead of print and True-Checks** - Migration to structured logging ✅
 - **[34] MVP Approach and Tool Evaluation** - Early MVP-focused phase and tool tests ✅
 - **[60] Branch Protection for main** - GitHub branch protection enabled ✅
+- **[127] Detection of PC Games and Book Accompanying Discs** - Specific categorization ✅
+- **[128] Playlist Management and UI Refinement** - Reordering, Clear, and UI fixes ✅
