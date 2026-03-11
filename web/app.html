@@ -145,6 +145,29 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
+        /* Playlist pick-and-insert visuals */
+        .media-item.picked {
+            outline: 2px dashed #2a7;
+            transform: translateY(-4px);
+            background: #fffef8;
+        }
+
+        .playlist-insert-target {
+            border-top: 2px solid #2a7;
+            margin-top: -2px;
+        }
+
+        .grab-icon {
+            cursor: grab;
+            padding: 4px;
+            border-radius: 4px;
+            color: #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+        }
+
         .sidebar-title {
             font-size: 1.2em;
             font-weight: bold;
@@ -2528,6 +2551,9 @@
         let isShuffle = false;
         let isRepeat = 'off'; // 'off', 'all', 'one'
         let shuffledPlaylist = [];
+        // Pick-and-insert state
+        let pickedIndex = -1;
+        let pickTimer = null;
 
         // Auto-play next song
         if (currentPlayer) {
@@ -3011,6 +3037,7 @@
                 let div = document.createElement('div');
                 div.className = 'media-item';
                 if (index === playlistIndex) div.classList.add('playing');
+                if (index === pickedIndex) div.classList.add('picked');
 
                 let tags = item.tags || {};
                 let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
@@ -3024,20 +3051,110 @@
                         <strong style="font-size: 0.9em;">${titleDisplay}</strong>
                         <span style="font-size: 0.8em;">${artistDisplay}</span>
                     </div>
-                    <div class="playlist-controls" style="display: flex; gap: 5px; margin-left: auto; padding-right: 10px;">
-                        <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;">🔼</button>
-                        <button onclick="event.stopPropagation(); moveItemDown(${index})" title="${t('pl_move_down') || 'Down'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;">🔽</button>
-                        <button onclick="event.stopPropagation(); removeItem(${index})" title="${t('pl_remove') || 'Remove'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.8em; color: #c0392b; padding: 5px;">❌</button>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 10px;">
+                        <div class="grab-icon" onpointerdown="onGrabPointerDown(event, ${index})" onpointerup="onGrabPointerUp(event, ${index})" title="${t('pl_grab') || 'Grab to move'}">☰</div>
+                        <div class="playlist-controls" style="display: flex; gap: 5px;">
+                            <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;">🔼</button>
+                            <button onclick="event.stopPropagation(); moveItemDown(${index})" title="${t('pl_move_down') || 'Down'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;">🔽</button>
+                            <button onclick="event.stopPropagation(); removeItem(${index})" title="${t('pl_remove') || 'Remove'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.8em; color: #c0392b; padding: 5px;">❌</button>
+                        </div>
                     </div>
                 `;
 
-                div.onclick = () => {
-                    playlistIndex = index;
-                    play(item, getMediaUrl(item));
-                    renderPlaylist();
-                };
+                div.onclick = () => onPlaylistItemClick(index, item);
                 list.appendChild(div);
             });
+        }
+
+        // Pick-and-insert handlers
+        function onPlaylistItemClick(index, item) {
+            // If an item is picked, insert before clicked index
+            if (pickedIndex !== -1 && pickedIndex !== index) {
+                releasePick(index);
+                return;
+            }
+            // Normal click: select and play
+            playlistIndex = index;
+            play(item, getMediaUrl(item));
+            renderPlaylist();
+        }
+
+        function onGrabPointerDown(e, index) {
+            e.stopPropagation();
+            // start long-press timer
+            if (pickTimer) clearTimeout(pickTimer);
+            pickTimer = setTimeout(() => {
+                pickTimer = null;
+                pickItem(index);
+            }, 400);
+        }
+
+        function onGrabPointerUp(e, index) {
+            e.stopPropagation();
+            if (pickTimer) {
+                // short click -> select
+                clearTimeout(pickTimer);
+                pickTimer = null;
+                playlistIndex = index;
+                renderPlaylist();
+            } else {
+                // long-press already activated; toggle pick off if same
+                if (pickedIndex === index) {
+                    cancelPick();
+                }
+            }
+        }
+
+        function pickItem(index) {
+            if (isShuffle) {
+                alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
+                return;
+            }
+            pickedIndex = index;
+            renderPlaylist();
+            // announce
+            try { appendUiTrace(`Picked item ${index}`); } catch (e) { }
+        }
+
+        async function releasePick(targetIndex) {
+            if (pickedIndex === -1) return;
+            try {
+                if (typeof eel === 'undefined') {
+                    // local fallback
+                    const active = currentPlaylist;
+                    const item = active.splice(pickedIndex, 1)[0];
+                    active.splice(targetIndex, 0, item);
+                    // update playlistIndex
+                    playlistIndex = active.indexOf(item);
+                    pickedIndex = -1;
+                    renderPlaylist();
+                    return;
+                }
+
+                const res = await eel.move_item_to(pickedIndex, targetIndex)();
+                pickedIndex = -1;
+                if (res && res.status === 'ok') {
+                    const remote = await eel.get_current_playlist()();
+                    if (remote && remote.items) {
+                        currentPlaylist = remote.items.slice();
+                        playlistIndex = remote.index;
+                        renderPlaylist();
+                    }
+                } else {
+                    alert((t('common_error') || 'Error: ') + (res && res.message ? res.message : 'move failed'));
+                    renderPlaylist();
+                }
+            } catch (e) {
+                console.error('releasePick error', e);
+                pickedIndex = -1;
+                renderPlaylist();
+            }
+        }
+
+        function cancelPick() {
+            pickedIndex = -1;
+            if (pickTimer) { clearTimeout(pickTimer); pickTimer = null; }
+            renderPlaylist();
         }
 
         // Add to switchTab logic to refresh playlist if it's selected
