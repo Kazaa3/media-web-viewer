@@ -70,6 +70,21 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
 
+    # Early exit: skip parser chain if not a regular file
+    if not path_obj.is_file():
+        log.warning(f"Early exit: '{filename}' is not a file (type: {'directory' if path_obj.is_dir() else 'unknown'})")
+        tags = {
+            'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
+            'codec': '', 'size': '', 'tagtype': '', 'container': '',
+            'has_art': 'No', 'title': '', 'artist': '', 'album': '',
+            'date': '', 'genre': '', 'track': '', 'totaltracks': '',
+            'disc': '', 'totaldiscs': '',
+            'error': 'Not a file',
+            'name': filename,
+            'type': 'directory' if path_obj.is_dir() else 'unknown',
+        }
+        return tags, {}
+
     tags: dict[str, Any] = {
         'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
         'codec': '', 'size': '', 'tagtype': '', 'container': '',
@@ -84,13 +99,10 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     parser_times = {}
 
     from typing import cast
-    # Iterate dynamically through the user-configured parser chain
     parser_chain = cast(list[str], PARSER_CONFIG.get(
         "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser"]))
-    
     log.debug(f"DEBUG: PARSER_CONFIG['parser_chain']: {parser_chain}")
 
-    # Neue Iteration: Alle verfügbaren Parser als optionale Schritte
     from . import isoparser_parser
     parser_steps = [
         ("filename", filename_parser.parse),
@@ -99,22 +111,19 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
         ("pymediainfo", pymediainfo_parser.parse),
         ("ffprobe", ffprobe_parser.parse),
         ("ffmpeg", ffmpeg_parser.parse),
-        ("isoparser", isoparser_parser.parse),  # new alternative ISO parser
-        ("ebml", None),  # handled below
-        ("mkvparse", None),  # handled below
-        ("enzyme", None),  # handled below
-        ("pycdlib", None),  # handled below
-        ("pymkv", None),  # handled below
-        ("tinytag", None),  # handled below
-        ("eyed3", None),  # handled below
-        ("music_tag", None),  # handled below
+        ("isoparser", isoparser_parser.parse),
+        ("ebml", None),
+        ("mkvparse", None),
+        ("enzyme", None),
+        ("pycdlib", None),
+        ("pymkv", None),
+        ("tinytag", None),
+        ("eyed3", None),
+        ("music_tag", None),
     ]
 
     MAX_RETRIES = PARSER_CONFIG.get("parser_max_retries", 2)
 
-    MAX_RETRIES = PARSER_CONFIG.get("parser_max_retries", 2)
-
-    # Filter and sort parser_steps according to the configured parser_chain
     active_steps = []
     for p_id in parser_chain:
         step = next((s for s in parser_steps if s[0] == p_id), None)
@@ -122,22 +131,19 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
             active_steps.append(step)
 
     from .format_utils import PARSER_CONFIG, SLOW_PARSERS
-    
+
+    error_shortcircuit = False
     for step_name, step_func in active_steps:
-        # 1. Mapping check: skip if parser is not for this file type
+        if error_shortcircuit:
+            log.debug(f"Shortcircuit: Skipping remaining parsers for '{filename}' due to prior error.")
+            break
         if file_type in PARSER_MAPPING and step_name not in PARSER_MAPPING[file_type]:
             continue
-
-        # 2. Skip slow parsers if Fast-Scan is enabled (unless mode is 'full')
         is_slow = step_name in SLOW_PARSERS
         fast_scan = PARSER_CONFIG.get("fast_scan_enabled", True)
-        
         if is_slow and mode != 'full' and fast_scan:
             log.debug(f"⏩ [Fast-Scan] Skipping slow parser '{step_name}' for '{filename}'")
             continue
-
-        # Skip if we already have enough information (for lightweight mode)
-        # or if mode is 'full' we always continue to gather all tags.
         if mode != 'full':
             has_essential = (
                 tags.get('samplerate')
@@ -148,13 +154,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                 and tags.get('container')
                 and duration
             )
-            # M4B / MKV often need chapters which filename parser can't provide
             needs_chapters = file_type in ['.m4b', '.mkv', '.m4a', '.mp4'] and not tags.get('chapters')
-            
             if has_essential and not needs_chapters:
                 continue
-
-        # Initialize local variables for the retry loop
         current_tags = tags
         attempt = 0
         success = False
@@ -193,7 +195,6 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                     success = True
                 elif step_name == "enzyme":
                     import enzyme
-                    # Open stream in binary mode as required by enzyme/mkv.py
                     with path_obj.open('rb') as f:
                         movie = enzyme.MKV(f)
                         current_tags['enzyme_tracks'] = movie.audio_tracks + movie.video_tracks
@@ -250,16 +251,20 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                     success = True
             except Exception as e:
                 attempt += 1
+                # Error shortcircuit: skip remaining parsers for typical file errors
+                error_str = str(e).lower()
+                if any(msg in error_str for msg in ["is a directory", "not a file", "no tag reader found", "mutagen type <class 'nonetype'> not implemented", "failed to read entire volume descriptor", "can't sync to mpeg frame"]):
+                    log.error(f"Shortcircuit: {step_name} parser error for '{filename}': {e}")
+                    parser_times[step_name] = time.time() - t0
+                    error_shortcircuit = True
+                    break
                 if attempt <= MAX_RETRIES:
                     log.warning(f"Parser {step_name} failed (Attempt {attempt}/{MAX_RETRIES+1}) for '{filename}': {e}. Retrying...")
                     time.sleep(0.05 * attempt)
                 else:
                     log.error(f"{step_name} parser error after {MAX_RETRIES} retries for '{filename}': {e}")
                     parser_times[step_name] = time.time() - t0
-        
         tags = current_tags
-
-        # Update duration safely after each potential parser
         if 'duration' in tags and tags['duration'] and not duration:
             try:
                 duration = int(float(tags['duration']))
