@@ -65,7 +65,7 @@ class TestGUITabsRefresh(unittest.TestCase):
             cls.log_file.close()
 
     def setUp(self):
-        self.driver.get(f"http://localhost:{self.port}")
+        self.driver.get(f"http://localhost:{self.port}/app.html")
         try:
             # Wait for any common element that indicates loading is done
             WebDriverWait(self.driver, 30).until(
@@ -90,12 +90,12 @@ class TestGUITabsRefresh(unittest.TestCase):
                 try:
                     # The switchTab call uses the tab ID as first argument
                     # e.g. switchTab('library', ...)
-                    xpath = f"//div[contains(@onclick, \"switchTab('{tab_name}')\")]"
+                    xpath = f"//button[contains(@onclick, \"switchTab('{tab_name}'\")]"
                     btn = WebDriverWait(self.driver, 10).until(
                         EC.element_to_be_clickable((By.XPATH, xpath))
                     )
                     btn.click()
-                    time.sleep(1.0) 
+                    time.sleep(1.0)
 
                     # Verify tab content is visible. IDs are {name}-tab
                     tab_id = f"{tab_name}-tab"
@@ -115,7 +115,7 @@ class TestGUITabsRefresh(unittest.TestCase):
     def test_parser_tab_categories(self):
         """Verify the new 'Spiel' and 'Beigabe' categories exist in the Options tab."""
         # Switch to Options tab
-        xpath = "//div[contains(@class, 'sidebar-nav')]//div[contains(@onclick, \"switchTab('options')\")]"
+        xpath = "//button[contains(@onclick, \"switchTab('options'\")]"
         btn = WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, xpath)))
         btn.click()
         time.sleep(1)
@@ -131,7 +131,7 @@ class TestGUITabsRefresh(unittest.TestCase):
 
     def test_parser_tab_population(self):
         """Verify that the Parser tab populates its list."""
-        xpath = "//div[contains(@class, 'sidebar-nav')]//div[contains(@onclick, \"switchTab('parser')\")]"
+        xpath = "//button[contains(@onclick, \"switchTab('parser'\")]"
         btn = WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, xpath)))
         btn.click()
         time.sleep(1)
