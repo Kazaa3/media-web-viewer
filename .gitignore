@@ -205,11 +205,12 @@ Thumbs.db
 # --- Artifacts ---
 media-web-viewer_*.deb
 
-# --- Screenshots ---
+# --- Screenshots & Test Artifacts ---
 Screens/
-tests/gui/screenshots/
+tests/selenium_artifacts/
 tests/reference_screenshots/
 tests/debug_*.png
+*.png.bak
 
 # --- Packaging ---
 packaging/

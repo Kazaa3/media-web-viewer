@@ -2188,26 +2188,6 @@ def move_item_down_by_key(key: str):
     return {"status": "error", "message": "item not found"}
 
 
-def _extract_key_from_obj(obj):
-    """Best-effort: extract a string key from a playlist item-like object.
-    Returns first non-empty candidate or None.
-    """
-    if not obj or not isinstance(obj, dict):
-        return None
-    for f in ('name', 'filename', 'path', 'id'):
-        v = obj.get(f)
-        if v and isinstance(v, (str, int)):
-            return str(v)
-    tags = obj.get('tags') or {}
-    if tags.get('title'):
-        return str(tags.get('title'))
-    # try nested keys
-    for k, v in obj.items():
-        if isinstance(v, str) and len(v) > 0:
-            return v
-    return None
-
-
 @eel.expose
 def move_item_up_by_obj(item_obj):
     """Expose: accept a JS object representing the item, extract a key and move up."""

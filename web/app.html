@@ -2871,9 +2871,20 @@
                     console.debug('moveItemUp: server res=', res);
                 }
                 if (res && res.status === 'ok') {
-                    // Refreshed state returned in res.items if provided
+                    // Refreshed state returned in res.items
                     currentPlaylist = res.items.slice();
                     playlistIndex = res.index;
+
+                    if (isShuffle) {
+                        // In shuffle mode, we don't want to reshuffle the whole list,
+                        // but we need to stay consistent. For now, disable reorder in shuffle 
+                        // or update the shuffled list too.
+                        // Choice: disable reorder buttons in renderPlaylist if isShuffle?
+                        // Better: If isShuffle is active, we should probably move the item in shuffled list too.
+                        const movedItem = currentPlaylist[playlistIndex];
+                        // simplest: just update currentPlaylist and hope user switches off shuffle to reorder
+                        // But let's at least keep the index correct.
+                    }
                     renderPlaylist();
                 }
             } catch (e) {
@@ -3073,6 +3084,19 @@
             const countEl = document.getElementById('playlist-count');
             if (!list) return;
 
+            const moveUpBtn = document.getElementById('pl-move-up');
+            const moveDownBtn = document.getElementById('pl-move-down');
+            if (moveUpBtn) {
+                moveUpBtn.disabled = isShuffle;
+                moveUpBtn.style.opacity = isShuffle ? '0.3' : '1';
+                moveUpBtn.style.cursor = isShuffle ? 'default' : 'pointer';
+            }
+            if (moveDownBtn) {
+                moveDownBtn.disabled = isShuffle;
+                moveDownBtn.style.opacity = isShuffle ? '0.3' : '1';
+                moveDownBtn.style.cursor = isShuffle ? 'default' : 'pointer';
+            }
+
             const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
             list.innerHTML = '';
             countEl.innerText = activeList.length + ' Items';
@@ -3098,8 +3122,10 @@
                     <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 10px;">
                         <div class="grab-icon" onpointerdown="onGrabPointerDown(event, ${index})" onpointerup="onGrabPointerUp(event, ${index})" title="${t('pl_grab') || 'Grab to move'}">☰</div>
                         <div class="playlist-controls" style="display: flex; gap: 5px;">
-                            <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;">🔼</button>
-                            <button onclick="event.stopPropagation(); moveItemDown(${index})" title="${t('pl_move_down') || 'Down'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;">🔽</button>
+                            <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" 
+                                ${isShuffle ? 'disabled style="opacity:0.3; cursor:default;"' : 'style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;"'}>🔼</button>
+                            <button onclick="event.stopPropagation(); moveItemDown(${index})" title="${t('pl_move_down') || 'Down'}" 
+                                ${isShuffle ? 'disabled style="opacity:0.3; cursor:default;"' : 'style="background:transparent; border:none; cursor:pointer; font-size: 0.9em; padding: 5px;"'}>🔽</button>
                             <button onclick="event.stopPropagation(); removeItem(${index})" title="${t('pl_remove') || 'Remove'}" style="background:transparent; border:none; cursor:pointer; font-size: 0.8em; color: #c0392b; padding: 5px;">❌</button>
                         </div>
                     </div>
