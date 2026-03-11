@@ -2189,6 +2189,33 @@ def move_item_down_by_key(key: str):
 
 
 @eel.expose
+def remove_playlist_item(index: int):
+    """
+    Remove playlist item at `index` from CURRENT_PLAYLIST.
+    Adjusts CURRENT_INDEX accordingly.
+    """
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    try:
+        idx = int(index)
+    except Exception:
+        return {"status": "error", "message": "invalid index"}
+
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    if idx < 0 or idx >= len(CURRENT_PLAYLIST):
+        return {"status": "error", "message": "index out of range"}
+
+    CURRENT_PLAYLIST.pop(idx)
+
+    if CURRENT_INDEX == idx:
+        CURRENT_INDEX = -1 
+    elif CURRENT_INDEX > idx:
+        CURRENT_INDEX -= 1
+
+    return {"status": "ok", "items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+
+@eel.expose
 def move_current_up():
     """Move the currently selected playlist item up by one position."""
     global CURRENT_INDEX

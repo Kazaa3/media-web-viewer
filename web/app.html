@@ -2845,7 +2845,6 @@
             // Call backend to persist reorder, then refresh playlist from backend
             try {
                 if (typeof eel === 'undefined') {
-                    // fallback to client-side if eel unavailable
                     if (index <= 0) return;
                     const activeListClient = isShuffle ? shuffledPlaylist : currentPlaylist;
                     [activeListClient[index - 1], activeListClient[index]] = [activeListClient[index], activeListClient[index - 1]];
@@ -2860,31 +2859,16 @@
                 // Prefer server-side move-by-key to avoid index-mapping issues
                 let item = isShuffle ? shuffledPlaylist[index] : currentPlaylist[index];
                 let key = (item && (item.name || item.path)) || null;
+                let res = null;
                 if (!key) {
                     console.debug('moveItemUp: no key for index', index);
                     // fallback to index-based call if key unavailable
-                    const res = await eel.move_item_up(index)();
+                    res = await eel.move_item_up(index)();
                     console.debug('moveItemUp: index-fallback res=', res);
-                    if (res && res.status === 'ok') {
-                        const remote = await eel.get_current_playlist()();
-                        if (remote && remote.items) {
-                            currentPlaylist = remote.items.slice();
-                            playlistIndex = remote.index;
-                            renderPlaylist();
-                        }
-                    }
                 } else {
                     console.debug('moveItemUp: calling move_item_up_by_key key=', key, 'index=', index, 'isShuffle=', isShuffle);
-                    const res = await eel.move_item_up_by_key(key)();
+                    res = await eel.move_item_up_by_key(key)();
                     console.debug('moveItemUp: server res=', res);
-                    if (res && res.status === 'ok') {
-                        const remote = await eel.get_current_playlist()();
-                        if (remote && remote.items) {
-                            currentPlaylist = remote.items.slice();
-                            playlistIndex = remote.index;
-                            renderPlaylist();
-                        }
-                    }
                 }
                 if (res && res.status === 'ok') {
                     // refreshed state returned in res.items if provided
@@ -2915,30 +2899,15 @@
                 // Map shuffled visible index to actual playlist index when needed.
                 let item = isShuffle ? shuffledPlaylist[index] : currentPlaylist[index];
                 let key = (item && (item.name || item.path)) || null;
+                let res = null;
                 if (!key) {
                     console.debug('moveItemDown: no key for index', index);
-                    const res = await eel.move_item_down(index)();
+                    res = await eel.move_item_down(index)();
                     console.debug('moveItemDown: index-fallback res=', res);
-                    if (res && res.status === 'ok') {
-                        const remote = await eel.get_current_playlist()();
-                        if (remote && remote.items) {
-                            currentPlaylist = remote.items.slice();
-                            playlistIndex = remote.index;
-                            renderPlaylist();
-                        }
-                    }
                 } else {
                     console.debug('moveItemDown: calling move_item_down_by_key key=', key, 'index=', index, 'isShuffle=', isShuffle);
-                    const res = await eel.move_item_down_by_key(key)();
+                    res = await eel.move_item_down_by_key(key)();
                     console.debug('moveItemDown: server res=', res);
-                    if (res && res.status === 'ok') {
-                        const remote = await eel.get_current_playlist()();
-                        if (remote && remote.items) {
-                            currentPlaylist = remote.items.slice();
-                            playlistIndex = remote.index;
-                            renderPlaylist();
-                        }
-                    }
                 }
                 if (res && res.status === 'ok') {
                     const remote = await eel.get_current_playlist()();
@@ -2953,30 +2922,54 @@
             }
         }
 
-        function removeItem(index) {
-            const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
-            const removedItem = activeList[index];
-            activeList.splice(index, 1);
+        async function removeItem(index) {
+            try {
+                if (typeof eel === 'undefined') {
+                    const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
+                    const removedItem = activeList[index];
+                    activeList.splice(index, 1);
 
-            if (isShuffle) {
-                const masterIdx = currentPlaylist.indexOf(removedItem);
-                if (masterIdx !== -1) currentPlaylist.splice(masterIdx, 1);
-            } else {
-                const shuffIdx = shuffledPlaylist.indexOf(removedItem);
-                if (shuffIdx !== -1) shuffledPlaylist.splice(shuffIdx, 1);
-            }
+                    if (isShuffle) {
+                        const masterIdx = currentPlaylist.indexOf(removedItem);
+                        if (masterIdx !== -1) currentPlaylist.splice(masterIdx, 1);
+                    } else {
+                        const shuffIdx = shuffledPlaylist.indexOf(removedItem);
+                        if (shuffIdx !== -1) shuffledPlaylist.splice(shuffIdx, 1);
+                    }
 
-            if (playlistIndex === index) {
-                playlistIndex = -1;
-                const player = document.getElementById('player');
-                if (player) {
-                    player.pause();
-                    player.src = "";
+                    if (playlistIndex === index) {
+                        playlistIndex = -1;
+                        const player = document.getElementById('player');
+                        if (player) {
+                            player.pause();
+                            player.src = "";
+                        }
+                    } else if (playlistIndex > index) {
+                        playlistIndex--;
+                    }
+                    renderPlaylist();
+                    return;
                 }
-            } else if (playlistIndex > index) {
-                playlistIndex--;
+
+                // Use the backend to remove
+                let actualIndex = index;
+                if (isShuffle) {
+                    const item = shuffledPlaylist[index];
+                    actualIndex = currentPlaylist.findIndex(i => i && item && (i.name === item.name || i.path === item.path));
+                    if (actualIndex === -1) actualIndex = index;
+                }
+                const res = await eel.remove_playlist_item(actualIndex)();
+                if (res && res.status === 'ok') {
+                    const remote = await eel.get_current_playlist()();
+                    if (remote && remote.items) {
+                        currentPlaylist = remote.items.slice();
+                        playlistIndex = remote.index;
+                        renderPlaylist();
+                    }
+                }
+            } catch (e) {
+                console.error('removeItem error', e);
             }
-            renderPlaylist();
         }
 
         async function moveCurrentUp() {
