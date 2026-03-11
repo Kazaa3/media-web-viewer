@@ -1817,6 +1817,99 @@ def play_media(path):
     return {"status": "play", "path": path}  # Bestätigung
 
 
+# Playlist state (in-memory)
+CURRENT_PLAYLIST: list[dict] = []
+CURRENT_INDEX: int = -1
+
+
+@eel.expose
+def set_current_playlist(items: list, start_index: int = 0, replace: bool = True):
+    """Set the active playlist. `items` is a list of media dicts or names.
+    If replace is False, append to existing playlist. start_index selects initial item.
+    """
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    # Normalize items: if list of names, convert to minimal dicts
+    normalized = []
+    for it in items:
+        if isinstance(it, str):
+            normalized.append({"name": it})
+        elif isinstance(it, dict):
+            normalized.append(it)
+    if replace:
+        CURRENT_PLAYLIST = normalized
+    else:
+        CURRENT_PLAYLIST.extend(normalized)
+
+    if not CURRENT_PLAYLIST:
+        CURRENT_INDEX = -1
+    else:
+        CURRENT_INDEX = max(0, min(len(CURRENT_PLAYLIST) - 1, int(start_index or 0)))
+
+    return {"status": "ok", "count": len(CURRENT_PLAYLIST), "index": CURRENT_INDEX}
+
+
+@eel.expose
+def get_current_playlist():
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    return {"items": CURRENT_PLAYLIST, "index": CURRENT_INDEX}
+
+
+def _play_index(idx: int):
+    """Internal: play item at index if valid. Returns status dict."""
+    global CURRENT_PLAYLIST, CURRENT_INDEX
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    if idx < 0 or idx >= len(CURRENT_PLAYLIST):
+        return {"status": "error", "message": "index out of range"}
+    CURRENT_INDEX = idx
+    item = CURRENT_PLAYLIST[CURRENT_INDEX]
+    path = item.get("path") or item.get("name")
+    # If path is a DB name, resolve to path via DB lookup
+    try:
+        if path and not Path(path).exists():
+            # Attempt to find in DB by name
+            all_media = db.get_all_media()
+            match = next((m for m in all_media if m.get("name") == path), None)
+            if match:
+                path = match.get("path") or path
+    except Exception:
+        pass
+
+    # Call existing play_media to trigger frontend actions
+    return play_media(path)
+
+
+@eel.expose
+def next_in_playlist():
+    global CURRENT_INDEX, CURRENT_PLAYLIST
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    next_idx = CURRENT_INDEX + 1 if CURRENT_INDEX + 1 < len(CURRENT_PLAYLIST) else -1
+    if next_idx == -1:
+        return {"status": "end"}
+    return _play_index(next_idx)
+
+
+@eel.expose
+def prev_in_playlist():
+    global CURRENT_INDEX
+    if not CURRENT_PLAYLIST:
+        return {"status": "error", "message": "no playlist"}
+    prev_idx = CURRENT_INDEX - 1 if CURRENT_INDEX - 1 >= 0 else -1
+    if prev_idx == -1:
+        return {"status": "start"}
+    return _play_index(prev_idx)
+
+
+@eel.expose
+def jump_to_index(index: int):
+    try:
+        idx = int(index)
+    except Exception:
+        return {"status": "error", "message": "invalid index"}
+    return _play_index(idx)
+
+
 @eel.expose
 def open_in_explorer(path_str):
     """
