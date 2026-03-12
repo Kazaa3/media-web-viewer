@@ -19,6 +19,25 @@ import logging
 # Get specialized logger for parser component
 log = logger.get_logger("parser")
 
+MAX_TAG_LEN = 4096  # Max length for any single string tag
+MAX_CHAPTERS = 500  # Max number of chapters to keep
+
+def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
+    """
+    @brief Sanitizes metadata to prevent memory bloat or UI lag.
+    """
+    for key, value in tags.items():
+        if isinstance(value, str) and len(value) > MAX_TAG_LEN:
+            log.warning(f"Truncating long tag '{key}' ({len(value)} chars)")
+            tags[key] = value[:MAX_TAG_LEN] + "..."
+    
+    if "chapters" in tags and isinstance(tags["chapters"], list):
+        if len(tags["chapters"]) > MAX_CHAPTERS:
+            log.warning(f"Truncating excessive chapters ({len(tags['chapters'])} -> {MAX_CHAPTERS})")
+            tags["chapters"] = tags["chapters"][:MAX_CHAPTERS]
+            
+    return tags
+
 
 # Mapping which parsers are responsible for which file types (extensions including dot)
 # If a file type is not in this mapping, all parsers in the chain will be attempted (legacy behavior).
@@ -206,7 +225,6 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                 # In ultimate mode, we want a copy of the tags before this parser
                 tags_before = current_tags.copy() if mode == 'ultimate' else None
                 
-                start_time = time.time()
                 
                 # Get parser specific settings from PARSER_CONFIG
                 p_settings = PARSER_CONFIG.get('parser_settings', {}).get(step_name, {})
@@ -216,23 +234,27 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                         path_obj, file_type, current_tags, filename, 
                         mode=('full' if mode == 'ultimate' else mode),
                         settings=p_settings))
+                    current_tags = sanitize_metadata(current_tags)
+                    parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "ebml":
                     from ebml.container import File
-                    ebml_file = File(path_obj.open('rb'))
-                    segment = next(ebml_file.children_named("Segment"), None)
-                    if segment:
-                        current_tags['ebml_title'] = getattr(segment, 'title', None)
-                        current_tags['ebml_duration'] = getattr(segment, 'duration', None)
-                        current_tags['ebml_tracks'] = [
-                            {
-                                'type': getattr(track, 'track_type', None),
-                                'language': getattr(track, 'language', None),
-                                'codec_id': getattr(track, 'codec_id', None)
-                            }
-                            for track in getattr(segment, 'tracks', [])
-                        ]
-                        current_tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                    with path_obj.open('rb') as f:
+                        ebml_file = File(f)
+                        segment = next(ebml_file.children_named("Segment"), None)
+                        if segment:
+                            current_tags['ebml_title'] = getattr(segment, 'title', None)
+                            current_tags['ebml_duration'] = getattr(segment, 'duration', None)
+                            current_tags['ebml_tracks'] = [
+                                {
+                                    'type': getattr(track, 'track_type', None),
+                                    'language': getattr(track, 'language', None),
+                                    'codec_id': getattr(track, 'codec_id', None)
+                                }
+                                for track in getattr(segment, 'tracks', [])
+                            ]
+                            current_tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                    current_tags = sanitize_metadata(current_tags)
                     log.debug(f"EBML parser finished for '{filename}'")
                     parser_times[step_name] = time.time() - t0
                     success = True
@@ -255,8 +277,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                     iso = pycdlib.PyCdlib()
                     iso.open(str(path_obj))
                     pvd = iso.get_pvd()
-                    current_tags['pycdlib_volume_id'] = pvd.volume_identifier.decode('utf-8', 'ignore').strip() if pvd else "Unknown"
+                    current_tags['pycdlib_volume_id'] = pvd.volume_identifier.decode('utf-8', 'replace').strip() if pvd else "Unknown"
                     iso.close()
+                    current_tags = sanitize_metadata(current_tags)
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "pymkv":
@@ -345,6 +368,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     if tags.get('container'):
         tags['container'] = format_container(tags['container'], file_type)
     tags['tagtype'] = format_tagtype(tags.get('tagtype'))
+    
+    # Final sanitization pass
+    tags = sanitize_metadata(tags)
 
     # Final Chapter Sort (Natural & Chronological)
     if tags.get('chapters') and isinstance(tags['chapters'], list):
@@ -368,6 +394,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
             log.debug(f"Sorted {len(tags['chapters'])} chapters. First 5: {first_chaps}")
 
     total_time = sum(parser_times.values())
-    logging.info(f"[Parser-Trace] Metadata extraction complete for {filename} in {total_time:.3f}s. Parsers: {list(parser_times.keys())}")
+    timing_report = ", ".join([f"{p}: {t:.3f}s" for p, t in parser_times.items() if t > 0.001])
+    logging.info(f"[Parser-Trace] Metadata extraction complete for {filename} in {total_time:.3f}s.")
+    if timing_report:
+        logging.info(f"[Parser-Trace] ⏱️ Detailed Timings: {timing_report}")
     # Backwards-compat: return (tags, parser_times) as older tests expect tags first
     return cast(dict[str, Any], tags), parser_times
