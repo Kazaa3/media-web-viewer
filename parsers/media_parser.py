@@ -24,6 +24,11 @@ log = logger.get_logger("parser")
 MAX_TAG_LEN = 4096  # Max length for any single string tag
 MAX_CHAPTERS = 500  # Max number of chapters to keep
 
+# Parser Categories
+AUDIO_PARSER_IDS = {"mutagen", "tinytag", "eyed3", "music_tag"}
+MULTIMEDIA_PARSER_IDS = {"container", "mkvmerge", "mkvinfo", "vlc", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
+UNIVERSAL_PARSER_IDS = {"filename", "pymediainfo", "ffprobe", "ffmpeg"}
+
 def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
     """
     @brief Sanitizes metadata to prevent memory bloat or UI lag.
@@ -201,12 +206,36 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     """
     @brief Orchestrates the metadata extraction process using a sequential parser chain.
     @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
-    @param path Path to the media file / Pfad zur Mediendatei.
-    @param filename Original filename for fallback parsing / Originaldateiname für Fallback-Parsing.
-    @param mode Extraction mode ('lightweight', 'full', or 'ultimate') / Extraktionsmodus ('lightweight', 'full' oder 'ultimate').
     @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
-    logging.info(f"[Parser-Trace] Starte Parsing für '{filename}' (Mode: {mode})")
+    path_obj = Path(path)
+    file_type = path_obj.suffix.lower()
+    from .format_utils import ALL_AUDIO_EXTENSIONS
+    
+    if file_type in ALL_AUDIO_EXTENSIONS:
+        return extract_metadata_audio(path, filename, mode, **kwargs)
+    else:
+        return extract_metadata_multimedia(path, filename, mode, **kwargs)
+
+def extract_metadata_audio(path, filename, mode='lightweight', **kwargs):
+    """
+    @brief Specialized branch for audio-only extraction.
+    """
+    log.debug(f"🎵 [Audio-Branch] Starting extraction for '{filename}'")
+    return _extract_metadata_internal(path, filename, mode, category='audio', **kwargs)
+
+def extract_metadata_multimedia(path, filename, mode='lightweight', **kwargs):
+    """
+    @brief Specialized branch for multimedia (video/ISO) extraction.
+    """
+    log.debug(f"🎬 [Multimedia-Branch] Starting extraction for '{filename}'")
+    return _extract_metadata_internal(path, filename, mode, category='multimedia', **kwargs)
+
+def _extract_metadata_internal(path, filename, mode='lightweight', category=None, **kwargs):
+    """
+    @brief Core extraction logic shared by branches.
+    """
+    logging.info(f"[Parser-Trace] Starte Parsing für '{filename}' (Mode: {mode}, Category: {category})")
     if mode in ('full', 'ultimate'):
         logging.info(f"[Parser-Trace] 🚀 {mode.capitalize()} Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
@@ -214,7 +243,6 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
 
-    # Early exit: skip parser chain if not a regular file
     if not path_obj.is_file():
         log.warning(f"Early exit: '{filename}' is not a file (type: {'directory' if path_obj.is_dir() else 'unknown'})")
         tags = {
@@ -280,12 +308,25 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     from .format_utils import PARSER_CONFIG, SLOW_PARSERS
 
     error_shortcircuit = False
+    
+    # Branch-based chain filtering:
+    # We skip parsers that don't belong to the file's primary category (audio vs multimedia)
+    # unless they are universal.
+    is_audio = category == 'audio'
+    
     for step_name, step_func in active_steps:
         if error_shortcircuit:
             log.debug(f"Shortcircuit: Skipping remaining parsers for '{filename}' due to prior error.")
             break
-        if file_type in PARSER_MAPPING and step_name not in PARSER_MAPPING[file_type]:
-            continue
+            
+        # Category Isolation
+        if is_audio and step_name in MULTIMEDIA_PARSER_IDS:
+             log.debug(f"🔇 [Audio-Branch] Skipping multimedia parser '{step_name}' for '{filename}'")
+             continue
+        
+        if not is_audio and step_name in AUDIO_PARSER_IDS:
+             log.debug(f"🔇 [Multimedia-Branch] Skipping audio parser '{step_name}' for '{filename}'")
+             continue
         is_slow = step_name in SLOW_PARSERS
         fast_scan = PARSER_CONFIG.get("fast_scan_enabled", True)
         if is_slow and mode != 'full' and fast_scan:
