@@ -3148,7 +3148,7 @@ def get_logbook_entry(feature_name, source="logbuch"):
     @param feature_name Entry name or 'README' / Name des Eintrags oder 'README'.
     @return Content string (Markdown) / Inhalts-String (Markdown).
     """
-    root_dir = Path(__file__).parent
+    root_dir = PROJECT_ROOT
     if source == "root":
         allowed_root_files = {
             "README.md",
@@ -3164,18 +3164,29 @@ def get_logbook_entry(feature_name, source="logbuch"):
     elif feature_name.upper() == "README" or feature_name.upper() == "README.MD":
         log_file = root_dir / "README.md"
     else:
-        log_file = Path(__file__).parent / "logbuch" / f"{feature_name}.md"
+        log_dir = PROJECT_ROOT / "docs" / "logbuch"
+        log_file = log_dir / f"{feature_name}.md"
         if not log_file.exists():
             # Fallback without extension just in case it was passed directly
-            log_file = Path(__file__).parent / "logbuch" / feature_name
+            log_file = log_dir / feature_name
 
     if not log_file.exists():
         return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
 
     try:
         content = log_file.read_text(encoding='utf-8')
-        # Simple markdown to HTML conversion (basic bold/header)
-        # In a real app we'd use 'markdown' library, but let's keep it simple or use JS side.
+        
+        # Bilingual splitting: <!-- lang-split -->
+        if "<!-- lang-split -->" in content:
+            parts = content.split("<!-- lang-split -->")
+            if len(parts) >= 2:
+                current_lang = get_language()
+                if current_lang.lower() == "en":
+                    return parts[1].strip()
+                else:
+                    return parts[0].strip()
+        
+        # Fallback: Return original content if no split tag is present
         return content
     except Exception as e:
         return f"<h1>Error</h1><p>{str(e)}</p>"
@@ -3188,7 +3199,7 @@ def list_logbook_entries():
     @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück.
     @return List of logbook entry objects / Liste von Logbuch-Eintrag-Objekten.
     """
-    log_dir = Path(__file__).parent / "logbuch"
+    log_dir = PROJECT_ROOT / "docs" / "logbuch"
     if not log_dir.exists():
         return []
 
@@ -3281,10 +3292,22 @@ def list_logbook_entries():
                 if not summary_en:
                     summary_en = summary
 
+                # Final Selection based on language
+                current_lang = get_language().lower()
+                final_title = title
+                final_summary = summary
+
+                if current_lang == "en":
+                    final_title = title_en or title
+                    final_summary = summary_en or summary
+                else:
+                    final_title = title_de or title
+                    final_summary = summary_de or summary
+
                 entries.append({
                     "name": f.stem,
                     "filename": f.name,
-                    "title": title,
+                    "title": final_title,
                     "title_de": title_de,
                     "title_en": title_en,
                     "category": category,
@@ -3365,7 +3388,7 @@ def save_logbook_entry(filename, content):
     @param content Markdown content / Markdown-Inhalt.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    log_dir = Path(__file__).parent / "logbuch"
+    log_dir = PROJECT_ROOT / "docs" / "logbuch"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Sichere den Dateinamen
@@ -3395,7 +3418,7 @@ def delete_logbook_entry(filename):
     @param filename Entry filename / Dateiname des Eintrags.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    log_dir = Path(__file__).parent / "logbuch"
+    log_dir = PROJECT_ROOT / "docs" / "logbuch"
 
     if not filename.endswith('.md'):
         filename = filename + '.md'

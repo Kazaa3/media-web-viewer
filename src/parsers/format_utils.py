@@ -305,7 +305,7 @@ def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
 
     project_root = Path(__file__).resolve().parent.parent
     blocked_dirs = {
-        (project_root / "logbuch").resolve(),
+        (project_root / "docs" / "logbuch").resolve(),
         (project_root / "dist").resolve(),
         (project_root / ".git").resolve(),
         (project_root / ".venv").resolve(),
