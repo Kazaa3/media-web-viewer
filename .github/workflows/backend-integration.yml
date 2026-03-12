@@ -6,14 +6,38 @@ on:
     branches: [ main ]
 
 jobs:
-  backend-integration:
+  backend-tests:
     runs-on: ubuntu-latest
-    permissions: write-all
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU (optional for cross-builds)
-        uses: docker/setup-qemu-action@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Install dependencies (testbed)
+        run: |
+          pip install --upgrade pip
+          pip install -r infra/requirements-test.txt
+
+      - name: Run Tech Tests
+        run: |
+          PYTHONPATH=. pytest tests/tech/ -v
+
+      - name: Run Basic Tests
+        run: |
+          PYTHONPATH=. pytest tests/basic/ -v
+
+  backend-docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Build headless image
         run: docker build -t mwv-headless -f Dockerfile.headless .
@@ -26,9 +50,3 @@ jobs:
             -v ${{ github.workspace }}/artifacts:/artifacts \
             -e ENABLE_INTEGRATION=1 \
             mwv-headless parse /fixtures/sample.mp3 --output /artifacts/out.json || true
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-integration-artifacts
-          path: artifacts

@@ -3,8 +3,8 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags like v1.3.3
-  workflow_dispatch:  # Allow manual trigger
+      - "v*" # Triggers on version tags like v1.33
+  workflow_dispatch: # Allow manual trigger
 
 concurrency:
   group: release-${{ github.ref }}
@@ -14,7 +14,31 @@ permissions:
   contents: write
 
 jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo xvfb firefox-geckodriver
+      - name: Install dependencies (selenium)
+        run: |
+          pip install --upgrade pip
+          pip install -r infra/requirements-selenium.txt
+      - name: Run Tech & Basic Tests
+        run: |
+          PYTHONPATH=. pytest tests/tech/ tests/basic/ -v
+      - name: Run UI Tests (Headless)
+        run: |
+          PYTHONPATH=. xvfb-run -a pytest tests/selenium/pages/ -v
+
   build-linux:
+    needs: validation
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -24,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -64,6 +88,7 @@ jobs:
           if-no-files-found: error
 
   build-windows:
+    needs: validation
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -72,7 +97,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         shell: bash
@@ -143,32 +168,32 @@ jobs:
           generate_release_notes: true
           body: |
             ## 🚀 Media Web Viewer v${{ steps.meta.outputs.VERSION }}
-            
+
             ### Changes in this release
             - FFmpeg parser: Fixed 24-bit PCM detection
             - Tests: Updated to use real media files
             - Tests: Skip logic now fails instead of passing
-            
+
             ### Downloads
             - **Linux**: `MediaWebViewer-Linux` (executable)
             - **Linux**: `MediaWebViewer-DEB` (.deb package)
             - **Windows**: `MediaWebViewer-Windows.exe`
-            
+
             ### Installation
             #### Linux (DEB)
             ```bash
             sudo dpkg -i media-web-viewer_${{ steps.meta.outputs.VERSION }}_amd64.deb
             ```
-            
+
             #### Linux (Executable)
             ```bash
             chmod +x MediaWebViewer-*
             ./MediaWebViewer-*
             ```
-            
+
             #### Windows
             Simply run the `.exe` file (no installation required).
-            
+
             ### Requirements
             - FFmpeg (for media processing)
             - MediaInfo (for metadata extraction)
