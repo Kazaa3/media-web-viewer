@@ -1674,6 +1674,13 @@
                                     <div style="margin-top: 10px;">
                                         <div style="margin-bottom: 8px;">
                                             <strong style="font-size: 0.85em; color: #666;"
+                                                data-i18n="env_label_core_packages">Core-Packages:</strong>
+                                            <div id="env-core-packages-status"
+                                                style="font-size: 0.8em; margin-top: 2px;">-
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="font-size: 0.85em; color: #666;"
                                                 data-i18n="env_label_test_tools">Test-Tools:</strong>
                                             <div id="env-test-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
                                             </div>
@@ -1689,6 +1696,19 @@
                                                 data-i18n="env_label_build_tools">Build-Tools:</strong>
                                             <div id="env-build-tools-status" style="font-size: 0.8em; margin-top: 2px;">
                                                 -</div>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="font-size: 0.85em; color: #666;"
+                                                data-i18n="env_label_requirements_list">Requirements-Status:</strong>
+                                            <div id="env-requirements-list" style="font-size: 0.8em; margin-top: 2px;">-
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 8px;">
+                                            <strong style="font-size: 0.85em; color: #666;"
+                                                data-i18n="env_label_base_dependencies">Basis-Abhängigkeiten:</strong>
+                                            <div id="env-base-dependencies-status"
+                                                style="font-size: 0.8em; margin-top: 2px;">-
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -4808,6 +4828,7 @@
                 const envTestToolsStatusEl = document.getElementById('env-test-tools-status');
                 const envDevToolsStatusEl = document.getElementById('env-dev-tools-status');
                 const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');
+                const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');
                 const envRequirementsListEl = document.getElementById('env-requirements-list');
                 const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');
 
@@ -4903,7 +4924,21 @@
                 const m3u8Ver = packageVersionMap.get('m3u8') || '-';
                 const streamToolsText = `${m3u8Ver !== '-' ? '✅' : '❌'} m3u8 ${m3u8Ver}`;
 
-                // envCorePackagesStatusEl removed from HTML, logic not needed
+                const corePackages = [
+                    ['bottle', 'bottle'],
+                    ['bottle-websocket', 'bottle-websocket'],
+                    ['eel', 'Eel'],
+                    ['m3u8', 'm3u8'],
+                    ['gevent', 'gevent'],
+                    ['greenlet', 'greenlet'],
+                ];
+                const corePackagesText = corePackages
+                    .map(([pkgKey, pkgLabel]) => {
+                        const version = packageVersionMap.get(pkgKey);
+                        return `${version ? '✅' : '❌'} ${pkgLabel}${version ? ` ${version}` : ''}`;
+                    })
+                    .join(' | ');
+                if (envCorePackagesStatusEl) envCorePackagesStatusEl.textContent = corePackagesText;
 
                 const testPackages = [
                     ['pytest', 'pytest'],
