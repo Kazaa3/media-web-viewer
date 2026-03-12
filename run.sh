@@ -9,7 +9,7 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
-VENV_DIR=".venv_testbed"
+VENV_DIR=".venv_core"
 REQUIREMENTS="requirements.txt"
 P14_PYTHON="/home/xc/anaconda3/envs/p14/bin/python"
 
@@ -117,8 +117,6 @@ echo ""
 echo -e "${BLUE}🚀 Starte Media Web Viewer...${NC}"
 
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    echo ""
-    echo "Usage: ./run.sh [option]"
     echo ""
     echo "Options:"
     echo "  --debug       Start with full debug flags"

@@ -45,6 +45,7 @@ def check_venv():
     print("\n📦 Virtual Environment Check:")
     
     # Check for venv
+    # Ensure we use the interpreter from the active .venv_core or .venv_testbed if present
     in_venv = sys.prefix != sys.base_prefix
     venv_env = os.environ.get('VIRTUAL_ENV', None)
     
@@ -71,7 +72,7 @@ def check_venv():
         print(f"   Status: ❌ NICHT AKTIV")
         print(f"   ⚠️  WARNUNG: Du solltest venv oder conda aktivieren:")
         print(f"      cd {Path(__file__).parent}")
-        print(f"      source .venv_testbed/bin/activate  # für venv")
+        print(f"      source .venv_core/bin/activate  # für venv")
         print(f"      conda activate <env-name>  # für conda")
         return False
 
@@ -236,7 +237,7 @@ def print_summary(checks_passed):
         print("\n📋 Empfohlene Schritte:")
         if not checks_passed['venv']:
             print("   1. Aktiviere das venv:")
-            print("      $ source .venv_testbed/bin/activate")
+            print("      $ source .venv_core/bin/activate")
         if not checks_passed['dependencies']:
             print("   2. Installiere Dependencies:")
             print("      $ pip install -r requirements.txt")

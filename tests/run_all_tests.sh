@@ -42,6 +42,15 @@ else
     PYTHON_EXE="python"
 fi
 
+# Optimization: Prefer .venv_dev if no active venv
+if [ -z "$VIRTUAL_ENV" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    if [ -x "$PROJECT_ROOT/.venv_dev/bin/python" ]; then
+        PYTHON_EXE="$PROJECT_ROOT/.venv_dev/bin/python"
+    fi
+fi
+
 # Ensure we use the interpreter from the active .venv if present
 if [ -n "$VIRTUAL_ENV" ]; then
     PYTHON_EXE="$VIRTUAL_ENV/bin/python"

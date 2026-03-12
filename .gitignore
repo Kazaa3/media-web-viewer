@@ -39,7 +39,11 @@ dmypy.json
 venv/
 env/
 .venv/
+.venv_core/
 .venv_testbed/
+.venv_dev/
+.venv_build/
+.venv_selenium/
 ENV/
 env.bak/
 venv.bak/

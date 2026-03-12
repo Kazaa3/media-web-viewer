@@ -97,7 +97,7 @@ Separate test coverage for these probes:
 - `tests/test_performance_probes.py`
 - `tests/test_bottle_health_latency.py`
 
-Latest local snapshot (09.03.2026, `.venv`, post-optimization #1):
+Latest local snapshot (09.03.2026, `.venv_core`, post-optimization #1):
 - `api_ping` (payload 4096, n=20): avg `0.002 ms`, median `0.001 ms`, p95 `0.012 ms`
 - `get_environment_info`: cold `4160.203 ms`, warm avg `0.003 ms`, warm median `0.001 ms`, warm p95 `0.017 ms`
 - `GET /health` (n=20): avg `2.762 ms`, median `0.527 ms`, p95 `44.568 ms`
@@ -301,17 +301,13 @@ Installation for development and customization:
 git clone https://github.com/kazaa3/media-web-viewer.git
 cd media-web-viewer
 
-# 2. Create Python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# 3. Install Python dependencies
+# 2. Create Python virtual environments (4-Venv Concept)
+# Core: Runtime, Testbed: UI Tests, Dev: CI/Backend, Build: Packaging
+python3 -m venv .venv_core
+source .venv_core/bin/activate
 pip install -r requirements.txt
 
-# 4. Run the application
-python main.py
-
-# 5. The browser opens automatically at http://localhost:<PORT>/app.html
+# Additional environments follow the same pattern (see 4-env concept below)
 #    Each session uses a dynamically allocated port (e.g., 59713, 56071)
 #    This allows running multiple instances simultaneously without conflicts
 ```

@@ -24,8 +24,10 @@ if [ "$SKIP_BUILD_TESTS" != "1" ]; then
     echo "==> Führe Build-Test-Gate aus..."
     if [ -n "$VIRTUAL_ENV" ] && [ -x "$VIRTUAL_ENV/bin/python" ]; then
         PYTHON_BIN="$VIRTUAL_ENV/bin/python"
-    elif [ -x "$SCRIPT_DIR/.venv_testbed/bin/python" ]; then
-        PYTHON_BIN="$SCRIPT_DIR/.venv_testbed/bin/python"
+    elif [ -x "$SCRIPT_DIR/.venv_dev/bin/python" ]; then
+        PYTHON_BIN="$SCRIPT_DIR/.venv_dev/bin/python"
+    elif [ -x "$SCRIPT_DIR/.venv_core/bin/python" ]; then
+        PYTHON_BIN="$SCRIPT_DIR/.venv_core/bin/python"
     else
         PYTHON_BIN="python3"
     fi
@@ -48,7 +50,12 @@ mkdir -p "$APP_DEST"
 # Quellcode kopieren (ohne .git, .venv, Tests, Build-Artefakte und Medien)
 rsync -a \
     --exclude '.git' \
-    --exclude '.venv_testbed' \
+    --exclude '.venv/' \
+    --exclude '.venv_core/' \
+    --exclude '.venv_testbed/' \
+    --exclude '.venv_dev/' \
+    --exclude '.venv_build/' \
+    --exclude '.venv_selenium/' \
     --exclude '__pycache__' \
     --exclude '*.pyc' \
     --exclude 'build/' \
