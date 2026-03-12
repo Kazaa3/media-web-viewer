@@ -39,9 +39,11 @@ def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any],
-    filename: str,
+    filename: str | None = None,
     mode: str = 'lightweight'
 ) -> dict[str, Any]:
+    if filename is None:
+        filename = Path(path).name
     """
     @brief Extracts tags using Mutagen (ID3, FLAC, Vorbis, MP4).
     @details Extrahiert Tags mittels Mutagen (ID3, FLAC, Vorbis, MP4).

@@ -13,7 +13,9 @@ except ImportError:
 from typing import Any
 from pathlib import Path
 
-def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str, mode: str = 'lightweight') -> dict[str, Any]:
+def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | None = None, mode: str = 'lightweight') -> dict[str, Any]:
+    if filename is None:
+        filename = path_obj.name
     """
     Parses ISO files using pycdlib or isoparser and extracts basic metadata.
     Handles both Path and file object, logs errors for corrupted files.

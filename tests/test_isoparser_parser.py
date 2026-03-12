@@ -1,11 +1,8 @@
-import sys
-import os
 from pathlib import Path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../parsers')))
-import isoparser_parser
+from parsers import isoparser_parser
 
 def test_isoparser_parser():
-    test_iso = Path('../media/test.iso')
+    test_iso = Path('media/OLE_DB_ODBC.iso')
     tags = {}
     result = isoparser_parser.parse(test_iso, '.iso', tags)
     assert 'iso_volume_label' in result or 'iso_error' in result

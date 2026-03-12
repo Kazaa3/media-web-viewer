@@ -1,18 +1,23 @@
 import subprocess
 import re
+from pathlib import Path
 from typing import Any
 
 
-def parse(path, file_type, tags, filename, mode='lightweight'):
+def parse(path, file_type, tags, filename=None, mode='lightweight'):
     """
     @brief Extracts metadata using FFmpeg CLI (last-resort fallback).
     @details Extrahiert Metadaten mittels FFmpeg CLI (letzte Instanz Fallback).
     @param path Absolute path / Absoluter Pfad.
     @param file_type Extension / Dateiendung.
     @param tags Existing tags dictionary / Vorhandene Tags.
+    @param filename Current filename / Aktueller Dateiname.
     @param mode Extraction mode / Extraktionsmodus.
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
+    if filename is None:
+        filename = Path(path).name
+
     if mode == 'full' and 'full_tags' not in tags:
         tags['full_tags'] = {}
 

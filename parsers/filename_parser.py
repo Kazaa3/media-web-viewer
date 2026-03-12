@@ -7,18 +7,22 @@ def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any] | None = None,
-    filename: str = '',
+    filename: str | None = None,
     mode: str = 'lightweight'
 ) -> dict[str, Any]:
     """
     @brief Extracts metadata from the filename (e.g., 'Artist - Title').
     @details Extrahiert Metadaten aus dem Dateinamen (z.B. 'Artist - Title').
     @param path Absolute filesystem path / Absoluter Dateipfad.
-    @param filename Current working filename / Aktueller Dateiname.
+    @param file_type Extension / Dateiendung.
     @param tags Existing tags dictionary / Vorhandene Tags.
+    @param filename Current working filename / Aktueller Dateiname.
     @param mode Extraction mode / Extraktionsmodus.
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
+    if filename is None:
+        filename = Path(path).name
+
     if tags is None:
         tags = {
             'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',

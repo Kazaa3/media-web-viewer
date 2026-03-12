@@ -8,9 +8,11 @@ def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any],
-    filename: str,
+    filename: str | None = None,
     mode: str = 'lightweight'
 ) -> dict[str, Any]:
+    if filename is None:
+        filename = Path(path).name
     """
     Parses container-level metadata specifically designed to identify
     embedded details such as MKV streams or nested audio.

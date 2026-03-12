@@ -8,9 +8,11 @@ def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any],
-    filename: str,
+    filename: str | None = None,
     mode: str = 'lightweight'
 ) -> dict[str, Any]:
+    if filename is None:
+        filename = Path(path).name
     """
     @brief Extracts metadata using PyMediaInfo (fallback/supplement).
     @details Extrahiert Metadaten mittels PyMediaInfo als Fallback oder Ergänzung.

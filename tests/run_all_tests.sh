@@ -48,12 +48,12 @@ fi
 
 # 2. Fallback to specialized venvs
 if [ -z "$PYTHON_EXE" ]; then
-    if [ -x "$PROJECT_ROOT/.venv_dev/bin/python" ]; then
-        PYTHON_EXE="$PROJECT_ROOT/.venv_dev/bin/python"
-    elif [ -x "$PROJECT_ROOT/.venv_testbed/bin/python" ]; then
+    if [ -x "$PROJECT_ROOT/.venv_testbed/bin/python" ]; then
         PYTHON_EXE="$PROJECT_ROOT/.venv_testbed/bin/python"
     elif [ -x "$PROJECT_ROOT/.venv_core/bin/python" ]; then
         PYTHON_EXE="$PROJECT_ROOT/.venv_core/bin/python"
+    elif [ -x "$PROJECT_ROOT/.venv_dev/bin/python" ]; then
+        PYTHON_EXE="$PROJECT_ROOT/.venv_dev/bin/python"
     fi
 fi
 
@@ -118,9 +118,13 @@ run_test() {
     fi
 }
 
+# Ensure project root is in PYTHONPATH
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+
 echo "================================================================================"
 echo "🧪 Media Web Viewer - Master Runner (Dynamic Discovery)"
 echo "Interpreter: $PYTHON_EXE"
+echo "PYTHONPATH: $PYTHONPATH"
 echo "================================================================================"
 
 SELECTED_TESTS=()

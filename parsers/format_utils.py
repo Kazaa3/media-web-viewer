@@ -210,9 +210,17 @@ def load_parser_config() -> None:
                 
                 PARSER_CONFIG.update(loaded)
                 
-                # Ensure parser_chain is never empty if it was intended to have defaults
-                if not PARSER_CONFIG.get("parser_chain"):
-                     PARSER_CONFIG["parser_chain"] = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"]
+                # Migration: Ensure all default parsers are in the chain
+                default_chain = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"]
+                current_chain = PARSER_CONFIG.get("parser_chain", [])
+                if not current_chain:
+                    PARSER_CONFIG["parser_chain"] = default_chain
+                else:
+                    # Append missing default parsers to the end if they are not present
+                    for p in default_chain:
+                        if p not in current_chain:
+                            current_chain.append(p)
+                    PARSER_CONFIG["parser_chain"] = current_chain
                 
                 PARSER_CONFIG["scan_dirs"] = sanitize_scan_dirs(PARSER_CONFIG.get("scan_dirs", []))
         except Exception as e:

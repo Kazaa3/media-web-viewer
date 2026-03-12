@@ -1,9 +1,12 @@
 import subprocess
 import json
+from pathlib import Path
 from typing import Any
 
 
-def parse(path, file_type, tags, filename, mode='lightweight'):
+def parse(path, file_type, tags, filename=None, mode='lightweight'):
+    if filename is None:
+        filename = Path(path).name
     """
     @brief Extracts metadata using ffprobe CLI with JSON output.
     @details Extrahiert Metadaten mittels ffprobe CLI mit JSON-Ausgabe.
