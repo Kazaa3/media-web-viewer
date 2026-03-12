@@ -380,7 +380,19 @@
         "pl_insert_here": "Hier einfügen",
         "pl_disable_shuffle": "Zufall deaktivieren",
         "pl_empty_warning": "Die Playlist ist leer.",
-        "common_confirm_clear_playlist": "Möchtest du wirklich die Wiedergabeliste leeren?"
+        "common_confirm_clear_playlist": "Möchtest du wirklich die Wiedergabeliste leeren?",
+        "pl_move_up": "🔼 Nach oben",
+        "pl_move_down": "🔽 Nach unten",
+        "pl_remove": "❌ Entfernen",
+        "pl_save_title": "💾 Speichern",
+        "pl_load_title": "📂 Laden",
+        "pl_saved_success": "Playlist gespeichert!",
+        "pl_loaded_success": "Playlist geladen!",
+        "pl_shuffle": "🔀 Zufall",
+        "pl_refresh": "🔄 Aktualisieren",
+        "pl_url_placeholder": "https://... | rtsp://... | rtmp://...",
+        "pl_date_placeholder": "JJJJ-MM-TT",
+        "pl_clear": "🗑️ Leeren"
     },
     "en": {
         "app_title": "dict",
@@ -763,6 +775,18 @@
         "pl_insert_here": "Insert here",
         "pl_disable_shuffle": "Disable shuffle",
         "pl_empty_warning": "The playlist is empty.",
-        "common_confirm_clear_playlist": "Are you sure you want to clear the playlist?"
+        "common_confirm_clear_playlist": "Are you sure you want to clear the playlist?",
+        "pl_move_up": "🔼 Move Up",
+        "pl_move_down": "🔽 Move Down",
+        "pl_remove": "❌ Remove",
+        "pl_save_title": "💾 Save",
+        "pl_load_title": "📂 Load",
+        "pl_saved_success": "Playlist saved!",
+        "pl_loaded_success": "Playlist loaded!",
+        "pl_shuffle": "🔀 Shuffle",
+        "pl_refresh": "🔄 Refresh",
+        "pl_url_placeholder": "https://... | rtsp://... | rtmp://...",
+        "pl_date_placeholder": "YYYY-MM-DD",
+        "pl_clear": "🗑️ Clear"
     }
 }
