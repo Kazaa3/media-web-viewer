@@ -179,7 +179,7 @@ eel.next_in_playlist()().then(r => console.log('next', r));
 - Generate a tiny `examples/api_client.html` demonstrating several common calls.
 
 File locations
-- Short summary: /home/xc/#Coding/gui_media_web_viewer/docs/API.md
-- Extended reference (this file): /home/xc/#Coding/gui_media_web_viewer/docs/API_FULL.md
+- Short summary: ./docs/API.md
+- Extended reference (this file): ./docs/API_FULL.md
 
 If you'd like, I can now update the todo list to mark this extended doc complete and then run the repo-tracked test or prepare a commit. Which next step do you want?

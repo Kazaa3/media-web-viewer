@@ -10,42 +10,42 @@ This file documents all .md files in the project, including logbuch and tests fo
 ### Project Root/Docs
 | File Path |
 |---|
-| /home/xc/#Coding/gui_media_web_viewer/STYLE_GUIDE_WEB.md |
-| /home/xc/#Coding/gui_media_web_viewer/TEST_SUITE_SUMMARY.md |
-| /home/xc/#Coding/gui_media_web_viewer/docs/OPTION_B_pin_deps_and_add_testdata.md |
-| /home/xc/#Coding/gui_media_web_viewer/docs/REFERENCE_SCREENSHOTS.md |
-| /home/xc/#Coding/gui_media_web_viewer/docs/IMPORT_SHADOWING_AND_TEST_VENV.md |
-| /home/xc/#Coding/gui_media_web_viewer/docs/API_FULL.md |
-| /home/xc/#Coding/gui_media_web_viewer/docs/API.md |
-| /home/xc/#Coding/gui_media_web_viewer/TECH_STACK.md |
-| /home/xc/#Coding/gui_media_web_viewer/docs/OPTION_A_make_tests_resilient.md |
-| /home/xc/#Coding/gui_media_web_viewer/.github/copilot-instructions.md |
-| /home/xc/#Coding/gui_media_web_viewer/DOCUMENTATION.md |
-| /home/xc/#Coding/gui_media_web_viewer/LICENSE.md |
-| /home/xc/#Coding/gui_media_web_viewer/INSTALL.md |
-| /home/xc/#Coding/gui_media_web_viewer/DEPENDENCIES.md |
-| /home/xc/#Coding/gui_media_web_viewer/README.md |
-| /home/xc/#Coding/gui_media_web_viewer/tests/README_E2E_PACKAGES.md |
-| /home/xc/#Coding/gui_media_web_viewer/tests/TEST_DOCUMENTATION.md |
+| ./STYLE_GUIDE_WEB.md |
+| ./TEST_SUITE_SUMMARY.md |
+| ./docs/OPTION_B_pin_deps_and_add_testdata.md |
+| ./docs/REFERENCE_SCREENSHOTS.md |
+| ./docs/IMPORT_SHADOWING_AND_TEST_VENV.md |
+| ./docs/API_FULL.md |
+| ./docs/API.md |
+| ./TECH_STACK.md |
+| ./docs/OPTION_A_make_tests_resilient.md |
+| ./.github/copilot-instructions.md |
+| ./DOCUMENTATION.md |
+| ./LICENSE.md |
+| ./INSTALL.md |
+| ./DEPENDENCIES.md |
+| ./README.md |
+| ./tests/README_E2E_PACKAGES.md |
+| ./tests/TEST_DOCUMENTATION.md |
 
 ### Logbuch Folder
 | File Path |
 |---|
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/000_Logbuch_Index.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/000_Logbuch_Merge_Strategie.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/001_Copilot_Anweisungen_Kompendium.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/002_Logbuch_Header_StyleSheet.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/003_Robust_Anchor_Management.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/01_Features.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/107_Default_Tab_Player.md |
-| /home/xc/#Coding/gui_media_web_viewer/logbuch/105_Selenium_404_Bug.md |
+| ./logbuch/000_Logbuch_Index.md |
+| ./logbuch/000_Logbuch_Merge_Strategie.md |
+| ./logbuch/001_Copilot_Anweisungen_Kompendium.md |
+| ./logbuch/002_Logbuch_Header_StyleSheet.md |
+| ./logbuch/003_Robust_Anchor_Management.md |
+| ./logbuch/01_Features.md |
+| ./logbuch/107_Default_Tab_Player.md |
+| ./logbuch/105_Selenium_404_Bug.md |
 | ... (full logbuch list continues) |
 
 ### Tests Folder
 | File Path |
 |---|
-| /home/xc/#Coding/gui_media_web_viewer/tests/README_E2E_PACKAGES.md |
-| /home/xc/#Coding/gui_media_web_viewer/tests/TEST_DOCUMENTATION.md |
+| ./tests/README_E2E_PACKAGES.md |
+| ./tests/TEST_DOCUMENTATION.md |
 
 ## Step 3: Next Actions
 - Use this list for batch header compliance, anchor, and redundancy checks across all .md files.

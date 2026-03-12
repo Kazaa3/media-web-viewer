@@ -10,7 +10,7 @@
 ## Den Überblick behalten
 **dict - Web Media Player & Library** ist ein lebendiges Projekt. Dieses Dokument dient als zentrales Register für alles, was noch zu tun ist – von kleinen Korrekturen bis hin zu großen architektonischen Visionen.
 
-## Aktuelle offene Bugs (Stand v1.33)
+## Aktuelle offene Bugs (Stand v.{VERSION})
 Trotz hoher Testabdeckung gibt es immer Raum für Verbesserungen:
 - **GUI-Glitches:** Feinjustierung des Glassmorphism-Layouts bei extrem schmalen Fenstern.
 - **Parser-Edge-Cases:** Behandlung von sehr alten, beschädigten MKV-Dateien, die zu Timeouts führen können.

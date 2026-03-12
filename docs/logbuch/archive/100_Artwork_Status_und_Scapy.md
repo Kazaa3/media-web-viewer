@@ -22,7 +22,7 @@ Es wurde eine neue Diagnose-Eigenschaft `is_missing_cover` in der Klasse `MediaI
 
 ## 📡 Scapy Integration
 Die Bibliothek `scapy` wurde zu den Systemabhängigkeiten hinzugefügt.
-- **Test-Suite**: Ein neuer Test [`tests/test_scapy_basic.py`](file:///home/xc/%23Coding/gui_media_web_viewer/tests/test_scapy_basic.py) wurde erstellt.
+- **Test-Suite**: Ein neuer Test [`tests/test_scapy_basic.py`](file://.../%23Coding/gui_media_web_viewer/tests/test_scapy_basic.py) wurde erstellt.
 - **Funktionalität**: Verifiziert Paket-Stacking (Ethernet/IP/ICMP) und die Verfügbarkeit der Bibliothek im Python-Umfeld.
 - **Zukunft**: Basis für UPnP/DLNA Discovery oder Netzwerk-Diagnose innerhalb des Media-Viewers.
 

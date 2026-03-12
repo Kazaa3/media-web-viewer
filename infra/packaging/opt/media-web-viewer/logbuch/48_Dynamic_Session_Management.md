@@ -177,7 +177,7 @@ $ media-viewer
 Umfassende Unit-Tests für die Session-Management-Funktionalität:
 
 ```bash
-$ cd /home/xc/#Coding/gui_media_web_viewer
+$ cd .../#Coding/gui_media_web_viewer
 $ python tests/test_session_management.py
 
 ======================================================================

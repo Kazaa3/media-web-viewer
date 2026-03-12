@@ -23,12 +23,12 @@ Das deutet auf vermischte Datenquellen hin (mehrere lokale DB-Dateien + wechseln
 ## Root Cause
 
 1. **Mehrere DB-Dateien im System** (historisch/legacy):
-   - `/home/xc/media_library.db`
-   - `/home/xc/#Coding/gui_media_web_viewer/media_library.db`
-   - `/home/xc/#Coding/gui_media_web_viewer/dist/media_library.db`
-   - `/home/xc/#Coding/media_library.db`
+   - `.../media_library.db`
+   - `./media_library.db`
+   - `./dist/media_library.db`
+   - `.../#Coding/media_library.db`
 2. **Aktive App-DB** ist jedoch ausschließlich:
-   - `/home/xc/.media-web-viewer/media_library.db`
+   - `.../.media-web-viewer/media_library.db`
 3. **Fehlerhafte Scan-Konfiguration** enthielt projektinterne Ordner (z. B. `logbuch`) als Scan-Quelle.
 
 ## Implementierte Lösung

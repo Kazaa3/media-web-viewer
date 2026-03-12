@@ -2427,7 +2427,7 @@ After this commit, these paths remain local but are no longer tracked and won't 
 
 **Run all tests:**
 ```bash
-cd /home/xc/#Coding/gui_media_web_viewer
+cd .../gui_media_web_viewer
 pytest tests/ -v
 ```
 

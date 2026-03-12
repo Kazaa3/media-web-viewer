@@ -2396,7 +2396,7 @@ scripts/cleanup_build_artifacts.sh --execute
 
 **Run all tests:**
 ```bash
-cd /home/xc/#Coding/gui_media_web_viewer
+cd .../#Coding/gui_media_web_viewer
 pytest tests/ -v
 ```
 
