@@ -2014,11 +2014,13 @@
                                 <select id="video-mode-select" onchange="updateVideoMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
                                     <option value="browser" data-i18n="video_mode_chrome">Chrome Native</option>
-                                    <option value="integrated" data-i18n="video_mode_vlc_integrated" selected>VLC
-                                        Integrated (Stream)</option>
-                                    <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
-                                    <option value="directplay" data-i18n="video_mode_mkvmerge">Direct Play (MKVmerge)
+                                    <option value="integrated" data-i18n="video_mode_ffmpeg_browser" selected>FFmpeg
+                                        Engine → Chrome</option>
+                                    <option value="vlc_browser" data-i18n="video_mode_vlc_browser">VLC Engine → Chrome
                                     </option>
+                                    <option value="directplay" data-i18n="video_mode_mkvmerge_vlc">mkvmerge → VLC
+                                        (Local)</option>
+                                    <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
                                 </select>
                             </div>
                         </div>
@@ -3927,9 +3929,13 @@
 
             if (mode === 'vlc') {
                 await startVLC(item.path);
+            } else if (mode === 'vlc_browser') {
+                startEmbeddedVideo(item, `/vlc-stream/${encodeURIComponent(item.path)}`);
             } else if (mode === 'integrated') {
+                // FFmpeg Engine -> Chrome
                 startEmbeddedVideo(item, `/video-stream/${encodeURIComponent(item.path)}`);
             } else if (mode === 'directplay') {
+                // mkvmerge -> VLC (Local)
                 const result = await eel.stream_to_vlc(item.path)();
                 if (result.status === 'ok') {
                     document.getElementById('vlc-info').style.display = 'block';

@@ -2,7 +2,9 @@ import db
 import bottle
 import mimetypes
 import subprocess
+import os
 import uuid
+import shutil
 import sys
 from pathlib import Path
 from mutagen.mp3 import MP3
@@ -80,18 +82,25 @@ def serve_media(filepath):
     mime_type, _ = mimetypes.guess_type(filepath)
     ext = filepath.lower()
 
-    # Detect transcoding suffix: .flac_transcoded or .ogg_transcoded
+    # Detect transcoding suffix: .flac_transcoded, .ogg_transcoded, .mp3_transcoded, .aac_transcoded
     needs_transcoding = False
     transcode_format = None
 
-    if filepath.endswith('.flac_transcoded'):
-        filepath = filepath[:-16]
-        transcode_format = 'flac'
-        needs_transcoding = True
-    elif filepath.endswith('.ogg_transcoded'):
-        filepath = filepath[:-15]
-        transcode_format = 'ogg'
-        needs_transcoding = True
+    
+    suffixes = {
+        '.flac_transcoded': 'flac',
+        '.ogg_transcoded': 'ogg',
+        '.mp3_transcoded': 'mp3',
+        '.aac_transcoded': 'aac',
+        '.opus_transcoded': 'opus'
+    }
+    
+    for suffix, fmt in suffixes.items():
+        if filepath.endswith(suffix):
+            filepath = filepath[:-len(suffix)]
+            transcode_format = fmt
+            needs_transcoding = True
+            break
 
     logger.debug("network", f"serve_media: filepath={filepath}, needs_transcoding={needs_transcoding}, format={transcode_format}")
 
@@ -107,15 +116,17 @@ def serve_media(filepath):
         cache_path = CACHE_DIR / cache_filename
         tmp_path = cache_path.with_suffix(f'.{uuid.uuid4().hex[:6]}.tmp')
 
-        # FFmpeg output format and MIME type
-        if transcode_format == 'ogg':
-            # WMA/others → Opus (efficient lossy codec)
-            ffmpeg_args = ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-compression_level', '10', '-f', 'ogg']
-            serve_mime = 'audio/ogg'
-        else:
-            # ALAC → FLAC (lossless → lossless, browser-compatible)
-            ffmpeg_args = ['-c:a', 'flac', '-compression_level', '5', '-f', 'flac']
-            serve_mime = 'audio/flac'
+        # FFmpeg configuration matrix
+        matrix = {
+            'mp3': (['audio/mpeg'], ['-c:a', 'libmp3lame', '-q:a', '2', '-f', 'mp3']),
+            'ogg': (['audio/ogg'], ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-f', 'ogg']),
+            'opus': (['audio/ogg'], ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-f', 'ogg']),
+            'aac': (['audio/aac'], ['-c:a', 'aac', '-b:a', '128k', '-f', 'adts']),
+            'flac': (['audio/flac'], ['-c:a', 'flac', '-compression_level', '5', '-f', 'flac'])
+        }
+        
+        serve_mime_list, ffmpeg_args = matrix.get(str(transcode_format), (['audio/mpeg'], ['-f', 'mp3']))
+        serve_mime = serve_mime_list[0]
 
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
@@ -248,6 +259,8 @@ def stream_video(filepath):
     def generate():
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
+            if not process.stdout:
+                 return
             while True:
                 chunk = process.stdout.read(64 * 1024)
                 if not chunk:
@@ -260,6 +273,50 @@ def stream_video(filepath):
             except subprocess.TimeoutExpired:
                 process.kill()
             logger.debug("network", f"VIDEO_STREAM ENDED: {input_source}")
+
+    bottle.response.content_type = 'video/mp4'
+    return generate()
+
+
+@bottle.route('/vlc-stream/<filepath:path>')
+def stream_vlc(filepath):
+    """
+    @brief Real-time video streaming with VLC as the backend engine.
+    @details Nutzt VLC für Live-Transkodierung und liefert den Stream an den Browser.
+    """
+    full_path = _resolve_path(filepath)
+    if not full_path:
+        return bottle.HTTPError(404, "File not found")
+
+    vlc_path = shutil.which('vlc') or 'vlc'
+    # VLC sout chain: transcode and mux to mp4 for browser
+    # access=file,dst=- is the way to pipe to stdout in VLC
+    sout = '#transcode{vcodec=h264,vb=2000,scale=auto,acodec=mp4a,ab=128,channels=2,samplerate=44100}:std{access=file,mux=mp4,dst=-}'
+    
+    cmd = [
+        vlc_path, '-I', 'dummy', str(full_path),
+        '--sout', sout, 'vlc://quit'
+    ]
+
+    logger.debug("network", f"VLC_STREAM STARTED: {full_path}")
+
+    def generate():
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            if not process.stdout:
+                 return
+            while True:
+                chunk = process.stdout.read(64 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            logger.debug("network", f"VLC_STREAM ENDED: {full_path}")
 
     bottle.response.content_type = 'video/mp4'
     return generate()
