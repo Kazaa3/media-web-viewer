@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Kategorie: i18n / Deep Scan Test
-# Eingabewerte: web/app.html, JavaScript Code, HTML Static Text, alert()/confirm() Aufrufe
-# Ausgabewerte: Hardcoded String Detection, innerHTML/innerText Validierung, Cardinality Check (102/102)
-# Testdateien: web/app.html
-# Kommentar: Deep-Scan für hardcoded Strings - prüft HTML Static Text, alert/confirm, innerHTML, JS String Literals, Button/Label, placeholder/title, Cardinality (8/8 Tests).
+# Kategorie: i18n (Deep Scan)
+# Eingabewerte: web/app.html (Code-Scan)
+# Ausgabewerte: Cardinality-Matrix, Liste nicht-internationalisierter Texte
+# Testdateien: tests/test_i18n_deep_scan.py
+# Kommentar: Findet ALLE nicht-internationalisierten Texte mittels Regex-Analyse.
 """
 ================================================================================
 i18n Deep Scan Test Suite - Tiefenanalyse für Media Web Viewer

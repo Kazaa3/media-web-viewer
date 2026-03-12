@@ -13,10 +13,10 @@ def main():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     test_dir = os.path.join(project_root, "tests")
     
-    # Use .venv_testbed python
-    venv_python = os.path.join(project_root, ".venv_testbed", "bin", "python3")
+    # Use .venv_selenium python
+    venv_python = os.path.join(project_root, ".venv_selenium", "bin", "python3")
     if not os.path.exists(venv_python):
-        print(f"Error: .venv_testbed not found at {venv_python}")
+        print(f"Error: .venv_selenium not found at {venv_python}")
         print("Please run creation script or ensure it exists.")
         sys.exit(1)
 

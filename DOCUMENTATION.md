@@ -97,26 +97,23 @@ Separate test coverage for these probes:
 - `tests/test_performance_probes.py`
 - `tests/test_bottle_health_latency.py`
 
-Latest local snapshot (09.03.2026, `.venv_core`, post-optimization #1):
-- `api_ping` (payload 4096, n=20): avg `0.002 ms`, median `0.001 ms`, p95 `0.012 ms`
-- `get_environment_info`: cold `4160.203 ms`, warm avg `0.003 ms`, warm median `0.001 ms`, warm p95 `0.017 ms`
-- `GET /health` (n=20): avg `2.762 ms`, median `0.527 ms`, p95 `44.568 ms`
-
-Implemented in this round:
-- Reduced request-path overhead in `web/app_bottle.py` by removing unconditional per-request info logs.
-- Optimized package search in `web/app.html` with pre-normalized search fields + 120ms debounce.
+Latest local snapshots (12.03.2026, 5-Venv Concept):
+- **Core** (`.venv_core`): Production baseline (avg ping `0.002 ms`)
+- **Selenium** (`.venv_selenium`): Dedicated E2E automation
+- **Testbed** (`.venv_testbed`): Internal GUI testing
+- **Dev** (`.venv_dev`): CI & Backend testing
+- **Build** (`.venv_build`): Isolated packaging Environment
 
 Build-process status:
 - A mandatory targeted pre-build gate is now active across all build entry points.
-- Gate suite:
+- Gate suite (run in `.venv_build` / `.venv_dev`):
     - `tests/test_performance_probes.py`
     - `tests/test_bottle_health_latency.py`
     - `tests/test_installed_packages_ui.py`
-        - `tests/test_environment_packages_fallback.py`
     - `tests/test_ui_session_stability.py`
 
 Environment package-list robustness:
-- Backend fallback chain in `get_environment_info()`:
+- Backend fallback chain in `get_environment_info()` supports all 5 environments.
     1. `pip list --format=json`
     2. `pip list --format=columns` parsing fallback
     3. `importlib.metadata` / `pkg_resources` fallback
@@ -176,6 +173,7 @@ Bleib dran – die nächste Legende wird geschrieben!
 **Audio:** MP3, M4A (AAC), M4B (Audiobooks), FLAC, OGG (Vorbis/Opus), WAV, ALAC, WMA, AIFF, DSD  
 **Video:** MP4, MKV, WebM (basic support)  
 **Documents:** EPUB, PDF (unsupport)
+
 
 ---
 

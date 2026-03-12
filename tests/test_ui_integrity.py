@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: UI Integration
+# Eingabewerte: web/app.html
+# Ausgabewerte: Tag-Balance, Tab-IDs, tabMap Status
+# Testdateien: tests/test_ui_integrity.py
+# Kommentar: Validiert die HTML-Struktur und JS-Tab-Konfiguration.
 
 import unittest
 import time

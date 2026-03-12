@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Kategorie: i18n / Internationalization Test
-# Eingabewerte: translations_de.json, translations_en.json, web/app.html, JavaScript Code
-# Ausgabewerte: JSON-Struktur-Validierung, Key-Parität (314 Keys), data-i18n Referenzen, t() Aufrufe
-# Testdateien: web/i18n/translations_de.json, web/i18n/translations_en.json, web/app.html
-# Kommentar: Validiert i18n-Vollständigkeit - JSON-Syntax, Key-Parität DE/EN, keine hardcoded Strings, alle data-i18n und t() Aufrufe referenzieren gültige Keys (9/9 Tests).
+# Kategorie: i18n
+# Eingabewerte: web/i18n.json, web/app.html
+# Ausgabewerte: Key-Parität, JSON-Syntax Status
+# Testdateien: tests/test_i18n_completeness.py
+# Kommentar: Kern-Test für die Vollständigkeit der Internationalisierung.
 """
 ================================================================================
 i18n Completeness Test Suite - Basis-Validierung für Media Web Viewer

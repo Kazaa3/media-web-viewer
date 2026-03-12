@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: UI Interaction (Mouse/Picking)
+# Eingabewerte: Playlist-Items, Click-Events
+# Ausgabewerte: Picking-Status, Ghost-Element Sichtbarkeit
+# Testdateien: tests/test_mouse_interaction.py
+# Kommentar: Testet Long-Press (Picking) und Drag-Indikatoren.
 import unittest
 import time
 import os
