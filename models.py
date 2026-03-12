@@ -97,6 +97,11 @@ class MediaItem:
         self.logical_type = self.detect_logical_type()
         self.file_format = detect_file_format(self.path, self.tags)
         self.content_type = self.detect_content_type()
+        
+        from parsers.format_utils import is_playable
+        tags_with_path = (self.tags or {}).copy()
+        tags_with_path['path'] = str(self.path)
+        self.is_playable = is_playable(self.file_format, tags_with_path)
 
         # Extract artwork if enabled
         self.art_path = self.extract_artwork()
@@ -321,6 +326,7 @@ class MediaItem:
             'logical_type': self.logical_type,
             'file_format': self.file_format,
             'content_type': self.content_type,
+            'is_playable': self.is_playable,
             'art_path': self.art_path,
             'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,

@@ -430,10 +430,24 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                                 ident_str = safe_str(ident).upper()
                                 if 'VIDEO_TS' in ident_str:
                                     tags['pycdlib_is_dvd'] = True
+                                if 'AUDIO_TS' in ident_str:
+                                    tags['pycdlib_is_dvd_audio'] = True
+                                if 'DVD_RTAV' in ident_str:
+                                    tags['pycdlib_is_dvd_vr'] = True
                                 if 'BDMV' in ident_str:
                                     tags['pycdlib_is_bluray'] = True
                                 if 'HVDVD_TS' in ident_str:
                                     tags['pycdlib_is_hvdvd'] = True
+                                if 'MPEGAV' in ident_str:
+                                    tags['pycdlib_is_vcd'] = True
+                                if 'SEGMENT' in ident_str or 'SVCD' in ident_str:
+                                    tags['pycdlib_is_svcd'] = True
+                                if 'CDI' in ident_str:
+                                    tags['pycdlib_is_cdi'] = True
+                                if 'PHOTO_CD' in ident_str:
+                                    tags['pycdlib_is_photocd'] = True
+                                if 'CDPLUS' in ident_str:
+                                    tags['pycdlib_is_cd_extra'] = True
                         except: pass
 
                         iso.close()

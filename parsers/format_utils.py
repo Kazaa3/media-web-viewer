@@ -16,10 +16,14 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
         # Normalize path input
         if path is None:
             return 'UNKNOWN'
-        if not isinstance(path, Path):
-            path = Path(path)
+        
+        path_obj = Path(path) if not isinstance(path, Path) else path
+        ext = (path_obj.suffix or '').lower()
+        path_str = str(path_obj).lower()
 
-        ext = (path.suffix or '').lower()
+        # Global Priorities (PC/Digital Games) - independent of extension
+        if 'steamlibrary' in path_str or 'steamapps' in path_str or 'common' in path_str:
+            return 'Digitales Spiel (Steam)'
     except Exception:
         return 'UNKNOWN'
 
@@ -50,6 +54,26 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
             if '10 bit' in bits or '12 bit' in bits:
                 return f'{bits.title()} Deep Color Video'
 
+        # High-Res Audio detection (FLAC, WAV, AIFF, ALAC)
+        if ext in AUDIO_EXTENSIONS:
+            bits = _tag('audio_bit_depth')
+            sr = _tag('samplerate')
+            
+            # Helper to check if High-Res
+            def _is_high_res(b_str: str, s_str: str) -> bool:
+                try:
+                    b_match = re.search(r'\d+', b_str)
+                    s_match = re.search(r'\d+', s_str)
+                    b = int(b_match.group()) if b_match else 0
+                    s = int(s_match.group()) if s_match else 0
+                    return b > 16 or s > 48000
+                except (ValueError, AttributeError):
+                    return False
+
+            if _is_high_res(bits, sr):
+                sr_fmt = format_samplerate(sr)
+                return f'High-Res {_fmt(ext)} ({bits or "24"}-bit/{sr_fmt})'
+
         return _fmt(ext)
 
     if ext in DISK_IMAGE_EXTENSIONS:
@@ -77,10 +101,37 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
         container = _tag('container')
         title = _tag('title')
         is_dvd = _tag('pycdlib_is_dvd') == 'true'
+        is_dvd_audio = _tag('pycdlib_is_dvd_audio') == 'true'
+        is_dvd_vr = _tag('pycdlib_is_dvd_vr') == 'true'
         is_bluray = _tag('pycdlib_is_bluray') == 'true'
         is_hvdvd = _tag('pycdlib_is_hvdvd') == 'true'
+        is_vcd = _tag('pycdlib_is_vcd') == 'true'
+        is_svcd = _tag('pycdlib_is_svcd') == 'true'
+        is_cdi = _tag('pycdlib_is_cdi') == 'true'
+        is_photocd = _tag('pycdlib_is_photocd') == 'true'
+        is_cd_extra = _tag('pycdlib_is_cd_extra') == 'true'
 
-        # Video Priorities
+        # 1. PC / Digital Games (Priority: High)
+        if 'win32' in volume_id or 'setup' in title or any(k in volume_id for k in ['spiel', 'game', 'software']):
+            return 'PC Spiel (Index)'
+
+        # 2. Specialized Optical Standards (Rainbow & DVD Books)
+        if is_dvd_audio:
+            return 'DVD-Audio (Abbild)'
+        if is_dvd_vr:
+            return 'DVD-VR (Video Recording)'
+        if is_vcd:
+            return 'Video CD (Abbild)'
+        if is_svcd:
+            return 'Super VCD (Abbild)'
+        if is_cdi:
+            return 'CD-i (Abbild)'
+        if is_photocd:
+            return 'Photo CD (Index)'
+        if is_cd_extra:
+            return 'CD-Extra (Abbild)'
+
+        # 3. Video Priorities
         if 'pal' in volume_id or 'pal' in standard:
             return 'PAL DVD (Abbild)'
         if 'ntsc' in volume_id or 'ntsc' in standard:
@@ -107,7 +158,7 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
         if '10 bit' in bits or '12 bit' in bits:
             return f'{bits} Deep Color Video'
 
-        # Audio Priorities
+        # 3. Audio Priorities
         if any(k in volume_id for k in ['sacd', 'audio cd', 'cda']):
             return 'Audio-CD (Abbild)'
 
@@ -129,6 +180,10 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
             return 'DSD64 (SACD Quality)'
         if '5644' in samplerate or '5.6' in samplerate:
             return 'DSD128'
+        if '11289' in samplerate or '11.2' in samplerate:
+            return 'DSD256'
+        if '22579' in samplerate or '22.5' in samplerate:
+            return 'DSD512'
         return 'DSD Audio'
 
     if ext in EBOOK_EXTENSIONS:
@@ -144,6 +199,33 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
     except Exception:
         pass
     return _fmt(ext)
+
+
+def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
+    """
+    @brief Determines if a file should be playable or just indexed.
+    @param format_label Result from detect_file_format.
+    @param tags Extracted tags.
+    """
+    label = (format_label or "").lower()
+    
+    # Clearly non-playable data formats
+    if 'pc spiel' in label or 'digitales spiel' in label or '(index)' in label:
+        return False
+        
+    # Movie/Audio images are playable
+    if any(k in label for k in ['dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res']):
+        return True
+        
+    # Standard media files are always playable
+    full_path = str(tags.get('path', ''))
+    ext = Path(full_path).suffix.lower() if full_path else ''
+    
+    # Check against known playable extensions
+    if ext in ('.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff'):
+        return True
+        
+    return False
 
 # Config File Path
 CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.json'
