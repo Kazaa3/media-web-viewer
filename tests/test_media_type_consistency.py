@@ -62,8 +62,8 @@ class TestMediaTypeConsistency(unittest.TestCase):
         """Verify fallback behavior for unknown extensions."""
         fname = "readme.txt"
         item = MediaItem(fname, Path(fname))
-        # Default in current models.py is 'audio' if not in video list
-        self.assertEqual(item.media_type, 'audio')
+        # .txt is a DOCUMENT_EXTENSION, mapping to 'document'
+        self.assertEqual(item.media_type, 'document')
 
 if __name__ == '__main__':
     print("Running Media Type Consistency Tests...")

@@ -15,12 +15,14 @@ class TestParserMapping(unittest.TestCase):
             "enable_isoparser_parser": True
         }
 
+    @patch('pathlib.Path.is_file')
     @patch('parsers.format_utils.PARSER_CONFIG')
     @patch('parsers.filename_parser.parse')
     @patch('parsers.mutagen_parser.parse')
     @patch('parsers.isoparser_parser.parse')
-    def test_mp3_mapping(self, mock_iso, mock_mutagen, mock_filename, mock_config):
+    def test_mp3_mapping(self, mock_iso, mock_mutagen, mock_filename, mock_config, mock_is_file):
         """Test that only mapped parsers are called for .mp3"""
+        mock_is_file.return_value = True
         mock_config.get.side_effect = self.mock_config.get
         
         # We need to mock the return values so the loop continues
@@ -34,11 +36,13 @@ class TestParserMapping(unittest.TestCase):
         self.assertTrue(mock_mutagen.called)
         self.assertFalse(mock_iso.called)
 
+    @patch('pathlib.Path.is_file')
     @patch('parsers.format_utils.PARSER_CONFIG')
     @patch('parsers.isoparser_parser.parse')
     @patch('parsers.filename_parser.parse')
-    def test_iso_mapping(self, mock_filename, mock_iso, mock_config):
+    def test_iso_mapping(self, mock_filename, mock_iso, mock_config, mock_is_file):
         """Test that isoparser is called for .iso"""
+        mock_is_file.return_value = True
         mock_config.get.side_effect = self.mock_config.get
         
         mock_filename.return_value = {}
@@ -49,11 +53,13 @@ class TestParserMapping(unittest.TestCase):
         self.assertTrue(mock_filename.called)
         self.assertTrue(mock_iso.called)
 
+    @patch('pathlib.Path.is_file')
     @patch('parsers.format_utils.PARSER_CONFIG')
     @patch('parsers.filename_parser.parse')
     @patch('parsers.mutagen_parser.parse')
-    def test_unknown_extension_fallback(self, mock_mutagen, mock_filename, mock_config):
+    def test_unknown_extension_fallback(self, mock_mutagen, mock_filename, mock_config, mock_is_file):
         """Test that unknown extensions fall back to trying all parsers in chain"""
+        mock_is_file.return_value = True
         mock_config.get.side_effect = self.mock_config.get
         
         mock_filename.return_value = {}

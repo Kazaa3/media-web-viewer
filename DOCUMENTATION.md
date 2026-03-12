@@ -2084,7 +2084,7 @@ cd media-web-viewer
 
 # 2. Create virtual environment
 python3 -m venv .venv
-source .ven
+source .venv/bin/activate
 pytest tests/
 
 # 6. Start in debug mode
@@ -2397,7 +2397,7 @@ After this commit, these paths remain local but are no longer tracked and won't 
 2. **Environment & Dependencies** (`test_environment_dependencies.py`)
    - Python version validation
    - Virtual environment detection
-   - Critical dependencies (eel, bottle, mutagen, pymediainfo)
+   - Critical dependencies (eel, mutagen, bottle, pymediainfo)
    - System dependencies (ffmpeg, mediainfo)
 
 3. **Backend Integration** (`test_backend_connection.py`)
@@ -4231,30 +4231,18 @@ python main.py --n
 
 ### Session Management
 
-**Check Running Sessions:**
-```python
-from main import check_running_sessions
+Media Web Viewer supports session tracking and management for running instances:
+- The backend uses `check_running_sessions()` (see main.py) to detect active sessions.
+- Each session is identified by its process ID (PID), port, and command line.
+- The app scans TCP connections and running processes to find all Media Web Viewer sessions.
+- This enables detection, debugging, and management of multiple parallel instances.
 
-sessions = check_running_sessions()
-for session in sessions:
-    print(f"Session: PID={session['pid']}, Port={session['port']}")
-```
+Example session info returned:
+- PID: Process ID
+- Port: Listening port
+- Command: Full command line
 
-**Check Port Availability:**
-```python
-from main import is_port_in_use
-
-if is_port_in_use(8000):
-    print("Port 8000 is already in use")
-else:
-    print("Port 8000 is available")
-```
-
-**Session Information:**
-Each session returns:
-- `pid` (int): Process ID
-- `port` (int or None): Listening port (if applicable)
-- `cmdline` (str): Full command line used to start the session
+This mechanism is useful for debugging, monitoring, and ensuring clean separation between environments (dev, test, production).
 
 ---
 

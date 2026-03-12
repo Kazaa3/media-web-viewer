@@ -15,6 +15,8 @@ eel.api_ping(Date.now(), 10)().then(res => console.log('pong', res));
 General conventions
 - Most endpoints return a dictionary with either `status`/`ok` or `error` keys.
 - Some functions perform best-effort operations (e.g., calling frontend functions via `eel.*`) and silently ignore failures.
+- Versioning is centralized via the `VERSION` file and validated by `tests/test_version_sync.py`.
+- For build and environment details, see [DOCUMENTATION.md](DOCUMENTATION.md).
 
 1. General / App Info
 ---------------------

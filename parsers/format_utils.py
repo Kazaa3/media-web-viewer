@@ -269,7 +269,7 @@ def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
 
 # Extension Categories
 AUDIO_EXTENSIONS = {
-    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b'
+    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b', '.aiff'
 }
 VIDEO_EXTENSIONS = {
     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
