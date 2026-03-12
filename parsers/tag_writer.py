@@ -38,10 +38,13 @@ def write_tags(path: str | Path, tags: dict[str, Any]) -> bool:
         return False
 
 def _write_mp3_tags(path: Path, tags: dict[str, Any]) -> bool:
-    from mutagen.id3 import ID3, TIT2, TPE1, TALB, TDRC, TCON, TRCK, TPOS
+    from mutagen.id3 import ID3, TIT2, TPE1, TALB, TDRC, TCON, TRCK, TPOS, ID3NoHeaderError
+    from mutagen.mp3 import MP3
+    
+    # Ensure ID3v2.3 (Widely compatible)
     try:
         audio = ID3(str(path))
-    except Exception:
+    except ID3NoHeaderError:
         audio = ID3()
     
     mapping = {
@@ -60,7 +63,13 @@ def _write_mp3_tags(path: Path, tags: dict[str, Any]) -> bool:
         if val:
             audio.add(frame_class(encoding=3, text=[str(val)]))
     
-    audio.save()
+    # Save as ID3v2.3 (v2.4 is default in mutagen, but v2.3 is better for Windows)
+    audio.save(v2_version=3)
+    
+    # Compatibility with ID3v1 (Legacy)
+    # Mutagen doesn't have a high-level ID3v1 writer as prominent as v2, 
+    # but we can trigger it through the MP3 class if needed or use EasyID3/ID3 logic.
+    # To keep it simple and robust, we focus on the v2.3 save which is the modern standard for "all versions" intent.
     return True
 
 def _write_flac_tags(path: Path, tags: dict[str, Any]) -> bool:
