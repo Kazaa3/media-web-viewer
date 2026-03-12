@@ -1,4 +1,5 @@
-import db
+import src.core.db as db
+import src.core.logger as logger
 import bottle
 import mimetypes
 import subprocess
@@ -11,7 +12,7 @@ from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 
-import logger
+# import logger  (redundant now)
 import logging
 
 # Get specialized logger for web component

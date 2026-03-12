@@ -1,56 +1,20 @@
-# --- Build Artifacts ---
-*.deb
 # ============================================================================
 # Media Web Viewer - .gitignore
 # ============================================================================
 
-# --- Python ---
+# --- Core Patterns ---
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.so
-.Python
 *.py[cod]
 *$py.class
-__pycache__/main.*.pyc
-
-# --- Testing ---
-.pytest_cache/
-.tox/
-.coverage
-.coverage.*
-htmlcov/
-.cache/
-coverage.xml
-*.cover
-.hypothesis/
-nosetests.xml
-test-results/
-junit.xml
-
-# --- Type Checking & Linting ---
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
+*.so
+.Python
 
 # --- Virtual Environments ---
+.venv/
+.venv*/
 venv/
 env/
-.venv/
-.venv_core/
-.venv_testbed/
-.venv_dev/
-.venv_build/
-.venv_selenium/
 ENV/
-env.bak/
-venv.bak/
-
-# --- Conda ---
-.conda/
-*.conda
 
 # --- IDEs and Editors ---
 .idea/
@@ -58,207 +22,104 @@ venv.bak/
 *.swp
 *.swo
 *~
-*.sublime-project
-*.sublime-workspace
 .project
 .pydevproject
 .settings/
 
 # --- Operating System ---
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 Desktop.ini
 
-# --- Packaging and Build ---
+# --- Build & Distribution ---
 build/
 dist/
 *.egg-info/
 *.egg
 *.whl
 MANIFEST
-pip-log.txt
-pip-delete-this-directory.txt
-
-# --- PyInstaller ---
 *.spec
 *.manifest
-
-# --- Debian Packages ---
 *.deb
 *.deb.*
-
-# Packaging staging directory (exclude compiled app during build)
 packaging/opt/
 !packaging/opt/.gitkeep
 
-# Explicitly ignore full build mirror content generated in packaging/opt/media-web-viewer
-packaging/opt/media-web-viewer/
+# --- Project Specifics ---
 
-# Keep DEBIAN control files and launcher
-!packaging/DEBIAN/
-!packaging/usr/
+# Data & Database
+data/*
+!data/.gitkeep
+database.db
+media_library.db
 
-# --- Documentation ---
-docs/html/
-docs/latex/
-docs/_build/
-docs/_static/
-docs/_templates/
-site/
-
-# --- Logs ---
-*.log
+# Logs
 logs/
-logs/*.txt
+*.log
 *.log.*
-app.log
-app.log.*
+data/logs/*
+!data/logs/.gitkeep
 
-# --- Database Files ---
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
+# Temporary / Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+.env
+.env.*
+*.bak
+*.tmp
+*.temp
+*~
 
-# --- Project Specific Media & Data ---
+# Screenshots & Local Assets
 media/*
 !media/.gitkeep
 !media/README.md
+assets/generated/
+dist/
 Screens/
 screenshots/
-
-# --- User Data Directory ---
-.media-web-viewer/
-
-# --- Environment & Config ---
-.env
-.env.*
-*.env
-
-# --- Temporary Files ---
-*.tmp
-*.temp
-*.bak
-*.backup
-*~
-.cache
-
-# --- Local Benchmarks ---
-benchmarks/
-benchmark-output/
-
-# --- Build System Artifacts ---
-*.tar.gz
-*.zip
-*.rar
-
-# --- macOS ---
-.AppleDouble
-.LSOverride
-Icon
-
-# --- Windows ---
-$RECYCLE.BIN/
-
-# --- Generated Files ---
-VERSION.bak
-*.orig
-
-# Keep important files
-!.gitkeep
-!requirements.txt
-!environment.yml
-
-# --- Build & Distribution ---
-dist/
-build/
-*.egg-info/
-*.deb
-*.spec
-
-# --- Logs ---
-logs/
-*.log
-
-# --- Editor/IDE ---
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# --- Documentation Backups ---
-DOCUMENTATION.md.disk-backup-*
-
-# --- Media ---
-media/
-
-# --- Misc ---
-*.bak
-*.tmp
-
-# --- OS ---
-.DS_Store
-Thumbs.db
-
-# --- Artifacts ---
-media-web-viewer_*.deb
-
-# --- Screenshots & Test Artifacts ---
-Screens/
 tests/selenium_artifacts/
 tests/reference_screenshots/
 tests/debug_*.png
-*.png.bak
 
-# --- Packaging ---
-packaging/
-
-# --- Bug Reports ---
-bugs/
-
-# --- HTML Docs ---
-docs/html/
-
-# --- Test Artifacts ---
-performance_test.py
-
-# --- Logbuch ---
-logbuch/
-
-# --- Remove old builds ---
-reinstall_deb.sh
-
-# --- Ignore everything except source ---
-!main.py
-!models.py
-!db.py
-!env_handler.py
-!logger.py
-!media_format.py
-!parsers/
+# --- Folder Preservation Rules ---
+# We keep these folders and their contents (unless matched above)
+!src/
 !web/
+!infra/
+!docs/
+!scripts/
 !tests/
+
+# Keep root configuration files
 !requirements.txt
+!setup.py
 !pyproject.toml
 !README.md
 !LICENSE.md
 !VERSION
-!update_version.py
-!build.py
-!build_system.py
-!build_deb.sh
-!build_exe.sh
-!check_environment.py
-!create_mocks.py
 !TECH_STACK.md
 !DEPENDENCIES.md
 !DOCUMENTATION.md
-!TEST_SUITE_SUMMARY.md
-!VERSION_SYNC.json
+
+# --- Documentation Subdirs ---
+docs/html/
+docs/latex/
+docs/_build/
+site/
+
+# --- Remove old/legacy specific files ---
+reinstall_deb.sh
+performance_test.py
+update_version.py
+build_deb.sh
+build_exe.sh
+build_system.py
+create_mocks.py
+check_environment.py
+VERSION_SYNC.json

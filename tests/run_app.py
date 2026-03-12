@@ -9,5 +9,5 @@ import sys
 import subprocess
 
 print("Starting app...")
-p = subprocess.Popen([sys.executable, "main.py"])
+p = subprocess.Popen([sys.executable, "src.core.main.py"])
 p.wait()

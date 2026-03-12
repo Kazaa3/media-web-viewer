@@ -10,7 +10,7 @@ def main():
     """
     Main entry point for running GUI tests using venv_testbed.
     """
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    project_root = os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
     test_dir = os.path.join(project_root, "tests")
     
     # Use .venv_selenium python
@@ -55,7 +55,6 @@ def main():
                 [venv_python, abs_test_path],
                 env=env,
                 cwd=project_root
-            )
             if result.returncode != 0:
                 print(f"[FAIL] {test_file} returned exit code {result.returncode}")
                 failed_tests.append(test_file)

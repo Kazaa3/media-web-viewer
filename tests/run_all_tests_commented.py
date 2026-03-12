@@ -46,7 +46,6 @@ class Color:
     BOLD = '\033[1m'
     DIM = '\033[2m'
 
-
 class TestRunner:
     """Runs and documents all test files in the tests/ directory."""
     
@@ -124,7 +123,6 @@ class TestRunner:
                 f"{project_root}:{existing_pythonpath}"
                 if existing_pythonpath
                 else project_root
-            )
 
             result = subprocess.run(
                 [sys.executable, str(test_file)],
@@ -133,7 +131,6 @@ class TestRunner:
                 timeout=30,
                 cwd=self.tests_dir.parent,
                 env=env,
-            )
             
             output = result.stdout + result.stderr
             
@@ -334,10 +331,9 @@ class TestRunner:
         print(f"   • Verwende fixtures für Test-Setup")
         print(f"   • Mock externe Abhängigkeiten (DB, Network)")
 
-
 def main():
     """Main entry point."""
-    tests_dir = Path(__file__).parent
+    tests_dir = Path(__file__).parents[1]
     
     runner = TestRunner(tests_dir)
     runner.run_all_tests()
@@ -348,7 +344,6 @@ def main():
     failed_count = sum(
         1 for r in runner.results.values()
         if r['status'] in ['FAILED', 'ERROR', 'TIMEOUT']
-    )
     
     if failed_count > 0:
         print(f"\n{Color.RED}⚠️  {failed_count} Tests fehlgeschlagen{Color.NC}\n")
@@ -356,7 +351,6 @@ def main():
     else:
         print(f"\n{Color.GREEN}✅ Alle Tests abgeschlossen{Color.NC}\n")
         sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

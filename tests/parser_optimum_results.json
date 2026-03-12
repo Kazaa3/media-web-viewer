@@ -6,82 +6,47 @@
     "ffprobe": {},
     "ffmpeg": {},
     "tinytag": {},
+    "eyed3": {},
     "music_tag": {}
   },
   "media/Coldplay - Viva La Vida.opus": {
     "filename": {},
-    "container": {
-      "container": "ogg"
-    },
     "mutagen": {},
     "pymediainfo": {},
     "ffprobe": {},
     "ffmpeg": {},
-    "pycdlib": {},
     "tinytag": {},
     "eyed3": {},
-    "music_tag": {},
-    "isoparser": {},
-    "ebml": {},
-    "mkvparse": {},
-    "enzyme": {},
-    "pymkv": {}
+    "music_tag": {}
   },
   "media/Kid Cudi vs. Crookers - Day 'n' Night.opus": {
     "filename": {},
-    "container": {
-      "container": "ogg"
-    },
     "mutagen": {},
     "pymediainfo": {},
     "ffprobe": {},
     "ffmpeg": {},
-    "pycdlib": {},
     "tinytag": {},
     "eyed3": {},
-    "music_tag": {},
-    "isoparser": {},
-    "ebml": {},
-    "mkvparse": {},
-    "enzyme": {},
-    "pymkv": {}
+    "music_tag": {}
   },
   "media/Limp Bizkit - My Generation.opus": {
     "filename": {},
-    "container": {
-      "container": "ogg"
-    },
     "mutagen": {},
     "pymediainfo": {},
     "ffprobe": {},
     "ffmpeg": {},
-    "pycdlib": {},
     "tinytag": {},
     "eyed3": {},
-    "music_tag": {},
-    "isoparser": {},
-    "ebml": {},
-    "mkvparse": {},
-    "enzyme": {},
-    "pymkv": {}
+    "music_tag": {}
   },
   "media/Youth Of The Nation - P.O.D.opus": {
     "filename": {},
-    "container": {
-      "container": "ogg"
-    },
     "mutagen": {},
     "pymediainfo": {},
     "ffprobe": {},
     "ffmpeg": {},
-    "pycdlib": {},
     "tinytag": {},
     "eyed3": {},
-    "music_tag": {},
-    "isoparser": {},
-    "ebml": {},
-    "mkvparse": {},
-    "enzyme": {},
-    "pymkv": {}
+    "music_tag": {}
   }
 }

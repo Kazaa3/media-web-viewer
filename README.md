@@ -12,12 +12,13 @@ sudo apt-get install -f
 media-web-viewer
 ```
 
-### From Source
+### From Source (empfohlene Umgebung: venv_core)
 ```bash
 git clone https://github.com/Kazaa3/media-web-viewer.git
 cd media-web-viewer
-mamba env create -f environment.yml
-mamba activate media-web-viewer
+python3 -m venv .venv_core
+source .venv_core/bin/activate
+pip install -r requirements.txt
 python main.py
 ```
 
