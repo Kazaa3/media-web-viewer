@@ -23,7 +23,19 @@ The following file types and directories are explicitly ignored in the root and 
 - `*.json` (inside `tests/`): All test reporting fragments.
 - `*.txt` (inside `tests/`): Temporary text output.
 - `tests/artifacts/`: The entire centralized storage.
-- `tests/assets/`: Legacy asset storage (mirroring artifacts).
+
+## Specific JSON Fragments & Output
+
+Certain specialized tests generate JSON results for comparison or benchmarking. These are explicitly excluded from Git:
+
+- `m4b_all_tools_results.json`: Generated during M4B chapter/metadata tool comparisons.
+- `m4b_mutagen_test_result`: Result fragment from Mutagen-specific extraction tests.
+- `temp_parser_result.json`: Transient result during parser-chain validation.
+
+### Where they arise
+- **Parser Pipeline**: `tests/tech/ffmpeg/`, `tests/tech/mutagen/`
+- **Benchmarking**: `tests/advanced/performance/`
+- **E2E Integration**: `tests/advanced/e2e_packages/`
 
 ## Standardized Paths in Tests
 
@@ -33,7 +45,8 @@ When writing new tests or updating existing ones, use the following patterns for
 from pathlib import Path
 
 # Base directory for artifacts
-ARTIFACT_ROOT = Path(__file__).parents[2] / "artifacts"
+# Adjust parents depending on depth of the test file
+ARTIFACT_ROOT = Path(__file__).resolve().parent.parent / "artifacts"
 LOG_DIR = ARTIFACT_ROOT / "logs"
 REPORT_DIR = ARTIFACT_ROOT / "reports"
 
@@ -42,4 +55,4 @@ report_path = REPORT_DIR / "test_results.json"
 ```
 
 ---
-*Note: This structure ensures a clean repository and easy cleanup of test-related debris.*
+*Note: This structure ensures a clean repository and easy cleanup of test-related debris. SCREENSHOTS (Bildschirmfotos) are considered temporary and must always reside in `screenshots/` or `tests/artifacts/screenshots/`.*
