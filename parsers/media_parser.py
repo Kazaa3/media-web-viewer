@@ -7,6 +7,9 @@ from . import pymediainfo_parser
 from . import ffprobe_parser
 from . import ffmpeg_parser
 from . import container_parser
+from . import mkvinfo_parser
+from . import mkvmerge_parser
+from . import vlc_parser
 import logger
 import logging
 
@@ -28,7 +31,7 @@ PARSER_MAPPING = {
     ".wma":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
     
     # --- VIDEO ---
-    ".mkv":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "ebml", "mkvparse", "enzyme", "pymkv"],
+    ".mkv":  ["filename", "container", "mkvmerge", "mkvinfo", "vlc", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "ebml", "mkvparse", "enzyme", "pymkv"],
     ".mp4":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "enzyme"],
     ".m4v":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
     ".avi":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
@@ -109,6 +112,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
         ("mutagen", mutagen_parser.parse),
         ("pymediainfo", pymediainfo_parser.parse),
         ("ffprobe", ffprobe_parser.parse),
+        ("mkvmerge", mkvmerge_parser.parse),
+        ("mkvinfo", mkvinfo_parser.parse),
+        ("vlc", vlc_parser.parse),
         ("ffmpeg", ffmpeg_parser.parse),
         ("isoparser", isoparser_parser.parse),
         ("ebml", None),

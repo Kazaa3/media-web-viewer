@@ -216,6 +216,55 @@ def serve_cover(filepath):
     return bottle.HTTPError(404, "No cover found")
 
 
+@bottle.route('/video-stream/<filepath:path>')
+def stream_video(filepath):
+    """
+    @brief Real-time video streaming with live transcoding.
+    @details Nutzt FFmpeg für Live-Transkodierung in ein browser-kompatibles Format (Fragmented MP4).
+             Optimiert für geringe Latenz und hohe Kompatibilität.
+    @param filepath Pfad zur Mediendatei.
+    """
+    full_path = _resolve_path(filepath)
+    if not full_path:
+        return bottle.HTTPError(404, "File not found")
+
+    is_iso = str(full_path).lower().endswith('.iso')
+    input_source = f"dvd://{full_path}" if is_iso else str(full_path)
+
+    # FFmpeg command for fragmented MP4 streaming
+    # -frag_keyframe+empty_moov: Required for streaming MP4
+    # -preset ultrafast: Faster encoding
+    # -tune zerolatency: Minimize delay
+    cmd = [
+        'ffmpeg', '-re', '-i', input_source,
+        '-vcodec', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',
+        '-acodec', 'aac', '-ar', '44100', '-ab', '128k',
+        '-f', 'mp4', '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
+        '-loglevel', 'error', '-'
+    ]
+
+    logger.debug("network", f"VIDEO_STREAM STARTED: {input_source}")
+
+    def generate():
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            while True:
+                chunk = process.stdout.read(64 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            logger.debug("network", f"VIDEO_STREAM ENDED: {input_source}")
+
+    bottle.response.content_type = 'video/mp4'
+    return generate()
+
+
 @bottle.error(500)
 def error500(error):
     """

@@ -2474,6 +2474,94 @@ def stop_vlc():
 
 
 @eel.expose
+def is_mkvtoolnix_available():
+    """Checks if mkvmerge is available in PATH."""
+    return shutil.which("mkvmerge") is not None
+
+
+@eel.expose
+def stream_to_vlc(file_path):
+    """
+    @brief Real-time streaming via mkvmerge pipe to VLC.
+    @details Nutzt mkvmerge zum Remuxen und pipet den Output direkt an VLC.
+    """
+    logging.info(f"Direct Play: {file_path}")
+    
+    # ISO Handling: Native DVD playback for menus
+    if file_path.lower().endswith('.iso'):
+        try:
+            # For ISOs, we use VLC's native dvd:// support instead of mkvmerge pipe
+            # This allows menu interaction and chapter selection.
+            vlc_path = shutil.which('vlc') or 'vlc'
+            cmd = [vlc_path, f"dvd://{file_path}"]
+            subprocess.Popen(cmd)
+            return {"status": "ok", "mode": "vlc_dvd"}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+    if not is_mkvtoolnix_available():
+        return {"status": "error", "error": "mkvtoolnix nicht installiert"}
+
+    try:
+        # Command 1: mkvmerge to stdout
+        mkvmerge_cmd = ["mkvmerge", file_path, "-o", "-"]
+        # Command 2: vlc from stdin
+        vlc_cmd = ["vlc", "-"]
+
+        logging.info(f"Direct Play: {' '.join(mkvmerge_cmd)} | {' '.join(vlc_cmd)}")
+
+        # Start pipeline
+        p1 = subprocess.Popen(mkvmerge_cmd, stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(vlc_cmd, stdin=p1.stdout)
+        
+        # Allow p1 to receive a SIGPIPE if p2 exits.
+        if p1.stdout:
+            p1.stdout.close()
+
+        return {"status": "ok", "message": "Streaming gestartet"}
+    except Exception as e:
+        logging.error(f"Direct Play Fehler: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
+def remux_mkv_batch(folder_path):
+    """
+    @brief Fast Batch-Remux of all video files in a folder to MKV.
+    """
+    if not is_mkvtoolnix_available():
+        return {"status": "error", "error": "mkvtoolnix nicht installiert"}
+
+    p = Path(folder_path)
+    if not p.is_dir():
+        return {"status": "error", "error": "Ungültiges Verzeichnis"}
+
+    video_files = []
+    for ext in VIDEO_EXTENSIONS:
+        if ext == ".mkv": continue # Skip existing MKVs
+        video_files.extend(list(p.glob(f"*{ext}")))
+
+    results = {"total": len(video_files), "success": 0, "errors": []}
+    
+    for vf in video_files:
+        output = vf.with_suffix(".mkv")
+        if output.exists():
+            results["errors"].append(f"{vf.name}: Ziel existiert bereits")
+            continue
+            
+        try:
+            cmd = ["mkvmerge", str(vf), "-o", str(output)]
+            subprocess.run(cmd, check=True, capture_output=True)
+            results["success"] += 1
+            logging.info(f"Remux Erfolg: {vf.name} -> {output.name}")
+        except Exception as e:
+            results["errors"].append(f"{vf.name}: {str(e)}")
+            logging.error(f"Remux Fehler {vf.name}: {e}")
+
+    return {"status": "ok", "results": results}
+
+
+@eel.expose
 def import_vlc_playlist(m3u_path: str):
     """
     @brief Imports a VLC playlist (m3u8/m3u/XSPF) into the library.

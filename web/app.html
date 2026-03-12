@@ -2008,12 +2008,15 @@
                                 style="display: flex; align-items: center; gap: 15px; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
                                 <span style="font-size: 0.9em; font-weight: bold; color: #666;"
                                     data-i18n="video_mode_label">Modus:</span>
-                                <label class="switch" style="width: 50px; height: 24px;">
-                                    <input type="checkbox" id="video-mode-toggle" onchange="updateVideoMode()">
-                                    <span class="slider round"></span>
-                                </label>
-                                <span id="video-mode-status" style="font-size: 0.9em; min-width: 80px;"
-                                    data-i18n="video_mode_browser">Browser</span>
+                                <select id="video-mode-select" onchange="updateVideoMode()"
+                                    style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
+                                    <option value="browser" data-i18n="video_mode_chrome">Chrome Native</option>
+                                    <option value="integrated" data-i18n="video_mode_vlc_integrated" selected>VLC
+                                        Integrated (Stream)</option>
+                                    <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
+                                    <option value="directplay" data-i18n="video_mode_mkvmerge">Direct Play (MKVmerge)
+                                    </option>
+                                </select>
                             </div>
                         </div>
 
@@ -2083,6 +2086,10 @@
                                 <button onclick="pickAndPlayInVLC()"
                                     style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
                                     📂 Datei auswählen
+                                </button>
+                                <button onclick="runBatchRemux()"
+                                    style="padding: 8px 14px; border: 1px solid #2a7; background: #2a7; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 10px;">
+                                    <span data-i18n="vlc_btn_batch_remux">📦 Batch-Remux zu MKV</span>
                                 </button>
                             </div>
                         </div>
@@ -3718,7 +3725,7 @@
         }
 
         function play(item, path) {
-            const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v'];
+            const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
             const isVideo = item.type === 'video' || (item.extension && videoExts.includes(item.extension.toLowerCase()));
 
             if (isVideo) {
@@ -3891,15 +3898,12 @@
         }
 
         function updateVideoMode() {
-            const toggle = document.getElementById('video-mode-toggle');
-            const status = document.getElementById('video-mode-status');
-            const isVLC = toggle.checked;
-
-            status.innerText = isVLC ? t('video_mode_vlc') : t('video_mode_browser');
+            const select = document.getElementById('video-mode-select');
+            const mode = select.value;
 
             // Show "Open in VLC" button only if in browser mode and video loaded
-            document.getElementById('btn-open-vlc').style.display = (!isVLC && currentVideoItem) ? 'flex' : 'none';
-            if (isVLC) {
+            document.getElementById('btn-open-vlc').style.display = (mode !== 'browser' && currentVideoItem) ? 'flex' : 'none';
+            if (mode !== 'browser') {
                 hideUnsupportedVideoHint();
             }
         }
@@ -3909,18 +3913,58 @@
             currentVideoPath = path;
 
             // Switch to Video tab
-            const vlcBtn = document.querySelector('button[onclick*="\'vlc\'"]');
+            const vlcBtn = document.getElementById('vlc-btn');
             switchTab('vlc', vlcBtn);
 
-            const isVLC = document.getElementById('video-mode-toggle').checked;
+            const select = document.getElementById('video-mode-select');
+            const mode = select.value;
 
             // Ensure audio is paused
             if (currentPlayer) currentPlayer.pause();
 
-            if (isVLC) {
+            if (mode === 'vlc') {
                 await startVLC(item.path);
+            } else if (mode === 'integrated') {
+                startEmbeddedVideo(item, `/video-stream/${encodeURIComponent(item.path)}`);
+            } else if (mode === 'directplay') {
+                const result = await eel.stream_to_vlc(item.path)();
+                if (result.status === 'ok') {
+                    document.getElementById('vlc-info').style.display = 'block';
+                    if (result.mode === 'vlc_dvd') {
+                        document.getElementById('vlc-current-file').innerText = `${t('vlc_info_dvd')}: ${item.name}`;
+                        showToast(t('iso_detected_msg'), 3000);
+                    } else {
+                        document.getElementById('vlc-current-file').innerText = item.path;
+                    }
+                } else {
+                    alert(result.error);
+                }
             } else {
+                // Chrome Native
                 startEmbeddedVideo(item, path);
+            }
+        }
+
+        async function runBatchRemux() {
+            const folder = await eel.pick_folder()();
+            if (!folder) return;
+
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ remuxing...';
+            btn.disabled = true;
+
+            try {
+                const result = await eel.remux_mkv_batch(folder)();
+                if (result.status === 'ok') {
+                    const r = result.results;
+                    alert(`Remux abgeschlossen!\nErfolgreich: ${r.success}\nFehler: ${r.errors.length}\n${r.errors.join('\n')}`);
+                } else {
+                    alert(result.error);
+                }
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
@@ -4147,7 +4191,7 @@
         }
 
         // Parser GUI Logic
-        const ALL_PARSERS = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"];
+        const ALL_PARSERS = ["filename", "container", "mkvmerge", "mkvinfo", "vlc", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"];
         let SLOW_PARSERS = [];
         let currentParserChain = [];
         let currentParserOptions = {};

@@ -41,6 +41,18 @@ class TestSpecialDisks(unittest.TestCase):
                 item = MediaItem("Beigabe_Buch_Python_Programming.iso", p)
                 self.assertEqual(item.category, 'Beigabe')
 
+    def test_dvd_iso_categorization(self):
+        """Test that ISO with PAL volid or VIDEO_TS structure is categorized as DVD/Film."""
+        p = Path("/tmp/video_dvd.iso")
+        tags = {'pycdlib_volume_id': 'MY_PAL_DVD'}
+        
+        with patch('parsers.media_parser.extract_metadata', return_value=(0, tags)):
+            with patch.object(MediaItem, 'detect_logical_type', return_value='Abbild'):
+                item = MediaItem("video_dvd.iso", p)
+                # content_type will be PAL DVD, category will be PAL DVD
+                self.assertEqual(item.content_type, 'PAL DVD')
+                self.assertIn('DVD', item.category)
+
     def test_generic_disk_image(self):
         """Test that generic disk images still fall back to 'Abbild'."""
         p = Path("/data/backup_linux.img")
