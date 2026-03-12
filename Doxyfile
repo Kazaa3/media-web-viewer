@@ -15,7 +15,7 @@ REPEAT_BRIEF           = YES
 INPUT                  = . parsers web
 FILE_PATTERNS          = *.py *.js
 RECURSIVE              = YES
-EXCLUDE_PATTERNS       = */.venv/* */.git/* */media/* */dist/* */build/* */packaging/* */logbuch/* */tests/*
+EXCLUDE_PATTERNS       = */.venv*/* */.git/* */media/* */dist/* */build/* */packaging/* */logbuch/* */tests/*
 EXCLUDE                = main.py # Exclude main entry point if it's too messy for docs
 
 # Python specific settings

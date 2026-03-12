@@ -8,8 +8,8 @@ VERSION=$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")
 echo "==> Building Media Web Viewer v${VERSION} Executable..."
 
 # Activate virtual environment if it exists
-if [ -d "$SCRIPT_DIR/.venv" ]; then
-    source "$SCRIPT_DIR/.venv/bin/activate"
+if [ -d "$SCRIPT_DIR/.venv_build" ]; then
+    source "$SCRIPT_DIR/.venv_build/bin/activate"
 fi
 
 # Install/upgrade PyInstaller

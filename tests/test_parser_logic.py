@@ -78,7 +78,7 @@ def test_filename_parser_simple():
     name = "Artist - Title.mp3"
     path = Path("/path/to/" + name)
     
-    tags = filename_parser.parse(path, name, {})
+    tags = filename_parser.parse(path, file_type="unknown", tags={}, filename=name)
     
     artist_ok = 'artist' in tags and "Artist" in tags['artist']
     title_ok = 'title' in tags and "Title" in tags['title']
@@ -103,7 +103,7 @@ def test_filename_parser_complex():
     name = "01-Artist - Title (Remix).flac"
     path = Path("/path/to/" + name)
     
-    tags = filename_parser.parse(path, name, {})
+    tags = filename_parser.parse(path, file_type="unknown", tags={}, filename=name)
     
     artist_ok = 'artist' in tags and "Artist" in str(tags['artist'])
     title_ok = 'title' in tags and "Title" in str(tags['title'])

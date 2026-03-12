@@ -1,7 +1,5 @@
-# Development / CI-only requirements
-# Install into your active virtualenv for running GUI tests locally
-selenium>=4.10.0
-webdriver-manager>=4.0.0
-xvfbwrapper>=0.2.9
-pytest>=8.0.0
-pytest-cov>=4.1.0
+# Media Web Viewer - Development Dependencies
+flake8>=7.0.0
+mypy>=1.9.0
+black>=24.0.0
+pylint>=3.0.0

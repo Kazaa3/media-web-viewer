@@ -24,6 +24,8 @@ if [ "$SKIP_BUILD_TESTS" != "1" ]; then
     echo "==> Führe Build-Test-Gate aus..."
     if [ -n "$VIRTUAL_ENV" ] && [ -x "$VIRTUAL_ENV/bin/python" ]; then
         PYTHON_BIN="$VIRTUAL_ENV/bin/python"
+    elif [ -x "$SCRIPT_DIR/.venv_build/bin/python" ]; then
+        PYTHON_BIN="$SCRIPT_DIR/.venv_build/bin/python"
     elif [ -x "$SCRIPT_DIR/.venv_dev/bin/python" ]; then
         PYTHON_BIN="$SCRIPT_DIR/.venv_dev/bin/python"
     elif [ -x "$SCRIPT_DIR/.venv_core/bin/python" ]; then

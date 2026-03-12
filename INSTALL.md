@@ -144,14 +144,14 @@ cd media-web-viewer
 **Setup Virtual Environment:**
 
 ```bash
-# Create virtual environment
-python3 -m venv .venv
+# Create core virtual environment
+python3 -m venv .venv_core
 
-# Activate virtual environment
-source .venv/bin/activate
+# Activate core virtual environment
+source .venv_core/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install core dependencies
+pip install -r requirements-core.txt
 ```
 
 **Run Application:**
@@ -180,7 +180,7 @@ conda activate media-web-viewer
 # Or manually
 conda create -n media-web-viewer python=3.11
 conda activate media-web-viewer
-pip install -r requirements.txt
+pip install -r requirements-core.txt
 ```
 
 **Run Application:**
@@ -369,11 +369,11 @@ python -c "import eel, bottle, bottle_websocket, mutagen, pymediainfo, m3u8; pri
 
 **Solution:**
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
+# Activate core virtual environment
+source .venv_core/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install core dependencies
+pip install -r requirements-core.txt
 ```
 
 ---
@@ -386,8 +386,8 @@ pip install -r requirements.txt
 
 **Quick fix:**
 ```bash
-source .venv/bin/activate
-pip install -r requirements.txt --upgrade --force-reinstall
+source .venv_core/bin/activate
+pip install -r requirements-core.txt --upgrade --force-reinstall
 
 # Verify
 python -c "import m3u8, bottle_websocket; print('imports ok')"
@@ -525,8 +525,8 @@ rm -rf ~/.media-web-viewer
 ### Source Installation
 
 ```bash
-# Remove virtual environment
-rm -rf .venv
+# Remove virtual environments
+rm -rf .venv_core .venv_dev .venv_testbed .venv_selenium .venv_build
 
 # Remove application data
 rm -rf ~/.media-web-viewer
