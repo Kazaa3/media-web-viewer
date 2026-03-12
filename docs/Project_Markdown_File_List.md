@@ -12,13 +12,11 @@ This file documents all .md files in the project, including logbuch and tests fo
 |---|
 | ./STYLE_GUIDE_WEB.md |
 | ./TEST_SUITE_SUMMARY.md |
-| ./docs/OPTION_B_pin_deps_and_add_testdata.md |
 | ./docs/REFERENCE_SCREENSHOTS.md |
 | ./docs/IMPORT_SHADOWING_AND_TEST_VENV.md |
 | ./docs/API_FULL.md |
 | ./docs/API.md |
 | ./TECH_STACK.md |
-| ./docs/OPTION_A_make_tests_resilient.md |
 | ./.github/copilot-instructions.md |
 | ./DOCUMENTATION.md |
 | ./LICENSE.md |

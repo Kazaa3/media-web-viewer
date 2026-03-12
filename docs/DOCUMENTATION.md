@@ -1,6 +1,6 @@
-# Media Web Viewer - Comprehensive Documentation
+# dict – Web Media Player & Library - Comprehensive Documentation
 
-**Version:** ${VERSION}  
+**Version:** 1.34  
 **License:** GNU General Public License v3 (GPL-3.0)  
 **Author:** kazaa3 | Germany  
 ### Global Versioning
@@ -8,7 +8,7 @@
 The application uses a centralized versioning system defined in the `VERSION` file in the project root:
 
 ```text
-${VERSION}
+1.34
 ```
 
 This version is automatically loaded and used across:
@@ -97,7 +97,7 @@ Separate test coverage for these probes:
 - `tests/test_performance_probes.py`
 - `tests/test_bottle_health_latency.py`
 
-Latest local snapshots (12.03.2026, 5-Venv Concept):
+Latest local snapshots (13.03.2026, 5-Venv Concept):
 - **Core** (`.venv_core`): Production baseline (avg ping `0.002 ms`)
 - **Selenium** (`.venv_selenium`): Dedicated E2E automation
 - **Testbed** (`.venv_testbed`): Internal GUI testing
@@ -158,7 +158,7 @@ Bleib dran – die nächste Legende wird geschrieben!
 
 ## Overview
 
-**Media Web Viewer** is a sophisticated, modern desktop media player and library manager with an embedded web-based graphical user interface. It combines the power of Python backend processing with a responsive HTML/CSS/JavaScript frontend to provide a premium user experience for managing and playing large media collections.
+**dict** is a sophisticated, modern desktop media player and library manager with an embedded web-based graphical user interface. It combines the power of Python backend processing with a responsive HTML/CSS/JavaScript frontend to provide a premium user experience for managing and playing large media collections.
 
 ### Design Philosophy
 
@@ -226,7 +226,7 @@ Bleib dran – die nächste Legende wird geschrieben!
 
 ### Prerequisites
 
-Before installing Media Web Viewer, ensure your system meets these requirements:
+Before installing **dict**, ensure your system meets these requirements:
 
 #### System Dependencies (Linux/Debian/Ubuntu)
 ```bash
@@ -655,14 +655,12 @@ media-web-viewer/
 │   ├── test_browser_launch.py # Chrome app mode and VLC dependencies
 │   └── test_*.py            # Additional functional/unit/integration tests
 │
-├── logbuch/                 # Development logbook (Markdown)
-│   ├── 01_Features.md       # Feature descriptions with bilingual titles
-│   ├── 00_Known_Issues.md   # Current and resolved issues
-│   ├── 53_Version_Synchronization_System.md # Version sync system docs
-│   ├── 54_Documentation_Completion_v132.md  # Latest documentation completion
-│   ├── 55_Release_Pipeline_Integration.md   # CI/CD pipeline implementation
-│   ├── 56_Chrome_App_Mode_and_VLC_Dependencies.md # Standalone browser fix
-│   └── *.py                 # Scripts for logbook management
+├── logbuch/                 # Development logbook (17 Kern-Dokumente)
+│   ├── 000_Index.md         # Central Index
+│   ├── 001_Projekt_Genese_und_Philosophie.md
+│   ├── ...                  # 002-016 Kern-Dokumente
+│   ├── 017_Bereinigung_und_Portabilitaet.md
+│   └── archive/             # Programm-Historie (290+ Forschungs-Logs)
 │
 ├── packaging/               # .deb package structure
 │   ├── DEBIAN/
@@ -696,7 +694,7 @@ media-web-viewer/
 ### Technology Tree
 
 ```
-Media Web Viewer (${VERSION})
+dict (1.34)
 ├── Frontend Layer
 │   ├── HTML5 / CSS3 (Glassmorphism)
 │   ├── Vanilla JavaScript (ES6+)

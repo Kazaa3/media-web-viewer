@@ -1085,7 +1085,7 @@ def get_environment_info(force_refresh=False):
             "name": "p14",
             "type": "conda",
             "python_version": "3.14.2",
-            "reason": "Latest stable Python release for Media Web Viewer"
+            "reason": "Latest stable Python release for dict"
         }
     }
 
@@ -1321,7 +1321,7 @@ def run_connectionless_browser_mode() -> dict:
 
 def check_running_sessions() -> list[dict]:
     """
-    Check for currently running Media Web Viewer sessions.
+    Check for currently running dict sessions.
     
     Returns:
         list[dict]: List of active sessions with pid, port, and command info

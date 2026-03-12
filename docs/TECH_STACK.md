@@ -1,6 +1,6 @@
 # Tech Stack Quick Reference (dict)
 
-**Version:** ${VERSION}  
+**Version:** 1.34  
 **Letzte Aktualisierung:** 10. März 2026
 
 ## Produktiv-Stack

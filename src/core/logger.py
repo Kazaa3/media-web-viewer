@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-logger.py - Centralized logging system for Media Web Viewer.
+logger.py - Centralized logging system for dict.
 """
 
 import logging

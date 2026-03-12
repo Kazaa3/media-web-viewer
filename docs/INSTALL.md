@@ -1,6 +1,6 @@
-# Installation Guide - Media Web Viewer
+# Installation Guide - dict
 
-**Version:** ${VERSION}  
+**Version:** 1.34  
 **Date:** March 8, 2026
 
 ## Table of Contents
@@ -63,10 +63,10 @@ choco install ffmpeg mediainfo python
 
 ```bash
 # Download latest release
-wget https://github.com/Kazaa3/media-web-viewer/releases/download/v${VERSION}/media-web-viewer_${VERSION}_amd64.deb
+wget https://github.com/Kazaa3/media-web-viewer/releases/download/v1.34/media-web-viewer_1.34_amd64.deb
 
 # Install package
-sudo dpkg -i media-web-viewer_${VERSION}_amd64.deb
+sudo dpkg -i media-web-viewer_1.34_amd64.deb
 
 # Install missing dependencies (if any)
 sudo apt-get install -f
@@ -79,7 +79,7 @@ sudo apt-get install -f
 media-web-viewer
 
 # Or via application menu
-# Applications → Media → Media Web Viewer
+# Applications → Media → dict
 ```
 
 **Uninstall:**
@@ -100,10 +100,10 @@ sudo apt purge media-web-viewer
 
 ```bash
 # Linux
-wget https://github.com/Kazaa3/media-web-viewer/releases/download/v${VERSION}/MediaWebViewer-${VERSION}-Linux
+wget https://github.com/Kazaa3/media-web-viewer/releases/download/v1.34/MediaWebViewer-1.34-Linux
 
 # Windows
-# Download MediaWebViewer-${VERSION}-Windows.exe from releases page
+# Download MediaWebViewer-1.34-Windows.exe from releases page
 
 # macOS
 # Download latest macOS build from releases page (if provided)
@@ -112,17 +112,17 @@ wget https://github.com/Kazaa3/media-web-viewer/releases/download/v${VERSION}/Me
 **Make Executable (Linux/macOS):**
 
 ```bash
-chmod +x MediaWebViewer-${VERSION}-Linux
+chmod +x MediaWebViewer-1.34-Linux
 ```
 
 **Run:**
 
 ```bash
 # Linux
-./MediaWebViewer-${VERSION}-Linux
+./MediaWebViewer-1.34-Linux
 
 # Windows
-MediaWebViewer-${VERSION}-Windows.exe
+MediaWebViewer-1.34-Windows.exe
 
 # macOS
 open MediaWebViewer.app
@@ -212,7 +212,7 @@ python build_system.py --full-build
 ```
 
 **Output:**
-- Package: `media-web-viewer_${VERSION}_amd64.deb`
+- Package: `media-web-viewer_1.34_amd64.deb`
 - Location: Project root directory
 
 ---
@@ -226,7 +226,7 @@ python build_system.py --full-build
 python build_system.py --build pyinstaller
 
 # Manual PyInstaller build
-python -m PyInstaller --onefile --noconsole --name MediaWebViewer-${VERSION} --add-data "web:web" --hidden-import bottle_websocket main.py
+python -m PyInstaller --onefile --noconsole --name MediaWebViewer-1.34 --add-data "web:web" --hidden-import bottle_websocket main.py
 ```
 
 **Platform-Specific Notes:**
@@ -237,7 +237,7 @@ python -m PyInstaller --onefile --noconsole --name MediaWebViewer-${VERSION} --a
 - Requires: glibc 2.31+ (Ubuntu 20.04+)
 
 **Windows:**
-- Output: `dist/MediaWebViewer-${VERSION}-Windows.exe`
+- Output: `dist/MediaWebViewer-1.34-Windows.exe`
 - Size: ~120-160 MB
 - Requires: Windows 10 or higher
 
@@ -273,14 +273,14 @@ Workflow: `.github/workflows/ci-artifacts.yml`
 - Trigger: push to `main` and manual dispatch
 - Build outputs:
     - Linux executable (`dist/MediaWebViewer`)
-    - Debian package (`media-web-viewer_${VERSION}_amd64.deb`)
+    - Debian package (`media-web-viewer_1.34_amd64.deb`)
 - Result: artifacts are uploaded to the workflow run (without creating a GitHub Release)
 
 ### 2) Tagged Release Pipeline
 
 Workflow: `.github/workflows/release.yml`
 
-- Trigger: tags `v*` (e.g., `v${VERSION}`) and manual dispatch
+- Trigger: tags `v*` (e.g., `v1.34`) and manual dispatch
 - Build outputs:
     - Linux executable
     - Debian package
@@ -291,8 +291,8 @@ Workflow: `.github/workflows/release.yml`
 
 ```bash
 git add .
-git commit -m "Release v${VERSION}"
-git tag -a v${VERSION} -m "Release v${VERSION}"
+git commit -m "Release v1.34"
+git tag -a v1.34 -m "Release v1.34"
 git push origin main --tags
 ```
 
@@ -454,7 +454,7 @@ choco install ffmpeg
 
 **Solution:**
 ```bash
-chmod +x MediaWebViewer-${VERSION}-Linux
+chmod +x MediaWebViewer-1.34-Linux
 ```
 
 ---
@@ -540,7 +540,7 @@ rm ~/.local/share/applications/media-web-viewer.desktop
 
 ```bash
 # Remove executable
-rm MediaWebViewer-${VERSION}-Linux
+rm MediaWebViewer-1.34-Linux
 
 # Remove application data
 rm -rf ~/.media-web-viewer
@@ -549,4 +549,4 @@ rm -rf ~/.media-web-viewer
 ---
 
 **Last Updated:** March 8, 2026  
-**Version:** ${VERSION}
+**Version:** 1.34

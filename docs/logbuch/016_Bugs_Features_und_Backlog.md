@@ -10,7 +10,7 @@
 ## Den Überblick behalten
 **dict - Web Media Player & Library** ist ein lebendiges Projekt. Dieses Dokument dient als zentrales Register für alles, was noch zu tun ist – von kleinen Korrekturen bis hin zu großen architektonischen Visionen.
 
-## Aktuelle offene Bugs (Stand v.{VERSION})
+## Aktuelle offene Bugs (Stand v.1.34)
 Trotz hoher Testabdeckung gibt es immer Raum für Verbesserungen:
 - **GUI-Glitches:** Feinjustierung des Glassmorphism-Layouts bei extrem schmalen Fenstern.
 - **Parser-Edge-Cases:** Behandlung von sehr alten, beschädigten MKV-Dateien, die zu Timeouts führen können.
@@ -42,7 +42,7 @@ Unser Ziel ist es, dict zum stabilsten und flexibelsten Open-Source Medienverwal
 ## Keeping Track
 **dict - Web Media Player & Library** is a living project. This document serves as a central registry for everything that still needs to be done – from small fixes to large architectural visions.
 
-## Current Open Bugs (as of v1.3.5)
+## Current Open Bugs (as of v1.34)
 Despite high test coverage, there is always room for improvement:
 - **GUI Glitches:** Fine-tuning the glassmorphism layout for extremely narrow windows.
 - **Parser Edge Cases:** Handling very old, corrupted MKV files that can lead to timeouts.

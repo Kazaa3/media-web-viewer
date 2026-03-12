@@ -22,7 +22,7 @@ class VersionSyncTester:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.version_file = project_root / "VERSION"
-        self.sync_file = project_root / "VERSION_SYNC.json"
+        self.sync_file = project_root / "infra/packaging/VERSION_SYNC.json"
         self.errors: List[str] = []
         self.warnings: List[str] = []
         
