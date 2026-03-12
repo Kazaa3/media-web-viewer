@@ -124,11 +124,35 @@ def parse(
             tags['bitdepth'] = format_bitdepth(audio_track.bit_depth, codec=tags.get('codec'), file_type=file_type)
 
         if video_track:
+            from .format_utils import format_scan_type, format_chroma, format_color_info
+
             # Capture standard (PAL / NTSC) and frame rate
             if not tags.get('standard') and hasattr(video_track, 'standard'):
                 tags['standard'] = video_track.standard
             if not tags.get('frame_rate') and hasattr(video_track, 'frame_rate'):
                 tags['frame_rate'] = video_track.frame_rate
+
+            # Exotic Field Extraction
+            tags['video_scan_type'] = format_scan_type(
+                getattr(video_track, 'scan_type', None),
+                getattr(video_track, 'scan_order', None)
+            )
+            tags['video_chroma'] = format_chroma(getattr(video_track, 'chroma_subsampling', None))
+            
+            color_data = format_color_info(
+                getattr(video_track, 'color_space', None),
+                getattr(video_track, 'transfer_characteristics', None),
+                getattr(video_track, 'matrix_coefficients', None),
+                getattr(video_track, 'hdr_format', None)
+            )
+            tags['video_color_space'] = color_data['color_space']
+            tags['video_hdr'] = color_data['hdr_format']
+            if 'matrix' in color_data:
+                tags['video_matrix'] = color_data['matrix']
+
+            # Capture Bit Depth for video if available
+            if hasattr(video_track, 'bit_depth') and video_track.bit_depth:
+                tags['video_bit_depth'] = f"{video_track.bit_depth} Bit"
 
         if mode == 'full':
             for i, track in enumerate(media_info.tracks):

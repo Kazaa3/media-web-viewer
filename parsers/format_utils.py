@@ -29,12 +29,29 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
             return 'UNKNOWN'
         return ext_raw.lstrip('.').upper()
 
-    if ext in AUDIO_EXTENSIONS:
+    if ext in AUDIO_EXTENSIONS or ext in VIDEO_EXTENSIONS:
+        tags = tags or {}
+        # Normalize tag retrieval
+        def _tag(key: str) -> str:
+            try:
+                return str(tags.get(key, '') or '').lower()
+            except Exception:
+                return ''
+
+        # Specialized Video Detection (HDR, Interlaced, Deep Color)
+        if ext in VIDEO_EXTENSIONS:
+            hdr = _tag('video_hdr')
+            scan = _tag('video_scan_type')
+            bits = _tag('video_bit_depth')
+            if hdr and hdr != 'none':
+                return f'HDR {hdr.upper()} Video'
+            if 'interlaced' in scan:
+                return 'Interlaced Video'
+            if '10 bit' in bits or '12 bit' in bits:
+                return f'{bits.title()} Deep Color Video'
+
         return _fmt(ext)
-    if ext in VIDEO_EXTENSIONS:
-        return _fmt(ext)
-    if ext in IMAGE_EXTENSIONS:
-        return _fmt(ext)
+
     if ext in DISK_IMAGE_EXTENSIONS:
         # Try to detect content (PAL DVD, Blu-ray, etc.)
         try:
@@ -59,16 +76,36 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
         standard = _tag('standard')
         container = _tag('container')
         title = _tag('title')
+        is_dvd = _tag('pycdlib_is_dvd') == 'true'
+        is_bluray = _tag('pycdlib_is_bluray') == 'true'
+        is_hvdvd = _tag('pycdlib_is_hvdvd') == 'true'
 
         # Video Priorities
         if 'pal' in volume_id or 'pal' in standard:
             return 'PAL DVD (Abbild)'
         if 'ntsc' in volume_id or 'ntsc' in standard:
             return 'NTSC DVD (Abbild)'
-        if 'dvd video' in container or 'video_ts' in title:
-            return 'DVD (Abbild)'
-        if any(k in volume_id for k in ['blu', 'bd', 'brd']):
+        if is_hvdvd or 'hvdvd_ts' in title or 'hvdvd' in volume_id:
+            return 'HD DVD (Abbild)'
+        if is_bluray or any(k in volume_id for k in ['blu', 'bd', 'brd']):
             return 'Blu-ray (Abbild)'
+        if is_dvd or 'dvd video' in container or 'video_ts' in title:
+            return 'DVD (Abbild)'
+        if any(k in volume_id for k in ['ld', 'laserdisc', 'mcav']):
+            return 'LaserDisc (Abbild)'
+        if any(k in volume_id for k in ['sacd', 'dsd']):
+            return 'SACD (Abbild)'
+
+        # Specialized Video Detection (HDR, Interlaced, Deep Color) - Also for ISOS if metadata is present
+        hdr = _tag('video_hdr')
+        scan = _tag('video_scan_type')
+        bits = _tag('video_bit_depth')
+        if hdr and hdr != 'none':
+            return f'HDR {hdr} Video'
+        if 'interlaced' in scan:
+            return 'Interlaced Video'
+        if '10 bit' in bits or '12 bit' in bits:
+            return f'{bits} Deep Color Video'
 
         # Audio Priorities
         if any(k in volume_id for k in ['sacd', 'audio cd', 'cda']):
@@ -83,6 +120,17 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
             return 'CD-ROM (Abbild)'
 
         return 'Disk-Abbild'
+
+    # DSD / High-Res Audio detection
+    if ext in DSD_EXTENSIONS:
+        tags = tags or {}
+        samplerate = str(tags.get('samplerate', '')).lower()
+        if '2822' in samplerate or '2.8' in samplerate:
+            return 'DSD64 (SACD Quality)'
+        if '5644' in samplerate or '5.6' in samplerate:
+            return 'DSD128'
+        return 'DSD Audio'
+
     if ext in EBOOK_EXTENSIONS:
         return _fmt(ext)
     if ext in DOCUMENT_EXTENSIONS:
@@ -296,7 +344,7 @@ AUDIO_EXTENSIONS = {
 }
 VIDEO_EXTENSIONS = {
     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
-    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts'
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.ts'
 }
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
@@ -309,6 +357,12 @@ EBOOK_EXTENSIONS = {
 }
 IMAGE_EXTENSIONS = {
     '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'
+}
+DSD_EXTENSIONS = {
+    '.dsf', '.dff', '.dsd'
+}
+HDDVD_EXTENSIONS = {
+    '.evo', '.map', '.bup'
 }
 
 
@@ -496,3 +550,54 @@ def format_bitdepth(
         return f"{bd_int} Bit"
     except (ValueError, TypeError):
         return str(bit_depth)
+
+
+def format_scan_type(scan_type: Any, scan_order: Any = None) -> str:
+    """
+    @brief Standardizes scan type (Progressive/Interlaced).
+    """
+    if not scan_type:
+        return ""
+    st = str(scan_type).capitalize()
+    if 'Interlaced' in st:
+        if scan_order:
+            memo = " (TFF)" if 'Top' in str(scan_order) else " (BFF)"
+            return f"Interlaced{memo}"
+        return "Interlaced"
+    return st
+
+
+def format_chroma(chroma: Any) -> str:
+    """
+    @brief Standardizes chroma subsampling.
+    """
+    if not chroma:
+        return ""
+    c = str(chroma).replace(':', '')
+    if len(c) == 3:
+        return f"{c[0]}:{c[1]}:{c[2]}"
+    return c
+
+
+def format_color_info(space: Any, transfer: Any = None, matrix: Any = None, hdr: Any = None) -> dict[str, str]:
+    """
+    @brief Standardizes color space and HDR info.
+    """
+    res = {
+        "color_space": str(space).upper() if space else "",
+        "hdr_format": "None"
+    }
+    
+    # HDR detection logic
+    t = str(transfer).lower() if transfer else ""
+    if hdr:
+        res["hdr_format"] = str(hdr)
+    elif 'smpte 2084' in t or 'pq' in t:
+        res["hdr_format"] = "HDR10"
+    elif 'arib std-b67' in t or 'hlg' in t:
+        res["hdr_format"] = "HLG"
+        
+    if matrix:
+        res["matrix"] = str(matrix).upper()
+        
+    return res

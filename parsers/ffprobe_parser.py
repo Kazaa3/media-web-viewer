@@ -165,6 +165,40 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
                     tags['bitrate'] = f"{bitrate_kbps} kbps"
                 except (ValueError, TypeError):
                     pass
+
+        # Extract video stream information
+        video_stream = next((s for s in streams if s.get('codec_type') == 'video'), None)
+        if video_stream:
+            from .format_utils import format_scan_type, format_chroma, format_color_info
+
+            # Standard and Frame Rate
+            if not tags.get('frame_rate') and 'avg_frame_rate' in video_stream:
+                tags['frame_rate'] = video_stream['avg_frame_rate']
+
+            # Exotic Field Extraction
+            tags['video_scan_type'] = format_scan_type(
+                video_stream.get('field_order', 'progressive')
+            )
+            
+            pix_fmt = video_stream.get('pix_fmt', '')
+            if pix_fmt:
+                # Basic heuristic for chroma from pix_fmt (e.g. yuv420p)
+                if '420' in pix_fmt: tags['video_chroma'] = '4:2:0'
+                elif '422' in pix_fmt: tags['video_chroma'] = '4:2:2'
+                elif '444' in pix_fmt: tags['video_chroma'] = '4:4:4'
+                
+                # Basic bit depth heuristic from pix_fmt
+                if '10le' in pix_fmt or '10be' in pix_fmt: tags['video_bit_depth'] = '10 Bit'
+                elif '12le' in pix_fmt or '12be' in pix_fmt: tags['video_bit_depth'] = '12 Bit'
+                elif not tags.get('video_bit_depth'): tags['video_bit_depth'] = '8 Bit'
+
+            color_data = format_color_info(
+                video_stream.get('color_space'),
+                video_stream.get('color_transfer'),
+                video_stream.get('color_primaries')
+            )
+            tags['video_color_space'] = color_data['color_space']
+            tags['video_hdr'] = color_data['hdr_format']
         
         # Extract chapters
         if not tags.get('chapters'):

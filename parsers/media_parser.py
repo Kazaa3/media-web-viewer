@@ -13,6 +13,8 @@ from . import mkvinfo_parser
 from . import mkvmerge_parser
 from . import vlc_parser
 from . import isoparser_parser
+import multiprocessing
+import queue
 import logger
 import logging
 
@@ -37,6 +39,93 @@ def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
             tags["chapters"] = tags["chapters"][:MAX_CHAPTERS]
             
     return tags
+
+# Magic byte signatures for specific formats
+REQUIRED_MAGIC = {
+    # EBML / Matroska (MKV, WebM)
+    "mkvmerge": b"\x1a\x45\xdf\xa3",
+    "mkvinfo":  b"\x1a\x45\xdf\xa3",
+    "mkvparse": b"\x1a\x45\xdf\xa3",
+    "enzyme":   b"\x1a\x45\xdf\xa3",
+    "pymkv":    b"\x1a\x45\xdf\xa3",
+    "ebml":     b"\x1a\x45\xdf\xa3",
+    # ISO 9660 (CD-ROM) - CD001 at offset 32769
+    "pycdlib":   b"CD001",
+    "isoparser": b"CD001",
+    # DSD (Direct Stream Digital)
+    "dsd":       b"DSD ",
+    "dsf":       b"DSD ",
+    "dff":       b"FRM8",
+}
+
+def get_file_magic(path: Path, length: int = 16, offset: int = 0) -> bytes:
+    """
+    @brief Reads bytes from a file at a specific offset.
+    """
+    try:
+        with path.open("rb") as f:
+            if offset > 0:
+                f.seek(offset)
+            return f.read(length)
+    except Exception:
+        return b""
+
+def validate_semantic_consistency(tags: dict[str, Any], filename: str):
+    """
+    @brief Compares metadata from different sources for sanity.
+    """
+    # 1. Duration Cross-Check
+    durations = []
+    for k in tags:
+        if 'duration' in k.lower() and tags[k]:
+            try:
+                durations.append(float(tags[k]))
+            except (ValueError, TypeError):
+                continue
+    
+    if len(set(durations)) > 1:
+        avg_dur = sum(durations) / len(durations)
+        discrepancy = max(durations) - min(durations)
+        if discrepancy > 5: # More than 5 seconds difference
+            log.warning(f"⚖️ [Semantic-Validation] Duration discrepancy for '{filename}': {min(durations)}s to {max(durations)}s")
+
+def _sandboxed_worker(func, queue, *args, **kwargs):
+    """
+    Internal worker for multiprocessing.
+    """
+    try:
+        result = func(*args, **kwargs)
+        queue.put((True, result))
+    except Exception as e:
+        queue.put((False, str(e)))
+
+def run_sandboxed(func, timeout, *args, **kwargs):
+    """
+    @brief Runs a function in a separate process to isolate crashes/hangs.
+    """
+def run_sandboxed(func, timeout, *args, **kwargs):
+    """
+    @brief Runs a function in a separate process to isolate crashes/hangs.
+    """
+    result_queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=_sandboxed_worker, args=(func, result_queue) + args, kwargs=kwargs)
+    p.start()
+    
+    try:
+        success, result = result_queue.get(timeout=timeout)
+        p.join(timeout=1.0)
+        if success:
+            return result
+        else:
+            raise Exception(f"Sandboxed process error: {result}")
+    except (multiprocessing.TimeoutError, queue.Empty):
+        p.terminate()
+        p.join()
+        raise TimeoutError(f"Sandboxed process timed out after {timeout}s")
+    except Exception as e:
+        p.terminate()
+        p.join()
+        raise e
 
 
 # Mapping which parsers are responsible for which file types (extensions including dot)
@@ -202,6 +291,15 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
         if is_slow and mode != 'full' and fast_scan:
             log.debug(f"⏩ [Fast-Scan] Skipping slow parser '{step_name}' for '{filename}'")
             continue
+            
+        # Magic Byte Verification
+        required_magic = REQUIRED_MAGIC.get(step_name)
+        if required_magic:
+            offset = 32769 if step_name in ["pycdlib", "isoparser"] else 0
+            file_magic = get_file_magic(path_obj, len(required_magic), offset=offset)
+            if not file_magic.startswith(required_magic):
+                log.debug(f"🔍 [Magic-Check] Skipping '{step_name}' for '{filename}': magic {file_magic.hex()} mismatch at {offset}")
+                continue
         if mode != 'full':
             has_essential = (
                 tags.get('samplerate')
@@ -238,22 +336,28 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "ebml":
-                    from ebml.container import File
-                    with path_obj.open('rb') as f:
-                        ebml_file = File(f)
-                        segment = next(ebml_file.children_named("Segment"), None)
-                        if segment:
-                            current_tags['ebml_title'] = getattr(segment, 'title', None)
-                            current_tags['ebml_duration'] = getattr(segment, 'duration', None)
-                            current_tags['ebml_tracks'] = [
-                                {
-                                    'type': getattr(track, 'track_type', None),
-                                    'language': getattr(track, 'language', None),
-                                    'codec_id': getattr(track, 'codec_id', None)
+                    def parse_ebml_isolated(path_o):
+                        from ebml.container import File
+                        with path_o.open('rb') as f_ebml:
+                            ef = File(f_ebml)
+                            seg = next(ef.children_named("Segment"), None)
+                            if seg:
+                                return {
+                                    'ebml_title': getattr(seg, 'title', None),
+                                    'ebml_duration': getattr(seg, 'duration', None),
+                                    'ebml_tracks': [
+                                        {
+                                            'type': getattr(tr, 'track_type', None),
+                                            'language': getattr(tr, 'language', None),
+                                            'codec_id': getattr(tr, 'codec_id', None)
+                                        }
+                                        for tr in getattr(seg, 'tracks', [])[:50] # Limit tracks
+                                    ]
                                 }
-                                for track in getattr(segment, 'tracks', [])
-                            ]
-                            current_tags['ebml_chapters'] = getattr(segment, 'chapters', None)
+                        return {}
+                    
+                    res = run_sandboxed(parse_ebml_isolated, timeout=5.0, path_o=path_obj)
+                    current_tags.update(res)
                     current_tags = sanitize_metadata(current_tags)
                     log.debug(f"EBML parser finished for '{filename}'")
                     parser_times[step_name] = time.time() - t0
@@ -265,20 +369,78 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "enzyme":
-                    import enzyme
-                    with path_obj.open('rb') as f:
-                        movie = enzyme.MKV(f)
-                        current_tags['enzyme_tracks'] = movie.audio_tracks + movie.video_tracks
-                        current_tags['enzyme_duration'] = movie.info.duration.total_seconds() if movie.info and movie.info.duration else None
+                    def parse_enzyme_isolated(path_o):
+                        import enzyme
+                        with path_o.open('rb') as f_enz:
+                            movie = enzyme.MKV(f_enz)
+                            return {
+                                'enzyme_tracks': (movie.audio_tracks + movie.video_tracks)[:50],
+                                'enzyme_duration': movie.info.duration.total_seconds() if movie.info and movie.info.duration else None
+                            }
+                    
+                    res = run_sandboxed(parse_enzyme_isolated, timeout=5.0, path_o=path_obj)
+                    current_tags.update(res)
+                    current_tags = sanitize_metadata(current_tags)
                     parser_times[step_name] = time.time() - t0
                     success = True
                 elif step_name == "pycdlib":
-                    import pycdlib
-                    iso = pycdlib.PyCdlib()
-                    iso.open(str(path_obj))
-                    pvd = iso.get_pvd()
-                    current_tags['pycdlib_volume_id'] = pvd.volume_identifier.decode('utf-8', 'replace').strip() if pvd else "Unknown"
-                    iso.close()
+                    def parse_pycdlib_isolated(path_o):
+                        import pycdlib
+                        iso = pycdlib.PyCdlib()
+                        iso.open(str(path_o))
+                        
+                        tags = {}
+                        def safe_str(val):
+                            if val is None: return ""
+                            # Some pycdlib versions return specialized objects with a .text attribute (bytes)
+                            if hasattr(val, 'text'):
+                                val = val.text
+                            if hasattr(val, 'decode'):
+                                return val.decode('utf-8', 'replace').strip()
+                            return str(val).strip()
+
+                        try:
+                            pvd = iso.pvd
+                        except:
+                            pvd = None
+
+                        if pvd:
+                            tags['pycdlib_volume_id'] = safe_str(pvd.volume_identifier)
+                            tags['pycdlib_publisher'] = safe_str(pvd.publisher_identifier)
+                            tags['pycdlib_application'] = safe_str(pvd.application_identifier)
+                            tags['pycdlib_preparer'] = safe_str(pvd.preparer_identifier)
+                            try:
+                                cdate = pvd.volume_creation_date
+                                if hasattr(cdate, 'year') and cdate.year > 0:
+                                    tags['pycdlib_creation_date'] = f"{cdate.year:04d}-{cdate.month:02d}-{cdate.dayofmonth:02d} {cdate.hour:02d}:{cdate.minute:02d}:{cdate.second:02d}"
+                                else:
+                                    tags['pycdlib_creation_date'] = safe_str(cdate)
+                            except: pass
+
+                        tags['pycdlib_has_joliet'] = iso.has_joliet()
+                        tags['pycdlib_has_rock_ridge'] = iso.has_rock_ridge()
+                        tags['pycdlib_has_udf'] = iso.has_udf()
+                        
+                        # Content Detection (Search for DVD/BD markers in root)
+                        try:
+                            children = list(iso.list_children(iso_path='/'))
+                            for c in children:
+                                # file_identifier can be an attribute or a method depending on version
+                                ident = c.file_identifier() if callable(c.file_identifier) else c.file_identifier
+                                ident_str = safe_str(ident).upper()
+                                if 'VIDEO_TS' in ident_str:
+                                    tags['pycdlib_is_dvd'] = True
+                                if 'BDMV' in ident_str:
+                                    tags['pycdlib_is_bluray'] = True
+                                if 'HVDVD_TS' in ident_str:
+                                    tags['pycdlib_is_hvdvd'] = True
+                        except: pass
+
+                        iso.close()
+                        return tags
+                    
+                    res = run_sandboxed(parse_pycdlib_isolated, timeout=5.0, path_o=path_obj)
+                    current_tags.update(res)
                     current_tags = sanitize_metadata(current_tags)
                     parser_times[step_name] = time.time() - t0
                     success = True
@@ -368,6 +530,9 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     if tags.get('container'):
         tags['container'] = format_container(tags['container'], file_type)
     tags['tagtype'] = format_tagtype(tags.get('tagtype'))
+    
+    # Semantic Cross-Validation
+    validate_semantic_consistency(tags, filename)
     
     # Final sanitization pass
     tags = sanitize_metadata(tags)

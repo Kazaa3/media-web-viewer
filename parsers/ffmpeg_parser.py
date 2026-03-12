@@ -51,6 +51,11 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
 
     try:
         cmd = ["ffmpeg"]
+        # Add custom flags if any
+        custom_flags = settings.get('cli_flags', '').split()
+        if custom_flags:
+            cmd.extend(custom_flags)
+            
         if settings.get('deep_analysis'):
             cmd.extend(["-analyzeduration", "100M", "-probesize", "100M"])
         cmd.extend(["-i", str(path)])

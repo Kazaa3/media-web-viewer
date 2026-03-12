@@ -301,7 +301,9 @@ class MediaItem:
             'disc', 'codec', 'bitdepth', 'samplerate', 'bitrate', 'size',
             'has_art', 'container', 'tagtype', '_parser_times', 'releasetype', 'compilation',
             'resolution', 'width', 'height', 'fps', 'video_codec', 'audio_track_count',
-            'subtitle_count', 'subtitle_languages', 'language'
+            'subtitle_count', 'subtitle_languages', 'language', 'standard', 'frame_rate',
+            'video_scan_type', 'video_chroma', 'video_color_space', 'video_hdr',
+            'video_bit_depth', 'video_matrix'
         }
         filtered_tags = {k: v for k, v in self.tags.items() if k in whitelist}
 
