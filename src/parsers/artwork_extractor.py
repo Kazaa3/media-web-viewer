@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from .format_utils import PARSER_CONFIG
-import logger
+from src.core import logger
 
 log = logger.get_logger("artwork")
 

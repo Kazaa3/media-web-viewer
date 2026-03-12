@@ -15,7 +15,7 @@ from . import vlc_parser
 from . import isoparser_parser
 import multiprocessing
 import queue
-import logger
+from src.core import logger
 import logging
 
 # Get specialized logger for parser component

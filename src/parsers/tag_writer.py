@@ -2,7 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Any
-import logger
+from src.core import logger
 
 log = logger.get_logger("tag_writer")
 

@@ -13,6 +13,7 @@ import time
 import os
 import sys
 import subprocess
+import psutil
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
@@ -50,7 +51,18 @@ class TestHammerhartReorder(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls, 'driver'): cls.driver.quit()
-        if cls.app_process: cls.app_process.terminate()
+        if cls.app_process:
+            # Check resource usage before terminating
+            try:
+                proc = psutil.Process(cls.app_process.pid)
+                mem = proc.memory_info().rss / (1024 * 1024)
+                files = len(proc.open_files())
+                print(f"\n📊 Final Resource Usage for PID {cls.app_process.pid}:")
+                print(f"  • Memory: {mem:.2f} MB")
+                print(f"  • Open Files: {files}")
+            except Exception as e:
+                print(f"Could not retrieve final resource usage: {e}")
+            cls.app_process.terminate()
 
     def test_hammerhart_to_second_and_fifth(self):
         playlist = PlaylistPage(self.driver)
@@ -59,6 +71,13 @@ class TestHammerhartReorder(unittest.TestCase):
             wait = WebDriverWait(self.driver, 45)
             wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
             wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))
+            
+            # Initial Resource Snapshot
+            proc = psutil.Process(self.app_process.pid) if self.app_process else None
+            if proc:
+                mem_start = proc.memory_info().rss / (1024 * 1024)
+                files_start = len(proc.open_files())
+                print(f"\n🚀 Hammerhart Start - PID {self.app_process.pid}: {mem_start:.2f} MB, {files_start} files")
             
             def find_hammer_idx():
                 names = playlist.get_item_names()
