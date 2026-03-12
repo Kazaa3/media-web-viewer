@@ -1,4 +1,6 @@
 import time
+import copy
+import subprocess
 from typing import Any
 from pathlib import Path
 from . import filename_parser
@@ -199,6 +201,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
         success = False
         while attempt <= MAX_RETRIES and not success:
             t0 = time.time()
+            tags_backup = copy.deepcopy(current_tags)
             try:
                 # In ultimate mode, we want a copy of the tags before this parser
                 tags_before = current_tags.copy() if mode == 'ultimate' else None
@@ -295,8 +298,21 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                 else:
                     parser_times[step_name] = 0.0
                     success = True
+            except (subprocess.TimeoutExpired, TimeoutError) as e:
+                attempt += 1
+                current_tags = tags_backup # Restore state
+                log.error(f"⏱️ Parser {step_name} timed out for '{filename}' (Attempt {attempt}/{MAX_RETRIES+1}): {e}")
+                if attempt > MAX_RETRIES:
+                    parser_times[step_name] = time.time() - t0
+            except (ImportError, ModuleNotFoundError) as e:
+                # Missing dependencies shouldn't be retried
+                current_tags = tags_backup # Restore state
+                log.error(f"📦 Parser {step_name} failed due to missing dependency for '{filename}': {e}")
+                parser_times[step_name] = time.time() - t0
+                success = True # Skip this parser
             except Exception as e:
                 attempt += 1
+                current_tags = tags_backup # Restore state
                 # Error shortcircuit: skip remaining parsers for typical file errors
                 error_str = str(e).lower()
                 if any(msg in error_str for msg in ["is a directory", "not a file", "no tag reader found", "mutagen type <class 'nonetype'> not implemented", "failed to read entire volume descriptor", "can't sync to mpeg frame"]):
@@ -305,10 +321,10 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                     error_shortcircuit = True
                     break
                 if attempt <= MAX_RETRIES:
-                    log.warning(f"Parser {step_name} failed (Attempt {attempt}/{MAX_RETRIES+1}) for '{filename}': {e}. Retrying...")
+                    log.warning(f"⚠️ Parser {step_name} failed (Attempt {attempt}/{MAX_RETRIES+1}) for '{filename}': {e}. Retrying...")
                     time.sleep(0.05 * attempt)
                 else:
-                    log.error(f"{step_name} parser error after {MAX_RETRIES} retries for '{filename}': {e}")
+                    log.error(f"❌ {step_name} parser error after {MAX_RETRIES} retries for '{filename}': {e}")
                     parser_times[step_name] = time.time() - t0
         tags = current_tags
         if 'duration' in tags and tags['duration'] and not duration:
