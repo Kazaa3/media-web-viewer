@@ -15,24 +15,33 @@ from mutagen.asf import ASF  # Für WMA
 # from mutagen.dsf import DSF  # DSD Stream File: .dsd-Dateien
 
 
-def safe_get(audio_obj, key, default=''):
-    """
-    @brief Safely retrieves a metadata key from a Mutagen object.
-    @details Ruft sicher einen Metadaten-Key aus einem Mutagen-Objekt ab.
-    @param audio_obj Mutagen audio object / Mutagen Audio-Objekt.
-    @param key Metadata key / Metadaten-Schlüssel.
-    @param default Default value / Standardwert.
-    @return Value as string / Wert als String.
-    """
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "Mutagen",
+        "description": "High-performance audio metadata parser (ID3, FLAC, Vorbis, MP4).",
+        "supported_tags": [
+            "title", "artist", "album", "year", "genre", "track", "totaltracks", 
+            "disc", "totaldiscs", "albumartist", "composer", "lyrics", "chapters"
+        ],
+        "supported_codecs": [
+            "mp3", "flac", "ogg", "opus", "m4a", "alac", "wav", "aac", "wma"
+        ]
+    }
 
 
-def format_samplerate(hz):
-    try:
-        hz = float(hz)
-        khz = hz / 1000
-        return f"{int(khz)} kHz" if khz.is_integer() else f"{khz:g} kHz"
-    except (ValueError, TypeError, Exception):
-        return ""
+def get_settings_schema() -> dict[str, Any]:
+    return {
+        "prefer_albumartist": {
+            "type": "boolean",
+            "default": True,
+            "description": "Prefer TPE2 (Album Artist) over TPE1 (Artist) for the main artist field."
+        },
+        "extract_lyrics": {
+            "type": "boolean",
+            "default": False,
+            "description": "Extract synchronized and unsynchronized lyrics."
+        }
+    }
 
 
 def parse(
@@ -40,7 +49,8 @@ def parse(
     file_type: str,
     tags: dict[str, Any],
     filename: str | None = None,
-    mode: str = 'lightweight'
+    mode: str = 'lightweight',
+    settings: dict[str, Any] = None
 ) -> dict[str, Any]:
     if filename is None:
         filename = Path(path).name
@@ -54,7 +64,10 @@ def parse(
     @param mode Extraction mode / Extraktionsmodus.
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
-    from .format_utils import PARSER_CONFIG
+    if settings is None:
+        from .format_utils import PARSER_CONFIG
+        settings = PARSER_CONFIG.get('parser_settings', {}).get('mutagen', {})
+
     audio_for_info: Any = None
 
     if mode == 'full' and 'full_tags' not in tags:
@@ -66,7 +79,7 @@ def parse(
             audio_for_info = audio_flac
 
             # Use preference for album artist
-            if PARSER_CONFIG.get('mutagen_prefer_albumartist'):
+            if settings.get('prefer_albumartist', True):
                 tags['artist'] = safe_get(audio_flac, 'ALBUMARTIST') or safe_get(
                     audio_flac, 'ARTIST', default=tags.get('artist', 'Unbekannt'))
             else:
@@ -122,7 +135,7 @@ def parse(
             aart = audio_mp3.get('TPE2')
             dsc = audio_mp3.get('TPOS')
 
-            if PARSER_CONFIG.get('mutagen_prefer_albumartist') and aart:
+            if settings.get('prefer_albumartist', True) and aart:
                 tags['artist'] = str(aart.text[0]) if hasattr(aart, 'text') else str(aart[0])
             elif art:
                 tags['artist'] = str(art.text[0]) if hasattr(art, 'text') else str(art[0])
@@ -175,7 +188,7 @@ def parse(
             audio_mp4 = MP4(path)
             audio_for_info = audio_mp4
 
-            if PARSER_CONFIG.get('mutagen_prefer_albumartist'):
+            if settings.get('prefer_albumartist', True):
                 tags['artist'] = safe_get(audio_mp4, 'aART') or safe_get(
                     audio_mp4, '\xa9ART', default=tags.get('artist', 'Unbekannt'))
             else:

@@ -10,6 +10,7 @@ from . import container_parser
 from . import mkvinfo_parser
 from . import mkvmerge_parser
 from . import vlc_parser
+from . import isoparser_parser
 import logger
 import logging
 
@@ -53,6 +54,37 @@ PARSER_MAPPING = {
     ".pdf":    ["filename", "pymediainfo", "ffprobe"],
     ".epub":   ["filename", "pymediainfo", "ffprobe"],
 }
+
+
+def get_parser_info() -> dict[str, Any]:
+    """
+    @brief Aggregates info about all available parsers, their capabilities and settings schemas.
+    """
+    parsers = {
+        "mutagen": mutagen_parser,
+        "pymediainfo": pymediainfo_parser,
+        "ffprobe": ffprobe_parser,
+        "ffmpeg": ffmpeg_parser,
+        "mkvmerge": mkvmerge_parser,
+        "mkvinfo": mkvinfo_parser,
+        "vlc": vlc_parser,
+        "filename": filename_parser,
+        "container": container_parser,
+        "isoparser": isoparser_parser
+    }
+    
+    info = {}
+    for p_id, p_mod in parsers.items():
+        p_info = {}
+        if hasattr(p_mod, 'get_capabilities'):
+            p_info['capabilities'] = p_mod.get_capabilities()
+        if hasattr(p_mod, 'get_settings_schema'):
+            p_info['settings_schema'] = p_mod.get_settings_schema()
+        
+        if p_info:
+            info[p_id] = p_info
+            
+    return info
 
 
 def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwargs):
@@ -172,9 +204,15 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
                 tags_before = current_tags.copy() if mode == 'ultimate' else None
                 
                 start_time = time.time()
+                
+                # Get parser specific settings from PARSER_CONFIG
+                p_settings = PARSER_CONFIG.get('parser_settings', {}).get(step_name, {})
+                
                 if step_func:
                     current_tags = cast(dict[str, Any], step_func(
-                        path_obj, file_type, current_tags, filename, mode=('full' if mode == 'ultimate' else mode)))
+                        path_obj, file_type, current_tags, filename, 
+                        mode=('full' if mode == 'ultimate' else mode),
+                        settings=p_settings))
                     success = True
                 elif step_name == "ebml":
                     from ebml.container import File

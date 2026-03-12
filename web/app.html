@@ -4239,6 +4239,8 @@
         let currentParserChain = [];
         let currentParserOptions = {};
         let currentParserMapping = {};
+        let currentParserInfo = {};
+        let currentGranularSettings = {};
 
         function loadParserConfig() {
             // First fetch slow parsers
@@ -4295,6 +4297,18 @@
                         }
                     });
 
+                    // Fetch Parser Info and Granular Settings
+                    if (eel.get_all_parser_info) {
+                        eel.get_all_parser_info()((info) => {
+                            currentParserInfo = info || {};
+                        });
+                    }
+                    if (eel.get_all_parser_settings) {
+                        eel.get_all_parser_settings()((settings) => {
+                            currentGranularSettings = settings || {};
+                        });
+                    }
+
                     renderParserList();
                 });
             });
@@ -4349,7 +4363,7 @@
             return li;
         }
 
-        function showParserOptions(parserId) {
+        async function showParserOptions(parserId) {
             const container = document.getElementById('parser-options-container');
             const placeholder = document.getElementById('parser-options-placeholder');
 
@@ -4360,23 +4374,71 @@
 
             placeholder.style.display = 'none';
             container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '20px';
             container.innerHTML = '';
 
+            const pInfo = currentParserInfo[parserId] || {};
+            const pCaps = pInfo.capabilities || {};
+            const pSchema = pInfo.settings_schema || {};
+            const pSettings = currentGranularSettings[parserId] || {};
+
             let html = '';
-            if (parserId === 'mutagen') {
-                html += renderOptionRow('mutagen_prefer_albumartist', t('parser_opt_mutagen_albumartist'));
-                html += renderOptionRow('mutagen_extract_lyrics', t('parser_opt_mutagen_lyrics'));
-            } else if (parserId === 'pymediainfo') {
-                html += renderOptionRow('pymediainfo_full_scan', t('parser_opt_pymediainfo_full'));
-            } else if (parserId === 'ffmpeg') {
-                html += renderOptionRow('ffmpeg_deep_analysis', t('parser_opt_ffmpeg_deep'));
-                html += renderOptionRow('ffmpeg_extract_thumbnails', t('parser_opt_ffmpeg_thumbs'));
-            } else {
-                const parserName = t('parser_' + parserId);
-                html = `<p style="color: #666; font-style: italic; padding: 10px;">${t('parser_no_options').replace('{parser}', parserName)}</p>`;
+
+            // 1. Capabilities Header
+            if (pCaps.name) {
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #eee; margin-bottom: 30px;">
+                        <h3 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 10px; font-size: 1.2em;">
+                            <span style="background: #2a7; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.8em; font-weight: bold;">${pCaps.name}</span>
+                            Parser Details
+                        </h3>
+                        <p style="color: #555; font-size: 0.9em; margin-bottom: 20px; line-height: 1.6;">${pCaps.description || ''}</p>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h4 style="font-size: 0.8em; color: #888; text-transform: uppercase; margin-bottom: 8px;">Supported Tags</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    ${(pCaps.supported_tags || []).map(t => `<span style="background: white; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; color: #666;">${t}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="font-size: 0.8em; color: #888; text-transform: uppercase; margin-bottom: 8px;">Supported Codecs</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    ${(pCaps.supported_codecs || []).map(t => `<span style="background: white; border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; color: #666;">${t}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
 
-            // Find and show supported extensions
+            // 2. Dynamic Settings from Schema
+            if (Object.keys(pSchema).length > 0) {
+                html += `<h3 style="font-size: 1.1em; margin-bottom: 15px; border-left: 4px solid #2a7; padding-left: 12px;">Parser Einstellungen</h3>`;
+                for (const [key, schema] of Object.entries(pSchema)) {
+                    const value = pSettings[key] !== undefined ? pSettings[key] : schema.default;
+                    html += renderGranularSettingRow(parserId, key, schema, value);
+                }
+            }
+
+            // Fallback for legacy hardcoded options if info is missing
+            if (Object.keys(pSchema).length === 0) {
+                if (parserId === 'mutagen') {
+                    html += renderOptionRow('mutagen_prefer_albumartist', t('parser_opt_mutagen_albumartist'));
+                    html += renderOptionRow('mutagen_extract_lyrics', t('parser_opt_mutagen_lyrics'));
+                } else if (parserId === 'pymediainfo') {
+                    html += renderOptionRow('pymediainfo_full_scan', t('parser_opt_pymediainfo_full'));
+                } else if (parserId === 'ffmpeg') {
+                    html += renderOptionRow('ffmpeg_deep_analysis', t('parser_opt_ffmpeg_deep'));
+                    html += renderOptionRow('ffmpeg_extract_thumbnails', t('parser_opt_ffmpeg_thumbs'));
+                } else {
+                    const parserName = t('parser_' + parserId);
+                    html += `<p style="color: #666; font-style: italic; padding: 10px;">${t('parser_no_options').replace('{parser}', parserName)}</p>`;
+                }
+            }
+
+            // 3. Supported Extensions
             const extensions = [];
             for (const ext in currentParserMapping) {
                 if (currentParserMapping[ext].includes(parserId)) {
@@ -4396,6 +4458,51 @@
             }
 
             container.innerHTML = html;
+        }
+
+        function renderGranularSettingRow(parserId, key, schema, value) {
+            let fieldHtml = '';
+            if (schema.type === 'boolean') {
+                fieldHtml = `
+                    <label class="switch">
+                        <input type="checkbox" ${value ? 'checked' : ''} onchange="updateGranularSetting('${parserId}', '${key}', this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                `;
+            } else if (schema.type === 'string') {
+                fieldHtml = `<input type="text" value="${value || ''}" style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;" onchange="updateGranularSetting('${parserId}', '${key}', this.value)">`;
+            } else if (schema.type === 'integer') {
+                fieldHtml = `<input type="number" value="${value || 0}" style="width: 80px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;" onchange="updateGranularSetting('${parserId}', '${key}', parseInt(this.value))">`;
+            }
+
+            return `
+                <div style="display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid #eee; padding: 18px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                        <div style="font-weight: 600; color: #333;">${key}</div>
+                        ${fieldHtml}
+                    </div>
+                    <div style="font-size: 0.85em; color: #888; line-height: 1.4;">${schema.description || ''}</div>
+                </div>
+            `;
+        }
+
+        async function updateGranularSetting(parserId, key, value) {
+            if (!currentGranularSettings[parserId]) currentGranularSettings[parserId] = {};
+            currentGranularSettings[parserId][key] = value;
+
+            // Highlight save button
+            const saveBtn = document.querySelector('[data-i18n="parser_btn_save"]');
+            if (saveBtn) {
+                saveBtn.style.boxShadow = '0 0 10px rgba(42, 167, 112, 0.4)';
+                saveBtn.classList.add('pulse');
+            }
+
+            // Persist to backend
+            const update = {};
+            update[parserId] = currentGranularSettings[parserId];
+            if (eel.update_parser_settings) {
+                await eel.update_parser_settings(update)();
+            }
         }
 
         function renderOptionRow(key, label) {

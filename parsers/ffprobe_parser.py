@@ -4,7 +4,31 @@ from pathlib import Path
 from typing import Any
 
 
-def parse(path, file_type, tags, filename=None, mode='lightweight'):
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "FFprobe",
+        "description": "Powerful CLI-based parser for nearly all media containers and streams.",
+        "supported_tags": ["title", "artist", "album", "date", "genre", "track", "disc", "chapters", "duration", "bitrate"],
+        "supported_codecs": ["h264", "hevc", "vp9", "mp3", "aac", "ac3", "flac", "vorbis", "opus", "..."]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {
+        "cli_flags": {
+            "type": "string",
+            "default": "",
+            "description": "Additional custom CLI flags for ffprobe."
+        },
+        "timeout": {
+            "type": "integer",
+            "default": 10,
+            "description": "Maximum execution time in seconds."
+        }
+    }
+
+
+def parse(path, file_type, tags, filename=None, mode='lightweight', settings=None):
     if filename is None:
         filename = Path(path).name
     """
@@ -26,11 +50,17 @@ def parse(path, file_type, tags, filename=None, mode='lightweight'):
             "-print_format", "json",
             "-show_format",
             "-show_streams",
-            "-show_chapters",
-            str(path)
+            "-show_chapters"
         ]
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        # Add custom flags if any
+        custom_flags = settings.get('cli_flags', '').split()
+        if custom_flags:
+            cmd.extend(custom_flags)
+            
+        cmd.append(str(path))
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=settings.get('timeout', 10))
         
         if result.returncode != 0:
             return tags

@@ -4,12 +4,26 @@ from pathlib import Path
 from pymediainfo import MediaInfo
 
 
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "Container Parser",
+        "description": "Analyzes the high-level container structure (MKV, MP4, AVI) to identify track counts, resolutions, and languages.",
+        "supported_tags": ["duration", "container", "title", "size", "width", "height", "fps", "video_codec", "resolution", "audio_track_count", "codec", "samplerate", "bitrate", "bitdepth", "language", "subtitle_count", "subtitle_languages"],
+        "supported_codecs": ["mkv", "mp4", "m4v", "webm", "avi", "mov", "wmv", "mpg", "mpeg"]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {}
+
+
 def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any],
     filename: str | None = None,
-    mode: str = 'lightweight'
+    mode: str = 'lightweight',
+    settings: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     if filename is None:
         filename = Path(path).name

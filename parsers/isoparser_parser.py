@@ -13,7 +13,20 @@ except ImportError:
 from typing import Any
 from pathlib import Path
 
-def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | None = None, mode: str = 'lightweight') -> dict[str, Any]:
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "ISO Parser",
+        "description": "Extracts volume identifiers and file listings from ISO/Disk images using pycdlib or isoparser.",
+        "supported_tags": ["container", "tagtype", "pycdlib_volume_id", "iso_files_count", "iso_volume_label"],
+        "supported_codecs": ["iso", "bin", "img"]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {}
+
+
+def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | None = None, mode: str = 'lightweight', settings: dict[str, Any] | None = None) -> dict[str, Any]:
     if filename is None:
         filename = path_obj.name
     """

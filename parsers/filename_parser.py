@@ -3,12 +3,26 @@ from pathlib import Path
 from typing import Any
 
 
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "Filename Parser",
+        "description": "Heuristic parser that extracts Artist, Title, and Track Number from the filename patterns.",
+        "supported_tags": ["artist", "title", "track"],
+        "supported_codecs": ["*"]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {}
+
+
 def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any] | None = None,
     filename: str | None = None,
-    mode: str = 'lightweight'
+    mode: str = 'lightweight',
+    settings: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     """
     @brief Extracts metadata from the filename (e.g., 'Artist - Title').

@@ -4,7 +4,31 @@ from pathlib import Path
 from typing import Any
 
 
-def parse(path, file_type, tags, filename=None, mode='lightweight'):
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "FFmpeg",
+        "description": "Standard CLI-based media tool. Used as a robust fallback for container and stream identification when other parsers fail.",
+        "supported_tags": ["container", "codec", "samplerate", "bitrate", "bitdepth", "chapters"],
+        "supported_codecs": ["*"]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {
+        "deep_analysis": {
+            "type": "boolean",
+            "default": False,
+            "description": "Scan the entire file for more accurate stream details (slower)."
+        },
+        "timeout": {
+            "type": "integer",
+            "default": 30,
+            "description": "Maximum execution time in seconds."
+        }
+    }
+
+
+def parse(path, file_type, tags, filename=None, mode='lightweight', settings=None):
     """
     @brief Extracts metadata using FFmpeg CLI (last-resort fallback).
     @details Extrahiert Metadaten mittels FFmpeg CLI (letzte Instanz Fallback).
@@ -21,9 +45,17 @@ def parse(path, file_type, tags, filename=None, mode='lightweight'):
     if mode == 'full' and 'full_tags' not in tags:
         tags['full_tags'] = {}
 
+    if settings is None:
+        from .format_utils import PARSER_CONFIG
+        settings = PARSER_CONFIG.get('parser_settings', {}).get('ffmpeg', {})
+
     try:
-        cmd = ["ffmpeg", "-i", str(path)]
-        output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True).stderr
+        cmd = ["ffmpeg"]
+        if settings.get('deep_analysis'):
+            cmd.extend(["-analyzeduration", "100M", "-probesize", "100M"])
+        cmd.extend(["-i", str(path)])
+        
+        output = subprocess.run(cmd, stderr=subprocess.PIPE, text=True, timeout=settings.get('timeout', 30)).stderr
 
         if mode == 'full':
             tags['full_tags']['ffmpeg_raw'] = output

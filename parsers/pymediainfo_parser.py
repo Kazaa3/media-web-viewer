@@ -4,12 +4,32 @@ from typing import Any
 from pathlib import Path
 
 
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "PyMediaInfo",
+        "description": "Python wrapper for MediaInfo library, providing exhaustive stream-level meta. Reliable for track counts and technical metadata.",
+        "supported_tags": ["audio_track_count", "video_track_count", "subtitle_count", "duration", "container", "standard", "frame_rate", "chapters"],
+        "supported_codecs": ["*"]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {
+        "full_scan": {
+            "type": "boolean",
+            "default": False,
+            "description": "Perform a deeper scan to discover more technical details (slower)."
+        }
+    }
+
+
 def parse(
     path: str | Path,
     file_type: str,
     tags: dict[str, Any],
     filename: str | None = None,
-    mode: str = 'lightweight'
+    mode: str = 'lightweight',
+    settings: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     if filename is None:
         filename = Path(path).name
@@ -25,8 +45,13 @@ def parse(
     if mode == 'full' and 'full_tags' not in tags:
         tags['full_tags'] = {}
 
+    if settings is None:
+        from .format_utils import PARSER_CONFIG
+        settings = PARSER_CONFIG.get('parser_settings', {}).get('pymediainfo', {})
+
     try:
-        media_info = MediaInfo.parse(path)
+        full_scan = settings.get('full_scan', False)
+        media_info = MediaInfo.parse(path, full=full_scan)
         general_track = None
         audio_track = None
         video_track = None

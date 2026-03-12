@@ -372,23 +372,43 @@ def get_debug_console():
 @eel.expose
 def save_tags_to_file(name, tags):
     """
-    @brief Saves edited tags back to the physical file and updates DB.
+    Writes updated tags to the media file and updates the DB.
     """
-    path = db.get_media_path(name)
-    if not path:
-        return {"success": False, "error": "File path not found in database"}
-    
-    # Write to physical file
-    success = tag_writer.write_tags(path, tags)
-    
-    if success:
-        # Update database with new tags
-        db.update_media_tags(name, tags)
-        logging.info(f"Successfully saved tags to '{path}' and updated database.")
-        return {"success": True}
-    else:
-        logging.error(f"Failed to save tags to '{path}'.")
-        return {"success": False, "error": "Failed to write tags to file. Check logs for details."}
+    try:
+        path = db.get_path_by_name(name)
+        if not path:
+            return {"status": "error", "message": f"Datei '{name}' nicht in DB gefunden."}
+        
+        success = tag_writer.write_tags(path, tags)
+        if success:
+            db.update_media_tags(name, tags, tags.get('full_tags', {}))
+            return {"status": "success", "message": f"Tags erfolgreich in '{name}' gespeichert."}
+        else:
+            return {"status": "error", "message": "Fehler beim Schreiben der Dateitags."}
+    except Exception as e:
+        logging.exception("save_tags_to_file failed")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def get_all_parser_info():
+    """Returns aggregated capabilities and settings schemas for all parsers."""
+    from parsers.media_parser import get_parser_info
+    return get_parser_info()
+
+
+@eel.expose
+def get_all_parser_settings():
+    """Returns the current granular settings for all parsers."""
+    return PARSER_CONFIG.get("parser_settings", {})
+
+
+@eel.expose
+def update_parser_settings(new_settings):
+    """Updates the granular parser settings and saves to disk."""
+    PARSER_CONFIG["parser_settings"].update(new_settings)
+    save_parser_config()
+    return {"status": "success"}
 
 
 # --- Debug/Test API ---

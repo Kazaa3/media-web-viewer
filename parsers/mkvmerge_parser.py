@@ -4,7 +4,31 @@ from pathlib import Path
 from typing import Any
 
 
-def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None, mode: str = 'lightweight') -> dict[str, Any]:
+def get_capabilities() -> dict[str, Any]:
+    return {
+        "name": "MKVMerge",
+        "description": "JSON-based identification tool from MKVToolNix for MKV/Matroska files.",
+        "supported_tags": ["title", "duration", "muxing_app", "writing_app", "track_info"],
+        "supported_codecs": ["mkv", "webm"]
+    }
+
+
+def get_settings_schema() -> dict[str, Any]:
+    return {
+        "cli_flags": {
+            "type": "string",
+            "default": "",
+            "description": "Additional custom CLI flags for mkvmerge -J."
+        },
+        "timeout": {
+            "type": "integer",
+            "default": 10,
+            "description": "Maximum execution time in seconds."
+        }
+    }
+
+
+def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None, mode: str = 'lightweight', settings: dict[str, Any] = None) -> dict[str, Any]:
     """
     @brief Extracts metadata using mkvmerge JSON identification.
     @details Extrahiert Metadaten mittels mkvmerge JSON-Identifizierung.
@@ -17,10 +41,22 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
     if file_type.lower() != '.mkv':
         return tags
 
+    if settings is None:
+        from .format_utils import PARSER_CONFIG
+        settings = PARSER_CONFIG.get('parser_settings', {}).get('mkvmerge', {})
+
     try:
         # mkvmerge -J provides a nice structured JSON
-        cmd = ["mkvmerge", "-J", str(path)]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10, encoding='utf-8', errors='ignore')
+        cmd = ["mkvmerge", "-J"]
+        
+        # Add custom flags if any
+        custom_flags = settings.get('cli_flags', '').split()
+        if custom_flags:
+            cmd.extend(custom_flags)
+            
+        cmd.append(str(path))
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=settings.get('timeout', 10), encoding='utf-8', errors='ignore')
         
         if result.returncode != 0:
             return tags

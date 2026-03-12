@@ -130,7 +130,30 @@ PARSER_CONFIG: dict[str, Any] = {
     "enable_enzyme_parser": False,    # Disabled by default (slow)
     "enable_pymkv_parser": False,     # Disabled by default (slow)
     "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
-    "displayed_categories": ["audio"]
+    "displayed_categories": ["audio"],
+    "parser_settings": {
+        "mkvmerge": {
+            "cli_flags": "",
+            "timeout": 10
+        },
+        "ffprobe": {
+            "cli_flags": "",
+            "timeout": 10
+        },
+        "ffmpeg": {
+            "deep_analysis": False,
+            "timeout": 30
+        },
+        "vlc": {
+            "timeout": 5
+        },
+        "mutagen": {
+            "prefer_albumartist": True
+        },
+        "mkvinfo": {
+            "timeout": 10
+        }
+    }
 }
 
 # Parser which are known to be slow on certain files (ISO, MKV etc)
