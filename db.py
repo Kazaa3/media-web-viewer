@@ -122,7 +122,8 @@ def init_db():
             container TEXT,
             tag_type TEXT,
             codec TEXT,
-            has_artwork BOOLEAN DEFAULT 0
+            has_artwork BOOLEAN DEFAULT 0,
+            full_tags TEXT
         )
     """)
 
@@ -149,7 +150,8 @@ def init_db():
         ("extension", "TEXT"),
         ("container", "TEXT"),
         ("tag_type", "TEXT"),
-        ("codec", "TEXT")
+        ("codec", "TEXT"),
+        ("full_tags", "TEXT")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -199,8 +201,8 @@ def insert_media(item_dict):
     try:
         cursor.execute("""
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
-                             transcoded_format, tags, extension, container, tag_type, codec, has_artwork)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             transcoded_format, tags, extension, container, tag_type, codec, has_artwork, full_tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -214,7 +216,8 @@ def insert_media(item_dict):
             item_dict.get('container'),
             item_dict.get('tag_type'),
             item_dict.get('codec'),
-            1 if item_dict.get('has_artwork') else 0
+            1 if item_dict.get('has_artwork') else 0,
+            json.dumps(item_dict.get('full_tags', {}))
         ))
         conn.commit()
     except sqlite3.IntegrityError:
@@ -251,7 +254,8 @@ def get_all_media():
             'has_artwork': bool(row['has_artwork']),
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {}
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
         })
     conn.close()
     return media_list
@@ -283,9 +287,9 @@ def update_media_tags(name, tags_dict):
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE media
-        SET tags = ?
+        SET tags = ?, full_tags = ?
         WHERE name = ?
-    """, (json.dumps(tags_dict), name))
+    """, (json.dumps(tags_dict), json.dumps(tags_dict.get('full_tags', {})), name))
     conn.commit()
     conn.close()
 

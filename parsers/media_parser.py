@@ -61,12 +61,12 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     @details Orchestriert den Metadaten-Extraktionsprozess über eine sequentielle Parser-Kette.
     @param path Path to the media file / Pfad zur Mediendatei.
     @param filename Original filename for fallback parsing / Originaldateiname für Fallback-Parsing.
-    @param mode Extraction mode ('lightweight' or 'full') / Extraktionsmodus ('lightweight' oder 'full').
+    @param mode Extraction mode ('lightweight', 'full', or 'ultimate') / Extraktionsmodus ('lightweight', 'full' oder 'ultimate').
     @return Tuple (duration, tags) / Tupel (Dauer, Tags).
     """
     logging.info(f"[Parser-Trace] Starte Parsing für '{filename}' (Mode: {mode})")
-    if mode == 'full':
-        logging.info(f"[Parser-Trace] 🚀 Full Mode aktiviert für '{filename}' – sammle ALLE Tags!")
+    if mode in ('full', 'ultimate'):
+        logging.info(f"[Parser-Trace] 🚀 {mode.capitalize()} Mode aktiviert für '{filename}' – sammle ALLE Tags!")
 
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
@@ -94,7 +94,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
         'date': '', 'genre': '', 'track': '', 'totaltracks': '',
         'disc': '', 'totaldiscs': ''
     }
-    if mode == 'full':
+    if mode in ('full', 'ultimate'):
         tags['full_tags'] = {}
 
     duration = 0
@@ -168,10 +168,13 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
         while attempt <= MAX_RETRIES and not success:
             t0 = time.time()
             try:
+                # In ultimate mode, we want a copy of the tags before this parser
+                tags_before = current_tags.copy() if mode == 'ultimate' else None
+                
+                start_time = time.time()
                 if step_func:
                     current_tags = cast(dict[str, Any], step_func(
-                        path_obj, file_type, current_tags, filename, mode=mode))
-                    parser_times[step_name] = time.time() - t0
+                        path_obj, file_type, current_tags, filename, mode=('full' if mode == 'ultimate' else mode)))
                     success = True
                 elif step_name == "ebml":
                     from ebml.container import File

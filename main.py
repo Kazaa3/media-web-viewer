@@ -151,7 +151,7 @@ def process_any_file(path: str) -> str:
         from parsers.media_parser import extract_metadata
         from pathlib import Path as _Path
         filename = _Path(path).name
-        duration, tags = extract_metadata(path, filename, mode='lightweight')
+        duration, tags = extract_metadata(path, filename, mode='ultimate')
         return json.dumps({"success": True, "duration": duration, "tags": tags})
     except Exception as e:
         _logger.exception("process_any_file failed")
@@ -368,6 +368,28 @@ def get_debug_console():
         "license": "GNU GPL-3.0",
         "debug_flags": DEBUG_FLAGS,
     }
+
+@eel.expose
+def save_tags_to_file(name, tags):
+    """
+    @brief Saves edited tags back to the physical file and updates DB.
+    """
+    path = db.get_media_path(name)
+    if not path:
+        return {"success": False, "error": "File path not found in database"}
+    
+    # Write to physical file
+    success = tag_writer.write_tags(path, tags)
+    
+    if success:
+        # Update database with new tags
+        db.update_media_tags(name, tags)
+        logging.info(f"Successfully saved tags to '{path}' and updated database.")
+        return {"success": True}
+    else:
+        logging.error(f"Failed to save tags to '{path}'.")
+        return {"success": False, "error": "Failed to write tags to file. Check logs for details."}
+
 
 # --- Debug/Test API ---
 @eel.expose
@@ -1499,7 +1521,8 @@ def set_language(lang):
 # Benutzerdefinierte Module
 
 # Eigene Parser
-# from parsers import media_parser (Importing for side effects if needed, but unused here)
+# from parsers import media_parser
+from parsers import tag_writer
 
 
 # Eigene bottle Web-Routen

@@ -1413,7 +1413,10 @@
                                 style="margin-top: 30px; display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #eee;">
                                 <button onclick="saveTags()"
                                     style="padding: 10px 24px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;"
-                                    data-i18n="edit_btn_save">Speichern</button>
+                                    data-i18n="edit_btn_save">Speichern (DB)</button>
+                                <button onclick="saveToFileUI()"
+                                    style="padding: 10px 24px; background: #0277bd; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;"
+                                    data-i18n="edit_btn_save_to_file">💾 In Datei speichern</button>
                                 <button onclick="resetEditForm()"
                                     style="padding: 10px 24px; background: #eee; color: #333; border: 1px solid #ccc; border-radius: 6px; cursor: pointer;"
                                     data-i18n="edit_btn_cancel">Abbrechen</button>
@@ -4085,6 +4088,46 @@
                 }
                 return '<span style="color: ' + color + ';">' + match + '</span>';
             });
+        }
+
+        async function saveToFileUI() {
+            const name = document.getElementById('edit-item-name').value;
+            if (!name) {
+                alert("No item selected / Kein Item ausgewählt.");
+                return;
+            }
+
+            const tags = {};
+            const tagRows = document.querySelectorAll('.edit-tag-row');
+            tagRows.forEach(row => {
+                const keyEl = row.querySelector('.tag-key');
+                const valEl = row.querySelector('.tag-val');
+                if (keyEl && valEl) {
+                    const key = keyEl.innerText.replace(':', '').trim().toLowerCase();
+                    tags[key] = valEl.value;
+                }
+            });
+
+            // Button context
+            const btn = event.currentTarget;
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = (t('edit_saving') || 'Speichern...') + ' ⏳';
+            btn.disabled = true;
+
+            try {
+                const result = await eel.save_tags_to_file(name, tags)();
+                if (result.success) {
+                    alert(t('edit_save_to_file_success') || 'Erfolgreich in Datei gespeichert!');
+                    loadLibrary(); // Refresh library to show updated tags
+                } else {
+                    alert((t('edit_save_to_file_error') || 'Fehler beim Speichern in Datei: ') + result.error);
+                }
+            } catch (e) {
+                alert('Eel error: ' + e);
+            } finally {
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
         }
 
         async function loadLibrary(retryCount) {
