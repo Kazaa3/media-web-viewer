@@ -23,7 +23,7 @@ class TestCLIArgs(unittest.TestCase):
 
     def test_debug_flag_enables_all(self):
         """Verifies that --debug flag enables all DEBUG_FLAGS."""
-        test_args = ["src.core.main.py", "--debug"]
+        test_args = ["src/core/main.py", "--debug"]
         
         # Call the refactored initialization function
         main.initialize_debug_flags(test_args)
@@ -34,7 +34,7 @@ class TestCLIArgs(unittest.TestCase):
 
     def test_no_debug_flag_leaves_defaults(self):
         """Verifies that without --debug, flags remain False (default)."""
-        test_args = ["src.core.main.py"]
+        test_args = ["src/core/main.py"]
         
         main.initialize_debug_flags(test_args)
         

@@ -27,7 +27,7 @@ def test_version_consistency():
     with patch('src.core.env_handler.validate_safe_startup'), patch('eel.init'), patch('eel.expose'):
         import src.core.main as main
         importlib.reload(main)
-        assert main.VERSION == version, f"src.core.main.py version ({main.VERSION}) != VERSION file ({version})"
+        assert main.VERSION == version, f"src/core/main.py version ({main.VERSION}) != VERSION file ({version})"
     
     # Check debian control
     control_file = root / "packaging" / "DEBIAN" / "control"
@@ -49,6 +49,7 @@ def test_run_all_tests():
         cwd=root,
         capture_output=True,
         text=True
+    )
     print(result.stdout)
     assert result.returncode == 0 or "FAILED" not in result.stdout, f"Some tests failed:\n{result.stdout}"
 

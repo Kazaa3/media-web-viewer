@@ -35,13 +35,14 @@ for file_path in TEST_FILES:
         filename=os.path.basename(file_path),
         mode="full",
         PARSER_CONFIG=PARSER_CONFIG
+    )
     # Optimum: Alle relevanten Felder pro Tool
     optimum = {}
     for tool in times:
         optimum[tool] = {k: v for k, v in tags.items() if tool in k}
     RESULTS[file_path] = optimum
 
-with open("tests/parser_optimum_results.json", "w", encoding="utf-8") as f:
+with open("tests/artifacts/reports/parser_optimum_results.json", "w", encoding="utf-8") as f:
     json.dump(RESULTS, f, indent=2, ensure_ascii=False)
 
 print("Optimum-JSON für alle Tools geschrieben: tests/parser_optimum_results.json")

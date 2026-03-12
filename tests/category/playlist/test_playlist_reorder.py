@@ -9,6 +9,7 @@ from src.core.main import (
     move_item_down,
     move_current_up,
     move_current_down,
+)
 
 def test_move_item_up_down_by_index():
     set_current_playlist(['a', 'b', 'c', 'd'], start_index=1, replace=True)

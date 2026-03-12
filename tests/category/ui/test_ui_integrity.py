@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: UI Integration
@@ -34,7 +36,7 @@ class TestUIIntegrity(unittest.TestCase):
             env["MWV_FORCE_NEW_SESSION"] = "1"
             
             cls.app_process = subprocess.Popen(
-                [sys.executable, "src.core.main.py"],
+                [sys.executable, "src/core/main.py"],
                 cwd=os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))),
                 env=env
             )

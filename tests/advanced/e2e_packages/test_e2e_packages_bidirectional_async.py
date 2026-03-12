@@ -30,7 +30,7 @@ class TestE2EPackagesBidirectionalAsync(unittest.TestCase):
     def setUp(self):
         """Initialize test environment with paths and sample data."""
         self.root = Path(__file__).parents[3]
-        self.main_py = self.root / "src.core.main.py"
+        self.main_py = self.root / "src/core/main.py"
         self.app_html = self.root / "web" / "app.html"
         
         # Sample pip JSON output (realistic structure)
@@ -126,6 +126,7 @@ wheel      0.42.0
             r'def get_environment_info.*?(?=\n@eel\.expose|\ndef [a-zA-Z_]|\Z)',
             self.main_code,
             re.DOTALL
+        )
         self.assertIsNotNone(env_info_match)
         func_body = env_info_match.group(0)
         self.assertIn("_get_installed_packages", func_body)
@@ -161,6 +162,7 @@ wheel      0.42.0
             r'function normalizeInstalledPackages\(rawPackages\).*?(?=\n\s*async function loadEnvironmentInfo|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(norm_match)
         norm_body = norm_match.group(0)
         
@@ -197,6 +199,7 @@ wheel      0.42.0
             r'async function loadEnvironmentInfo\([^)]*\)\s*{(.*?)\n\s*}(?:\n|$)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match)
         func_body = load_env_match.group(1)
         
@@ -220,6 +223,7 @@ wheel      0.42.0
             self.assertTrue(
                 has_inline_handler is not None,
                 "Package search should have event binding"
+            )
 
     def test_12_async_flow_error_handling(self):
         """Test: Frontend async flow includes error handling."""
@@ -227,6 +231,7 @@ wheel      0.42.0
             r'async function loadEnvironmentInfo\([^)]*\)\s*{(.*?)\n\s*}(?:\n|$)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match)
         func_body = load_env_match.group(1)
         
@@ -250,6 +255,7 @@ wheel      0.42.0
             r'def _get_installed_packages\(\):.*?(?=\n    def [a-zA-Z_]|\Z)',
             self.main_code,
             re.DOTALL
+        )
         self.assertIsNotNone(func_match)
         func_body = func_match.group(0)
         
@@ -267,6 +273,7 @@ wheel      0.42.0
             r'def _get_installed_packages\(\):.*?return packages, source',
             self.main_code,
             re.DOTALL
+        )
         self.assertIsNotNone(func_match, "Function should return (packages, source) tuple")
 
     def test_16_integration_data_structure_consistency(self):
@@ -287,6 +294,7 @@ wheel      0.42.0
             r'async function loadEnvironmentInfo\([^)]*\).*?}',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match)
         func_body = load_env_match.group(0)
         

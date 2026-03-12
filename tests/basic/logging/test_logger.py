@@ -17,6 +17,7 @@ class TestLogger(unittest.TestCase):
             msg="Test message",
             args=(),
             exc_info=None
+        )
         handler.emit(record)
         self.assertTrue(len(logger.LOG_BUFFER) > 0)
 

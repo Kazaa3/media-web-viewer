@@ -30,7 +30,7 @@ class TestUIDebugTools(unittest.TestCase):
     def setUp(self):
         """Initialize test environment with paths."""
         self.root = Path(__file__).parents[3]
-        self.main_py = self.root / "src.core.main.py"
+        self.main_py = self.root / "src/core/main.py"
         self.app_html = self.root / "web" / "app.html"
         self.main_code = self.main_py.read_text(encoding="utf-8")
         self.html_code = self.app_html.read_text(encoding="utf-8")
@@ -49,7 +49,7 @@ class TestUIDebugTools(unittest.TestCase):
         get_env_info_match = re.search(
             r'def get_environment_info.*?return result',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(get_env_info_match)
         func_body = get_env_info_match.group(0)
         
@@ -76,7 +76,7 @@ class TestUIDebugTools(unittest.TestCase):
         get_env_info_match = re.search(
             r'def get_environment_info\(.*?\):.*?return result',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(get_env_info_match)
         
         # Verify logging infrastructure exists
@@ -91,7 +91,7 @@ class TestUIDebugTools(unittest.TestCase):
         norm_match = re.search(
             r'function normalizeInstalledPackages\(rawPackages\).*?return normalized;',
             self.html_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(norm_match)
         func_body = norm_match.group(0)
         
@@ -144,7 +144,7 @@ class TestUIDebugTools(unittest.TestCase):
         get_env_match = re.search(
             r'def get_environment_info\(force_refresh=False\):.*?if not force_refresh',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(get_env_match,
                             "Should have force_refresh parameter to bypass cache for debugging")
 
@@ -157,6 +157,7 @@ class TestUIDebugTools(unittest.TestCase):
         refresh_exists = (
             'loadEnvironmentInfo(true)' in self.html_code or
             'loadEnvironmentInfo(force' in self.html_code
+        )
         self.assertTrue(refresh_exists, "Should have way to trigger force refresh")
 
     def test_10_data_flow_diagram_in_code(self):
@@ -192,7 +193,7 @@ class TestUIDebugTools(unittest.TestCase):
         subprocess_calls = re.findall(
             r'subprocess\.run\([^)]+\)',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         
         # At least one should exist (pip list)
         self.assertGreater(len(subprocess_calls), 0)
@@ -209,6 +210,7 @@ class TestUIDebugTools(unittest.TestCase):
         search_handler_exists = (
             'addEventListener' in self.html_code and 
             'package-search' in self.html_code
+        )
         self.assertTrue(search_handler_exists)
 
     def test_14_multiple_fallback_stages_documented(self):
@@ -221,7 +223,7 @@ class TestUIDebugTools(unittest.TestCase):
         _get_installed_match = re.search(
             r'def _get_installed_packages\(\):.*?return.*?source',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(_get_installed_match)
 
     def test_15_requirements_status_separate_from_packages(self):
@@ -233,7 +235,7 @@ class TestUIDebugTools(unittest.TestCase):
         req_status_match = re.search(
             r'def _get_requirements_status\(\):.*?return \{',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(req_status_match)
 
     def test_16_ui_trace_insertion_points_documented(self):
@@ -244,7 +246,7 @@ class TestUIDebugTools(unittest.TestCase):
         get_env_return = re.search(
             r'def get_environment_info\(.*?\).*?return result',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(get_env_return,
                             "Backend function should have clear return point for trace logging")
         
@@ -275,7 +277,7 @@ class TestUIDebugTools(unittest.TestCase):
         get_env_info_match = re.search(
             r'def get_environment_info.*?return result',
             self.main_code,
-            re.DOTALL
+            re.DOTALL)
         self.assertIsNotNone(get_env_info_match)
         func_body = get_env_info_match.group(0)
         self.assertIn('"tools_status"', func_body)

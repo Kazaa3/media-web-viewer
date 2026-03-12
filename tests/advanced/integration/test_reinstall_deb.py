@@ -26,7 +26,7 @@ def run_command(cmd, check=True, capture_output=True):
         shell=True,
         capture_output=capture_output,
         text=True,
-        check=False
+        check=False)
     if check and result.returncode != 0:
         print(f"❌ Command failed: {cmd}")
         print(f"   stdout: {result.stdout}")
@@ -173,7 +173,7 @@ def test_installed_version_matches_current_build():
 
     result = run_command(
         "dpkg-query -W -f='${Status} ${Version}\\n' media-web-viewer",
-        check=False
+        check=False)
 
     strict_mode = os.getenv("STRICT_PACKAGE_VERSION", "0") == "1"
 
@@ -199,7 +199,8 @@ def test_installed_version_matches_current_build():
     if installed_version != expected_version:
         print(
             f"⚠️  Installed version mismatch: installed={installed_version}, "
-            f"expected={expected_version}"
+            f"expected={expected_version})"
+        )
         print("   Run ./reinstall_deb.sh to purge old package and install current build")
         return not strict_mode
 
@@ -239,6 +240,7 @@ def test_destructive_reinstall_e2e_optional():
     verify_result = run_command(
         "dpkg-query -W -f='${Status} ${Version}\\n' media-web-viewer",
         check=False
+    )
 
     if verify_result.returncode != 0:
         print("❌ Package media-web-viewer not installed after reinstall")
@@ -256,6 +258,7 @@ def test_destructive_reinstall_e2e_optional():
         print(
             f"❌ Reinstall verification failed: state={installed_state}, "
             f"version={installed_version}, expected={expected_version}"
+        )
         return False
 
     print(f"✅ Destructive reinstall successful: {installed_version}")

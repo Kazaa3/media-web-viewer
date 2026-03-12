@@ -41,23 +41,23 @@ class TestSessionlessFlagDetection(unittest.TestCase):
     """
 
     def test_detects_no_gui_short_flag(self):
-        self.assertTrue(main.is_no_gui_mode(["python", "src.core.main.py", "--ng"]))
+        self.assertTrue(main.is_no_gui_mode(["python", "src/core/main.py", "--ng"]))
 
     def test_detects_no_gui_long_flag(self):
-        self.assertTrue(main.is_no_gui_mode(["python", "src.core.main.py", "--sessionless"]))
+        self.assertTrue(main.is_no_gui_mode(["python", "src/core/main.py", "--sessionless"]))
 
     def test_no_gui_returns_false_without_flag(self):
-        self.assertFalse(main.is_no_gui_mode(["python", "src.core.main.py"]))
+        self.assertFalse(main.is_no_gui_mode(["python", "src/core/main.py"]))
 
     def test_detects_connectionless_browser_mode(self):
-        self.assertTrue(main.is_connectionless_browser_mode(["python", "src.core.main.py", "--n"]))
+        self.assertTrue(main.is_connectionless_browser_mode(["python", "src/core/main.py", "--n"]))
 
     def test_connectionless_browser_returns_false_without_flag(self):
-        self.assertFalse(main.is_connectionless_browser_mode(["python", "src.core.main.py"]))
+        self.assertFalse(main.is_connectionless_browser_mode(["python", "src/core/main.py"]))
 
     def test_no_gui_and_n_are_distinct(self):
-        self.assertFalse(main.is_no_gui_mode(["python", "src.core.main.py", "--n"]))
-        self.assertFalse(main.is_connectionless_browser_mode(["python", "src.core.main.py", "--ng"]))
+        self.assertFalse(main.is_no_gui_mode(["python", "src/core/main.py", "--n"]))
+        self.assertFalse(main.is_connectionless_browser_mode(["python", "src/core/main.py", "--ng"]))
 
 class TestSessionlessRuntimeInfo(unittest.TestCase):
     """

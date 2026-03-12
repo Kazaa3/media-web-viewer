@@ -29,6 +29,7 @@ def test_doxygen_generation():
         cwd=str(root_dir),
         capture_output=True,
         text=True
+    )
 
     # Exit-Code prüfen (0 ist Erfolg)
     assert result.returncode == 0, f"Doxygen fehlgeschlagen mit Exit-Code {result.returncode}. Output: {result.stderr}"

@@ -100,6 +100,7 @@ class VersionSyncTester:
                 mismatch_msg = (
                     f"{location['file']}: Expected '{expected_pattern}' but found "
                     f"'{matches[0].strip() if matches else 'N/A'}'"
+                )
                 if required:
                     self.errors.append(mismatch_msg)
                 else:
@@ -135,6 +136,7 @@ class VersionSyncTester:
         else:
             self.errors.append(
                 f"VERSION_SYNC.json version ({config_version}) doesn't match VERSION file ({master_version})"
+            )
             print(f"   ❌ VERSION_SYNC.json needs update!")
             return False
     

@@ -37,6 +37,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<!-- Installed Packages.*?</div>.*?</div>',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(package_section, "Should find Installed Packages section")
         section = package_section.group(0)
         
@@ -52,6 +53,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<h4[^>]*>.*?id="package-count".*?</h4>',
             section,
             re.DOTALL
+        )
         self.assertIsNotNone(h4_match, "Should find h4 with package-count")
         h4_content = h4_match.group(0)
         
@@ -68,6 +70,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<h4[^>]*>\s*<span[^>]*data-i18n[^>]*>.*?</span>.*?<span\s+id="package-count"',
             h4_content,
             re.DOTALL
+        )
         self.assertIsNotNone(has_i18n_span, 
                             "Should have structure: <h4><span data-i18n>text</span><span id='package-count'>...")
 
@@ -78,6 +81,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<!-- requirements\.txt Status.*?</div>.*?</div>',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(req_section, "Should find requirements status section")
         section = req_section.group(0)
         
@@ -89,6 +93,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<h4[^>]*>.*?id="requirements-count".*?</h4>',
             section,
             re.DOTALL
+        )
         self.assertIsNotNone(h4_match, "Should find h4 with requirements-count")
         h4_content = h4_match.group(0)
         
@@ -104,6 +109,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<h4[^>]*>\s*<span[^>]*data-i18n[^>]*>.*?</span>.*?<span\s+id="requirements-count"',
             h4_content,
             re.DOTALL
+        )
         self.assertIsNotNone(has_i18n_span,
                             "Should have structure: <h4><span data-i18n>text</span><span id='requirements-count'>...")
 
@@ -113,6 +119,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<!-- Installed Packages.*?</div>.*?</div>',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(package_section)
         section = package_section.group(0)
         
@@ -125,6 +132,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             r'<h4[^>]*>.*?id="package-count".*?id="package-source".*?</h4>',
             section,
             re.DOTALL
+        )
         self.assertIsNotNone(h4_match, "Both package-count and package-source should be in h4")
 
     def test_04_apply_translations_uses_innerhtml(self):
@@ -133,6 +141,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
         apply_trans_match = re.search(
             r'function\s+applyTranslations\s*\([^)]*\)',
             self.html_code
+        )
         self.assertIsNotNone(apply_trans_match, "Should find applyTranslations function")
         
         # Find the function body (approximate)
@@ -204,6 +213,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
             element_match = re.search(
                 rf'id="{element_id}"',
                 self.html_code
+            )
             self.assertIsNotNone(element_match, f"Element {element_id} should exist")
             
             # Find the containing h4 or div

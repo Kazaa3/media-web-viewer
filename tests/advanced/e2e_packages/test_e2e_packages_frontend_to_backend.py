@@ -24,7 +24,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
     def setUp(self):
         """Initialize test environment."""
         self.root = Path(__file__).parents[3]
-        self.main_py = self.root / "src.core.main.py"
+        self.main_py = self.root / "src/core/main.py"
         self.app_html = self.root / "web" / "app.html"
         
         self.main_code = self.main_py.read_text(encoding="utf-8")
@@ -55,6 +55,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'async function loadEnvironmentInfo.*?renderPackages',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match, "Search should trigger filtering")
 
     def test_04_search_input_is_debounced(self):
@@ -84,6 +85,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'async function loadEnvironmentInfo.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match)
         func_body = load_env_match.group(0)
         
@@ -96,6 +98,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'async function loadEnvironmentInfo.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match)
         func_body = load_env_match.group(0)
         
@@ -110,6 +113,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'normalizeInstalledPackages.*?force.*?refresh',
             self.html_code,
             re.DOTALL | re.IGNORECASE
+        )
         
         # Should have logic connecting normalization to refresh decision
         self.assertIn("normalizeInstalledPackages", self.html_code)
@@ -134,6 +138,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'def get_environment_info\(force_refresh.*?\):.*?(?=\n@eel\.expose|\ndef [a-zA-Z_]|\Z)',
             self.main_code,
             re.DOTALL
+        )
         
         if api_match:
             func_body = api_match.group(0)
@@ -150,6 +155,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'function renderPackages.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         
         # May also have inline filtering in event handler
         self.assertIn("package-search", self.html_code)
@@ -230,6 +236,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'function renderPackages.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(render_match)
         func_body = render_match.group(0)
         
@@ -251,6 +258,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'async function loadEnvironmentInfo.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(load_env_match)
         func_body = load_env_match.group(0)
         
@@ -265,6 +273,7 @@ class TestE2EFrontendToBackend(unittest.TestCase):
             r'catch.*?{.*?}',
             self.html_code,
             re.DOTALL
+        )
         
         if catch_match:
             catch_body = catch_match.group(0)

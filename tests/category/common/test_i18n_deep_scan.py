@@ -455,6 +455,7 @@ def test_javascript_innerhtml_setters():
     assignments = re.finditer(
         r'(innerHTML|innerText|textContent)\s*=\s*[\'"]([^\'\"]+)[\'"]',
         content
+    )
     
     for match in assignments:
         prop_name = match.group(1)
@@ -743,6 +744,7 @@ def test_console_log_german():
         r'console\.(log|warn|error|info)\s*\([^)]*["\']([^"\']*[äöüß][^"\']*)["\'][^)]*\)',
         content,
         re.IGNORECASE
+    )
     
     for match in console_calls:
         method = match.group(1)

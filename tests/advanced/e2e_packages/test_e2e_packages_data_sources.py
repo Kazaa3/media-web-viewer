@@ -31,7 +31,7 @@ class TestE2EPackagesDataSources(unittest.TestCase):
     def setUp(self):
         """Initialize test environment."""
         self.root = Path(__file__).parents[3]
-        self.main_py = self.root / "src.core.main.py"
+        self.main_py = self.root / "src/core/main.py"
         self.main_code = self.main_py.read_text(encoding="utf-8")
 
     # ========== Source 1: pip list --format=json ==========

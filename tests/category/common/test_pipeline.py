@@ -24,6 +24,7 @@ def run_command(cmd, check=True, capture_output=True):
         capture_output=capture_output,
         text=True,
         check=False
+    )
     if check and result.returncode != 0:
         print(f"❌ Command failed: {cmd}")
         print(f"   stdout: {result.stdout}")
@@ -61,6 +62,7 @@ def test_pipeline_help():
     result = run_command(
         "python build_system.py --help | grep -i pipeline",
         check=False
+    )
     
     if not result:
         print("❌ Pipeline help not found in build_system.py --help")

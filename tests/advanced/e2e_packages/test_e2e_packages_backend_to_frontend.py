@@ -27,7 +27,7 @@ class TestE2EBackendToFrontend(unittest.TestCase):
     def setUp(self):
         """Initialize test environment."""
         self.root = Path(__file__).parents[3]
-        self.main_py = self.root / "src.core.main.py"
+        self.main_py = self.root / "src/core/main.py"
         self.app_html = self.root / "web" / "app.html"
         
         self.main_code = self.main_py.read_text(encoding="utf-8")
@@ -193,6 +193,7 @@ pip        24.0
             r'def get_environment_info.*?(?=\n@eel\.expose|\ndef [a-zA-Z_]|\Z)',
             self.main_code,
             re.DOTALL
+        )
         self.assertIsNotNone(api_match)
 
     # ========== Stage 4: API Response Formation ==========
@@ -288,6 +289,7 @@ pip        24.0
             r'function normalizeInstalledPackages.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(norm_match)
         func_body = norm_match.group(0)
         
@@ -301,6 +303,7 @@ pip        24.0
             r'function normalizeInstalledPackages.*?(?=\n\s*function|\Z)',
             self.html_code,
             re.DOTALL
+        )
         self.assertIsNotNone(norm_match)
         func_body = norm_match.group(0)
         

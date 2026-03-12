@@ -37,7 +37,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parents[3]
 LAUNCHER_SCRIPT = Path.home() / ".local" / "bin" / "media-viewer"
 VENV_DIR = PROJECT_ROOT / ".venv"
-MAIN_SCRIPT = PROJECT_ROOT / "src.core.main.py"
+MAIN_SCRIPT = PROJECT_ROOT / "src/core/main.py"
 
 # =============================================================================
 # Test: Launcher Script Existence
@@ -63,10 +63,12 @@ def test_launcher_script_exists():
     assert LAUNCHER_SCRIPT.exists(), (
         f"Launcher script not found at {LAUNCHER_SCRIPT}\n"
         f"Expected location: ~/.local/bin/media-viewer"
+    )
     print(f"  ✓ Script exists: {LAUNCHER_SCRIPT}")
     
     assert LAUNCHER_SCRIPT.is_file(), (
         f"Launcher path exists but is not a file: {LAUNCHER_SCRIPT}"
+    )
     print(f"  ✓ Script is a regular file")
     
     print(f"\n✅ Launcher script found and validated")
@@ -109,6 +111,7 @@ def test_launcher_script_executable():
     assert is_executable, (
         f"Launcher script is not executable: {LAUNCHER_SCRIPT}\n"
         f"Fix with: chmod +x {LAUNCHER_SCRIPT}"
+    )
     
     print(f"\n✅ Script has correct executable permissions")
 
@@ -162,6 +165,7 @@ def test_launcher_script_content():
     
     assert not missing_elements, (
         f"Launcher script is missing required elements: {', '.join(missing_elements)}"
+    )
     
     print(f"\n✅ All required script elements present")
 
@@ -233,6 +237,7 @@ def test_launcher_test_mode():
             text=True,
             timeout=30,
             check=False
+        )
         
         print(f"\n📤 Exit code: {result.returncode}")
         print(f"\n📄 Output:")
@@ -248,6 +253,7 @@ def test_launcher_test_mode():
             f"Launcher test mode failed with exit code {result.returncode}\n"
             f"Stdout: {result.stdout}\n"
             f"Stderr: {result.stderr}"
+        )
         
         # Validate output content
         output = result.stdout + result.stderr
@@ -302,6 +308,7 @@ def test_launcher_help_output():
             text=True,
             timeout=10,
             check=True
+        )
         
         print(f"\n📄 Help output:")
         print("─" * 70)
@@ -344,12 +351,15 @@ def test_launcher_mode_ng_executes_successfully():
         capture_output=True,
         text=True,
         timeout=20,
-        check=False,
+        check=False
+    )
+
 
     assert result.returncode == 0, (
         f"Launcher --ng failed with exit code {result.returncode}\n"
         f"Stdout: {result.stdout}\n"
         f"Stderr: {result.stderr}"
+    )
 
 def test_launcher_mode_n_executes_successfully():
     """
@@ -360,12 +370,14 @@ def test_launcher_mode_n_executes_successfully():
         capture_output=True,
         text=True,
         timeout=20,
-        check=False,
+        check=False
+    )
 
     assert result.returncode == 0, (
         f"Launcher --n failed with exit code {result.returncode}\n"
         f"Stdout: {result.stdout}\n"
         f"Stderr: {result.stderr}"
+    )
 
 # =============================================================================
 # Test: Python Version in Launcher
@@ -399,6 +411,7 @@ def test_launcher_python_version():
         capture_output=True,
         text=True,
         check=True
+    )
     
     version_output = result.stdout.strip()
     print(f"  • Version output: {version_output}")

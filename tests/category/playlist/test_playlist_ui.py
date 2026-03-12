@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: GUI / E2E Test
@@ -31,9 +33,9 @@ class TestPlaylistUI(unittest.TestCase):
                 {"name": "Track C", "path": "/fake/C.mp3"}
             ], f)
 
-        cls.log_file = open("test_playlist_startup.log", "w")
+        cls.log_file = open("tests/artifacts/logs/test_playlist_startup.log", "w")
         cls.app_process = subprocess.Popen(
-            [sys.executable, "src.core.main.py"],
+            [sys.executable, "src/core/main.py"],
             cwd=os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))),
             stdout=cls.log_file,
             stderr=subprocess.STDOUT,
@@ -67,6 +69,7 @@ class TestPlaylistUI(unittest.TestCase):
         self.driver.get(f"http://localhost:{self.port}/app.html")
         WebDriverWait(self.driver, 15).until(
             EC.presence_of_element_located((By.ID, "main-split-container"))
+        )
 
     def take_screenshot(self, name):
         screenshot_dir = os.environ.get("MWV_GUI_PICTURES_DIR", os.path.dirname(__file__))
@@ -83,6 +86,7 @@ class TestPlaylistUI(unittest.TestCase):
         # Increase timeout drastically to wait for the backend parser to finish loading all files
         WebDriverWait(self.driver, 45).until(
             EC.presence_of_all_elements_located(media_list_locator)
+        )
         
         # Verify we have at least 3 items before proceeding
         initial_items = self.driver.find_elements(*media_list_locator)

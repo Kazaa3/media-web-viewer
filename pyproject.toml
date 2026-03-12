@@ -18,3 +18,13 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "mutagen.*"
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = "test_*.py"
+markers = [
+    "selenium: UI tests using Selenium",
+    "gui: Graphical User Interface tests",
+    "integration: Integration tests",
+]

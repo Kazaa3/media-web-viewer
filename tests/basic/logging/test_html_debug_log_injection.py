@@ -56,11 +56,13 @@ class TestHtmlDebugLogInjection(unittest.TestCase):
         self.assertEqual(
             once.count("[DEBUG] loadEnvironmentInfo: Starting..."),
             1,
-            "Debug marker should exist exactly once after first injection",
+            "Debug marker should exist exactly once after first injection"
+        )
         self.assertEqual(
             twice.count("[DEBUG] loadEnvironmentInfo: Starting..."),
             1,
-            "Debug marker should still exist exactly once after second injection",
+            "Debug marker should still exist exactly once after second injection"
+        )
 
     def test_injection_works_for_packaging_html(self):
         """Injection should also work for packaged app.html copy."""
@@ -77,11 +79,13 @@ class TestHtmlDebugLogInjection(unittest.TestCase):
         self.assertEqual(
             once.count("[DEBUG] loadEnvironmentInfo: Starting..."),
             1,
-            "Debug marker should exist exactly once after first injection (packaging)",
+            "Debug marker should exist exactly once after first injection (packaging)"
+        )
         self.assertEqual(
             twice.count("[DEBUG] loadEnvironmentInfo: Starting..."),
             1,
-            "Debug marker should still exist exactly once after second injection (packaging)",
+            "Debug marker should still exist exactly once after second injection (packaging)"
+        )
 
     def test_optionally_apply_debug_injection_to_file(self):
         """

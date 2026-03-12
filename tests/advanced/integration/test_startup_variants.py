@@ -38,39 +38,39 @@ class TestStartupModeDetection(unittest.TestCase):
     
     def test_no_gui_mode_with_ng_flag(self):
         """Test that --ng flag enables no-GUI mode."""
-        result = main.is_no_gui_mode(["src.core.main.py", "--ng"])
+        result = main.is_no_gui_mode(["src/core/main.py", "--ng"])
         self.assertTrue(result)
     
     def test_no_gui_mode_with_no_gui_flag(self):
         """Test that --no-gui flag enables no-GUI mode."""
-        result = main.is_no_gui_mode(["src.core.main.py", "--no-gui"])
+        result = main.is_no_gui_mode(["src/core/main.py", "--no-gui"])
         self.assertTrue(result)
     
     def test_no_gui_mode_with_sessionless_flag(self):
         """Test that --sessionless flag enables no-GUI mode."""
-        result = main.is_no_gui_mode(["src.core.main.py", "--sessionless"])
+        result = main.is_no_gui_mode(["src/core/main.py", "--sessionless"])
         self.assertTrue(result)
     
     def test_no_gui_mode_disabled_by_default(self):
         """Test that no-GUI mode is disabled by default."""
-        result = main.is_no_gui_mode(["src.core.main.py"])
+        result = main.is_no_gui_mode(["src/core/main.py"])
         self.assertFalse(result)
     
     def test_connectionless_mode_with_n_flag(self):
         """Test that --n flag enables connectionless mode."""
-        result = main.is_connectionless_browser_mode(["src.core.main.py", "--n"])
+        result = main.is_connectionless_browser_mode(["src/core/main.py", "--n"])
         self.assertTrue(result)
     
     def test_connectionless_mode_disabled_by_default(self):
         """Test that connectionless mode is disabled by default."""
-        result = main.is_connectionless_browser_mode(["src.core.main.py"])
+        result = main.is_connectionless_browser_mode(["src/core/main.py"])
         self.assertFalse(result)
     
     def test_modes_are_mutually_exclusive_in_logic(self):
         """Test that both modes can be detected but main.py handles exclusivity."""
         # Both flags present (edge case - main.py should handle priority)
-        no_gui = main.is_no_gui_mode(["src.core.main.py", "--ng", "--n"])
-        connectionless = main.is_connectionless_browser_mode(["src.core.main.py", "--ng", "--n"])
+        no_gui = main.is_no_gui_mode(["src/core/main.py", "--ng", "--n"])
+        connectionless = main.is_connectionless_browser_mode(["src/core/main.py", "--ng", "--n"])
         # Both are detected, but startup logic should prioritize one
         self.assertTrue(no_gui or connectionless)
 
@@ -253,19 +253,19 @@ class TestCommandLineUsage(unittest.TestCase):
     
     def test_normal_startup_detection(self):
         """Test normal startup (no special flags)."""
-        args = ["src.core.main.py"]
+        args = ["src/core/main.py"]
         self.assertFalse(main.is_no_gui_mode(args))
         self.assertFalse(main.is_connectionless_browser_mode(args))
     
     def test_help_flag_does_not_trigger_modes(self):
         """Test that --help doesn't trigger special modes."""
-        args = ["src.core.main.py", "--help"]
+        args = ["src/core/main.py", "--help"]
         self.assertFalse(main.is_no_gui_mode(args))
         self.assertFalse(main.is_connectionless_browser_mode(args))
     
     def test_multiple_flags_detection(self):
         """Test detection with multiple flags present."""
-        args = ["src.core.main.py", "--ng", "--verbose", "--debug"]
+        args = ["src/core/main.py", "--ng", "--verbose", "--debug"]
         self.assertTrue(main.is_no_gui_mode(args))
 
 def run_tests():

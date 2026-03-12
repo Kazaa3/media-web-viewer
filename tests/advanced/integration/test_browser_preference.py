@@ -79,6 +79,7 @@ class TestBrowserDetection(unittest.TestCase):
         self.assertTrue(
             chrome_path or chromium_path,
             "Neither Chrome nor Chromium found on system"
+        )
 
     def test_chrome_preferred_over_vivaldi(self):
         """

@@ -26,7 +26,7 @@ env["MWV_DEBUG_UI"] = "1"
 
 print(f"Starting server on port {port}...")
 app_process = subprocess.Popen(
-    [os.sys.executable, "src.core.main.py"],
+    [os.sys.executable, "src/core/main.py"],
     cwd=str(BASE_DIR),
     stdout=subprocess.DEVNULL,
     stderr=subprocess.STDOUT,

@@ -16,7 +16,7 @@ class TestCorePackagesFourTargeted(unittest.TestCase):
         cls.requirements_path = cls.root / "requirements.txt"
         cls.requirements_text = cls.requirements_path.read_text(encoding="utf-8")
 
-        main_path = cls.root / "src.core.main.py"
+        main_path = cls.root / "src/core/main.py"
         spec = importlib.util.spec_from_file_location("main", str(main_path))
         module = importlib.util.module_from_spec(spec)
         sys.modules["main"] = module
@@ -37,7 +37,8 @@ class TestCorePackagesFourTargeted(unittest.TestCase):
             pattern = rf"^\s*{re.escape(package_name)}\s*(?:[<>=!~]|$)"
             self.assertIsNotNone(
                 re.search(pattern, normalized, re.MULTILINE),
-                msg=f"requirements.txt should contain {package_name}",
+                msg=f"requirements.txt should contain {package_name}"
+            )
 
     def test_02_backend_requirements_status_mentions_targets(self):
         """Backend requirements_status must mention each target package."""
@@ -51,7 +52,8 @@ class TestCorePackagesFourTargeted(unittest.TestCase):
         for package_name in self.__class__.target_packages:
             self.assertTrue(
                 package_seen(package_name),
-                msg=f"requirements_status should include {package_name}",
+                msg=f"requirements_status should include {package_name}"
+            )
 
     def test_03_backend_has_no_missing_targets(self):
         """All four requested packages should currently be installed."""
@@ -61,7 +63,8 @@ class TestCorePackagesFourTargeted(unittest.TestCase):
         for package_name in self.__class__.target_packages:
             self.assertFalse(
                 any(entry.startswith(package_name) for entry in missing),
-                msg=f"target package should not be missing: {package_name}",
+                msg=f"target package should not be missing: {package_name}"
+            )
 
 if __name__ == "__main__":
     unittest.main()

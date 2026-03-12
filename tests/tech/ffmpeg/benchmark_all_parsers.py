@@ -8,7 +8,7 @@ from pathlib import Path
 
 PROJECT_ROOT = os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 if PROJECT_ROOT not in sys.path:
-    
+    sys.path.append(PROJECT_ROOT)
 
 from src.parsers import media_parser
 
@@ -38,6 +38,8 @@ for f in files:
             name,
             mode="full",
             file_type=file_type,
+            PARSER_CONFIG=PARSER_CONFIG
+        )
         duration = time.time() - t0
         results[name] = {
             "duration": duration,
@@ -49,7 +51,7 @@ for f in files:
             "error": str(e)
         }
 
-with open("tests/parser_benchmark_results.json", "w", encoding="utf-8") as f:
+with open("tests/artifacts/reports/parser_benchmark_results.json", "w", encoding="utf-8") as f:
     json.dump(results, f, indent=2, ensure_ascii=False)
 
 print("Benchmark abgeschlossen: tests/parser_benchmark_results.json")

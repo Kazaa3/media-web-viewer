@@ -58,7 +58,8 @@ class TestInstalledPackagesUI(unittest.TestCase):
         match = re.search(
             r'id="installed-packages-list"[^>]*>(.*?)</div>',
             self.app_html,
-            re.DOTALL,
+            re.DOTALL
+        )
         if match is None:
             self.fail("installed-packages-list container not found")
         self.assertIn('data-i18n="common_loading_short"', match.group(1))

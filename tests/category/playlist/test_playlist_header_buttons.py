@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -22,7 +24,7 @@ class TestPlaylistHeaderButtons(unittest.TestCase):
         
         cls.log_file = open("test_playlist_header.log", "w")
         cls.app_process = subprocess.Popen(
-            [sys.executable, "src.core.main.py"],
+            [sys.executable, "src/core/main.py"],
             cwd=os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))),
             stdout=cls.log_file,
             stderr=subprocess.STDOUT,

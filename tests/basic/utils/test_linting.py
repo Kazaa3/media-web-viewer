@@ -27,6 +27,7 @@ def test_flake8_linting():
         cwd=str(root_dir),
         capture_output=True,
         text=True
+    )
 
     # Wir erlauben vorerst Warnings, aber loggen sie
     if result.returncode != 0:
@@ -52,6 +53,7 @@ def test_mypy_typing():
         cwd=str(root_dir),
         capture_output=True,
         text=True
+    )
 
     if result.returncode != 0:
         print(f"\n[Mypy Typing Issues]:\n{result.stdout}")

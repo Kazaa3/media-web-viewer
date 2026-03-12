@@ -80,6 +80,7 @@ def test_mkv_container_parsing():
             stderr=subprocess.PIPE,
             text=True,
             timeout=10
+        )
         
         if not temp_file.exists():
             print("❌ MKV-Datei konnte nicht erstellt werden")
@@ -94,6 +95,7 @@ def test_mkv_container_parsing():
             stderr=subprocess.PIPE,
             text=True,
             timeout=5
+        )
         
         output = parse_result.stderr
         

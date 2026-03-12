@@ -74,6 +74,7 @@ def test_ffprobe_duration_extraction():
             capture_output=True,
             text=True,
             timeout=10
+        )
         
         duration = result.stdout.strip()
         

@@ -101,6 +101,7 @@ class TestJsonSyntaxHighlighting(unittest.TestCase):
         pattern_match = re.search(
             r'json\.replace\(/(.+?)/g,\s*function',
             self.html_content
+        )
         self.assertIsNotNone(pattern_match, "JSON regex pattern not found")
         
         regex_pattern = pattern_match.group(1)

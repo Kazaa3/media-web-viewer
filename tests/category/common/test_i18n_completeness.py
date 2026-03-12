@@ -315,7 +315,7 @@ def test_eel_expose_on_scan_media():
     """Test that scan_media function has @eel.expose decorator."""
     print("\n🧪 Test 6: scan_media @eel.expose Decorator")
     
-    main_py = Path(__file__).parents[3] / "src.core.main.py"
+    main_py = Path(__file__).parents[3] / "src/core/main.py"
     
     with open(main_py, 'r', encoding='utf-8') as f:
         content = f.read()

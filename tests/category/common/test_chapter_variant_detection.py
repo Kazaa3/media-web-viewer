@@ -45,6 +45,7 @@ def test_chapter_variant_detection(monkeypatch, chapters, expected_variant):
             'Nero-Variante' if nero_variant else
             'Apple-Variante' if apple_variant else
             'Unbekannte Variante'
+        )
         log.info(f"Chapter variant detected: {variant_str} for '{filename}'")
         tags['chapters'] = sorted(tags['chapters'], key=lambda x: (
             natural_sort_key(x.get('title', '')), x.get('start', 0.0)))

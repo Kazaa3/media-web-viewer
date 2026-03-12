@@ -1,4 +1,6 @@
 import socket
+import pytest
+pytest.importorskip("selenium")
 import logging
 import time
 import os
@@ -51,7 +53,7 @@ def find_running_project_sessions():
                 is_this_project = False
                 for token in cmdline:
                     token_clean = token.strip("'\"")
-                    if token_clean.endswith('src.core.main.py'):
+                    if token_clean.endswith('src/core/main.py'):
                         try:
                             token_path = Path(token_clean).resolve()
                             if project_root in token_path.parents or token_path.parent == project_root:
@@ -101,8 +103,8 @@ def robust_action(driver, action_func, retries=10, delay=1.0):
 
 def save_screenshot(driver, name):
     """Saves a screenshot for debugging."""
-    shot_dir = Path(__file__).parents[3] / "screenshots"
-    shot_dir.mkdir(exist_ok=True)
+    shot_dir = Path(__file__).parents[3] / "tests/artifacts/screenshots"
+    shot_dir.mkdir(parents=True, exist_ok=True)
     path = shot_dir / f"{name}_{int(time.time())}.png"
     driver.save_screenshot(str(path))
     print(f"Screenshot saved to {path}")

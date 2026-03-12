@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: GUI / E2E Test
@@ -32,9 +34,9 @@ class TestGUITabsRefresh(unittest.TestCase):
         env["MWV_DEBUG_UI"] = "1"
 
         # Start the application in a subprocess
-        cls.log_file = open("test_app_startup.log", "w")
+        cls.log_file = open("tests/artifacts/logs/test_app_startup.log", "w")
         cls.app_process = subprocess.Popen(
-            [os.sys.executable, "src.core.main.py"],
+            [os.sys.executable, "src/core/main.py"],
             cwd=os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))),
             stdout=cls.log_file,
             stderr=subprocess.STDOUT,
@@ -70,6 +72,7 @@ class TestGUITabsRefresh(unittest.TestCase):
             # Wait for any common element that indicates loading is done
             WebDriverWait(self.driver, 30).until(
                 EC.presence_of_element_located((By.ID, "main-split-container"))
+            )
         except Exception as e:
             with open("test_selenium_error.html", "w") as f:
                 f.write(self.driver.page_source)
@@ -92,6 +95,7 @@ class TestGUITabsRefresh(unittest.TestCase):
                     xpath = f"//button[contains(@onclick, \"switchTab('{tab_name}'\")]"
                     btn = WebDriverWait(self.driver, 10).until(
                         EC.element_to_be_clickable((By.XPATH, xpath))
+                    )
                     btn.click()
                     time.sleep(1.0)
 

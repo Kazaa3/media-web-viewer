@@ -79,13 +79,40 @@ htmlcov/
 media/*
 !media/.gitkeep
 !media/README.md
+media/.cache/
 assets/generated/
-dist/
-Screens/
 screenshots/
+
+# Test specific data and artifacts
+tests/artifacts/
+tests/assets/
+tests/data/
+tests/*.json
+tests/*.png
+tests/*.txt
+tests/*.log
+m4b_all_tools_results.json
+m4b_mutagen_test_result
+*.xz
+*.json
+database/
+!tests/assets/.gitkeep
+!tests/data/.gitkeep
+!tests/README*.md
+!tests/GUI_TEST_SUITE.md
+!tests/TEST_ARTIFACTS.md
+!tests/TEST_DOCUMENTATION.md
+
+# GUI snapshots and screenshots (Bildschirmfotos)
+testing_screenshots/
 tests/selenium_artifacts/
 tests/reference_screenshots/
 tests/debug_*.png
+*.png
+*.jpg
+*.jpeg
+!web/assets/
+!tests/assets/.gitkeep
 
 # --- Folder Preservation Rules ---
 # We keep these folders and their contents (unless matched above)

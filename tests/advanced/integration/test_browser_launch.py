@@ -49,7 +49,7 @@ def test_app_mode_flags_present():
     """Test that main.py contains Chrome app mode flags."""
     print("\n🧪 Test 2: App Mode Flags Present in Code")
     
-    main_py = Path(__file__).parents[3] / "src.core.main.py"
+    main_py = Path(__file__).parents[3] / "src/core/main.py"
     
     if not main_py.exists():
         print("❌ main.py not found")
@@ -81,7 +81,7 @@ def test_subprocess_launch_pattern():
     """Test that main.py uses subprocess.Popen for browser launch."""
     print("\n🧪 Test 3: Subprocess Launch Pattern")
     
-    main_py = Path(__file__).parents[3] / "src.core.main.py"
+    main_py = Path(__file__).parents[3] / "src/core/main.py"
     
     with open(main_py, 'r') as f:
         content = f.read()
@@ -102,7 +102,7 @@ def test_fallback_browser_exists():
     """Test that get_preferred_browser fallback still exists."""
     print("\n🧪 Test 4: Fallback Browser Function Exists")
     
-    main_py = Path(__file__).parents[3] / "src.core.main.py"
+    main_py = Path(__file__).parents[3] / "src/core/main.py"
     
     with open(main_py, 'r') as f:
         content = f.read()
@@ -152,7 +152,7 @@ def test_browser_launch_logic_structure():
     """Test that browser launch has proper try-except structure."""
     print("\n🧪 Test 7: Browser Launch Error Handling")
     
-    main_py = Path(__file__).parents[3] / "src.core.main.py"
+    main_py = Path(__file__).parents[3] / "src/core/main.py"
     
     with open(main_py, 'r') as f:
         content = f.read()

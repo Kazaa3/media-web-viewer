@@ -39,7 +39,7 @@ def test_main_health_api_present_or_skip():
     try:
         import src.core.main as m  # type: ignore
     except Exception:
-        pytest.skip("src.core.main.py not importable in this env")
+        pytest.skip("src/core/main.py not importable in this env")
     for name in ("get_server_status",):
         assert hasattr(m, name) and callable(getattr(m, name))
     status = m.get_server_status()

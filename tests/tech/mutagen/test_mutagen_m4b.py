@@ -55,7 +55,7 @@ result = {
     "cover_b64": cover_b64
 }
 
-with open("tests/m4b_mutagen_test_result.json", "w", encoding="utf-8") as f:
+with open("tests/artifacts/reports/m4b_mutagen_test_result.json", "w", encoding="utf-8") as f:
     json.dump(result, f, indent=2, ensure_ascii=False)
 
 print("Mutagen M4B Test abgeschlossen: tests/m4b_mutagen_test_result.json")

@@ -31,7 +31,7 @@ class TestBackendConnection(unittest.TestCase):
             self.assertEqual(response.get('status'), 'ok')
             self.assertEqual(response.get('message'), 'pong')
         else:
-            self.fail("src.core.main.py does not have a ping function yet.")
+            self.fail("src/core/main.py does not have a ping function yet.")
 
 if __name__ == '__main__':
     print("Running Backend Connection Tests...")

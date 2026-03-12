@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: GUI / E2E Test
@@ -35,7 +37,7 @@ class TestISOPlaybackUI(unittest.TestCase):
 
         cls.log_file = open("test_iso_ui_startup.log", "w")
         cls.app_process = subprocess.Popen(
-            [sys.executable, "src.core.main.py"],
+            [sys.executable, "src/core/main.py"],
             cwd=cls.project_root,
             stdout=cls.log_file,
             stderr=subprocess.STDOUT,
@@ -70,6 +72,7 @@ class TestISOPlaybackUI(unittest.TestCase):
         self.driver.get(f"http://localhost:{self.port}/app.html")
         WebDriverWait(self.driver, 20).until(
             EC.presence_of_element_located((By.ID, "main-split-container"))
+        )
 
     def test_iso_direct_play_feedback(self):
         """Test that clicking an ISO in Direct Play mode shows the DVD info ribbon."""
@@ -79,6 +82,7 @@ class TestISOPlaybackUI(unittest.TestCase):
         # We need to set the mode first. We can quickly switch and back or just find the select if it's in DOM.
         vlc_tab_btn = WebDriverWait(self.driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(@onclick, \"switchTab('vlc'\")]"))
+        )
         vlc_tab_btn.click()
         time.sleep(1)
         
@@ -97,6 +101,7 @@ class TestISOPlaybackUI(unittest.TestCase):
             # Look for category chips
             all_chip = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'category-chip')]//span[contains(text(), 'Alles')]"))
+            )
             all_chip.click()
         except:
             print("Could not find 'Alles' chip, trying 'All'...")
@@ -112,6 +117,7 @@ class TestISOPlaybackUI(unittest.TestCase):
         try:
             iso_element_child = WebDriverWait(self.driver, 30).until(
                 EC.presence_of_element_located((By.XPATH, iso_item_xpath))
+            )
             iso_element = iso_element_child.find_element(By.XPATH, "./ancestor::div[contains(@class, 'media-item')]")
         except Exception as e:
             self.driver.save_screenshot("test_failed_iso_not_found.png")
@@ -128,6 +134,7 @@ class TestISOPlaybackUI(unittest.TestCase):
         print("Waiting for automatic switch to Video Player tab...")
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, "video-tab"))
+        )
 
         print("Waiting for VLC info ribbon...")
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", iso_element)
@@ -137,6 +144,7 @@ class TestISOPlaybackUI(unittest.TestCase):
         print("Waiting for VLC info ribbon...")
         vlc_info = WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, "vlc-info"))
+        )
         
         current_file_text = self.driver.find_element(By.ID, "vlc-current-file").text
         print(f"Ribbon text: {current_file_text}")
@@ -150,6 +158,7 @@ class TestISOPlaybackUI(unittest.TestCase):
         try:
             toast = WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "toast"))
+            )
             print(f"Toast detected: {toast.text}")
         except:
             print("Toast not detected or already gone, which is acceptable if ribbon is present.")

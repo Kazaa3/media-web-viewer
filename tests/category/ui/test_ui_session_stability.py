@@ -15,7 +15,7 @@ class TestUiSessionStability(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.root = Path(__file__).parents[3]
-        cls.main_py = (cls.root / "src.core.main.py").read_text(encoding="utf-8")
+        cls.main_py = (cls.root / "src/core/main.py").read_text(encoding="utf-8")
         cls.app_html = (cls.root / "web" / "app.html").read_text(encoding="utf-8")
 
     def test_keepalive_catches_baseexception(self):
@@ -32,6 +32,7 @@ class TestUiSessionStability(unittest.TestCase):
             popen_count,
             1,
             f"Expected exactly 1 browser Popen launch site, found {popen_count}"
+        )
 
     def test_eel_start_disables_auto_browser_launch(self):
         """Eel auto browser launch must be disabled to avoid duplicate windows."""
