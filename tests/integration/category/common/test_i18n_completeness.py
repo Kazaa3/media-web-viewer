@@ -79,7 +79,7 @@ def test_i18n_json_structure():
     """Test that i18n.json has valid structure with de/en keys."""
     print("\n🧪 Test 1: i18n.json Structure")
     
-    i18n_file = Path(__file__).parents[3] / "web" / "i18n.json"
+    i18n_file = Path(__file__).parents[4] / "web" / "i18n.json"
     
     if not i18n_file.exists():
         print("❌ i18n.json not found")
@@ -103,7 +103,7 @@ def test_i18n_key_parity():
     """Test that German and English have the same keys."""
     print("\n🧪 Test 2: German/English Key Parity")
     
-    i18n_file = Path(__file__).parents[3] / "web" / "i18n.json"
+    i18n_file = Path(__file__).parents[4] / "web" / "i18n.json"
     
     with open(i18n_file, 'r', encoding='utf-8') as f:
         i18n_data = json.load(f)
@@ -155,7 +155,7 @@ def test_required_i18n_keys_present():
     print("\n🧪 Test 3: Required i18n Keys Present")
     print("   └─ Prüft ob kritische Keys für App-Funktionen vorhanden sind")
     
-    i18n_file = Path(__file__).parents[3] / "web" / "i18n.json"
+    i18n_file = Path(__file__).parents[4] / "web" / "i18n.json"
     
     with open(i18n_file, 'r', encoding='utf-8') as f:
         i18n_data = json.load(f)
@@ -195,7 +195,7 @@ def test_loading_error_keys_are_used_in_ui():
     """Test that newly required loading/error i18n keys are actually referenced in app.html."""
     print("\n🧪 Test 4: Loading/Error Keys Referenced")
 
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
 
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -257,7 +257,7 @@ def test_no_hardcoded_german_strings():
     print("\n🧪 Test 4: No Hardcoded German Strings")
     print("   └─ Scannt nach deutschem Text ohne i18n-Wrapper")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -291,7 +291,7 @@ def test_no_i18n_function_calls():
     """Test that app.html uses t() instead of i18n()."""
     print("\n🧪 Test 5: No i18n() Function Calls")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -315,7 +315,7 @@ def test_eel_expose_on_scan_media():
     """Test that scan_media function has @eel.expose decorator."""
     print("\n🧪 Test 6: scan_media @eel.expose Decorator")
     
-    main_py = Path(__file__).parents[3] / "src/core/main.py"
+    main_py = Path(__file__).parents[4] / "src/core/main.py"
     
     with open(main_py, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -343,8 +343,8 @@ def test_data_i18n_attributes():
     """Test that data-i18n attributes reference existing keys."""
     print("\n🧪 Test 7: data-i18n Attributes Reference Valid Keys")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
-    i18n_file = Path(__file__).parents[3] / "web" / "i18n.json"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
+    i18n_file = Path(__file__).parents[4] / "web" / "i18n.json"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         html_content = f.read()
@@ -385,8 +385,8 @@ def test_t_function_calls_valid():
     """Test that t() function calls reference existing i18n keys."""
     print("\n🧪 Test 8: t() Function Calls Reference Valid Keys")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
-    i18n_file = Path(__file__).parents[3] / "web" / "i18n.json"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
+    i18n_file = Path(__file__).parents[4] / "web" / "i18n.json"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         html_content = f.read()

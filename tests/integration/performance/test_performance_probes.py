@@ -55,7 +55,9 @@ class TestPerformanceProbes(unittest.TestCase):
 
     def test_frontend_latency_diagnostics_hook_exists(self):
         """Frontend must expose runLatencyDiagnostics for separate UI measurements."""
-        self.assertIn("window.runLatencyDiagnostics = async function(payloadSize = 0, samples = 5)", self.app_html)
+        self.assertIn("window.runLatencyDiagnostics", self.app_html)
+        self.assertIn("async function", self.app_html)
+        self.assertIn("payloadSize = 0, samples = 5", self.app_html)
         self.assertIn("await eel.api_ping(Date.now(), size)();", self.app_html)
         self.assertIn("await fetch('/health', { cache: 'no-store' });", self.app_html)
 

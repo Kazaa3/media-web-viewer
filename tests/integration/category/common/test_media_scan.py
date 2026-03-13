@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 import os
 
-MEDIA_DIR = Path(__file__).parents[3] / "media"
+MEDIA_DIR = Path(__file__).parents[4] / "media"
 ISO_SIZE_LIMIT_MB = 5000  # 5 GB
 
 class TestMediaScan(unittest.TestCase):

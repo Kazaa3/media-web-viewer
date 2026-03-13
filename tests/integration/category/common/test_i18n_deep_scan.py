@@ -352,7 +352,7 @@ def test_html_static_text():
     """Test for hardcoded text in HTML tags without i18n."""
     print("\n🔍 Deep Scan 1: HTML Static Text Elements")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -405,7 +405,7 @@ def test_javascript_alert_confirm():
     """Test for hardcoded German text in alert/confirm calls."""
     print("\n🔍 Deep Scan 2: alert() / confirm() German Text")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -443,7 +443,7 @@ def test_javascript_innerhtml_setters():
     """Test for innerHTML assignments with hardcoded German text."""
     print("\n🔍 Deep Scan 3: innerHTML/innerText German Assignments")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -489,7 +489,7 @@ def test_javascript_string_literals():
     """Test for suspicious German string literals in JavaScript."""
     print("\n🔍 Deep Scan 4: JavaScript String Literals (German)")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -556,7 +556,7 @@ def test_html_button_labels():
     """Test for buttons/labels with hardcoded text."""
     print("\n🔍 Deep Scan 5: Button/Label Hardcoded Text")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -594,7 +594,7 @@ def test_html_placeholder_title_attrs():
     """Test for placeholder/title attributes without i18n."""
     print("\n🔍 Deep Scan 6: placeholder/title Attributes")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -643,7 +643,7 @@ def test_element_type_cardinality_i18n_coverage():
     """
     print("\n🔍 Deep Scan 7: Type Cardinality (Soll/Ist i18n)")
 
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
 
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -732,7 +732,7 @@ def test_console_log_german():
     """Test for console.log with German debug messages."""
     print("\n🔍 Deep Scan 8: console.log German Messages")
     
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()

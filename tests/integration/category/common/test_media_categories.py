@@ -129,7 +129,7 @@ class TestMediaCategories(unittest.TestCase):
 
     def test_local_media_integration(self):
         """Integration test: scan the local media directory and verify all items."""
-        media_dir = Path(__file__).parents[3].parent / 'media'
+        media_dir = Path(__file__).parents[4].parent / 'media'
         if not media_dir.exists():
             self.skipTest("Local media directory not found")
         

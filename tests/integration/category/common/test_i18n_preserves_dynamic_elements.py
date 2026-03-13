@@ -26,7 +26,7 @@ class TestI18nPreservesDynamicElements(unittest.TestCase):
 
     def setUp(self):
         """Initialize test environment with paths."""
-        self.root = Path(__file__).parents[3]
+        self.root = Path(__file__).parents[4]
         self.app_html = self.root / "web" / "app.html"
         self.html_code = self.app_html.read_text(encoding="utf-8")
 

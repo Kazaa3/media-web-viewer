@@ -43,7 +43,7 @@ VERWENDUNG:
 
 class TestPlayerUILogic(unittest.TestCase):
     def setUp(self):
-        self.app_html_path = Path(__file__).parents[3] / "web" / "app.html"
+        self.app_html_path = Path(__file__).parents[4] / "web" / "app.html"
         with open(self.app_html_path, "r", encoding="utf-8") as f:
             self.content = f.read()
 

@@ -14,7 +14,7 @@ class TestSyncI18n(unittest.TestCase):
     """Regression tests for sync status translations and usage."""
 
     def setUp(self):
-        self.root = Path(__file__).parents[3]
+        self.root = Path(__file__).parents[4]
         self.i18n_path = self.root / "web" / "i18n.json"
         self.app_html_path = self.root / "web" / "app.html"
 

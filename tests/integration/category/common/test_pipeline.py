@@ -36,7 +36,7 @@ def test_pipeline_script_exists():
     """Test that build_system.py exists and has pipeline functionality."""
     print("\n🧪 Test 1: Pipeline Script Exists")
     
-    script_path = Path(__file__).parents[3] / "infra.build_system.py"
+    script_path = Path(__file__).parents[4] / "infra.build_system.py"
     
     if not script_path.exists():
         print("❌ build_system.py not found")
@@ -75,7 +75,7 @@ def test_version_sync_test_exists():
     """Test that version sync test exists (required by pipeline)."""
     print("\n🧪 Test 3: Version Sync Test Exists")
     
-    test_path = Path(__file__).parents[3] / "test_version_sync.py"
+    test_path = Path(__file__).parents[4] / "test_version_sync.py"
     
     if not test_path.exists():
         print(f"❌ test_version_sync.py not found")
@@ -88,7 +88,7 @@ def test_reinstall_test_exists():
     """Test that reinstall test exists (required by pipeline)."""
     print("\n🧪 Test 4: Reinstall Test Exists")
     
-    test_path = Path(__file__).parents[3] / "test_reinstall_deb.py"
+    test_path = Path(__file__).parents[4] / "test_reinstall_deb.py"
     
     if not test_path.exists():
         print(f"❌ test_reinstall_deb.py not found")
@@ -101,7 +101,7 @@ def test_build_script_exists():
     """Test that build script exists (required by pipeline)."""
     print("\n🧪 Test 5: Build Script Exists")
     
-    script_path = Path(__file__).parents[3] / "build_deb.sh"
+    script_path = Path(__file__).parents[4] / "build_deb.sh"
     
     if not script_path.exists():
         print("❌ build_deb.sh not found")
@@ -114,7 +114,7 @@ def test_reinstall_script_exists():
     """Test that reinstall script exists (used by destructive pipeline)."""
     print("\n🧪 Test 6: Reinstall Script Exists")
     
-    script_path = Path(__file__).parents[3] / "reinstall_deb.sh"
+    script_path = Path(__file__).parents[4] / "reinstall_deb.sh"
     
     if not script_path.exists():
         print("❌ reinstall_deb.sh not found")
@@ -127,7 +127,7 @@ def test_version_sync_config_exists():
     """Test that VERSION_SYNC.json exists (required by pipeline)."""
     print("\n🧪 Test 7: Version Sync Config Exists")
     
-    config_path = Path(__file__).parents[3] / "VERSION_SYNC.json"
+    config_path = Path(__file__).parents[4] / "VERSION_SYNC.json"
     
     if not config_path.exists():
         print("❌ VERSION_SYNC.json not found")

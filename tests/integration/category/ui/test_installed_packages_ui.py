@@ -22,7 +22,7 @@ class TestInstalledPackagesUI(unittest.TestCase):
     """
 
     def setUp(self):
-        self.root = Path(__file__).parents[3]
+        self.root = Path(__file__).parents[4]
         self.app_html_path = self.root / "web" / "app.html"
         self.i18n_path = self.root / "web" / "i18n.json"
 

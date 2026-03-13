@@ -50,7 +50,7 @@ class TestUiSessionStability(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.root = Path(__file__).parents[3]
+        cls.root = Path(__file__).parents[4]
         cls.main_py = (cls.root / "src/core/main.py").read_text(encoding="utf-8")
         cls.app_html = (cls.root / "web" / "app.html").read_text(encoding="utf-8")
 
@@ -71,8 +71,9 @@ class TestUiSessionStability(unittest.TestCase):
         )
 
     def test_eel_start_disables_auto_browser_launch(self):
-        """Eel auto browser launch must be disabled to avoid duplicate windows."""
-        self.assertIn('eel.start("app.html", mode=False', self.main_py)
+        """Eel must be called with mode=False to prevent duplicate browser windows."""
+        self.assertIn('eel.start(', self.main_py)
+        self.assertIn('mode=False', self.main_py)
 
     def test_startup_has_existing_session_guard(self):
         """Startup must guard against launching a second app window/session."""

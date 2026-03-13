@@ -2173,7 +2173,6 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             all_exts |= DISK_IMAGE_EXTENSIONS
 
         # Reset counters
-        count: int = 0
         total_count: int = 0
         for scan_root in scan_roots:
             logger.debug("scan", f"Starting scan of: {scan_root}")

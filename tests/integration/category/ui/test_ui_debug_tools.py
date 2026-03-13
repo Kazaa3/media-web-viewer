@@ -31,7 +31,7 @@ class TestUIDebugTools(unittest.TestCase):
 
     def setUp(self):
         """Initialize test environment with paths."""
-        self.root = Path(__file__).parents[3]
+        self.root = Path(__file__).parents[4]
         self.main_py = self.root / "src/core/main.py"
         self.app_html = self.root / "web" / "app.html"
         self.main_code = self.main_py.read_text(encoding="utf-8")

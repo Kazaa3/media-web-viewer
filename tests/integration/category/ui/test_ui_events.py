@@ -248,7 +248,7 @@ def extract_interactive_elements():
     Returns:
         Liste von Dictionaries mit Element-Informationen
     """
-    app_html = Path(__file__).parents[3] / "web" / "app.html"
+    app_html = Path(__file__).parents[4] / "web" / "app.html"
     
     with open(app_html, 'r', encoding='utf-8') as f:
         content = f.read()

@@ -223,7 +223,7 @@ def test_destructive_reinstall_e2e_optional():
         return True
 
     project_root = Path(__file__).parents[3]
-    reinstall_script = project_root / "reinstall_deb.sh"
+    reinstall_script = project_root / "scripts" / "reinstall_deb.sh"
 
     if not reinstall_script.exists():
         print("❌ reinstall_deb.sh not found")
@@ -275,7 +275,7 @@ def test_reinstall_script_dry_run():
     """Test reinstall script without actually running it (check syntax)."""
     print("\n🧪 Test 8: Reinstall Script Syntax")
     
-    script_path = Path(__file__).parents[3] / "reinstall_deb.sh"
+    script_path = Path(__file__).parents[3] / "scripts" / "reinstall_deb.sh"
     
     # Use bash -n to check syntax without execution
     result = run_command(f"bash -n {script_path}", check=False)

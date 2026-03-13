@@ -100,6 +100,8 @@ class BuildSystem:
         # Setup management reports directory
         self.reports_dir = self.root / "build" / "management_reports"
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.branch = self._get_current_branch()
 
     def _read_version(self) -> str:
         """Read version from VERSION file."""
@@ -113,6 +115,42 @@ class BuildSystem:
         print("\n" + "=" * 70)
         print(f"  {title}")
         print("=" * 70 + "\n")
+
+    def _get_current_branch(self) -> str:
+        """Detect the current git branch."""
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=self.root,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return result.stdout.strip()
+        except Exception:
+            return "unknown"
+
+    def deploy_branch_config(self) -> bool:
+        """Deploy branch-specific configuration JSON."""
+        print_status(f"Deploying config for branch: {self.branch}", "PROCESS")
+        
+        config_src = self.root / "web" / f"config.{self.branch}.json"
+        config_dest = self.root / "web" / "config.json"
+        
+        # Fallback to dev if specialized branch config doesn't exist
+        if not config_src.exists():
+            if "milestone" in self.branch or self.branch == "develop":
+                 config_src = self.root / "web" / "config.develop.json"
+            else:
+                 config_src = self.root / "web" / "config.main.json"
+
+        if config_src.exists():
+            shutil.copy2(config_src, config_dest)
+            print_status(f"Deployed {config_src.name} -> {config_dest.name}", "SUCCESS")
+            return True
+        else:
+            print_status(f"No specific config found for {self.branch}, using legacy default if exists", "WARNING")
+            return True # Not a hard failure
 
     def _run_command(
             self,
@@ -302,12 +340,13 @@ class BuildSystem:
         except Exception as e:
             print(f"⚠️ Could not parse test report: {e}")
 
-    def run_build_test_gate(self, verbose: bool = False) -> bool:
+    def run_build_test_gate(self, verbose: bool = False, report: bool = True) -> bool:
         """
         Run the mandatory targeted pre-build quality gate.
 
         Args:
             verbose: Enable verbose output
+            report: Enable JUnit XML reporting
 
         Returns:
             bool: True if gate passed
@@ -319,8 +358,19 @@ class BuildSystem:
             cmd.append("-v")
         else:
             cmd.append("-q")
+
+        if report:
+            report_file = self.reports_dir / "report-gate.xml"
+            cmd.extend(["--junitxml", str(report_file)])
+            print_status(f"Reporting gate results to: {report_file}", "INFO")
+
         cmd.extend(self.BUILD_TEST_GATE)
-        return self._run_command(cmd)
+        success = self._run_command(cmd)
+
+        if report and report_file.exists():
+            self._print_test_summary(report_file)
+
+        return success
 
     def run_linter(self) -> bool:
         """
@@ -507,20 +557,25 @@ class BuildSystem:
             self,
             skip_build_gate: bool = False,
             install: bool = False,
-            **kwargs) -> bool:
+            monitor: bool = False) -> bool:
         """
-        Build Debian package using build_deb.sh script.
-
-        Args:
-            skip_build_gate: Skip pre-build gate
-            install: Automatically install/reinstall after build
-            **kwargs: monitor, hang_timeout
-
-        Returns:
-            bool: True if build succeeded
+        Build a Debian package.
         """
+        self._print_banner(f"Building Debian Package (v{self.version})")
+
+        # Deploy branch-specific config before building
+        self.deploy_branch_config()
+
+        # Args:
+        #     skip_build_gate: Skip pre-build gate
+        #     install: Automatically install/reinstall after build
+        #     **kwargs: monitor, hang_timeout
+
+        # Returns:
+        #     bool: True if build succeeded
+        # """
         with self.timer("Debian Build"):
-            self._print_banner(f"Building Debian Package (v{self.version})")
+            # self._print_banner(f"Building Debian Package (v{self.version})")
 
             if not skip_build_gate:
                 if not self.run_build_test_gate():
@@ -539,7 +594,7 @@ class BuildSystem:
             env["SKIP_BUILD_TESTS"] = "1"
 
             # Determine if we should use monitoring
-            monitor = kwargs.get("monitor", False)
+            # monitor = kwargs.get("monitor", False)
 
             cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
             success = self._run_command(cmd, monitor=monitor, hang_timeout=600)
@@ -744,56 +799,58 @@ class BuildSystem:
 
             return success
 
-    def run_pipeline(self, destructive: bool = False,
-                     skip_build_gate: bool = False) -> bool:
+    def run_pipeline(
+            self,
+            destructive: bool = False,
+            skip_build_gate: bool = False) -> bool:
         """
-        Run release pipeline checks and build artifacts.
+        Run the full release pipeline.
         """
+        self._print_banner(f"Release Pipeline - v{self.version}")
+        
+        # Deploy branch-specific config
+        self.deploy_branch_config()
         with self.timer("Pipeline Build"):
-            self._print_banner(f"Release Pipeline - v{self.version}")
-
-        print(f"Destructive checks: {destructive}\n")
-
-        if not self.check_environment():
-            print("❌ Environment check failed")
-            return False
-
-        print("▶ Step 1/4: Version synchronization check")
-        if not self._run_command(
-                [sys.executable, "tests/integration/test_version_sync.py"]):
-            print("\n❌ Version sync failed")
-            return False
-
-        print("▶ Step 2/4: Build Debian package")
-        if not self.build_debian_package(
-                skip_build_gate=skip_build_gate,
-                install=destructive):
-            print("\n❌ Debian build failed")
-            return False
-
-        print("▶ Step 3/4: Reinstall validation (safe)")
-        if not self._run_command(
-                [sys.executable, "tests/e2e/install/test_reinstall_deb.py"]):
-            print("\n❌ Reinstall validation failed")
-            return False
-
-        if destructive:
-            print("▶ Step 4/4: Reinstall validation (destructive)")
-            cmd = [
-                "bash",
-                "-lc",
-                f"RUN_DESTRUCTIVE_TESTS=1 {
-                    sys.executable} tests/e2e/install/test_reinstall_deb.py"]
-            if not self._run_command(cmd):
-                print("\n❌ Destructive reinstall validation failed")
+            if not self.check_environment():
+                print("❌ Environment check failed")
                 return False
-        else:
-            print("▶ Step 4/4: Destructive reinstall validation skipped")
 
-        self._print_banner("✅ Pipeline Complete")
-        print(f"Version: {self.version}")
-        print("All pipeline steps passed.")
-        return True
+            print("▶ Step 1/4: Version synchronization check")
+            if not self._run_command(
+                    [sys.executable, "tests/integration/test_version_sync.py"]):
+                print("\n❌ Version sync failed")
+                return False
+
+            print("▶ Step 2/4: Build Debian package")
+            if not self.build_debian_package(
+                    skip_build_gate=skip_build_gate,
+                    install=destructive):
+                print("\n❌ Debian build failed")
+                return False
+
+            print("▶ Step 3/4: Reinstall validation (safe)")
+            if not self._run_command(
+                    [sys.executable, "tests/e2e/install/test_reinstall_deb.py"]):
+                print("\n❌ Reinstall validation failed")
+                return False
+
+            if destructive:
+                print("▶ Step 4/4: Reinstall validation (destructive)")
+                cmd = [
+                    "bash",
+                    "-lc",
+                    f"RUN_DESTRUCTIVE_TESTS=1 {
+                        sys.executable} tests/e2e/install/test_reinstall_deb.py"]
+                if not self._run_command(cmd):
+                    print("\n❌ Destructive reinstall validation failed")
+                    return False
+            else:
+                print("▶ Step 4/4: Destructive reinstall validation skipped")
+
+            self._print_banner("✅ Pipeline Complete")
+            print(f"Version: {self.version}")
+            print("All pipeline steps passed.")
+            return True
 
 
 def main():

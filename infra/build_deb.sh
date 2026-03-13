@@ -93,6 +93,13 @@ rsync -a \
     --max-size=50M \
     "$ROOT_DIR/" "$STAGED_APP_DEST/"
 
+# Inject build metadata
+cat <<EOF > "$STAGED_APP_DEST/.build_metadata"
+BRANCH=$BRANCH
+VERSION=$VERSION
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+EOF
+
 # Update control file version im temporären Staging
 sed -i "s/^Version:.*/Version: $VERSION/" "$BUILD_ROOT/pkg/DEBIAN/control"
 

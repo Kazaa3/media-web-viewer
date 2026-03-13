@@ -8,10 +8,25 @@ APP_DIR="/opt/media-web-viewer"
 
 if [ "$1" = "purge" ]; then
     echo "Purging Media Web Viewer data..."
-    # Remove everything in /opt/media-web-viewer
-    if [ -d "$APP_DIR" ]; then
-        rm -rf "$APP_DIR"
-        echo "Removed $APP_DIR"
+    
+    METADATA_FILE="$APP_DIR/.build_metadata"
+    IS_DEV=0
+    if [ -f "$METADATA_FILE" ]; then
+        if grep -qE "BRANCH=(develop|milestone|unknown)" "$METADATA_FILE"; then
+            IS_DEV=1
+        fi
+    fi
+
+    if [ "$IS_DEV" = "1" ]; then
+        echo "Development build detected. Preserving data/ directory for persistence."
+        # Remove everything EXCEPT data/
+        find "$APP_DIR" -mindepth 1 -maxdepth 1 ! -name "data" -exec rm -rf {} +
+    else
+        echo "Release build detected. Performing full wipe."
+        if [ -d "$APP_DIR" ]; then
+            rm -rf "$APP_DIR"
+            echo "Removed $APP_DIR"
+        fi
     fi
     
     # Remove launcher if it was installed by install_launcher.sh or similar
