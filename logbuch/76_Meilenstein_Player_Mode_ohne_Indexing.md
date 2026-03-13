@@ -4,7 +4,7 @@
 **Autor:** Copilot
 
 ## Kontext
-Im Rahmen des aktuellen Meilensteins wurde ein spezieller Player Mode implementiert, der ohne Medienindexierung arbeitet. Ziel ist es, einen schnellen, ressourcenschonenden Wiedergabemodus bereitzustellen, bei dem Indexierungsprozesse und Datenbankoperationen deaktiviert oder optional sind.
+Im Rahmen des aktuellen Meilensteins soll ein spezieller Player Mode implementiert, der ohne Medienindexierung arbeitet. Ziel ist es, einen schnellen, ressourcenschonenden Wiedergabemodus bereitzustellen, bei dem Indexierungsprozesse und Datenbankoperationen deaktiviert oder optional sind.
 
 ## Features
 - **Player Mode ohne Indexing:**
@@ -32,6 +32,7 @@ Im Rahmen des aktuellen Meilensteins wurde ein spezieller Player Mode implementi
 - UI-Integration für Mode- und Indextime-Einstellungen
 - Tests für Player Mode ohne Indexing
 - Dokumentation und User Guide
+- Watchdog / Polling
 
 ---
 
