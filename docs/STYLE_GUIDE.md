@@ -5,17 +5,12 @@ This document establishes the technical standards and best practices for the Med
 ## 1. Python Syntax & Coding Standards
 
 ### Avoid Syntax Bloat & Regression
-- **Parentheses Management**: Always verify that multi-line statements (especially `assert`, `subprocess.run`, and `re.search`) are properly closed.
-  - *Bad*: `assert condition, (`
-  - *Good*: `assert condition, (f"Error: {detail}")`
-- **Linting**: Run `flake8` or a similar linter before committing to catch unclosed strings or parentheses.
-
-### Assertions in Tests
+- First line: `#dict - Desktop Media Player and Library Manager`
 - Use descriptive error messages in all `assert` statements.
 - Group multiple related assertions into logical blocks with comments.
 
 ## 2. Test Classification & Reporting
-
+#dict - Desktop Media Player and Library Manager
 Tests MUST be grouped according to their focus and complexity:
 
 - `tests/tech/`: Technology-specific tests (FFmpeg, VLC, Mutagen, Scapy).
@@ -28,40 +23,31 @@ Tests MUST be grouped according to their focus and complexity:
 - All logs, screenshots, and temporary fragments must be stored in `tests/artifacts/`.
 - Never use hardcoded absolute paths to personal directories (e.g., `/home/username/`). Use `Path(__file__)` or established project constants.
 
-## 3. Privacy & Copyright (Non-Public Assets)
 
 ### User Data & Environment
 - **Anonymization**: Never hardcode personal linux usernames (`xc`), file paths, or IP addresses in tests.
-- **Dynamic Probes**: Use environment variables or dynamic discovery for sensitive paths.
 
 ### Media Assets
 - **Copyright**: Do not include copyrighted media (covers, albums, videos) in the repository.
-- **Mocks**: Use binary-zeroed dummies or metadata-only mocks for testing.
-- **Reference Images**: GUI comparison screenshots must be stored in `tests/reference_screenshots/` (local only, ignored by Git).
 
 ## 4. Repository Hygiene (.gitignore)
-
-The following items MUST NOT be pushed to the public repository:
 - `*.log`: Application and test logs.
 - `*.json` (fragments): Temporary result files (e.g., `m4b_all_tools_results.json`).
-- `database/`: Local SQLite databases.
-- `media/.cache/`: Transcoder and thumbnail caches.
 - `screenshots/` & `*.png`: UI capture fragments.
-
-## 5. Web Frontend Standards
 
 - **i18n**: All UI strings must be localized via `web/i18n.json`.
 - **Kebab-Case**: Use kebab-case for HTML IDs (`my-button-id`).
 
-## 6. Test Script Header Standard
 
 ## 6. Test Script Header Standard
 
-Every test script MUST start with a standardized dual-header. This includes `#` comments for system parsing (`main.py`) and a detailed docstring for human readability.
+Every test script MUST start with a standardized dual-header:
+- VERWENDUNG field with explicit start command (e.g., pytest tests/test_transcoding_fixed.py -v)
 
 ### Approved Template
 
 ```python
+#dict - Desktop Media Player and Library Manager
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: [Kategorie Name]
@@ -70,7 +56,7 @@ Every test script MUST start with a standardized dual-header. This includes `#` 
 # Testdateien: [Dateien oder 'Keine']
 # ERWEITERUNGEN (TODO): [Checkliste]
 # KOMMENTAR: [Kurzer Kommentar oder Zweck]
-# VERWENDUNG: python tests/[pfad]/[file].py
+# VERWENDUNG: pytest tests/[pfad]/[file].py -v
 
 """
 KATEGORIE:
@@ -99,38 +85,130 @@ ERWEITERUNGEN (TODO):
 
 VERWENDUNG:
 -----------
-    python tests/[pfad]/[file].py
+    pytest tests/[pfad]/[file].py -v
 """
 ```
 
 ### Key Rules
-- **Redundancy is Required**: The metadata must exist in both the `#` comments (for the UI) and the docstring (for documentation).
-- **Exact Field Names**: Use the exact names (KATEGORIE, ZWECK, etc.) and underlines (`-------`) as shown.
-- **Shebang**: Always include the shebang and UTF-8 encoding.
+## E2E Test Header Convention
 
-## Testskript-Header-Konvention
+E2E tests must follow the same header standard, but add:
+- Kategorie: E2E Test
+- Eingabewerte: UI, Selenium, browser, etc.
+- Ausgabewerte: Screenshots, Log-Ausgaben, Fehler
+- Testdateien: E2E test scripts, reference screenshots
+- Startbefehl: pytest tests/e2e/test_[name].py -v
 
-Jedes Testskript muss einen standardisierten Header enthalten:
+## Audit Script Header Convention
 
-- Kategorie: (Testtyp, z.B. FFmpeg Transcoding Fix Test)
-- Eingabewerte: (relevante Dateien, Daten)
-- Ausgabewerte: (Ergebnisse, Log-Ausgaben)
-- Testdateien: (Name des Testskripts)
-- Kommentar: (kurze Beschreibung)
-- Startbefehl: (Kommando zum Ausführen, z.B. pytest tests/test_transcoding_fixed.py -v)
+Audit scripts must include:
+- Purpose and scope (DE/EN bilingual docstring)
+- Test directory (e.g., tests/)
+- Explicit list of included test file names (use 'File:' or 'Datei:' prefix for clarity)
+- Usage instructions (start command)
 
-Beispiel:
+Example header:
+```python
+#dict - Desktop Media Player and Library Manager
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Audit Script
+# Eingabewerte: [Dateien, Daten]
+# Ausgabewerte: [Ergebnisse, Log-Ausgaben]
+# Testdateien: [Dateien oder 'Keine']
+# ERWEITERUNGEN (TODO): [Checkliste]
+# KOMMENTAR: [Kurzer Kommentar oder Zweck]
+# VERWENDUNG: python tests/[pfad]/[file].py
 
-    # =============================================================================
-    # Kategorie: FFmpeg Transcoding Fix Test
-    # Eingabewerte: app_bottle.py, models.py, Logbuch 52
-    # Ausgabewerte: Transcoding-Status, Fehlerbehandlung, Log-Einträge
-    # Testdateien: test_transcoding_fixed.py
-    # Kommentar: Testet die Behebung des Transcoding-Bugs und Optimierung.
-    # Startbefehl: pytest tests/test_transcoding_fixed.py -v
-    # =============================================================================
+"""
+KATEGORIE:
+----------
+Audit Script
 
-Der Startbefehl muss immer im Header angegeben werden, um die Ausführung und CI-Integration zu erleichtern.
+ZWECK:
+------
+[Kurze Beschreibung des Audit-Zwecks]
+
+EINGABEWERTE:
+-------------
+- [Dateien, Daten]
+
+AUSGABEWERTE:
+-------------
+- [Ergebnisse, Log-Ausgaben]
+
+TESTDATEIEN:
+------------
+- [Dateien oder 'Keine']
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] [Zukünftiges Feature]
+
+VERWENDUNG:
+-----------
+    python tests/[pfad]/[file].py
+"""
+```
+
+
+
+## .md Documentation Naming Convention
+
+All .md documentation files must include 'dict - Desktop Media Player and Library Manager' as the first line for naming consistency and project identification.
+
+## Codebuch Entry Convention
+
+All codebook entries must include:
+- Required header line: `#dict - Desktop Media Player and Library Manager`
+- Shebang and UTF-8 encoding
+- Structured metadata fields (Kategorie, Eingabewerte, Ausgabewerte, Testdateien, ERWEITERUNGEN (TODO), KOMMENTAR, VERWENDUNG)
+- Bilingual docstring (DE/EN) describing purpose, scope, and usage
+- Reference: See logbuch/ItemType_Category_Map.md for detailed codebook entry requirements and examples
+
+Example header:
+```python
+#dict - Desktop Media Player and Library Manager
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Codebuch Entry
+# Eingabewerte: [Werte]
+# Ausgabewerte: [Ergebnisse]
+# Testdateien: [Dateien oder 'Keine']
+# ERWEITERUNGEN (TODO): [Checkliste]
+# KOMMENTAR: [Kurzer Kommentar oder Zweck]
+# VERWENDUNG: python codebuch/[pfad]/[file].py
+
+"""
+KATEGORIE:
+----------
+Codebuch Entry
+
+ZWECK:
+------
+[Kurze Beschreibung des Codebuch-Eintrags]
+
+EINGABEWERTE:
+-------------
+- [Wert 1]
+
+AUSGABEWERTE:
+-------------
+- [Ergebnis 1]
+
+TESTDATEIEN:
+------------
+- [Pfad oder 'Keine']
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] [Zukünftiges Feature]
+
+VERWENDUNG:
+-----------
+    python codebuch/[pfad]/[file].py
+"""
+```
 
 ## Zusätzliche Docstrings für Prosa-Erklärungen
 
@@ -196,3 +274,36 @@ Beispiel für .gitignore:
     *.deb
     *.exe
     *.whl
+
+## Test Header Style (Audit Scripts)
+
+All test audit scripts should include a standardized header with:
+- Purpose and scope (DE/EN bilingual docstring)
+- Test directory (e.g., tests/)
+- Explicit list of included test file names (use 'File:' or 'Datei:' prefix for clarity)
+- Usage instructions
+
+Example header:
+"""
+Test Header/Docstring Audit
+
+Checks for missing standardized headers and Google-style bilingual docstrings in test files listed in the GUI overview.
+
+Test Directory: tests/
+File / Datei:
+- test_abase.py
+- test_bplayer.py
+- test_debug_and_db.py
+- test_library.py
+- test_modals.py
+- test_options.py
+- test_playlist.py
+- test_teststab.py
+- test_videoplayer.py
+# Add more as needed...
+
+Usage:
+    python tests/check_missing_test_headers.py
+"""
+
+Update all audit scripts to follow this header pattern for easier test discovery and maintainability.

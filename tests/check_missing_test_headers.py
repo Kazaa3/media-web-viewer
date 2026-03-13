@@ -1,19 +1,43 @@
-# Test Header/Docstring Audit
 
-This script checks for missing standardized headers and Google-style bilingual docstrings in test files listed in the GUI overview.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Test Header Audit
+# Eingabewerte: test python files
+# Ausgabewerte: Liste fehlender Header/Docstrings
+# Testdateien: tests/*.py
+# ERWEITERUNGEN (TODO): [ ] Automatische Korrektur fehlender Header
+# KOMMENTAR: Prüft Style-Guide-konforme Header und Docstrings in Testdateien
+# VERWENDUNG: python tests/check_missing_test_headers.py
 
-## Usage
-Run this script from the project root:
+"""
+KATEGORIE:
+----------
+Test Header Audit
 
-```bash
-python tests/check_missing_test_headers.py
-```
+ZWECK:
+------
+Prüft, ob Testdateien den Style-Guide-konformen Header und bilingualen Docstring enthalten.
 
-## What it does
-- Scans the listed test files for header/docstring patterns.
-- Prints a list of files missing documentation.
+EINGABEWERTE:
+-------------
+- tests/*.py
 
----
+AUSGABEWERTE:
+-------------
+- Liste der Dateien mit fehlendem Header/Docstring
+
+TESTDATEIEN:
+------------
+- tests/*.py
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Automatische Korrektur fehlender Header
+
+VERWENDUNG:
+-----------
+    python tests/check_missing_test_headers.py
+"""
 
 import os
 import re
