@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# =============================================================================
 # Kategorie: Startup Variants Test
-# Eingabewerte: Various startup flags
-# Ausgabewerte: Startup behavior validation
-# Testdateien: Keine
-# Kommentar: Testet verschiedene Startup-Varianten.
+# Eingabewerte: Startup-Flags, Session-Parameter
+# Ausgabewerte: Startup-Verhalten, Session-Status
+# Testdateien: test_startup_variants.py
+# Kommentar: Testet verschiedene Startup-Varianten und Session-Management.
+# Startbefehl: python tests/test_startup_variants.py
+# =============================================================================
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """

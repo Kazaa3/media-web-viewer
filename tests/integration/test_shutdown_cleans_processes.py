@@ -1,3 +1,11 @@
+# =============================================================================
+# Kategorie: Shutdown Process Cleanup Test
+# Eingabewerte: src/core/main.py, process_manager
+# Ausgabewerte: Prozess-Cleanup, API-Aufrufe
+# Testdateien: test_shutdown_cleans_processes.py
+# Kommentar: Testet, ob beim Shutdown alle Prozesse korrekt aufgeräumt werden.
+# Startbefehl: pytest tests/test_shutdown_cleans_processes.py -v
+# =============================================================================
 import importlib
 import sys
 import types

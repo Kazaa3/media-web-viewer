@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Kategorie: FFprobe Duration Extraction
-# Eingabewerte: media/01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a
-# Ausgabewerte: FFprobe duration in Sekunden
-# Testdateien: media/01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a
-# Kommentar: Testet FFprobe Stream-Duration-Extraktion aus M4A-Datei (subprocess mit Timeout, Error Handling).
+# Kategorie: FFprobe Duration Extraction Test
+# Eingabewerte: media/01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a, FFprobe-Parameter
+# Ausgabewerte: Dauer in Sekunden, Fehlerbehandlung
+# Testdateien: test_stream.py
+# Kommentar: Testet FFprobe Stream-Duration-Extraktion aus M4A-Datei.
+# Startbefehl: python tests/test_stream.py
+# =============================================================================
 """
 ================================================================================
 FFprobe Duration Extraction Test - Media Web Viewer

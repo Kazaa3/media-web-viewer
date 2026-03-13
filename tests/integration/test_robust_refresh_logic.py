@@ -1,10 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# =============================================================================
 # Kategorie: GUI / Frontend-Backend Integration Test
-# Eingabewerte: Backend API (eel expoased functions)
-# Ausgabewerte: Logic consistency results
-# Testdateien: Temporary .md files in logbuch/
-# Kommentar: Verifies logic for robust refreshes and cross-tab consistency.
+# Eingabewerte: Backend API (eel exposed functions), logbuch/*.md
+# Ausgabewerte: Logik-Konsistenz, Metadaten, Directory-Scan
+# Testdateien: test_robust_refresh_logic.py
+# Kommentar: Testet robuste Refresh-Logik und Cross-Tab-Konsistenz.
+# Startbefehl: python tests/test_robust_refresh_logic.py
+# =============================================================================
+"""
+GUI / Frontend-Backend Integration Test Suite (DE/EN)
+=====================================================
+
+DE:
+Testet die Backend-Logik für robuste GUI-Refreshes und Cross-Tab-Konsistenz.
+
+EN:
+Tests backend logic for robust GUI refreshes and cross-tab consistency.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import unittest
 import os
@@ -18,8 +35,11 @@ import src.core.main as main
 
 class TestRobustRefreshLogic(unittest.TestCase):
     """
-    @brief Tests for verifying the backend logic that supports robust GUI refreshes.
-    @details Ensures that data is correctly returned and state is consistent after modifications.
+    DE:
+    Testet die Backend-Logik für Refreshes und Metadaten-Konsistenz.
+
+    EN:
+    Tests backend logic for refreshes and metadata consistency.
     """
 
     def setUp(self):
