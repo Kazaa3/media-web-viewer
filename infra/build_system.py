@@ -15,7 +15,6 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-import monitor_utils  # type: ignore
 import sys
 import os
 import platform
@@ -33,6 +32,8 @@ ROOT_PATH = Path(__file__).resolve().parent.parent
 SCRIPTS_PATH = ROOT_PATH / "scripts"
 if str(SCRIPTS_PATH) not in sys.path:
     sys.path.append(str(SCRIPTS_PATH))
+
+import monitor_utils  # type: ignore
 
 
 def print_status(message: str, category: str = "INFO"):
@@ -56,6 +57,7 @@ class BuildSystem:
         "tests/integration/category/ui/test_installed_packages_ui.py",
         "tests/integration/basic/env/test_environment_packages_fallback.py",
         "tests/integration/category/ui/test_ui_session_stability.py",
+        "tests/integration/category/git/test_git_guard.py",
     ]
 
     TEST_TIERS = {
@@ -751,7 +753,7 @@ class BuildSystem:
 
         print("▶ Step 1/4: Version synchronization check")
         if not self._run_command(
-                [sys.executable, "tests/test_version_sync.py"]):
+                [sys.executable, "tests/integration/test_version_sync.py"]):
             print("\n❌ Version sync failed")
             return False
 
@@ -764,7 +766,7 @@ class BuildSystem:
 
         print("▶ Step 3/4: Reinstall validation (safe)")
         if not self._run_command(
-                [sys.executable, "tests/test_reinstall_deb.py"]):
+                [sys.executable, "tests/e2e/install/test_reinstall_deb.py"]):
             print("\n❌ Reinstall validation failed")
             return False
 
@@ -774,7 +776,7 @@ class BuildSystem:
                 "bash",
                 "-lc",
                 f"RUN_DESTRUCTIVE_TESTS=1 {
-                    sys.executable} tests/test_reinstall_deb.py"]
+                    sys.executable} tests/e2e/install/test_reinstall_deb.py"]
             if not self._run_command(cmd):
                 print("\n❌ Destructive reinstall validation failed")
                 return False
@@ -925,6 +927,12 @@ def main():
     )
 
     parser.add_argument(
+        "--test-gate",
+        action="store_true",
+        help="Run targeted pre-build gate tests"
+    )
+
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose output"
@@ -957,6 +965,9 @@ def main():
 
     if args.lint:
         success = build_sys.run_linter() and success
+
+    if args.test_gate:
+        success = build_sys.run_build_test_gate(verbose=args.verbose) and success
 
     if args.type_check:
         success = build_sys.run_type_check() and success

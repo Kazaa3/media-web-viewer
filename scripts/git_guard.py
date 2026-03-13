@@ -52,15 +52,36 @@ def check_file_sizes(files):
             
     return too_big, warnings
 
+def check_directory(directory_path):
+    """Recursively check all files in a directory for their size."""
+    p = Path(directory_path)
+    if not p.exists() or not p.is_dir():
+        print(f"❌ Pfad {directory_path} existiert nicht oder ist kein Verzeichnis.")
+        return []
+        
+    return [str(f) for f in p.rglob("*") if f.is_file()]
+
 def main():
-    print("🛡️ Git Guard: Prüfe Dateigrößen...")
-    staged = get_staged_files()
+    import argparse
+    parser = argparse.ArgumentParser(description="🛡️ Git Guard: Verhindert zu große Commits.")
+    parser.add_argument("--dir", help="Prüfe ein spezifisches Verzeichnis statt Git Staged Files.")
+    args = parser.parse_args()
+
+    if args.dir:
+        print(f"🛡️ Git Guard: Prüfe Verzeichnis {args.dir}...")
+        files = check_directory(args.dir)
+    else:
+        print("🛡️ Git Guard: Prüfe Git Staged Files...")
+        files = get_staged_files()
     
-    if not staged:
-        print("✅ Keine Dateien zum Prüfen vorgemerkt.")
+    if not files:
+        if args.dir:
+            print("✅ Verzeichnis ist leer oder enthält keine Dateien.")
+        else:
+            print("✅ Keine Dateien zum Prüfen vorgemerkt.")
         return
 
-    too_big, warnings = check_file_sizes(staged)
+    too_big, warnings = check_file_sizes(files)
     
     if warnings:
         print("\n⚠️  WARNHINWEIS (Große Dateien):")
@@ -75,7 +96,7 @@ def main():
         sys.exit(1)
     
     if not warnings and not too_big:
-        print(f"✅ Alle {len(staged)} Dateien sind innerhalb der Limits.")
+        print(f"✅ Alle {len(files)} Dateien sind innerhalb der Limits.")
 
 if __name__ == "__main__":
     main()

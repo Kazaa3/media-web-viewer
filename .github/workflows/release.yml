@@ -32,10 +32,10 @@ jobs:
           pip install -r infra/requirements-selenium.txt
       - name: Run Tech & Basic Tests
         run: |
-          PYTHONPATH=. pytest tests/tech/ tests/basic/ -v
+          PYTHONPATH=. pytest tests/integration/category/tech/ tests/integration/category/basic/ -v
       - name: Run UI Tests (Headless)
         run: |
-          PYTHONPATH=. xvfb-run -a pytest tests/selenium/pages/ -v
+          PYTHONPATH=. xvfb-run -a pytest tests/e2e/selenium/ -v
 
   build-linux:
     needs: validation
