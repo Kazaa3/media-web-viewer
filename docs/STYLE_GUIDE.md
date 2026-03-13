@@ -180,3 +180,19 @@ Beispiel:
         # ...existing code...
 
 Die Funktions-Docstrings sind von den prosaartigen Modul-Docstrings und dem Header getrennt und müssen für jede Testfunktion vorhanden sein.
+
+## Build-Artefakte und CI/CD
+
+- Build-Artefakte (z.B. .deb, .exe, .whl) sollen immer in build/ oder dist/ abgelegt werden.
+- Der Projekt-Root darf keine Build-Artefakte enthalten.
+- Die Verzeichnisse build/ und dist/ sowie alle Artefakte (*.deb, *.exe, *.whl) müssen in .gitignore eingetragen werden.
+- Nur Quellcode und Dokumentation werden im Git-Repository versioniert.
+- Artefakte werden über CI/CD (z.B. GitHub Releases) bereitgestellt, nicht im Git-Repo.
+
+Beispiel für .gitignore:
+
+    build/
+    dist/
+    *.deb
+    *.exe
+    *.whl

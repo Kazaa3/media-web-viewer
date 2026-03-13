@@ -8,14 +8,7 @@ PACKAGE_NAME="media-web-viewer"
 VERSION=$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")
 ARCH="amd64"
 DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
-# Search for .deb in root and build/
-if [ -f "$ROOT_DIR/$DEB_NAME" ]; then
-    DEB_PATH="$ROOT_DIR/$DEB_NAME"
-elif [ -f "$ROOT_DIR/build/$DEB_NAME" ]; then
-    DEB_PATH="$ROOT_DIR/build/$DEB_NAME"
-else
-    DEB_PATH=""
-fi
+DEB_PATH="$ROOT_DIR/$DEB_NAME"
 
 echo "==> Media Web Viewer Reinstall Script"
 echo "    Version: $VERSION"
@@ -23,7 +16,7 @@ echo "    Package: $DEB_NAME"
 echo ""
 
 # Check if .deb file exists
-if [ -z "$DEB_PATH" ] || [ ! -f "$DEB_PATH" ]; then
+if [ ! -f "$DEB_PATH" ]; then
     echo "❌ Error: $DEB_NAME not found!"
     echo "   Please run ./build_deb.sh first."
     exit 1

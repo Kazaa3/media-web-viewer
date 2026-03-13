@@ -38,6 +38,25 @@ Heute wurden keine Änderungen gemerged – alle Änderungen sind nur lokal vorh
    git remote get-url origin
    ```
 
+## Problem mit großen Dateien (.deb, .exe, .whl)
+
+GitHub akzeptiert keine Dateien >100 MB (z.B. .deb, .exe, .whl). Wenn der Push fehlschlägt:
+
+- Prüfe mit `git status` und `git ls-files` ob große Dateien getrackt sind.
+- Entferne sie aus dem Git-Index:
+  ```bash
+  git rm --cached <dateiname>
+  git commit -m "Remove large build artifacts from tracking"
+  git push
+  ```
+- Füge build/ und dist/ sowie *.deb, *.exe, *.whl in `.gitignore` ein.
+- Wenn die Dateien in der Historie sind, nutze `git filter-repo` oder `BFG Repo-Cleaner`:
+  - [BFG Repo-Cleaner Anleitung](https://rtyley.github.io/bfg-repo-cleaner/)
+  - [git filter-repo Anleitung](https://github.com/newren/git-filter-repo)
+
+**Hinweis:**
+Nur Quellcode und Dokumentation gehören ins Git-Repo. Build-Artefakte werden über CI/CD bereitgestellt.
+
 ## Typische Fehler
 
 - `fatal: not a git repository`
