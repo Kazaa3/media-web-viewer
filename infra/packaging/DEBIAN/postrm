@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+# Pass parameters to the script
+# $1 is the action (purge, remove, upgrade, etc.)
+
+APP_DIR="/opt/media-web-viewer"
+
+if [ "$1" = "purge" ]; then
+    echo "Purging Media Web Viewer data..."
+    # Remove everything in /opt/media-web-viewer
+    if [ -d "$APP_DIR" ]; then
+        rm -rf "$APP_DIR"
+        echo "Removed $APP_DIR"
+    fi
+    
+    # Remove launcher if it was installed by install_launcher.sh or similar
+    if [ -f "/usr/local/bin/media-web-viewer" ]; then
+        rm -f "/usr/local/bin/media-web-viewer"
+    fi
+fi
+
+exit 0

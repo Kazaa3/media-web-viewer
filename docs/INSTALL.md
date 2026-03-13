@@ -132,7 +132,7 @@ open MediaWebViewer.app
 
 ---
 
-### Method 3: From Source with Virtual Environment
+### Method 3: From Source with Virtual Environment (⭐ Recommended)
 
 **Clone Repository:**
 
@@ -168,7 +168,7 @@ bash install_launcher.sh
 
 ---
 
-### Method 4: Conda Environment
+### Method 4: Conda Environment (Alternative / Legacy)
 
 **Create Environment:**
 

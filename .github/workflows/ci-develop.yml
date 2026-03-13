@@ -1,0 +1,45 @@
+name: Develop CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  tier-1-2-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r infra/requirements-test.txt
+
+      - name: Run Tier 1 (Unit) Tests
+        run: |
+          PYTHONPATH=. python infra/build_system.py --test unit -v
+
+      - name: Run Tier 2 (Integration) Tests
+        run: |
+          PYTHONPATH=. python infra/build_system.py --test integration -v
+
+      - name: Build Debian Package (Validation)
+        run: |
+          PYTHONPATH=. python infra/build_system.py --build deb --monitor --skip-build-gate
+
+      - name: Cleanup build artifacts
+        run: |
+          PYTHONPATH=. python infra/build_system.py --clean-all

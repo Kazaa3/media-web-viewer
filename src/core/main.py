@@ -701,7 +701,7 @@ def get_environment_info(force_refresh=False):
                                     timeout=1
                                 )
                                 version = v_result.stdout.strip() or v_result.stderr.strip()
-                                is_recommended = env_name == "p14"
+                                is_recommended = False
                                 
                                 environments.append({
                                     "name": env_name,
@@ -1152,7 +1152,7 @@ def get_environment_info(force_refresh=False):
             "name": "venv_core",
             "type": "venv",
             "python_version": "3.14.2",
-            "reason": "Lokale venv empfohlen: stabil, unabhängig von Anaconda"
+            "reason": "Eigene venv für main.py empfohlen"
         }
     }
 

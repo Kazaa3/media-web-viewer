@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 import re
 import os
 import json
 
-def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> str:
+def detect_file_format(path: Optional[Path | str], tags: Optional[dict[str, Any]] = None) -> str:
     """
     @brief Determines the standardized file format for a given media file.
     @details Unterscheidet und standardisiert das Dateiformat je nach Typ (Audio, Video, ISO, etc.).
@@ -80,9 +80,9 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
         # Try to detect content (PAL DVD, Blu-ray, etc.)
         try:
             size_gb = 0.0
-            if path.exists():
+            if path_obj.exists():
                 try:
-                    size_gb = os.path.getsize(path) / (1024**3)
+                    size_gb = os.path.getsize(str(path_obj)) / (1024**3)
                 except (OSError, PermissionError):
                     size_gb = 0.0
         except Exception:
@@ -422,17 +422,19 @@ def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
 
 # Extension Categories
 AUDIO_EXTENSIONS = {
-    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b', '.aiff'
+    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b', '.aiff',
+    '.ac3', '.mka', '.dts', '.dtshd', '.mka', '.pcm', '.ra', '.rm'
 }
 VIDEO_EXTENSIONS = {
     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
-    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.ts'
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.ts',
+    '.m2t', '.m2v', '.divx', '.xvid', '.vob', '.dat', '.rmvb', '.asf'
 }
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
 }
 DISK_IMAGE_EXTENSIONS = {
-    '.iso', '.bin', '.img', '.cue', '.nrg', '.mdf'
+    '.iso', '.bin', '.img', '.cue', '.nrg', '.mdf', '.toast', '.ccd', '.daa'
 }
 EBOOK_EXTENSIONS = {
     '.epub', '.mobi', '.azw', '.fb2'
@@ -515,7 +517,7 @@ def format_container(raw_container: Any, file_type: str | None = None) -> str:
     container = str(raw_container).lower().strip() if raw_container else ""
 
     if not container and file_type:
-        container = file_type[1:].lower() if file_type else ""
+        container = file_type[1:].lower()
 
     # Handle ambiguous FFmpeg container outputs
     if container == 'matroska,webm':
@@ -536,7 +538,7 @@ def format_container(raw_container: Any, file_type: str | None = None) -> str:
 
     # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
     if container in ('id3', 'wav') and file_type:
-        return file_type[1:].lower() if file_type else ""
+        return file_type[1:].lower()
 
     return container_map.get(container, container)
 

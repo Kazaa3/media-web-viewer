@@ -1,36 +1,42 @@
-name: CI Artifacts
+name: Main CI / Release Gate
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
-
-permissions:
-  contents: read
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  build-linux-artifacts:
+  full-validation:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg mediainfo
+          sudo apt-get install -y ffmpeg mediainfo xvfb firefox-geckodriver
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r infra/requirements-test.txt
+          pip install -r infra/requirements-selenium.txt
           pip install pyinstaller
 
-      - name: Build and Package (Linux)
+      - name: Run All Test Tiers (including E2E)
         run: |
-          ./.venv_build/bin/python infra/build_system.py --build all --monitor --skip-build-gate
+          PYTHONPATH=. xvfb-run -a python infra/build_system.py --test all -v
+
+      - name: Build Artifacts
+        run: |
+          PYTHONPATH=. python infra/build_system.py --build all --monitor --skip-build-gate
 
       - name: Upload Linux executable
         uses: actions/upload-artifact@v4

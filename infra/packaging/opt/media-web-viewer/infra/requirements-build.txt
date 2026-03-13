@@ -1,4 +1,0 @@
-# Media Web Viewer - Build & Packaging Dependencies
--r requirements-core.txt
-pyinstaller>=6.0.0
-wheel>=0.42.0

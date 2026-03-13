@@ -1,3 +1,0 @@
-# Media Web Viewer - Main Dependencies
-# This file is kept for compatibility and redirects to the core requirements.
--r requirements-core.txt

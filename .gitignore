@@ -42,8 +42,12 @@ MANIFEST
 *.manifest
 *.deb
 *.deb.*
-packaging/opt/
+packaging/opt/*
 !packaging/opt/.gitkeep
+infra/packaging/opt/*
+!infra/packaging/opt/.gitkeep
+**/pkg/
+**/deb_staging/
 
 # --- Project Specifics ---
 
@@ -143,12 +147,13 @@ docs/_build/
 site/
 
 # --- Remove old/legacy specific files ---
-reinstall_deb.sh
-performance_test.py
-update_version.py
-build_deb.sh
-build_exe.sh
-build_system.py
-create_mocks.py
-check_environment.py
-VERSION_SYNC.json
+# (Ensure these don't clash with files in infra/ or scripts/)
+/reinstall_deb.sh
+/performance_test.py
+/update_version.py
+/build_deb.sh
+/build_exe.sh
+/build_system.py
+/create_mocks.py
+/check_environment.py
+/VERSION_SYNC.json

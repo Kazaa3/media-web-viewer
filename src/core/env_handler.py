@@ -168,10 +168,8 @@ class EnvironmentManager:
         if in_venv and current_prefix == expected_prefix:
             return True
             
-        # Fallback for active Conda environments if they are named p14 (as per user setup)
-        conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+        # Fallback for active Conda environments (considered legacy)
         if self.is_conda():
-            # If it's a conda env, we allow it (e.g., p14)
             return True
             
         return False
@@ -291,7 +289,14 @@ class EnvironmentManager:
         if self.is_debug:
             logging.debug(f"[{header}] Fingerprint: {self.get_environment_fingerprint()}")
 
-        # 1. Check exclusivity
+        # 1. Check exclusivity and environment type
+        is_conda = self.is_conda()
+        if is_conda:
+            logging.warning(
+                "[%s] Conda environment detected. Switching to 'venv_core' is recommended for maximum stability and independence.",
+                header
+            )
+
         if not self.is_exclusive_venv():
             msg = (
                 "Unsafe startup detected: Application is not running in an exclusive environment.\n"

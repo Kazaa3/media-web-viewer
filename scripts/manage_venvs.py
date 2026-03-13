@@ -129,6 +129,15 @@ class VenvManager:
         except Exception:
             return []
 
+    def clean_fragments(self):
+        """Clean temporary build/test fragments if any exist."""
+        fragments = [ROOT / "build" / "deb_staging", ROOT / "tests" / "__pycache__"]
+        for frag in fragments:
+            if frag.exists():
+                print_status(f"Cleaning fragment: {frag}", "PROCESS")
+                if frag.is_file(): frag.unlink()
+                else: shutil.rmtree(frag)
+
     def show_status(self, detailed: bool = False):
         """Show status of all venvs."""
         print("\n" + "="*40)
@@ -157,7 +166,8 @@ class VenvManager:
                         ver_ok = False
                 except: pass
 
-            print(f"- {name:15} : {status} ({py_ver})")
+            rec_tag = " ⭐ RECOMMENDED" if name == ".venv_core" else ""
+            print(f"- {name:15} : {status} ({py_ver}){rec_tag}")
             
             if detailed and exists:
                 packages = self.get_installed_packages(name)
