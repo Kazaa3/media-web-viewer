@@ -119,6 +119,7 @@ docs/Screens/
 # We keep these folders and their contents (unless matched above)
 !src/
 !web/
+src/core/logs/
 !infra/
 !docs/
 !scripts/

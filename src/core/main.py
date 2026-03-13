@@ -900,11 +900,28 @@ def get_environment_info(force_refresh=False):
         except Exception:
             pymediainfo_available = False
 
+        mediainfo_cli_version = None
+        if cli_path:
+            try:
+                result = subprocess.run(
+                    [cli_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (result.stdout or "").splitlines()[0] if result.stdout else ""
+                match = re.search(r"MediaInfo Lib v(\S+)", first_line)
+                mediainfo_cli_version = match.group(1) if match else None
+            except Exception:
+                mediainfo_cli_version = None
+
         return {
             "pymediainfo_available": pymediainfo_available,
             "pymediainfo_version": pymediainfo_version,
             "mediainfo_cli_available": bool(cli_path),
             "mediainfo_cli_path": cli_path,
+            "mediainfo_cli_version": mediainfo_cli_version,
         }
 
     def _get_runtime_tools_status():
@@ -912,7 +929,9 @@ def get_environment_info(force_refresh=False):
         ffprobe_path = shutil.which("ffprobe")
         vlc_cli_path = shutil.which("vlc")
         mkvinfo_path = shutil.which("mkvinfo")
+        mkvmerge_path = shutil.which("mkvmerge")
         mkvinfo_version = None
+        mkvmerge_version = None
         python_mkv_available = False
         python_mkv_version = None
         try:
@@ -935,6 +954,21 @@ def get_environment_info(force_refresh=False):
                 mkvinfo_version = match.group(1) if match else None
             except Exception:
                 mkvinfo_version = None
+        if mkvmerge_path:
+            try:
+                mkvmerge_result = subprocess.run(
+                    [mkvmerge_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (mkvmerge_result.stdout or "").splitlines()[0] if mkvmerge_result.stdout else ""
+                match = re.search(r"mkvmerge v(\S+)", first_line)
+                mkvmerge_version = match.group(1) if match else None
+            except Exception:
+                mkvmerge_version = None
+
         browser_candidates = [
             ("google-chrome", "google-chrome"),
             ("google-chrome-stable", "google-chrome-stable"),
@@ -1043,6 +1077,9 @@ def get_environment_info(force_refresh=False):
             "mkvinfo_cli_available": bool(mkvinfo_path),
             "mkvinfo_cli_path": mkvinfo_path,
             "mkvinfo_cli_version": mkvinfo_version,
+            "mkvmerge_cli_available": bool(mkvmerge_path),
+            "mkvmerge_cli_path": mkvmerge_path,
+            "mkvmerge_cli_version": mkvmerge_version,
             "python_mkv_available": python_mkv_available,
             "python_mkv_version": python_mkv_version,
             "browser_available": bool(browser_path),
@@ -1057,6 +1094,7 @@ def get_environment_info(force_refresh=False):
             "mutagen_available": mutagen_available,
             "mutagen_version": mutagen_version,
         }
+
 
 
 
