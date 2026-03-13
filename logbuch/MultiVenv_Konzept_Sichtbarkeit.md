@@ -57,3 +57,16 @@ Vorteile:
 ---
 
 **Letzte Aktualisierung:** 13. März 2026
+
+
+## Erweiterung: venv dev2
+
+Um die Multi-Venv-Strategie weiter auszubauen, wird die Einführung einer zusätzlichen Entwicklungsumgebung 'venv_dev2' empfohlen:
+- Zweck: Separate Entwicklungs-/Testumgebung für experimentelle Features oder parallele Entwicklung.
+- Statusanzeige: get_venv_summary() und UI sollten auch 'venv_dev2' berücksichtigen (vorhanden/nicht vorhanden/geplant).
+- Dokumentation: Rolle und Nutzung von 'venv_dev2' in TECH_STACK.md und DOCUMENTATION.md ergänzen.
+- CLI/Helper: Automatisierte Checks und Umschaltung zwischen venv_dev2 und anderen Umgebungen ermöglichen.
+
+Vorteile:
+- Parallele Entwicklung ohne Risiko für Hauptumgebung.
+- Bessere Testbarkeit und Flexibilität.
