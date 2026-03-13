@@ -100,7 +100,7 @@ def list_logbooks(root, search=None):
     for f in files:
         if search and search.lower() not in f.name.lower():
             continue
-        
+
         # Try to extract the first line as a title
         title = ""
         try:
