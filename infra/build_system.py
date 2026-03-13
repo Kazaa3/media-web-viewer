@@ -596,7 +596,7 @@ class BuildSystem:
             # Determine if we should use monitoring
             # monitor = kwargs.get("monitor", False)
 
-            cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
+            cmd = ["bash", "-lc", f"BRANCH={self.branch} SKIP_BUILD_TESTS=1 bash '{build_script}'"]
             success = self._run_command(cmd, monitor=monitor, hang_timeout=600)
 
             if success:

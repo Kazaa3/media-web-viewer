@@ -27,7 +27,8 @@ except ImportError:
     from src.parsers import media_parser
 
 BASELINE_DIR = PROJECT_ROOT / "tests" / "artifacts" / "baseline"
-REPORT_DIR = PROJECT_ROOT / "tests" / "artifacts" / "reports"
+# Allow override from environment (BuildSystem)
+REPORT_DIR = Path(os.getenv("PERF_REPORT_DIR", str(PROJECT_ROOT / "tests" / "artifacts" / "reports")))
 BASELINE_FILE = BASELINE_DIR / "parser_benchmark_results.json"
 
 PARSER_CONFIG = {
