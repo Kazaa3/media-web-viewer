@@ -1149,10 +1149,10 @@ def get_environment_info(force_refresh=False):
         
         # Recommendations
         "recommended_environment": {
-            "name": "p14",
-            "type": "conda",
+            "name": "venv_core",
+            "type": "venv",
             "python_version": "3.14.2",
-            "reason": "Latest stable Python release for dict"
+            "reason": "Lokale venv empfohlen: stabil, unabhängig von Anaconda"
         }
     }
 
