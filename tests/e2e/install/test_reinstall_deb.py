@@ -4,20 +4,19 @@
 # Eingabewerte: .deb-Paket, build_deb.sh, reinstall_deb.sh
 # Ausgabewerte: Installationsstatus, Paketstruktur, Version
 # Testdateien: build/*.deb
-# Kommentar: Testet DEB-Package-Reinstallation und Validierung.
+# ERWEITERUNGEN (TODO): [ ] Integration in CI/CD, [ ] Abhängigkeitsprüfung
+# KOMMENTAR: Testet DEB-Package-Reinstallation und Validierung.
+# VERWENDUNG: python3 tests/e2e/install/test_reinstall_deb.py
+
 """
-DEB Reinstall Test Suite (DE/EN)
-================================
-
-DE:
-Testet den Reinstall-Workflow für .deb-Pakete, inklusive Version, Struktur und Installation.
-
-EN:
-Tests the reinstall workflow for .deb packages, including version, structure, and installation.
-
-Autor/Author: Media Web Viewer Team
-Erstellt/Created: 2026-03-13
-Version: 1.0.0
+KATEGORIE: DEB Reinstall Test
+ZWECK: Testet den Reinstall-Workflow für .deb-Pakete, inklusive Version, Struktur und Installation.
+EINGABEWERTE: .deb-Paket, build_deb.sh, reinstall_deb.sh
+AUSGABEWERTE: Installationsstatus, Paketstruktur, Version
+TESTDATEIEN: build/*.deb
+ERWEITERUNGEN (TODO): [ ] Integration in CI/CD, [ ] Abhängigkeitsprüfung
+KOMMENTAR: Testet DEB-Package-Reinstallation und Validierung.
+VERWENDUNG: python3 tests/e2e/install/test_reinstall_deb.py
 """
 
 import subprocess

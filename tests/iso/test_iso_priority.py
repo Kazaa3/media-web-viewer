@@ -7,19 +7,16 @@
 # ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere Formate, [ ] Fehlerfall-Tests
 # KOMMENTAR: Testet die Priorität von pycdlib und isoparser.
 # VERWENDUNG: python3 tests/iso/test_iso_priority.py
+
 """
-ISO Parser Priority Test Suite (DE/EN)
-======================================
-
-DE:
-Testet die Priorität von pycdlib und isoparser für ISO-Dateien.
-
-EN:
-Tests priority of pycdlib and isoparser for ISO files.
-
-Autor/Author: Media Web Viewer Team
-Erstellt/Created: 2026-03-13
-Version: 1.0.0
+KATEGORIE: ISO / Parser / Priority
+ZWECK: Testet die Priorität von pycdlib und isoparser für ISO-Dateien im Parser-Modul.
+EINGABEWERTE: src/parsers/media_parser.py, src/parsers/format_utils.py
+AUSGABEWERTE: Validierung der Parser-Priorität für ISO-Dateien
+TESTDATEIEN: src/parsers/media_parser.py, src/parsers/format_utils.py
+ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere Formate, [ ] Fehlerfall-Tests
+KOMMENTAR: Testet die Priorität von pycdlib und isoparser.
+VERWENDUNG: python3 tests/iso/test_iso_priority.py
 """
 
 import unittest

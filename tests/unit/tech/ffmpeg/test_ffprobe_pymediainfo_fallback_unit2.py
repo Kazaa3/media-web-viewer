@@ -4,18 +4,20 @@
 # Eingabewerte: src/parsers/ffprobe_parser.py, ffprobe, pymediainfo
 # Ausgabewerte: Validierung Fallback-Logik und Parser-Ergebnis
 # Testdateien: src/parsers/ffprobe_parser.py
-# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Parser, [ ] Fallback-Logik für weitere Formate
+# ERWEITERUNGEN (TODO): [ ] Mocking für weitere Parser, [ ] Fallback-Logik für weitere Formate
 # KOMMENTAR: Testet die Fallback-Logik von ffprobe auf pymediainfo.
 # VERWENDUNG: pytest tests/unit/tech/ffmpeg/test_ffprobe_pymediainfo_fallback_unit2.py
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Kategorie: Unit / FFMPEG / Fallback
-# Eingabewerte: src/parsers/ffprobe_parser.py, ffprobe, pymediainfo
-# Ausgabewerte: Validierung Fallback-Logik und Parser-Ergebnis
-# Testdateien: src/parsers/ffprobe_parser.py
-# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Parser, [ ] Fallback-Logik für weitere Formate
-# KOMMENTAR: Testet die Fallback-Logik von ffprobe auf pymediainfo.
-# VERWENDUNG: pytest tests/unit/tech/ffmpeg/test_ffprobe_pymediainfo_fallback_unit2.py
+
+"""
+KATEGORIE: Unit / FFMPEG / Fallback
+ZWECK: Testet die Fallback-Logik von ffprobe auf pymediainfo im Parser-Modul.
+EINGABEWERTE: src/parsers/ffprobe_parser.py, ffprobe, pymediainfo
+AUSGABEWERTE: Validierung Fallback-Logik und Parser-Ergebnis
+TESTDATEIEN: src/parsers/ffprobe_parser.py
+ERWEITERUNGEN (TODO): [ ] Mocking für weitere Parser, [ ] Fallback-Logik für weitere Formate
+KOMMENTAR: Testet die Fallback-Logik von ffprobe auf pymediainfo.
+VERWENDUNG: pytest tests/unit/tech/ffmpeg/test_ffprobe_pymediainfo_fallback_unit2.py
+"""
 import importlib
 import sys
 import types
