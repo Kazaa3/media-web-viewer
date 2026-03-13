@@ -1,7 +1,8 @@
 # Tech Stack Quick Reference (dict)
 
 **Version:** 1.34  
-**Letzte Aktualisierung:** 10. März 2026
+**Letzte Aktualisierung:** 13. März 2026
+
 
 ## Produktiv-Stack
 
@@ -16,6 +17,11 @@
 - **pymediainfo** 7.0.1 (Detailed Info)
 - **ffprobe** (JSON Parser)
 - **ffmpeg** (Transcoding)
+
+### Monitoring & Infrastructure
+- **monitor_utils.py** (Watchdog System)
+- **psutil** (Process Management)
+
 
 ### Frontend
 - **Vanilla JavaScript** (ES6+)

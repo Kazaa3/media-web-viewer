@@ -28,6 +28,9 @@ python main.py
 - Database: SQLite (`media_library.db`)
 - Media Tooling: Mutagen, pymediainfo, FFmpeg
 - VLC Support: m3u8 (playlist import/export), python-vlc
+- 📦 **Venv Management**: Centralized logic for coordinated virtual environments.
+- 🔍 **Build Monitoring**: Integrated watchdog system for stable DEB and EXE builds.
+
 
 ## Startup Modes
 

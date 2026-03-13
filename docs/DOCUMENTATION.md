@@ -46,9 +46,12 @@ python tests/test_version_sync.py
 python build_system.py --pipeline
 ```
 
-### Release Notes (v)
+### Release Notes (v1.34)
 
 Highlights of this release:
+- **Build System Overhaul**: Integrated `monitor_utils.py` for watchdog-protected builds (DEB and EXE).
+- **Venv Management**: Standardized `manage_venvs.py` with support for specific Python versions (e.g., Core on 3.14).
+- **Performance Benchmarks**: New `--benchmarks` flag in `build_system.py` with validated transcoding and scanner tests.
 - Added automated CI/CD workflows for:
     - main-branch build artifacts (`ci-artifacts.yml`)
     - tagged binary releases (`release.yml`)
