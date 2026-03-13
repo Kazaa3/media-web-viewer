@@ -911,6 +911,30 @@ def get_environment_info(force_refresh=False):
         ffmpeg_path = shutil.which("ffmpeg")
         ffprobe_path = shutil.which("ffprobe")
         vlc_cli_path = shutil.which("vlc")
+        mkvinfo_path = shutil.which("mkvinfo")
+        mkvinfo_version = None
+        python_mkv_available = False
+        python_mkv_version = None
+        try:
+            import pymkv
+            python_mkv_available = True
+            python_mkv_version = getattr(pymkv, "__version__", None)
+        except Exception:
+            python_mkv_available = False
+        if mkvinfo_path:
+            try:
+                mkvinfo_result = subprocess.run(
+                    [mkvinfo_path, "--version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=2,
+                )
+                first_line = (mkvinfo_result.stdout or "").splitlines()[0] if mkvinfo_result.stdout else ""
+                match = re.search(r"mkvinfo v(\S+)", first_line)
+                mkvinfo_version = match.group(1) if match else None
+            except Exception:
+                mkvinfo_version = None
         browser_candidates = [
             ("google-chrome", "google-chrome"),
             ("google-chrome-stable", "google-chrome-stable"),
@@ -1016,6 +1040,11 @@ def get_environment_info(force_refresh=False):
             "ffprobe_cli_available": bool(ffprobe_path),
             "ffprobe_cli_path": ffprobe_path,
             "ffprobe_cli_version": ffprobe_version,
+            "mkvinfo_cli_available": bool(mkvinfo_path),
+            "mkvinfo_cli_path": mkvinfo_path,
+            "mkvinfo_cli_version": mkvinfo_version,
+            "python_mkv_available": python_mkv_available,
+            "python_mkv_version": python_mkv_version,
             "browser_available": bool(browser_path),
             "browser_name": browser_name,
             "browser_path": browser_path,

@@ -34,6 +34,7 @@ This file documents all .md files in the project, including logbuch and tests fo
 | ./logbuch/001_Copilot_Anweisungen_Kompendium.md |
 | ./logbuch/002_Logbuch_Header_StyleSheet.md |
 | ./logbuch/003_Robust_Anchor_Management.md |
+| ./logbuch/55_CI_CD_Integration_and_Build_Watchdog.md |
 | ./logbuch/01_Features.md |
 | ./logbuch/107_Default_Tab_Player.md |
 | ./logbuch/105_Selenium_404_Bug.md |

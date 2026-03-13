@@ -57,20 +57,9 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build Linux Executable
+      - name: Build and Package (Linux)
         run: |
-          chmod +x build_exe.sh
-          ./build_exe.sh
-
-      - name: Prepare Linux executable artifact
-        run: |
-          VERSION=$(tr -d '[:space:]' < VERSION)
-          cp dist/MediaWebViewer dist/MediaWebViewer-${VERSION}-Linux
-
-      - name: Build DEB Package
-        run: |
-          chmod +x build_deb.sh
-          ./build_deb.sh
+          ./.venv_build/bin/python infra/build_system.py --build all --monitor --skip-build-gate
 
       - name: Upload Linux Executable
         uses: actions/upload-artifact@v4
