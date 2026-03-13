@@ -543,6 +543,7 @@ class BuildSystem:
                 # Benchmarks can be heavy, use monitoring by default for them
                 env = os.environ.copy()
                 env["PYTHONPATH"] = str(self.root)
+                env["PERF_REPORT_DIR"] = str(self.reports_dir)
                 
                 # We capture output to avoid breaking the status bar
                 if not self._run_command([sys.executable, str(

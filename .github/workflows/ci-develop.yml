@@ -40,6 +40,13 @@ jobs:
         run: |
           PYTHONPATH=. python infra/build_system.py --build deb --monitor --skip-build-gate
 
+      - name: Upload Management Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: Management-Reports-develop
+          path: build/management_reports/
+          if-no-files-found: warn
+
       - name: Cleanup build artifacts
         run: |
           PYTHONPATH=. python infra/build_system.py --clean-all

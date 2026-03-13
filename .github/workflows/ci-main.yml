@@ -51,3 +51,10 @@ jobs:
           name: MediaWebViewer-DEB-main
           path: build/media-web-viewer_*_amd64.deb
           if-no-files-found: error
+
+      - name: Upload Management Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: Management-Reports-main
+          path: build/management_reports/
+          if-no-files-found: warn
