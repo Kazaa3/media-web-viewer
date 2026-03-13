@@ -52,6 +52,7 @@ The following items MUST NOT be pushed to the public repository:
 
 - **i18n**: All UI strings must be localized via `web/i18n.json`.
 - **Kebab-Case**: Use kebab-case for HTML IDs (`my-button-id`).
+
 ## 6. Test Script Header Standard
 
 ## 6. Test Script Header Standard
@@ -106,3 +107,76 @@ VERWENDUNG:
 - **Redundancy is Required**: The metadata must exist in both the `#` comments (for the UI) and the docstring (for documentation).
 - **Exact Field Names**: Use the exact names (KATEGORIE, ZWECK, etc.) and underlines (`-------`) as shown.
 - **Shebang**: Always include the shebang and UTF-8 encoding.
+
+## Testskript-Header-Konvention
+
+Jedes Testskript muss einen standardisierten Header enthalten:
+
+- Kategorie: (Testtyp, z.B. FFmpeg Transcoding Fix Test)
+- Eingabewerte: (relevante Dateien, Daten)
+- Ausgabewerte: (Ergebnisse, Log-Ausgaben)
+- Testdateien: (Name des Testskripts)
+- Kommentar: (kurze Beschreibung)
+- Startbefehl: (Kommando zum Ausführen, z.B. pytest tests/test_transcoding_fixed.py -v)
+
+Beispiel:
+
+    # =============================================================================
+    # Kategorie: FFmpeg Transcoding Fix Test
+    # Eingabewerte: app_bottle.py, models.py, Logbuch 52
+    # Ausgabewerte: Transcoding-Status, Fehlerbehandlung, Log-Einträge
+    # Testdateien: test_transcoding_fixed.py
+    # Kommentar: Testet die Behebung des Transcoding-Bugs und Optimierung.
+    # Startbefehl: pytest tests/test_transcoding_fixed.py -v
+    # =============================================================================
+
+Der Startbefehl muss immer im Header angegeben werden, um die Ausführung und CI-Integration zu erleichtern.
+
+## Zusätzliche Docstrings für Prosa-Erklärungen
+
+Neben dem Header und den Funktions-Dokumentationen kann ein zusätzlicher Docstring am Anfang des Skripts stehen, der prosaartige Erklärungen, Hintergrund, Motivation oder Teststrategie enthält.
+
+Dieser Docstring kann in Deutsch und Englisch verfasst werden und soll den Kontext, die Zielsetzung und Besonderheiten des Tests erläutern.
+
+Beispiel:
+
+    """
+    FFmpeg Transcoding Fix Test Suite (DE/EN)
+    =========================================
+    
+    DE:
+    Testet die Behebung des Transcoding-Bugs und die Optimierung der Parameter für FFmpeg und ALAC-Erkennung.
+    
+    EN:
+    Tests the fix for the transcoding bug and optimization of parameters for FFmpeg and ALAC detection.
+    
+    Motivation:
+        Dieser Test prüft, ob die Fehlerursache im Transcoding-Workflow behoben wurde und ob die neuen Parameter zu einer besseren Performance führen.
+    """
+
+## Funktions-Dokumentation: Google-Style, bilingual
+
+Jede Funktion im Testskript soll einen Google-Style Docstring enthalten, der sowohl Deutsch als auch Englisch umfasst.
+
+Der Docstring beschreibt Zweck, Parameter, Rückgabewerte und Fehlerfälle.
+
+Beispiel:
+
+    def test_ffmpeg_transcoding():
+        """
+        DE:
+        Testet die Transcodierung mit FFmpeg und prüft, ob die Parameter korrekt gesetzt sind.
+
+        EN:
+        Tests transcoding with FFmpeg and checks if parameters are set correctly.
+
+        Args:
+            Keine.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn die Transcodierung fehlschlägt.
+        """
+        # ...existing code...
+
+Die Funktions-Docstrings sind von den prosaartigen Modul-Docstrings und dem Header getrennt und müssen für jede Testfunktion vorhanden sein.

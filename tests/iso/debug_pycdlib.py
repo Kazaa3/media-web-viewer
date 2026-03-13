@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: ISO / Parser / Debug
+# Eingabewerte: media/4 Könige (2015) - DVD/4_KOENIGE.iso, pycdlib
+# Ausgabewerte: Debugging von pycdlib-Parsing und ISO-Header
+# Testdateien: media/4 Könige (2015) - DVD/4_KOENIGE.iso
+# ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere Debug-Methoden, [ ] Fehlerfall-Analyse
+# KOMMENTAR: Debugging von pycdlib für ISO-Parsing.
+# VERWENDUNG: python3 tests/iso/debug_pycdlib.py
 import pycdlib
 import struct
 import traceback
@@ -5,6 +14,12 @@ import traceback
 SAMPLE_ISO = "./media/4 Könige (2015) - DVD/4_KOENIGE.iso"
 
 def debug_pycdlib():
+        """
+        Debugging von pycdlib für ISO-Parsing. / Debugging pycdlib for ISO parsing.
+
+        Returns:
+            None
+        """
     print(f"Debugging pycdlib open for: {SAMPLE_ISO}")
     iso = pycdlib.PyCdlib()
     try:

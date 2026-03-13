@@ -25,7 +25,12 @@ import unittest
 from pathlib import Path
 
 class TestInstalledPackagesUI(unittest.TestCase):
-    """Validates Installed Packages UI block in Options > Environment."""
+    """
+    Validiert das Installed Packages UI-Element im Optionsbereich. / Validates Installed Packages UI block in Options > Environment.
+
+    Returns:
+        None
+    """
 
     def setUp(self):
         self.root = Path(__file__).parents[3]

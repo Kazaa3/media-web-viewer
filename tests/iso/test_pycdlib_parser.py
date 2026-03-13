@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: ISO / Parser / Unit
+# Eingabewerte: ../../media/test.iso, pycdlib
+# Ausgabewerte: Validierung des pycdlib-Parser-Ergebnisses
+# Testdateien: ../../media/test.iso
+# ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO-Dateien, [ ] Fehlerfall-Tests
+# KOMMENTAR: Testet den pycdlib-Parser für ISO-Dateien.
+# VERWENDUNG: python3 tests/iso/test_pycdlib_parser.py
 import sys
 import os
 from pathlib import Path
@@ -5,6 +14,12 @@ from pathlib import Path
 import pycdlib
 
 def test_pycdlib_parser():
+        """
+        Testet den pycdlib-Parser für ISO-Dateien. / Tests pycdlib parser for ISO files.
+
+        Returns:
+            None
+        """
     test_iso = Path('../../media/test.iso')
     tags = {}
     try:

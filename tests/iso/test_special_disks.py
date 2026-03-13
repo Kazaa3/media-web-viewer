@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: ISO / Disk / Spezialfälle
+# Eingabewerte: src/core/models.py, media_parser, verschiedene ISO/BIN-Dateien
+# Ausgabewerte: Validierung der Disk-Kategorisierung und Speziallogik
+# Testdateien: src/core/models.py
+# ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere Spezialfälle, [ ] Fehlerfall-Tests
+# KOMMENTAR: Testet Spezialfälle für Disk-Kategorisierung.
+# VERWENDUNG: python3 tests/iso/test_special_disks.py
 
 import unittest
 from pathlib import Path
@@ -10,6 +19,12 @@ import os
 from src.core.models import MediaItem
 
 class TestSpecialDisks(unittest.TestCase):
+        """
+        Testet Spezialfälle für Disk-Kategorisierung. / Tests special cases for disk categorization.
+
+        Returns:
+            None
+        """
     def test_pc_game_detection_by_volid(self):
         """Test detection of PC games using Volume ID in tags."""
         p = Path("/tmp/s3gold.iso")

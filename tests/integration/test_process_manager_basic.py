@@ -1,3 +1,25 @@
+# =============================================================================
+# Kategorie: Process Manager Basic Test
+# Eingabewerte: Prozess-Kommandos, Testdaten
+# Ausgabewerte: PID-Ausgaben, Status, Fehlerbehandlung
+# Testdateien: test_process_manager_basic.py
+# Kommentar: Testet grundlegende Prozessmanager-Funktionen und Fehlerbehandlung.
+# =============================================================================
+"""
+Process Manager Basic Test Suite (DE/EN)
+========================================
+
+DE:
+Testet grundlegende Funktionen des Prozessmanagers, einschließlich Starten, Terminieren, Killen und Aufräumen von Prozessen.
+
+EN:
+Tests basic process manager functions, including starting, terminating, killing, and reaping processes.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import sys
 import os
 
@@ -7,6 +29,12 @@ import time
 import pytest
 
 class FakePopen:
+    """
+    DE:
+    Simuliert das Verhalten von subprocess.Popen für Tests.
+    EN:
+    Simulates subprocess.Popen behavior for tests.
+    """
     def __init__(self, cmd, *args, **kwargs):
         self.cmd = cmd
         self.pid = 12345
@@ -36,6 +64,12 @@ class FakePopen:
         return (b"", b"")
 
 def test_process_manager_start_and_terminate(monkeypatch):
+    """
+    DE:
+    Testet das Starten und Terminieren von Prozessen mit dem Prozessmanager.
+    EN:
+    Tests starting and terminating processes with the process manager.
+    """
     try:
         import process_manager as pm  # type: ignore
     except Exception:
@@ -61,6 +95,12 @@ def test_process_manager_start_and_terminate(monkeypatch):
         pytest.fail("kill_process raised unexpectedly")
 
 def test_process_manager_reap(monkeypatch):
+    """
+    DE:
+    Testet das Aufräumen (Reap) von Prozessen mit dem Prozessmanager.
+    EN:
+    Tests reaping (cleanup) of processes with the process manager.
+    """
     try:
         import process_manager as pm  # type: ignore
     except Exception:

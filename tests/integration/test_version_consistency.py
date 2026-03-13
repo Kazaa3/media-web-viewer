@@ -1,16 +1,44 @@
-# Kategorie: Versioning / Release Consistency
+# =============================================================================
+# Kategorie: Versioning / Release Consistency Test
 # Eingabewerte: VERSION, main.py, packaging/DEBIAN/control, DOCUMENTATION.md
 # Ausgabewerte: Konsistenz-Checks für Versionsnummern
-# Kommentar: Prüft, dass die Projektversion zentral aus VERSION abgeleitet ist und
-#            keine alten Release-Nummern in den relevanten Doku-/Package-Feldern stehen.
+# Testdateien: test_version_consistency.py
+# Kommentar: Testet zentrale Ableitung und Konsistenz der Projektversion.
+# =============================================================================
+"""
+Versioning / Release Consistency Test Suite (DE/EN)
+===================================================
+
+DE:
+Testet die zentrale Ableitung und Konsistenz der Projektversion über alle relevanten Dateien.
+
+EN:
+Tests central derivation and consistency of project version across all relevant files.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import re
 from pathlib import Path
 
 def _root_dir() -> Path:
+    """
+    DE:
+    Gibt das Projekt-Root-Verzeichnis zurück.
+    EN:
+    Returns the project root directory.
+    """
     return Path(__file__).parents[3].parent
 
 def _read_current_version() -> str:
+    """
+    DE:
+    Liest die aktuelle Version aus der VERSION-Datei.
+    EN:
+    Reads the current version from the VERSION file.
+    """
     version_file = _root_dir() / "VERSION"
     version = version_file.read_text(encoding="utf-8").strip()
     assert re.fullmatch(r"\d+\.\d+\.\d+", version), (
@@ -19,10 +47,22 @@ def _read_current_version() -> str:
     return version
 
 def test_version_file_is_valid_semver():
+    """
+    DE:
+    Testet, ob die VERSION-Datei ein gültiges Semver-Format hat.
+    EN:
+    Tests if the VERSION file has valid semver format.
+    """
     current = _read_current_version()
     print(f"✅ VERSION: {current}")
 
 def test_canonical_locations_match_version_file():
+    """
+    DE:
+    Testet, ob alle kanonischen Orte die Version aus der VERSION-Datei übernehmen.
+    EN:
+    Tests if all canonical locations adopt the version from the VERSION file.
+    """
     current = _read_current_version()
     root = _root_dir()
 
@@ -55,6 +95,12 @@ def test_canonical_locations_match_version_file():
     )
 
 def test_no_old_deb_version_examples_in_documentation():
+    """
+    DE:
+    Testet, dass keine alten .deb Versionsbeispiele in der Dokumentation stehen.
+    EN:
+    Tests that no old .deb version examples are present in the documentation.
+    """
     current = _read_current_version()
     docs = (_root_dir() / "DOCUMENTATION.md").read_text(encoding="utf-8")
 

@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Unit / Eel / WebSocket
+# Eingabewerte: src/core/env_handler.py, bottle_websocket, sniffio
+# Ausgabewerte: Validierung WebSocket-Health-Handler
+# Testdateien: src/core/env_handler.py
+# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene WS-Backends, [ ] Timeout-Tests
+# KOMMENTAR: Testet die Registrierung und Funktion des WebSocket-Health-Handlers.
+# VERWENDUNG: pytest tests/unit/tech/eel/test_ws_session_unit.py
 import importlib
 import sys
 import types
@@ -21,7 +30,15 @@ class _FakeWS:
         return self._recv
 
 def test_ws_health_handler_registers_and_handles_ping(monkeypatch):
-    # simulate gevent runtime and bottle_websocket present
+    """
+    Testet die Registrierung und Funktion des WebSocket-Health-Handlers. / Tests registration and function of WebSocket health handler.
+
+    Args:
+        monkeypatch: pytest fixture zum Patchen / pytest fixture for patching.
+
+    Returns:
+        None
+    """
     sys.modules["sniffio"] = _make_sniffio_module("gevent")
     bw = types.ModuleType("bottle_websocket")
     bw.websocket = object()

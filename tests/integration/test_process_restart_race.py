@@ -1,9 +1,37 @@
+# =============================================================================
+# Kategorie: Process Restart Race Test
+# Eingabewerte: Prozess-Kommandos, Testdaten
+# Ausgabewerte: PID-Ausgaben, Status, Fehlerbehandlung
+# Testdateien: test_process_restart_race.py
+# Kommentar: Testet Race-Conditions beim Prozess-Start und Idempotenz.
+# =============================================================================
+"""
+Process Restart Race Test Suite (DE/EN)
+=======================================
+
+DE:
+Testet Race-Conditions und Idempotenz beim Starten von Prozessen über die API.
+
+EN:
+Tests race conditions and idempotency when starting processes via the API.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import importlib
 import sys
 import types
 import pytest
 
 def _pm_stub_same_pid():
+    """
+    DE:
+    Erstellt einen Stub für den Prozessmanager mit immer gleicher PID.
+    EN:
+    Creates a stub for the process manager with always the same PID.
+    """
     pm = types.SimpleNamespace()
     state = {"started": 0}
     def start(cmd):
@@ -21,6 +49,12 @@ def _pm_stub_same_pid():
     return pm
 
 def test_start_idempotent_on_race(monkeypatch):
+    """
+    DE:
+    Testet, dass das Starten von Prozessen idempotent und race-safe ist.
+    EN:
+    Tests that starting processes is idempotent and race-safe.
+    """
     sys.modules["process_manager"] = _pm_stub_same_pid()
     try:
         import src.core.main as m  # type: ignore

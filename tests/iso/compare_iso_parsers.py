@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: ISO / Parser / Vergleich
+# Eingabewerte: media/4 Könige (2015) - DVD/4_KOENIGE.iso, pycdlib, isoparser
+# Ausgabewerte: Vergleich der Parser-Ergebnisse und Performance
+# Testdateien: media/4 Könige (2015) - DVD/4_KOENIGE.iso
+# ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO-Parser, [ ] Performance-Optimierung
+# KOMMENTAR: Vergleicht pycdlib und isoparser für ISO-Parsing.
+# VERWENDUNG: python3 tests/iso/compare_iso_parsers.py
 import os
 import time
 from pathlib import Path
@@ -17,6 +26,12 @@ except ImportError:
 SAMPLE_ISO = "./media/4 Könige (2015) - DVD/4_KOENIGE.iso"
 
 def compare_parsers():
+    """
+    Vergleicht pycdlib und isoparser für ISO-Parsing. / Compares pycdlib and isoparser for ISO parsing.
+
+    Returns:
+        None
+    """
     if not os.path.exists(SAMPLE_ISO):
         print(f"Error: Sample ISO not found at {SAMPLE_ISO}")
         return

@@ -1,10 +1,27 @@
+# =============================================================================
+# Kategorie: FFmpeg Transcoding Fix Test
+# Eingabewerte: app_bottle.py, models.py, Logbuch 52
+# Ausgabewerte: Transcoding-Status, Fehlerbehandlung, Log-Einträge
+# Testdateien: test_transcoding_fixed.py
+# Kommentar: Testet die Behebung des Transcoding-Bugs und Optimierung.
+# Startbefehl: pytest tests/test_transcoding_fixed.py -v
+# =============================================================================
 """
-Test: FFmpeg Transcoding Fix and Optimization
-==============================================
+FFmpeg Transcoding Fix Test Suite (DE/EN)
+=========================================
 
-Validates that the transcoding bug is fixed and optimized parameters work.
+DE:
+Testet die Behebung des Transcoding-Bugs und die Optimierung der Parameter für FFmpeg und ALAC-Erkennung.
 
-Run: pytest tests/test_transcoding_fixed.py -v
+EN:
+Tests the fix for the transcoding bug and optimization of parameters for FFmpeg and ALAC detection.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+
+Startbefehl/Run command:
+    pytest tests/test_transcoding_fixed.py -v
 """
 
 import pytest

@@ -1,3 +1,21 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Unit / FFMPEG / Fallback
+# Eingabewerte: src/parsers/ffprobe_parser.py, ffprobe, pymediainfo
+# Ausgabewerte: Validierung Fallback-Logik und Parser-Ergebnis
+# Testdateien: src/parsers/ffprobe_parser.py
+# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Parser, [ ] Fallback-Logik für weitere Formate
+# KOMMENTAR: Testet die Fallback-Logik von ffprobe auf pymediainfo.
+# VERWENDUNG: pytest tests/unit/tech/ffmpeg/test_ffprobe_pymediainfo_fallback_unit2.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Unit / FFMPEG / Fallback
+# Eingabewerte: src/parsers/ffprobe_parser.py, ffprobe, pymediainfo
+# Ausgabewerte: Validierung Fallback-Logik und Parser-Ergebnis
+# Testdateien: src/parsers/ffprobe_parser.py
+# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Parser, [ ] Fallback-Logik für weitere Formate
+# KOMMENTAR: Testet die Fallback-Logik von ffprobe auf pymediainfo.
+# VERWENDUNG: pytest tests/unit/tech/ffmpeg/test_ffprobe_pymediainfo_fallback_unit2.py
 import importlib
 import sys
 import types
@@ -7,7 +25,16 @@ import json
 import pytest
 
 def test_ffprobe_success_path(monkeypatch, tmp_path):
-    # mock subprocess.run to return valid ffprobe JSON
+    """
+    Testet den Erfolgsfall von ffprobe mit Mock-Subprozess. / Tests ffprobe success path with mocked subprocess.
+
+    Args:
+        monkeypatch: pytest fixture zum Patchen / pytest fixture for patching.
+        tmp_path: temporärer Pfad für Testdatei / temporary path for test file.
+
+    Returns:
+        None
+    """
     class Proc:
         returncode = 0
         stdout = json.dumps({"format": {"duration": "2.5"}, "streams": []})
@@ -23,7 +50,15 @@ def test_ffprobe_success_path(monkeypatch, tmp_path):
     assert "duration_ms" in res
 
 def test_ffprobe_missing_fallback_to_pymediainfo(monkeypatch):
-    # simulate ffprobe absent
+    """
+    Testet den Fallback auf pymediainfo, wenn ffprobe fehlt. / Tests fallback to pymediainfo when ffprobe is missing.
+
+    Args:
+        monkeypatch: pytest fixture zum Patchen / pytest fixture for patching.
+
+    Returns:
+        None
+    """
     monkeypatch.setattr(shutil, "which", lambda name: None)
     # provide fake pymediainfo module with MediaInfo.parse or MediaInfo
     fake = types.SimpleNamespace(MediaInfo=types.SimpleNamespace)

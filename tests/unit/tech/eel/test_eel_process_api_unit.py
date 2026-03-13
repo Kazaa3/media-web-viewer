@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Unit / Eel / Process API
+# Eingabewerte: src/core/main.py, process_manager
+# Ausgabewerte: Validierung Eel-Process-API und Prozesssteuerung
+# Testdateien: src/core/main.py
+# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Prozess-Manager, [ ] Fehlerfall-Tests
+# KOMMENTAR: Testet die Eel-Process-API und deren Verbindung zum Backend.
+# VERWENDUNG: pytest tests/unit/tech/eel/test_eel_process_api_unit.py
 import importlib
 import sys
 import types
@@ -13,7 +22,15 @@ def _make_pm_stub():
     return pm
 
 def test_eel_process_api_calls(monkeypatch):
-    # ensure process_manager can be monkeypatched
+    """
+    Testet die Eel-Process-API und deren Verbindung zum Backend. / Tests Eel process API and its connection to backend.
+
+    Args:
+        monkeypatch: pytest fixture zum Patchen / pytest fixture for patching.
+
+    Returns:
+        None
+    """
     sys.modules.pop("process_manager", None)
     sys.modules["process_manager"] = _make_pm_stub()
     try:

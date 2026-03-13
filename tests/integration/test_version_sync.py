@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# =============================================================================
 # Kategorie: Version Synchronization Test
 # Eingabewerte: VERSION file, VERSION_SYNC.json, pyproject.toml, MediaWebViewer.spec, DEBIAN/control
 # Ausgabewerte: Version-Konsistenz über alle Dateien, Format-Validierung
-# Testdateien: VERSION, VERSION_SYNC.json, pyproject.toml, MediaWebViewer.spec, packaging/DEBIAN/control
-# Kommentar: Prüft dass Version in allen konfigurierten Dateien synchron ist (VERSION file als Master).
+# Testdateien: test_version_sync.py
+# Kommentar: Testet die Synchronisierung der Version über alle konfigurierten Dateien.
+# =============================================================================
 """
-Test suite for version synchronization across the project.
-Reads VERSION_SYNC.json and verifies all locations have the correct version.
+Version Synchronization Test Suite (DE/EN)
+==========================================
+
+DE:
+Testet die Synchronisierung der Version über alle konfigurierten Dateien mit der VERSION-Datei als Master.
+
+EN:
+Tests version synchronization across all configured files with the VERSION file as master.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
 """
 
 import json
@@ -17,7 +29,12 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 class VersionSyncTester:
-    """Test version synchronization across project files."""
+    """
+    DE:
+    Testet die Version-Synchronisierung über Projektdateien.
+    EN:
+    Tests version synchronization across project files.
+    """
     
     def __init__(self, project_root: Path):
         self.project_root = project_root
@@ -201,7 +218,12 @@ class VersionSyncTester:
             return False
 
 def main():
-    """Main entry point."""
+    """
+    DE:
+    Haupt-Einstiegspunkt für den Test.
+    EN:
+    Main entry point for the test.
+    """
     project_root = Path(__file__).parents[3].absolute()
     tester = VersionSyncTester(project_root)
     
