@@ -3051,12 +3051,12 @@ def get_test_suites():
     @details Findet alle Testdateien im Verzeichnis tests/ und extrahiert deren Metadaten.
     @return List of test suite objects / Liste von Test-Suite-Objekten.
     """
-    test_dir = Path(__file__).parent / "tests"
+    test_dir = Path(__file__).parents[2] / "tests"
     if not test_dir.exists():
         return []
 
     suites = []
-    for f in sorted(test_dir.glob("*.py")):
+    for f in sorted(test_dir.rglob("*.py")):
         if f.name.startswith("__"):
             continue
         # Include all .py files in tests/ as they might be utility scripts the user wants
@@ -3087,7 +3087,7 @@ def get_test_suites():
 
         display_name = f.stem.replace("test_", "").replace("benchmark_", "Benchmark: ").replace("_", " ").title()
         suites.append({
-            "id": f.name,
+            "id": str(f.relative_to(test_dir)),
             "name": display_name,
             "path": str(f),
             "metadata": metadata
@@ -3104,7 +3104,7 @@ def update_test_metadata(filename, metadata):
     @param metadata Dictionary of metadata fields / Dictionary der Metadaten-Felder.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    test_dir = Path(__file__).parent / "tests"
+    test_dir = Path(__file__).parents[2] / "tests"
     file_path = test_dir / filename
 
     if not file_path.exists():
@@ -3152,7 +3152,7 @@ def create_new_test(name):
     @param name Base name for the test / Basisname des Tests.
     @return Status or filename dictionary / Status- oder Dateinamen-Dictionary.
     """
-    test_dir = Path(__file__).parent / "tests"
+    test_dir = Path(__file__).parents[2] / "tests"
     test_dir.mkdir(parents=True, exist_ok=True)
 
     # Sanitize name
@@ -3194,7 +3194,7 @@ def delete_test(filename):
     @param filename Test file name / Name der Testdatei.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    test_dir = Path(__file__).parent / "tests"
+    test_dir = Path(__file__).parents[2] / "tests"
     file_path = test_dir / filename
 
     if not file_path.exists():
@@ -3522,8 +3522,10 @@ def run_tests(test_files):
 
     # Verify files exist
     valid_files = []
+    root_dir = Path(__file__).parents[2]
+    test_dir = root_dir / "tests"
     for tf in test_files:
-        p = Path(__file__).parent / "tests" / tf
+        p = test_dir / tf
         if p.exists():
             valid_files.append(str(p))
 
@@ -3532,7 +3534,7 @@ def run_tests(test_files):
 
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(Path(__file__).parent)
+    env["PYTHONPATH"] = f"{root_dir}:{root_dir}/src"
     env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
@@ -3544,7 +3546,7 @@ def run_tests(test_files):
             stderr=subprocess.STDOUT,
             text=True,
             env=env,
-            cwd=str(Path(__file__).parent),
+            cwd=str(root_dir),
             bufsize=1,
             universal_newlines=True,
         )
