@@ -82,13 +82,15 @@ rsync -a \
     --exclude 'dist/' \
     --exclude 'infra/packaging/' \
     --exclude 'media/' \
+    --exclude 'doc*/' \
+    --exclude 'tests/' \
     --exclude '.gitignore' \
-    --exclude '**/tests/' \
     --exclude '*.spec' \
     --exclude '*.deb' \
     --exclude '.pytest_cache/' \
     --exclude '.mypy_cache/' \
     --exclude 'reinstall_deb.sh' \
+    --max-size=50M \
     "$ROOT_DIR/" "$STAGED_APP_DEST/"
 
 # Update control file version im temporären Staging

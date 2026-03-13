@@ -114,6 +114,7 @@ except ModuleNotFoundError as exc:
         f"   cd {project_dir}\n"
         f"   source .venv_core/bin/activate\n"
         f"   python main.py\n\n"
+        f"⚠️ Keine lokalen Virtual Environments gefunden!\n"
         f"Falls .venv_core fehlt:\n"
         f"   python3 -m venv .venv_core\n"
         f"   source .venv_core/bin/activate\n"
@@ -1593,6 +1594,47 @@ def set_all_debug_flags(value):
     for key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = value
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
+
+
+@eel.expose
+def get_venv_summary():
+    """
+    @brief Returns a comprehensive summary of the current and available Python environments.
+    @details Gibt eine Zusammenfassung der aktuellen und verfügbaren Python-Umgebungen zurück.
+    @return Dictionary with environment details and recommendations.
+    """
+    env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    
+    # Discovery of subsidiary venvs
+    available_venvs = []
+    project_root = Path(__file__).resolve().parent.parent.parent
+    potential_venvs = [".venv_core", ".venv_dev", ".venv_testbed", ".venv_selenium", "venv"]
+    
+    for vname in potential_venvs:
+        vpath = project_root / vname
+        if vpath.exists() and (vpath / "bin" / "python").exists():
+            available_venvs.append({
+                "name": vname,
+                "path": str(vpath),
+                "active": (str(vpath) == str(env_path))
+            })
+
+    return {
+        "current_environment": {
+            "type": env_type,
+            "name": env_name,
+            "path": str(env_path),
+            "python_version": py_ver,
+            "python_executable": str(py_exec)
+        },
+        "available_venvs": available_venvs,
+        "recommended_environment": {
+            "name": "venv_core",
+            "type": "venv",
+            "python_version": "3.14.2",
+            "reason": "Eigene venv für main.py empfohlen"
+        }
+    }
 
 
 @eel.expose

@@ -17,6 +17,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 import sys
 import os
+import platform
 import subprocess
 import argparse
 import shutil
@@ -338,20 +339,29 @@ class BuildSystem:
             else:
                 print("⚠️  Build test gate skipped (--skip-build-gate)")
             
+            # Use the root spec file for consistency
             cmd = [
-                sys.executable, "-m", "eel",
-                "src/core/main.py", "web",
+                sys.executable, "-m", "PyInstaller",
                 "--clean",
-                "--name", f"MediaWebViewer-{self.version}",
+                "MediaWebViewer.spec",
+                "--workpath", str(self.root / "build" / "pyinstaller_work"),
+                "--distpath", str(self.root / "dist")
             ]
             
-            if onefile:
-                cmd.append("--onefile")
-            
-            if not console:
-                cmd.append("--noconsole")
-            
             success = self._run_command(cmd, monitor=kwargs.get("monitor", False), hang_timeout=900)
+
+            # Post-build verification: Check artifact version naming
+            if success:
+                expected_artifact = self.root / "dist" / f"MediaWebViewer-{self.version}"
+                if platform.system() == "Windows":
+                    expected_artifact = expected_artifact.with_suffix(".exe")
+                
+                if not expected_artifact.exists():
+                    print_status(f"Versioning Mismatch: Expected artifact {expected_artifact.name} not found!", "ERROR")
+                    # Audit dist dir for what actually was built
+                    actual_items = list((self.root / "dist").iterdir()) if (self.root / "dist").exists() else []
+                    print(f"   Found in dist/: {[item.name for item in actual_items]}")
+                    return False
 
             
             if success:

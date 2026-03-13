@@ -144,6 +144,22 @@ class VenvManager:
                 else:
                     shutil.rmtree(frag)
 
+    def clean_venv(self, name: str):
+        """Completely remove a venv directory."""
+        venv_path = self.get_venv_path(name)
+        if venv_path.exists():
+            print_status(f"Removing venv: {name}...", "PROCESS")
+            try:
+                shutil.rmtree(venv_path)
+                print_status(f"Venv {name} removed.", "SUCCESS")
+                return True
+            except Exception as e:
+                print_status(f"Failed to remove {name}: {e}", "ERROR")
+                return False
+        else:
+            print_status(f"Venv {name} does not exist.", "INFO")
+            return True
+
     def show_status(self, detailed: bool = False):
         """Show status of all venvs."""
         print("\n" + "="*40)
@@ -193,10 +209,12 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Media Web Viewer Venv Manager")
     parser.add_argument("--sync", choices=list(VENVS.keys()) + ["all"], help="Sync specified venv or all")
+    parser.add_argument("--rebuild", choices=list(VENVS.keys()) + ["all"], help="Rebuild (force sync) specified venv or all")
+    parser.add_argument("--clean-venv", choices=list(VENVS.keys()) + ["all"], help="Remove specified venv or all")
     parser.add_argument("--status", action="store_true", help="Show current venv status")
     parser.add_argument("--detailed", action="store_true", help="Show detailed status with packages")
     parser.add_argument("--clean-fragments", action="store_true", help="Clean test/log fragments")
-    parser.add_argument("--force", action="store_true", help="Force recreation of venv")
+    parser.add_argument("--force", action="store_true", help="Force recreation of venv (used with --sync)")
 
     args = parser.parse_args()
     manager = VenvManager()
@@ -213,6 +231,20 @@ def main():
                 manager.sync_venv(name, force=args.force)
         else:
             manager.sync_venv(args.sync, force=args.force)
+
+    if args.rebuild:
+        if args.rebuild == "all":
+            for name in VENVS:
+                manager.sync_venv(name, force=True)
+        else:
+            manager.sync_venv(args.rebuild, force=True)
+
+    if args.clean_venv:
+        if args.clean_venv == "all":
+            for name in VENVS:
+                manager.clean_venv(name)
+        else:
+            manager.clean_venv(args.clean_venv)
 
 if __name__ == "__main__":
     main()
