@@ -910,8 +910,8 @@ def get_environment_info(force_refresh=False):
                     text=True,
                     timeout=2,
                 )
-                first_line = (result.stdout or "").splitlines()[0] if result.stdout else ""
-                match = re.search(r"MediaInfo Lib v(\S+)", first_line)
+                output = result.stdout or ""
+                match = re.search(r"v(\d+\.\d+(?:\.\d+)*)", output)
                 mediainfo_cli_version = match.group(1) if match else None
             except Exception:
                 mediainfo_cli_version = None
