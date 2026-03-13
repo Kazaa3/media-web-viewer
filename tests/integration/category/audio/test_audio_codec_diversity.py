@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-test_audio_codec_diversity.py - Validates parser coverage for various audio codecs.
+# test_audio_codec_diversity.py - Validates parser coverage for various audio codecs.
 """
 
 import pytest

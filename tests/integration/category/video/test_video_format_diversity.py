@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-test_video_format_diversity.py - Validates parser coverage for various video containers.
+# test_video_format_diversity.py - Validates parser coverage for various video containers.
 """
 
 import pytest

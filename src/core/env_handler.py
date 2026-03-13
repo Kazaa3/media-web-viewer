@@ -1,10 +1,10 @@
-env_handler.py - Robust environment validation and hygiene management.
-Ensures the app runs in a clean, exclusive, and verified virtual environment.
+# env_handler.py - Robust environment validation and hygiene management.
+# Ensures the app runs in a clean, exclusive, and verified virtual environment.
 #dict - Desktop Media Player and Library Manager v1.34
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-env_handler.py - Environment Handler (Extended)
+# env_handler.py - Environment Handler (Extended)
 
 Dieses Modul stellt robuste Validierung und Hygiene-Management für die Projektumgebung bereit.
 Es prüft, ob die App in einer sauberen, exklusiven und verifizierten virtuellen Umgebung läuft.

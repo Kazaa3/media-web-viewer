@@ -2,7 +2,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-report_tab.py - Report Reiter (Tab)
+# report_tab.py - Report Reiter (Tab)
 
 Dieses Modul stellt einen Report-Reiter für die Media Web Viewer Anwendung bereit.
 

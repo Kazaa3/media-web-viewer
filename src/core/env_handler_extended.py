@@ -2,7 +2,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-env_handler_extended.py - Environment Handler (Batch & Extended)
+# env_handler_extended.py - Environment Handler (Batch & Extended)
 
 Dieses Modul erweitert die Validierung und das Management der Projektumgebung um Batch- und Pip-Installationsfunktionen.
 

@@ -2,7 +2,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-logbuch_file_handler.py - Logbuch File Handler
+# logbuch_file_handler.py - Logbuch File Handler
 
 Dieses Modul stellt Funktionen zum Lesen, Schreiben und Verwalten von Logbuch-Dateien im Media Web Viewer bereit.
 

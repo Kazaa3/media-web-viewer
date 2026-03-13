@@ -2,7 +2,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-logbuffer_api_extended.py - Logbuffer API (Extended)
+# logbuffer_api_extended.py - Logbuffer API (Extended)
 
 Dieses Modul stellt eine erweiterte API für das Logbuffer-Management im Media Web Viewer bereit.
 

@@ -34,6 +34,7 @@ if str(SCRIPTS_PATH) not in sys.path:
     sys.path.append(str(SCRIPTS_PATH))
 
 import monitor_utils  # type: ignore
+from status_bar_utils import StatusBar  # type: ignore
 
 
 def print_status(message: str, category: str = "INFO"):
@@ -95,6 +96,10 @@ class BuildSystem:
         self.version = self._read_version()
         self.metrics = []
         self.start_time = time.time()
+        
+        # Setup management reports directory
+        self.reports_dir = self.root / "build" / "management_reports"
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
 
     def _read_version(self) -> str:
         """Read version from VERSION file."""
@@ -241,9 +246,7 @@ class BuildSystem:
                 cmd.append("-v")
 
             if report:
-                report_dir = self.root / "build" / "test-reports"
-                report_dir.mkdir(parents=True, exist_ok=True)
-                report_file = report_dir / f"report-{tier}.xml"
+                report_file = self.reports_dir / f"report-{tier}.xml"
                 cmd.extend(["--junitxml", str(report_file)])
                 print_status(f"Reporting to: {report_file}", "INFO")
 
@@ -476,23 +479,27 @@ class BuildSystem:
             "tests/integration/performance/test_transcoding_performance_debug.py"]
 
         all_success = True
-        for bench in benchmark_files:
-            file_path = self.root / bench
-            if not file_path.exists():
-                print(f"⚠️ Benchmark missing: {bench}")
-                continue
+        total_benchmarks = len(benchmark_files)
+        
+        with StatusBar("Performance Benchmarks", total=total_benchmarks) as sb:
+            for i, bench in enumerate(benchmark_files, 1):
+                file_path = self.root / bench
+                if not file_path.exists():
+                    print(f"\r⚠️ Benchmark missing: {bench}")
+                    continue
 
-            print(f"▶ Running {bench}...")
-            # Benchmarks can be heavy, use monitoring by default for them
-            env = os.environ.copy()
-            env["PYTHONPATH"] = str(self.root)
-            if not self._run_command([sys.executable, str(
-                    file_path)], monitor=True, hang_timeout=300, env=env):
-                print("Testing Gate failed locally.")
-
-                all_success = False
-            else:
-                print(f"✅ Benchmark finished: {bench}")
+                sb.update(i, f"(Running {bench})")
+                
+                # Benchmarks can be heavy, use monitoring by default for them
+                env = os.environ.copy()
+                env["PYTHONPATH"] = str(self.root)
+                
+                # We capture output to avoid breaking the status bar
+                if not self._run_command([sys.executable, str(
+                        file_path)], monitor=True, hang_timeout=300, env=env):
+                    all_success = False
+                
+                sb.update(i, f"(Finished {bench})")
 
         return all_success
 
