@@ -929,38 +929,90 @@ def get_environment_info(force_refresh=False):
         return packages, source
 
     def _find_local_venvs():
-        """Find local venv directories in common locations."""
+        """Find local venv directories in common locations using Multi-Venv Strategy."""
         venvs = []
-        venv_names = [".venv", "venv", "env", ".env"]
+        
+        # Strategy definition: Detailed multi-venv concept
+        VENV_STRATEGY = {
+            ".venv_core": {
+                "purpose": "Zentrale Laufzeitumgebung für die App-Logik.",
+                "role": "CORE"
+            },
+            ".venv_build": {
+                "purpose": "Umgebung für das Packaging (PyInstaller, .deb).",
+                "role": "BUILD"
+            },
+            ".venv_dev": {
+                "purpose": "Entwicklungsumgebung mit Lintern (flake8, pyre).",
+                "role": "DEV"
+            },
+            ".venv_testbed": {
+                "purpose": "Isolierte Umgebung für Integrations-Tests.",
+                "role": "TEST"
+            },
+            ".venv_selenium": {
+                "purpose": "Umgebung für E2E Browser-Tests.",
+                "role": "E2E"
+            }
+        }
 
         try:
-            # Check project directory
-            project_dir = Path(__file__).parent
-            for venv_name in venv_names:
-                try:
-                    venv_path = project_dir / venv_name
-                    if venv_path.exists() and (venv_path / "bin" / "python").exists():
-                        python_exe = venv_path / "bin" / "python"
-                        try:
-                            result = subprocess.run(
-                                [str(python_exe), "--version"],
-                                capture_output=True,
-                                text=True,
-                                timeout=1
-                            )
-                            version = result.stdout.strip() or result.stderr.strip()
-                            venvs.append({
-                                "name": venv_name,
-                                "path": str(venv_path),
-                                "version": version,
-                                "is_current": str(venv_path) == env_path
-                            })
-                        except (subprocess.TimeoutExpired, Exception):
-                            pass
-                except Exception:
-                    pass
-        except Exception:
-            pass
+            # Discovery of subsidiary venvs based on strategy
+            for vname, info in VENV_STRATEGY.items():
+                venv_path = PROJECT_ROOT / vname
+                exists = venv_path.exists() and (venv_path / "bin" / "python").exists()
+                
+                version = None
+                if exists:
+                    python_exe = venv_path / "bin" / "python"
+                    try:
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+                    except (subprocess.TimeoutExpired, Exception):
+                        version = "unknown"
+                
+                venvs.append({
+                    "name": vname,
+                    "path": str(venv_path),
+                    "exists": exists,
+                    "version": version,
+                    "is_current": str(venv_path) == env_path,
+                    "purpose": info["purpose"],
+                    "role": info["role"]
+                })
+
+            # Add legacy/default 'venv' if it exists
+            default_venv = PROJECT_ROOT / "venv"
+            if default_venv.exists() and (default_venv / "bin" / "python").exists():
+                if not any(v["name"] == "venv" for v in venvs):
+                    python_exe = default_venv / "bin" / "python"
+                    try:
+                        result = subprocess.run(
+                            [str(python_exe), "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=1
+                        )
+                        version = result.stdout.strip() or result.stderr.strip()
+                    except (subprocess.TimeoutExpired, Exception):
+                        version = "unknown"
+                        
+                    venvs.append({
+                        "name": "venv",
+                        "path": str(default_venv),
+                        "exists": True,
+                        "version": version,
+                        "is_current": str(default_venv) == env_path,
+                        "purpose": "Standard Fallback-Umgebung.",
+                        "role": "FALLBACK"
+                    })
+        except Exception as e:
+            logging.debug(f"Error finding local venvs: {e}")
 
         return venvs
 
@@ -1226,6 +1278,7 @@ def get_environment_info(force_refresh=False):
         "available_conda_environments": conda_envs,
         "available_system_pythons": system_pythons,
         "local_venvs": local_venvs,
+        "multi_venv_concept": "Dieses Projekt nutzt ein Multi-Virtual-Environment-Konzept zur strikten Trennung von Laufzeit-, Build- und Test-Abhängigkeiten.",
 
         # Installed Packages
         "installed_packages": installed_packages,
@@ -1710,23 +1763,61 @@ def get_venv_summary():
     """
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
 
-    # Discovery of subsidiary venvs
-    available_venvs = []
-    project_root = Path(__file__).resolve().parent.parent.parent
-    potential_venvs = [
-        ".venv_core",
-        ".venv_dev",
-        ".venv_testbed",
-        ".venv_selenium",
-        "venv"]
+    # Strategy definition: Detailed multi-venv concept
+    VENV_STRATEGY = {
+        ".venv_core": {
+            "purpose": "Zentrale Laufzeitumgebung für die App-Logik.",
+            "role": "CORE",
+            "required": True
+        },
+        ".venv_build": {
+            "purpose": "Umgebung für das Packaging (PyInstaller, .deb).",
+            "role": "BUILD",
+            "required": False
+        },
+        ".venv_dev": {
+            "purpose": "Entwicklungsumgebung mit Lintern (flake8, pyre).",
+            "role": "DEV",
+            "required": False
+        },
+        ".venv_testbed": {
+            "purpose": "Isolierte Umgebung für Integrations-Tests.",
+            "role": "TEST",
+            "required": False
+        },
+        ".venv_selenium": {
+            "purpose": "Umgebung für E2E Browser-Tests.",
+            "role": "E2E",
+            "required": False
+        }
+    }
 
-    for vname in potential_venvs:
-        vpath = project_root / vname
-        if vpath.exists() and (vpath / "bin" / "python").exists():
+    available_venvs = []
+    # Discovery of subsidiary venvs based on strategy
+    for vname, info in VENV_STRATEGY.items():
+        vpath = PROJECT_ROOT / vname
+        exists = vpath.exists() and (vpath / "bin" / "python").exists()
+        
+        available_venvs.append({
+            "name": vname,
+            "path": str(vpath),
+            "exists": exists,
+            "active": (str(vpath) == str(env_path)) if exists else False,
+            "purpose": info["purpose"],
+            "role": info["role"]
+        })
+
+    # Add default 'venv' if it exists but is not in strategy
+    default_venv = PROJECT_ROOT / "venv"
+    if default_venv.exists() and (default_venv / "bin" / "python").exists():
+        if not any(v["name"] == "venv" for v in available_venvs):
             available_venvs.append({
-                "name": vname,
-                "path": str(vpath),
-                "active": (str(vpath) == str(env_path))
+                "name": "venv",
+                "path": str(default_venv),
+                "exists": True,
+                "active": (str(default_venv) == str(env_path)),
+                "purpose": "Standard Fallback-Umgebung.",
+                "role": "FALLBACK"
             })
 
     return {
@@ -1738,11 +1829,11 @@ def get_venv_summary():
             "python_executable": str(py_exec)
         },
         "available_venvs": available_venvs,
+        "multi_venv_concept": "Das Projekt nutzt eine Multi-Venv-Strategie zur Trennung von Core-Logik, Build-System und Testing.",
         "recommended_environment": {
-            "name": "venv_core",
+            "name": ".venv_core",
             "type": "venv",
-            "python_version": "3.14.2",
-            "reason": "Eigene venv für main.py empfohlen"
+            "reason": "Empfohlene Umgebung für den stabilen Betrieb der App."
         }
     }
 
@@ -2082,8 +2173,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             all_exts |= DISK_IMAGE_EXTENSIONS
 
         # Reset counters
-        count = 0
-        total_count = 0
+        count: int = 0
+        total_count: int = 0
         for scan_root in scan_roots:
             logger.debug("scan", f"Starting scan of: {scan_root}")
 
@@ -3039,7 +3130,7 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
             playlist_file = playlist_file.with_suffix('.m3u8')
 
         lines = ["#EXTM3U\n"]
-        exported = 0
+        exported: int = 0
         missing = []
 
         # Get all media and create a lookup dict
