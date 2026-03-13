@@ -40,6 +40,7 @@ VERWENDUNG:
 -----------
     python src/core/main.py
 """
+"""
 dict - Desktop Media Player and Library Manager
 
 This program is free software: you can redistribute it and/or modify
@@ -545,7 +546,7 @@ _ENV_INFO_CACHE_TTL_SECONDS = 8.0
 def api_ping(client_ts=None, payload_size=0):
     """
     @brief Lightweight ping endpoint for Eel roundtrip latency diagnostics.
-    @details Minimal payload endpoint to measure frontend↔backend roundtrip and payload transfer time.
+    @details Minimal payload endpoint to measure frontend<->backend roundtrip and payload transfer time.
     @param client_ts Optional client timestamp / Optionaler Client-Timestamp.
     @param payload_size Optional echo payload size in bytes (0..200000) / Optionale Echo-Payload.
     @return Dictionary with timestamps and payload size / Dictionary mit Zeitstempeln und Payload-Größe.
