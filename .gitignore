@@ -1,3 +1,8 @@
+# --- Selenium Testbed & Artifacts ---
+tests/selenium/reference_screenshots/
+tests/selenium/selenium_artifacts/
+
+# Testbed-Fragmente und Artefakte werden zentral verwaltet und nicht versioniert.
 # ============================================================================
 # Media Web Viewer - .gitignore
 # ============================================================================
