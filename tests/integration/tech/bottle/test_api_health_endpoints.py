@@ -4,7 +4,44 @@
 # Eingabewerte: Bottle app instance, gevent-websocket
 # Ausgabewerte: Server status (shape), WebSocket health (ping/pong)
 # Testdateien: src/core/main.py, src/core/env_handler.py
-# Kommentar: Validiert API-Health-Endprodukte und WebSocket-Status-Verbindungen.
+# ERWEITERUNGEN (TODO): [ ] Integrationstests erweitern, [ ] Performance-Messung WebSocket
+# KOMMENTAR: Prüft die API-Endpunkte auf Verfügbarkeit und WebSocket-Funktionalität.
+# VERWENDUNG: pytest tests/integration/tech/bottle/test_api_health_endpoints.py
+
+"""
+KATEGORIE:
+----------
+Tech / Bottle
+
+ZWECK:
+------
+Validiert API-Health-Endprodukte und WebSocket-Status-Verbindungen.
+Prüft Bottle App Endpunkte und die WebSocket-Interaktion.
+
+EINGABEWERTE:
+-------------
+- Bottle app instance
+- gevent-websocket
+
+AUSGABEWERTE:
+-------------
+- Server status (shape)
+- WebSocket health (ping/pong)
+
+TESTDATEIEN:
+------------
+- src/core/main.py
+- src/core/env_handler.py
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Integrationstests erweitern
+- [ ] Performance-Messung WebSocket
+
+VERWENDUNG:
+-----------
+    pytest tests/integration/tech/bottle/test_api_health_endpoints.py
+"""
 
 import importlib
 import pytest

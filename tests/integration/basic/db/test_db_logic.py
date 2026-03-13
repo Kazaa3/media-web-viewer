@@ -1,8 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Kategorie: Database Test
 # Eingabewerte: Media-Dictionaries, Dateipfade
 # Ausgabewerte: Datenbank-Einträge
 # Testdateien: Temporäre SQLite DB
-# Kommentar: Prüft CRUD Operationen auf der Media-Datenbank.
+# ERWEITERUNGEN (TODO): [ ] Batch-Insert Performance, [ ] Index-Optimierung Tests
+# KOMMENTAR: Prüft CRUD Operationen auf der Media-Datenbank.
+# VERWENDUNG: pytest tests/integration/basic/db/test_db_logic.py
+
+"""
+KATEGORIE: Database Test
+ZWECK: Prüft CRUD Operationen auf der Media-Datenbank unter Verwendung einer temporären Test-DB.
+EINGABEWERTE: Media-Dictionaries, Dateipfade
+AUSGABEWERTE: Datenbank-Einträge
+TESTDATEIEN: Temporäre SQLite DB
+ERWEITERUNGEN (TODO): [ ] Batch-Insert Performance, [ ] Index-Optimierung Tests
+KOMMENTAR: Prüft CRUD Operationen auf der Media-Datenbank.
+VERWENDUNG: pytest tests/integration/basic/db/test_db_logic.py
+"""
 
 import pytest
 import sys

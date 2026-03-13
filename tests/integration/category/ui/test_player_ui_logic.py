@@ -1,5 +1,45 @@
-import unittest
-from pathlib import Path
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Player UI Logic
+# Eingabewerte: web/app.html (Static Content)
+# Ausgabewerte: Element-Existenz (bool), Function-Existenz (bool)
+# Testdateien: web/app.html
+# ERWEITERUNGEN (TODO): [ ] Playlist-Backend Integration testen, [ ] Audio-Event Handler Validierung
+# KOMMENTAR: Verifiziert die Existenz und Verknüpfung von Player-Steuerungselementen.
+# VERWENDUNG: python3 tests/integration/category/ui/test_player_ui_logic.py
+
+"""
+KATEGORIE:
+----------
+Player UI Logic
+
+ZWECK:
+------
+Verifiziert die Existenz und korrekte Verknüpfung von Player-Steuerungselementen in der UI.
+Prüft auf Shuffle, Repeat, Navigation und Playlist-Tab Komponenten.
+
+EINGABEWERTE:
+-------------
+- web/app.html (Statischer Inhalt)
+
+AUSGABEWERTE:
+-------------
+- Element-Existenz (bool)
+- Function-Existenz (bool)
+
+TESTDATEIEN:
+------------
+- web/app.html
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Playlist-Backend Integration testen
+- [ ] Audio-Event Handler Validierung
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/category/ui/test_player_ui_logic.py
+"""
 
 class TestPlayerUILogic(unittest.TestCase):
     def setUp(self):

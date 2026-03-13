@@ -1,8 +1,44 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Kategorie: Direct Path Routing Test
 # Eingabewerte: Pfad "media/..."
 # Ausgabewerte: HTTP Response von der Route
 # Testdateien: 02 We the People….m4a
-# Kommentar: Testet ob die Route auch bei vorangestelltem "media/" im Pfad korrekt greift.
+# ERWEITERUNGEN (TODO): [ ] Relative Pfad-Mappings prüfen, [ ] Doppelte Präfixe testen
+# KOMMENTAR: Verifiziert das direkte Routing ohne Transcoding-Eingriffe.
+# VERWENDUNG: python3 tests/integration/tech/bottle/test_route_debug2.py
+
+"""
+KATEGORIE:
+----------
+Direct Path Routing Test
+
+ZWECK:
+------
+Testet ob die Route auch bei vorangestelltem "media/" im Pfad korrekt greift.
+Verifiziert das Robustheitsverhalten des Routing-Handlers.
+
+EINGABEWERTE:
+-------------
+- Pfad "media/..."
+
+AUSGABEWERTE:
+-------------
+- HTTP Response von der Route
+
+TESTDATEIEN:
+------------
+- 02 We the People….m4a
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Relative Pfad-Mappings prüfen
+- [ ] Doppelte Präfixe testen
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/tech/bottle/test_route_debug2.py
+"""
 
 import eel
 import bottle

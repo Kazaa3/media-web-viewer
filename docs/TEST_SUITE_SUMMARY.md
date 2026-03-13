@@ -231,7 +231,14 @@ pytest tests/ -m "e2e"
 
 ---
 
-## 📝 Test-Dokumentation Details
+## 📝 Test-Dokumentation & Standards
+
+### Test Script Headers
+Alle Testskripte müssen dem Standard-Header aus dem [STYLE_GUIDE.md](STYLE_GUIDE.md#6-test-script-header-standard) folgen. Dies gewährleistet:
+- Klare Test-Kategorisierung
+- Definierte Ein- und Ausgabewerte
+- Nachvollziehbare `VERWENDUNG`
+- Transparente `ERWEITERUNGEN (TODO)` Checklisten
 
 ### Vollständige Dokumentation
 

@@ -4,7 +4,43 @@
 # Eingabewerte: main.py, web/app.html
 # Ausgabewerte: Validierte Schutzmechanismen gegen Session-Abbruch und Doppel-Launch
 # Testdateien: main.py, web/app.html
-# Kommentar: Regression-Tests für Test-Tab-Sprung, unload/SystemExit und doppelte Fenster-Launches.
+# ERWEITERUNGEN (TODO): [ ] Mocking-Tests für Session-Recovery, [ ] Browser-Launch Race-Condition Tests
+# KOMMENTAR: Prüft die Stabilität der UI-Session und verhindert Doppel-Launch Instanzen.
+# VERWENDUNG: python3 tests/integration/category/ui/test_ui_session_stability.py
+
+"""
+KATEGORIE:
+----------
+UI Session Stability
+
+ZWECK:
+------
+Regression-Tests für Test-Tab-Sprung, unload/SystemExit und doppelte Fenster-Launches.
+Stellt sicher, dass die UI-Session stabil bleibt und keine Duplikate erzeugt werden.
+
+EINGABEWERTE:
+-------------
+- src/core/main.py
+- web/app.html
+
+AUSGABEWERTE:
+-------------
+- Validierte Schutzmechanismen gegen Session-Abbruch und Doppel-Launch
+
+TESTDATEIEN:
+------------
+- src/core/main.py
+- web/app.html
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Mocking-Tests für Session-Recovery
+- [ ] Browser-Launch Race-Condition Tests
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/category/ui/test_ui_session_stability.py
+"""
 
 import unittest
 from pathlib import Path

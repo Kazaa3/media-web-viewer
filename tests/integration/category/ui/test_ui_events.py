@@ -3,9 +3,21 @@
 # Kategorie: UI Logic
 # Eingabewerte: web/app.html (DOM)
 # Ausgabewerte: Event-Handler Statistiken, Backend-Call Validierung
-# Testdateien: tests/test_ui_events.py
-# Kommentar: Validiert die vollständige UI-Interaktivität und Event-Bindungen.
-"""
+# Testdateien: tests/test_ui_events.py, web/app.html, web/script.js
+# ERWEITERUNGEN (TODO): [ ] Drag & Drop Tests, [ ] Context-Menu Interaktionen, [ ] Selenium-Integration für Klick-Tests
+# KOMMENTAR: Validiert die vollständige UI-Interaktivität und Event-Bindungen.
+# VERWENDUNG: python3 tests/integration/category/ui/test_ui_events.py
+
+'''
+KATEGORIE: UI Logic
+ZWECK: Validiert, dass ALLE interaktiven UI-Elemente korrekt mit Event-Handlern versehen sind.
+EINGABEWERTE: web/app.html (DOM)
+AUSGABEWERTE: Event-Handler Statistiken, Backend-Call Validierung
+TESTDATEIEN: tests/test_ui_events.py, web/app.html, web/script.js
+ERWEITERUNGEN (TODO): [ ] Drag & Drop Tests, [ ] Context-Menu Interaktionen
+KOMMENTAR: Validiert die vollständige UI-Interaktivität und Event-Bindungen.
+VERWENDUNG: python3 tests/integration/category/ui/test_ui_events.py
+
 ================================================================================
 UI Events Test Suite - Vollständige Event-Handler Validierung
 ================================================================================
@@ -16,9 +28,6 @@ Dieser Test validiert, dass ALLE interaktiven UI-Elemente korrekt mit Event-
 Handlern versehen sind. Kein Button, Input oder Link darf ohne Funktionalität 
 existieren!
 
-TEST-SUITE ÜBERSICHT:
----------------------
-Drei komplementäre Test-Suites für vollständige Code-Qualität:
 
 1️⃣  test_i18n_completeness.py - i18n Basis-Validierung (9/9 Tests ✅)
     ├─ JSON-Struktur & Syntaxprüfung
@@ -143,7 +152,7 @@ AUTOREN:
 --------
 Entwickelt für das Media Web Viewer Projekt
 Letzte Aktualisierung: 2026-03-08
-"""
+'''
 
 import sys
 import re

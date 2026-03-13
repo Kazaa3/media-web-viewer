@@ -1,8 +1,44 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Kategorie: Routing & URL Encoding Debug
 # Eingabewerte: Pfade mit Sonderzeichen (Leerzeichen, …)
 # Ausgabewerte: HTTP Success oder Failure
 # Testdateien: 02 We the People….m4a
-# Kommentar: Debuggt Probleme mit speziellen Dateinamen und deren URL-Encoding in Bottle-Routen.
+# ERWEITERUNGEN (TODO): [ ] Unicode-Normalisierung prüfen, [ ] Weitere Sonderzeichen testen
+# KOMMENTAR: Debuggt URL-Encoding Probleme bei Pfaden mit Sonderzeichen.
+# VERWENDUNG: python3 tests/integration/tech/bottle/test_route_debug.py
+
+"""
+KATEGORIE:
+----------
+Routing & URL Encoding Debug
+
+ZWECK:
+------
+Debuggt Probleme mit speziellen Dateinamen und deren URL-Encoding in Bottle-Routen.
+Stellt sicher, dass Sonderzeichen korrekt verarbeitet werden.
+
+EINGABEWERTE:
+-------------
+- Pfade mit Sonderzeichen (Leerzeichen, …)
+
+AUSGABEWERTE:
+-------------
+- HTTP Success oder Failure
+
+TESTDATEIEN:
+------------
+- 02 We the People….m4a
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Unicode-Normalisierung prüfen
+- [ ] Weitere Sonderzeichen testen
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/tech/bottle/test_route_debug.py
+"""
 
 import eel
 import bottle

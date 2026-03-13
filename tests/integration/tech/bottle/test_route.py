@@ -4,7 +4,42 @@
 # Eingabewerte: Pfade zu ALAC / M4A Dateien
 # Ausgabewerte: HTTP Responses, Dateisystem-Checks (.cache)
 # Testdateien: media/sample.alac
-# Kommentar: Prüft das dynamische Servieren und Caching von speziellen Audioformaten wie ALAC.
+# ERWEITERUNGEN (TODO): [ ] Streaming-Tests erweitern, [ ] Cache-Invalidierung prüfen
+# KOMMENTAR: Testet das Routing von Medieninhalten inklusive Transcoding-Checks.
+# VERWENDUNG: python3 tests/integration/tech/bottle/test_route.py
+
+"""
+KATEGORIE:
+----------
+Tech / Bottle
+
+ZWECK:
+------
+Prüft das dynamische Servieren und Caching von speziellen Audioformaten wie ALAC.
+Validiert die korrekte Route-Verarbeitung und Cache-Verzeichnis-Erstellung.
+
+EINGABEWERTE:
+-------------
+- Pfade zu ALAC / M4A Dateien (z.B. media/sample.alac)
+
+AUSGABEWERTE:
+-------------
+- HTTP Responses
+- Dateisystem-Checks (.cache)
+
+TESTDATEIEN:
+------------
+- media/sample.alac
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Streaming-Tests erweitern
+- [ ] Cache-Invalidierung prüfen
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/tech/bottle/test_route.py
+"""
 
 import eel
 import bottle

@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Kategorie: Database Integration Test
+# Eingabewerte: SQLite-Datenbank, Mediendaten
+# Ausgabewerte: Schema-Validität, CRUD-Operation Status
+# Testdateien: src/core/db.py
+# ERWEITERUNGEN (TODO): [ ] Playlist-Funktionalität, [ ] Foreign-Key-Constraints
+# KOMMENTAR: Comprehensive tests for database operations and schema consistency.
+# VERWENDUNG: pytest tests/integration/basic/db/test_db_operations.py
+
+"""
+KATEGORIE: Database Integration Test
+ZWECK: Verifiziert die korrekte Funktion der Datenbank-Operationen und Schema-Integrität.
+EINGABEWERTE: SQLite-Datenbank, Mediendaten
+AUSGABEWERTE: Schema-Validität, CRUD-Operation Status
+TESTDATEIEN: src/core/db.py
+ERWEITERUNGEN (TODO): [ ] Playlist-Funktionalität, [ ] Foreign-Key-Constraints
+KOMMENTAR: Comprehensive tests for database operations and schema consistency.
+VERWENDUNG: pytest tests/integration/basic/db/test_db_operations.py
+"""
 import pytest
 import sqlite3
 import json

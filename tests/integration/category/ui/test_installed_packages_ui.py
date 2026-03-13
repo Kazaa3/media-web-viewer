@@ -4,7 +4,20 @@
 # Eingabewerte: web/app.html, web/i18n.json
 # Ausgabewerte: Validierung für Installed-Packages-Element, Search-Feld, Loading-Status
 # Testdateien: web/app.html, web/i18n.json
-# Kommentar: Testet das UI-Element "Installed Packages" inklusive Search-Input und initialem Loading-Text.
+# ERWEITERUNGEN (TODO): [ ] Multi-Venv Support Visualisierung, [ ] Package-Update Trigger Tests
+# KOMMENTAR: Testet das UI-Element "Installed Packages" inklusive Search-Input.
+# VERWENDUNG: python3 tests/integration/category/ui/test_installed_packages_ui.py
+
+"""
+KATEGORIE: UI / Environment Packages Element Test
+ZWECK: Validiert das Installed Packages UI-Element in den Optionen.
+EINGABEWERTE: web/app.html, web/i18n.json
+AUSGABEWERTE: Validierung für Installed-Packages-Element, Search-Feld, Loading-Status
+TESTDATEIEN: web/app.html, web/i18n.json
+ERWEITERUNGEN (TODO): [ ] Multi-Venv Support Visualisierung, [ ] Package-Update Trigger Tests
+KOMMENTAR: Testet das UI-Element "Installed Packages" inklusive Search-Input.
+VERWENDUNG: python3 tests/integration/category/ui/test_installed_packages_ui.py
+"""
 
 import json
 import re

@@ -1,10 +1,46 @@
-import pytest
-import sys
-import os
-from pathlib import Path
-import json
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: UI / Media Visibility
+# Eingabewerte: Datenbank-Items, Medienscann-Ergebnisse
+# Ausgabewerte: Library-Visibility (bool), Kategorie-Diversity
+# Testdateien: Diverse Media-Files (ISO, BIN, CUE, Audio/Video)
+# ERWEITERUNGEN (TODO): [ ] Filter-Logik für Unterkategorien testen, [ ] Performance-Tests für große Libraries
+# KOMMENTAR: Verifiziert die Sichtbarkeit von Medienobjekten in der UI basierend auf Kategorien.
+# VERWENDUNG: pytest tests/integration/category/ui/test_ui_media_visibility.py
 
-# Project root handled by PYTHONPATH=.
+"""
+KATEGORIE:
+----------
+UI / Media Visibility
+
+ZWECK:
+------
+Verifiziert die Sichtbarkeit von Medienobjekten in der UI basierend auf Kategorien und Dateitypen.
+Stellt sicher, dass der Scanner alle unterstützten Erweiterungen korrekt erfasst.
+
+EINGABEWERTE:
+-------------
+- Datenbank-Items
+- Medienscann-Ergebnisse
+
+AUSGABEWERTE:
+-------------
+- Library-Visibility (bool)
+- Kategorie-Diversity
+
+TESTDATEIEN:
+------------
+- Diverse Media-Files (ISO, BIN, CUE, Audio/Video)
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Filter-Logik für Unterkategorien testen
+- [ ] Performance-Tests für große Libraries
+
+VERWENDUNG:
+-----------
+    pytest tests/integration/category/ui/test_ui_media_visibility.py
+"""
 
 from src.core.main import get_library, scan_media, PARSER_CONFIG
 import src.core.db as db

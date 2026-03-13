@@ -1,12 +1,47 @@
-import pytest
-pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: GUI / E2E Test
 # Eingabewerte: Browser UI
 # Ausgabewerte: Visual consistency results
 # Testdateien: web/app.html
-# Kommentar: Selenium-based test to verify tab switching and refresh logic in the GUI.
+# ERWEITERUNGEN (TODO): [ ] Playlist-Scroll-Tests, [ ] Mobile-View-Simulation
+# KOMMENTAR: Selenium-basiert: Verifiziert das Tab-Switching und die Content-Lade-Logik.
+# VERWENDUNG: python3 tests/integration/category/ui/test_gui_tabs_refresh.py
+
+import pytest
+pytest.importorskip("selenium")
+
+"""
+KATEGORIE:
+----------
+GUI / E2E Test
+
+ZWECK:
+------
+Selenium-basierter Test zur Verifizierung des Tab-Switching und der Refresh-Logik in der GUI.
+Stellt sicher, dass alle Tabs korrekt geladen und gerendert werden.
+
+EINGABEWERTE:
+-------------
+- Browser UI (via Selenium)
+
+AUSGABEWERTE:
+-------------
+- Visual consistency results
+
+TESTDATEIEN:
+------------
+- web/app.html
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Playlist-Scroll-Tests
+- [ ] Mobile-View-Simulation
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/category/ui/test_gui_tabs_refresh.py
+"""
 
 import unittest
 import time

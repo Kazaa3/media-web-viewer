@@ -1,12 +1,26 @@
-import pytest
-pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: UI Integration
 # Eingabewerte: web/app.html
 # Ausgabewerte: Tag-Balance, Tab-IDs, tabMap Status
 # Testdateien: tests/test_ui_integrity.py
-# Kommentar: Validiert die HTML-Struktur und JS-Tab-Konfiguration.
+# ERWEITERUNGEN (TODO): [ ] Mocking-Tests für Session-Recovery, [ ] Browser-Launch Race-Condition Tests
+# KOMMENTAR: Validiert die HTML-Struktur und JS-Tab-Konfiguration.
+# VERWENDUNG: python3 tests/integration/category/ui/test_ui_integrity.py
+
+"""
+KATEGORIE: UI Integration
+ZWECK: Validiert die HTML-Struktur und JS-Tab-Konfiguration des Frontends.
+EINGABEWERTE: web/app.html
+AUSGABEWERTE: Tag-Balance, Tab-IDs, tabMap Status
+TESTDATEIEN: tests/test_ui_integrity.py
+ERWEITERUNGEN (TODO): [ ] Mocking-Tests für Session-Recovery, [ ] Browser-Launch Race-Condition Tests
+KOMMENTAR: Validiert die HTML-Struktur und JS-Tab-Konfiguration.
+VERWENDUNG: python3 tests/integration/category/ui/test_ui_integrity.py
+"""
+
+import pytest
+pytest.importorskip("selenium")
 
 import unittest
 import time

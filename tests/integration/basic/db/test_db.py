@@ -1,3 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Database Integration Test
+# Eingabewerte: SQLite-Datenbank (Pfad-Konfiguration)
+# Ausgabewerte: Pfad-Objekte, Legacy-DB Listen
+# Testdateien: src/core/db.py
+# ERWEITERUNGEN (TODO): [ ] DB-Migrationstests, [ ] Pfad-Validierung unter Windows
+# KOMMENTAR: Tests for database path discovery and legacy DB handling.
+# VERWENDUNG: python3 tests/integration/basic/db/test_db.py
+
+"""
+KATEGORIE: Database Integration Test
+ZWECK: Testet die Datenbank-Pfadfindung und das Handling von Legacy-Datenbanken.
+EINGABEWERTE: SQLite-Datenbank (Pfad-Konfiguration)
+AUSGABEWERTE: Pfad-Objekte, Legacy-DB Listen
+TESTDATEIEN: src/core/db.py
+ERWEITERUNGEN (TODO): [ ] DB-Migrationstests, [ ] Pfad-Validierung unter Windows
+KOMMENTAR: Tests for database path discovery and legacy DB handling.
+VERWENDUNG: python3 tests/integration/basic/db/test_db.py
+"""
+
 import unittest
 import src.core.db as db
 from pathlib import Path

@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: E2E / Frontend → Backend (Unidirektional)
-# Eingabewerte: web/app.html (User Interactions), main.py (API calls)
+# Eingabewerte: web/app.html (User Interactions), src/core/main.py (API calls)
 # Ausgabewerte: Validierung Frontend-Request-Pipeline bis Backend-Response
-# Testdateien: web/app.html, main.py
-# Kommentar: Testet ausschließlich die Datenfluss-Richtung Frontend → Backend.
+# Testdateien: web/app.html, src/core/main.py
+# ERWEITERUNGEN (TODO): [ ] Debounce-Timing Tests, [ ] Error-UI-Feedback Tests
+# KOMMENTAR: Testet ausschließlich die Datenfluss-Richtung Frontend → Backend.
+# VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_frontend_to_backend.py
+
+"""
+KATEGORIE: E2E / Frontend → Backend (Unidirektional)
+ZWECK: Testet ausschließlich die Datenfluss-Richtung Frontend → Backend (User Interaction -> API -> Backend).
+EINGABEWERTE: web/app.html (User Interactions), src/core/main.py (API calls)
+AUSGABEWERTE: Validierung Frontend-Request-Pipeline bis Backend-Response
+TESTDATEIEN: web/app.html, src/core/main.py
+ERWEITERUNGEN (TODO): [ ] Debounce-Timing Tests, [ ] Error-UI-Feedback Tests
+KOMMENTAR: Testet ausschließlich die Datenfluss-Richtung Frontend → Backend.
+VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_frontend_to_backend.py
+"""
 
 import json
 import re

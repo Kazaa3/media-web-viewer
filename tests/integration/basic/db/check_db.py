@@ -5,6 +5,7 @@
 # Ausgabewerte: Tabellen-Existenz, CRUD-Operation-Status, Legacy-DB-Informationen, Statistiken
 # Testdateien: Keine spezifischen Dateien erforderlich (arbeitet mit temporärer Test-DB)
 # ERWEITERUNGEN (TODO): Playlist-Funktionalität, Foreign-Key-Constraints, Transaktions-Rollback, Concurrent-Access, Performance, Migration, Backup/Restore, pytest-fixtures
+# KOMMENTAR: Validiert die Datenbank-Integrität und grundlegende CRUD-Operationen.
 # VERWENDUNG: python tests/check_db.py
 # ================================================================================================
 # Database Integrity Test - Media Web Viewer
@@ -56,7 +57,7 @@ ERWEITERUNGEN (TODO):
 
 VERWENDUNG:
 -----------
-    python tests/check_db.py
+    python tests/integration/basic/db/check_db.py
 """
 
 import sys
@@ -76,8 +77,9 @@ except ImportError:
 
 def test_db_initialization():
     """
-    @brief Test database initialization and table creation.
-    @details Validates that init_db() creates all required tables.
+    Prüft, ob die Datenbank korrekt initialisiert und alle Tabellen angelegt werden.
+    Returns:
+        bool: True bei Erfolg, False bei Fehler.
     """
     print("\n🗄️  Test 1: Database Initialization")
     print("─" * 60)
@@ -121,8 +123,9 @@ def test_db_initialization():
 
 def test_media_table_structure():
     """
-    @brief Test media table structure and column integrity.
-    @details Validates all required columns exist with correct types.
+    Validiert die Struktur und Spaltenintegrität der media-Tabelle.
+    Returns:
+        bool: True bei Erfolg, False bei Fehler.
     """
     print("\n📋 Test 2: Media Table Structure")
     print("─" * 60)
@@ -176,8 +179,9 @@ def test_media_table_structure():
 
 def test_crud_operations():
     """
-    @brief Test Create, Read, Update, Delete operations.
-    @details Validates all CRUD functions work correctly.
+    Testet die CRUD-Operationen (Create, Read, Update, Delete) für Media-Items.
+    Returns:
+        bool: True bei Erfolg, False bei Fehler.
     """
     print("\n🔄 Test 3: CRUD Operations")
     print("─" * 60)
@@ -271,8 +275,9 @@ def test_crud_operations():
 
 def test_database_stats():
     """
-    @brief Test database statistics retrieval.
-    @details Validates get_db_stats() function.
+    Prüft die Funktion zum Abrufen von Datenbankstatistiken.
+    Returns:
+        bool: True bei Erfolg, False bei Fehler.
     """
     print("\n📊 Test 4: Database Statistics")
     print("─" * 60)
@@ -300,8 +305,9 @@ def test_database_stats():
 
 def test_legacy_database_handling():
     """
-    @brief Test legacy database detection and cleanup.
-    @details Validates legacy DB functions.
+    Testet die Erkennung und das Handling von Legacy-Datenbanken.
+    Returns:
+        bool: True bei Erfolg, False bei Fehler.
     """
     print("\n🗂️  Test 5: Legacy Database Handling")
     print("─" * 60)
@@ -336,8 +342,9 @@ def test_legacy_database_handling():
 
 def run_all_tests():
     """
-    @brief Run all database tests.
-    @return True if all tests passed, False otherwise.
+    Führt alle Datenbanktests aus und gibt das Gesamtergebnis zurück.
+    Returns:
+        bool: True wenn alle Tests bestanden wurden, sonst False.
     """
     if not DB_AVAILABLE:
         print("❌ db.py Modul nicht importierbar")

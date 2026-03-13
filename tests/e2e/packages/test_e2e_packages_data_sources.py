@@ -3,8 +3,21 @@
 # Kategorie: E2E / Multi-Source Data Mocking
 # Eingabewerte: Verschiedene Package-Datenquellen (pip, conda, poetry, etc.)
 # Ausgabewerte: Validierung Backend-Parsing für alle Quellen
-# Testdateien: main.py (_get_installed_packages)
-# Kommentar: Testet Backend mit Mocks für unterschiedliche Paket-Datenquellen.
+# Testdateien: src/core/main.py (_get_installed_packages)
+# ERWEITERUNGEN (TODO): [ ] Venv-Isolation Tests, [ ] OS-spezifische Pfad-Mocks
+# KOMMENTAR: Testet Backend mit Mocks für unterschiedliche Paket-Datenquellen.
+# VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_data_sources.py
+
+"""
+KATEGORIE: E2E / Multi-Source Data Mocking
+ZWECK: Multi-Source Mock Tests für Package-Daten. Testet Backend-Parsing-Logic mit verschiedenen Datenquellen.
+EINGABEWERTE: Verschiedene Package-Datenquellen (pip, conda, poetry, etc.)
+AUSGABEWERTE: Validierung Backend-Parsing für alle Quellen
+TESTDATEIEN: src/core/main.py (_get_installed_packages)
+ERWEITERUNGEN (TODO): [ ] Venv-Isolation Tests, [ ] OS-spezifische Pfad-Mocks
+KOMMENTAR: Testet Backend mit Mocks für unterschiedliche Paket-Datenquellen.
+VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_data_sources.py
+"""
 
 import json
 import unittest

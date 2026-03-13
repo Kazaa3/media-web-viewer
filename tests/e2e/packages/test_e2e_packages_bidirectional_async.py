@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: E2E / Async Bidirectional Package Data Flow
-# Eingabewerte: main.py (_get_installed_packages), web/app.html (loadEnvironmentInfo)
+# Eingabewerte: src/core/main.py (_get_installed_packages), web/app.html (loadEnvironmentInfo)
 # Ausgabewerte: Bidirektionaler Datenfluß pip→backend→frontend→DOM & frontend→backend
-# Testdateien: main.py, web/app.html, web/i18n.json
-# Kommentar: End-to-End Test für vollständigen, bidirektionalen, asynchronen Package-Datenfluss.
+# Testdateien: src/core/main.py, web/app.html, web/i18n.json
+# ERWEITERUNGEN (TODO): [ ] Mocking für Netzwerk-Timeouts, [ ] Performance-Benchmarks
+# KOMMENTAR: End-to-End Test für vollständigen, bidirektionalen, asynchronen Package-Datenfluss.
+# VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_bidirectional_async.py
+
+"""
+KATEGORIE: E2E / Async Bidirectional Package Data Flow
+ZWECK: End-to-End Test für vollständigen, bidirektionalen, asynchronen Package-Datenfluss (pip -> backend -> frontend -> DOM).
+EINGABEWERTE: src/core/main.py (_get_installed_packages), web/app.html (loadEnvironmentInfo)
+AUSGABEWERTE: Bidirektionaler Datenfluß pip→backend→frontend→DOM & frontend→backend
+TESTDATEIEN: src/core/main.py, web/app.html, web/i18n.json
+ERWEITERUNGEN (TODO): [ ] Mocking für Netzwerk-Timeouts, [ ] Performance-Benchmarks
+KOMMENTAR: End-to-End Test für vollständigen, bidirektionalen, asynchronen Package-Datenfluss.
+VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_bidirectional_async.py
+"""
 
 import asyncio
 import json

@@ -4,7 +4,20 @@
 # Eingabewerte: main.py (get_environment_info), web/app.html (console.log patterns)
 # Ausgabewerte: Verifiziert, dass Debug-Tools für UI-Probleme verfügbar sind
 # Testdateien: main.py, web/app.html
-# Kommentar: Test suite documenting UI debugging tools used to diagnose issues like the i18n bug
+# ERWEITERUNGEN (TODO): [ ] Mocking-Tests für Remote-Debugging, [ ] Performance-Tracing Erweiterung
+# KOMMENTAR: Test suite documenting UI debugging tools used to diagnose issues.
+# VERWENDUNG: python3 tests/integration/category/ui/test_ui_debug_tools.py
+
+"""
+KATEGORIE: Debugging / UI Trace Tools
+ZWECK: Dokumentiert und verifiziert die verfügbaren UI-Debugging-Tools und Workflows.
+EINGABEWERTE: main.py (get_environment_info), web/app.html (console.log patterns)
+AUSGABEWERTE: Verifiziert, dass Debug-Tools für UI-Probleme verfügbar sind
+TESTDATEIEN: main.py, web/app.html
+ERWEITERUNGEN (TODO): [ ] Mocking-Tests für Remote-Debugging, [ ] Performance-Tracing Erweiterung
+KOMMENTAR: Test suite documenting UI debugging tools used to diagnose issues.
+VERWENDUNG: python3 tests/integration/category/ui/test_ui_debug_tools.py
+"""
 
 import unittest
 from pathlib import Path

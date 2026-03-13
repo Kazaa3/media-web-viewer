@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: E2E / Backend → Frontend (Unidirektional)
-# Eingabewerte: main.py (_get_installed_packages, get_environment_info)
+# Eingabewerte: src/core/main.py (_get_installed_packages, get_environment_info)
 # Ausgabewerte: Validierung Backend-Daten-Pipeline bis Frontend-Empfang
-# Testdateien: main.py, web/app.html
-# Kommentar: Testet ausschließlich die Datenfluss-Richtung Backend → Frontend.
+# Testdateien: src/core/main.py, web/app.html
+# ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Python-Versionen, [ ] Backend-Timeout Tests
+# KOMMENTAR: Testet ausschließlich die Datenfluss-Richtung Backend → Frontend.
+# VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_backend_to_frontend.py
+
+"""
+KATEGORIE: E2E / Backend → Frontend (Unidirektional)
+ZWECK: Testet ausschließlich die Datenfluss-Richtung Backend → Frontend (Parsing -> API -> Frontend reception).
+EINGABEWERTE: src/core/main.py (_get_installed_packages, get_environment_info)
+AUSGABEWERTE: Validierung Backend-Daten-Pipeline bis Frontend-Empfang
+TESTDATEIEN: src/core/main.py, web/app.html
+ERWEITERUNGEN (TODO): [ ] Mocking für verschiedene Python-Versionen, [ ] Backend-Timeout Tests
+KOMMENTAR: Testet ausschließlich die Datenfluss-Richtung Backend → Frontend.
+VERWENDUNG: python3 tests/e2e/packages/test_e2e_packages_backend_to_frontend.py
+"""
 
 import json
 import re

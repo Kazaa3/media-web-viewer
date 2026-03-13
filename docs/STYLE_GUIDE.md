@@ -52,4 +52,57 @@ The following items MUST NOT be pushed to the public repository:
 
 - **i18n**: All UI strings must be localized via `web/i18n.json`.
 - **Kebab-Case**: Use kebab-case for HTML IDs (`my-button-id`).
-- **Trace Logging**: Use `appendUiTrace()` for diagnostic feedback in the Debug tab.
+## 6. Test Script Header Standard
+
+## 6. Test Script Header Standard
+
+Every test script MUST start with a standardized dual-header. This includes `#` comments for system parsing (`main.py`) and a detailed docstring for human readability.
+
+### Approved Template
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: [Kategorie Name]
+# Eingabewerte: [Werte]
+# Ausgabewerte: [Ergebnisse]
+# Testdateien: [Dateien oder 'Keine']
+# ERWEITERUNGEN (TODO): [Checkliste]
+# KOMMENTAR: [Kurzer Kommentar oder Zweck]
+# VERWENDUNG: python tests/[pfad]/[file].py
+
+"""
+KATEGORIE:
+----------
+[Kategorie Name]
+
+ZWECK:
+------
+[Kurze Beschreibung des Testzwecks]
+
+EINGABEWERTE:
+-------------
+- [Wert 1]
+
+AUSGABEWERTE:
+-------------
+- [Ergebnis 1]
+
+TESTDATEIEN:
+------------
+- [Pfad oder 'Keine']
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] [Zukünftiges Feature]
+
+VERWENDUNG:
+-----------
+    python tests/[pfad]/[file].py
+"""
+```
+
+### Key Rules
+- **Redundancy is Required**: The metadata must exist in both the `#` comments (for the UI) and the docstring (for documentation).
+- **Exact Field Names**: Use the exact names (KATEGORIE, ZWECK, etc.) and underlines (`-------`) as shown.
+- **Shebang**: Always include the shebang and UTF-8 encoding.

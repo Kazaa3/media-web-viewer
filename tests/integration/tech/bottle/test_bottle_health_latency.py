@@ -4,7 +4,42 @@
 # Eingabewerte: web/app_bottle.py health endpoint
 # Ausgabewerte: HTTP 200 und lokale Roundtrip-Latenz (Median)
 # Testdateien: web/app_bottle.py
-# Kommentar: Separater Transporttest für Bottle-HTTP-Latenz.
+# ERWEITERUNGEN (TODO): [ ] Latenz-Benchmarking unter Last, [ ] Histogramm-Ausgabe
+# KOMMENTAR: Misst die HTTP-Latenz der Bottle-Applikation unter lokaler Last.
+# VERWENDUNG: python3 tests/integration/tech/bottle/test_bottle_health_latency.py
+
+"""
+KATEGORIE:
+----------
+Bottle Transport Latency Test
+
+ZWECK:
+------
+Validiert die /health Endpunkt Verfügbarkeit und lokale HTTP-Latenz.
+Stellt sicher, dass der Transport-Overhead im akzeptablen Bereich bleibt.
+
+EINGABEWERTE:
+-------------
+- web/app_bottle.py health endpoint
+
+AUSGABEWERTE:
+-------------
+- HTTP 200
+- Lokale Roundtrip-Latenz (Median in ms)
+
+TESTDATEIEN:
+------------
+- web/app_bottle.py
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Latenz-Benchmarking unter Last
+- [ ] Histogramm-Ausgabe
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/tech/bottle/test_bottle_health_latency.py
+"""
 
 import json
 import socket

@@ -4,7 +4,42 @@
 # Eingabewerte: None
 # Ausgabewerte: Health check status (dict), log_request success
 # Testdateien: web/app_bottle.py
-# Kommentar: Validiert interne Funktionen von app_bottle.py (Health-Check, Logging).
+# ERWEITERUNGEN (TODO): [ ] Fehlerbehandlung in log_request prüfen, [ ] Mocking-Tests für app_bottle
+# KOMMENTAR: Testet Basisfunktionen der Bottle-Web-Applikation wie Health-Checks und Logging.
+# VERWENDUNG: python3 tests/integration/tech/bottle/test_web_app_bottle.py
+
+"""
+KATEGORIE:
+----------
+Tech / Bottle
+
+ZWECK:
+------
+Validiert interne Funktionen von app_bottle.py (Health-Check, Logging).
+Prüft die Kern-Logik des Bottle-Web-App-Wrappers.
+
+EINGABEWERTE:
+-------------
+- Keine (interne Funktionen von app_bottle)
+
+AUSGABEWERTE:
+-------------
+- Health check status (dict)
+- log_request success
+
+TESTDATEIEN:
+------------
+- web/app_bottle.py
+
+ERWEITERUNGEN (TODO):
+---------------------
+- [ ] Fehlerbehandlung in log_request prüfen
+- [ ] Mocking-Tests für app_bottle
+
+VERWENDUNG:
+-----------
+    python3 tests/integration/tech/bottle/test_web_app_bottle.py
+"""
 
 import unittest
 from web import app_bottle
