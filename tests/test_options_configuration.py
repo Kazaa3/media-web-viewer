@@ -1,3 +1,4 @@
+#dict - Desktop Media Player and Library Manager v1.34
 """
 Options Configuration Unit Test (DE/EN)
 

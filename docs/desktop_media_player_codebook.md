@@ -9,7 +9,7 @@ This codebook documents the conventions, metadata fields, and header requirement
 ## Header Standard
 
 All scripts, tests, and .md files must start with:
-- `dict - Desktop Media Player and Library Manager`
+- `dict - Web Media Player and Library Manager`
 - Shebang (`#!/usr/bin/env python3`) and UTF-8 encoding (`# -*- coding: utf-8 -*-`) for Python files
 - Structured metadata fields: Kategorie, Eingabewerte, Ausgabewerte, Testdateien, ERWEITERUNGEN (TODO), KOMMENTAR, VERWENDUNG
 - Bilingual docstring (DE/EN) for purpose, scope, and usage
@@ -20,7 +20,7 @@ All scripts, tests, and .md files must start with:
 ```python
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# App: dict - Desktop Media Player and Library Manager
+# App: dict - Web Media Player and Library Manager
 # Kategorie: [Kategorie Name]
 # Eingabewerte: [Werte]
 # Ausgabewerte: [Ergebnisse]

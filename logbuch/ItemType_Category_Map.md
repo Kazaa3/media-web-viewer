@@ -81,9 +81,14 @@ cat_map = {
 - Die Keys für cat_map und Filter stammen aus diesen Extension-Listen und der get_category()-Logik.
 
 ## Hinweise
-- Das Mapping kann zentral gepflegt und erweitert werden.
-- GUI und Backend nutzen die Typen für Filter, Anzeige und Spezialfunktionen.
-- Für neue Medienarten einfach neue Kategorien und Keywords ergänzen.
+
+## Namens-Kandidaten für Projekt/App
+
+Folgende Namen sind als Header oder App-Name im Projekt gültig:
+- dict - Desktop Media Player and Library Manager
+- dict - Web Media Player and Library Manager
+
+Diese Namen können als Header in Scripts, Tests, .md-Dateien und Codebuch-Einträgen verwendet werden.
 
 
 

@@ -10,7 +10,8 @@ This document establishes the technical standards and best practices for the Med
 - Group multiple related assertions into logical blocks with comments.
 
 ## 2. Test Classification & Reporting
-#dict - Desktop Media Player and Library Manager
+#dict - Desktop Media Player and Library Manager v1.34
+#dict - Web Media Player and Library Manager v.{VERSION}
 Tests MUST be grouped according to their focus and complexity:
 
 - `tests/tech/`: Technology-specific tests (FFmpeg, VLC, Mutagen, Scapy).
@@ -47,7 +48,7 @@ Every test script MUST start with a standardized dual-header:
 ### Approved Template
 
 ```python
-#dict - Desktop Media Player and Library Manager
+# dict - Web Media Player and Library Manager
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: [Kategorie Name]
@@ -109,7 +110,7 @@ Audit scripts must include:
 
 Example header:
 ```python
-#dict - Desktop Media Player and Library Manager
+# dict - Web Media Player and Library Manager v.{VERSION}
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: Audit Script
