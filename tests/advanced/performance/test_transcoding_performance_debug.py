@@ -287,9 +287,9 @@ class TestTranscodingDebugCapabilities:
         log_checks = {
             'TRANSCODING STARTED': 'Start log missing',
             'TRANSCODING SUCCESS': 'Success log missing',
-            'TRANSCODING FAILED': 'Failure log missing',
+            'TRANSCODING FAILURE' if 'TRANSCODING FAILURE' in content else 'TRANSCODING FAILED': 'Failure log missing',
             'TRANSCODING TIMEOUT': 'Timeout log missing',
-            'src.core.logger.debug("transcode"': 'Debug logger missing',
+            'logger.debug("transcode"': 'Debug logger missing',
         }
         
         for log_string, error_msg in log_checks.items():

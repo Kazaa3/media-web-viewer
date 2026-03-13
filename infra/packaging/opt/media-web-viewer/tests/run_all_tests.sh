@@ -1,170 +1,163 @@
 #!/bin/bash
+# MASTER TEST RUNNER - Dynamic Test Discovery & Categorization
 ################################################################################
-# Master Test Runner - Führt alle Test-Suites aus
-################################################################################
-#
-# ZWECK:
-# ------
-# Führt alle drei Test-Suites nacheinander aus und zeigt eine Gesamt-Statistik.
-#
-# TEST-SUITES:
-# ------------
-# 1. test_i18n_completeness.py - i18n Basis-Validierung (9 Tests)
-# 2. test_i18n_deep_scan.py    - i18n Deep Scan (8 Tests)
-# 3. test_ui_events.py          - UI Events & Interaktionen (10 Tests)
-#
-# VERWENDUNG:
-# -----------
-#     chmod +x tests/run_all_tests.sh
-#     ./tests/run_all_tests.sh
-#
-# ODER:
-#     bash tests/run_all_tests.sh
-#
-# EXIT-CODES:
-# -----------
-# 0 = Alle Tests bestanden
-# 1 = Mindestens ein Test fehlgeschlagen
-#
-################################################################################
-
-set -e  # Stop on first error
 
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo ""
-echo "================================================================================"
-echo "🧪 Media Web Viewer - Complete Test Suite"
-echo "================================================================================"
-echo ""
-echo "Führt alle Test-Suites aus:"
-echo "  1️⃣  i18n Completeness (9 Tests)"
-echo "  2️⃣  i18n Deep Scan (8 Tests)"
-echo "  3️⃣  UI Events (10 Tests)"
-echo ""
-echo "Gesamt: 27 Tests"
-echo ""
-echo "================================================================================"
-echo ""
+show_help() {
+    echo "Usage: ./tests/run_all_tests.sh [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --stage 1    Core Health (API, Env, Exposure)"
+    echo "  --stage 2    Backend Logic (DB, Parsers, Processes, Models)"
+    echo "  --stage 3    UI & i18n Interaction (CSS, HTML, Events)"
+    echo "  --stage 4    Automation & Integration (VLC, PyAutoGUI, Selenium)"
+    echo "  --stage 5    Quality & Security (Linting, Version, Build)"
+    echo "  --all        Run all stages (highly recommended for full validation)"
+    echo "  --list       List discovered tests per stage"
+    echo "  --help       Show this help"
+}
 
-# Initialize counters
-total_tests=0
-passed_tests=0
-failed_tests=0
+STAGE=0
+LIST_ONLY=0
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --stage) STAGE="$2"; shift ;;
+        --all) STAGE="all" ;;
+        --list) LIST_ONLY=1 ;;
+        --help) show_help; exit 0 ;;
+        *) echo "Unknown parameter: $1"; show_help; exit 1 ;;
+    esac
+    shift
+done
 
-# Test 1: i18n Completeness
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${BLUE}1️⃣  Running: test_i18n_completeness.py${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+# Optimization: Prefer .venv_dev or .venv_testbed
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-if python tests/test_i18n_completeness.py; then
-    echo -e "${GREEN}✅ i18n Completeness: PASSED${NC}"
-    ((passed_tests+=9))
-else
-    echo -e "${RED}❌ i18n Completeness: FAILED${NC}"
-    ((failed_tests+=9))
-fi
-((total_tests+=9))
-
-# Test 2: i18n Deep Scan
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${BLUE}2️⃣  Running: test_i18n_deep_scan.py${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-if python tests/test_i18n_deep_scan.py; then
-    echo -e "${GREEN}✅ i18n Deep Scan: PASSED${NC}"
-    ((passed_tests+=8))
-else
-    echo -e "${YELLOW}⚠️  i18n Deep Scan: PASSED with WARNINGS${NC}"
-    ((passed_tests+=7))
-    ((failed_tests+=1))
-fi
-((total_tests+=8))
-
-# Test 3: UI Events
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${BLUE}3️⃣  Running: test_ui_events.py${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-if python tests/test_ui_events.py; then
-    echo -e "${GREEN}✅ UI Events: PASSED${NC}"
-    ((passed_tests+=10))
-else
-    echo -e "${RED}❌ UI Events: FAILED${NC}"
-    ((failed_tests+=10))
-fi
-((total_tests+=10))
-
-# Final Summary
-echo ""
-echo "================================================================================"
-echo "📊 FINAL TEST RESULTS"
-echo "================================================================================"
-echo ""
-echo "Total Tests:  $total_tests"
-echo -e "Passed:       ${GREEN}$passed_tests${NC}"
-
-if [ $failed_tests -gt 0 ]; then
-    echo -e "Failed:       ${RED}$failed_tests${NC}"
-else
-    echo -e "Failed:       ${GREEN}0${NC}"
+PYTHON_EXE=""
+# 1. Prefer active VIRTUAL_ENV ONLY if it exists
+if [ -n "$VIRTUAL_ENV" ] && [ -x "$VIRTUAL_ENV/bin/python" ]; then
+    PYTHON_EXE="$VIRTUAL_ENV/bin/python"
 fi
 
-# Calculate pass rate
-pass_rate=$(awk "BEGIN {printf \"%.1f\", ($passed_tests/$total_tests)*100}")
-echo ""
-echo "Pass Rate:    ${pass_rate}%"
-echo ""
+# 2. Fallback to specialized venvs
+if [ -z "$PYTHON_EXE" ]; then
+    if [ -x "$PROJECT_ROOT/.venv_testbed/bin/python" ]; then
+        PYTHON_EXE="$PROJECT_ROOT/.venv_testbed/bin/python"
+    elif [ -x "$PROJECT_ROOT/.venv_core/bin/python" ]; then
+        PYTHON_EXE="$PROJECT_ROOT/.venv_core/bin/python"
+    elif [ -x "$PROJECT_ROOT/.venv_dev/bin/python" ]; then
+        PYTHON_EXE="$PROJECT_ROOT/.venv_dev/bin/python"
+    fi
+fi
 
-# Overall result
-if [ $failed_tests -eq 0 ]; then
-    echo "================================================================================"
-    echo -e "${GREEN}✅✅✅ ALL TESTS PASSED! ✅✅✅${NC}"
-    echo "================================================================================"
-    echo ""
-    echo "🎉 Gratulation! Alle Tests bestanden!"
-    echo ""
-    echo "   ✅ i18n Completeness  → 9/9 Tests"
-    echo "   ✅ i18n Deep Scan     → 8/8 Tests"
-    echo "   ✅ UI Events          → 10/10 Tests"
-    echo ""
-    echo "   Die App ist vollständig getestet und produktionsreif!"
-    echo ""
+# 3. System fallback
+if [ -z "$PYTHON_EXE" ]; then
+    if command -v python3 &>/dev/null; then
+        PYTHON_EXE="python3"
+    else
+        PYTHON_EXE="python"
+    fi
+fi
+
+# Discovery & Categorization logic
+ALL_TESTS=$(ls "$PROJECT_ROOT"/tests/test_*.py)
+S1_PATTERNS=("eel" "api" "env_handler" "logbuffer" "health" "network")
+S2_PATTERNS=("db" "parser" "process" "transcoding" "media" "format" "models" "parse" "artwork" "mkv" "mp3" "pcm" "bitdepth" "iso" "stream" "chapter" "tag")
+S3_PATTERNS=("i18n" "ui_events" "playlist" "tabs" "refresh" "integrity" "html" "css" "json" "rendering")
+S4_PATTERNS=("pyautogui" "launcher" "vlc" "selenium" "browser" "session" "docker")
+S5_PATTERNS=("subprocess" "version" "build" "markdown" "linting" "doxygen" "cleanup" "package" "repo" "pip")
+
+get_stage_tests() {
+    local target_stage=$1
+    local results=()
+    
+    for t in $ALL_TESTS; do
+        local filename=$(basename "$t")
+        local matched=0
+        
+        case $target_stage in
+            1) for p in "${S1_PATTERNS[@]}"; do [[ "$filename" == *"$p"* ]] && matched=1; done ;;
+            2) for p in "${S2_PATTERNS[@]}"; do [[ "$filename" == *"$p"* ]] && matched=1; done ;;
+            3) for p in "${S3_PATTERNS[@]}"; do [[ "$filename" == *"$p"* ]] && matched=1; done ;;
+            4) for p in "${S4_PATTERNS[@]}"; do [[ "$filename" == *"$p"* ]] && matched=1; done ;;
+            5) for p in "${S5_PATTERNS[@]}"; do [[ "$filename" == *"$p"* ]] && matched=1; done ;;
+        esac
+        
+        if [ $matched -eq 1 ]; then
+            results+=("tests/$filename")
+        fi
+    done
+    echo "${results[@]}"
+}
+
+if [ "$LIST_ONLY" -eq 1 ]; then
+    echo -e "${BLUE}Discovered Tests per Stage:${NC}"
+    for s in {1..5}; do
+        echo -e "${YELLOW}Stage $s:${NC}"
+        get_stage_tests $s | tr ' ' '\n'
+    done
     exit 0
-elif [ $failed_tests -eq 1 ]; then
-    echo "================================================================================"
-    echo -e "${YELLOW}⚠️  TESTS PASSED WITH WARNINGS ⚠️${NC}"
-    echo "================================================================================"
-    echo ""
-    echo "26 von 27 Tests bestanden (96% Pass Rate)"
-    echo ""
-    echo "Die meisten Tests sind OK, aber es gibt ein paar nicht-kritische Warnungen."
-    echo "Diese können später behoben werden."
-    echo ""
+fi
+
+run_test() {
+    local file=$1
+    echo -ne "${BLUE}Running: $(basename "$file")... ${NC}"
+    if "$PYTHON_EXE" "$file" > /dev/null 2>&1; then
+        echo -e "${GREEN}PASS${NC}"
+        return 0
+    else
+        echo -e "${RED}FAIL${NC}"
+        return 1
+    fi
+}
+
+# Ensure project root is in PYTHONPATH
+export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+
+echo "================================================================================"
+echo "🧪 Media Web Viewer - Master Runner (Dynamic Discovery)"
+echo "Interpreter: $PYTHON_EXE"
+echo "PYTHONPATH: $PYTHONPATH"
+echo "================================================================================"
+
+SELECTED_TESTS=()
+if [ "$STAGE" == "all" ]; then
+    SELECTED_TESTS=($ALL_TESTS)
+    for i in "${!SELECTED_TESTS[@]}"; do
+        SELECTED_TESTS[$i]="tests/$(basename "${SELECTED_TESTS[$i]}")"
+    done
+else
+    SELECTED_TESTS=($(get_stage_tests "$STAGE"))
+fi
+
+if [ ${#SELECTED_TESTS[@]} -eq 0 ]; then
+    echo -e "${RED}No tests found for Stage $STAGE${NC}"
+    exit 1
+fi
+
+TOTAL=${#SELECTED_TESTS[@]}
+FAILED=0
+echo "Found $TOTAL tests for execution."
+
+for t in "${SELECTED_TESTS[@]}"; do
+    if ! run_test "$t"; then
+        ((FAILED++))
+    fi
+done
+
+echo "================================================================================"
+echo "📊 Results: $TOTAL tests, $FAILED failed."
+if [ $FAILED -eq 0 ]; then
+    echo -e "${GREEN}SUCCESS: Validation complete.${NC}"
     exit 0
 else
-    echo "================================================================================"
-    echo -e "${RED}❌ SOME TESTS FAILED ❌${NC}"
-    echo "================================================================================"
-    echo ""
-    echo "Bitte prüfe die Fehler-Ausgaben oben und behebe die Probleme."
-    echo ""
-    echo "Häufige Probleme:"
-    echo "  • Fehlende i18n Keys in web/i18n.json"
-    echo "  • Hardcoded deutsche Strings ohne t() Wrapper"
-    echo "  • Buttons ohne Event-Handler"
-    echo "  • Fehlende @eel.expose Dekoratoren"
-    echo ""
+    echo -e "${RED}FAILURE: $FAILED tests failed.${NC}"
     exit 1
 fi

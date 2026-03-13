@@ -5310,7 +5310,7 @@
             packagesList.innerHTML = packagesHtml;
         }
 
-        window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
+        window.runLatencyDiagnostics = async function(payloadSize = 0, samples = 5) {
             const count = Math.max(1, Math.min(30, Number(samples) || 5));
             const size = Math.max(0, Math.min(200000, Number(payloadSize) || 0));
 

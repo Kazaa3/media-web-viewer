@@ -1,28 +1,30 @@
-# Media Web Viewer (v1.3.3)
+# dict – Web Media Player & Library
+1.34
 
-Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](DOCUMENTATION.md).
+Kompakte Projektübersicht. Das vollständige Technical Manual liegt in [DOCUMENTATION.md](docs/DOCUMENTATION.md).
 
 ## Quick Start
 
 ### Debian/Ubuntu (.deb)
 ```bash
-sudo dpkg -i media-web-viewer_1.3.3_amd64.deb
+sudo dpkg -i media-web-viewer_1.34_amd64.deb
 sudo apt-get install -f
 media-web-viewer
 ```
 
-### From Source
+### From Source (empfohlene Umgebung: venv_core)
 ```bash
 git clone https://github.com/Kazaa3/media-web-viewer.git
 cd media-web-viewer
-mamba env create -f environment.yml
-mamba activate media-web-viewer
+python3 -m venv .venv_core
+source .venv_core/bin/activate
+pip install -r requirements.txt
 python main.py
 ```
 
 ## Core Stack
 - Backend: Python 3.11+, Bottle, Eel
-- Frontend: HTML5/CSS3, Vanilla JavaScript
+- Frontend: HTML5/CSS3, Vanilla JavaScript (Glassmorphism)
 - Database: SQLite (`media_library.db`)
 - Media Tooling: Mutagen, pymediainfo, FFmpeg
 - VLC Support: m3u8 (playlist import/export), python-vlc
@@ -73,6 +75,7 @@ Note on build quality gate:
 	- `tests/test_performance_probes.py`
 	- `tests/test_bottle_health_latency.py`
 	- `tests/test_installed_packages_ui.py`
+	- `tests/test_environment_packages_fallback.py`
 	- `tests/test_ui_session_stability.py`
 - Explicit override (not recommended):
 
@@ -124,7 +127,7 @@ Pipeline order in `build_system.py`:
 
 ```bash
 # 1) Update VERSION + all configured sync locations
-python update_version.py --new-version 1.3.5
+python update_version.py --new-version 1.34
 
 # 2) Verify sync is fully consistent
 python tests/test_version_sync.py
@@ -138,20 +141,20 @@ On every push to `main`, the workflow [ci-artifacts.yml](.github/workflows/ci-ar
 - Debian package (`media-web-viewer_*_amd64.deb`)
 
 ### Tagged Release (auto-publish to GitHub Releases)
-When you push a tag like `v1.3.3`, the workflow [release.yml](.github/workflows/release.yml):
+When you push a tag like `v1.34`, the workflow [release.yml](.github/workflows/release.yml):
 - builds Linux executable + Debian package + Windows `.exe`
 - creates/updates the GitHub Release
 - uploads all binaries as release assets
 
 ```bash
-git tag -a v1.3.3 -m "Release v1.3.3"
+git tag -a v1.34 -m "Release v1.34"
 git push origin main --tags
 ```
 
 ### Release Checklist (recommended)
 ```bash
 # 1) Update project version
-python update_version.py --new-version 1.3.5
+python update_version.py --new-version 1.34
 
 # 2) Verify version consistency
 python tests/test_version_sync.py
@@ -161,12 +164,12 @@ python build_system.py --pipeline
 
 # 4) Commit release-related changes
 git add VERSION VERSION_SYNC.json update_version.py
-git add main.py README.md DOCUMENTATION.md
+git add main.py README.md docs/DOCUMENTATION.md
 git add .github/workflows/release.yml .github/workflows/ci-artifacts.yml
-git commit -m "Release v1.3.5"
+git commit -m "Release v1.34"
 
 # 5) Create and push release tag
-git tag -a v1.3.5 -m "Release v1.3.5"
+git tag -a v1.34 -m "Release v1.34"
 git push origin main --tags
 ```
 
@@ -181,9 +184,20 @@ scripts/cleanup_build_artifacts.sh
 scripts/cleanup_build_artifacts.sh --execute
 ```
 
-## Docs
-- Technical Manual: [DOCUMENTATION.md](DOCUMENTATION.md)
-- Dependencies & licenses: [DEPENDENCIES.md](DEPENDENCIES.md)
-- License: [LICENSE.md](LICENSE.md)
+If generated artifacts were already committed in the past, remove them from the Git index once (files stay local):
+
+```bash
+git rm -r --cached -- packaging/opt/media-web-viewer
+git rm --cached -- __pycache__/main.cpython-314.pyc
+git rm --cached -- media-web-viewer_v1.34_amd64.deb
+git commit -m "chore: untrack generated packaging/cache artifacts"
+```
+
+## Docs & Logbuch
+- Technical Manual: [DOCUMENTATION.md](docs/DOCUMENTATION.md)
+- Logbuch-Zentrum: [docs/logbuch/000_Index.md](docs/logbuch/000_Index.md) (17 Kern-Dokumente)
+- Programm-Historie (Archiv): [docs/logbuch/archive/](docs/logbuch/archive/) (290+ Forschungs-Logs)
+- Dependencies & licenses: [DEPENDENCIES.md](docs/DEPENDENCIES.md)
+- License: [LICENSE.md](docs/LICENSE.md)
 
 Developed by **kazaa3**.
