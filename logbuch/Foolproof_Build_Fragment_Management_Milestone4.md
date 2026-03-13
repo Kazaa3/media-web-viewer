@@ -134,13 +134,36 @@ Test Suite & Automation Strategy Rethink (Ergänzung)
 - Test- und Build-Logs werden zentral in build/logs/ gespeichert.
 - Verifikation: python infra/build_system.py --clean sorgt für einen sauberen Tree; CI prüft, dass keine Fragmente im develop-Branch landen.
 
-6. Milestone 5: Testing Maturity & Windows Build
-- infra/build_exe.sh: Output ins build/-Verzeichnis; Cleanup/Isolation vor PyInstaller.
-- build_system.py: --report-Flag erzeugt JUnit-XML in build/test-reports/; integrierter CI-Log-Summary.
-- TIERS.md [NEU]: Dokumentation zu Unit/Integration/E2E, Guidelines für neue Tests.
-- Scanner-Update: .m4b, .wav, .aac und weitere Formate explizit abgedeckt.
-- Verifikation: python infra/build_system.py --test all --report erzeugt XML in build/, build_exe.sh produziert Artefakt in build/ ohne Fragmente.
+6. Milestone 5: Testing Maturity & Windows Build (Review Ergänzung)
+
+- build_exe.sh refaktoriert: Windows-Executables werden ins root build/-Verzeichnis exportiert, Staging-Fragmente werden strikt im build/-Ordner isoliert und bereinigt.
+- build_system.py unterstützt jetzt das --report-Flag für alle Test-Tiers:
+  - JUnit XML: Standardisierte JUnit-XML-Dateien werden in build/test-reports/ erzeugt, CI-Integration vereinfacht.
+  - Terminal Summary: Automatischer Parser gibt eine Zusammenfassung (Total, Passed, Failed, Duration) direkt im Terminal aus.
+- TIERS.md erstellt: Klare Guidelines für Unit-, Integration- und E2E-Tests, sorgt für konsistente Klassifizierung und Entwicklerfokus.
+- format_utils.py erweitert:
+  - Audio: .ac3, .mka, .dts, .dtshd, .ra, .rm
+  - Video: .vob, .dat, .divx, .xvid, .m2t, .mts, etc.
+  - Disk Images: .toast, .ccd, .daa
+- Test- und Build-Logs werden zentral in build/logs/ gespeichert.
 - CI prüft, dass Windows-Builds und Testreports korrekt erzeugt und keine Fragmente im develop-Branch landen.
+
+---
+Milestone 7: Build Performance & Resilience
+
+Goal: Professionelles Build-Monitoring und Zuverlässigkeit durch Performance-Messung und Hang-Prävention.
+
+Proposed Changes
+- Build System (infra/build_system.py):
+  - Performance Tracking: Timer-Context-Manager misst die Dauer jeder Build-Phase.
+  - Resilience: Timeout-Parameter (default 600s) für alle _run_command-Aufrufe, verhindert endlose Hänger.
+  - Reporting: "Total Build Time" und Phase-Dauer werden im finalen Build-Summary ausgegeben.
+- Build Scripts (infra/build_deb.sh, infra/build_exe.sh):
+  - Interne Timestamp-Logs für detaillierte Performance-Daten auf Skript-Ebene.
+
+Verification Plan
+- Performance: Vollständigen Build ausführen und prüfen, dass "Build Time"-Summary erscheint.
+- Resilience: Test-Build mit absichtlich langem sleep-Befehl ausführen und prüfen, dass Timeout korrekt greift.
 
 ---
 Walkthrough Review (Ergänzung)

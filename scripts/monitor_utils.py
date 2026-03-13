@@ -27,9 +27,13 @@ def kill_process_tree(pid: int):
         parent = psutil.Process(pid)
         children = parent.children(recursive=True)
         for child in children:
-            child.kill()
-        parent.kill()
-    except (ImportError, psutil.NoSuchProcess):
+            try:
+                child.kill()
+            except: pass
+        try:
+            parent.kill()
+        except: pass
+    except (ImportError, Exception):
         # Fallback if psutil is missing or process gone
         try:
             os.kill(pid, signal.SIGKILL)
@@ -77,11 +81,16 @@ def run_monitored(
     
     try:
         fd = None
-        if process.stdout is not None:
-            import fcntl
-            fd = process.stdout.fileno()
-            fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-            fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        current_stdout = process.stdout
+        if current_stdout is not None:
+            try:
+                import fcntl
+                fd = current_stdout.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+            except (ImportError, AttributeError, Exception):
+                # Non-critical: some platforms might not support fcntl
+                pass
 
 
         while True:

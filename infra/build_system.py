@@ -61,6 +61,20 @@ class BuildSystem:
         "e2e": "tests/e2e/",
         "all": "tests/"
     }
+
+    import contextlib
+    @contextlib.contextmanager
+    def timer(self, phase_name: str):
+        """Context manager to measure and log phase duration."""
+        start = time.time()
+        print_status(f"Starting phase: {phase_name}", "PROCESS")
+        try:
+            yield
+        finally:
+            end = time.time()
+            duration = end - start
+            self.metrics.append({"phase": phase_name, "duration": duration})
+            print_status(f"Finished {phase_name} in {duration:.2f}s", "SUCCESS")
     
     def __init__(self, root_dir: Optional[Path] = None):
         """
@@ -71,6 +85,8 @@ class BuildSystem:
         """
         self.root = root_dir or Path(__file__).resolve().parent.parent
         self.version = self._read_version()
+        self.metrics = []
+        self.start_time = time.time()
         
     def _read_version(self) -> str:
         """Read version from VERSION file."""
@@ -88,16 +104,10 @@ class BuildSystem:
     def _run_command(self, cmd: list[str], cwd: Optional[Path] = None, monitor: bool = False, **kwargs) -> bool:
         """
         Run a command and return success status.
-        
-        Args:
-            cmd: Command and arguments as list
-            cwd: Working directory (default: root)
-            monitor: Enable robust hang detection
-            **kwargs: hang_timeout, alive_interval
-            
-        Returns:
-            bool: True if command succeeded, False otherwise
         """
+        start_time = time.time()
+        timeout = kwargs.get("timeout", 600)  # Default 10 min timeout
+        
         if not monitor:
             try:
                 result = subprocess.run(
@@ -106,25 +116,41 @@ class BuildSystem:
                     env=kwargs.get("env"),
                     check=True,
                     capture_output=True,
-                    text=True
+                    text=True,
+                    timeout=timeout
                 )
+                duration = time.time() - start_time
+                self.metrics.append({"cmd": cmd[0], "duration": duration, "status": "success"})
                 if result.stdout:
                     print(result.stdout)
                 return True
+            except subprocess.TimeoutExpired:
+                print(f"❌ Timeout Error: Command '{cmd[0]}' timed out after {timeout}s")
+                self.metrics.append({"cmd": cmd[0], "duration": timeout, "status": "timeout"})
+                return False
             except subprocess.CalledProcessError as e:
+                duration = time.time() - start_time
                 print(f"❌ Error: {e}")
+                self.metrics.append({"cmd": cmd[0], "duration": duration, "status": "failed"})
                 if e.stderr:
                     print(f"  stderr: {e.stderr}")
                 return False
         else:
-            from monitor_utils import run_monitored
-            return run_monitored(
-                cmd,
-                cwd=str(cwd or self.root),
-                env=kwargs.get("env"),
-                hang_timeout=kwargs.get("hang_timeout", 300),
-                alive_interval=kwargs.get("alive_interval", 30)
-            )
+            try:
+                from monitor_utils import run_monitored
+                success = run_monitored(
+                    cmd,
+                    cwd=str(cwd or self.root),
+                    env=kwargs.get("env"),
+                    hang_timeout=kwargs.get("hang_timeout", 300),
+                    alive_interval=kwargs.get("alive_interval", 30)
+                )
+                duration = time.time() - start_time
+                self.metrics.append({"cmd": cmd[0], "duration": duration, "status": "success" if success else "failed/hang"})
+                return success
+            except ImportError:
+                print_status("monitor_utils not found, falling back to standard execution", "WARNING")
+                return self._run_command(cmd, cwd=cwd, monitor=False, **kwargs)
     
     def check_environment(self) -> bool:
         """
@@ -161,37 +187,41 @@ class BuildSystem:
     
     def run_tests(self, tier: str, verbose: bool = False, report: bool = False) -> bool:
         """Run tests for a specified tier."""
-        self._print_banner(f"Running {tier.upper()} Tests")
-        
-        test_paths = {
-            "unit": "tests/unit",
-            "integration": "tests/integration",
-            "e2e": "tests/e2e",
-            "all": "tests"
-        }
-        
-        path = test_paths.get(tier)
-        if not path:
-            print(f"❌ Unknown test tier: {tier}")
-            return False
+        with self.timer(f"Testing ({tier})"):
+            if tier not in self.TEST_TIERS:
+                print(f"❌ Error: Unknown test tier '{tier}'")
+                return False
+            self._print_banner(f"Running {tier.upper()} Tests")
             
-        cmd = [sys.executable, "-m", "pytest", path]
-        if verbose:
-            cmd.append("-v")
+            test_paths = {
+                "unit": "tests/unit",
+                "integration": "tests/integration",
+                "e2e": "tests/e2e",
+                "all": "tests"
+            }
             
-        if report:
-            report_dir = self.root / "build" / "test-reports"
-            report_dir.mkdir(parents=True, exist_ok=True)
-            report_file = report_dir / f"report-{tier}.xml"
-            cmd.extend(["--junitxml", str(report_file)])
-            print_status(f"Reporting to: {report_file}", "INFO")
+            path = test_paths.get(tier)
+            if not path:
+                print(f"❌ Unknown test tier: {tier}")
+                return False
+                
+            cmd = [sys.executable, "-m", "pytest", path]
+            if verbose:
+                cmd.append("-v")
+                
+            if report:
+                report_dir = self.root / "build" / "test-reports"
+                report_dir.mkdir(parents=True, exist_ok=True)
+                report_file = report_dir / f"report-{tier}.xml"
+                cmd.extend(["--junitxml", str(report_file)])
+                print_status(f"Reporting to: {report_file}", "INFO")
+                
+            success = self._run_command(cmd)
             
-        success = self._run_command(cmd)
-        
-        if report and report_file.exists():
-            self._print_test_summary(report_file)
-            
-        return success
+            if report and report_file.exists():
+                self._print_test_summary(report_file)
+                
+            return success
 
     def _print_test_summary(self, xml_file: Path):
         """Parse JUnit XML and print a summary."""
@@ -298,41 +328,72 @@ class BuildSystem:
         Returns:
             bool: True if build succeeded
         """
-        self._print_banner(f"Building PyInstaller Executable (v{self.version})")
+        with self.timer("Windows EXE Build"):
+            self._print_banner(f"Building PyInstaller Executable (v{self.version})")
 
+            if not skip_build_gate:
+                if not self.run_build_test_gate():
+                    print("\n❌ Build test gate failed - aborting PyInstaller build")
+                    return False
+            else:
+                print("⚠️  Build test gate skipped (--skip-build-gate)")
+            
+            cmd = [
+                sys.executable, "-m", "eel",
+                "src/core/main.py", "web",
+                "--clean",
+                "--name", f"MediaWebViewer-{self.version}",
+            ]
+            
+            if onefile:
+                cmd.append("--onefile")
+            
+            if not console:
+                cmd.append("--noconsole")
+            
+            success = self._run_command(cmd, monitor=kwargs.get("monitor", False), hang_timeout=900)
 
-        if not skip_build_gate:
-            if not self.run_build_test_gate():
-                print("\n❌ Build test gate failed - aborting PyInstaller build")
-                return False
-        else:
-            print("⚠️  Build test gate skipped (--skip-build-gate)")
-        
-        cmd = [
-            sys.executable, "-m", "eel",
-            "src/core/main.py", "web",
-            "--clean",
-            "--name", f"MediaWebViewer-{self.version}",
-        ]
-        
-        if onefile:
-            cmd.append("--onefile")
-        
-        if not console:
-            cmd.append("--noconsole")
-        
-        success = self._run_command(cmd, monitor=kwargs.get("monitor", False), hang_timeout=900)
-
-        
-        if success:
-            dist_dir = self.root / "dist"
-            print(f"\n✅ Executable created in: {dist_dir}")
-            if dist_dir.exists():
-                for item in dist_dir.iterdir():
-                    print(f"   - {item.name}")
-        
-        return success
+            
+            if success:
+                dist_dir = self.root / "dist"
+                print(f"\n✅ Executable created in: {dist_dir}")
+                if dist_dir.exists():
+                    for item in dist_dir.iterdir():
+                        print(f"   - {item.name}")
+            
+            return success
     
+    def print_summary(self):
+        """Print a summary of the entire build/test session."""
+        total_duration = time.time() - self.start_time
+        self._print_banner("BUILD SESSION SUMMARY")
+        
+        print(f"  Version:        {self.version}")
+        print(f"  Total Duration: {total_duration:.2f}s")
+        print("\n  Phase Durations:")
+        
+        for metric in self.metrics:
+            if "phase" in metric:
+                print(f"    - {metric['phase']:<20}: {metric['duration']:.2f}s")
+            elif "cmd" in metric:
+                status = metric.get("status", "unknown")
+                print(f"    - [Cmd] {metric['cmd']:<14}: {metric['duration']:.2f}s ({status})")
+        
+        print("\n" + "=" * 70 + "\n")
+
+    def build_deb(self) -> bool:
+        """Build Debian package."""
+        with self.timer("Debian Build"):
+            self._print_banner(f"Building Debian Package (v{self.version})")
+            
+            # Use build_deb.sh script
+            script = self.root / "infra" / "build_deb.sh"
+            if not script.exists():
+                print(f"❌ Error: {script} not found")
+                return False
+                
+            return self._run_command(["bash", str(script)], monitor=True)
+
     def run_performance_benchmarks(self) -> bool:
         """
         Run all performance benchmarks in tests/advanced/performance/.
@@ -380,46 +441,47 @@ class BuildSystem:
         Returns:
             bool: True if build succeeded
         """
-        self._print_banner(f"Building Debian Package (v{self.version})")
+        with self.timer("Debian Build"):
+            self._print_banner(f"Building Debian Package (v{self.version})")
 
-        if not skip_build_gate:
-            if not self.run_build_test_gate():
-                print("\n❌ Build test gate failed - aborting Debian build")
+            if not skip_build_gate:
+                if not self.run_build_test_gate():
+                    print("\n❌ Build test gate failed - aborting Debian build")
+                    return False
+            else:
+                print("⚠️  Build test gate skipped (--skip-build-gate)")
+            
+            build_script = self.root / "infra" / "build_deb.sh"
+            if not build_script.exists():
+                print("❌ build_deb.sh not found")
                 return False
-        else:
-            print("⚠️  Build test gate skipped (--skip-build-gate)")
-        
-        build_script = self.root / "infra" / "build_deb.sh"
-        if not build_script.exists():
-            print("❌ build_deb.sh not found")
-            return False
-        
-        # Avoid duplicate gate execution
-        env = os.environ.copy()
-        env["SKIP_BUILD_TESTS"] = "1"
-        
-        # Determine if we should use monitoring
-        monitor = kwargs.get("monitor", False)
-        
-        cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
-        success = self._run_command(cmd, monitor=monitor, hang_timeout=600)
-        
-        if success:
-            deb_file = self.root / f"media-web-viewer_{self.version}_amd64.deb"
-            if deb_file.exists():
-                print(f"\n✅ Debian package created: {deb_file.name}")
-                
-                if install:
-                    print_status("Automatically installing package...", "PROCESS")
-                    reinstall_script = self.root / "scripts" / "reinstall_deb.sh"
-                    if reinstall_script.exists():
-                        self._run_command(["bash", str(reinstall_script)])
+            
+            # Avoid duplicate gate execution
+            env = os.environ.copy()
+            env["SKIP_BUILD_TESTS"] = "1"
+            
+            # Determine if we should use monitoring
+            monitor = kwargs.get("monitor", False)
+            
+            cmd = ["bash", "-lc", f"SKIP_BUILD_TESTS=1 bash '{build_script}'"]
+            success = self._run_command(cmd, monitor=monitor, hang_timeout=600)
+            
+            if success:
+                deb_file = self.root / f"media-web-viewer_{self.version}_amd64.deb"
+                if deb_file.exists():
+                    print(f"\n✅ Debian package created: {deb_file.name}")
+                    
+                    if install:
+                        print_status("Automatically installing package...", "PROCESS")
+                        reinstall_script = self.root / "scripts" / "reinstall_deb.sh"
+                        if reinstall_script.exists():
+                            self._run_command(["bash", str(reinstall_script)])
+                        else:
+                            print("❌ reinstall_deb.sh not found for auto-install")
                     else:
-                        print("❌ reinstall_deb.sh not found for auto-install")
-                else:
-                    print(f"   Install: sudo dpkg -i {deb_file.name}")
-        
-        return success
+                        print(f"   Install: sudo dpkg -i {deb_file.name}")
+            
+            return success
 
     def sync_environments(self, target: str = "all", force: bool = False) -> bool:
         """
@@ -458,26 +520,22 @@ class BuildSystem:
         return True
     
     def clean(self, full: bool = False) -> bool:
-        """
-        Clean build artifacts and temporary files.
-        
-        Args:
-            full: Also remove dist/, build/, and all .deb/.exe files
-        """
-        self._print_banner("Cleaning Build Artifacts")
-        
-        patterns = [
-            "__pycache__",
-            "*.pyc",
-            "*.pyo",
-            "*.pyd",
-            ".pytest_cache",
-            ".mypy_cache",
-            "*.egg-info",
-        ]
-        
-        if full:
-            patterns.extend(["*.deb", "*.exe"])
+        """Clean build artifacts and temporary files."""
+        with self.timer("Clean"):
+            self._print_banner("Cleaning Build Artifacts")
+            
+            patterns = [
+                "__pycache__",
+                "*.pyc",
+                "*.pyo",
+                "*.pyd",
+                ".pytest_cache",
+                ".mypy_cache",
+                "*.egg-info",
+            ]
+            
+            if full:
+                patterns.extend(["*.deb", "*.exe"])
         
         removed: list[str] = []
         
@@ -540,67 +598,54 @@ class BuildSystem:
         print()
     
     def full_build(self, target: str = "deb", skip_tests: bool = False, skip_build_gate: bool = False, **kwargs) -> bool:
-        """
-        Complete build process: test, check, and build.
-        
-        Args:
-            target: Build target ('deb', 'pyinstaller', or 'all')
-            skip_tests: Skip test execution
+        """Complete build process: test, check, and build."""
+        with self.timer(f"Full Build ({target})"):
+            self._print_banner(f"Full Build Process - v{self.version}")
             
-        Returns:
-            bool: True if entire build succeeded
-        """
-        self._print_banner(f"Full Build Process - v{self.version}")
-        
-        print(f"Target: {target}")
-        print(f"Skip tests: {skip_tests}\n")
-        
-        # Step 1: Environment check
-        if not self.check_environment():
-            print("❌ Environment check failed")
-            return False
-        
-        # Step 2: Run tests
-        if not skip_tests:
-            if not self.run_tests(tier="all", verbose=kwargs.get("verbose", False), report=kwargs.get("report", False)):
-                print("\n❌ Tests failed - aborting build")
-                return False
-        else:
-            print("⚠️  Tests skipped")
-        
-        # Step 3: Build based on target
-        if target == "deb":
-            success = self.build_debian_package(skip_build_gate=skip_build_gate, install=kwargs.get("install", False))
-        elif target == "pyinstaller":
-            success = self.build_pyinstaller(skip_build_gate=skip_build_gate)
-        elif target == "all":
-            success = self.build_pyinstaller(skip_build_gate=skip_build_gate) and \
-                      self.build_debian_package(skip_build_gate=skip_build_gate, install=kwargs.get("install", False))
-        else:
-            print(f"❌ Unknown target: {target}")
-            return False
-        
-        if success:
-            self._print_banner("✅ Build Complete!")
-            print(f"Version: {self.version}")
             print(f"Target: {target}")
-        else:
-            print("\n❌ Build failed")
-        
-        return success
+            print(f"Skip tests: {skip_tests}\n")
+            
+            # Step 1: Environment check
+            if not self.check_environment():
+                print("❌ Environment check failed")
+                return False
+            
+            # Step 2: Run tests
+            if not skip_tests:
+                if not self.run_tests(tier="all", verbose=kwargs.get("verbose", False), report=kwargs.get("report", False)):
+                    print("\n❌ Tests failed - aborting build")
+                    return False
+            else:
+                print("⚠️  Tests skipped")
+            
+            # Step 3: Build based on target
+            success = False
+            if target == "deb":
+                success = self.build_debian_package(skip_build_gate=skip_build_gate, install=kwargs.get("install", False))
+            elif target == "pyinstaller":
+                success = self.build_pyinstaller(skip_build_gate=skip_build_gate)
+            elif target == "all":
+                success = self.build_pyinstaller(skip_build_gate=skip_build_gate) and \
+                          self.build_debian_package(skip_build_gate=skip_build_gate, install=kwargs.get("install", False))
+            else:
+                print(f"❌ Unknown target: {target}")
+                return False
+            
+            if success:
+                self._print_banner("✅ Build Complete!")
+                print(f"Version: {self.version}")
+                print(f"Target: {target}")
+            else:
+                print("\n❌ Build failed")
+            
+            return success
 
     def run_pipeline(self, destructive: bool = False, skip_build_gate: bool = False) -> bool:
         """
         Run release pipeline checks and build artifacts.
-
-        Pipeline steps:
-        1) Environment check
-        2) Version sync validation
-        3) Build Debian package (includes build gate by default)
-        4) Reinstall validation tests (safe)
-        5) Optional destructive reinstall validation
         """
-        self._print_banner(f"Release Pipeline - v{self.version}")
+        with self.timer("Pipeline Build"):
+            self._print_banner(f"Release Pipeline - v{self.version}")
 
         print(f"Destructive checks: {destructive}\n")
 
@@ -839,6 +884,9 @@ def main():
 
     if args.pipeline:
         success = build_sys.run_pipeline(destructive=args.destructive, skip_build_gate=args.skip_build_gate) and success
+    
+    # Final summary
+    build_sys.print_summary()
     
     return 0 if success else 1
 
