@@ -227,7 +227,7 @@ class BuildSystem:
 
         checks = {
             "Python >= 3.10": sys.version_info >= (3, 10),
-            "requirements.txt exists": (self.root / "requirements.txt").exists(),
+            "requirements.txt exists": (self.root / "infra" / "requirements.txt").exists(),
             "main.py exists": (self.root / "src/core/main.py").exists(),
             "web/ directory exists": (self.root / "web").is_dir(),
             "VERSION file exists": (self.root / "VERSION").exists(),

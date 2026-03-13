@@ -224,7 +224,7 @@ def main():
     EN:
     Main entry point for the test.
     """
-    project_root = Path(__file__).parents[3].absolute()
+    project_root = Path(__file__).parents[2].absolute()
     tester = VersionSyncTester(project_root)
     
     success = tester.run_tests()
