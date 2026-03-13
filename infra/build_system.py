@@ -997,6 +997,12 @@ def main():
     )
 
     parser.add_argument(
+        "--deploy-config",
+        action="store_true",
+        help="Deploy branch-specific configuration to web/config.json"
+    )
+
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose output"
@@ -1076,6 +1082,9 @@ def main():
         success = build_sys.run_pipeline(
             destructive=args.destructive,
             skip_build_gate=args.skip_build_gate) and success
+
+    if args.deploy_config:
+        success = build_sys.deploy_branch_config() and success
 
     # Final summary
     build_sys.print_summary()

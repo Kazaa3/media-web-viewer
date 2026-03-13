@@ -272,7 +272,7 @@ PARSER_CONFIG: dict[str, Any] = {
     "enable_enzyme_parser": False,    # Disabled by default (slow)
     "enable_pymkv_parser": False,     # Disabled by default (slow)
     "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
-    "displayed_categories": ["audio"],
+    "displayed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
     "parser_settings": {
         "mkvmerge": {
             "cli_flags": "",

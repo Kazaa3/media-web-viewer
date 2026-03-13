@@ -1892,7 +1892,9 @@ def get_library():
             "images",
             "documents",
             "ebooks",
-            "abbild"]
+            "abbild",
+            "spiel",
+            "beigabe"]
 
     # We map internal categories to the setting keys
     # logical_type: 'Audio', 'Video', 'Bilder', 'Dokument', 'E-Book', 'Abbild'
@@ -1924,9 +1926,14 @@ def get_library():
             "Blu-ray (Abbild)",
             "Audio-CD (Abbild)",
             "CD-ROM (Abbild)",
-            "Disk-Abbild",
-            "Film",
-            "Spiel",
+            "Disk-Abbild"],
+        "spiel": [
+            "PC Spiel",
+            "PC Spiel (Index)",
+            "Digitales Spiel (Steam)",
+            "Spiel"],
+        "beigabe": [
+            "Supplement",
             "Beigabe",
             "Software"]}
 
