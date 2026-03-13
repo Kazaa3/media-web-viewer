@@ -526,7 +526,8 @@ class BuildSystem:
             "tests/integration/performance/benchmark_scanner.py",
             "tests/integration/performance/compare_benchmarks.py",
             "tests/integration/performance/test_performance_probes.py",
-            "tests/integration/performance/test_transcoding_performance_debug.py"]
+            "tests/integration/performance/test_transcoding_performance_debug.py",
+            "tests/integration/tech/ffmpeg/benchmark_all_parsers.py"]
 
         all_success = True
         total_benchmarks = len(benchmark_files)
@@ -549,10 +550,34 @@ class BuildSystem:
                 if not self._run_command([sys.executable, str(
                         file_path)], monitor=True, hang_timeout=300, env=env):
                     all_success = False
-                
-                sb.update(i, f"(Finished {bench})")
+            sb.update(i, f"(Finished {bench})")
 
         return all_success
+
+    def run_performance_audit(self) -> bool:
+        """
+        Run a comprehensive performance audit of all parsers.
+        """
+        self._print_banner("Running Performance Audit")
+
+        audit_script = "tests/integration/tech/ffmpeg/benchmark_all_parsers.py"
+        file_path = self.root / audit_script
+
+        if not file_path.exists():
+            print_status(f"Audit script missing: {audit_script}", "ERROR")
+            return False
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(self.root)
+        env["PERF_REPORT_DIR"] = str(self.reports_dir)
+
+        print_status(f"Executing audit: {audit_script}", "PROCESS")
+        success = self._run_command([sys.executable, str(file_path)], monitor=True, env=env)
+
+        if success:
+            print_status(f"Audit report generated in {self.reports_dir}", "SUCCESS")
+
+        return success
 
     def build_debian_package(
             self,
@@ -1004,6 +1029,12 @@ def main():
     )
 
     parser.add_argument(
+        "--audit-performance",
+        action="store_true",
+        help="Run comprehensive parser performance audit with format statistics"
+    )
+
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose output"
@@ -1086,6 +1117,9 @@ def main():
 
     if args.deploy_config:
         success = build_sys.deploy_branch_config() and success
+
+    if args.audit_performance:
+        success = build_sys.run_performance_audit() and success
 
     # Final summary
     build_sys.print_summary()

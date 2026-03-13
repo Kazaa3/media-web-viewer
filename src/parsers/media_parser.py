@@ -368,6 +368,15 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
                 # Get parser specific settings from PARSER_CONFIG
                 p_settings = PARSER_CONFIG.get('parser_settings', {}).get(step_name, {})
                 
+                if step_name in ["pymediainfo", "pycdlib", "isoparser"]:
+                    # Optimization: Skip heavy parsers for very large ISO files
+                    # They tend to cause extreme memory spikes during full/deep scans
+                    if file_type == ".iso" and path_obj.stat().st_size > 500 * 1024 * 1024:
+                        logging.info(f"Skipping {step_name} for large ISO: {filename}")
+                        parser_times[step_name] = time.time() - t0
+                        success = True
+                        continue
+
                 if step_func:
                     current_tags = cast(dict[str, Any], step_func(
                         path_obj, file_type, current_tags, filename, 
