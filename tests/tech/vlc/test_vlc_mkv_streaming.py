@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / VLC
+# Eingabewerte: MP4, ISO, MKV files
+# Ausgabewerte: Streaming status (ok), Popen commands (vlc, mkvmerge)
+# Testdateien: src/core/main.py
+# Kommentar: Testet VLC-Streaming-Protokolle und Batch-Remuxing-Logik.
+
 import unittest
 from unittest.mock import patch, MagicMock
 import os

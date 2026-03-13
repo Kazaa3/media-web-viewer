@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / VLC
+# Eingabewerte: vlc python-binding, vlc binary in PATH
+# Ausgabewerte: Import status, binary presence, version check
+# Testdateien: None
+# Kommentar: Prüft die Verfügbarkeit der VLC-Bibliothek und des Binaries.
+
 import subprocess
 
 def test_python_vlc_import():

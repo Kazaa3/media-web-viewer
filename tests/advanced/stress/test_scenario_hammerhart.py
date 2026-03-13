@@ -1,5 +1,3 @@
-import pytest
-pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: UI Scenario (Hammerhart)
@@ -7,6 +5,9 @@ pytest.importorskip("selenium")
 # Ausgabewerte: Reordered DOM, Backend-Persistence Status
 # Testdateien: tests/test_scenario_hammerhart.py
 # Kommentar: Komplexer E2E-Test für Playlist-Reordering via Drag & Drop.
+
+import pytest
+pytest.importorskip("selenium")
 
 import unittest
 import time

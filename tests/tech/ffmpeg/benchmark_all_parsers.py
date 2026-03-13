@@ -1,4 +1,11 @@
-# Benchmark: Alle Parser auf allen Dateien
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / FFmpeg (Benchmark)
+# Eingabewerte: All media files in the library
+# Ausgabewerte: Performance metrics per parser (duration, parser_times)
+# Testdateien: src/parsers/media_parser.py, all tech-specific parsers
+# Kommentar: Benchmark für alle Metadaten-Parser auf dem gesamten Medienbestand.
+
 import os
 import sys
 import glob

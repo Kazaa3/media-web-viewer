@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Basic / Utils
+# Eingabewerte: None
+# Ausgabewerte: Port status, app status, selenium drivers
+# Testdateien: None
+# Kommentar: Gemeinsame Test-Utilities und Selenium-Helper.
+
 import socket
 import pytest
 pytest.importorskip("selenium")

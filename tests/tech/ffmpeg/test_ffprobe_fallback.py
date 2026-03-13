@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / FFmpeg
+# Eingabewerte: Fake ffprobe/pymediainfo environment
+# Ausgabewerte: Fallback status, no-crash validation
+# Testdateien: src/parsers/ffprobe_parser.py
+# Kommentar: Testet den Fallback-Mechanismus von ffprobe zu pymediainfo.
+
 import subprocess
 import shutil
 import pytest

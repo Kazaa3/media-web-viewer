@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Advanced / Stress
+# Eingabewerte: None
+# Ausgabewerte: Server status (repeated calls) performance
+# Testdateien: src/core/main.py
+# Kommentar: Stress-Test für den Server-Status-Endpunkt.
+
 import time
 import pytest
 

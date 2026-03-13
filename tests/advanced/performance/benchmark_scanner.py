@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Advanced / Performance
+# Eingabewerte: Media directory path
+# Ausgabewerte: Scan duration, Extraction performance per item
+# Testdateien: src/core/main.py, src/core/models.py
+# Kommentar: Benchmark für Scanner-Geschwindigkeit und Metadaten-Extraktion.
+
 import time
 import os
 from pathlib import Path

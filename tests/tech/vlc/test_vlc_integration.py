@@ -1,8 +1,10 @@
-# Kategorie: VLC Integration
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / VLC
 # Eingabewerte: m3u8 Playlist-Dateien, Media Library
 # Ausgabewerte: Importierte Tracks, Exportierte Playlists
 # Testdateien: test_playlist.m3u8, sample_media.mp3
-# Kommentar: Test-Suite für VLC Playlist Import/Export Funktionalität
+# Kommentar: Test-Suite für VLC Playlist Import/Export Funktionalität.
 
 import pytest
 import tempfile

@@ -1,11 +1,10 @@
-"""
-Test: Transcoding Performance, Debugging & Logging
-===================================================
-
-Validates transcoding performance improvements and debug capabilities.
-
-Run: pytest tests/test_transcoding_performance_debug.py -v -s
-"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Advanced / Performance
+# Eingabewerte: ALAC/WMA test files, FFmpeg, app_bottle.py logs
+# Ausgabewerte: Transcoding performance (old vs new), log completeness status
+# Testdateien: web/app_bottle.py, src/core/logger.py
+# Kommentar: Validiert Transcoding-Performance, Debugging-Fähigkeiten und Logging-Vollständigkeit.
 
 import pytest
 import subprocess

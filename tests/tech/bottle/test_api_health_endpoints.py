@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / Bottle
+# Eingabewerte: Bottle app instance, gevent-websocket
+# Ausgabewerte: Server status (shape), WebSocket health (ping/pong)
+# Testdateien: src/core/main.py, src/core/env_handler.py
+# Kommentar: Validiert API-Health-Endprodukte und WebSocket-Status-Verbindungen.
+
 import importlib
 import pytest
 

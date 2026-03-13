@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-compare_benchmarks.py - Regression testing utility for Media Web Viewer.
-Compares current media extraction performance against historical baselines.
-"""
+# Kategorie: Advanced / Performance
+# Eingabewerte: Current benchmark results, baseline results
+# Ausgabewerte: Performance regression report (Delta %)
+# Testdateien: src/parsers/media_parser.py
+# Kommentar: Regression testing utility for Media Web Viewer. Compares current media extraction performance against historical baselines.
 
 import os
 import sys

@@ -1,4 +1,6 @@
-# Kategorie: Routing Test
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Tech / Bottle
 # Eingabewerte: Pfade zu ALAC / M4A Dateien
 # Ausgabewerte: HTTP Responses, Dateisystem-Checks (.cache)
 # Testdateien: media/sample.alac
