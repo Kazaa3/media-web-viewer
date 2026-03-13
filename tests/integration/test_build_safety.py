@@ -1,10 +1,24 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# =============================================================================
+# Kategorie: Build Safety Test
+# Eingabewerte: VERSION-Datei, main.py, control, spec, build_deb.sh
+# Ausgabewerte: Versionskonsistenz, Artifact-Sicherheit, Folder-Naming-Logik
+# Testdateien: test_build_safety.py
+# Kommentar: Prüft Versionskonsistenz und Artifact-Sicherheit im Build-Prozess.
+# Startbefehl: pytest tests/integration/test_build_safety.py -v
+# =============================================================================
 """
-test_build_safety.py - Verifies version consistency and artifact safety.
-Ensures that:
-1. VERSION file matches key locations (main.py, control, spec).
-2. No large media/data files are staged for packaging.
+Build Safety Test Suite (DE/EN)
+===============================
+
+DE:
+Testet die Versionskonsistenz und Artifact-Sicherheit im Build-Prozess.
+
+EN:
+Tests version consistency and artifact safety in the build process.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
 """
 
 import os
@@ -16,7 +30,17 @@ ROOT = Path(__file__).resolve().parent.parent.parent.parent
 VERSION_FILE = ROOT / "VERSION"
 
 def test_version_consistency():
-    """Verify that all key files have the same version string."""
+    """
+    DE:
+    Prüft, ob alle relevanten Dateien die gleiche Versionsnummer enthalten.
+
+    EN:
+    Verifies that all key files have the same version string.
+    Returns:
+        Keine.
+    Raises:
+        AssertionError: Wenn Versionsmismatch.
+    """
     assert VERSION_FILE.exists(), "VERSION file missing"
     current_version = VERSION_FILE.read_text().strip()
     
@@ -35,7 +59,17 @@ def test_version_consistency():
         assert expected_snippet in content, f"Version mismatch in {file_path.name}: expected '{expected_snippet}'"
 
 def test_no_large_files_in_staging_logic():
-    """Verify that build_deb.sh excludes large files effectively."""
+    """
+    DE:
+    Prüft, ob build_deb.sh große Dateien effektiv ausschließt.
+
+    EN:
+    Verifies that build_deb.sh excludes large files effectively.
+    Returns:
+        Keine.
+    Raises:
+        AssertionError: Wenn Schutz fehlt.
+    """
     build_deb_script = ROOT / "infra" / "build_deb.sh"
     assert build_deb_script.exists()
     
@@ -49,7 +83,17 @@ def test_no_large_files_in_staging_logic():
         assert f"--exclude '{ex}'" in content, f"build_deb.sh missing exclude for {ex}"
 
 def test_folder_naming_logic():
-    """Verify that BuildSystem uses version-specific names for artifacts."""
+    """
+    DE:
+    Prüft, ob BuildSystem versionsspezifische Namen für Artefakte verwendet.
+
+    EN:
+    Verifies that BuildSystem uses version-specific names for artifacts.
+    Returns:
+        Keine.
+    Raises:
+        Keine.
+    """
     from infra.build_system import BuildSystem
     bs = BuildSystem(root_dir=ROOT)
     version = bs.version

@@ -1,10 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: Backend Connection Test
-# Eingabewerte: Eel server
-# Ausgabewerte: Connection status
+# Eingabewerte: Eel-Server
+# Ausgabewerte: Connection-Status
 # Testdateien: Keine
 # Kommentar: Testet Eel Backend-Connection.
+"""
+Backend Connection Test Suite (DE/EN)
+=====================================
+
+DE:
+Testet die Verbindung zum Eel-Backend und prüft die Ping-Funktion.
+
+EN:
+Tests connection to the Eel backend and verifies the ping function.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import unittest
 from unittest.mock import patch, MagicMock
 import sys
@@ -16,14 +31,23 @@ import src.core.main as main
 
 class TestBackendConnection(unittest.TestCase):
     """
-    @test Verify the backend's responsiveness.
-    @details Confirms that the exposed ping function returns the expected response.
-    """
+    DE:
+    Testet die Backend-Verbindung und Ping-Funktion.
 
+    EN:
+    Tests backend connection and ping function.
+    """
     def test_ping_response(self):
         """
-        @test Verify the backend's ping function.
-        @details Ensures that main.ping() returns {'status': 'ok', 'message': 'pong'}.
+        DE:
+        Prüft, ob main.ping() den erwarteten Wert zurückgibt.
+
+        EN:
+        Verifies that main.ping() returns the expected value.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Antwort nicht wie erwartet.
         """
         # We need to make sure ping exists in main.py
         if hasattr(main, 'ping'):

@@ -1,4 +1,24 @@
-# Test: Mutagen M4B Kapitel und Cover
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: Mutagen M4B Kapitel & Cover Test
+# Eingabewerte: M4B-Datei, MP4Chapters, Cover-Bild
+# Ausgabewerte: Kapitel-Status, Cover-Status, JSON-Report
+# Testdateien: test_mutagen_m4b.py
+# Kommentar: Testet Kapitel- und Cover-Handling mit Mutagen.
+"""
+Mutagen M4B Kapitel & Cover Test Suite (DE/EN)
+==============================================
+
+DE:
+Testet das Lesen, Hinzufügen und Extrahieren von Kapiteln und Cover-Bildern in M4B-Dateien mit Mutagen.
+
+EN:
+Tests reading, adding, and extracting chapters and cover images in M4B files using Mutagen.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import os
 import base64

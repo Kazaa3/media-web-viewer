@@ -7,17 +7,33 @@
 # ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere Formate, [ ] Fehlerfall-Tests
 # KOMMENTAR: Testet die Priorität von pycdlib und isoparser.
 # VERWENDUNG: python3 tests/iso/test_iso_priority.py
+"""
+ISO Parser Priority Test Suite (DE/EN)
+======================================
+
+DE:
+Testet die Priorität von pycdlib und isoparser für ISO-Dateien.
+
+EN:
+Tests priority of pycdlib and isoparser for ISO files.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import unittest
 from src.parsers.media_parser import PARSER_MAPPING
 from src.parsers.format_utils import PARSER_CONFIG
 
 class TestISOPriority(unittest.TestCase):
-        """
-        Testet die Priorität von pycdlib und isoparser für ISO-Dateien. / Tests priority of pycdlib and isoparser for ISO files.
+    """
+    DE:
+    Testet die Priorität von pycdlib und isoparser für ISO-Dateien.
 
-        Returns:
-            None
-        """
+    EN:
+    Tests priority of pycdlib and isoparser for ISO files.
+    """
     def test_mapping_priority(self):
         """Ensures pycdlib comes before isoparser in the .iso mapping."""
         mapping = PARSER_MAPPING.get(".iso", [])

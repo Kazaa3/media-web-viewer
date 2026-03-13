@@ -7,6 +7,21 @@
 # ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere Debug-Methoden, [ ] Fehlerfall-Analyse
 # KOMMENTAR: Debugging von pycdlib für ISO-Parsing.
 # VERWENDUNG: python3 tests/iso/debug_pycdlib.py
+"""
+ISO Parser Debug Test Suite (DE/EN)
+===================================
+
+DE:
+Debugging von pycdlib für ISO-Parsing und Header-Analyse.
+
+EN:
+Debugging pycdlib for ISO parsing and header analysis.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import pycdlib
 import struct
 import traceback

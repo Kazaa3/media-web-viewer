@@ -1,5 +1,25 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# =============================================================================
+# Kategorie: Core Packages Four Targeted Test
+# Eingabewerte: requirements.txt, main.py, env_info
+# Ausgabewerte: Package-Status, Installationsprüfung
+# Testdateien: test_core_packages_four_targeted.py
+# Kommentar: Testet die vier Kernpakete und deren Installationsstatus.
+# Startbefehl: python tests/test_core_packages_four_targeted.py
+# =============================================================================
+"""
+Core Packages Four Targeted Test Suite (DE/EN)
+==============================================
+
+DE:
+Testet die vier Kernpakete (bottle, bottle-websocket, eel, m3u8) und deren Installationsstatus.
+
+EN:
+Tests the four core packages (bottle, bottle-websocket, eel, m3u8) and their installation status.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import importlib.util
 import re
@@ -8,7 +28,13 @@ import unittest
 from pathlib import Path
 
 class TestCorePackagesFourTargeted(unittest.TestCase):
-    """Focused checks for the 4 requested core packages."""
+    """
+    DE:
+    Testet die Installation und Statusprüfung der vier Kernpakete.
+
+    EN:
+    Tests installation and status check of the four core packages.
+    """
 
     @classmethod
     def setUpClass(cls):

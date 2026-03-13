@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: DEB Reinstall Test
-# Eingabewerte: .deb package
-# Ausgabewerte: Installation results
+# Eingabewerte: .deb-Paket, build_deb.sh, reinstall_deb.sh
+# Ausgabewerte: Installationsstatus, Paketstruktur, Version
 # Testdateien: build/*.deb
-# Kommentar: Testet DEB-Package-Reinstallation.
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# Kommentar: Testet DEB-Package-Reinstallation und Validierung.
 """
-Test suite for .deb package reinstallation workflow
-Tests the build_deb.sh + reinstall_deb.sh pipeline
+DEB Reinstall Test Suite (DE/EN)
+================================
+
+DE:
+Testet den Reinstall-Workflow für .deb-Pakete, inklusive Version, Struktur und Installation.
+
+EN:
+Tests the reinstall workflow for .deb packages, including version, structure, and installation.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
 """
 
 import subprocess

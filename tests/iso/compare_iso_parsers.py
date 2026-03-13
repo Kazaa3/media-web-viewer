@@ -7,6 +7,21 @@
 # ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO-Parser, [ ] Performance-Optimierung
 # KOMMENTAR: Vergleicht pycdlib und isoparser für ISO-Parsing.
 # VERWENDUNG: python3 tests/iso/compare_iso_parsers.py
+"""
+ISO Parser Comparison Test Suite (DE/EN)
+========================================
+
+DE:
+Vergleicht pycdlib und isoparser für ISO-Parsing und Performance.
+
+EN:
+Compares pycdlib and isoparser for ISO parsing and performance.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import os
 import time
 from pathlib import Path

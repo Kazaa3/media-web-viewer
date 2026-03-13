@@ -2,9 +2,23 @@
 # -*- coding: utf-8 -*-
 # Kategorie: Tech / FFmpeg
 # Eingabewerte: Fake ffprobe/pymediainfo environment
-# Ausgabewerte: Fallback status, no-crash validation
+# Ausgabewerte: Fallback-Status, No-Crash-Validierung
 # Testdateien: src/parsers/ffprobe_parser.py
 # Kommentar: Testet den Fallback-Mechanismus von ffprobe zu pymediainfo.
+"""
+FFprobe Fallback Test Suite (DE/EN)
+===================================
+
+DE:
+Testet den Fallback-Mechanismus von ffprobe zu pymediainfo und prüft auf Absturzfreiheit.
+
+EN:
+Tests ffprobe fallback mechanism to pymediainfo and checks for crash-free operation.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import subprocess
 import shutil

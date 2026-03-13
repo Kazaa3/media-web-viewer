@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: UI Frontend Test
-# Eingabewerte: JSON data for syntax highlighting
-# Ausgabewerte: HTML with colored syntax elements
+# Eingabewerte: JSON-Daten für Syntax-Highlighting
+# Ausgabewerte: HTML mit farbigen Syntaxelementen
 # Testdateien: web/app.html
 # Kommentar: Testet JSON Syntax-Highlighting im Python Dict (Details) Element.
 """
-Test Suite for JSON Syntax Highlighting in Debug Tab
+JSON Syntax Highlighting Test Suite (DE/EN)
+===========================================
 
-Tests the "Python Dict (Details)" element which displays JSON data
-with syntax highlighting in VS Code Dark+ theme colors.
+DE:
+Testet das JSON Syntax-Highlighting im Debug-Tab und die Darstellung im Python Dict (Details) Element.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+EN:
+Tests JSON syntax highlighting in the Debug tab and rendering in the Python Dict (Details) element.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+Lizenz: GPLv3
 """
 
 import unittest
@@ -25,31 +29,83 @@ from pathlib import Path
 # Add parent directory to path
 
 class TestJsonSyntaxHighlighting(unittest.TestCase):
-    """Test JSON syntax highlighting functionality in Debug tab."""
+    """
+    DE:
+    Testet die JSON Syntax-Highlighting-Funktionalität im Debug-Tab.
+
+    EN:
+    Tests JSON syntax highlighting functionality in Debug tab.
+    """
     
     def setUp(self):
-        """Load app.html content for testing."""
+        """
+        DE:
+        Lädt den Inhalt von app.html für die Tests.
+
+        EN:
+        Loads app.html content for testing.
+        """
         self.app_html_path = Path(__file__).parents[3] / "web" / "app.html"
         with open(self.app_html_path, 'r', encoding='utf-8') as f:
             self.html_content = f.read()
     
     def test_debug_items_json_element_exists(self):
-        """Test that debug-items-json element exists in HTML."""
+        """
+        DE:
+        Prüft, ob das debug-items-json Element im HTML existiert.
+
+        EN:
+        Tests that debug-items-json element exists in HTML.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Element fehlt.
+        """
         self.assertIn('id="debug-items-json"', self.html_content)
         print("✓ debug-items-json element found in HTML")
     
     def test_debug_items_dict_container_exists(self):
-        """Test that debug-items-dict-container wrapper exists."""
+        """
+        DE:
+        Prüft, ob der debug-items-dict-container Wrapper existiert.
+
+        EN:
+        Tests that debug-items-dict-container wrapper exists.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Element fehlt.
+        """
         self.assertIn('id="debug-items-dict-container"', self.html_content)
         print("✓ debug-items-dict-container element found in HTML")
     
     def test_syntax_highlight_function_exists(self):
-        """Test that syntaxHighlight function is defined."""
+        """
+        DE:
+        Prüft, ob die Funktion syntaxHighlight definiert ist.
+
+        EN:
+        Tests that syntaxHighlight function is defined.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Funktion fehlt.
+        """
         self.assertIn('function syntaxHighlight', self.html_content)
         print("✓ syntaxHighlight function is defined")
     
     def test_syntax_highlight_function_has_color_definitions(self):
-        """Test that syntaxHighlight function contains VS Code color palette."""
+        """
+        DE:
+        Prüft, ob die Funktion syntaxHighlight die VS Code Farbpalette enthält.
+
+        EN:
+        Tests that syntaxHighlight function contains VS Code color palette.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Farben fehlen.
+        """
         # Check for key colors from VS Code Dark+ theme
         colors = {
             '#9cdcfe': 'Keys (bright blue)',
@@ -64,39 +120,99 @@ class TestJsonSyntaxHighlighting(unittest.TestCase):
             print(f"✓ Color {color} for {description} found")
     
     def test_dark_theme_background(self):
-        """Test that dark theme background is applied."""
+        """
+        DE:
+        Prüft, ob der Dark Theme Hintergrund angewendet wird.
+
+        EN:
+        Tests that dark theme background is applied.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Hintergrundfarbe fehlt.
+        """
         # Check for dark background color
         self.assertIn('#1e1e1e', self.html_content)
         print("✓ Dark theme background (#1e1e1e) applied")
     
     def test_gradient_border_styling(self):
-        """Test that gradient border is applied to container."""
+        """
+        DE:
+        Prüft, ob ein Gradient-Border angewendet wird.
+
+        EN:
+        Tests that gradient border is applied to container.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Gradient fehlt.
+        """
         # Check for gradient styling
         pattern = r'linear-gradient\(135deg,\s*#667eea\s+0%,\s*#764ba2\s+100%\)'
         self.assertRegex(self.html_content, pattern)
         print("✓ Gradient border styling found")
     
     def test_fira_code_font_family(self):
-        """Test that Fira Code monospace font is used."""
+        """
+        DE:
+        Prüft, ob die Fira Code Monospace-Schrift verwendet wird.
+
+        EN:
+        Tests that Fira Code monospace font is used.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Schrift fehlt.
+        """
         pattern = r"font-family:\s*['\"]Fira Code"
         self.assertRegex(self.html_content, pattern)
         print("✓ Fira Code font family specified")
     
     def test_syntax_highlight_is_called(self):
-        """Test that syntaxHighlight function is actually invoked."""
+        """
+        DE:
+        Prüft, ob die Funktion syntaxHighlight tatsächlich aufgerufen wird.
+
+        EN:
+        Tests that syntaxHighlight function is actually invoked.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Aufruf fehlt.
+        """
         # Check if syntaxHighlight is called with result.media
         pattern = r'syntaxHighlight\s*\(\s*result\.media\s*\)'
         self.assertRegex(self.html_content, pattern)
         print("✓ syntaxHighlight function is called with result.media")
     
     def test_html_injection_via_innerHTML(self):
-        """Test that highlighted JSON is injected via innerHTML."""
+        """
+        DE:
+        Prüft, ob das hervorgehobene JSON via innerHTML injiziert wird.
+
+        EN:
+        Tests that highlighted JSON is injected via innerHTML.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Injection fehlt.
+        """
         pattern = r'debugItemsJson\.innerHTML\s*=\s*highlighted'
         self.assertRegex(self.html_content, pattern)
         print("✓ Highlighted JSON is injected via innerHTML")
     
     def test_regex_pattern_for_json_elements(self):
-        """Test that the regex pattern matches JSON elements correctly."""
+        """
+        DE:
+        Prüft, ob das Regex-Muster JSON-Elemente korrekt matched.
+
+        EN:
+        Tests that the regex pattern matches JSON elements correctly.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Pattern fehlt.
+        """
         # Extract the regex pattern from syntaxHighlight function
         pattern_match = re.search(
             r'json\.replace\(/(.+?)/g,\s*function',
@@ -122,19 +238,49 @@ class TestJsonSyntaxHighlighting(unittest.TestCase):
         print("✓ JSON regex pattern contains all required matchers")
     
     def test_python_dict_section_title(self):
-        """Test that 'Python Dict (Details)' title is present."""
+        """
+        DE:
+        Prüft, ob der Titel 'Python Dict (Details)' vorhanden ist.
+
+        EN:
+        Tests that 'Python Dict (Details)' title is present.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Titel fehlt.
+        """
         self.assertIn('Python Dict (Details)', self.html_content)
         print("✓ Section title 'Python Dict (Details)' found")
     
     def test_section_description(self):
-        """Test that description text is present."""
+        """
+        DE:
+        Prüft, ob der Beschreibungstext vorhanden ist.
+
+        EN:
+        Tests that description text is present.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Beschreibung fehlt.
+        """
         pattern = r'Item-Dictionary.*Python-Backend'
         self.assertRegex(self.html_content, pattern, 
                         "Section description not found")
         print("✓ Section description text found")
     
     def test_html_escaping_in_syntax_highlight(self):
-        """Test that syntaxHighlight function escapes HTML entities."""
+        """
+        DE:
+        Prüft, ob die Funktion syntaxHighlight HTML-Entities escaped.
+
+        EN:
+        Tests that syntaxHighlight function escapes HTML entities.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Escaping fehlt.
+        """
         # Check for HTML entity escaping
         escaping_patterns = [
             r'\.replace\(/&/g,\s*[\'"]&amp;',
@@ -149,13 +295,33 @@ class TestJsonSyntaxHighlighting(unittest.TestCase):
         print("✓ HTML entity escaping is implemented")
     
     def test_json_key_highlighting_with_weight(self):
-        """Test that JSON keys are highlighted with font-weight: 500."""
+        """
+        DE:
+        Prüft, ob JSON-Keys mit font-weight: 500 hervorgehoben werden.
+
+        EN:
+        Tests that JSON keys are highlighted with font-weight: 500.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Gewicht fehlt.
+        """
         pattern = r'font-weight:\s*500'
         self.assertRegex(self.html_content, pattern)
         print("✓ JSON keys have font-weight: 500 for emphasis")
     
     def test_loading_state_placeholder(self):
-        """Test that 'Loading data...' placeholder exists."""
+        """
+        DE:
+        Prüft, ob der 'Loading data...' Platzhalter existiert.
+
+        EN:
+        Tests that 'Loading data...' placeholder exists.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Platzhalter fehlt.
+        """
         # Check for i18n key or direct text
         loading_patterns = [
             'debug_loading_data',
@@ -168,10 +334,26 @@ class TestJsonSyntaxHighlighting(unittest.TestCase):
         print("✓ Loading state placeholder found")
 
 class TestSyntaxHighlightLogic(unittest.TestCase):
-    """Test the logic of syntax highlighting with simulated JavaScript behavior."""
+    """
+    DE:
+    Testet die Logik des Syntax-Highlightings mit simuliertem JavaScript-Verhalten.
+
+    EN:
+    Tests the logic of syntax highlighting with simulated JavaScript behavior.
+    """
     
     def test_color_assignments_are_correct(self):
-        """Verify color assignments match VS Code Dark+ theme."""
+        """
+        DE:
+        Prüft, ob die Farbzuteilungen dem VS Code Dark+ Theme entsprechen.
+
+        EN:
+        Verifies color assignments match VS Code Dark+ theme.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Farben nicht korrekt.
+        """
         app_html_path = Path(__file__).parents[3] / "web" / "app.html"
         with open(app_html_path, 'r', encoding='utf-8') as f:
             content = f.read()

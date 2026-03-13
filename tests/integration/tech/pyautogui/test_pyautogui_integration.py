@@ -2,9 +2,24 @@
 # -*- coding: utf-8 -*-
 # Kategorie: PyAutoGUI Integration Test
 # Eingabewerte: PyAutoGUI library
-# Ausgabewerte: UI automation results
+# Ausgabewerte: UI-Automation-Ergebnisse
 # Testdateien: Keine
 # Kommentar: Testet PyAutoGUI-Integration.
+"""
+PyAutoGUI Integration Test Suite (DE/EN)
+========================================
+
+DE:
+Testet die PyAutoGUI-Integration und GUI-Interaktionsfähigkeit.
+
+EN:
+Tests PyAutoGUI integration and GUI interaction capability.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import unittest
 import pyautogui
 import os
@@ -13,12 +28,24 @@ import time
 
 class TestPyAutoGUIIntegration(unittest.TestCase):
     """
-    @brief Functional tests using PyAutoGUI to verify GUI interaction capabilities.
-    @details Ensures the environment supports GUI automation and demonstrates control.
-    """
+    DE:
+    Funktionale Tests zur Überprüfung der GUI-Interaktionsfähigkeit mit PyAutoGUI.
 
+    EN:
+    Functional tests to verify GUI interaction capability with PyAutoGUI.
+    """
     def test_pyautogui_basics(self):
-        """Verify that PyAutoGUI can access screen information."""
+        """
+        DE:
+        Prüft, ob PyAutoGUI auf Bildschirmdaten zugreifen kann.
+
+        EN:
+        Verifies PyAutoGUI can access screen information.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Bildschirmdaten fehlen.
+        """
         try:
             width, height = pyautogui.size()
             print(f"Screen size detected: {width}x{height}")
@@ -28,7 +55,17 @@ class TestPyAutoGUIIntegration(unittest.TestCase):
             self.fail(f"PyAutoGUI failed to get screen size: {e}. Check if X11/Display is available.")
 
     def test_pyautogui_safe_move(self):
-        """Simulate a safe mouse movement to verify automation works."""
+        """
+        DE:
+        Simuliert eine sichere Mausbewegung zur Überprüfung der Automatisierung.
+
+        EN:
+        Simulates a safe mouse movement to verify automation works.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Mausbewegung fehlschlägt.
+        """
         current_x, current_y = pyautogui.position()
         # Move mouse slightly and back
         pyautogui.moveRel(10, 10, duration=0.1)
@@ -40,8 +77,15 @@ class TestPyAutoGUIIntegration(unittest.TestCase):
 
     def test_app_control_simulation(self):
         """
-        @test Demonstration of how PyAutoGUI would control the Media Viewer.
-        @details This is a 'smoke test' for the integration itself.
+        DE:
+        Demonstriert, wie PyAutoGUI den Media Viewer steuern würde.
+
+        EN:
+        Demonstrates how PyAutoGUI would control the Media Viewer.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Automatisierungsbefehl fehlschlägt.
         """
         # We don't want to actually start the app here as it blocks, 
         # but we verify that the automation library is ready to send commands.

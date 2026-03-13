@@ -1,8 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Kategorie: Performance Test
 # Eingabewerte: Reale Medien im /media Ordner
 # Ausgabewerte: Ausführungszeiten (STDOUT)
 # Testdateien: /media/*
 # Kommentar: Misst die Geschwindigkeit von pymediainfo, mutagen, ffmpeg etc.
+"""
+Performance Benchmark Test Suite (DE/EN)
+========================================
+
+DE:
+Misst die Geschwindigkeit verschiedener Parser auf echten Mediendateien.
+
+EN:
+Measures the speed of various parsers on real media files.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 from typing import Any
 import time

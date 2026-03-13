@@ -1,30 +1,23 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+###############################################################################
 # Kategorie: Comprehensive Test Runner
 # Eingabewerte: Alle test_*.py Dateien im tests/ Verzeichnis
 # Ausgabewerte: Test-Status (PASSED/FAILED/SKIPPED), Metadata, Recommendations
 # Testdateien: tests/test_*.py (alle 53+ Tests)
 # Kommentar: Läuft durch ALLE Test-Dateien und dokumentiert jeden Test mit Zweck, Eingabe, Ausgabe, Status und Empfehlungen.
+###############################################################################
 """
-================================================================================
-Comprehensive Test Runner - Alle Tests mit Kommentaren
-================================================================================
+Comprehensive Test Runner (DE/EN)
+=================================
 
-Läuft durch ALLE 53 Test-Dateien und dokumentiert jeden Test mit:
-- Zweck des Tests
-- Eingabewerte / Testdaten
-- Erwartete Ausgabe
-- Status (PASSED / FAILED / SKIPPED / EMPTY)
-- Empfehlungen für Verbesserungen
+DE:
+Läuft durch ALLE 53 Test-Dateien und dokumentiert jeden Test mit Zweck, Eingabe, Ausgabe, Status und Empfehlungen.
 
-Verwendung:
-    python tests/run_all_tests_commented.py
+EN:
+Runs through ALL 53 test files and documents each test with purpose, input, output, status, and recommendations.
 
-Output:
-    - Detaillierte Test-Dokumentation
-    - Zusammenfassung aller Tests
-    - Liste der leeren/minimalen Tests
-    - Empfehlungen für Test-Erweiterungen
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
 """
 
 import os

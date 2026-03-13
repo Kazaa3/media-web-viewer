@@ -7,6 +7,21 @@
 # ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO-Dateien, [ ] Fehlerfall-Tests
 # KOMMENTAR: Testet den pycdlib-Parser für ISO-Dateien.
 # VERWENDUNG: python3 tests/iso/test_pycdlib_parser.py
+"""
+Pycdlib Parser Unit Test Suite (DE/EN)
+======================================
+
+DE:
+Testet den pycdlib-Parser für ISO-Dateien.
+
+EN:
+Tests pycdlib parser for ISO files.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 import sys
 import os
 from pathlib import Path

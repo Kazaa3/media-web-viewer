@@ -1,10 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: Tech / FFmpeg (Benchmark)
-# Eingabewerte: All media files in the library
-# Ausgabewerte: Performance metrics per parser (duration, parser_times)
-# Testdateien: src/parsers/media_parser.py, all tech-specific parsers
+# Eingabewerte: Alle Mediendateien im Bestand
+# Ausgabewerte: Performance-Metriken pro Parser (duration, parser_times)
+# Testdateien: src/parsers/media_parser.py, alle tech-spezifischen Parser
 # Kommentar: Benchmark für alle Metadaten-Parser auf dem gesamten Medienbestand.
+"""
+FFmpeg Parser Benchmark Test Suite (DE/EN)
+==========================================
+
+DE:
+Benchmark für alle Metadaten-Parser auf dem gesamten Medienbestand.
+
+EN:
+Benchmark for all metadata parsers on the entire media library.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import os
 import sys

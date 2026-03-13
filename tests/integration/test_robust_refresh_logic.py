@@ -41,19 +41,50 @@ class TestRobustRefreshLogic(unittest.TestCase):
     EN:
     Tests backend logic for refreshes and metadata consistency.
     """
-
     def setUp(self):
+        """
+        DE:
+        Initialisiert Testdateien und Logbuch-Verzeichnis.
+
+        EN:
+        Initializes test files and logbook directory.
+        Returns:
+            Keine.
+        Raises:
+            Keine.
+        """
         self.logbuch_dir = Path(__file__).parents[3] / "logbuch"
         self.logbuch_dir.mkdir(exist_ok=True)
         self.test_file_name = "test_refresh_logic_entry"
         self.test_file_path = self.logbuch_dir / f"{self.test_file_name}.md"
 
     def tearDown(self):
+        """
+        DE:
+        Entfernt Testdateien nach den Tests.
+
+        EN:
+        Removes test files after tests.
+        Returns:
+            Keine.
+        Raises:
+            Keine.
+        """
         if hasattr(self, 'test_file_path') and self.test_file_path.exists():
             self.test_file_path.unlink()
 
     def test_logbook_listing_robustness(self):
-        """Verify that list_logbook_entries returns all .md files with correct metadata."""
+        """
+        DE:
+        Prüft, ob list_logbook_entries alle .md-Dateien mit korrekten Metadaten zurückgibt.
+
+        EN:
+        Checks if list_logbook_entries returns all .md files with correct metadata.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Metadaten fehlen.
+        """
         # Create a dummy entry
         content = "Category: Test\nStatus: ACTIVE\nTitle_DE: Test Eintrag\n\nBody content"
         main.save_logbook_entry(self.test_file_name, content)
@@ -68,14 +99,34 @@ class TestRobustRefreshLogic(unittest.TestCase):
         self.assertEqual(target['status'], "ACTIVE")
 
     def test_metadata_update_consistency(self):
-        """Verify that updating tags in the backend (simulating Editor save) works correctly."""
+        """
+        DE:
+        Prüft, ob das Aktualisieren von Tags im Backend funktioniert.
+
+        EN:
+        Checks if updating tags in the backend works correctly.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn API fehlt.
+        """
         # This assumes we have a media item in the DB. Since we might not, we'll verify the API existence.
         self.assertTrue(hasattr(main, 'update_tags'), "Backend function update_tags missing")
         self.assertTrue(hasattr(main, 'rename_media'), "Backend function rename_media missing")
         self.assertTrue(hasattr(main, 'get_library'), "Backend function get_library missing")
 
     def test_browser_directory_scan_support(self):
-        """Verify that the backend support for directory browsing is functional."""
+        """
+        DE:
+        Prüft, ob das Backend Directory-Browsing unterstützt.
+
+        EN:
+        Checks if backend supports directory browsing.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Wenn Directory-Browsing fehlschlägt.
+        """
         root = Path(__file__).parents[3]
         res = main.browse_dir(str(root))
         self.assertNotIn('error', res)

@@ -7,6 +7,21 @@
 # ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO-Dateien, [ ] Fehlerfall-Tests
 # KOMMENTAR: Testet den isoparser_parser für ISO-Dateien.
 # VERWENDUNG: python3 tests/iso/test_isoparser_parser.py
+"""
+ISO Parser Unit Test Suite (DE/EN)
+==================================
+
+DE:
+Testet den isoparser_parser für ISO-Dateien.
+
+EN:
+Tests isoparser_parser for ISO files.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
 from pathlib import Path
 from src.parsers import isoparser_parser
 

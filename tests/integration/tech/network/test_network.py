@@ -1,5 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Kategorie: Netzwerk & Integration Test
+# Eingabewerte: Eel-Server, HTTP-Requests, Query-Parameter
+# Ausgabewerte: Response-Status, Static-File-Content
+# Testdateien: Keine
 # Kommentar: Konsolidierte Tests mit dynamischem Port und vereinfachtem Routing.
+"""
+Network Integration Test Suite (DE/EN)
+======================================
+
+DE:
+Testet Netzwerk- und Backend-Integration mit dynamischem Port und Routing.
+
+EN:
+Tests network and backend integration with dynamic port and routing.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import eel
 import time

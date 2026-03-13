@@ -26,8 +26,14 @@ def test_psutil_snapshot_presence():
     """
     DE:
     Testet, ob PSUtil installiert ist und Snapshots für Speicher und CPU erstellt werden können.
+
     EN:
     Tests if PSUtil is installed and snapshots for memory and CPU can be created.
+    Returns:
+        Keine.
+    Raises:
+        pytest.skip: Wenn PSUtil nicht installiert.
+        AssertionError: Wenn Snapshots nicht erstellt werden können.
     """
     try:
         import psutil

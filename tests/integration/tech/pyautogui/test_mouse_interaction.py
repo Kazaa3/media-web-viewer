@@ -1,5 +1,3 @@
-import pytest
-pytest.importorskip("selenium")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Kategorie: UI Interaction (Mouse/Picking)
@@ -7,6 +5,23 @@ pytest.importorskip("selenium")
 # Ausgabewerte: Picking-Status, Ghost-Element Sichtbarkeit
 # Testdateien: tests/test_mouse_interaction.py
 # Kommentar: Testet Long-Press (Picking) und Drag-Indikatoren.
+"""
+Mouse Interaction Test Suite (DE/EN)
+====================================
+
+DE:
+Testet Long-Press (Picking) und Drag-Indikatoren im UI.
+
+EN:
+Tests long-press (picking) and drag indicators in the UI.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
+
+import pytest
+pytest.importorskip("selenium")
 import unittest
 import time
 import os
@@ -21,8 +36,22 @@ from tests.selenium.pages.playlist_page import PlaylistPage
 from tests.basic.utils.test_utils import manage_app_instance, wait_for_app, robust_action, save_screenshot
 
 class TestMouseInteraction(unittest.TestCase):
+    """
+    DE:
+    Testet die Mausinteraktion für Picking und Drag-Indikatoren.
+
+    EN:
+    Tests mouse interaction for picking and drag indicators.
+    """
     @classmethod
     def setUpClass(cls):
+        """
+        DE:
+        Initialisiert die App-Instanz und den Selenium-Webdriver.
+
+        EN:
+        Initializes app instance and Selenium WebDriver.
+        """
         preferred = int(os.environ.get("MWV_PORT", 0)) or None
         cls.app_process = None
         decision, using_existing, cls.port = manage_app_instance(preferred)
@@ -47,16 +76,41 @@ class TestMouseInteraction(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        DE:
+        Beendet WebDriver und App-Prozess nach den Tests.
+
+        EN:
+        Shuts down WebDriver and app process after tests.
+        """
         if hasattr(cls, 'driver'): cls.driver.quit()
         if cls.app_process: cls.app_process.terminate()
 
     def tearDown(self):
+        """
+        DE:
+        Optional: Screenshot bei Fehler.
+
+        EN:
+        Optional: Screenshot on failure.
+        """
         # Result detection for screenshot
         # sys.exc_info() is often used but not always reliable in unittest
         # Instead, we just take one if it's the last thing we do in a failed test
         pass
 
     def test_pick_and_insert_flow(self):
+        """
+        DE:
+        Testet den Ablauf für Picking und Einfügen von Playlist-Items.
+
+        EN:
+        Tests the flow for picking and inserting playlist items.
+        Returns:
+            Keine.
+        Raises:
+            AssertionError: Bei Fehler im Ablauf.
+        """
         try:
             self.driver.get(f"http://localhost:{self.port}/app.html")
             wait = WebDriverWait(self.driver, 45)

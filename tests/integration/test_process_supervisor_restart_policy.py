@@ -29,8 +29,14 @@ def test_supervisor_restarts_failed_process(monkeypatch):
     """
     DE:
     Testet, ob der Supervisor fehlgeschlagene Prozesse gemäß Restart-Policy neu startet.
+
     EN:
     Tests if supervisor restarts failed processes according to restart policy.
+    Returns:
+        Keine.
+    Raises:
+        pytest.skip: Wenn process_manager nicht vorhanden.
+        AssertionError: Wenn Restart nicht erfolgt.
     """
     try:
         import process_manager as pm  # type: ignore
