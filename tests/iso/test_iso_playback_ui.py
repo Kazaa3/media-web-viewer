@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Kategorie: GUI / E2E Test / ISO
+# Eingabewerte: Selenium, src/core/main.py, media/test_selenium_dvd.iso
+# Ausgabewerte: Validierung der ISO/DVD-Playback-Logik im UI
+# Testdateien: src/core/main.py, media/test_selenium_dvd.iso
+# ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO/DVD-Fälle, [ ] Fehlerfall-Tests
+# KOMMENTAR: Selenium-basierter Test für ISO/DVD-Playback.
+# VERWENDUNG: python3 tests/iso/test_iso_playback_ui.py
 import pytest
 pytest.importorskip("selenium")
 #!/usr/bin/env python3
@@ -17,6 +26,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 class TestISOPlaybackUI(unittest.TestCase):
+        """
+        Selenium-basierter Test für ISO/DVD-Playback im UI. / Selenium-based test for ISO/DVD playback in UI.
+
+        Returns:
+            None
+        """
     @classmethod
     def setUpClass(cls):
         cls.port = 8004

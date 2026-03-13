@@ -1,8 +1,8 @@
 #!/bin/bash
 # Media Web Viewer - Automatic Environment Setup & Launch Script
 # This script automatically detects and activates the correct Python environment
-# Requires: Python 3.14.2 (from Conda p14) or falls back to python3
-# Supports: venv (primary) and conda (fallback)
+# Requires: Python 3.12+
+# Supports: venv (primary) and conda (legacy fallback)
 
 set -e
 
@@ -24,13 +24,16 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}🎬 Media Web Viewer - Auto Launcher${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# Determine which Python to use (prefer 3.14.2)
+# Determine which Python to use (prefer system python3)
 PYTHON_CMD="python3"
-if [ -f "$P14_PYTHON" ]; then
+if command -v python3.14 >/dev/null 2>&1; then
+    PYTHON_CMD="python3.14"
+    echo -e "${GREEN}✅ Gefunden: Python 3.14 (System)${NC}"
+elif [ -f "$P14_PYTHON" ]; then
     PYTHON_CMD="$P14_PYTHON"
-    echo -e "${GREEN}✅ Gefunden: Python 3.14.2${NC}"
+    echo -e "${YELLOW}ℹ️  Python 3.14.2 in Conda p14 gefunden (Legacy Fallback)${NC}"
 else
-    echo -e "${YELLOW}⚠️  Python 3.14.2 nicht verfügbar, nutze python3${NC}"
+    echo -e "${YELLOW}⚠️  Python 3.14 nicht als System-Binary gefunden, nutze standard python3${NC}"
 fi
 
 # Check if venv exists

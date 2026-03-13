@@ -1,7 +1,21 @@
+# logger.py - Centralized logging system for dict.
+#dict - Desktop Media Player and Library Manager v1.34
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-logger.py - Centralized logging system for dict.
+# logger.py - Centralized Logging System
+
+Dieses Modul stellt ein zentrales Logging-System für das Media Web Viewer Projekt bereit.
+
+Features:
+- Logging für Backend, UI und Tests
+- Logbuffer-Unterstützung für Session- und Fehleranalyse
+- File- und Stream-Handler für CI/CD und lokale Entwicklung
+- Integration mit Logbuffer API und UI-Logzugriff
+
+Verwendung:
+- Für Desktop- und CI/CD-Integrationen, nicht für Browser-Frontend.
+
 """
 
 import logging

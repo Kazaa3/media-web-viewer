@@ -12,7 +12,7 @@ sudo apt-get install -f
 media-web-viewer
 ```
 
-### From Source (empfohlene Umgebung: venv_core)
+### From Source (⭐ EMPFOHLEN: venv_core)
 ```bash
 git clone https://github.com/Kazaa3/media-web-viewer.git
 cd media-web-viewer

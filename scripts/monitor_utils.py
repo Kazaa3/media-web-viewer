@@ -27,9 +27,13 @@ def kill_process_tree(pid: int):
         parent = psutil.Process(pid)
         children = parent.children(recursive=True)
         for child in children:
-            child.kill()
-        parent.kill()
-    except (ImportError, psutil.NoSuchProcess):
+            try:
+                child.kill()
+            except: pass
+        try:
+            parent.kill()
+        except: pass
+    except (ImportError, Exception):
         # Fallback if psutil is missing or process gone
         try:
             os.kill(pid, signal.SIGKILL)
@@ -78,10 +82,17 @@ def run_monitored(
     try:
         fd = None
         if process.stdout is not None:
-            import fcntl
-            fd = process.stdout.fileno()
-            fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-            fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+            try:
+                import fcntl
+                # Use getattr to avoid type checker issues with fileno
+                fileno_func = getattr(process.stdout, 'fileno', None)
+                if fileno_func:
+                    fd = fileno_func()
+                    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+            except (ImportError, AttributeError, Exception):
+                # Non-critical: some platforms might not support fcntl
+                pass
 
 
         while True:
@@ -124,12 +135,32 @@ def run_monitored(
                         return False
             
             if line:
-                if on_output:
-                    on_output(line.strip())
+                cb = on_output
+                if cb is not None:
+                    cb(line.strip())
                 else:
                     print(f"  [output] {line.strip()}")
                 last_output_time = now
                 last_alive_marker = now
+            
+            # Safety break if process is gone but we missed it
+            if process.poll() is not None:
+                # One last attempt to read
+                try:
+                    out = process.stdout
+                    cb = on_output
+                    if out is not None:
+                        line = out.readline()
+                        if line: 
+                            if cb is not None:
+                                cb(line.strip())
+                            else:
+                                print(f"  [output] {line.strip()}")
+                except Exception:
+                    pass
+                
+                retcode = process.poll()
+                return retcode == 0
                     
     except KeyboardInterrupt:
         print_monitor(f"Interrupted by user. Killing process {pid}...", "KILL")

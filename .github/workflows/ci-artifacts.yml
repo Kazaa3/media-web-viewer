@@ -43,5 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MediaWebViewer-DEB-main
-          path: media-web-viewer_*_amd64.deb
+          path: build/media-web-viewer_*_amd64.deb
           if-no-files-found: error

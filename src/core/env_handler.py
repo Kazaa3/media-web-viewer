@@ -1,8 +1,24 @@
+# env_handler.py - Robust environment validation and hygiene management.
+# Ensures the app runs in a clean, exclusive, and verified virtual environment.
+#dict - Desktop Media Player and Library Manager v1.34
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-env_handler.py - Robust environment validation and hygiene management.
-Ensures the app runs in a clean, exclusive, and verified virtual environment.
+# env_handler.py - Environment Handler (Extended)
+
+Dieses Modul stellt robuste Validierung und Hygiene-Management für die Projektumgebung bereit.
+Es prüft, ob die App in einer sauberen, exklusiven und verifizierten virtuellen Umgebung läuft.
+
+Features:
+- Validierung von Python-Paketen und System-Binaries
+- Unterstützung für Conda, venv, und CI/CD
+- Mapping von Pip/Apt/Conda-Paketen
+- Logging und Fehlerbehandlung
+- Browser-Binary-Erkennung für UI
+
+Verwendung:
+- Für Desktop- und CI/CD-Integrationen, nicht für Browser-Frontend.
+
 """
 
 import sys
@@ -168,10 +184,8 @@ class EnvironmentManager:
         if in_venv and current_prefix == expected_prefix:
             return True
             
-        # Fallback for active Conda environments if they are named p14 (as per user setup)
-        conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+        # Fallback for active Conda environments (considered legacy)
         if self.is_conda():
-            # If it's a conda env, we allow it (e.g., p14)
             return True
             
         return False
@@ -291,7 +305,14 @@ class EnvironmentManager:
         if self.is_debug:
             logging.debug(f"[{header}] Fingerprint: {self.get_environment_fingerprint()}")
 
-        # 1. Check exclusivity
+        # 1. Check exclusivity and environment type
+        is_conda = self.is_conda()
+        if is_conda:
+            logging.warning(
+                "[%s] Conda environment detected. Switching to 'venv_core' is recommended for maximum stability and independence.",
+                header
+            )
+
         if not self.is_exclusive_venv():
             msg = (
                 "Unsafe startup detected: Application is not running in an exclusive environment.\n"

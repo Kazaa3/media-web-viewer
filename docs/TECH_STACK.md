@@ -33,6 +33,20 @@
 - **pytest-cov** 4.1.0
 - **mypy** 1.9.0
 
+## Multi-Venv Strategie
+
+Das Projekt nutzt spezialisierte virtuelle Umgebungen zur Trennung von Verantwortlichkeiten:
+
+| Venv | Rolle | Zweck |
+|------|-------|-------|
+| `.venv_core` | **CORE** | Zentrale Laufzeit für die App-Logik. |
+| `.venv_build` | **BUILD** | Packaging, Deployment und PyInstaller. |
+| `.venv_dev` | **DEV** | Entwicklungstools (Linter, Formatierer). |
+| `.venv_testbed` | **TEST** | Integrations- und Performance-Tests. |
+| `.venv_selenium` | **E2E** | Automatisierte Browser-Tests. |
+
+Management via: `scripts/manage_venvs.py --status`
+
 ## Geplante Features
 
 | Feature | Version | Technologie | Status |

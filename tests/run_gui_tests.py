@@ -1,5 +1,24 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+###############################################################################
+# Kategorie: GUI Test Runner
+# Eingabewerte: GUI-Testdateien, .venv_selenium
+# Ausgabewerte: Teststatus, Fehler, Zusammenfassung
+# Testdateien: tests/test_ui_integrity.py, tests/test_parser_stalling.py, tests/test_mouse_interaction.py, tests/test_scenario_hammerhart.py
+# Kommentar: Führt GUI-Tests mit venv_testbed aus und gibt Status zurück.
+###############################################################################
+"""
+GUI Test Runner (DE/EN)
+======================
+
+DE:
+Führt GUI-Tests mit venv_testbed aus und gibt Status zurück.
+
+EN:
+Runs GUI tests using venv_testbed and returns status.
+
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
+"""
 
 import os
 import sys
@@ -8,7 +27,13 @@ import time
 
 def main():
     """
-    Main entry point for running GUI tests using venv_testbed.
+    DE:
+    Hauptfunktion zum Ausführen der GUI-Tests.
+
+    EN:
+    Main entry point for running GUI tests.
+    Returns:
+        Keine.
     """
     project_root = os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
     test_dir = os.path.join(project_root, "tests")
@@ -55,6 +80,7 @@ def main():
                 [venv_python, abs_test_path],
                 env=env,
                 cwd=project_root
+            )
             if result.returncode != 0:
                 print(f"[FAIL] {test_file} returned exit code {result.returncode}")
                 failed_tests.append(test_file)

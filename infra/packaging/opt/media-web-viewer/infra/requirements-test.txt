@@ -1,7 +1,0 @@
-# Media Web Viewer - General Testing Dependencies
--r requirements-core.txt
-pytest>=8.0.0
-pytest-cov>=4.1.0
-coverage>=7.4.0
-pyautogui>=0.9.54
-pyscreeze>=0.1.30

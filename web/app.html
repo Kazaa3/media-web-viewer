@@ -1840,8 +1840,11 @@
                             <div style="margin-top: 15px;">
                                 <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
                                     data-i18n="options_local_venvs">4. 📁 Lokale Virtual Environments</h4>
+                                <div id="multi-venv-concept"
+                                    style="font-size: 0.85em; color: #666; margin-bottom: 10px; font-style: italic;">
+                                </div>
                                 <div id="local-venvs-list"
-                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 150px; overflow-y: auto;">
+                                    style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 250px; overflow-y: auto;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
                             </div>
@@ -5273,18 +5276,26 @@
 
                 // Display Local Virtual Environments
                 const venvsList = document.getElementById('local-venvs-list');
+                const venvConceptEl = document.getElementById('multi-venv-concept');
+                if (venvConceptEl) venvConceptEl.textContent = info.multi_venv_concept || '';
+
                 if (venvsList && safeLocalVenvs.length > 0) {
                     let venvsHtml = '<div style="font-family: monospace;">';
                     safeLocalVenvs.forEach(venv => {
                         if (!venv || typeof venv !== 'object') return;
                         const isCurrent = venv.is_current;
+                        const exists = venv.exists !== false; // Backend now returns exists
                         const currentBadge = isCurrent ? '<span style="color: #2a7; font-weight: bold;">● AKTIV</span>' : '';
+                        const missingBadge = !exists ? '<span style="color: #c0392b; font-weight: bold;">⚠️ NICHT INSTALLIERT</span>' : '';
+                        const roleBadge = venv.role ? `<span style="background: #eee; color: #555; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-right: 5px; font-weight: bold;">${venv.role}</span>` : '';
 
                         venvsHtml += `
-                            <div style="margin-bottom: 8px; padding: 6px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 3px solid ${isCurrent ? '#4caf50' : '#ddd'}; border-radius: 3px;">
-                                <div style="font-weight: bold; color: #333;">${venv.name || '-'} ${currentBadge}</div>
-                                <div style="color: #666; font-size: 0.9em;">${venv.version || '-'}</div>
-                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.path || '-'}</div>
+                            <div style="margin-bottom: 8px; padding: 8px; background: ${isCurrent ? '#e8f5e9' : '#fff'}; border-left: 4px solid ${isCurrent ? '#4caf50' : (exists ? '#ddd' : '#c0392b')}; border-radius: 3px; opacity: ${exists ? 1 : 0.7};">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                    <div style="font-weight: bold; color: #333;">${roleBadge}${venv.name || '-'} ${currentBadge} ${missingBadge}</div>
+                                </div>
+                                <div style="color: #666; font-size: 0.9em; margin-bottom: 4px;">${venv.purpose || ''}</div>
+                                <div style="color: #999; font-size: 0.85em; word-break: break-all;">${venv.version || (exists ? '-' : '(Kein Python found)')} ${exists ? ' | ' + venv.path : ''}</div>
                             </div>
                         `;
                     });

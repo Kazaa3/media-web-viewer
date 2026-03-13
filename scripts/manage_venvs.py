@@ -90,6 +90,10 @@ class VenvManager:
         print_status(f"Syncing {name} dependencies with monitoring...", "PROCESS")
         
         # Use our new monitoring utility
+        SCRIPTS_PATH = ROOT / "scripts"
+        if str(SCRIPTS_PATH) not in sys.path:
+            sys.path.append(str(SCRIPTS_PATH))
+        import monitor_utils  # type: ignore
         from monitor_utils import run_monitored
         
         cmd = [str(pip_bin), "install", "-r", str(req_file), "--upgrade"]
@@ -129,6 +133,33 @@ class VenvManager:
         except Exception:
             return []
 
+    def clean_fragments(self):
+        """Clean temporary build/test fragments if any exist."""
+        fragments = [ROOT / "build" / "deb_staging", ROOT / "tests" / "__pycache__"]
+        for frag in fragments:
+            if frag.exists():
+                print_status(f"Cleaning fragment: {frag}", "PROCESS")
+                if frag.is_file():
+                    frag.unlink()
+                else:
+                    shutil.rmtree(frag)
+
+    def clean_venv(self, name: str):
+        """Completely remove a venv directory."""
+        venv_path = self.get_venv_path(name)
+        if venv_path.exists():
+            print_status(f"Removing venv: {name}...", "PROCESS")
+            try:
+                shutil.rmtree(venv_path)
+                print_status(f"Venv {name} removed.", "SUCCESS")
+                return True
+            except Exception as e:
+                print_status(f"Failed to remove {name}: {e}", "ERROR")
+                return False
+        else:
+            print_status(f"Venv {name} does not exist.", "INFO")
+            return True
+
     def show_status(self, detailed: bool = False):
         """Show status of all venvs."""
         print("\n" + "="*40)
@@ -136,7 +167,9 @@ class VenvManager:
         print("="*40)
         
         if self.conda_active:
-            print_status(f"Conda active: {os.environ.get('CONDA_DEFAULT_ENV')} ({os.environ.get('CONDA_PREFIX')})", "WARNING")
+            conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+            conda_prefix = os.environ.get('CONDA_PREFIX')
+            print_status(f"Conda active: {conda_env} ({conda_prefix})", "WARNING")
 
         for name in VENVS:
             exists = self.check_venv(name)
@@ -150,20 +183,24 @@ class VenvManager:
                     ver_res = subprocess.run([str(py_bin), "--version"], capture_output=True, text=True)
                     py_ver = ver_res.stdout.strip()
                     
-                    # Optional check if version matches target
                     target = VENV_PYTHON_VERSIONS.get(name)
                     if target and target not in py_ver.lower():
                         status = f"⚠️ Version Mismatch (Target: {target})"
                         ver_ok = False
-                except: pass
+                except Exception:
+                    py_ver = "unknown"
 
-            print(f"- {name:15} : {status} ({py_ver})")
+            rec_tag = " ⭐ RECOMMENDED" if name == ".venv_core" else ""
+            print(f"- {name:15} : {status} ({py_ver}){rec_tag}")
             
             if detailed and exists:
                 packages = self.get_installed_packages(name)
-                # Show top 5 packages as a summary
-                for pkg in packages[:5]:
+                # Show top 5 packages as a summary using loop to avoid slice lints
+                count = 0
+                for pkg in packages:
+                    if count >= 5: break
                     print(f"    • {pkg}")
+                    count += 1
                 if len(packages) > 5:
                     print(f"    ... and {len(packages)-5} more.")
         print("="*40 + "\n")
@@ -172,10 +209,12 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Media Web Viewer Venv Manager")
     parser.add_argument("--sync", choices=list(VENVS.keys()) + ["all"], help="Sync specified venv or all")
+    parser.add_argument("--rebuild", choices=list(VENVS.keys()) + ["all"], help="Rebuild (force sync) specified venv or all")
+    parser.add_argument("--clean-venv", choices=list(VENVS.keys()) + ["all"], help="Remove specified venv or all")
     parser.add_argument("--status", action="store_true", help="Show current venv status")
     parser.add_argument("--detailed", action="store_true", help="Show detailed status with packages")
     parser.add_argument("--clean-fragments", action="store_true", help="Clean test/log fragments")
-    parser.add_argument("--force", action="store_true", help="Force recreation of venv")
+    parser.add_argument("--force", action="store_true", help="Force recreation of venv (used with --sync)")
 
     args = parser.parse_args()
     manager = VenvManager()
@@ -192,6 +231,20 @@ def main():
                 manager.sync_venv(name, force=args.force)
         else:
             manager.sync_venv(args.sync, force=args.force)
+
+    if args.rebuild:
+        if args.rebuild == "all":
+            for name in VENVS:
+                manager.sync_venv(name, force=True)
+        else:
+            manager.sync_venv(args.rebuild, force=True)
+
+    if args.clean_venv:
+        if args.clean_venv == "all":
+            for name in VENVS:
+                manager.clean_venv(name)
+        else:
+            manager.clean_venv(args.clean_venv)
 
 if __name__ == "__main__":
     main()

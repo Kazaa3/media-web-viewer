@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 import re
 import os
 import json
 
-def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> str:
+def detect_file_format(path: Optional[Path | str], tags: Optional[dict[str, Any]] = None) -> str:
     """
     @brief Determines the standardized file format for a given media file.
     @details Unterscheidet und standardisiert das Dateiformat je nach Typ (Audio, Video, ISO, etc.).
@@ -80,9 +80,9 @@ def detect_file_format(path: Path | str | None, tags: dict[str, Any] = None) -> 
         # Try to detect content (PAL DVD, Blu-ray, etc.)
         try:
             size_gb = 0.0
-            if path.exists():
+            if path_obj.exists():
                 try:
-                    size_gb = os.path.getsize(path) / (1024**3)
+                    size_gb = os.path.getsize(str(path_obj)) / (1024**3)
                 except (OSError, PermissionError):
                     size_gb = 0.0
         except Exception:
@@ -214,7 +214,11 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
         return False
         
     # Movie/Audio images are playable
-    if any(k in label for k in ['dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res']):
+    playable_keywords = [
+        'dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 
+        'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res'
+    ]
+    if any(k in label for k in playable_keywords):
         return True
         
     # Standard media files are always playable
@@ -222,7 +226,11 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
     ext = Path(full_path).suffix.lower() if full_path else ''
     
     # Check against known playable extensions
-    if ext in ('.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff'):
+    playable_exts = (
+        '.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', 
+        '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff'
+    )
+    if ext in playable_exts:
         return True
         
     return False
@@ -241,7 +249,11 @@ def get_default_scan_dir() -> Path:
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG: dict[str, Any] = {
-    "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
+    "parser_chain": [
+        "filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", 
+        "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", 
+        "tinytag", "eyed3", "music_tag"
+    ],
     "parser_mode": "lightweight",
     "fast_scan_enabled": True,  # New global fast-scan toggle
     "debug_scan": True,
@@ -260,7 +272,7 @@ PARSER_CONFIG: dict[str, Any] = {
     "enable_enzyme_parser": False,    # Disabled by default (slow)
     "enable_pymkv_parser": False,     # Disabled by default (slow)
     "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
-    "displayed_categories": ["audio"],
+    "displayed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
     "parser_settings": {
         "mkvmerge": {
             "cli_flags": "",
@@ -329,7 +341,6 @@ def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
             continue
         if candidate in seen:
             continue
-
         seen.add(candidate)
         sanitized.append(str(candidate))
 
@@ -422,17 +433,19 @@ def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
 
 # Extension Categories
 AUDIO_EXTENSIONS = {
-    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b', '.aiff'
+    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b', '.aiff',
+    '.ac3', '.mka', '.dts', '.dtshd', '.mka', '.pcm', '.ra', '.rm'
 }
 VIDEO_EXTENSIONS = {
     '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
-    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.ts'
+    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.ts',
+    '.m2t', '.m2v', '.divx', '.xvid', '.vob', '.dat', '.rmvb', '.asf'
 }
 DOCUMENT_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
 }
 DISK_IMAGE_EXTENSIONS = {
-    '.iso', '.bin', '.img', '.cue', '.nrg', '.mdf'
+    '.iso', '.bin', '.img', '.cue', '.nrg', '.mdf', '.toast', '.ccd', '.daa'
 }
 EBOOK_EXTENSIONS = {
     '.epub', '.mobi', '.azw', '.fb2'
@@ -515,7 +528,7 @@ def format_container(raw_container: Any, file_type: str | None = None) -> str:
     container = str(raw_container).lower().strip() if raw_container else ""
 
     if not container and file_type:
-        container = file_type[1:].lower() if file_type else ""
+        container = file_type[1:].lower()
 
     # Handle ambiguous FFmpeg container outputs
     if container == 'matroska,webm':
@@ -536,7 +549,7 @@ def format_container(raw_container: Any, file_type: str | None = None) -> str:
 
     # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
     if container in ('id3', 'wav') and file_type:
-        return file_type[1:].lower() if file_type else ""
+        return file_type[1:].lower()
 
     return container_map.get(container, container)
 
