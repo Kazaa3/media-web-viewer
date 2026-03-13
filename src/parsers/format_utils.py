@@ -214,7 +214,11 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
         return False
         
     # Movie/Audio images are playable
-    if any(k in label for k in ['dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res']):
+    playable_keywords = [
+        'dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 
+        'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res'
+    ]
+    if any(k in label for k in playable_keywords):
         return True
         
     # Standard media files are always playable
@@ -222,7 +226,11 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
     ext = Path(full_path).suffix.lower() if full_path else ''
     
     # Check against known playable extensions
-    if ext in ('.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff'):
+    playable_exts = (
+        '.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', 
+        '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff'
+    )
+    if ext in playable_exts:
         return True
         
     return False
@@ -241,7 +249,11 @@ def get_default_scan_dir() -> Path:
 # Central Parser Configuration
 # This avoids circular imports with main.py
 PARSER_CONFIG: dict[str, Any] = {
-    "parser_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
+    "parser_chain": [
+        "filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", 
+        "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", 
+        "tinytag", "eyed3", "music_tag"
+    ],
     "parser_mode": "lightweight",
     "fast_scan_enabled": True,  # New global fast-scan toggle
     "debug_scan": True,
@@ -329,7 +341,6 @@ def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
             continue
         if candidate in seen:
             continue
-
         seen.add(candidate)
         sanitized.append(str(candidate))
 

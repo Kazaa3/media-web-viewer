@@ -90,6 +90,10 @@ class VenvManager:
         print_status(f"Syncing {name} dependencies with monitoring...", "PROCESS")
         
         # Use our new monitoring utility
+        SCRIPTS_PATH = ROOT / "scripts"
+        if str(SCRIPTS_PATH) not in sys.path:
+            sys.path.append(str(SCRIPTS_PATH))
+        import monitor_utils  # type: ignore
         from monitor_utils import run_monitored
         
         cmd = [str(pip_bin), "install", "-r", str(req_file), "--upgrade"]
@@ -135,8 +139,10 @@ class VenvManager:
         for frag in fragments:
             if frag.exists():
                 print_status(f"Cleaning fragment: {frag}", "PROCESS")
-                if frag.is_file(): frag.unlink()
-                else: shutil.rmtree(frag)
+                if frag.is_file():
+                    frag.unlink()
+                else:
+                    shutil.rmtree(frag)
 
     def show_status(self, detailed: bool = False):
         """Show status of all venvs."""
@@ -145,7 +151,9 @@ class VenvManager:
         print("="*40)
         
         if self.conda_active:
-            print_status(f"Conda active: {os.environ.get('CONDA_DEFAULT_ENV')} ({os.environ.get('CONDA_PREFIX')})", "WARNING")
+            conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+            conda_prefix = os.environ.get('CONDA_PREFIX')
+            print_status(f"Conda active: {conda_env} ({conda_prefix})", "WARNING")
 
         for name in VENVS:
             exists = self.check_venv(name)
@@ -159,21 +167,24 @@ class VenvManager:
                     ver_res = subprocess.run([str(py_bin), "--version"], capture_output=True, text=True)
                     py_ver = ver_res.stdout.strip()
                     
-                    # Optional check if version matches target
                     target = VENV_PYTHON_VERSIONS.get(name)
                     if target and target not in py_ver.lower():
                         status = f"⚠️ Version Mismatch (Target: {target})"
                         ver_ok = False
-                except: pass
+                except Exception:
+                    py_ver = "unknown"
 
             rec_tag = " ⭐ RECOMMENDED" if name == ".venv_core" else ""
             print(f"- {name:15} : {status} ({py_ver}){rec_tag}")
             
             if detailed and exists:
                 packages = self.get_installed_packages(name)
-                # Show top 5 packages as a summary
-                for pkg in packages[:5]:
+                # Show top 5 packages as a summary using loop to avoid slice lints
+                count = 0
+                for pkg in packages:
+                    if count >= 5: break
                     print(f"    • {pkg}")
+                    count += 1
                 if len(packages) > 5:
                     print(f"    ... and {len(packages)-5} more.")
         print("="*40 + "\n")

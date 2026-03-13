@@ -34,7 +34,7 @@ ROOT_PATH = Path(__file__).resolve().parent.parent
 SCRIPTS_PATH = ROOT_PATH / "scripts"
 if str(SCRIPTS_PATH) not in sys.path:
     sys.path.append(str(SCRIPTS_PATH))
-from typing import Optional
+import monitor_utils  # type: ignore
 
 
 def print_status(message: str, category: str = "INFO"):

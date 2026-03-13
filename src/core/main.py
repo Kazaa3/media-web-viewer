@@ -2056,7 +2056,6 @@ def play_media(path):
         # Prepare minimal metadata
         p = Path(path)
         title = p.stem if p.name else str(path)
-        meta = {"title": title, "artist": "", "album": "", "artwork": [{"src": document.get('footer-cover') if False else ""}]}
         # Eel call (if frontend exposes `set_media_session`)
         try:
             eel.set_media_session({"title": title})()
