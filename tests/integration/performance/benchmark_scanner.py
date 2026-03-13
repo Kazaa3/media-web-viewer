@@ -22,12 +22,14 @@ def run_benchmark():
     
     # Measure Scan Time
     start_scan = time.perf_counter()
-    items = scan_media(str(media_dir))
+    scan_result = scan_media(str(media_dir))
+    items = scan_result.get("media", [])
+    scan_stats = scan_result.get("stats", {})
     end_scan = time.perf_counter()
     
     scan_duration = end_scan - start_scan
     print(f"Total items found: {len(items)}")
-    print(f"Scan duration: {scan_duration:.4f} seconds")
+    print(f"Scan duration: {scan_duration:.4f} seconds (Backend reported: {scan_stats.get('time_seconds', 0):.4f}s)")
     if len(items) > 0:
         print(f"Average time per item (scan): {scan_duration/len(items):.6f} seconds")
 
