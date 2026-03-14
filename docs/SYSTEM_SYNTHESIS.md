@@ -1,68 +1,38 @@
-A# SYSTEM_SYNTHESIS.md
+# SYSTEM_SYNTHESIS.md
 
-## System Infrastructure Consolidation & Synthesis
-
-This document provides a high-level overview of the consolidated system architecture and infrastructure management for the Media Web Viewer project.
-
-### Configuration Management
-- Branch-specific JSON configs (e.g., `config.main.json`, `config.develop.json`)
-- Centralized in a dedicated config directory
-
-### Environment Concept
-- Multi-venv architecture: `.venv_core`, `.venv_dev`, `.venv_run`, etc.
-- Requirements decoupled by purpose (see `infra/requirements-run.txt`)
-
-### Reporting & Benchmarks
-- All test results and performance probes consolidated in `build/management_reports/`
-- Automated reporting in CI and release pipelines
-
-### Build Pipeline Strategy
-- **Full Release (Tagged):** Complete build, test, and artifact generation for production
-- **Main Push (CI-only):** Fast validation, no external artifact publishing
-- See also: `90_Build_Pipeline_Strategy_FullRelease_vs_MainPush.md`
-
-### Storage & Logging
-- Standardized paths for database, logs, and temp artifacts
-- All logs and temp files are excluded from version control
-
-### Fragment Management
-- Strict .gitignore gating: only source, docs, and whitelisted folders allowed
-- All build/test fragments and legacy artifacts are auto-cleaned during build/clean
-
----
-
-For further details, see the referenced documentation and scripts in the infra/ and scripts/ directories.
-A# SYSTEM_SYNTHESIS.md
-
-## System Infrastructure Consolidation & Synthesis
+## System Infrastructure Consolidation & Synthesis (v1.34)
 
 This document provides a high-level overview of the consolidated system architecture and infrastructure management for the Media Web Viewer project.
 
-### Configuration Management
-- Branch-specific JSON configs (e.g., `config.main.json`, `config.develop.json`)
-- Centralized in a dedicated config directory
+### 1. Configuration Management (Single Source of Truth)
+- **Centralized Config**: All application settings are now consolidated in `parser_config.json`.
+- **Media Categories**: Support for 10 distinct media categories (Audio, Video, Games, etc.) is deeply integrated.
+- **Diagnostic Logging**: 20+ granular `debug_flags` are now managed directly via the central configuration.
+- **Branch-Specific Profiles**: Reference configurations like `web/config.main.json` and `web/config.develop.json` serve as templates for different environments.
 
-### Environment Concept
-- Multi-venv architecture: `.venv_core`, `.venv_dev`, `.venv_run`, etc.
-- Requirements decoupled by purpose (see `requirements-run.txt`)
+### 2. Environment Architecture (Multi-Venv Strategy)
+- **Decoupled Environments**: The project uses specialized virtual environments to isolate core logic from development and testing tools:
+  - `.venv_core`: Production/runtime dependencies.
+  - `.venv_dev`: Development tools (formatting, documentation).
+  - `.venv_run`: Lightweight execution environment for rapid testing.
+- **Automated Setup**: Managed via `scripts/setup_venvs.sh` and `scripts/manage_venvs.py`.
 
-### Reporting & Benchmarks
-- All test results and performance probes consolidated in `build/management_reports/`
-- Automated reporting in CI and release pipelines
+### 3. Integrated Build & Packaging
+- **Release Strategy**: 
+  - **Prerelease**: `release/v1.34-purified` contains the squashed/purified source.
+  - **Milestone 1**: `meilenstein-1-mediaplayer` is the staging branch for the v1.34 release.
+  - **Main**: The `main` branch is protected and receives the final PR from M1.
+- **Unified Packaging**: `infra/packaging/specs/MediaWebViewer.spec` provides a single point of truth for PyInstaller builds.
+- **Version Synchronization**: Managed via `infra/VERSION_SYNC.json` across all source, packaging, and documentation files.
 
-### Build Pipeline Strategy
-- **Full Release (Tagged):** Complete build, test, and artifact generation for production
-- **Main Push (CI-only):** Fast validation, no external artifact publishing
-- See also: `90_Build_Pipeline_Strategy_FullRelease_vs_MainPush.md`
+### 4. Quality Assurance & Reporting
+- **Test Pipeline**: The `infra/build_system.py --pipeline` command executes 24 test gates, from unit tests to E2E Selenium flows.
+- **Management Reporting**: All benchmark data, performance probes, and test results are consolidated in `build/management_reports/`.
+- **Continuous Monitoring**: `scripts/monitor_utils.py` provides watchdog capabilities for long-running synchronization and scanning tasks.
 
-### Storage & Logging
-- Standardized paths for database, logs, and temp artifacts
-- All logs and temp files are excluded from version control
-
-### Fragment Management
-- Strict .gitignore gating: only source, docs, and whitelisted folders allowed
-- All build/test fragments and legacy artifacts are auto-cleaned during build/clean
+### 5. Repository Purification (Git Purity)
+- **Restrictive Gating**: The `.gitignore` uses a "Gated Purification" strategy (ignore-all by default) to ensure no binary residue or Selenium artifacts enter the version tree.
+- **Root Discipline**: The repository root is kept clean; all infrastructure files are strictly organized in `infra/`, `scripts/`, or `docs/`.
 
 ---
-
-For further details, see the referenced documentation and scripts in the infra/ and scripts/ directories.
+*Last Updated: 2026-03-14 | Release v1.34*
