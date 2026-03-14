@@ -210,9 +210,7 @@ class BuildSystem:
                     print(result.stdout)
                 return True
             except subprocess.TimeoutExpired:
-                print(
-                    f"❌ Timeout Error: Command '{
-                        cmd[0]}' timed out after {timeout}s")
+                print(f"❌ Timeout Error: Command '{cmd[0]}' timed out after {timeout}s")
                 self.metrics.append(
                     {"cmd": cmd[0], "duration": timeout, "status": "timeout"})
                 return False
