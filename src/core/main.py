@@ -137,6 +137,10 @@ def _detect_python_environment():
 
 # --- Global Constants & State ---
 VERSION = "1.34"
+
+# Initialize logging as early as possible after paths are set
+initialize_debug_flags()
+
 STARTUP_TIME = time.time()
 BROWSER_PID = None  # Global to track browser process
 
@@ -468,9 +472,8 @@ def get_konsole():
     """
     Returns debug logs, environment info, and dicts for GUI console.
     """
-    from logger import get_ui_logs
     return {
-        "logs": "\n".join(get_ui_logs()),
+        "logs": "\n".join(logger.get_ui_logs()),
         "env": get_environment_info_dict(),
         "version": VERSION,
         "license": "GNU GPL-3.0",
@@ -1436,8 +1439,7 @@ def get_debug_logs():
     """
     @brief Returns the entire log history as a single string.
     """
-    from logger import get_ui_logs
-    return "\n".join(get_ui_logs())
+    return "\n".join(logger.get_ui_logs())
 
 
 @eel.expose
@@ -1454,8 +1456,7 @@ def set_log_level(level_name: str):
     logging.info(f"[System] Log-Level manually set to {level_name}")
     return True
 
-# Initialize logging early with default sys.argv
-initialize_debug_flags()
+# initialize_debug_flags was moved to top-level for earlier capture
 
 
 def is_no_gui_mode(args: list[str] | None = None) -> bool:

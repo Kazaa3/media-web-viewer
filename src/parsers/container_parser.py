@@ -102,7 +102,7 @@ def parse(
                 tags['full_tags'][f"container_track_{i}_{track.track_type}"] = track.to_data()
 
     except Exception as e:
-        from logger import get_logger
+        from src.core.logger import get_logger
         get_logger("parser").warning(f"Container parser failed for {filename}: {e}")
 
     return tags
