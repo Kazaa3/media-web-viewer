@@ -8,7 +8,7 @@ PACKAGE_NAME="media-web-viewer"
 VERSION=$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")
 ARCH="amd64"
 DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
-DEB_PATH="$ROOT_DIR/$DEB_NAME"
+DEB_PATH="$ROOT_DIR/build/$DEB_NAME"
 
 echo "==> Media Web Viewer Reinstall Script"
 echo "    Version: $VERSION"
