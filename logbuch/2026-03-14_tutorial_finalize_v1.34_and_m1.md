@@ -15,7 +15,7 @@ Da der main-Branch geschützt ist, muss der Merge über die Web-Oberfläche erfo
 3. Klicke auf den grünen Button "New Pull Request".
 4. Wähle als base: `main` und als compare: `meilenstein-1-mediaplayer`.
 5. Klicke auf "Create Pull Request".
-6. Gib ihm den Titel: `release: finalize v1.34 and prepare Milestone 1`.
+6. Gib ihm den Titel: `release: merge v1.34 into meilenstein-1-mediaplayer and main`.
 7. Bestätige den Merge ("Merge" oder "Squash and Merge").
 
 ## Schritt 2: Lokale Synchronisation
@@ -49,8 +49,29 @@ git checkout -b feature/m1-video-player
 - Anbindung des Backends für Video-Streaming (VLC/FFmpeg-Support).
 
 ---
-**IMPORTANT**
 
-Bitte führe jetzt Schritt 1 (PR auf GitHub) aus und gib mir Bescheid, sobald der PR gemergt wurde. Ich warte hier auf dein Signal zum Weitermachen!
+## Schritt 5: Merge von v1.34 (meilenstein-1-mediaplayer) nach main und Tagging
+
+1. **Merge durchführen:**
+   - Erstelle auf GitHub einen Pull Request von `meilenstein-1-mediaplayer` nach `main`.
+   - Merge den PR ("Merge" oder "Squash and Merge").
+
+2. **Alten main als v1.33 taggen:**
+   - Vor dem Merge wurde der alte main-Stand bereits als Tag `v1.33` archiviert.
+
+3. **Nach dem Merge:**
+   - Aktualisiere deinen lokalen main:
+     ```bash
+     git checkout main
+     git pull origin main
+     ```
+   - Wechsle zurück zu meilenstein-1-mediaplayer, um dort weiterzuarbeiten:
+     ```bash
+     git checkout meilenstein-1-mediaplayer
+     ```
+
+**Hinweis:**
+- Nach dem Merge ist main offiziell auf v1.34 (purified) und bereit für produktiven Einsatz.
+- Die Entwicklung für weitere Features (z.B. Videoplayer) erfolgt weiterhin auf meilenstein-1-mediaplayer oder neuen Feature-Branches.
 
 Letzte Aktualisierung: 14.03.2026
