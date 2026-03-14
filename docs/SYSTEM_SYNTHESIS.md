@@ -1,5 +1,23 @@
 # SYSTEM_SYNTHESIS.md
 
+
+---
+
+## Nachtrag: Venv/Requirements-Split in CI/CD & Technische Freigabe v1.34 (März 2026)
+
+**CI/CD-Update:**
+- Das Venv-Konzept wurde konsequent in die GitHub Actions Workflows (`ci-main.yml`, `release.yml`) übertragen.
+- Die Anforderungen sind jetzt klar getrennt:
+   - **Build-Phase:** nutzt `infra/requirements-build.txt` (Core + PyInstaller + Wheel)
+   - **Test-Phase:** nutzt `infra/requirements-test.txt` (Core + Pytest + Coverage)
+   - **Selenium-Phase:** nutzt `infra/requirements-selenium.txt`
+- Die `infra/requirements.txt` im Root ist nur noch ein Redirect auf die Core-Abhängigkeiten (Abwärtskompatibilität).
+- In den Workflows wurden generische requirements-Aufrufe durch die spezialisierten Files ersetzt.
+
+**Status:**
+- Änderungen sind gepusht, GitHub Actions laufen automatisch neu an.
+- Sobald die Checks grün sind, kann der Merge nach `main` (siehe Schritt 1 im Tutorial) durchgeführt werden.
+- Damit ist v1.34 technisch "sauber" und bereit, die stabile Basis für den Videoplayer in Meilenstein 1 zu bilden.
 ## System Infrastructure Consolidation & Synthesis (v1.34)
 
 This document provides a high-level overview of the consolidated system architecture and infrastructure management for the Media Web Viewer project.
