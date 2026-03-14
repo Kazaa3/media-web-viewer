@@ -1,4 +1,9 @@
 # --- Media Web Viewer: Purified .gitignore ---
+# Ignore selenium screenshots
+tests/e2e/selenium/screenshots/
+
+# Ignore selenium reference screenshots
+tests/e2e/selenium/reference_screenshots/
 
 # 1. Broad Ignores
 **/__pycache__/
@@ -23,7 +28,7 @@
 # Step 4a: Ignore almost everything by default in root
 /*
 
-# Step 4b: Whitelist essential source directories (Source Only)
+# Step 4b: Whitelist essential source directories
 !/src/
 !/infra/
 !/scripts/
@@ -31,22 +36,17 @@
 !/web/
 !/tests/
 !/logbuch/
+!/media/
 
-# Step 4c: Re-ignore residues inside whitelisted directories (The "Deep Purge")
+docs/latex/
+data/**
+
+# Step 4c: Re-ignore residues inside whitelisted directories
 docs/html/
 docs/latex/
 media/**
 !media/mock_files/
 data/**
-**/screenshots/
-**/testing_screenshots/
-**/reference_screenshots/
-**/selenium_artifacts/
-**/debug_artifacts/
-**/*.log
-**/*.png
-**/*.jpg
-**/*.jpeg
 
 # Step 4d: Whitelist specific root files
 !/.gitignore
@@ -58,6 +58,12 @@ data/**
 !/pyproject.toml
 !/package.json
 
-# Step 4e: Restore specific assets if needed
-!/web/icons/**
-!/web/images/**
+# 5. Tool-Specific
+.pytest_cache/
+.coverage
+htmlcov/
+geckodriver.log
+chromedriver.log
+ghostdriver.log
+**/selenium_artifacts/
+**/debug_artifacts/
