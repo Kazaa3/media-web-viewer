@@ -1,7 +1,0 @@
-# requirements-run.txt
-# Dedicated requirements for developer execution environment
-#
-# This file is a copy of the requirements for the core venv (see infra/requirements.txt)
-# and is used to set up the .venv_run environment for running the application.
-
--e ./infra/requirements.txt
