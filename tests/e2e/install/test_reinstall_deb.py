@@ -133,7 +133,7 @@ def test_deb_package_structure():
     # Check for essential files (DEBIAN/control not shown in dpkg-deb -c output)
     essential_files = [
         './opt/media-web-viewer/src/core/main.py',
-        './opt/media-web-viewer/requirements.txt',
+        './opt/media-web-viewer/infra/requirements.txt',
         './usr/bin/media-web-viewer',
     ]
     

@@ -129,3 +129,13 @@ This plan will streamline development, reduce confusion, and improve maintainabi
 - Push nach main: GitHub-Schutz blockiert Force-Push, aber meilenstein-1-mediaplayer ist bereit für den PR und Merge auf GitHub.
 - Kontext: Weiterarbeit erfolgt auf meilenstein-1-mediaplayer.
 - Repo-Purity und Dokumentation sind vollständig, v1.34 Release ist abgeschlossen und bereit für den Merge.
+
+## Finalisierung: M1-Merge und Release-Check (v1.34)
+
+- Die Repo-Purity ist hergestellt, die Dokumentation ist aktuell und der v1.34 Release-Stammbaum ist sauber dokumentiert.
+- Der finale Merge von meilenstein-1-mediaplayer (M1) nach main erfolgt per Pull Request auf GitHub.
+- Die lokale main wurde bereits auf den v1.34 purified state gebracht.
+- Alle requirements sind in infra/ korrekt gelistet.
+- setup_venvs.sh und die venv-Struktur wurden final geprüft.
+- Das Repository ist 100% frei von visuellen Altlasten (Screenshots, Artefakte) und bereit für den Release.
+- Nächster Schritt: PR auf GitHub abschließen und v1.34 als neuen Main-Branch etablieren.

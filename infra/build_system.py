@@ -81,9 +81,7 @@ class BuildSystem:
             end = time.time()
             duration = end - start
             self.metrics.append({"phase": phase_name, "duration": duration})
-            print_status(
-                f"Finished {phase_name} in {
-                    duration:.2f}s", "SUCCESS")
+            print_status(f"Finished {phase_name} in {duration:.2f}s", "SUCCESS")
 
     def __init__(self, root_dir: Optional[Path] = None):
         """
@@ -223,6 +221,8 @@ class BuildSystem:
                 print(f"❌ Error: {e}")
                 self.metrics.append(
                     {"cmd": cmd[0], "duration": duration, "status": "failed"})
+                if e.stdout:
+                    print(f"  stdout: {e.stdout}")
                 if e.stderr:
                     print(f"  stderr: {e.stderr}")
                 return False
