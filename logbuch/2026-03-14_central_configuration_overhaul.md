@@ -1,4 +1,3 @@
-
 ## 5. Configuration Centralization & UI Refinement
 
 ### Repository History Purification (v1.34 Consolidated Release)
@@ -23,5 +22,21 @@
 - **Configuration Consolidation:** All categories now active by default; settings merge verified.
 
 ---
-Comment
-Ctrl+Alt+M
+
+## PR #4 – CI-Status & SyntaxError (März 2026)
+
+- **System-Abhängigkeiten:** Installiert, Problem mit firefox-geckodriver gelöst.
+- **Python-Abhängigkeiten:** Installiert, keine Fehler.
+- **Test-Tiers (inkl. E2E):** Fehlgeschlagen.
+- **Fehler:**
+  - SyntaxError: unterminated string literal (infra/build_system.py, Zeile 214)
+  - Vermutlich ein nicht geschlossener f-string oder ein fehlendes Anführungszeichen im Timeout-Error-Handler.
+- **Aktion:**
+  - PR Checks Tab geprüft, Fehler lokalisiert.
+  - Aktuell blockiert der Syntaxfehler die finale Validierung.
+- **Empfehlung:**
+  - build_system.py auf Zeile 214 prüfen, Fehler beheben, erneut pushen.
+  - Erst nach erfolgreichem CI-Lauf kann der PR gemergt werden.
+
+**Status:**
+- Environment-Setup ist jetzt stabil, nur noch der Syntaxfehler blockiert den Merge.
