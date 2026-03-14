@@ -354,8 +354,7 @@ class BuildSystem:
             print("         TEST RESULT SUMMARY")
             print("═" * 40)
             print(f"  Total:    {total}")
-            print(f"  Passed:   {
-                  passed} ({(passed / total * 100 if total > 0 else 0):.1f}%)")
+            print(f"  Passed:   {passed} ({(passed / total * 100 if total > 0 else 0):.1f}%)")
             if failures:
                 print(f"  Failures: {failures}")
             if errors:
@@ -497,9 +496,7 @@ class BuildSystem:
                     expected_artifact = expected_artifact.with_suffix(".exe")
 
                 if not expected_artifact.exists():
-                    print_status(
-                        f"Versioning Mismatch: Expected artifact {
-                            expected_artifact.name} not found!", "ERROR")
+                    print_status(f"Versioning Mismatch: Expected artifact {expected_artifact.name} not found!", "ERROR")
                     # Audit dist dir for what actually was built
                     actual_items = list(
                         (self.root /
@@ -911,8 +908,7 @@ class BuildSystem:
                 cmd = [
                     "bash",
                     "-lc",
-                    f"RUN_DESTRUCTIVE_TESTS=1 {
-                        sys.executable} tests/e2e/install/test_reinstall_deb.py"]
+                    f"RUN_DESTRUCTIVE_TESTS=1 {sys.executable} tests/e2e/install/test_reinstall_deb.py"]
                 if not self._run_command(cmd):
                     print("\n❌ Destructive reinstall validation failed")
                     return False
