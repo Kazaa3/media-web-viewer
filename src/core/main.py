@@ -135,6 +135,45 @@ def _detect_python_environment():
     # System Python
     return ('system', None, sys.prefix, python_version, python_executable)
 
+# Debug-Optionen (Konsolidiert in PARSER_CONFIG)
+DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
+
+def initialize_debug_flags(args=None):
+    """
+    @brief Initializes debug mode and flags based on CLI arguments and environment.
+    """
+    if args is None:
+        args = sys.argv
+
+    # Environment Detection
+    env_type, env_name, env_path, _, _ = _detect_python_environment()
+    is_dev = "Coding" in str(env_path) or os.path.exists(PROJECT_ROOT / ".git")
+    
+    # Update PARSER_CONFIG env
+    PARSER_CONFIG["env"] = "dev" if is_dev else "production"
+
+    debug_mode = "--debug" in args
+    
+    # Centralized Log Level Management
+    # Dev -> highest (DEBUG), Production -> INFO/WARNING
+    if is_dev or debug_mode:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+        
+    logger.setup_logging(debug_mode=debug_mode, level=log_level)
+
+    if debug_mode:
+        # Override config: Set all flags to True for --debug session
+        for key in DEBUG_FLAGS:
+            DEBUG_FLAGS[key] = True
+        logger.set_debug_flags(DEBUG_FLAGS)
+        logging.info(
+            "[System] Full Debug-Mode activated (--debug). All flags set to True.")
+    else:
+        # Use flags as defined in PARSER_CONFIG
+        logger.set_debug_flags(DEBUG_FLAGS)
+
 # --- Global Constants & State ---
 VERSION = "1.34"
 
@@ -1392,47 +1431,6 @@ IMAGE_EXTENSIONS = {
 ARCHIVE_EXTENSIONS = {
     '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'
 }
-
-
-# Debug-Optionen (Konsolidiert in PARSER_CONFIG)
-DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
-
-
-def initialize_debug_flags(args=None):
-    """
-    @brief Initializes debug mode and flags based on CLI arguments and environment.
-    """
-    if args is None:
-        args = sys.argv
-
-    # Environment Detection
-    env_type, env_name, env_path, _, _ = _detect_python_environment()
-    is_dev = "Coding" in str(env_path) or os.path.exists(PROJECT_ROOT / ".git")
-    
-    # Update PARSER_CONFIG env
-    PARSER_CONFIG["env"] = "dev" if is_dev else "production"
-
-    debug_mode = "--debug" in args
-    
-    # Centralized Log Level Management
-    # Dev -> highest (DEBUG), Production -> INFO/WARNING
-    if is_dev or debug_mode:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
-        
-    logger.setup_logging(debug_mode=debug_mode, level=log_level)
-
-    if debug_mode:
-        # Override config: Set all flags to True for --debug session
-        for key in DEBUG_FLAGS:
-            DEBUG_FLAGS[key] = True
-        logger.set_debug_flags(DEBUG_FLAGS)
-        logging.info(
-            "[System] Full Debug-Mode activated (--debug). All flags set to True.")
-    else:
-        # Use flags as defined in PARSER_CONFIG
-        logger.set_debug_flags(DEBUG_FLAGS)
 
 @eel.expose
 def get_debug_logs():
