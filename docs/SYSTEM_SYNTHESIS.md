@@ -34,5 +34,62 @@ This document provides a high-level overview of the consolidated system architec
 - **Restrictive Gating**: The `.gitignore` uses a "Gated Purification" strategy (ignore-all by default) to ensure no binary residue or Selenium artifacts enter the version tree.
 - **Root Discipline**: The repository root is kept clean; all infrastructure files are strictly organized in `infra/`, `scripts/`, or `docs/`.
 
+## 6. Testdaten & Mockfiles
+- Strukturierte Mockfiles in /tests/mockfiles/ und /media/ für Parser- und File-Tests
+- README_mock_testfiles.md dokumentiert die Testdatenstrategie
+- Reale, aber rechtlich unbedenkliche Mockfiles werden für fortgeschrittene Tests genutzt
+
+## 7. Branch- und Tag-Historie
+- main (alt) -> v1.33 (Tag) -> meilenstein-1-mediaplayer (v1.34 purified)
+- M1 ist bereit, der neue main zu werden (PR auf GitHub)
+
+## 8. Abschluss & Ausblick
+- Debug-Flags konsolidiert, Datenbank für frischen Start vorbereitet
+- Dokumentation ist vollständig und aktuell
+- Repository ist frei von visuellen Altlasten und bereit für den Release
+
 ---
-*Last Updated: 2026-03-14 | Release v1.34*
+
+## Walkthrough: Final System Integration & Purification (v1.34)
+
+### Key Accomplishments
+1. **High-Level Repository Purification**
+   - Root Cleanup: Alle Tool-Fragmente (.log, .png, .xml, .txt, .spec, .so) entfernt.
+   - Legacy Migration: Root-Skripte nach infra/ oder scripts/ verschoben oder gelöscht.
+   - Gated .gitignore: Restriktive "Gated Purification"-Strategie implementiert.
+2. **Advanced Monitoring Infrastructure**
+   - Progress Watchdogs: monitor_utils.py erkennt "silent hangs" via Logfile-Überwachung.
+   - BuildSystem Integration: Automatischer Watchdog-Einsatz bei Benchmarks und Builds.
+3. **Packaging Architecture & Purification**
+   - Surgical Purge: packaging/-Verzeichnis und alte Spec-Files entfernt.
+   - Template Consolidation: Alle Templates in infra/packaging/ isoliert.
+   - Source vs. Artifacts: Nur Build-Logik im Repo, keine Artefakte.
+   - Nuclear Index Refresh: git rm -r -f --cached . für sauberen Index.
+   - Recursive Screenshot Purge: .gitignore fängt jetzt alle Screenshots ab.
+4. **Integrated Pipeline Verification**
+   - Vollständige Pipeline ausgeführt: Version Sync, Debian-Build, 24 Test Gates, Benchmarks, Management Reports.
+5. **v1.34 Consolidation & v1.33 Archival**
+   - v1.33 als Tag archiviert, v1.34 purified in M1 gemerged.
+   - 565 Commits zu einem Clean Commit gesquasht.
+   - DEBUG_FLAGS zentralisiert, DB für frischen Start bereinigt.
+
+### Final Repository State
+
+    .
+    ├── src/            # Core logic (purified)
+    ├── infra/          # Infrastructure, packaging templates, & version sync
+    ├── scripts/        # Monitoring & utility scripts (watchdogs)
+    ├── web/            # Frontend assets
+    ├── docs/           # Centralized documentation
+    ├── tests/          # Refactored test suite
+    ├── logbuch/        # Project logbooks
+    ├── data/           # Local data (gitignored)
+    ├── main.py         # Entry point
+    └── VERSION         # v1.34
+
+### Validation Results
+- **History & Archival:** main → v1.33 (Tag) → M1 (v1.34 purified) korrekt abgebildet.
+- **Configuration & Data:** DEBUG_FLAGS-Propagation und frische DB-Schema-Generierung verifiziert.
+
+---
+Letzte Aktualisierung: 14.03.2026
