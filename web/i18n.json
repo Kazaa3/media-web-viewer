@@ -415,7 +415,11 @@
         "options_conda_envs_numbered": "2. 🐍 Conda Umgebungen",
         "options_system_python_local_numbered": "3. 🏠 Python Local",
         "options_system_python_global_numbered": "4. 🌐 Python Global",
-        "debug_runtime_info": "Laufzeit-Info & Log-Level"
+        "debug_runtime_info": "Laufzeit-Info & Log-Level",
+        "debug_dict_library": "Bibliothek (Media Items)",
+        "debug_dict_parser": "Parser Konfiguration",
+        "debug_dict_environment": "System Umgebung",
+        "debug_dict_flags": "Debug Flags"
     },
     "en": {
         "app_title": "dict",
@@ -833,6 +837,10 @@
         "options_conda_envs_numbered": "2. 🐍 Conda Environments",
         "options_system_python_local_numbered": "3. 🏠 Python Local",
         "options_system_python_global_numbered": "4. 🌐 Python Global",
-        "debug_runtime_info": "Runtime Info & Log Level"
+        "debug_runtime_info": "Runtime Info & Log Level",
+        "debug_dict_library": "Library (Media Items)",
+        "debug_dict_parser": "Parser Config",
+        "debug_dict_environment": "System Environment",
+        "debug_dict_flags": "Debug Flags"
     }
 }

@@ -1981,18 +1981,27 @@
                     </div>
 
                     <div style="margin-bottom: 25px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
-                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #2c3e50;" data-i18n="debug_python_dict">
-                            Python Dict (Details)</h3>
-                        <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 12px;" data-i18n="debug_db_desc">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="margin: 0; font-size: 1.1em; color: #333;" data-i18n="debug_python_dict">
+                                Python Dict (Details)</h3>
+                            <select id="debug-dict-select" onchange="changeDebugDictView(this.value)"
+                                style="font-size: 0.8em; padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #444; font-weight: 500; outline: none; transition: border-color 0.2s;">
+                                <option value="library" data-i18n="debug_dict_library">Bibliothek (Media Items)</option>
+                                <option value="parser" data-i18n="debug_dict_parser">Parser Konfiguration</option>
+                                <option value="env" data-i18n="debug_dict_environment">System Umgebung</option>
+                                <option value="flags" data-i18n="debug_dict_flags">Debug Flags</option>
+                            </select>
+                        </div>
+                        <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;" data-i18n="debug_db_desc">
                             Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank
                             und die
                             Frontend gesendet wird.
                         </p>
 
                         <div id="debug-items-dict-container"
-                            style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 2px; border-radius: 10px; font-size: 0.85em; overflow: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                            <div
-                                style="background: #1e1e1e; height: 100%; border-radius: 8px; padding: 15px; overflow: auto;">
+                            style="flex: 1; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; font-size: 0.85em; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+                            <div style="padding: 15px; flex: 1; overflow: auto;">
                                 <pre id="debug-items-json"
                                     style="background: transparent; padding: 0; margin: 0; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; color: #d4d4d4;"
                                     data-i18n="debug_loading_data">Lade Daten...</pre>
@@ -2990,12 +2999,6 @@
             }
 
             if (debugItemsJson && debugConsole.env) {
-                // Populate dictionaries div with environment and flag info
-                let html = '<h4>System Environment</h4>';
-                html += '<pre>' + JSON.stringify(debugConsole.env, null, 2) + '</pre>';
-                html += '<h4>Debug Flags</h4>';
-                html += '<pre>' + JSON.stringify(debugConsole.debug_flags, null, 2) + '</pre>';
-
                 // Update Runtime Info
                 const pyPid = document.getElementById('debug-python-pid');
                 const brPid = document.getElementById('debug-browser-pid');
@@ -3007,13 +3010,51 @@
                     lvSel.value = debugConsole.env.log_level || 'INFO';
                 }
 
-                const currentContent = debugItemsJson.innerText;
-                const isLoading = currentContent.includes('...') || currentContent.includes('Lade') || currentContent.includes('Loading');
-                const isSelectionPrompt = currentContent.includes('Wähle') || currentContent.includes('Select');
-
-                if (isLoading || isSelectionPrompt || !currentContent.trim()) {
-                    debugItemsJson.innerHTML = html;
+                // Update current dict view if applicable
+                const dictSelect = document.getElementById('debug-dict-select');
+                if (dictSelect) {
+                    if (dictSelect.value === 'env') {
+                        debugItemsJson.innerHTML = syntaxHighlight(debugConsole.env);
+                    } else if (dictSelect.value === 'flags') {
+                        debugItemsJson.innerHTML = syntaxHighlight(debugConsole.debug_flags);
+                    } else if (dictSelect.value === 'library' && (!debugItemsJson.innerText.trim() || debugItemsJson.innerText.includes('Loading') || debugItemsJson.innerText.includes('Lade'))) {
+                        // Load library data if first time or empty
+                        const libRes = await eel.get_library()();
+                        if (libRes && libRes.media) {
+                            debugItemsJson.innerHTML = syntaxHighlight(libRes.media);
+                        }
+                    }
                 }
+            }
+        }
+
+        async function changeDebugDictView(viewType) {
+            const debugItemsJson = document.getElementById('debug-items-json');
+            if (!debugItemsJson) return;
+
+            debugItemsJson.innerHTML = '<i>Processing...</i>';
+
+            try {
+                let data = null;
+                if (viewType === 'library') {
+                    const res = await eel.get_library()();
+                    data = res.media;
+                } else if (viewType === 'parser') {
+                    data = await eel.get_parser_config()();
+                } else {
+                    const res = await eel.get_konsole()();
+                    if (viewType === 'env') data = res.env;
+                    if (viewType === 'flags') data = res.debug_flags;
+                }
+
+                if (data) {
+                    debugItemsJson.innerHTML = syntaxHighlight(data);
+                } else {
+                    debugItemsJson.innerText = 'No data available for: ' + viewType;
+                }
+            } catch (e) {
+                console.error("[changeDebugDictView] Error:", e);
+                debugItemsJson.innerText = 'Error loading data: ' + e.message;
             }
         }
 
@@ -4287,7 +4328,9 @@
 
                 console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
 
-                if (debugItemsJson) {
+                const debugItemsJson = document.getElementById('debug-items-json');
+                const dictSelect = document.getElementById('debug-dict-select');
+                if (debugItemsJson && (!dictSelect || dictSelect.value === 'library')) {
                     const highlighted = syntaxHighlight(result.media);
                     debugItemsJson.innerHTML = highlighted;
                 }
