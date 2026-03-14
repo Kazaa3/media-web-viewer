@@ -74,4 +74,24 @@ git checkout -b feature/m1-video-player
 - Nach dem Merge ist main offiziell auf v1.34 (purified) und bereit für produktiven Einsatz.
 - Die Entwicklung für weitere Features (z.B. Videoplayer) erfolgt weiterhin auf meilenstein-1-mediaplayer oder neuen Feature-Branches.
 
+---
+
+## Troubleshooting: Merge Blocked durch Review/CI
+
+- **Review erforderlich:**
+  - Mindestens ein Reviewer mit Schreibrechten muss den Pull Request approven, bevor der Merge möglich ist.
+  - Bitte einen berechtigten Reviewer, den PR zu prüfen und freizugeben.
+
+- **CI-Check fehlgeschlagen:**
+  - Der Release Gate/CI-Check (full-validation) ist fehlgeschlagen.
+  - Öffne die Logs im GitHub-PR, analysiere die Fehlerursache und behebe sie im Code.
+  - Nach dem Fix: Änderungen pushen, damit die Checks erneut laufen.
+
+- **Merge-Optionen:**
+  - Nach erfolgreicher Review und bestandenem Check kann der Merge über die GitHub-Oberfläche erfolgen.
+  - Alternativ ist ein Merge per Kommandozeile möglich (siehe Hinweis im PR).
+
+**Tipp:**
+- Bei Fragen zu CI-Fehlern oder Review-Prozess: Logs posten oder gezielt nach Unterstützung fragen.
+
 Letzte Aktualisierung: 14.03.2026
