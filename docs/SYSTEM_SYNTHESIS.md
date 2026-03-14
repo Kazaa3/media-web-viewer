@@ -10,7 +10,7 @@ This document provides a high-level overview of the consolidated system architec
 
 ### Environment Concept
 - Multi-venv architecture: `.venv_core`, `.venv_dev`, `.venv_run`, etc.
-- Requirements decoupled by purpose (see `requirements-run.txt`)
+- Requirements decoupled by purpose (see `infra/requirements-run.txt`)
 
 ### Reporting & Benchmarks
 - All test results and performance probes consolidated in `build/management_reports/`
