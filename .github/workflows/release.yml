@@ -25,7 +25,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg mediainfo xvfb firefox-geckodriver
+          sudo apt-get install -y ffmpeg mediainfo xvfb
       - name: Install dependencies (selenium)
         run: |
           pip install --upgrade pip

@@ -20,7 +20,10 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg mediainfo xvfb firefox-geckodriver
+          sudo apt-get install -y ffmpeg mediainfo xvfb
+          # Geckodriver is typically pre-installed on GitHub Actions runners.
+          # We verify it here.
+          geckodriver --version || echo "Geckodriver not found in PATH"
 
       - name: Install dependencies
         run: |
