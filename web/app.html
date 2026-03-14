@@ -786,6 +786,23 @@
             }
             if (tabId === 'debug') {
                 if (typeof loadDebugLogs === 'function') loadDebugLogs();
+                // Start auto-refresh for logs
+                if (!window._debugLogInterval) {
+                    window._debugLogInterval = setInterval(() => {
+                        const activeTab = localStorage.getItem('mwv_active_tab');
+                        if (activeTab === 'debug') {
+                            loadDebugLogs();
+                        } else {
+                            clearInterval(window._debugLogInterval);
+                            window._debugLogInterval = null;
+                        }
+                    }, 2000);
+                }
+            } else {
+                if (window._debugLogInterval) {
+                    clearInterval(window._debugLogInterval);
+                    window._debugLogInterval = null;
+                }
             }
             if (tabId === 'logbuch') {
                 if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
@@ -1984,7 +2001,7 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <h3 style="margin: 0; font-size: 1.1em; color: #333;" data-i18n="debug_python_dict">
-                                Python Dict (Details)</h3>
+                                Python Dicts (Details)</h3>
                             <select id="debug-dict-select" onchange="changeDebugDictView(this.value)"
                                 style="font-size: 0.8em; padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #444; font-weight: 500; outline: none; transition: border-color 0.2s;">
                                 <option value="library" data-i18n="debug_dict_library">Bibliothek (Media Items)</option>
@@ -2993,9 +3010,17 @@
             const debugItemsJson = document.getElementById('debug-items-json');
 
             if (debugPre && debugConsole.logs) {
-                debugPre.innerText = debugConsole.logs;
-                const parent = debugPre.parentElement;
-                if (parent) parent.scrollTop = parent.scrollHeight;
+                // Only update if content changed or first time
+                if (debugPre.innerText !== debugConsole.logs) {
+                    const parent = debugPre.parentElement;
+                    const isAtBottom = parent ? (parent.scrollHeight - parent.scrollTop - parent.clientHeight < 50) : true;
+
+                    debugPre.innerText = debugConsole.logs;
+
+                    if (parent && isAtBottom) {
+                        parent.scrollTop = parent.scrollHeight;
+                    }
+                }
             }
 
             if (debugItemsJson && debugConsole.env) {
@@ -3010,15 +3035,19 @@
                     lvSel.value = debugConsole.env.log_level || 'INFO';
                 }
 
-                // Update current dict view if applicable
+                // Update current dict view if it's currently showing env or flags (which refresh regularly)
+                // or if it's empty/loading
                 const dictSelect = document.getElementById('debug-dict-select');
                 if (dictSelect) {
-                    if (dictSelect.value === 'env') {
+                    const currentVal = dictSelect.value;
+                    const isManualRefreshView = (currentVal === 'library' || currentVal === 'parser');
+                    const isEmpty = !debugItemsJson.innerText.trim() || debugItemsJson.innerText.includes('Loading') || debugItemsJson.innerText.includes('Lade');
+
+                    if (currentVal === 'env') {
                         debugItemsJson.innerHTML = syntaxHighlight(debugConsole.env);
-                    } else if (dictSelect.value === 'flags') {
+                    } else if (currentVal === 'flags') {
                         debugItemsJson.innerHTML = syntaxHighlight(debugConsole.debug_flags);
-                    } else if (dictSelect.value === 'library' && (!debugItemsJson.innerText.trim() || debugItemsJson.innerText.includes('Loading') || debugItemsJson.innerText.includes('Lade'))) {
-                        // Load library data if first time or empty
+                    } else if (isEmpty && currentVal === 'library') {
                         const libRes = await eel.get_library()();
                         if (libRes && libRes.media) {
                             debugItemsJson.innerHTML = syntaxHighlight(libRes.media);

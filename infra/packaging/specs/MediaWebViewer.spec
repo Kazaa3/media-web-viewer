@@ -3,6 +3,11 @@ import sys
 import os
 from pathlib import Path
 
+# Dynamic project root resolution
+# In PyInstaller spec files, __file__ is not defined, but SPECPATH is available.
+SPEC_DIR = Path(SPECPATH).resolve()
+PROJECT_ROOT = SPEC_DIR.parent.parent.parent
+
 VERSION = '1.34'
 
 # Dynamic path resolution
@@ -13,13 +18,13 @@ try:
 except ImportError:
     pass
 
-datas = [('web', 'web')]
+datas = [(str(PROJECT_ROOT / 'web'), 'web')]
 if eel_path:
     datas.append((os.path.join(eel_path, 'eel.js'), 'eel'))
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    [str(PROJECT_ROOT / 'src' / 'core' / 'main.py')],
+    pathex=[str(PROJECT_ROOT)],
     binaries=[],
     datas=datas,
     hiddenimports=['bottle_websocket', 'gevent', 'gevent.monkey'],
@@ -38,7 +43,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='MediaWebViewer',
+    name=f'MediaWebViewer-{VERSION}',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

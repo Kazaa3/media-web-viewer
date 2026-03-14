@@ -144,6 +144,18 @@ class BuildSystem:
         # Re-ensure reports dir if it was wiped
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
+    def get_build_python(self) -> str:
+        """
+        Detect and return the python executable to use for building.
+        Prioritizes .venv_build if available.
+        """
+        venv_build_python = self.root / ".venv_build" / "bin" / "python"
+        if venv_build_python.exists():
+            return str(venv_build_python)
+        
+        # Fallback to current sys.executable
+        return sys.executable
+
     def _get_current_branch(self) -> str:
         """Detect the current git branch."""
         try:
@@ -476,8 +488,11 @@ class BuildSystem:
                 print_status(f"Critical: Spec file not found at {spec_file}", "ERROR")
                 return False
 
+            build_python = self.get_build_python()
+            print_status(f"Using build environment: {build_python}", "INFO")
+
             cmd = [
-                sys.executable, "-m", "PyInstaller",
+                build_python, "-m", "PyInstaller",
                 "--clean",
                 str(spec_file),
                 "--workpath", str(self.root / "build" / "pyinstaller_work"),
