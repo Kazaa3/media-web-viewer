@@ -1391,30 +1391,8 @@ ARCHIVE_EXTENSIONS = {
 }
 
 
-# Debug-Optionen
-DEBUG_FLAGS = {
-    "system": False,
-    "ui": False,
-    "lib": False,
-    "browser": False,
-    "edit": False,
-    "options": False,
-    "start": False,
-    "parser": False,
-    "scan": False,
-    "player": False,
-    "db": False,
-    "tests": False,
-    "api": False,
-    "web": False,
-    "i18n": False,
-    "websocket": False,
-    "performance": False,
-    "metadata": False,
-    "transcode": False,
-    "file_ops": False,
-    "network": False
-}
+# Debug-Optionen (Konsolidiert in PARSER_CONFIG)
+DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
 
 def initialize_debug_flags(args=None):
@@ -1428,12 +1406,14 @@ def initialize_debug_flags(args=None):
     logger.setup_logging(debug_mode)
 
     if debug_mode:
+        # Override config: Set all flags to True for --debug session
         for key in DEBUG_FLAGS:
             DEBUG_FLAGS[key] = True
         logger.set_debug_flags(DEBUG_FLAGS)
         logging.info(
             "[System] Full Debug-Mode activated (--debug). All flags set to True.")
     else:
+        # Use flags as defined in PARSER_CONFIG
         logger.set_debug_flags(DEBUG_FLAGS)
 
 
