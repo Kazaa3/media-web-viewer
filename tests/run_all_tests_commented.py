@@ -1,30 +1,23 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+###############################################################################
 # Kategorie: Comprehensive Test Runner
 # Eingabewerte: Alle test_*.py Dateien im tests/ Verzeichnis
 # Ausgabewerte: Test-Status (PASSED/FAILED/SKIPPED), Metadata, Recommendations
 # Testdateien: tests/test_*.py (alle 53+ Tests)
 # Kommentar: Läuft durch ALLE Test-Dateien und dokumentiert jeden Test mit Zweck, Eingabe, Ausgabe, Status und Empfehlungen.
+###############################################################################
 """
-================================================================================
-Comprehensive Test Runner - Alle Tests mit Kommentaren
-================================================================================
+Comprehensive Test Runner (DE/EN)
+=================================
 
-Läuft durch ALLE 53 Test-Dateien und dokumentiert jeden Test mit:
-- Zweck des Tests
-- Eingabewerte / Testdaten
-- Erwartete Ausgabe
-- Status (PASSED / FAILED / SKIPPED / EMPTY)
-- Empfehlungen für Verbesserungen
+DE:
+Läuft durch ALLE 53 Test-Dateien und dokumentiert jeden Test mit Zweck, Eingabe, Ausgabe, Status und Empfehlungen.
 
-Verwendung:
-    python tests/run_all_tests_commented.py
+EN:
+Runs through ALL 53 test files and documents each test with purpose, input, output, status, and recommendations.
 
-Output:
-    - Detaillierte Test-Dokumentation
-    - Zusammenfassung aller Tests
-    - Liste der leeren/minimalen Tests
-    - Empfehlungen für Test-Erweiterungen
+Autor/Author: Media Web Viewer Team
+Erstellt/Created: 2026-03-13
+Version: 1.0.0
 """
 
 import os
@@ -45,7 +38,6 @@ class Color:
     NC = '\033[0m'  # No Color
     BOLD = '\033[1m'
     DIM = '\033[2m'
-
 
 class TestRunner:
     """Runs and documents all test files in the tests/ directory."""
@@ -124,7 +116,6 @@ class TestRunner:
                 f"{project_root}:{existing_pythonpath}"
                 if existing_pythonpath
                 else project_root
-            )
 
             result = subprocess.run(
                 [sys.executable, str(test_file)],
@@ -133,7 +124,6 @@ class TestRunner:
                 timeout=30,
                 cwd=self.tests_dir.parent,
                 env=env,
-            )
             
             output = result.stdout + result.stderr
             
@@ -334,10 +324,9 @@ class TestRunner:
         print(f"   • Verwende fixtures für Test-Setup")
         print(f"   • Mock externe Abhängigkeiten (DB, Network)")
 
-
 def main():
     """Main entry point."""
-    tests_dir = Path(__file__).parent
+    tests_dir = Path(__file__).parents[1]
     
     runner = TestRunner(tests_dir)
     runner.run_all_tests()
@@ -348,7 +337,6 @@ def main():
     failed_count = sum(
         1 for r in runner.results.values()
         if r['status'] in ['FAILED', 'ERROR', 'TIMEOUT']
-    )
     
     if failed_count > 0:
         print(f"\n{Color.RED}⚠️  {failed_count} Tests fehlgeschlagen{Color.NC}\n")
@@ -356,7 +344,6 @@ def main():
     else:
         print(f"\n{Color.GREEN}✅ Alle Tests abgeschlossen{Color.NC}\n")
         sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,60 @@
+name: Main CI / Release Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  full-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo xvfb firefox-geckodriver
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r infra/requirements-test.txt
+          pip install -r infra/requirements-selenium.txt
+          pip install pyinstaller
+
+      - name: Run All Test Tiers (including E2E)
+        run: |
+          PYTHONPATH=. xvfb-run -a python infra/build_system.py --test all -v
+
+      - name: Build Artifacts
+        run: |
+          PYTHONPATH=. python infra/build_system.py --build all --monitor --skip-build-gate
+
+      - name: Upload Linux executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaWebViewer-Linux-main
+          path: dist/MediaWebViewer
+          if-no-files-found: error
+
+      - name: Upload DEB package
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaWebViewer-DEB-main
+          path: build/media-web-viewer_*_amd64.deb
+          if-no-files-found: error
+
+      - name: Upload Management Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: Management-Reports-main
+          path: build/management_reports/
+          if-no-files-found: warn
