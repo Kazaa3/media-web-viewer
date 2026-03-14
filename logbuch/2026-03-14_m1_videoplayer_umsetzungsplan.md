@@ -54,4 +54,19 @@ git checkout -b feature/m1-video-implementation
 
 ---
 
-**Startbereit: Sobald der Branch erstellt ist, kann die Umsetzung nach diesem Plan beginnen.**
+## Build- und Installationsprozess – Wrapper-Skripte & Fixes (März 2026)
+
+- **Neue Wrapper-Skripte:**
+  - `./build.sh`: Baut das Debian-Paket extrem schnell (Testgate wird übersprungen).
+  - `./push.sh`: Installiert das gebaute Paket lokal (entspricht einem lokalen "Push").
+- **Korrigierte Fehler:**
+  - Installer (postinst) sucht `requirements.txt` jetzt korrekt in `infra/`.
+  - `scripts/reinstall_deb.sh` verwendet den richtigen Build-Pfad.
+  - f-string/Syntax-Fehler in der Build-Pipeline für ältere Python-Versionen behoben.
+- **Nächste Schritte:**
+  - Paket mit `./build.sh` bauen (bereits erfolgt).
+  - Mit `./push.sh` lokal installieren und testen.
+  - Nach erfolgreicher Installation ist die Basis für Meilenstein 1 (Videoplayer) bereit.
+
+**Frage:**
+Soll der neue Branch für den Videoplayer (feature/m1-video-implementation) direkt vorbereitet werden?
