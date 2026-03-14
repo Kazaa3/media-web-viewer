@@ -101,6 +101,9 @@ class BuildSystem:
         self.reports_dir = self.root / "build" / "management_reports"
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         
+        self.build_dir = self.root / "build"
+        self.dist_dir = self.root / "dist"
+        
         self.branch = self._get_current_branch()
 
     def _read_version(self) -> str:
@@ -115,6 +118,33 @@ class BuildSystem:
         print("\n" + "=" * 70)
         print(f"  {title}")
         print("=" * 70 + "\n")
+
+    def clean(self, full: bool = False):
+        """Clean build and temporary directories."""
+        self._print_banner("Cleaning Build Artifacts")
+        
+        folders_to_clean = [
+            self.root / "build" / "pyinstaller_work",
+            self.root / "build" / "deb_staging",
+            self.dist_dir,
+            self.root / ".pytest_cache"
+        ]
+        
+        if full:
+            print_status("Removing all build artifacts and reports...", "WARNING")
+            folders_to_clean.append(self.reports_dir)
+            folders_to_clean.append(self.build_dir)
+            
+        for folder in folders_to_clean:
+            if folder.exists():
+                print_status(f"Removing {folder.relative_to(self.root)}...", "INFO")
+                try:
+                    shutil.rmtree(folder)
+                except Exception as e:
+                    print_status(f"Error removing {folder}: {e}", "WARNING")
+        
+        # Re-ensure reports dir if it was wiped
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_current_branch(self) -> str:
         """Detect the current git branch."""
@@ -439,11 +469,20 @@ class BuildSystem:
             else:
                 print("⚠️  Build test gate skipped (--skip-build-gate)")
 
-            # Use the root spec file for consistency
+            # Use the consolidated spec file
+            spec_file = self.root / "infra" / "packaging" / "specs" / "MediaWebViewer.spec"
+            if not spec_file.exists():
+                 # Fallback to general spec if specific one not found
+                 spec_file = self.root / "infra" / "packaging" / "specs" / f"MediaWebViewer-{self.version}.spec"
+            
+            if not spec_file.exists():
+                print_status(f"Critical: Spec file not found at {spec_file}", "ERROR")
+                return False
+
             cmd = [
                 sys.executable, "-m", "PyInstaller",
                 "--clean",
-                "MediaWebViewer.spec",
+                str(spec_file),
                 "--workpath", str(self.root / "build" / "pyinstaller_work"),
                 "--distpath", str(self.root / "dist")
             ]
@@ -546,9 +585,18 @@ class BuildSystem:
                 env["PYTHONPATH"] = str(self.root)
                 env["PERF_REPORT_DIR"] = str(self.reports_dir)
                 
+                # Watchdog: monitor the debug log for progress if the benchmark writes to it
+                debug_log = self.root / "data" / "logs" / "debug.log"
+                
                 # We capture output to avoid breaking the status bar
-                if not self._run_command([sys.executable, str(
-                        file_path)], monitor=True, hang_timeout=300, env=env):
+                if not self._run_command(
+                    [sys.executable, str(file_path)], 
+                    monitor=True, 
+                    hang_timeout=300, 
+                    env=env,
+                    watch_files=[str(debug_log)] if debug_log.exists() else None,
+                    watch_timeout=180
+                ):
                     all_success = False
             sb.update(i, f"(Finished {bench})")
 

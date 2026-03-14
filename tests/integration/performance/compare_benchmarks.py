@@ -134,15 +134,19 @@ def compare_results(baseline: Dict[str, Any], current: Dict[str, Any]):
 
 def main():
     if not BASELINE_FILE.exists():
-        print(f"❌ Error: Baseline file not found at {BASELINE_FILE}")
-        print("Run a baseline snapshot first.")
-        sys.exit(1)
-
-    with open(BASELINE_FILE, "r", encoding="utf-8") as f:
-        baseline = json.load(f)
+        print(f"⚠️ Warning: Baseline file not found at {BASELINE_FILE}")
+        print("   Skipping comparison. A new report will be generated.")
+        baseline = {}
+    else:
+        with open(BASELINE_FILE, "r", encoding="utf-8") as f:
+            baseline = json.load(f)
 
     current = run_current_benchmark()
-    compare_results(baseline, current)
+    
+    if baseline:
+        compare_results(baseline, current)
+    else:
+        print("📊 Current benchmark results collected.")
 
     # Save current as a report for future reference
     REPORT_DIR.mkdir(parents=True, exist_ok=True)

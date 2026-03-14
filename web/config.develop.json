@@ -1,0 +1,34 @@
+{
+    "debug": true,
+    "log_level": "DEBUG",
+    "feature_flags": {
+        "experimental_transcoding": true,
+        "verbose_parsing": true,
+        "show_test_tab": true
+    },
+    "api": {
+        "timeout": 30,
+        "retries": 5
+    },
+    "indexed_categories": [
+        "audio",
+        "video",
+        "images",
+        "documents",
+        "ebooks",
+        "abbild",
+        "spiel",
+        "beigabe"
+    ],
+    "displayed_categories": [
+        "audio",
+        "video",
+        "images",
+        "documents",
+        "ebooks",
+        "abbild",
+        "spiel",
+        "beigabe"
+    ],
+    "env": "development"
+}

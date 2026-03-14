@@ -25,6 +25,7 @@ VENVS = {
     ".venv_dev": "requirements-dev.txt",
     ".venv_testbed": "requirements-test.txt",
     ".venv_selenium": "requirements-selenium.txt",
+    ".venv_run": "requirements-run.txt",
     "venv": "requirements.txt",
 }
 
@@ -58,8 +59,13 @@ class VenvManager:
     def sync_venv(self, name: str, force: bool = False):
         """Create or update a venv."""
         venv_path = self.get_venv_path(name)
-        req_file = REQUIREMENTS_DIR / VENVS.get(name, "requirements.txt")
+        req_name = VENVS.get(name, "requirements.txt")
+        req_file = REQUIREMENTS_DIR / req_name
         
+        # Fallback to ROOT if not in INFRA
+        if not req_file.exists():
+             req_file = ROOT / req_name
+
         if not req_file.exists():
             print_status(f"Requirement file {req_file.name} missing for {name}", "ERROR")
             return False

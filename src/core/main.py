@@ -978,6 +978,10 @@ def get_environment_info(force_refresh=False):
                 "purpose": "Zentrale Laufzeitumgebung für die App-Logik.",
                 "role": "CORE"
             },
+            ".venv_run": {
+                "purpose": "Optimierte Laufzeitumgebung für den Anwenderbetrieb.",
+                "role": "RUN"
+            },
             ".venv_build": {
                 "purpose": "Umgebung für das Packaging (PyInstaller, .deb).",
                 "role": "BUILD"
@@ -1334,7 +1338,10 @@ def get_environment_info(force_refresh=False):
             "type": "venv",
             "python_version": "3.14.2",
             "reason": "Eigene venv für main.py empfohlen"
-        }
+        },
+        "default_scan_dir": SCAN_MEDIA_DIR,
+        "browse_default_dir": BROWSER_DEFAULT_DIR,
+        "parser_config": PARSER_CONFIG
     }
 
     # UI Trace Logging - capture what frontend receives
@@ -1369,10 +1376,11 @@ def get_environment_info(force_refresh=False):
 
 # Konfiguration
 # 1. Ort für den automatischen Bibliotheks-Scan
-SCAN_MEDIA_DIR = str(Path(__file__).parent / "media")
+# Standardmäßig aus PARSER_CONFIG laden (sync)
+SCAN_MEDIA_DIR = PARSER_CONFIG.get("scan_dirs", [str(Path(__file__).parent / "media")])[0]
 
 # 2. Standard-Pfad beim ersten Öffnen des Browsers
-BROWSER_DEFAULT_DIR = str(Path.home())
+BROWSER_DEFAULT_DIR = PARSER_CONFIG.get("browse_default_dir", str(Path.home()))
 # Redundante Definitionen entfernt, da diese nun aus parsers.format_utils importiert werden.
 # (AUDIO_EXTENSIONS, VIDEO_EXTENSIONS etc. werden oben importiert)
 IMAGE_EXTENSIONS = {
@@ -1383,30 +1391,8 @@ ARCHIVE_EXTENSIONS = {
 }
 
 
-# Debug-Optionen
-DEBUG_FLAGS = {
-    "system": False,
-    "ui": False,
-    "lib": False,
-    "browser": False,
-    "edit": False,
-    "options": False,
-    "start": False,
-    "parser": False,
-    "scan": False,
-    "player": False,
-    "db": False,
-    "tests": False,
-    "api": False,
-    "web": False,
-    "i18n": False,
-    "websocket": False,
-    "performance": False,
-    "metadata": False,
-    "transcode": False,
-    "file_ops": False,
-    "network": False
-}
+# Debug-Optionen (Konsolidiert in PARSER_CONFIG)
+DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
 
 def initialize_debug_flags(args=None):
@@ -1420,12 +1406,14 @@ def initialize_debug_flags(args=None):
     logger.setup_logging(debug_mode)
 
     if debug_mode:
+        # Override config: Set all flags to True for --debug session
         for key in DEBUG_FLAGS:
             DEBUG_FLAGS[key] = True
         logger.set_debug_flags(DEBUG_FLAGS)
         logging.info(
             "[System] Full Debug-Mode activated (--debug). All flags set to True.")
     else:
+        # Use flags as defined in PARSER_CONFIG
         logger.set_debug_flags(DEBUG_FLAGS)
 
 
@@ -1671,32 +1659,36 @@ def is_port_in_use(port: int) -> bool:
 
 
 def _ensure_project_venv_active() -> None:
-    """Re-exec into local project .venv_core interpreter when available."""
+    """Re-exec into local project .venv_core interpreter when available, 
+    but respect any project-local .venv_* if already active."""
     if os.environ.get("MWV_DISABLE_AUTO_VENV") == "1":
         return
     if os.environ.get("MWV_AUTO_VENV_REEXEC") == "1":
         return
 
-    # PROJECT_ROOT is already defined at top level as
-    # Path(__file__).resolve().parent.parent.parent
+    # 1. Detection: Are we already in a project venv?
+    # We check if sys.executable points into PROJECT_ROOT/.venv*
+    current_exec_path = Path(sys.executable)
+    try:
+        if current_exec_path.is_relative_to(PROJECT_ROOT):
+            # Check if it's within a .venv* folder
+            parts = current_exec_path.relative_to(PROJECT_ROOT).parts
+            if parts and parts[0].startswith(".venv"):
+                # We are already in a project-specific environment (like .venv_run or .venv_core)
+                return
+    except (ValueError, Exception):
+        pass
+
+    # 2. Fallback: Re-exec into .venv_core if it exists
     venv_python = PROJECT_ROOT / ".venv_core" / "bin" / "python"
     if not (venv_python.is_file() and os.access(venv_python, os.X_OK)):
         return
 
-    try:
-        current_exec = Path(sys.executable).resolve()
-        target_exec = venv_python.resolve()
-    except Exception:
-        return
-
-    if current_exec == target_exec:
-        return
-
-    logging.info(
-        f"[Startup] Re-exec into project .venv_core interpreter: {target_exec}")
+    logging.info(f"[Startup] Re-exec into project-local environment: {venv_python}")
     os.environ["MWV_AUTO_VENV_REEXEC"] = "1"
-    os.execv(str(target_exec), [str(target_exec), str(
-        Path(__file__).resolve()), *sys.argv[1:]])
+    # IMPORTANT: Do NOT use .resolve() here. We MUST execute the symlink 
+    # itself so the Python interpreter finds its local site-packages correctly.
+    os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve()), *sys.argv[1:]])
 
 
 # Defer these calls to if __name__ == '__main__': block
@@ -2136,6 +2128,21 @@ def ensure_default_scan_dir():
     return {"status": "ok", "dirs": PARSER_CONFIG.get("scan_dirs", [])}
 
 # Funktion, um Medien zu scannen und an die GUI zu senden
+
+
+@eel.expose
+def update_browse_default_dir(new_path: str):
+    """
+    @brief Updates the default browsing directory in the central config.
+    """
+    global BROWSER_DEFAULT_DIR
+    if not new_path or not os.path.isdir(new_path):
+        return {"status": "error", "message": "Invalid directory"}
+
+    BROWSER_DEFAULT_DIR = str(Path(new_path).resolve())
+    PARSER_CONFIG["browse_default_dir"] = BROWSER_DEFAULT_DIR
+    save_parser_config()
+    return {"status": "ok", "path": BROWSER_DEFAULT_DIR}
 
 
 @eel.expose

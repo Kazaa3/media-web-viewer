@@ -1,191 +1,68 @@
-# --- Selenium Testbed & Artifacts ---
-tests/selenium/reference_screenshots/
-tests/selenium/selenium_artifacts/
+# --- Media Web Viewer: Purified .gitignore ---
+# Ignore selenium screenshots
+tests/e2e/selenium/screenshots/
 
-# Testbed-Fragmente und Artefakte werden zentral verwaltet und nicht versioniert.
-# ============================================================================
-# Media Web Viewer - .gitignore
-# ============================================================================
+# Ignore selenium reference screenshots
+tests/e2e/selenium/reference_screenshots/
 
-# --- Core Patterns ---
-__pycache__/
-*.py[cod]
-*$py.class
+# 1. Broad Ignores
+**/__pycache__/
+*.pyc
 *.so
-.Python
-
-# --- Virtual Environments ---
-.venv/
-.venv*/
-venv/
-env/
-ENV/
-
-# --- IDEs and Editors ---
+.DS_Store
 .idea/
 .vscode/
-*.swp
-*.swo
-*~
-.project
-.pydevproject
-.settings/
 
-# --- Operating System ---
-.DS_Store
-Thumbs.db
-Desktop.ini
+# 2. Virtual Environments
+.venv*/
+**/venv/
 
-# --- Build & Distribution ---
-build/
-dist/
-*.egg-info/
-*.egg
-*.whl
-MANIFEST
-*.spec
-*.manifest
+# 3. Global Fragments (Recursive)
+**/*.log
+**/*.bak
+**/*.tmp
+**/*.swp
 *.deb
-*.deb.*
-packaging/opt/*
-!packaging/opt/.gitkeep
-infra/packaging/opt/*
-!infra/packaging/opt/.gitkeep
-**/pkg/
-**/deb_staging/
 
-# --- Project Specifics ---
+# 4. Gated Purification (Whitelist approach)
+# Step 4a: Ignore almost everything by default in root
+/*
 
-# Data & Database
-data/*
-!data/.gitkeep
-database.db
-media_library.db
+# Step 4b: Whitelist essential source directories
+!/src/
+!/infra/
+!/scripts/
+!/docs/
+!/web/
+!/tests/
+!/logbuch/
+!/media/
 
-# Logs
-logs/
-*.log
-*.log.*
-data/logs/*
-!data/logs/.gitkeep
+docs/latex/
 
-# Temporary / Cache
-.cache/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-htmlcov/
-.coverage
-.coverage.*
-.env
-.env.*
-*.bak
-*.tmp
-*.temp
-*~
 
-# Screenshots & Local Assets
-media/*
-!media/.gitkeep
-!media/README.md
-media/.cache/
-assets/generated/
-screenshots/
-
-# Test specific data and artifacts
-tests/artifacts/
-tests/assets/
-tests/data/
-tests/*.json
-tests/*.png
-tests/*.txt
-tests/*.log
-m4b_all_tools_results.json
-m4b_mutagen_test_result
-*.xz
-*.json
-database/
-!tests/assets/.gitkeep
-!tests/data/.gitkeep
-!tests/README*.md
-!tests/GUI_TEST_SUITE.md
-!tests/TEST_ARTIFACTS.md
-!tests/TEST_DOCUMENTATION.md
-
-# GUI snapshots and screenshots (Bildschirmfotos)
-testing_screenshots/
-tests/selenium_artifacts/
-tests/reference_screenshots/
-tests/debug_*.png
-*.png
-*.jpg
-*.jpeg
-!web/assets/
-!tests/assets/.gitkeep
-docs/Screens/
-
-# --- Folder Preservation Rules ---
-# We keep these folders and their contents (unless matched above)
-!src/
-!web/
-src/core/logs/
-!infra/
-!docs/
-!scripts/
-!tests/
-
-# Keep root configuration files
-!requirements.txt
-!setup.py
-!pyproject.toml
-!README.md
-!LICENSE.md
-!VERSION
-!TECH_STACK.md
-!DEPENDENCIES.md
-!DOCUMENTATION.md
-
-# --- Documentation Subdirs ---
+# Step 4c: Re-ignore residues inside whitelisted directories
 docs/html/
 docs/latex/
-docs/_build/
-site/
+media/**
+!media/mock_files/
 
-# --- Remove old/legacy specific files ---
-# (Ensure these don't clash with files in infra/ or scripts/)
-/reinstall_deb.sh
-/performance_test.py
-/update_version.py
-/build_deb.sh
-/build_exe.sh
-/build_system.py
-/create_mocks.py
-/check_environment.py
-/VERSION_SYNC.json
+# Step 4d: Whitelist specific root files
+!/.gitignore
+!/README.md
+!/VERSION
+!/VERSION_SYNC.json
+!/requirements*.txt
+!/main.py
+!/pyproject.toml
+!/package.json
 
-# Build and distribution artifacts
-build/
-dist/
-*.deb
-*.exe
-*.msi
-*.egg
-*.whl
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.bak
-
-# Logs
-logs/
-*.log
-
-# Other
-*.DS_Store
+# 5. Tool-Specific
+.pytest_cache/
+.coverage
+htmlcov/
+geckodriver.log
+chromedriver.log
+ghostdriver.log
+**/selenium_artifacts/
+**/debug_artifacts/

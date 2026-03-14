@@ -4,7 +4,7 @@
 
 set -e
 
-PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Detect Python
@@ -19,7 +19,7 @@ fi
 
 setup_venv() {
     local name=$1
-    local req_file=$2
+    local req_file="infra/$2"
     local dir=".$name"
     
     echo "--------------------------------------------------------------------------------"
@@ -53,6 +53,21 @@ setup_venv "venv_selenium" "requirements-selenium.txt"
 # 5. Build
 setup_venv "venv_build" "requirements-build.txt"
 
+# 6. Run (Developer Primary)
+setup_venv "venv_run" "requirements-run.txt"
+
+# 7. Legacy venv (Root Compatibility)
+echo "--------------------------------------------------------------------------------"
+echo "Setting up legacy venv environment in venv..."
+echo "--------------------------------------------------------------------------------"
+if [ ! -d "venv" ]; then
+    "$PYTHON" -m venv "venv"
+fi
+source "venv/bin/activate"
+pip install --upgrade pip
+pip install -r "requirements.txt"
+deactivate
+
 echo "================================================================================"
-echo "All 5 environments initialized successfully."
+echo "All 7 environments initialized successfully."
 echo "================================================================================"

@@ -407,7 +407,13 @@
         "pl_refresh": "🔄 Aktualisieren",
         "pl_url_placeholder": "https://... | rtsp://... | rtmp://...",
         "pl_date_placeholder": "JJJJ-MM-TT",
-        "pl_clear": "🗑️ Leeren"
+        "pl_clear": "🗑️ Leeren",
+        "env_setup_script_title": "Virtual Environments initialisieren",
+        "env_setup_script_desc": "Nutze das Skript <code>scripts/setup_venvs.sh</code> im Projekt-Root, um alle 7 spezialisierten Umgebungen (Core, Dev, Test, Selenium etc.) automatisch zu erstellen und zu aktualisieren.",
+        "options_local_venvs_priority_title": "1. 📁 Lokale Virtual Environments (Projekt-Struktur)",
+        "options_conda_envs_numbered": "2. 🐍 Conda Umgebungen",
+        "options_system_python_local_numbered": "3. 🏠 Python Local",
+        "options_system_python_global_numbered": "4. 🌐 Python Global"
     },
     "en": {
         "app_title": "dict",
@@ -817,6 +823,12 @@
         "pl_refresh": "🔄 Refresh",
         "pl_url_placeholder": "https://... | rtsp://... | rtmp://...",
         "pl_date_placeholder": "YYYY-MM-DD",
-        "pl_clear": "🗑️ Clear"
+        "pl_clear": "🗑️ Clear",
+        "env_setup_script_title": "Initialize Virtual Environments",
+        "env_setup_script_desc": "Use the <code>scripts/setup_venvs.sh</code> script in the project root to automatically create and update all 7 specialized environments (Core, Dev, Test, Selenium etc.).",
+        "options_local_venvs_priority_title": "1. 📁 Local Virtual Environments (Project Structure)",
+        "options_conda_envs_numbered": "2. 🐍 Conda Environments",
+        "options_system_python_local_numbered": "3. 🏠 Python Local",
+        "options_system_python_global_numbered": "4. 🌐 Python Global"
     }
 }

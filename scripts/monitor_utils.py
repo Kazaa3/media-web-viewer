@@ -11,6 +11,7 @@ import os
 import signal
 import sys
 import psutil
+from pathlib import Path
 from typing import List, Optional, Callable, Dict
 
 
@@ -45,7 +46,9 @@ def run_monitored(
     hang_timeout: int = 60,
     alive_interval: int = 15,
     on_output: Optional[Callable[[str], None]] = None,
-    env: Optional[Dict[str, str]] = None
+    env: Optional[Dict[str, str]] = None,
+    watch_files: Optional[List[str]] = None,
+    watch_timeout: int = 120
 ) -> bool:
     """
     Run a command with hang detection.
@@ -79,6 +82,16 @@ def run_monitored(
     last_output_time = time.time()
     last_alive_marker = time.time()
     
+    # Watch file state
+    watch_files_state = {}
+    if watch_files:
+        for f in watch_files:
+            file_path = Path(f)
+            if file_path.exists():
+                watch_files_state[f] = file_path.stat().st_mtime
+            else:
+                watch_files_state[f] = 0.0
+    
     try:
         fd = None
         if process.stdout is not None:
@@ -110,10 +123,26 @@ def run_monitored(
             now = time.time()
                 
             if now - last_output_time > hang_timeout:
-                print_monitor(f"HANG DETECTED! No output for {int(now - last_output_time)}s.", "HANG")
+                print_monitor(f"STDOUT HANG DETECTED! No activity for {int(now - last_output_time)}s.", "HANG")
                 print_monitor(f"Aborting process tree (PID: {pid})...", "KILL")
                 kill_process_tree(pid)
                 return False
+            
+            # Check watched files
+            if watch_files:
+                for f in watch_files:
+                    file_path = Path(f)
+                    if file_path.exists():
+                        mtime = file_path.stat().st_mtime
+                        if mtime > watch_files_state[f]:
+                            # File updated, reset watchdog
+                            watch_files_state[f] = mtime
+                            last_output_time = now
+                        elif now - last_output_time > watch_timeout:
+                             print_monitor(f"FILE WATCHDOG HANG! {f} stalled for {int(now - last_output_time)}s.", "HANG")
+                             print_monitor(f"Aborting process tree (PID: {pid})...", "KILL")
+                             kill_process_tree(pid)
+                             return False
             
             # Print alive marker if needed
             if now - last_alive_marker > alive_interval:

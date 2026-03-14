@@ -89,7 +89,7 @@ def main() -> int:
     scripts_dir = Path(__file__).resolve().parent
     root = scripts_dir.parent
     version_file = root / "VERSION"
-    sync_file = root / "infra/packaging/VERSION_SYNC.json"
+    sync_file = root / "infra/VERSION_SYNC.json"
         # Example usage for version 1.01:
         # python update_version.py --new-version 1.01
 
@@ -212,9 +212,8 @@ def main() -> int:
     import subprocess
     try:
         result = subprocess.run([
-            sys.executable, "tests/advanced/integration/test_version_sync.py"
-        ], capture_output=True, text=True)
-        print(result.stdout)
+            sys.executable, "tests/integration/test_version_sync.py"
+        ], text=True)
         if result.returncode != 0:
             print("❌ Version sync check failed!")
             print(result.stderr)
