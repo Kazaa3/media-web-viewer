@@ -40,7 +40,7 @@ else:
 
 # UI Log Buffer (accessible by Eel)
 LOG_BUFFER: List[str] = []
-MAX_BUFFER_SIZE = 1000
+MAX_BUFFER_SIZE = 10000
 
 # Reference to DEBUG_FLAGS from main (initialized during setup)
 _debug_flags = {}
@@ -66,10 +66,11 @@ class UIHandler(logging.Handler):
             self.handleError(record)
 
 
-def setup_logging(debug_mode: bool = False):
+def setup_logging(debug_mode: bool = False, level: int = None):
     """
     Initializes the centralized logging system.
-    @param debug_mode If True, sets the root logger level to DEBUG.
+    @param debug_mode If True, additional debug file loggers are activated.
+    @param level Optional explicit logging level (e.g. logging.DEBUG, logging.INFO).
     """
     root_logger = logging.getLogger()
     
@@ -77,7 +78,8 @@ def setup_logging(debug_mode: bool = False):
     if root_logger.hasHandlers():
         root_logger.handlers.clear()
 
-    level = logging.DEBUG if debug_mode else logging.INFO
+    if level is None:
+        level = logging.DEBUG if debug_mode else logging.INFO
     root_logger.setLevel(level)
 
     # Format

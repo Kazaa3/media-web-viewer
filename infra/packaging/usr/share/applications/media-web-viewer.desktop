@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Media Web Viewer
+Name=dict (v1.34)
 Comment=Lokaler Mediaplayer mit Metadaten-Verwaltung
 Exec=media-web-viewer
 Icon=multimedia-video-player

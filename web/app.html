@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title data-i18n="app_title">Media Player</title> <!-- ohne: -->
+    <title data-i18n="app_title">dict</title> <!-- ohne: -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
@@ -1252,7 +1252,7 @@
     </script>
     <div class="header-container">
         <div style="display: flex; align-items: center; gap: 20px;">
-            <h1 data-i18n="app_title">Media Player</h1>
+            <h1 data-i18n="app_title">dict</h1>
             <div class="tab-buttons">
                 <button id="player-btn" class="tab-btn active" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
@@ -2003,6 +2003,29 @@
 
                 <!-- Right Column: Results/Console -->
                 <div style="flex: 1.5; display: flex; flex-direction: column; overflow: hidden; background: #1a1a1a;">
+                    <!-- Runtime Info (Right Side) -->
+                    <div style="padding: 15px; background: #222; border-bottom: 1px solid #333;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #ddd;" data-i18n="debug_runtime_info">
+                            Laufzeit-Info & Log-Level</h3>
+                        <div
+                            style="font-size: 0.9em; color: #999; background: #1a1a1a; border: 1px solid #444; padding: 12px; border-radius: 6px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <div><b>Python PID:</b> <span id="debug-python-pid" style="color: #6a1;">-</span></div>
+                                <div><b>Browser PID:</b> <span id="debug-browser-pid" style="color: #6a1;">-</span>
+                                </div>
+                                <div><b>Log-Level:</b>
+                                    <select id="debug-log-level-select" onchange="changeLogLevel(this.value)"
+                                        style="font-size: 0.9em; padding: 2px; border-radius: 4px; border: 1px solid #555; background: #333; color: #eee;">
+                                        <option value="DEBUG">DEBUG</option>
+                                        <option value="INFO">INFO</option>
+                                        <option value="WARNING">WARNING</option>
+                                        <option value="ERROR">ERROR</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div
                         style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                         <span data-i18n="debug_console">Konsole / Logs</span>
@@ -2940,7 +2963,7 @@
             try {
                 const stats = await eel.get_db_stats()();
                 let html = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <div><b>Entries:</b> ${stats.total_items}</div>
+                            <div><b>${t('database_item') || 'database item:'}</b> ${stats.total_items}</div>
                             <div><b>Categories:</b></div>
                         </div>
                         <ul style="margin: 10px 0 0 0; padding-left: 20px; font-size: 0.9em; color: #555;">`;
@@ -2950,19 +2973,55 @@
                 html += `</ul>`;
                 infoEl.innerHTML = html;
             } catch (e) {
-                infoEl.innerText = t('db_loading_error');
+                infoEl.innerText = t('db_loading_error') || 'Error loading DB stats';
             }
         }
 
         async function loadDebugLogs() {
-            loadDebugDBInfo(); // Call both
-            const logs = await eel.get_debug_logs()();
+            loadDebugDBInfo();
+            const debugConsole = await eel.get_konsole()();
             const debugPre = document.getElementById('debug-output');
-            if (debugPre && logs) {
-                debugPre.innerText = logs;
+            const debugItemsJson = document.getElementById('debug-items-json');
+
+            if (debugPre && debugConsole.logs) {
+                debugPre.innerText = debugConsole.logs;
                 const parent = debugPre.parentElement;
                 if (parent) parent.scrollTop = parent.scrollHeight;
             }
+
+            if (debugItemsJson && debugConsole.env) {
+                // Populate dictionaries div with environment and flag info
+                let html = '<h4>System Environment</h4>';
+                html += '<pre>' + JSON.stringify(debugConsole.env, null, 2) + '</pre>';
+                html += '<h4>Debug Flags</h4>';
+                html += '<pre>' + JSON.stringify(debugConsole.debug_flags, null, 2) + '</pre>';
+
+                // Update Runtime Info
+                const pyPid = document.getElementById('debug-python-pid');
+                const brPid = document.getElementById('debug-browser-pid');
+                const lvSel = document.getElementById('debug-log-level-select');
+
+                if (pyPid) pyPid.innerText = debugConsole.env.pid || '-';
+                if (brPid) brPid.innerText = debugConsole.env.browser_pid || 'N/A';
+                if (lvSel && !lvSel.dataset.manual) {
+                    lvSel.value = debugConsole.env.log_level || 'INFO';
+                }
+
+                const currentContent = debugItemsJson.innerText;
+                const isLoading = currentContent.includes('...') || currentContent.includes('Lade') || currentContent.includes('Loading');
+                const isSelectionPrompt = currentContent.includes('Wähle') || currentContent.includes('Select');
+
+                if (isLoading || isSelectionPrompt || !currentContent.trim()) {
+                    debugItemsJson.innerHTML = html;
+                }
+            }
+        }
+
+        async function changeLogLevel(level) {
+            const select = document.getElementById('debug-log-level-select');
+            if (select) select.dataset.manual = "true";
+            await eel.set_log_level(level)();
+            loadDebugLogs(); // Refresh
         }
 
         // ============ Playlist UI Logic ============
@@ -3782,12 +3841,6 @@
             try {
                 let result = await eel.scan_media(targetDir, clearDb)();
 
-                // Populate Debug Tab with perf timing
-                const debugOutput = document.getElementById('debug-output');
-                if (debugOutput && result && result.stats) {
-                    debugOutput.textContent = `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` + JSON.stringify(result.media || [], null, 2);
-                }
-
                 // Always reload canonical library view after scan
                 if (typeof loadLibrary === 'function') {
                     loadLibrary();
@@ -4234,13 +4287,6 @@
 
                 console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
 
-                // Restore population of Debug Tab
-                const debugOutput = document.getElementById('debug-output');
-                const debugItemsJson = document.getElementById('debug-items-json');
-                if (debugOutput) {
-                    const statsStr = result.stats ? `[Performance]\nIndexed ${result.stats.count} files in ${result.stats.time_seconds.toFixed(3)} seconds.\n\n` : '';
-                    debugOutput.textContent = statsStr + JSON.stringify(result.media, null, 2);
-                }
                 if (debugItemsJson) {
                     const highlighted = syntaxHighlight(result.media);
                     debugItemsJson.innerHTML = highlighted;

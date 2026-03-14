@@ -135,8 +135,11 @@ def _detect_python_environment():
     # System Python
     return ('system', None, sys.prefix, python_version, python_executable)
 
+# --- Global Constants & State ---
+VERSION = "1.34"
+STARTUP_TIME = time.time()
+BROWSER_PID = None  # Global to track browser process
 
-# Benötigte Module importieren
 try:
     from src.core.models import MediaItem
     import src.core.db as db
@@ -169,11 +172,9 @@ except ModuleNotFoundError as exc:
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
 
     if env_type == 'conda':
-        current_env = f"📦 Conda: {env_name}\n   Pfad: {
-            env_path}\n   Python: {py_exec}"
+        current_env = f"📦 Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
     elif env_type == 'venv':
-        current_env = f"📦 Venv: {env_name}\n   Pfad: {
-            env_path}\n   Python: {py_exec}"
+        current_env = f"📦 Venv: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
     else:
         current_env = f"⚙️  System Python {py_ver}\n   Python: {py_exec}"
 
@@ -439,6 +440,7 @@ def get_environment_info_dict():
     """
     import platform
     import sys
+    import os
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
     return {
         "env_type": env_type,
@@ -450,6 +452,9 @@ def get_environment_info_dict():
         "venv_active": sys.prefix != sys.base_prefix,
         "cwd": str(Path.cwd()),
         "os": platform.system(),
+        "pid": os.getpid(),
+        "browser_pid": BROWSER_PID,
+        "log_level": logging.getLevelName(logging.getLogger().getEffectiveLevel()),
         "release": platform.release(),
         "machine": platform.machine(),
         "debug_flags": DEBUG_FLAGS,
@@ -459,13 +464,13 @@ def get_environment_info_dict():
 
 
 @eel.expose
-def get_debug_console():
+def get_konsole():
     """
     Returns debug logs, environment info, and dicts for GUI console.
     """
     from logger import get_ui_logs
     return {
-        "logs": get_ui_logs(),
+        "logs": "\n".join(get_ui_logs()),
         "env": get_environment_info_dict(),
         "version": VERSION,
         "license": "GNU GPL-3.0",
@@ -481,8 +486,7 @@ def save_tags_to_file(name, tags):
     try:
         path = db.get_path_by_name(name)
         if not path:
-            return {"status": "error", "message": f"Datei '{
-                name}' nicht in DB gefunden."}
+            return {"status": "error", "message": f"Datei '{name}' nicht in DB gefunden."}
 
         success = tag_writer.write_tags(path, tags)
         if success:
@@ -597,8 +601,7 @@ def pip_install_packages(packages):
 
         if result.returncode == 0:
             logging.info(
-                f"Successfully installed packages: {
-                    ', '.join(packages)}")
+                f"Successfully installed packages: {', '.join(packages)}")
             # After installation, we should probably clear the environment info
             # cache
             _ENV_INFO_CACHE["data"] = None
@@ -1351,15 +1354,12 @@ def get_environment_info(force_refresh=False):
         trace_log_path.parent.mkdir(parents=True, exist_ok=True)
         with open(trace_log_path, "a", encoding="utf-8") as f:
             f.write(f"\n{'=' * 80}\n")
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')
-                        }] get_environment_info() called\n")
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] get_environment_info() called\n")
             f.write(f"force_refresh: {force_refresh}\n")
             f.write(f"package_count: {len(installed_packages)}\n")
-            f.write(f"installed_packages_source: {
-                    installed_packages_source}\n")
+            f.write(f"installed_packages_source: {installed_packages_source}\n")
             f.write(f"requirements_status: {requirements_status}\n")
-            f.write(f"first_3_packages: {
-                    installed_packages[:3] if installed_packages else 'EMPTY'}\n")
+            f.write(f"first_3_packages: {installed_packages[:3] if installed_packages else 'EMPTY'}\n")
             f.write(f"env_type: {result.get('env_type')}\n")
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
@@ -1397,13 +1397,28 @@ DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
 def initialize_debug_flags(args=None):
     """
-    @brief Initializes debug mode and flags based on CLI arguments.
+    @brief Initializes debug mode and flags based on CLI arguments and environment.
     """
     if args is None:
         args = sys.argv
 
+    # Environment Detection
+    env_type, env_name, env_path, _, _ = _detect_python_environment()
+    is_dev = "Coding" in str(env_path) or os.path.exists(PROJECT_ROOT / ".git")
+    
+    # Update PARSER_CONFIG env
+    PARSER_CONFIG["env"] = "dev" if is_dev else "production"
+
     debug_mode = "--debug" in args
-    logger.setup_logging(debug_mode)
+    
+    # Centralized Log Level Management
+    # Dev -> highest (DEBUG), Production -> INFO/WARNING
+    if is_dev or debug_mode:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+        
+    logger.setup_logging(debug_mode=debug_mode, level=log_level)
 
     if debug_mode:
         # Override config: Set all flags to True for --debug session
@@ -1416,6 +1431,28 @@ def initialize_debug_flags(args=None):
         # Use flags as defined in PARSER_CONFIG
         logger.set_debug_flags(DEBUG_FLAGS)
 
+@eel.expose
+def get_debug_logs():
+    """
+    @brief Returns the entire log history as a single string.
+    """
+    from logger import get_ui_logs
+    return "\n".join(get_ui_logs())
+
+
+@eel.expose
+def set_log_level(level_name: str):
+    """
+    @brief Sets the global log level.
+    @param level_name One of DEBUG, INFO, WARNING, ERROR.
+    """
+    level = getattr(logging, level_name.upper(), logging.INFO)
+    logging.getLogger().setLevel(level)
+    # Update handlers as well to be sure
+    for handler in logging.getLogger().handlers:
+        handler.setLevel(level)
+    logging.info(f"[System] Log-Level manually set to {level_name}")
+    return True
 
 # Initialize logging early with default sys.argv
 initialize_debug_flags()
@@ -1500,7 +1537,7 @@ def open_session_url(url: str) -> bool:
         if browser_path:
             logging.info(f"[Browser] Launching {browser_cmd} in app mode")
             try:
-                subprocess.Popen([
+                process = subprocess.Popen([
                     browser_path,
                     f'--app={url}',
                     '--new-window',
@@ -1510,6 +1547,8 @@ def open_session_url(url: str) -> bool:
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL
                 )
+                global BROWSER_PID
+                BROWSER_PID = process.pid
                 return True
             except Exception as e:
                 logging.warning(
@@ -1738,17 +1777,7 @@ def debug_log(message: str) -> None:
 if DEBUG_FLAGS["start"]:
     debug_log("[Startup] main.py loading...")
 
-# Removed redundant debug flag processing (now in initialize_debug_flags)
-
-
-@eel.expose
-def get_debug_logs():
-    """
-    @brief Returns the entire log history as a single string.
-    @details Gibt den gesamten bisherigen Log-Verlauf als String zurück.
-    @return Multi-line log string / Mehrzeiliger Log-String.
-    """
-    return "\n".join(logger.get_ui_logs())
+# Removed duplicate get_debug_console (correct version is at line 459)
 
 
 @eel.expose
@@ -2478,7 +2507,7 @@ def get_current_playlist():
 def get_current_playlist_exposed():
     return get_current_playlist()
 
-
+@eel.expose
 def _play_index(idx: int):
     """Internal: play item at index if valid. Returns status dict."""
     global CURRENT_PLAYLIST, CURRENT_INDEX
@@ -4131,6 +4160,12 @@ def ui_trace(message):
 # Main-Funktion, die die Eel-App startet
 if __name__ == "__main__":
     _ensure_project_venv_active()
+    
+    # dict branding startup logs
+    logging.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logging.info(f"  dict v{VERSION} - Starting Application")
+    logging.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
     env_handler.validate_safe_startup()
 
     no_gui_mode = is_no_gui_mode(sys.argv)
@@ -4138,13 +4173,11 @@ if __name__ == "__main__":
 
     # Logge den Start-Befehl (für das Debug-Fenster)
     startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
-    # Only print on startup if a debug flag is active (though usually all are False initially)
-    # Append to log silently so it's visible in the debug window later
+    logging.info(f"[Startup] Command: {startup_cmd}")
     debug_log(startup_cmd)
-    if any(DEBUG_FLAGS.values()):
-        debug_log(startup_cmd)
-
+    
     db.init_db()
+    logging.info(f"[Startup] Database initialized: {db.DB_FILENAME}")
 
     legacy_dbs = db.list_legacy_databases()
     if legacy_dbs:
@@ -4290,6 +4323,11 @@ if __name__ == "__main__":
         logger.debug(
             "websocket",
             f"Starting Eel server session on port {session_port}...")
+            
+        # Log exposed functions for debugging
+        exposed_functions = [k for k, v in eel._exposed_functions.items()]
+        logging.info(f"[Eel] Exposed functions: {exposed_functions}")
+        
         eel.start(
             "app.html",
             mode=False,

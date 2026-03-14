@@ -20,4 +20,4 @@ mkdir -p "$(dirname "$LOG_FILE")"
 cd "$APP_DIR" || exit 1
 
 # Run the app and log potential startup errors
-exec "$VENV_PYTHON" "$APP_DIR/main.py" "$@" >> "$LOG_FILE" 2>&1
+exec "$VENV_PYTHON" "$APP_DIR/src/core/main.py" "$@" >> "$LOG_FILE" 2>&1

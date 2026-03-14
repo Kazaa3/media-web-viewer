@@ -11,6 +11,7 @@
         "nav_tests": "Tests",
         "nav_logbook": "📓 Logbuch",
         "nav_video": "🎬 Video Player",
+        "database_item": "Datenbank-Items:",
         "video_tab_title": "🎬 Video Player",
         "video_mode_label": "Modus:",
         "video_placeholder": "Kein Video ausgewählt",
@@ -290,7 +291,7 @@
         "debug_item_db": "Item DB (Übersicht)",
         "debug_item_db_overview": "Item DB (Übersicht)",
         "debug_python_dict": "Python Dict (Details)",
-        "debug_console": "Konsole / Logs",
+        "debug_console": "Konsole",
         "debug_comment_info": "Kommentare werden als Dictionary gespeichert und als JSON importiert.",
         "options_debug_desc": "Im Options-Reiter können die Flags für das Logging gesetzt werden.",
         "options_debug_all_on": "Alle Flags an",
@@ -413,7 +414,8 @@
         "options_local_venvs_priority_title": "1. 📁 Lokale Virtual Environments (Projekt-Struktur)",
         "options_conda_envs_numbered": "2. 🐍 Conda Umgebungen",
         "options_system_python_local_numbered": "3. 🏠 Python Local",
-        "options_system_python_global_numbered": "4. 🌐 Python Global"
+        "options_system_python_global_numbered": "4. 🌐 Python Global",
+        "debug_runtime_info": "Laufzeit-Info & Log-Level"
     },
     "en": {
         "app_title": "dict",
@@ -427,6 +429,7 @@
         "nav_tests": "Tests",
         "nav_logbook": "📓 Logbook",
         "nav_video": "🎬 Video Player",
+        "database_item": "Database Items:",
         "video_tab_title": "🎬 Video Player",
         "video_mode_label": "Mode:",
         "video_placeholder": "No video selected",
@@ -700,7 +703,7 @@
         "debug_item_db": "Item DB (Overview)",
         "debug_item_db_overview": "Item DB (Overview)",
         "debug_python_dict": "Python Dict (Details)",
-        "debug_console": "Console / Logs",
+        "debug_console": "Konsole",
         "debug_comment_info": "Comments are stored as dictionaries and imported as JSON.",
         "options_debug_desc": "In the Options tab, the flags for logging can be set.",
         "options_debug_all_on": "All Flags On",
@@ -829,6 +832,7 @@
         "options_local_venvs_priority_title": "1. 📁 Local Virtual Environments (Project Structure)",
         "options_conda_envs_numbered": "2. 🐍 Conda Environments",
         "options_system_python_local_numbered": "3. 🏠 Python Local",
-        "options_system_python_global_numbered": "4. 🌐 Python Global"
+        "options_system_python_global_numbered": "4. 🌐 Python Global",
+        "debug_runtime_info": "Runtime Info & Log Level"
     }
 }
