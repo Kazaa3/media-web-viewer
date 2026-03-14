@@ -1,164 +1,68 @@
-# ============================================================================
-# Media Web Viewer - .gitignore
-# ============================================================================
+# --- Media Web Viewer: Purified .gitignore ---
+# Ignore selenium screenshots
+tests/e2e/selenium/screenshots/
 
-# --- Python ---
-__pycache__/
+# Ignore selenium reference screenshots
+tests/e2e/selenium/reference_screenshots/
+
+# 1. Broad Ignores
+**/__pycache__/
 *.pyc
-*.pyo
-*.pyd
 *.so
-.Python
-*.py[cod]
-*$py.class
-
-# --- Testing ---
-.pytest_cache/
-.tox/
-.coverage
-.coverage.*
-htmlcov/
-.cache/
-coverage.xml
-*.cover
-.hypothesis/
-nosetests.xml
-test-results/
-junit.xml
-
-# --- Type Checking & Linting ---
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-
-# --- Virtual Environments ---
-venv/
-env/
-.venv/
-ENV/
-env.bak/
-venv.bak/
-
-# --- Conda ---
-.conda/
-*.conda
-
-# --- IDEs and Editors ---
+.DS_Store
 .idea/
 .vscode/
-*.swp
-*.swo
-*~
-*.sublime-project
-*.sublime-workspace
-.project
-.pydevproject
-.settings/
 
-# --- Operating System ---
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
+# 2. Virtual Environments
+.venv*/
+**/venv/
 
-# --- Packaging and Build ---
-build/
-dist/
-*.egg-info/
-*.egg
-*.whl
-MANIFEST
-pip-log.txt
-pip-delete-this-directory.txt
-
-# --- PyInstaller ---
-*.spec
-*.manifest
-
-# --- Debian Packages ---
+# 3. Global Fragments (Recursive)
+**/*.log
+**/*.bak
+**/*.tmp
+**/*.swp
 *.deb
-*.deb.*
 
-# Packaging staging directory (exclude compiled app during build)
-packaging/opt/
-!packaging/opt/.gitkeep
+# 4. Gated Purification (Whitelist approach)
+# Step 4a: Ignore almost everything by default in root
+/*
 
-# Keep DEBIAN control files and launcher
-!packaging/DEBIAN/
-!packaging/usr/
+# Step 4b: Whitelist essential source directories
+!/src/
+!/infra/
+!/scripts/
+!/docs/
+!/web/
+!/tests/
+!/logbuch/
+!/media/
 
-# --- Documentation ---
+docs/latex/
+
+
+# Step 4c: Re-ignore residues inside whitelisted directories
 docs/html/
 docs/latex/
-docs/_build/
-docs/_static/
-docs/_templates/
-site/
+media/**
+!media/mock_files/
 
-# --- Logs ---
-*.log
-logs/
-logs/*.txt
-*.log.*
-app.log
-app.log.*
+# Step 4d: Whitelist specific root files
+!/.gitignore
+!/README.md
+!/VERSION
+!/VERSION_SYNC.json
+!/requirements*.txt
+!/main.py
+!/pyproject.toml
+!/package.json
 
-# --- Database Files ---
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-
-# --- Project Specific Media & Data ---
-media/*
-!media/.gitkeep
-!media/README.md
-Screens/
-screenshots/
-
-# --- User Data Directory ---
-.media-web-viewer/
-
-# --- Environment & Config ---
-.env
-.env.*
-*.env
-
-# --- Temporary Files ---
-*.tmp
-*.temp
-*.bak
-*.backup
-*~
-.cache
-
-# --- Build System Artifacts ---
-*.tar.gz
-*.zip
-*.rar
-
-# --- macOS ---
-.AppleDouble
-.LSOverride
-Icon
-
-# --- Windows ---
-$RECYCLE.BIN/
-
-# --- Generated Files ---
-VERSION.bak
-*.orig
-
-# Keep important files
-!.gitkeep
-!requirements.txt
-!environment.yml
-
-Notiz
+# 5. Tool-Specific
+.pytest_cache/
+.coverage
+htmlcov/
+geckodriver.log
+chromedriver.log
+ghostdriver.log
+**/selenium_artifacts/
+**/debug_artifacts/

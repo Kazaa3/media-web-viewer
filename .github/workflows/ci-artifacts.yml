@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -28,15 +28,9 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build Linux executable
+      - name: Build and Package (Linux)
         run: |
-          chmod +x build_exe.sh
-          ./build_exe.sh
-
-      - name: Build DEB package
-        run: |
-          chmod +x build_deb.sh
-          ./build_deb.sh
+          ./.venv_build/bin/python infra/build_system.py --build all --monitor --skip-build-gate
 
       - name: Upload Linux executable
         uses: actions/upload-artifact@v4
@@ -49,5 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MediaWebViewer-DEB-main
-          path: media-web-viewer_*_amd64.deb
+          path: build/media-web-viewer_*_amd64.deb
           if-no-files-found: error
