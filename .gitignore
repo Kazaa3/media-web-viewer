@@ -39,14 +39,13 @@ tests/e2e/selenium/reference_screenshots/
 !/media/
 
 docs/latex/
-data/**
+
 
 # Step 4c: Re-ignore residues inside whitelisted directories
 docs/html/
 docs/latex/
 media/**
 !media/mock_files/
-data/**
 
 # Step 4d: Whitelist specific root files
 !/.gitignore

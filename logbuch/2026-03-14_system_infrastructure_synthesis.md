@@ -79,5 +79,28 @@ _Comprehensive plan for v1.34 release: consolidate DEBUG_FLAGS into parser_confi
 
 ---
 
-Comment
-Ctrl+Alt+M
+## Core Stack & Test Suite
+
+### Core Stack
+- Python Backend (Bottle, Eel)
+- Modular Parsers (ffprobe, mutagen, etc.)
+- SQLite (db.py)
+- Environment Validation (env_handler.py)
+- Logging (logger.py)
+- Media Abstraction (models.py)
+- Frontend: Browser-based (HTML/JS, served via Eel)
+
+### Test Suite
+- Umfassende Tests für Performance, API, UI-Stabilität, Environment, Build-Gate
+- Wichtige Tests:
+    - test_performance_probes.py
+    - test_bottle_health_latency.py
+    - test_installed_packages_ui.py
+    - test_environment_packages_fallback.py
+    - test_ui_session_stability.py
+- Ausführung: `python build_system.py --test` oder `pytest tests/`
+- Gate-Tests: Müssen für Release/Build erfolgreich sein
+- Integrationstests: Markiert mit @pytest.mark.integration
+- CI/CD: Automatisierte Ausführung und Validierung
+
+---
