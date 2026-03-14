@@ -1,5 +1,20 @@
 # Pipeline- und Paketbau-Fixes (März 2026)
 
+
+---
+
+## Hinweis: Hardcodierte Pfade im Paketbau
+
+Im Rahmen der Migration und Bereinigung wurden an mehreren Stellen (z.B. im Paketbau, in postinst-Skripten und Test-Suites) hardcodierte Pfade wie
+
+  './opt/media-web-viewer/src/core/main.py',
+  './opt/media-web-viewer/infra/requirements.txt',
+  './usr/bin/media-web-viewer'
+
+identifiziert. Diese wurden im Zuge der Umstrukturierung angepasst, sodass sie mit der neuen Infrastruktur und den verschobenen requirements-Dateien kompatibel sind.
+
+**Empfehlung:**
+- Bei zukünftigen Änderungen an der Verzeichnisstruktur sollten alle Skripte und Paketdefinitionen auf solche hardcodierten Pfade überprüft und ggf. angepasst werden, um Build- und Installationsfehler zu vermeiden.
 ## Zusammenfassung der Korrekturen
 
 - **SyntaxError behoben:**
@@ -44,7 +59,7 @@
 - source .venv_testbed/bin/activate
 - which python  # Sollte ~/.venv_core/bin/python zeigen
 - chmod +x ./infra/build_system.py
-- ./infra/build_system.py --pipeline
+- ./infra/build_system.py --pipeline            oder: source .venv_testbed/bin/activate && ./infra/build_system.py --pipeline
 - git checkout meilenstein-1-mediaplayer
 - git pull origin meilenstein-1-mediaplayer
 
