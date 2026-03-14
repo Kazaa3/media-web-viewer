@@ -1,9 +1,37 @@
 # Test Suite Documentation - Media Web Viewer
 
-**Datum:** 8. März 2026  
-**Version:** 1.3.1  
+**Datum:** 12. März 2026  
+**Version:** 1.3.4  
 **Gesamt-Tests:** 53 Test-Dateien  
 **Status:** ✅ Kern-Tests bestanden (27/27)
+
+---
+
+## 🏗️ Test-Architektur (5-Venv Konzept)
+
+Um maximale Isolation zu gewährleisten, werden die Tests in spezialisierten Umgebungen ausgeführt:
+
+| Umgebung | Pfad | Zweck |
+|----------|------|-------|
+| **Core** | `.venv_core` | App-Runtime & Basis-Tests |
+| **Selenium**| `.venv_selenium`| E2E-Automation / Browser-Tests |
+| **Testbed**| `.venv_testbed`| App-interne GUI-Tests (Test-Reiter) |
+| **Dev**  | `.venv_dev`  | CI, Backend-Tests, Linting |
+| **Build** | `.venv_build` | Packaging & Build-Gate |
+
+---
+
+## 📜 Test Style Sheet (Standard-Header)
+
+Jede Test-Datei muss einen standardisierten Header enthalten, um die automatische Analyse und Übersichtlichkeit zu gewährleisten:
+
+```python
+# Kategorie: [z.B. UI Integration, Backend Logic, i18n]
+# Eingabewerte: [z.B. web/app.html, media/*.mp3]
+# Ausgabewerte: [z.B. Status-Codes, UI-Element-IDs]
+# Testdateien: [z.B. tests/test_ui_integrity.py]
+# Kommentar: [Kurze Beschreibung des Testzwecks]
+```
 
 ---
 
