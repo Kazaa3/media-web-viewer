@@ -14,7 +14,7 @@ python3 -m venv "$VENV_DIR"
 
 # Install Python dependencies
 "$VENV_DIR/bin/pip" install --upgrade pip --no-cache-dir --quiet
-"$VENV_DIR/bin/pip" install --no-cache-dir -r "$APP_DIR/requirements.txt" --quiet
+"$VENV_DIR/bin/pip" install --no-cache-dir -r "$APP_DIR/infra/requirements.txt" --quiet
 
 # Ensure media directory exists
 mkdir -p "$APP_DIR/media"
