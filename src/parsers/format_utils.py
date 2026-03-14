@@ -404,6 +404,10 @@ def load_parser_config() -> None:
                     PARSER_CONFIG["parser_chain"] = current_chain
                 
                 PARSER_CONFIG["scan_dirs"] = sanitize_scan_dirs(PARSER_CONFIG.get("scan_dirs", []))
+                
+                # Persistence: Save the migrated config back to disk to ensure 
+                # all new defaults (categories, flags) are permanent.
+                save_parser_config()
         except Exception as e:
             print(f"Error loading config: {e}")
     else:
