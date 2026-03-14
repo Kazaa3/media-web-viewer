@@ -272,8 +272,16 @@ PARSER_CONFIG: dict[str, Any] = {
     "enable_mkvparse_parser": False,  # Disabled by default (slow)
     "enable_enzyme_parser": False,    # Disabled by default (slow)
     "enable_pymkv_parser": False,     # Disabled by default (slow)
-    "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
-    "displayed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"],
+    "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "supplements", "games"],
+    "displayed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "supplements", "games"],
+    "feature_flags": {
+        "experimental_transcoding": False,
+        "verbose_parsing": False,
+        "show_test_tab": True
+    },
+    "log_level": "INFO",
+    "api_timeout": 10,
+    "env": "production",
     "parser_settings": {
         "mkvmerge": {
             "cli_flags": "",
@@ -367,12 +375,20 @@ def load_parser_config() -> None:
                 for key, value in PARSER_CONFIG.items():
                     if key not in loaded:
                         loaded[key] = value
-                    # Special Case: empty lists should be reset to defaults if it's the first run or migration
-                    # but only if we are SURE it was not an intentional user choice.
-                    # Simplified: if the key is mandatory and empty, use defaults from PARSER_CONFIG
-                    if key in ["indexed_categories", "displayed_categories"] and not loaded[key]:
-                         loaded[key] = value
-                
+                    
+                    # Ensure nested dicts like feature_flags are merged
+                    if isinstance(value, dict) and key in loaded and isinstance(loaded[key], dict):
+                        for subkey, subvalue in value.items():
+                            if subkey not in loaded[key]:
+                                loaded[key][subkey] = subvalue
+
+                    # Ensure lists like categories are expanded with new defaults
+                    # (only if they are missing some of the new defaults)
+                    if isinstance(value, list) and key in ["indexed_categories", "displayed_categories"] and isinstance(loaded.get(key), list):
+                        new_items = [i for i in value if i not in loaded[key]]
+                        if new_items:
+                            loaded[key].extend(new_items)
+
                 PARSER_CONFIG.update(loaded)
                 
                 # Migration: Ensure all default parsers are in the chain

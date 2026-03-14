@@ -1340,7 +1340,8 @@ def get_environment_info(force_refresh=False):
             "reason": "Eigene venv für main.py empfohlen"
         },
         "default_scan_dir": SCAN_MEDIA_DIR,
-        "browse_default_dir": BROWSER_DEFAULT_DIR
+        "browse_default_dir": BROWSER_DEFAULT_DIR,
+        "parser_config": PARSER_CONFIG
     }
 
     # UI Trace Logging - capture what frontend receives
