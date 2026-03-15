@@ -228,7 +228,9 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
     # Check against known playable extensions
     playable_exts = (
         '.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', 
-        '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff'
+        '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff',
+        '.mpeg', '.mpg', '.mov', '.webm', '.wmv', '.m4v',
+        '.3gp', '.ogv', '.vob', '.m2ts'
     )
     if ext in playable_exts:
         return True
@@ -288,7 +290,7 @@ PARSER_CONFIG: dict[str, Any] = {
         "network": False
     },
     "additional_library_dirs": [],
-    "language": "de",
+    "language": "en",
     "mutagen_prefer_albumartist": True,
     "mutagen_extract_lyrics": False,
     "pymediainfo_full_scan": False,

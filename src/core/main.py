@@ -529,6 +529,7 @@ def get_environment_info_dict():
         "release": platform.release(),
         "machine": platform.machine(),
         "debug_flags": DEBUG_FLAGS,
+        "version": VERSION,
     }
 
 # --- Debug Console API ---
@@ -1513,6 +1514,11 @@ def get_environment_info(force_refresh=False):
         "platform": platform.platform(),
         "platform_system": platform.system(),
         "platform_release": platform.release(),
+        "pid": os.getpid(),
+        "browser_pid": BROWSER_PID,
+        "testbed_pid": find_venv_pid('.venv_testbed'),
+        "selenium_pid": find_venv_pid('.venv_selenium'),
+        "version": VERSION,
 
         # Current Environment (Detailed)
         "current_environment": current_env,
