@@ -697,12 +697,30 @@
             return document.querySelector(`.tab-btn[onclick*="switchTab('${tabId}'"]`);
         }
 
+        let mwv_config = {
+            start_page: 'player',
+            app_mode: 'High-Performance',
+            parser_mode: 'lightweight'
+        };
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('config.json');
+                if (response.ok) {
+                    mwv_config = await response.json();
+                    console.log('Global config loaded:', mwv_config);
+                }
+            } catch (e) {
+                console.warn('Failed to load config.json:', e);
+            }
+        }
+
         function restoreLastActiveTab() {
             try {
-                // Default to 'player' unless explicitly saved and not 'playlist'
+                // Default to 'player' or global config unless explicitly saved and not 'playlist'
                 let savedTab = localStorage.getItem('mwv_active_tab');
                 if (!savedTab || savedTab === 'playlist') {
-                    savedTab = 'player';
+                    savedTab = mwv_config.start_page || 'player';
                 }
                 const savedBtn = getTabButton(savedTab);
                 if (savedBtn) {
@@ -1509,11 +1527,31 @@
                             📁 Standardordner media/ wiederherstellen
                         </button>
 
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">🔧 Pfad-Konfiguration</h3>
+                        <div
+                            style="background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label
+                                    style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Browser
+                                    Standard-Ordner:</label>
+                                <input type="text" id="config-browse-dir"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
+                                    onchange="updateBrowseDirUI(this.value)">
+                            </div>
+                            <div>
+                                <label
+                                    style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Haupt-Bibliothek-Ordner:</label>
+                                <input type="text" id="config-library-dir"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
+                                    onchange="updateLibraryDirUI(this.value)">
+                            </div>
+                        </div>
+
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">
                             Darstellung
                         </h3>
                         <div
-                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
                             <label class="switch">
                                 <input type="checkbox" id="toggle-parser-times" checked
                                     onchange="toggleParserTimes(this.checked)">
@@ -1525,6 +1563,34 @@
                                 <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
                                     data-i18n="options_show_parser_times_desc">Zeigt unten links an, wie
                                     lange jeder Parser gebraucht hat.</div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_app_mode">App-Modus
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="setAppModeUI('High-Performance')" id="mode-perf" class="sidebar-badge"
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;">🚀
+                                    High-Performance</button>
+                                <button onclick="setAppModeUI('Low-Bandwidth')" id="mode-bw" class="sidebar-badge"
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;">📉 Low
+                                    Bandwidth</button>
+                            </div>
+                        </div>
+
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_parser_mode">
+                                Parser-Modus</div>
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="setParserModeUI('lightweight')" id="pm-light" class="sidebar-badge"
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;">Light</button>
+                                <button onclick="setParserModeUI('full')" id="pm-full" class="sidebar-badge"
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;">Full</button>
+                                <button onclick="setParserModeUI('ultimate')" id="pm-ult" class="sidebar-badge"
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;">Ultimate</button>
                             </div>
                         </div>
 
@@ -2138,6 +2204,21 @@
                                     <option value="directplay" data-i18n="video_mode_mkvmerge_vlc">mkvmerge → VLC
                                         (Local)</option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
+                                </select>
+                            </div>
+                            <div
+                                style="display: flex; align-items: center; gap: 15px; background: #fff8e1; padding: 8px 15px; border-radius: 8px; border: 1px solid #ffe0b2;">
+                                <span style="font-size: 0.9em; font-weight: bold; color: #6d4c41;"
+                                    data-i18n="options_start_page">Start-Seite:</span>
+                                <select id="start-page-select" onchange="updateStartPage(this.value)"
+                                    style="background: white; border: 1px solid #ffcc80; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none; color: #5d4037;">
+                                    <option value="player">Player</option>
+                                    <option value="library">Bibliothek</option>
+                                    <option value="browser">Browser</option>
+                                    <option value="vlc">Video Player</option>
+                                    <option value="logbuch">Logbuch</option>
+                                    <option value="playlist">Playlist</option>
+                                    <option value="options">Optionen</option>
                                 </select>
                             </div>
                         </div>
@@ -4778,6 +4859,85 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
+        async function updateStartPage(page) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    await eel.set_start_page(page)();
+                    // Also update local cached config
+                    mwv_config.start_page = page;
+                    console.log('Start page updated to:', page);
+                }
+            } catch (e) {
+                console.error('Failed to save start page:', e);
+            }
+        }
+
+        async function updateBrowseDirUI(path) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    await eel.update_browse_dir(path)();
+                    mwv_config.browse_default_dir = path;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateLibraryDirUI(path) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    await eel.update_library_dir(path)();
+                    mwv_config.library_dir = path;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function setAppModeUI(mode) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    await eel.set_app_mode(mode)();
+                    mwv_config.app_mode = mode;
+                    updateAppModeButtons();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function setParserModeUI(mode) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    await eel.set_parser_mode(mode)();
+                    mwv_config.parser_mode = mode;
+                    updateParserModeButtons();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateAppModeButtons() {
+            const mode = mwv_config.app_mode || 'High-Performance';
+            document.querySelectorAll('[id^="mode-"]').forEach(el => el.style.background = '#fff');
+            const target = mode === 'High-Performance' ? 'mode-perf' : 'mode-bw';
+            const el = document.getElementById(target);
+            if (el) el.style.background = '#e6f7ff';
+        }
+
+        function updateParserModeButtons() {
+            const mode = mwv_config.parser_mode || 'lightweight';
+            document.querySelectorAll('[id^="pm-"]').forEach(el => el.style.background = '#fff');
+            let target = 'pm-light';
+            if (mode === 'full') target = 'pm-full';
+            if (mode === 'ultimate') target = 'pm-ult';
+            const el = document.getElementById(target);
+            if (el) el.style.background = '#f6ffed';
+        }
+
+        async function resetConfigUI() {
+            if (confirm("Möchtest du wirklich alle Einstellungen zurücksetzen? Die App muss danach neu gestartet werden.")) {
+                try {
+                    await eel.reset_config()();
+                    alert("Konfiguration zurückgesetzt. Bitte starte die App neu.");
+                    location.reload();
+                } catch (e) { alert("Fehler beim Zurücksetzen: " + e); }
+            }
+        }
+
         function saveParserChainUI() {
             const listItems = document.getElementById('parser-list').querySelectorAll('.parser-item');
             const newChain = [];
@@ -6473,7 +6633,8 @@
         // ============ End VLC Functions ============
 
         // Initial load: wait a tick for Eel WebSocket to connect, then load data
-        setTimeout(function () {
+        setTimeout(async function () {
+            await loadConfig();
             // loadLibrary() is called by initTranslations() after translations are loaded
             loadParserConfig();
             loadDebugFlags();
@@ -6481,6 +6642,20 @@
             loadFeatureStatus();
             initVlcDropZone();
             setVlcRibbonMode('dnd');
+
+            // Sync start-page select UI
+            const spSelect = document.getElementById('start-page-select');
+            if (spSelect) spSelect.value = mwv_config.start_page || 'player';
+
+            // Sync paths
+            const browseInp = document.getElementById('config-browse-dir');
+            if (browseInp) browseInp.value = mwv_config.browse_default_dir || '';
+            const libInp = document.getElementById('config-library-dir');
+            if (libInp) libInp.value = mwv_config.library_dir || '';
+
+            updateAppModeButtons();
+            updateParserModeButtons();
+
             restoreLastActiveTab();
         }, 100);
         window.addEventListener('DOMContentLoaded', async () => {

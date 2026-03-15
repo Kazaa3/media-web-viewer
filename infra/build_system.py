@@ -170,7 +170,7 @@ class BuildSystem:
         except Exception:
             return "unknown"
 
-    def deploy_branch_config(self) -> bool:
+    def deploy_branch_config(self, start_page: Optional[str] = None) -> bool:
         """Deploy branch-specific configuration JSON."""
         print_status(f"Deploying config for branch: {self.branch}", "PROCESS")
         
@@ -185,8 +185,21 @@ class BuildSystem:
                  config_src = self.root / "web" / "config.main.json"
 
         if config_src.exists():
-            shutil.copy2(config_src, config_dest)
-            print_status(f"Deployed {config_src.name} -> {config_dest.name}", "SUCCESS")
+            if start_page:
+                import json
+                try:
+                    with open(config_src, 'r') as f:
+                        data = json.load(f)
+                    data['start_page'] = start_page
+                    with open(config_dest, 'w') as f:
+                        json.dump(data, f, indent=4)
+                    print_status(f"Deployed {config_src.name} -> {config_dest.name} with start_page={start_page}", "SUCCESS")
+                except Exception as e:
+                    print_status(f"Failed to patch config with start_page: {e}", "ERROR")
+                    shutil.copy2(config_src, config_dest)
+            else:
+                shutil.copy2(config_src, config_dest)
+                print_status(f"Deployed {config_src.name} -> {config_dest.name}", "SUCCESS")
             return True
         else:
             print_status(f"No specific config found for {self.branch}, using legacy default if exists", "WARNING")
@@ -1086,6 +1099,12 @@ def main():
     )
 
     parser.add_argument(
+        "--start-page",
+        type=str,
+        help="Set global start page in config.json (e.g. player, library, vlc)"
+    )
+
+    parser.add_argument(
         "--audit-performance",
         action="store_true",
         help="Run comprehensive parser performance audit with format statistics"
@@ -1172,8 +1191,8 @@ def main():
             destructive=args.destructive,
             skip_build_gate=args.skip_build_gate) and success
 
-    if args.deploy_config:
-        success = build_sys.deploy_branch_config() and success
+    if args.deploy_config or args.start_page:
+        success = build_sys.deploy_branch_config(start_page=args.start_page) and success
 
     if args.audit_performance:
         success = build_sys.run_performance_audit() and success

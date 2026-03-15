@@ -1,6 +1,7 @@
 {
     "debug": true,
     "log_level": "DEBUG",
+    "start_page": "player",
     "feature_flags": {
         "experimental_transcoding": true,
         "verbose_parsing": true,

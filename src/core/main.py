@@ -566,6 +566,72 @@ def update_parser_settings(new_settings):
     return {"status": "success"}
 
 
+@eel.expose
+def get_start_page():
+    """Returns the global start page."""
+    return PARSER_CONFIG.get("start_page", "player")
+
+
+@eel.expose
+def set_start_page(page):
+    """Updates the global start page and saves to disk."""
+    PARSER_CONFIG["start_page"] = page
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
+def get_app_mode():
+    """Returns the current app mode (High-Performance/Low-Bandwidth)."""
+    return PARSER_CONFIG.get("app_mode", "High-Performance")
+
+
+@eel.expose
+def set_app_mode(mode):
+    """Updates the app mode and saves to disk."""
+    PARSER_CONFIG["app_mode"] = mode
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
+def get_parser_mode():
+    """Returns the current parser mode (lightweight/full/ultimate)."""
+    return PARSER_CONFIG.get("parser_mode", "lightweight")
+
+
+@eel.expose
+def set_parser_mode(mode):
+    """Updates the parser mode and saves to disk."""
+    PARSER_CONFIG["parser_mode"] = mode
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
+def update_browse_dir(path):
+    """Updates the default browse directory."""
+    PARSER_CONFIG["browse_default_dir"] = path
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
+def update_library_dir(path):
+    """Updates the primary library/media directory."""
+    PARSER_CONFIG["library_dir"] = path
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
+def reset_config():
+    """Resets the configuration to defaults."""
+    from src.parsers.format_utils import reset_parser_config
+    reset_parser_config()
+    return {"status": "success"}
+
+
 # --- Debug/Test API ---
 @eel.expose
 def run_debug_test():
