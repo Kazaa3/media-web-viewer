@@ -30,6 +30,20 @@ Nach dem letzten Merge sollen die Wirkung der Debugflags und das Logging-System 
 2. **Tests erneut ausführen** und Fehlerprotokoll prüfen.
 3. **Fehlerhafte Tests reparieren** und Wirkung der Debugflags/Logging nach Merge validieren.
 
+## Testergebnisse nach Umbenennung und Ausführung
+- **14 von 16 Tests bestanden**
+- **Fehlschläge:**
+  1. `test_project_debug_log_file` (tests/test_logging.py): Debug-Logfile wurde nicht wie erwartet unter `/logs/debug.log` angelegt, sondern unter `/data/logs/debug.log` (siehe Logausgabe). Ursache: Unterschiedliche Logpfad-Logik im Test vs. logger.py.
+  2. `test_debug_tab_json_logic` (tests/integration/tech/test_debug_tab_values.py): Erwartete JSON-Logik (`JSON.stringify(debugConsole.env|debug_flags`) im Debug-Tab nicht gefunden. Möglicherweise wurde die UI-Logik geändert oder entfernt.
+
+## Reparaturmaßnahmen
+- **Test für Debug-Logfile**: Test anpassen, damit er den tatsächlichen Logpfad (`data/logs/debug.log`) prüft, wie von logger.py verwendet.
+- **Debug-Tab-JSON-Test**: UI/JS-Code prüfen und ggf. Test und/oder Frontend anpassen, damit die Debug-Informationen wie erwartet angezeigt werden.
+
+## Status
+- Debugflags und Logging funktionieren, aber zwei Tests müssen an neue Pfade/Logik angepasst werden.
+- Nach Reparatur erneute Testausführung empfohlen.
+
 ## Fazit
 - Debugflags und Logging sind nach Merge grundsätzlich funktionsfähig, aber die Testabdeckung ist durch einen Importkonflikt blockiert.
 - Nach Umbenennung und erneuter Ausführung können Fehler gezielt repariert werden.
