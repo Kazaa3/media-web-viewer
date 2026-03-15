@@ -90,3 +90,45 @@
 - `.gitkeep`-Dateien sichern die Verzeichnisstruktur für Artefakte, auch wenn noch keine Dateien vorhanden sind.
 
 Diese Artefakte dienen der Nachvollziehbarkeit, Fehleranalyse und Qualitätssicherung im Testprozess.
+
+## 9. GitHub Actions: Firefox/Geckodriver Fehler & Fix
+
+**Problem:**
+- Bei GitHub Actions (Ubuntu 22.04/24.04) kommt es häufig zu Fehlern mit Firefox/Geckodriver:
+  - Startprobleme/Hänger, wenn Firefox als Snap/Flatpak läuft (Standard auf Ubuntu)
+  - Geckodriver/ASLR/Clang/ASAN-Crashes (z.B. Segfaults, Kernel-Inkompatibilität)
+
+**Workarounds & Fixes:**
+- **ASLR/Clang/ASAN-Fix:**
+  - Vor dem Testlauf in der Workflow-Datei die Kernel-Entropie für Address Space Layout Randomization (ASLR) reduzieren:
+    ```yaml
+    - name: Fix kernel mmap rnd bits (ASLR workaround)
+      run: sudo sysctl vm.mmap_rnd_bits=28
+    ```
+  - Hintergrund: Ältere LLVM/Clang-Versionen (z.B. in Ubuntu 22.04) sind nicht kompatibel mit der hohen ASLR-Entropie neuerer GitHub-Runner-Kernel. Siehe [actions/runner-images#9491](https://github.com/actions/runner-images/issues/9491).
+
+- **Geckodriver-Version aktuell halten:**
+  - Immer die neueste stabile Version verwenden, z.B. mit der Action:
+    ```yaml
+    - uses: browser-actions/setup-geckodriver@latest
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    ```
+
+- **Firefox im Container (Snap/Flatpak):**
+  - Setze `TMPDIR` auf ein Verzeichnis, das sowohl Firefox als auch Geckodriver beschreiben können:
+    ```yaml
+    - run: mkdir -p $HOME/tmp
+    - run: export TMPDIR=$HOME/tmp
+    ```
+  - Oder nutze die Option `--profile-root` für Geckodriver.
+  - Alternativ: Firefox als .deb von mozilla.org installieren und Snap/Flatpak vermeiden.
+
+**Quellen & Details:**
+- [actions/runner-images#9491](https://github.com/actions/runner-images/issues/9491)
+- [Geckodriver Releases](https://github.com/mozilla/geckodriver/releases)
+- [Geckodriver Usage: Container](https://firefox-source-docs.mozilla.org/testing/geckodriver/Usage.html#Running-Firefox-in-an-container-based-package)
+
+**Empfehlung:**
+- Diese Workarounds in der CI/CD-Pipeline dokumentieren und als Standard für Firefox/Geckodriver-Tests unter GitHub Actions übernehmen.
+- Bei Änderungen an den GitHub-Runner-Images oder neuen Firefox/Geckodriver-Releases regelmäßig prüfen, ob die Workarounds noch nötig sind.
