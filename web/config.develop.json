@@ -2,6 +2,13 @@
     "debug": true,
     "log_level": "DEBUG",
     "start_page": "player",
+    "browse_default_dir": "~/index",
+    "library_dir": "media",
+    "additional_library_dirs": [
+        "media/ext1",
+        "media/ext2",
+        "media/ext3"
+    ],
     "feature_flags": {
         "experimental_transcoding": true,
         "verbose_parsing": true,

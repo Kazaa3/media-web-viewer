@@ -2,6 +2,9 @@
     "debug": false,
     "log_level": "INFO",
     "start_page": "player",
+    "browse_default_dir": "~/index",
+    "library_dir": "media",
+    "additional_library_dirs": [],
     "feature_flags": {
         "experimental_transcoding": false,
         "verbose_parsing": false,

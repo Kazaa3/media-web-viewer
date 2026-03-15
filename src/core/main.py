@@ -625,6 +625,14 @@ def update_library_dir(path):
 
 
 @eel.expose
+def update_additional_library_dirs(dirs):
+    """Updates the list of additional library directories."""
+    PARSER_CONFIG["additional_library_dirs"] = dirs
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
 def reset_config():
     """Resets the configuration to defaults."""
     from src.parsers.format_utils import reset_parser_config

@@ -1545,6 +1545,14 @@
                                     style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
                                     onchange="updateLibraryDirUI(this.value)">
                             </div>
+                            <div>
+                                <label
+                                    style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Zusätzliche
+                                    Bibliotheks-Ordner (einer pro Zeile):</label>
+                                <textarea id="config-additional-dirs"
+                                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; resize: vertical;"
+                                    rows="3" onchange="updateAdditionalDirsUI(this.value)"></textarea>
+                            </div>
                         </div>
 
                         <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">
@@ -4890,6 +4898,17 @@
             } catch (e) { console.error(e); }
         }
 
+        async function updateAdditionalDirsUI(text) {
+            const dirs = text.split('\n').map(d => d.trim()).filter(d => d.length > 0);
+            try {
+                if (typeof eel !== 'undefined') {
+                    // We need a set_additional_library_dirs Eel function
+                    await eel.update_additional_library_dirs(dirs)();
+                    mwv_config.additional_library_dirs = dirs;
+                }
+            } catch (e) { console.error(e); }
+        }
+
         async function setAppModeUI(mode) {
             try {
                 if (typeof eel !== 'undefined') {
@@ -6652,6 +6671,9 @@
             if (browseInp) browseInp.value = mwv_config.browse_default_dir || '';
             const libInp = document.getElementById('config-library-dir');
             if (libInp) libInp.value = mwv_config.library_dir || '';
+
+            const addInp = document.getElementById('config-additional-dirs');
+            if (addInp) addInp.value = (mwv_config.additional_library_dirs || []).join('\n');
 
             updateAppModeButtons();
             updateParserModeButtons();

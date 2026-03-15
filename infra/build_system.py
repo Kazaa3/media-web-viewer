@@ -170,7 +170,11 @@ class BuildSystem:
         except Exception:
             return "unknown"
 
-    def deploy_branch_config(self, start_page: Optional[str] = None) -> bool:
+    def deploy_branch_config(self, 
+                             start_page: Optional[str] = None,
+                             browse_dir: Optional[str] = None,
+                             library_dir: Optional[str] = None,
+                             additional_library_dirs: Optional[str] = None) -> bool:
         """Deploy branch-specific configuration JSON."""
         print_status(f"Deploying config for branch: {self.branch}", "PROCESS")
         
@@ -179,27 +183,32 @@ class BuildSystem:
         
         # Fallback to dev if specialized branch config doesn't exist
         if not config_src.exists():
-            if "milestone" in self.branch or self.branch == "develop":
+            if any(k in self.branch for k in ["milestone", "meilenstein", "develop"]):
                  config_src = self.root / "web" / "config.develop.json"
             else:
                  config_src = self.root / "web" / "config.main.json"
 
         if config_src.exists():
-            if start_page:
-                import json
-                try:
-                    with open(config_src, 'r') as f:
-                        data = json.load(f)
+            import json
+            try:
+                with open(config_src, 'r') as f:
+                    data = json.load(f)
+                
+                if start_page:
                     data['start_page'] = start_page
-                    with open(config_dest, 'w') as f:
-                        json.dump(data, f, indent=4)
-                    print_status(f"Deployed {config_src.name} -> {config_dest.name} with start_page={start_page}", "SUCCESS")
-                except Exception as e:
-                    print_status(f"Failed to patch config with start_page: {e}", "ERROR")
-                    shutil.copy2(config_src, config_dest)
-            else:
+                if browse_dir:
+                    data['browse_default_dir'] = browse_dir
+                if library_dir:
+                    data['library_dir'] = library_dir
+                if additional_library_dirs:
+                    data['additional_library_dirs'] = [d.strip() for d in additional_library_dirs.split(",") if d.strip()]
+                
+                with open(config_dest, 'w') as f:
+                    json.dump(data, f, indent=4)
+                print_status(f"Deployed {config_src.name} -> {config_dest.name} with overrides", "SUCCESS")
+            except Exception as e:
+                print_status(f"Failed to patch config: {e}", "ERROR")
                 shutil.copy2(config_src, config_dest)
-                print_status(f"Deployed {config_src.name} -> {config_dest.name}", "SUCCESS")
             return True
         else:
             print_status(f"No specific config found for {self.branch}, using legacy default if exists", "WARNING")
@@ -1111,6 +1120,24 @@ def main():
     )
 
     parser.add_argument(
+        "--browse-dir",
+        type=str,
+        help="Set default browse directory in config.json"
+    )
+
+    parser.add_argument(
+        "--library-dir",
+        type=str,
+        help="Set primary library directory in config.json"
+    )
+
+    parser.add_argument(
+        "--additional-library-dirs",
+        type=str,
+        help="Comma-separated list of additional library directories"
+    )
+
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose output"
@@ -1191,8 +1218,13 @@ def main():
             destructive=args.destructive,
             skip_build_gate=args.skip_build_gate) and success
 
-    if args.deploy_config or args.start_page:
-        success = build_sys.deploy_branch_config(start_page=args.start_page) and success
+    if args.deploy_config or args.start_page or args.browse_dir or args.library_dir or args.additional_library_dirs:
+        success = build_sys.deploy_branch_config(
+            start_page=args.start_page,
+            browse_dir=args.browse_dir,
+            library_dir=args.library_dir,
+            additional_library_dirs=args.additional_library_dirs
+        ) and success
 
     if args.audit_performance:
         success = build_sys.run_performance_audit() and success

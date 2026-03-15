@@ -1,21 +1,42 @@
 {
-    "debug": false,
-    "log_level": "INFO",
-    "start_page": "vlc",
+    "debug": true,
+    "log_level": "DEBUG",
+    "start_page": "player",
+    "browse_default_dir": "~/index",
+    "library_dir": "media",
+    "additional_library_dirs": [
+        "media/ext1",
+        "media/ext2",
+        "media/ext3"
+    ],
     "feature_flags": {
-        "experimental_transcoding": false,
-        "verbose_parsing": false,
-        "show_test_tab": false
+        "experimental_transcoding": true,
+        "verbose_parsing": true,
+        "show_test_tab": true
     },
     "api": {
-        "timeout": 10,
-        "retries": 2
+        "timeout": 30,
+        "retries": 5
     },
     "indexed_categories": [
-        "audio"
+        "audio",
+        "video",
+        "images",
+        "documents",
+        "ebooks",
+        "abbild",
+        "spiel",
+        "beigabe"
     ],
     "displayed_categories": [
-        "audio"
+        "audio",
+        "video",
+        "images",
+        "documents",
+        "ebooks",
+        "abbild",
+        "spiel",
+        "beigabe"
     ],
-    "env": "production"
+    "env": "development"
 }
