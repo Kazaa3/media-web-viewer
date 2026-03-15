@@ -158,11 +158,36 @@ def initialize_debug_flags(args=None):
 # --- Global Constants & State ---
 VERSION = "1.34"
 
+
+# Nach Logging-Setup: PIDs loggen für Konsole. deswegen kein eel.expose
+def find_venv_pid(venv_name):
+    import psutil
+    venv_path = str((PROJECT_ROOT / venv_name).resolve())
+    for proc in psutil.process_iter(['pid', 'exe', 'cmdline']):
+        try:
+            exe = proc.info.get('exe')
+            if exe and exe.startswith(venv_path):
+                return proc.info['pid']
+            cmdline = proc.info.get('cmdline')
+            if cmdline and venv_path in ' '.join(cmdline):
+                return proc.info['pid']
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return None
+
 # Initialize logging as early as possible after paths are set
 initialize_debug_flags()
 
 STARTUP_TIME = time.time()
 BROWSER_PID = None  # Global to track browser process
+
+# PID-Logging beim Startup
+main_pid = os.getpid()
+testbed_pid = find_venv_pid('.venv_testbed')
+selenium_pid = find_venv_pid('.venv_selenium')
+logging.info(f"[System] Main PID: {main_pid}")
+logging.info(f"[System] Testbed PID: {testbed_pid if testbed_pid else 'nicht aktiv'}")
+logging.info(f"[System] Selenium PID: {selenium_pid if selenium_pid else 'nicht aktiv'}")
 
 try:
     from src.core.models import MediaItem
@@ -466,6 +491,26 @@ def get_environment_info_dict():
     import sys
     import os
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
+    import psutil
+    def find_venv_pid(venv_name):
+        """Find PID of a running python process in the given venv (by path match)."""
+        venv_path = str((PROJECT_ROOT / venv_name).resolve())
+        for proc in psutil.process_iter(['pid', 'exe', 'cmdline']):
+            try:
+                exe = proc.info.get('exe')
+                if exe and exe.startswith(venv_path):
+                    return proc.info['pid']
+                # Fallback: check cmdline for venv python
+                cmdline = proc.info.get('cmdline')
+                if cmdline and venv_path in ' '.join(cmdline):
+                    return proc.info['pid']
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return None
+
+    testbed_pid = find_venv_pid('.venv_testbed')
+    selenium_pid = find_venv_pid('.venv_selenium')
+
     return {
         "env_type": env_type,
         "env_name": env_name,
@@ -478,6 +523,8 @@ def get_environment_info_dict():
         "os": platform.system(),
         "pid": os.getpid(),
         "browser_pid": BROWSER_PID,
+        "testbed_pid": testbed_pid,
+        "selenium_pid": selenium_pid,
         "log_level": logging.getLevelName(logging.getLogger().getEffectiveLevel()),
         "release": platform.release(),
         "machine": platform.machine(),
