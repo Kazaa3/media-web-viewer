@@ -3122,10 +3122,10 @@ def play_vlc(file_path: str):
         VLC_PLAYER.set_media(media)
         VLC_PLAYER.play()
 
-        logger.get_ui_logger().info(f"VLC: Spiele {file_path}")
+        logger.get_logger("vlc").info(f"VLC: Spiele {file_path}")
         return {"status": "ok"}
     except Exception as e:
-        logger.get_ui_logger().error(f"VLC Fehler: {e}")
+        logger.get_logger("vlc").error(f"VLC Fehler: {e}")
         return {"error": str(e)}
 
 

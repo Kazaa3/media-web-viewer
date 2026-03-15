@@ -1690,11 +1690,35 @@
                                 </label>
                             </div>
                         </div>
-                        <select id="language-select" onchange="changeLanguage(this.value)"
-                            style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
-                            <option value="de" data-i18n="language_option_de">Deutsch</option>
-                            <option value="en" data-i18n="language_option_en">English</option>
-                        </select>
+
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_general_debug">Allgemeine
+                            Einstellungen</h3>
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-weight: 500; margin-bottom: 8px;"
+                                    data-i18n="options_language">Sprache / Language</label>
+                                <select id="language-select" onchange="changeLanguage(this.value)"
+                                    style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
+                                    <option value="de" data-i18n="language_option_de">Deutsch</option>
+                                    <option value="en" data-i18n="language_option_en">English</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 500; margin-bottom: 8px;"
+                                    data-i18n="options_start_page">Start-Seite</label>
+                                <select id="start-page-select" onchange="updateStartPage(this.value)"
+                                    style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
+                                    <option value="player">Player</option>
+                                    <option value="library">Bibliothek</option>
+                                    <option value="browser">Browser</option>
+                                    <option value="vlc">Video Player</option>
+                                    <option value="logbuch">Logbuch</option>
+                                    <option value="playlist">Playlist</option>
+                                    <option value="options">Optionen</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Right Column: General & Debug Settings -->
@@ -2214,21 +2238,6 @@
                                         (Local)</option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
                                     <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
-                                </select>
-                            </div>
-                            <div
-                                style="display: flex; align-items: center; gap: 15px; background: #fff8e1; padding: 8px 15px; border-radius: 8px; border: 1px solid #ffe0b2;">
-                                <span style="font-size: 0.9em; font-weight: bold; color: #6d4c41;"
-                                    data-i18n="options_start_page">Start-Seite:</span>
-                                <select id="start-page-select" onchange="updateStartPage(this.value)"
-                                    style="background: white; border: 1px solid #ffcc80; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none; color: #5d4037;">
-                                    <option value="player">Player</option>
-                                    <option value="library">Bibliothek</option>
-                                    <option value="browser">Browser</option>
-                                    <option value="vlc">Video Player</option>
-                                    <option value="logbuch">Logbuch</option>
-                                    <option value="playlist">Playlist</option>
-                                    <option value="options">Optionen</option>
                                 </select>
                             </div>
                         </div>
