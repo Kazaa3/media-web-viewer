@@ -116,6 +116,7 @@ class TestRunner:
                 f"{project_root}:{existing_pythonpath}"
                 if existing_pythonpath
                 else project_root
+            )
 
             result = subprocess.run(
                 [sys.executable, str(test_file)],
@@ -124,6 +125,7 @@ class TestRunner:
                 timeout=30,
                 cwd=self.tests_dir.parent,
                 env=env,
+            )
             
             output = result.stdout + result.stderr
             
@@ -337,6 +339,7 @@ def main():
     failed_count = sum(
         1 for r in runner.results.values()
         if r['status'] in ['FAILED', 'ERROR', 'TIMEOUT']
+    )
     
     if failed_count > 0:
         print(f"\n{Color.RED}⚠️  {failed_count} Tests fehlgeschlagen{Color.NC}\n")

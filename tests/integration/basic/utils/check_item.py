@@ -11,7 +11,8 @@ import os
 
 PROJECT_ROOT = os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 if PROJECT_ROOT not in sys.path:
-    
+    sys.path.insert(0, PROJECT_ROOT)
+    sys.path.insert(0, os.path.join(PROJECT_ROOT, "src"))
 
 from src.core.main import MediaItem
 
@@ -23,6 +24,7 @@ files = (
     glob.glob(os.path.join(media_dir, "*.mp*"))
     + glob.glob(os.path.join(media_dir, "*.mkv"))
     + glob.glob(os.path.join(media_dir, "*.we*"))
+)
 for f in files:
     try:
         item = MediaItem(f, f)

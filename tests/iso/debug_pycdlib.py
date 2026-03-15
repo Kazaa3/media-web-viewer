@@ -29,12 +29,12 @@ import traceback
 SAMPLE_ISO = "./media/4 Könige (2015) - DVD/4_KOENIGE.iso"
 
 def debug_pycdlib():
-        """
-        Debugging von pycdlib für ISO-Parsing. / Debugging pycdlib for ISO parsing.
+    """
+    Debugging von pycdlib für ISO-Parsing. / Debugging pycdlib for ISO parsing.
 
-        Returns:
-            None
-        """
+    Returns:
+        None
+    """
     print(f"Debugging pycdlib open for: {SAMPLE_ISO}")
     iso = pycdlib.PyCdlib()
     try:

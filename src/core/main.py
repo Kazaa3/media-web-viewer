@@ -805,7 +805,7 @@ def _get_requirements_status():
     }
 
     import_overrides = {
-        "python-vlc": "vlc",
+        "python-vlc": "vlc", # overirdes anschauen
         "bottle-websocket": "bottle_websocket",
         "gevent-websocket": "geventwebsocket",
         "pytest-cov": "pytest_cov",
@@ -4155,7 +4155,7 @@ def run_tests(test_files):
 
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
-    env["PYTHONPATH"] = f"{PROJECT_ROOT}:{PROJECT_ROOT}/src"
+    env["PYTHONPATH"] = f"{PROJECT_ROOT}:{PROJECT_ROOT}/src:{PROJECT_ROOT}/src/core:{PROJECT_ROOT}/src/parsers"
     env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
     # Detect environment strategy:
