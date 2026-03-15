@@ -800,8 +800,7 @@ def _get_requirements_status():
         "installed_count": 0,
         "missing_count": 0,
         "installed": [],
-        "missing": [],
-        "source": str(requirements_file.relative_to(PROJECT_ROOT))
+        "source": str(requirements_file.relative_to(PROJECT_ROOT)) if requirements_file else "None"
     }
 
     import_overrides = {
@@ -4155,23 +4154,38 @@ def run_tests(test_files):
 
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
-    env["PYTHONPATH"] = f"{root_dir}:{root_dir}/src"
+    env["PYTHONPATH"] = f"{PROJECT_ROOT}:{PROJECT_ROOT}/src"
     env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
     # Detect environment strategy:
-    # 1. Check if current interpreter has pytest
-    # 2. If not, check if .venv_testbed exists
-    # 3. Fallback to sys.executable and hope for the best
-    import importlib.util
+    # 1. Check for specialized venvs first (preferred for tests)
+    # 2. Fallback to current interpreter if it has pytest
     test_python = sys.executable
-    if importlib.util.find_spec("pytest") is None:
-        # Specialized venvs discovery
-        known_venvs = [".venv_testbed", ".venv_dev", "venv"]
-        for venv_name in known_venvs:
-            venv_bin = root_dir / venv_name / "bin" / "python"
-            if venv_bin.exists():
+    venv_found = False
+    
+    known_venvs = [".venv_testbed", ".venv_dev", "venv"]
+    for venv_name in known_venvs:
+        venv_bin = PROJECT_ROOT / venv_name / "bin" / "python"
+        if venv_bin.exists():
+            # Quick check if it has pytest
+            try:
+                # We use a quick check to avoid slow startups
                 test_python = str(venv_bin)
+                venv_found = True
+                if DEBUG_FLAGS.get("tests"):
+                    debug_log(f"[Tests] Found specialized test venv: {venv_name}")
                 break
+            except Exception:
+                continue
+
+    if not venv_found:
+        import importlib.util
+        if importlib.util.find_spec("pytest") is None:
+            if DEBUG_FLAGS.get("tests"):
+                debug_log("[Tests] No specialized venv found and pytest missing in current env.")
+        else:
+            if DEBUG_FLAGS.get("tests"):
+                debug_log("[Tests] Using current interpreter (pytest found).")
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
     # Stream output lines live to frontend for real-time refresh.
