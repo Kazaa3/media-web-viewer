@@ -962,18 +962,18 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
             const tabMap = {
-                'player': 'media-list',
-                'library': 'library-tab',
-                'browser': 'browser-tab',
-                'edit': 'edit-tab',
-                'options': 'options-tab',
-                'parser': 'parser-tab',
-                'debug': 'debug-tab',
-                'tests': 'tests',
-                'logbuch': 'logbuch-tab',
-                'playlist': 'playlist-tab',
-                'vlc': 'vlc',
-                'video': 'vlc'
+                'player': 'state-orchestrated-active-queue-list-container',
+                'library': 'indexed-sqlite-media-repository-panel',
+                'browser': 'filesystem-crawler-directory-panel',
+                'edit': 'metadata-writer-crud-panel',
+                'options': 'system-configuration-persistence-panel',
+                'parser': 'regex-provider-chain-orchestrator-panel',
+                'debug': 'debug-flag-persistence-panel',
+                'tests': 'quality-assurance-regression-suite-panel',
+                'logbuch': 'localized-markdown-documentation-journal-panel',
+                'playlist': 'json-serialized-sequence-buffer-panel',
+                'vlc': 'multiplexed-media-player-orchestrator-panel',
+                'video': 'multiplexed-media-player-orchestrator-panel'
             };
 
             const targetId = tabMap[tabId];
@@ -1515,22 +1515,23 @@
                     data-i18n="nav_browser">Browser</button>
                 <button id="edit-btn" class="tab-btn" onclick="switchTab('edit', this)"
                     data-i18n="nav_edit">Edit</button>
-                <button id="options-btn" class="tab-btn" onclick="switchTab('options', this)"
+                <button id="system-registry-tab-trigger" class="tab-btn" onclick="switchTab('options', this)"
                     data-i18n="nav_options">Optionen</button>
-                <button id="parser-btn" class="tab-btn" onclick="switchTab('parser', this)"
+                <button id="chain-config-tab-trigger" class="tab-btn" onclick="switchTab('parser', this)"
                     data-i18n="nav_parser">Parser</button>
-                <button id="debug-btn" class="tab-btn" onclick="switchTab('debug', this)" data-i18n="nav_debug">Debug
+                <button id="telemetry-inspector-tab-trigger" class="tab-btn" onclick="switchTab('debug', this)"
+                    data-i18n="nav_debug">Debug
                     DB</button>
-                <button id="tests-btn" class="tab-btn" onclick="switchTab('tests', this)"
+                <button id="qa-validation-tab-trigger" class="tab-btn" onclick="switchTab('tests', this)"
                     data-i18n="nav_tests">Tests</button>
-                <button id="logbuch-btn" class="tab-btn" onclick="switchTab('logbuch', this)"
+                <button id="documentation-journal-tab-trigger" class="tab-btn" onclick="switchTab('logbuch', this)"
                     style="background: #e1f5fe; border-color: #0277bd; color: #0277bd; display: flex; align-items: center; gap: 8px;"
                     data-i18n="nav_logbook">
                     <span class="icon-logbook"></span> <span data-i18n="nav_logbook">Logbuch</span></button>
-                <button id="playlist-btn" class="tab-btn" onclick="switchTab('playlist', this)"
+                <button id="sequential-buffer-tab-trigger" class="tab-btn" onclick="switchTab('playlist', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_playlist">
                     <span class="icon-menu"></span> <span data-i18n="nav_playlist">Playlist</span></button>
-                <button id="vlc-btn" class="tab-btn" onclick="switchTab('vlc', this)"
+                <button id="media-orchestrator-tab-trigger" class="tab-btn" onclick="switchTab('vlc', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_video">
                     <span class="icon-video"></span> <span data-i18n="nav_video">Video Player</span></button>
                 <button class="tab-btn"
@@ -1544,7 +1545,7 @@
                 style="padding: 8px 16px; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #1b5e20; cursor: pointer; font-weight: bold; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"
                 data-i18n="btn_features">
                 <span class="icon-features"></span> <span data-i18n="btn_features">Features</span></button>
-            <button onclick="scan(null, true)" id="scan-btn"
+            <button onclick="scan(null, true)" id="media-index-crawler-trigger"
                 style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; flex-shrink: 0;"
                 data-i18n="btn_scan_media">Scan
                 Media</button>
@@ -1555,15 +1556,16 @@
     <div class="layout-container" id="main-split-container">
         <!-- Sidebar -->
         <div id="main-sidebar" class="sidebar">
-            <img id="sb-cover" class="sidebar-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                style="opacity: 0.5;">
-            <div id="sb-title" class="sidebar-title" data-i18n="sb_no_song">Kein Lied gewählt</div>
-            <div id="sb-artist" class="sidebar-artist">-</div>
-            <div id="sb-album"
+            <img id="sidebar-artwork-raster-buffer" class="sidebar-cover"
+                src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="opacity: 0.5;">
+            <div id="sidebar-metadata-primary-string-renderer" class="sidebar-title" data-i18n="sb_no_song">Kein Lied
+                gewählt</div>
+            <div id="sidebar-metadata-secondary-string-renderer" class="sidebar-artist">-</div>
+            <div id="sidebar-metadata-tertiary-string-renderer"
                 style="font-size: 0.9em; font-weight: bold; color: #444; margin-bottom: 6px; text-align: center;"></div>
-            <div id="sb-meta" class="sidebar-meta"></div>
-            <div id="sb-badge" class="sidebar-badge" style="display: none;"></div>
-            <div id="sb-fileinfo"
+            <div id="sidebar-metadata-extended-attribute-grid" class="sidebar-meta"></div>
+            <div id="sidebar-status-tag-visualizer" class="sidebar-badge" style="display: none;"></div>
+            <div id="sidebar-filesystem-handle-string-renderer"
                 style="font-size: 0.75em; color: #999; margin-top: 15px; margin-bottom: 8px; text-align: center; white-space: pre-wrap;">
             </div>
         </div>
@@ -1573,10 +1575,11 @@
 
         <!-- Main Right Content Area -->
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-width: 0;">
-            <div id="media-list" class="tab-content active" style="padding: 10px; overflow-y: auto; height: 100%;">
+            <div id="state-orchestrated-active-queue-list-container" class="tab-content active"
+                style="padding: 10px; overflow-y: auto; height: 100%;">
             </div>
 
-            <div id="browser-tab" class="tab-content" style="padding: 20px; overflow-y: auto;">
+            <div id="filesystem-crawler-directory-panel" class="tab-content" style="padding: 20px; overflow-y: auto;">
                 <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 20px;">
                     <button id="fb-back" onclick="fbBack()"
                         style="padding: 10px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
@@ -1600,11 +1603,12 @@
                 <div id="fb-list"></div>
             </div>
 
-            <div id="library-tab" class="tab-content" style="overflow-y: auto; width: 100%;">
+            <div id="indexed-sqlite-media-repository-panel" class="tab-content" style="overflow-y: auto; width: 100%;">
                 <div id="library-list"></div>
             </div>
 
-            <div id="playlist-tab" class="tab-content" style="overflow-y: auto; width: 100%; padding: 10px;">
+            <div id="json-serialized-sequence-buffer-panel" class="tab-content"
+                style="overflow-y: auto; width: 100%; padding: 10px;">
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
@@ -1637,7 +1641,7 @@
                 <div id="playlist-list"></div>
             </div>
 
-            <div id="edit-tab" class="tab-content"
+            <div id="metadata-writer-crud-panel" class="tab-content"
                 style="padding: 20px; flex-direction: column; display: none; height: 100%; width: 100%;">
                 <h2 style="margin-bottom: 5px;" data-i18n="edit_title">Metadaten Editor</h2>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;" data-i18n="edit_subtitle">Passe Tags
@@ -1725,7 +1729,8 @@
                 </div>
             </div>
 
-            <div id="options-tab" class="tab-content" style="padding: 20px; overflow-y: auto; height: 100%;">
+            <div id="system-configuration-persistence-panel" class="tab-content"
+                style="padding: 20px; overflow-y: auto; height: 100%;">
                 <h2 style="margin-bottom: 25px;" data-i18n="options_title">Optionen</h2>
 
                 <div style="display: flex; gap: 40px; align-items: flex-start;">
@@ -2247,7 +2252,8 @@
                 <!-- Close options-tab -->
             </div>
 
-            <div id="parser-tab" class="tab-content" style="padding: 20px; overflow-y: auto; height: 100%;">
+            <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
+                style="padding: 20px; overflow-y: auto; height: 100%;">
                 <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
 
                 <div style="display: flex; gap: 30px; align-items: flex-start;">
@@ -2317,7 +2323,7 @@
                 </div>
             </div>
 
-            <div id="debug-tab" class="tab-content"
+            <div id="debug-flag-persistence-panel" class="tab-content"
                 style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
 
                 <!-- Left Column: Settings and DB Overview -->
@@ -2406,7 +2412,8 @@
             </div>
 
             <!-- Tests Tab -->
-            <div id="tests" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
+            <div id="quality-assurance-regression-suite-panel" class="tab-content"
+                style="display: none; padding: 20px; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                     <h2 style="margin: 0;" data-i18n="test_title">Unit Tests & Verifizierung</h2>
                     <div style="display: flex; align-items: center; gap: 15px;">
@@ -2450,7 +2457,7 @@
             </div>
 
             <!-- Video Player Tab -->
-            <div id="vlc" class="tab-content"
+            <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
                 style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
                 <div style="max-width: 1000px; margin: 0 auto;">
                     <div
@@ -2466,7 +2473,7 @@
                                 style="display: flex; align-items: center; gap: 15px; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
                                 <span style="font-size: 0.9em; font-weight: bold; color: #666;"
                                     data-i18n="video_mode_label">Modus:</span>
-                                <select id="video-mode-select" onchange="updateVideoMode()"
+                                <select id="playback-engine-strategy-selector" onchange="orchestrateVideoPlaybackMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
                                     <option value="browser" data-i18n="video_mode_chrome" selected>Chrome Native
                                     </option>
@@ -2478,15 +2485,18 @@
                                         (Local)</option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
                                     <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
+                                    <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- Embedded Player -->
-                        <div id="embedded-video-container"
+                        <!-- Coordinated Renderer Pipeline -->
+                        <div id="coordinated-media-renderer-pipeline-viewport"
                             style="background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                            <video id="video-player" controls style="width: 100%; height: 100%; display: none;"></video>
-                            <div id="video-placeholder" style="color: #444; text-align: center; padding: 40px;">
+                            <video id="native-html5-video-resource-node" controls
+                                style="width: 100%; height: 100%; display: none;"></video>
+                            <div id="idle-state-media-icon-symbol"
+                                style="color: #444; text-align: center; padding: 40px;">
                                 <div
                                     style="font-size: 4em; margin-bottom: 10px; opacity: 0.2; display: flex; justify-content: center;">
                                     <span class="icon-video" style="width: 80px; height: 80px;"></span>
@@ -2495,9 +2505,9 @@
                             </div>
                         </div>
 
-                        <!-- Drag & Drop Panel (integrated) -->
-                        <div id="vlc-dnd-panel" style="display: none; margin-bottom: 20px;">
-                            <div id="vlc-drop-zone"
+                        <!-- Orchestrator Ingress Buffers -->
+                        <div id="orchestrator-ingress-drag-drop-buffer" style="display: none; margin-bottom: 20px;">
+                            <div id="external-player-drag-drop-ingress-area"
                                 style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 40px; text-align: center; font-weight: 600; transition: all 0.2s;">
                                 Datei hier hineinziehen, um sie in VLC zu öffnen
                             </div>
@@ -2647,7 +2657,8 @@
             </div>
 
             <!-- Logbuch Tab -->
-            <div id="logbuch-tab" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
+            <div id="localized-markdown-documentation-journal-panel" class="tab-content"
+                style="display: none; padding: 20px; overflow-y: auto;">
                 <h2 style="margin-bottom: 25px;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
                 <div style="display: flex; gap: 30px;">
                     <div
@@ -2707,7 +2718,7 @@
 
     <!-- Sticky Footer Player -->
     <div class="player-container" style="display: flex; align-items: center; gap: 10px;">
-        <img id="footer-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+        <img id="footer-artwork-raster-buffer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
             style="width: 40px; height: auto; border-radius: 4px; object-fit: contain; background: transparent; align-self: stretch;">
         <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -2717,12 +2728,12 @@
                     <button onclick="playNext()" class="player-btn" data-i18n="[title]player_btn_next"
                         aria-label="player_next">⏭️</button>
                 </div>
-                <audio id="player" controls style="flex: 1; height: 32px;"></audio>
+                <audio id="native-html5-audio-pipeline-element" controls style="flex: 1; height: 32px;"></audio>
                 <script>
                     if ('mediaSession' in navigator) {
                         const updateMediaMetadata = (meta) => {
                             try {
-                                const footerCover = document.getElementById('footer-cover');
+                                const footerCover = document.getElementById('footer-artwork-raster-buffer');
                                 const artworkSrc = footerCover && footerCover.src ? footerCover.src : '';
                                 navigator.mediaSession.metadata = new MediaMetadata({
                                     title: meta.title || '',
@@ -2733,12 +2744,12 @@
                             } catch (e) { console.warn('mediaSession metadata set failed', e); }
                         };
 
-                        navigator.mediaSession.setActionHandler('play', () => { const p = document.getElementById('player'); if (p && p.play) p.play(); });
-                        navigator.mediaSession.setActionHandler('pause', () => { const p = document.getElementById('player'); if (p && p.pause) p.pause(); });
+                        navigator.mediaSession.setActionHandler('play', () => { const p = document.getElementById('native-html5-audio-pipeline-element'); if (p && p.play) p.play(); });
+                        navigator.mediaSession.setActionHandler('pause', () => { const p = document.getElementById('native-html5-audio-pipeline-element'); if (p && p.pause) p.pause(); });
                         navigator.mediaSession.setActionHandler('previoustrack', () => window.playPrev && window.playPrev());
                         navigator.mediaSession.setActionHandler('nexttrack', () => window.playNext && window.playNext());
 
-                        const player = document.getElementById('player');
+                        const playerPipeline = document.getElementById('native-html5-audio-pipeline-element');
                         if (player && player.addEventListener) {
                             player.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status') ? document.querySelector('#status').textContent : '' }));
                         }
@@ -2746,7 +2757,7 @@
                     function set_media_session(meta) {
                         try {
                             if (!('mediaSession' in navigator)) return;
-                            const artwork = (meta.artwork && meta.artwork.length) ? meta.artwork[0].src : document.getElementById('footer-cover').src;
+                            const artwork = (meta.artwork && meta.artwork.length) ? meta.artwork[0].src : document.getElementById('footer-artwork-raster-buffer').src;
                             navigator.mediaSession.metadata = new MediaMetadata({
                                 title: meta.title || '',
                                 artist: meta.artist || '',
@@ -3544,7 +3555,7 @@
 
                     if (playlistIndex === index) {
                         playlistIndex = -1;
-                        const player = document.getElementById('player');
+                        const playerPipeline = document.getElementById('native-html5-audio-pipeline-element');
                         if (player) {
                             player.pause();
                             player.src = "";
@@ -4458,9 +4469,18 @@
             }
         }
 
-        function updateVideoMode() {
-            const select = document.getElementById('video-mode-select');
+        function orchestrateVideoPlaybackMode() {
+            const select = document.getElementById('playback-engine-strategy-selector');
             const mode = select.value;
+
+            if (mode === 'playlist') {
+                if (typeof loadPlaylistUI === 'function') loadPlaylistUI();
+                const plBtn = document.getElementById('sequential-buffer-tab-trigger');
+                switchTab('playlist', plBtn);
+                // Reset select to previous mode or native?
+                select.value = 'browser';
+                return;
+            }
 
             // Show "Open in VLC" button only if in browser mode and video loaded
             document.getElementById('btn-open-vlc').style.display = (mode !== 'browser' && mode !== 'dnd' && currentVideoItem) ? 'flex' : 'none';
@@ -4487,10 +4507,10 @@
             currentVideoPath = path;
 
             // Switch to Video tab
-            const vlcBtn = document.getElementById('vlc-btn');
+            const vlcBtn = document.getElementById('media-orchestrator-tab-trigger');
             switchTab('vlc', vlcBtn);
 
-            const select = document.getElementById('video-mode-select');
+            const select = document.getElementById('playback-engine-strategy-selector');
             const mode = select.value;
 
             // Ensure audio is paused
@@ -6720,10 +6740,10 @@
         function setVlcRibbonMode(mode) {
             vlcRibbonMode = mode === 'stream' ? 'stream' : 'dnd';
 
-            const dndBtn = document.getElementById('vlc-ribbon-dnd-btn');
-            const streamBtn = document.getElementById('vlc-ribbon-stream-btn');
-            const dndPanel = document.getElementById('vlc-dnd-panel');
-            const streamPanel = document.getElementById('vlc-stream-panel');
+            const dndBtn = document.getElementById('vlc-ribbon-dnd-mode-activator');
+            const streamBtn = document.getElementById('vlc-ribbon-stream-mode-activator');
+            const dndPanel = document.getElementById('vlc-dnd-input-interface');
+            const streamPanel = document.getElementById('vlc-stream-input-interface');
 
             if (!dndBtn || !streamBtn || !dndPanel || !streamPanel) return;
 
@@ -6749,7 +6769,7 @@
         }
 
         function initVlcDropZone() {
-            const zone = document.getElementById('vlc-drop-zone');
+            const zone = document.getElementById('external-player-drag-drop-ingress-area');
             if (!zone || zone.dataset.bound === '1') return;
             zone.dataset.bound = '1';
 
