@@ -2479,16 +2479,13 @@
                                     data-i18n="video_mode_label">Modus:</span>
                                 <select id="playback-engine-strategy-selector" onchange="orchestrateVideoPlaybackMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <option value="browser" data-i18n="video_mode_chrome" selected>Chrome Native
+                                    <option value="browser" data-i18n="video_mode_chrome">Chrome Native</option>
+                                    <option value="vlc_pipe" data-i18n="video_mode_vlc_pipe" selected>vlc pipe</option>
+                                    <option value="integrated" data-i18n="video_mode_ffmpeg_browser">FFmpeg Engine
                                     </option>
-                                    <option value="integrated" data-i18n="video_mode_ffmpeg_browser">FFmpeg
-                                        Engine → Chrome</option>
-                                    <option value="hybrid" data-i18n="video_mode_hybrid">Chrome Native (Hybrid VLC
-                                        Fallback)</option>
-                                    <option value="vlc_browser" data-i18n="video_mode_vlc_browser">VLC Engine → Chrome
+                                    <option value="directplay" data-i18n="video_mode_direct_play">Direct Play</option>
+                                    <option value="vlc_browser" data-i18n="video_mode_embedded_vlc">Embedded VLC
                                     </option>
-                                    <option value="directplay" data-i18n="video_mode_mkvmerge_vlc">mkvmerge → VLC
-                                        (Local)</option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
                                     <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
                                     <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
@@ -4527,25 +4524,26 @@
                 await startVLC(item.path);
             } else if (mode === 'vlc_browser') {
                 startEmbeddedVideo(item, `/vlc-stream/${encodeURIComponent(item.path)}`);
-            } else if (mode === 'integrated') {
-                // FFmpeg Engine -> Chrome
-                startEmbeddedVideo(item, `/video-stream/${encodeURIComponent(item.path)}`);
-            } else if (mode === 'hybrid') {
-                // Hybrid: Try Chrome Native, then fallback to VLC only if NotSupported
+            } else if (mode === 'vlc_pipe') {
+                // Hybrid (Option 2): Try Chrome Native, then fallback to VLC only if NotSupported
                 const nativeUrl = `/media/${encodeURIComponent(item.path)}`;
                 const videoEl = document.getElementById('native-html5-video-resource-node');
 
                 startEmbeddedVideo(item, nativeUrl, async () => {
                     const err = videoEl.error;
-                    console.warn("Hybrid Mode: Native attempt reported error code:", err ? err.code : 'unknown');
+                    console.warn("[vlc pipe]: Native attempt failed. Error code:", err ? err.code : 'unknown');
 
                     // Fallback to VLC if it's a format support issue (Code 4) or unknown
                     if (!err || err.code === 4) {
-                        console.log("Switching to VLC fallback for", item.name);
+                        console.log("[vlc pipe] Switching to VLC pipe for:", item.name);
+                        showToast(t('vlc_info_fallback_msg') || "Browser unsupported - Falling back to VLC...", 3000);
                         const res = await eel.stream_to_vlc(item.path)();
                         if (res.status === 'ok') {
                             document.getElementById('vlc-info').style.display = 'block';
                             document.getElementById('vlc-current-file').innerText = item.path;
+                            videoEl.pause();
+                            videoEl.src = "";
+                            videoEl.load();
                             videoEl.style.display = 'none';
                             document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
                             hideUnsupportedVideoHint();
@@ -4553,10 +4551,12 @@
                             showUnsupportedVideoHint();
                         }
                     } else {
-                        // Other error (e.g. network 2, abort 3), just show hint
                         showUnsupportedVideoHint();
                     }
                 });
+            } else if (mode === 'integrated') {
+                // FFmpeg Engine (Option 3) -> Chrome
+                startEmbeddedVideo(item, `/video-stream/${encodeURIComponent(item.path)}`);
             } else if (mode === 'directplay') {
                 // mkvmerge -> VLC (Local)
                 const result = await eel.stream_to_vlc(item.path)();
@@ -4611,6 +4611,13 @@
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
+            // Hard reset to clear previous state/errors
+            video.pause();
+            video.onerror = null;
+            video.onloadeddata = null;
+            video.src = "";
+            video.load();
+
             // Stop VLC if running
             eel.stop_vlc()();
             document.getElementById('vlc-info').style.display = 'none';
@@ -4618,22 +4625,38 @@
 
             placeholder.style.display = 'none';
             video.style.display = 'block';
-            video.onloadeddata = () => hideUnsupportedVideoHint();
-            video.onerror = () => {
+
+            let callbackTriggered = false;
+            const triggerError = () => {
+                if (callbackTriggered) return;
+                callbackTriggered = true;
                 if (typeof onErrorCallback === 'function') {
                     onErrorCallback();
                 } else {
                     showUnsupportedVideoHint();
                 }
             };
+
+            video.onloadeddata = () => {
+                hideUnsupportedVideoHint();
+                console.log("Video source loaded:", path);
+            };
+
+            video.onerror = () => {
+                console.warn("Video 'onerror' event triggered for:", path);
+                triggerError();
+            };
+
             video.src = path;
-            video.play().catch(e => {
-                if (isUnsupportedMediaError(e)) {
-                    showUnsupportedVideoHint();
-                    return;
-                }
-                console.error("Browser playback failed:", e);
-            });
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.error("Video play() promise rejection:", e);
+                    if (isUnsupportedMediaError(e)) {
+                        triggerError();
+                    }
+                });
+            }
 
             document.getElementById('btn-open-vlc').style.display = 'flex';
         }

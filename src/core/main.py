@@ -3203,47 +3203,66 @@ def is_mkvtoolnix_available():
 def stream_to_vlc(file_path):
     """
     @brief Real-time streaming via mkvmerge pipe to VLC.
-    @details Nutzt mkvmerge zum Remuxen und pipet den Output direkt an VLC.
+    @details Nutzt mkvmerge oder FFmpeg zum Remuxen und pipet den Output direkt an VLC.
     """
-    logging.info(f"Direct Play: {file_path}")
+    logging.info(f"[vlc pipe] Requesting stream for: {file_path}")
+
+    if not file_path or not os.path.exists(str(file_path)):
+        logging.error(f"[vlc pipe] File not found: {file_path}")
+        return {"status": "error", "error": f"Datei nicht gefunden: {file_path}"}
 
     # ISO Handling: Native DVD playback for menus
-    if file_path.lower().endswith('.iso'):
+    if str(file_path).lower().endswith('.iso'):
         try:
-            # For ISOs, we use VLC's native dvd:// support instead of mkvmerge pipe
-            # This allows menu interaction and chapter selection.
+            logging.info(f"[vlc pipe] ISO detected, using dvd:// protocol for {file_path}")
             vlc_path = shutil.which('vlc') or 'vlc'
-            cmd = [vlc_path, f"dvd://{file_path}"]
+            cmd = [str(vlc_path), f"dvd://{file_path}"]
             subprocess.Popen(cmd)
             return {"status": "ok", "mode": "vlc_dvd"}
         except Exception as e:
+            logging.error(f"[vlc pipe] ISO Playback error: {e}")
             return {"status": "error", "error": str(e)}
 
     if not is_mkvtoolnix_available():
-        return {"status": "error", "message": "mkvtoolnix nicht installiert"}
+        logging.error("[vlc pipe] mkvmerge not found in PATH")
+        return {"status": "error", "error": "mkvtoolnix (mkvmerge) nicht installiert"}
+
+    vlc_path = shutil.which('vlc') or 'vlc'
+    if not vlc_path:
+        logging.error("[vlc pipe] vlc not found in PATH")
+        return {"status": "error", "error": "VLC Media Player nicht installiert oder nicht im PATH"}
 
     try:
-        # Command 1: mkvmerge to stdout
-        mkvmerge_cmd = ["mkvmerge", file_path, "-o", "-"]
-        # Command 2: vlc from stdin
-        vlc_cmd = ["vlc", "-"]
+        # Use ffmpeg for the pipe because it's more reliable for stdout-muxing
+        # -i file_path: input file
+        # -c copy: stream copy (no transcoding)
+        # -f matroska -: output to stdout as Matroska
+        ffmpeg_cmd = ["ffmpeg", "-loglevel", "error", "-i", str(file_path), "-c", "copy", "-f", "matroska", "-"]
+        vlc_cmd = [str(vlc_path), "-"]
 
-        logging.info(
-            f"Direct Play: {
-                ' '.join(mkvmerge_cmd)} | {
-                ' '.join(vlc_cmd)}")
+        logging.info(f"[vlc pipe] Launching Pipe: {' '.join(str(c) for c in ffmpeg_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
 
-        # Start pipeline
-        p1 = subprocess.Popen(mkvmerge_cmd, stdout=subprocess.PIPE)
+        # Start ffmpeg
+        p1 = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Start VLC, linking its stdin to ffmpeg's stdout
         p2 = subprocess.Popen(vlc_cmd, stdin=p1.stdout)
 
         # Allow p1 to receive a SIGPIPE if p2 exits.
         if p1.stdout:
             p1.stdout.close()
 
+        # Small delay to see if p1 (ffmpeg) crashes immediately
+        time.sleep(0.5)
+        if p1.poll() is not None and p1.returncode != 0:
+            err_msg = ""
+            if p1.stderr:
+                err_msg = p1.stderr.read().decode('utf-8', errors='ignore')
+            logging.error(f"[vlc pipe] FFmpeg failed immediately: {err_msg}")
+            return {"status": "error", "error": f"FFmpeg Fehler: {err_msg.splitlines()[0] if err_msg else 'Unknown'}"}
+
         return {"status": "ok", "message": "Streaming gestartet"}
     except Exception as e:
-        logging.error(f"Direct Play Fehler: {e}")
+        logging.error(f"[vlc pipe] Critical Pipe Error: {e}")
         return {"status": "error", "error": str(e)}
 
 
