@@ -40,6 +40,12 @@ Nach dem letzten Merge sollen die Wirkung der Debugflags und das Logging-System 
 - **Test für Debug-Logfile**: Test anpassen, damit er den tatsächlichen Logpfad (`data/logs/debug.log`) prüft, wie von logger.py verwendet.
 - **Debug-Tab-JSON-Test**: UI/JS-Code prüfen und ggf. Test und/oder Frontend anpassen, damit die Debug-Informationen wie erwartet angezeigt werden.
 
+## Zusatz: Geckodriver-Fehler im CI – Zusammenhang mit GitHub Actions
+- Der Fehler beim Installieren von `firefox-geckodriver` entsteht nicht durch GitHub selbst, sondern durch die verwendete CI-Umgebung (GitHub Actions) und das zugrundeliegende Ubuntu-Image.
+- In Ubuntu 24.04 ist das Paket `firefox-geckodriver` nicht mehr verfügbar, daher schlägt die Installation im CI-Workflow fehl.
+- GitHub Actions ist lediglich die Plattform, auf der das Problem sichtbar wird – die eigentliche Ursache ist die Paketänderung in Ubuntu, nicht GitHub oder Geckodriver selbst.
+- Lösung: Geckodriver direkt von Mozilla herunterladen und im CI-Workflow manuell installieren (siehe separaten Logbucheintrag zum CI-Geckodriver-Problem).
+
 ## Status
 - Debugflags und Logging funktionieren, aber zwei Tests müssen an neue Pfade/Logik angepasst werden.
 - Nach Reparatur erneute Testausführung empfohlen.
