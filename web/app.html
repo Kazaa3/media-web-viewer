@@ -5218,6 +5218,9 @@
                 const envBuildToolsStatusEl = document.getElementById('env-build-tools-status');
                 const envCorePackagesStatusEl = document.getElementById('env-core-packages-status');
                 const envRequirementsListEl = document.getElementById('env-requirements-list');
+                const envMainPidEl = document.getElementById('env-main-pid');
+                const envTestbedPidEl = document.getElementById('env-testbed-pid');
+                const envSeleniumPidEl = document.getElementById('env-selenium-pid');
                 const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');
 
                 const mediaInfoStatus = info.mediainfo_status || {};
@@ -5482,6 +5485,9 @@
                 if (envRequirementsListEl) envRequirementsListEl.textContent = requirementsListText;
                 if (envBaseDependenciesStatusEl) envBaseDependenciesStatusEl.textContent = baseDependenciesText;
                 if (envPlatformEl) envPlatformEl.textContent = info.platform || info.system || '-';
+                if (envMainPidEl) envMainPidEl.textContent = info.pid || '-';
+                if (envTestbedPidEl) envTestbedPidEl.textContent = info.testbed_pid || '-';
+                if (envSeleniumPidEl) envSeleniumPidEl.textContent = info.selenium_pid || '-';
 
                 // Full package list rendering (keep as before)
                 const packagesList = document.getElementById('installed-packages-list');
