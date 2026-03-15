@@ -124,11 +124,11 @@
         }
 
         /* Hide chapters scrollbar */
-        #sb-fileinfo>div>div::-webkit-scrollbar {
-            display: none;
+        #sidebar-filesystem-handle-string-renderer>div>div::-webkit-scrollbar {
+            width: 4px;
         }
 
-        #sb-fileinfo>div>div {
+        #sidebar-filesystem-handle-string-renderer>div>div {
             -ms-overflow-style: none;
             /* IE and Edge */
             scrollbar-width: none;
@@ -874,7 +874,7 @@
     </style>
     <script>
         // Pre-define critical functions to avoid "not defined" errors on button clicks
-        let currentPlayer;
+        let activeAudioPipeline;
         let currentLogbuchEntries = [];
         let currentLogbookEditName = null;
         let currentLogbookEditFilename = null;
@@ -1507,13 +1507,13 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1 data-i18n="app_title">dict</h1>
             <div class="tab-buttons">
-                <button id="player-btn" class="tab-btn active" onclick="switchTab('player', this)"
+                <button id="active-queue-tab-trigger" class="tab-btn active" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
-                <button id="library-btn" class="tab-btn" onclick="switchTab('library', this)"
+                <button id="indexed-sqlite-repository-tab-trigger" class="tab-btn" onclick="switchTab('library', this)"
                     data-i18n="nav_library">Bibliothek</button>
-                <button id="browser-btn" class="tab-btn" onclick="switchTab('browser', this)"
+                <button id="filesystem-crawler-tab-trigger" class="tab-btn" onclick="switchTab('browser', this)"
                     data-i18n="nav_browser">Browser</button>
-                <button id="edit-btn" class="tab-btn" onclick="switchTab('edit', this)"
+                <button id="crud-metadata-tab-trigger" class="tab-btn" onclick="switchTab('edit', this)"
                     data-i18n="nav_edit">Edit</button>
                 <button id="system-registry-tab-trigger" class="tab-btn" onclick="switchTab('options', this)"
                     data-i18n="nav_options">Optionen</button>
@@ -2749,9 +2749,9 @@
                         navigator.mediaSession.setActionHandler('previoustrack', () => window.playPrev && window.playPrev());
                         navigator.mediaSession.setActionHandler('nexttrack', () => window.playNext && window.playNext());
 
-                        const playerPipeline = document.getElementById('native-html5-audio-pipeline-element');
-                        if (player && player.addEventListener) {
-                            player.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status') ? document.querySelector('#status').textContent : '' }));
+                        const pipelineElement = document.getElementById('native-html5-audio-pipeline-element');
+                        if (pipelineElement && pipelineElement.addEventListener) {
+                            pipelineElement.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status') ? document.querySelector('#status').textContent : '' }));
                         }
                     }
                     function set_media_session(meta) {
@@ -2877,7 +2877,7 @@
 
     <!-- Logbook Detail Modal -->
     <div id="logbook-modal"
-        style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #ffffff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
+        style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 600px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 2500; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
         <div
             style="background: #2a7; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
             <h3 id="logbook-title" style="margin: 0; font-size: 1.25em; letter-spacing: -0.02em;"
@@ -3047,24 +3047,24 @@
     </div>
 
     <script>
-        currentPlayer = document.getElementById('player');
+        activeAudioPipeline = document.getElementById('native-html5-audio-pipeline-element');
         currentLogbuchEntries = [];
 
         // ============ Player Expansion State ============
         let currentPlaylist = [];
         let playlistIndex = -1;
         let isShuffle = false;
-        let isRepeat = 'off'; // 'off', 'all', 'one'
+        let repeatStatus = 'off'; // 'off', 'all', 'one'
         let shuffledPlaylist = [];
         // Pick-and-insert state
         let pickedIndex = -1;
         let pickTimer = null;
 
         // Auto-play next song
-        if (currentPlayer) {
-            currentPlayer.onended = () => {
-                if (isRepeat === 'one') {
-                    currentPlayer.play();
+        if (activeAudioPipeline) {
+            activeAudioPipeline.onended = () => {
+                if (repeatStatus === 'one') {
+                    activeAudioPipeline.play();
                 } else {
                     playNext();
                 }
@@ -3638,7 +3638,7 @@
             if (typeof eel !== 'undefined' && typeof eel.set_current_playlist === 'function') {
                 eel.set_current_playlist(currentPlaylist)().catch(console.error);
             }
-            const player = document.getElementById('player');
+            const player = document.getElementById('native-html5-audio-pipeline-element');
             if (player) {
                 player.pause();
                 player.src = "";
@@ -4322,8 +4322,8 @@
                 renderPlaylist();
             }
 
-            currentPlayer.src = path;
-            currentPlayer.play().catch(e => {
+            activeAudioPipeline.src = path;
+            activeAudioPipeline.play().catch(e => {
                 if (isUnsupportedMediaError(e)) {
                     console.warn('Audio playback unsupported for source:', path, e);
                     document.getElementById('status').textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
@@ -4344,10 +4344,10 @@
             let tags = item.tags;
             console.log("Playing item tags:", tags);
 
-            let sbCover = document.getElementById('sb-cover');
+            let sbCover = document.getElementById('sidebar-artwork-raster-buffer');
             sbCover.src = "/cover/" + encodeURIComponent(item.name);
             // Update footer cover too
-            let footerCover = document.getElementById('footer-cover');
+            let footerCover = document.getElementById('footer-artwork-raster-buffer');
             footerCover.src = "/cover/" + encodeURIComponent(item.name);
             footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
             sbCover.style.opacity = "1";
@@ -4356,9 +4356,9 @@
                 this.style.backgroundColor = '#ddd';
             };
 
-            document.getElementById('sb-title').innerText = tags.title;
-            document.getElementById('sb-artist').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
-            document.getElementById('sb-album').innerText = tags.album ? tags.album : "";
+            document.getElementById('sidebar-metadata-primary-string-renderer').innerText = tags.title;
+            document.getElementById('sidebar-metadata-secondary-string-renderer').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
+            document.getElementById('sidebar-metadata-tertiary-string-renderer').innerText = tags.album ? tags.album : "";
 
             // Limit year to 4 digits if it's a full date string
             let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
@@ -4370,14 +4370,14 @@
 
             let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
 
-            document.getElementById('sb-meta').innerText = extraInfoSb + "\n\n" + item.duration;
+            document.getElementById('sidebar-metadata-extended-attribute-grid').innerText = extraInfoSb + "\n\n" + item.duration;
 
             let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
             if (badgeText) {
-                document.getElementById('sb-badge').innerText = badgeText;
-                document.getElementById('sb-badge').style.display = 'inline-block';
+                document.getElementById('sidebar-status-tag-visualizer').innerText = badgeText;
+                document.getElementById('sidebar-status-tag-visualizer').style.display = 'inline-block';
             } else {
-                document.getElementById('sb-badge').style.display = 'none';
+                document.getElementById('sidebar-status-tag-visualizer').style.display = 'none';
             }
 
             let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
@@ -4438,7 +4438,7 @@
                 chaptersHtml += '</div></div>';
             }
 
-            document.getElementById('sb-fileinfo').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
+            document.getElementById('sidebar-filesystem-handle-string-renderer').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
 
             // Python Backend anfunken
             eel.play_media(path)();
@@ -4489,7 +4489,7 @@
             }
 
             // Sync D&D Panel visibility
-            const dndPanel = document.getElementById('vlc-dnd-panel');
+            const dndPanel = document.getElementById('orchestrator-ingress-drag-drop-buffer');
             if (dndPanel) {
                 const embedded = document.getElementById('embedded-video-container');
                 if (mode === 'dnd') {
@@ -4514,7 +4514,7 @@
             const mode = select.value;
 
             // Ensure audio is paused
-            if (currentPlayer) currentPlayer.pause();
+            if (activeAudioPipeline) activeAudioPipeline.pause();
 
             if (mode === 'vlc') {
                 await startVLC(item.path);
@@ -4574,8 +4574,8 @@
         }
 
         function startEmbeddedVideo(item, path) {
-            const video = document.getElementById('video-player');
-            const placeholder = document.getElementById('video-placeholder');
+            const video = document.getElementById('native-html5-video-resource-node');
+            const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
             // Stop VLC if running
             eel.stop_vlc()();
@@ -4599,10 +4599,10 @@
         }
 
         async function startVLC(filePath, displayName = null) {
-            const video = document.getElementById('video-player');
+            const video = document.getElementById('native-html5-video-resource-node');
             video.pause();
             video.style.display = 'none';
-            document.getElementById('video-placeholder').style.display = 'block';
+            document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
             document.getElementById('btn-open-vlc').style.display = 'none';
             hideUnsupportedVideoHint();
 
@@ -4617,14 +4617,14 @@
         }
 
         async function stopVideo() {
-            const video = document.getElementById('video-player');
+            const video = document.getElementById('native-html5-video-resource-node');
             if (video) {
                 video.pause();
                 video.src = "";
                 video.style.display = 'none';
             }
             if (document.getElementById('video-placeholder')) {
-                document.getElementById('video-placeholder').style.display = 'block';
+                document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
             }
             hideUnsupportedVideoHint();
 
@@ -4642,7 +4642,7 @@
 
         function switchToVLC() {
             if (currentVideoItem) {
-                const select = document.getElementById('video-mode-select');
+                const select = document.getElementById('playback-engine-strategy-selector');
                 if (select) {
                     select.value = 'vlc';
                     updateVideoMode();
@@ -4658,7 +4658,7 @@
         }
 
         window.jumpToChapter = function (startTime) {
-            let p = document.getElementById('player');
+            let p = document.getElementById('native-html5-audio-pipeline-element');
             if (p) {
                 p.currentTime = startTime;
                 p.play();
@@ -6365,9 +6365,9 @@
         // Toggle Parser Times function
         function toggleParserTimes(show) {
             // Re-render the sidebar info if a song is currently playing
-            if (currentPlayer.src) {
+            if (activeAudioPipeline.src) {
                 // Find current item based on the title, or we can just trigger a re-render of the file info
-                const titleText = document.getElementById('sb-title').innerText;
+                const titleText = document.getElementById('sidebar-metadata-primary-string-renderer').innerText;
                 if (titleText !== t('sb_no_song')) {
                     // The easiest way is to let the user re-click for now, but we saved the preference.
                 }
