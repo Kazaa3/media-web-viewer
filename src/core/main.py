@@ -800,6 +800,7 @@ def _get_requirements_status():
         "installed_count": 0,
         "missing_count": 0,
         "installed": [],
+        "missing": [],
         "source": str(requirements_file.relative_to(PROJECT_ROOT)) if requirements_file else "None"
     }
 
@@ -4164,28 +4165,27 @@ def run_tests(test_files):
     venv_found = False
     
     known_venvs = [".venv_testbed", ".venv_dev", "venv"]
+    logging.info(f"[Tests] Searching for test environment in {PROJECT_ROOT}...")
+    
     for venv_name in known_venvs:
         venv_bin = PROJECT_ROOT / venv_name / "bin" / "python"
         if venv_bin.exists():
-            # Quick check if it has pytest
-            try:
-                # We use a quick check to avoid slow startups
-                test_python = str(venv_bin)
-                venv_found = True
-                if DEBUG_FLAGS.get("tests"):
-                    debug_log(f"[Tests] Found specialized test venv: {venv_name}")
-                break
-            except Exception:
-                continue
+            test_python = str(venv_bin)
+            venv_found = True
+            logging.info(f"[Tests] Found specialized test venv: {venv_name} -> {test_python}")
+            break
+        else:
+            if DEBUG_FLAGS.get("tests"):
+                 debug_log(f"[Tests] Missing venv: {venv_name} (checked {venv_bin})")
 
     if not venv_found:
         import importlib.util
         if importlib.util.find_spec("pytest") is None:
-            if DEBUG_FLAGS.get("tests"):
-                debug_log("[Tests] No specialized venv found and pytest missing in current env.")
+            logging.warning(f"[Tests] No specialized venv found and pytest missing in current env ({sys.executable}).")
         else:
-            if DEBUG_FLAGS.get("tests"):
-                debug_log("[Tests] Using current interpreter (pytest found).")
+            logging.info(f"[Tests] Using current interpreter (pytest found): {sys.executable}")
+    
+    logging.info(f"[Tests] Final execution command python: {test_python}")
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
     # Stream output lines live to frontend for real-time refresh.

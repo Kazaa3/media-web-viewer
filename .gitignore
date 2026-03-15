@@ -5,6 +5,9 @@ tests/e2e/selenium/screenshots/
 # Ignore selenium reference screenshots
 tests/e2e/selenium/reference_screenshots/
 
+# Referenz-Screenshots für Tests
+/tests/reference_screenshots/
+
 # 1. Broad Ignores
 **/__pycache__/
 *.pyc

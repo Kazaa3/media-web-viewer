@@ -1,0 +1,847 @@
+{
+  "audit_metadata": {
+    "timestamp": "2026-03-15T14:11:48Z",
+    "parser_config": {
+      "start_page": "player",
+      "app_mode": "High-Performance",
+      "parser_mode": "full",
+      "browse_default_dir": "/home/xc",
+      "library_dir": "/home/xc/#Coding/gui_media_web_viewer/media",
+      "additional_library_dirs": [],
+      "parser_chain": [
+        "filename",
+        "container",
+        "mutagen",
+        "pymediainfo",
+        "ffprobe",
+        "ffmpeg",
+        "pycdlib",
+        "tinytag",
+        "eyed3",
+        "music_tag",
+        "isoparser",
+        "ebml",
+        "mkvparse",
+        "enzyme",
+        "pymkv"
+      ],
+      "fast_scan_enabled": null,
+      "debug_scan": true,
+      "debug_parser": true,
+      "debug_flags": {
+        "system": false,
+        "ui": false,
+        "lib": false,
+        "browser": false,
+        "edit": false,
+        "options": false,
+        "start": false,
+        "parser": false,
+        "scan": false,
+        "player": false,
+        "db": false,
+        "tests": false,
+        "api": false,
+        "web": false,
+        "i18n": false,
+        "websocket": false,
+        "performance": false,
+        "metadata": false,
+        "transcode": false,
+        "file_ops": false,
+        "network": false
+      },
+      "language": "de",
+      "mutagen_prefer_albumartist": true,
+      "mutagen_extract_lyrics": false,
+      "pymediainfo_full_scan": false,
+      "ffmpeg_deep_analysis": false,
+      "ffmpeg_extract_thumbnails": true,
+      "enable_isoparser_parser": false,
+      "enable_pycdlib_parser": false,
+      "enable_ebml_parser": false,
+      "enable_mkvparse_parser": false,
+      "enable_enzyme_parser": false,
+      "enable_pymkv_parser": false,
+      "indexed_categories": [
+        "audio",
+        "video",
+        "images",
+        "documents",
+        "ebooks",
+        "abbild",
+        "spiel",
+        "beigabe",
+        "supplements",
+        "games"
+      ],
+      "displayed_categories": [
+        "audio",
+        "video",
+        "images",
+        "documents",
+        "ebooks",
+        "abbild",
+        "spiel",
+        "beigabe",
+        "supplements",
+        "games"
+      ],
+      "feature_flags": {
+        "experimental_transcoding": false,
+        "verbose_parsing": false,
+        "show_test_tab": true
+      },
+      "log_level": "INFO",
+      "api_timeout": 10,
+      "env": "dev",
+      "parser_settings": {
+        "mkvmerge": {
+          "cli_flags": "",
+          "timeout": 10
+        },
+        "ffprobe": {
+          "cli_flags": "",
+          "timeout": 10
+        },
+        "ffmpeg": {
+          "deep_analysis": false,
+          "timeout": 30
+        },
+        "vlc": {
+          "timeout": 5
+        },
+        "mutagen": {
+          "prefer_albumartist": true
+        },
+        "mkvinfo": {
+          "timeout": 10
+        }
+      },
+      "scan_dirs": [
+        "/home/xc/#Coding/gui_media_web_viewer/media"
+      ]
+    },
+    "media_dir": "/home/xc/#Coding/gui_media_web_viewer/media"
+  },
+  "format_stats": {
+    ".ogg": {
+      "count": 1,
+      "success_count": 1,
+      "total_duration": 0.12588787078857422,
+      "parsers_used": {
+        "filename": 1,
+        "mutagen": 1,
+        "pymediainfo": 1,
+        "ffprobe": 1,
+        "ffmpeg": 1,
+        "tinytag": 1,
+        "eyed3": 1,
+        "music_tag": 1
+      },
+      "avg_duration": 0.12588787078857422,
+      "success_rate": 100.0
+    },
+    ".flac": {
+      "count": 2,
+      "success_count": 2,
+      "total_duration": 0.281022310256958,
+      "parsers_used": {
+        "filename": 2,
+        "mutagen": 2,
+        "pymediainfo": 2,
+        "ffprobe": 2,
+        "ffmpeg": 2,
+        "tinytag": 2,
+        "eyed3": 2,
+        "music_tag": 2
+      },
+      "avg_duration": 0.140511155128479,
+      "success_rate": 100.0
+    },
+    ".wav": {
+      "count": 4,
+      "success_count": 4,
+      "total_duration": 0.6076436042785645,
+      "parsers_used": {
+        "filename": 4,
+        "mutagen": 4,
+        "pymediainfo": 4,
+        "ffprobe": 4,
+        "ffmpeg": 4,
+        "tinytag": 4,
+        "eyed3": 4,
+        "music_tag": 4
+      },
+      "avg_duration": 0.1519109010696411,
+      "success_rate": 100.0
+    },
+    ".wma": {
+      "count": 4,
+      "success_count": 4,
+      "total_duration": 0.5992190837860107,
+      "parsers_used": {
+        "filename": 4,
+        "mutagen": 4,
+        "pymediainfo": 4,
+        "ffprobe": 4,
+        "ffmpeg": 4,
+        "tinytag": 4,
+        "eyed3": 4,
+        "music_tag": 4
+      },
+      "avg_duration": 0.14980477094650269,
+      "success_rate": 100.0
+    },
+    ".m4a": {
+      "count": 5,
+      "success_count": 5,
+      "total_duration": 0.6532454490661621,
+      "parsers_used": {
+        "filename": 5,
+        "mutagen": 5,
+        "pymediainfo": 5,
+        "ffprobe": 5,
+        "ffmpeg": 5,
+        "tinytag": 5,
+        "eyed3": 5,
+        "music_tag": 5
+      },
+      "avg_duration": 0.13064908981323242,
+      "success_rate": 100.0
+    },
+    ".bin": {
+      "count": 1,
+      "success_count": 1,
+      "total_duration": 0.28170275688171387,
+      "parsers_used": {
+        "filename": 1,
+        "container": 1,
+        "pymediainfo": 1,
+        "ffprobe": 1,
+        "ffmpeg": 1
+      },
+      "avg_duration": 0.28170275688171387,
+      "success_rate": 100.0
+    },
+    ".mp3": {
+      "count": 2,
+      "success_count": 2,
+      "total_duration": 0.3522770404815674,
+      "parsers_used": {
+        "filename": 2,
+        "mutagen": 2,
+        "pymediainfo": 2,
+        "ffprobe": 2,
+        "ffmpeg": 2,
+        "tinytag": 2,
+        "eyed3": 2,
+        "music_tag": 2
+      },
+      "avg_duration": 0.1761385202407837,
+      "success_rate": 100.0
+    },
+    ".m4b": {
+      "count": 4,
+      "success_count": 4,
+      "total_duration": 0.7511224746704102,
+      "parsers_used": {
+        "filename": 4,
+        "mutagen": 4,
+        "pymediainfo": 4,
+        "ffprobe": 4,
+        "ffmpeg": 3,
+        "tinytag": 3,
+        "eyed3": 3,
+        "music_tag": 3
+      },
+      "avg_duration": 0.18778061866760254,
+      "success_rate": 100.0
+    },
+    ".aac": {
+      "count": 1,
+      "success_count": 1,
+      "total_duration": 0.14409136772155762,
+      "parsers_used": {
+        "filename": 1,
+        "mutagen": 1,
+        "pymediainfo": 1,
+        "ffprobe": 1,
+        "ffmpeg": 1,
+        "tinytag": 1,
+        "eyed3": 1,
+        "music_tag": 1
+      },
+      "avg_duration": 0.14409136772155762,
+      "success_rate": 100.0
+    },
+    ".opus": {
+      "count": 4,
+      "success_count": 4,
+      "total_duration": 0.5337979793548584,
+      "parsers_used": {
+        "filename": 4,
+        "mutagen": 4,
+        "pymediainfo": 4,
+        "ffprobe": 4,
+        "ffmpeg": 4,
+        "tinytag": 4,
+        "eyed3": 4,
+        "music_tag": 4
+      },
+      "avg_duration": 0.1334494948387146,
+      "success_rate": 100.0
+    },
+    ".cue": {
+      "count": 1,
+      "success_count": 1,
+      "total_duration": 0.12566757202148438,
+      "parsers_used": {
+        "filename": 1,
+        "container": 1,
+        "pymediainfo": 1,
+        "ffprobe": 1,
+        "ffmpeg": 1
+      },
+      "avg_duration": 0.12566757202148438,
+      "success_rate": 100.0
+    },
+    ".iso": {
+      "count": 4,
+      "success_count": 4,
+      "total_duration": 1.1867432594299316,
+      "parsers_used": {
+        "filename": 4,
+        "container": 4,
+        "pymediainfo": 4,
+        "ffprobe": 4,
+        "ffmpeg": 4,
+        "pycdlib": 3,
+        "isoparser": 3
+      },
+      "avg_duration": 0.2966858148574829,
+      "success_rate": 100.0
+    },
+    ".mp4": {
+      "count": 1,
+      "success_count": 1,
+      "total_duration": 0.2281174659729004,
+      "parsers_used": {
+        "filename": 1,
+        "container": 1,
+        "pymediainfo": 1,
+        "ffprobe": 1,
+        "ffmpeg": 1
+      },
+      "avg_duration": 0.2281174659729004,
+      "success_rate": 100.0
+    },
+    "": {
+      "count": 1,
+      "success_count": 1,
+      "total_duration": 0.00033020973205566406,
+      "parsers_used": {},
+      "avg_duration": 0.00033020973205566406,
+      "success_rate": 100.0
+    }
+  },
+  "detailed_results": {
+    "AL_Cave_108_inci_CaveDist_02.ogg": {
+      "duration": 0.12588787078857422,
+      "parser_times": {
+        "filename": 4.220008850097656e-05,
+        "mutagen": 0.0001709461212158203,
+        "pymediainfo": 0.0022673606872558594,
+        "ffprobe": 0.06386590003967285,
+        "ffmpeg": 0.057363271713256836,
+        "tinytag": 0.0005407333374023438,
+        "eyed3": 0.00034356117248535156,
+        "music_tag": 0.00030994415283203125
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "02 Pledging My Time.flac": {
+      "duration": 0.14712309837341309,
+      "parser_times": {
+        "filename": 4.267692565917969e-05,
+        "mutagen": 0.00020360946655273438,
+        "pymediainfo": 0.0015802383422851562,
+        "ffprobe": 0.07321810722351074,
+        "ffmpeg": 0.0699453353881836,
+        "tinytag": 0.0005207061767578125,
+        "eyed3": 0.0003581047058105469,
+        "music_tag": 0.00033473968505859375
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "02 Ludwig van Beethoven - Piano Concerto No. 5 in E-flat major, Op. 73 ''Emperor''- II. Adagio un poco mosso.wav": {
+      "duration": 0.17419099807739258,
+      "parser_times": {
+        "filename": 5.364418029785156e-05,
+        "mutagen": 0.00023889541625976562,
+        "pymediainfo": 0.010238409042358398,
+        "ffprobe": 0.07919001579284668,
+        "ffmpeg": 0.08230400085449219,
+        "tinytag": 0.0005519390106201172,
+        "eyed3": 0.00037932395935058594,
+        "music_tag": 0.0003445148468017578
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "07 Plattenpapzt - Wenn Zonis Reisen (ft. Tefla & Jaleel).wma": {
+      "duration": 0.17115569114685059,
+      "parser_times": {
+        "filename": 4.744529724121094e-05,
+        "mutagen": 0.0002923011779785156,
+        "pymediainfo": 0.002554178237915039,
+        "ffprobe": 0.0928502082824707,
+        "ffmpeg": 0.07278156280517578,
+        "tinytag": 0.0006246566772460938,
+        "eyed3": 0.0003981590270996094,
+        "music_tag": 0.0005028247833251953
+      },
+      "status": "success",
+      "tag_count": 28
+    },
+    "01 Absolute Beginner feat. D‐Flame & Illo 77 - Hammerhart (Denyo77 remix).m4a": {
+      "duration": 0.13123846054077148,
+      "parser_times": {
+        "filename": 4.887580871582031e-05,
+        "mutagen": 0.0003960132598876953,
+        "pymediainfo": 0.0017583370208740234,
+        "ffprobe": 0.06396245956420898,
+        "ffmpeg": 0.06304454803466797,
+        "tinytag": 0.0004715919494628906,
+        "eyed3": 0.00032138824462890625,
+        "music_tag": 0.00031304359436035156
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "02-Leaving Earth.wav": {
+      "duration": 0.17022418975830078,
+      "parser_times": {
+        "filename": 6.0558319091796875e-05,
+        "mutagen": 0.0003743171691894531,
+        "pymediainfo": 0.01537942886352539,
+        "ffprobe": 0.07603836059570312,
+        "ffmpeg": 0.07502198219299316,
+        "tinytag": 0.0009849071502685547,
+        "eyed3": 0.0008785724639892578,
+        "music_tag": 0.0005593299865722656
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "02 We the People….m4a": {
+      "duration": 0.14653754234313965,
+      "parser_times": {
+        "filename": 5.173683166503906e-05,
+        "mutagen": 0.0003287792205810547,
+        "pymediainfo": 0.0017879009246826172,
+        "ffprobe": 0.07759618759155273,
+        "ffmpeg": 0.06466841697692871,
+        "tinytag": 0.0005114078521728516,
+        "eyed3": 0.0003528594970703125,
+        "music_tag": 0.0003192424774169922
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "20-The Emerald Abyss.wav": {
+      "duration": 0.12393951416015625,
+      "parser_times": {
+        "filename": 3.4809112548828125e-05,
+        "mutagen": 0.00017595291137695312,
+        "pymediainfo": 0.00764918327331543,
+        "ffprobe": 0.054592132568359375,
+        "ffmpeg": 0.05965471267700195,
+        "tinytag": 0.00046181678771972656,
+        "eyed3": 0.0002913475036621094,
+        "music_tag": 0.0003058910369873047
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "S3gold1_g.bin": {
+      "duration": 0.28170275688171387,
+      "parser_times": {
+        "filename": 2.9802322387695312e-05,
+        "container": 8.58306884765625e-06,
+        "pymediainfo": 0.07084846496582031,
+        "ffprobe": 0.10397624969482422,
+        "ffmpeg": 0.10578513145446777
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "01 - Einfach & Leicht.mp3": {
+      "duration": 0.20194673538208008,
+      "parser_times": {
+        "filename": 4.6253204345703125e-05,
+        "mutagen": 0.00870370864868164,
+        "pymediainfo": 0.021953344345092773,
+        "ffprobe": 0.08302974700927734,
+        "ffmpeg": 0.08617138862609863,
+        "tinytag": 0.0005507469177246094,
+        "eyed3": 0.00036406517028808594,
+        "music_tag": 0.0003337860107421875
+      },
+      "status": "success",
+      "tag_count": 29
+    },
+    "Adrienne Herbert - Power Hour.m4b": {
+      "duration": 0.21848797798156738,
+      "parser_times": {
+        "filename": 4.3392181396484375e-05,
+        "mutagen": 0.0009636878967285156,
+        "pymediainfo": 0.016369342803955078,
+        "ffprobe": 0.10398530960083008,
+        "ffmpeg": 0.09313321113586426,
+        "tinytag": 0.0011227130889892578,
+        "eyed3": 0.0008392333984375,
+        "music_tag": 0.0007619857788085938
+      },
+      "status": "success",
+      "tag_count": 29
+    },
+    "01 - Anfangsstadium RMX.mp3": {
+      "duration": 0.1503303050994873,
+      "parser_times": {
+        "filename": 3.4332275390625e-05,
+        "mutagen": 0.0015223026275634766,
+        "pymediainfo": 0.0057220458984375,
+        "ffprobe": 0.06699752807617188,
+        "ffmpeg": 0.07398009300231934,
+        "tinytag": 0.0005371570587158203,
+        "eyed3": 0.0003821849822998047,
+        "music_tag": 0.00034999847412109375
+      },
+      "status": "success",
+      "tag_count": 29
+    },
+    "Heinz Strunk - Fleisch ist mein Gemüse (Komplettes Hörbuch).aac": {
+      "duration": 0.14409136772155762,
+      "parser_times": {
+        "filename": 4.076957702636719e-05,
+        "mutagen": 0.0002856254577636719,
+        "pymediainfo": 0.012248992919921875,
+        "ffprobe": 0.06663823127746582,
+        "ffmpeg": 0.062074899673461914,
+        "tinytag": 0.0007631778717041016,
+        "eyed3": 0.0005855560302734375,
+        "music_tag": 0.0005037784576416016
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "Cypress Hill with House of Pain - Jump Around (Remix)(1).wma": {
+      "duration": 0.16062068939208984,
+      "parser_times": {
+        "filename": 5.030632019042969e-05,
+        "mutagen": 0.00039196014404296875,
+        "pymediainfo": 0.0028188228607177734,
+        "ffprobe": 0.06820154190063477,
+        "ffmpeg": 0.08635449409484863,
+        "tinytag": 0.0006711483001708984,
+        "eyed3": 0.00048828125,
+        "music_tag": 0.0004749298095703125
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "Limp Bizkit - My Generation.opus": {
+      "duration": 0.1400594711303711,
+      "parser_times": {
+        "filename": 6.961822509765625e-05,
+        "mutagen": 0.0002665519714355469,
+        "pymediainfo": 0.0029501914978027344,
+        "ffprobe": 0.07082438468933105,
+        "ffmpeg": 0.06368136405944824,
+        "tinytag": 0.000514984130859375,
+        "eyed3": 0.0003561973571777344,
+        "music_tag": 0.0003294944763183594
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "S3gold1_g.cue": {
+      "duration": 0.12566757202148438,
+      "parser_times": {
+        "filename": 3.9577484130859375e-05,
+        "container": 1.0967254638671875e-05,
+        "pymediainfo": 0.002667665481567383,
+        "ffprobe": 0.06066417694091797,
+        "ffmpeg": 0.061052799224853516
+      },
+      "status": "success",
+      "tag_count": 23
+    },
+    "02 Aaliyah feat. Static - Loose Rap.flac": {
+      "duration": 0.13389921188354492,
+      "parser_times": {
+        "filename": 6.580352783203125e-05,
+        "mutagen": 0.00022411346435546875,
+        "pymediainfo": 0.001956939697265625,
+        "ffprobe": 0.06308150291442871,
+        "ffmpeg": 0.06640052795410156,
+        "tinytag": 0.0005517005920410156,
+        "eyed3": 0.00036215782165527344,
+        "music_tag": 0.0003292560577392578
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "01-05-Joan_Baez-Lowlands-LLS.m4a": {
+      "duration": 0.12851834297180176,
+      "parser_times": {
+        "filename": 3.814697265625e-05,
+        "mutagen": 0.000392913818359375,
+        "pymediainfo": 0.0020551681518554688,
+        "ffprobe": 0.06577944755554199,
+        "ffmpeg": 0.058318376541137695,
+        "tinytag": 0.0005085468292236328,
+        "eyed3": 0.00031757354736328125,
+        "music_tag": 0.00029206275939941406
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "21-The Enclave.wav": {
+      "duration": 0.13928890228271484,
+      "parser_times": {
+        "filename": 3.504753112792969e-05,
+        "mutagen": 0.00017762184143066406,
+        "pymediainfo": 0.00740504264831543,
+        "ffprobe": 0.05946540832519531,
+        "ffmpeg": 0.07017374038696289,
+        "tinytag": 0.0005452632904052734,
+        "eyed3": 0.00036835670471191406,
+        "music_tag": 0.0003345012664794922
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "Kid Cudi vs. Crookers - Day 'n' Night.opus": {
+      "duration": 0.1282644271850586,
+      "parser_times": {
+        "filename": 4.076957702636719e-05,
+        "mutagen": 0.0001773834228515625,
+        "pymediainfo": 0.001859426498413086,
+        "ffprobe": 0.06303167343139648,
+        "ffmpeg": 0.06106853485107422,
+        "tinytag": 0.0006015300750732422,
+        "eyed3": 0.0003561973571777344,
+        "music_tag": 0.00029158592224121094
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "Going Raw - JUDITA_169_OPTION.ISO": {
+      "duration": 0.2372298240661621,
+      "parser_times": {
+        "filename": 3.24249267578125e-05,
+        "container": 8.58306884765625e-06,
+        "pymediainfo": 4.839897155761719e-05,
+        "ffprobe": 0.11773228645324707,
+        "ffmpeg": 0.11827397346496582,
+        "pycdlib": 0.0001690387725830078,
+        "isoparser": 7.081031799316406e-05
+      },
+      "status": "success",
+      "tag_count": 24
+    },
+    "OLE_DB_ODBC.iso": {
+      "duration": 0.4075028896331787,
+      "parser_times": {
+        "filename": 4.076957702636719e-05,
+        "container": 1.0967254638671875e-05,
+        "pymediainfo": 0.002054452896118164,
+        "ffprobe": 0.10816669464111328,
+        "ffmpeg": 0.10789060592651367,
+        "pycdlib": 0.0014836788177490234,
+        "isoparser": 0.02326655387878418
+      },
+      "status": "success",
+      "tag_count": 26
+    },
+    "As a Man Thinketh - Heile Deine Gedanken - Werde Meister deines Schicksals (320).m4b": {
+      "duration": 0.1477062702178955,
+      "parser_times": {
+        "filename": 4.57763671875e-05,
+        "mutagen": 0.00045752525329589844,
+        "pymediainfo": 0.009516477584838867,
+        "ffprobe": 0.06736183166503906,
+        "ffmpeg": 0.06786966323852539,
+        "tinytag": 0.0006546974182128906,
+        "eyed3": 0.0004088878631591797,
+        "music_tag": 0.00033354759216308594
+      },
+      "status": "success",
+      "tag_count": 23
+    },
+    "mock_movie.iso": {
+      "duration": 0.14072966575622559,
+      "parser_times": {
+        "filename": 4.649162292480469e-05,
+        "container": 1.3113021850585938e-05,
+        "pymediainfo": 0.002168416976928711,
+        "ffprobe": 0.0664529800415039,
+        "ffmpeg": 0.07089805603027344
+      },
+      "status": "success",
+      "tag_count": 23
+    },
+    "Hermes House Band - Brasil Samba Mix.WMA": {
+      "duration": 0.1400890350341797,
+      "parser_times": {
+        "filename": 3.838539123535156e-05,
+        "mutagen": 0.0002732276916503906,
+        "pymediainfo": 0.001634836196899414,
+        "ffprobe": 0.06912493705749512,
+        "ffmpeg": 0.06660652160644531,
+        "tinytag": 0.0005869865417480469,
+        "eyed3": 0.0005538463592529297,
+        "music_tag": 0.0004143714904785156
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "Adam Grant - Geben und Nehmen.m4b": {
+      "duration": 0.23168611526489258,
+      "parser_times": {
+        "filename": 4.8160552978515625e-05,
+        "mutagen": 0.0004849433898925781,
+        "pymediainfo": 0.02449798583984375,
+        "ffprobe": 0.09954428672790527,
+        "ffmpeg": 0.10437822341918945,
+        "tinytag": 0.0007030963897705078,
+        "eyed3": 0.0005323886871337891,
+        "music_tag": 0.0004413127899169922
+      },
+      "status": "success",
+      "tag_count": 29
+    },
+    "Youth Of The Nation - P.O.D.opus": {
+      "duration": 0.13081049919128418,
+      "parser_times": {
+        "filename": 3.4809112548828125e-05,
+        "mutagen": 0.000171661376953125,
+        "pymediainfo": 0.002064228057861328,
+        "ffprobe": 0.06731486320495605,
+        "ffmpeg": 0.059298038482666016,
+        "tinytag": 0.0005252361297607422,
+        "eyed3": 0.0003466606140136719,
+        "music_tag": 0.00028896331787109375
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "Coldplay - Viva La Vida.opus": {
+      "duration": 0.13466358184814453,
+      "parser_times": {
+        "filename": 3.4332275390625e-05,
+        "mutagen": 0.00016117095947265625,
+        "pymediainfo": 0.0015385150909423828,
+        "ffprobe": 0.06146526336669922,
+        "ffmpeg": 0.06959271430969238,
+        "tinytag": 0.00047087669372558594,
+        "eyed3": 0.0003273487091064453,
+        "music_tag": 0.0003025531768798828
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "04 One of Us Must Know (Sooner or Later).m4a": {
+      "duration": 0.12107586860656738,
+      "parser_times": {
+        "filename": 3.8623809814453125e-05,
+        "mutagen": 0.0003056526184082031,
+        "pymediainfo": 0.0017364025115966797,
+        "ffprobe": 0.06006598472595215,
+        "ffmpeg": 0.05684304237365723,
+        "tinytag": 0.0005578994750976562,
+        "eyed3": 0.00036454200744628906,
+        "music_tag": 0.0004138946533203125
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "03_deichkind_-_remmidemmi_(yippie_yippie_yeah) - (alben.to).wma": {
+      "duration": 0.12735366821289062,
+      "parser_times": {
+        "filename": 3.457069396972656e-05,
+        "mutagen": 0.0002574920654296875,
+        "pymediainfo": 0.0017507076263427734,
+        "ffprobe": 0.0633397102355957,
+        "ffmpeg": 0.059156179428100586,
+        "tinytag": 0.0007414817810058594,
+        "eyed3": 0.0005593299865722656,
+        "music_tag": 0.0005695819854736328
+      },
+      "status": "success",
+      "tag_count": 28
+    },
+    "30. Pleisweiler Gespräch - Vortrag - Prof. Dr. Gertraud Teuchert-Noodt - 21. Oktober 2018 (720p_30fps_H264-192kbit_AAC).mp4": {
+      "duration": 0.2281174659729004,
+      "parser_times": {
+        "filename": 5.626678466796875e-05,
+        "container": 0.018796682357788086,
+        "pymediainfo": 0.014010429382324219,
+        "ffprobe": 0.09944844245910645,
+        "ffmpeg": 0.09425044059753418
+      },
+      "status": "success",
+      "tag_count": 37
+    },
+    ".cache": {
+      "duration": 0.00033020973205566406,
+      "parser_times": {},
+      "status": "success",
+      "tag_count": 21
+    },
+    "Adam Grant - Nonkonformisten.m4b": {
+      "duration": 0.1532421112060547,
+      "parser_times": {
+        "filename": 3.933906555175781e-05,
+        "mutagen": 0.0004730224609375,
+        "pymediainfo": 0.028672218322753906,
+        "ffprobe": 0.12276005744934082
+      },
+      "status": "success",
+      "tag_count": 28
+    },
+    "01-02-Oscar_Peterson-Easy_Does_It-LLS.m4a": {
+      "duration": 0.12587523460388184,
+      "parser_times": {
+        "filename": 4.863739013671875e-05,
+        "mutagen": 0.0005137920379638672,
+        "pymediainfo": 0.0030012130737304688,
+        "ffprobe": 0.06112194061279297,
+        "ffmpeg": 0.05784869194030762,
+        "tinytag": 0.0008723735809326172,
+        "eyed3": 0.0006685256958007812,
+        "music_tag": 0.0006151199340820312
+      },
+      "status": "success",
+      "tag_count": 22
+    },
+    "1411_c_von_a_bis.iso": {
+      "duration": 0.40128087997436523,
+      "parser_times": {
+        "filename": 6.079673767089844e-05,
+        "container": 1.9311904907226562e-05,
+        "pymediainfo": 0.004087924957275391,
+        "ffprobe": 0.10545992851257324,
+        "ffmpeg": 0.10280776023864746,
+        "pycdlib": 0.0005304813385009766,
+        "isoparser": 0.03519916534423828
+      },
+      "status": "success",
+      "tag_count": 26
+    }
+  }
+}
