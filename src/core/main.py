@@ -181,6 +181,7 @@ initialize_debug_flags()
 STARTUP_TIME = time.time()
 BROWSER_PID = None  # Global to track browser process
 
+
 # PID-Logging beim Startup
 main_pid = os.getpid()
 testbed_pid = find_venv_pid('.venv_testbed')
@@ -188,6 +189,9 @@ selenium_pid = find_venv_pid('.venv_selenium')
 logging.info(f"[System] Main PID: {main_pid}")
 logging.info(f"[System] Testbed PID: {testbed_pid if testbed_pid else 'nicht aktiv'}")
 logging.info(f"[System] Selenium PID: {selenium_pid if selenium_pid else 'nicht aktiv'}")
+# Logge Browser-PID, falls schon gesetzt (z.B. bei Headless-Start)
+if BROWSER_PID:
+    logging.info(f"[System] Browser PID: {BROWSER_PID}")
 
 try:
     from src.core.models import MediaItem
@@ -1708,6 +1712,7 @@ def open_session_url(url: str) -> bool:
                 )
                 global BROWSER_PID
                 BROWSER_PID = process.pid
+                logging.info(f"[Browser] Gestartet wurde: {browser_cmd} (PID: {BROWSER_PID})")
                 return True
             except Exception as e:
                 logging.warning(
