@@ -146,7 +146,7 @@
         }
 
         /* Playlist pick-and-insert visuals */
-        .media-item.picked {
+        .implementation-encapsulated-state-buffer-node.picked {
             outline: 2px dashed #2a7;
             transform: scale(1.02);
             background: #fffef8;
@@ -270,7 +270,7 @@
             overflow: hidden;
         }
 
-        .media-item {
+        .implementation-encapsulated-state-buffer-node {
             padding: 12px;
             margin-bottom: 8px;
             border: 1px solid #eee;
@@ -284,7 +284,7 @@
             position: relative;
         }
 
-        .media-item.drop-target-before::before {
+        .implementation-encapsulated-state-buffer-node.drop-target-before::before {
             content: '';
             position: absolute;
             top: -5px;
@@ -297,17 +297,17 @@
             box-shadow: 0 0 8px rgba(52, 152, 219, 0.8);
         }
 
-        .media-item.playing {
+        .implementation-encapsulated-state-buffer-node.playing {
             background: #eefbff;
             border-color: #0277bd;
             box-shadow: 0 2px 5px rgba(2, 119, 189, 0.1);
         }
 
-        .media-item.playing strong {
+        .implementation-encapsulated-state-buffer-node.playing strong {
             color: #0277bd;
         }
 
-        .media-item:hover {
+        .implementation-encapsulated-state-buffer-node:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
             border-color: #ddd;
@@ -1493,7 +1493,7 @@
         window.addEventListener('unhandledrejection', function (event) {
             if (isUnsupportedMediaError(event.reason)) {
                 console.warn('Unsupported media source rejected by browser:', event.reason);
-                const statusEl = document.getElementById('status');
+                const statusEl = document.getElementById('active-orchestration-status-message-renderer');
                 if (statusEl) {
                     statusEl.textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
                 }
@@ -1604,7 +1604,7 @@
             </div>
 
             <div id="indexed-sqlite-media-repository-panel" class="tab-content" style="overflow-y: auto; width: 100%;">
-                <div id="library-list"></div>
+                <div id="persistent-sqlite-repository-item-grid"></div>
             </div>
 
             <div id="json-serialized-sequence-buffer-panel" class="tab-content"
@@ -1613,7 +1613,8 @@
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <h2 style="margin: 0;" data-i18n="nav_playlist">Playlist</h2>
-                        <span id="playlist-count" style="color: #666; font-size: 0.9em;">0 Items</span>
+                        <span id="json-serialized-sequence-length-renderer" style="color: #666; font-size: 0.9em;">0
+                            Items</span>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -1623,22 +1624,25 @@
                             <button onclick="loadPlaylistUI()" class="sidebar-badge"
                                 style="cursor: pointer; border: 1px solid #ddd; background: #fff8e1; color: #6d4c41; display: flex; align-items: center; gap: 4px;">
                                 <span class="icon-load"></span> <span data-i18n="pl_load">Load</span></button>
-                            <button onclick="toggleShuffle()" id="pl-shuffle-btn" class="sidebar-badge"
+                            <button onclick="toggleShuffle()" id="sequence-buffer-randomization-orchestrator"
+                                class="sidebar-badge"
                                 style="cursor: pointer; border: 1px solid #ddd; display: flex; align-items: center; gap: 4px;">
                                 <span class="icon-shuffle"></span> <span data-i18n="pl_shuffle">Shuffle</span></button>
                             <button onclick="clearPlaylist()" class="sidebar-badge"
                                 style="cursor: pointer; border: 1px solid #ddd; color: #c0392b; display: flex; align-items: center; gap: 4px;">
                                 <span class="icon-clear"></span> <span data-i18n="pl_clear">Clear</span></button>
-                            <button id="pl-move-up" onclick="moveCurrentUp()" class="sidebar-badge"
+                            <button id="sequence-buffer-index-decrement-trigger" onclick="moveCurrentUp()"
+                                class="sidebar-badge"
                                 style="cursor: pointer; border: 1px solid #ddd; display: flex; align-items: center; gap: 4px;">
                                 <span class="icon-up"></span> <span data-i18n="pl_move_up">Up</span></button>
-                            <button id="pl-move-down" onclick="moveCurrentDown()" class="sidebar-badge"
+                            <button id="sequence-buffer-index-increment-trigger" onclick="moveCurrentDown()"
+                                class="sidebar-badge"
                                 style="cursor: pointer; border: 1px solid #ddd; display: flex; align-items: center; gap: 4px;">
                                 <span class="icon-down"></span> <span data-i18n="pl_move_down">Down</span></button>
                         </div>
                     </div>
                 </div>
-                <div id="playlist-list"></div>
+                <div id="json-serialized-sequence-item-container"></div>
             </div>
 
             <div id="metadata-writer-crud-panel" class="tab-content"
@@ -2781,7 +2785,8 @@
                     </button>
                 </div>
             </div>
-            <div id="status" style="font-size: 0.85em;" data-i18n="player_select_song">Wählt ein Lied aus
+            <div id="active-orchestration-status-message-renderer" style="font-size: 0.85em;"
+                data-i18n="player_select_song">Wählt ein Lied aus
                 der Liste!
             </div>
         </div>
@@ -3073,7 +3078,7 @@
 
         function updateShuffleUI() {
             const btn = document.getElementById('btn-shuffle');
-            const plBtn = document.getElementById('pl-shuffle-btn');
+            const plBtn = document.getElementById('sequence-buffer-randomization-orchestrator');
 
             [btn, plBtn].forEach(b => {
                 if (!b) return;
@@ -3692,12 +3697,12 @@
         }
 
         function renderPlaylist() {
-            const list = document.getElementById('playlist-list');
-            const countEl = document.getElementById('playlist-count');
+            const list = document.getElementById('json-serialized-sequence-item-container');
+            const countEl = document.getElementById('json-serialized-sequence-length-renderer');
             if (!list) return;
 
-            const moveUpBtn = document.getElementById('pl-move-up');
-            const moveDownBtn = document.getElementById('pl-move-down');
+            const moveUpBtn = document.getElementById('sequence-buffer-index-decrement-trigger');
+            const moveDownBtn = document.getElementById('sequence-buffer-index-increment-trigger');
             if (moveUpBtn) {
                 moveUpBtn.disabled = isShuffle;
                 moveUpBtn.style.opacity = isShuffle ? '0.3' : '1';
@@ -3715,7 +3720,7 @@
 
             activeList.forEach((item, index) => {
                 let div = document.createElement('div');
-                div.className = 'media-item';
+                div.className = 'implementation-encapsulated-state-buffer-node';
                 if (index === playlistIndex) div.classList.add('playing');
                 if (index === pickedIndex) div.classList.add('picked');
                 if (pickedIndex !== -1) div.style.cursor = 'cell'; // Indicate insert mode
@@ -3871,7 +3876,7 @@
             window.addEventListener('mouseup', onGlobalUp);
 
             // Visual confirmation
-            const list = document.getElementById('playlist-list');
+            const list = document.getElementById('json-serialized-sequence-item-container');
             if (list && list.children[index]) {
                 list.children[index].classList.add('picked-flash');
                 setTimeout(() => { if (list.children[index]) list.children[index].classList.remove('picked-flash'); }, 500);
@@ -3952,7 +3957,7 @@
             if (window._pickAutoCancel) { clearTimeout(window._pickAutoCancel); window._pickAutoCancel = null; }
 
             // Immediate DOM cleanup for speed
-            document.querySelectorAll('.media-item').forEach(el => {
+            document.querySelectorAll('.implementation-encapsulated-state-buffer-node').forEach(el => {
                 el.classList.remove('drop-target-before', 'drop-target-after', 'picked', 'picked-flash');
                 el.style.cursor = '';
             });
@@ -4216,7 +4221,7 @@
 
         async function refreshLibrary() {
             let result = await eel.get_library()();
-            let list = document.getElementById('library-list');
+            let list = document.getElementById('persistent-sqlite-repository-item-grid');
             list.innerHTML = '';
             if (!result.media || result.media.length === 0) {
                 list.innerHTML = `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`;
@@ -4224,7 +4229,7 @@
             }
             result.media.forEach(item => {
                 let div = document.createElement('div');
-                div.className = 'media-item';
+                div.className = 'implementation-encapsulated-state-buffer-node';
                 let tags = item.tags;
                 let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
                 let trackStr = tags.track ? 'Track ' + tags.track : '';
@@ -4255,7 +4260,7 @@
 
         async function scan(targetDir = null, clearDb = true) {
             const scanBtn = document.getElementById('scan-btn');
-            const status = document.getElementById('status');
+            const status = document.getElementById('active-orchestration-status-message-renderer');
 
             if (typeof set_db_status === 'function') {
                 set_db_status(true);
@@ -4308,7 +4313,7 @@
             stopVideo();
 
             // Highlight in list
-            document.querySelectorAll('.media-item').forEach((el, idx) => {
+            document.querySelectorAll('.implementation-encapsulated-state-buffer-node').forEach((el, idx) => {
                 let list = isShuffle ? shuffledPlaylist : currentPlaylist;
                 if (list[idx] === item) {
                     el.classList.add('playing');
@@ -4326,7 +4331,7 @@
             activeAudioPipeline.play().catch(e => {
                 if (isUnsupportedMediaError(e)) {
                     console.warn('Audio playback unsupported for source:', path, e);
-                    document.getElementById('status').textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
+                    document.getElementById('active-orchestration-status-message-renderer').textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
                     return;
                 }
                 console.error('Audio playback failed:', e);
@@ -4338,7 +4343,7 @@
             }
 
             // Update Status Bar
-            document.getElementById('status').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
+            document.getElementById('active-orchestration-status-message-renderer').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
 
             // Update Sidebar
             let tags = item.tags;
@@ -4739,7 +4744,7 @@
             retryCount = retryCount || 0;
             try {
                 let result = await eel.get_library()();
-                let list = document.getElementById('media-list');
+                let list = document.getElementById('state-orchestrated-active-queue-list-container');
                 list.innerHTML = '';
                 console.log("[loadLibrary] Result from backend:", result);
                 if (!result || !result.media || result.media.length === 0) {
@@ -4782,7 +4787,7 @@
 
                 result.media.forEach((item, index) => {
                     let div = document.createElement('div');
-                    div.className = 'media-item';
+                    div.className = 'implementation-encapsulated-state-buffer-node';
                     let tags = item.tags || {}; // Fallback if tags object is completely missing
                     let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
                     let trackStr = tags.track ? t('lib_track_prefix') + tags.track : '';
@@ -4827,7 +4832,7 @@
                     console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
                     setTimeout(() => loadLibrary(retryCount + 1), 1000);
                 } else {
-                    let list = document.getElementById('media-list');
+                    let list = document.getElementById('state-orchestrated-active-queue-list-container');
                     if (list) list.innerHTML = `<p style="padding: 20px; color: #c33;">${t('lib_error_loading')}${e.message}</p>`;
                 }
             }
