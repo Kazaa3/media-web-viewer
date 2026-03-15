@@ -1,45 +1,26 @@
-#dict - Web Media Player and Library Manager v.{VERSION}
+# dict – Web Media Player & Library Manager v1.34
+# -----------------------------------------
+# Main entry point: Initializes Eel, exposes API, starts app, and handles environment detection.
+#
+# Usage:   python src/core/main.py
+# License: GNU GPL v3 (see https://www.gnu.org/licenses/)
+# Author:  kazaa3
+#
+# Purpose:
+#   - Desktop/Browser Media Player & Library Manager
+#   - API exposure for frontend/backend communication
+#   - Environment & dependency detection
+#   - Modular extension point for future features
+#
+# Inputs:  sys, os, platform, Eel, core modules
+# Outputs: App status, API, log output
+# Tests:   src/core/main.py, tests/*
+#
+# TODO:
+#   - Modularization
+#   - API tests
+#   - Performance monitoring
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Kategorie: Main Entry & API Exposure
-# Eingabewerte: sys, os, platform, Eel, core modules
-# Ausgabewerte: App-Status, API, Log-Ausgaben
-# Testdateien: src/core/main.py, tests/*
-# ERWEITERUNGEN (TODO): [ ] Modularisierung, API-Tests, Performance-Monitoring
-# KOMMENTAR: Initialisiert Eel, API-Exporte, App-Start, Environment-Detection
-# VERWENDUNG: python src/core/main.py
-
-"""
-KATEGORIE:
-----------
-Main Entry & API Exposure
-eb
-ZWECK:
-------
-Initialisiert Eel, API-Exporte, App-Start und Environment-Detection für Media Web Viewer.
-
-EINGABEWERTE:
--------------
-- sys, os, platform, Eel, core modules
-
-AUSGABEWERTE:
--------------
-- App-Status, API, Log-Ausgaben
-
-TESTDATEIEN:
-------------
-- src/core/main.py
-- tests/*
-
-ERWEITERUNGEN (TODO):
----------------------
-- [ ] Modularisierung, API-Tests, Performance-Monitoring
-
-VERWENDUNG:
------------
-    python src/core/main.py
-"""
 """
 dict - Desktop Media Player and Library Manager
 

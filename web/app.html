@@ -756,8 +756,8 @@
                 'tests': 'tests',
                 'logbuch': 'logbuch-tab',
                 'playlist': 'playlist-tab',
-                'vlc': 'video-tab',
-                'video': 'video-tab'
+                'vlc': 'vlc',
+                'video': 'vlc'
             };
 
             const targetId = tabMap[tabId];
@@ -2187,7 +2187,7 @@
             </div>
 
             <!-- Video Player Tab -->
-            <div id="video-tab" class="tab-content"
+            <div id="vlc" class="tab-content"
                 style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
                 <div style="max-width: 1000px; margin: 0 auto;">
                     <div
@@ -2204,14 +2204,16 @@
                                     data-i18n="video_mode_label">Modus:</span>
                                 <select id="video-mode-select" onchange="updateVideoMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <option value="browser" data-i18n="video_mode_chrome">Chrome Native</option>
-                                    <option value="integrated" data-i18n="video_mode_ffmpeg_browser" selected>FFmpeg
+                                    <option value="browser" data-i18n="video_mode_chrome" selected>Chrome Native
+                                    </option>
+                                    <option value="integrated" data-i18n="video_mode_ffmpeg_browser">FFmpeg
                                         Engine → Chrome</option>
                                     <option value="vlc_browser" data-i18n="video_mode_vlc_browser">VLC Engine → Chrome
                                     </option>
                                     <option value="directplay" data-i18n="video_mode_mkvmerge_vlc">mkvmerge → VLC
                                         (Local)</option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
+                                    <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
                                 </select>
                             </div>
                             <div
@@ -2238,6 +2240,24 @@
                             <div id="video-placeholder" style="color: #444; text-align: center; padding: 40px;">
                                 <div style="font-size: 4em; margin-bottom: 10px;">🎞️</div>
                                 <p data-i18n="video_placeholder">Kein Video ausgewählt</p>
+                            </div>
+                        </div>
+
+                        <!-- Drag & Drop Panel (integrated) -->
+                        <div id="vlc-dnd-panel" style="display: none; margin-bottom: 20px;">
+                            <div id="vlc-drop-zone"
+                                style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 40px; text-align: center; font-weight: 600; transition: all 0.2s;">
+                                Datei hier hineinziehen, um sie in VLC zu öffnen
+                            </div>
+                            <div style="margin-top: 10px; text-align: center;">
+                                <button onclick="pickAndPlayInVLC()"
+                                    style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    📂 Datei auswählen
+                                </button>
+                                <button onclick="runBatchRemux()"
+                                    style="padding: 8px 14px; border: 1px solid #2a7; background: #2a7; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 10px;">
+                                    <span data-i18n="vlc_btn_batch_remux">📦 Batch-Remux zu MKV</span>
+                                </button>
                             </div>
                         </div>
 
@@ -2274,38 +2294,10 @@
                         style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
                         <h3
                             style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                            🎬 VLC Ribbon
+                            🎬 VLC Stream
                         </h3>
 
-                        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
-                            <button id="vlc-ribbon-dnd-btn" onclick="setVlcRibbonMode('dnd')"
-                                style="padding: 8px 12px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 8px; cursor: pointer; font-weight: 700;">
-                                Variante 1: Drag & Drop
-                            </button>
-                            <button id="vlc-ribbon-stream-btn" onclick="setVlcRibbonMode('stream')"
-                                style="padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; color: #666; border-radius: 8px; cursor: pointer; font-weight: 700;">
-                                Variante 2: Streaming
-                            </button>
-                        </div>
-
-                        <div id="vlc-dnd-panel" style="display: block;">
-                            <div id="vlc-drop-zone"
-                                style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 20px; text-align: center; font-weight: 600; transition: all 0.2s;">
-                                Datei hier hineinziehen, um sie in VLC zu öffnen
-                            </div>
-                            <div style="margin-top: 10px; text-align: center;">
-                                <button onclick="pickAndPlayInVLC()"
-                                    style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                                    📂 Datei auswählen
-                                </button>
-                                <button onclick="runBatchRemux()"
-                                    style="padding: 8px 14px; border: 1px solid #2a7; background: #2a7; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 10px;">
-                                    <span data-i18n="vlc_btn_batch_remux">📦 Batch-Remux zu MKV</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="vlc-stream-panel" style="display: none;">
+                        <div id="vlc-stream-panel" style="display: block;">
                             <div style="display: flex; gap: 10px;">
                                 <input id="vlc-stream-url" type="text"
                                     placeholder="https://... | rtsp://... | rtmp://..."
@@ -2315,10 +2307,9 @@
                                     ▶ Stream starten
                                 </button>
                             </div>
-                        </div>
-
-                        <div id="vlc-ribbon-status"
-                            style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;">
+                            <div id="vlc-ribbon-status"
+                                style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;">
+                            </div>
                         </div>
                     </div>
 
@@ -2396,7 +2387,6 @@
                             </ul>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -4202,9 +4192,22 @@
             const mode = select.value;
 
             // Show "Open in VLC" button only if in browser mode and video loaded
-            document.getElementById('btn-open-vlc').style.display = (mode !== 'browser' && currentVideoItem) ? 'flex' : 'none';
+            document.getElementById('btn-open-vlc').style.display = (mode !== 'browser' && mode !== 'dnd' && currentVideoItem) ? 'flex' : 'none';
             if (mode !== 'browser') {
                 hideUnsupportedVideoHint();
+            }
+
+            // Sync D&D Panel visibility
+            const dndPanel = document.getElementById('vlc-dnd-panel');
+            if (dndPanel) {
+                const embedded = document.getElementById('embedded-video-container');
+                if (mode === 'dnd') {
+                    dndPanel.style.display = 'block';
+                    embedded.style.display = 'none';
+                } else {
+                    dndPanel.style.display = 'none';
+                    embedded.style.display = 'flex';
+                }
             }
         }
 
@@ -4243,8 +4246,15 @@
                 } else {
                     alert(result.error);
                 }
+            } else if (mode === 'browser') {
+                // Chrome Native - Use media route to bypass local file security
+                startEmbeddedVideo(item, `/media/${encodeURIComponent(item.path)}`);
+            } else if (mode === 'dnd') {
+                // Drag & Drop mode - just ensure panel is visible
+                updateVideoMode();
+                stopVideo();
             } else {
-                // Chrome Native
+                // Fallback
                 startEmbeddedVideo(item, path);
             }
         }
@@ -4341,9 +4351,12 @@
 
         function switchToVLC() {
             if (currentVideoItem) {
-                document.getElementById('video-mode-toggle').checked = true;
-                updateVideoMode();
-                startVLC(currentVideoItem.path);
+                const select = document.getElementById('video-mode-select');
+                if (select) {
+                    select.value = 'vlc';
+                    updateVideoMode();
+                    startVLC(currentVideoItem.path);
+                }
             }
         }
 
