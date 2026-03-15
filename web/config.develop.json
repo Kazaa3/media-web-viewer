@@ -1,6 +1,6 @@
 {
-    "debug": true,
-    "log_level": "DEBUG",
+    "debug": false,
+    "log_level": "INFO",
     "start_page": "player",
     "browse_default_dir": "~/index",
     "library_dir": "media",
@@ -11,7 +11,7 @@
     ],
     "feature_flags": {
         "experimental_transcoding": true,
-        "verbose_parsing": true,
+        "verbose_parsing": false,
         "show_test_tab": true
     },
     "api": {
