@@ -6,6 +6,9 @@
 # Testdateien: Keine (Runtime test)
 # Kommentar: Testet Debug-Flag-System.
 import logging
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "core"))
 import logger
 
 def test_debug_component_filtering():
