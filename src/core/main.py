@@ -767,18 +767,42 @@ def _get_requirements_status():
     """Get install status for requirements.txt packages in current interpreter."""
     import importlib.util
 
-    requirements_file = PROJECT_ROOT / "requirements.txt"
+    # Check multiple locations for requirements
+    req_locations = [
+        PROJECT_ROOT / "requirements.txt",
+        PROJECT_ROOT / "infra" / "requirements.txt",
+        PROJECT_ROOT / "infra" / "requirements-run.txt",
+        PROJECT_ROOT / "infra" / "requirements-core.txt"
+    ]
+    
+    requirements_file = None
+    for loc in req_locations:
+        if loc.exists():
+            requirements_file = loc
+            # If it's a main redirect/entry, use it and stop.
+            if loc.name == "requirements.txt" or loc.name == "requirements-run.txt":
+                 break
+
+    if not requirements_file:
+        return {
+            "available": False,
+            "total": 0,
+            "installed_count": 0,
+            "missing_count": 0,
+            "installed": [],
+            "missing": [],
+            "source": "None"
+        }
+
     status = {
-        "available": requirements_file.exists(),
+        "available": True,
         "total": 0,
         "installed_count": 0,
         "missing_count": 0,
         "installed": [],
         "missing": [],
+        "source": str(requirements_file.relative_to(PROJECT_ROOT))
     }
-
-    if not requirements_file.exists():
-        return status
 
     import_overrides = {
         "python-vlc": "vlc",
@@ -787,33 +811,61 @@ def _get_requirements_status():
         "pytest-cov": "pytest_cov",
         "pyinstaller": "PyInstaller",
         "pillow": "PIL",
+        "markdown": "markdown",
+        "scapy": "scapy",
+        "future": "future",
+        "chardet": "chardet",
+        "pyscreeze": "pyscreeze",
+        "pyautogui": "pyautogui",
     }
 
     requirement_names = set()
-    try:
-        for raw_line in requirements_file.read_text(
-                encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if line.startswith(("-r", "--")):
-                continue
+    
+    def parse_requirements(file_path, seen=None):
+        if seen is None: seen = set()
+        # Normalize path for seen set
+        try:
+            abs_path = file_path.resolve()
+        except:
+            return
+        if str(abs_path) in seen: return
+        seen.add(str(abs_path))
+        
+        try:
+            for raw_line in file_path.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                
+                # Handle recursive requirements (-r)
+                if line.startswith("-r"):
+                    ref_name = line[2:].strip()
+                    ref_path = file_path.parent / ref_name
+                    if ref_path.exists():
+                        parse_requirements(ref_path, seen)
+                    continue
+                
+                # Handle other pip flags we don't care about for existence check
+                if line.startswith("-"):
+                    continue
 
-            line = line.split(" #", 1)[0].split(";", 1)[0].strip()
-            if not line:
-                continue
+                line = line.split(" #", 1)[0].split(";", 1)[0].strip()
+                if not line:
+                    continue
 
-            if " @ " in line:
-                package_name = line.split(" @ ", 1)[0].strip()
-            else:
-                package_name = re.split(
-                    r"(==|>=|<=|~=|!=|>|<)", line, maxsplit=1)[0].strip()
+                if " @ " in line:
+                    package_name = line.split(" @ ", 1)[0].strip()
+                else:
+                    # Capture everything before the first version specifier
+                    package_name = re.split(
+                        r"(==|>=|<=|~=|!=|>|<|\[)", line, maxsplit=1)[0].strip()
 
-            if package_name:
-                requirement_names.add(package_name)
-    except Exception as e:
-        status["error"] = str(e)  # type: ignore
-        return status
+                if package_name:
+                    requirement_names.add(package_name)
+        except Exception as e:
+            logging.error(f"Error parsing {file_path}: {e}")
+
+    parse_requirements(requirements_file)
 
     installed = []
     missing = []
@@ -4106,11 +4158,26 @@ def run_tests(test_files):
     env["PYTHONPATH"] = f"{root_dir}:{root_dir}/src"
     env["MWV_DISABLE_BROWSER_OPEN"] = "1"
 
+    # Detect environment strategy:
+    # 1. Check if current interpreter has pytest
+    # 2. If not, check if .venv_testbed exists
+    # 3. Fallback to sys.executable and hope for the best
+    import importlib.util
+    test_python = sys.executable
+    if importlib.util.find_spec("pytest") is None:
+        # Specialized venvs discovery
+        known_venvs = [".venv_testbed", ".venv_dev", "venv"]
+        for venv_name in known_venvs:
+            venv_bin = root_dir / venv_name / "bin" / "python"
+            if venv_bin.exists():
+                test_python = str(venv_bin)
+                break
+
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
     # Stream output lines live to frontend for real-time refresh.
     try:
         process = subprocess.Popen(
-            [sys.executable, "-m", "pytest", "-q"] + valid_files,
+            [test_python, "-m", "pytest", "-q"] + valid_files,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

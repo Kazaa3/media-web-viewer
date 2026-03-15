@@ -156,6 +156,26 @@ class BuildSystem:
         # Fallback to current sys.executable
         return sys.executable
 
+    def get_test_python(self) -> str:
+        """
+        Return the python executable to use for tests.
+        Prioritizes specialized test venvs if the current one is insufficient.
+        """
+        # 1. If current python has pytest, use it
+        import importlib.util
+        if importlib.util.find_spec("pytest") is not None:
+             return sys.executable
+             
+        # 2. Look for specialized venvs
+        test_venvs = [".venv_testbed", ".venv_dev", "venv"]
+        for name in test_venvs:
+             py_bin = self.root / name / "bin" / "python"
+             if py_bin.exists():
+                  return str(py_bin)
+                  
+        # 3. Fallback
+        return sys.executable
+
     def _get_current_branch(self) -> str:
         """Detect the current git branch."""
         try:
@@ -341,7 +361,7 @@ class BuildSystem:
                 print(f"❌ Unknown test tier: {tier}")
                 return False
 
-            cmd = [sys.executable, "-m", "pytest", path]
+            cmd = [self.get_test_python(), "-m", "pytest", path]
             if verbose:
                 cmd.append("-v")
 
@@ -414,7 +434,7 @@ class BuildSystem:
         """
         self._print_banner(f"Build Test Gate (v{self.version})")
 
-        cmd = [sys.executable, "-m", "pytest"]
+        cmd = [self.get_test_python(), "-m", "pytest"]
         if verbose:
             cmd.append("-v")
         else:
