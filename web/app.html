@@ -2483,6 +2483,8 @@
                                     </option>
                                     <option value="integrated" data-i18n="video_mode_ffmpeg_browser">FFmpeg
                                         Engine → Chrome</option>
+                                    <option value="hybrid" data-i18n="video_mode_hybrid">Chrome Native (Hybrid VLC
+                                        Fallback)</option>
                                     <option value="vlc_browser" data-i18n="video_mode_vlc_browser">VLC Engine → Chrome
                                     </option>
                                     <option value="directplay" data-i18n="video_mode_mkvmerge_vlc">mkvmerge → VLC
@@ -4528,6 +4530,33 @@
             } else if (mode === 'integrated') {
                 // FFmpeg Engine -> Chrome
                 startEmbeddedVideo(item, `/video-stream/${encodeURIComponent(item.path)}`);
+            } else if (mode === 'hybrid') {
+                // Hybrid: Try Chrome Native, then fallback to VLC only if NotSupported
+                const nativeUrl = `/media/${encodeURIComponent(item.path)}`;
+                const videoEl = document.getElementById('native-html5-video-resource-node');
+
+                startEmbeddedVideo(item, nativeUrl, async () => {
+                    const err = videoEl.error;
+                    console.warn("Hybrid Mode: Native attempt reported error code:", err ? err.code : 'unknown');
+
+                    // Fallback to VLC if it's a format support issue (Code 4) or unknown
+                    if (!err || err.code === 4) {
+                        console.log("Switching to VLC fallback for", item.name);
+                        const res = await eel.stream_to_vlc(item.path)();
+                        if (res.status === 'ok') {
+                            document.getElementById('vlc-info').style.display = 'block';
+                            document.getElementById('vlc-current-file').innerText = item.path;
+                            videoEl.style.display = 'none';
+                            document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
+                            hideUnsupportedVideoHint();
+                        } else {
+                            showUnsupportedVideoHint();
+                        }
+                    } else {
+                        // Other error (e.g. network 2, abort 3), just show hint
+                        showUnsupportedVideoHint();
+                    }
+                });
             } else if (mode === 'directplay') {
                 // mkvmerge -> VLC (Local)
                 const result = await eel.stream_to_vlc(item.path)();
@@ -4578,7 +4607,7 @@
             }
         }
 
-        function startEmbeddedVideo(item, path) {
+        function startEmbeddedVideo(item, path, onErrorCallback = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
@@ -4590,7 +4619,13 @@
             placeholder.style.display = 'none';
             video.style.display = 'block';
             video.onloadeddata = () => hideUnsupportedVideoHint();
-            video.onerror = () => showUnsupportedVideoHint();
+            video.onerror = () => {
+                if (typeof onErrorCallback === 'function') {
+                    onErrorCallback();
+                } else {
+                    showUnsupportedVideoHint();
+                }
+            };
             video.src = path;
             video.play().catch(e => {
                 if (isUnsupportedMediaError(e)) {
