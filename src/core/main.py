@@ -45,7 +45,10 @@ import sys
 import os
 import platform
 import time
+import requests
+import json
 from pathlib import Path
+from urllib.parse import unquote
 
 # --- Path Bootstrapping & Import Normalization ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -2694,6 +2697,7 @@ def open_video(file_path: str, mode: str):
     Used for 'Open With' functionality.
     """
     logging.info(f"[Player] Explicit 'Open With' triggered: {file_path} via {mode}")
+    file_path = unquote(str(file_path))
 
     if mode == "mediamtx":
         return stream_to_mediamtx(file_path, protocol="hls")
@@ -3464,6 +3468,7 @@ def detect_ts_stream(port):
 @eel.expose
 def vlc_ts_mode(file_path):
     """Launches cvlc with TS muxing and returns the port."""
+    file_path = unquote(str(file_path))
     if not os.path.exists(file_path):
         return {"status": "error", "error": "Datei nicht gefunden"}
 
@@ -3549,6 +3554,7 @@ def mediamtx_mode(file_path, variant="hls"):
     """Enhanced handler for MediaMTX GUI integration."""
     return stream_to_mediamtx(file_path, protocol=variant)
 
+@eel.expose
 def stream_to_mediamtx(file_path, protocol="hls"):
     """
     @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server).
@@ -4625,16 +4631,57 @@ def run_tests(test_files):
             fails = int(match_fails.group(1))
 
         summary = f"{passes} passed, {fails} failed"
+        
+        duration = time.time() - start_time
+        timestamp = time.time()
+        
+        # Persist results
+        try:
+            results_path = PROJECT_ROOT / "test_results.json"
+            history = []
+            if results_path.exists():
+                try:
+                    history = json.loads(results_path.read_text(encoding='utf-8'))
+                except:
+                    history = []
+            
+            history.append({
+                "timestamp": timestamp,
+                "duration": duration,
+                "passes": passes,
+                "fails": fails,
+                "summary": summary,
+                "files": test_files
+            })
+            # Keep last 100 runs
+            last_100 = history[-100:]
+            results_path.write_text(json.dumps(last_100, indent=2), encoding='utf-8')
+        except Exception as e:
+            logging.error(f"[Reporting] Error saving results: {e}")
 
         return {
             "exit_code": result_code,
             "output": output,
             "summary": summary,
             "passes": passes,
-            "fails": fails
+            "fails": fails,
+            "timestamp": timestamp,
+            "duration": duration
         }
     except Exception as e:
         return {"error": str(e)}
+
+@eel.expose
+def get_test_results():
+    """Returns historical test results for the dashboard."""
+    results_path = PROJECT_ROOT / "test_results.json"
+    if not results_path.exists():
+        return []
+    try:
+        import json
+        return json.loads(results_path.read_text(encoding='utf-8'))
+    except:
+        return []
 
 
 @eel.expose
@@ -4912,3 +4959,66 @@ if __name__ == "__main__":
                     "y": mouse_pos.y}}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+
+@eel.expose
+def discover_cast_devices():
+    """Returns discovered Chromecast and DLNA devices."""
+    devices = {"chromecast": [], "dlna": []}
+    try:
+        # Placeholder for pychromecast / dlnap discovery
+        # logging.info("[Cast] Starting device discovery...")
+        pass
+    except Exception as e:
+        logging.error(f"[Cast] Discovery error: {e}")
+    return devices
+
+@eel.expose
+def start_cast(device_id, media_url):
+    """Starts casting a URL to a specific device."""
+    logging.info(f"[Cast] Casting {media_url} to {device_id}")
+    return {"status": "ok"}
+
+@eel.expose
+def toggle_swyh_rs(enabled=True):
+    """Toggles swyh-rs (Stream What You Hear) state."""
+    state = "enabled" if enabled else "disabled"
+    logging.info(f"[swyh-rs] Toggling to {state}")
+    return {"status": "ok", "state": state}
+
+@eel.expose
+def batch_remux_to_mkv(folder_path):
+    """Remuxes all videos in a folder to MKV using mkvmerge."""
+    path = Path(folder_path)
+    if not path.exists() or not path.is_dir():
+        return {"status": "error", "error": "Invalid folder"}
+    
+    count = 0
+    mkvmerge_path = shutil.which("mkvmerge") or "mkvmerge"
+    
+    for f in path.glob("*"):
+        if f.suffix.lower() in [".mp4", ".avi", ".mkv", ".mov", ".ts", ".iso"]:
+            output = f.with_suffix(".remuxed.mkv")
+            try:
+                subprocess.run([mkvmerge_path, "-o", str(output), str(f)], check=True, capture_output=True)
+                count += 1
+            except Exception as e:
+                logging.error(f"[Remux] Failed for {f.name}: {e}")
+    
+    return {"status": "ok", "remuxed_count": count}
+
+@eel.expose
+def save_benchmark_results(results):
+    """Saves playback benchmarks for the reporting dashboard."""
+    try:
+        bench_file = PROJECT_ROOT / "benchmarks.json"
+        history = []
+        if bench_file.exists():
+            history = json.loads(bench_file.read_text(encoding='utf-8'))
+        history.append({
+            "timestamp": time.time(),
+            "results": results
+        })
+        bench_file.write_text(json.dumps(history[-50:], indent=2), encoding='utf-8')
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}

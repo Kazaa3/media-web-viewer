@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -1702,6 +1703,9 @@
                     DB</button>
                 <button id="qa-validation-tab-trigger" class="tab-btn" onclick="switchTab('tests', this)"
                     data-i18n="nav_tests">Tests</button>
+                <button id="reporting-dashboard-tab-trigger" class="tab-btn" onclick="switchTab('reporting', this)"
+                    style="background: #f1f8e9; border-color: #388e3c; color: #388e3c;"
+                    data-i18n="nav_reporting">Reporting</button>
                 <button id="documentation-journal-tab-trigger" class="tab-btn" onclick="switchTab('logbuch', this)"
                     style="background: #e1f5fe; border-color: #0277bd; color: #0277bd; display: flex; align-items: center; gap: 8px;"
                     data-i18n="nav_logbook">
@@ -2683,6 +2687,37 @@
                 </div>
             </div>
 
+            <!-- Reporting Tab -->
+            <div id="reporting-dashboard-panel" class="tab-content"
+                style="display: none; padding: 20px; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0;" data-i18n="report_title">Test Reporting & Dashboard</h2>
+                    <button onclick="refreshReportingData()"
+                        style="padding: 10px 20px; background: #388e3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        🔄 Daten aktualisieren
+                    </button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div id="status-pie-chart"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
+                    </div>
+                    <div id="duration-bar-chart"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
+                    </div>
+                </div>
+
+                <div id="trend-line-chart"
+                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 400px; margin-bottom: 30px;">
+                </div>
+
+                <div id="report-summary-table-container"
+                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                    <h3 data-i18n="report_summary_label">Letzte Testläufe</h3>
+                    <div id="report-summary-table"></div>
+                </div>
+            </div>
+
             <!-- Video Player Tab -->
             <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
                 style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
@@ -2751,6 +2786,33 @@
                                 </div>
                                 <p data-i18n="video_placeholder">Kein Video ausgewählt</p>
                             </div>
+                        </div>
+
+                        <!-- Advanced Player Controls -->
+                        <div id="advanced-player-controls"
+                            style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
+                            <button id="btn-stop" onclick="stopVideo()" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Stop">■</button>
+                            <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Shuffle">🔀</button>
+                            <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Repeat">🔁</button>
+                            <div style="width: 1px; background: #ddd; margin: 0 5px;"></div>
+                            <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Rewind 10s">⏪</button>
+                            <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Forward 10s">⏩</button>
+                            <button id="btn-speed" onclick="toggleSpeed()" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Speed">⏱️</button>
+                            <button id="btn-eq" onclick="openEQ()" class="player-btn"
+                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
+                                title="Equalizer">🎚️</button>
                         </div>
 
                         <!-- Orchestrator Ingress Buffers -->
@@ -5036,8 +5098,12 @@
 
         async function stopVideo() {
             const video = document.getElementById('native-html5-video-resource-node');
-            if (video) {
+            if (vjsPlayer) {
+                try { vjsPlayer.pause(); } catch (e) { }
+            } else if (video && typeof video.pause === 'function') {
                 video.pause();
+            }
+            if (video) {
                 video.src = "";
                 video.style.display = 'none';
             }
@@ -7038,6 +7104,64 @@
 
         function closeTestEditModal() {
             document.getElementById('test-edit-modal').style.display = 'none';
+        }
+
+        async function refreshReportingData() {
+            const history = await eel.get_test_results()();
+            if (!history || history.length === 0) {
+                document.getElementById('report-summary-table').innerHTML = '<p style="color: #999;">Keine Testdaten vorhanden.</p>';
+                return;
+            }
+            renderCharts(history);
+            renderReportingTable(history);
+        }
+
+        function renderCharts(history) {
+            const recent = history.slice(-20); // Last 20 for charts
+            const timestamps = recent.map(r => new Date(r.timestamp * 1000).toLocaleString());
+            const passes = recent.map(r => r.passes);
+            const fails = recent.map(r => r.fails);
+            const durations = recent.map(r => r.duration);
+
+            // Pie Chart (Total Pass/Fail of all history)
+            let totalP = 0, totalF = 0;
+            history.forEach(r => { totalP += r.passes; totalF += r.fails; });
+            Plotly.newPlot('status-pie-chart', [{
+                values: [totalP, totalF],
+                labels: ['Passed', 'Failed'],
+                type: 'pie',
+                marker: { colors: ['#4caf50', '#f44336'] }
+            }], { title: t('report_total_status'), margin: { t: 40, b: 20, l: 20, r: 20 } });
+
+            // Bar Chart (Duration)
+            Plotly.newPlot('duration-bar-chart', [{
+                x: timestamps,
+                y: durations,
+                type: 'bar',
+                marker: { color: '#2196f3' }
+            }], { title: t('report_duration_ms'), margin: { t: 40 }, xaxis: { visible: false } });
+
+            // Trend Line
+            Plotly.newPlot('trend-line-chart', [
+                { x: timestamps, y: passes, name: 'Passes', line: { color: '#4caf50' } },
+                { x: timestamps, y: fails, name: 'Fails', line: { color: '#f44336' } }
+            ], { title: t('report_trend'), margin: { t: 40 } });
+        }
+
+        function renderReportingTable(history) {
+            let html = '<table style="width:100%; border-collapse: collapse; margin-top: 15px;">';
+            html += '<tr style="background: #f5f5f5;"><th style="padding: 10px; border: 1px solid #ddd;">Datum</th><th style="padding: 10px; border: 1px solid #ddd;">Ergebnis</th><th style="padding: 10px; border: 1px solid #ddd;">Dauer (s)</th></tr>';
+            history.reverse().slice(0, 10).forEach(r => {
+                const date = new Date(r.timestamp * 1000).toLocaleString();
+                const statusColor = r.fails > 0 ? '#d32f2f' : '#388e3c';
+                html += `<tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${date}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; color: ${statusColor}; font-weight: bold;">${r.summary}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${r.duration.toFixed(2)}s</td>
+                </tr>`;
+            });
+            html += '</table>';
+            document.getElementById('report-summary-table').innerHTML = html;
         }
 
         async function saveTestMetadata() {

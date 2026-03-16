@@ -35,7 +35,14 @@ def benchmark_mode(name, cmd, timeout=10):
         logging.error(f"[{name}] Exception: {e}")
         return {"status": "error", "error": str(e)}
 
+import argparse
+import json
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json-report", help="Path to save JSON report")
+    args = parser.parse_args()
+
     test_file = "media/Going Raw - JUDITA_169_OPTION.ISO" # Sample file
     if not os.path.exists(test_file):
         logging.warning(f"Test file {test_file} not found. Using a dummy if possible or skipping.")
@@ -52,3 +59,8 @@ if __name__ == "__main__":
     logging.info("\nFinal Results:")
     for name, res in results.items():
         logging.info(f"{name}: {res}")
+
+    if args.json_report:
+        with open(args.json_report, "w") as f:
+            json.dump(results, f, indent=2)
+        logging.info(f"Report saved to {args.json_report}")
