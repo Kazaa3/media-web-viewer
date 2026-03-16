@@ -1565,7 +1565,9 @@
             const selectedCategory = filter ? filter.value : 'Alle';
             const statusFilter = document.getElementById('logbuch-status-filter');
             const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
-            list.innerHTML = '';
+
+            if (list) list.innerHTML = '';
+            else return;
 
             // Filter entries
             const filteredEntries = entries.filter(e => {
@@ -1599,8 +1601,8 @@
                 // Add pin icon for pinned entries
                 if (entry.pinned) {
                     const pinEl = document.createElement('span');
-                    pinEl.innerHTML = '<span class="icon-pin" style="background-color: #f1c40f; width: 14px; height: 14px;"></span>';
-                    pinEl.style.cssText = 'margin-left: 8px; display: flex; align-items: center;';
+                    pinEl.className = 'icon-pin';
+                    pinEl.style.cssText = 'margin-left: 8px; display: flex; align-items: center; background-color: #f1c40f; width: 14px; height: 14px;';
                     pinEl.title = 'Pinned';
                     btn.appendChild(pinEl);
                 }
@@ -1619,15 +1621,9 @@
                         deleteLogbookEntry(entry.filename);
                     }
                 };
+                btn.onmouseenter = () => deleteBtn.style.opacity = '1';
+                btn.onmouseleave = () => deleteBtn.style.opacity = '0.3';
                 btn.appendChild(deleteBtn);
-                btn.onmouseover = () => {
-                    btn.style.background = '#eef2ff';
-                    deleteBtn.style.opacity = '1';
-                };
-                btn.onmouseout = () => {
-                    btn.style.background = '#f5f5f5';
-                    deleteBtn.style.opacity = '0.3';
-                };
                 btn.onclick = async () => {
                     loadLogbuchContent(entry.name, entry.filename);
                 };
@@ -1636,12 +1632,15 @@
         }
 
         async function loadLogbuchContent(name, filename) {
-            const title = document.getElementById('logbuch-tab-title');
-            const content = document.getElementById('logbuch-tab-content');
-            title.innerText = name;
-            content.innerHTML = `<div style="color:#999;">${t('edit_loading')}</div>`;
+            safeText('logbuch-tab-title', name);
+            safeHtml('logbuch-tab-content', `<div style="color:#999;">${t('edit_loading')}</div>`);
+
             try {
                 const markdown = await eel.get_logbook_entry(name)();
+                if (!markdown) {
+                    safeHtml('logbuch-tab-content', `<p style="color: #f44;">${t('edit_error_loading')}</p>`);
+                    return;
+                }
                 const meta = extractLogbookMeta(markdown || '');
                 const visibleBody = stripLogbookFixedTags(markdown || '');
                 const tagsHtml = `
@@ -1677,14 +1676,21 @@
 
                 // Wrap content with styling
                 const styledHtml = `<div style="line-height: 1.6; color: #333;">${html}</div>`;
-                content.innerHTML = tagsHtml + styledHtml;
-                const editBtn = document.createElement('button');
-                editBtn.innerText = t('edit_btn_edit');
-                editBtn.style.cssText = 'margin-top: 20px; padding: 8px 16px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
-                editBtn.onclick = () => openLogbookEditor(name, filename, markdown);
-                content.appendChild(editBtn);
+                const fullContent = tagsHtml + styledHtml;
+
+                safeHtml('logbuch-tab-content', fullContent);
+
+                // Add edit button
+                const contentEl = document.getElementById('logbuch-tab-content');
+                if (contentEl) {
+                    const editBtn = document.createElement('button');
+                    editBtn.innerText = t('edit_btn_edit');
+                    editBtn.style.cssText = 'margin-top: 20px; padding: 8px 16px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
+                    editBtn.onclick = () => openLogbookEditor(name, filename, markdown);
+                    contentEl.appendChild(editBtn);
+                }
             } catch (e) {
-                content.innerHTML = `<p style="color: #f44;">${t('edit_error_loading')} ${e}</p>`;
+                safeHtml('logbuch-tab-content', `<p style="color: #f44;">${t('edit_error_loading')} ${e}</p>`);
             }
         }
     </script>
@@ -1982,22 +1988,21 @@
                         <div
                             style="background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px;">
                             <div>
-                                <label
-                                    style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Browser
-                                    Standard-Ordner:</label>
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;"
+                                    data-i18n="env_label_standard_folder">Browser Standard-Ordner:</label>
                                 <input type="text" id="config-browse-dir"
                                     style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
                                     onchange="updateBrowseDirUI(this.value)">
                             </div>
                             <div>
-                                <label
-                                    style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Haupt-Bibliothek-Ordner:</label>
+                                <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;"
+                                    data-i18n="options_main_dir_label">Haupt-Bibliothek-Ordner:</label>
                                 <input type="text" id="config-library-dir"
                                     style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
                                     onchange="updateLibraryDirUI(this.value)">
                             </div>
                             <div>
-                                <label
+                                <label data-i18n="options_additional_dirs"
                                     style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Zusätzliche
                                     Bibliotheks-Ordner (einer pro Zeile):</label>
                                 <textarea id="config-additional-dirs"
@@ -2031,11 +2036,11 @@
                                 Wiedergabe-Modus</div>
                             <select id="config-playback-mode" onchange="updatePlaybackModeUI(this.value)"
                                 style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
-                                <option value="chrome_native">Chrome Native</option>
-                                <option value="ffmpeg">FFmpeg (Transcode)</option>
-                                <option value="cvlc">CVLC (Fallback)</option>
-                                <option value="mkvmerge">mkvmerge (Direct)</option>
-                                <option value="direct">Direct Play</option>
+                                <option value="chrome_native" data-i18n="player_chrome_native">Chrome Native</option>
+                                <option value="ffmpeg" data-i18n="player_ffmpeg_transcode">FFmpeg (Transcode)</option>
+                                <option value="cvlc" data-i18n="player_vlc_stream">VLC Stream</option>
+                                <option value="mkvmerge" data-i18n="video_mode_mkvmerge">mkvmerge (Direct)</option>
+                                <option value="direct" data-i18n="player_direct_play">Direct Play</option>
                             </select>
                         </div>
 
@@ -2076,10 +2081,10 @@
                             <div style="display: flex; gap: 10px;">
                                 <button onclick="setAppModeUI('High-Performance')" id="mode-perf" class="sidebar-badge"
                                     style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;">🚀
-                                    High-Performance</button>
+                                    <span data-i18n="status_performance">High-Performance</span></button>
                                 <button onclick="setAppModeUI('Low-Bandwidth')" id="mode-bw" class="sidebar-badge"
-                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;">📉 Low
-                                    Bandwidth</button>
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;">📉 <span
+                                        data-i18n="status_bandwidth">Low Bandwidth</span></button>
                             </div>
                         </div>
 
@@ -2089,11 +2094,14 @@
                                 Parser-Modus</div>
                             <div style="display: flex; gap: 5px;">
                                 <button onclick="setParserModeUI('lightweight')" id="pm-light" class="sidebar-badge"
-                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;">Light</button>
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
+                                    data-i18n="parser_mode_light">Light</button>
                                 <button onclick="setParserModeUI('full')" id="pm-full" class="sidebar-badge"
-                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;">Full</button>
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
+                                    data-i18n="parser_mode_full">Full</button>
                                 <button onclick="setParserModeUI('ultimate')" id="pm-ult" class="sidebar-badge"
-                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;">Ultimate</button>
+                                    style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
+                                    data-i18n="parser_mode_ultimate">Ultimate</button>
                             </div>
                         </div>
 
@@ -2248,21 +2256,25 @@
                                 <h3 data-i18n="env_architecture_title">Kernarchitektur & Systemstatus</h3>
 
                                 <div class="arch-subgroup">
-                                    <h4 style="display: flex; align-items: center; gap: 8px;"><span
-                                            class="icon-palette"></span> Front End</h4>
+                                    <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_front_end">
+                                        <span class="icon-palette"></span> Front End
+                                    </h4>
                                     <ul>
                                         <li><strong data-i18n="env_label_gui">Browser:</strong> <span
                                                 id="env-gui-status">-</span></li>
-                                        <li><strong>Browser PID:</strong> <span id="env-browser-pid">-</span></li>
-                                        <li><strong>App-Version:</strong> <span id="env-app-version">-</span></li>
+                                        <li><strong data-i18n="env_label_browser_pid">Browser PID:</strong> <span
+                                                id="env-browser-pid">-</span></li>
+                                        <li><strong data-i18n="env_label_app_version">App-Version:</strong> <span
+                                                id="env-app-version">-</span></li>
                                     </ul>
                                 </div>
 
                                 <hr>
 
                                 <div class="arch-subgroup">
-                                    <h4 style="display: flex; align-items: center; gap: 8px;"><span
-                                            class="icon-gear"></span> Backend</h4>
+                                    <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_backend">
+                                        <span class="icon-gear"></span> Backend
+                                    </h4>
                                     <ul>
                                         <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
                                             <span id="env-python-version">-</span>
@@ -2271,15 +2283,21 @@
                                                 id="env-venv-status">-</span></li>
                                         <li><strong data-i18n="env_label_system">System:</strong> <span
                                                 id="env-platform">-</span></li>
-                                        <li><strong>Eel / WS:</strong> <span id="env-eel-status">✅ Eel | ✅
+                                        <li><strong data-i18n="env_label_eel_ws">Eel / WS:</strong> <span
+                                                id="env-eel-status">✅ Eel | ✅
                                                 Websocket</span></li>
-                                        <li><strong>Bottle / WS:</strong> <span id="env-bottle-status">-</span>
+                                        <li><strong data-i18n="env_label_bottle_ws">Bottle / WS:</strong> <span
+                                                id="env-bottle-status">-</span>
                                         </li>
-                                        <li><strong>Gevent / Greenlet:</strong> <span id="env-gevent-status">-</span>
+                                        <li><strong data-i18n="env_label_gevent_ws">Gevent / Greenlet:</strong> <span
+                                                id="env-gevent-status">-</span>
                                         </li>
-                                        <li><strong>Main PID:</strong> <span id="env-main-pid">-</span></li>
-                                        <li><strong>Testbed PID:</strong> <span id="env-testbed-pid">-</span></li>
-                                        <li><strong>Selenium PID:</strong> <span id="env-selenium-pid">-</span></li>
+                                        <li><strong data-i18n="env_label_main_pid">Main PID:</strong> <span
+                                                id="env-main-pid">-</span></li>
+                                        <li><strong data-i18n="env_label_testbed_pid">Testbed PID:</strong> <span
+                                                id="env-testbed-pid">-</span></li>
+                                        <li><strong data-i18n="env_label_selenium_pid">Selenium PID:</strong> <span
+                                                id="env-selenium-pid">-</span></li>
                                         <li><strong data-i18n="env_label_python_executable">Python-Pfad:</strong>
                                             <span id="env-python-exec" style="word-break: break-all;">-</span>
                                         </li>
@@ -2292,8 +2310,9 @@
                                 <hr>
 
                                 <div class="arch-subgroup">
-                                    <h4 style="display: flex; align-items: center; gap: 8px;"><span
-                                            class="icon-video"></span> Media-Handling</h4>
+                                    <h4 style="display: flex; align-items: center; gap: 8px;"
+                                        data-i18n="env_media_handling"><span class="icon-video"></span> Media-Handling
+                                    </h4>
                                     <ul>
                                         <li><strong data-i18n="env_label_mediaplayer">Mediaplayer:</strong>
                                             <span id="env-mediaplayer-status">-</span>
@@ -2312,7 +2331,8 @@
                                                 id="env-mkv-status">-</span></li>
                                         <li><strong data-i18n="env_label_mkvmerge">mkvmerge:</strong> <span
                                                 id="env-mkvmerge-status">-</span></li>
-                                        <li><strong>Stream-Tools:</strong> <span id="env-stream-tools-status">-</span>
+                                        <li><strong data-i18n="env_label_stream_tools">Stream-Tools:</strong> <span
+                                                id="env-stream-tools-status">-</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2881,9 +2901,8 @@
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
                         <div
                             style="background: white; border-radius: 8px; border: 1px solid #eee; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                            <h4 style="margin-top: 0; color: #555; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"
-                                data-i18n="options_loading_env">
-                                Available Environments</h4>
+                            <h4 style="margin-top: 0; color: #555; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;"
+                                data-i18n="env_label_environments">Available Environments</h4>
                             <div id="env-info-list" style="font-size: 0.85em; color: #666;">
                                 <div style="display: flex; justify-content: center; padding: 20px;">
                                     <div class="loader-spinner"></div>
@@ -2895,17 +2914,18 @@
                         style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
                         <h3
                             style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                            <span class="icon-video"></span> VLC Stream
+                            <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC Stream</span>
                         </h3>
 
                         <div id="vlc-stream-panel" style="display: block;">
                             <div style="display: flex; gap: 10px;">
                                 <input id="vlc-stream-url" type="text"
                                     placeholder="https://... | rtsp://... | rtmp://..."
-                                    style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;" />
+                                    style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;"
+                                    data-i18n="[placeholder]vlc_stream_placeholder" />
                                 <button onclick="playVLCStream()"
                                     style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
-                                    ▶ Stream starten
+                                    ▶ <span data-i18n="vlc_usage_open_in_vlc">Stream starten</span>
                                 </button>
                             </div>
                             <div id="vlc-ribbon-status"
@@ -2917,19 +2937,20 @@
                     <!-- VLC Playlist Import/Export Section -->
                     <div
                         style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
-                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;"
-                            data-i18n="vlc_playlist_integration">
-                            <span class="icon-cassette"></span> VLC Playlist Integration
+                        <h3
+                            style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <span class="icon-cassette"></span> <span data-i18n="vlc_playlist_integration">VLC Playlist
+                                Integration</span>
                         </h3>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                             <!-- Import Section -->
                             <div
                                 style="background: #f0f8ff; padding: 20px; border-radius: 8px; border: 1px solid #b3d9ff;">
-                                <h4 style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em; display: flex; align-items: center; gap: 8px;"
-                                    data-i18n="vlc_import_section_title">
-                                    <span class="icon-inbox" style="background-color: #2980b9;"></span> Import VLC
-                                    Playlist
+                                <h4
+                                    style="margin: 0 0 10px 0; color: #2980b9; font-size: 1em; display: flex; align-items: center; gap: 8px;">
+                                    <span class="icon-inbox" style="background-color: #2980b9;"></span> <span
+                                        data-i18n="vlc_import_section_title">Import VLC Playlist</span>
                                 </h4>
                                 <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
                                     <span data-i18n="vlc_import_desc">Importiere eine m3u8/m3u-Playlist aus
@@ -2950,9 +2971,10 @@
                             <!-- Export Section -->
                             <div
                                 style="background: #fff8f0; padding: 20px; border-radius: 8px; border: 1px solid #ffd9b3;">
-                                <h4 style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em; display: flex; align-items: center; gap: 8px;"
-                                    data-i18n="vlc_export_section_title">
-                                    <span class="icon-outbox" style="background-color: #e67e22;"></span> Export to VLC
+                                <h4
+                                    style="margin: 0 0 10px 0; color: #e67e22; font-size: 1em; display: flex; align-items: center; gap: 8px;">
+                                    <span class="icon-outbox" style="background-color: #e67e22;"></span> <span
+                                        data-i18n="vlc_export_section_title">Export to VLC</span>
                                 </h4>
                                 <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">
                                     <span data-i18n="vlc_export_desc">Exportiere die gesamte Bibliothek als
@@ -3310,39 +3332,43 @@
             </div>
             <div
                 style="border: 1px solid #e7e7e7; border-radius: 8px; padding: 12px; background: #fafafa; display: flex; flex-direction: column; gap: 10px;">
-                <div style="font-size: 0.85em; font-weight: bold; color: #555; text-transform: uppercase;">
-                    Feste
-                    Tags
-                    (editierbar)</div>
+                <div style="font-size: 0.85em; font-weight: bold; color: #555; text-transform: uppercase;"
+                    data-i18n="logbook_fixed_tags_title">
+                    Fixed Tags (editable)</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div style="display:flex; flex-direction:column; gap:4px;">
-                        <label style="font-size: 0.78em; color:#666;">Category</label>
+                        <label style="font-size: 0.78em; color:#666;"
+                            data-i18n="logbook_label_category">Category</label>
                         <input type="text" id="logbuch-editor-category"
                             style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:4px;">
-                        <label style="font-size: 0.78em; color:#666;">Date</label>
+                        <label style="font-size: 0.78em; color:#666;" data-i18n="logbook_label_date">Date</label>
                         <input type="text" id="logbuch-editor-date"
                             style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;"
                             placeholder="YYYY-MM-DD">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
-                        <label style="font-size: 0.78em; color:#666;">Title_DE</label>
+                        <label style="font-size: 0.78em; color:#666;"
+                            data-i18n="logbook_label_title_de">Title_DE</label>
                         <input type="text" id="logbuch-editor-title-de"
                             style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
-                        <label style="font-size: 0.78em; color:#666;">Title_EN</label>
+                        <label style="font-size: 0.78em; color:#666;"
+                            data-i18n="logbook_label_title_en">Title_EN</label>
                         <input type="text" id="logbuch-editor-title-en"
                             style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
-                        <label style="font-size: 0.78em; color:#666;">Summary_DE</label>
+                        <label style="font-size: 0.78em; color:#666;"
+                            data-i18n="logbook_label_summary_de">Summary_DE</label>
                         <input type="text" id="logbuch-editor-summary-de"
                             style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:4px; grid-column: 1 / span 2;">
-                        <label style="font-size: 0.78em; color:#666;">Summary_EN</label>
+                        <label style="font-size: 0.78em; color:#666;"
+                            data-i18n="logbook_label_summary_en">Summary_EN</label>
                         <input type="text" id="logbuch-editor-summary-en"
                             style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;">
                     </div>
@@ -5244,22 +5270,20 @@
             retryCount = retryCount || 0;
             try {
                 let result = await eel.get_library()();
-                let list = document.getElementById('state-orchestrated-active-queue-list-container');
-                list.innerHTML = '';
-                console.log("[loadLibrary] Result from backend:", result);
-                if (!result || !result.media || result.media.length === 0) {
+                if (result && result.media && result.media.length > 0) {
+                    safeHtml('state-orchestrated-active-queue-list-container', '');
+                } else {
                     console.warn("[loadLibrary] No media found in library.");
-                    list.innerHTML = `<p style="padding: 20px; color: #999;">${t('lib_no_media_desc')}</p>`;
+                    safeHtml('state-orchestrated-active-queue-list-container', `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`);
                     return;
                 }
 
-                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB. First:", result.media[0]);
+                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB.");
 
-                const debugItemsJson = document.getElementById('debug-items-json');
                 const dictSelect = document.getElementById('debug-dict-select');
-                if (debugItemsJson && (!dictSelect || dictSelect.value === 'library')) {
+                if (!dictSelect || dictSelect.value === 'library') {
                     const highlighted = syntaxHighlight(result.media);
-                    debugItemsJson.innerHTML = highlighted;
+                    safeHtml('debug-items-json', highlighted);
                 }
 
                 // Update current playlist for Shuffle/Next/Prev
@@ -5278,8 +5302,8 @@
                     eel.set_current_playlist(currentPlaylist)().catch(console.error);
                 }
 
-                result.media.forEach((item, index) => {
-                });
+                const list = document.getElementById('state-orchestrated-active-queue-list-container');
+                if (!list) return;
 
                 if (typeof renderPlaylist === 'function') {
                     renderPlaylist();
@@ -5333,11 +5357,11 @@
                     console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
                     setTimeout(() => loadLibrary(retryCount + 1), 1000);
                 } else {
-                    let list = document.getElementById('state-orchestrated-active-queue-list-container');
-                    if (list) list.innerHTML = `<p style="padding: 20px; color: #c33;">${t('lib_error_loading')}${e.message}</p>`;
+                    safeHtml('state-orchestrated-active-queue-list-container', `<p style="padding: 20px; color: #c33;">${t('lib_error_loading')}${e.message}</p>`);
                 }
             }
         }
+
 
         // Parser GUI Logic
         const ALL_PARSERS = ["filename", "container", "mkvmerge", "mkvinfo", "vlc", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"];
@@ -7454,11 +7478,14 @@
         }
 
         async function importVLCPlaylist() {
-            const statusDiv = document.getElementById('import-status');
+            const statusId = 'import-status';
+            const statusDiv = document.getElementById(statusId);
+            if (!statusDiv) return;
+
             statusDiv.style.display = 'block';
             statusDiv.style.background = '#e3f2fd';
             statusDiv.style.color = '#1565c0';
-            statusDiv.innerHTML = `⏳ ${t('vlc_select_playlist')}`;
+            safeHtml(statusId, `⏳ ${t('vlc_select_playlist')}`);
 
             try {
                 const filePath = await eel.pick_file(t('vlc_picker_title'), [
@@ -7472,14 +7499,14 @@
                     return;
                 }
 
-                statusDiv.innerHTML = `⏳ ${t('vlc_importing_playlist')}`;
+                safeHtml(statusId, `⏳ ${t('vlc_importing_playlist')}`);
 
                 const result = await eel.import_vlc_playlist(filePath)();
 
                 if (result.error) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `❌ ${t('common_error')}${result.error}`;
+                    safeHtml(statusId, `❌ ${t('common_error')}${result.error}`);
                 } else {
                     statusDiv.style.background = '#e8f5e9';
                     statusDiv.style.color = '#2e7d32';
@@ -7492,7 +7519,7 @@
                     if (skipped > 0) msg += `<br>⏩ ${skipped} ${t('vlc_tracks_already_present_suffix')}`;
                     if (errors > 0) msg += `<br>⚠️ ${errors} ${t('vlc_errors_suffix')}`;
 
-                    statusDiv.innerHTML = msg;
+                    safeHtml(statusId, msg);
 
                     // Reload library to show new items
                     if (imported > 0) {
@@ -7505,16 +7532,19 @@
             } catch (e) {
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
-                statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
+                safeHtml(statusId, `❌ ${t('common_error')}${e.message || e}`);
             }
         }
 
         async function exportToVLC() {
-            const statusDiv = document.getElementById('export-status');
+            const statusId = 'export-status';
+            const statusDiv = document.getElementById(statusId);
+            if (!statusDiv) return;
+
             statusDiv.style.display = 'block';
             statusDiv.style.background = '#fff8f0';
             statusDiv.style.color = '#e67e22';
-            statusDiv.innerHTML = `⏳ ${t('lib_loading_text')}`;
+            safeHtml(statusId, `⏳ ${t('lib_loading_text')}`);
 
             try {
                 // Get all media from library
@@ -7524,11 +7554,11 @@
                 if (mediaNames.length === 0) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `⚠️ ${t('lib_no_media_warning')}`;
+                    safeHtml(statusId, `⚠️ ${t('lib_no_media_warning')}`);
                     return;
                 }
 
-                statusDiv.innerHTML = `⏳ ${t('vlc_select_location')}`;
+                safeHtml(statusId, `⏳ ${t('vlc_select_location')}`);
 
                 // Pick save location
                 const filePath = await eel.pick_save_file(t('vlc_save_playlist_as'), [
@@ -7541,14 +7571,14 @@
                     return;
                 }
 
-                statusDiv.innerHTML = `⏳ ${t('vlc_exporting_playlist')}`;
+                safeHtml(statusId, `⏳ ${t('vlc_exporting_playlist')}`);
 
                 const result = await eel.export_playlist_to_vlc(mediaNames, filePath)();
 
                 if (result.error) {
                     statusDiv.style.background = '#ffebee';
                     statusDiv.style.color = '#c62828';
-                    statusDiv.innerHTML = `❌ ${t('common_error')}${result.error}`;
+                    safeHtml(statusId, `❌ ${t('common_error')}${result.error}`);
                 } else {
                     statusDiv.style.background = '#e8f5e9';
                     statusDiv.style.color = '#2e7d32';
@@ -7560,14 +7590,15 @@
                     if (missing > 0) msg += `<br>⚠️ ${missing} ${t('vlc_missing_suffix')}`;
                     msg += `<br>📂 ${t('common_file_label')} <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">${result.path}</code>`;
 
-                    statusDiv.innerHTML = msg;
+                    safeHtml(statusId, msg);
                 }
             } catch (e) {
                 statusDiv.style.background = '#ffebee';
                 statusDiv.style.color = '#c62828';
-                statusDiv.innerHTML = `❌ ${t('common_error')}${e.message || e}`;
+                safeHtml(statusId, `❌ ${t('common_error')}${e.message || e}`);
             }
         }
+
 
         // ============ End VLC Functions ============
 
