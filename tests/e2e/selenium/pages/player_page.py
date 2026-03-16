@@ -33,6 +33,8 @@ class PlayerPage(BasePage):
     Page object for the player tab.
     """
     MEDIA_ITEMS = (By.CSS_SELECTOR, "#media-list .media-item")
+    PLAYER_TYPE = (By.ID, "player-type")
+    VIDEO_MODE = (By.ID, "video-mode")
 
     def play_index(self, index):
         """
