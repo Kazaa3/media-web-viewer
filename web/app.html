@@ -239,16 +239,125 @@
         }
 
         .tab-btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             cursor: pointer;
-            border: 1px solid #ccc;
-            background: #eee;
-            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
         .tab-btn.active {
             background: #fff;
+            border-color: #2a7;
+            color: #2a7;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Filter Chips and Selects */
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: #2a7;
+            color: white;
+            border-color: #216d41;
+        }
+
+        .filter-select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 0.85em;
+            outline: none;
+        }
+
+        /* Coverflow Styles */
+        .coverflow-wrap {
+            perspective: 1000px;
+            width: 100%;
+            padding: 40px 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            align-items: center;
+            /* Hide scrollbar */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .coverflow-wrap::-webkit-scrollbar {
+            display: none;
+        }
+
+        .coverflow-track {
+            display: flex;
+            gap: -40px;
+            /* Slight overlap */
+            padding: 0 50%;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease-out;
+        }
+
+        .coverflow-item {
+            flex-shrink: 0;
+            width: 240px;
+            height: 340px;
+            background: #eee;
+            border-radius: 12px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .coverflow-item:hover {
+            transform: scale(1.05) translateZ(50px);
+            z-index: 100;
+        }
+
+        .coverflow-item .info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .coverflow-item:hover .info {
+            opacity: 1;
+        }
+
+        .coverflow-item .title {
             font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .coverflow-item .meta {
+            font-size: 0.75em;
+            opacity: 0.8;
         }
 
         /* Custom Context Menu */
@@ -1169,7 +1278,8 @@
 
             const tabMap = {
                 'player': 'state-orchestrated-active-queue-list-container',
-                'library': 'indexed-sqlite-media-repository-panel',
+                'library': 'coverflow-library-panel',
+                'file': 'indexed-sqlite-media-repository-panel',
                 'browser': 'filesystem-crawler-directory-panel',
                 'edit': 'metadata-writer-crud-panel',
                 'options': 'system-configuration-persistence-panel',
@@ -1188,10 +1298,15 @@
                 const targetEl = document.getElementById(targetId);
                 if (targetEl) {
                     targetEl.classList.add('active');
+                    // Ensure block display for library and file tabs, flex for debug/edit, block for others
                     if (tabId === 'debug' || tabId === 'edit') {
                         targetEl.style.display = 'flex';
                     } else {
                         targetEl.style.display = 'block';
+                    }
+
+                    if (tabId === 'library') {
+                        renderLibraryCoverflow();
                     }
                 } else {
                     console.warn(`[UI] Target element not found for tab: ${tabId} (id: ${targetId})`);
@@ -1717,7 +1832,7 @@
                 event.preventDefault();
                 return;
             }
-            alert("Uncaught Promise: " + event.reason);
+            console.error("Uncaught Promise: ", event.reason);
         });
     </script>
     <div class="header-container">
@@ -1726,8 +1841,10 @@
             <div class="tab-buttons">
                 <button id="active-queue-tab-trigger" class="tab-btn active" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
-                <button id="indexed-sqlite-repository-tab-trigger" class="tab-btn" onclick="switchTab('library', this)"
+                <button id="coverflow-library-tab-trigger" class="tab-btn" onclick="switchTab('library', this)"
                     data-i18n="nav_library">Bibliothek</button>
+                <button id="indexed-sqlite-repository-tab-trigger" class="tab-btn" onclick="switchTab('file', this)"
+                    data-i18n="nav_file">Datei</button>
                 <button id="filesystem-crawler-tab-trigger" class="tab-btn" onclick="switchTab('browser', this)"
                     data-i18n="nav_browser">Browser</button>
                 <button id="crud-metadata-tab-trigger" class="tab-btn" onclick="switchTab('edit', this)"
@@ -1821,6 +1938,40 @@
                 </div>
 
                 <div id="fb-list"></div>
+            </div>
+
+            <!-- New Coverflow Library Tab -->
+            <div id="coverflow-library-panel" class="tab-content"
+                style="padding: 20px; overflow-y: auto; height: 100%;">
+                <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Filter Area -->
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <button class="filter-chip active" onclick="setLibraryFilter('all')"
+                            data-i18n="filter_all">Alle</button>
+                        <button class="filter-chip" onclick="setLibraryFilter('audio')"
+                            data-i18n="filter_audio">Audio</button>
+                        <button class="filter-chip" onclick="setLibraryFilter('video')"
+                            data-i18n="filter_video">Video</button>
+                        <button class="filter-chip" onclick="setLibraryFilter('images')"
+                            data-i18n="filter_images">Bilder</button>
+
+                        <div style="width: 1px; height: 24px; background: #ddd; margin: 0 10px;"></div>
+
+                        <select id="library-subcategory-filter" class="filter-select"
+                            onchange="setLibrarySubFilter(this.value)">
+                            <option value="all" data-i18n="filter_sub_all">Alle Unterkategorien</option>
+                            <option value="audiobooks" data-i18n="filter_audiobooks">Hörbücher</option>
+                            <option value="podcasts" data-i18n="filter_podcasts">Podcasts</option>
+                            <option value="albums" data-i18n="filter_albums">Alben</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="coverflow-container" class="coverflow-wrap">
+                    <div id="coverflow-track" class="coverflow-track">
+                        <!-- Items rendered dynamically -->
+                    </div>
+                </div>
             </div>
 
             <div id="indexed-sqlite-media-repository-panel" class="tab-content" style="overflow-y: auto; width: 100%;">
@@ -3412,6 +3563,80 @@
         // ============ Player Expansion State ============
         let currentPlaylist = [];
         const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
+        let libraryFilter = 'all';
+        let librarySubFilter = 'all';
+
+        function setLibraryFilter(cat) {
+            libraryFilter = cat;
+            document.querySelectorAll('#coverflow-library-panel .filter-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
+            });
+            renderLibraryCoverflow();
+        }
+
+        function setLibrarySubFilter(val) {
+            librarySubFilter = val;
+            renderLibraryCoverflow();
+        }
+
+        async function renderLibraryCoverflow() {
+            const track = document.getElementById('coverflow-track');
+            if (!track) return;
+
+            try {
+                const library = await eel.get_library()();
+                let items = library.media || [];
+
+                // Filter logic
+                if (libraryFilter !== 'all') {
+                    items = items.filter(i => i.category === libraryFilter);
+                }
+
+                if (librarySubFilter !== 'all') {
+                    // Mapping sub-filters to possible tags or categories
+                    const subMap = {
+                        'audiobooks': ['hörbuch', 'audiobook'],
+                        'podcasts': ['podcast'],
+                        'albums': ['album']
+                    };
+                    const matchTags = subMap[librarySubFilter] || [];
+                    items = items.filter(i => {
+                        const searchStr = (i.name + ' ' + (i.tags || '')).toLowerCase();
+                        return matchTags.some(t => searchStr.includes(t));
+                    });
+                }
+
+                if (items.length === 0) {
+                    safeHtml('coverflow-track', `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`);
+                    return;
+                }
+
+                const html = items.map(item => {
+                    const artwork = item.artwork || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                    return `
+                        <div class="coverflow-item" style="background-image: url('${artwork}')" onclick="playMediaObject(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                            <div class="info">
+                                <div class="title">${item.name || 'Unknown'}</div>
+                                <div class="meta">${item.category || ''} | ${item.type || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                safeHtml('coverflow-track', html);
+
+            } catch (e) {
+                console.error("Failed to render coverflow:", e);
+                safeHtml('coverflow-track', `<div style="color: red; padding: 20px;">Error: ${e.message || e}</div>`);
+            }
+        }
+
+        function playMediaObject(item) {
+            if (typeof addToQueue === 'function') {
+                addToQueue(item);
+                switchTab('player', document.getElementById('active-queue-tab-trigger'));
+            }
+        }
 
         function showToast(message, duration = 3000) {
             const container = document.getElementById('toast-container');
@@ -3480,7 +3705,7 @@
                 }
             } else if (res && res.status === 'error') {
                 if (typeof showToast === 'function') showToast(res.error);
-                else alert(res.error);
+                else console.error(res.error);
             } else if (res && res.status === 'ok') {
                 showToast(res.message || "Aktion gestartet");
             }
@@ -4136,9 +4361,9 @@
                     updateShuffleUI();
                     playlistIndex = -1;
                     renderPlaylist();
-                    alert((t('pl_loaded_success') || "Loaded items: ") + result.items.length);
+                    if (typeof showToast === 'function') showToast((t('pl_loaded_success') || "Loaded items: ") + result.items.length);
                 } else {
-                    alert((t('common_error') || "Error: ") + result.error);
+                    console.error((t('common_error') || "Error: ") + result.error);
                 }
             } catch (e) {
                 console.error("Load Playlist Error:", e);
