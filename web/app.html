@@ -3228,6 +3228,58 @@
                 toast.remove();
             }, duration + 300);
         }
+
+        let contextMenuItem = null;
+        function showContextMenu(e, item) {
+            e.preventDefault();
+            contextMenuItem = item;
+            const menu = document.getElementById('custom-context-menu');
+            if (!menu) return;
+
+            menu.style.display = 'block';
+
+            // Positioning
+            let x = e.clientX;
+            let y = e.clientY;
+
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+
+            // Adjust if off-screen
+            const rect = menu.getBoundingClientRect();
+            if (rect.right > window.innerWidth) {
+                menu.style.left = (window.innerWidth - rect.width - 5) + 'px';
+            }
+            if (rect.bottom > window.innerHeight) {
+                menu.style.top = (window.innerHeight - rect.height - 5) + 'px';
+            }
+        }
+
+        function hideContextMenu() {
+            const menu = document.getElementById('custom-context-menu');
+            if (menu) menu.style.display = 'none';
+        }
+
+        async function handleContextMenuAction(mode) {
+            if (!contextMenuItem) return;
+            const item = contextMenuItem;
+            hideContextMenu();
+
+            const res = await eel.open_video(item.path, mode)();
+            if (res && res.status === 'play') {
+                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
+                    if (typeof startEmbeddedVideo === 'function') {
+                        startEmbeddedVideo(item, res.path);
+                    }
+                }
+            } else if (res && res.status === 'error') {
+                if (typeof showToast === 'function') showToast(res.error);
+                else alert(res.error);
+            }
+        }
+
+        window.addEventListener('click', () => hideContextMenu());
+        window.addEventListener('scroll', () => hideContextMenu(), true);
         let playlistIndex = -1;
         let isShuffle = false;
         let repeatStatus = 'off'; // 'off', 'all', 'one'
@@ -3943,6 +3995,7 @@
                 `;
 
                 div.onclick = () => onPlaylistItemClick(index, item);
+                div.oncontextmenu = (e) => showContextMenu(e, item);
 
                 // --- Drag and Drop Handlers ---
                 div.onmouseenter = () => {
@@ -4442,6 +4495,7 @@
                 }
 
                 div.onclick = () => jumpToEdit(item);
+                div.oncontextmenu = (e) => showContextMenu(e, item);
                 list.appendChild(div);
             });
         }
@@ -4668,11 +4722,11 @@
                 return;
             }
             const select = document.getElementById('playback-engine-strategy-selector');
-            const modeLabel = select.selectedOptions[0].text;
-            const res = await eel.open_video(currentSong.path, modeLabel)();
+            const mode = select.value;
+            const res = await eel.open_video(currentSong.path, mode)();
             if (res && res.status === 'play') {
                 if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
-                    startEmbeddedVideo(res.path);
+                    startEmbeddedVideo(currentSong, res.path);
                 }
             } else if (res && res.status === 'error') {
                 showToast(res.error);
@@ -5092,6 +5146,7 @@
                         }
                         play(item, mediaUrl);
                     };
+                    div.oncontextmenu = (e) => showContextMenu(e, item);
                     list.appendChild(div);
                 });
             } catch (e) {
@@ -7359,6 +7414,34 @@
             }
         });
     </script>
+    <!-- Custom Context Menu for Media Items -->
+    <div id="custom-context-menu" class="custom-context-menu">
+        <div class="context-menu-header" data-i18n="video_mode_label">Playback Mode</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_native')">
+            <span>🌐</span> <span data-i18n="video_mode_chrome">Chrome Native</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('ffmpeg')">
+            <span>🎞️</span> <span data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mkvmerge')">
+            <span>📦</span> <span data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('cvlc')">
+            <span>🎬</span> <span data-i18n="video_mode_cvlc">cvlc solo</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc')">
+            <span>📺</span> <span data-i18n="video_mode_vlc_external">VLC (Extern)</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-header">Streaming</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')">
+            <span>🌐</span> <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx_webrtc')">
+            <span>⚡</span> <span data-i18n="video_mode_mediamtx_webrtc">MediaMTX (WebRTC)</span>
+        </div>
+    </div>
+
 </body>
 
 </html>

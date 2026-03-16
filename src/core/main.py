@@ -2692,19 +2692,19 @@ def open_video(file_path: str, mode: str):
     """
     logging.info(f"[Player] Explicit 'Open With' triggered: {file_path} via {mode}")
     
-    if mode == "MediaMTX (HLS)":
+    if mode == "mediamtx":
         return stream_to_mediamtx(file_path, protocol="hls")
-    elif mode == "MediaMTX (WebRTC)":
+    elif mode == "mediamtx_webrtc":
         return stream_to_mediamtx(file_path, protocol="webrtc")
-    elif mode == "ffmpeg mit cvlc":
+    elif mode == "ffmpeg":
         return stream_to_vlc(file_path, engine="ffmpeg")
-    elif mode == "mkvmerge mit cvlc":
+    elif mode == "mkvmerge":
         return stream_to_vlc(file_path, engine="mkvmerge")
-    elif mode == "cvlc solo":
-        return play_vlc(file_path) # Direct VLC
-    elif mode == "VLC (Extern)":
+    elif mode == "cvlc":
+        return play_vlc(file_path) # Direct VLC Solo
+    elif mode == "vlc":
         return play_vlc(file_path)
-    elif mode == "Chrome Native":
+    elif mode == "chrome_native":
         return {"status": "play", "path": file_path, "mode": "chrome_native"}
     
     # Fallback/Default
