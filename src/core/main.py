@@ -2691,50 +2691,60 @@ def play_media(path):
 
 
 @eel.expose
-def open_video(file_path: str, mode: str):
+def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_direct"):
     """
-    @brief Explicitly opens a video with a specific mode.
-    Used for 'Open With' functionality.
+    @brief Explicitly opens a video with a specific player type and mode.
     """
-    logging.info(f"[Player] Explicit 'Open With' triggered: {file_path} via {mode}")
+    logging.info(f"[Player] Open video triggered: {file_path} via {player_type}/{mode}")
     file_path = unquote(str(file_path))
 
-    if mode == "mediamtx":
-        return stream_to_mediamtx(file_path, protocol="hls")
-    elif mode == "mediamtx_webrtc":
-        return stream_to_mediamtx(file_path, protocol="webrtc")
-    elif mode == "ffmpeg":
-        return stream_to_vlc(file_path, engine="ffmpeg")
-    elif mode == "ffmpeg_browser":
-        # Returns a path to /video-stream/ for the internal player
-        return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
-    elif mode == "ffplay":
-        try:
-            ffplay_path = shutil.which("ffplay") or "ffplay"
-            logging.info(f"[Player] Launching ffplay standalone: {file_path}")
-            subprocess.Popen([str(ffplay_path), str(file_path), "-autoexit", "-alwaysontop"])
-            return {"status": "ok", "mode": "ffplay_standalone"}
-        except Exception as e:
-            return {"status": "error", "error": f"ffplay startup failed: {e}"}
-    elif mode == "mkvmerge":
-        return stream_to_vlc(file_path, engine="mkvmerge")
-    elif mode == "mkvmerge_standalone":
-        # Remuxes to a temp MKV and open with VLC
-        return mkvmerge_standalone_mode(file_path)
-    elif mode == "cvlc":
-        return stream_to_vlc(file_path, engine="cvlc_solo")
-    elif mode == "vlc_ts":
-        return vlc_ts_mode(file_path)
-    elif mode == "vlc" or mode == "vlc_extern":
-        return stream_to_vlc(file_path, engine="vlc_extern")
-    elif mode == "dvd_native":
-        return stream_to_vlc(file_path, engine="dvd_native")
-    elif mode == "bluray_native":
-        return stream_to_vlc(file_path, engine="bluray_native")
-    elif mode == "chrome_native":
-        return {"status": "play", "path": file_path, "mode": "chrome_native"}
-    elif mode == "vlc_browser":
-        return {"status": "play", "path": file_path, "mode": "vlc_browser"}
+    if player_type == "chrome":
+        if mode == "chrome_direct":
+            return {"status": "play", "path": file_path, "mode": "chrome_native"}
+        elif mode == "chrome_hls":
+            return stream_to_mediamtx(file_path, protocol="hls")
+        elif mode == "chrome_webrtc":
+            return stream_to_mediamtx(file_path, protocol="webrtc")
+        elif mode == "chrome_fragmp4":
+            # ffmpeg fragmp4 logic (placeholder for actual ffmpeg -listen)
+            return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
+        elif mode == "chrome_ffmpeg_browser":
+            return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
+
+    elif player_type == "vlc":
+        if mode == "vlc_cvlc":
+            return stream_to_vlc(file_path, engine="cvlc_solo")
+        elif mode == "vlc_iso":
+             # DVD ISO Live (VLC Native)
+            if file_path.lower().endswith('.iso'):
+                try:
+                    vlc_path = shutil.which("vlc") or "vlc"
+                    subprocess.Popen([str(vlc_path), f"dvd://{file_path}"])
+                    return {"status": "ok", "mode": "vlc_external"}
+                except Exception as e:
+                    return {"status": "error", "error": f"VLC ISO startup failed: {e}"}
+            return stream_to_vlc(file_path, engine="dvd_native")
+        elif mode == "vlc_embedded":
+            return {"status": "play", "path": file_path, "mode": "vlc_browser"}
+        elif mode == "vlc_extern":
+            return stream_to_vlc(file_path, engine="vlc_extern")
+        elif mode == "vlc_ts":
+            return vlc_ts_mode(file_path)
+
+    elif player_type == "pyplayer":
+        if mode == "pyplayer_native":
+            # Logic for pyvidplayer2
+            try:
+                import pyvidplayer2 as pv
+                subprocess.Popen([sys.executable, "-m", "pyvidplayer2", file_path])
+                return {"status": "ok", "mode": "pyplayer_standalone"}
+            except Exception as e:
+                return {"status": "error", "error": f"pyvidplayer2 failed: {e}"}
+        elif mode == "pyplayer_mpv":
+            # Placeholder for mpv
+             return {"status": "error", "error": "mpv mode not yet implemented"}
+        elif mode == "pyplayer_pip":
+             return {"status": "error", "error": "PiP mode not yet implemented"}
 
     # Fallback/Default
     return play_media(file_path)

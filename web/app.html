@@ -2735,35 +2735,15 @@
                                 style="display: flex; align-items: center; gap: 15px; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
                                 <span style="font-size: 0.9em; font-weight: bold; color: #666;"
                                     data-i18n="video_mode_label">Modus:</span>
-                                <select id="playback-engine-strategy-selector" onchange="orchestrateVideoPlaybackMode()"
+                                <select id="player-type" onchange="updateVideoModes()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <optgroup label="🎬 Chrome Native (Video.js)">
-                                        <option value="chrome_native" data-i18n="video_mode_chrome">Chrome Native
-                                            (Direct)</option>
-                                        <option value="mediamtx" data-i18n="video_mode_mediamtx">MediaMTX (HLS)</option>
-                                        <option value="mediamtx_webrtc" data-i18n="video_mode_mediamtx_webrtc">MediaMTX
-                                            (WebRTC)</option>
-                                        <option value="ffmpeg_browser" data-i18n="video_mode_ffmpeg_browser">FFmpeg
-                                            (Browser)</option>
-                                    </optgroup>
-                                    <optgroup label="📺 VLC / Standalone">
-                                        <option value="vlc_ts" data-i18n="video_mode_vlc_ts">VLC (TS-Stream Detection)
-                                        </option>
-                                        <option value="cvlc" data-i18n="video_mode_cvlc">cvlc solo</option>
-                                        <option value="vlc_browser" data-i18n="video_mode_embedded_vlc">Embedded VLC
-                                        </option>
-                                        <option value="ffplay" data-i18n="video_mode_ffplay">ffplay (Standalone)
-                                        </option>
-                                        <option value="mkvmerge_standalone" data-i18n="video_mode_mkvmerge_standalone">
-                                            mkvmerge (Standalone)</option>
-                                        <option value="dvd_native" data-i18n="video_mode_dvd_native">DVD / ISO (Native)
-                                        </option>
-                                        <option value="bluray_native" data-i18n="video_mode_bluray_native">Blu-ray
-                                            (Native)</option>
-                                        <option value="vlc_extern" data-i18n="video_mode_vlc_external">VLC (Extern)
-                                        </option>
-                                    </optgroup>
-                                    <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
+                                    <option value="chrome">🎬 Chrome Native</option>
+                                    <option value="vlc">📺 VLC (Desktop)</option>
+                                    <option value="pyplayer">🐍 PyPlayer (Native)</option>
+                                </select>
+                                <select id="video-mode" onchange="orchestrateVideoPlaybackMode()"
+                                    style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none; margin-left:10px;">
+                                    <!-- Dynamic -->
                                 </select>
                                 <button onclick="triggerOpenWith()" data-i18n="btn_open_with"
                                     style="background: #2a7; color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: opacity 0.2s;">
@@ -4894,8 +4874,38 @@
             }
         }
 
+        function updateVideoModes() {
+            const type = document.getElementById('player-type').value;
+            const modeSelect = document.getElementById('video-mode');
+            const modes = {
+                'chrome': [
+                    { value: 'chrome_direct', label: '⚡ Direct Play' },
+                    { value: 'chrome_hls', label: '📱 MediaMTX HLS' },
+                    { value: 'chrome_fragmp4', label: '🔄 ffmpeg FragMP4' },
+                    { value: 'chrome_webrtc', label: '📡 MediaMTX WebRTC' },
+                    { value: 'chrome_ffmpeg_browser', label: '🌐 FFmpeg Browser' }
+                ],
+                'vlc': [
+                    { value: 'vlc_cvlc', label: '📡 cvlc Solo' },
+                    { value: 'vlc_embedded', label: '🖥️ VLC Embedded' },
+                    { value: 'vlc_iso', label: '💿 DVD ISO Live' },
+                    { value: 'vlc_extern', label: '📺 VLC Extern' },
+                    { value: 'vlc_ts', label: '🔍 TS-Detect' }
+                ],
+                'pyplayer': [
+                    { value: 'pyplayer_native', label: '🐍 pyvidplayer2' },
+                    { value: 'pyplayer_mpv', label: '🎹 mpv Embedded' },
+                    { value: 'pyplayer_pip', label: '🖼️ Mini-Overlay' }
+                ]
+            };
+
+            const selectedModes = modes[type] || [];
+            modeSelect.innerHTML = selectedModes.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+            orchestrateVideoPlaybackMode();
+        }
+
         function orchestrateVideoPlaybackMode() {
-            const select = document.getElementById('playback-engine-strategy-selector');
+            const select = document.getElementById('video-mode');
             const mode = select.value;
 
             if (mode === 'playlist') {
@@ -4937,70 +4947,34 @@
             const vlcBtn = document.getElementById('media-orchestrator-tab-trigger');
             switchTab('vlc', vlcBtn);
 
-            const select = document.getElementById('playback-engine-strategy-selector');
-            const mode = select.value;
+            const select = document.getElementById('video-mode');
+            const typeSelect = document.getElementById('player-type');
+            const type = typeSelect ? typeSelect.value : 'chrome';
+            const mode = select ? select.value : 'chrome_direct';
 
             // Ensure audio is paused
             if (activeAudioPipeline) activeAudioPipeline.pause();
 
-            // Handle new modes
-            if (mode === 'vlc_ts') {
-                const res = await eel.vlc_ts_mode(item.path)();
-                if (res.status === 'play') {
-                    startEmbeddedVideo(item, res.path, null, res.type);
-                } else {
-                    showToast(res.error || "VLC TS Error");
-                }
-            } else if (mode === 'ffplay') {
-                const res = await eel.open_video(item.path, 'ffplay')();
-                if (res.status !== 'ok') showToast(res.error);
-            } else if (mode === 'mkvmerge_standalone') {
-                const res = await eel.open_video(item.path, 'mkvmerge_standalone')();
-                if (res.status !== 'ok') showToast(res.error);
-            } else if (mode === 'ffmpeg_browser') {
-                const res = await eel.open_video(item.path, 'ffmpeg_browser')();
-                if (res.status === 'play') {
-                    startEmbeddedVideo(item, res.path);
-                }
-            } else if (mode === 'vlc') {
-                await startVLC(item.path);
-            } else if (mode === 'mediamtx' || mode === 'mediamtx_webrtc') {
-                const protocol = (mode === 'mediamtx_webrtc') ? 'webrtc' : 'hls';
-                const res = await eel.stream_to_mediamtx(item.path, protocol)();
-                if (res.status === 'play') {
-                    startEmbeddedVideo(item, res.path);
-                } else {
-                    showToast(res.error || "MediaMTX Error");
-                }
-            } else if (mode === 'vlc_browser') {
-                startEmbeddedVideo(item, `/vlc-stream/${encodeURIComponent(item.path)}`);
-            } else if (mode === 'ffmpeg' || mode === 'cvlc' || mode === 'mkvmerge') {
-                // Pipe mechanism
-                const nativeUrl = `/media/${encodeURIComponent(item.path)}`;
-                const videoEl = document.getElementById('native-html5-video-resource-node');
+            showToast(`Lade Video (${type}/${mode})...`, 2000);
 
-                startEmbeddedVideo(item, nativeUrl, async () => {
-                    const err = videoEl.error;
-                    if (!err || err.code === 4) {
-                        showToast(t('vlc_info_fallback_msg') || "Browser unsupported - Falling back to VLC...", 3000);
-                        const res = await eel.stream_to_vlc(item.path, mode)();
-                        if (res.status === 'ok') {
-                            document.getElementById('vlc-info').style.display = 'block';
-                            document.getElementById('vlc-current-file').innerText = item.path;
-                            videoEl.pause();
-                            videoEl.src = "";
-                            videoEl.load();
-                            videoEl.style.display = 'none';
-                            document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
-                        }
+            // Refactored backend call
+            try {
+                const res = await eel.open_video(path, type, mode)();
+
+                if (res && res.status === 'play') {
+                    if (res.mode === 'chrome_native') {
+                        startEmbeddedVideo(item, res.path);
+                    } else if (res.mode === 'vlc_browser') {
+                        startVLC(res.path);
                     }
-                });
-            } else if (mode === 'direct') {
-                await eel.stream_to_vlc(item.path)();
-            } else if (mode === 'chrome_native') {
-                startEmbeddedVideo(item, `/media/${encodeURIComponent(item.path)}`);
-            } else {
-                startEmbeddedVideo(item, path);
+                } else if (res && res.status === 'ok') {
+                    // Standalone player started, nothing more to do here
+                } else if (res && res.status === 'error') {
+                    showToast(res.error);
+                }
+            } catch (err) {
+                console.error("Open video error:", err);
+                showToast("Fehler beim Starten des Players");
             }
         }
 
@@ -5126,12 +5100,16 @@
 
         function switchToVLC() {
             if (currentVideoItem) {
-                const select = document.getElementById('playback-engine-strategy-selector');
-                if (select) {
-                    select.value = 'vlc';
-                    updateVideoMode();
-                    startVLC(currentVideoItem.path);
+                const typeSelect = document.getElementById('player-type');
+                if (typeSelect) {
+                    typeSelect.value = 'vlc';
+                    updateVideoModes();
                 }
+                const modeSelect = document.getElementById('video-mode');
+                if (modeSelect) {
+                    modeSelect.value = 'vlc_extern';
+                }
+                playVideo(currentVideoItem, currentVideoItem.path);
             }
         }
 
@@ -7600,6 +7578,8 @@
 
             updateAppModeButtons();
             updateParserModeButtons();
+
+            updateVideoModes(); // Initialize 3-Player System
 
             restoreLastActiveTab();
         }, 100);
