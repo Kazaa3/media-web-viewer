@@ -2681,6 +2681,9 @@ def play_media(path):
         # Ultra-low latency WebRTC streaming
         return stream_to_mediamtx(path, protocol="webrtc")
 
+    if mode == "vlc_browser":
+        return {"status": "play", "path": path, "mode": "vlc_browser"}
+
     return {"status": "play", "path": path, "mode": "chrome_native"}
 
 
@@ -2691,7 +2694,7 @@ def open_video(file_path: str, mode: str):
     Used for 'Open With' functionality.
     """
     logging.info(f"[Player] Explicit 'Open With' triggered: {file_path} via {mode}")
-    
+
     if mode == "mediamtx":
         return stream_to_mediamtx(file_path, protocol="hls")
     elif mode == "mediamtx_webrtc":
@@ -2701,12 +2704,18 @@ def open_video(file_path: str, mode: str):
     elif mode == "mkvmerge":
         return stream_to_vlc(file_path, engine="mkvmerge")
     elif mode == "cvlc":
-        return play_vlc(file_path) # Direct VLC Solo
-    elif mode == "vlc":
-        return play_vlc(file_path)
+        return stream_to_vlc(file_path, engine="cvlc_solo")
+    elif mode == "vlc" or mode == "vlc_extern":
+        return stream_to_vlc(file_path, engine="vlc_extern")
+    elif mode == "dvd_native":
+        return stream_to_vlc(file_path, engine="dvd_native")
+    elif mode == "bluray_native":
+        return stream_to_vlc(file_path, engine="bluray_native")
     elif mode == "chrome_native":
         return {"status": "play", "path": file_path, "mode": "chrome_native"}
-    
+    elif mode == "vlc_browser":
+        return {"status": "play", "path": file_path, "mode": "vlc_browser"}
+
     # Fallback/Default
     return play_media(file_path)
 
@@ -3347,16 +3356,34 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         logging.error(f"[vlc pipe] File not found: {file_path}")
         return {"status": "error", "error": f"Datei nicht gefunden: {file_path}"}
 
-    # ISO Handling: Native DVD playback for menus
-    if str(file_path).lower().endswith('.iso'):
+    # ISO/DVD/Blu-ray Handling: Native playback
+    file_path_str = str(file_path).lower()
+    if file_path_str.endswith('.iso') or engine in ("dvd_native", "bluray_native", "cdrom_native"):
         try:
-            logging.info(f"[vlc pipe] ISO detected, using dvd:// protocol for {file_path}")
             vlc_path = shutil.which('vlc') or 'vlc'
-            cmd = [str(vlc_path), f"dvd://{file_path}"]
+            protocol = "dvd://"
+            if engine == "bluray_native" or "bdmv" in file_path_str:
+                protocol = "bluray://"
+            elif engine == "cdrom_native" or "cdda" in file_path_str:
+                protocol = "cdda://"
+            
+            logging.info(f"[vlc] Native media detected, using {protocol} for {file_path}")
+            cmd = [str(vlc_path), f"{protocol}{file_path}"]
             subprocess.Popen(cmd)
-            return {"status": "ok", "mode": "vlc_dvd"}
+            return {"status": "ok", "mode": "vlc_native"}
         except Exception as e:
-            logging.error(f"[vlc pipe] ISO Playback error: {e}")
+            logging.error(f"[vlc] Native Playback error: {e}")
+            return {"status": "error", "error": str(e)}
+
+    # Direct VLC Solo (No Pipe)
+    if engine in ("cvlc_solo", "vlc_extern"):
+        try:
+            vlc_cmd = 'cvlc' if engine == "cvlc_solo" else 'vlc'
+            vlc_path = shutil.which(vlc_cmd) or vlc_cmd
+            logging.info(f"[vlc] Opening external: {file_path}")
+            subprocess.Popen([str(vlc_path), str(file_path)])
+            return {"status": "ok", "mode": "vlc_external"}
+        except Exception as e:
             return {"status": "error", "error": str(e)}
 
     if not is_mkvtoolnix_available():
@@ -4690,6 +4717,15 @@ if __name__ == "__main__":
     session_port = int(os.environ.get("MWV_PORT", 0))
     if session_port == 0:
         session_port = find_free_port()
+
+    # Persist port for testing and manual verification
+    try:
+        from src.parsers.format_utils import CONFIG_FILE
+        port_file = CONFIG_FILE.parent / ".mwv_port"
+        with open(port_file, "w") as f:
+            f.write(str(session_port))
+    except Exception as e:
+        logging.warning(f"[System] Could not persist session port: {e}")
 
     # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
     # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und

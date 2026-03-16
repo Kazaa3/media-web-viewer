@@ -1086,11 +1086,15 @@
             const targetId = tabMap[tabId];
             if (targetId) {
                 const targetEl = document.getElementById(targetId);
-                targetEl.classList.add('active');
-                if (tabId === 'debug' || tabId === 'edit') {
-                    targetEl.style.display = 'flex';
+                if (targetEl) {
+                    targetEl.classList.add('active');
+                    if (tabId === 'debug' || tabId === 'edit') {
+                        targetEl.style.display = 'flex';
+                    } else {
+                        targetEl.style.display = 'block';
+                    }
                 } else {
-                    targetEl.style.display = 'block';
+                    console.warn(`[UI] Target element not found for tab: ${tabId} (id: ${targetId})`);
                 }
             }
             if (btn) {
@@ -2631,17 +2635,31 @@
                                     data-i18n="video_mode_label">Modus:</span>
                                 <select id="playback-engine-strategy-selector" onchange="orchestrateVideoPlaybackMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <option value="chrome_native" data-i18n="video_mode_chrome">Chrome Native</option>
-                                    <option value="ffmpeg" data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</option>
-                                    <option value="mkvmerge" data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc</option>
-                                    <option value="cvlc" data-i18n="video_mode_cvlc">cvlc solo</option>
-                                    <option value="direct" data-i18n="video_mode_direct">Direct Play</option>
-                                    <option value="vlc_browser" data-i18n="video_mode_embedded_vlc">Embedded VLC
-                                    </option>
-                                    <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
-                                    <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
-                                    <option value="mediamtx_webrtc" data-i18n="video_mode_mediamtx_webrtc">MediaMTX
-                                        (WebRTC)</option>
+                                    <optgroup label="🎬 Chrome / Browser">
+                                        <option value="chrome_native" data-i18n="video_mode_chrome">Chrome Native
+                                        </option>
+                                        <option value="mediamtx" data-i18n="video_mode_mediamtx">MediaMTX (HLS)</option>
+                                        <option value="mediamtx_webrtc" data-i18n="video_mode_mediamtx_webrtc">MediaMTX
+                                            (WebRTC)</option>
+                                        <option value="vlc_browser" data-i18n="video_mode_embedded_vlc">Embedded VLC
+                                        </option>
+                                    </optgroup>
+                                    <optgroup label="📺 VLC / Desktop">
+                                        <option value="cvlc" data-i18n="video_mode_cvlc">cvlc solo</option>
+                                        <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
+                                        <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
+                                    </optgroup>
+                                    <optgroup label="📀 Disc / Native">
+                                        <option value="dvd_native" data-i18n="video_mode_dvd_native">DVD / ISO (Native)
+                                        </option>
+                                        <option value="bluray_native" data-i18n="video_mode_bluray_native">Blu-ray
+                                            (Native)</option>
+                                    </optgroup>
+                                    <optgroup label="📦 Pipe / Process">
+                                        <option value="ffmpeg" data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</option>
+                                        <option value="mkvmerge" data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc
+                                        </option>
+                                    </optgroup>
                                     <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
                                 </select>
                                 <button onclick="triggerOpenWith()" data-i18n="btn_open_with"
@@ -4547,6 +4565,7 @@
             const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
             const isVideo = item.type === 'video' || (item.extension && videoExts.includes(item.extension.toLowerCase()));
 
+            currentVideoItem = item;
             if (isVideo) {
                 playVideo(item, path);
                 return;
@@ -4717,16 +4736,16 @@
         }
 
         async function triggerOpenWith() {
-            if (!currentSong) {
-                showToast(i18next.t('player_select_song'));
+            if (!currentVideoItem) {
+                showToast(t('player_select_song'));
                 return;
             }
             const select = document.getElementById('playback-engine-strategy-selector');
-            const mode = select.value;
-            const res = await eel.open_video(currentSong.path, mode)();
+            const mode = select ? select.value : 'chrome_native';
+            const res = await eel.open_video(currentVideoItem.path, mode)();
             if (res && res.status === 'play') {
                 if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
-                    startEmbeddedVideo(currentSong, res.path);
+                    startEmbeddedVideo(currentVideoItem, res.path);
                 }
             } else if (res && res.status === 'error') {
                 showToast(res.error);
@@ -7420,25 +7439,39 @@
         <div class="context-menu-item" onclick="handleContextMenuAction('chrome_native')">
             <span>🌐</span> <span data-i18n="video_mode_chrome">Chrome Native</span>
         </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-header">Streaming</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')">
+            <span>📡</span> <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx_webrtc')">
+            <span>⚡</span> <span data-i18n="video_mode_mediamtx_webrtc">MediaMTX (WebRTC)</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-header">VLC / Pipe</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('cvlc')">
+            <span>🎬</span> <span data-i18n="video_mode_cvlc">cvlc solo</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_browser')">
+            <span>🖥️</span> <span data-i18n="video_mode_embedded_vlc">Embedded VLC</span>
+        </div>
         <div class="context-menu-item" onclick="handleContextMenuAction('ffmpeg')">
             <span>🎞️</span> <span data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</span>
         </div>
         <div class="context-menu-item" onclick="handleContextMenuAction('mkvmerge')">
             <span>📦</span> <span data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('cvlc')">
-            <span>🎬</span> <span data-i18n="video_mode_cvlc">cvlc solo</span>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-header">Disc / Hardware</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('dvd_native')">
+            <span>📀</span> <span data-i18n="video_mode_dvd_native">DVD / ISO (Native)</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc')">
-            <span>📺</span> <span data-i18n="video_mode_vlc_external">VLC (Extern)</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('bluray_native')">
+            <span>💿</span> <span data-i18n="video_mode_bluray_native">Blu-ray (Native)</span>
         </div>
         <div class="context-menu-divider"></div>
-        <div class="context-menu-header">Streaming</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')">
-            <span>🌐</span> <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx_webrtc')">
-            <span>⚡</span> <span data-i18n="video_mode_mediamtx_webrtc">MediaMTX (WebRTC)</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')">
+            <span>📺</span> <span data-i18n="video_mode_vlc_external">VLC (Extern)</span>
         </div>
     </div>
 

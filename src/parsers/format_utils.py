@@ -142,10 +142,18 @@ def detect_file_format(path: Optional[Path | str], tags: Optional[dict[str, Any]
             return 'Blu-ray (Abbild)'
         if is_dvd or 'dvd video' in container or 'video_ts' in title:
             return 'DVD (Abbild)'
-        if any(k in volume_id for k in ['ld', 'laserdisc', 'mcav']):
-            return 'LaserDisc (Abbild)'
         if any(k in volume_id for k in ['sacd', 'dsd']):
             return 'SACD (Abbild)'
+
+        # 4. Data / Rom Priorities
+        if is_cdi or 'cd-i' in volume_id:
+            return 'CD-i (Abbild)'
+        if 'cdrom' in volume_id or 'compact disc' in volume_id:
+            return 'CD-ROM (Abbild)'
+        if 'dvd data' in volume_id:
+            return 'DVD Daten (Abbild)'
+        if 'bluray data' in volume_id:
+            return 'Blu-ray Daten (Abbild)'
 
         # Specialized Video Detection (HDR, Interlaced, Deep Color) - Also for ISOS if metadata is present
         hdr = _tag('video_hdr')
@@ -216,7 +224,8 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
     # Movie/Audio images are playable
     playable_keywords = [
         'dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 
-        'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res'
+        'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res',
+        'cd-rom', 'dvd daten', 'blu-ray daten'
     ]
     if any(k in label for k in playable_keywords):
         return True
