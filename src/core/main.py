@@ -844,7 +844,7 @@ def _get_requirements_status():
         "missing_count": 0,
         "installed": [],
         "missing": [],
-        "source": str(requirements_file.relative_to(PROJECT_ROOT)) if requirements_file else "None"
+        "source": "requirements.txt"
     }
 
     import_overrides = {
@@ -909,6 +909,14 @@ def _get_requirements_status():
             logging.error(f"Error parsing {file_path}: {e}")
 
     parse_requirements(requirements_file)
+    
+    # If the main requirement file was just a redirect, show the final target
+    if requirements_file and status["source"] == "requirements.txt" and requirements_file.name != "requirements.txt":
+         status["source"] = f"requirements.txt -> {requirements_file.name}"
+    
+    # If we followed a chain, show the last one that actually had content
+    if requirements_file:
+        status["source"] = str(requirements_file.relative_to(PROJECT_ROOT))
 
     installed = []
     missing = []

@@ -1145,6 +1145,7 @@
                 'parser': 'regex-provider-chain-orchestrator-panel',
                 'debug': 'debug-flag-persistence-panel',
                 'tests': 'quality-assurance-regression-suite-panel',
+                'reporting': 'reporting-dashboard-panel',
                 'logbuch': 'localized-markdown-documentation-journal-panel',
                 'playlist': 'json-serialized-sequence-buffer-panel',
                 'vlc': 'multiplexed-media-player-orchestrator-panel',
@@ -1177,8 +1178,8 @@
 
             const sidebar = document.querySelector('.sidebar');
             const splitter = document.getElementById('main-splitter');
-            if (sidebar) sidebar.style.display = tabId === 'player' ? '' : 'none';
-            if (splitter) splitter.style.display = tabId === 'player' ? '' : 'none';
+            if (sidebar) sidebar.style.display = (tabId === 'player' || tabId === 'vlc' || tabId === 'video') ? '' : 'none';
+            if (splitter) splitter.style.display = (tabId === 'player' || tabId === 'vlc' || tabId === 'video') ? '' : 'none';
 
             if (tabId === 'player') {
                 if (typeof loadLibrary === 'function') loadLibrary();
@@ -7085,12 +7086,23 @@
         }
 
         async function refreshReportingData() {
-            const history = await eel.get_test_results()();
-            if (!history || history.length === 0) {
-                document.getElementById('report-summary-table').innerHTML = '<p style="color: #999;">Keine Testdaten vorhanden.</p>';
+            if (typeof eel.get_test_results !== 'function') {
+                console.error('[UI] eel.get_test_results not available. Check backend @eel.expose.');
+                const container = document.getElementById('report-summary-table');
+                if (container) container.innerHTML = '<p style="color: #c33;">Backend API Error: get_test_results missing.</p>';
                 return;
             }
-            renderCharts(history);
+            const history = await eel.get_test_results()();
+            if (!history || history.length === 0) {
+                const container = document.getElementById('report-summary-table');
+                if (container) container.innerHTML = '<p style="color: #999;">Keine Testdaten vorhanden.</p>';
+                return;
+            }
+            if (window.Plotly) {
+                renderCharts(history);
+            } else {
+                console.warn('[UI] Plotly not loaded. Skipping charts.');
+            }
             renderReportingTable(history);
         }
 
