@@ -253,6 +253,9 @@ def get_default_scan_dir() -> Path:
 PARSER_CONFIG: dict[str, Any] = {
     "start_page": "player",
     "app_mode": "High-Performance", # Choices: High-Performance, Low-Bandwidth
+    "bandwidth_limit": 20, # MB/s
+    "playback_mode": "chrome_native", # Default: chrome_native, ffmpeg, cvlc, mkvmerge, direct
+    "vlc_embedded": True,
     "parser_mode": "lightweight",  # Choices: lightweight, full, ultimate
     "browse_default_dir": str(Path.home()),
     "library_dir": str(get_default_scan_dir()),
@@ -307,8 +310,11 @@ PARSER_CONFIG: dict[str, Any] = {
     "feature_flags": {
         "experimental_transcoding": False,
         "verbose_parsing": False,
-        "show_test_tab": True
+        "show_test_tab": True,
+        "analyse_mode": False,
+        "write_mode": False
     },
+
     "log_level": "INFO",
     "api_timeout": 10,
     "env": "production",

@@ -1813,6 +1813,50 @@
 
                         <div
                             style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_playback_mode">
+                                Wiedergabe-Modus</div>
+                            <select id="config-playback-mode" onchange="updatePlaybackModeUI(this.value)"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
+                                <option value="chrome_native">Chrome Native</option>
+                                <option value="ffmpeg">FFmpeg (Transcode)</option>
+                                <option value="cvlc">CVLC (Fallback)</option>
+                                <option value="mkvmerge">mkvmerge (Direct)</option>
+                                <option value="direct">Direct Play</option>
+                            </select>
+                        </div>
+
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_bandwidth_limit">
+                                Bandbreiten-Limit (MB/s)</div>
+                            <input type="number" id="config-bandwidth-limit" value="20" min="1" step="1"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                                onchange="updateBandwidthLimitUI(this.value)">
+                        </div>
+
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_hardware_info">
+                                Hardware-Informationen</div>
+                            <div
+                                style="font-size: 0.85em; color: #444; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span data-i18n="env_label_disk_type">Laufwerkstyp:</span>
+                                    <span id="hardware-disk-type" style="font-weight: bold;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span data-i18n="env_label_pcie_gen">PCIe Generation:</span>
+                                    <span id="hardware-pcie-gen" style="font-weight: bold;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span data-i18n="env_label_network_mount">Netzwerk-Mount:</span>
+                                    <span id="hardware-network-mount" style="font-weight: bold;">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                             <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_app_mode">App-Modus
                             </div>
                             <div style="display: flex; gap: 10px;">
@@ -4945,8 +4989,6 @@
                         currentParserMapping = mapping;
                     });
 
-                    // Initialize categories
-                    const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
                     cats.forEach(cat => {
                         const cb = document.getElementById('cat-' + cat);
                         if (cb && config.indexed_categories) {
@@ -4958,6 +5000,26 @@
                             dispCb.checked = config.displayed_categories.includes(cat);
                         }
                     });
+
+                    // Set Playback Mode
+                    const playbackSelect = document.getElementById('config-playback-mode');
+                    if (playbackSelect && config.playback_mode) {
+                        playbackSelect.value = config.playback_mode;
+                    }
+
+                    // Set Bandwidth Limit
+                    const bandwidthInput = document.getElementById('config-bandwidth-limit');
+                    if (bandwidthInput && config.bandwidth_limit) {
+                        bandwidthInput.value = config.bandwidth_limit;
+                    }
+
+                    // Set Feature Flags
+                    if (config.feature_flags) {
+                        const analyseFlag = document.getElementById('flag-analyse-mode');
+                        if (analyseFlag) analyseFlag.checked = !!config.feature_flags.analyse_mode;
+                        const writeFlag = document.getElementById('flag-write-mode');
+                        if (writeFlag) writeFlag.checked = !!config.feature_flags.write_mode;
+                    }
 
                     // Fetch Parser Info and Granular Settings
                     if (eel.get_all_parser_info) {
@@ -5565,6 +5627,21 @@
                 const envTestbedPidEl = document.getElementById('env-testbed-pid');
                 const envSeleniumPidEl = document.getElementById('env-selenium-pid');
                 const envBaseDependenciesStatusEl = document.getElementById('env-base-dependencies-status');
+
+                // Hardware Info
+                try {
+                    const hwInfo = await eel.get_hardware_info()();
+                    if (hwInfo) {
+                        const diskTypeEl = document.getElementById('hardware-disk-type');
+                        if (diskTypeEl) diskTypeEl.textContent = hwInfo.disk_type || '-';
+                        const pcieGenEl = document.getElementById('hardware-pcie-gen');
+                        if (pcieGenEl) pcieGenEl.textContent = hwInfo.pcie_gen || '-';
+                        const networkMountEl = document.getElementById('hardware-network-mount');
+                        if (networkMountEl) networkMountEl.textContent = hwInfo.is_network_mount ? 'Yes' : 'No';
+                    }
+                } catch (hwErr) {
+                    console.error('Failed to load hardware info:', hwErr);
+                }
 
                 const mediaInfoStatus = info.mediainfo_status || {};
                 const pyMediaInfoOk = !!mediaInfoStatus.pymediainfo_available;
@@ -7026,6 +7103,39 @@
         }
 
         // ============ End VLC Functions ============
+
+        async function updatePlaybackModeUI(mode) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    await eel.set_playback_mode(mode)();
+                    currentParserOptions.playback_mode = mode;
+                    console.log('Playback mode updated to:', mode);
+                }
+            } catch (e) { console.error('Failed to update playback mode:', e); }
+        }
+
+        async function updateBandwidthLimitUI(limit) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    const val = parseInt(limit);
+                    await eel.set_bandwidth_limit(val)();
+                    currentParserOptions.bandwidth_limit = val;
+                    console.log('Bandwidth limit updated to:', val);
+                }
+            } catch (e) { console.error('Failed to update bandwidth limit:', e); }
+        }
+
+        async function toggleFeatureFlag(flag, value) {
+            try {
+                if (typeof eel !== 'undefined') {
+                    if (!currentParserOptions.feature_flags) currentParserOptions.feature_flags = {};
+                    currentParserOptions.feature_flags[flag] = value;
+                    // We can reuse update_parser_config for now as it takes the whole config
+                    await eel.update_parser_config(currentParserOptions)();
+                    console.log(`Feature flag ${flag} set to ${value}`);
+                }
+            } catch (e) { console.error(`Failed to toggle feature flag ${flag}:`, e); }
+        }
 
         // Initial load: wait a tick for Eel WebSocket to connect, then load data
         setTimeout(async function () {

@@ -66,11 +66,7 @@
 - Damit ist der Fehler im Build-Prozess behoben und die Tests können mit aktueller Geckodriver-Version laufen.
 
 ## TODO: Geckodriver-Fix in allen Pipelines
-- Der dynamische Geckodriver-Download ist bisher nur im ci-main.yml umgesetzt.
-- In folgenden Workflows muss der Fix ebenfalls ergänzt werden:
-  - ci-artifacts.yml
-  - ci-develop.yml
-  - release.yml
+C
 - Erst dann sind alle Pipelines robust gegen das fehlende Systempaket `firefox-geckodriver`.
 
 ---

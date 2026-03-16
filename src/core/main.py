@@ -82,6 +82,7 @@ import env_handler
 import src.core.logger as logger
 from src.core.logger import get_logger
 from src.parsers import tag_writer
+from src.core import hardware_detector
 
 
 def _detect_python_environment():
@@ -484,6 +485,12 @@ def get_app_name():
     return "dict"
 
 # --- Environment Info API ---
+
+
+@eel.expose
+def get_hardware_info():
+    """Returns hardware information (SSD, PCIe, Network) for the UI."""
+    return hardware_detector.get_hardware_info()
 
 
 @eel.expose
@@ -2392,7 +2399,17 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     try:
         from src.parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
 
-        # Build all_exts based on configured categories
+        # Determine if we should use lightweight mode based on path or config
+        is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
+        if is_network:
+            logging.info("[Scan] Network mount detected. Enabling automatic lightweight mode.")
+            parser_mode = "lightweight"
+        else:
+            parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
+
+        # Get existing media from DB for caching
+        existing_media = {m['path']: m for m in db.get_all_media()}
+
         indexed_cats = PARSER_CONFIG.get("indexed_categories")
         if not indexed_cats:
             indexed_cats = [
@@ -2486,6 +2503,13 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
                         logger.debug("scan", f"Verarbeite: {f.name}")
                         try:
+                            # 1. Check if already in DB and not modified (basic check by path)
+                            existing_item = existing_media.get(str(f))
+                            if existing_item:
+                                count += 1
+                                continue # Already indexed, skip deep parsing
+
+                            # 2. Extract metadata
                             item = MediaItem(f.name, f)
                             item_dict = item.to_dict()
                             db.insert_media(item_dict)
@@ -2594,31 +2618,97 @@ def remove_scan_dir(dir_path):
 
 
 @eel.expose
+def set_playback_mode(mode):
+    """Sets the global playback mode."""
+    if mode in ["chrome_native", "ffmpeg", "cvlc", "mkvmerge", "direct"]:
+        PARSER_CONFIG["playback_mode"] = mode
+        save_parser_config()
+        return {"status": "ok", "mode": mode}
+    return {"status": "error", "message": "Invalid mode"}
+
+@eel.expose
+def set_bandwidth_limit(limit_mbps):
+    """Sets the bandwidth limit in MB/s."""
+    try:
+        PARSER_CONFIG["bandwidth_limit"] = int(limit_mbps)
+        save_parser_config()
+        return {"status": "ok", "limit": limit_mbps}
+    except ValueError:
+        return {"status": "error", "message": "Invalid limit"}
+
+@eel.expose
 def play_media(path):
     """
-    @brief Triggers media playback (handled client-side by the browser).
-    @details Triggert die Medienwiedergabe (wird clientseitig vom Browser gehandhabt).
-    @param path Media URL or path / Medien-URL oder Pfad.
-    @return Confirmation dictionary / Bestätigungs-Dictionary.
+    @brief Triggers media playback based on the current playback mode.
     """
-    if DEBUG_FLAGS["player"]:
-        debug_log(f"[Debug-Player] Spiele ab: {path}")
+    mode = PARSER_CONFIG.get("playback_mode", "chrome_native")
+    
+    # Priority 1: Audio is always Chrome Native if mode is default or requested
+    is_audio = Path(path).suffix.lower() in AUDIO_EXTENSIONS
+    if is_audio:
+        # User requested: "for audio always chrome native at the moment."
+        return {"status": "play", "path": path, "mode": "chrome_native"}
 
-    # Try to update browser Media Session via Eel (best-effort)
+    if mode == "chrome_native":
+        # Check if natively supported by Chrome (mp4/webm/etc)
+        ext = Path(path).suffix.lower()
+        if ext in ('.mp4', '.webm', '.ogg'):
+            return {"status": "play", "path": path, "mode": "chrome_native"}
+        else:
+            # Fallback to ffmpeg/vlc if not supported natively
+            logging.info(f"[Player] {ext} not natively supported, falling back to VLC pipe.")
+            return stream_to_vlc(path)
+
+    if mode == "cvlc" or mode == "ffmpeg" or mode == "mkvmerge":
+        # These all use the VLC pipe mechanism currently
+        return stream_to_vlc(path)
+
+    if mode == "direct":
+        # Direct play via system default or VLC direct
+        return play_vlc(path)
+
+    return {"status": "play", "path": path, "mode": "chrome_native"}
+
+
+@eel.expose
+def analyse_media(path):
+    """
+    @brief Performs deep analysis of a media file.
+    """
+    if not PARSER_CONFIG.get("feature_flags", {}).get("analyse_mode", False):
+        return {"status": "error", "message": "Analyse mode is disabled"}
+    
+    from src.parsers.ffprobe_parser import FFprobeParser
+    parser = FFprobeParser()
     try:
-        # Prepare minimal metadata
-        p = Path(path)
-        title = p.stem if p.name else str(path)
-        # Eel call (if frontend exposes `set_media_session`)
-        try:
-            eel.set_media_session({"title": title})()
-        except Exception:
-            # If Eel or JS function not available, ignore silently
-            pass
-    except Exception:
-        pass
+        analysis = parser.parse(Path(path))
+        return {"status": "ok", "analysis": analysis}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
-    return {"status": "play", "path": path}  # Bestätigung
+@eel.expose
+def write_media_tags(path, tags):
+    """
+    @brief Writes tags to a media file, with safety checks.
+    """
+    if not PARSER_CONFIG.get("feature_flags", {}).get("write_mode", False):
+        return {"status": "error", "message": "Write mode is disabled"}
+    
+    # Check for blocking formats
+    ext = Path(path).suffix.lower()
+    if ext in ('.iso', '.mkv'):
+        # For ISO/MKV, we use mkvpropedit if available
+        logging.info(f"[Write] Using specialized writer for {ext}")
+    
+    try:
+        success = tag_writer.write_tags(path, tags)
+        if success:
+            return {"status": "ok"}
+        else:
+            return {"status": "error", "message": "Tag writing failed"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 
 
 # Playlist state (in-memory)
