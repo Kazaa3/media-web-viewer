@@ -435,7 +435,16 @@
         "env_label_pcie_gen": "PCIe Generation:",
         "env_label_network_mount": "Netzwerk-Mount:",
         "debug_flag_analyse_mode": "ANALYSE MODE",
-        "debug_flag_write_mode": "WRITE MODE"
+        "debug_flag_write_mode": "WRITE MODE",
+        "video_mode_chrome": "Chrome Native",
+        "video_mode_vlc_pipe": "VLC hybrid",
+        "video_mode_ffmpeg_browser": "FFmpeg",
+        "video_mode_direct_play": "Direct Play",
+        "video_mode_embedded_vlc": "Embedded VLC",
+        "video_mode_vlc_external": "VLC (Extern)",
+        "video_mode_dnd": "Drag & Drop (Extern)",
+        "video_mode_playlist": "Playlist öffnen",
+        "video_mode_mediamtx": "MediaMTX (HLS)"
     },
     "en": {
         "app_title": "dict",
@@ -865,6 +874,15 @@
         "env_label_pcie_gen": "PCIe Generation:",
         "env_label_network_mount": "Network Mount:",
         "debug_flag_analyse_mode": "ANALYSE MODE",
-        "debug_flag_write_mode": "WRITE MODE"
+        "debug_flag_write_mode": "WRITE MODE",
+        "video_mode_chrome": "Chrome Native",
+        "video_mode_vlc_pipe": "VLC hybrid",
+        "video_mode_ffmpeg_browser": "FFmpeg",
+        "video_mode_direct_play": "Direct Play",
+        "video_mode_embedded_vlc": "Embedded VLC",
+        "video_mode_vlc_external": "VLC (External)",
+        "video_mode_dnd": "Drag & Drop (External)",
+        "video_mode_playlist": "Open Playlist",
+        "video_mode_mediamtx": "MediaMTX (HLS)"
     }
 }

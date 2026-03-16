@@ -2620,7 +2620,7 @@ def remove_scan_dir(dir_path):
 @eel.expose
 def set_playback_mode(mode):
     """Sets the global playback mode."""
-    if mode in ["chrome_native", "ffmpeg", "cvlc", "mkvmerge", "direct"]:
+    if mode in ["chrome_native", "ffmpeg", "cvlc", "mkvmerge", "direct", "mediamtx"]:
         PARSER_CONFIG["playback_mode"] = mode
         save_parser_config()
         return {"status": "ok", "mode": mode}
@@ -2666,6 +2666,10 @@ def play_media(path):
     if mode == "direct":
         # Direct play via system default or VLC direct
         return play_vlc(path)
+
+    if mode == "mediamtx":
+        # High-performance RTSP/HLS streaming
+        return stream_to_mediamtx(path)
 
     return {"status": "play", "path": path, "mode": "chrome_native"}
 
@@ -3358,6 +3362,33 @@ def stream_to_vlc(file_path):
         return {"status": "ok", "message": "Streaming gestartet"}
     except Exception as e:
         logging.error(f"[vlc pipe] Critical Pipe Error: {e}")
+        return {"status": "error", "error": str(e)}
+
+def stream_to_mediamtx(file_path):
+    """
+    @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server).
+    """
+    logging.info(f"[mediamtx] Requesting stream for: {file_path}")
+    
+    if not file_path or not os.path.exists(str(file_path)):
+        return {"status": "error", "error": "Datei nicht gefunden"}
+
+    # Create a safe slug for the path
+    safe_name = re.sub(r'[^a-zA-Z0-9]', '_', Path(file_path).stem)
+    
+    try:
+        # Optional: Explicitly trigger MediaMTX path start if using the API
+        # MediaMTX usually auto-starts paths if configured with runOnDemand
+        # We can try to notify it via CURL if requested by the user's pattern
+        # subprocess.run(['curl', '-X', 'POST', f'http://localhost:9997/paths/add/{safe_name}'], capture_output=True)
+        
+        # The user's pattern suggests:
+        hls_url = f"http://localhost:8888/{safe_name}/index.m3u8"
+        
+        return {"status": "play", "path": hls_url, "mode": "mediamtx"}
+    except Exception as e:
+        logging.error(f"[mediamtx] Setup error: {e}")
+        return {"status": "error", "error": str(e)}
         return {"status": "error", "error": str(e)}
 
 

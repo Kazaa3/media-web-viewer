@@ -4,6 +4,7 @@
 <head>
     <title data-i18n="app_title">dict</title> <!-- ohne: -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -2531,6 +2532,7 @@
                                     </option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
                                     <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
+                                    <option value="mediamtx">MediaMTX (HLS)</option>
                                     <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
                                 </select>
                             </div>
@@ -3743,6 +3745,19 @@
             const countEl = document.getElementById('json-serialized-sequence-length-renderer');
             if (!list) return;
 
+            list.ondragover = (e) => e.preventDefault();
+            list.ondrop = (e) => {
+                e.preventDefault();
+                const data = e.dataTransfer.getData("text/plain");
+                if (data) {
+                    try {
+                        const item = JSON.parse(data);
+                        currentPlaylist.push(item);
+                        renderPlaylist();
+                    } catch (err) { console.error("Drop error", err); }
+                }
+            };
+
             const moveUpBtn = document.getElementById('sequence-buffer-index-decrement-trigger');
             const moveDownBtn = document.getElementById('sequence-buffer-index-increment-trigger');
             if (moveUpBtn) {
@@ -4272,6 +4287,10 @@
             result.media.forEach(item => {
                 let div = document.createElement('div');
                 div.className = 'implementation-encapsulated-state-buffer-node';
+                div.draggable = true;
+                div.ondragstart = (e) => {
+                    e.dataTransfer.setData("text/plain", JSON.stringify(item));
+                };
                 let tags = item.tags;
                 let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
                 let trackStr = tags.track ? 'Track ' + tags.track : '';
@@ -4565,6 +4584,14 @@
 
             if (mode === 'vlc') {
                 await startVLC(item.path);
+            } else if (mode === 'mediamtx') {
+                // MediaMTX High Performance Streaming
+                const res = await eel.stream_to_mediamtx(item.path)();
+                if (res.status === 'play') {
+                    startEmbeddedVideo(item, res.path);
+                } else {
+                    alert(res.error || "MediaMTX Error");
+                }
             } else if (mode === 'vlc_browser') {
                 startEmbeddedVideo(item, `/vlc-stream/${encodeURIComponent(item.path)}`);
             } else if (mode === 'vlc_pipe') {
@@ -4668,6 +4695,32 @@
 
             placeholder.style.display = 'none';
             video.style.display = 'block';
+
+            // HLS Support for MediaMTX
+            if (path && path.includes('index.m3u8')) {
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(path);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                        video.play();
+                    });
+                    // Store hls instance to destroy later if needed
+                    video.hls = hls;
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = path;
+                    video.addEventListener('loadedmetadata', function () {
+                        video.play();
+                    });
+                }
+                return;
+            }
+
+            // Clean up previous HLS if exists
+            if (video.hls) {
+                video.hls.destroy();
+                delete video.hls;
+            }
 
             let callbackTriggered = false;
             const triggerError = () => {
