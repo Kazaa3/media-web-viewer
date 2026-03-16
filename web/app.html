@@ -5,6 +5,8 @@
     <title data-i18n="app_title">dict</title> <!-- ohne: -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -251,17 +253,82 @@
         /* Custom Context Menu */
         .custom-context-menu {
             position: fixed;
+            z-index: 10000;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            z-index: 9999;
-            min-width: 200px;
-            padding: 5px 0;
+            padding: 8px 0;
+            min-width: 220px;
             display: none;
-            animation: context-menu-fade-in 0.1s ease-out;
-            pointer-events: auto;
+            flex-direction: column;
+            animation: fadeInScale 0.2s ease-out;
+        }
+
+        /* Mini-Player Overlay CSS */
+        .mini-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            height: 180px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 10001;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mini-player.hidden {
+            display: none;
+        }
+
+        .mini-drag-handle {
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            cursor: move;
+            color: white;
+            font-size: 0.8em;
+        }
+
+        .mini-drag-handle button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 0 5px;
+        }
+
+        .mini-video {
+            width: 100%;
+            height: 120px;
+            background: black;
+        }
+
+        .mini-controls {
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .mini-controls button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1em;
         }
 
         @keyframes context-menu-fade-in {
@@ -2635,29 +2702,30 @@
                                     data-i18n="video_mode_label">Modus:</span>
                                 <select id="playback-engine-strategy-selector" onchange="orchestrateVideoPlaybackMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <optgroup label="🎬 Chrome / Browser">
+                                    <optgroup label="🎬 Chrome Native (Video.js)">
                                         <option value="chrome_native" data-i18n="video_mode_chrome">Chrome Native
-                                        </option>
+                                            (Direct)</option>
                                         <option value="mediamtx" data-i18n="video_mode_mediamtx">MediaMTX (HLS)</option>
                                         <option value="mediamtx_webrtc" data-i18n="video_mode_mediamtx_webrtc">MediaMTX
                                             (WebRTC)</option>
+                                        <option value="ffmpeg_browser" data-i18n="video_mode_ffmpeg_browser">FFmpeg
+                                            (Browser)</option>
+                                    </optgroup>
+                                    <optgroup label="📺 VLC / Standalone">
+                                        <option value="vlc_ts" data-i18n="video_mode_vlc_ts">VLC (TS-Stream Detection)
+                                        </option>
+                                        <option value="cvlc" data-i18n="video_mode_cvlc">cvlc solo</option>
                                         <option value="vlc_browser" data-i18n="video_mode_embedded_vlc">Embedded VLC
                                         </option>
-                                    </optgroup>
-                                    <optgroup label="📺 VLC / Desktop">
-                                        <option value="cvlc" data-i18n="video_mode_cvlc">cvlc solo</option>
-                                        <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
-                                        <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
-                                    </optgroup>
-                                    <optgroup label="📀 Disc / Native">
+                                        <option value="ffplay" data-i18n="video_mode_ffplay">ffplay (Standalone)
+                                        </option>
+                                        <option value="mkvmerge_standalone" data-i18n="video_mode_mkvmerge_standalone">
+                                            mkvmerge (Standalone)</option>
                                         <option value="dvd_native" data-i18n="video_mode_dvd_native">DVD / ISO (Native)
                                         </option>
                                         <option value="bluray_native" data-i18n="video_mode_bluray_native">Blu-ray
                                             (Native)</option>
-                                    </optgroup>
-                                    <optgroup label="📦 Pipe / Process">
-                                        <option value="ffmpeg" data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</option>
-                                        <option value="mkvmerge" data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc
+                                        <option value="vlc_extern" data-i18n="video_mode_vlc_external">VLC (Extern)
                                         </option>
                                     </optgroup>
                                     <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
@@ -2673,8 +2741,8 @@
                         <div id="toast-container"></div>
                         <div id="coordinated-media-renderer-pipeline-viewport"
                             style="background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                            <video id="native-html5-video-resource-node" controls
-                                style="width: 100%; height: 100%; display: none;"></video>
+                            <video id="native-html5-video-resource-node" class="video-js vjs-default-skin" controls
+                                preload="auto" style="width: 100%; height: 100%; display: none;"></video>
                             <div id="idle-state-media-icon-symbol"
                                 style="color: #444; text-align: center; padding: 40px;">
                                 <div
@@ -3283,9 +3351,19 @@
             const item = contextMenuItem;
             hideContextMenu();
 
+            if (mode === 'vlc_ts') {
+                const res = await eel.vlc_ts_mode(item.path)();
+                if (res.status === 'play') {
+                    startEmbeddedVideo(item, res.path, null, res.type);
+                } else {
+                    showToast(res.error || "VLC TS Error");
+                }
+                return;
+            }
+
             const res = await eel.open_video(item.path, mode)();
             if (res && res.status === 'play') {
-                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
+                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native' || res.mode === 'ffmpeg_browser') {
                     if (typeof startEmbeddedVideo === 'function') {
                         startEmbeddedVideo(item, res.path);
                     }
@@ -3293,6 +3371,8 @@
             } else if (res && res.status === 'error') {
                 if (typeof showToast === 'function') showToast(res.error);
                 else alert(res.error);
+            } else if (res && res.status === 'ok') {
+                showToast(res.message || "Aktion gestartet");
             }
         }
 
@@ -4785,6 +4865,8 @@
             }
         }
 
+        let vjsPlayer = null;
+
         async function playVideo(item, path) {
             currentVideoItem = item;
             currentVideoPath = path;
@@ -4799,7 +4881,26 @@
             // Ensure audio is paused
             if (activeAudioPipeline) activeAudioPipeline.pause();
 
-            if (mode === 'vlc') {
+            // Handle new modes
+            if (mode === 'vlc_ts') {
+                const res = await eel.vlc_ts_mode(item.path)();
+                if (res.status === 'play') {
+                    startEmbeddedVideo(item, res.path, null, res.type);
+                } else {
+                    showToast(res.error || "VLC TS Error");
+                }
+            } else if (mode === 'ffplay') {
+                const res = await eel.open_video(item.path, 'ffplay')();
+                if (res.status !== 'ok') showToast(res.error);
+            } else if (mode === 'mkvmerge_standalone') {
+                const res = await eel.open_video(item.path, 'mkvmerge_standalone')();
+                if (res.status !== 'ok') showToast(res.error);
+            } else if (mode === 'ffmpeg_browser') {
+                const res = await eel.open_video(item.path, 'ffmpeg_browser')();
+                if (res.status === 'play') {
+                    startEmbeddedVideo(item, res.path);
+                }
+            } else if (mode === 'vlc') {
                 await startVLC(item.path);
             } else if (mode === 'mediamtx' || mode === 'mediamtx_webrtc') {
                 const protocol = (mode === 'mediamtx_webrtc') ? 'webrtc' : 'hls';
@@ -4864,16 +4965,33 @@
             }
         }
 
-        function startEmbeddedVideo(item, path, onErrorCallback = null) {
+        function startEmbeddedVideo(item, path, onErrorCallback = null, type = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
-            // Hard reset to clear previous state/errors
-            video.pause();
-            video.onerror = null;
-            video.onloadeddata = null;
-            video.src = "";
-            video.load();
+            // Initialize Video.js if not already done
+            if (!vjsPlayer) {
+                vjsPlayer = videojs('native-html5-video-resource-node', {
+                    fluid: true,
+                    playbackRates: [0.5, 1, 1.5, 2],
+                    controlBar: {
+                        children: [
+                            'playToggle',
+                            'volumePanel',
+                            'currentTimeDisplay',
+                            'timeDivider',
+                            'durationDisplay',
+                            'progressControl',
+                            'remainingTimeDisplay',
+                            'playbackRateMenuButton',
+                            'subsCapsButton',
+                            'audioTrackButton',
+                            'fullscreenToggle',
+                            'pictureInPictureToggle'
+                        ]
+                    }
+                });
+            }
 
             // Stop VLC if running
             eel.stop_vlc()();
@@ -4883,65 +5001,19 @@
             placeholder.style.display = 'none';
             video.style.display = 'block';
 
-            // HLS Support for MediaMTX
-            if (path && path.includes('index.m3u8')) {
-                if (Hls.isSupported()) {
-                    const hls = new Hls();
-                    hls.loadSource(path);
-                    hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                        video.play();
-                    });
-                    // Store hls instance to destroy later if needed
-                    video.hls = hls;
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = path;
-                    video.addEventListener('loadedmetadata', function () {
-                        video.play();
-                    });
-                }
-                return;
+            let srcType = type || 'video/mp4';
+            if (path && (path.includes('index.m3u8') || path.endsWith('.m3u8'))) {
+                srcType = 'application/x-mpegURL';
+            } else if (type === 'video/mp2t' || path.includes(':')) {
+                srcType = 'video/mp2t';
             }
 
-            // Clean up previous HLS if exists
-            if (video.hls) {
-                video.hls.destroy();
-                delete video.hls;
-            }
+            vjsPlayer.src({ src: path, type: srcType });
+            vjsPlayer.play().catch(e => {
+                console.warn("Video.js playback failed:", e);
+                if (typeof onErrorCallback === 'function') onErrorCallback();
+            });
 
-            let callbackTriggered = false;
-            const triggerError = () => {
-                if (callbackTriggered) return;
-                callbackTriggered = true;
-                if (typeof onErrorCallback === 'function') {
-                    onErrorCallback();
-                } else {
-                    showUnsupportedVideoHint();
-                }
-            };
-
-            video.onloadeddata = () => {
-                hideUnsupportedVideoHint();
-                console.log("Video source loaded:", path);
-            };
-
-            video.onerror = () => {
-                console.warn("Video 'onerror' event triggered for:", path);
-                triggerError();
-            };
-
-            video.src = path;
-            const playPromise = video.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(e => {
-                    console.error("Video play() promise rejection:", e);
-                    if (isUnsupportedMediaError(e)) {
-                        triggerError();
-                    }
-                });
-            }
-
-            document.getElementById('btn-open-vlc').style.display = 'flex';
         }
 
         async function startVLC(filePath, displayName = null) {
@@ -7432,37 +7504,112 @@
                 console.error("Could not fetch version/app info:", e);
             }
         });
+
+        // Mini-Player Logik
+        function toggleMiniPlayer() {
+            const mini = document.getElementById('mini-player');
+            mini.classList.toggle('hidden');
+            if (!mini.classList.contains('hidden')) {
+                console.log("Mini-Player activated");
+            }
+        }
+
+        function miniPlayerControl(action) {
+            if (!vjsPlayer) return;
+            if (action === 'play') vjsPlayer.play();
+            else if (action === 'pause') vjsPlayer.pause();
+            else if (action === 'fullscreen') vjsPlayer.requestFullscreen();
+        }
+
+        // Draggable Logic for Mini-Player
+        document.addEventListener('DOMContentLoaded', () => {
+            const miniPlayer = document.getElementById('mini-player');
+            const dragHandle = document.getElementById('mini-drag-handle');
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+
+            if (dragHandle) {
+                dragHandle.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    const rect = miniPlayer.getBoundingClientRect();
+                    startLeft = rect.left;
+                    startTop = rect.top;
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                    e.preventDefault();
+                });
+            }
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                miniPlayer.style.left = (startLeft + dx) + 'px';
+                miniPlayer.style.top = (startTop + dy) + 'px';
+                miniPlayer.style.bottom = 'auto';
+                miniPlayer.style.right = 'auto';
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+        });
     </script>
+    <!-- Mini-Video Overlay (PiP) -->
+    <div id="mini-player" class="mini-player hidden">
+        <div class="mini-drag-handle" id="mini-drag-handle">
+            <span>Mini-Player</span>
+            <button onclick="toggleMiniPlayer()">×</button>
+        </div>
+        <div id="mini-player-container" class="mini-video">
+            <!-- Video.js or native video will be injected here -->
+        </div>
+        <div class="mini-controls">
+            <button onclick="miniPlayerControl('play')">▶</button>
+            <button onclick="miniPlayerControl('pause')">⏸</button>
+            <button onclick="miniPlayerControl('fullscreen')">⛶</button>
+        </div>
+    </div>
+
     <!-- Custom Context Menu for Media Items -->
     <div id="custom-context-menu" class="custom-context-menu">
         <div class="context-menu-header" data-i18n="video_mode_label">Playback Mode</div>
+        <div class="context-menu-header">🎬 Chrome Native</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('chrome_native')">
-            <span>🌐</span> <span data-i18n="video_mode_chrome">Chrome Native</span>
+            <span>🌐</span> <span data-i18n="video_mode_chrome">Chrome Native (Direct)</span>
         </div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-header">Streaming</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')">
             <span>📡</span> <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
         </div>
         <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx_webrtc')">
             <span>⚡</span> <span data-i18n="video_mode_mediamtx_webrtc">MediaMTX (WebRTC)</span>
         </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('ffmpeg_browser')">
+            <span>🎞️</span> <span data-i18n="video_mode_ffmpeg_browser">FFmpeg (Browser)</span>
+        </div>
         <div class="context-menu-divider"></div>
-        <div class="context-menu-header">VLC / Pipe</div>
+        <div class="context-menu-header">📺 VLC / Standalone</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_ts')">
+            <span>🎛️</span> <span data-i18n="video_mode_vlc_ts">VLC (TS-Stream Detection)</span>
+        </div>
         <div class="context-menu-item" onclick="handleContextMenuAction('cvlc')">
             <span>🎬</span> <span data-i18n="video_mode_cvlc">cvlc solo</span>
         </div>
         <div class="context-menu-item" onclick="handleContextMenuAction('vlc_browser')">
             <span>🖥️</span> <span data-i18n="video_mode_embedded_vlc">Embedded VLC</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('ffmpeg')">
-            <span>🎞️</span> <span data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('ffplay')">
+            <span>🚀</span> <span data-i18n="video_mode_ffplay">ffplay (Standalone)</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('mkvmerge')">
-            <span>📦</span> <span data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mkvmerge_standalone')">
+            <span>📦</span> <span data-i18n="video_mode_mkvmerge_standalone">mkvmerge (Standalone)</span>
         </div>
         <div class="context-menu-divider"></div>
-        <div class="context-menu-header">Disc / Hardware</div>
+        <div class="context-menu-header">📀 Disc / Hardware</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('dvd_native')">
             <span>📀</span> <span data-i18n="video_mode_dvd_native">DVD / ISO (Native)</span>
         </div>

@@ -2701,10 +2701,26 @@ def open_video(file_path: str, mode: str):
         return stream_to_mediamtx(file_path, protocol="webrtc")
     elif mode == "ffmpeg":
         return stream_to_vlc(file_path, engine="ffmpeg")
+    elif mode == "ffmpeg_browser":
+        # Returns a path to /video-stream/ for the internal player
+        return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
+    elif mode == "ffplay":
+        try:
+            ffplay_path = shutil.which("ffplay") or "ffplay"
+            logging.info(f"[Player] Launching ffplay standalone: {file_path}")
+            subprocess.Popen([str(ffplay_path), str(file_path), "-autoexit", "-alwaysontop"])
+            return {"status": "ok", "mode": "ffplay_standalone"}
+        except Exception as e:
+            return {"status": "error", "error": f"ffplay startup failed: {e}"}
     elif mode == "mkvmerge":
         return stream_to_vlc(file_path, engine="mkvmerge")
+    elif mode == "mkvmerge_standalone":
+        # Remuxes to a temp MKV and open with VLC
+        return mkvmerge_standalone_mode(file_path)
     elif mode == "cvlc":
         return stream_to_vlc(file_path, engine="cvlc_solo")
+    elif mode == "vlc_ts":
+        return vlc_ts_mode(file_path)
     elif mode == "vlc" or mode == "vlc_extern":
         return stream_to_vlc(file_path, engine="vlc_extern")
     elif mode == "dvd_native":
@@ -3429,6 +3445,109 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     except Exception as e:
         logging.error(f"[vlc pipe] Critical Pipe Error: {e}")
         return {"status": "error", "error": str(e)}
+
+
+def detect_ts_stream(port):
+    """Prüft ob cvlc TS auf Port läuft."""
+    import requests
+    try:
+        # VLC simple HTTP check
+        r = requests.head(f"http://localhost:{session_port}/health", timeout=0.1) # dummy check for port activity?
+        # Better: check if port is listening
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
+    except:
+        return False
+
+
+@eel.expose
+def vlc_ts_mode(file_path):
+    """Launches cvlc with TS muxing and returns the port."""
+    if not os.path.exists(file_path):
+        return {"status": "error", "error": "Datei nicht gefunden"}
+
+    def find_free_port():
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            return s.getsockname()[1]
+
+    port = find_free_port()
+    try:
+        cmd = [
+            'cvlc', file_path,
+            '--sout', f'#std{{access=http,mux=ts,dst=:{port}/}}',
+            '--no-video-title-show', '--loop'
+        ]
+        logging.info(f"[cvlc] Launching TS Stream on port {port}: {file_path}")
+        subprocess.Popen(cmd)
+
+        # Wait for TS-Stream to be active
+        max_retries = 10
+        for i in range(max_retries):
+            time.sleep(0.5)
+            if detect_ts_stream(port):
+                logging.info(f"[cvlc] TS Stream active on port {port}")
+                # We return a URL that the frontend can play via Video.js (type: video/mp2t)
+                return {"status": "play", "path": f"http://localhost:{port}/", "mode": "chrome_native", "type": "video/mp2t"}
+
+        return {"status": "error", "error": "cvlc TS failed to start"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
+def pyvidplayer2_mode(file_path):
+    """Launches pyvidplayer2 for high-performance desktop playback."""
+    if not os.path.exists(file_path):
+        return {"status": "error", "error": "Datei nicht gefunden"}
+    
+    try:
+        import pyvidplayer2 as pv
+        # Note: This usually opens a new window depending on the backend (pygame/cv2)
+        # For true embedding in Eel, one would need to pass frames as base64, 
+        # but for standalone it's simpler.
+        def run_pv():
+             player = pv.Video(file_path)
+             player.play()
+        
+        logging.info(f"[pyvidplayer2] Launching for: {file_path}")
+        import threading
+        threading.Thread(target=run_pv, daemon=True).start()
+        return {"status": "ok", "message": "pyvidplayer2 gestartet"}
+    except ImportError:
+        return {"status": "error", "error": "pyvidplayer2 nicht installiert (pip install pyvidplayer2)"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
+def mkvmerge_standalone_mode(file_path):
+    """Remuxes to a temp MKV and then opens it in VLC."""
+    if not is_mkvtoolnix_available():
+        return {"status": "error", "error": "mkvtoolnix nicht installiert"}
+
+    try:
+        temp_dir = Path(logger.APP_DATA_DIR) / "temp_remux"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        out_file = temp_dir / (Path(file_path).stem + ".mkv")
+
+        if not out_file.exists():
+            logging.info(f"[mkvmerge] Remuxing to standalone: {file_path}")
+            subprocess.run(["mkvmerge", "-o", str(out_file), str(file_path)], check=True)
+
+        vlc_path = shutil.which("vlc") or "vlc"
+        subprocess.Popen([str(vlc_path), str(out_file)])
+        return {"status": "ok", "mode": "mkvmerge_standalone"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
+def mediamtx_mode(file_path, variant="hls"):
+    """Enhanced handler for MediaMTX GUI integration."""
+    return stream_to_mediamtx(file_path, protocol=variant)
 
 def stream_to_mediamtx(file_path, protocol="hls"):
     """
