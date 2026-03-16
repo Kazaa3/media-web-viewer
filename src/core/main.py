@@ -1615,14 +1615,20 @@ def get_debug_logs():
 def set_log_level(level_name: str):
     """
     @brief Sets the global log level.
-    @param level_name One of DEBUG, INFO, WARNING, ERROR.
+    @param level_name One of DEBUG, INFO, WARNING, ERROR, CRITICAL.
     """
+    # Log the action BEFORE changing the level so it's always captured at current level
+    logging.info(f"[System] Manually setting Log-Level to {level_name.upper()}")
+    
     level = getattr(logging, level_name.upper(), logging.INFO)
     logging.getLogger().setLevel(level)
     # Update handlers as well to be sure
     for handler in logging.getLogger().handlers:
         handler.setLevel(level)
-    logging.info(f"[System] Log-Level manually set to {level_name}")
+    
+    # Update config for persistence
+    PARSER_CONFIG["log_level"] = level_name.upper()
+    save_parser_config()
     return True
 
 # initialize_debug_flags was moved to top-level for earlier capture
@@ -2668,10 +2674,41 @@ def play_media(path):
         return play_vlc(path)
 
     if mode == "mediamtx":
-        # High-performance RTSP/HLS streaming
-        return stream_to_mediamtx(path)
+        # High-performance HLS streaming
+        return stream_to_mediamtx(path, protocol="hls")
+
+    if mode == "mediamtx_webrtc":
+        # Ultra-low latency WebRTC streaming
+        return stream_to_mediamtx(path, protocol="webrtc")
 
     return {"status": "play", "path": path, "mode": "chrome_native"}
+
+
+@eel.expose
+def open_video(file_path: str, mode: str):
+    """
+    @brief Explicitly opens a video with a specific mode.
+    Used for 'Open With' functionality.
+    """
+    logging.info(f"[Player] Explicit 'Open With' triggered: {file_path} via {mode}")
+    
+    if mode == "MediaMTX (HLS)":
+        return stream_to_mediamtx(file_path, protocol="hls")
+    elif mode == "MediaMTX (WebRTC)":
+        return stream_to_mediamtx(file_path, protocol="webrtc")
+    elif mode == "ffmpeg mit cvlc":
+        return stream_to_vlc(file_path, engine="ffmpeg")
+    elif mode == "mkvmerge mit cvlc":
+        return stream_to_vlc(file_path, engine="mkvmerge")
+    elif mode == "cvlc solo":
+        return play_vlc(file_path) # Direct VLC
+    elif mode == "VLC (Extern)":
+        return play_vlc(file_path)
+    elif mode == "Chrome Native":
+        return {"status": "play", "path": file_path, "mode": "chrome_native"}
+    
+    # Fallback/Default
+    return play_media(file_path)
 
 
 @eel.expose
@@ -3299,7 +3336,7 @@ def is_mkvtoolnix_available():
 
 
 @eel.expose
-def stream_to_vlc(file_path):
+def stream_to_vlc(file_path, engine="ffmpeg"):
     """
     @brief Real-time streaming via mkvmerge pipe to VLC.
     @details Nutzt mkvmerge oder FFmpeg zum Remuxen und pipet den Output direkt an VLC.
@@ -3332,17 +3369,19 @@ def stream_to_vlc(file_path):
         return {"status": "error", "error": "VLC Media Player nicht installiert oder nicht im PATH"}
 
     try:
-        # Use ffmpeg for the pipe because it's more reliable for stdout-muxing
-        # -i file_path: input file
-        # -c copy: stream copy (no transcoding)
-        # -f matroska -: output to stdout as Matroska
-        ffmpeg_cmd = ["ffmpeg", "-loglevel", "error", "-i", str(file_path), "-c", "copy", "-f", "matroska", "-"]
+        if engine == "mkvmerge":
+            # mkvmerge pipeline: -o - (stdout)
+            remux_cmd = ["mkvmerge", "-o", "-", str(file_path)]
+        else:
+            # ffmpeg pipeline (default)
+            remux_cmd = ["ffmpeg", "-loglevel", "error", "-i", str(file_path), "-c", "copy", "-f", "matroska", "-"]
+        
         vlc_cmd = [str(vlc_path), "-"]
 
-        logging.info(f"[vlc pipe] Launching Pipe: {' '.join(str(c) for c in ffmpeg_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
+        logging.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c) for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
 
-        # Start ffmpeg
-        p1 = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Start remuxer
+        p1 = subprocess.Popen(remux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # Start VLC, linking its stdin to ffmpeg's stdout
         p2 = subprocess.Popen(vlc_cmd, stdin=p1.stdout)
 
@@ -3364,11 +3403,12 @@ def stream_to_vlc(file_path):
         logging.error(f"[vlc pipe] Critical Pipe Error: {e}")
         return {"status": "error", "error": str(e)}
 
-def stream_to_mediamtx(file_path):
+def stream_to_mediamtx(file_path, protocol="hls"):
     """
     @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server).
+    @param protocol "hls" or "webrtc"
     """
-    logging.info(f"[mediamtx] Requesting stream for: {file_path}")
+    logging.info(f"[mediamtx] Requesting {protocol} stream for: {file_path}")
     
     if not file_path or not os.path.exists(str(file_path)):
         return {"status": "error", "error": "Datei nicht gefunden"}
@@ -3377,18 +3417,23 @@ def stream_to_mediamtx(file_path):
     safe_name = re.sub(r'[^a-zA-Z0-9]', '_', Path(file_path).stem)
     
     try:
-        # Optional: Explicitly trigger MediaMTX path start if using the API
         # MediaMTX usually auto-starts paths if configured with runOnDemand
-        # We can try to notify it via CURL if requested by the user's pattern
-        # subprocess.run(['curl', '-X', 'POST', f'http://localhost:9997/paths/add/{safe_name}'], capture_output=True)
-        
-        # The user's pattern suggests:
-        hls_url = f"http://localhost:8888/{safe_name}/index.m3u8"
-        
-        return {"status": "play", "path": hls_url, "mode": "mediamtx"}
+        if protocol == "webrtc":
+            # WebRTC (WHEP) endpoint for high-performance sub-100ms
+            # URL format usually matches the WHEP API of MediaMTX
+            # Default MediaMTX WebRTC port is often 8889 for UI or specific API
+            # For WHEP specifically, it's often the same as HLS port but different path or separate port
+            # Assuming standard bluenviron/mediamtx config
+            src_url = f"http://localhost:8889/{safe_name}/whep"
+            mode = "mediamtx_webrtc"
+        else:
+            # HLS (default)
+            src_url = f"http://localhost:8888/{safe_name}/index.m3u8"
+            mode = "mediamtx"
+            
+        return {"status": "play", "path": src_url, "mode": mode}
     except Exception as e:
         logging.error(f"[mediamtx] Setup error: {e}")
-        return {"status": "error", "error": str(e)}
         return {"status": "error", "error": str(e)}
 
 

@@ -248,6 +248,65 @@
             font-weight: bold;
         }
 
+        /* Custom Context Menu */
+        .custom-context-menu {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+            min-width: 200px;
+            padding: 5px 0;
+            display: none;
+            animation: context-menu-fade-in 0.1s ease-out;
+            pointer-events: auto;
+        }
+
+        @keyframes context-menu-fade-in {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .context-menu-item:hover {
+            background: #2a7;
+            color: white;
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.05);
+            margin: 5px 0;
+        }
+
+        .context-menu-header {
+            padding: 8px 16px 4px 16px;
+            font-size: 0.72em;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.8px;
+        }
+
         .player-container {
             background-color: #ffffff;
             border-top: 1px solid #ddd;
@@ -871,6 +930,53 @@
 
         .kernarchitektur-section .core-pkg strong {
             color: #2a7;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 0.9em;
+            animation: toast-in 0.3s ease-out, toast-out 0.3s ease-in 2.7s forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes toast-in {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toast-out {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(100%);
+                opacity: 0;
+            }
         }
     </style>
     <script>
@@ -2434,10 +2540,11 @@
                                 <div><b>Log-Level:</b>
                                     <select id="debug-log-level-select" onchange="changeLogLevel(this.value)"
                                         style="font-size: 0.9em; padding: 2px; border-radius: 4px; border: 1px solid #555; background: #333; color: #eee;">
-                                        <option value="DEBUG">DEBUG</option>
-                                        <option value="INFO">INFO</option>
-                                        <option value="WARNING">WARNING</option>
-                                        <option value="ERROR">ERROR</option>
+                                        <option value="DEBUG" data-i18n="log_level_debug">DEBUG</option>
+                                        <option value="INFO" data-i18n="log_level_info">INFO</option>
+                                        <option value="WARNING" data-i18n="log_level_warning">WARNING</option>
+                                        <option value="ERROR" data-i18n="log_level_error">ERROR</option>
+                                        <option value="CRITICAL" data-i18n="log_level_critical">CRITICAL</option>
                                     </select>
                                 </div>
                             </div>
@@ -2524,21 +2631,28 @@
                                     data-i18n="video_mode_label">Modus:</span>
                                 <select id="playback-engine-strategy-selector" onchange="orchestrateVideoPlaybackMode()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <option value="browser" data-i18n="video_mode_chrome">Chrome Native</option>
-                                    <option value="vlc_pipe" data-i18n="video_mode_vlc_pipe" selected>vlc pipe</option>
-                                    <option value="integrated" data-i18n="video_mode_ffmpeg_browser">FFmpeg</option>
-                                    <option value="directplay" data-i18n="video_mode_direct_play">Direct Play</option>
+                                    <option value="chrome_native" data-i18n="video_mode_chrome">Chrome Native</option>
+                                    <option value="ffmpeg" data-i18n="video_mode_ffmpeg">ffmpeg mit cvlc</option>
+                                    <option value="mkvmerge" data-i18n="video_mode_mkvmerge">mkvmerge mit cvlc</option>
+                                    <option value="cvlc" data-i18n="video_mode_cvlc">cvlc solo</option>
+                                    <option value="direct" data-i18n="video_mode_direct">Direct Play</option>
                                     <option value="vlc_browser" data-i18n="video_mode_embedded_vlc">Embedded VLC
                                     </option>
                                     <option value="vlc" data-i18n="video_mode_vlc_external">VLC (Extern)</option>
                                     <option value="dnd" data-i18n="video_mode_dnd">Drag & Drop (Extern)</option>
-                                    <option value="mediamtx">MediaMTX (HLS)</option>
+                                    <option value="mediamtx_webrtc" data-i18n="video_mode_mediamtx_webrtc">MediaMTX
+                                        (WebRTC)</option>
                                     <option value="playlist" data-i18n="video_mode_playlist">Playlist öffnen</option>
                                 </select>
+                                <button onclick="triggerOpenWith()" data-i18n="btn_open_with"
+                                    style="background: #2a7; color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: opacity 0.2s;">
+                                    Öffnen mit
+                                </button>
                             </div>
                         </div>
 
                         <!-- Coordinated Renderer Pipeline -->
+                        <div id="toast-container"></div>
                         <div id="coordinated-media-renderer-pipeline-viewport"
                             style="background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
                             <video id="native-html5-video-resource-node" controls
@@ -3101,6 +3215,19 @@
 
         // ============ Player Expansion State ============
         let currentPlaylist = [];
+        const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
+
+        function showToast(message, duration = 3000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, duration + 300);
+        }
         let playlistIndex = -1;
         let isShuffle = false;
         let repeatStatus = 'off'; // 'off', 'all', 'one'
@@ -4535,6 +4662,23 @@
             }
         }
 
+        async function triggerOpenWith() {
+            if (!currentSong) {
+                showToast(i18next.t('player_select_song'));
+                return;
+            }
+            const select = document.getElementById('playback-engine-strategy-selector');
+            const modeLabel = select.selectedOptions[0].text;
+            const res = await eel.open_video(currentSong.path, modeLabel)();
+            if (res && res.status === 'play') {
+                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
+                    startEmbeddedVideo(res.path);
+                }
+            } else if (res && res.status === 'error') {
+                showToast(res.error);
+            }
+        }
+
         function orchestrateVideoPlaybackMode() {
             const select = document.getElementById('playback-engine-strategy-selector');
             const mode = select.value;
@@ -4544,7 +4688,7 @@
                 const plBtn = document.getElementById('sequential-buffer-tab-trigger');
                 switchTab('playlist', plBtn);
                 // Reset select to previous mode or native?
-                select.value = 'browser';
+                select.value = 'chrome_native';
                 return;
             }
 
@@ -4584,30 +4728,26 @@
 
             if (mode === 'vlc') {
                 await startVLC(item.path);
-            } else if (mode === 'mediamtx') {
-                // MediaMTX High Performance Streaming
-                const res = await eel.stream_to_mediamtx(item.path)();
+            } else if (mode === 'mediamtx' || mode === 'mediamtx_webrtc') {
+                const protocol = (mode === 'mediamtx_webrtc') ? 'webrtc' : 'hls';
+                const res = await eel.stream_to_mediamtx(item.path, protocol)();
                 if (res.status === 'play') {
                     startEmbeddedVideo(item, res.path);
                 } else {
-                    alert(res.error || "MediaMTX Error");
+                    showToast(res.error || "MediaMTX Error");
                 }
             } else if (mode === 'vlc_browser') {
                 startEmbeddedVideo(item, `/vlc-stream/${encodeURIComponent(item.path)}`);
-            } else if (mode === 'vlc_pipe') {
-                // Hybrid (Option 2): Try Chrome Native, then fallback to VLC only if NotSupported
+            } else if (mode === 'ffmpeg' || mode === 'cvlc' || mode === 'mkvmerge') {
+                // Pipe mechanism
                 const nativeUrl = `/media/${encodeURIComponent(item.path)}`;
                 const videoEl = document.getElementById('native-html5-video-resource-node');
 
                 startEmbeddedVideo(item, nativeUrl, async () => {
                     const err = videoEl.error;
-                    console.warn("[vlc pipe]: Native attempt failed. Error code:", err ? err.code : 'unknown');
-
-                    // Fallback to VLC if it's a format support issue (Code 4) or unknown
                     if (!err || err.code === 4) {
-                        console.log("[vlc pipe] Switching to VLC pipe for:", item.name);
                         showToast(t('vlc_info_fallback_msg') || "Browser unsupported - Falling back to VLC...", 3000);
-                        const res = await eel.stream_to_vlc(item.path)();
+                        const res = await eel.stream_to_vlc(item.path, mode)();
                         if (res.status === 'ok') {
                             document.getElementById('vlc-info').style.display = 'block';
                             document.getElementById('vlc-current-file').innerText = item.path;
@@ -4616,40 +4756,14 @@
                             videoEl.load();
                             videoEl.style.display = 'none';
                             document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
-                            hideUnsupportedVideoHint();
-                        } else {
-                            showUnsupportedVideoHint();
                         }
-                    } else {
-                        showUnsupportedVideoHint();
                     }
                 });
-            } else if (mode === 'integrated') {
-                // FFmpeg Engine (Option 3) -> Chrome
-                startEmbeddedVideo(item, `/video-stream/${encodeURIComponent(item.path)}`);
-            } else if (mode === 'directplay') {
-                // mkvmerge -> VLC (Local)
-                const result = await eel.stream_to_vlc(item.path)();
-                if (result.status === 'ok') {
-                    document.getElementById('vlc-info').style.display = 'block';
-                    if (result.mode === 'vlc_dvd') {
-                        document.getElementById('vlc-current-file').innerText = `${t('vlc_info_dvd')}: ${item.name}`;
-                        showToast(t('iso_detected_msg'), 3000);
-                    } else {
-                        document.getElementById('vlc-current-file').innerText = item.path;
-                    }
-                } else {
-                    alert(result.error);
-                }
-            } else if (mode === 'browser') {
-                // Chrome Native - Use media route to bypass local file security
+            } else if (mode === 'direct') {
+                await eel.stream_to_vlc(item.path)();
+            } else if (mode === 'chrome_native') {
                 startEmbeddedVideo(item, `/media/${encodeURIComponent(item.path)}`);
-            } else if (mode === 'dnd') {
-                // Drag & Drop mode - just ensure panel is visible
-                updateVideoMode();
-                stopVideo();
             } else {
-                // Fallback
                 startEmbeddedVideo(item, path);
             }
         }
@@ -5460,7 +5574,7 @@
             }
 
             const indexedCats = [];
-            const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
+            // cats is now defined globally
             cats.forEach(cat => {
                 const cb = document.getElementById('cat-' + cat);
                 if (cb && cb.checked) indexedCats.push(cat);
