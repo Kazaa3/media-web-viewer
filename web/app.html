@@ -1125,7 +1125,16 @@
         function safeValue(id, val) {
             const el = document.getElementById(id);
             if (el) el.value = val;
-            return el ? el.value : '';
+        }
+
+        function readValue(id, fallback = '') {
+            const el = document.getElementById(id);
+            return el ? el.value : fallback;
+        }
+
+        function readText(id, fallback = '') {
+            const el = document.getElementById(id);
+            return el ? el.innerText : fallback;
         }
 
         function restoreLastActiveTab() {
@@ -1366,16 +1375,16 @@
         }
 
         async function saveLogbookEntry() {
-            const name = document.getElementById('logbuch-editor-name').value.trim();
-            const bodyContent = document.getElementById('logbuch-editor-content').value || '';
+            const name = readValue('logbuch-editor-name').trim();
+            const bodyContent = readValue('logbuch-editor-content');
             const meta = {
-                category: document.getElementById('logbuch-editor-category').value.trim() || 'Planung',
-                titleDe: document.getElementById('logbuch-editor-title-de').value.trim(),
-                titleEn: document.getElementById('logbuch-editor-title-en').value.trim(),
-                summaryDe: document.getElementById('logbuch-editor-summary-de').value.trim(),
-                summaryEn: document.getElementById('logbuch-editor-summary-en').value.trim(),
-                status: (document.getElementById('logbuch-editor-status').value || 'ACTIVE').toUpperCase(),
-                date: document.getElementById('logbuch-editor-date').value.trim() || new Date().toISOString().slice(0, 10)
+                category: readValue('logbuch-editor-category').trim() || 'Planung',
+                titleDe: readValue('logbuch-editor-title-de').trim(),
+                titleEn: readValue('logbuch-editor-title-en').trim(),
+                summaryDe: readValue('logbuch-editor-summary-de').trim(),
+                summaryEn: readValue('logbuch-editor-summary-en').trim(),
+                status: (readValue('logbuch-editor-status') || 'ACTIVE').toUpperCase(),
+                date: readValue('logbuch-editor-date').trim() || new Date().toISOString().slice(0, 10)
             };
             const content = `${buildLogbookFixedTagsBlock(meta)}\n\n${bodyContent.trimStart()}`;
             if (!name) {
@@ -1412,8 +1421,8 @@
             if (res.status === 'ok') {
                 await loadLogbuchTab();
                 // Clear content area
-                document.getElementById('logbuch-tab-title').innerText = t('logbook_welcome');
-                document.getElementById('logbuch-tab-content').innerText = t('logbook_select_entry_text');
+                safeText('logbuch-tab-title', t('logbook_welcome'));
+                safeText('logbuch-tab-content', t('logbook_select_entry_text'));
                 alert(t('logbook_deleted'));
             } else {
                 alert(t('common_error') + res.error);
@@ -1799,7 +1808,7 @@
                         style="flex: 1; padding: 10px 16px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 1em; color: #444;" />
 
 
-                    <button onclick="scan(document.getElementById('fb-path-input').value, false)"
+                    <button onclick="scan(readValue('fb-path-input'), false)"
                         style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px;"
                         data-i18n="fb_add_path">
                         <span class="icon-add"></span> <span data-i18n="fb_add_path">Hinzufügen</span></button>
@@ -2652,7 +2661,7 @@
                     <div
                         style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
                         <span data-i18n="debug_console">Konsole / Logs</span>
-                        <button onclick="document.getElementById('debug-output').innerText = ''"
+                        <button onclick="safeText('debug-output', '')"
                             style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
                             data-i18n="common_clear">Clear</button>
                     </div>
@@ -3219,7 +3228,7 @@
         </div>
         <div
             style="background: #f9f9f9; padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;">
-            <button onclick="document.getElementById('logbook-modal').style.display = 'none'"
+            <button onclick="safeStyle('logbook-modal', 'display', 'none')"
                 style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer;"
                 data-i18n="common_close">Schließen</button>
         </div>
@@ -3673,19 +3682,20 @@
             try {
                 let result = await eel.browse_dir(dirPath || null)();
                 if (result.error) {
-                    document.getElementById('fb-list').innerHTML = `<p style="color: #c33;">❌ ${result.error}</p>`;
+                    safeHtml('fb-list', `<p style="color: #c33;">❌ ${result.error}</p>`);
                     return;
                 }
                 fbCurrentPath = result.path;
                 fbParentPath = result.parent;
-                document.getElementById('fb-path-input').value = result.path;
-                document.getElementById('fb-back').disabled = !result.parent;
+                safeValue('fb-path-input', result.path);
+                const backBtn = document.getElementById('fb-back');
+                if (backBtn) backBtn.disabled = !result.parent;
 
                 let list = document.getElementById('fb-list');
-                list.innerHTML = '';
+                if (list) list.innerHTML = '';
 
                 if (result.items.length === 0) {
-                    list.innerHTML = `<p style="color: #999;">${t('fb_no_items')}</p>`;
+                    safeHtml('fb-list', `<p style="color: #999;">${t('fb_no_items')}</p>`);
                     return;
                 }
 
@@ -4157,8 +4167,7 @@
                 let itemName = item.name || item.filename || "unknown";
 
                 div.innerHTML = `
-                    <div style="width: 24px; color: #999; font-size: 0.8em; text-align: center; margin-right: 10px;">${index + 1}</div>
-                    <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="" style="width:30px; height:30px;">
+                    <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
                     <div class="media-info" style="margin-left: 10px; flex: 1;">
                         <strong style="font-size: 0.9em;">${titleDisplay}</strong>
                         <span style="font-size: 0.8em;">${artistDisplay}</span>
@@ -4462,7 +4471,7 @@
         }
 
         function filterEditList() {
-            const query = document.getElementById('edit-search').value.toLowerCase();
+            const query = readValue('edit-search').toLowerCase();
             const filtered = allLibraryItems.filter(item =>
                 item.name.toLowerCase().includes(query) ||
                 (item.tags.title && item.tags.title.toLowerCase().includes(query)) ||
@@ -4474,23 +4483,21 @@
 
         function openEditForm(item) {
             console.log("[Editor] Opening form for:", item.name);
-            const placeholder = document.getElementById('edit-placeholder');
-            const form = document.getElementById('edit-form-container');
-
-            if (placeholder) placeholder.style.setProperty('display', 'none', 'important');
-            if (form) form.style.setProperty('display', 'block', 'important');
+            safeStyle('edit-placeholder', 'display', 'none', 'important');
+            safeStyle('edit-form-container', 'display', 'block', 'important');
 
             if (!item) {
                 console.error("[Editor] No item provided!");
                 return;
             }
 
-            document.getElementById('edit-item-name').value = item.name;
-            document.getElementById('edit-filename-display').innerText = item.name;
-            document.getElementById('edit-cover').src = `/cover/${encodeURIComponent(item.name)}`;
+            safeValue('edit-item-name', item.name);
+            safeText('edit-filename-display', item.name);
+            const cover = document.getElementById('edit-cover');
+            if (cover) cover.src = `/cover/${encodeURIComponent(item.name)}`;
 
             const container = document.getElementById('edit-dynamic-tags');
-            container.innerHTML = '';
+            if (container) container.innerHTML = '';
 
             // Alphabetisch sortieren für Ordnung
             const keys = Object.keys(item.tags).sort();
@@ -4569,12 +4576,12 @@
         }
 
         function resetEditForm() {
-            document.getElementById('edit-placeholder').style.display = 'flex';
-            document.getElementById('edit-form-container').style.display = 'none';
+            safeStyle('edit-placeholder', 'display', 'flex');
+            safeStyle('edit-form-container', 'display', 'none');
         }
 
         async function saveTags() {
-            const name = document.getElementById('edit-item-name').value;
+            const name = readValue('edit-item-name');
             const item = allLibraryItems.find(i => i.name === name);
             if (!item) return;
 
@@ -4611,13 +4618,13 @@
         }
 
         async function renameMedia() {
-            const oldName = document.getElementById('edit-item-name').value;
+            const oldName = readValue('edit-item-name');
             const newName = prompt(t('edit_rename_prompt'), oldName);
             if (newName && newName !== oldName) {
                 const res = await eel.rename_media(oldName, newName)();
                 if (res.status === 'ok') {
-                    document.getElementById('edit-item-name').value = newName;
-                    document.getElementById('edit-filename-display').innerText = newName;
+                    safeValue('edit-item-name', newName);
+                    safeText('edit-filename-display', newName);
                     // Refresh all relevant views
                     if (typeof loadEditItems === 'function') loadEditItems();
                     if (typeof loadLibrary === 'function') loadLibrary();
@@ -4631,7 +4638,7 @@
         }
 
         async function deleteMediaFromEdit() {
-            const name = document.getElementById('edit-item-name').value;
+            const name = readValue('edit-item-name');
             const msg = t('edit_delete_confirm').replace('{name}', name);
             if (confirm(msg)) {
                 const res = await eel.delete_media(name)();
@@ -4649,9 +4656,9 @@
         async function refreshLibrary() {
             let result = await eel.get_library()();
             let list = document.getElementById('persistent-sqlite-repository-item-grid');
-            list.innerHTML = '';
+            if (list) list.innerHTML = '';
             if (!result.media || result.media.length === 0) {
-                list.innerHTML = `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`;
+                safeHtml('persistent-sqlite-repository-item-grid', `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`);
                 return;
             }
             result.media.forEach(item => {
@@ -4692,7 +4699,6 @@
 
         async function scan(targetDir = null, clearDb = true) {
             const scanBtn = document.getElementById('scan-btn');
-            const status = document.getElementById('active-orchestration-status-message-renderer');
 
             if (typeof set_db_status === 'function') {
                 set_db_status(true);
@@ -4702,9 +4708,7 @@
                 scanBtn.style.opacity = '0.7';
                 scanBtn.style.cursor = 'wait';
             }
-            if (status) {
-                status.textContent = t('db_updating');
-            }
+            safeText('active-orchestration-status-message-renderer', t('db_updating'));
 
             try {
                 let result = await eel.scan_media(targetDir, clearDb)();
@@ -4718,9 +4722,7 @@
                 }
             } catch (e) {
                 console.error('[scan] Error during scan:', e);
-                if (status) {
-                    status.textContent = `${t('common_error')} ${e.message || e}`;
-                }
+                safeText('active-orchestration-status-message-renderer', `${t('common_error')} ${e.message || e}`);
             } finally {
                 if (typeof set_db_status === 'function') {
                     set_db_status(false);
@@ -4764,7 +4766,7 @@
             activeAudioPipeline.play().catch(e => {
                 if (isUnsupportedMediaError(e)) {
                     console.warn('Audio playback unsupported for source:', path, e);
-                    document.getElementById('active-orchestration-status-message-renderer').textContent = t('player_unsupported_source') || 'Unsupported media source for browser playback.';
+                    safeText('active-orchestration-status-message-renderer', t('player_unsupported_source') || 'Unsupported media source for browser playback.');
                     return;
                 }
                 console.error('Audio playback failed:', e);
@@ -4776,51 +4778,53 @@
             }
 
             // Update Status Bar
-            document.getElementById('active-orchestration-status-message-renderer').innerHTML = `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`;
+            safeHtml('active-orchestration-status-message-renderer', `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`);
 
             // Update Sidebar
             let tags = item.tags;
             console.log("Playing item tags:", tags);
 
             let sbCover = document.getElementById('sidebar-artwork-raster-buffer');
-            sbCover.src = "/cover/" + encodeURIComponent(item.name);
+            if (sbCover) {
+                sbCover.src = "/cover/" + encodeURIComponent(item.name);
+                sbCover.style.opacity = "1";
+                sbCover.onerror = function () {
+                    this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                    this.style.backgroundColor = '#ddd';
+                };
+            }
             // Update footer cover too
             let footerCover = document.getElementById('footer-artwork-raster-buffer');
-            footerCover.src = "/cover/" + encodeURIComponent(item.name);
-            footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
-            sbCover.style.opacity = "1";
-            sbCover.onerror = function () {
-                this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-                this.style.backgroundColor = '#ddd';
-            };
+            if (footerCover) {
+                footerCover.src = "/cover/" + encodeURIComponent(item.name);
+                footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
+            }
 
-            document.getElementById('sidebar-metadata-primary-string-renderer').innerText = tags.title;
-            document.getElementById('sidebar-metadata-secondary-string-renderer').innerText = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
-            document.getElementById('sidebar-metadata-tertiary-string-renderer').innerText = tags.album ? tags.album : "";
+            safeText('sidebar-metadata-primary-string-renderer', tags.title);
+            let artistStr = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
+            safeText('sidebar-metadata-secondary-string-renderer', artistStr);
+            safeText('sidebar-metadata-tertiary-string-renderer', tags.album || "");
 
-            // Limit year to 4 digits if it's a full date string
             let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-
-            let trackStr = tags.track ? 'Track ' + tags.track : '';
+            let trackStr = tags.track ? t('sb_track_label') + tags.track : '';
             if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
 
-            let discStr = tags.disc ? 'Disc ' + tags.disc : '';
-
+            let discStr = tags.disc ? t('sb_disc_label') + tags.disc : '';
             let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
 
-            document.getElementById('sidebar-metadata-extended-attribute-grid').innerText = extraInfoSb + "\n\n" + item.duration;
+            safeText('sidebar-metadata-extended-attribute-grid', extraInfoSb + "\n\n" + item.duration);
 
             let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
             if (badgeText) {
-                document.getElementById('sidebar-status-tag-visualizer').innerText = badgeText;
-                document.getElementById('sidebar-status-tag-visualizer').style.display = 'inline-block';
+                safeText('sidebar-status-tag-visualizer', badgeText);
+                safeStyle('sidebar-status-tag-visualizer', 'display', 'inline-block');
             } else {
-                document.getElementById('sidebar-status-tag-visualizer').style.display = 'none';
+                safeStyle('sidebar-status-tag-visualizer', 'display', 'none');
             }
 
-            let artStr = tags.has_art === 'Yes' ? 'Art: Yes' : 'Art: No';
-            let extStr = t('sb_file_label') + item.type.toLowerCase();
-            let contStr = tags.container ? 'Container: ' + tags.container.toLowerCase() : '';
+            let artStr = tags.has_art === 'Yes' ? t('sb_art_yes') : t('sb_art_no');
+            let extStr = t('sb_file_label') + (item.type ? item.type.toLowerCase() : '');
+            let contStr = tags.container ? t('sb_container_label') + tags.container.toLowerCase() : '';
 
             // Reorganize top row with size and art
             let fileInfoStr = [tags.size, artStr].filter(Boolean).join(' &bull; ');
@@ -4876,7 +4880,7 @@
                 chaptersHtml += '</div></div>';
             }
 
-            document.getElementById('sidebar-filesystem-handle-string-renderer').innerHTML = fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml;
+            safeHtml('sidebar-filesystem-handle-string-renderer', fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml);
 
             // Python Backend anfunken
             eel.play_media(path)();
@@ -4887,24 +4891,16 @@
         let currentVideoPath = null;
 
         function showUnsupportedVideoHint() {
-            const hint = document.getElementById('video-unsupported-hint');
-            const vlcBtn = document.getElementById('btn-open-vlc');
-            if (hint) hint.style.display = 'block';
-            if (vlcBtn) {
-                vlcBtn.style.display = 'flex';
-                vlcBtn.style.background = '#d35400';
-                vlcBtn.style.boxShadow = '0 0 0 3px rgba(243, 156, 18, 0.35)';
-            }
+            safeStyle('video-unsupported-hint', 'display', 'block');
+            safeStyle('btn-open-vlc', 'display', 'flex');
+            safeStyle('btn-open-vlc', 'background', '#d35400');
+            safeStyle('btn-open-vlc', 'boxShadow', '0 0 0 3px rgba(243, 156, 18, 0.35)');
         }
 
         function hideUnsupportedVideoHint() {
-            const hint = document.getElementById('video-unsupported-hint');
-            const vlcBtn = document.getElementById('btn-open-vlc');
-            if (hint) hint.style.display = 'none';
-            if (vlcBtn) {
-                vlcBtn.style.background = '#2980b9';
-                vlcBtn.style.boxShadow = 'none';
-            }
+            safeStyle('video-unsupported-hint', 'display', 'none');
+            safeStyle('btn-open-vlc', 'background', '#2980b9');
+            safeStyle('btn-open-vlc', 'boxShadow', 'none');
         }
 
         async function triggerOpenWith() {
@@ -4912,8 +4908,7 @@
                 showToast(t('player_select_song'));
                 return;
             }
-            const select = document.getElementById('playback-engine-strategy-selector');
-            const mode = select ? select.value : 'chrome_native';
+            const mode = readValue('playback-engine-strategy-selector', 'chrome_native');
             const res = await eel.open_video(currentVideoItem.path, mode)();
             if (res && res.status === 'play') {
                 if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
@@ -5087,7 +5082,7 @@
 
             // Stop VLC if running
             eel.stop_vlc()();
-            document.getElementById('vlc-info').style.display = 'none';
+            safeStyle('vlc-info', 'display', 'none');
             hideUnsupportedVideoHint();
 
             placeholder.style.display = 'none';
@@ -5110,15 +5105,17 @@
 
         async function startVLC(filePath, displayName = null) {
             const video = document.getElementById('native-html5-video-resource-node');
-            video.pause();
-            video.style.display = 'none';
-            document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
-            document.getElementById('btn-open-vlc').style.display = 'none';
+            if (video) {
+                video.pause();
+                video.style.display = 'none';
+            }
+            safeStyle('idle-state-media-icon-symbol', 'display', 'block');
+            safeStyle('btn-open-vlc', 'display', 'none');
             hideUnsupportedVideoHint();
 
-            document.getElementById('vlc-info').style.display = 'block';
+            safeStyle('vlc-info', 'display', 'block');
             const shownName = displayName || (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
-            document.getElementById('vlc-current-file').innerText = shownName;
+            safeText('vlc-current-file', shownName);
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
@@ -5138,17 +5135,13 @@
                 video.style.display = 'none';
             }
             if (document.getElementById('video-placeholder')) {
-                document.getElementById('idle-state-media-icon-symbol').style.display = 'block';
+                safeStyle('idle-state-media-icon-symbol', 'display', 'block');
             }
             hideUnsupportedVideoHint();
 
             await eel.stop_vlc()();
-            if (document.getElementById('vlc-info')) {
-                document.getElementById('vlc-info').style.display = 'none';
-            }
-            if (document.getElementById('btn-open-vlc')) {
-                document.getElementById('btn-open-vlc').style.display = 'none';
-            }
+            safeStyle('vlc-info', 'display', 'none');
+            safeStyle('btn-open-vlc', 'display', 'none');
 
             currentVideoItem = null;
             currentVideoPath = null;
@@ -5156,15 +5149,9 @@
 
         function switchToVLC() {
             if (currentVideoItem) {
-                const typeSelect = document.getElementById('player-type');
-                if (typeSelect) {
-                    typeSelect.value = 'vlc';
-                    updateVideoModes();
-                }
-                const modeSelect = document.getElementById('video-mode');
-                if (modeSelect) {
-                    modeSelect.value = 'vlc_extern';
-                }
+                safeValue('player-type', 'vlc');
+                updateVideoModes();
+                safeValue('video-mode', 'vlc_extern');
                 playVideo(currentVideoItem, currentVideoItem.path);
             }
         }
@@ -5214,9 +5201,9 @@
         }
 
         async function saveToFileUI() {
-            const name = document.getElementById('edit-item-name').value;
+            const name = readValue('edit-item-name');
             if (!name) {
-                alert("No item selected / Kein Item ausgewählt.");
+                alert(t('edit_no_selection_error'));
                 return;
             }
 
@@ -5789,12 +5776,12 @@
         }
 
         async function resetConfigUI() {
-            if (confirm("Möchtest du wirklich alle Einstellungen zurücksetzen? Die App muss danach neu gestartet werden.")) {
+            if (confirm(t('reset_confirm_app') || "Möchtest du wirklich alle Einstellungen zurücksetzen?")) {
                 try {
                     await eel.reset_config()();
-                    alert("Konfiguration zurückgesetzt. Bitte starte die App neu.");
+                    alert(t('settings_reset_success'));
                     location.reload();
-                } catch (e) { alert("Fehler beim Zurücksetzen: " + e); }
+                } catch (e) { alert(t('settings_reset_error') + e); }
             }
         }
 
@@ -6640,7 +6627,7 @@
             const modal = document.getElementById('debug-flags-modal');
             if (modal.style.display === 'none') {
                 modal.style.display = 'block';
-                document.getElementById('feature-status-modal').style.display = 'none'; // Close other
+                safeStyle('feature-status-modal', 'display', 'none'); // Close other
                 loadDebugFlags();
             } else {
                 modal.style.display = 'none';
@@ -6819,7 +6806,7 @@
                     alert(t("reset_success_app"));
                     location.reload();
                 } else {
-                    alert("Error: " + result.message);
+                    alert(t("common_error_prefix") + result.message);
                 }
             }
         }
@@ -6919,7 +6906,7 @@
             // Re-render the sidebar info if a song is currently playing
             if (activeAudioPipeline.src) {
                 // Find current item based on the title, or we can just trigger a re-render of the file info
-                const titleText = document.getElementById('sidebar-metadata-primary-string-renderer').innerText;
+                const titleText = readText('sidebar-metadata-primary-string-renderer');
                 if (titleText !== t('sb_no_song')) {
                     // The easiest way is to let the user re-click for now, but we saved the preference.
                 }
@@ -7127,17 +7114,17 @@
 
         function openTestEditModal(suite) {
             currentEditingTestFile = suite.id;
-            document.getElementById('test-edit-filename').innerText = `${t('test_meta_file_label')}tests/${suite.id}`;
-            document.getElementById('test-edit-category').value = suite.metadata.category || '-';
-            document.getElementById('test-edit-inputs').value = suite.metadata.inputs || '-';
-            document.getElementById('test-edit-outputs').value = suite.metadata.outputs || '-';
-            document.getElementById('test-edit-files').value = suite.metadata.files || '-';
-            document.getElementById('test-edit-comment').value = suite.metadata.comment || '-';
-            document.getElementById('test-edit-modal').style.display = 'flex';
+            safeText('test-edit-filename', `${t('test_meta_file_label')}tests/${suite.id}`);
+            safeValue('test-edit-category', suite.metadata.category || '-');
+            safeValue('test-edit-inputs', suite.metadata.inputs || '-');
+            safeValue('test-edit-outputs', suite.metadata.outputs || '-');
+            safeValue('test-edit-files', suite.metadata.files || '-');
+            safeValue('test-edit-comment', suite.metadata.comment || '-');
+            safeStyle('test-edit-modal', 'display', 'flex');
         }
 
         function closeTestEditModal() {
-            document.getElementById('test-edit-modal').style.display = 'none';
+            safeStyle('test-edit-modal', 'display', 'none');
         }
 
         async function refreshReportingData() {
@@ -7206,18 +7193,18 @@
                 </tr>`;
             });
             html += '</table>';
-            document.getElementById('report-summary-table').innerHTML = html;
+            safeHtml('report-summary-table', html);
         }
 
         async function saveTestMetadata() {
             if (!currentEditingTestFile) return;
 
             const metadata = {
-                category: document.getElementById('test-edit-category').value,
-                inputs: document.getElementById('test-edit-inputs').value,
-                outputs: document.getElementById('test-edit-outputs').value,
-                files: document.getElementById('test-edit-files').value,
-                comment: document.getElementById('test-edit-comment').value
+                category: readValue('test-edit-category'),
+                inputs: readValue('test-edit-inputs'),
+                outputs: readValue('test-edit-outputs'),
+                files: readValue('test-edit-files'),
+                comment: readValue('test-edit-comment')
             };
 
             const res = await eel.update_test_metadata(currentEditingTestFile, metadata)();
@@ -7258,10 +7245,10 @@
             const text = document.getElementById('sync-text');
 
             if (typeof eel === 'undefined' || window.__eel_missing__ === true) {
-                dot.style.background = '#f44';
-                indicator.style.background = '#ffebee';
-                text.innerText = t('sync_offline_no_backend');
-                text.style.color = '#c62828';
+                safeStyle('sync-dot', 'background', '#f44');
+                safeStyle('sync-indicator', 'background', '#ffebee');
+                safeText('sync-text', t('sync_offline_no_backend'));
+                safeStyle('sync-text', 'color', '#c62828');
                 if (lastSyncState !== 'missing-backend') {
                     appendUiTrace('sync-state: missing backend (eel unavailable)');
                 }
@@ -7272,11 +7259,11 @@
             try {
                 const res = await eel.ping()();
                 if (res && res.status === 'ok') {
-                    dot.style.background = '#4CAF50';
-                    dot.style.boxShadow = '0 0 8px #4CAF50';
-                    indicator.style.background = '#e8f5e9';
-                    text.innerText = t('sync_synchronized');
-                    text.style.color = '#2e7d32';
+                    safeStyle('sync-dot', 'background', '#4CAF50');
+                    safeStyle('sync-dot', 'boxShadow', '0 0 8px #4CAF50');
+                    safeStyle('sync-indicator', 'background', '#e8f5e9');
+                    safeText('sync-text', t('sync_synchronized'));
+                    safeStyle('sync-text', 'color', '#2e7d32');
                     if (lastSyncState !== 'ok') {
                         appendUiTrace('sync-state: synchronized');
                     }
@@ -7285,10 +7272,10 @@
                     throw new Error("Invalid response");
                 }
             } catch (e) {
-                dot.style.background = '#ff9800';
-                indicator.style.background = '#fff3e0';
-                text.innerText = t('sync_connection_lost');
-                text.style.color = '#e65100';
+                safeStyle('sync-dot', 'background', '#ff9800');
+                safeStyle('sync-indicator', 'background', '#fff3e0');
+                safeText('sync-text', t('sync_connection_lost'));
+                safeStyle('sync-text', 'color', '#e65100');
                 if (lastSyncState !== 'lost') {
                     appendUiTrace(`sync-state: connection lost (${e && e.message ? e.message : e})`);
                 }
@@ -7321,19 +7308,17 @@
 
         // ============ About & Imprint ============
         function openAboutImprint() {
-            const modal = document.getElementById('about-imprint-modal');
-            if (modal) modal.style.display = 'flex';
+            safeStyle('about-imprint-modal', 'display', 'flex');
         }
 
         function closeAboutImprint() {
-            const modal = document.getElementById('about-imprint-modal');
-            if (modal) modal.style.display = 'none';
+            safeStyle('about-imprint-modal', 'display', 'none');
         }
 
         // Close modals on escape key
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                document.getElementById('about-imprint-modal').style.display = 'none';
+                safeStyle('about-imprint-modal', 'display', 'none');
             }
         });
 
