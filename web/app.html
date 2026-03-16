@@ -3714,17 +3714,34 @@
             if (!infoEl) return;
             try {
                 const stats = await eel.get_db_stats()();
-                let html = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <div><b>${t('database_item') || 'database item:'}</b> ${stats.total_items}</div>
-                            <div><b>Categories:</b></div>
+
+                let html = `
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; border: 1px solid #eef;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee;">
+                            <span style="font-weight: bold; color: #333; font-size: 1.1em;">
+                                <span class="icon-database" style="background-color: #2980b9;"></span> ${t('database_item') || 'Items'}: 
+                                <span style="color: #2980b9; margin-left: 5px;">${stats.total_items}</span>
+                            </span>
                         </div>
-                        <ul style="margin: 10px 0 0 0; padding-left: 20px; font-size: 0.9em; color: #555;">`;
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                `;
+
                 for (const [cat, count] of Object.entries(stats.categories)) {
-                    html += `<li>${cat}: ${count}</li>`;
+                    html += `
+                        <div style="display: flex; align-items: center; background: white; border: 1px solid #ddd; border-radius: 20px; padding: 4px 10px; font-size: 0.85em; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <span style="font-weight: 600; color: #555; margin-right: 6px;">${cat}:</span>
+                            <span style="color: #2a7; font-weight: bold;">${count}</span>
+                        </div>
+                    `;
                 }
-                html += `</ul>`;
+
+                html += `
+                        </div>
+                    </div>
+                `;
                 infoEl.innerHTML = html;
             } catch (e) {
+                console.error('[DB Info] Error:', e);
                 infoEl.innerText = t('db_loading_error') || 'Error loading DB stats';
             }
         }
