@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import logging
+import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -119,7 +120,9 @@ class TestFileFormatsReal(unittest.TestCase):
             f.write(content)
         return path
 
+    @pytest.mark.mockup
     def test_audio_formats_detection(self):
+        """[MOCKUP TEST] Uses dummy audio files to test parser extension logic."""
         formats = ["test.mp3", "test.flac", "test.wav", "test.m4a", "test.ogg"]
         for fmt in formats:
             self._create_dummy_file(fmt)
@@ -131,7 +134,9 @@ class TestFileFormatsReal(unittest.TestCase):
         # but the scanner should still identify them by extension.
         self.assertEqual(self.mock_insert.call_count, len(formats))
 
+    @pytest.mark.mockup
     def test_video_formats_detection(self):
+        """[MOCKUP TEST] Uses dummy video files (fake magic bytes) to test parser."""
         # MKV needs EBML magic for some parsers, even if we just check extension first
         mkv_magic = b"\x1a\x45\xdf\xa3"
         self._create_dummy_file("test.mkv", content=mkv_magic + b"video data")
@@ -141,8 +146,9 @@ class TestFileFormatsReal(unittest.TestCase):
         main.scan_media(dir_path=self.media_dir, clear_db=True)
         self.assertEqual(self.mock_insert.call_count, 3)
 
+    @pytest.mark.mockup
     def test_specialized_categories_detection(self):
-        """Verify specialized categories like Klassik, Serie, Film, Hörbuch."""
+        """[MOCKUP TEST] Verify specialized categories like Klassik, Serie, Film, Hörbuch using dummy files."""
         # 1. Klassik (Classical)
         self._create_dummy_file("Beethoven - Symphony No. 9.mp3")
         # 2. Serie (Series)

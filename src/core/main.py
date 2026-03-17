@@ -2807,6 +2807,30 @@ def resolve_media_path(file_path: str) -> str:
         return str(alt_path.resolve())
 
     return path_decoded
+
+def resolve_dvd_bundle_path(path_str: str) -> str:
+    """
+    @brief Resolves generic DVD/BD bundle folders to their underlying playable component.
+    @details Wenn ein Ordner an VLC übergeben wird, sucht diese Funktion nach VIDEO_TS, BDMV oder ISO.
+    """
+    p = Path(path_str)
+    if not p.is_dir():
+        return path_str
+        
+    # Check for ISOs
+    isos = list(p.glob('*.iso'))
+    if len(isos) == 1:
+        return str(isos[0].resolve())
+    elif len(isos) > 1:
+        return str(isos[0].resolve())
+        
+    # Check for VIDEO_TS or BDMV
+    if (p / 'VIDEO_TS').exists():
+        return str((p / 'VIDEO_TS').resolve())
+    if (p / 'BDMV').exists():
+        return str((p / 'BDMV').resolve())
+        
+    return path_str
 def get_best_hw_encoder():
     """
     @brief Detects available hardware encoders to reduce CPU load.
@@ -3714,6 +3738,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     @details Nutzt mkvmerge oder FFmpeg zum Remuxen und pipet den Output direkt an VLC.
     """
     file_path = resolve_media_path(file_path)
+    file_path = resolve_dvd_bundle_path(file_path)
     logging.info(f"[vlc pipe] Requesting stream for: {file_path}")
 
     if not file_path or not os.path.exists(str(file_path)):
@@ -3856,6 +3881,7 @@ def detect_ts_stream(port):
 def vlc_ts_mode(file_path):
     """Launches cvlc with TS muxing and returns the port."""
     file_path = resolve_media_path(file_path)
+    file_path = resolve_dvd_bundle_path(file_path)
     if not os.path.exists(file_path):
         return {"status": "error", "error": "Datei nicht gefunden"}
 

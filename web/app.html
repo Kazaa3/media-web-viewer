@@ -4288,6 +4288,25 @@
             }, duration + 300);
         }
 
+        function getCategoryBadgeHtml(item) {
+            if (!item || !item.category) return '';
+            const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image'];
+            if (!specialCategories.includes(item.category)) return '';
+
+            let catIcon = '';
+            if (item.category === 'H\u00f6rbuch') catIcon = '🎧';
+            else if (item.category === 'Film') catIcon = '🎬';
+            else if (item.category === 'Serie') catIcon = '📺';
+            else if (item.category === 'Dokument') catIcon = '📄';
+            else if (item.category === 'E-Book') catIcon = '📖';
+            else if (item.category === 'Bilder') catIcon = '🖼️';
+            else if (item.category === 'ISO/Image') catIcon = '💿';
+            else if (item.category === 'Compilation') catIcon = '💽';
+
+            if (!catIcon) return '';
+            return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5;" title="${item.category}">${catIcon}</div>`;
+        }
+
         let contextMenuItem = null;
         function showContextMenu(e, item) {
             e.preventDefault();
@@ -5085,10 +5104,14 @@
                 let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
                 let artistDisplay = tags.artist || t('lib_unknown_artist');
                 let itemName = item.name || item.filename || "unknown";
+                let badgeHtml = getCategoryBadgeHtml(item);
 
                 div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
-                    <div class="media-info" style="margin-left: 10px; flex: 1;">
+                    <div style="position:relative; display:inline-block; margin-right:12px; flex-shrink:0;">
+                        <img class="media-cover" style="margin-right:0;" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
+                        ${badgeHtml}
+                    </div>
+                    <div class="media-info" style="flex: 1;">
                         <strong style="font-size: 0.9em;">${titleDisplay}</strong>
                         <span style="font-size: 0.8em;">${artistDisplay}</span>
                     </div>
@@ -5594,9 +5617,13 @@
                 if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
                 let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
                 let codecInfo = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+                let badgeHtml = getCategoryBadgeHtml(item);
 
                 div.innerHTML = `
-                    <img class="media-cover" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
+                    <div style="position:relative; display:inline-block; margin-right:12px; flex-shrink:0;">
+                        <img class="media-cover" style="margin-right:0;" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
+                        ${badgeHtml}
+                    </div>
                     <div class="media-info">
                         <strong>${tags.title}</strong>
                         <span>${tags.artist}</span>
@@ -6272,14 +6299,16 @@
                     let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
                     let artistDisplay = tags.artist || t('lib_unknown_artist');
                     let itemName = item.name || item.filename || "unknown";
+                    let badgeHtml = getCategoryBadgeHtml(item);
 
-                    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image'];
-                    let catBadge = (item.category && specialCategories.includes(item.category)) ? ` <span style="font-size: 0.85em; color: #6a6a6a;">(${item.category})</span>` : '';
                     div.innerHTML = `
-                        <img class="media-cover" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
+                        <div style="position:relative; display:inline-block; margin-right:12px; flex-shrink:0;">
+                            <img class="media-cover" style="margin-right:0;" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
+                            ${badgeHtml}
+                        </div>
                         <div class="media-info">
                             <strong>${titleDisplay}</strong>
-                            <span>${artistDisplay}</span>${catBadge}
+                            <span>${artistDisplay}</span>
                             <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
                         </div>
                     `;
