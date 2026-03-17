@@ -50,7 +50,8 @@ class MediaItem:
         """
         self.name = name
         self.path = Path(path)
-        if self.path.is_dir():
+        self.is_directory = self.path.is_dir()
+        if self.is_directory:
             self.type = 'Folder'
         else:
             self.type = self.path.suffix.lower()
@@ -336,7 +337,9 @@ class MediaItem:
             'logical_type': self.logical_type,
             'file_format': self.file_format,
             'content_type': self.content_type,
+            'is_artwork_missing': self.is_missing_cover,
             'is_playable': self.is_playable,
+            'is_directory': self.is_directory,
             'art_path': self.art_path,
             'artwork': self.art_path, # Alias for frontend
             'has_artwork': self.has_artwork,

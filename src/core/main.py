@@ -2990,6 +2990,13 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
                 return {"status": "ok", "mode": "mpv_standalone"}
             except Exception as e:
                 return {"status": "error", "error": f"mpv failed: {e}"}
+        elif mode == "pyplayer_ffplay":
+            try:
+                ffplay_path = shutil.which("ffplay") or "ffplay"
+                subprocess.Popen([str(ffplay_path), str(file_path)])
+                return {"status": "ok", "mode": "ffplay_standalone"}
+            except Exception as e:
+                return {"status": "error", "error": f"ffplay failed: {e}"}
         elif mode == "pyplayer_pip":
              try:
                  import pyvidplayer2 as pv
@@ -2998,6 +3005,14 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
                  return {"status": "ok", "mode": "pyplayer_pip"}
              except Exception as e:
                  return {"status": "error", "error": f"PiP mode failed: {e}"}
+
+    elif player_type == "ffplay" or mode == "ffplay":
+        try:
+            ffplay_path = shutil.which("ffplay") or "ffplay"
+            subprocess.Popen([str(ffplay_path), str(file_path)])
+            return {"status": "ok", "mode": "ffplay_standalone"}
+        except Exception as e:
+            return {"status": "error", "error": f"ffplay failed: {e}"}
 
     # Fallback/Default
     return play_media(file_path)
@@ -3641,6 +3656,19 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         logging.error(f"[vlc pipe] File not found: {file_path}")
         return {"status": "error", "error": f"Datei nicht gefunden: {file_path}"}
 
+    # Directory Check: If it's a directory, it's likely a DVD/Blu-ray folder
+    if os.path.isdir(str(file_path)):
+        logging.info(f"[vlc] Directory detected, opening as native media: {file_path}")
+        try:
+            vlc_path = shutil.which('cvlc') or shutil.which('vlc') or 'cvlc'
+            # Use dvd:// with absolute path for folders
+            cmd = [str(vlc_path), f"dvd://{file_path}"]
+            subprocess.Popen(cmd)
+            return {"status": "ok", "mode": "vlc_native_directory"}
+        except Exception as e:
+            logging.error(f"[vlc] Failed to open directory: {e}")
+            return {"status": "error", "error": str(e)}
+
     # ISO/DVD/Blu-ray Handling: Native playback
     file_path_str = str(file_path).lower()
     if file_path_str.endswith('.iso') or engine in ("dvd_native", "bluray_native", "cdrom_native"):
@@ -3677,9 +3705,19 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    if not is_mkvtoolnix_available():
-        logging.error("[vlc pipe] mkvmerge not found in PATH")
-        return {"status": "error", "error": "mkvtoolnix (mkvmerge) nicht installiert"}
+    if engine == "ffplay_solo":
+        try:
+            ffplay_path = shutil.which("ffplay") or "ffplay"
+            logging.info(f"[ffplay] Opening external: {file_path}")
+            subprocess.Popen([str(ffplay_path), str(file_path)])
+            return {"status": "ok", "mode": "ffplay_external"}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+    # Check for engines, but allow fallback if mkvtoolnix is missing but engine is ffmpeg
+    if engine == "mkvmerge" and not is_mkvtoolnix_available():
+        logging.warning("[vlc pipe] mkvmerge requested but not found, falling back to ffmpeg")
+        engine = "ffmpeg"
 
     vlc_path = shutil.which('cvlc') or shutil.which('vlc') or 'cvlc'
     if not vlc_path:
@@ -3697,8 +3735,9 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
                 "-c", "copy", "-f", "matroska", "-"
             ]
         
-        # VLC Command: Use fd://0 and explicit demuxer to avoid mjpeg-misdetection
-        vlc_cmd = [str(vlc_path), "--demux", "mkv", "--no-mjpeg-demux", "fd://0"]
+        # VLC Command: Use fd://0 and explicit demuxer. 
+        # Removed --no-mjpeg-demux as it's not supported in all VLC versions or causing issues.
+        vlc_cmd = [str(vlc_path), "--demux", "mkv", "fd://0"]
 
         logging.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c) for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
 

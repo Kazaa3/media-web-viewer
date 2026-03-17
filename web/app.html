@@ -4243,7 +4243,7 @@
             // Dynamically hide/show items based on file extension
             const ext = item.name.toLowerCase().split('.').pop();
             const isVideo = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'ts'].includes(ext);
-            const isDisc = ['iso', 'dvd', 'udf', 'img'].includes(ext);
+            const isDisc = ['iso', 'dvd', 'udf', 'img'].includes(ext) || item.is_directory || item.category === 'Film';
             const isAudio = ['mp3', 'flac', 'm4a', 'wav', 'ogg', 'opus'].includes(ext);
 
             const groupHeaders = menu.querySelectorAll('.context-menu-header');
@@ -5982,9 +5982,20 @@
 
             vjsPlayer.src({ src: path, type: srcType });
 
-            // Explicitly trigger a resize to fix black screen/layout issues
+            // Explicitly trigger a resize and ensure visibility to fix black screen/layout issues
             vjsPlayer.ready(() => {
-                vjsPlayer.trigger('resize');
+                // Wait a tiny bit for the DOM to settle
+                setTimeout(() => {
+                    const vjsWrapper = video.closest('.video-js');
+                    if (vjsWrapper) {
+                        vjsWrapper.style.visibility = 'visible';
+                        vjsWrapper.style.opacity = '1';
+                        // Force a reflow
+                        vjsWrapper.offsetHeight;
+                    }
+                    vjsPlayer.trigger('resize');
+                }, 150);
+
                 vjsPlayer.play().catch(e => {
                     console.warn("Video.js playback failed:", e);
                     if (typeof onErrorCallback === 'function') onErrorCallback();
