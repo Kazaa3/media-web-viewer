@@ -72,8 +72,10 @@ class MediaItem:
                 elif isinstance(a, dict):
                     # (tags, parser_times)
                     self.tags = a or {}
-                    # try to extract duration from parser_times or b
-                    if isinstance(b, (int, float)):
+                    if isinstance(b, dict):
+                        self.tags['_parser_times'] = b
+                        self.duration = int(b.get('duration', a.get('duration', 0)) or 0)
+                    elif isinstance(b, (int, float)):
                         self.duration = int(b)
                     elif isinstance(b, dict):
                         self.duration = int(b.get('duration', 0) or 0)

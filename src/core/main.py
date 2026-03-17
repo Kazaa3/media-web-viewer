@@ -285,9 +285,10 @@ def process_any_file(path: str) -> str:
         from src.parsers.media_parser import extract_metadata
         from pathlib import Path as _Path
         filename = _Path(path).name
-        duration, tags = extract_metadata(path, filename, mode='ultimate')
+        tags, parser_times = extract_metadata(path, filename, mode='ultimate')
+        duration = float(tags.get('duration', 0) or 0)
         return json.dumps(
-            {"success": True, "duration": duration, "tags": tags})
+            {"success": True, "duration": duration, "tags": tags, "parser_times": parser_times})
     except Exception as e:
         _logger.exception("process_any_file failed")
         return json.dumps({"error": str(e)})
@@ -608,8 +609,61 @@ def get_all_parser_settings():
 def update_parser_settings(new_settings):
     """Updates the granular parser settings and saves to disk."""
     PARSER_CONFIG["parser_settings"].update(new_settings)
-    save_parser_config()
+    save_parser_config(PARSER_CONFIG)
     return {"status": "success"}
+
+
+@eel.expose
+def list_sql_files():
+    """
+    Returns a list of .sql files in the data/ directory.
+    @details Gibt eine Liste aller .sql-Dateien im Datenverzeichnis zurück.
+    """
+    try:
+        db_dir = db.DB_DIR
+        sql_files = list(db_dir.glob("*.sql"))
+        # Also include the database file as a candidate if needed?
+        # No, request specifically said SQL files.
+        return sorted([f.name for f in sql_files])
+    except Exception as e:
+        logging.error(f"Failed to list SQL files: {e}")
+        return []
+
+
+@eel.expose
+def get_sql_content(filename):
+    """
+    Returns the content of a specific SQL file in the data/ directory.
+    @details Gibt den Inhalt einer spezifischen SQL-Datei zurück.
+    """
+    try:
+        db_dir = db.DB_DIR
+        # Security check: resolve and verify it's within DB_DIR
+        p = (db_dir / filename).resolve()
+        if p.is_relative_to(db_dir.resolve()) and p.exists() and p.suffix == '.sql':
+            return p.read_text(encoding='utf-8')
+        return f"-- Error: File '{filename}' not found or access denied."
+    except Exception as e:
+        logging.error(f"Failed to read SQL content for {filename}: {e}")
+        return f"-- Error: {str(e)}"
+
+
+@eel.expose
+def get_library_folders():
+    """
+    Returns a list of unique parent directories for all media in the DB.
+    @details Gibt eine Liste aller eindeutigen übergeordneten Verzeichnisse zurück.
+    """
+    try:
+        items = db.get_all_media()
+        folders = set()
+        for item in items:
+            p = Path(item['path'])
+            folders.add(str(p.parent))
+        return sorted(list(folders))
+    except Exception as e:
+        logging.error(f"Failed to get library folders: {e}")
+        return []
 
 
 @eel.expose
@@ -1858,15 +1912,21 @@ def check_running_sessions() -> list[dict]:
     return sessions
 
 
-def is_session_url_reachable(url: str, timeout: float = 1.0) -> bool:
-    """Check whether an existing session URL responds in time."""
+def is_session_url_reachable(url: str, timeout: float = 1.0, retries: int = 1) -> bool:
+    """Check whether an existing session URL responds in time with retries."""
     import urllib.request
+    import time
 
-    try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:
-            return 200 <= int(getattr(response, 'status', 200)) < 500
-    except Exception:
-        return False
+    for i in range(retries + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as response:
+                if 200 <= int(getattr(response, 'status', 200)) < 500:
+                    return True
+        except Exception:
+            if i < retries:
+                time.sleep(0.5)  # Wait a bit before retry
+                continue
+    return False
 
 
 def is_port_in_use(port: int) -> bool:
@@ -4839,7 +4899,7 @@ if __name__ == "__main__":
         existing = existing_sessions[0]
         existing_url = f"http://localhost:{existing['port']}/app.html"
 
-        if is_session_url_reachable(existing_url, timeout=0.8):
+        if is_session_url_reachable(existing_url, timeout=1.0, retries=3):
             logging.warning(
                 f"[Session] Existing session detected (PID {
                     existing['pid']}, port {
@@ -4863,6 +4923,17 @@ if __name__ == "__main__":
             f"[Session] Ignoring stale session candidate (PID {
                 existing['pid']}, port {
                 existing['port']}) - URL unreachable.")
+
+        # Optional: Kill stale process if requested or if it's clearly hung
+        if os.environ.get("MWV_KILL_STALE") == "1":
+            try:
+                import psutil
+                proc = psutil.Process(existing['pid'])
+                logging.info(f"[Session] Terminating stale process {existing['pid']}...")
+                proc.terminate()
+                proc.wait(timeout=3)
+            except Exception as e:
+                logging.warning(f"[Session] Failed to terminate stale process: {e}")
 
     # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
     # In einem Thread, damit die GUI sofort erscheint

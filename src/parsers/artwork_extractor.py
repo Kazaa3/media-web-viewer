@@ -24,7 +24,13 @@ class ArtworkExtractor:
 
     def __init__(self):
         self.cache_dir = Path.home() / '.cache' / 'gui_media_web_viewer' / 'art'
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        except FileExistsError:
+            if not self.cache_dir.is_dir():
+                log.error(f"Cache path {self.cache_dir} exists but is not a directory!")
+        except Exception as e:
+            log.error(f"Failed to create cache directory {self.cache_dir}: {e}")
 
     def extract(self, path: Path, tags: Dict[str, Any], logical_type: str) -> Optional[str]:
         """
