@@ -2,8 +2,8 @@
     "de": {
         "app_title": "dict",
         "nav_player": "Player",
-        "nav_library": "Bibliothek",
-        "nav_file": "Datei",
+        "nav_library": "Library / Bibliothek",
+        "nav_file": "File / Datei",
         "nav_browser": "Browser",
         "nav_edit": "Edit",
         "nav_options": "Optionen",
@@ -504,8 +504,8 @@
     "en": {
         "app_title": "dict",
         "nav_player": "Player",
-        "nav_library": "Library",
-        "nav_file": "File",
+        "nav_library": "Library / Bibliothek",
+        "nav_file": "File / Datei",
         "nav_browser": "Browser",
         "nav_edit": "Edit",
         "nav_options": "Options",

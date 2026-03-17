@@ -312,19 +312,20 @@
 
         .coverflow-item {
             flex-shrink: 0;
-            width: 260px;
-            height: 380px;
-            background: #222;
-            border-radius: 16px;
+            width: 280px;
+            height: 400px;
+            background: #111;
+            border-radius: 20px;
             position: relative;
             transform-style: preserve-3d;
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
             cursor: pointer;
-            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             overflow: hidden;
             background-size: cover;
             background-position: center;
-            border: 2px solid transparent;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            -webkit-box-reflect: below 10px linear-gradient(transparent, transparent, rgba(0, 0, 0, 0.2));
         }
 
         /* 3D Perspective shifts for side items */
@@ -337,17 +338,13 @@
         }
 
         .coverflow-item.active,
-        .coverflow-item:hover {
-            transform: scale(1.1) translateZ(100px) rotateY(0deg);
+        .coverflow-item:hover,
+        .coverflow-item:focus {
+            transform: scale(1.15) translateZ(150px) rotateY(0deg);
             z-index: 1000;
             border-color: #2a7;
-            box-shadow: 0 25px 60px rgba(42, 170, 0, 0.3);
-        }
-
-        .coverflow-item:focus {
+            box-shadow: 0 30px 70px rgba(42, 170, 0, 0.4), 0 0 20px rgba(42, 170, 0, 0.2);
             outline: none;
-            border-color: #2a7;
-            box-shadow: 0 0 0 4px rgba(42, 170, 0, 0.4);
         }
 
         .coverflow-item .info {
@@ -3699,6 +3696,10 @@
                 if (coverflowIndex < coverflowItems.length - 1) {
                     coverflowIndex++;
                     updateCoverflowDisplay();
+                } else if (e.key === 'Enter') {
+                    if (coverflowItems[coverflowIndex]) {
+                        playMediaObject(coverflowItems[coverflowIndex]);
+                    }
                 }
             } else if (e.key === 'Enter') {
                 if (coverflowItems[coverflowIndex]) {
