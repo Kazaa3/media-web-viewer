@@ -2987,9 +2987,9 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
            (codec in ('vp8', 'vp9', 'av1') and container == 'matroska'): # WebM is subset of MKV
             player_type, mode = "chrome", "chrome_direct"
         
-        # Priority 2: Disc Images (ISO) -> VLC
+        # Priority 2: Disc Images (ISO) -> VLC TS (Embedded)
         elif container in ('iso9660', 'dvd', 'udf') or file_path.lower().endswith('.iso'):
-            player_type, mode = "vlc", "vlc_iso"
+            player_type, mode = "vlc", "vlc_ts"
             
         # Priority 3: Non-native Format -> On-the-fly Transmuxing (FragMP4)
         else:
@@ -3815,16 +3815,22 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
             p1.stdout.close()
 
         # Small delay to see if p1 (ffmpeg/mkvmerge) crashes immediately
-        time.sleep(0.5)
+        time.sleep(1.0)
         if p1.poll() is not None and p1.returncode != 0:
             err_msg = ""
             if p1.stderr:
                 err_msg = p1.stderr.read().decode('utf-8', errors='ignore')
-            logging.warning(f"[vlc pipe] {engine} failed immediately: {err_msg.strip()}. Falling back to direct VLC.")
+            logging.error(f"[vlc pipe] {engine} failed: {err_msg.strip()}. Falling back to direct VLC.")
             # Fallback to external VLC
-            p2.terminate()
+            if p2.poll() is None:
+                p2.terminate()
             subprocess.Popen([str(vlc_path), str(file_path)])
             return {"status": "ok", "mode": "vlc_fallback_direct"}
+        
+        # Monitor p2 (VLC) as well
+        if p2.poll() is not None:
+             logging.error(f"[vlc pipe] VLC exited prematurely with code {p2.returncode}")
+             return {"status": "error", "error": f"VLC beendet: Code {p2.returncode}"}
 
         return {"status": "ok", "message": "Streaming gestartet"}
     except Exception as e:
