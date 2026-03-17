@@ -1,48 +1,40 @@
-# Walkthrough – UI Refinement: Structure, Filtering & PiP
+# Walkthrough – UI & Stability Refinements: Premium Player, PiP, Categories
 
 **Datum:** 17. März 2026
 
 ## Zusammenfassung
-Zweite Runde der UI-Überarbeitung abgeschlossen: Struktur, Filterlogik und Picture-in-Picture (PiP) Funktionalität wurden wie gewünscht umgesetzt.
+Abschluss der UI- und Stabilitätsverbesserungen für Media Web Viewer:
+
+- **Movable & Persistent Splitter:**
+  - Der horizontale Splitter im "File"-Tab ist jetzt per Drag-and-Drop verschiebbar und speichert seine Position in localStorage.
+- **Automatische Reporting-Aktualisierung:**
+  - Der Reporting-Tab aktualisiert sich automatisch beim Wechsel.
+- **Premium Video Player & PiP:**
+  - Der Videoplayer wurde mit einer modernen Glassmorphism-Oberfläche ("Premium UI") überarbeitet.
+  - Native Chrome Picture-in-Picture (PiP) Unterstützung mit eigenem Button und togglePip-Logik.
+- **Kategorie-Fixes:**
+  - Backend- und Frontend-Category-Maps wurden um fehlende Typen wie Podcasts, Radio und Disk-Image-Varianten ergänzt.
+  - Neue Unit-Tests zur Verifikation der Kategorielogik.
+- **Stabilität:**
+  - Verbesserte Session-Reachability-Checks und automatisches Aufräumen "stale" Prozesse via MWV_KILL_STALE.
 
 ---
 
-### 1. Tab Naming & Mapping Fixed
-- Erster Tab: "Item", zweiter Tab: "File"
-- Bug behoben, bei dem beide Tabs als "Item" angezeigt wurden (i18n-Mapping korrigiert)
-
-### 2. "File" Tab Ratio (2/3 Split-Pane)
-- Split-Pane-Layout im "File"-Tab angepasst
-- Top Pane (File Browser): 2/3 der Höhe
-- Bottom Pane (Library Folders): 1/3 der Höhe
-- Splitter bleibt für manuelle Anpassung funktionsfähig
-
-### 3. Reporting Tab Initialization
-- "Reporting"-Tab zeigt beim Aktivieren standardmäßig das Dashboard an (kein leeres Fenster mehr)
-
-### 4. Library Category Filtering Fixed
-- Frontend `CATEGORY_MAP` implementiert, entspricht den Backend-Gruppen
-- Hauptkategorie-Chips (Audio, Video, Bilder) filtern Coverflow und Grid jetzt korrekt (inkl. aller Subtypen)
-
-### 5. Picture-in-Picture (PiP) Support
-- PiP-Button (🖼️) zu den Video-Player-Controls hinzugefügt
-- `togglePip()` implementiert: Video kann in ein schwebendes Fenster ausgelagert werden
+## Test & Verifikation
+- **E2E Selenium-Test für PiP:**
+  - Automatisierter Test prüft das Auslösen und Beenden des Picture-in-Picture-Modus.
+- **Unit-Test für Category-Mapping:**
+  - Sicherstellung, dass alle Medientypen korrekt gruppiert und gefiltert werden.
+- **Manuelle Prüfung:**
+  - Splitter, Reporting-Tab, Player-UI und Filter wurden in der UI getestet.
 
 ---
 
-## Verifikation
-- Split-Pane-Ratio: Top ca. 62%, Bottom ca. 38% (flex 2:1)
-- Reporting-Tab: Dashboard wird beim Aktivieren geladen
-- Filter: Audio/Video/Bilder-Chips lösen korrekte Filterlogik aus
-- PiP: Button vorhanden und funktionsfähig
+## Hinweise
+- Bildpfade und Formatierungen im Walkthrough-Artefakt wurden korrigiert.
+- Alle Änderungen sind in walkthrough.md dokumentiert.
 
 ---
 
-## Nächste Schritte
-- Verbesserungen am Core-Scanner zur besseren Erkennung/Kategorisierung (z.B. Dokumente, Spiele)
-- Video-Player-Überarbeitung (später)
-
----
-
-**UI Verification Recording:**
-- Automatisierte und manuelle Tests durchgeführt, alle Kernfunktionen wie geplant umgesetzt und geprüft.
+**Fazit:**
+Die Media Web Viewer UI ist jetzt moderner, stabiler und bietet Premium-Features wie PiP und persistente Layouts. Alle Kernfunktionen wurden automatisiert und manuell verifiziert.

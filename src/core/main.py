@@ -74,6 +74,7 @@ import threading
 import subprocess
 import re
 import shutil
+import bottle
 from typing import cast
 
 # Internal imports
@@ -86,6 +87,10 @@ import src.core.logger as logger
 from src.core.logger import get_logger
 from src.parsers import tag_writer
 from src.core import hardware_detector
+from src.core import transcoder
+
+# Initialize transcoder manager
+transcode_mgr = transcoder.TranscoderManager()
 
 # Central logger for main
 log = get_logger("main")
@@ -2218,7 +2223,6 @@ def get_library():
             "Klassik",
             "Compilation",
             "Single",
-            "Podcasts",
             "Podcast",
             "Radio"],
         "video": [
@@ -2760,17 +2764,181 @@ def play_media(path):
     if mode == "vlc_browser":
         return {"status": "play", "path": path, "mode": "vlc_browser"}
 
-    return {"status": "play", "path": path, "mode": "chrome_native"}
+def resolve_media_path(file_path: str) -> str:
+    """
+    Resolves a file path that might be a URL-encoded string or a relative /media/ path.
+    """
+    if not file_path:
+        return ""
+    
+    # Decouple from URL encoding
+    path_decoded = unquote(str(file_path))
+    
+    # 1. Try direct filesystem check first (some absolute paths might exist)
+    if os.path.exists(path_decoded):
+        return str(Path(path_decoded).resolve())
 
+    # 2. Strip /media/ prefix if present and handle virtual pathing
+    stripped_path = path_decoded
+    if path_decoded.startswith("/media/"):
+        stripped_path = path_decoded[len("/media/"):]
+    elif path_decoded.startswith("media/"):
+        stripped_path = path_decoded[len("media/"):]
+
+    # 3. Try to find in DB using the stripped path
+    db_path = db.get_media_path(stripped_path)
+    if db_path and os.path.exists(db_path):
+        return db_path
+    
+    # 4. Try direct filesystem check on stripped path
+    if os.path.exists(stripped_path):
+        return str(Path(stripped_path).resolve())
+    
+    # 5. Try resolving relative to PROJECT_ROOT/media
+    media_root = PROJECT_ROOT / "media"
+    alt_path = media_root / stripped_path
+    if alt_path.exists():
+        return str(alt_path.resolve())
+
+    return path_decoded
+def get_best_hw_encoder():
+    """
+    @brief Detects available hardware encoders to reduce CPU load.
+    @return Encoder name (e.g. 'h264_vaapi', 'h264_nvenc', or 'libx264' as fallback).
+    """
+    try:
+        gpu = hardware_detector.get_gpu_info()
+        encoders = gpu.get("encoders", [])
+        
+        # Priority 1: NVIDIA NVENC
+        if "nvenc" in encoders:
+            return "h264_nvenc"
+        
+        # Priority 2: Intel/AMD VAAPI
+        if "vaapi" in encoders:
+            return "h264_vaapi"
+            
+        # Priority 3: Intel QSV
+        if "qsv" in encoders:
+            return "h264_qsv"
+            
+    except Exception as e:
+        logging.warning(f"[HW Detect] Failed to probe encoders: {e}")
+    
+    return "libx264"
+
+@eel.btl.route('/video-stream/<file_path:path>')
+def stream_video_fragmented(file_path):
+    """
+    On-the-fly FragMP4/Matroska streaming via FFmpeg.
+    Useful for formats not natively playable in Chrome (e.g. MKV/HEVC/AC3).
+    """
+    resolved_path = resolve_media_path(file_path)
+    if not os.path.exists(resolved_path):
+        return bottle.HTTPError(404, "File not found")
+
+    def ffmpeg_stream():
+        # Auto-detect best encoder for performance
+        encoder = get_best_hw_encoder()
+        logging.info(f"[stream] Using encoder: {encoder} for {resolved_path}")
+        
+        # Base command for H.264 FragMP4
+        cmd = [
+            "ffmpeg", "-re", "-i", resolved_path,
+            "-c:v", encoder, "-preset", "ultrafast", "-tune", "zerolatency",
+            "-c:a", "aac", "-b:a", "128k",
+            "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+            "-f", "mp4", "-"
+        ]
+        
+        # Add VAAPI specific flags if needed
+        if encoder == "h264_vaapi":
+            # VAAPI needs extra initialization
+            cmd = [
+                "ffmpeg", "-re", "-vaapi_device", "/dev/dri/renderD128",
+                "-i", resolved_path,
+                "-vf", "format=nv12,hwupload",
+                "-c:v", "h264_vaapi",
+                "-c:a", "aac", "-b:a", "128k",
+                "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+                "-f", "mp4", "-"
+            ]
+
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        try:
+            if process.stdout:
+                while True:
+                    data = process.stdout.read(4096 * 16)
+                    if not data:
+                        break
+                    yield data
+        finally:
+            if process:
+                process.kill()
+
+    return bottle.HTTPResponse(ffmpeg_stream(), content_type="video/mp4")
+
+def get_video_metadata(file_path: str) -> dict:
+    """
+    Analyzes a video file using ffprobe and returns codec/container info.
+    """
+    try:
+        cmd = [
+            "ffprobe", "-v", "quiet", "-print_format", "json",
+            "-show_format", "-show_streams", str(file_path)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        if result.returncode != 0:
+            return {}
+        data = json.loads(result.stdout)
+        
+        streams = data.get('streams', [])
+        video_stream = next((s for s in streams if s.get('codec_type') == 'video'), {})
+        format_info = data.get('format', {})
+        
+        return {
+            "codec": video_stream.get('codec_name', ''),
+            "width": int(video_stream.get('width', 0)),
+            "height": int(video_stream.get('height', 0)),
+            "container": format_info.get('format_name', '').split(',')[0],
+            "duration": float(format_info.get('duration', 0))
+        }
+    except Exception as e:
+        logging.error(f"[ffprobe] Auto-detect failed: {e}")
+        return {}
 
 @eel.expose
 def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_direct"):
     """
     @brief Explicitly opens a video with a specific player type and mode.
+    Supports 'auto' for intelligent routing based on ffprobe.
     """
     logging.info(f"[Player] Open video triggered: {file_path} via {player_type}/{mode}")
-    file_path = unquote(str(file_path))
+    file_path = resolve_media_path(file_path)
 
+    # 1. FFprobe Auto-Detection Logic
+    if player_type == "auto" or mode == "auto":
+        meta = get_video_metadata(file_path)
+        codec = meta.get('codec', '').lower()
+        container = meta.get('container', '').lower()
+        
+        logging.info(f"[Auto-Detect] File: {file_path} | Codec: {codec} | Container: {container}")
+        
+        # Priority 1: Chrome Native Direct Play
+        # Chrome natively supports: H.264/AAC in MP4/MOV, VP8/VP9/AV1 in WebM
+        if (codec == 'h264' and container in ('mp4', 'mov', 'quicktime')) or \
+           (codec in ('vp8', 'vp9', 'av1') and container == 'matroska'): # WebM is subset of MKV
+            player_type, mode = "chrome", "chrome_direct"
+        
+        # Priority 2: Disc Images (ISO) -> VLC
+        elif container in ('iso9660', 'dvd', 'udf') or file_path.lower().endswith('.iso'):
+            player_type, mode = "vlc", "vlc_iso"
+            
+        # Priority 3: Non-native Format -> On-the-fly Transmuxing (FragMP4)
+        else:
+            player_type, mode = "chrome", "chrome_fragmp4"
+
+    # 2. Player Routing
     if player_type == "chrome":
         if mode == "chrome_direct":
             return {"status": "play", "path": file_path, "mode": "chrome_native"}
@@ -2791,12 +2959,14 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
              # DVD ISO Live (VLC Native)
             if file_path.lower().endswith('.iso'):
                 try:
-                    vlc_path = shutil.which("vlc") or "vlc"
-                    subprocess.Popen([str(vlc_path), f"dvd://{file_path}"])
+                    vlc_path = shutil.which("cvlc") or shutil.which("vlc") or "cvlc"
+                    # For ISO files, cvlc directly or dvdsimple:// often works better than dvd://
+                    subprocess.Popen([str(vlc_path), str(file_path)])
                     return {"status": "ok", "mode": "vlc_external"}
                 except Exception as e:
                     return {"status": "error", "error": f"VLC ISO startup failed: {e}"}
             return stream_to_vlc(file_path, engine="dvd_native")
+
         elif mode == "vlc_embedded":
             return {"status": "play", "path": file_path, "mode": "vlc_browser"}
         elif mode == "vlc_extern":
@@ -2814,10 +2984,20 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
             except Exception as e:
                 return {"status": "error", "error": f"pyvidplayer2 failed: {e}"}
         elif mode == "pyplayer_mpv":
-            # Placeholder for mpv
-             return {"status": "error", "error": "mpv mode not yet implemented"}
+            try:
+                mpv_path = shutil.which("mpv") or "mpv"
+                subprocess.Popen([str(mpv_path), str(file_path)])
+                return {"status": "ok", "mode": "mpv_standalone"}
+            except Exception as e:
+                return {"status": "error", "error": f"mpv failed: {e}"}
         elif mode == "pyplayer_pip":
-             return {"status": "error", "error": "PiP mode not yet implemented"}
+             try:
+                 import pyvidplayer2 as pv
+                 # Use a simple subprocess for the built-in PiP test tool or similar if available
+                 subprocess.Popen([sys.executable, "-m", "pyvidplayer2", "--pip", file_path])
+                 return {"status": "ok", "mode": "pyplayer_pip"}
+             except Exception as e:
+                 return {"status": "error", "error": f"PiP mode failed: {e}"}
 
     # Fallback/Default
     return play_media(file_path)
@@ -2831,12 +3011,14 @@ def analyse_media(path):
     if not PARSER_CONFIG.get("feature_flags", {}).get("analyse_mode", False):
         return {"status": "error", "message": "Analyse mode is disabled"}
     
-    from src.parsers.ffprobe_parser import FFprobeParser
-    parser = FFprobeParser()
+    import src.parsers.ffprobe_parser as ffprobe_parser
     try:
-        analysis = parser.parse(Path(path))
+        # Pass empty dict for tags and settings if needed, or use a more direct way
+        dummy_tags = {}
+        analysis = ffprobe_parser.parse(Path(path), Path(path).suffix, dummy_tags, mode='full', settings={'timeout': 5})
         return {"status": "ok", "analysis": analysis}
     except Exception as e:
+        logging.error(f"[Analyse] Failed for {path}: {e}")
         return {"status": "error", "message": str(e)}
 
 @eel.expose
@@ -3452,6 +3634,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     @brief Real-time streaming via mkvmerge pipe to VLC.
     @details Nutzt mkvmerge oder FFmpeg zum Remuxen und pipet den Output direkt an VLC.
     """
+    file_path = resolve_media_path(file_path)
     logging.info(f"[vlc pipe] Requesting stream for: {file_path}")
 
     if not file_path or not os.path.exists(str(file_path)):
@@ -3462,17 +3645,23 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     file_path_str = str(file_path).lower()
     if file_path_str.endswith('.iso') or engine in ("dvd_native", "bluray_native", "cdrom_native"):
         try:
-            vlc_path = shutil.which('vlc') or 'vlc'
-            protocol = "dvd://"
-            if engine == "bluray_native" or "bdmv" in file_path_str:
-                protocol = "bluray://"
-            elif engine == "cdrom_native" or "cdda" in file_path_str:
-                protocol = "cdda://"
+            vlc_path = shutil.which('cvlc') or shutil.which('vlc') or 'cvlc'
+            if file_path_str.endswith('.iso'):
+                # Better to let VLC handle ISO directly
+                cmd = [str(vlc_path), str(file_path)]
+            else:
+                protocol = "dvd://"
+                if engine == "bluray_native" or "bdmv" in file_path_str:
+                    protocol = "bluray://"
+                elif engine == "cdrom_native" or "cdda" in file_path_str:
+                    protocol = "cdda://"
+                
+                logging.info(f"[vlc] Native media detected, using {protocol} for {file_path}")
+                cmd = [str(vlc_path), f"{protocol}{file_path}"]
             
-            logging.info(f"[vlc] Native media detected, using {protocol} for {file_path}")
-            cmd = [str(vlc_path), f"{protocol}{file_path}"]
             subprocess.Popen(cmd)
             return {"status": "ok", "mode": "vlc_native"}
+
         except Exception as e:
             logging.error(f"[vlc] Native Playback error: {e}")
             return {"status": "error", "error": str(e)}
@@ -3480,8 +3669,8 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     # Direct VLC Solo (No Pipe)
     if engine in ("cvlc_solo", "vlc_extern"):
         try:
-            vlc_cmd = 'cvlc' if engine == "cvlc_solo" else 'vlc'
-            vlc_path = shutil.which(vlc_cmd) or vlc_cmd
+            vlc_cmd = 'cvlc'
+            vlc_path = shutil.which(vlc_cmd) or shutil.which('vlc') or vlc_cmd
             logging.info(f"[vlc] Opening external: {file_path}")
             subprocess.Popen([str(vlc_path), str(file_path)])
             return {"status": "ok", "mode": "vlc_external"}
@@ -3492,7 +3681,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         logging.error("[vlc pipe] mkvmerge not found in PATH")
         return {"status": "error", "error": "mkvtoolnix (mkvmerge) nicht installiert"}
 
-    vlc_path = shutil.which('vlc') or 'vlc'
+    vlc_path = shutil.which('cvlc') or shutil.which('vlc') or 'cvlc'
     if not vlc_path:
         logging.error("[vlc pipe] vlc not found in PATH")
         return {"status": "error", "error": "VLC Media Player nicht installiert oder nicht im PATH"}
@@ -3502,30 +3691,34 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
             # mkvmerge pipeline: -o - (stdout)
             remux_cmd = ["mkvmerge", "-o", "-", str(file_path)]
         else:
-            # ffmpeg pipeline (default)
-            remux_cmd = ["ffmpeg", "-loglevel", "error", "-i", str(file_path), "-c", "copy", "-f", "matroska", "-"]
+            # ffmpeg pipeline (default): Use matroska for universality
+            remux_cmd = [
+                "ffmpeg", "-loglevel", "error", "-i", str(file_path),
+                "-c", "copy", "-f", "matroska", "-"
+            ]
         
-        vlc_cmd = [str(vlc_path), "-"]
+        # VLC Command: Use fd://0 and explicit demuxer to avoid mjpeg-misdetection
+        vlc_cmd = [str(vlc_path), "--demux", "mkv", "--no-mjpeg-demux", "fd://0"]
 
         logging.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c) for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
 
         # Start remuxer
         p1 = subprocess.Popen(remux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # Start VLC, linking its stdin to ffmpeg's stdout
+        # Start VLC, linking its stdin to remuxer's stdout
         p2 = subprocess.Popen(vlc_cmd, stdin=p1.stdout)
 
         # Allow p1 to receive a SIGPIPE if p2 exits.
         if p1.stdout:
             p1.stdout.close()
 
-        # Small delay to see if p1 (ffmpeg) crashes immediately
+        # Small delay to see if p1 (ffmpeg/mkvmerge) crashes immediately
         time.sleep(0.5)
         if p1.poll() is not None and p1.returncode != 0:
             err_msg = ""
             if p1.stderr:
                 err_msg = p1.stderr.read().decode('utf-8', errors='ignore')
-            logging.error(f"[vlc pipe] FFmpeg failed immediately: {err_msg}")
-            return {"status": "error", "error": f"FFmpeg Fehler: {err_msg.splitlines()[0] if err_msg else 'Unknown'}"}
+            logging.error(f"[vlc pipe] {engine} failed immediately: {err_msg}")
+            return {"status": "error", "error": f"{engine} Fehler: {err_msg.splitlines()[0] if err_msg else 'Unknown'}"}
 
         return {"status": "ok", "message": "Streaming gestartet"}
     except Exception as e:
@@ -3550,7 +3743,7 @@ def detect_ts_stream(port):
 @eel.expose
 def vlc_ts_mode(file_path):
     """Launches cvlc with TS muxing and returns the port."""
-    file_path = unquote(str(file_path))
+    file_path = resolve_media_path(file_path)
     if not os.path.exists(file_path):
         return {"status": "error", "error": "Datei nicht gefunden"}
 
@@ -5115,3 +5308,23 @@ def save_benchmark_results(results):
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "error": str(e)}
+
+@eel.expose
+def start_handbrake_transcode(input_path: str, output_path: str, encoder: str = "x264", preset: str = "fast"):
+    """Exposes HandBrake transcoding to the frontend."""
+    options = {"encoder": encoder, "preset": preset}
+    task_id = transcode_mgr.add_task(input_path, output_path, "handbrake", options)
+    transcode_mgr.start_task(task_id)
+    return task_id
+
+@eel.expose
+def start_webm_conversion(input_path: str, output_path: str):
+    """Exposes WebM/VP9 conversion to the frontend."""
+    task_id = transcode_mgr.add_task(input_path, output_path, "webm", {})
+    transcode_mgr.start_task(task_id)
+    return task_id
+
+@eel.expose
+def get_transcode_status(task_id: str):
+    """Returns the status and progress of a transcoding task."""
+    return transcode_mgr.get_task_status(task_id)

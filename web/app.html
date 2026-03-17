@@ -383,6 +383,8 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.05);
             position: relative;
+            z-index: 50;
+            /* Ensure it stays above normal content but below overlays */
         }
 
         .glass-controls {
@@ -1471,7 +1473,8 @@
                 'logbuch': 'localized-markdown-documentation-journal-panel',
                 'playlist': 'json-serialized-sequence-buffer-panel',
                 'vlc': 'multiplexed-media-player-orchestrator-panel',
-                'video': 'multiplexed-media-player-orchestrator-panel'
+                'video': 'multiplexed-media-player-orchestrator-panel',
+                'tools': 'tools-tab'
             };
 
             const targetId = tabMap[tabId];
@@ -2143,6 +2146,9 @@
                 <button id="media-orchestrator-tab-trigger" class="tab-btn" onclick="switchTab('vlc', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_video">
                     <span class="icon-video"></span> <span data-i18n="nav_video">Video Player</span></button>
+                <button id="advanced-tools-tab-trigger" class="tab-btn" onclick="switchTab('tools', this)"
+                    style="background: #fff3e0; border-color: #ff9800; color: #e65100; display: flex; align-items: center; gap: 8px;">
+                    <span class="icon-settings"></span> <span>Advanced Tools</span></button>
                 <button class="tab-btn"
                     style="background: #fdf5e6; border-color: #f4d; display: flex; align-items: center; gap: 8px;"
                     onclick="toggleDebugMenu()" data-i18n="nav_flags">
@@ -3303,6 +3309,7 @@
                                     data-i18n="video_mode_label">Modus:</span>
                                 <select id="player-type" onchange="updateVideoModes()"
                                     style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
+                                    <option value="auto">🤖 Auto-Detect (ffprobe)</option>
                                     <option value="chrome">🎬 Chrome Native</option>
                                     <option value="vlc">📺 VLC (Desktop)</option>
                                     <option value="pyplayer">🐍 PyPlayer (Native)</option>
@@ -3441,6 +3448,63 @@
                             </div>
                             <div id="vlc-ribbon-status"
                                 style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Tools Tab -->
+                    <div id="tools-tab" class="tab-content" style="padding: 20px;">
+                        <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
+                            <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
+                        </h2>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <!-- HandBrake Section -->
+                            <div
+                                style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                <h3 style="margin-top: 0; color: #d35400;">🚀 HandBrake (High-Level)</h3>
+                                <p style="font-size: 0.9em; color: #666;">Optimized batch encoding for high quality and
+                                    small sizes.</p>
+
+                                <div style="margin-bottom: 15px;">
+                                    <label
+                                        style="display: block; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">Encoder
+                                        Type:</label>
+                                    <select id="hb-encoder"
+                                        style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                                        <option value="x264">Software (x264)</option>
+                                        <option value="qsv">Intel QuickSync (QSV)</option>
+                                        <option value="nvenc">NVIDIA (NVENC)</option>
+                                        <option value="vaapi">VAAPI (Generic HW)</option>
+                                    </select>
+                                </div>
+
+                                <button onclick="triggerHBTranscode()"
+                                    style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
+                                    Start Transcoding
+                                </button>
+                            </div>
+
+                            <!-- WebM Section -->
+                            <div
+                                style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                <h3 style="margin-top: 0; color: #2980b9;">🌐 WebM (VP9 / Ultra Small)</h3>
+                                <p style="font-size: 0.9em; color: #666;">Best for web sharing. High compression with
+                                    VP9/Opus.</p>
+
+                                <button onclick="triggerWebMTranscode()"
+                                    style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 45px;">
+                                    Convert to WebM
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Active Tasks UI -->
+                        <div id="transcoding-tasks-container" style="margin-top: 30px;">
+                            <h4 style="color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">Active Tasks
+                            </h4>
+                            <div id="transcoding-task-list">
+                                <p style="font-size: 0.9em; color: #999; font-style: italic;">No active tasks.</p>
                             </div>
                         </div>
                     </div>
@@ -4176,6 +4240,34 @@
             const menu = document.getElementById('custom-context-menu');
             if (!menu) return;
 
+            // Dynamically hide/show items based on file extension
+            const ext = item.name.toLowerCase().split('.').pop();
+            const isVideo = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'ts'].includes(ext);
+            const isDisc = ['iso', 'dvd', 'udf', 'img'].includes(ext);
+            const isAudio = ['mp3', 'flac', 'm4a', 'wav', 'ogg', 'opus'].includes(ext);
+
+            const groupHeaders = menu.querySelectorAll('.context-menu-header');
+            const dividers = menu.querySelectorAll('.context-menu-divider');
+            const items = menu.querySelectorAll('.context-menu-item');
+
+            // Hide/Show based on type
+            items.forEach(el => {
+                const action = el.getAttribute('onclick');
+                if (action.includes('dvd_native') || action.includes('bluray_native') || action.includes('vlc_iso')) {
+                    el.style.display = isDisc ? 'flex' : 'none';
+                } else if (action.includes('chrome_native') || action.includes('mediamtx') || action.includes('ffmpeg_browser') || action.includes('vlc_ts')) {
+                    el.style.display = (isVideo || isAudio) ? 'flex' : 'none';
+                } else if (action.includes('vlc_extern') || action.includes('cvlc')) {
+                    el.style.display = 'flex'; // Always show general VLC
+                }
+            });
+
+            // Adjust headers and dividers (simplified)
+            groupHeaders.forEach(h => {
+                if (h.innerText.includes('Disc') && !isDisc) h.style.display = 'none';
+                else h.style.display = 'block';
+            });
+
             menu.style.display = 'block';
 
             // Positioning
@@ -4217,9 +4309,11 @@
 
             const res = await eel.open_video(item.path, mode)();
             if (res && res.status === 'play') {
-                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native' || res.mode === 'ffmpeg_browser') {
+                const embeddedModes = ['mediamtx', 'mediamtx_webrtc', 'chrome_native', 'chrome_direct', 'chrome_hls', 'chrome_fragmp4', 'ffmpeg_browser'];
+                if (embeddedModes.includes(res.mode) || embeddedModes.includes(mode)) {
                     if (typeof startEmbeddedVideo === 'function') {
-                        startEmbeddedVideo(item, res.path);
+                        startEmbeddedVideo(item, res.path, null, res.type);
+                        switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                     }
                 }
             } else if (res && res.status === 'error') {
@@ -4229,6 +4323,7 @@
                 showToast(res.message || "Aktion gestartet");
             }
         }
+
 
         window.addEventListener('click', () => hideContextMenu());
         window.addEventListener('scroll', () => hideContextMenu(), true);
@@ -4533,7 +4628,7 @@
                             <span style="font-weight: bold; color: #333; font-size: 1.1em;">
                                 <span class="icon-database" style="background-color: #2980b9;"></span> ${t('database_item') || 'Items'}: 
                                 <span style="color: #2980b9; margin-left: 5px;">${stats.total_items}</span>
-                            </span>
+                            </div>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 `;
@@ -5695,10 +5790,13 @@
             if (!modeSelect) return;
 
             const modes = {
+                'auto': [
+                    { value: 'auto', label: '✨ Smart Auto-Routing' }
+                ],
                 'chrome': [
                     { value: 'chrome_direct', label: t('video_mode_chrome') },
                     { value: 'chrome_hls', label: t('video_mode_mediamtx') },
-                    { value: 'chrome_fragmp4', label: '🔄 ffmpeg FragMP4' },
+                    { value: 'chrome_fragmp4', label: 'ffmpeg FragMP4' },
                     { value: 'chrome_webrtc', label: t('video_mode_mediamtx_webrtc') },
                     { value: 'chrome_ffmpeg_browser', label: t('video_mode_ffmpeg_browser') }
                 ],
@@ -5730,30 +5828,32 @@
                 const plBtn = document.getElementById('sequential-buffer-tab-trigger');
                 switchTab('playlist', plBtn);
                 // Reset select to previous mode or native?
-                select.value = 'chrome_native';
+                select.value = 'chrome_direct';
                 return;
             }
 
-            // Show "Open in VLC" button only if in browser mode and video loaded
-            const openVlcBtn = document.getElementById('btn-open-vlc');
-            if (openVlcBtn) {
-                openVlcBtn.style.display = (mode !== 'browser' && mode !== 'dnd' && currentVideoItem) ? 'flex' : 'none';
+            // Show "Open with" button only if video loaded
+            const openWithBtn = document.querySelector('button[onclick="triggerOpenWith()"]');
+            if (openWithBtn) {
+                openWithBtn.style.display = currentVideoItem ? 'inline-block' : 'none';
             }
 
-            if (mode !== 'browser') {
-                hideUnsupportedVideoHint();
-            }
-
-            // Sync D&D Panel visibility
             const dndPanel = document.getElementById('orchestrator-ingress-drag-drop-buffer');
-            if (dndPanel) {
-                const embedded = document.getElementById('coordinated-media-renderer-pipeline-viewport');
-                if (mode === 'dnd') {
-                    dndPanel.style.display = 'block';
-                    if (embedded) embedded.style.display = 'none';
-                } else {
-                    dndPanel.style.display = 'none';
-                    if (embedded) embedded.style.display = 'flex';
+            const embedded = document.getElementById('coordinated-media-renderer-pipeline-viewport');
+
+            if (mode === 'dnd') {
+                if (dndPanel) dndPanel.style.display = 'block';
+                if (embedded) embedded.style.display = 'none';
+            } else {
+                if (dndPanel) dndPanel.style.display = 'none';
+                if (embedded) embedded.style.display = 'flex';
+
+                // If we have a current item, restart playback in the new mode if applicable
+                if (currentVideoItem && !window.__manual_mode_change__) {
+                    // Avoid infinite loop if called from playVideo
+                    // But allow user change to trigger something?
+                    // Actually, usually users change mode and THEN press play, OR expect it to switch now.
+                    // For now, let's just update the UI state.
                 }
             }
         }
@@ -5784,6 +5884,11 @@
 
                 if (res && res.status === 'play') {
                     if (res.mode === 'chrome_native') {
+                        if (res.path && res.path.startsWith('/video-stream/')) {
+                            showToast("ON-THE-FLY TRANSCODING (FragMP4)", 3000);
+                        } else if (type === 'auto') {
+                            showToast("DIRECT PLAYBACK (Chrome Native)", 3000);
+                        }
                         startEmbeddedVideo(item, res.path);
                     } else if (res.mode === 'vlc_browser') {
                         startVLC(res.path);
@@ -5855,22 +5960,36 @@
             safeStyle('vlc-info', 'display', 'none');
             hideUnsupportedVideoHint();
 
-            placeholder.style.display = 'none';
-            video.style.display = 'block';
+            // Ensure Video.js container is visible and placeholder is hidden
+            if (placeholder) placeholder.style.display = 'none';
+
+            // Video.js wrapper management
+            const vjsWrapper = video.closest('.video-js');
+            if (vjsWrapper) {
+                vjsWrapper.style.display = 'block';
+                vjsWrapper.style.width = '100%';
+                vjsWrapper.style.height = '100%';
+            } else {
+                video.style.display = 'block';
+            }
 
             let srcType = type || 'video/mp4';
             if (path && (path.includes('index.m3u8') || path.endsWith('.m3u8'))) {
                 srcType = 'application/x-mpegURL';
-            } else if (type === 'video/mp2t' || path.includes(':')) {
+            } else if (type === 'video/mp2t' || (path && path.includes(':'))) {
                 srcType = 'video/mp2t';
             }
 
             vjsPlayer.src({ src: path, type: srcType });
-            vjsPlayer.play().catch(e => {
-                console.warn("Video.js playback failed:", e);
-                if (typeof onErrorCallback === 'function') onErrorCallback();
-            });
 
+            // Explicitly trigger a resize to fix black screen/layout issues
+            vjsPlayer.ready(() => {
+                vjsPlayer.trigger('resize');
+                vjsPlayer.play().catch(e => {
+                    console.warn("Video.js playback failed:", e);
+                    if (typeof onErrorCallback === 'function') onErrorCallback();
+                });
+            });
         }
 
         async function startVLC(filePath, displayName = null) {
@@ -8539,6 +8658,77 @@
                 document.removeEventListener('mouseup', onMouseUp);
             }
         });
+
+        async function triggerHBTranscode() {
+            if (typeof currentVideoItem === 'undefined' || !currentVideoItem) {
+                showToast("Bitte zuerst ein Video auswählen.");
+                return;
+            }
+            const encoderSelect = document.getElementById('hb-encoder');
+            const encoder = encoderSelect ? encoderSelect.value : "x264";
+            const input = currentVideoItem.path;
+            const output = input.replace(/\.[^/.]+$/, "") + "_hb.mp4";
+
+            showToast(`Starte HandBrake Transcoder (${encoder})...`);
+            const taskId = await eel.start_handbrake_transcode(input, output, encoder)();
+            startPollingTask(taskId, currentVideoItem.name);
+        }
+
+        async function triggerWebMTranscode() {
+            if (typeof currentVideoItem === 'undefined' || !currentVideoItem) {
+                showToast("Bitte zuerst ein Video auswählen.");
+                return;
+            }
+            const input = currentVideoItem.path;
+            const output = input.replace(/\.[^/.]+$/, "") + ".webm";
+
+            showToast("Konvertiere zu WebM (VP9)...");
+            const taskId = await eel.start_webm_conversion(input, output)();
+            startPollingTask(taskId, currentVideoItem.name);
+        }
+
+        function startPollingTask(taskId, fileName) {
+            const list = document.getElementById('transcoding-task-list');
+            if (!list) return;
+            if (list.querySelector('p')) list.innerHTML = '';
+
+            const taskDiv = document.createElement('div');
+            taskDiv.id = `task-${taskId}`;
+            taskDiv.style = "margin-bottom: 15px; padding: 15px; background: #fff; border-radius: 10px; border: 1px solid #eaebed; box-shadow: 0 2px 5px rgba(0,0,0,0.02);";
+            taskDiv.innerHTML = `
+                <div style="font-size: 0.9em; font-weight: 600; color: #333; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fileName}</div>
+                <div style="height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                    <div id="progress-${taskId}" style="height: 100%; width: 0%; background: linear-gradient(90deg, #2a7, #2ecc71); transition: width 0.4s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75em; align-items: center;">
+                    <span id="label-${taskId}" style="color: #666; font-weight: 500;">In Warteschlange...</span>
+                    <span id="percent-${taskId}" style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-weight: bold;">0%</span>
+                </div>
+            `;
+            list.appendChild(taskDiv);
+
+            const interval = setInterval(async () => {
+                const status = await eel.get_transcode_status(taskId)();
+                if (status.status === 'completed') {
+                    document.getElementById(`progress-${taskId}`).style.width = '100%';
+                    document.getElementById(`percent-${taskId}`).innerText = '100%';
+                    document.getElementById(`label-${taskId}`).innerText = 'Fertig';
+                    document.getElementById(`label-${taskId}`).style.color = '#2a7';
+                    clearInterval(interval);
+                    showToast(`✅ Transcoding fertig: ${fileName}`, 4000);
+                } else if (status.status === 'error') {
+                    document.getElementById(`label-${taskId}`).innerText = `Fehler: ${status.error}`;
+                    document.getElementById(`label-${taskId}`).style.color = '#c0392b';
+                    clearInterval(interval);
+                    showToast(`❌ Transcoding fehlgeschlagen: ${fileName}`, 5000);
+                } else {
+                    const p = Math.round(status.progress || 0);
+                    document.getElementById(`progress-${taskId}`).style.width = `${p}%`;
+                    document.getElementById(`percent-${taskId}`).innerText = `${p}%`;
+                    document.getElementById(`label-${taskId}`).innerText = 'Wird verarbeitet...';
+                }
+            }, 2500);
+        }
     </script>
     <!-- Mini-Video Overlay (PiP) -->
     <div id="mini-player" class="mini-player hidden">
