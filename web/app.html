@@ -2146,9 +2146,6 @@
                 <button id="media-orchestrator-tab-trigger" class="tab-btn" onclick="switchTab('vlc', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_video">
                     <span class="icon-video"></span> <span data-i18n="nav_video">Video Player</span></button>
-                <button id="advanced-tools-tab-trigger" class="tab-btn" onclick="switchTab('tools', this)"
-                    style="background: #fff3e0; border-color: #ff9800; color: #e65100; display: flex; align-items: center; gap: 8px;">
-                    <span class="icon-settings"></span> <span>Advanced Tools</span></button>
                 <button class="tab-btn"
                     style="background: #fdf5e6; border-color: #f4d; display: flex; align-items: center; gap: 8px;"
                     onclick="toggleDebugMenu()" data-i18n="nav_flags">
@@ -2562,6 +2559,19 @@
                                     <span id="hardware-network-mount" style="font-weight: bold;">-</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div
+                            style="background: #fff3e0; border: 1px solid #ff9800; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-weight: bold; color: #e65100;">Advanced Media Tools</div>
+                                <div style="font-size: 0.85em; color: #666; margin-top: 4px;">HandBrake Transcoding,
+                                    WebM Conversion & VLC Playlist Tools.</div>
+                            </div>
+                            <button onclick="switchTab('tools', null)"
+                                style="padding: 10px 20px; background: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                Open Tools
+                            </button>
                         </div>
 
                         <div
@@ -4223,10 +4233,18 @@
 
         window.jumpToChapter = function (startTime) {
             const video = document.getElementById('native-html5-video-resource-node');
-            if (video && !video.paused || video.readyState > 0) {
-                video.currentTime = startTime;
-                video.play().catch(() => { });
+            const audio = document.getElementById('native-html5-audio-pipeline-element');
+
+            let player = null;
+            if (video && (video.offsetHeight > 0 || !video.paused)) player = video;
+            else if (audio && (audio.offsetHeight > 0 || !audio.paused)) player = audio;
+
+            if (player && (player.readyState > 0 || !player.paused)) {
+                player.currentTime = startTime;
+                player.play().catch(() => { });
                 showToast(t('player_status_playing') + " (Kapitel @ " + new Date(startTime * 1000).toISOString().substring(11, 19) + ")");
+            } else {
+                console.warn("[JumpToChapter] No active player found to seek in.");
             }
         };
 

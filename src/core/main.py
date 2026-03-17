@@ -3756,8 +3756,11 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
             err_msg = ""
             if p1.stderr:
                 err_msg = p1.stderr.read().decode('utf-8', errors='ignore')
-            logging.error(f"[vlc pipe] {engine} failed immediately: {err_msg}")
-            return {"status": "error", "error": f"{engine} Fehler: {err_msg.splitlines()[0] if err_msg else 'Unknown'}"}
+            logging.warning(f"[vlc pipe] {engine} failed immediately: {err_msg.strip()}. Falling back to direct VLC.")
+            # Fallback to external VLC
+            p2.terminate()
+            subprocess.Popen([str(vlc_path), str(file_path)])
+            return {"status": "ok", "mode": "vlc_fallback_direct"}
 
         return {"status": "ok", "message": "Streaming gestartet"}
     except Exception as e:

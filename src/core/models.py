@@ -319,7 +319,7 @@ class MediaItem:
             'resolution', 'width', 'height', 'fps', 'video_codec', 'audio_track_count',
             'subtitle_count', 'subtitle_languages', 'language', 'standard', 'frame_rate',
             'video_scan_type', 'video_chroma', 'video_color_space', 'video_hdr',
-            'video_bit_depth', 'video_matrix'
+            'video_bit_depth', 'video_matrix', 'chapters'
         }
         filtered_tags = {k: v for k, v in self.tags.items() if k in whitelist}
 
