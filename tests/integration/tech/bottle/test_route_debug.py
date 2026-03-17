@@ -69,7 +69,7 @@ try:
     # URL encode the filename just in case
     import urllib.parse
     filename = urllib.parse.quote("02 We the People….m4a")
-    res = urllib.request.urlopen(f'http://localhost:8082/media/{filename}').read()
+    res = urllib.request.urlopen(f'http://localhost:{port}/media/{filename}').read()
     print("Response:", res)
 except Exception as e:
     print("Error:", e)

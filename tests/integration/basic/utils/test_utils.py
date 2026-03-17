@@ -89,9 +89,8 @@ def manage_app_instance(preferred_port=None):
         return None, True, best['port']
     if preferred_port and is_port_open(preferred_port):
         return None, True, preferred_port
-    if os.environ.get("MWV_ONLY_EXISTING_SESSION") == "1":
         return "FAIL", False, None
-    return "START_NEW", False, preferred_port or 8005
+    return "START_NEW", False, preferred_port or 8345
 
 def robust_action(driver, action_func, retries=10, delay=1.0):
     from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, ElementNotInteractableException, NoSuchElementException

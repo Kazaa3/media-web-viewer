@@ -20,7 +20,7 @@ def browser():
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options)
-    driver.get("http://localhost:8000")  # Adjust as needed
+    driver.get("http://localhost:{port}")  # Adjust as needed
     yield driver
     driver.quit()
 

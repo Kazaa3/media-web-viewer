@@ -68,7 +68,7 @@ class TestHammerhartReorder(unittest.TestCase):
     def test_hammerhart_to_second_and_fifth(self):
         playlist = PlaylistPage(self.driver)
         try:
-            self.driver.get(f"http://localhost:{self.port}/app.html")
+            self.driver.get(f"http://localhost:{port}/app.html")
             wait = WebDriverWait(self.driver, 45)
             wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
             wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))

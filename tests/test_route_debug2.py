@@ -37,8 +37,8 @@ time.sleep(2)
 
 try:
     filename = urllib.parse.quote("media/02 We the People….m4a")
-    print("Requesting:", f'http://localhost:8083/{filename}')
-    res = urllib.request.urlopen(f'http://localhost:8083/{filename}').read()
+    print("Requesting:", f'http://localhost:{port}/{filename}')
+    res = urllib.request.urlopen(f'http://localhost:{port}/{filename}').read()
     print("Response:", res)
 except Exception as e:
     print("Error:", e)

@@ -102,7 +102,7 @@ class TestGUITabsRefresh(unittest.TestCase):
             cls.log_file.close()
 
     def setUp(self):
-        self.driver.get(f"http://localhost:{self.port}/app.html")
+        self.driver.get(f"http://localhost:{port}/app.html")
         try:
             # Wait for any common element that indicates loading is done
             WebDriverWait(self.driver, 30).until(

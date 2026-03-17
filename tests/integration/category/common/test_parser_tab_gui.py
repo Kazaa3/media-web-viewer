@@ -10,10 +10,10 @@ def browser():
     yield driver
     driver.quit()
 
-# Annahme: Die App läuft lokal auf http://localhost:8000
+# Annahme: Die App läuft lokal auf http://localhost:{port}
 
 def test_parser_tab_elements(browser):
-    browser.get("http://localhost:8000")
+    browser.get("http://localhost:{port}")
     parser_tab = browser.find_element(By.ID, "parserTab")
     assert parser_tab is not None, "Parser-Tab fehlt im UI!"
 

@@ -3314,22 +3314,25 @@
                                 <span class="icon-video"></span> <span data-i18n="video_tab_title">Video Player</span>
                             </h2>
                             <div
-                                style="display: flex; align-items: center; gap: 15px; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
-                                <span style="font-size: 0.9em; font-weight: bold; color: #666;"
+                                style="display: flex; align-items: center; gap: 15px; background: #fdfdfd; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                                <span style="font-size: 0.9em; font-weight: bold; color: #555;"
                                     data-i18n="video_mode_label">Modus:</span>
+
                                 <select id="player-type" onchange="updateVideoModes()"
-                                    style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none;">
-                                    <option value="auto">🤖 Auto-Detect (ffprobe)</option>
+                                    style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
+                                    <option value="auto">🤖 Auto-Detect (Smart)</option>
                                     <option value="chrome">🎬 Chrome Native</option>
-                                    <option value="vlc">📺 VLC (Desktop)</option>
+                                    <option value="vlc">📺 VLC (Desktop/Embedded)</option>
                                     <option value="pyplayer">🐍 PyPlayer (Native)</option>
                                 </select>
+
                                 <select id="video-mode" onchange="orchestrateVideoPlaybackMode()"
-                                    style="background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; outline: none; margin-left:10px;">
+                                    style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
                                     <!-- Dynamic -->
                                 </select>
-                                <button onclick="triggerOpenWith()" data-i18n="btn_open_with"
-                                    style="background: #2a7; color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: opacity 0.2s;">
+
+                                <button onclick="triggerOpenWith()" data-i18n="btn_open_with" id="btn-open-with-video"
+                                    style="background: #2a7; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(42,167,112,0.3); display: none;">
                                     Öffnen mit
                                 </button>
                             </div>
@@ -3400,14 +3403,22 @@
                             Browser kann dieses Video nicht direkt abspielen. Nutze "In VLC öffnen".
                         </div>
 
+                        <!-- VLC & System Logs inside Player Context for easier debugging -->
                         <div id="vlc-info"
                             style="margin-bottom: 20px; padding: 15px; background: #fffcf0; border-radius: 8px; border-left: 4px solid #f90; display: none;">
-                            <div style="font-weight: bold; color: #333; margin-bottom: 5px;"
-                                data-i18n="vlc_now_playing">
-                                VLC läuft:</div>
+                            <div
+                                style="font-weight: bold; color: #333; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
+                                <span data-i18n="vlc_now_playing">VLC läuft:</span>
+                                <span id="vlc-status-badge"
+                                    style="background: #2a7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Aktiv</span>
+                            </div>
                             <div id="vlc-current-file"
-                                style="font-family: monospace; font-size: 0.9em; word-break: break-all;">
+                                style="font-family: monospace; font-size: 0.9em; word-break: break-all; margin-bottom: 10px; color: #555;">
                                 -
+                            </div>
+                            <div
+                                style="background: #222; color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8em; max-height: 120px; overflow-y: auto;">
+                                <span id="vlc-pipe-log-feed">Warte auf Logs vom VLC-Subprocess...</span>
                             </div>
                         </div>
 
@@ -5915,7 +5926,7 @@
             }
 
             // Show "Open with" button only if video loaded
-            const openWithBtn = document.querySelector('button[onclick="triggerOpenWith()"]');
+            const openWithBtn = document.getElementById('btn-open-with-video');
             if (openWithBtn) {
                 openWithBtn.style.display = currentVideoItem ? 'inline-block' : 'none';
             }
@@ -5976,7 +5987,8 @@
                         startVLC(res.path);
                     }
                 } else if (res && res.status === 'ok') {
-                    // Standalone player started, nothing more to do here
+                    // Standalone player started, update UI to reflect external playback
+                    showExternalStatus(path, res.mode);
                 } else if (res && res.status === 'error') {
                     showToast(res.error);
                 }
@@ -6102,7 +6114,32 @@
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
                 alert(t('vlc_error_prefix') + res.error);
+                safeHtml('vlc-pipe-log-feed', '<span style="color:#f33;">FEHLER:</span> ' + res.error);
+                safeStyle('vlc-status-badge', 'background', '#e74c3c');
+                safeText('vlc-status-badge', 'Fehler');
+            } else {
+                safeHtml('vlc-pipe-log-feed', 'Subprocess erfolgreich gestartet.');
+                safeStyle('vlc-status-badge', 'background', '#2a7');
+                safeText('vlc-status-badge', 'Aktiv');
             }
+        }
+
+        function showExternalStatus(filePath, mode) {
+            const video = document.getElementById('native-html5-video-resource-node');
+            if (video) {
+                video.pause();
+                video.style.display = 'none';
+            }
+            safeStyle('idle-state-media-icon-symbol', 'display', 'block');
+            safeStyle('btn-open-vlc', 'display', 'none');
+            hideUnsupportedVideoHint();
+
+            safeStyle('vlc-info', 'display', 'block');
+            const shownName = (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
+            safeText('vlc-current-file', shownName + " [Extern: " + mode + "]");
+            safeHtml('vlc-pipe-log-feed', 'Wird in externem Fenster abgespielt (' + mode + '). Das Video läuft nun in einem eigenen Fenster. Die GUI wartet hier.');
+            safeStyle('vlc-status-badge', 'background', '#3498db');
+            safeText('vlc-status-badge', 'Extern');
         }
         async function togglePip() {
             const video = document.getElementById('native-html5-video-resource-node');

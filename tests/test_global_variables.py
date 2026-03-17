@@ -20,7 +20,7 @@ def browser():
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options)
-    driver.get("http://localhost:8000")  # Adjust as needed
+    driver.get("http://localhost:{port}")  # Adjust as needed
     yield driver
     driver.quit()
 
@@ -55,7 +55,7 @@ class TestGlobalVariables:
         """
         # Example: call backend API (adjust as needed)
         import requests
-        resp = requests.get("http://localhost:8000/api/imprint_info")  # Adjust endpoint
+        resp = requests.get("http://localhost:{port}/api/imprint_info")  # Adjust endpoint
         data = resp.json()
         assert "version" in data
         assert "developer" in data

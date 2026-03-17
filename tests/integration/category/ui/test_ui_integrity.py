@@ -75,7 +75,7 @@ class TestUIIntegrity(unittest.TestCase):
             cls.app_process.terminate()
 
     def setUp(self):
-        self.driver.get(f"http://localhost:{self.port}/app.html")
+        self.driver.get(f"http://localhost:{port}/app.html")
         time.sleep(2)
 
     def test_refresh_maintenance(self):

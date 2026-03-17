@@ -47,7 +47,7 @@ class TestParserStalling(unittest.TestCase):
 
     def test_ui_responsiveness_during_scan(self):
         try:
-            self.driver.get(f"http://localhost:{self.port}/app.html")
+            self.driver.get(f"http://localhost:{port}/app.html")
             wait = WebDriverWait(self.driver, 45)
             for tab in ["playlist", "library", "player"]:
                 def switch():
@@ -64,7 +64,7 @@ class TestParserStalling(unittest.TestCase):
 
     def test_drag_and_drop_during_scan(self):
         try:
-            self.driver.get(f"http://localhost:{self.port}/app.html")
+            self.driver.get(f"http://localhost:{port}/app.html")
             wait = WebDriverWait(self.driver, 60)
             wait.until(EC.element_to_be_clickable((By.ID, "playlist-btn"))).click()
             wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-item")))

@@ -70,7 +70,7 @@ t.start()
 time.sleep(2)
 
 try:
-    res = urllib.request.urlopen('http://localhost:8080/media/sample.alac').read()
+    res = urllib.request.urlopen('http://localhost:{port}/media/sample.alac').read()
     print("Response:", res)
 except Exception as e:
     print("Error:", e)

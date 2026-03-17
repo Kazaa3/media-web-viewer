@@ -66,7 +66,7 @@ class TestPlaylistUI(unittest.TestCase):
             os.remove(cls.fake_playlist_path)
 
     def setUp(self):
-        self.driver.get(f"http://localhost:{self.port}/app.html")
+        self.driver.get(f"http://localhost:{port}/app.html")
         WebDriverWait(self.driver, 15).until(
             EC.presence_of_element_located((By.ID, "main-split-container"))
         )

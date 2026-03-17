@@ -2830,6 +2830,12 @@ def resolve_dvd_bundle_path(path_str: str) -> str:
     if (p / 'BDMV').exists():
         return str((p / 'BDMV').resolve())
         
+    # Check for other common video files (e.g., MP4 in a folder)
+    for ext in ['*.mp4', '*.mkv', '*.avi', '*.webm', '*.m4v', '*.ts']:
+        vids = list(p.glob(ext))
+        if len(vids) >= 1:
+            return str(vids[0].resolve())
+            
     return path_str
 def get_best_hw_encoder():
     """
@@ -3022,13 +3028,14 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
     # 2. Player Routing
     if player_type == "chrome":
         if mode == "chrome_direct":
-            return {"status": "play", "path": file_path, "mode": "chrome_native"}
+            # Direct static file access via Bottle
+            return {"status": "play", "path": f"/media/{Path(file_path).name}", "mode": "chrome_native"}
         elif mode == "chrome_hls":
             return stream_to_mediamtx(file_path, protocol="hls")
         elif mode == "chrome_webrtc":
             return stream_to_mediamtx(file_path, protocol="webrtc")
         elif mode == "chrome_fragmp4":
-            return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
+            return {"status": "play", "path": f"/video-stream/{Path(file_path).name}", "mode": "chrome_native"}
         elif mode == "chrome_remux":
             # For remuxing we need the item_id.
             from src.core import db
@@ -3044,21 +3051,29 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
         if mode == "vlc_cvlc":
             return stream_to_vlc(file_path, engine="cvlc_solo")
         elif mode == "vlc_iso":
-             # DVD ISO Live (VLC Native)
-            if file_path.lower().endswith('.iso'):
+            # DVD ISO Live (VLC Native)
+            vlc_path = shutil.which("cvlc") or shutil.which("vlc") or "cvlc"
+            if file_path.lower().endswith('.iso') or os.path.isdir(file_path):
                 try:
-                    vlc_path = shutil.which("cvlc") or shutil.which("vlc") or "cvlc"
-                    # For ISO files, cvlc directly or dvdsimple:// often works better than dvd://
-                    subprocess.Popen([str(vlc_path), str(file_path)])
+                    prefix = "dvd://" if os.path.isdir(file_path) else ""
+                    proc = subprocess.Popen([str(vlc_path), f"{prefix}{file_path}"])
+                    ACTIVE_SUBPROCESSES.append(proc)
                     return {"status": "ok", "mode": "vlc_external"}
                 except Exception as e:
-                    return {"status": "error", "error": f"VLC ISO startup failed: {e}"}
+                    return {"status": "error", "error": f"VLC ISO/DVD startup failed: {e}"}
             return stream_to_vlc(file_path, engine="dvd_native")
 
         elif mode == "vlc_embedded":
             return {"status": "play", "path": file_path, "mode": "vlc_browser"}
         elif mode == "vlc_extern":
-            return stream_to_vlc(file_path, engine="vlc_extern")
+            # Ensure we only open it once
+            vlc_path = shutil.which("cvlc") or shutil.which("vlc") or "cvlc"
+            try:
+                proc = subprocess.Popen([str(vlc_path), str(file_path)])
+                ACTIVE_SUBPROCESSES.append(proc)
+                return {"status": "ok", "mode": "vlc_external"}
+            except Exception as e:
+                return {"status": "error", "error": f"VLC External startup failed: {e}"}
         elif mode == "vlc_ts":
             return vlc_ts_mode(file_path)
 
@@ -3067,21 +3082,24 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
             # Logic for pyvidplayer2
             try:
                 import pyvidplayer2 as pv
-                subprocess.Popen([sys.executable, "-m", "pyvidplayer2", file_path])
+                proc = subprocess.Popen([sys.executable, "-m", "pyvidplayer2", file_path])
+                ACTIVE_SUBPROCESSES.append(proc)
                 return {"status": "ok", "mode": "pyplayer_standalone"}
             except Exception as e:
                 return {"status": "error", "error": f"pyvidplayer2 failed: {e}"}
         elif mode == "pyplayer_mpv":
             try:
                 mpv_path = shutil.which("mpv") or "mpv"
-                subprocess.Popen([str(mpv_path), str(file_path)])
+                proc = subprocess.Popen([str(mpv_path), str(file_path)])
+                ACTIVE_SUBPROCESSES.append(proc)
                 return {"status": "ok", "mode": "mpv_standalone"}
             except Exception as e:
                 return {"status": "error", "error": f"mpv failed: {e}"}
         elif mode == "pyplayer_ffplay":
             try:
                 ffplay_path = shutil.which("ffplay") or "ffplay"
-                subprocess.Popen([str(ffplay_path), str(file_path)])
+                proc = subprocess.Popen([str(ffplay_path), str(file_path)])
+                ACTIVE_SUBPROCESSES.append(proc)
                 return {"status": "ok", "mode": "ffplay_standalone"}
             except Exception as e:
                 return {"status": "error", "error": f"ffplay failed: {e}"}
@@ -3089,7 +3107,8 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
              try:
                  import pyvidplayer2 as pv
                  # Use a simple subprocess for the built-in PiP test tool or similar if available
-                 subprocess.Popen([sys.executable, "-m", "pyvidplayer2", "--pip", file_path])
+                 proc = subprocess.Popen([sys.executable, "-m", "pyvidplayer2", "--pip", file_path])
+                 ACTIVE_SUBPROCESSES.append(proc)
                  return {"status": "ok", "mode": "pyplayer_pip"}
              except Exception as e:
                  return {"status": "error", "error": f"PiP mode failed: {e}"}
@@ -3097,7 +3116,8 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
     elif player_type == "ffplay" or mode == "ffplay":
         try:
             ffplay_path = shutil.which("ffplay") or "ffplay"
-            subprocess.Popen([str(ffplay_path), str(file_path)])
+            proc = subprocess.Popen([str(ffplay_path), str(file_path)])
+            ACTIVE_SUBPROCESSES.append(proc)
             return {"status": "ok", "mode": "ffplay_standalone"}
         except Exception as e:
             return {"status": "error", "error": f"ffplay failed: {e}"}
@@ -3683,6 +3703,7 @@ def add_file_to_library(file_path):
 # VLC Player Instance (Global)
 VLC_INSTANCE = None
 VLC_PLAYER = None
+ACTIVE_SUBPROCESSES = []
 
 
 @eel.expose
@@ -3717,11 +3738,25 @@ def play_vlc(file_path: str):
 @eel.expose
 def stop_vlc():
     """
-    @brief Stops the VLC player.
+    @brief Stops the VLC player and any external active subprocess players.
     """
-    global VLC_PLAYER
+    global VLC_PLAYER, ACTIVE_SUBPROCESSES
     if VLC_PLAYER:
         VLC_PLAYER.stop()
+        
+    still_active = []
+    for proc in ACTIVE_SUBPROCESSES:
+        if proc.poll() is None:
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+        else:
+            still_active.append(proc)
+    
+    # Keep ones that didn't terminate? Actually we want to clear terminated.
+    ACTIVE_SUBPROCESSES = [p for p in ACTIVE_SUBPROCESSES if p.poll() is None]
+    
     return {"status": "ok"}
 
 
@@ -3834,6 +3869,9 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         p1 = subprocess.Popen(remux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # Start VLC, linking its stdin to remuxer's stdout
         p2 = subprocess.Popen(vlc_cmd, stdin=p1.stdout)
+        
+        ACTIVE_SUBPROCESSES.append(p1)
+        ACTIVE_SUBPROCESSES.append(p2)
 
         # Allow p1 to receive a SIGPIPE if p2 exits.
         if p1.stdout:
@@ -3849,7 +3887,8 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
             # Fallback to external VLC
             if p2.poll() is None:
                 p2.terminate()
-            subprocess.Popen([str(vlc_path), str(file_path)])
+            proc = subprocess.Popen([str(vlc_path), str(file_path)])
+            ACTIVE_SUBPROCESSES.append(proc)
             return {"status": "ok", "mode": "vlc_fallback_direct"}
         
         # Monitor p2 (VLC) as well
@@ -5303,9 +5342,16 @@ if __name__ == "__main__":
             port = s.getsockname()[1]
         return port
 
-    # Check for fixed port (useful for CI/Tests)
-    session_port = int(os.environ.get("MWV_PORT", 0))
-    if session_port == 0:
+    # Always use a reliable unique static port by default so bookmarks work
+    # User requested NOT to use 8080, so we use 8345.
+    session_port = int(os.environ.get("MWV_PORT", 8345))
+    
+    def is_port_in_use(port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
+    
+    if is_port_in_use(session_port):
+        logging.warning(f"[System] Requested port {session_port} is in use, falling back to a dynamic port.")
         session_port = find_free_port()
 
     # Persist port for testing and manual verification
@@ -5328,6 +5374,13 @@ if __name__ == "__main__":
             "websocket",
             f"Starting Eel server session on port {session_port}...")
             
+        # Shutdown logic when UI closes
+        def close_callback(page, sockets):
+            logging.info(f"[Session] UI window closed ({page}). Remaining sockets: {len(sockets)}")
+            if not sockets:
+                logging.info("[Session] All UI connections lost. Shutting down backend.")
+                sys.exit(0)
+        
         # Log exposed functions for debugging
         exposed_functions = [k for k, v in eel._exposed_functions.items()]
         logging.info(f"[Eel] Exposed functions: {exposed_functions}")
@@ -5339,7 +5392,8 @@ if __name__ == "__main__":
                 1450,
                 800),
             block=False,
-            port=session_port)
+            port=session_port,
+            close_callback=close_callback)
 
         # Open browser explicitly after Eel starts with session-specific URL
         session_url = f"http://localhost:{session_port}/app.html"
