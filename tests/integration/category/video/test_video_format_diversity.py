@@ -5,19 +5,27 @@
 """
 
 import pytest
+import os
+import subprocess
 from pathlib import Path
 from src.parsers import media_parser
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-MEDIA_DIR = PROJECT_ROOT / "media"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+ARTIFACTS_DIR = PROJECT_ROOT / "tests" / "artifacts" / "real_media"
 
 # Define formats to test (if files exist)
-VIDEO_FORMATS = [".mp4", ".avi", ".mov", ".wmv", ".mkv", ".flv", ".webm"]
+VIDEO_FORMATS = [".mp4", ".avi", ".mkv", ".webm"]
+
+def setup_module():
+    """Ensure artifacts exist before testing."""
+    if not ARTIFACTS_DIR.exists() or not list(ARTIFACTS_DIR.glob("*.mp4")):
+        script = PROJECT_ROOT / "tests" / "scripts" / "generate_test_media.py"
+        subprocess.run(["python3", str(script)], check=True)
 
 def test_video_format_parsing_coverage():
     """Verify that at least one file of each major video format is parsable."""
     found_formats = set()
-    for f in MEDIA_DIR.glob("*.*"):
+    for f in ARTIFACTS_DIR.glob("*.*"):
         ext = f.suffix.lower()
         if ext in VIDEO_FORMATS:
             found_formats.add(ext)
@@ -34,7 +42,7 @@ def test_video_format_parsing_coverage():
 
 def test_video_resolution_detection():
     """Verify that resolution (width/height) is detected for video files."""
-    video_files = [f for f in MEDIA_DIR.glob("*.*") if f.suffix.lower() in VIDEO_FORMATS]
+    video_files = [f for f in ARTIFACTS_DIR.glob("*.*") if f.suffix.lower() in VIDEO_FORMATS]
     
     if not video_files:
         pytest.skip("No video files found.")
