@@ -364,17 +364,60 @@
         }
 
         .coverflow-item .title {
-            font-weight: bold;
-            font-size: 0.9em;
-            margin-bottom: 4px;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin-bottom: 5px;
         }
 
         .coverflow-item .meta {
-            font-size: 0.75em;
+            font-size: 0.8em;
             opacity: 0.8;
+        }
+
+        /* --- Premium Player Styles --- */
+        .premium-player-container {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .glass-controls {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-btn-premium {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #efefef !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border-radius: 8px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em !important;
+        }
+
+        .player-btn-premium:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .player-btn-premium:active {
+            transform: translateY(0);
+        }
+
+        .icon-premium {
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
         }
 
         /* Custom Context Menu */
@@ -1446,6 +1489,7 @@
                         targetEl.style.display = 'block';
                         switchReportingView('dashboard');
                         loadSqlFiles();
+                        refreshReportingData(); // Auto-refresh for user convenience
                     } else {
                         targetEl.style.display = 'block';
                     }
@@ -1476,7 +1520,7 @@
             if (tabId === 'player') {
                 if (typeof loadLibrary === 'function') loadLibrary();
             }
-            if (tabId === 'browser' && !fbCurrentPath) {
+            if (tabId === 'file' && !fbCurrentPath) {
                 if (typeof fbNavigate === 'function') fbNavigate();
             }
             if (tabId === 'library') {
@@ -3276,48 +3320,42 @@
 
                         <!-- Coordinated Renderer Pipeline -->
                         <div id="toast-container"></div>
-                        <div id="coordinated-media-renderer-pipeline-viewport"
-                            style="background: black; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                        <div id="coordinated-media-renderer-pipeline-viewport" class="premium-player-container"
+                            style="aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                             <video id="native-html5-video-resource-node" class="video-js vjs-default-skin" controls
-                                preload="auto" style="width: 100%; height: 100%; display: none;"></video>
+                                preload="auto"
+                                style="width: 100%; height: 100%; display: none; border-radius: 8px;"></video>
                             <div id="idle-state-media-icon-symbol"
-                                style="color: #444; text-align: center; padding: 40px;">
+                                style="color: #666; text-align: center; padding: 40px;">
                                 <div
-                                    style="font-size: 4em; margin-bottom: 10px; opacity: 0.2; display: flex; justify-content: center;">
-                                    <span class="icon-video" style="width: 80px; height: 80px;"></span>
+                                    style="font-size: 5em; margin-bottom: 15px; opacity: 0.3; display: flex; justify-content: center;">
+                                    <span class="icon-video" style="width: 100px; height: 100px;"></span>
                                 </div>
-                                <p data-i18n="video_placeholder">Kein Video ausgewählt</p>
+                                <p data-i18n="video_placeholder" style="font-weight: 500; letter-spacing: 0.5px;">Kein
+                                    Video ausgewählt</p>
                             </div>
                         </div>
 
                         <!-- Advanced Player Controls -->
-                        <div id="advanced-player-controls"
-                            style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px solid #eee;">
-                            <button id="btn-stop" onclick="stopVideo()" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Stop">■</button>
-                            <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Shuffle">🔀</button>
-                            <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Repeat">🔁</button>
-                            <div style="width: 1px; background: #ddd; margin: 0 5px;"></div>
-                            <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Rewind 10s">⏪</button>
-                            <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Forward 10s">⏩</button>
-                            <button id="btn-speed" onclick="toggleSpeed()" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Speed">⏱️</button>
-                            <button id="btn-eq" onclick="openEQ()" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Equalizer">🎚️</button>
-                            <button id="btn-pip" onclick="togglePip()" class="player-btn"
-                                style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 1.2em;"
-                                title="Picture in Picture">🖼️</button>
+                        <div id="advanced-player-controls" class="glass-controls"
+                            style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 15px; border-radius: 12px;">
+                            <button id="btn-stop" onclick="stopVideo()" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Stop">■</button>
+                            <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Shuffle">🔀</button>
+                            <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Repeat">🔁</button>
+                            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 5px 5px;"></div>
+                            <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Rewind 10s">⏪</button>
+                            <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Forward 10s">⏩</button>
+                            <button id="btn-speed" onclick="toggleSpeed()" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Speed">⏱️</button>
+                            <button id="btn-eq" onclick="openEQ()" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Equalizer">🎚️</button>
+                            <button id="btn-pip" onclick="togglePip()" class="player-btn-premium"
+                                style="width: 45px; height: 45px;" title="Picture in Picture">🖼️</button>
                         </div>
 
                         <!-- Orchestrator Ingress Buffers -->
@@ -3891,7 +3929,7 @@
         let coverflowItems = [];
 
         const CATEGORY_MAP = {
-            "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single"],
+            "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio"],
             "video": ["Video", "Film", "Serie"],
             "images": ["Bilder"],
             "documents": ["Dokument"],
@@ -3903,6 +3941,10 @@
 
         function setLibraryFilter(cat) {
             libraryFilter = cat;
+            librarySubFilter = 'all'; // Reset sub-filter when switching main category
+            const subFilterSelect = document.getElementById('library-subcategory-filter');
+            if (subFilterSelect) subFilterSelect.value = 'all';
+
             coverflowIndex = 0;
             document.querySelectorAll('#coverflow-library-panel .filter-chip').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
@@ -5850,6 +5892,26 @@
                 alert(t('vlc_error_prefix') + res.error);
             }
         }
+        async function togglePip() {
+            const video = document.getElementById('native-html5-video-resource-node');
+            if (!video) return;
+
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                    console.info("[PiP] Exited Picture-in-Picture mode.");
+                } else if (document.pictureInPictureEnabled) {
+                    await video.requestPictureInPicture();
+                    console.info("[PiP] Entered Picture-in-Picture mode.");
+                } else {
+                    console.warn("[PiP] Picture-in-Picture is not supported or enabled in this browser.");
+                    alert(t('pip_not_supported') || 'Picture-in-Picture is not supported in your browser.');
+                }
+            } catch (error) {
+                console.error("[PiP] Error toggling Picture-in-Picture:", error);
+            }
+        }
+
 
         async function stopVideo() {
             const video = document.getElementById('native-html5-video-resource-node');
@@ -7593,6 +7655,19 @@
                 if (!splitter || !leftPane || !container) return;
 
                 const isVertical = orientation === 'vertical';
+                const storageKey = `mwv_splitter_${splitterId}`;
+
+                // Restore previous state
+                const savedPos = localStorage.getItem(storageKey);
+                if (savedPos) {
+                    if (isVertical) {
+                        leftPane.style.width = savedPos + 'px';
+                        leftPane.style.flex = 'none';
+                    } else {
+                        leftPane.style.height = savedPos + 'px';
+                        leftPane.style.flex = 'none';
+                    }
+                }
 
                 splitter.addEventListener('mousedown', (e) => {
                     isDragging = true;
@@ -7605,24 +7680,26 @@
                     if (!isDragging) return;
 
                     const containerRect = container.getBoundingClientRect();
+                    let size;
 
                     if (isVertical) {
-                        let newWidth = e.clientX - containerRect.left;
+                        size = e.clientX - containerRect.left;
                         const minWidth = 200;
                         const maxWidth = containerRect.width - 300;
-                        if (newWidth < minWidth) newWidth = minWidth;
-                        if (newWidth > maxWidth) newWidth = maxWidth;
-                        leftPane.style.width = newWidth + 'px';
+                        if (size < minWidth) size = minWidth;
+                        if (size > maxWidth) size = maxWidth;
+                        leftPane.style.width = size + 'px';
                         leftPane.style.flex = 'none';
                     } else {
-                        let newHeight = e.clientY - containerRect.top;
+                        size = e.clientY - containerRect.top;
                         const minHeight = 150;
                         const maxHeight = containerRect.height - 150;
-                        if (newHeight < minHeight) newHeight = minHeight;
-                        if (newHeight > maxHeight) newHeight = maxHeight;
-                        leftPane.style.height = newHeight + 'px';
+                        if (size < minHeight) size = minHeight;
+                        if (size > maxHeight) size = maxHeight;
+                        leftPane.style.height = size + 'px';
                         leftPane.style.flex = 'none';
                     }
+                    localStorage.setItem(storageKey, size);
                 });
 
                 window.addEventListener('mouseup', () => {

@@ -2217,7 +2217,10 @@ def get_library():
             "Hörbuch",
             "Klassik",
             "Compilation",
-            "Single"],
+            "Single",
+            "Podcasts",
+            "Podcast",
+            "Radio"],
         "video": [
             "Video",
             "Film",
