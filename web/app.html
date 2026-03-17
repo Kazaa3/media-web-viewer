@@ -4221,6 +4221,15 @@
             }
         }
 
+        window.jumpToChapter = function (startTime) {
+            const video = document.getElementById('native-html5-video-resource-node');
+            if (video && !video.paused || video.readyState > 0) {
+                video.currentTime = startTime;
+                video.play().catch(() => { });
+                showToast(t('player_status_playing') + " (Kapitel @ " + new Date(startTime * 1000).toISOString().substring(11, 19) + ")");
+            }
+        };
+
         function showToast(message, duration = 3000) {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -5697,8 +5706,7 @@
             // New distinct row for format details
             let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
             let tagStr = t('sb_tag_format_label') + tagVal;
-            let filetypeValue = item.category || 'Audio';
-            let fileTypeStr = `${t('sb_filetype_label')}${filetypeValue}`;
+            let fileTypeStr = `${t('sb_filetype_label')}${item.category || 'Audio'}`;
             let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
 
             // Combine them
