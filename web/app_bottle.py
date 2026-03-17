@@ -7,6 +7,8 @@ import os
 import uuid
 import shutil
 import sys
+import json
+from urllib.parse import unquote
 from pathlib import Path
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
@@ -186,6 +188,15 @@ def serve_cover(filepath):
     @param filepath Media filename or path / Medien-Dateiname oder Pfad.
     @return Image data or 404 / Bilddaten oder 404.
     """
+    # Check database for cached artwork first
+    item_name = unquote(filepath)
+    db_item = db.get_media_by_name(item_name)
+    if db_item and db_item.get('art_path'):
+        art_path = Path(db_item['art_path'])
+        if art_path.exists():
+            mime_type, _ = mimetypes.guess_type(str(art_path))
+            return bottle.static_file(art_path.name, root=str(art_path.parent), mimetype=mime_type or 'image/jpeg')
+
     full_path = _resolve_path(filepath)
     if not full_path or not full_path.exists():
         return bottle.HTTPError(404, "File not found")

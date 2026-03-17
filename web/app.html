@@ -1172,6 +1172,127 @@
                 opacity: 0;
             }
         }
+
+        /* Media Grid (CD/Film Covers) */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .grid-item {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 2px solid rgba(0, 0, 0, 0.05);
+            aspect-ratio: 2/3;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            border-color: #2a7;
+        }
+
+        .grid-cover {
+            flex: 1;
+            background-size: cover;
+            background-position: center;
+            background-color: #111;
+        }
+
+        .grid-info {
+            padding: 12px;
+            background: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .grid-title {
+            font-size: 0.85em;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .grid-meta {
+            font-size: 0.75em;
+            color: #777;
+        }
+
+        /* Details Table (DataManager) */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            text-align: left;
+        }
+
+        .details-table th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .details-table th:hover {
+            background: #f0f2f5;
+            color: #2a7;
+        }
+
+        .details-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #444;
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .details-table tr:hover {
+            background: #f8fff9;
+            cursor: pointer;
+        }
+
+        .details-table tr.active {
+            background: #eaffea;
+            border-left: 4px solid #2a7;
+        }
+
+        /* Library Sub-Tabs */
+        .library-sub-content {
+            display: none;
+        }
+
+        .library-sub-content.active {
+            display: block;
+        }
     </style>
     <script>
         // Pre-define critical functions to avoid "not defined" errors on button clicks
@@ -1323,7 +1444,7 @@
                     }
 
                     if (tabId === 'library') {
-                        renderLibraryCoverflow();
+                        renderLibrary();
                     }
                 } else {
                     console.warn(`[UI] Target element not found for tab: ${tabId} (id: ${targetId})`);
@@ -1961,6 +2082,17 @@
             <div id="coverflow-library-panel" class="tab-content"
                 style="padding: 20px; overflow-y: auto; height: 100%;">
                 <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Sub-Tab Navigation -->
+                    <div
+                        style="display: flex; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+                        <button id="lib-tab-btn-coverflow" class="tab-btn active"
+                            onclick="switchLibrarySubTab('coverflow')" data-i18n="lib_tab_coverflow">Cover Flow</button>
+                        <button id="lib-tab-btn-grid" class="tab-btn" onclick="switchLibrarySubTab('grid')"
+                            data-i18n="lib_tab_grid">CD / Film Cover</button>
+                        <button id="lib-tab-btn-details" class="tab-btn" onclick="switchLibrarySubTab('details')"
+                            data-i18n="lib_tab_details">Dateimanager (Details)</button>
+                    </div>
+
                     <!-- Filter Area -->
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="filter-chip active" onclick="setLibraryFilter('all')"
@@ -1984,9 +2116,32 @@
                     </div>
                 </div>
 
-                <div id="coverflow-container" class="coverflow-wrap">
-                    <div id="coverflow-track" class="coverflow-track">
-                        <!-- Items rendered dynamically -->
+                <div id="lib-view-coverflow" class="library-sub-content active">
+                    <div id="coverflow-container" class="coverflow-wrap">
+                        <div id="coverflow-track" class="coverflow-track">
+                            <!-- Items rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="lib-view-grid" class="library-sub-content" style="display: none;">
+                    <div id="grid-container" class="media-grid">
+                        <!-- Grid items rendered dynamically -->
+                    </div>
+                </div>
+
+                <div id="lib-view-details" class="library-sub-content" style="display: none;">
+                    <div class="table-container">
+                        <table id="details-table" class="details-table">
+                            <thead>
+                                <tr id="details-table-header">
+                                    <!-- Headers rendered dynamically -->
+                                </tr>
+                            </thead>
+                            <tbody id="details-table-body">
+                                <!-- Rows rendered dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -3591,16 +3746,33 @@
             document.querySelectorAll('#coverflow-library-panel .filter-chip').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
             });
-            renderLibraryCoverflow();
+            renderLibrary();
+        }
+
+        let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+
+        function switchLibrarySubTab(tabId) {
+            librarySubTab = tabId;
+            localStorage.setItem('mwv_library_sub_tab', tabId);
+
+            // Update buttons
+            document.querySelectorAll('#coverflow-library-panel .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lib-tab-btn-${tabId}`).classList.add('active');
+
+            // Update views
+            document.querySelectorAll('.library-sub-content').forEach(view => view.style.display = 'none');
+            document.getElementById(`lib-view-${tabId}`).style.display = 'block';
+
+            renderLibrary();
         }
 
         function setLibrarySubFilter(val) {
             librarySubFilter = val;
             coverflowIndex = 0;
-            renderLibraryCoverflow();
+            renderLibrary();
         }
 
-        async function renderLibraryCoverflow() {
+        async function renderLibrary() {
             const track = document.getElementById('coverflow-track');
             if (!track) return;
 
@@ -3613,30 +3785,96 @@
                     coverflowItems = coverflowItems.filter(i => i.category === libraryFilter);
                 }
 
-                if (librarySubFilter !== 'all') {
-                    const subMap = {
-                        'audiobooks': ['hörbuch', 'audiobook'],
-                        'podcasts': ['podcast'],
-                        'albums': ['album']
-                    };
-                    const matchTags = subMap[librarySubFilter] || [];
-                    coverflowItems = coverflowItems.filter(i => {
-                        const searchStr = (i.name + ' ' + (i.tags || '')).toLowerCase();
-                        return matchTags.some(t => searchStr.includes(t));
+                // Populate dynamic sub-filters based on current category
+                const subFilterSelect = document.getElementById('library-subcategory-filter');
+                if (subFilterSelect) {
+                    const currentVal = subFilterSelect.value;
+                    const categories = [...new Set(library.media.map(i => i.category))].filter(Boolean).sort();
+
+                    let optionsHtml = `<option value="all" data-i18n="filter_sub_all">Alle Unterkategorien</option>`;
+                    categories.forEach(cat => {
+                        optionsHtml += `<option value="${cat.toLowerCase()}">${cat}</option>`;
                     });
+
+                    subFilterSelect.innerHTML = optionsHtml;
+                    subFilterSelect.value = categories.map(c => c.toLowerCase()).includes(currentVal.toLowerCase()) ? currentVal : 'all';
+                }
+
+                if (librarySubFilter !== 'all') {
+                    coverflowItems = coverflowItems.filter(i => (i.category || '').toLowerCase() === librarySubFilter.toLowerCase());
                 }
 
                 if (coverflowItems.length === 0) {
-                    safeHtml('coverflow-track', `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`);
+                    const noMediaHtml = `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`;
+                    safeHtml('coverflow-track', noMediaHtml);
+                    safeHtml('grid-container', noMediaHtml);
+                    safeHtml('details-table-body', `<tr><td colspan="5" style="text-align:center; padding: 50px;">Keine Medien gefunden</td></tr>`);
                     return;
                 }
 
-                updateCoverflowDisplay();
+                if (librarySubTab === 'coverflow') {
+                    updateCoverflowDisplay();
+                } else if (librarySubTab === 'grid') {
+                    renderGridView();
+                } else if (librarySubTab === 'details') {
+                    renderDetailedView();
+                }
 
             } catch (e) {
-                console.error("Failed to render coverflow:", e);
-                safeHtml('coverflow-track', `<div style="color: red; padding: 20px;">Error: ${e.message || e}</div>`);
+                console.error("Failed to render library:", e);
             }
+        }
+
+        function renderGridView() {
+            const container = document.getElementById('grid-container');
+            if (!container) return;
+
+            const html = coverflowItems.map((item, idx) => {
+                const artwork = `/cover/${encodeURIComponent(item.name)}`;
+                return `
+                    <div class="grid-item" onclick="playMediaObject(coverflowItems[${idx}])">
+                        <div class="grid-cover" style="background-image: url('${artwork}')"></div>
+                        <div class="grid-info">
+                            <div class="grid-title" title="${item.name}">${item.name || 'Unknown'}</div>
+                            <div class="grid-meta">${item.category || ''} | ${item.type || ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            safeHtml('grid-container', html);
+        }
+
+        function renderDetailedView() {
+            const header = document.getElementById('details-table-header');
+            const body = document.getElementById('details-table-body');
+            if (!header || !body) return;
+
+            // Render Header
+            const cols = [
+                { key: 'name', label: 'Name' },
+                { key: 'category', label: 'Category' },
+                { key: 'type', label: 'Type' },
+                { key: 'path', label: 'Path' },
+                { key: 'tags', label: 'Tags' }
+            ];
+
+            safeHtml('details-table-header', cols.map(c => `<th>${c.label}</th>`).join(''));
+
+            // Render Body
+            const html = coverflowItems.map((item, idx) => {
+                return `
+                    <tr onclick="playMediaObject(coverflowItems[${idx}])">
+                        <td>${item.name || '---'}</td>
+                        <td>${item.category || '---'}</td>
+                        <td>${item.type || '---'}</td>
+                        <td title="${item.path}">${item.path || '---'}</td>
+                        <td>${item.tags || '---'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            safeHtml('details-table-body', html);
         }
 
         function updateCoverflowDisplay() {
@@ -3644,7 +3882,7 @@
             if (!track) return;
 
             const html = coverflowItems.map((item, idx) => {
-                const artwork = item.artwork || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                const artwork = `/cover/${encodeURIComponent(item.name)}`;
                 let classes = 'coverflow-item';
                 if (idx === coverflowIndex) classes += ' active';
                 else if (idx < coverflowIndex) classes += ' left';
@@ -7990,6 +8228,9 @@
                 if (modalTitle) {
                     modalTitle.textContent = (t('common_about_imprint') || 'About') + ' v' + version;
                 }
+
+                // Initialize Library Sub-Tabs
+                switchLibrarySubTab(librarySubTab);
             } catch (e) {
                 console.error("Could not fetch version/app info:", e);
             }

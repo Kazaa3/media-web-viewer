@@ -22,7 +22,7 @@ import logging
 import logging.handlers
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 # Setup paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -66,7 +66,7 @@ class UIHandler(logging.Handler):
             self.handleError(record)
 
 
-def setup_logging(debug_mode: bool = False, level: int = None):
+def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
     """
     Initializes the centralized logging system.
     @param debug_mode If True, additional debug file loggers are activated.
@@ -101,7 +101,7 @@ def setup_logging(debug_mode: bool = False, level: int = None):
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
     except Exception as e:
-        print(f"Failed to initialize file logger: {e}")
+        logging.error(f"Failed to initialize file logger: {e}")
 
     # 3. Project-Local Debug File Handler (only if debug_mode is True)
     if debug_mode:
@@ -114,7 +114,7 @@ def setup_logging(debug_mode: bool = False, level: int = None):
             root_logger.addHandler(debug_file_handler)
             logging.info(f"Project-local debug log initialized at: {DEBUG_LOG_FILE}")
         except Exception as e:
-            print(f"Failed to initialize project-local debug logger: {e}")
+            logging.error(f"Failed to initialize project-local debug logger: {e}")
 
     # 4. UI Buffer Handler
     ui_handler = UIHandler()

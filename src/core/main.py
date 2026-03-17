@@ -87,6 +87,9 @@ from src.core.logger import get_logger
 from src.parsers import tag_writer
 from src.core import hardware_detector
 
+# Central logger for main
+log = get_logger("main")
+
 
 def _detect_python_environment():
     """
@@ -217,7 +220,7 @@ except ModuleNotFoundError as exc:
         and os.access(local_venv_python, os.X_OK)
         and Path(sys.executable).resolve() != local_venv_python.resolve()
     ):
-        print(
+        log.info(
             f"\nℹ️ Fehlende Abhängigkeit '{missing_module}' in aktueller Umgebung erkannt.\n"
             f"→ Starte automatisch neu mit Projekt-Umgebung:\n"
             f"  {local_venv_python}\n"
@@ -235,7 +238,7 @@ except ModuleNotFoundError as exc:
     else:
         current_env = f"⚙️  System Python {py_ver}\n   Python: {py_exec}"
 
-    print(
+    log.error(
         f"\n❌ Abhängigkeit '{missing_module}' nicht installiert!\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"📍 Aktuelle Umgebung:\n   {current_env}\n"
@@ -1588,10 +1591,10 @@ def get_environment_info(force_refresh=False):
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
         # Also print to console for immediate visibility
-        print(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(
+        log.debug(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(
             installed_packages)}, source={installed_packages_source}, req={requirements_status}")
     except Exception as e:
-        print(f"⚠️  UI-TRACE logging failed: {e}")
+        log.error(f"⚠️  UI-TRACE logging failed: {e}")
 
     _ENV_INFO_CACHE["data"] = result
     _ENV_INFO_CACHE["ts"] = time.time()
@@ -2453,7 +2456,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # Reset counters
         total_count: int = 0
         for scan_root in scan_roots:
-            print(f"🚀 [Scan] Starting scan of: {scan_root}")
+            log.info(f"🚀 [Scan] Starting scan of: {scan_root}")
 
             # Collect items to avoid sub-file duplicates
             skip_subpaths: set[Path] = set()
@@ -3000,7 +3003,7 @@ def move_item_up_by_key(key: str):
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
         if matches(it, key):
-            print(f"[DEBUG] move_item_up_by_key: matched idx={
+            log.debug(f"[DEBUG] move_item_up_by_key: matched idx={
                   idx} key={key} item={it}")
             return move_item_up(idx)
 
@@ -3013,7 +3016,7 @@ def move_item_up_by_key(key: str):
         except Exception:
             continue
 
-    print(f"[DEBUG] move_item_up_by_key: no match for key={key}")
+    log.debug(f"[DEBUG] move_item_up_by_key: no match for key={key}")
     return {"status": "error", "message": "item not found"}
 
 
@@ -3046,7 +3049,7 @@ def move_item_down_by_key(key: str):
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
         if matches(it, key):
-            print(f"[DEBUG] move_item_down_by_key: matched idx={
+            log.debug(f"[DEBUG] move_item_down_by_key: matched idx={
                   idx} key={key} item={it}")
             return move_item_down(idx)
 
@@ -3058,7 +3061,7 @@ def move_item_down_by_key(key: str):
         except Exception:
             continue
 
-    print(f"[DEBUG] move_item_down_by_key: no match for key={key}")
+    log.debug(f"[DEBUG] move_item_down_by_key: no match for key={key}")
     return {"status": "error", "message": "item not found"}
 
 
@@ -3080,12 +3083,12 @@ def move_item_up_by_obj(item_obj):
         # item_obj comes from Eel as a dict
         key = _extract_key_from_obj(item_obj)
         if not key:
-            print(
+            log.debug(
                 f"[DEBUG] move_item_up_by_obj: could not extract key from {item_obj}")
             return {"status": "error", "message": "no key extracted"}
         return move_item_up_by_key(key)
     except Exception as e:
-        print(f"[ERROR] move_item_up_by_obj exception: {e}")
+        log.error(f"[ERROR] move_item_up_by_obj exception: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -3095,12 +3098,12 @@ def move_item_down_by_obj(item_obj):
     try:
         key = _extract_key_from_obj(item_obj)
         if not key:
-            print(
+            log.debug(
                 f"[DEBUG] move_item_down_by_obj: could not extract key from {item_obj}")
             return {"status": "error", "message": "no key extracted"}
         return move_item_down_by_key(key)
     except Exception as e:
-        print(f"[ERROR] move_item_down_by_obj exception: {e}")
+        log.error(f"[ERROR] move_item_down_by_obj exception: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -3898,8 +3901,8 @@ def pick_folder_cli(prompt="Ordnerpfad eingeben"):
     @return Valid folder path or None / Gültiger Ordnerpfad oder None.
     """
     try:
-        print(f"\n{prompt}:")
-        print(f"(Standard: {Path.home()})")
+        log.info(f"\n{prompt}:")
+        log.info(f"(Standard: {Path.home()})")
         user_input = input("> ").strip()
 
         if not user_input:
@@ -3910,13 +3913,13 @@ def pick_folder_cli(prompt="Ordnerpfad eingeben"):
         if folder_path.exists() and folder_path.is_dir():
             return str(folder_path)
         else:
-            print(f"Fehler: '{folder_path}' ist kein gültiger Ordner.")
+            log.error(f"Fehler: '{folder_path}' ist kein gültiger Ordner.")
             return None
     except (KeyboardInterrupt, EOFError):
-        print("\nAbgebrochen.")
+        log.info("\nAbgebrochen.")
         return None
     except Exception as e:
-        logging.error(f"[System] CLI folder picker failed: {e}")
+        log.error(f"[System] CLI folder picker failed: {e}")
         return None
 
 
@@ -3943,23 +3946,23 @@ def pick_file_cli(prompt="Dateipfad eingeben", extensions=None):
         file_path = Path(user_input).expanduser().resolve()
 
         if not file_path.exists():
-            print(f"Fehler: Datei '{file_path}' nicht gefunden.")
+            log.error(f"Fehler: Datei '{file_path}' nicht gefunden.")
             return None
 
         if not file_path.is_file():
-            print(f"Fehler: '{file_path}' ist keine Datei.")
+            log.error(f"Fehler: '{file_path}' ist keine Datei.")
             return None
 
         if extensions and file_path.suffix.lower() not in extensions:
-            print(f"Fehler: Dateiformat '{file_path.suffix}' nicht erlaubt.")
+            log.error(f"Fehler: Dateiformat '{file_path.suffix}' nicht erlaubt.")
             return None
 
         return str(file_path)
     except (KeyboardInterrupt, EOFError):
-        print("\nAbgebrochen.")
+        log.info("\nAbgebrochen.")
         return None
     except Exception as e:
-        logging.error(f"[System] CLI file picker failed: {e}")
+        log.error(f"[System] CLI file picker failed: {e}")
         return None
 
 
@@ -3981,8 +3984,8 @@ def pick_save_file_cli(
         if extensions:
             ext_info = f" (Formate: {', '.join(extensions)})"
 
-        print(f"\n{prompt}{ext_info}:")
-        print(f"(Standard: {default_name})")
+        log.info(f"\n{prompt}{ext_info}:")
+        log.info(f"(Standard: {default_name})")
         user_input = input("> ").strip()
 
         if not user_input:
@@ -3996,7 +3999,7 @@ def pick_save_file_cli(
 
         # Check if parent directory exists
         if not save_path.parent.exists():
-            print(f"Fehler: Verzeichnis '{save_path.parent}' existiert nicht.")
+            log.error(f"Fehler: Verzeichnis '{save_path.parent}' existiert nicht.")
             create = input("Verzeichnis erstellen? (j/n): ").strip().lower()
             if create == 'j':
                 save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -4013,10 +4016,10 @@ def pick_save_file_cli(
 
         return str(save_path)
     except (KeyboardInterrupt, EOFError):
-        print("\nAbgebrochen.")
+        log.info("\nAbgebrochen.")
         return None
     except Exception as e:
-        logging.error(f"[System] CLI save file picker failed: {e}")
+        log.error(f"[System] CLI save file picker failed: {e}")
         return None
 
 
@@ -4134,7 +4137,7 @@ def update_test_metadata(filename, metadata):
 @eel.expose
 def clear_logs():
     """Clear the UI log buffer."""
-    print("Logs cleared.")
+    log.info("Logs cleared.")
 
 
 @eel.expose

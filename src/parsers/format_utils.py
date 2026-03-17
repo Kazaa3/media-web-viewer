@@ -3,6 +3,10 @@ from typing import Any, Optional
 import re
 import os
 import json
+from src.core import logger
+
+# Get specialized logger for format_utils
+log = logger.get_logger("format_utils")
 
 def detect_file_format(path: Optional[Path | str], tags: Optional[dict[str, Any]] = None) -> str:
     """
@@ -470,7 +474,7 @@ def load_parser_config() -> None:
                 # all new defaults (categories, flags) are permanent.
                 save_parser_config()
         except Exception as e:
-            print(f"Error loading config: {e}")
+            log.error(f"Error loading config: {e}")
     else:
         # Ensure directory exists but wait to save until needed
         os.makedirs(CONFIG_FILE.parent, exist_ok=True)
@@ -494,7 +498,7 @@ def save_parser_config() -> None:
         with open(CONFIG_FILE, 'w') as f:
             json.dump(PARSER_CONFIG, f, indent=4)
     except Exception as e:
-        print(f"Error saving config: {e}")
+        log.error(f"Error saving config: {e}")
 
 
 def reset_parser_config() -> None:
@@ -504,9 +508,9 @@ def reset_parser_config() -> None:
     if CONFIG_FILE.exists():
         try:
             CONFIG_FILE.unlink()
-            print(f"Config file {CONFIG_FILE} deleted. Reloading defaults.")
+            log.info(f"Config file {CONFIG_FILE} deleted. Reloading defaults.")
         except Exception as e:
-            print(f"Error deleting config file: {e}")
+            log.error(f"Error deleting config file: {e}")
     
     # Re-initialize with defaults
     # We can't easily re-run the module-level code, so we just manually reset the dict

@@ -119,9 +119,9 @@ class MediaItem:
         lt = (self.logical_type or '')
         mapping = {
             'video': 'video', 'Video': 'video',
-            'Audio': 'audio', 'audio': 'audio', 'Hörbuch': 'audio', 'Album': 'audio', 'Klassik': 'audio',
+            'Audio': 'audio', 'audio': 'audio', 'Hörbuch': 'audio', 'Album': 'audio', 'Klassik': 'audio', 'Klaqssik': 'audio',
             'Bilder': 'image', 'E-Book': 'ebook', 'Dokument': 'document', 'Abbild': 'disk',
-            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Unbekannt': 'unknown'
+            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Erie': 'video', 'Unbekannt': 'unknown'
         }
         self.media_type = mapping.get(lt, str(lt).lower())
         self.container = self.tags.get('container', self.extension)
@@ -179,11 +179,15 @@ class MediaItem:
                 return 'Serie'
             if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists() or any(self.path.glob('*.iso')):
                 return 'Film'
+            if any(k in path_str for k in ['film', 'movie']):
+                return 'Film'
             return 'Ordner'
 
         if logical == 'Video':
-            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
+            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel', 'erie']):
                 return 'Serie'
+            if any(k in path_str for k in ['film', 'movie']):
+                return 'Film'
             return 'Film'
         
         if logical == 'Abbild':
@@ -222,6 +226,7 @@ class MediaItem:
             genre = (tags.get('genre') or '').lower()
             album = (tags.get('album') or '').lower()
             artist = (tags.get('artist') or '').lower()
+            path_str = str(self.path).lower()
             if ext == '.m4b' or any(
                 k in path_str for k in [
                     'hörbuch',
@@ -230,14 +235,17 @@ class MediaItem:
                     'audiobooks']) or 'audiobook' in genre or 'hörbuch' in genre:
                 return 'Hörbuch'
 
+            if 'podcast' in path_str or 'podcast' in genre:
+                return 'Podcasts'
+
             # Priority 2: Music specific tags
             artist = (tags.get('artist') or "").lower()
             album = (tags.get('album') or "").lower()
 
             # Priority 3: Klassik
-            if any(k in genre for k in ['klassik', 'classical']) or \
+            if any(k in genre for k in ['klassik', 'classical', 'klaqssik']) or \
                any(k in artist for k in ['beethoven', 'mozart', 'bach', 'chopin', 'klassik', 'classical']) or \
-               any(k in path_str for k in ['klassik', 'classical']):
+               any(k in path_str for k in ['klassik', 'classical', 'klaqssik']):
                 return 'Klassik'
 
             # Priority 4: Compilations / Albums / Singles
@@ -328,6 +336,7 @@ class MediaItem:
             'content_type': self.content_type,
             'is_playable': self.is_playable,
             'art_path': self.art_path,
+            'artwork': self.art_path, # Alias for frontend
             'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format

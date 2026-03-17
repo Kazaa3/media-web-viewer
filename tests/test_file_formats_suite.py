@@ -141,32 +141,35 @@ class TestFileFormatsReal(unittest.TestCase):
         main.scan_media(dir_path=self.media_dir, clear_db=True)
         self.assertEqual(self.mock_insert.call_count, 3)
 
-    def test_iso_and_dvd_folder_detection(self):
-        # ISO file
-        iso_path = os.path.join(self.media_dir, "movie.iso")
-        # ISO 9660 magic "CD001" at offset 32769
-        with open(iso_path, "wb") as f:
-            f.seek(32769)
-            f.write(b"CD001")
-            f.write(b"EXTRAS")
-            
-        # DVD Folder
-        dvd_dir = os.path.join(self.media_dir, "MyDVD")
-        video_ts = os.path.join(dvd_dir, "VIDEO_TS")
-        os.makedirs(video_ts)
-        with open(os.path.join(video_ts, "VIDEO_TS.IFO"), "w") as f:
-            f.write("IFO")
-            
+    def test_specialized_categories_detection(self):
+        """Verify specialized categories like Klassik, Serie, Film, Hörbuch."""
+        # 1. Klassik (Classical)
+        self._create_dummy_file("Beethoven - Symphony No. 9.mp3")
+        # 2. Serie (Series)
+        serie_dir = os.path.join(self.media_dir, "TV_Shows", "Season 1")
+        os.makedirs(serie_dir, exist_ok=True)
+        with open(os.path.join(serie_dir, "episode1.mkv"), "wb") as f:
+            f.write(b"\x1a\x45\xdf\xa3" + b"video data")
+        # 3. Film (Movie) - already tested in ISO but let's do a folder too
+        movie_dir = os.path.join(self.media_dir, "MyMovie")
+        os.makedirs(os.path.join(movie_dir, "VIDEO_TS"), exist_ok=True)
+        with open(os.path.join(movie_dir, "VIDEO_TS", "VIDEO_TS.IFO"), "w") as f: f.write("IFO")
+        # 4. Hörbuch (Audiobook)
+        self._create_dummy_file("MyAudiobook.m4b")
+        # 5. Klaqssik (User requested typo/string)
+        self._create_dummy_file("Music_Klaqssik_Test.mp3")
+
         main.scan_media(dir_path=self.media_dir, clear_db=True)
-        
-        # Should detect 2 items: movie.iso and MyDVD (as a folder item)
-        self.assertEqual(self.mock_insert.call_count, 2)
         
         # Verify categories
         calls = [call[0][0] for call in self.mock_insert.call_args_list]
-        names = [c['name'] for c in calls]
-        self.assertIn("movie.iso", names)
-        self.assertIn("MyDVD", names)
+        cat_map = {c['name']: c['category'] for c in calls}
+        
+        self.assertEqual(cat_map.get("Beethoven - Symphony No. 9.mp3"), "Klassik")
+        self.assertEqual(cat_map.get("episode1.mkv"), "Serie")
+        self.assertEqual(cat_map.get("MyMovie"), "Film")
+        self.assertEqual(cat_map.get("MyAudiobook.m4b"), "Hörbuch")
+        self.assertEqual(cat_map.get("Music_Klaqssik_Test.mp3"), "Klassik")
 
 if __name__ == "__main__":
     unittest.main()

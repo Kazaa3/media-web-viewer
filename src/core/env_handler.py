@@ -210,9 +210,9 @@ class EnvironmentManager:
             for err in dep_errors:
                 logging.error(f"  - {err}")
             
-            print("\n❌ CRITICAL: Environment Integrity Check Failed", file=sys.stderr)
+            logging.critical("\n❌ CRITICAL: Environment Integrity Check Failed")
             for err in dep_errors:
-                print(f"   - {err}", file=sys.stderr)
+                logging.error(f"   - {err}")
             
             fix_cmd = "./run.sh"
             installer_hint = "automatically install all dependencies"
@@ -221,8 +221,8 @@ class EnvironmentManager:
             else:
                 installer_hint += " via pip/apt"
                 
-            print(f"\n   👉 Fix: Run '{fix_cmd}' to {installer_hint}.", file=sys.stderr)
-            print(f"   (Or use '{fix_cmd} --rebuild' to recreate the environment from scratch)", file=sys.stderr)
+            logging.error(f"\n   👉 Fix: Run '{fix_cmd}' to {installer_hint}.")
+            logging.error(f"   (Or use '{fix_cmd} --rebuild' to recreate the environment from scratch)")
             sys.exit(1)
 
         if self.is_debug:

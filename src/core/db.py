@@ -130,6 +130,7 @@ def init_db():
             tag_type TEXT,
             codec TEXT,
             has_artwork BOOLEAN DEFAULT 0,
+            art_path TEXT,
             full_tags TEXT
         )
     """)
@@ -158,6 +159,7 @@ def init_db():
         ("container", "TEXT"),
         ("tag_type", "TEXT"),
         ("codec", "TEXT"),
+        ("art_path", "TEXT"),
         ("full_tags", "TEXT")
     ]
     for col_name, col_type in new_columns:
@@ -208,8 +210,8 @@ def insert_media(item_dict):
     try:
         cursor.execute("""
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
-                             transcoded_format, tags, extension, container, tag_type, codec, has_artwork, full_tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             transcoded_format, tags, extension, container, tag_type, codec, has_artwork, art_path, full_tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -224,6 +226,7 @@ def insert_media(item_dict):
             item_dict.get('tag_type'),
             item_dict.get('codec'),
             1 if item_dict.get('has_artwork') else 0,
+            item_dict.get('art_path'),
             json.dumps(item_dict.get('full_tags', {}))
         ))
         conn.commit()
@@ -258,6 +261,7 @@ def get_all_media():
             'container': row['container'],
             'tag_type': row['tag_type'],
             'codec': row['codec'],
+            'art_path': row['art_path'],
             'has_artwork': bool(row['has_artwork']),
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
@@ -281,6 +285,42 @@ def get_media_path(name):
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else None
+
+
+def get_media_by_name(name):
+    """
+    @brief Retrieves a single media item's full record by its unique name.
+    @details Ruft den vollständigen Datensatz eines Mediums anhand seines Namens ab.
+    @param name Media name / Datenbank-Name.
+    @return Media dictionary or None / Medien-Dictionary oder None.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM media WHERE name = ?", (name,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+        }
+    return None
 
 
 def update_media_tags(name, tags_dict):
