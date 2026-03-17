@@ -302,32 +302,52 @@
 
         .coverflow-track {
             display: flex;
-            gap: -40px;
-            /* Slight overlap */
-            padding: 0 50%;
+            gap: -80px;
+            /* Increased overlap for 3D depth */
+            padding: 40px 50%;
             transform-style: preserve-3d;
-            transition: transform 0.3s ease-out;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            align-items: center;
         }
 
         .coverflow-item {
             flex-shrink: 0;
-            width: 240px;
-            height: 340px;
-            background: #eee;
-            border-radius: 12px;
+            width: 260px;
+            height: 380px;
+            background: #222;
+            border-radius: 16px;
             position: relative;
             transform-style: preserve-3d;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
             overflow: hidden;
             background-size: cover;
             background-position: center;
+            border: 2px solid transparent;
         }
 
+        /* 3D Perspective shifts for side items */
+        .coverflow-item.left {
+            transform: rotateY(45deg) scale(0.85) translateZ(-100px);
+        }
+
+        .coverflow-item.right {
+            transform: rotateY(-45deg) scale(0.85) translateZ(-100px);
+        }
+
+        .coverflow-item.active,
         .coverflow-item:hover {
-            transform: scale(1.05) translateZ(50px);
-            z-index: 100;
+            transform: scale(1.1) translateZ(100px) rotateY(0deg);
+            z-index: 1000;
+            border-color: #2a7;
+            box-shadow: 0 25px 60px rgba(42, 170, 0, 0.3);
+        }
+
+        .coverflow-item:focus {
+            outline: none;
+            border-color: #2a7;
+            box-shadow: 0 0 0 4px rgba(42, 170, 0, 0.4);
         }
 
         .coverflow-item .info {
@@ -3565,9 +3585,12 @@
         const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
         let libraryFilter = 'all';
         let librarySubFilter = 'all';
+        let coverflowIndex = 0;
+        let coverflowItems = [];
 
         function setLibraryFilter(cat) {
             libraryFilter = cat;
+            coverflowIndex = 0;
             document.querySelectorAll('#coverflow-library-panel .filter-chip').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
             });
@@ -3576,6 +3599,7 @@
 
         function setLibrarySubFilter(val) {
             librarySubFilter = val;
+            coverflowIndex = 0;
             renderLibraryCoverflow();
         }
 
@@ -3585,51 +3609,103 @@
 
             try {
                 const library = await eel.get_library()();
-                let items = library.media || [];
+                coverflowItems = library.media || [];
 
                 // Filter logic
                 if (libraryFilter !== 'all') {
-                    items = items.filter(i => i.category === libraryFilter);
+                    coverflowItems = coverflowItems.filter(i => i.category === libraryFilter);
                 }
 
                 if (librarySubFilter !== 'all') {
-                    // Mapping sub-filters to possible tags or categories
                     const subMap = {
                         'audiobooks': ['hörbuch', 'audiobook'],
                         'podcasts': ['podcast'],
                         'albums': ['album']
                     };
                     const matchTags = subMap[librarySubFilter] || [];
-                    items = items.filter(i => {
+                    coverflowItems = coverflowItems.filter(i => {
                         const searchStr = (i.name + ' ' + (i.tags || '')).toLowerCase();
                         return matchTags.some(t => searchStr.includes(t));
                     });
                 }
 
-                if (items.length === 0) {
+                if (coverflowItems.length === 0) {
                     safeHtml('coverflow-track', `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`);
                     return;
                 }
 
-                const html = items.map(item => {
-                    const artwork = item.artwork || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-                    return `
-                        <div class="coverflow-item" style="background-image: url('${artwork}')" onclick="playMediaObject(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                            <div class="info">
-                                <div class="title">${item.name || 'Unknown'}</div>
-                                <div class="meta">${item.category || ''} | ${item.type || ''}</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                safeHtml('coverflow-track', html);
+                updateCoverflowDisplay();
 
             } catch (e) {
                 console.error("Failed to render coverflow:", e);
                 safeHtml('coverflow-track', `<div style="color: red; padding: 20px;">Error: ${e.message || e}</div>`);
             }
         }
+
+        function updateCoverflowDisplay() {
+            const track = document.getElementById('coverflow-track');
+            if (!track) return;
+
+            const html = coverflowItems.map((item, idx) => {
+                const artwork = item.artwork || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                let classes = 'coverflow-item';
+                if (idx === coverflowIndex) classes += ' active';
+                else if (idx < coverflowIndex) classes += ' left';
+                else classes += ' right';
+
+                return `
+                    <div class="${classes}" style="background-image: url('${artwork}')" 
+                         onclick="selectCoverflowItem(${idx})"
+                         tabindex="0">
+                        <div class="info">
+                            <div class="title">${item.name || 'Unknown'}</div>
+                            <div class="meta">${item.category || ''} | ${item.type || ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            safeHtml('coverflow-track', html);
+
+            // Center the active item
+            const activeEl = track.querySelector('.coverflow-item.active');
+            if (activeEl) {
+                const offset = activeEl.offsetLeft + (activeEl.offsetWidth / 2);
+                const containerHalf = track.parentElement.offsetWidth / 2;
+                track.style.transform = `translateX(${containerHalf - offset}px)`;
+            }
+        }
+
+        function selectCoverflowItem(idx) {
+            if (idx === coverflowIndex) {
+                playMediaObject(coverflowItems[idx]);
+            } else {
+                coverflowIndex = idx;
+                updateCoverflowDisplay();
+            }
+        }
+
+        // Keyboard Navigation for Coverflow
+        document.addEventListener('keydown', (e) => {
+            const activeTab = localStorage.getItem('mwv_active_tab');
+            if (activeTab !== 'library') return;
+
+            if (e.key === 'ArrowLeft') {
+                if (coverflowIndex > 0) {
+                    coverflowIndex--;
+                    updateCoverflowDisplay();
+                }
+            } else if (e.key === 'ArrowRight') {
+                if (coverflowIndex < coverflowItems.length - 1) {
+                    coverflowIndex++;
+                    updateCoverflowDisplay();
+                }
+            } else if (e.key === 'Enter') {
+                if (coverflowItems[coverflowIndex]) {
+                    playMediaObject(coverflowItems[coverflowIndex]);
+                }
+            }
+        });
 
         function playMediaObject(item) {
             if (typeof addToQueue === 'function') {

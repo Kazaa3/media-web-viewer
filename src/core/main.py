@@ -2388,7 +2388,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 '%H:%M:%S',
                 time.localtime(start_time))}")
 
-    if hasattr(eel, 'set_db_status'):
+    if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
         try:
             eel.set_db_status(True)()
         except Exception:
@@ -2427,25 +2427,20 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # Get existing media from DB for caching
         existing_media = {m['path']: m for m in db.get_all_media()}
 
-        indexed_cats = PARSER_CONFIG.get("indexed_categories")
-        if not indexed_cats:
-            indexed_cats = [
-                "audio",
-                "video",
-                "images",
-                "documents",
-                "ebooks",
-                "abbild"]
-
+        # Determine which categories are enabled
+        indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
+        # print(f"🔍 [Scan] Enabled categories: {indexed_cats}")
+        
         all_exts = set()
-
         if "audio" in indexed_cats:
             all_exts |= AUDIO_EXTENSIONS
         if "video" in indexed_cats:
             all_exts |= VIDEO_EXTENSIONS
         if "images" in indexed_cats:
+            from src.parsers.format_utils import IMAGE_EXTENSIONS
             all_exts |= IMAGE_EXTENSIONS
         if "documents" in indexed_cats:
+            from src.parsers.format_utils import DOCUMENT_EXTENSIONS
             all_exts |= DOCUMENT_EXTENSIONS
         if "ebooks" in indexed_cats:
             all_exts |= EBOOK_EXTENSIONS
@@ -2453,10 +2448,12 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             from src.parsers.format_utils import DISK_IMAGE_EXTENSIONS
             all_exts |= DISK_IMAGE_EXTENSIONS
 
+        # print(f"🔍 [Scan] Supported extensions: {len(all_exts)}")
+
         # Reset counters
         total_count: int = 0
         for scan_root in scan_roots:
-            logger.debug("scan", f"Starting scan of: {scan_root}")
+            print(f"🚀 [Scan] Starting scan of: {scan_root}")
 
             # Collect items to avoid sub-file duplicates
             skip_subpaths: set[Path] = set()
@@ -2475,14 +2472,14 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             is_media_folder = True
 
                     if is_media_folder:
-                        logger.debug("scan",
-                                     f"Erkennte Medien-Ordner: {d.name}")
+                        logger.debug("scan", f"🎬 [Scan] Detected Media Folder: {d.name}")
                         try:
                             item = MediaItem(d.name, d)
                             item_dict = item.to_dict()
                             db.insert_media(item_dict)
                             count += 1
                             skip_subpaths.add(d)
+                            logger.debug("scan", f"✅ [Scan] Indexed Media Folder: {d.name} (Category: {item_dict.get('category')})")
                         except Exception as e:
                             logger.debug(
                                 "scan", f"Fehler bei Ordner {
@@ -2527,9 +2524,11 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                 continue # Already indexed, skip deep parsing
 
                             # 2. Extract metadata
+                            logger.debug("scan", f"🔨 [Scan] Processing item: {f.name}")
                             item = MediaItem(f.name, f)
                             item_dict = item.to_dict()
                             db.insert_media(item_dict)
+                            logger.debug("scan", f"✅ [Scan] Indexed: {f.name} (has_art: {item_dict.get('has_artwork')})")
                             count += 1
                         except Exception as e:
                             logger.debug("scan", f"Fehler bei {f.name}: {e}")
@@ -2549,7 +2548,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             "stats": {"count": count, "time_seconds": elapsed}
         }
     finally:
-        if hasattr(eel, 'set_db_status'):
+        if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
             try:
                 eel.set_db_status(False)()
             except Exception:
@@ -3213,7 +3212,6 @@ def move_item_to(old_index: int, new_index: int):
             "index": CURRENT_INDEX}
     except Exception as e:
         return {"status": "error", "message": str(e)}
-
 
 @eel.expose
 def open_in_explorer(path_str):
