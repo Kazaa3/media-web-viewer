@@ -2536,10 +2536,16 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                         'VIDEO_TS').exists() or (
                         d /
                         'BDMV').exists()
+                    
                     if not is_media_folder:
-                        # Check if it contains an ISO
-                        if any(d.glob('*.iso')):
-                            is_media_folder = True
+                        # Smarter DVD Bundle detection: "Name (Year)" folder with an .iso inside
+                        # and possibly a cover image.
+                        isos = list(d.glob('*.iso'))
+                        if len(isos) == 1:
+                            # If the folder name looks like "Name (Year)", treat as a bundle
+                            import re
+                            if re.search(r'\(\d{4}\)', d.name):
+                                is_media_folder = True
 
                     if is_media_folder:
                         logger.debug("scan", f"🎬 [Scan] Detected Media Folder: {d.name}")
@@ -2907,6 +2913,57 @@ def get_video_metadata(file_path: str) -> dict:
         logging.error(f"[ffprobe] Auto-detect failed: {e}")
         return {}
 
+
+@bottle.route('/video-remux-stream/<item_id>')
+def video_remux_stream(item_id):
+    """
+    @brief Real-time remuxing to Matroska/WebM for Chrome Native playback.
+    """
+    from src.core import db
+    item = db.get_media_by_id(item_id)
+    if not item:
+        return bottle.HTTPResponse(status=404)
+
+    file_path = item['path']
+    logging.info(f"🚀 [Remux] Starting live stream for: {file_path}")
+
+    # Use mkvmerge if available, else ffmpeg copy
+    if is_mkvtoolnix_available():
+        cmd = ["mkvmerge", "-o", "-", str(file_path)]
+    else:
+        cmd = [
+            "ffmpeg", "-loglevel", "error", "-i", str(file_path),
+            "-c", "copy", "-f", "matroska", "-"
+        ]
+    
+    mime = "video/x-matroska"
+
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        def generate():
+            try:
+                # Use a larger buffer for smoother streaming
+                while True:
+                    chunk = proc.stdout.read(128 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
+            finally:
+                proc.terminate()
+                # Log any errors from the remuxer
+                if proc.stderr:
+                    err = proc.stderr.read().decode('utf-8', errors='ignore')
+                    if err:
+                        logging.error(f"[Remux] Error from process: {err.strip()}")
+
+        return bottle.HTTPResponse(generate(), content_type=mime)
+    except Exception as e:
+        logging.error(f"[Remux] Critical Error: {e}")
+        return bottle.HTTPResponse(status=500)
+
+
+
 @eel.expose
 def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_direct"):
     """
@@ -2947,8 +3004,15 @@ def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_
         elif mode == "chrome_webrtc":
             return stream_to_mediamtx(file_path, protocol="webrtc")
         elif mode == "chrome_fragmp4":
-            # ffmpeg fragmp4 logic (placeholder for actual ffmpeg -listen)
             return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
+        elif mode == "chrome_remux":
+            # For remuxing we need the item_id.
+            from src.core import db
+            item = db.get_media_by_path(file_path)
+            item_id = item.get('id') if item else None
+            if item_id:
+                return {"status": "play", "path": f"/video-remux-stream/{item_id}", "mode": "chrome_native"}
+            return {"status": "error", "error": "Item ID for remuxing not found"}
         elif mode == "chrome_ffmpeg_browser":
             return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
 

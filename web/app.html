@@ -3438,29 +3438,6 @@
                             </div>
                         </div>
                     </div>
-                    <div
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 20px;">
-                        <h3
-                            style="margin: 0 0 15px 0; color: #333; font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                            <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC Stream</span>
-                        </h3>
-
-                        <div id="vlc-stream-panel" style="display: block;">
-                            <div style="display: flex; gap: 10px;">
-                                <input id="vlc-stream-url" type="text"
-                                    placeholder="https://... | rtsp://... | rtmp://..."
-                                    style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;"
-                                    data-i18n="[placeholder]vlc_stream_placeholder" />
-                                <button onclick="playVLCStream()"
-                                    style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
-                                    ▶ <span data-i18n="vlc_usage_open_in_vlc">Stream starten</span>
-                                </button>
-                            </div>
-                            <div id="vlc-ribbon-status"
-                                style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.9em;">
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Advanced Tools Tab -->
                     <div id="tools-tab" class="tab-content" style="padding: 20px;">
@@ -3509,12 +3486,63 @@
                             </div>
                         </div>
 
-                        <!-- Active Tasks UI -->
+                        <!-- Transcode Tasks (Full Width) -->
                         <div id="transcoding-tasks-container" style="margin-top: 30px;">
                             <h4 style="color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">Active Tasks
                             </h4>
                             <div id="transcoding-task-list">
                                 <p style="font-size: 0.9em; color: #999; font-style: italic;">No active tasks.</p>
+                            </div>
+                        </div>
+
+                        <!-- VLC Integration Section (Full Width) -->
+                        <div
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 30px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                                <!-- VLC Stream Panel -->
+                                <div>
+                                    <h3
+                                        style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                        <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC
+                                            Stream</span>
+                                    </h3>
+                                    <div id="vlc-stream-panel" style="display: block;">
+                                        <div style="display: flex; gap: 10px;">
+                                            <input id="vlc-stream-url" type="text"
+                                                placeholder="https://... | rtsp://... | rtmp://..."
+                                                style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;"
+                                                data-i18n="[placeholder]vlc_stream_placeholder" />
+                                            <button onclick="playVLCStream()"
+                                                style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                                ▶ <span data-i18n="vlc_usage_open_in_vlc">Stream starten</span>
+                                            </button>
+                                        </div>
+                                        <div id="vlc-ribbon-status"
+                                            style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.85em;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- VLC Playlist Panel -->
+                                <div>
+                                    <h3
+                                        style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                        <span class="icon-cassette"></span> <span
+                                            data-i18n="vlc_playlist_integration">Playlist Tools</span>
+                                    </h3>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button onclick="importVLCPlaylist()" class="sidebar-badge"
+                                            style="flex: 1; padding: 10px; cursor: pointer; background: #f0f8ff; border: 1px solid #b3d9ff; color: #2980b9; font-weight: bold;">
+                                            Import Playlist
+                                        </button>
+                                        <button onclick="exportToVLC()" class="sidebar-badge"
+                                            style="flex: 1; padding: 10px; cursor: pointer; background: #fff8f0; border: 1px solid #ffd9b3; color: #e67e22; font-weight: bold;">
+                                            Export to VLC
+                                        </button>
+                                    </div>
+                                    <div id="import-status" style="margin-top: 10px; font-size: 0.8em; display: none;">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4336,7 +4364,7 @@
 
             const res = await eel.open_video(item.path, mode)();
             if (res && res.status === 'play') {
-                const embeddedModes = ['mediamtx', 'mediamtx_webrtc', 'chrome_native', 'chrome_direct', 'chrome_hls', 'chrome_fragmp4', 'ffmpeg_browser'];
+                const embeddedModes = ['mediamtx', 'mediamtx_webrtc', 'chrome_native', 'chrome_direct', 'chrome_hls', 'chrome_fragmp4', 'ffmpeg_browser', 'chrome_remux'];
                 if (embeddedModes.includes(res.mode) || embeddedModes.includes(mode)) {
                     if (typeof startEmbeddedVideo === 'function') {
                         startEmbeddedVideo(item, res.path, null, res.type);
@@ -5821,6 +5849,7 @@
                 ],
                 'chrome': [
                     { value: 'chrome_direct', label: t('video_mode_chrome') },
+                    { value: 'chrome_remux', label: '🚀 Live Remux (Native)' },
                     { value: 'chrome_hls', label: t('video_mode_mediamtx') },
                     { value: 'chrome_fragmp4', label: 'ffmpeg FragMP4' },
                     { value: 'chrome_webrtc', label: t('video_mode_mediamtx_webrtc') },
@@ -8789,6 +8818,9 @@
         <div class="context-menu-header">🎬 Chrome Native</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('chrome_native')">
             <span>🌐</span> <span data-i18n="video_mode_chrome">Chrome Native (Direct)</span>
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')">
+            <span>🚀</span> <span>Live Remux (Native)</span>
         </div>
         <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')">
             <span>📡</span> <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
