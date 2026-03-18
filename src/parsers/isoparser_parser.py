@@ -33,8 +33,12 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
     Parses ISO files using pycdlib or isoparser and extracts basic metadata.
     Handles both Path and file object, logs errors for corrupted files.
     """
-    if file_type != ".iso":
+    # Support for .iso, .bin, and .img
+    if file_type not in [".iso", ".bin", ".img"]:
         return tags
+    
+    import re
+    year_pattern = re.compile(r'[\(\[\s]((?:19|20)\d{2})[\)\]\s]?')
 
     from .format_utils import PARSER_CONFIG, SLOW_PARSERS
     is_slow = "isoparser" in SLOW_PARSERS or "pycdlib" in SLOW_PARSERS
@@ -43,18 +47,35 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
     if is_slow and mode != 'full' and fast_scan:
         return tags
     
-    tags['container'] = 'iso'
-    tags['tagtype'] = 'iso'
+    tags['container'] = 'iso' if file_type == '.iso' else file_type[1:]
+    tags['tagtype'] = 'disk_image'
 
     # Try pycdlib first (generally more robust/faster)
     if HAS_PYCDLIB:
         try:
             iso = pycdlib.PyCdlib()
             iso.open(str(path_obj))
-            pvd = iso.get_pvd()
-            tags['pycdlib_volume_id'] = pvd.volume_identifier.decode('utf-8', 'ignore').strip() if pvd else "Unknown"
+            try:
+                pvd = iso.get_pvd()
+            except:
+                pvd = None
+
+            if pvd:
+                vol_id = pvd.volume_identifier.decode('utf-8', 'ignore').strip() if hasattr(pvd.volume_identifier, 'decode') else str(pvd.volume_identifier).strip()
+                tags['pycdlib_volume_id'] = vol_id
+                if not tags.get('title'):
+                    tags['title'] = vol_id
+                
+                # Try to extract year from volume_id
+                ym = year_pattern.search(vol_id)
+                if ym and not tags.get('year'):
+                    tags['year'] = ym.group(1)
+
             # Basic file count from root
-            tags['iso_files_count'] = len(iso.list_children(iso_path='/'))
+            try:
+                tags['iso_files_count'] = len(iso.list_children(iso_path='/'))
+            except: pass
+            
             iso.close()
             return tags
         except Exception:
@@ -66,12 +87,18 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
             iso = isoparser.parse(str(path_obj))
             if hasattr(iso, 'volume_descriptors') and 'primary' in iso.volume_descriptors:
                 pvd = iso.volume_descriptors['primary']
-                # isoparser/pycdlib might use volume_id or volume_identifier
-                tags['iso_volume_label'] = getattr(pvd, 'volume_id', getattr(pvd, 'volume_identifier', 'Unknown'))
+                label = getattr(pvd, 'volume_id', getattr(pvd, 'volume_identifier', 'Unknown'))
+                tags['iso_volume_label'] = label
+                if not tags.get('title') or tags.get('title') == "Unknown":
+                    tags['title'] = label
+                
+                # Try to extract year from label
+                ym = year_pattern.search(str(label))
+                if ym and not tags.get('year'):
+                    tags['year'] = ym.group(1)
             
             all_files = list(iso.root.children) if hasattr(iso, 'root') else []
             tags['iso_files_count'] = len(all_files)
-            tags['iso_file_list'] = [f.name for f in all_files][:10]
         except Exception as e:
             tags['iso_error'] = f"isoparser: {e}"
             

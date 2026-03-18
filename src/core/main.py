@@ -875,7 +875,7 @@ def _get_requirements_status():
     # Check multiple locations for requirements
     req_locations = [
         PROJECT_ROOT / "requirements.txt",
-        PROJECT_ROOT / "infra" / "requirements-build.txt"
+        PROJECT_ROOT / "infra" / "requirements-build.txt",
         PROJECT_ROOT / "infra" / "requirements-core.txt",
         PROJECT_ROOT / "infra" / "requirements-testbed.txt",
         PROJECT_ROOT / "infra" / "requirements-selenium.txt",
@@ -3386,6 +3386,9 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
             logging.info(f"DEBUG: [Player-Trace] DVD Normalization: {file_path} -> {target_path}")
 
         prefix = "dvd://" if is_dvd_folder or is_dvd_iso else ""
+        # Default to embedded HLS if not specified as browser (standalone)
+        if mode == "auto" or mode == "vlc_embedded":
+             return start_vlc_guarded(target_path, "vlc_embedded", prefix, source=f"open_video_{source}", start_time=start_time)
         return start_vlc_guarded(target_path, mode, prefix, source=f"open_video_{source}", start_time=start_time)
 
     elif player_type == "ffplay":
@@ -3393,21 +3396,42 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
 
     elif player_type == "pyplayer":
         # pyvidplayer2 / standalone
+        if mode == "pyplayer_mpv":
+             # Launch mpv if available
+             mpv_path = shutil.which("mpv") or "mpv"
+             try:
+                 proc = subprocess.Popen([str(mpv_path), str(file_path)])
+                 ACTIVE_SUBPROCESSES.append(proc)
+                 return {"status": "ok", "mode": "mpv"}
+             except Exception as e:
+                 return {"status": "error", "error": f"MPV failed: {e}"}
+        
+        # Default: pyvidplayer2
         try:
             import pyvidplayer2
             # Use subprocess to avoid blocking Eel thread
             proc = subprocess.Popen([sys.executable, "-m", "pyvidplayer2", str(file_path)])
             ACTIVE_SUBPROCESSES.append(proc)
             return {"status": "ok", "mode": "pyplayer"}
+        except ImportError:
+            # Fallback to FFplay if pyvidplayer2 is missing
+            return open_with_ffplay(file_path)
         except Exception as e:
             return {"status": "error", "error": f"PyPlayer failed: {e}"}
 
     if player_type == "chrome":
+        if mode.startswith("mtx_"):
+            # Redirect to MediaMTX handler
+            variant = "webrtc" if mode == "mtx_webrtc" else "hls"
+            return stream_to_mediamtx(file_path, protocol=variant)
+
         if mode == "chrome_direct":
             import urllib.parse
             safe_path = urllib.parse.quote(str(file_path), safe='')
             return {"status": "play", "path": f"/media-raw/{safe_path}", "mode": "chrome_direct", "type": "video/mp4"}
-        elif mode in ("chrome_remux", "chrome_fragmp4"):
+        elif mode in ("chrome_remux", "chrome_fragmp4", "chrome_hls"):
+            # Note: chrome_hls is treated as remux/fragmp4 pipeline back-of-house
+            # unless a real HLS backend (like MTX) is selected.
             from src.core import db
             item = db.get_media_by_path(file_path)
             item_id = item.get('id') if item else file_path
@@ -4368,25 +4392,55 @@ def mediamtx_mode(file_path, variant="hls"):
 @eel.expose
 def stream_to_mediamtx(file_path, protocol="hls"):
     """
-    @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server).
+    @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server) using FFmpeg push.
     @param protocol "hls" or "webrtc"
     """
     logging.info(f"[mediamtx] Requesting {protocol} stream for: {file_path}")
     
+    file_path = resolve_media_path(file_path)
     if not file_path or not os.path.exists(str(file_path)):
-        return {"status": "error", "error": "Datei nicht gefunden"}
+        return {"status": "error", "error": f"Datei nicht gefunden: {file_path}"}
 
     # Create a safe slug for the path
     safe_name = re.sub(r'[^a-zA-Z0-9]', '_', Path(file_path).stem)
     
+    # 1. Kill any existing FFmpeg push for this path
+    # (Simple strategy: clear all active subprocesses if they match the path, 
+    # but for now we rely on a global cleanup or just add to list)
+    
     try:
-        # MediaMTX usually auto-starts paths if configured with runOnDemand
+        # 2. Build FFmpeg command
+        is_dvd = str(file_path).lower().endswith('.iso') or (os.path.isdir(file_path) and "VIDEO_TS" in os.listdir(file_path))
+        
+        # We use RTSP as the ingest protocol for MediaMTX (default port 8554)
+        rtsp_target = f"rtsp://localhost:8554/{safe_name}"
+        
+        ffmpeg_cmd = ["ffmpeg", "-re"] # -re = read at native frame rate (essential for live streams)
+        
+        if is_dvd:
+             # DVD Transcode (H.264 + AAC)
+             # Note: dvd:// protocol requires libdvdnav support in ffmpeg
+             prefix = "dvd://" if os.path.isdir(file_path) else ""
+             ffmpeg_cmd += ["-i", f"{prefix}{file_path}", "-c:v", "libx264", "-preset", "ultrafast", "-acodec", "aac"]
+        else:
+             # File Remux (Copy codecs if possible, or force h264 for browser compat)
+             # To be safe and fast, we try 'copy' first, but MediaMTX/Browsers prefer H264
+             ffmpeg_cmd += ["-i", str(file_path), "-c", "copy"]
+
+        ffmpeg_cmd += ["-f", "rtsp", rtsp_target]
+        
+        logging.info(f"[mediamtx] Spawning FFmpeg push: {' '.join(ffmpeg_cmd)}")
+        
+        # Start the push process in the background
+        # Use stdout/stderr=DEVNULL to avoid clogging the buffers
+        proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        ACTIVE_SUBPROCESSES.append(proc)
+        
+        # 3. Wait a tiny bit for the stream to initialize in MediaMTX
+        time.sleep(0.5)
+
         if protocol == "webrtc":
-            # WebRTC (WHEP) endpoint for high-performance sub-100ms
-            # URL format usually matches the WHEP API of MediaMTX
-            # Default MediaMTX WebRTC port is often 8889 for UI or specific API
-            # For WHEP specifically, it's often the same as HLS port but different path or separate port
-            # Assuming standard bluenviron/mediamtx config
+            # WebRTC (WHEP) endpoint
             src_url = f"http://localhost:8889/{safe_name}/whep"
             mode = "mediamtx_webrtc"
         else:
@@ -4394,7 +4448,7 @@ def stream_to_mediamtx(file_path, protocol="hls"):
             src_url = f"http://localhost:8888/{safe_name}/index.m3u8"
             mode = "mediamtx"
             
-        return {"status": "play", "path": src_url, "mode": mode}
+        return {"status": "play", "path": src_url, "mode": mode, "type": "application/x-mpegURL" if protocol == "hls" else "video/webrtc"}
     except Exception as e:
         logging.error(f"[mediamtx] Setup error: {e}")
         return {"status": "error", "error": str(e)}
@@ -5946,3 +6000,70 @@ def save_benchmark_results(results):
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
+@eel.expose
+def get_multimedia_analysis():
+    """Aggregates a report on DVD/Film objects and Chrome Native compatibility."""
+    try:
+        items = db.get_all_media()
+        analysis = {
+            'dvd_objects': [],
+            'film_objects': [],
+            'chrome_compatible_mp4s': [],
+            'incompatible_videos': [],
+            'stats': {
+                'total_films': 0,
+                'total_dvds': 0,
+                'native_support_count': 0
+            }
+        }
+
+        for item in items:
+            cat = item.get('category', '')
+            tags = item.get('tags', {})
+            path = item.get('path', '')
+            ext = item.get('extension', '').lower()
+            
+            # 1. DVD/Film Detection
+            is_dvd_image = ext in ['iso', 'bin', 'img']
+            is_dvd_folder = 'VIDEO_TS' in path or 'BDMV' in path
+            
+            if cat == 'Film' or is_dvd_image or is_dvd_folder:
+                obj = {
+                    'name': item.get('name'),
+                    'year': tags.get('year', 'Unknown'),
+                    'type': item.get('content_type', 'Film'),
+                    'format': ext.upper() if not is_dvd_folder else 'Folder',
+                    'path': path
+                }
+                if is_dvd_image or is_dvd_folder:
+                    analysis['dvd_objects'].append(obj)
+                    analysis['stats']['total_dvds'] += 1
+                else:
+                    analysis['film_objects'].append(obj)
+                    analysis['stats']['total_films'] += 1
+
+            # 2. Chrome Native Compatibility (MP4 / H.264)
+            if ext == 'mp4':
+                # Check both top-level item 'codec' and tags 'video_codec'/'codec'
+                raw_codec = item.get('codec') or tags.get('video_codec') or tags.get('codec') or ''
+                codec = str(raw_codec).lower()
+                # Simple heuristic for Chrome compatibility
+                is_native = any(c in codec for c in ['h264', 'avc', 'vp8', 'vp9', 'av1'])
+                if is_native:
+                    analysis['chrome_compatible_mp4s'].append({
+                        'name': item.get('name'),
+                        'codec': codec,
+                        'is_native': True
+                    })
+                    analysis['stats']['native_support_count'] += 1
+                else:
+                    analysis['incompatible_videos'].append({
+                        'name': item.get('name'),
+                        'codec': codec,
+                        'reason': 'Codec not natively supported by Chrome'
+                    })
+
+        return analysis
+    except Exception as e:
+        log.error(f"Failed to generate multimedia analysis: {e}")
+        return {'error': str(e)}

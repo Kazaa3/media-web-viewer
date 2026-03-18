@@ -19,8 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
 from typing import Optional, Any
-from parsers.format_utils import (
-    PARSER_CONFIG, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
+from ..parsers.format_utils import (
+    PARSER_CONFIG, SLOW_PARSERS, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
     DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS,
     DISK_IMAGE_EXTENSIONS
 )
@@ -133,14 +133,15 @@ class MediaItem:
 
     def detect_logical_type(self):
         ext = self.type.lower()
-        if ext in DISK_IMAGE_EXTENSIONS:
+        if ext in DISK_IMAGE_EXTENSIONS or ext in ['.bin', '.img']:
             return 'Abbild'
         if self.type == 'Folder':
             # Check if it contains media indicators
+            p_str = str(self.path).lower()
             if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists():
-                return 'Ordner' # Categorized as folder, but content will be 'Film'
-            if any(self.path.glob('*.iso')):
-                return 'Ordner'
+                return 'Film' # Direct film object if it's a DVD/BD folder
+            if any(self.path.glob('*.iso')) or any(self.path.glob('*.bin')):
+                return 'Film' # Folder containing disc images is often a Film Object
             return 'Ordner'
         if ext in VIDEO_EXTENSIONS:
             return 'Video'
@@ -158,12 +159,22 @@ class MediaItem:
         ext = self.type.lower()
         tags = self.tags or {}
         # ISO / Disk Image: try to detect PAL DVD
-        if ext in DISK_IMAGE_EXTENSIONS:
-            volume_id = tags.get('pycdlib_volume_id', '').lower()
+        if ext in DISK_IMAGE_EXTENSIONS or ext in ['.bin', '.img']:
+            volume_id = str(tags.get('pycdlib_volume_id', tags.get('iso_volume_label', ''))).lower()
             if 'pal' in volume_id or 'dvd' in volume_id:
                 return 'PAL DVD'
+            if 'ntsc' in volume_id:
+                return 'NTSC DVD'
+            # Ensure files_count is int
+            try:
+                files_count = int(tags.get('iso_files_count', 0))
+            except (ValueError, TypeError):
+                files_count = 0
+            if files_count > 50:
+                return 'Data DVD'
             return 'Disk Image'
         return self.category
+
     def get_category(self):
         """
         @brief Detects the category of the media item based on extension and metadata tags.
@@ -176,12 +187,19 @@ class MediaItem:
         logical = self.detect_logical_type()
 
         # 1. Folders / Video / DVD / ISO
-        if logical == 'Ordner':
+        if logical == 'Ordner' or logical == 'Film':
             # Sub-classification for folders
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
                 return 'Serie'
-            if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists() or any(self.path.glob('*.iso')):
+            
+            # DVD Folder detection
+            if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists():
+                 return 'Film'
+                 
+            # Folder with ISOs
+            if any(self.path.glob('*.iso')) or any(self.path.glob('*.bin')):
                 return 'Film'
+
             if any(k in path_str for k in ['film', 'movie']):
                 return 'Film'
             return 'Ordner'
@@ -189,8 +207,6 @@ class MediaItem:
         if logical == 'Video':
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel', 'erie']):
                 return 'Serie'
-            if any(k in path_str for k in ['film', 'movie']):
-                return 'Film'
             return 'Film'
         
         if logical == 'Abbild':
@@ -198,23 +214,25 @@ class MediaItem:
             from parsers.format_utils import detect_file_format
             fmt = detect_file_format(self.path, tags)
             if 'DVD' in fmt or 'Blu-ray' in fmt:
-                return fmt
+                return 'Film'
             if 'SACD' in fmt or 'Audio-CD' in fmt:
                 return 'Album'
             
             # Specialized detection for PC Games and Book Discs
-            vol_id = tags.get('pycdlib_volume_id', '').upper()
+            vol_id = str(tags.get('pycdlib_volume_id', tags.get('iso_volume_label', ''))).upper()
+            if any(k in vol_id for k in ['DVD', 'PAL', 'NTSC', 'VTS']):
+                 return 'Film'
+                 
             if any(k in vol_id for k in ['S3GOLD', 'GAME', 'PLAY', 'SPIEL', 'SIMS']):
                 return 'Spiel'
             
-            path_lower = str(self.path).lower()
-            if any(k in path_lower for k in ['spiel', 'game', 'software']):
+            if any(k in path_str for k in ['spiel', 'game', 'software']):
                  return 'Spiel'
                  
-            if any(k in path_lower for k in ['buch', 'book', 'beigabe']):
+            if any(k in path_str for k in ['buch', 'book', 'beigabe']):
                 return 'Beigabe'
                 
-            return 'Abbild'
+            return 'Film' if any(k in path_str for k in ['film', 'movie']) else 'Abbild'
 
         if ext in EBOOK_EXTENSIONS:
             return 'E-Book'

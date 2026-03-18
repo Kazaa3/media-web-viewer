@@ -53,12 +53,23 @@ def parse(
         pass
 
     working_filename = filename
+    
+    # 1. Year Extraction (e.g. "Movie (2024)", "Film 1999")
+    year_pattern = re.compile(r'[\(\[\s]((?:19|20)\d{2})[\)\]\s]?')
+    year_match = year_pattern.search(working_filename)
+    if year_match:
+        tags['year'] = year_match.group(1)
+        # Remove year from working filename for title extraction
+        working_filename = year_pattern.sub('', working_filename).strip()
+    
+    # 2. Track Extraction
     if not tags.get('track'):
         track_match = re.match(r"^(\d+)\s+(.*)", working_filename)
         if track_match:
             tags['track'] = str(int(track_match.group(1)))  # Remove leading zeros
             working_filename = track_match.group(2)
 
+    # 3. Title & Artist Extraction
     if " - " in working_filename:
         parts = working_filename.split(" - ", 1)
         if not tags.get('artist'):
@@ -69,6 +80,6 @@ def parse(
     else:
         if not tags.get('title'):
             title = working_filename.rsplit(".", 1)[0] if "." in working_filename else working_filename
-            tags['title'] = title
+            tags['title'] = title.strip()
 
     return tags

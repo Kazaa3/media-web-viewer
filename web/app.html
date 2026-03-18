@@ -1630,13 +1630,81 @@
             const container = (type === 'audio') ? document.getElementById('audio-benchmarks-list') : document.getElementById('video-benchmarks-list');
             if (!container) return;
 
+            // Header for Multimedia Analysis (only for video)
+            let analysisHtml = '';
+            if (type === 'video') {
+                const analysis = await eel.get_multimedia_analysis()();
+                if (analysis && !analysis.error) {
+                    analysisHtml = `<div style="margin-bottom: 30px; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <h4 style="margin: 0 0 15px 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            Multimedia Library Analysis
+                        </h4>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.8em; color: #666;">Film Objects</div>
+                                <div style="font-size: 1.4em; font-weight: bold; color: #2196f3;">${analysis.stats.total_films}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.8em; color: #666;">DVD/Disc Images</div>
+                                <div style="font-size: 1.4em; font-weight: bold; color: #ff9800;">${analysis.stats.total_dvds}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.8em; color: #666;">Chrome Native (MP4)</div>
+                                <div style="font-size: 1.4em; font-weight: bold; color: #4caf50;">${analysis.stats.native_support_count}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Detected DVD & Film Objects</h5>
+                            <div style="max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
+                                    <thead style="background: #f5f5f5; position: sticky; top: 0;">
+                                        <tr>
+                                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Name</th>
+                                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Year</th>
+                                            <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Type</th>
+                                            <th style="padding: 8px; text-align: center; border-bottom: 1px solid #ddd;">Streaming</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${[...analysis.dvd_objects, ...analysis.film_objects].map(obj => `
+                                            <tr style="border-bottom: 1px solid #f0f0f0;">
+                                                <td style="padding: 8px; font-weight: 500;">${obj.name}</td>
+                                                <td style="padding: 8px; color: #666;">${obj.year}</td>
+                                                <td style="padding: 8px;"><span style="padding: 2px 6px; background: #eee; border-radius: 4px; font-size: 0.9em;">${obj.type}</span></td>
+                                                <td style="padding: 8px; text-align: center;">
+                                                    <span title="Ready for MediaMTX/VLC" style="color: #4caf50; cursor: help;">Ready</span>
+                                                </td>
+                                            </tr>
+                                        `).join('') || '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #999;">No objects detected yet. Run a library scan.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Chrome Native Compatibility (MP4)</h5>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${analysis.chrome_compatible_mp4s.map(m => `
+                                    <div style="padding: 4px 10px; background: #e8f5e9; color: #2e7d32; border-radius: 12px; font-size: 0.8em; border: 1px solid #a5d6a7;" title="Codec: ${m.codec}">
+                                        ${m.name}
+                                    </div>
+                                `).join('') || '<div style="color: #999; font-size: 0.85em;">No native MP4s found.</div>'}
+                            </div>
+                        </div>
+                    </div>`;
+                }
+            }
+
             const history = await eel.get_benchmark_results()();
             if (!history || (Array.isArray(history) && history.length === 0)) {
-                container.innerHTML = '<p style="color: #999;">Keine Benchmark-Daten vorhanden.</p>';
+                container.innerHTML = analysisHtml + '<p style="color: #999;">Keine Benchmark-Daten vorhanden.</p>';
                 return;
             }
 
-            let html = '';
+            let html = analysisHtml;
             const historyArr = Array.isArray(history) ? [...history] : [history];
             historyArr.reverse().forEach(run => {
                 const ts = run.timestamp || (run.results ? (run.results.timestamp || Date.now() / 1000) : Date.now() / 1000);
@@ -2141,7 +2209,7 @@
                 iconEl.title = (entry.status || 'ACTIVE').toUpperCase();
                 btn.appendChild(iconEl);
                 const deleteBtn = document.createElement('button');
-                deleteBtn.innerHTML = '<span class="icon-remove" style="background-color: #c0392b; width: 16px; height: 16px;"></span>';
+                deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
                 deleteBtn.style.cssText = 'background: transparent; border: none; cursor: pointer; padding: 0; width: 24px; height: 24px; opacity: 0.3; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center;';
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
@@ -2281,10 +2349,12 @@
                     <span class="icon-logbook"></span> <span data-i18n="nav_logbook">Logbuch</span></button>
                 <button id="sequential-buffer-tab-trigger" class="tab-btn" onclick="switchTab('playlist', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_playlist">
-                    <span class="icon-menu"></span> <span data-i18n="nav_playlist">Playlist</span></button>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <span data-i18n="nav_playlist">Playlist</span></button>
                 <button id="media-orchestrator-tab-trigger" class="tab-btn" onclick="switchTab('vlc', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_video">
-                    <span class="icon-video"></span> <span data-i18n="nav_video">Video Player</span></button>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="15" rx="2" ry="2"/><polyline points="10 8 14 10.5 10 13 10 8"/></svg>
+                    <span data-i18n="nav_video">Video</span></button>
                 <button class="tab-btn"
                     style="background: #fdf5e6; border-color: #f4d; display: flex; align-items: center; gap: 8px;"
                     onclick="toggleDebugMenu()" data-i18n="nav_flags">
@@ -2337,12 +2407,14 @@
                     <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 20px;">
                         <button id="fb-back" onclick="fbBack()"
                             style="padding: 10px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                            <span class="icon-back"></span></button>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+                        </button>
 
                         <button onclick="fbNavigate(fbCurrentPath)" id="fb-refresh-btn"
                             style="padding: 10px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
                             title="Refresh">
-                            <span class="icon-refresh"></span></button>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
 
                         <input id="fb-path-input" type="text"
                             onkeypress="if(event.key === 'Enter') fbNavigate(this.value)"
@@ -2351,7 +2423,8 @@
                         <button onclick="scan(readValue('fb-path-input'), false)"
                             style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px;"
                             data-i18n="fb_add_path">
-                            <span class="icon-add"></span> <span data-i18n="fb_add_path">Hinzufügen</span></button>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            <span data-i18n="fb_add_path">Hinzufügen</span></button>
                     </div>
 
                     <div id="fb-list"></div>
@@ -3652,8 +3725,7 @@
             <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
                 style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
                 <div style="max-width: 1000px; margin: 0 auto;">
-                    <div
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                    <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); display:flex; flex-direction:column; min-height: calc(100vh - 80px);">
 
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
@@ -3661,31 +3733,153 @@
                                 data-i18n="video_tab_title">
                                 <span class="icon-video"></span> <span data-i18n="video_tab_title">Video Player</span>
                             </h2>
-                            <div
-                                style="display: flex; align-items: center; gap: 15px; background: #fdfdfd; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                                <span style="font-size: 0.9em; font-weight: bold; color: #555;"
-                                    data-i18n="video_mode_label">Modus:</span>
 
-                                <select id="player-type" onchange="updateVideoModes()"
-                                    style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
-                                    <option value="auto">🤖 Auto-Detect (Smart)</option>
-                                    <option value="chrome">🎬 Chrome Native</option>
-                                    <option value="vlc">📺 VLC (Desktop/Embedded)</option>
-                                    <option value="pyplayer">🐍 PyPlayer (Native)</option>
-                                </select>
+                            <!-- ENGINE SELECTOR BAR -->
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                                <button class="engine-btn active" data-engine="auto" onclick="selectEngine('auto',this)" title="Smart Auto-Routing" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #2a7;background:#e8f8f0;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    Auto
+                                </button>
+                                <button class="engine-btn" data-engine="chrome" onclick="selectEngine('chrome',this)" title="Chrome Native/Video.js" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #ddd;background:#fafafa;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+                                    Chrome Native
+                                </button>
+                                <button class="engine-btn" data-engine="vlc" onclick="selectEngine('vlc',this)" title="VLC HLS Embedded (DVD/ISO)" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #ddd;background:#fafafa;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                                    VLC HLS
+                                </button>
+                                <button class="engine-btn" data-engine="mtx" onclick="selectEngine('mtx',this)" title="MediaMTX Streaming" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #ddd;background:#fafafa;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.59 16.11a6 6 0 0 1 6.82 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                    MediaMTX
+                                </button>
+                                <button class="engine-btn" data-engine="pyplayer" onclick="selectEngine('pyplayer',this)" title="PyPlayer" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #ddd;background:#fafafa;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                    PyPlayer
+                                </button>
 
-                                <select id="video-mode" onchange="orchestrateVideoPlaybackMode()"
-                                    style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
-                                    <!-- Dynamic -->
-                                </select>
+                                <!-- Hidden legacy inputs kept for backward compat -->
+                                <input type="hidden" id="player-type" value="auto">
+                                <input type="hidden" id="video-mode" value="auto">
 
-                                <button onclick="triggerOpenWith()" data-i18n="btn_open_with" id="btn-open-with-video"
-                                    style="background: #2a7; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(42,167,112,0.3); display: none;">
+                                <button onclick="triggerOpenWith()" id="btn-open-with-video" style="margin-left:auto;background:#2a7;color:white;border:none;padding:6px 14px;border-radius:8px;font-size:0.85em;cursor:pointer;font-weight:bold;display:none;align-items:center;gap:6px;transition:all 0.2s;box-shadow:0 2px 4px rgba(42,167,112,0.3);">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                                     Öffnen mit
                                 </button>
                             </div>
-                        </div>
 
+                            <!-- SUB-MODE PANELS (one per engine, shown/hidden by selectEngine) -->
+
+                            <!-- AUTO -->
+                            <div id="submode-auto" class="submode-panel" style="margin-top:8px;padding:8px 10px;background:#f0faf5;border:1px solid #b2dfcb;border-radius:8px;font-size:0.83em;color:#2a7;font-weight:500;display:flex;align-items:center;gap:8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                Smart Auto-Routing: Erkennt automatisch DVD, ISO, MKV, MP4 und wählt den besten Player.
+                            </div>
+
+                            <!-- CHROME NATIVE -->
+                            <div id="submode-chrome" class="submode-panel" style="display:none;margin-top:8px;">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    <button class="submode-btn active" data-mode="chrome_direct" onclick="selectSubMode('chrome_direct',this,'chrome')" style="padding:5px 11px;border-radius:7px;border:1px solid #2a7;background:#e8f8f0;font-size:0.8em;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                        Direct (Raw)
+                                    </button>
+                                    <button class="submode-btn" data-mode="chrome_remux" onclick="selectSubMode('chrome_remux',this,'chrome')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                        mkvmerge Remux
+                                    </button>
+                                    <button class="submode-btn" data-mode="chrome_fragmp4" onclick="selectSubMode('chrome_fragmp4',this,'chrome')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                                        FFmpeg FragMP4
+                                    </button>
+                                    <button class="submode-btn" data-mode="chrome_hls" onclick="selectSubMode('chrome_hls',this,'chrome')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.59 16.11a6 6 0 0 1 6.82 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                        HLS via MTX
+                                    </button>
+                                </div>
+                                <div id="chrome-info-strip" style="margin-top:6px;font-size:0.78em;color:#555;padding:4px 8px;background:#f5f5f5;border-radius:5px;">
+                                    Direct Play: MP4/WebM werden nativ im Browser abgespielt — keine Rechenleistung nötig.
+                                </div>
+                            </div>
+
+                            <!-- VLC HLS — 4 DVD VARIANTS -->
+                            <div id="submode-vlc" class="submode-panel" style="display:none;margin-top:8px;">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap; align-items:center;">
+                                    <button class="submode-btn active" data-mode="vlc_embedded" onclick="selectSubMode('vlc_embedded',this,'vlc')" style="padding:5px 11px;border-radius:7px;border:1px solid #e67e22;background:#fff3e0;font-size:0.8em;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                                        DVD-Ordner
+                                    </button>
+                                    <button class="submode-btn" data-mode="vlc_iso" onclick="selectSubMode('vlc_iso',this,'vlc')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                                        ISO-Image
+                                    </button>
+                                    <button class="submode-btn" data-mode="vlc_device" onclick="selectSubMode('vlc_device',this,'vlc')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        DVD-Gerät
+                                    </button>
+                                    <button class="submode-btn" data-mode="vlc_network" onclick="selectSubMode('vlc_network',this,'vlc')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                        Netzwerk-URL
+                                    </button>
+                                </div>
+                                <div id="vlc-submode-network-input" style="display:none;margin-top:6px;">
+                                    <input id="vlc-network-url" type="text" placeholder="rtsp:// oder http:// Stream-URL..." style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid #ccc;font-size:0.82em;box-sizing:border-box;">
+                                </div>
+                                <div id="vlc-submode-device-input" style="display:none;margin-top:6px;">
+                                    <input id="vlc-device-path" type="text" value="/dev/dvd" placeholder="/dev/dvd oder /dev/sr0" style="width:200px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;font-size:0.82em;">
+                                </div>
+                                <div style="margin-top:6px;font-size:0.78em;color:#555;padding:4px 8px;background:#fff8ee;border-radius:5px;display:flex;align-items:center;gap:6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                                    VLC transkodiert im Hintergrund → HLS → Video.js im Browser (popup-frei, seekbar aktiv)
+                                </div>
+                            </div>
+
+                            <!-- MTX STREAMING -->
+                            <div id="submode-mtx" class="submode-panel" style="display:none;margin-top:8px;">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                    <button class="submode-btn active" data-mode="mtx_hls" onclick="selectSubMode('mtx_hls',this,'mtx')" style="padding:5px 11px;border-radius:7px;border:1px solid #2980b9;background:#eaf4fb;font-size:0.8em;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                                        HLS
+                                    </button>
+                                    <button class="submode-btn" data-mode="mtx_webrtc" onclick="selectSubMode('mtx_webrtc',this,'mtx')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                        WebRTC
+                                    </button>
+                                    <button class="submode-btn" data-mode="mtx_rtsp" onclick="selectSubMode('mtx_rtsp',this,'mtx')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.59 16.11a6 6 0 0 1 6.82 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                        RTSP
+                                    </button>
+                                    <button class="submode-btn" data-mode="mtx_rtmp" onclick="selectSubMode('mtx_rtmp',this,'mtx')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/></svg>
+                                        RTMP
+                                    </button>
+                                </div>
+                                <div style="margin-top:6px;font-size:0.78em;color:#555;padding:4px 8px;background:#eaf4fb;border-radius:5px;display:flex;align-items:center;gap:6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.59 16.11a6 6 0 0 1 6.82 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                                    MediaMTX Server muss laufen. HLS und WebRTC werden direkt im Browser abgespielt.
+                                </div>
+                            </div>
+
+                            <!-- PYPLAYER -->
+                            <div id="submode-pyplayer" class="submode-panel" style="display:none;margin-top:8px;">
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    <button class="submode-btn active" data-mode="pyplayer_native" onclick="selectSubMode('pyplayer_native',this,'pyplayer')" style="padding:5px 11px;border-radius:7px;border:1px solid #8e44ad;background:#f5eafb;font-size:0.8em;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                        pyvidplayer2
+                                    </button>
+                                    <button class="submode-btn" data-mode="pyplayer_mpv" onclick="selectSubMode('pyplayer_mpv',this,'pyplayer')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                        mpv
+                                    </button>
+                                    <button class="submode-btn" data-mode="pyplayer_pip" onclick="selectSubMode('pyplayer_pip',this,'pyplayer')" style="padding:5px 11px;border-radius:7px;border:1px solid #ddd;background:#fafafa;font-size:0.8em;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><path d="M15 11h5v4h-5z"/></svg>
+                                        Mini-Overlay
+                                    </button>
+                                </div>
+                                <div style="margin-top:6px;font-size:0.78em;color:#555;padding:4px 8px;background:#f5eafb;border-radius:5px;display:flex;align-items:center;gap:6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6M12 19h1a5 5 0 0 0 5-5v-1h3.5L16 8l-5.5 5H14v1a2 2 0 0 1-2 2h-1"/></svg>
+                                    pyvidplayer2 öffnet ein eigenständiges Python-Fenster. Ideal für hardwarebeschleunigtes Rendering.
+                                </div>
+                            </div>
+                        </div>
                         <!-- Coordinated Renderer Pipeline -->
                         <div id="toast-container"></div>
                         <div id="coordinated-media-renderer-pipeline-viewport" class="premium-player-container"
@@ -3695,41 +3889,63 @@
                                 style="width: 100%; height: 100%; border-radius: 8px; z-index: 1; visibility: hidden;"></video>
                             <div id="idle-state-media-icon-symbol"
                                 style="color: #666; text-align: center; padding: 40px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; background: rgba(26,26,26,0.8); pointer-events: none;">
-                                <div
-                                    style="font-size: 5em; margin-bottom: 15px; opacity: 0.3; display: flex; justify-content: center;">
-                                    <span class="icon-video" style="width: 100px; height: 100px;"></span>
-                                </div>
-                                <p data-i18n="video_placeholder" style="font-weight: 500; letter-spacing: 0.5px;">Kein
-                                    Video ausgewählt</p>
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:20px;"><rect x="2" y="3" width="20" height="15" rx="2" ry="2"/><polyline points="10 8 14 10.5 10 13 10 8"/></svg>
+                                <span data-i18n="video_placeholder" style="color: #999; font-weight: 500;">Kein Video ausgewählt</span>
                             </div>
                         </div>
 
                         <!-- Advanced Player Controls -->
+                        <!-- Advanced Player Controls -->
                         <div id="advanced-player-controls" class="glass-controls"
-                            style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 15px; border-radius: 12px;">
-                            <button id="btn-stop" onclick="stopVideo()" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Stop">■</button>
-                            <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Shuffle">🔀</button>
-                            <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Repeat">🔁</button>
-                            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 5px 5px;"></div>
-                            <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Rewind 10s">⏪</button>
-                            <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Forward 10s">⏩</button>
-                            <div style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 0 10px;">
-                                <span id="video-current-time" style="color: #666; font-family: monospace; font-size: 0.85em; width: 50px;">00:00</span>
-                                <input type="range" id="video-seek-slider" min="0" max="100" value="0"
-                                    style="flex: 1; height: 6px; cursor: pointer; accent-color: #2a7; border-radius: 3px;">
-                                <span id="video-duration" style="color: #666; font-family: monospace; font-size: 0.85em; width: 50px;">00:00</span>
+                            style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05);">
+                            
+                            <button id="btn-stop" onclick="stopVideo()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Stop">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#333"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                            </button>
+                            
+                            <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Shuffle">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                            </button>
+                            
+                            <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Repeat">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                            </button>
+
+                            <div style="width: 1px; background: rgba(0,0,0,0.1); margin: 8px 4px;"></div>
+
+                            <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Rewind 10s">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+                            </button>
+                            
+                            <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Forward 10s">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="#333"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                            </button>
+
+                            <div style="flex: 1; display: flex; align-items: center; gap: 12px; padding: 0 15px;">
+                                <span id="video-current-time" style="color: #666; font-family: 'Inter', ui-monospace, monospace; font-size: 0.85em; width: 45px; font-variant-numeric: tabular-nums;">00:00</span>
+                                <div style="flex:1; position:relative; display:flex; align-items:center;">
+                                    <input type="range" id="video-seek-slider" min="0" max="100" value="0"
+                                        style="width: 100%; height: 6px; cursor: pointer; accent-color: #2a7; border-radius: 3px; -webkit-appearance: none; background: #e0e0e0; transition: background 0.2s;">
+                                    <style>
+                                        #video-seek-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #2a7; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+                                        #video-seek-slider::-moz-range-thumb { width: 14px; height: 14px; background: #2a7; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+                                        #video-seek-slider:hover { background: #d0d0d0; }
+                                    </style>
+                                </div>
+                                <span id="video-duration" style="color: #666; font-family: 'Inter', ui-monospace, monospace; font-size: 0.85em; width: 45px; font-variant-numeric: tabular-nums;">00:00</span>
                             </div>
-                            <button id="btn-speed" onclick="toggleSpeed()" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Speed">⏱️</button>
-                            <button id="btn-eq" onclick="openEQ()" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Equalizer">🎚️</button>
-                            <button id="btn-pip" onclick="togglePip()" class="player-btn-premium"
-                                style="width: 45px; height: 45px;" title="Picture in Picture">🖼️</button>
+
+                            <button id="btn-speed" onclick="toggleSpeed()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Speed">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </button>
+                            
+                            <button id="btn-eq" onclick="openEQ()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Equalizer">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg>
+                            </button>
+                            
+                            <button id="btn-pip" onclick="togglePip()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Picture in Picture">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><path d="M15 11h5v4h-5z"/></svg>
+                            </button>
                         </div>
 
                         <!-- Orchestrator Ingress Buffers -->
@@ -3742,7 +3958,7 @@
                             <div style="margin-top: 10px; text-align: center;">
                                 <button onclick="pickAndPlayInVLC()"
                                     style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                                    <span class="icon-load" style="background-color: white;"></span> Datei auswählen
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Datei auswählen
                                 </button>
                                 <button onclick="runBatchRemux()"
                                     style="padding: 8px 14px; border: 1px solid #2a7; background: #2a7; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 10px;">
@@ -3758,39 +3974,58 @@
                         </div>
 
                         <!-- VLC & System Logs inside Player Context for easier debugging -->
-                        <div id="vlc-info"
-                            style="margin-bottom: 20px; padding: 15px; background: #fffcf0; border-radius: 8px; border-left: 4px solid #f90; display: none;">
-                            <div
-                                style="font-weight: bold; color: #333; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
+                        <!-- VLC & System Logs Panel -->
+                        <div id="vlc-info" style="margin-bottom: 16px; padding: 15px; background: #fffcf0; border-radius: 8px; border-left: 4px solid #f90; display: none;">
+                            <div style="font-weight: bold; color: #333; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
                                 <span data-i18n="vlc_now_playing">VLC läuft:</span>
-                                <span id="vlc-status-badge"
-                                    style="background: #2a7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Aktiv</span>
+                                <span id="vlc-status-badge" style="background: #2a7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Aktiv</span>
                             </div>
-                            <div id="vlc-current-file"
-                                style="font-family: monospace; font-size: 0.9em; word-break: break-all; margin-bottom: 10px; color: #555;">
-                                -
-                            </div>
-                            <div
-                                style="background: #222; color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8em; max-height: 120px; overflow-y: auto;">
+                            <div id="vlc-current-file" style="font-family: monospace; font-size: 0.9em; word-break: break-all; margin-bottom: 10px; color: #555;">-</div>
+                            <div style="background: #222; color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8em; max-height: 120px; overflow-y: auto;">
                                 <span id="vlc-pipe-log-feed">Warte auf Logs vom VLC-Subprocess...</span>
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 15px; justify-content: center;">
-                            <button onclick="stopVideo()"
-                                style="padding: 10px 20px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                                <span class="icon-stop" style="background-color: white;"></span> <span
-                                    data-i18n="vlc_btn_stop">Stoppen</span>
-                            </button>
-                            <button id="btn-open-vlc" onclick="switchToVLC()"
-                                style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; align-items: center; gap: 8px;">
-                                <span class="icon-rocket" style="background-color: white;"></span> <span
-                                    data-i18n="vlc_btn_extern">In VLC öffnen</span>
-                            </button>
+                        <!-- ACTIVE ENGINE STATUS STRIP -->
+                        <div id="active-engine-status-strip" style="display:none; margin-bottom:12px; padding:8px 14px; background:#1a1a2e; border-radius:8px; color:#aef; font-family:monospace; font-size:0.82em; align-items:center; gap:10px; flex-wrap:wrap; border:1px solid rgba(255,255,255,0.05);">
+                            <span id="status-strip-icon" style="display:flex; align-items:center;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </span>
+                            <span id="status-strip-engine" style="font-weight:bold; color:#7df;">Chrome Native</span>
+                            <span style="color:#555;">·</span>
+                            <span id="status-strip-mode" style="color:#aaa;">Direct</span>
+                            <span style="color:#555;">·</span>
+                            <span id="status-strip-file" style="color:#ccc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:300px;">—</span>
                         </div>
+
+                        <!-- FOOTER: Stop + VLC Extern (pinned to bottom via margin-top:auto) -->
+                        <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px; padding-top:16px; border-top:1px solid #eee;">
+                            <div style="display:flex; justify-content:center;">
+                                <button onclick="stopVideo()" style="padding:9px 22px;background:#c0392b;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;display:flex;align-items:center;gap:8px;box-shadow:0 2px 6px rgba(192,57,43,0.3);">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                                    <span data-i18n="vlc_btn_stop">Stoppen</span>
+                                </button>
+                            </div>
+                            <!-- VLC EXTERN FALLBACK (always visible at very bottom) -->
+                            <div id="vlc-extern-fallback-bar" style="padding:9px 14px; border:1px solid #e0e0e0; border-radius:8px; background:#f7f7f7; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <span style="font-size:0.78em; color:#999; font-style:italic; flex:1; display:flex; align-items:center; gap:6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                    Fallback / Extern
+                                </span>
+                                <button id="btn-open-vlc" onclick="switchToVLC()" style="padding:6px 13px;background:#2980b9;color:white;border:none;border-radius:7px;cursor:pointer;font-weight:bold;font-size:0.82em;display:flex;align-items:center;gap:6px;box-shadow:0 2px 4px rgba(41,128,185,0.2);">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                    <span data-i18n="vlc_btn_extern">In VLC öffnen</span>
+                                </button>
+                                <button onclick="(() => { selectEngine('vlc', document.querySelector('.engine-btn[data-engine=vlc]')); selectSubMode('vlc_cvlc', null, 'vlc'); triggerOpenWith(); })()" style="padding:6px 13px;background:#555;color:white;border:none;border-radius:7px;cursor:pointer;font-size:0.82em;">
+                                    cvlc (Terminal)
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
+
 
             <!-- Logbuch Tab -->
             <div id="localized-markdown-documentation-journal-panel" class="tab-content"
@@ -3909,13 +4144,21 @@
                 <div style="display: flex; gap: 4px;">
                     <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn"
                         data-i18n="[title]player_btn_shuffle" aria-label="player_shuffle">
-                        <span class="icon-shuffle"></span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6;"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
                     </button>
                     <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn"
                         data-i18n="[title]player_btn_repeat" aria-label="player_repeat">
-                        <span id="repeat-icon" class="icon-repeat"></span>
+                        <span id="repeat-icon" style="display:flex; align-items:center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        </span>
                     </button>
                 </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.95em; color: #444;">
+                <span id="footer-status-label" data-i18n="player_status_playing"></span>
+                <span id="footer-status-title" style="font-weight: bold;"></span>
+                <span id="footer-status-by" style="margin: 0 4px; color: #888;" data-i18n="player_status_by"></span>
+                <span id="footer-status-artist" style="font-weight: 500;"></span>
             </div>
             <div id="active-orchestration-status-message-renderer" style="font-size: 0.85em;"
                 data-i18n="player_select_song">Wählt ein Lied aus
@@ -4602,14 +4845,14 @@
         function updateRepeatUI() {
             const btn = document.getElementById('btn-repeat');
             if (!btn) return;
-            const icon = btn.querySelector('span');
-            if (icon) {
+            const container = document.getElementById('repeat-icon');
+            if (container) {
                 if (isRepeat === 'all') {
-                    icon.className = 'icon-repeat-on';
+                    container.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
                 } else if (isRepeat === 'one') {
-                    icon.className = 'icon-repeat-one';
+                    container.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><path d="M11 10h1v4"/><path d="M10 14h3"/></svg>';
                 } else {
-                    icon.className = 'icon-repeat';
+                    container.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
                 }
             }
             if (isRepeat !== 'off') btn.classList.add('active');
@@ -5849,13 +6092,20 @@
         function play(item, path) {
             console.info(">>> [Play-Trace] play() called for:", item.name, "path:", path);
             const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
-            const isVideo = item.type === 'video' || (item.extension && videoExts.includes(item.extension.toLowerCase()));
+            const isVideo = item.type === 'video' || 
+                            item.type === 'movie' ||
+                            item.category === 'video' || 
+                            item.category === 'movie' || 
+                            item.category === 'abbild' || 
+                            item.category === 'movie/abbild' ||
+                            (!item.extension) || // Folders are likely videos in the movie lib context
+                            (item.extension && videoExts.includes(item.extension.toLowerCase()));
 
             currentVideoItem = item;
             updateMediaSidebar(item, path);
             
             if (isVideo) {
-                console.info(">>> [Play-Trace] isVideo=true, calling playVideo()");
+                console.info(">>> [Play-Trace] isVideo IDENTIFIED (type: " + item.type + ", cat: " + item.category + "). Calling playVideo().");
                 playVideo(item, path);
                 return;
             }
@@ -6033,109 +6283,173 @@
 
         async function triggerOpenWith() {
             if (!currentVideoItem) {
-                showToast(t('player_select_song'));
+                showToast(t('player_select_song') || 'Bitte zuerst eine Datei auswählen.');
                 return;
             }
-            const mode = readValue('playback-engine-strategy-selector', 'chrome_native');
-            const res = await eel.open_video(currentVideoItem.path, mode)();
+            const engine = document.getElementById('player-type')?.value || 'auto';
+            const mode   = document.getElementById('video-mode')?.value   || 'auto';
+
+            // Resolve path: for VLC network use the URL input, for DVD device use the device path
+            let targetPath = currentVideoItem.path;
+            if (mode === 'vlc_network') {
+                const urlInput = document.getElementById('vlc-network-url');
+                if (urlInput && urlInput.value.trim()) targetPath = urlInput.value.trim();
+            } else if (mode === 'vlc_device') {
+                const devInput = document.getElementById('vlc-device-path');
+                if (devInput && devInput.value.trim()) targetPath = devInput.value.trim();
+            }
+
+            console.info('>>> [Play-Trace] triggerOpenWith — engine:', engine, 'mode:', mode, 'path:', targetPath);
+
+            let res;
+            if (engine === 'auto' || mode === 'auto') {
+                res = await eel.open_video_smart(targetPath, mode)();
+            } else {
+                res = await eel.open_video(targetPath, engine === 'mtx' ? 'chrome' : engine, mode)();
+            }
+
             if (res && res.status === 'play') {
-                console.info(">>> [Play-Trace] open_video_smart returned status=play, mode=", res.mode);
-                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native' || res.mode === 'chrome_fragmp4' || res.mode === 'chrome_remux') {
-                    startEmbeddedVideo(currentVideoItem, res.path);
-                } else if (res.mode.startsWith('chrome_')) {
-                    startEmbeddedVideo(currentVideoItem, res.path);
-                }
+                console.info('>>> [Play-Trace] triggerOpenWith returned status=play, mode=', res.mode);
+                startEmbeddedVideo(currentVideoItem, res.path, null, res.type || null);
+                updateStatusStrip(engine, mode, targetPath, true);
             } else if (res && res.status === 'ok') {
-                console.info(">>> [Play-Trace] open_video_smart returned status=ok, mode=", res.mode);
-                // Standalone player started, update UI to reflect external playback
-                showExternalStatus(currentVideoItem.path, res.mode);
-                
-                // Set a hint in the video placeholder to reflect this
-                const placeholder = document.getElementById('video-placeholder-message');
-                if (placeholder) {
-                    const modeLabel = res.mode === 'vlc_dvd' ? 'VLC (DVD/ISO)' : (res.mode || 'Externer Player');
-                    placeholder.textContent = `Externer Player aktiv: ${modeLabel}`;
-                    placeholder.style.color = '#3498db';
-                }
+                console.info('>>> [Play-Trace] triggerOpenWith returned status=ok, mode=', res.mode);
+                updateStatusStrip(engine, mode, targetPath, false);
             } else if (res && res.status === 'error') {
-                console.error(">>> [Play-Trace] open_video_smart returned ERROR:", res.error);
-                showToast(res.error);
             }
         }
 
-        function updateVideoModes() {
-            const type = safeValue('player-type');
-            const modeSelect = document.getElementById('video-mode');
-            if (!modeSelect) return;
+        function updateStatusStrip(engine, mode, file, isPlaying) {
+            const strip = document.getElementById('active-engine-status-strip');
+            if (!strip) return;
+            strip.style.display = 'flex';
 
-            const modes = {
-                'auto': [
-                    { value: 'auto', label: '✨ Smart Auto-Routing' }
-                ],
-                'chrome': [
-                    { value: 'chrome_direct', label: t('video_mode_chrome') },
-                    { value: 'chrome_remux', label: 'mkvmerge PIPE KIT (VLC-frei)' },
-                    { value: 'chrome_hls', label: t('video_mode_mediamtx') },
-                    { value: 'chrome_fragmp4', label: 'ffmpeg FragMP4' },
-                    { value: 'chrome_webrtc', label: t('video_mode_mediamtx_webrtc') },
-                    { value: 'chrome_ffmpeg_browser', label: t('video_mode_ffmpeg_browser') }
-                ],
-                'vlc': [
-                    { value: 'vlc_cvlc', label: t('video_mode_cvlc') },
-                    { value: 'vlc_embedded', label: t('video_mode_embedded_vlc') },
-                    { value: 'vlc_iso', label: t('video_mode_dvd_native') },
-                    { value: 'vlc_extern', label: t('video_mode_vlc_external') },
-                    { value: 'vlc_ts', label: t('video_mode_vlc_ts') }
-                ],
-                'pyplayer': [
-                    { value: 'pyplayer_native', label: 'pyvidplayer2' },
-                    { value: 'pyplayer_mpv', label: 'mpv Embedded' },
-                    { value: 'pyplayer_pip', label: 'Mini-Overlay' }
-                ]
-            };
+            const engineEl = document.getElementById('status-strip-engine');
+            const modeEl   = document.getElementById('status-strip-mode');
+            const fileEl   = document.getElementById('status-strip-file');
+            const iconEl   = document.getElementById('status-strip-icon');
 
-            const selectedModes = modes[type] || [];
-            safeHtml('video-mode', selectedModes.map(m => `<option value="${m.value}">${m.label}</option>`).join(''));
-            orchestrateVideoPlaybackMode();
+            if (engineEl) engineEl.textContent = engine.charAt(0).toUpperCase() + engine.slice(1);
+            if (modeEl)   modeEl.textContent   = mode;
+            if (fileEl)   fileEl.textContent   = file.split('/').pop();
+
+            if (iconEl) {
+                if (isPlaying) {
+                    iconEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="#7df"><path d="M8 5v14l11-7z"/></svg>';
+                } else {
+                    iconEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="#e67e22"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+                }
+            }
         }
 
-        function orchestrateVideoPlaybackMode() {
-            const select = document.getElementById('video-mode');
-            const mode = select.value;
+        function selectEngine(engine, btn) {
+            // Update hidden input
+            const playerTypeInput = document.getElementById('player-type');
+            if (playerTypeInput) playerTypeInput.value = engine;
 
-            if (mode === 'playlist') {
-                if (typeof loadPlaylistUI === 'function') loadPlaylistUI();
-                const plBtn = document.getElementById('sequential-buffer-tab-trigger');
-                switchTab('playlist', plBtn);
-                // Reset select to previous mode or native?
-                select.value = 'chrome_direct';
-                return;
+            // Style engine buttons
+            document.querySelectorAll('.engine-btn').forEach(b => {
+                b.style.border = '2px solid #ddd';
+                b.style.background = '#fafafa';
+            });
+            if (btn) {
+                const colors = { auto:'#2a7', chrome:'#2a7', vlc:'#e67e22', mtx:'#2980b9', pyplayer:'#8e44ad' };
+                const bgs = { auto:'#e8f8f0', chrome:'#e8f8f0', vlc:'#fff3e0', mtx:'#eaf4fb', pyplayer:'#f5eafb' };
+                btn.style.border = `2px solid ${colors[engine] || '#2a7'}`;
+                btn.style.background = bgs[engine] || '#e8f8f0';
             }
 
-            // Show "Open with" button only if video loaded
+            // Show/hide submode panels
+            document.querySelectorAll('.submode-panel').forEach(p => p.style.display = 'none');
+            const panel = document.getElementById(`submode-${engine}`);
+            if (panel) panel.style.display = '';
+
+            // Set default mode for the engine
+            const defaults = { auto:'auto', chrome:'chrome_direct', vlc:'vlc_embedded', mtx:'mtx_hls', pyplayer:'pyplayer_native' };
+            const modeInput = document.getElementById('video-mode');
+            if (modeInput) modeInput.value = defaults[engine] || 'auto';
+
+            // Show/hide open-with button
             const openWithBtn = document.getElementById('btn-open-with-video');
-            if (openWithBtn) {
-                openWithBtn.style.display = currentVideoItem ? 'inline-block' : 'none';
+            if (openWithBtn) openWithBtn.style.display = currentVideoItem ? 'inline-block' : 'none';
+        }
+
+        function selectSubMode(mode, btn, engine) {
+            // Update hidden input
+            const modeInput = document.getElementById('video-mode');
+            if (modeInput) modeInput.value = mode;
+            
+            // Style sibling submode buttons in same engine panel
+            const panel = document.getElementById(`submode-${engine}`);
+            if (panel) {
+                panel.querySelectorAll('.submode-btn').forEach(b => {
+                    b.style.border = '1px solid #ddd';
+                    b.style.background = '#fafafa';
+                    b.style.fontWeight = '';
+                });
+            }
+            if (btn) {
+                const colors = { chrome:'#2a7', vlc:'#e67e22', mtx:'#2980b9', pyplayer:'#8e44ad' };
+                const bgs = { chrome:'#e8f8f0', vlc:'#fff3e0', mtx:'#eaf4fb', pyplayer:'#f5eafb' };
+                btn.style.border = `1px solid ${colors[engine] || '#2a7'}`;
+                btn.style.background = bgs[engine] || '#e8f8f0';
+                btn.style.fontWeight = '600';
             }
 
+            // Toggle extra inputs for VLC network/device
+            const netInput = document.getElementById('vlc-submode-network-input');
+            const devInput = document.getElementById('vlc-submode-device-input');
+            if (netInput) netInput.style.display = mode === 'vlc_network' ? '' : 'none';
+            if (devInput) devInput.style.display = mode === 'vlc_device' ? '' : 'none';
+
+            // Update info strips based on engine
+            const chromeInfo = document.getElementById('chrome-info-strip');
+            const chromeInfoTexts = {
+                chrome_direct: 'Direct Play: MP4/WebM werden nativ im Browser abgespielt — keine Transkodierung.',
+                chrome_remux: 'mkvmerge Remux: MKV-Dateien werden via Pipe-Kit für Chrome kompatibel gemacht.',
+                chrome_fragmp4: 'FFmpeg FragMP4: Universelle Echtzeit-Transkodierung über FragMP4 für alle Formate.',
+                chrome_hls: 'Internal HLS: Experimentelles HLS-Streaming über das interne Backend.'
+            };
+            if (chromeInfo && chromeInfoTexts[mode]) chromeInfo.textContent = chromeInfoTexts[mode];
+
+            const vlcInfo = document.getElementById('vlc-info-strip');
+            const vlcInfoTexts = {
+                vlc_embedded: 'Embedded HLS: VLC streamt das Video als HLS-Stream direkt in diesen Tab.',
+                vlc_browser: 'Standalone VLC: Öffnet die Datei in einer separaten VLC-Instanz (extern).',
+                vlc_dvd: 'VLC DVD Mode: Optimierte Wiedergabe für DVD-Strukturen und ISO-Images.',
+                vlc_network: 'VLC Network: Streamen von einer Netzwerk-URL oder einem Device.',
+                vlc_device: 'VLC Device: Direkte Wiedergabe von physikalischen Datenträgern.'
+            };
+            if (vlcInfo && vlcInfoTexts[mode]) vlcInfo.textContent = vlcInfoTexts[mode];
+
+            const mtxInfo = document.getElementById('mtx-info-strip');
+            const mtxInfoTexts = {
+                mtx_hls: 'MediaMTX HLS: Stabiles HTTP Live Streaming (benötigt MediaMTX Server).',
+                mtx_webrtc: 'MediaMTX WebRTC: Ultra-Low-Latency Wiedergabe (<100ms Verzögerung).',
+                mtx_rtsp: 'MediaMTX RTSP: Forwarding an einen RTSP-Stream-Endpunkt.',
+                mtx_rtmp: 'MediaMTX RTMP: Forwarding an einen RTMP-Stream-Endpunkt.'
+            };
+            if (mtxInfo && mtxInfoTexts[mode]) mtxInfo.textContent = mtxInfoTexts[mode];
+
+            const pyInfo = document.getElementById('pyplayer-info-strip');
+            const pyInfoTexts = {
+                pyplayer_native: 'pyvidplayer2: Nutzt die Python-Bibliothek für eine native Overlay-Wiedergabe.',
+                pyplayer_mpv: 'mpv Standalone: Startet den mächtigen mpv-Player als separaten Prozess.',
+                pyplayer_mini: 'Mini-Overlay: Kompakte Wiedergabe in einem schwebenden Fenster.'
+            };
+            if (pyInfo && pyInfoTexts[mode]) pyInfo.textContent = pyInfoTexts[mode];
+        }
+
+        // Legacy: kept for backward compat, delegates to selectEngine
+        function updateVideoModes() {
+            const type = document.getElementById('player-type');
+            if (type) selectEngine(type.value, document.querySelector(`.engine-btn[data-engine="${type.value}"]`));
+        }
+        function orchestrateVideoPlaybackMode() {
             const dndPanel = document.getElementById('orchestrator-ingress-drag-drop-buffer');
             const embedded = document.getElementById('coordinated-media-renderer-pipeline-viewport');
-
-            if (mode === 'dnd') {
-                if (dndPanel) dndPanel.style.display = 'block';
-                if (embedded) embedded.style.display = 'none';
-            } else {
-                if (dndPanel) dndPanel.style.display = 'none';
-                if (embedded) embedded.style.display = 'flex';
-
-                // If we have a current item, restart playback in the new mode if applicable
-                if (currentVideoItem && !window.__manual_mode_change__) {
-                    // Avoid infinite loop if called from playVideo
-                    // But allow user change to trigger something?
-                    // Actually, usually users change mode and THEN press play, OR expect it to switch now.
-                    // For now, let's just update the UI state.
-                }
-            }
+            if (dndPanel) dndPanel.style.display = 'none';
+            if (embedded) embedded.style.display = 'flex';
         }
 
         function formatTime(seconds) {
@@ -6187,16 +6501,21 @@
                         const streamUrl = res.webrtc || res.hls;
                         const streamType = res.webrtc ? 'video/webrtc' : 'application/x-mpegURL';
                         startEmbeddedVideo(item, streamUrl, null, streamType);
-                    } else if (res.mode.startsWith('chrome_')) {
+                    } else if (res.mode.startsWith('chrome_') || res.mode === 'vlc_embedded') {
                         let msg = "DIRECT PLAYBACK (Chrome Native)";
-                        if (res.path && res.path.startsWith('/video-remux-stream/')) msg = "mkvmerge PIPE KIT (Direct FragMP4)";
+                        if (res.mode === 'vlc_embedded') msg = "VLC EMBEDDED HLS STREAM (DVD/ISO Engine)";
+                        else if (res.path && res.path.startsWith('/video-remux-stream/')) msg = "mkvmerge PIPE KIT (Direct FragMP4)";
                         else if (res.path && res.path.startsWith('/video-stream/')) msg = "ON-THE-FLY TRANSCODING (FragMP4)";
                         showToast(msg, 3000);
-                        startEmbeddedVideo(item, res.path);
+                        startEmbeddedVideo(item, res.path, null, res.type);
                     } else if (res.mode === 'vlc_browser') {
                         startVLC(res.path);
                     }
                 } else if (res && res.status === 'ok') {
+                    if (res.mode === 'locked') {
+                        console.info(">>> [Play-Trace] open_video_smart locked (double trigger avoided)");
+                        return;
+                    }
                     console.info(">>> [Play-Trace] open_video_smart returned status=ok, mode=", res.mode);
                     // Standalone player started, update UI to reflect external playback
                     showExternalStatus(path, res.mode);
@@ -6310,6 +6629,30 @@
                     });
                 }
             }
+
+            // Seeking logic for streams
+            vjsPlayer.off('seeking');
+            vjsPlayer.on('seeking', () => {
+                const newTime = vjsPlayer.currentTime();
+                const currentSrc = vjsPlayer.src();
+                
+                if (currentSrc.includes('/video-remux-stream/') || currentSrc.includes('/video-stream/')) {
+                    console.info("[Video.js] Stream seek requested, hot-reloading at:", newTime);
+                    const base = currentSrc.split('?')[0];
+                    const newPath = `${base}?ss=${newTime}`;
+                    // Important: We must not trigger seeking again in a loop
+                    // Video.js src() call might trigger it. Use a flag if needed.
+                    vjsPlayer.src({ src: newPath, type: vjsPlayer.currentType() });
+                    vjsPlayer.play();
+                } else if (currentSrc.includes('/vlc-hls-live/')) {
+                    console.info("[Video.js] VLC HLS seek requested, signaling backend...");
+                    if (vjsPlayer.originalPath) {
+                         eel.open_video_smart(vjsPlayer.originalPath, "vlc_embedded", newTime)();
+                    }
+                }
+            });
+
+            vjsPlayer.originalPath = path;
 
             // Stop VLC if running
             eel.stop_vlc()();
@@ -6654,7 +6997,8 @@
                         mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
                     }
 
-                    div.onclick = () => {
+                    div.onclick = (e) => {
+                        if (e) e.stopPropagation();
                         playlistIndex = index;
                         // If shuffle is active, find this item in the shuffled list
                         if (isShuffle) {
@@ -9240,60 +9584,48 @@
         <div id="mini-player-container" class="mini-video">
             <!-- Video.js or native video will be injected here -->
         </div>
-        <div class="mini-controls">
-            <button onclick="miniPlayerControl('play')">▶</button>
-            <button onclick="miniPlayerControl('pause')">⏸</button>
-            <button onclick="miniPlayerControl('fullscreen')">⛶</button>
+        <div class="mini-controls" style="display:flex; justify-content:center; gap:10px; padding:8px; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); border-top:1px solid rgba(255,255,255,0.1);">
+            <button onclick="miniPlayerControl('play')" style="background:none; border:none; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; padding:5px; transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button onclick="miniPlayerControl('pause')" style="background:none; border:none; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; padding:5px; transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+            <button onclick="miniPlayerControl('fullscreen')" style="background:none; border:none; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; padding:5px; transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
         </div>
     </div>
 
     <!-- Custom Context Menu for Media Items -->
-    <div id="custom-context-menu" class="custom-context-menu">
-        <div class="context-menu-header" data-i18n="video_mode_label">Playback Mode</div>
-        <div class="context-menu-header">🎬 Chrome Native</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_native')">
-            <span>🌐</span> <span data-i18n="video_mode_chrome">Chrome Native (Direct)</span>
+    <div id="custom-context-menu" class="custom-context-menu" style="min-width:240px; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); border:1px solid #eee; overflow:hidden; padding:4px;">
+        <div class="context-menu-header" data-i18n="video_mode_label" style="padding:10px 14px; font-size:11px; text-transform:uppercase; color:#999; font-weight:800; letter-spacing:0.5px;">Playback Mode</div>
+        <div class="context-menu-header" style="color:#2a7; background:#e8f8f0; margin:2px 4px 6px; border-radius:6px; padding:6px 10px;">Chrome Native</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_native')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:0.9em; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span data-i18n="video_mode_chrome">Chrome Native (Direct)</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')">
-            <span>🚀</span> <span>Live Remux (Native)</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:0.9em; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <span>Live Remux (Native)</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')">
-            <span>📡</span> <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:0.9em; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2980b9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.59 16.11a6 6 0 0 1 6.82 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            <span data-i18n="video_mode_mediamtx">MediaMTX (HLS)</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx_webrtc')">
-            <span>⚡</span> <span data-i18n="video_mode_mediamtx_webrtc">MediaMTX (WebRTC)</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mediamtx_webrtc')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:0.9em; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2980b9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span data-i18n="video_mode_mediamtx_webrtc">MediaMTX (WebRTC)</span>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('ffmpeg_browser')">
-            <span>🎞️</span> <span data-i18n="video_mode_ffmpeg_browser">FFmpeg (Browser)</span>
+        <div class="context-menu-divider" style="height:1px; background:#eee; margin:4px 8px;"></div>
+        <div class="context-menu-header" style="color:#e67e22; background:#fff3e0; margin:6px 4px; border-radius:6px; padding:6px 10px;">VLC / Standalone</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_browser')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:0.9em; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span data-i18n="video_mode_embedded_vlc">Embedded VLC</span>
         </div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-header">📺 VLC / Standalone</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_ts')">
-            <span>🎛️</span> <span data-i18n="video_mode_vlc_ts">VLC (TS-Stream Detection)</span>
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('cvlc')">
-            <span>🎬</span> <span data-i18n="video_mode_cvlc">cvlc solo</span>
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_browser')">
-            <span>🖥️</span> <span data-i18n="video_mode_embedded_vlc">Embedded VLC</span>
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('ffplay')">
-            <span>🚀</span> <span data-i18n="video_mode_ffplay">ffplay (Standalone)</span>
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('mkvmerge_standalone')">
-            <span>📦</span> <span data-i18n="video_mode_mkvmerge_standalone">mkvmerge (Standalone)</span>
-        </div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-header">📀 Disc / Hardware</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('dvd_native')">
-            <span>📀</span> <span data-i18n="video_mode_dvd_native">DVD / ISO (Native)</span>
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('bluray_native')">
-            <span>💿</span> <span data-i18n="video_mode_bluray_native">Blu-ray (Native)</span>
-        </div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')">
-            <span>📺</span> <span data-i18n="video_mode_vlc_external">VLC (Extern)</span>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; font-size:0.9em; border-radius:6px; transition:background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span data-i18n="video_mode_vlc_external">VLC (Extern)</span>
         </div>
     </div>
 
