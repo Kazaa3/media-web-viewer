@@ -5847,6 +5847,7 @@
         }
 
         function play(item, path) {
+            console.info(">>> [Play-Trace] play() called for:", item.name, "path:", path);
             const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
             const isVideo = item.type === 'video' || (item.extension && videoExts.includes(item.extension.toLowerCase()));
 
@@ -5854,13 +5855,14 @@
             updateMediaSidebar(item, path);
             
             if (isVideo) {
+                console.info(">>> [Play-Trace] isVideo=true, calling playVideo()");
                 playVideo(item, path);
                 return;
             }
             // Ensure video is stopped if audio starts
             stopVideo();
-
-            // Highlight in list
+            
+            // Highlight in list (audio specific)
             document.querySelectorAll('.implementation-encapsulated-state-buffer-node').forEach((el, idx) => {
                 let list = isShuffle ? shuffledPlaylist : currentPlaylist;
                 if (list[idx] === item) {
@@ -5879,7 +5881,7 @@
             activeAudioPipeline.play().catch(e => {
                 if (isUnsupportedMediaError(e)) {
                     console.warn('Audio playback unsupported for source:', path, e);
-                    safeText('active-orchestration-status-message-renderer', t('player_unsupported_source') || 'Unsupported media source for browser playback.');
+                    safeText('active-orchestration-status-message-renderer', (t('player_unsupported_source') || 'Unsupported media source for browser playback.'));
                     return;
                 }
                 console.error('Audio playback failed:', e);
@@ -5894,14 +5896,11 @@
                 }
             }
 
-            // Python Backend anfunken
+            // Python Backend anfunken (ONLY FOR AUDIO)
             eel.play_media(path)();
         }
 
         function updateMediaSidebar(item, path) {
-            // Update Status Bar
-            safeHtml('active-orchestration-status-message-renderer', `${t('player_status_playing')}<strong>${item.tags.title || item.name}</strong>${t('player_status_by')}${item.tags.artist || 'Unknown'}`);
-
             // Update Sidebar
             let tags = item.tags;
             console.log("Updating sidebar for item:", item.name);
@@ -6005,6 +6004,14 @@
             }
 
             safeHtml('sidebar-filesystem-handle-string-renderer', fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml);
+
+            // Update footer status message with proper spacing and translations
+            const playingLabel = t('player_status_playing') || 'Playing: ';
+            const byLabel = t('player_status_by') || ' by ';
+            const titleStr = item.tags.title || item.name;
+            const finalArtistStr = item.tags.artist || 'Unknown';
+            
+            safeHtml('active-orchestration-status-message-renderer', `${playingLabel} &nbsp; <strong>${titleStr}</strong> &nbsp; ${byLabel} &nbsp; ${finalArtistStr}`);
         }
 
         // ============ Video Player ============
@@ -6032,10 +6039,26 @@
             const mode = readValue('playback-engine-strategy-selector', 'chrome_native');
             const res = await eel.open_video(currentVideoItem.path, mode)();
             if (res && res.status === 'play') {
-                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native') {
+                console.info(">>> [Play-Trace] open_video_smart returned status=play, mode=", res.mode);
+                if (res.mode === 'mediamtx' || res.mode === 'mediamtx_webrtc' || res.mode === 'chrome_native' || res.mode === 'chrome_fragmp4' || res.mode === 'chrome_remux') {
+                    startEmbeddedVideo(currentVideoItem, res.path);
+                } else if (res.mode.startsWith('chrome_')) {
                     startEmbeddedVideo(currentVideoItem, res.path);
                 }
+            } else if (res && res.status === 'ok') {
+                console.info(">>> [Play-Trace] open_video_smart returned status=ok, mode=", res.mode);
+                // Standalone player started, update UI to reflect external playback
+                showExternalStatus(currentVideoItem.path, res.mode);
+                
+                // Set a hint in the video placeholder to reflect this
+                const placeholder = document.getElementById('video-placeholder-message');
+                if (placeholder) {
+                    const modeLabel = res.mode === 'vlc_dvd' ? 'VLC (DVD/ISO)' : (res.mode || 'Externer Player');
+                    placeholder.textContent = `Externer Player aktiv: ${modeLabel}`;
+                    placeholder.style.color = '#3498db';
+                }
             } else if (res && res.status === 'error') {
+                console.error(">>> [Play-Trace] open_video_smart returned ERROR:", res.error);
                 showToast(res.error);
             }
         }
@@ -6127,6 +6150,14 @@
         let vjsPlayer = null;
 
         async function playVideo(item, path) {
+            console.info(">>> [Play-Trace] playVideo() called for:", path);
+            if (window._locking_video_playback) {
+                console.warn(">>> [Play-Trace] Playback LOCK detected. Skipping double call.");
+                return;
+            }
+            window._locking_video_playback = true;
+            setTimeout(() => { window._locking_video_playback = false; }, 1000);
+
             currentVideoItem = item;
             currentVideoPath = path;
 

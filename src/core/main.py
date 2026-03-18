@@ -2732,7 +2732,17 @@ def set_bandwidth_limit(limit_mbps):
 def play_media(path):
     """
     @brief Triggers media playback based on the current playback mode.
+    Now hardened: Only handles audio to prevent double-starts with open_video logic.
     """
+    logging.info(f"DEBUG: [Player-Trace] play_media called for: {path}")
+    
+    # NEW: Safety check - if it's a video, do NOT trigger here (use open_video_smart)
+    ext = Path(path).suffix.lower()
+    video_exts = ['.mp4', '.mkv', '.webm', '.ogg', '.mov', '.avi', '.m4v', '.iso']
+    if ext in video_exts:
+        logging.warning(f"DEBUG: [Player-Trace] play_media IGNORED for video file: {path}. Use open_video_smart.")
+        return {"status": "error", "message": "Use open_video_smart for video"}
+
     mode = PARSER_CONFIG.get("playback_mode", "chrome_native")
     
     # Priority 1: Audio is always Chrome Native if mode is default or requested
@@ -3187,16 +3197,21 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto"):
     @brief Explicitly opens a media file with a specific player type and mode.
     Handles 'auto' routing and specializes for ISO, DVD, Audio.
     """
-    logging.info(f"[Player] Open triggering: {file_path} (via {player_type}/{mode})")
+    logging.info(f"DEBUG: [Player-Trace] open_video called for: {file_path} (type: {player_type}, mode: {mode})")
     file_path = resolve_media_path(file_path)
     
     # 1. Advanced Format Analysis
     is_dvd_iso = file_path.lower().endswith('.iso')
-    is_dvd_folder = os.path.isdir(file_path) and (
-        os.path.exists(os.path.join(file_path, "VIDEO_TS")) or 
-        os.path.exists(os.path.join(file_path, "BDMV"))
-    )
+    is_dvd_folder = False
+    if os.path.isdir(file_path):
+        is_dvd_folder = any([
+            os.path.exists(os.path.join(file_path, "VIDEO_TS")),
+            os.path.exists(os.path.join(file_path, "BDMV")),
+            any(f.lower().endswith('.iso') for f in os.listdir(file_path))
+        ])
     is_audio = file_path.lower().endswith(('.mp3', '.m4b', '.opus', '.flac', '.wav'))
+    
+    logging.info(f"DEBUG: [Player-Trace] Analysis: ISO={is_dvd_iso}, DVD_Folder={is_dvd_folder}, Audio={is_audio}")
 
     # 2. Auto-Detection Logic
     if player_type == "auto" or mode == "auto":
@@ -3275,8 +3290,15 @@ def open_video_smart(file_path: str, mode: str = "auto"):
     @brief Smart routing for video playback as described in videoplayer logbuch.
     Supports Direct Play, MediaMTX (HLS/WebRTC), and FragMP4.
     """
-    logging.info(f"[Player] Smart Open triggering: {file_path} (mode: {mode})")
+    logging.info(f"DEBUG: [Player-Trace] open_video_smart called for: {file_path} (mode: {mode})")
     file_path = resolve_media_path(file_path)
+    
+    # Global double-trigger lock (Python side)
+    last_trigger = getattr(open_video_smart, '_last_trigger', 0)
+    if time.time() - last_trigger < 1.0:
+         logging.warning(f"DEBUG: [Player-Trace] Python LOCK detected for {file_path}. Skipping.")
+         return {"status": "error", "error": "Debounced"}
+    open_video_smart._last_trigger = time.time()
     
     # 1. Compatibility Check (simplified version of logbuch logic)
     meta = get_video_metadata(file_path)
@@ -3286,7 +3308,9 @@ def open_video_smart(file_path: str, mode: str = "auto"):
                                  (codec in ('vp8', 'vp9') and container in ('webm', 'matroska'))
 
     # 2. Routing Logic
-    if mode == "Direct Play" or (mode == "auto" and is_direct_play_compatible):
+    is_iso = file_path.lower().endswith('.iso')
+    
+    if mode == "Direct Play" or (mode == "auto" and is_direct_play_compatible and not is_iso):
         return {"status": "play", "path": f"/media/{Path(file_path).name}", "mode": "chrome_direct"}
     
     elif mode == "MediaMTX (HLS/WebRTC)":
@@ -3309,9 +3333,15 @@ def open_video_smart(file_path: str, mode: str = "auto"):
         from src.core import db
         item = db.get_media_by_path(file_path)
         item_id = item.get('id') if item else None
+        
+        # If it's an ISO, FragMP4 is acceptable fallback if DB entry exists (it should)
         if item_id:
+            logging.info(f"DEBUG: [Player-Trace] Using FragMP4 (Embedded) for: {file_path}")
             return {"status": "play", "path": f"/video-remux-stream/{item_id}", "mode": "chrome_fragmp4"}
-        return {"status": "error", "error": "Media Item not found for FragMP4", "mode": "chrome_fragmp4"}
+        
+        # If no DB item yet (e.g. fresh scan), fallback to open_video (VLC)
+        logging.info(f"DEBUG: [Player-Trace] No DB entry, falling back to open_video")
+        return open_video(file_path, "auto", mode)
 
     return open_video(file_path, "auto", mode)
 
