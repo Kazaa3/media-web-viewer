@@ -1708,6 +1708,42 @@
                          </div>`;
             });
             html += '</div>';
+
+            // Add Last Results Table if in reporting tab
+            if (containerId === 'parser-reporting-container' && stats.last_results && stats.last_results.length > 0) {
+                html += `<h4 style="margin-top: 30px; margin-bottom: 15px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                            Letzte Parser-Ergebnisse
+                         </h4>
+                         <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85em; text-align: left;">
+                                <thead>
+                                    <tr style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                                        <th style="padding: 10px;">Datei</th>
+                                        <th style="padding: 10px;">Titel / Artist</th>
+                                        <th style="padding: 10px;">Dauer</th>
+                                        <th style="padding: 10px;">Parser-Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+                stats.last_results.forEach(res => {
+                    const details = Object.entries(res.parser_times).map(([n, t]) => `${n}: ${t.toFixed(3)}s`).join(', ');
+                    html += `<tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 10px; color: #666; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">${res.filename}</td>
+                                <td style="padding: 10px;">
+                                    <div style="font-weight: 600;">${res.title}</div>
+                                    <div style="font-size: 0.9em; color: #888;">${res.artist}</div>
+                                </td>
+                                <td style="padding: 10px; font-weight: bold; color: #2a7;">${res.total_time.toFixed(3)}s</td>
+                                <td style="padding: 10px; color: #999; font-size: 0.8em;">${details}</td>
+                            </tr>`;
+                });
+
+                html += `</tbody>
+                            </table>
+                         </div>`;
+            }
+
             container.innerHTML = html;
         }
 
