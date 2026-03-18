@@ -6181,28 +6181,34 @@
                 console.log("Open video result:", res);
 
                 if (res && res.status === 'play') {
+                    console.info(">>> [Play-Trace] open_video_smart returned status=play, mode=", res.mode);
                     if (res.mode === 'mediamtx') {
                         showToast("STREAMING via MediaMTX (HLS/WebRTC)", 3000);
-                        // Prefer WebRTC if available, fallback to HLS
                         const streamUrl = res.webrtc || res.hls;
                         const streamType = res.webrtc ? 'video/webrtc' : 'application/x-mpegURL';
                         startEmbeddedVideo(item, streamUrl, null, streamType);
                     } else if (res.mode.startsWith('chrome_')) {
-                        if (res.path && res.path.startsWith('/video-remux-stream/')) {
-                            showToast("mkvmerge PIPE KIT (Direct FragMP4)", 3000);
-                        } else if (res.path && res.path.startsWith('/video-stream/')) {
-                            showToast("ON-THE-FLY TRANSCODING (FragMP4)", 3000);
-                        } else if (type === 'auto') {
-                            showToast("DIRECT PLAYBACK (Chrome Native)", 3000);
-                        }
+                        let msg = "DIRECT PLAYBACK (Chrome Native)";
+                        if (res.path && res.path.startsWith('/video-remux-stream/')) msg = "mkvmerge PIPE KIT (Direct FragMP4)";
+                        else if (res.path && res.path.startsWith('/video-stream/')) msg = "ON-THE-FLY TRANSCODING (FragMP4)";
+                        showToast(msg, 3000);
                         startEmbeddedVideo(item, res.path);
                     } else if (res.mode === 'vlc_browser') {
                         startVLC(res.path);
                     }
                 } else if (res && res.status === 'ok') {
+                    console.info(">>> [Play-Trace] open_video_smart returned status=ok, mode=", res.mode);
                     // Standalone player started, update UI to reflect external playback
                     showExternalStatus(path, res.mode);
+                    
+                    // CLEARLY inform the user in the video tab that it's playing externally
+                    const placeholder = document.getElementById('video-placeholder-message');
+                    if (placeholder) {
+                        const modeLabel = res.mode === 'vlc_dvd' ? 'VLC (DVD/ISO)' : (res.mode || 'Externer Player');
+                        placeholder.innerHTML = `<span style="color: #3498db; font-size: 1.2em; font-weight: bold;">📺 Externer Player aktiv</span><br><br><span style="color: #888;">Das Video "${item.name}" wird in <strong>${modeLabel}</strong> wiedergegeben.</span>`;
+                    }
                 } else if (res && res.status === 'error') {
+                    console.error(">>> [Play-Trace] open_video_smart ERROR:", res.error);
                     showToast(res.error);
                 }
             } catch (err) {

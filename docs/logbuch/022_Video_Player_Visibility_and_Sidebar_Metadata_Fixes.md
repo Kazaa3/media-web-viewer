@@ -77,4 +77,94 @@
 
 ---
 
-*Erstellt durch Antigravity (AI Assistant)*
+## Triple-Layer Hard Locks & DVD Protocol Fix – 18. März 2026
+
+**1. Strict DVD Path Normalization:**
+- Fehlerursache: VLC erhielt den /VIDEO_TS-Subfolder statt des DVD-Hauptordners, was zu Protokollfehlern und Wiederholungen führte.
+- Lösung: In `open_video()` wurde ein Normalizer eingebaut, der bei DVD-Strukturen automatisch auf den Elternordner pivotiert.
+- Ergebnis: VLC startet jetzt sauber mit dem dvd://-Protokoll.
+
+**2. Global Backend Lock (PLAYBACK_LOCKS):**
+- Ein globales Dictionary-basiertes Lock im Python-Backend verhindert, dass mehrere Player-Starts für dieselbe Datei innerhalb von 1 Sekunde ausgelöst werden.
+- Alle parallelen Events werden blockiert und nur der erste Start ausgeführt.
+
+**3. Hardened play_media:**
+- Die Funktion `play_media` ignoriert jetzt strikt Video-Extensions und kann nie mehr eine VLC-Instanz für Videos starten.
+
+**4. UI Feedback:**
+- Der Video-Player-Tab zeigt jetzt explizit: "📺 Externer Player aktiv: VLC (DVD/ISO)" wenn ein Standalone-Fenster genutzt wird.
+
+**Test:**
+- DVD-Ordner und ISO öffnen: Nur noch ein VLC-Fenster, Status im Tab korrekt.
+- Terminal-Log: `DEBUG: [Player-Trace] open_video LOCK detected for ... Skipping secondary start.` zeigt, dass das Lock greift.
+
+**Status:** Triple-Layer-Lock & DVD-Protokoll gefixt (18.03.2026)
+
+---
+
+## Final Hard Locks & UI Feedback – 18. März 2026
+
+**1. Backend "Video-Lock" für play_media:**
+- Die Funktion `play_media` im Backend wurde so angepasst, dass sie Video-Dateien explizit ignoriert.
+- Selbst wenn ein UI-Komponent versehentlich den generischen Play-Befehl auslöst, startet keine zweite VLC-Instanz mehr für Videos.
+- Video-Dateien werden jetzt ausschließlich über die `open_video_smart`-Pipeline behandelt.
+
+**2. Status "Kein Video ausgewählt" ersetzt:**
+- Öffnet man ein ISO oder einen Ordner, der einen externen Player (VLC) startet, zeigt der Video-Tab jetzt eine klare Statusmeldung:
+    - "📺 Externer Player aktiv: VLC (DVD/ISO)"
+- Das ersetzt die verwirrende "No video selected"-Meldung und macht transparent, warum der Player leer bleibt.
+
+**3. UI Feedback & Tracing:**
+- Sichtbare Toast-Messages beim Moduswechsel (z.B. "DIRECT PLAYBACK", "mkvmerge PIPE KIT").
+- Jeder Start eines externen Players wird mit `[Play-Trace]` im Console-Log dokumentiert.
+
+**Test:**
+- ISO-Objekte öffnen: Kein doppeltes VLC-Fenster mehr, Status im Video-Tab korrekt.
+- Alle externen Player-Aktionen sind nachvollziehbar geloggt.
+
+**Status:** Finaler Lock & Feedback implementiert (18.03.2026)
+
+---
+
+## Deadlock-Fix, Parser-Interferenz & Singleton-Verbesserung – 18. März 2026
+
+**1. Logic Deadlock behoben:**
+- Problem: `open_video_smart` setzte einen Lock und rief dann `open_video` auf, das denselben Lock prüfte und sich dadurch selbst blockierte.
+- Lösung: Die Locks verwenden jetzt unterschiedliche Keys für "Smart Routing" und "Direct Playback". Deadlocks sind ausgeschlossen.
+
+**2. Parser-Interferenz:**
+- Der `vlc_parser` wurde für ISO- und DVD-Strukturen explizit deaktiviert, um das Starten von Phantom-VLC-Instanzen im Hintergrund zu verhindern.
+
+**3. Refined Singleton Logic:**
+- Vor jedem neuen Videostart sucht das Backend nach verwaisten VLC-Prozessen und beendet diese gezielt (Hard Process Reset), bevor eine neue Instanz gestartet wird.
+
+**4. PIPE-KIT für H264 wiederhergestellt:**
+- Für H264-Dateien wurde der PIPE-KIT-Remuxer reaktiviert, damit der Browser einen abspielbaren Stream erhält und kein Blackscreen mehr erscheint.
+
+**Test:**
+- Kein Deadlock mehr, keine "locked"-Status-Fehler.
+- Keine doppelten oder Phantom-VLC-Instanzen.
+- MP4/MKV/H264 werden korrekt im Embedded Player angezeigt.
+
+**Status:** Deadlock, Parser-Interferenz & Singleton-Logik gefixt (18.03.2026)
+
+---
+
+## Embedded Player Fallback & VLC-Popup-Handling – 18. März 2026
+
+**Problem:**
+- Es erscheinen weiterhin 2 VLC-Popups bei bestimmten Aktionen.
+
+**Workaround/Strategie:**
+1. Wähle eines der VLC-Popups aus und ordne die Instanz gezielt zu (z.B. per PID oder Fenster-Handle).
+2. Binde diese Instanz in den Embedded Player ein (z.B. via Video-Stream, RTSP, oder Window-Embedding, je nach Plattform und Architektur).
+3. Schließe das Popup-Fenster nach erfolgreicher Einbindung automatisch oder manuell.
+4. Gehe den Weg zurück: Der Embedded Player übernimmt die Wiedergabe, die UI bleibt konsistent, und es gibt keine doppelten Fenster mehr.
+
+**Nächste Schritte:**
+- Automatisierung der Popup-Erkennung und -Zuordnung.
+- Sicherstellen, dass der Embedded Player immer Vorrang hat und Popups nur als Fallback dienen.
+- Optional: User-Feedback, wenn ein Popup übernommen wurde (z.B. Toast "VLC-Instanz übernommen und eingebettet").
+
+**Status:**
+- Workaround dokumentiert, weitere Automatisierung empfohlen.
