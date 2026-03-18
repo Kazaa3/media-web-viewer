@@ -2901,935 +2901,948 @@
                                 data-i18n="options_debug_all_off">Alle Flags aus</button>
                         </div>
 
-                    </div>
-                </div>
-            </div>
+                    </div> <!-- closes right column -->
+                </div> <!-- closes options-general-view flex row -->
 
-            <div id="options-tools-view" class="options-view" style="display: none; padding: 20px;">
-                <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
-                    <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
-                </h2>
+                <div id="options-tools-view" class="options-view"
+                    style="display: none; padding: 20px; overflow-y: auto; height: 100%;">
+                    <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
+                        <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
+                    </h2>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <!-- HandBrake Section -->
-                    <div
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <h3 style="margin-top: 0; color: #d35400;">🚀 HandBrake (High-Level)</h3>
-                        <p style="font-size: 0.9em; color: #666;">Optimized batch encoding for high quality and
-                            small sizes.</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- HandBrake Section -->
+                        <div
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                            <h3 style="margin-top: 0; color: #d35400;">🚀 HandBrake (High-Level)</h3>
+                            <p style="font-size: 0.9em; color: #666;">Optimized batch encoding for high quality and
+                                small sizes.</p>
 
-                        <div style="margin-bottom: 15px;">
-                            <label
-                                style="display: block; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">Encoder
-                                Type:</label>
-                            <select id="hb-encoder"
-                                style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
-                                <option value="x264">Software (x264)</option>
-                                <option value="qsv">Intel QuickSync (QSV)</option>
-                                <option value="nvenc">NVIDIA (NVENC)</option>
-                                <option value="vaapi">VAAPI (Generic HW)</option>
-                            </select>
+                            <div style="margin-bottom: 15px;">
+                                <label
+                                    style="display: block; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">Encoder
+                                    Type:</label>
+                                <select id="hb-encoder"
+                                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                                    <option value="x264">Software (x264)</option>
+                                    <option value="qsv">Intel QuickSync (QSV)</option>
+                                    <option value="nvenc">NVIDIA (NVENC)</option>
+                                    <option value="vaapi">VAAPI (Generic HW)</option>
+                                </select>
+                            </div>
+
+                            <button onclick="triggerHBTranscode()"
+                                style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
+                                Start Transcoding
+                            </button>
                         </div>
 
-                        <button onclick="triggerHBTranscode()"
-                            style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
-                            Start Transcoding
-                        </button>
+                        <!-- WebM Section -->
+                        <div
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                            <h3 style="margin-top: 0; color: #2980b9;">🌐 WebM (VP9 / Ultra Small)</h3>
+                            <p style="font-size: 0.9em; color: #666;">Best for web sharing. High compression with
+                                VP9/Opus.</p>
+
+                            <button onclick="triggerWebMTranscode()"
+                                style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 45px;">
+                                Convert to WebM
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- WebM Section -->
+                    <!-- Transcode Tasks (Full Width) -->
+                    <div id="transcoding-tasks-container" style="margin-top: 30px;">
+                        <h4 style="color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">Active Tasks
+                        </h4>
+                        <div id="transcoding-task-list">
+                            <p style="font-size: 0.9em; color: #999; font-style: italic;">No active tasks.</p>
+                        </div>
+                    </div>
+
+                    <!-- VLC Integration Section (Full Width) -->
                     <div
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <h3 style="margin-top: 0; color: #2980b9;">🌐 WebM (VP9 / Ultra Small)</h3>
-                        <p style="font-size: 0.9em; color: #666;">Best for web sharing. High compression with
-                            VP9/Opus.</p>
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 30px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                            <!-- VLC Stream Panel -->
+                            <div>
+                                <h3
+                                    style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                    <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC
+                                        Stream</span>
+                                </h3>
+                                <div id="vlc-stream-panel" style="display: block;">
+                                    <div style="display: flex; gap: 10px;">
+                                        <input id="vlc-stream-url" type="text"
+                                            placeholder="https://... | rtsp://... | rtmp://..."
+                                            style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;"
+                                            data-i18n="[placeholder]vlc_stream_placeholder" />
+                                        <button onclick="playVLCStream()"
+                                            style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                            ▶ <span data-i18n="vlc_usage_open_in_vlc">Stream starten</span>
+                                        </button>
+                                    </div>
+                                    <div id="vlc-ribbon-status"
+                                        style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.85em;">
+                                    </div>
+                                </div>
+                            </div>
 
-                        <button onclick="triggerWebMTranscode()"
-                            style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 45px;">
-                            Convert to WebM
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Transcode Tasks (Full Width) -->
-                <div id="transcoding-tasks-container" style="margin-top: 30px;">
-                    <h4 style="color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">Active Tasks
-                    </h4>
-                    <div id="transcoding-task-list">
-                        <p style="font-size: 0.9em; color: #999; font-style: italic;">No active tasks.</p>
-                    </div>
-                </div>
-
-                <!-- VLC Integration Section (Full Width) -->
-                <div
-                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 30px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                        <!-- VLC Stream Panel -->
-                        <div>
-                            <h3
-                                style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                                <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC
-                                    Stream</span>
-                            </h3>
-                            <div id="vlc-stream-panel" style="display: block;">
+                            <!-- VLC Playlist Panel -->
+                            <div>
+                                <h3
+                                    style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                    <span class="icon-cassette"></span> <span
+                                        data-i18n="vlc_playlist_integration">Playlist
+                                        Tools</span>
+                                </h3>
                                 <div style="display: flex; gap: 10px;">
-                                    <input id="vlc-stream-url" type="text"
-                                        placeholder="https://... | rtsp://... | rtmp://..."
-                                        style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;"
-                                        data-i18n="[placeholder]vlc_stream_placeholder" />
-                                    <button onclick="playVLCStream()"
-                                        style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
-                                        ▶ <span data-i18n="vlc_usage_open_in_vlc">Stream starten</span>
+                                    <button onclick="importVLCPlaylist()" class="sidebar-badge"
+                                        style="flex: 1; padding: 10px; cursor: pointer; background: #f0f8ff; border: 1px solid #b3d9ff; color: #2980b9; font-weight: bold;">
+                                        Import Playlist
+                                    </button>
+                                    <button onclick="exportToVLC()" class="sidebar-badge"
+                                        style="flex: 1; padding: 10px; cursor: pointer; background: #fff8f0; border: 1px solid #ffd9b3; color: #e67e22; font-weight: bold;">
+                                        Export to VLC
                                     </button>
                                 </div>
-                                <div id="vlc-ribbon-status"
-                                    style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.85em;">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- VLC Playlist Panel -->
-                        <div>
-                            <h3
-                                style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                                <span class="icon-cassette"></span> <span data-i18n="vlc_playlist_integration">Playlist
-                                    Tools</span>
-                            </h3>
-                            <div style="display: flex; gap: 10px;">
-                                <button onclick="importVLCPlaylist()" class="sidebar-badge"
-                                    style="flex: 1; padding: 10px; cursor: pointer; background: #f0f8ff; border: 1px solid #b3d9ff; color: #2980b9; font-weight: bold;">
-                                    Import Playlist
-                                </button>
-                                <button onclick="exportToVLC()" class="sidebar-badge"
-                                    style="flex: 1; padding: 10px; cursor: pointer; background: #fff8f0; border: 1px solid #ffd9b3; color: #e67e22; font-weight: bold;">
-                                    Export to VLC
-                                </button>
-                            </div>
-                            <div id="import-status" style="margin-top: 10px; font-size: 0.8em; display: none;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tool Output / Logs Section -->
-                <div
-                    style="background: #1e1e1e; border-radius: 12px; padding: 20px; margin-top: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                    <h3
-                        style="margin: 0 0 15px 0; color: #eee; font-size: 1.1em; display: flex; align-items: center; gap: 10px;">
-                        <span class="icon-terminal" style="color: #00ff00;"></span> <span>Tool Output /
-                            Logs</span>
-                        <button onclick="clearToolLogs()"
-                            style="margin-left: auto; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; transition: all 0.2s;">Clear</button>
-                    </h3>
-                    <div id="tool-logs-container"
-                        style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 0.85em; color: #00ff00; border: 1px solid #222; scroll-behavior: smooth;">
-                        <div id="tool-logs-content">
-                            <div style="color: #666; font-style: italic;">Waiting for tool output...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="options-environment-view" class="options-view"
-                style="display: none; flex-direction: column; padding: 20px;">
-                <div style="flex: 1; max-width: 500px;">
-                    <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
-                        Python-Umgebung</h3>
-                    <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
-                        data-i18n="options_environment_desc">
-                        Informationen über die aktuell verwendete Python-Umgebung.</p>
-
-                    <div class="kernarchitektur-section">
-                        <h3 data-i18n="env_architecture_title">Kernarchitektur & Systemstatus</h3>
-
-                        <div class="arch-subgroup">
-                            <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_front_end">
-                                <span class="icon-palette"></span> Front End
-                            </h4>
-                            <ul>
-                                <li><strong data-i18n="env_label_gui">Browser:</strong> <span
-                                        id="env-gui-status">-</span></li>
-                                <li><strong data-i18n="env_label_browser_pid">Browser PID:</strong> <span
-                                        id="env-browser-pid">-</span></li>
-                            </ul>
-                        </div>
-
-                        <hr>
-
-                        <div class="arch-subgroup">
-                            <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_backend">
-                                <span class="icon-gear"></span> Backend
-                            </h4>
-                            <ul>
-                                <li><strong data-i18n="env_label_app_version">App-Version:</strong> <span
-                                        id="env-app-version">-</span></li>
-                                <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
-                                    <span id="env-python-version">-</span>
-                                </li>
-                                <li><strong data-i18n="env_label_environment">Umgebung:</strong> <span
-                                        id="env-venv-status">-</span></li>
-                                <li><strong data-i18n="env_label_system">System:</strong> <span
-                                        id="env-platform">-</span></li>
-                                <li><strong data-i18n="env_label_eel_ws">Eel / WS:</strong> <span id="env-eel-status">✅
-                                        Eel | ✅
-                                        Websocket</span></li>
-                                <li><strong data-i18n="env_label_bottle_ws">Bottle / WS:</strong> <span
-                                        id="env-bottle-status">-</span>
-                                </li>
-                                <li><strong data-i18n="env_label_gevent_ws">Gevent / Greenlet:</strong> <span
-                                        id="env-gevent-status">-</span>
-                                </li>
-                                <li><strong data-i18n="env_label_main_pid">Main PID:</strong> <span
-                                        id="env-main-pid">-</span></li>
-                                <li><strong data-i18n="env_label_testbed_pid">Testbed PID:</strong> <span
-                                        id="env-testbed-pid">-</span></li>
-                                <li><strong data-i18n="env_label_selenium_pid">Selenium PID:</strong> <span
-                                        id="env-selenium-pid">-</span></li>
-                                <li><strong data-i18n="env_label_python_executable">Python-Pfad:</strong>
-                                    <span id="env-python-exec" style="word-break: break-all;">-</span>
-                                </li>
-                                <li><strong data-i18n="env_label_environment_path">Env-Pfad:</strong>
-                                    <span id="env-venv-path" style="word-break: break-all;">-</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <hr>
-
-                        <div class="arch-subgroup">
-                            <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_media_handling">
-                                <span class="icon-video"></span> Media-Handling
-                            </h4>
-                            <ul>
-                                <li><strong data-i18n="env_label_mediaplayer">Mediaplayer:</strong>
-                                    <span id="env-mediaplayer-status">-</span>
-                                </li>
-                                <li><strong data-i18n="env_label_mutagen">Mutagen:</strong> <span
-                                        id="env-mutagen-status">-</span></li>
-                                <li><strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span
-                                        id="env-mediainfo-status">-</span></li>
-                                <li><strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span
-                                        id="env-ffmpeg-status">-</span></li>
-                                <li><strong data-i18n="env_label_ffprobe">FFprobe:</strong> <span
-                                        id="env-ffprobe-status">-</span></li>
-                                <li><strong data-i18n="env_label_pymkv">pymkv:</strong> <span
-                                        id="env-pymkv-status">-</span></li>
-                                <li><strong data-i18n="env_label_mkv_info">mkvinfo:</strong> <span
-                                        id="env-mkv-status">-</span></li>
-                                <li><strong data-i18n="env_label_mkvmerge">mkvmerge:</strong> <span
-                                        id="env-mkvmerge-status">-</span></li>
-                                <li><strong data-i18n="env_label_stream_tools">Stream-Tools:</strong> <span
-                                        id="env-stream-tools-status">-</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <hr>
-
-                        <div class="arch-subgroup">
-                            <h4 data-i18n="env_label_core_packages">Core Packages</h4>
-                            <div style="margin-top: 10px;">
-                                <div style="margin-bottom: 8px;">
-                                    <strong style="font-size: 0.85em; color: #666;"
-                                        data-i18n="env_label_core_packages">Core-Packages:</strong>
-                                    <div id="env-core-packages-status" style="font-size: 0.8em; margin-top: 2px;">-
-                                    </div>
-                                </div>
-                                <div style="margin-bottom: 8px;">
-                                    <strong style="font-size: 0.85em; color: #666;"
-                                        data-i18n="env_label_test_tools">Test-Tools:</strong>
-                                    <div id="env-test-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
-                                    </div>
-                                </div>
-                                <div style="margin-bottom: 8px;">
-                                    <strong style="font-size: 0.85em; color: #666;"
-                                        data-i18n="env_label_dev_tools">Entwickler-Tools:</strong>
-                                    <div id="env-dev-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
-                                    </div>
-                                </div>
-                                <div style="margin-bottom: 8px;">
-                                    <strong style="font-size: 0.85em; color: #666;"
-                                        data-i18n="env_label_build_tools">Build-Tools:</strong>
-                                    <div id="env-build-tools-status" style="font-size: 0.8em; margin-top: 2px;">
-                                        -</div>
-                                </div>
-                                <div style="margin-bottom: 8px;">
-                                    <strong style="font-size: 0.85em; color: #666;"
-                                        data-i18n="env_label_requirements_list">Requirements-Status:</strong>
-                                    <div id="env-requirements-list" style="font-size: 0.8em; margin-top: 2px;">-
-                                    </div>
-                                </div>
-                                <div style="margin-bottom: 8px;">
-                                    <strong style="font-size: 0.85em; color: #666;"
-                                        data-i18n="env_label_base_dependencies">Basis-Abhängigkeiten:</strong>
-                                    <div id="env-base-dependencies-status" style="font-size: 0.8em; margin-top: 2px;">-
-                                    </div>
+                                <div id="import-status" style="margin-top: 10px; font-size: 0.8em; display: none;">
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Multi-Venv Concept & Setup Script -->
+                    <!-- Tool Output / Logs Section -->
                     <div
-                        style="margin-top: 20px; background: #f0f7ff; border: 1px solid #d0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <h4 style="color: #0056b3; margin-bottom: 8px; font-size: 1em;"
-                            data-i18n="env_setup_script_title">Virtual Environments initialisieren</h4>
-                        <p style="font-size: 0.85em; color: #444; line-height: 1.4;" data-i18n="env_setup_script_desc">
-                            Nutze das Skript <code>scripts/setup_venvs.sh</code> im Projekt-Root, um alle 7
-                            spezialisierten Umgebungen (Core, Dev, Test, Selenium etc.) automatisch zu erstellen
-                            und zu aktualisieren.
-                        </p>
-                    </div>
-
-                    <h4 style="font-size: 0.95em; margin-top: 10px; margin-bottom: 12px; color: #444;">
-                        Vorhandene Umgebungen</h4>
-
-                    <!-- Local Virtual Environments (Priority 1) -->
-                    <div style="margin-top: 15px;">
-                        <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
-                            data-i18n="options_local_venvs_priority_title">1. 📁 Lokale Virtual Environments
-                            (Projekt-Struktur)</h4>
-                        <div id="multi-venv-concept"
-                            style="font-size: 0.85em; color: #666; margin-bottom: 10px; font-style: italic;">
-                        </div>
-                        <div id="local-venvs-list"
-                            style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 250px; overflow-y: auto;">
-                            <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                        </div>
-                    </div>
-
-                    <!-- Conda Environments (Priority 2) -->
-                    <div style="margin-top: 20px;">
-                        <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
-                            data-i18n="options_conda_envs_numbered">2. 🐍 Conda Umgebungen</h4>
-                        <div id="conda-environments-list"
-                            style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
-                            <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                        </div>
-                    </div>
-
-                    <!-- Local Python Installations (Priority 3) -->
-                    <div style="margin-top: 15px;">
-                        <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
-                            data-i18n="options_system_python_local_numbered">3. 🏠 Python Local</h4>
-                        <div id="system-python-local-list"
-                            style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
-                            <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                        </div>
-                    </div>
-
-                    <!-- Global Python Installations (Priority 4) -->
-                    <div style="margin-top: 15px;">
-                        <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
-                            data-i18n="options_system_python_global_numbered">4. 🌐 Python Global</h4>
-                        <div id="system-python-global-list"
-                            style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
-                            <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                        </div>
-                    </div>
-
-                    <hr style="margin: 25px 0; border: 0; border-top: 1px dashed #eee;">
-
-                    <!-- requirements.txt Status -->
-                    <div style="margin-top: 15px;">
-                        <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
-                            <span data-i18n="options_requirements_status">✅ requirements.txt
-                                Status</span>
-                            <span id="requirements-count"
-                                style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
-                        </h4>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button onclick="loadEnvironmentInfo(true)"
-                                style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
-                                data-i18n="options_requirements_refresh">
-                                🔄 Jetzt neu prüfen
-                            </button>
-                            <button id="btn-install-missing" onclick="installMissingPackages()"
-                                style="display: none; padding: 6px 10px; background: #2a7; color: #fff; border: 1px solid #286; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold;"
-                                data-i18n="env_requirements_install_btn">
-                                📦 Fehlende Pakete installieren (Interactive)
-                            </button>
-                        </div>
-                        <div id="pip-install-output"
-                            style="display: none; margin-bottom: 10px; background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #444;">
-                        </div>
-                        <div id="requirements-last-checked" style="margin-bottom: 8px; color: #777; font-size: 0.78em;"
-                            data-i18n="env_requirements_last_checked_never">Noch nicht geprüft</div>
-                        <div id="requirements-status-list"
-                            style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
-                            <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                        </div>
-                    </div>
-
-                    <!-- Installed Packages (active environment) -->
-                    <div style="margin-top: 25px;">
-                        <h4
-                            style="font-size: 0.95em; margin-bottom: 8px; color: #555; display: flex; align-items: center; gap: 8px;">
-                            <span class="icon-box"></span> <span data-i18n="options_installed_packages">Installierte
-                                Pakete (aktive
-                                Umgebung)</span>
-                            <span id="package-count"
-                                style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
-                            <span id="package-source"
-                                style="color: #999; font-weight: normal; font-size: 0.8em; margin-left: 8px;">[source:
-                                -]</span>
-                        </h4>
-                        <div style="margin-bottom: 8px;">
-                            <input type="text" id="package-search" placeholder="Search packages..."
-                                style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
-                                data-i18n="[placeholder]packages_search_placeholder">
-                        </div>
-                        <div id="installed-packages-list"
-                            style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
-                            <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
-                    <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;" data-i18n="options_danger_zone">
-                        Gefahrenzone (Reset)
-                    </h3>
-                    <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
-                        data-i18n="options_danger_zone_desc">Löscht nur die
-                        Datenbank, oder zusätzlich die Konfigurationsdateien (Werkszustand).</p>
-                    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-                        <button onclick="clearDatabase()"
-                            style="padding: 10px 16px; background: #fff; color: #f4d; border: 1px solid #f4d; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;"
-                            data-i18n="options_btn_clear_db">
-                            <span class="icon-trash" style="background-color: #f4d;"></span> Nur DB leeren
-                        </button>
-                        <button onclick="resetApp()"
-                            style="padding: 10px 18px; border: 1px solid #c0392b; background: white; color: #c0392b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
-                            class="btn-hover-danger">
-                            <span class="icon-fire" style="background-color: #c0392b;"></span> <span
-                                data-i18n="options_app_reset">App Reset (Alles Löschen)</span>
-                        </button>
-                    </div>
-                    <div style="margin-top: 15px; color: #c0392b; font-size: 0.8em; font-weight: bold;"
-                        data-i18n="options_danger_caution">
-                        Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
-                    </div>
-                </div> <!-- closes danger zone -->
-            </div> <!-- closes inner view column content -->
-        </div> <!-- closes options-environment-view -->
-    </div> <!-- closes system-configuration-persistence-panel -->
-
-    <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
-        style="padding: 20px; overflow-y: auto; height: 100%;">
-        <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
-
-        <div style="display: flex; gap: 30px; align-items: flex-start;">
-            <!-- Left Column: Core Parser Settings -->
-            <div style="flex: 0 0 450px;">
-
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_core_settings">
-                    Erweiterter
-                    Parser-Modus</h3>
-                <div
-                    style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-parser-mode" onchange="saveParserChainUI()">
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <div style="font-weight: 500;" data-i18n="parser_mode_label">Effizienz-Modus
-                        </div>
-                        <div id="parser-mode-status"
-                            style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;"
-                            data-i18n="parser_mode_light">
-                            Leichtgewicht (Schnell)</div>
-                        <div style="font-size: 0.85em; color: #666; margin-top: 4px;" data-i18n="parser_mode_desc">
-                            Bestimmt, wie intensiv Metadaten extrahiert werden.
-                        </div>
-                    </div>
-                </div>
-
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_arch_title">
-                    Parser-Architektur</h3>
-                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;" data-i18n="parser_arch_desc">
-                    Sortiere die
-                    Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach
-                    Bedarf.
-                </p>
-
-                <div
-                    style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                    <ul id="parser-list" class="parser-list">
-                        <!-- Dynamically populated list -->
-                    </ul>
-                    <button onclick="saveParserChainUI()"
-                        style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
-                        data-i18n="parser_btn_save">Konfiguration
-                        Speichern</button>
-                    <span id="parser-save-status"
-                        style="margin-left: 10px; font-size: 0.85em; color: #2a7; display: none;"
-                        data-i18n="parser_save_success">✅
-                        Gespeichert</span>
-                </div>
-
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;">📊 Performance Übersicht</h3>
-                <div id="parser-tab-perf-container"
-                    style="background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                    <p style="font-size: 0.85em; color: #666;">Lade Performance-Daten...</p>
-                </div>
-            </div>
-
-            <!-- Right Column: Parser-Specific Options -->
-            <div id="parser-details-column"
-                style="flex: 1; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">
-                    Parser-Optionen</h3>
-                <div id="parser-options-placeholder" style="color: #999; font-style: italic; margin-top: 20px;"
-                    data-i18n="parser_options_desc">
-                    Wähle einen Parser links aus, um seine Einstellungen zu sehen.
-                </div>
-                <div id="parser-options-container" style="display: none; flex-direction: column; gap: 20px;">
-                    <!-- Options will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="debug-flag-persistence-panel" class="tab-content"
-        style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
-
-        <!-- Left Column: Settings and DB Overview -->
-        <div
-            style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #ddd; padding: 20px;">
-            <div style="margin-bottom: 25px;">
-                <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_item_db_overview">
-                    Item DB (Übersicht)</h3>
-                <div id="debug-db-info"
-                    style="font-size: 0.9em; color: #666; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px;">
-                    <!-- DB Stats will be loaded here -->
-                    <span data-i18n="debug_db_loading_stats">Lade Datenbank-Statistiken...</span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 25px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h3 style="margin: 0; font-size: 1.1em; color: #333;" data-i18n="debug_python_dict">
-                        Python Dicts (Details)</h3>
-                    <select id="debug-dict-select" onchange="changeDebugDictView(this.value)"
-                        style="font-size: 0.8em; padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #444; font-weight: 500; outline: none; transition: border-color 0.2s;">
-                        <option value="library" data-i18n="debug_dict_library">Bibliothek (Media Items)</option>
-                        <option value="parser" data-i18n="debug_dict_parser">Parser Konfiguration</option>
-                        <option value="env" data-i18n="debug_dict_environment">System Umgebung</option>
-                        <option value="flags" data-i18n="debug_dict_flags">Debug Flags</option>
-                    </select>
-                </div>
-                <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;" data-i18n="debug_db_desc">
-                    Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank
-                    und die
-                    Frontend gesendet wird.
-                </p>
-
-                <div id="debug-items-dict-container"
-                    style="flex: 1; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; font-size: 0.85em; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
-                    <div style="padding: 15px; flex: 1; overflow: auto;">
-                        <pre id="debug-items-json"
-                            style="background: transparent; padding: 0; margin: 0; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; color: #d4d4d4;"
-                            data-i18n="debug_loading_data">Lade Daten...</pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column: Results/Console -->
-        <div style="flex: 1.5; display: flex; flex-direction: column; overflow: hidden; background: #1a1a1a;">
-            <!-- Runtime Info (Right Side) -->
-            <div style="padding: 15px; background: #222; border-bottom: 1px solid #333;">
-                <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #ddd;" data-i18n="debug_runtime_info">
-                    Laufzeit-Info & Log-Level</h3>
-                <div
-                    style="font-size: 0.9em; color: #999; background: #1a1a1a; border: 1px solid #444; padding: 12px; border-radius: 6px;">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div><b>Python PID:</b> <span id="debug-python-pid" style="color: #6a1;">-</span></div>
-                        <div><b>Browser PID:</b> <span id="debug-browser-pid" style="color: #6a1;">-</span>
-                        </div>
-                        <div><b>Log-Level:</b>
-                            <select id="debug-log-level-select" onchange="changeLogLevel(this.value)"
-                                style="font-size: 0.9em; padding: 2px; border-radius: 4px; border: 1px solid #555; background: #333; color: #eee;">
-                                <option value="DEBUG" data-i18n="log_level_debug">DEBUG</option>
-                                <option value="INFO" data-i18n="log_level_info">INFO</option>
-                                <option value="WARNING" data-i18n="log_level_warning">WARNING</option>
-                                <option value="ERROR" data-i18n="log_level_error">ERROR</option>
-                                <option value="CRITICAL" data-i18n="log_level_critical">CRITICAL</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div
-                style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                <span data-i18n="debug_console">Konsole / Logs</span>
-                <button onclick="safeText('debug-output', '')"
-                    style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
-                    data-i18n="common_clear">Clear</button>
-            </div>
-            <div style="flex: 1; overflow-y: auto; padding: 0;">
-                <pre id="debug-output"
-                    style="color: #0f0; padding: 15px; font-size: 0.9em; margin: 0; min-height: 100%; white-space: pre-wrap; word-wrap: break-word; font-family: 'Fira Code', monospace;"></pre>
-            </div>
-            <!-- Hidden textarea for compatibility with old code if any -->
-            <textarea id="browse-results-debug" style="display: none;"></textarea>
-        </div>
-    </div>
-
-    <!-- Tests Tab -->
-    <div id="quality-assurance-regression-suite-panel" class="tab-content"
-        style="display: none; padding: 20px; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 style="margin: 0;" data-i18n="test_title">Unit Tests & Verifizierung</h2>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <span id="test-run-summary"
-                    style="font-weight: bold; font-size: 1.1em; color: #444; background: #f0f0f0; padding: 6px 12px; border-radius: 6px; display: none;"></span>
-                <button id="run-selected-tests-btn" onclick="runSelectedTests()"
-                    style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
-                    data-i18n="test_run_selected">
-                    ▶ Ausgewählte Tests ausführen
-                </button>
-                <button onclick="createNewTest()"
-                    style="padding: 10px 20px; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
-                    data-i18n="test_new">
-                    ➕ Neuer Test
-                </button>
-            </div>
-        </div>
-
-        <div style="margin-bottom: 16px; padding: 10px 12px; border-radius: 8px; background: #fff8e1; border: 1px solid #ffe082; color: #6d4c41; font-size: 0.9em;"
-            data-i18n="test_interactive_hint">
-            Hinweis: Interaktive Browser-Tests sind standardmäßig deaktiviert und können bei Bedarf
-            manuell
-            aktiviert werden.
-        </div>
-
-        <div id="test-suites-container"
-            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            <!-- Dynamically loaded -->
-            <div style="color: #999; font-size: 0.9em;" data-i18n="test_searching">Suche nach
-                Tests...</div>
-        </div>
-
-        <div id="test-results-container" style="display: none; width: 100%;">
-            <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="test_results_label">
-                Testergebnisse
-                (Logs):
-            </h3>
-            <pre id="test-output"
-                style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
-        </div>
-    </div>
-
-    <div id="reporting-dashboard-panel" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 style="margin: 0;" data-i18n="report_title">Test Reporting & Dashboard</h2>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <select id="reporting-view-select" onchange="switchReportingView(this.value)"
-                    style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
-                    <option value="dashboard" data-i18n="report_view_dashboard">📈 Dashboard</option>
-                    <option value="database" data-i18n="report_view_database">🗄️ Datenbank (SQL)</option>
-                    <option value="video-streaming" data-i18n="report_view_video_streaming">🎬 Video Streaming
-                    </option>
-                    <option value="audio-streaming" data-i18n="report_view_audio_streaming">🎵 Audio Streaming
-                    </option>
-                    <option value="parser" data-i18n="report_view_parser">🧠 Parser Reporting</option>
-                </select>
-                <button onclick="refreshReportingData()"
-                    style="padding: 10px 20px; background: #388e3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                    🔄 Daten aktualisieren
-                </button>
-            </div>
-        </div>
-
-        <div id="reporting-main-content">
-            <div id="reporting-dashboard-view">
-                <div
-                    style="grid-column: span 2; background: #fff; border-radius: 12px; border: 1px solid #eee; padding: 15px; margin-bottom: 5px; display: flex; gap: 30px; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="flex: 1;">
-                        <div style="display: flex; gap: 30px; align-items: center;">
-                            <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 10px; height: 10px; border-radius: 50%; background: #4caf50;">
-                                </div>
-                                <strong>Backend:</strong> <span id="report-engine-status" style="color: #666;">Bottle /
-                                    Gevent</span>
-                            </div>
-                            <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 10px; height: 10px; border-radius: 50%; background: #2196f3;">
-                                </div>
-                                <strong>Runtime:</strong> <span id="report-gevent-status" style="color: #666;">Gevent /
-                                    Greenlet</span>
-                            </div>
-                            <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff9800;">
-                                </div>
-                                <strong>OS Platform:</strong> <span id="report-os-status"
-                                    style="color: #666;">Linux</span>
+                        style="background: #1e1e1e; border-radius: 12px; padding: 20px; margin-top: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                        <h3
+                            style="margin: 0 0 15px 0; color: #eee; font-size: 1.1em; display: flex; align-items: center; gap: 10px;">
+                            <span class="icon-terminal" style="color: #00ff00;"></span> <span>Tool Output /
+                                Logs</span>
+                            <button onclick="clearToolLogs()"
+                                style="margin-left: auto; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; transition: all 0.2s;">Clear</button>
+                        </h3>
+                        <div id="tool-logs-container"
+                            style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 0.85em; color: #00ff00; border: 1px solid #222; scroll-behavior: smooth;">
+                            <div id="tool-logs-content">
+                                <div style="color: #666; font-style: italic;">Waiting for tool output...</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-                    <div id="status-pie-chart"
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
-                    </div>
-                    <div id="duration-bar-chart"
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
-                    </div>
-                </div>
+                <div id="options-environment-view" class="options-view"
+                    style="display: none; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%;">
+                    <div style="flex: 1; max-width: 500px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
+                            Python-Umgebung</h3>
+                        <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
+                            data-i18n="options_environment_desc">
+                            Informationen über die aktuell verwendete Python-Umgebung.</p>
 
-                <div id="trend-line-chart"
-                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 400px; margin-bottom: 30px;">
-                </div>
+                        <div class="kernarchitektur-section">
+                            <h3 data-i18n="env_architecture_title">Kernarchitektur & Systemstatus</h3>
 
-                <div id="report-summary-table-container"
-                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
-                    <h3 data-i18n="report_summary_label">Letzte Testläufe</h3>
-                    <div id="report-summary-table"></div>
-                </div>
-            </div>
+                            <div class="arch-subgroup">
+                                <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_front_end">
+                                    <span class="icon-palette"></span> Front End
+                                </h4>
+                                <ul>
+                                    <li><strong data-i18n="env_label_gui">Browser:</strong> <span
+                                            id="env-gui-status">-</span></li>
+                                    <li><strong data-i18n="env_label_browser_pid">Browser PID:</strong> <span
+                                            id="env-browser-pid">-</span></li>
+                                </ul>
+                            </div>
 
-            <div id="reporting-database-view" style="display: none;">
-                <div style="display: flex; gap: 20px;">
-                    <div id="sql-file-sidebar"
-                        style="width: 250px; background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 15px;">
-                        <h4 style="margin-top: 0;" data-i18n="report_sql_files">SQL Dateien</h4>
-                        <div id="sql-file-list" style="display: flex; flex-direction: column; gap: 8px;">
-                            <!-- SQL files rendered dynamically -->
+                            <hr>
+
+                            <div class="arch-subgroup">
+                                <h4 style="display: flex; align-items: center; gap: 8px;" data-i18n="env_backend">
+                                    <span class="icon-gear"></span> Backend
+                                </h4>
+                                <ul>
+                                    <li><strong data-i18n="env_label_app_version">App-Version:</strong> <span
+                                            id="env-app-version">-</span></li>
+                                    <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
+                                        <span id="env-python-version">-</span>
+                                    </li>
+                                    <li><strong data-i18n="env_label_environment">Umgebung:</strong> <span
+                                            id="env-venv-status">-</span></li>
+                                    <li><strong data-i18n="env_label_system">System:</strong> <span
+                                            id="env-platform">-</span></li>
+                                    <li><strong data-i18n="env_label_eel_ws">Eel / WS:</strong> <span
+                                            id="env-eel-status">✅
+                                            Eel | ✅
+                                            Websocket</span></li>
+                                    <li><strong data-i18n="env_label_bottle_ws">Bottle / WS:</strong> <span
+                                            id="env-bottle-status">-</span>
+                                    </li>
+                                    <li><strong data-i18n="env_label_gevent_ws">Gevent / Greenlet:</strong> <span
+                                            id="env-gevent-status">-</span>
+                                    </li>
+                                    <li><strong data-i18n="env_label_main_pid">Main PID:</strong> <span
+                                            id="env-main-pid">-</span></li>
+                                    <li><strong data-i18n="env_label_testbed_pid">Testbed PID:</strong> <span
+                                            id="env-testbed-pid">-</span></li>
+                                    <li><strong data-i18n="env_label_selenium_pid">Selenium PID:</strong> <span
+                                            id="env-selenium-pid">-</span></li>
+                                    <li><strong data-i18n="env_label_python_executable">Python-Pfad:</strong>
+                                        <span id="env-python-exec" style="word-break: break-all;">-</span>
+                                    </li>
+                                    <li><strong data-i18n="env_label_environment_path">Env-Pfad:</strong>
+                                        <span id="env-venv-path" style="word-break: break-all;">-</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <hr>
+
+                            <div class="arch-subgroup">
+                                <h4 style="display: flex; align-items: center; gap: 8px;"
+                                    data-i18n="env_media_handling">
+                                    <span class="icon-video"></span> Media-Handling
+                                </h4>
+                                <ul>
+                                    <li><strong data-i18n="env_label_mediaplayer">Mediaplayer:</strong>
+                                        <span id="env-mediaplayer-status">-</span>
+                                    </li>
+                                    <li><strong data-i18n="env_label_mutagen">Mutagen:</strong> <span
+                                            id="env-mutagen-status">-</span></li>
+                                    <li><strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span
+                                            id="env-mediainfo-status">-</span></li>
+                                    <li><strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span
+                                            id="env-ffmpeg-status">-</span></li>
+                                    <li><strong data-i18n="env_label_ffprobe">FFprobe:</strong> <span
+                                            id="env-ffprobe-status">-</span></li>
+                                    <li><strong data-i18n="env_label_pymkv">pymkv:</strong> <span
+                                            id="env-pymkv-status">-</span></li>
+                                    <li><strong data-i18n="env_label_mkv_info">mkvinfo:</strong> <span
+                                            id="env-mkv-status">-</span></li>
+                                    <li><strong data-i18n="env_label_mkvmerge">mkvmerge:</strong> <span
+                                            id="env-mkvmerge-status">-</span></li>
+                                    <li><strong data-i18n="env_label_stream_tools">Stream-Tools:</strong> <span
+                                            id="env-stream-tools-status">-</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <hr>
+
+                            <div class="arch-subgroup">
+                                <h4 data-i18n="env_label_core_packages">Core Packages</h4>
+                                <div style="margin-top: 10px;">
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="font-size: 0.85em; color: #666;"
+                                            data-i18n="env_label_core_packages">Core-Packages:</strong>
+                                        <div id="env-core-packages-status" style="font-size: 0.8em; margin-top: 2px;">-
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="font-size: 0.85em; color: #666;"
+                                            data-i18n="env_label_test_tools">Test-Tools:</strong>
+                                        <div id="env-test-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="font-size: 0.85em; color: #666;"
+                                            data-i18n="env_label_dev_tools">Entwickler-Tools:</strong>
+                                        <div id="env-dev-tools-status" style="font-size: 0.8em; margin-top: 2px;">-
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="font-size: 0.85em; color: #666;"
+                                            data-i18n="env_label_build_tools">Build-Tools:</strong>
+                                        <div id="env-build-tools-status" style="font-size: 0.8em; margin-top: 2px;">
+                                            -</div>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="font-size: 0.85em; color: #666;"
+                                            data-i18n="env_label_requirements_list">Requirements-Status:</strong>
+                                        <div id="env-requirements-list" style="font-size: 0.8em; margin-top: 2px;">-
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <strong style="font-size: 0.85em; color: #666;"
+                                            data-i18n="env_label_base_dependencies">Basis-Abhängigkeiten:</strong>
+                                        <div id="env-base-dependencies-status"
+                                            style="font-size: 0.8em; margin-top: 2px;">-
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div id="sql-content-area" style="flex: 1; min-width: 0;">
-                        <div id="sql-editor-toolbar"
-                            style="margin-bottom: 10px; display: flex; justify-content: space-between;">
-                            <span id="selected-sql-filename" style="font-weight: bold; color: #333;">-</span>
-                        </div>
-                        <pre id="sql-content-renderer"
-                            style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.9em; min-height: 400px; overflow: auto; border: 1px solid #333;"></pre>
-                    </div>
-                </div>
-            </div>
 
-            <div id="reporting-video-streaming-view" style="display: none;">
-                <h3 style="margin-top: 0;" data-i18n="report_video_streaming_title">Video-Streaming Benchmarks
-                </h3>
-                <div id="video-benchmarks-container"
-                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
-                    <div id="video-benchmarks-list">Lade Benchmarks...</div>
-                </div>
-            </div>
-
-            <div id="reporting-audio-streaming-view" style="display: none;">
-                <h3 style="margin-top: 0;" data-i18n="report_audio_streaming_title">Audio-Streaming Benchmarks
-                </h3>
-                <div id="audio-benchmarks-container"
-                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
-                    <div id="audio-benchmarks-list">Lade Benchmarks...</div>
-                </div>
-            </div>
-
-            <div id="reporting-parser-view" style="display: none;">
-                <h3 style="margin-top: 0;" data-i18n="report_parser_title">Parser Performance</h3>
-                <div id="parser-reporting-container"
-                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
-                    Lade Parser-Daten...
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Video Player Tab -->
-    <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
-        style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
-        <div style="max-width: 1000px; margin: 0 auto;">
-            <div
-                style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
-
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-                    <h2 style="margin:0; color: #333; font-size: 1.4em; display: flex; align-items: center; gap: 10px;"
-                        data-i18n="video_tab_title">
-                        <span class="icon-video"></span> <span data-i18n="video_tab_title">Video Player</span>
-                    </h2>
-                    <div
-                        style="display: flex; align-items: center; gap: 15px; background: #fdfdfd; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                        <span style="font-size: 0.9em; font-weight: bold; color: #555;"
-                            data-i18n="video_mode_label">Modus:</span>
-
-                        <select id="player-type" onchange="updateVideoModes()"
-                            style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
-                            <option value="auto">🤖 Auto-Detect (Smart)</option>
-                            <option value="chrome">🎬 Chrome Native</option>
-                            <option value="vlc">📺 VLC (Desktop/Embedded)</option>
-                            <option value="pyplayer">🐍 PyPlayer (Native)</option>
-                        </select>
-
-                        <select id="video-mode" onchange="orchestrateVideoPlaybackMode()"
-                            style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
-                            <!-- Dynamic -->
-                        </select>
-
-                        <button onclick="triggerOpenWith()" data-i18n="btn_open_with" id="btn-open-with-video"
-                            style="background: #2a7; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(42,167,112,0.3); display: none;">
-                            Öffnen mit
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Coordinated Renderer Pipeline -->
-                <div id="toast-container"></div>
-                <div id="coordinated-media-renderer-pipeline-viewport" class="premium-player-container"
-                    style="aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                    <video id="native-html5-video-resource-node" class="video-js vjs-default-skin" controls
-                        preload="auto" style="width: 100%; height: 100%; display: none; border-radius: 8px;"></video>
-                    <div id="idle-state-media-icon-symbol" style="color: #666; text-align: center; padding: 40px;">
+                        <!-- Multi-Venv Concept & Setup Script -->
                         <div
-                            style="font-size: 5em; margin-bottom: 15px; opacity: 0.3; display: flex; justify-content: center;">
-                            <span class="icon-video" style="width: 100px; height: 100px;"></span>
+                            style="margin-top: 20px; background: #f0f7ff; border: 1px solid #d0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #0056b3; margin-bottom: 8px; font-size: 1em;"
+                                data-i18n="env_setup_script_title">Virtual Environments initialisieren</h4>
+                            <p style="font-size: 0.85em; color: #444; line-height: 1.4;"
+                                data-i18n="env_setup_script_desc">
+                                Nutze das Skript <code>scripts/setup_venvs.sh</code> im Projekt-Root, um alle 7
+                                spezialisierten Umgebungen (Core, Dev, Test, Selenium etc.) automatisch zu erstellen
+                                und zu aktualisieren.
+                            </p>
                         </div>
-                        <p data-i18n="video_placeholder" style="font-weight: 500; letter-spacing: 0.5px;">Kein
-                            Video ausgewählt</p>
+
+                        <h4 style="font-size: 0.95em; margin-top: 10px; margin-bottom: 12px; color: #444;">
+                            Vorhandene Umgebungen</h4>
+
+                        <!-- Local Virtual Environments (Priority 1) -->
+                        <div style="margin-top: 15px;">
+                            <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                data-i18n="options_local_venvs_priority_title">1. 📁 Lokale Virtual Environments
+                                (Projekt-Struktur)</h4>
+                            <div id="multi-venv-concept"
+                                style="font-size: 0.85em; color: #666; margin-bottom: 10px; font-style: italic;">
+                            </div>
+                            <div id="local-venvs-list"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 250px; overflow-y: auto;">
+                                <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                            </div>
+                        </div>
+
+                        <!-- Conda Environments (Priority 2) -->
+                        <div style="margin-top: 20px;">
+                            <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                data-i18n="options_conda_envs_numbered">2. 🐍 Conda Umgebungen</h4>
+                            <div id="conda-environments-list"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                            </div>
+                        </div>
+
+                        <!-- Local Python Installations (Priority 3) -->
+                        <div style="margin-top: 15px;">
+                            <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                data-i18n="options_system_python_local_numbered">3. 🏠 Python Local</h4>
+                            <div id="system-python-local-list"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                            </div>
+                        </div>
+
+                        <!-- Global Python Installations (Priority 4) -->
+                        <div style="margin-top: 15px;">
+                            <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;"
+                                data-i18n="options_system_python_global_numbered">4. 🌐 Python Global</h4>
+                            <div id="system-python-global-list"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 180px; overflow-y: auto;">
+                                <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                            </div>
+                        </div>
+
+                        <hr style="margin: 25px 0; border: 0; border-top: 1px dashed #eee;">
+
+                        <!-- requirements.txt Status -->
+                        <div style="margin-top: 15px;">
+                            <h4 style="font-size: 0.95em; margin-bottom: 8px; color: #555;">
+                                <span data-i18n="options_requirements_status">✅ requirements.txt
+                                    Status</span>
+                                <span id="requirements-count"
+                                    style="color: #999; font-weight: normal; font-size: 0.9em;">(0/0)</span>
+                            </h4>
+                            <div style="margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button onclick="loadEnvironmentInfo(true)"
+                                    style="padding: 6px 10px; background: #fff; color: #444; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
+                                    data-i18n="options_requirements_refresh">
+                                    🔄 Jetzt neu prüfen
+                                </button>
+                                <button id="btn-install-missing" onclick="installMissingPackages()"
+                                    style="display: none; padding: 6px 10px; background: #2a7; color: #fff; border: 1px solid #286; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold;"
+                                    data-i18n="env_requirements_install_btn">
+                                    📦 Fehlende Pakete installieren (Interactive)
+                                </button>
+                            </div>
+                            <div id="pip-install-output"
+                                style="display: none; margin-bottom: 10px; background: #222; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.75em; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #444;">
+                            </div>
+                            <div id="requirements-last-checked"
+                                style="margin-bottom: 8px; color: #777; font-size: 0.78em;"
+                                data-i18n="env_requirements_last_checked_never">Noch nicht geprüft</div>
+                            <div id="requirements-status-list"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
+                                <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                            </div>
+                        </div>
+
+                        <!-- Installed Packages (active environment) -->
+                        <div style="margin-top: 25px;">
+                            <h4
+                                style="font-size: 0.95em; margin-bottom: 8px; color: #555; display: flex; align-items: center; gap: 8px;">
+                                <span class="icon-box"></span> <span data-i18n="options_installed_packages">Installierte
+                                    Pakete (aktive
+                                    Umgebung)</span>
+                                <span id="package-count"
+                                    style="color: #999; font-weight: normal; font-size: 0.9em;">(0)</span>
+                                <span id="package-source"
+                                    style="color: #999; font-weight: normal; font-size: 0.8em; margin-left: 8px;">[source:
+                                    -]</span>
+                            </h4>
+                            <div style="margin-bottom: 8px;">
+                                <input type="text" id="package-search" placeholder="Search packages..."
+                                    style="width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em;"
+                                    data-i18n="[placeholder]packages_search_placeholder">
+                            </div>
+                            <div id="installed-packages-list"
+                                style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.75em; max-height: 300px; overflow-y: auto; font-family: monospace;">
+                                <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Advanced Player Controls -->
-                <div id="advanced-player-controls" class="glass-controls"
-                    style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 15px; border-radius: 12px;">
-                    <button id="btn-stop" onclick="stopVideo()" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Stop">■</button>
-                    <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Shuffle">🔀</button>
-                    <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Repeat">🔁</button>
-                    <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 5px 5px;"></div>
-                    <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Rewind 10s">⏪</button>
-                    <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Forward 10s">⏩</button>
-                    <button id="btn-speed" onclick="toggleSpeed()" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Speed">⏱️</button>
-                    <button id="btn-eq" onclick="openEQ()" class="player-btn-premium" style="width: 45px; height: 45px;"
-                        title="Equalizer">🎚️</button>
-                    <button id="btn-pip" onclick="togglePip()" class="player-btn-premium"
-                        style="width: 45px; height: 45px;" title="Picture in Picture">🖼️</button>
-                </div>
+                    <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
+                        <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;"
+                            data-i18n="options_danger_zone">
+                            Gefahrenzone (Reset)
+                        </h3>
+                        <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
+                            data-i18n="options_danger_zone_desc">Löscht nur die
+                            Datenbank, oder zusätzlich die Konfigurationsdateien (Werkszustand).</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                            <button onclick="clearDatabase()"
+                                style="padding: 10px 16px; background: #fff; color: #f4d; border: 1px solid #f4d; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;"
+                                data-i18n="options_btn_clear_db">
+                                <span class="icon-trash" style="background-color: #f4d;"></span> Nur DB leeren
+                            </button>
+                            <button onclick="resetApp()"
+                                style="padding: 10px 18px; border: 1px solid #c0392b; background: white; color: #c0392b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
+                                class="btn-hover-danger">
+                                <span class="icon-fire" style="background-color: #c0392b;"></span> <span
+                                    data-i18n="options_app_reset">App Reset (Alles Löschen)</span>
+                            </button>
+                        </div>
+                        <div style="margin-top: 15px; color: #c0392b; font-size: 0.8em; font-weight: bold;"
+                            data-i18n="options_danger_caution">
+                            Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
+                        </div>
+                    </div> <!-- closes danger zone -->
+                </div> <!-- closes inner view column content -->
+            </div> <!-- closes options-environment-view -->
+        </div> <!-- closes system-configuration-persistence-panel -->
 
-                <!-- Orchestrator Ingress Buffers -->
-                <div id="orchestrator-ingress-drag-drop-buffer" style="display: none; margin-bottom: 20px;">
-                    <div id="external-player-drag-drop-ingress-area"
-                        style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 40px; text-align: center; font-weight: 600; transition: all 0.2s;"
-                        data-i18n="vlc_dnd_hint">
-                        Datei hier hineinziehen, um sie in VLC zu öffnen
-                    </div>
-                    <div style="margin-top: 10px; text-align: center;">
-                        <button onclick="pickAndPlayInVLC()"
-                            style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                            <span class="icon-load" style="background-color: white;"></span> Datei auswählen
-                        </button>
-                        <button onclick="runBatchRemux()"
-                            style="padding: 8px 14px; border: 1px solid #2a7; background: #2a7; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 10px;">
-                            <span data-i18n="vlc_btn_batch_remux">📦 Batch-Remux zu MKV</span>
-                        </button>
-                    </div>
-                </div>
+        <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
+            style="padding: 20px; overflow-y: auto; height: 100%;">
+            <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
 
-                <div id="video-unsupported-hint"
-                    style="display: none; margin-bottom: 16px; padding: 12px 14px; background: #fff8e1; border: 1px solid #ffcc80; border-left: 4px solid #f39c12; border-radius: 8px; color: #6d4c41; font-size: 0.9em;"
-                    data-i18n="video_unsupported_hint">
-                    Browser kann dieses Video nicht direkt abspielen. Nutze "In VLC öffnen".
-                </div>
+            <div style="display: flex; gap: 30px; align-items: flex-start;">
+                <!-- Left Column: Core Parser Settings -->
+                <div style="flex: 0 0 450px;">
 
-                <!-- VLC & System Logs inside Player Context for easier debugging -->
-                <div id="vlc-info"
-                    style="margin-bottom: 20px; padding: 15px; background: #fffcf0; border-radius: 8px; border-left: 4px solid #f90; display: none;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_core_settings">
+                        Erweiterter
+                        Parser-Modus</h3>
                     <div
-                        style="font-weight: bold; color: #333; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
-                        <span data-i18n="vlc_now_playing">VLC läuft:</span>
-                        <span id="vlc-status-badge"
-                            style="background: #2a7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Aktiv</span>
+                        style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-parser-mode" onchange="saveParserChainUI()">
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <div style="font-weight: 500;" data-i18n="parser_mode_label">Effizienz-Modus
+                            </div>
+                            <div id="parser-mode-status"
+                                style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;"
+                                data-i18n="parser_mode_light">
+                                Leichtgewicht (Schnell)</div>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 4px;" data-i18n="parser_mode_desc">
+                                Bestimmt, wie intensiv Metadaten extrahiert werden.
+                            </div>
+                        </div>
                     </div>
-                    <div id="vlc-current-file"
-                        style="font-family: monospace; font-size: 0.9em; word-break: break-all; margin-bottom: 10px; color: #555;">
-                        -
-                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_arch_title">
+                        Parser-Architektur</h3>
+                    <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;" data-i18n="parser_arch_desc">
+                        Sortiere die
+                        Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach
+                        Bedarf.
+                    </p>
+
                     <div
-                        style="background: #222; color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8em; max-height: 120px; overflow-y: auto;">
-                        <span id="vlc-pipe-log-feed">Warte auf Logs vom VLC-Subprocess...</span>
+                        style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                        <ul id="parser-list" class="parser-list">
+                            <!-- Dynamically populated list -->
+                        </ul>
+                        <button onclick="saveParserChainUI()"
+                            style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
+                            data-i18n="parser_btn_save">Konfiguration
+                            Speichern</button>
+                        <span id="parser-save-status"
+                            style="margin-left: 10px; font-size: 0.85em; color: #2a7; display: none;"
+                            data-i18n="parser_save_success">✅
+                            Gespeichert</span>
+                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;">📊 Performance Übersicht</h3>
+                    <div id="parser-tab-perf-container"
+                        style="background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                        <p style="font-size: 0.85em; color: #666;">Lade Performance-Daten...</p>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button onclick="stopVideo()"
-                        style="padding: 10px 20px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                        <span class="icon-stop" style="background-color: white;"></span> <span
-                            data-i18n="vlc_btn_stop">Stoppen</span>
-                    </button>
-                    <button id="btn-open-vlc" onclick="switchToVLC()"
-                        style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; align-items: center; gap: 8px;">
-                        <span class="icon-rocket" style="background-color: white;"></span> <span
-                            data-i18n="vlc_btn_extern">In VLC öffnen</span>
-                    </button>
+                <!-- Right Column: Parser-Specific Options -->
+                <div id="parser-details-column"
+                    style="flex: 1; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">
+                        Parser-Optionen</h3>
+                    <div id="parser-options-placeholder" style="color: #999; font-style: italic; margin-top: 20px;"
+                        data-i18n="parser_options_desc">
+                        Wähle einen Parser links aus, um seine Einstellungen zu sehen.
+                    </div>
+                    <div id="parser-options-container" style="display: none; flex-direction: column; gap: 20px;">
+                        <!-- Options will be rendered here -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    </div>
 
-    <!-- Logbuch Tab -->
-    <div id="localized-markdown-documentation-journal-panel" class="tab-content"
-        style="display: none; padding: 20px; overflow-y: auto;">
-        <h2 style="margin-bottom: 25px;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
-        <div style="display: flex; gap: 30px;">
+        <div id="debug-flag-persistence-panel" class="tab-content"
+            style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
+
+            <!-- Left Column: Settings and DB Overview -->
             <div
-                style="flex: 1; max-width: 350px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="font-size: 1.1em; margin: 0;" data-i18n="nav_logbook">Einträge</h3>
-                    <button onclick="loadLogbuchTab()"
-                        style="background:none; border:none; cursor:pointer; font-size:1.1em;"
-                        title="Refresh">🔄</button>
+                style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #ddd; padding: 20px;">
+                <div style="margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_item_db_overview">
+                        Item DB (Übersicht)</h3>
+                    <div id="debug-db-info"
+                        style="font-size: 0.9em; color: #666; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px;">
+                        <!-- DB Stats will be loaded here -->
+                        <span data-i18n="debug_db_loading_stats">Lade Datenbank-Statistiken...</span>
+                    </div>
                 </div>
 
-                <div style="margin-bottom: 15px;">
-                    <select id="logbuch-category-filter" onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
-                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
-                        <option value="Alle" data-i18n="logbook_category_all">Alle Kategorien
+                <div style="margin-bottom: 25px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin: 0; font-size: 1.1em; color: #333;" data-i18n="debug_python_dict">
+                            Python Dicts (Details)</h3>
+                        <select id="debug-dict-select" onchange="changeDebugDictView(this.value)"
+                            style="font-size: 0.8em; padding: 4px 10px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; color: #444; font-weight: 500; outline: none; transition: border-color 0.2s;">
+                            <option value="library" data-i18n="debug_dict_library">Bibliothek (Media Items)</option>
+                            <option value="parser" data-i18n="debug_dict_parser">Parser Konfiguration</option>
+                            <option value="env" data-i18n="debug_dict_environment">System Umgebung</option>
+                            <option value="flags" data-i18n="debug_dict_flags">Debug Flags</option>
+                        </select>
+                    </div>
+                    <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;" data-i18n="debug_db_desc">
+                        Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank
+                        und die
+                        Frontend gesendet wird.
+                    </p>
+
+                    <div id="debug-items-dict-container"
+                        style="flex: 1; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; font-size: 0.85em; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+                        <div style="padding: 15px; flex: 1; overflow: auto;">
+                            <pre id="debug-items-json"
+                                style="background: transparent; padding: 0; margin: 0; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; color: #d4d4d4;"
+                                data-i18n="debug_loading_data">Lade Daten...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results/Console -->
+            <div style="flex: 1.5; display: flex; flex-direction: column; overflow: hidden; background: #1a1a1a;">
+                <!-- Runtime Info (Right Side) -->
+                <div style="padding: 15px; background: #222; border-bottom: 1px solid #333;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #ddd;" data-i18n="debug_runtime_info">
+                        Laufzeit-Info & Log-Level</h3>
+                    <div
+                        style="font-size: 0.9em; color: #999; background: #1a1a1a; border: 1px solid #444; padding: 12px; border-radius: 6px;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div><b>Python PID:</b> <span id="debug-python-pid" style="color: #6a1;">-</span></div>
+                            <div><b>Browser PID:</b> <span id="debug-browser-pid" style="color: #6a1;">-</span>
+                            </div>
+                            <div><b>Log-Level:</b>
+                                <select id="debug-log-level-select" onchange="changeLogLevel(this.value)"
+                                    style="font-size: 0.9em; padding: 2px; border-radius: 4px; border: 1px solid #555; background: #333; color: #eee;">
+                                    <option value="DEBUG" data-i18n="log_level_debug">DEBUG</option>
+                                    <option value="INFO" data-i18n="log_level_info">INFO</option>
+                                    <option value="WARNING" data-i18n="log_level_warning">WARNING</option>
+                                    <option value="ERROR" data-i18n="log_level_error">ERROR</option>
+                                    <option value="CRITICAL" data-i18n="log_level_critical">CRITICAL</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                    <span data-i18n="debug_console">Konsole / Logs</span>
+                    <button onclick="safeText('debug-output', '')"
+                        style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
+                        data-i18n="common_clear">Clear</button>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 0;">
+                    <pre id="debug-output"
+                        style="color: #0f0; padding: 15px; font-size: 0.9em; margin: 0; min-height: 100%; white-space: pre-wrap; word-wrap: break-word; font-family: 'Fira Code', monospace;"></pre>
+                </div>
+                <!-- Hidden textarea for compatibility with old code if any -->
+                <textarea id="browse-results-debug" style="display: none;"></textarea>
+            </div>
+        </div>
+
+        <!-- Tests Tab -->
+        <div id="quality-assurance-regression-suite-panel" class="tab-content"
+            style="display: none; padding: 20px; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="margin: 0;" data-i18n="test_title">Unit Tests & Verifizierung</h2>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="test-run-summary"
+                        style="font-weight: bold; font-size: 1.1em; color: #444; background: #f0f0f0; padding: 6px 12px; border-radius: 6px; display: none;"></span>
+                    <button id="run-selected-tests-btn" onclick="runSelectedTests()"
+                        style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
+                        data-i18n="test_run_selected">
+                        ▶ Ausgewählte Tests ausführen
+                    </button>
+                    <button onclick="createNewTest()"
+                        style="padding: 10px 20px; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
+                        data-i18n="test_new">
+                        ➕ Neuer Test
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px; padding: 10px 12px; border-radius: 8px; background: #fff8e1; border: 1px solid #ffe082; color: #6d4c41; font-size: 0.9em;"
+                data-i18n="test_interactive_hint">
+                Hinweis: Interaktive Browser-Tests sind standardmäßig deaktiviert und können bei Bedarf
+                manuell
+                aktiviert werden.
+            </div>
+
+            <div id="test-suites-container"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <!-- Dynamically loaded -->
+                <div style="color: #999; font-size: 0.9em;" data-i18n="test_searching">Suche nach
+                    Tests...</div>
+            </div>
+
+            <div id="test-results-container" style="display: none; width: 100%;">
+                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="test_results_label">
+                    Testergebnisse
+                    (Logs):
+                </h3>
+                <pre id="test-output"
+                    style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
+            </div>
+        </div>
+
+        <div id="reporting-dashboard-panel" class="tab-content" style="display: none; padding: 20px; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="margin: 0;" data-i18n="report_title">Test Reporting & Dashboard</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="reporting-view-select" onchange="switchReportingView(this.value)"
+                        style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
+                        <option value="dashboard" data-i18n="report_view_dashboard">📈 Dashboard</option>
+                        <option value="database" data-i18n="report_view_database">🗄️ Datenbank (SQL)</option>
+                        <option value="video-streaming" data-i18n="report_view_video_streaming">🎬 Video Streaming
                         </option>
+                        <option value="audio-streaming" data-i18n="report_view_audio_streaming">🎵 Audio Streaming
+                        </option>
+                        <option value="parser" data-i18n="report_view_parser">🧠 Parser Reporting</option>
                     </select>
+                    <button onclick="refreshReportingData()"
+                        style="padding: 10px 20px; background: #388e3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                        🔄 Daten aktualisieren
+                    </button>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <select id="logbuch-status-filter" onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
-                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
-                        <option value="ALL" data-i18n="logbook_status_all">Alle Status</option>
-                    </select>
-                </div>
-                <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
-                    <!-- populated by JS -->
-                    <div style="color: #999; font-style: italic;" data-i18n="logbook_loading_items">
-                        Lade
-                        Einträge...</div>
-                </div>
-                <button onclick="openLogbookEditor()"
-                    style="width: 100%; padding: 10px; margin-top: 15px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s;"
-                    onmouseover="this.style.background='#d4edda'" onmouseout="this.style.background='#e8f5e9'"
-                    data-i18n="logbook_edit_new">
-                    ➕ Neuer Eintrag
-                </button>
             </div>
-            <div
-                style="flex: 2; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px; min-height: 500px;">
-                <h2 id="logbuch-tab-title" style="margin-top: 0; margin-bottom: 20px; color: #333;"
-                    data-i18n="logbook_welcome">Willkommen
-                    im Logbuch</h2>
-                <div id="logbuch-tab-content" style="line-height: 1.6; color: #444;" data-i18n="logbook_select_entry">
-                    Wähle links einen Eintrag aus, um ihn zu lesen.
+
+            <div id="reporting-main-content">
+                <div id="reporting-dashboard-view">
+                    <div
+                        style="grid-column: span 2; background: #fff; border-radius: 12px; border: 1px solid #eee; padding: 15px; margin-bottom: 5px; display: flex; gap: 30px; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="flex: 1;">
+                            <div style="display: flex; gap: 30px; align-items: center;">
+                                <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #4caf50;">
+                                    </div>
+                                    <strong>Backend:</strong> <span id="report-engine-status"
+                                        style="color: #666;">Bottle /
+                                        Gevent</span>
+                                </div>
+                                <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #2196f3;">
+                                    </div>
+                                    <strong>Runtime:</strong> <span id="report-gevent-status"
+                                        style="color: #666;">Gevent /
+                                        Greenlet</span>
+                                </div>
+                                <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff9800;">
+                                    </div>
+                                    <strong>OS Platform:</strong> <span id="report-os-status"
+                                        style="color: #666;">Linux</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                        <div id="status-pie-chart"
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
+                        </div>
+                        <div id="duration-bar-chart"
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
+                        </div>
+                    </div>
+
+                    <div id="trend-line-chart"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 400px; margin-bottom: 30px;">
+                    </div>
+
+                    <div id="report-summary-table-container"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                        <h3 data-i18n="report_summary_label">Letzte Testläufe</h3>
+                        <div id="report-summary-table"></div>
+                    </div>
+                </div>
+
+                <div id="reporting-database-view" style="display: none;">
+                    <div style="display: flex; gap: 20px;">
+                        <div id="sql-file-sidebar"
+                            style="width: 250px; background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 15px;">
+                            <h4 style="margin-top: 0;" data-i18n="report_sql_files">SQL Dateien</h4>
+                            <div id="sql-file-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                <!-- SQL files rendered dynamically -->
+                            </div>
+                        </div>
+                        <div id="sql-content-area" style="flex: 1; min-width: 0;">
+                            <div id="sql-editor-toolbar"
+                                style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                                <span id="selected-sql-filename" style="font-weight: bold; color: #333;">-</span>
+                            </div>
+                            <pre id="sql-content-renderer"
+                                style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.9em; min-height: 400px; overflow: auto; border: 1px solid #333;"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reporting-video-streaming-view" style="display: none;">
+                    <h3 style="margin-top: 0;" data-i18n="report_video_streaming_title">Video-Streaming Benchmarks
+                    </h3>
+                    <div id="video-benchmarks-container"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                        <div id="video-benchmarks-list">Lade Benchmarks...</div>
+                    </div>
+                </div>
+
+                <div id="reporting-audio-streaming-view" style="display: none;">
+                    <h3 style="margin-top: 0;" data-i18n="report_audio_streaming_title">Audio-Streaming Benchmarks
+                    </h3>
+                    <div id="audio-benchmarks-container"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                        <div id="audio-benchmarks-list">Lade Benchmarks...</div>
+                    </div>
+                </div>
+
+                <div id="reporting-parser-view" style="display: none;">
+                    <h3 style="margin-top: 0;" data-i18n="report_parser_title">Parser Performance</h3>
+                    <div id="parser-reporting-container"
+                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                        Lade Parser-Daten...
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Debug Tab duplicate removed -->
-    </div> <!-- End of logbuch-tab -->
+        <!-- Video Player Tab -->
+        <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
+            style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
+            <div style="max-width: 1000px; margin: 0 auto;">
+                <div
+                    style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                        <h2 style="margin:0; color: #333; font-size: 1.4em; display: flex; align-items: center; gap: 10px;"
+                            data-i18n="video_tab_title">
+                            <span class="icon-video"></span> <span data-i18n="video_tab_title">Video Player</span>
+                        </h2>
+                        <div
+                            style="display: flex; align-items: center; gap: 15px; background: #fdfdfd; padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            <span style="font-size: 0.9em; font-weight: bold; color: #555;"
+                                data-i18n="video_mode_label">Modus:</span>
+
+                            <select id="player-type" onchange="updateVideoModes()"
+                                style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
+                                <option value="auto">🤖 Auto-Detect (Smart)</option>
+                                <option value="chrome">🎬 Chrome Native</option>
+                                <option value="vlc">📺 VLC (Desktop/Embedded)</option>
+                                <option value="pyplayer">🐍 PyPlayer (Native)</option>
+                            </select>
+
+                            <select id="video-mode" onchange="orchestrateVideoPlaybackMode()"
+                                style="background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.9em; outline: none; cursor: pointer; color: #333;">
+                                <!-- Dynamic -->
+                            </select>
+
+                            <button onclick="triggerOpenWith()" data-i18n="btn_open_with" id="btn-open-with-video"
+                                style="background: #2a7; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.9em; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 2px 4px rgba(42,167,112,0.3); display: none;">
+                                Öffnen mit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coordinated Renderer Pipeline -->
+                    <div id="toast-container"></div>
+                    <div id="coordinated-media-renderer-pipeline-viewport" class="premium-player-container"
+                        style="aspect-ratio: 16/9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <video id="native-html5-video-resource-node" class="video-js vjs-default-skin" controls
+                            preload="auto"
+                            style="width: 100%; height: 100%; display: none; border-radius: 8px;"></video>
+                        <div id="idle-state-media-icon-symbol" style="color: #666; text-align: center; padding: 40px;">
+                            <div
+                                style="font-size: 5em; margin-bottom: 15px; opacity: 0.3; display: flex; justify-content: center;">
+                                <span class="icon-video" style="width: 100px; height: 100px;"></span>
+                            </div>
+                            <p data-i18n="video_placeholder" style="font-weight: 500; letter-spacing: 0.5px;">Kein
+                                Video ausgewählt</p>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Player Controls -->
+                    <div id="advanced-player-controls" class="glass-controls"
+                        style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; padding: 15px; border-radius: 12px;">
+                        <button id="btn-stop" onclick="stopVideo()" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Stop">■</button>
+                        <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Shuffle">🔀</button>
+                        <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Repeat">🔁</button>
+                        <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 5px 5px;"></div>
+                        <button id="btn-seek-back" onclick="seekVideo(-10)" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Rewind 10s">⏪</button>
+                        <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Forward 10s">⏩</button>
+                        <button id="btn-speed" onclick="toggleSpeed()" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Speed">⏱️</button>
+                        <button id="btn-eq" onclick="openEQ()" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Equalizer">🎚️</button>
+                        <button id="btn-pip" onclick="togglePip()" class="player-btn-premium"
+                            style="width: 45px; height: 45px;" title="Picture in Picture">🖼️</button>
+                    </div>
+
+                    <!-- Orchestrator Ingress Buffers -->
+                    <div id="orchestrator-ingress-drag-drop-buffer" style="display: none; margin-bottom: 20px;">
+                        <div id="external-player-drag-drop-ingress-area"
+                            style="border: 2px dashed #90caf9; border-radius: 10px; background: #f7fbff; color: #1e5d87; padding: 40px; text-align: center; font-weight: 600; transition: all 0.2s;"
+                            data-i18n="vlc_dnd_hint">
+                            Datei hier hineinziehen, um sie in VLC zu öffnen
+                        </div>
+                        <div style="margin-top: 10px; text-align: center;">
+                            <button onclick="pickAndPlayInVLC()"
+                                style="padding: 8px 14px; border: 1px solid #2980b9; background: #2980b9; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                                <span class="icon-load" style="background-color: white;"></span> Datei auswählen
+                            </button>
+                            <button onclick="runBatchRemux()"
+                                style="padding: 8px 14px; border: 1px solid #2a7; background: #2a7; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 10px;">
+                                <span data-i18n="vlc_btn_batch_remux">📦 Batch-Remux zu MKV</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="video-unsupported-hint"
+                        style="display: none; margin-bottom: 16px; padding: 12px 14px; background: #fff8e1; border: 1px solid #ffcc80; border-left: 4px solid #f39c12; border-radius: 8px; color: #6d4c41; font-size: 0.9em;"
+                        data-i18n="video_unsupported_hint">
+                        Browser kann dieses Video nicht direkt abspielen. Nutze "In VLC öffnen".
+                    </div>
+
+                    <!-- VLC & System Logs inside Player Context for easier debugging -->
+                    <div id="vlc-info"
+                        style="margin-bottom: 20px; padding: 15px; background: #fffcf0; border-radius: 8px; border-left: 4px solid #f90; display: none;">
+                        <div
+                            style="font-weight: bold; color: #333; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
+                            <span data-i18n="vlc_now_playing">VLC läuft:</span>
+                            <span id="vlc-status-badge"
+                                style="background: #2a7; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">Aktiv</span>
+                        </div>
+                        <div id="vlc-current-file"
+                            style="font-family: monospace; font-size: 0.9em; word-break: break-all; margin-bottom: 10px; color: #555;">
+                            -
+                        </div>
+                        <div
+                            style="background: #222; color: #0f0; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.8em; max-height: 120px; overflow-y: auto;">
+                            <span id="vlc-pipe-log-feed">Warte auf Logs vom VLC-Subprocess...</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="stopVideo()"
+                            style="padding: 10px 20px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                            <span class="icon-stop" style="background-color: white;"></span> <span
+                                data-i18n="vlc_btn_stop">Stoppen</span>
+                        </button>
+                        <button id="btn-open-vlc" onclick="switchToVLC()"
+                            style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; align-items: center; gap: 8px;">
+                            <span class="icon-rocket" style="background-color: white;"></span> <span
+                                data-i18n="vlc_btn_extern">In VLC öffnen</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logbuch Tab -->
+        <div id="localized-markdown-documentation-journal-panel" class="tab-content"
+            style="display: none; padding: 20px; overflow-y: auto;">
+            <h2 style="margin-bottom: 25px;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
+            <div style="display: flex; gap: 30px;">
+                <div
+                    style="flex: 1; max-width: 350px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 1.1em; margin: 0;" data-i18n="nav_logbook">Einträge</h3>
+                        <button onclick="loadLogbuchTab()"
+                            style="background:none; border:none; cursor:pointer; font-size:1.1em;"
+                            title="Refresh">🔄</button>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <select id="logbuch-category-filter"
+                            onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
+                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
+                            <option value="Alle" data-i18n="logbook_category_all">Alle Kategorien
+                            </option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <select id="logbuch-status-filter" onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
+                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer;">
+                            <option value="ALL" data-i18n="logbook_status_all">Alle Status</option>
+                        </select>
+                    </div>
+                    <div id="logbuch-tab-list" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- populated by JS -->
+                        <div style="color: #999; font-style: italic;" data-i18n="logbook_loading_items">
+                            Lade
+                            Einträge...</div>
+                    </div>
+                    <button onclick="openLogbookEditor()"
+                        style="width: 100%; padding: 10px; margin-top: 15px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s;"
+                        onmouseover="this.style.background='#d4edda'" onmouseout="this.style.background='#e8f5e9'"
+                        data-i18n="logbook_edit_new">
+                        ➕ Neuer Eintrag
+                    </button>
+                </div>
+                <div
+                    style="flex: 2; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 30px; min-height: 500px;">
+                    <h2 id="logbuch-tab-title" style="margin-top: 0; margin-bottom: 20px; color: #333;"
+                        data-i18n="logbook_welcome">Willkommen
+                        im Logbuch</h2>
+                    <div id="logbuch-tab-content" style="line-height: 1.6; color: #444;"
+                        data-i18n="logbook_select_entry">
+                        Wähle links einen Eintrag aus, um ihn zu lesen.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Tab duplicate removed -->
+        </div> <!-- End of logbuch-tab -->
     </div> <!-- End of right content flex column -->
     </div> <!-- End of layout-container (main-split-container) -->
 
