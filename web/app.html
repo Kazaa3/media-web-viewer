@@ -3718,6 +3718,12 @@
                                 style="width: 45px; height: 45px;" title="Rewind 10s">⏪</button>
                             <button id="btn-seek-forward" onclick="seekVideo(10)" class="player-btn-premium"
                                 style="width: 45px; height: 45px;" title="Forward 10s">⏩</button>
+                            <div style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 0 10px;">
+                                <span id="video-current-time" style="color: #666; font-family: monospace; font-size: 0.85em; width: 50px;">00:00</span>
+                                <input type="range" id="video-seek-slider" min="0" max="100" value="0"
+                                    style="flex: 1; height: 6px; cursor: pointer; accent-color: #2a7; border-radius: 3px;">
+                                <span id="video-duration" style="color: #666; font-family: monospace; font-size: 0.85em; width: 50px;">00:00</span>
+                            </div>
                             <button id="btn-speed" onclick="toggleSpeed()" class="player-btn-premium"
                                 style="width: 45px; height: 45px;" title="Speed">⏱️</button>
                             <button id="btn-eq" onclick="openEQ()" class="player-btn-premium"
@@ -5845,6 +5851,8 @@
             const isVideo = item.type === 'video' || (item.extension && videoExts.includes(item.extension.toLowerCase()));
 
             currentVideoItem = item;
+            updateMediaSidebar(item, path);
+            
             if (isVideo) {
                 playVideo(item, path);
                 return;
@@ -5879,15 +5887,24 @@
 
             // Synchronize backend index
             if (typeof eel !== 'undefined' && typeof eel.jump_to_index === 'function') {
-                eel.jump_to_index(playlistIndex)().catch(console.error);
+                const list = isShuffle ? shuffledPlaylist : currentPlaylist;
+                const idx = list.indexOf(item);
+                if (idx !== -1) {
+                    eel.jump_to_index(idx)().catch(console.error);
+                }
             }
 
+            // Python Backend anfunken
+            eel.play_media(path)();
+        }
+
+        function updateMediaSidebar(item, path) {
             // Update Status Bar
-            safeHtml('active-orchestration-status-message-renderer', `${t('player_status_playing')}<strong>${item.tags.title}</strong>${t('player_status_by')}${item.tags.artist}`);
+            safeHtml('active-orchestration-status-message-renderer', `${t('player_status_playing')}<strong>${item.tags.title || item.name}</strong>${t('player_status_by')}${item.tags.artist || 'Unknown'}`);
 
             // Update Sidebar
             let tags = item.tags;
-            console.log("Playing item tags:", tags);
+            console.log("Updating sidebar for item:", item.name);
 
             let sbCover = document.getElementById('sidebar-artwork-raster-buffer');
             if (sbCover) {
@@ -5905,8 +5922,8 @@
                 footerCover.onerror = function () { this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
             }
 
-            safeText('sidebar-metadata-primary-string-renderer', tags.title);
-            let artistStr = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : tags.artist;
+            safeText('sidebar-metadata-primary-string-renderer', tags.title || item.name);
+            let artistStr = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : (tags.artist || 'Unknown');
             safeText('sidebar-metadata-secondary-string-renderer', artistStr);
             safeText('sidebar-metadata-tertiary-string-renderer', tags.album || "");
 
@@ -5917,7 +5934,7 @@
             let discStr = tags.disc ? t('sb_disc_label') + tags.disc : '';
             let extraInfoSb = [displayYear, tags.genre, discStr, trackStr].filter(Boolean).join(' • ');
 
-            safeText('sidebar-metadata-extended-attribute-grid', extraInfoSb + "\n\n" + item.duration);
+            safeText('sidebar-metadata-extended-attribute-grid', extraInfoSb + "\n\n" + (item.duration || '0:00'));
 
             let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
             if (badgeText) {
@@ -5928,7 +5945,7 @@
             }
 
             let artStr = tags.has_art === 'Yes' ? t('sb_art_yes') : t('sb_art_no');
-            let extStr = t('sb_file_label') + (item.type ? item.type.toLowerCase() : '');
+            let extStr = t('sb_file_label') + (item.type ? item.type.toLowerCase() : (item.extension || '').toLowerCase());
             let contStr = tags.container ? t('sb_container_label') + tags.container.toLowerCase() : '';
 
             // Reorganize top row with size and art
@@ -5937,7 +5954,7 @@
             // New distinct row for format details
             let tagVal = tags.tagtype && tags.tagtype !== 'None' ? tags.tagtype : 'None';
             let tagStr = t('sb_tag_format_label') + tagVal;
-            let fileTypeStr = `${t('sb_filetype_label')}${item.category || 'Audio'}`;
+            let fileTypeStr = `${t('sb_filetype_label')}${item.category || (item.type || 'Media')}`;
             let formatDetailsStr = [extStr, contStr, tagStr, fileTypeStr].filter(Boolean).join(' • ');
 
             // Combine them
@@ -5946,6 +5963,7 @@
             // Base info: Name & Path (Prepended)
             let headerInfo = `<strong>${item.name}</strong><br><br><span style="color:#aaa; font-style:italic; font-size:0.85em; word-break: break-all;">${path}</span>`;
             fileInfoStr = headerInfo + '<br><br>' + fileInfoStr;
+            
             // Format Parser Times
             let parserTimesHtml = '';
             // Only show if the toggle is checked
@@ -5962,10 +5980,12 @@
                     }
                 }
                 if (times.length > 0) {
-                    parserTimesHtml = `<br><br>${t('sb_parser_times_title')}<br>` + times.join(' &bull; ');
+                    parserTimesHtml = '<div style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px; font-size: 0.85em;">' +
+                                      '<div style="margin-bottom: 5px; color: #888; text-transform: uppercase; font-size: 10px; font-weight: bold; letter-spacing: 0.5px;">Performance</div>' +
+                                      times.join(' • ') + '</div>';
                 }
             }
-            // Base info: Name & Path
+
             let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">${t('sb_transcoding_msg').replace('{fmt}', item.transcoded_format || 'FLAC')}</span>` : '';
 
             // Render chapters if available
@@ -5985,9 +6005,6 @@
             }
 
             safeHtml('sidebar-filesystem-handle-string-renderer', fileInfoStr + parserTimesHtml + transcodeHtml + chaptersHtml);
-
-            // Python Backend anfunken
-            eel.play_media(path)();
         }
 
         // ============ Video Player ============
@@ -6096,6 +6113,15 @@
                     // For now, let's just update the UI state.
                 }
             }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
         let vjsPlayer = null;
@@ -6223,6 +6249,29 @@
                         if (typeof onErrorCallback === 'function') onErrorCallback();
                     }
                 });
+
+                vjsPlayer.on('timeupdate', () => {
+                    const slider = document.getElementById('video-seek-slider');
+                    const currentTimeSpan = document.getElementById('video-current-time');
+                    const durationSpan = document.getElementById('video-duration');
+                    
+                    if (slider && !slider.matches(':active')) {
+                        const progress = (vjsPlayer.currentTime() / vjsPlayer.duration()) * 100;
+                        slider.value = isFinite(progress) ? progress : 0;
+                    }
+                    if (currentTimeSpan) currentTimeSpan.innerText = formatTime(vjsPlayer.currentTime());
+                    if (durationSpan) durationSpan.innerText = formatTime(vjsPlayer.duration());
+                });
+
+                const seekSlider = document.getElementById('video-seek-slider');
+                if (seekSlider) {
+                    seekSlider.addEventListener('input', (e) => {
+                        if (vjsPlayer && vjsPlayer.duration()) {
+                            const newTime = (e.target.value / 100) * vjsPlayer.duration();
+                            vjsPlayer.currentTime(newTime);
+                        }
+                    });
+                }
             }
 
             // Stop VLC if running
