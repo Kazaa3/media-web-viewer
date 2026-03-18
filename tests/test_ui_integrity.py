@@ -97,6 +97,66 @@ class TestUIIntegrity(unittest.TestCase):
         for rid in required_ids:
             self.assertIn(f'id="{rid}"', self.content, f"Layout ID '{rid}' missing")
 
+    def test_no_duplicate_js_functions(self):
+        """
+        @test Verify no JS function is defined more than once in app.html.
+        @details Duplicate function definitions (e.g. seekVideo, toggleSpeed, togglePip)
+                 cause SyntaxErrors like 'unexpected token'. This regression check
+                 detects them statically.
+        """
+        # Extract named functions (function foo(...) and async function foo(...))
+        func_defs = re.findall(
+            r'\basync\s+function\s+(\w+)\s*\(|(?<!\w)function\s+(\w+)\s*\(',
+            self.content
+        )
+        names = [a or b for a, b in func_defs]
+        seen = {}
+        duplicates = []
+        for name in names:
+            seen[name] = seen.get(name, 0) + 1
+            if seen[name] == 2:
+                duplicates.append(name)
+        self.assertEqual(
+            duplicates, [],
+            f"Duplicate JS function definitions found: {duplicates}"
+        )
+
+    def test_no_orphaned_catch_blocks(self):
+        """
+        @test Verify no '} catch' block exists without a matching 'try {' above it.
+        @details Uses a backwards scan from each '} catch' up to the nearest function
+                 boundary to confirm there is an unmatched 'try {'. Handles long functions.
+        """
+        lines = self.content.split('\n')
+        suspicious = []
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not re.match(r'^\}\s*catch\s*[\(\{]', stripped):
+                continue
+            # Scan backwards to find the nearest function definition or file start
+            catch_depth = 0
+            found_try = False
+            for j in range(i - 2, max(0, i - 600), -1):
+                lj = lines[j].strip()
+                if re.search(r'\btry\s*\{', lj):
+                    if catch_depth == 0:
+                        found_try = True
+                        break
+                    catch_depth -= 1
+                elif re.match(r'^\}\s*catch\s*[\(\{]', lj):
+                    catch_depth += 1
+                # Stop at the enclosing function start
+                if re.match(r'(async\s+)?function\s+\w+\s*\(', lj):
+                    break
+            if not found_try:
+                suspicious.append(f"Line {i}: {stripped}")
+        self.assertEqual(
+            suspicious, [],
+            f"Orphaned catch block(s) found:\n" + "\n".join(suspicious)
+        )
+
+
+
 if __name__ == '__main__':
     print("Running UI Integrity Tests...")
     unittest.main()

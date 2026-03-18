@@ -304,6 +304,75 @@ def get_media_by_name(name):
 
     if row:
         return {
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+        }
+    return None
+
+
+def get_media_by_id(media_id):
+    """
+    @brief Retrieves a single media item's full record by its unique ID.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM media WHERE id = ?", (media_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+        }
+    return None
+
+
+def get_media_by_path(path):
+    """
+    @brief Retrieves a single media item's full record by its filesystem path.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM media WHERE path = ?", (path,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            'id': row['id'],
             'name': row['name'],
             'path': row['path'],
             'type': row['type'],

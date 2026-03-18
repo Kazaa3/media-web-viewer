@@ -1647,12 +1647,7 @@
             });
         }
 
-        function toggleDebugMenu() {
-            const menu = document.getElementById('debug-menu');
-            if (menu) {
-                menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-            }
-        }
+
 
         function closeLogbookEditor() {
             const modal = document.getElementById('logbuch-editor-modal');
@@ -3553,6 +3548,24 @@
                                     </div>
                                     <div id="import-status" style="margin-top: 10px; font-size: 0.8em; display: none;">
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tool Output / Logs Section -->
+                        <div
+                            style="background: #1e1e1e; border-radius: 12px; padding: 20px; margin-top: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                            <h3
+                                style="margin: 0 0 15px 0; color: #eee; font-size: 1.1em; display: flex; align-items: center; gap: 10px;">
+                                <span class="icon-terminal" style="color: #00ff00;"></span> <span>Tool Output /
+                                    Logs</span>
+                                <button onclick="clearToolLogs()"
+                                    style="margin-left: auto; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; transition: all 0.2s;">Clear</button>
+                            </h3>
+                            <div id="tool-logs-container"
+                                style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 0.85em; color: #00ff00; border: 1px solid #222; scroll-behavior: smooth;">
+                                <div id="tool-logs-content">
+                                    <div style="color: #666; font-style: italic;">Waiting for tool output...</div>
                                 </div>
                             </div>
                         </div>
@@ -5887,7 +5900,7 @@
                 ],
                 'chrome': [
                     { value: 'chrome_direct', label: t('video_mode_chrome') },
-                    { value: 'chrome_remux', label: '🚀 Live Remux (Native)' },
+                    { value: 'chrome_remux', label: 'mkvmerge PIPE KIT (VLC-frei)' },
                     { value: 'chrome_hls', label: t('video_mode_mediamtx') },
                     { value: 'chrome_fragmp4', label: 'ffmpeg FragMP4' },
                     { value: 'chrome_webrtc', label: t('video_mode_mediamtx_webrtc') },
@@ -5901,9 +5914,9 @@
                     { value: 'vlc_ts', label: t('video_mode_vlc_ts') }
                 ],
                 'pyplayer': [
-                    { value: 'pyplayer_native', label: '🐍 pyvidplayer2' },
-                    { value: 'pyplayer_mpv', label: '🎹 mpv Embedded' },
-                    { value: 'pyplayer_pip', label: '🖼️ Mini-Overlay' }
+                    { value: 'pyplayer_native', label: 'pyvidplayer2' },
+                    { value: 'pyplayer_mpv', label: 'mpv Embedded' },
+                    { value: 'pyplayer_pip', label: 'Mini-Overlay' }
                 ]
             };
 
@@ -5971,13 +5984,22 @@
 
             showToast(`Lade Video (${type}/${mode})...`, 2000);
 
-            // Refactored backend call
             try {
-                const res = await eel.open_video(path, type, mode)();
+                // Use open_video_smart for better routing as per logbuch
+                const res = await eel.open_video_smart(path, mode)();
+                console.log("Open video result:", res);
 
                 if (res && res.status === 'play') {
-                    if (res.mode === 'chrome_native') {
-                        if (res.path && res.path.startsWith('/video-stream/')) {
+                    if (res.mode === 'mediamtx') {
+                        showToast("STREAMING via MediaMTX (HLS/WebRTC)", 3000);
+                        // Prefer WebRTC if available, fallback to HLS
+                        const streamUrl = res.webrtc || res.hls;
+                        const streamType = res.webrtc ? 'video/webrtc' : 'application/x-mpegURL';
+                        startEmbeddedVideo(item, streamUrl, null, streamType);
+                    } else if (res.mode.startsWith('chrome_')) {
+                        if (res.path && res.path.startsWith('/video-remux-stream/')) {
+                            showToast("mkvmerge PIPE KIT (Direct FragMP4)", 3000);
+                        } else if (res.path && res.path.startsWith('/video-stream/')) {
                             showToast("ON-THE-FLY TRANSCODING (FragMP4)", 3000);
                         } else if (type === 'auto') {
                             showToast("DIRECT PLAYBACK (Chrome Native)", 3000);
@@ -6045,6 +6067,26 @@
                             'fullscreenToggle',
                             'pictureInPictureToggle'
                         ]
+                    }
+                });
+
+                // Automatic playlist progression
+                vjsPlayer.on('ended', () => {
+                    console.info("[Video.js] Video ended, triggering next...");
+                    if (isRepeat === 'one') {
+                        vjsPlayer.play();
+                    } else {
+                        playNext();
+                    }
+                });
+
+                // Error handling fallback
+                vjsPlayer.on('error', () => {
+                    const error = vjsPlayer.error();
+                    console.error("[Video.js] Player Error:", error);
+                    if (error.code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        showUnsupportedVideoHint();
+                        if (typeof onErrorCallback === 'function') onErrorCallback();
                     }
                 });
             }
@@ -6161,6 +6203,27 @@
             }
         }
 
+        function seekVideo(delta) {
+            if (vjsPlayer) {
+                const currentTime = vjsPlayer.currentTime();
+                vjsPlayer.currentTime(currentTime + delta);
+            }
+        }
+
+        function toggleSpeed() {
+            if (vjsPlayer) {
+                const currentRate = vjsPlayer.playbackRate();
+                const rates = [1, 1.25, 1.5, 2, 0.5];
+                let nextIdx = rates.indexOf(currentRate) + 1;
+                if (nextIdx >= rates.length) nextIdx = 0;
+                vjsPlayer.playbackRate(rates[nextIdx]);
+                showToast(`Speed: ${rates[nextIdx]}x`, 1000);
+            }
+        }
+
+        function openEQ() {
+            showToast("Equalizer ist in diesem Modus noch nicht verfügbar (Native Browser EQ coming soon)", 2000);
+        }
 
         async function stopVideo() {
             const video = document.getElementById('native-html5-video-resource-node');
@@ -8832,25 +8895,38 @@
                 <div style="height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
                     <div id="progress-${taskId}" style="height: 100%; width: 0%; background: linear-gradient(90deg, #2a7, #2ecc71); transition: width 0.4s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.75em; align-items: center;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75em; align-items: center; margin-bottom: 8px;">
                     <span id="label-${taskId}" style="color: #666; font-weight: 500;">In Warteschlange...</span>
                     <span id="percent-${taskId}" style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-weight: bold;">0%</span>
+                </div>
+                <div id="log-${taskId}" style="font-family: monospace; font-size: 0.7em; background: #f8f9fa; padding: 8px; border-radius: 4px; color: #555; max-height: 60px; overflow-y: auto; border: 1px solid #eee;">
+                    Warte auf Tool-Ausgabe...
                 </div>
             `;
             list.appendChild(taskDiv);
 
             const interval = setInterval(async () => {
                 const status = await eel.get_transcode_status(taskId)();
+
+                // Update Logs
+                const logDiv = document.getElementById(`log-${taskId}`);
+                if (logDiv && status.logs && status.logs.length > 0) {
+                    logDiv.innerText = status.logs[status.logs.length - 1]; // Show last line or all? Last line is cleaner.
+                    logDiv.title = status.logs.join('\n');
+                }
+
                 if (status.status === 'completed') {
                     document.getElementById(`progress-${taskId}`).style.width = '100%';
                     document.getElementById(`percent-${taskId}`).innerText = '100%';
                     document.getElementById(`label-${taskId}`).innerText = 'Fertig';
                     document.getElementById(`label-${taskId}`).style.color = '#2a7';
+                    if (logDiv) logDiv.innerText = "Transcoding erfolgreich abgeschlossen.";
                     clearInterval(interval);
                     showToast(`✅ Transcoding fertig: ${fileName}`, 4000);
                 } else if (status.status === 'error') {
                     document.getElementById(`label-${taskId}`).innerText = `Fehler: ${status.error}`;
                     document.getElementById(`label-${taskId}`).style.color = '#c0392b';
+                    if (logDiv) logDiv.innerText = `FEHLER: ${status.error}`;
                     clearInterval(interval);
                     showToast(`❌ Transcoding fehlgeschlagen: ${fileName}`, 5000);
                 } else {
@@ -8861,6 +8937,58 @@
                 }
             }, 2500);
         }
+
+        function clearToolLogs() {
+            const content = document.getElementById('tool-logs-content');
+            if (content) content.innerHTML = '<div style="color: #666; font-style: italic;">Wait for tool output...</div>';
+        }
+
+        async function updateToolLogs() {
+            try {
+                const logs = await eel.get_ui_logs()();
+                const container = document.getElementById('tool-logs-content');
+                if (!container) return;
+
+                const toolPatterns = [
+                    '🚀 [Remux]', '🚀 [VLC]', '🚀 [Stream]', '🚀 [FFplay]',
+                    '[HandBrake]', 'ffmpeg', 'mkvmerge', 'HandBrakeCLI',
+                    'Transcode', 'Convert', '[Vortrag]'
+                ];
+
+                const filteredLogs = logs.filter(line =>
+                    toolPatterns.some(p => line.includes(p))
+                );
+
+                if (filteredLogs.length > 0) {
+                    const htmlContent = filteredLogs.map(line => {
+                        let color = "#00ff00";
+                        if (line.includes("ERROR") || line.includes("FAILED")) color = "#ff4444";
+                        if (line.includes("WARNING")) color = "#ffcc00";
+                        if (line.includes("Starting") || line.includes("Finalized") || line.includes("Started")) color = "#3498db";
+                        return `<div style="margin-bottom: 2px; color: ${color}; opacity: 0.9;">${line}</div>`;
+                    }).join('');
+
+                    if (container.innerHTML !== htmlContent) {
+                        const parent = container.parentElement;
+                        const wasAtBottom = (parent.scrollTop + parent.clientHeight >= parent.scrollHeight - 20);
+                        container.innerHTML = htmlContent;
+                        if (wasAtBottom) {
+                            parent.scrollTop = parent.scrollHeight;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Tool Log Error:", e);
+            }
+        }
+
+        // Start polling for tool logs if we are on the advanced tools tab
+        setInterval(() => {
+            const toolsTab = document.getElementById('tools-tab');
+            if (toolsTab && toolsTab.style.display !== 'none') {
+                updateToolLogs();
+            }
+        }, 3000);
     </script>
     <!-- Mini-Video Overlay (PiP) -->
     <div id="mini-player" class="mini-player hidden">

@@ -19,7 +19,7 @@ from selenium.webdriver.support import expected_conditions as EC
 class TestPlaylistUI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.port = 8003
+        cls.port = 8346
         env = os.environ.copy()
         env["MWV_PORT"] = str(cls.port)
         env["MWV_FORCE_NEW_SESSION"] = "1"
@@ -34,9 +34,17 @@ class TestPlaylistUI(unittest.TestCase):
             ], f)
 
         cls.log_file = open("tests/artifacts/logs/test_playlist_startup.log", "w")
+        
+        # Use .venv_core for the application backend
+        project_root = os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+        core_python = os.path.join(project_root, ".venv_core", "bin", "python3")
+        if not os.path.exists(core_python):
+             # Fallback to sys.executable if .venv_core is missing (should not happen in prod)
+             core_python = sys.executable
+
         cls.app_process = subprocess.Popen(
-            [sys.executable, "src/core/main.py"],
-            cwd=os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))),
+            [core_python, "src/core/main.py"],
+            cwd=project_root,
             stdout=cls.log_file,
             stderr=subprocess.STDOUT,
             env=env
@@ -66,7 +74,7 @@ class TestPlaylistUI(unittest.TestCase):
             os.remove(cls.fake_playlist_path)
 
     def setUp(self):
-        self.driver.get(f"http://localhost:{port}/app.html")
+        self.driver.get(f"http://localhost:{self.port}/app.html")
         WebDriverWait(self.driver, 15).until(
             EC.presence_of_element_located((By.ID, "main-split-container"))
         )

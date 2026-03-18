@@ -4,15 +4,7 @@
 # Eingabewerte: Selenium, src/core/main.py, media/test_selenium_dvd.iso
 # Ausgabewerte: Validierung der ISO/DVD-Playback-Logik im UI
 # Testdateien: src/core/main.py, media/test_selenium_dvd.iso
-# ERWEITERUNGEN (TODO): [ ] Erweiterung auf weitere ISO/DVD-Fälle, [ ] Fehlerfall-Tests
 # KOMMENTAR: Selenium-basierter Test für ISO/DVD-Playback.
-# VERWENDUNG: python3 tests/iso/test_iso_playback_ui.py
-import pytest
-pytest.importorskip("selenium")
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Kategorie: GUI / E2E Test
-# Kommentar: Selenium-based test for ISO/DVD playback logic.
 
 import unittest
 import time
@@ -26,15 +18,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 class TestISOPlaybackUI(unittest.TestCase):
-        """
-        Selenium-basierter Test für ISO/DVD-Playback im UI. / Selenium-based test for ISO/DVD playback in UI.
-
-        Returns:
-            None
-        """
+    """
+    Selenium-basierter Test für ISO/DVD-Playback im UI. / Selenium-based test for ISO/DVD playback in UI.
+    """
     @classmethod
     def setUpClass(cls):
-        cls.port = 8004
+        cls.port = 8346
         env = os.environ.copy()
         env["MWV_PORT"] = str(cls.port)
         env["MWV_FORCE_NEW_SESSION"] = "1"
@@ -51,8 +40,14 @@ class TestISOPlaybackUI(unittest.TestCase):
             f.write(b"\0" * 1024)
 
         cls.log_file = open("test_iso_ui_startup.log", "w")
+        
+        # Use .venv_core for the application backend
+        core_python = os.path.join(cls.project_root, ".venv_core", "bin", "python3")
+        if not os.path.exists(core_python):
+             core_python = sys.executable
+
         cls.app_process = subprocess.Popen(
-            [sys.executable, "src/core/main.py"],
+            [core_python, "src/core/main.py"],
             cwd=cls.project_root,
             stdout=cls.log_file,
             stderr=subprocess.STDOUT,
@@ -84,7 +79,7 @@ class TestISOPlaybackUI(unittest.TestCase):
             os.remove(cls.mock_iso)
 
     def setUp(self):
-        self.driver.get(f"http://localhost:{port}/app.html")
+        self.driver.get(f"http://localhost:{self.port}/app.html")
         WebDriverWait(self.driver, 20).until(
             EC.presence_of_element_located((By.ID, "main-split-container"))
         )

@@ -54,14 +54,14 @@ class TestMouseInteraction(unittest.TestCase):
         """
         preferred = int(os.environ.get("MWV_PORT", 0)) or None
         cls.app_process = None
-        decision, using_existing, cls.port = manage_app_instance(preferred)
+        decision, using_existing, cls.port, core_python = manage_app_instance(preferred)
         
         if decision == "START_NEW":
             env = os.environ.copy()
             env["MWV_PORT"] = str(cls.port)
             env["MWV_FORCE_NEW_SESSION"] = "1"
             cls.app_process = subprocess.Popen(
-                [sys.executable, "src/core/main.py"],
+                [core_python, "src/core/main.py"],
                 cwd=os.path.abspath(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))),
                 env=env
             )

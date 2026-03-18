@@ -75,9 +75,20 @@ def find_running_project_sessions():
         print(f"Error scanning sessions: {e}")
     return sessions
 
+def get_core_python():
+    """Returns the path to the core virtual environment's python executable."""
+    # Project root is 4 levels up from this file (integration/basic/utils/test_utils.py)
+    project_root = Path(__file__).parents[4]
+    core_python = project_root / ".venv_core" / "bin" / "python3"
+    if core_python.exists():
+        return str(core_python)
+    return sys.executable
+
 def manage_app_instance(preferred_port=None):
-    """Prioritizes existing project sessions."""
+    """Prioritizes existing project sessions and returns the recommended python executable."""
     sessions = find_running_project_sessions()
+    core_python = get_core_python()
+    
     if sessions:
         best = sessions[0]
         if preferred_port:
@@ -86,11 +97,15 @@ def manage_app_instance(preferred_port=None):
                     best = s
                     break
         print(f"Using EXISTING project session (PID {best['pid']}) on port {best['port']}.")
-        return None, True, best['port']
-    if preferred_port and is_port_open(preferred_port):
-        return None, True, preferred_port
-        return "FAIL", False, None
-    return "START_NEW", False, preferred_port or 8345
+        return None, True, best['port'], core_python
+    
+    port = preferred_port or 8346
+    if is_port_open(port):
+        # If the port is open but not by a project session we recognized, we might have a conflict
+        # But for now we just return it
+        return "START_NEW", False, port, core_python
+        
+    return "START_NEW", False, port, core_python
 
 def robust_action(driver, action_func, retries=10, delay=1.0):
     from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, ElementNotInteractableException, NoSuchElementException

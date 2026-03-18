@@ -23,7 +23,7 @@ def test_websocket_bridge():
     
     project_root = Path(__file__).parent.parent.absolute()
     main_py = project_root / "src" / "core" / "main.py"
-    port = 8009
+    port = 8346
     
     env = os.environ.copy()
     env["MWV_PORT"] = str(port)
@@ -33,8 +33,14 @@ def test_websocket_bridge():
 
     print(f"   ├─ Starting backend server on port {port}...")
     log_file = open("tests/websocket_test_startup.log", "w")
+    
+    # Use .venv_core for the application backend
+    core_python = project_root / ".venv_core" / "bin" / "python3"
+    if not core_python.exists():
+        core_python = Path(sys.executable)
+
     process = subprocess.Popen(
-        [sys.executable, str(main_py)],
+        [str(core_python), str(main_py)],
         cwd=str(project_root),
         stdout=log_file,
         stderr=subprocess.STDOUT,

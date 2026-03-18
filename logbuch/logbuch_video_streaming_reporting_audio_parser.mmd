@@ -1,0 +1,33 @@
+# Logbuch: Video Streaming – Reporting-Tab, Audio-Streaming & Parser/Extraction (März 2026)
+
+## Übersicht
+Dieses Logbuch dokumentiert die Einführung und Weiterentwicklung des Video-Streaming-Subsystems im Reporting-Tab, die geplante Erweiterung um Audio-Streaming sowie die Integration von Parsern und Video-Extraction-Tools.
+
+---
+
+## 1. Video Streaming im Reporting-Tab
+- Neuer Untertab "Video Streaming" im Reporting-Bereich implementiert.
+- Übersicht aller aktiven und historischen Streams (Direct, HLS, WebRTC, FragMP4).
+- Anzeige von Stream-Status, Startzeit, Modus (z.B. mkvmerge PIPE KIT, MediaMTX), und Nutzer.
+- Live-Log-Panel für Fehler, Transcoder-Status und Netzwerk-Events.
+- Schnellzugriff auf Player- und Moduswechsel direkt aus dem Reporting-Tab.
+
+## 2. Geplante Erweiterung: Audio-Streaming
+- Analoges Konzept für Audio-Streaming (MP3, M4B, Opus, FLAC) vorgesehen.
+- Untertab "Audio Streaming" für laufende und vergangene Audiostreams.
+- Integration von Equalizer- und DSP-Optionen in der UI.
+- Geplante Unterstützung für Podcast- und Hörbuch-Streaming.
+
+## 3. Parser & Video Extraction
+- Integration von Parsern (ffprobe, pymediainfo, mutagen) zur automatischen Metadaten-Extraktion bei jedem Stream-Start.
+- Geplante Erweiterung: Video-Extraction-Tools (z.B. Szenen-Split, Thumbnail-Generator, Subtitle-Extractor) als eigene Sektion im Reporting-Tab.
+- Fortschrittsanzeige und Fehlerprotokoll für alle Extraction-Tasks.
+
+---
+
+## 4. Ausblick
+- Schrittweise Erweiterung des Reporting-Tabs um Audio- und Extraction-Funktionen.
+- Ziel: Zentrale Übersicht und Steuerung aller Streaming- und Analyseprozesse in der App.
+
+**Datum:** 18. März 2026  
+**Autor:** GitHub Copilot

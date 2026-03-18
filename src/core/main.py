@@ -2871,6 +2871,15 @@ def stream_video_fragmented(file_path):
     """
     resolved_path = resolve_media_path(file_path)
     if not os.path.exists(resolved_path):
+        # Fallback to DB lookup if path resolve failed (id or filename search)
+        from src.core import db
+        item = db.get_media_by_name(file_path)
+        if item:
+            resolved_path = item['path']
+        else:
+            return bottle.HTTPError(404, "File not found")
+
+    if not os.path.exists(resolved_path):
         return bottle.HTTPError(404, "File not found")
 
     def ffmpeg_stream():
@@ -2880,7 +2889,7 @@ def stream_video_fragmented(file_path):
         
         # Base command for H.264 FragMP4
         cmd = [
-            "ffmpeg", "-re", "-i", resolved_path,
+            "ffmpeg", "-re", "-i", str(resolved_path),
             "-c:v", encoder, "-preset", "ultrafast", "-tune", "zerolatency",
             "-c:a", "aac", "-b:a", "128k",
             "-movflags", "frag_keyframe+empty_moov+default_base_moof",
@@ -2892,7 +2901,7 @@ def stream_video_fragmented(file_path):
             # VAAPI needs extra initialization
             cmd = [
                 "ffmpeg", "-re", "-vaapi_device", "/dev/dri/renderD128",
-                "-i", resolved_path,
+                "-i", str(resolved_path),
                 "-vf", "format=nv12,hwupload",
                 "-c:v", "h264_vaapi",
                 "-c:a", "aac", "-b:a", "128k",
@@ -2900,19 +2909,188 @@ def stream_video_fragmented(file_path):
                 "-f", "mp4", "-"
             ]
 
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024)
         try:
-            if process.stdout:
-                while True:
-                    data = process.stdout.read(4096 * 16)
-                    if not data:
-                        break
-                    yield data
+            if not process.stdout:
+                 return
+            while True:
+                chunk = process.stdout.read(256 * 1024)
+                if not chunk:
+                    break
+                yield chunk
         finally:
             if process:
-                process.kill()
+                process.terminate()
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+            logging.info(f"🚀 [Stream] Finalized fragment stream for: {resolved_path}")
 
     return bottle.HTTPResponse(ffmpeg_stream(), content_type="video/mp4")
+
+@eel.btl.route('/vlc-stream/<item_id>')
+def vlc_stream(item_id):
+    """
+    @brief Real-time video streaming with VLC as the backend engine.
+    """
+    from src.core import db
+    item = db.get_media_by_id(item_id)
+    if not item:
+        item_path = resolve_media_path(item_id)
+        if os.path.exists(item_path):
+            file_path = item_path
+        else:
+            return bottle.HTTPResponse(status=404)
+    else:
+        file_path = item['path']
+
+    vlc_path = shutil.which('vlc') or 'vlc'
+    sout = '#transcode{vcodec=h264,vb=2000,scale=auto,acodec=mp4a,ab=128,channels=2,samplerate=44100}:std{access=file,mux=mp4,dst=-}'
+    
+    cmd = [
+        vlc_path, '-I', 'dummy', str(file_path),
+        '--sout', sout, 'vlc://quit'
+    ]
+
+    def generate():
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            if not process.stdout:
+                 return
+            while True:
+                chunk = process.stdout.read(64 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            if process:
+                process.terminate()
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+            logging.info(f"🚀 [VLC] Finalized stream for: {file_path}")
+
+    return bottle.HTTPResponse(generate(), content_type='video/mp4')
+
+
+def log_process_stderr(process, label):
+    """
+    Helper to read stderr from a process in a separate thread and log it.
+    Handles both text and binary streams (decodes bytes).
+    """
+    def reader():
+        if not process.stderr: return
+        # Handle both text and binary stderr
+        stream = process.stderr
+        while True:
+            line = stream.readline()
+            if not line: break
+            if isinstance(line, bytes):
+                try:
+                    line = line.decode('utf-8', errors='replace')
+                except:
+                    continue
+            logging.info(f"🚀 [{label}] {line.strip()}")
+        process.stderr.close()
+    
+    thread = threading.Thread(target=reader, daemon=True)
+    thread.start()
+
+
+@eel.btl.route('/video-remux-stream/<item_id:path>')
+def video_remux_stream(item_id):
+    """
+    @brief Real-time remuxing to Matroska/WebM for Chrome Native playback.
+    """
+    try:
+        from src.core import db
+        item = db.get_media_by_id(item_id)
+        if not item:
+            # Fallback: check if item_id is actually a name
+            item = db.get_media_by_name(item_id)
+            if not item:
+                # Last fallback: literal path
+                item_path = resolve_media_path(item_id)
+                if os.path.exists(item_path):
+                    file_path = item_path
+                else:
+                    logging.warning(f"❌ [Remux] Field not found in DB or filesystem: {item_id}")
+                    return bottle.HTTPResponse(status=404)
+            else:
+                file_path = item['path']
+        else:
+            file_path = item['path']
+
+        logging.info(f"🚀 [Remux] Starting live Pipe-Kit stream for: {file_path}")
+
+        mkvmerge_path = shutil.which('mkvmerge') or 'mkvmerge'
+        ffmpeg_path = shutil.which('ffmpeg') or 'ffmpeg'
+        
+        def generate():
+            # PIPE-KIT: mkvmerge (MKV) -> ffmpeg (FragMP4)
+            # This provides the best of both worlds: lossless remux and browser-friendly streaming.
+            mkv_proc = None
+            ffmpeg_proc = None
+            
+            try:
+                if is_mkvtoolnix_available():
+                    mkv_proc = subprocess.Popen(
+                        [mkvmerge_path, "-o", "-", str(file_path)],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024
+                    )
+                    log_process_stderr(mkv_proc, "MKVMerge-Pipe")
+                    
+                    ffmpeg_cmd = [
+                        ffmpeg_path, "-loglevel", "error", "-i", "pipe:0",
+                        "-c", "copy", "-f", "mp4",
+                        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+                        "-"
+                    ]
+                    ffmpeg_proc = subprocess.Popen(
+                        ffmpeg_cmd, stdin=mkv_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024
+                    )
+                    log_process_stderr(ffmpeg_proc, "FFmpeg-Frag")
+                else:
+                    # Fallback to pure FFmpeg remux if mkvtoolnix is missing
+                    ffmpeg_cmd = [
+                        ffmpeg_path, "-loglevel", "error", "-i", str(file_path),
+                        "-c", "copy", "-f", "mp4",
+                        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+                        "-"
+                    ]
+                    ffmpeg_proc = subprocess.Popen(
+                        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024
+                    )
+                    log_process_stderr(ffmpeg_proc, "FFmpeg-Remux")
+
+                # Stream chunks to browser
+                while True:
+                    if ffmpeg_proc.stdout is None: break
+                    chunk = ffmpeg_proc.stdout.read(256 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
+            except Exception as e:
+                logging.error(f"❌ [Remux] Generator error: {e}")
+            finally:
+                # Cleanup processes
+                for p in [ffmpeg_proc, mkv_proc]:
+                    if p:
+                        try:
+                            p.terminate()
+                            p.wait(timeout=1)
+                        except:
+                            try: p.kill() 
+                            except: pass
+                logging.info(f"🚀 [Remux] Finalized Pipe-Kit stream for: {file_path}")
+
+        return bottle.HTTPResponse(generate(), content_type="video/mp4")
+    except Exception as e:
+        import traceback
+        logging.error(f"💥 [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
+        return bottle.HTTPError(500, f"Remux Error: {e}")
 
 def get_video_metadata(file_path: str) -> dict:
     """
@@ -2944,187 +3122,198 @@ def get_video_metadata(file_path: str) -> dict:
         return {}
 
 
-@bottle.route('/video-remux-stream/<item_id>')
-def video_remux_stream(item_id):
-    """
-    @brief Real-time remuxing to Matroska/WebM for Chrome Native playback.
-    """
-    from src.core import db
-    item = db.get_media_by_id(item_id)
-    if not item:
-        return bottle.HTTPResponse(status=404)
-
-    file_path = item['path']
-    logging.info(f"🚀 [Remux] Starting live stream for: {file_path}")
-
-    # Use mkvmerge if available, else ffmpeg copy
-    if is_mkvtoolnix_available():
-        cmd = ["mkvmerge", "-o", "-", str(file_path)]
-    else:
-        cmd = [
-            "ffmpeg", "-loglevel", "error", "-i", str(file_path),
-            "-c", "copy", "-f", "matroska", "-"
-        ]
-    
-    mime = "video/x-matroska"
-
-    try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        def generate():
-            try:
-                # Use a larger buffer for smoother streaming
-                while True:
-                    chunk = proc.stdout.read(128 * 1024)
-                    if not chunk:
-                        break
-                    yield chunk
-            finally:
-                proc.terminate()
-                # Log any errors from the remuxer
-                if proc.stderr:
-                    err = proc.stderr.read().decode('utf-8', errors='ignore')
-                    if err:
-                        logging.error(f"[Remux] Error from process: {err.strip()}")
-
-        return bottle.HTTPResponse(generate(), content_type=mime)
-    except Exception as e:
-        logging.error(f"[Remux] Critical Error: {e}")
-        return bottle.HTTPResponse(status=500)
 
 
 
 @eel.expose
-def open_video(file_path: str, player_type: str = "chrome", mode: str = "chrome_direct"):
-    """
-    @brief Explicitly opens a video with a specific player type and mode.
-    Supports 'auto' for intelligent routing based on ffprobe.
-    """
-    logging.info(f"[Player] Open video triggered: {file_path} via {player_type}/{mode}")
+def open_with_ffplay(file_path: str):
+    """Explicitly open a file with ffplay."""
     file_path = resolve_media_path(file_path)
+    try:
+        ffplay_path = shutil.which("ffplay") or "ffplay"
+        proc = subprocess.Popen([str(ffplay_path), str(file_path)])
+        ACTIVE_SUBPROCESSES.append(proc)
+        logging.info(f"🚀 [FFplay] Started for: {file_path}")
+        return {"status": "ok", "mode": "ffplay"}
+    except Exception as e:
+        return {"status": "error", "error": f"FFplay failed: {e}"}
 
-    # 1. FFprobe Auto-Detection Logic
+@eel.expose
+def open_with_vlc(file_path: str):
+    """Explicitly open a file with VLC (GUI)."""
+    file_path = resolve_media_path(file_path)
+    try:
+        vlc_path = shutil.which("vlc") or "vlc"
+        proc = subprocess.Popen([str(vlc_path), str(file_path)])
+        ACTIVE_SUBPROCESSES.append(proc)
+        logging.info(f"🚀 [VLC] Started for: {file_path}")
+        return {"status": "ok", "mode": "vlc"}
+    except Exception as e:
+        return {"status": "error", "error": f"VLC failed: {e}"}
+
+@eel.expose
+def open_with_cvlc(file_path: str):
+    """Explicitly open a file with CVLC (command-line VLC)."""
+    file_path = resolve_media_path(file_path)
+    try:
+        vlc_path = shutil.which("cvlc") or "cvlc"
+        proc = subprocess.Popen([str(vlc_path), str(file_path)])
+        ACTIVE_SUBPROCESSES.append(proc)
+        logging.info(f"🚀 [CVLC] Started for: {file_path}")
+        return {"status": "ok", "mode": "cvlc"}
+    except Exception as e:
+        return {"status": "error", "error": f"CVLC failed: {e}"}
+
+@eel.expose
+def open_with_pyvlc(file_path: str):
+    """Explicitly open a file with python-vlc (libvlc bindings)."""
+    file_path = resolve_media_path(file_path)
+    try:
+        import vlc
+        instance = vlc.Instance()
+        player = instance.media_player_new()
+        media = instance.media_new(str(file_path))
+        player.set_media(media)
+        player.play()
+        # Note: This is an embedded-style player in a new window by default on some platforms
+        # or it might need a native window handle.
+        logging.info(f"🚀 [PyVLC] Started for: {file_path}")
+        return {"status": "ok", "mode": "pyvlc"}
+    except Exception as e:
+        return {"status": "error", "error": f"PyVLC failed: {e}"}
+
+def open_video(file_path: str, player_type: str = "auto", mode: str = "auto"):
+    """
+    @brief Explicitly opens a media file with a specific player type and mode.
+    Handles 'auto' routing and specializes for ISO, DVD, Audio.
+    """
+    logging.info(f"[Player] Open triggering: {file_path} (via {player_type}/{mode})")
+    file_path = resolve_media_path(file_path)
+    
+    # 1. Advanced Format Analysis
+    is_dvd_iso = file_path.lower().endswith('.iso')
+    is_dvd_folder = os.path.isdir(file_path) and (
+        os.path.exists(os.path.join(file_path, "VIDEO_TS")) or 
+        os.path.exists(os.path.join(file_path, "BDMV"))
+    )
+    is_audio = file_path.lower().endswith(('.mp3', '.m4b', '.opus', '.flac', '.wav'))
+
+    # 2. Auto-Detection Logic
     if player_type == "auto" or mode == "auto":
-        meta = get_video_metadata(file_path)
-        codec = meta.get('codec', '').lower()
-        container = meta.get('container', '').lower()
-        
-        logging.info(f"[Auto-Detect] File: {file_path} | Codec: {codec} | Container: {container}")
-        
-        # Priority 1: Chrome Native Direct Play
-        # Chrome natively supports: H.264/AAC in MP4/MOV, VP8/VP9/AV1 in WebM
-        if (codec == 'h264' and container in ('mp4', 'mov', 'quicktime')) or \
-           (codec in ('vp8', 'vp9', 'av1') and container == 'matroska'): # WebM is subset of MKV
+        if is_dvd_iso or is_dvd_folder:
+            player_type, mode = "vlc", "vlc_iso"
+        elif is_audio:
             player_type, mode = "chrome", "chrome_direct"
-        
-        # Priority 2: Disc Images (ISO) -> VLC TS (Embedded)
-        elif container in ('iso9660', 'dvd', 'udf') or file_path.lower().endswith('.iso'):
-            player_type, mode = "vlc", "vlc_ts"
-            
-        # Priority 3: Non-native Format -> On-the-fly Transmuxing (FragMP4)
         else:
-            player_type, mode = "chrome", "chrome_fragmp4"
+            meta = get_video_metadata(file_path)
+            codec = meta.get('codec', '').lower()
+            container = meta.get('container', '').lower()
+            
+            # Chrome Routing Logic: Favor the new PIPE-KIT for MKVs
+            if container == 'matroska' and is_mkvtoolnix_available():
+                player_type, mode = "chrome", "chrome_remux"  # Upgraded to PIPE-KIT
+            elif (codec == 'h264' and container in ('mp4', 'mov', 'quicktime')) or \
+                 (codec in ('vp8', 'vp9', 'av1') and container in ('matroska', 'webm')):
+                player_type, mode = "chrome", "chrome_direct"
+            elif codec == 'h264':
+                player_type, mode = "chrome", "chrome_remux"  # Easy remux
+            else:
+                player_type, mode = "chrome", "chrome_fragmp4"
 
-    # 2. Player Routing
+    # 3. Player Routing
+    if player_type == "ffplay":
+        return open_with_ffplay(file_path)
+    elif player_type == "vlc":
+        if mode == "vlc_cvlc":
+            return open_with_cvlc(file_path)
+        elif mode == "vlc_pyvlc":
+            return open_with_pyvlc(file_path)
+        elif mode == "vlc_iso":
+            vlc_path = shutil.which("vlc") or "vlc"
+            prefix = "dvd://" if is_dvd_folder or is_dvd_iso else ""
+            try:
+                proc = subprocess.Popen([str(vlc_path), f"{prefix}{file_path}"])
+                ACTIVE_SUBPROCESSES.append(proc)
+                return {"status": "ok", "mode": "vlc_dvd"}
+            except Exception as e:
+                return {"status": "error", "error": f"VLC DVD startup failed: {e}"}
+        else:
+            return open_with_vlc(file_path)
+
+    elif player_type == "pyplayer":
+        # pyvidplayer2 / standalone
+        try:
+            import pyvidplayer2
+            # Use subprocess to avoid blocking Eel thread
+            proc = subprocess.Popen([sys.executable, "-m", "pyvidplayer2", str(file_path)])
+            ACTIVE_SUBPROCESSES.append(proc)
+            return {"status": "ok", "mode": "pyplayer"}
+        except Exception as e:
+            return {"status": "error", "error": f"PyPlayer failed: {e}"}
+
     if player_type == "chrome":
         if mode == "chrome_direct":
-            # Direct static file access via Bottle
-            return {"status": "play", "path": f"/media/{Path(file_path).name}", "mode": "chrome_native"}
-        elif mode == "chrome_hls":
-            return stream_to_mediamtx(file_path, protocol="hls")
-        elif mode == "chrome_webrtc":
-            return stream_to_mediamtx(file_path, protocol="webrtc")
-        elif mode == "chrome_fragmp4":
-            return {"status": "play", "path": f"/video-stream/{Path(file_path).name}", "mode": "chrome_native"}
-        elif mode == "chrome_remux":
-            # For remuxing we need the item_id.
+            return {"status": "play", "path": f"/media/{Path(file_path).name}", "mode": "chrome_direct"}
+        elif mode in ("chrome_remux", "chrome_fragmp4"):
             from src.core import db
             item = db.get_media_by_path(file_path)
             item_id = item.get('id') if item else None
             if item_id:
-                return {"status": "play", "path": f"/video-remux-stream/{item_id}", "mode": "chrome_native"}
-            return {"status": "error", "error": "Item ID for remuxing not found"}
-        elif mode == "chrome_ffmpeg_browser":
-            return {"status": "play", "path": f"/video-stream/{file_path}", "mode": "chrome_native"}
+                # Both now use the unified video_remux_stream logic (Tube PIPE-KIT)
+                return {"status": "play", "path": f"/video-remux-stream/{item_id}", "mode": mode}
+            return {"status": "error", "error": f"Media Item not found in DB: {file_path}", "mode": mode}
 
-    elif player_type == "vlc":
-        if mode == "vlc_cvlc":
-            return stream_to_vlc(file_path, engine="cvlc_solo")
-        elif mode == "vlc_iso":
-            # DVD ISO Live (VLC Native)
-            vlc_path = shutil.which("cvlc") or shutil.which("vlc") or "cvlc"
-            if file_path.lower().endswith('.iso') or os.path.isdir(file_path):
-                try:
-                    prefix = "dvd://" if os.path.isdir(file_path) else ""
-                    proc = subprocess.Popen([str(vlc_path), f"{prefix}{file_path}"])
-                    ACTIVE_SUBPROCESSES.append(proc)
-                    return {"status": "ok", "mode": "vlc_external"}
-                except Exception as e:
-                    return {"status": "error", "error": f"VLC ISO/DVD startup failed: {e}"}
-            return stream_to_vlc(file_path, engine="dvd_native")
-
-        elif mode == "vlc_embedded":
-            return {"status": "play", "path": file_path, "mode": "vlc_browser"}
-        elif mode == "vlc_extern":
-            # Ensure we only open it once
-            vlc_path = shutil.which("cvlc") or shutil.which("vlc") or "cvlc"
-            try:
-                proc = subprocess.Popen([str(vlc_path), str(file_path)])
-                ACTIVE_SUBPROCESSES.append(proc)
-                return {"status": "ok", "mode": "vlc_external"}
-            except Exception as e:
-                return {"status": "error", "error": f"VLC External startup failed: {e}"}
-        elif mode == "vlc_ts":
-            return vlc_ts_mode(file_path)
-
-    elif player_type == "pyplayer":
-        if mode == "pyplayer_native":
-            # Logic for pyvidplayer2
-            try:
-                import pyvidplayer2 as pv
-                proc = subprocess.Popen([sys.executable, "-m", "pyvidplayer2", file_path])
-                ACTIVE_SUBPROCESSES.append(proc)
-                return {"status": "ok", "mode": "pyplayer_standalone"}
-            except Exception as e:
-                return {"status": "error", "error": f"pyvidplayer2 failed: {e}"}
-        elif mode == "pyplayer_mpv":
-            try:
-                mpv_path = shutil.which("mpv") or "mpv"
-                proc = subprocess.Popen([str(mpv_path), str(file_path)])
-                ACTIVE_SUBPROCESSES.append(proc)
-                return {"status": "ok", "mode": "mpv_standalone"}
-            except Exception as e:
-                return {"status": "error", "error": f"mpv failed: {e}"}
-        elif mode == "pyplayer_ffplay":
-            try:
-                ffplay_path = shutil.which("ffplay") or "ffplay"
-                proc = subprocess.Popen([str(ffplay_path), str(file_path)])
-                ACTIVE_SUBPROCESSES.append(proc)
-                return {"status": "ok", "mode": "ffplay_standalone"}
-            except Exception as e:
-                return {"status": "error", "error": f"ffplay failed: {e}"}
-        elif mode == "pyplayer_pip":
-             try:
-                 import pyvidplayer2 as pv
-                 # Use a simple subprocess for the built-in PiP test tool or similar if available
-                 proc = subprocess.Popen([sys.executable, "-m", "pyvidplayer2", "--pip", file_path])
-                 ACTIVE_SUBPROCESSES.append(proc)
-                 return {"status": "ok", "mode": "pyplayer_pip"}
-             except Exception as e:
-                 return {"status": "error", "error": f"PiP mode failed: {e}"}
-
-    elif player_type == "ffplay" or mode == "ffplay":
-        try:
-            ffplay_path = shutil.which("ffplay") or "ffplay"
-            proc = subprocess.Popen([str(ffplay_path), str(file_path)])
-            ACTIVE_SUBPROCESSES.append(proc)
-            return {"status": "ok", "mode": "ffplay_standalone"}
-        except Exception as e:
-            return {"status": "error", "error": f"ffplay failed: {e}"}
+    return {"status": "error", "error": f"Invalid player configuration: {player_type}/{mode}"}
 
     # Fallback/Default
     return play_media(file_path)
 
+
+@eel.expose
+def open_video_smart(file_path: str, mode: str = "auto"):
+    """
+    @brief Smart routing for video playback as described in videoplayer logbuch.
+    Supports Direct Play, MediaMTX (HLS/WebRTC), and FragMP4.
+    """
+    logging.info(f"[Player] Smart Open triggering: {file_path} (mode: {mode})")
+    file_path = resolve_media_path(file_path)
+    
+    # 1. Compatibility Check (simplified version of logbuch logic)
+    meta = get_video_metadata(file_path)
+    codec = meta.get('codec', '').lower()
+    container = meta.get('container', '').lower()
+    is_direct_play_compatible = (codec == 'h264' and container in ('mp4', 'mov')) or \
+                                 (codec in ('vp8', 'vp9') and container in ('webm', 'matroska'))
+
+    # 2. Routing Logic
+    if mode == "Direct Play" or (mode == "auto" and is_direct_play_compatible):
+        return {"status": "play", "path": f"/media/{Path(file_path).name}", "mode": "chrome_direct"}
+    
+    elif mode == "MediaMTX (HLS/WebRTC)":
+        # Mocking MediaMTX interaction for now as per logbuch snippet
+        # In a real scenario, we'd check if mediamtx is running
+        try:
+            # log.info("Triggering MediaMTX path...")
+            # requests.post(f"http://localhost:9997/v3/paths/{Path(file_path).stem}", json={"source": "ffmpeg"})
+            return {
+                "status": "play",
+                "mode": "mediamtx",
+                "hls": f"http://localhost:8888/{Path(file_path).stem}/index.m3u8",
+                "webrtc": f"http://localhost:8889/{Path(file_path).stem}"
+            }
+        except Exception as e:
+            logging.error(f"MediaMTX trigger failed: {e}")
+            return {"status": "error", "error": f"MediaMTX failed: {e}"}
+
+    elif mode == "ffmpeg FragMP4" or mode == "auto":
+        from src.core import db
+        item = db.get_media_by_path(file_path)
+        item_id = item.get('id') if item else None
+        if item_id:
+            return {"status": "play", "path": f"/video-remux-stream/{item_id}", "mode": "chrome_fragmp4"}
+        return {"status": "error", "error": "Media Item not found for FragMP4", "mode": "chrome_fragmp4"}
+
+    return open_video(file_path, "auto", mode)
 
 @eel.expose
 def analyse_media(path):

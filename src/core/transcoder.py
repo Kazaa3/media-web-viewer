@@ -19,6 +19,8 @@ class TranscodeTask:
         self.status = "queued"  # queued, processing, completed, error
         self.error_message = ""
         self.process: Optional[subprocess.Popen] = None
+        self.log_buffer: List[str] = []
+        self.duration: float = 0.0
 
 class TranscoderManager:
     def __init__(self):
@@ -42,9 +44,10 @@ class TranscoderManager:
         thread.start()
 
     def _run_task(self, task_id: str, task: TranscodeTask, callback: Optional[Callable[[str, float], None]]):
-        task.status = "processing"
-        
         try:
+            # Get duration for progress tracking
+            self._get_duration(task)
+            
             if task.task_type == "handbrake":
                 cmd = self._build_handbrake_cmd(task)
             elif task.task_type == "webm":
@@ -59,7 +62,20 @@ class TranscoderManager:
 
             if task.process.stdout:
                 for line in task.process.stdout:
-                    progress = self._parse_progress(line, task.task_type)
+                    line = line.strip()
+                    if not line: continue
+                    
+                    # Store in log buffer
+                    task.log_buffer.append(line)
+                    if len(task.log_buffer) > 1000: task.log_buffer.pop(0)
+                    
+                    # Log to system logger for UI visibility
+                    if task.task_type == "handbrake":
+                        logging.info(f"🚀 [HandBrake] {line}")
+                    elif task.task_type == "webm":
+                        logging.info(f"🌐 [WebM] {line}")
+
+                    progress = self._parse_progress(line, task)
                     if progress is not None:
                         task.progress = progress
                         if callback: callback(task_id, progress)
@@ -105,15 +121,29 @@ class TranscoderManager:
         ]
         return cmd
 
-    def _parse_progress(self, line: str, task_type: str) -> Optional[float]:
-        if task_type == "handbrake":
+    def _get_duration(self, task: TranscodeTask):
+        """Usee ffprobe to get duration in seconds."""
+        try:
+            cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", task.input_path]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                task.duration = float(result.stdout.strip())
+        except Exception as e:
+            logger.warning(f"Could not get duration for {task.input_path}: {e}")
+
+    def _parse_progress(self, line: str, task: TranscodeTask) -> Optional[float]:
+        if task.task_type == "handbrake":
             # Example: [20:05:10] reader: done. 10.50 %
             match = re.search(r"(\d+\.\d+)\s*%", line)
             if match: return float(match.group(1))
-        elif task_type == "webm":
-            # FFmpeg doesn't give easy % without duration context, but we can estimated
-            # This is a simplified placeholder
-            pass
+        elif task.task_type == "webm" and task.duration > 0:
+            # FFmpeg example: time=00:00:15.50
+            match = re.search(r"time=(\d+):(\d+):(\d+\.\d+)", line)
+            if match:
+                hours, minutes, seconds = map(float, match.groups())
+                current_time = hours * 3600 + minutes * 60 + seconds
+                progress = (current_time / task.duration) * 100
+                return min(100.0, progress)
         return None
 
     def get_task_status(self, task_id: str) -> Dict[str, Any]:
@@ -124,5 +154,6 @@ class TranscoderManager:
             "status": task.status,
             "progress": task.progress,
             "error": task.error_message,
-            "type": task.task_type
+            "type": task.task_type,
+            "logs": task.log_buffer[-50:]  # Return last 50 lines of logs
         }

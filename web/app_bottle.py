@@ -239,108 +239,10 @@ def serve_cover(filepath):
     return bottle.HTTPError(404, "No cover found")
 
 
-@bottle.route('/video-stream/<filepath:path>')
-def stream_video(filepath):
-    """
-    @brief Real-time video streaming with live transcoding.
-    @details Nutzt FFmpeg für Live-Transkodierung in ein browser-kompatibles Format (Fragmented MP4).
-             Optimiert für geringe Latenz und hohe Kompatibilität.
-    @param filepath Pfad zur Mediendatei.
-    """
-    full_path = _resolve_path(filepath)
-    if not full_path:
-        return bottle.HTTPError(404, "File not found")
-
-    is_iso = str(full_path).lower().endswith('.iso')
-    input_source = f"dvd://{full_path}" if is_iso else str(full_path)
-
-    # FFmpeg command for fragmented MP4 streaming
-    # -frag_keyframe+empty_moov: Required for streaming MP4
-    # -preset ultrafast: Faster encoding
-    # -tune zerolatency: Minimize delay
-    cmd = [
-        'ffmpeg', '-re', '-i', input_source,
-        '-vcodec', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',
-        '-acodec', 'aac', '-ar', '44100', '-ab', '128k',
-        '-f', 'mp4', '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
-        '-loglevel', 'error', '-'
-    ]
-
-    logger.debug("network", f"VIDEO_STREAM STARTED: {input_source}")
-
-    def generate():
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        try:
-            if not process.stdout:
-                 return
-            while True:
-                chunk = process.stdout.read(64 * 1024)
-                if not chunk:
-                    break
-                yield chunk
-        finally:
-            process.terminate()
-            try:
-                process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                process.kill()
-            logger.debug("network", f"VIDEO_STREAM ENDED: {input_source}")
-
-    bottle.response.content_type = 'video/mp4'
-    return generate()
-
-
-@bottle.route('/vlc-stream/<filepath:path>')
-def stream_vlc(filepath):
-    """
-    @brief Real-time video streaming with VLC as the backend engine.
-    @details Nutzt VLC für Live-Transkodierung und liefert den Stream an den Browser.
-    """
-    full_path = _resolve_path(filepath)
-    if not full_path:
-        return bottle.HTTPError(404, "File not found")
-
-    vlc_path = shutil.which('vlc') or 'vlc'
-    # VLC sout chain: transcode and mux to mp4 for browser
-    # access=file,dst=- is the way to pipe to stdout in VLC
-    sout = '#transcode{vcodec=h264,vb=2000,scale=auto,acodec=mp4a,ab=128,channels=2,samplerate=44100}:std{access=file,mux=mp4,dst=-}'
-    
-    cmd = [
-        vlc_path, '-I', 'dummy', str(full_path),
-        '--sout', sout, 'vlc://quit'
-    ]
-
-    logger.debug("network", f"VLC_STREAM STARTED: {full_path}")
-
-    def generate():
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        try:
-            if not process.stdout:
-                 return
-            while True:
-                chunk = process.stdout.read(64 * 1024)
-                if not chunk:
-                    break
-                yield chunk
-        finally:
-            process.terminate()
-            try:
-                process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                process.kill()
-            logger.debug("network", f"VLC_STREAM ENDED: {full_path}")
-
-    bottle.response.content_type = 'video/mp4'
-    return generate()
-
-
 @bottle.error(500)
 def error500(error):
     """
     @brief Custom 500 error handler with debug logging.
-    @details Benutzerdefinierter HTML 500 Fehler-Handler mit Debug-Logging.
-    @param error Error object / Fehler-Objekt.
-    @return Error message string / Fehlermeldungs-String.
     """
     import traceback
     log.error("\n--- ERROR 500 ---\n%s\nURL: %s", traceback.format_exc(), bottle.request.url)
