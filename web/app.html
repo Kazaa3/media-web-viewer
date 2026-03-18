@@ -1684,16 +1684,36 @@
                             </div>
                         </div>
 
-                        <div style="margin-top: 20px;">
-                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Chrome Native Compatibility (MP4)</h5>
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                ${analysis.chrome_compatible_mp4s.map(m => `
-                                    <div style="padding: 4px 10px; background: #e8f5e9; color: #2e7d32; border-radius: 12px; font-size: 0.8em; border: 1px solid #a5d6a7;" title="Codec: ${m.codec}">
-                                        ${m.name}
-                                    </div>
-                                `).join('') || '<div style="color: #999; font-size: 0.85em;">No native MP4s found.</div>'}
+                        <div style="margin-top: 30px;">
+                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Streaming Engine & Format Matrix</h5>
+                            <div style="overflow-x: auto; border: 1px solid #eee; border-radius: 6px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.8em; line-height: 1.4;">
+                                    <thead style="background: #f8f9fa;">
+                                        <tr>
+                                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Engine</th>
+                                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Modes</th>
+                                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Formats</th>
+                                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd;">Features</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(await eel.get_streaming_capability_matrix()()).map(m => `
+                                            <tr style="border-bottom: 1px solid #f0f0f0;">
+                                                <td style="padding: 10px;"><b>${m.engine}</b></td>
+                                                <td style="padding: 10px; color: #666;">${m.modes.join(', ')}</td>
+                                                <td style="padding: 10px;">${m.formats.join(', ')} <br><small style="color:#999;">${m.codecs.join(', ')}</small></td>
+                                                <td style="padding: 10px; color: #444;">${m.features.join(' • ')}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.75em; color: #888; font-style: italic;">
+                                * This matrix represents the core technical capabilities of the current playback engines. 
+                                Transcoding via FFmpeg is automatically applied for incompatible streams.
                             </div>
                         </div>
+
                     </div>`;
                 }
             }
@@ -2473,6 +2493,8 @@
                             data-i18n="cat_documents">Dokumente</button>
                         <button class="filter-chip" onclick="setLibraryFilter('ebooks')"
                             data-i18n="cat_ebooks">E-Books</button>
+                        <button class="filter-chip" onclick="setLibraryFilter('film')"
+                            data-i18n="cat_film">Film</button>
                         <button class="filter-chip" onclick="setLibraryFilter('abbild')"
                             data-i18n="cat_abbild">ISO-Abbilder</button>
                         <button class="filter-chip" onclick="setLibraryFilter('spiel')"

@@ -3498,14 +3498,25 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
 
     # Special: Check if it's a DVD structure
     is_dvd = False
+    is_disc_img = str(file_path).lower().endswith(('.iso', '.bin', '.img'))
+    
     if os.path.exists(file_path) and os.path.isdir(file_path):
         try:
-            is_dvd = any([os.path.exists(os.path.join(file_path, "VIDEO_TS")), any(f.lower().endswith('.iso') for f in os.listdir(file_path))])
+            is_dvd = any([
+                os.path.exists(os.path.join(file_path, "VIDEO_TS")), 
+                os.path.exists(os.path.join(file_path, "BDMV")),
+                any(f.lower().endswith(('.iso', '.bin', '.img')) for f in os.listdir(file_path))
+            ])
         except: pass
     
-    if is_dvd or str(file_path).lower().endswith('.iso'):
-         logging.info(f"DEBUG: [Player-Trace] DVD/ISO detected in smart router. Forcing VLC Embedded.")
-         return open_video(file_path, "vlc", "vlc_embedded", source="smart_router_dvd")
+    # Check DB category for specialized routing
+    from src.core import db
+    db_item = db.get_media_by_path(str(file_path))
+    category = db_item.get('category', '') if db_item else ''
+    
+    if is_dvd or is_disc_img or category in ('Film', 'Abbild'):
+         logging.info(f"DEBUG: [Player-Trace] DVD/Film/DiscImg detected in smart router (Category: {category}). Forcing VLC Embedded.")
+         return open_video(file_path, "vlc", "vlc_embedded", source="smart_router_dvd_film")
 
     return open_video(file_path, "auto", mode, source="smart_router_auto")
 
@@ -6056,7 +6067,6 @@ def get_multimedia_analysis():
                         'is_native': True
                     })
                     analysis['stats']['native_support_count'] += 1
-                else:
                     analysis['incompatible_videos'].append({
                         'name': item.get('name'),
                         'codec': codec,
@@ -6067,3 +6077,41 @@ def get_multimedia_analysis():
     except Exception as e:
         log.error(f"Failed to generate multimedia analysis: {e}")
         return {'error': str(e)}
+
+@eel.expose
+def get_streaming_capability_matrix():
+    """Returns a technical matrix of supported engines, modes, and formats."""
+    return [
+        {
+            "engine": "Chrome Native",
+            "modes": ["Integrated", "Direct"],
+            "formats": ["MP4", "WebM", "OGG"],
+            "codecs": ["H.264", "VP8", "VP9", "AV1"],
+            "features": ["HW Accel", "Low Latency", "Browser Native"],
+            "notes": "Best for web-compatible MP4 files."
+        },
+        {
+            "engine": "VLC (Native)",
+            "modes": ["External", "Integrated (VLC.js/Plugin)"],
+            "formats": ["ISO", "BIN", "MKV", "AVI", "DVD"],
+            "codecs": ["All (H.265, AC3, DTS, etc.)"],
+            "features": ["DVD Menus", "Subtitles", "Post-processing"],
+            "notes": "Universal player for all file types including disc images."
+        },
+        {
+            "engine": "MediaMTX",
+            "modes": ["HLS", "WebRTC", "RTSP"],
+            "formats": ["MP4", "MKV (via FFmpeg)"],
+            "codecs": ["H.264", "AAC"],
+            "features": ["Multi-device", "Zero client install", "HTTP Streaming"],
+            "notes": "Ideal for streaming to multiple devices over network."
+        },
+        {
+            "engine": "PyPlayer",
+            "modes": ["Integrated (PyVidPlayer2)"],
+            "formats": ["MP4", "MKV", "AVI"],
+            "codecs": ["Most FFmpeg-supported"],
+            "features": ["Python-embedded", "Custom Overlays"],
+            "notes": "Integrated player for Python-based video interactions."
+        }
+    ]

@@ -12,7 +12,7 @@
         "nav_tests": "Tests",
         "nav_reporting": "Reporting",
         "nav_logbook": "Logbuch",
-        "nav_video": "Video", // Video Player
+        "nav_video": "Video",
         "report_view_dashboard": "Dashboard",
         "report_view_database": "Datenbank (SQL)",
         "report_view_video_streaming": "Video Streaming",
@@ -35,7 +35,7 @@
         "lib_tab_grid": "CD / Film Cover",
         "lib_tab_details": "Dateimanager (Details)",
         "database_item": "Datenbank-Items:",
-        "video_tab_title": "Video", // Video Player
+        "video_tab_title": "Video",
         "video_mode_label": "Wiedergabemodus",
         "video_placeholder": "Kein Video ausgewählt",
         "video_mode_chrome": "Chrome Native (Direkt)",
@@ -299,6 +299,7 @@
         "options_indexed_types_desc": "Wähle aus, welche Dateitypen beim Scan indexiert werden sollen.",
         "cat_audio": "Audio",
         "cat_video": "Video",
+        "cat_film": "Film",
         "cat_images": "Bilder",
         "cat_documents": "Dokumente",
         "cat_ebooks": "E-Books",
@@ -526,7 +527,7 @@
         "nav_tests": "Tests",
         "nav_reporting": "Reporting",
         "nav_logbook": "Logbook",
-        "nav_video": "Video", // Video Player
+        "nav_video": "Video",
         "nav_playlist": "📋 Playlist",
         "nav_flags": "⚙️ Flags",
         "report_view_dashboard": "Dashboard",
@@ -926,6 +927,7 @@
         "options_indexed_types_desc": "Choose which file types should be indexed during scan.",
         "cat_audio": "Audio",
         "cat_video": "Video",
+        "cat_film": "Movie",
         "cat_images": "Images",
         "cat_documents": "Documents",
         "cat_ebooks": "E-Books",
