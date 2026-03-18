@@ -14,7 +14,6 @@ Alle geplanten Verbesserungen für Port-Management, Ordner-Playback und die Inte
 - Die Logik in `resolve_dvd_bundle_path` wurde erweitert:
     - Wird ein Verzeichnis als "Filmobjekt" erkannt, das eine .mp4, .mkv oder .avi enthält (statt ISO/VIDEO_TS), wird diese Datei jetzt korrekt als Film abgespielt.
     - Drag & Drop und GUI-Auswahl funktionieren jetzt auch für "flache" Video-Ordner.
-- Der Bug "mp4 im ordner geht nicht zum abspieln" ist damit behoben.
 
 ## 3. VLC Zwei Pop-Ups & GUI-Integration
 - Das Problem mit doppelten VLC-Popups (python-vlc + cvlc) ist gelöst.

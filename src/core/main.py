@@ -5370,6 +5370,105 @@ def ui_trace(message):
 
 
 # Main-Funktion, die die Eel-App startet
+@eel.expose
+def get_benchmark_results():
+    """Returns stored playback benchmarks for the reporting dashboard."""
+    try:
+        bench_file = PROJECT_ROOT / "benchmarks.json"
+        if bench_file.exists():
+            data = json.loads(bench_file.read_text(encoding='utf-8'))
+            # Normalize: if it's a dict of results, wrap it as a single 'run' for history log
+            if isinstance(data, dict) and "timestamp" not in data:
+                 return [{"timestamp": time.time(), "results": data}]
+            return data
+        return []
+    except Exception as e:
+        log.error(f"Failed to read benchmarks: {e}")
+        return []
+
+@eel.expose
+def get_parser_stats():
+    """Returns aggregated performance metrics from all items in the library."""
+    try:
+        items = db.get_all_media()
+        stats = {}
+        counts = {}
+        for item in items:
+             # parser_times is usually a dict in the DB, but might be a JSON string
+             p_times = item.get("parser_times")
+             if not p_times: continue
+             if isinstance(p_times, str):
+                 try:
+                     p_times = json.loads(p_times)
+                 except: continue
+             
+             if not isinstance(p_times, dict): continue
+             
+             for p_name, p_time in p_times.items():
+                 # Handle list of times or single float
+                 val = p_time if isinstance(p_time, (int, float)) else (p_time[0] if isinstance(p_time, list) and p_time else 0)
+                 stats[p_name] = stats.get(p_name, 0.0) + val
+                 counts[p_name] = counts.get(p_name, 0) + 1
+        
+        avg_stats = {k: stats[k]/counts[k] for k in stats if counts[k] > 0}
+        
+        # Get last 20 items for granular results
+        last_items = []
+        # Sort items by some timestamp if available, otherwise just last 20 from db
+        # Assuming db.get_all_media returns items in natural order, we take the last ones
+        sorted_items = sorted(items, key=lambda x: x.get('id', 0), reverse=True)[:20]
+        for item in sorted_items:
+            last_items.append({
+                "filename": item.get("filename", "Unknown"),
+                "title": item.get("title", "-"),
+                "artist": item.get("artist", "-"),
+                "album": item.get("album", "-"),
+                "parser_times": item.get("parser_times", {}),
+                "total_time": sum(item.get("parser_times", {}).values()) if isinstance(item.get("parser_times"), dict) else 0
+            })
+
+        return {
+            "averages": avg_stats, 
+            "total_items": len(items),
+            "last_results": last_items
+        }
+    except Exception as e:
+        log.error(f"Failed to get parser stats: {e}")
+        return {"averages": {}, "total_items": 0, "last_results": []}
+
+@eel.expose
+def get_test_results():
+    """Returns stored unit test results (regression suite)."""
+    try:
+        test_log = PROJECT_ROOT / "test_results.json"
+        if test_log.exists():
+            return json.loads(test_log.read_text(encoding='utf-8'))
+        return []
+    except Exception as e:
+        log.error(f"Failed to read test results: {e}")
+        return []
+
+@eel.expose
+def start_handbrake_transcode(input_path: str, output_path: str, encoder: str = "x264", preset: str = "fast"):
+    """Exposes HandBrake transcoding to the frontend."""
+    options = {"encoder": encoder, "preset": preset}
+    task_id = transcode_mgr.add_task(input_path, output_path, "handbrake", options)
+    transcode_mgr.start_task(task_id)
+    return task_id
+
+@eel.expose
+def start_webm_conversion(input_path: str, output_path: str):
+    """Exposes WebM/VP9 conversion to the frontend."""
+    task_id = transcode_mgr.add_task(input_path, output_path, "webm", {})
+    transcode_mgr.start_task(task_id)
+    return task_id
+
+@eel.expose
+def get_transcode_status(task_id: str):
+    """Returns the status and progress of a transcoding task."""
+    return transcode_mgr.get_task_status(task_id)
+
+# --- Main Entry Point ---
 if __name__ == "__main__":
     _ensure_project_venv_active()
     
@@ -5690,100 +5789,3 @@ def save_benchmark_results(results):
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
-@eel.expose
-def get_benchmark_results():
-    """Returns stored playback benchmarks for the reporting dashboard."""
-    try:
-        bench_file = PROJECT_ROOT / "benchmarks.json"
-        if bench_file.exists():
-            data = json.loads(bench_file.read_text(encoding='utf-8'))
-            # Normalize: if it's a dict of results, wrap it as a single 'run' for history log
-            if isinstance(data, dict) and "timestamp" not in data:
-                 return [{"timestamp": time.time(), "results": data}]
-            return data
-        return []
-    except Exception as e:
-        log.error(f"Failed to read benchmarks: {e}")
-        return []
-
-@eel.expose
-def get_parser_stats():
-    """Returns aggregated performance metrics from all items in the library."""
-    try:
-        items = db.get_all_media()
-        stats = {}
-        counts = {}
-        for item in items:
-             # parser_times is usually a dict in the DB, but might be a JSON string
-             p_times = item.get("parser_times")
-             if not p_times: continue
-             if isinstance(p_times, str):
-                 try:
-                     p_times = json.loads(p_times)
-                 except: continue
-             
-             if not isinstance(p_times, dict): continue
-             
-             for p_name, p_time in p_times.items():
-                 # Handle list of times or single float
-                 val = p_time if isinstance(p_time, (int, float)) else (p_time[0] if isinstance(p_time, list) and p_time else 0)
-                 stats[p_name] = stats.get(p_name, 0.0) + val
-                 counts[p_name] = counts.get(p_name, 0) + 1
-        
-        avg_stats = {k: stats[k]/counts[k] for k in stats if counts[k] > 0}
-        
-        # Get last 20 items for granular results
-        last_items = []
-        # Sort items by some timestamp if available, otherwise just last 20 from db
-        # Assuming db.get_all_media returns items in natural order, we take the last ones
-        sorted_items = sorted(items, key=lambda x: x.get('id', 0), reverse=True)[:20]
-        for item in sorted_items:
-            last_items.append({
-                "filename": item.get("filename", "Unknown"),
-                "title": item.get("title", "-"),
-                "artist": item.get("artist", "-"),
-                "album": item.get("album", "-"),
-                "parser_times": item.get("parser_times", {}),
-                "total_time": sum(item.get("parser_times", {}).values()) if isinstance(item.get("parser_times"), dict) else 0
-            })
-
-        return {
-            "averages": avg_stats, 
-            "total_items": len(items),
-            "last_results": last_items
-        }
-    except Exception as e:
-        log.error(f"Failed to get parser stats: {e}")
-        return {"averages": {}, "total_items": 0, "last_results": []}
-
-@eel.expose
-def get_test_results():
-    """Returns stored unit test results (regression suite)."""
-    try:
-        test_log = PROJECT_ROOT / "test_results.json"
-        if test_log.exists():
-            return json.loads(test_log.read_text(encoding='utf-8'))
-        return []
-    except Exception as e:
-        log.error(f"Failed to read test results: {e}")
-        return []
-
-@eel.expose
-def start_handbrake_transcode(input_path: str, output_path: str, encoder: str = "x264", preset: str = "fast"):
-    """Exposes HandBrake transcoding to the frontend."""
-    options = {"encoder": encoder, "preset": preset}
-    task_id = transcode_mgr.add_task(input_path, output_path, "handbrake", options)
-    transcode_mgr.start_task(task_id)
-    return task_id
-
-@eel.expose
-def start_webm_conversion(input_path: str, output_path: str):
-    """Exposes WebM/VP9 conversion to the frontend."""
-    task_id = transcode_mgr.add_task(input_path, output_path, "webm", {})
-    transcode_mgr.start_task(task_id)
-    return task_id
-
-@eel.expose
-def get_transcode_status(task_id: str):
-    """Returns the status and progress of a transcoding task."""
-    return transcode_mgr.get_task_status(task_id)
