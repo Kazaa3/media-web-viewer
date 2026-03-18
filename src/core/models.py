@@ -201,7 +201,7 @@ class MediaItem:
         # 1. Folders / Video / DVD / ISO
         if logical == 'Ordner' or logical == 'Film':
             # Sub-classification for folders
-            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
+            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']) or tags.get('is_series'):
                 return 'Serie'
             
             # DVD Folder detection (VIDEO_TS / BDMV)
@@ -223,7 +223,7 @@ class MediaItem:
             return 'Ordner'
 
         if logical == 'Video':
-            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel', 'erie']):
+            if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel', 'erie']) or tags.get('is_series'):
                 return 'Serie'
             return 'Film'
         
@@ -258,6 +258,10 @@ class MediaItem:
             return 'Dokument'
         if ext in IMAGE_EXTENSIONS:
             return 'Bilder'
+        
+        # New: Playlists
+        if ext in ('.m3u', '.m3u8', '.pls'):
+            return 'Playlist'
 
         # 2. Audio Parser Logic
         if ext in AUDIO_EXTENSIONS or ext == '.m4b':
@@ -287,13 +291,22 @@ class MediaItem:
                any(k in path_str for k in ['klassik', 'classical', 'klaqssik']):
                 return 'Klassik'
 
-            # Priority 4: Compilations / Albums / Singles
+            # Priority 4: Soundtrack
+            if any(k in path_str for k in ['ost', 'soundtrack', 'o.s.t']) or \
+               any(k in album for k in ['ost', 'soundtrack', 'original motion picture']):
+                return 'Soundtrack'
+
+            # Priority 5: Compilations / Albums / Singles
             if any(k in artist for k in ['va', 'various artists', 'various', 'compilation']):
                 return 'Compilation'
 
             if album:
                 if 'single' in album:
                     return 'Single'
+                return 'Album'
+
+            # Fallback: Folder-based logic for Albums
+            if tags.get('album'):
                 return 'Album'
 
             return 'Audio'
@@ -348,8 +361,8 @@ class MediaItem:
             transcoded_format = None
             
         # Is Chrome Native?
-        from parsers.format_utils import is_chrome_native_ext
-        is_chrome_native = is_chrome_native_ext(self.type, codec)
+        from src.parsers.format_utils import is_chrome_native
+        chrome_native = is_chrome_native(self.type, codec)
 
         # Filter tags: Only keep what's strictly necessary for the UI/Database to save space
         whitelist = {

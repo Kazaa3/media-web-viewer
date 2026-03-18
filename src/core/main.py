@@ -6164,7 +6164,6 @@ def get_cover_extraction_report():
 
 @eel.expose
 def get_streaming_capability_matrix():
-    """Returns a technical matrix of supported engines, modes, and formats."""
     return [
         {
             "engine": "Chrome Native",
@@ -6172,30 +6171,88 @@ def get_streaming_capability_matrix():
             "formats": ["MP4", "WebM", "OGG"],
             "codecs": ["H.264", "VP8", "VP9", "AV1"],
             "features": ["HW Accel", "Low Latency", "Browser Native"],
-            "notes": "Best for web-compatible MP4 files."
+            "notes": "Best for web-compatible MP4 files. Zero transcoding required."
         },
         {
-            "engine": "VLC (Native)",
-            "modes": ["External", "Integrated (VLC.js/Plugin)"],
-            "formats": ["ISO", "BIN", "MKV", "AVI", "DVD"],
-            "codecs": ["All (H.265, AC3, DTS, etc.)"],
-            "features": ["DVD Menus", "Subtitles", "Post-processing"],
-            "notes": "Universal player for all file types including disc images."
-        },
-        {
-            "engine": "MediaMTX",
+            "engine": "MediaMTX (mmts)",
             "modes": ["HLS", "WebRTC", "RTSP"],
             "formats": ["MP4", "MKV (via FFmpeg)"],
             "codecs": ["H.264", "AAC"],
             "features": ["Multi-device", "Zero client install", "HTTP Streaming"],
-            "notes": "Ideal for streaming to multiple devices over network."
+            "notes": "Ideal for streaming to multiple devices over network via FFmpeg remux."
         },
         {
-            "engine": "PyPlayer",
-            "modes": ["Integrated (PyVidPlayer2)"],
-            "formats": ["MP4", "MKV", "AVI"],
-            "codecs": ["Most FFmpeg-supported"],
-            "features": ["Python-embedded", "Custom Overlays"],
-            "notes": "Integrated player for Python-based video interactions."
+            "engine": "VLC (Universal)",
+            "modes": ["External", "VLC.js"],
+            "formats": ["ISO", "BIN", "IMG", "MKV", "AVI", "DVD", "VIDEO_TS"],
+            "codecs": ["All (H.265, AC3, DTS, etc.)"],
+            "features": ["DVD Menus", "Subtitles", "Post-processing"],
+            "notes": "Universal player for all file types including disc images and legacy formats."
+        },
+        {
+            "engine": "mkvmerge",
+            "modes": ["Remux", "Batch"],
+            "formats": ["MKV (Output)", "All (Input)"],
+            "codecs": ["Container Shift"],
+            "features": ["Sub-track preservation", "Fast remux", "ISO to MKV"],
+            "notes": "Used for converting incompatible containers into streamable MKV/MP4."
+        },
+        {
+            "engine": "ffplay",
+            "modes": ["CLI Preview"],
+            "formats": ["All"],
+            "codecs": ["All (FFmpeg-based)"],
+            "features": ["Low latency", "Raw decoding", "Debug view"],
+            "notes": "Technical fallback for quick local playback verification."
+        },
+        {
+            "engine": "swyh-rs (suw)",
+            "modes": ["Audio HTTP", "DLNA"],
+            "formats": ["WAV", "FLAC", "LPCM"],
+            "codecs": ["Lossless PCM"],
+            "features": ["System Audio Capture", "Network Audio"],
+            "notes": "Specialized for lossless audio streaming to network devices (Stream What You Hear)."
         }
     ]
+
+@eel.expose
+def get_media_compatibility_report():
+    """Generates a detailed compatibility matrix for all media items in the library."""
+    from src.core import db
+    from src.parsers.format_utils import is_chrome_native_ext
+    
+    try:
+        items = db.get_all_media()
+        report = []
+        
+        for item in items:
+            tags = item.get('tags', {})
+            codec = tags.get('video_codec', tags.get('codec', ''))
+            ext = item.get('extension', '').lower()
+            
+            is_chrome = is_chrome_native_ext(ext, codec)
+            is_mtx = ext in ['.mp4', '.mkv', '.avi', '.mov', '.ts'] # FFmpeg can remux these
+            is_vlc = True # VLC plays everything
+            is_ffplay = True # FFmpeg plays everything
+            
+            # Specialized check for disc images
+            is_disc = ext in ['.iso', '.bin', '.img'] or item.get('category') == 'Abbild'
+            if is_disc:
+                is_chrome = False
+                is_mtx = False # MTX doesn't native stream ISOs usually without complex piping
+            
+            report.append({
+                'name': item.get('name'),
+                'type': item.get('type'),
+                'category': item.get('category'),
+                'chrome_native': is_chrome,
+                'mediamtx': is_mtx,
+                'vlc': is_vlc,
+                'ffplay': is_ffplay,
+                'notes': "ISO/Image requiring VLC" if is_disc else ""
+            })
+            
+        return report
+    except Exception as e:
+        log.error(f"Failed to generate compatibility report: {e}")
+        return []

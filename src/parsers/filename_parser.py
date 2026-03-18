@@ -54,7 +54,23 @@ def parse(
 
     working_filename = filename
     
-    # 1. Year Extraction (e.g. "Movie (2024)", "Film 1999")
+    # 1. Series/Episode Extraction (e.g. "Serien Name S01E01", "Show 1x01")
+    series_pattern = re.compile(r'[sS](\d+)[eE](\d+)')
+    episode_pattern = re.compile(r'(\d+)x(\d+)')
+    
+    s_match = series_pattern.search(working_filename)
+    e_match = episode_pattern.search(working_filename)
+    
+    if s_match:
+        tags['season'] = int(s_match.group(1))
+        tags['episode'] = int(s_match.group(2))
+        tags['is_series'] = True
+    elif e_match:
+        tags['season'] = int(e_match.group(1))
+        tags['episode'] = int(e_match.group(2))
+        tags['is_series'] = True
+
+    # 2. Year Extraction (e.g. "Movie (2024)", "Film 1999")
     year_pattern = re.compile(r'[\(\[\s]((?:19|20)\d{2})[\)\]\s]?')
     year_match = year_pattern.search(working_filename)
     if year_match:
@@ -62,14 +78,14 @@ def parse(
         # Remove year from working filename for title extraction
         working_filename = year_pattern.sub('', working_filename).strip()
     
-    # 2. Track Extraction
+    # 3. Track Extraction
     if not tags.get('track'):
         track_match = re.match(r"^(\d+)\s+(.*)", working_filename)
         if track_match:
             tags['track'] = str(int(track_match.group(1)))  # Remove leading zeros
             working_filename = track_match.group(2)
 
-    # 3. Title & Artist Extraction
+    # 4. Title & Artist Extraction
     if " - " in working_filename:
         parts = working_filename.split(" - ", 1)
         if not tags.get('artist'):
@@ -81,5 +97,18 @@ def parse(
         if not tags.get('title'):
             title = working_filename.rsplit(".", 1)[0] if "." in working_filename else working_filename
             tags['title'] = title.strip()
+
+    # 5. Folder-level Metadata (Parent folder as fallback)
+    # Pattern: "Artist - Album (Year)"
+    parent_name = Path(path).parent.name
+    folder_pattern = re.compile(r'^(.*)\s+-\s+(.*)\s+[\(\[]((?:19|20)\d{2})[\)\]]$')
+    f_match = folder_pattern.match(parent_name)
+    if f_match:
+        if not tags.get('artist'):
+            tags['artist'] = f_match.group(1).strip()
+        if not tags.get('album'):
+            tags['album'] = f_match.group(2).strip()
+        if not tags.get('year'):
+            tags['year'] = f_match.group(3).strip()
 
     return tags

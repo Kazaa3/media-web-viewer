@@ -1737,7 +1737,7 @@
                         </div>
 
                         <div style="margin-top: 30px;">
-                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Streaming Engine & Format Matrix</h5>
+                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Technical Tool & Mode Matrix</h5>
                             <div style="overflow-x: auto; border: 1px solid #eee; border-radius: 6px;">
                                 <table style="width: 100%; border-collapse: collapse; font-size: 0.8em; line-height: 1.4;">
                                     <thead style="background: #f8f9fa;">
@@ -1753,18 +1753,71 @@
                                             <tr style="border-bottom: 1px solid #f0f0f0;">
                                                 <td style="padding: 10px;"><b>${m.engine}</b></td>
                                                 <td style="padding: 10px; color: #666;">${m.modes.join(', ')}</td>
-                                                <td style="padding: 10px;">${m.formats.join(', ')} <br><small style="color:#999;">${m.codecs.join(', ')}</small></td>
-                                                <td style="padding: 10px; color: #444;">${m.features.join(' • ')}</td>
+                                                <td style="padding: 10px;">
+                                                    ${m.formats.join(', ')} 
+                                                    ${m.codecs ? `<br><small style="color:#999;">${m.codecs.join(', ')}</small>` : ''}
+                                                </td>
+                                                <td style="padding: 10px; color: #444;">
+                                                    <div>${m.features.join(' • ')}</div>
+                                                    <div style="font-size: 0.9em; color: #888; font-style: italic; margin-top: 4px;">${m.notes || ''}</div>
+                                                </td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
                                 </table>
                             </div>
-                            <div style="margin-top: 10px; font-size: 0.75em; color: #888; font-style: italic;">
-                                * This matrix represents the core technical capabilities of the current playback engines. 
-                                Transcoding via FFmpeg is automatically applied for incompatible streams.
+                        </div>
+
+                        <div style="margin-top: 30px;">
+                            <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #555;">Item Compatibility Check (By Item / Format)</h5>
+                            <div style="margin-bottom: 10px;">
+                                <input type="text" id="compatibility-search" placeholder="Filter items..." oninput="filterCompatibilityTable()" 
+                                       style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
+                            </div>
+                            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
+                                <table id="compatibility-table" style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
+                                    <thead style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
+                                        <tr>
+                                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid #ddd; width: 40%;">Item</th>
+                                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid #ddd;">Chrome</th>
+                                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid #ddd;">MediaMTX</th>
+                                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid #ddd;">VLC</th>
+                                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid #ddd;">FFplay</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(await eel.get_media_compatibility_report()()).map(item => `
+                                            <tr class="comp-row" style="border-bottom: 1px solid #f9f9f9;">
+                                                <td style="padding: 10px;">
+                                                    <div style="font-weight: 500;">${item.name}</div>
+                                                    <div style="font-size: 0.8em; color: #888;">${item.category} | ${item.type} ${item.notes ? `| <span style="color: #e67e22;">${item.notes}</span>` : ''}</div>
+                                                </td>
+                                                <td style="padding: 10px; text-align: center;">${item.chrome_native ? '<span style="color:#4caf50;">●</span>' : '<span style="color:#f44336;">○</span>'}</td>
+                                                <td style="padding: 10px; text-align: center;">${item.mediamtx ? '<span style="color:#4caf50;">●</span>' : '<span style="color:#f44336;">○</span>'}</td>
+                                                <td style="padding: 10px; text-align: center;">${item.vlc ? '<span style="color:#4caf50;">●</span>' : '<span style="color:#f44336;">○</span>'}</td>
+                                                <td style="padding: 10px; text-align: center;">${item.ffplay ? '<span style="color:#4caf50;">●</span>' : '<span style="color:#f44336;">○</span>'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.75em; color: #999;">
+                                ● Native / Optimal Support | ○ Transcoding Required / Limited Support
                             </div>
                         </div>
+
+                        <script>
+                            function filterCompatibilityTable() {
+                                const input = document.getElementById('compatibility-search');
+                                const filter = input.value.toLowerCase();
+                                const rows = document.querySelectorAll('.comp-row');
+                                
+                                rows.forEach(row => {
+                                    const text = row.innerText.toLowerCase();
+                                    row.style.display = text.includes(filter) ? '' : 'none';
+                                });
+                            }
+                        </script>
 
                     </div>`;
                 }

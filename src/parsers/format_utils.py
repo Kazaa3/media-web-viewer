@@ -808,3 +808,24 @@ def format_color_info(space: Any, transfer: Any = None, matrix: Any = None, hdr:
         res["matrix"] = str(matrix).upper()
         
     return res
+
+
+def is_chrome_native(ext: str, codec: str = "") -> bool:
+    """
+    Returns True if both extension and codec are natively supported by Chrome.
+    """
+    native_exts = {'.mp4', '.webm', '.ogv', '.mp3', '.wav', '.ogg', '.m4a', '.flac'}
+    ext_ok = (ext or "").lower() in native_exts
+    
+    if not codec:
+        return ext_ok
+        
+    c = codec.lower()
+    # Common native codecs
+    native_codecs = {
+        'h264', 'avc1', 'vp8', 'vp9', 'av1',  # Video
+        'aac', 'mp4a', 'mp3', 'opus', 'vorbis', 'flac', 'pcm' # Audio
+    }
+    
+    codec_ok = any(nc in c for nc in native_codecs)
+    return ext_ok and codec_ok
