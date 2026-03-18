@@ -6079,6 +6079,81 @@ def get_multimedia_analysis():
         return {'error': str(e)}
 
 @eel.expose
+def get_model_analysis():
+    """Aggregates stats on category, content_type, and media_type from the DB."""
+    try:
+        items = db.get_all_media()
+        stats = {
+            'categories': {},
+            'content_types': {},
+            'media_types': {},
+            'total_count': len(items),
+            'samples': {} # Sample items for each category
+        }
+        
+        for item in items:
+            cat = item.get('category', 'Unknown')
+            ct = item.get('content_type', 'Unknown')
+            mt = item.get('type', 'Unknown') # Internal media_type name
+            
+            stats['categories'][cat] = stats['categories'].get(cat, 0) + 1
+            stats['content_types'][ct] = stats['content_types'].get(ct, 0) + 1
+            stats['media_types'][mt] = stats['media_types'].get(mt, 0) + 1
+            
+            # Keep a sample for each category if not already present
+            if cat not in stats['samples'] and len(stats['samples']) < 20:
+                stats['samples'][cat] = {
+                    'name': item.get('name'),
+                    'path': item.get('path'),
+                    'content_type': ct,
+                    'media_type': mt
+                }
+                
+        return stats
+    except Exception as e:
+        log.error(f"Failed to get model analysis: {e}")
+        return {'error': str(e)}
+
+@eel.expose
+def get_cover_extraction_report():
+    """Analyzes artwork efficiency and sources."""
+    try:
+        items = db.get_all_media()
+        report = {
+            'total': len(items),
+            'has_artwork': 0,
+            'missing_artwork': 0,
+            'sources': {
+                'embedded_or_cache': 0,
+                'local_folder': 0
+            },
+            'formats': {}
+        }
+        
+        for item in items:
+            art = item.get('art_path') or item.get('artwork')
+            if art:
+                report['has_artwork'] += 1
+                art_path = Path(art)
+                # Check if it is in cache
+                if '.cache' in str(art_path):
+                    report['sources']['embedded_or_cache'] += 1
+                else:
+                    report['sources']['local_folder'] += 1
+                
+                # Format stats
+                ext = art_path.suffix.lower().lstrip('.')
+                if ext:
+                    report['formats'][ext] = report['formats'].get(ext, 0) + 1
+            else:
+                report['missing_artwork'] += 1
+                
+        return report
+    except Exception as e:
+        log.error(f"Failed to get cover extraction report: {e}")
+        return {'error': str(e)}
+
+@eel.expose
 def get_streaming_capability_matrix():
     """Returns a technical matrix of supported engines, modes, and formats."""
     return [

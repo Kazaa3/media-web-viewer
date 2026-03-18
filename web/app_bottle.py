@@ -134,19 +134,42 @@ def serve_media(filepath):
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
             logger.debug("transcode", f"Transcoding required: {full_path} to {transcode_format}")
+            start_time = __import__('time').time()
             try:
                 result = subprocess.run(
                     ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn', '-map', '0:a:0'] + ffmpeg_args + [str(tmp_path)],
                     check=True, capture_output=True, text=True, timeout=120
                 )
+                
                 if tmp_path.exists() and tmp_path.stat().st_size > 0:
+                    latency = __import__('time').time() - start_time
                     tmp_path.replace(cache_path)
-                    _log(f"TRANSCODING SUCCESS: {cache_path.stat().st_size} bytes")
+                    _log(f"TRANSCODING SUCCESS: {cache_path.stat().st_size} bytes in {latency:.4f}s")
                     logger.debug("transcode", f"Transcoding success: {cache_path} ({cache_path.stat().st_size} bytes)")
+                    
+                    # Record benchmark
+                    try:
+                        bench_file = APP_ROOT / "benchmarks.json"
+                        history = []
+                        if bench_file.exists():
+                            history = json.loads(bench_file.read_text(encoding='utf-8'))
+                        history.append({
+                            "timestamp": __import__('time').time(),
+                            "results": {
+                                f"Audio Transcode: {filepath.rsplit('.', 1)[-1].upper()} -> {transcode_format.upper()}": {
+                                    "status": "ok",
+                                    "latency": latency
+                                }
+                            }
+                        })
+                        bench_file.write_text(json.dumps(history[-50:], indent=2), encoding='utf-8')
+                    except Exception as be:
+                        log.error(f"Failed to save audio benchmark: {be}")
                 else:
                     raise RuntimeError("FFmpeg produced empty output")
             except subprocess.TimeoutExpired:
                 _log(f"TRANSCODING TIMEOUT: {full_path}")
+                # ... (rest of the error handling remains the same)
                 logger.debug("transcode", f"Transcoding timeout for {full_path}")
                 if tmp_path.exists():
                     tmp_path.unlink()
