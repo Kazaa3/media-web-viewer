@@ -5731,10 +5731,30 @@ def get_parser_stats():
                  counts[p_name] = counts.get(p_name, 0) + 1
         
         avg_stats = {k: stats[k]/counts[k] for k in stats if counts[k] > 0}
-        return {"averages": avg_stats, "total_items": len(items)}
+        
+        # Get last 20 items for granular results
+        last_items = []
+        # Sort items by some timestamp if available, otherwise just last 20 from db
+        # Assuming db.get_all_media returns items in natural order, we take the last ones
+        sorted_items = sorted(items, key=lambda x: x.get('id', 0), reverse=True)[:20]
+        for item in sorted_items:
+            last_items.append({
+                "filename": item.get("filename", "Unknown"),
+                "title": item.get("title", "-"),
+                "artist": item.get("artist", "-"),
+                "album": item.get("album", "-"),
+                "parser_times": item.get("parser_times", {}),
+                "total_time": sum(item.get("parser_times", {}).values()) if isinstance(item.get("parser_times"), dict) else 0
+            })
+
+        return {
+            "averages": avg_stats, 
+            "total_items": len(items),
+            "last_results": last_items
+        }
     except Exception as e:
         log.error(f"Failed to get parser stats: {e}")
-        return {"averages": {}, "total_items": 0}
+        return {"averages": {}, "total_items": 0, "last_results": []}
 
 @eel.expose
 def get_test_results():
