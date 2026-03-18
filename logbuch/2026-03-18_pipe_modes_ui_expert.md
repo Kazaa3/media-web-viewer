@@ -2,26 +2,33 @@
 
 ## Stand März 2026
 
+
 ### Features & Architektur
-- Pipe-Varianten (mkvmerge → FFmpeg) sind als Expert-Optionen ganz unten im UI (<details> collapsed).
-- Modus-Auswahl: Primary (Chrome Native, Video.js, VLC), Fallbacks (ffplay, MTX), Expert (Pipe-FragMP4, Pipe-HLS).
-- UI-Hierarchie: Primary > Fallback > Pipes – für optimale Usability.
+- Pipe-Varianten (mkvmerge → FFmpeg) und Python-Player (pyvidplayer) sind als Expert-Optionen ganz unten im UI (<details> collapsed).
+- Modus-Auswahl: Primary (Chrome Native, Video.js, VLC), Fallbacks (ffplay, MTX), Expert (Pipe-FragMP4, Pipe-HLS, pyvidplayer).
+- UI-Hierarchie: Primary > Fallback > Expert (Pipes & Python-Player) – für optimale Usability.
 - Status-Feedback: Expert-Modi zeigen Pipe-Status im UI (z.B. "🔄 Piping: mkvmerge → FFmpeg HLS...").
 
+#### Python-Player (pyvidplayer)
+- pyvidplayer ist ein programmatischer Python-Player für Video/Audio, ideal für Embedded- und Backend-Integration.
+- Expert-Modus: "pyvidplayer" als Button im <details> Bereich.
+
 ### Beispiel-Implementierung
+
 #### HTML (Modus-Selector)
 ```html
 <div class="mode-selector">
-  <button data-mode="chrome-native">Chrome Native</button>
-  <button data-mode="videojs">Video.js</button>
-  <button data-mode="vlc">VLC</button>
-  <button data-mode="ffplay">FFplay</button>
-  <button data-mode="mtx">MTX RTSP</button>
-  <details class="expert-modes">
-    <summary>Expert: Pipe-Varianten</summary>
-    <button data-mode="pipe-fragmp4">mkvmerge→FFmpeg FragMP4</button>
-    <button data-mode="pipe-hls">mkvmerge→FFmpeg HLS</button>
-  </details>
+    <button data-mode="chrome-native">Chrome Native</button>
+    <button data-mode="videojs">Video.js</button>
+    <button data-mode="vlc">VLC</button>
+    <button data-mode="ffplay">FFplay</button>
+    <button data-mode="mtx">MTX RTSP</button>
+    <details class="expert-modes">
+        <summary>Expert: Pipe-Varianten & Python-Player</summary>
+        <button data-mode="pipe-fragmp4">mkvmerge→FFmpeg FragMP4</button>
+        <button data-mode="pipe-hls">mkvmerge→FFmpeg HLS</button>
+        <button data-mode="pyvidplayer">pyvidplayer (Python)</button>
+    </details>
 </div>
 ```
 
@@ -65,22 +72,32 @@ def generate_pipe_hls(input_file, output_base):
     os.unlink(tmp_mkv)
     return f"{out_dir}/playlist.m3u8"
 
-def generate(path, mode):
+def generate(path, mode): # Refractor to generate_pipe
     if mode in PIPE_MODES:
         return PIPE_MODES[mode](path, f"/tmp/output_{mode}")
     # ... andere Modi
 ```
 
-### Modus-Tabelle (inkl. Pipes)
-| Kategorie   | Modus         | Tool-Chain           | Output         |
-|-------------|-------------- |--------------------- |--------------- |
-| Primary     | chrome-native | FFmpeg mp4-faststart | .mp4           |
-| videojs     | FFmpeg HLS    | .m3u8                |
-| vlc/cvlc/pyvlc | mkvmerge/native | MKV/RTSP         |
-| Fallback    | ffplay        | FFmpeg/ffplay        | Direct         |
-| mtx         | FFmpeg → MTX  | RTSP                 |
-| Expert      | pipe-fragmp4  | mkvmerge → FFmpeg    | FragMP4        |
-| Expert      | pipe-hls      | mkvmerge → FFmpeg    | HLS            |
+
+
+
+### Modus-Tabelle (alle Varianten)
+| Kategorie   | Modus                | Tool-Chain                | Output           |
+|-------------|----------------------|---------------------------|------------------|
+| Primary     | chrome-native        | FFmpeg mp4-faststart      | .mp4             |
+| Primary     | videojs              | FFmpeg HLS                | .m3u8            |
+| Primary     | vlc (Direct Replay)  | VLC ohne Transcoding      | Original         |
+| Primary     | vlc/cvlc/pyvlc       | mkvmerge/native           | MKV/RTSP         |
+| Primary     | pyvidplayer          | pyvidplayer (Python)      | Embedded/Direct  |
+| Fallback    | ffplay               | FFmpeg/ffplay             | Direct           |
+| MTX         | mtx Variante 1       | FFmpeg → MTX (RTSP)       | RTSP             |
+| MTX         | mtx Variante 2       | FFmpeg → MTX (UDP)        | UDP Stream       |
+| Expert      | mkvmerge alleine     | mkvmerge                  | MKV              |
+| Expert      | ffmpeg Variante 1    | FFmpeg FragMP4            | FragMP4          |
+| Expert      | ffmpeg Variante 2    | FFmpeg HLS                | HLS (.m3u8)      |
+| Expert      | ffmpeg Variante 3    | FFmpeg → ffplay           | Direct           |
+| Expert      | pipe-fragmp4         | mkvmerge → FFmpeg         | FragMP4          |
+| Expert      | pipe-hls             | mkvmerge → FFmpeg         | HLS              |
 
 ### Zusammenfassung
 - Pipe-Varianten sind als Expert-Optionen ganz unten im UI.

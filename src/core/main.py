@@ -5437,18 +5437,6 @@ def get_parser_stats():
         return {"averages": {}, "total_items": 0, "last_results": []}
 
 @eel.expose
-def get_test_results():
-    """Returns stored unit test results (regression suite)."""
-    try:
-        test_log = PROJECT_ROOT / "test_results.json"
-        if test_log.exists():
-            return json.loads(test_log.read_text(encoding='utf-8'))
-        return []
-    except Exception as e:
-        log.error(f"Failed to read test results: {e}")
-        return []
-
-@eel.expose
 def start_handbrake_transcode(input_path: str, output_path: str, encoder: str = "x264", preset: str = "fast"):
     """Exposes HandBrake transcoding to the frontend."""
     options = {"encoder": encoder, "preset": preset}
