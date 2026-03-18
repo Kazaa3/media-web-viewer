@@ -159,12 +159,20 @@ class ArtworkExtractor:
     def _find_local_art(self, path: Path, out_path: Path) -> bool:
         """
         Search for local artwork files in the same directory (or inside if path is dir).
+        Also checks up to 2 levels of parent directories.
         Common names: poster, folder, cover, albumart, front.
         """
         log.debug(f"🔍 [Artwork] Searching local art for {path.name}")
-        target_dir = path if path.is_dir() else path.parent
-        if not target_dir.exists():
-            return False
+        
+        # Search targets: current (if dir), parent, grandparent
+        search_dirs = []
+        curr = path if path.is_dir() else path.parent
+        if curr.exists():
+            search_dirs.append(curr)
+            if curr.parent != curr and curr.parent.exists() and str(curr.parent) != '/':
+                search_dirs.append(curr.parent)
+                if curr.parent.parent != curr.parent and curr.parent.parent.exists() and str(curr.parent.parent) != '/':
+                    search_dirs.append(curr.parent.parent)
 
         names = {
             'poster', 'folder', 'cover', 'front', 'albumart',
@@ -172,46 +180,39 @@ class ArtworkExtractor:
         }
         exts = {'.jpg', '.jpeg', '.png', '.webp'}
         
-        try:
-            # List directory once to avoid O(N*M*K) complexity
-            candidates = list(target_dir.iterdir())
-            log.debug(f"🔍 [Artwork] Found {len(candidates)} candidates in {target_dir}")
-            
-            # Priority 1: Exact matches (case-insensitive)
-            for candidate in candidates:
-                if not candidate.is_file():
-                    continue
-                stem_lower = candidate.stem.lower()
-                suffix_lower = candidate.suffix.lower()
+        for target_dir in search_dirs:
+            try:
+                candidates = list(target_dir.iterdir())
+                log.debug(f"🔍 [Artwork] Checking {len(candidates)} candidates in {target_dir}")
                 
-                log.debug(f"🔍 [Artwork] Checking candidate: {candidate.name} (stem: {candidate.stem}, ext: {candidate.suffix})")
-                
-                if stem_lower in names and suffix_lower in exts:
-                    log.debug(f"✨ [Artwork] Match found: {candidate.name}")
-                    try:
-                        shutil.copy2(candidate, out_path)
-                        log.debug(f"✅ [Artwork] Successfully copied to {out_path}")
-                        return True
-                    except Exception as e:
-                        log.debug(f"❌ [Artwork] Failed to copy {candidate.name}: {e}")
+                # Priority 1: Exact matches (case-insensitive)
+                for candidate in candidates:
+                    if not candidate.is_file():
                         continue
+                    stem_lower = candidate.stem.lower()
+                    suffix_lower = candidate.suffix.lower()
+                    
+                    if stem_lower in names and suffix_lower in exts:
+                        log.debug(f"✨ [Artwork] Match found in {target_dir.name}: {candidate.name}")
+                        try:
+                            shutil.copy2(candidate, out_path)
+                            return True
+                        except Exception: continue
 
-            # Priority 2: Matches starting with one of the names
-            for candidate in candidates:
-                if not candidate.is_file():
-                    continue
-                stem_lower = candidate.stem.lower()
-                suffix_lower = candidate.suffix.lower()
-                
-                if suffix_lower in exts and any(stem_lower.startswith(n) for n in names):
-                    try:
-                        shutil.copy2(candidate, out_path)
-                        return True
-                    except Exception as e:
-                        log.debug(f"Failed to copy prefix local art {candidate}: {e}")
+                # Priority 2: Prefix matches
+                for candidate in candidates:
+                    if not candidate.is_file():
                         continue
-        except Exception as e:
-            log.debug(f"Error searching local art in {target_dir}: {e}")
+                    stem_lower = candidate.stem.lower()
+                    suffix_lower = candidate.suffix.lower()
+                    
+                    if suffix_lower in exts and any(stem_lower.startswith(n) for n in names):
+                        try:
+                            shutil.copy2(candidate, out_path)
+                            return True
+                        except Exception: continue
+            except Exception as e:
+                log.debug(f"Error searching art in {target_dir}: {e}")
 
         return False
 

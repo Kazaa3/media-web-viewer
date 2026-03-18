@@ -6053,8 +6053,9 @@ def get_multimedia_analysis():
                     analysis['film_objects'].append(obj)
                     analysis['stats']['total_films'] += 1
 
-            # 2. Chrome Native Compatibility (MP4 / H.264)
-            if ext == 'mp4':
+            # 2. Chrome Native Compatibility (MP4 / H.264 / VP8 / VP9 / AV1)
+            is_chrome_native_ext = ext in ('.mp4', '.webm', '.ogg')
+            if is_chrome_native_ext:
                 # Check both top-level item 'codec' and tags 'video_codec'/'codec'
                 raw_codec = item.get('codec') or tags.get('video_codec') or tags.get('codec') or ''
                 codec = str(raw_codec).lower()
@@ -6067,10 +6068,18 @@ def get_multimedia_analysis():
                         'is_native': True
                     })
                     analysis['stats']['native_support_count'] += 1
+                else:
                     analysis['incompatible_videos'].append({
                         'name': item.get('name'),
-                        'codec': codec,
+                        'codec': codec or 'Unknown',
                         'reason': 'Codec not natively supported by Chrome'
+                    })
+            elif ext in ('.mkv', '.avi', '.mov', '.ts', '.m2ts'):
+                 # These definitely need VLC or Transcoding for Chrome
+                 analysis['incompatible_videos'].append({
+                        'name': item.get('name'),
+                        'codec': tags.get('video_codec', 'Unknown'),
+                        'reason': 'Container not supported by Chrome Native'
                     })
 
         return analysis

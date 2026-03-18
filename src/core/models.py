@@ -26,6 +26,7 @@ from ..parsers.format_utils import (
 )
 from parsers import media_parser
 import logger
+import re
 
 # Get specialized logger for models
 log = logger.get_logger("models")
@@ -157,22 +158,33 @@ class MediaItem:
 
     def detect_content_type(self):
         ext = self.type.lower()
+        path_str = str(self.path).lower()
         tags = self.tags or {}
-        # ISO / Disk Image: try to detect PAL DVD
-        if ext in DISK_IMAGE_EXTENSIONS or ext in ['.bin', '.img']:
-            volume_id = str(tags.get('pycdlib_volume_id', tags.get('iso_volume_label', ''))).lower()
-            if 'pal' in volume_id or 'dvd' in volume_id:
+        
+        # 1. DVD / Disk Image Objects
+        is_disc = ext in ('.iso', '.bin', '.img') or (self.is_directory and (self.path / "VIDEO_TS").exists())
+        
+        if is_disc:
+            vol_id = str(tags.get('pycdlib_volume_id', tags.get('iso_volume_label', ''))).lower()
+            if 'pal' in vol_id or 'dvd' in vol_id:
                 return 'PAL DVD'
-            if 'ntsc' in volume_id:
+            if 'ntsc' in vol_id:
                 return 'NTSC DVD'
-            # Ensure files_count is int
+            # Check file counts for Data vs Video DVD
             try:
                 files_count = int(tags.get('iso_files_count', 0))
-            except (ValueError, TypeError):
-                files_count = 0
-            if files_count > 50:
-                return 'Data DVD'
-            return 'Disk Image'
+                if files_count > 50: return 'Data DVD'
+                if files_count > 0: return 'Mixed Media'
+            except: pass
+            return 'DVD Object'
+            
+        # 2. Film Object Detection (Folders with metadata or specific structure)
+        if self.is_directory:
+            # Check for year in folder name or tags
+            has_year = 'year' in tags or re.search(r'(19|20)\d{2}', self.path.name)
+            if has_year and any(self.path.glob('*.[mmap][kpk4][v4i]')): # simple check for video files
+                return 'Film Object'
+                
         return self.category
 
     def get_category(self):
@@ -192,16 +204,22 @@ class MediaItem:
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel']):
                 return 'Serie'
             
-            # DVD Folder detection
+            # DVD Folder detection (VIDEO_TS / BDMV)
             if (self.path / 'VIDEO_TS').exists() or (self.path / 'BDMV').exists():
                  return 'Film'
                  
-            # Folder with ISOs
-            if any(self.path.glob('*.iso')) or any(self.path.glob('*.bin')):
+            # Folder with ISOs / Images
+            disk_pat = ('*.iso', '*.bin', '*.img')
+            if any(any(self.path.glob(p)) for p in disk_pat):
                 return 'Film'
 
             if any(k in path_str for k in ['film', 'movie']):
                 return 'Film'
+                
+            # Detect Year in Folder -> likely a Movie folder
+            if re.search(r'[\(\[\s]((?:19|20)\d{2})[\)\]\s]?', self.path.name):
+                return 'Film'
+                
             return 'Ordner'
 
         if logical == 'Video':
@@ -328,6 +346,10 @@ class MediaItem:
             transcoded_format = 'OGG'
         else:
             transcoded_format = None
+            
+        # Is Chrome Native?
+        from parsers.format_utils import is_chrome_native_ext
+        is_chrome_native = is_chrome_native_ext(self.type, codec)
 
         # Filter tags: Only keep what's strictly necessary for the UI/Database to save space
         whitelist = {
@@ -362,5 +384,8 @@ class MediaItem:
             'artwork': self.art_path, # Alias for frontend
             'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
-            'transcoded_format': transcoded_format
+            'transcoded_format': transcoded_format,
+            'is_chrome_native': is_chrome_native,
+            'year': filtered_tags.get('year', ''),
+            'film_title': filtered_tags.get('title', self.name)
         }
