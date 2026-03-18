@@ -38,6 +38,7 @@ Der Media Web Viewer ist eine modulare Desktop-Anwendung zur Medienverwaltung un
 - **Formate:** Audio, Video, Bild, Container (u.a. ALAC, FLAC, MP4, MKV, ISO)
 - **Tools:** Mutagen, pymediainfo, FFmpeg, python-vlc, m3u8
 - **Transcoding:** Echtzeit-Konvertierung für Browser-Kompatibilität
+- **Routing:** Zentrale Steuerung via `open_video_smart` ([Details](docs/video_player_routing.md))
 
 ### Virtual Environment Management
 - **Venv/Conda:** Zentrale Steuerung, 5-Venv-Konzept (core, dev, build, selenium, testbed)

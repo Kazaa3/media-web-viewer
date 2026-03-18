@@ -30,6 +30,9 @@ Dies ist das zentrale Register für das Projekt **dict - Web Media Player & Libr
 15. [015_AI_RAG_und_Zukunftsvisionen.md](file://./docs/logbuch/015_AI_RAG_und_Zukunftsvisionen.md) - KI-Forschung
 16. [016_Bugs_Features_und_Backlog.md](file://./docs/logbuch/016_Bugs_Features_und_Backlog.md) - Roadmap
 17. [017_Bereinigung_und_Portabilitaet.md](file://./docs/logbuch/017_Bereinigung_und_Portabilitaet.md) - Hausputz & v1.3.5
+18. [018_Video_Player_Redesign_3_Player_System.md](file://./docs/logbuch/018_Video_Player_Redesign_3_Player_System.md) - Player Evolution
+19. [019_Video_Player_Fixes_and_Test_Media.md](file://./docs/logbuch/019_Video_Player_Fixes_and_Test_Media.md) - Bugfixing
+20. [020_Reporting_and_Parser_Performance.md](file://./docs/logbuch/020_Reporting_and_Parser_Performance.md) - Transparenz
 
 <!-- lang-split -->
 
@@ -57,6 +60,9 @@ This is the central register for the **dict - Web Media Player & Library** proje
 15. [015_AI_RAG_und_Zukunftsvisionen.md](file://./docs/logbuch/015_AI_RAG_und_Zukunftsvisionen.md) - AI Research
 16. [016_Bugs_Features_und_Backlog.md](file://./docs/logbuch/016_Bugs_Features_und_Backlog.md) - Roadmap
 17. [017_Bereinigung_und_Portabilitaet.md](file://./docs/logbuch/017_Bereinigung_und_Portabilitaet.md) - Cleanup & v1.3.5
+18. [018_Video_Player_Redesign_3_Player_System.md](file://./docs/logbuch/018_Video_Player_Redesign_3_Player_System.md) - Player Evolution
+19. [019_Video_Player_Fixes_and_Test_Media.md](file://./docs/logbuch/019_Video_Player_Fixes_and_Test_Media.md) - Bugfixing
+20. [020_Reporting_and_Parser_Performance.md](file://./docs/logbuch/020_Reporting_and_Parser_Performance.md) - Transparency
 
 ---
 *Die ursprünglichen 290+ Forschungs-Logs befinden sich im [archive/](archive/) Ordner.*

@@ -1499,6 +1499,7 @@
 
                     if (tabId === 'library') renderLibrary();
                     if (tabId === 'item') refreshLibrary();
+                    if (tabId === 'parser') loadParserPerformance('parser-tab-perf-container');
                     // The loadLibraryFolders for 'file' tab is now handled in the display logic above
                     // The loadSqlFiles for 'reporting' tab is now handled in the display logic above
                 } else {
@@ -1567,16 +1568,22 @@
 
         // --- Reporting View & SQL Logic ---
         function switchReportingView(view) {
-            const dashView = document.getElementById('reporting-dashboard-view');
-            const dbView = document.getElementById('reporting-database-view');
-            if (view === 'dashboard') {
-                dashView.style.display = 'block';
-                dbView.style.display = 'none';
-            } else {
-                dashView.style.display = 'none';
-                dbView.style.display = 'block';
-                loadSqlFiles();
+            const views = {
+                'dashboard': document.getElementById('reporting-dashboard-view'),
+                'database': document.getElementById('reporting-database-view'),
+                'video-streaming': document.getElementById('reporting-video-streaming-view'),
+                'audio-streaming': document.getElementById('reporting-audio-streaming-view'),
+                'parser': document.getElementById('reporting-parser-view')
+            };
+
+            for (const [key, el] of Object.entries(views)) {
+                if (el) el.style.display = (view === key) ? 'block' : 'none';
             }
+
+            if (view === 'database') loadSqlFiles();
+            if (view === 'video-streaming') loadVideoStreamingBenchmarks('video');
+            if (view === 'audio-streaming') loadVideoStreamingBenchmarks('audio');
+            if (view === 'parser') loadParserPerformance();
         }
 
         async function loadSqlFiles() {
@@ -1601,6 +1608,91 @@
             const content = await eel.get_sql_content(filename)();
             safeHtml('sql-content-renderer', content);
             safeText('selected-sql-filename', filename);
+        }
+
+        async function loadVideoStreamingBenchmarks(type = 'all') {
+            const container = (type === 'audio') ? document.getElementById('audio-benchmarks-list') : document.getElementById('video-benchmarks-list');
+            if (!container) return;
+
+            const history = await eel.get_benchmark_results()();
+            if (!history || (Array.isArray(history) && history.length === 0)) {
+                container.innerHTML = '<p style="color: #999;">Keine Benchmark-Daten vorhanden.</p>';
+                return;
+            }
+
+            let html = '';
+            const historyArr = Array.isArray(history) ? [...history] : [history];
+            historyArr.reverse().forEach(run => {
+                const ts = run.timestamp || (run.results ? (run.results.timestamp || Date.now() / 1000) : Date.now() / 1000);
+                const date = new Date(ts * 1000).toLocaleString();
+
+                let runHtml = '';
+                const results = run.results || run;
+                let foundMatch = false;
+
+                for (const [name, res] of Object.entries(results)) {
+                    if (name === "timestamp") continue;
+                    if (!res || typeof res !== 'object') continue;
+
+                    const isAudio = name.toLowerCase().includes('audio') || name.toLowerCase().includes('cvlc') || name.toLowerCase().includes('latency');
+                    const isVideo = name.toLowerCase().includes('video') || name.toLowerCase().includes('ffplay') || name.toLowerCase().includes('stream');
+
+                    if (type === 'audio' && !isAudio) continue;
+                    if (type === 'video' && !isVideo) continue;
+
+                    foundMatch = true;
+                    const isOk = res.status === 'ok';
+                    const color = isOk ? '#2e7d32' : '#c62828';
+                    const icon = isOk ? '✅' : '❌';
+
+                    runHtml += `<div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid ${color};">
+                                <div style="font-weight: bold; margin-bottom: 5px;">${icon} ${name}</div>
+                                <div style="font-size: 0.85em; color: #666;">
+                                    Status: <span style="color: ${color}; font-weight: bold;">${(res.status || 'unknown').toUpperCase()}</span><br>
+                                    ${res.latency ? `Latency: <b>${res.latency.toFixed(4)}s</b><br>` : ''}
+                                    ${res.error ? `<div style="margin-top: 5px; padding: 5px; background: #fee; color: #c33; font-family: monospace; font-size: 0.8em; overflow: auto; max-height: 120px; white-space: pre-wrap;">${res.error}</div>` : ''}
+                                </div>
+                             </div>`;
+                }
+
+                if (foundMatch) {
+                    html += `<div style="margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+                                <h4 style="margin: 0 0 10px 0; color: #555;">Run: ${date}</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                                    ${runHtml}
+                                </div>
+                             </div>`;
+                }
+            });
+            container.innerHTML = html || '<p style="color: #999;">Keine passenden Benchmarks für diesen Filter gefunden.</p>';
+        }
+
+        async function loadParserPerformance(containerId = 'parser-reporting-container') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const stats = await eel.get_parser_stats()();
+            if (!stats || !stats.averages || Object.keys(stats.averages).length === 0) {
+                container.innerHTML = '<p style="color: #999;">Keine Parser-Statistiken vorhanden. Bitte Bibliothek scannen.</p>';
+                return;
+            }
+
+            let html = `<div style="margin-bottom: 20px;">
+                            <strong>Total Items Scanned:</strong> ${stats.total_items}
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(${containerId === 'parser-tab-perf-container' ? '180px' : '250px'}, 1fr)); gap: 15px;">`;
+
+            const sorted = Object.entries(stats.averages).sort((a, b) => b[1] - a[1]);
+            sorted.forEach(([name, time]) => {
+                const color = time > 0.5 ? '#f57c00' : (time > 0.1 ? '#fbc02d' : '#388e3c');
+                html += `<div style="padding: 12px; background: #fff; border: 1px solid #eee; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                            <div style="font-weight: bold; color: #333; margin-bottom: 5px; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</div>
+                            <div style="font-size: 1.1em; font-weight: 800; color: ${color};">${time.toFixed(4)}s</div>
+                            <div style="font-size: 0.7em; color: #999; margin-top: 2px;">avg. extraction time</div>
+                         </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         // --- Library Folder Browser Logic ---
@@ -3082,6 +3174,12 @@
                                 data-i18n="parser_save_success">✅
                                 Gespeichert</span>
                         </div>
+
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;">📊 Performance Übersicht</h3>
+                        <div id="parser-tab-perf-container"
+                            style="background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                            <p style="font-size: 0.85em; color: #666;">Lade Performance-Daten...</p>
+                        </div>
                     </div>
 
                     <!-- Right Column: Parser-Specific Options -->
@@ -3243,6 +3341,11 @@
                             style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
                             <option value="dashboard" data-i18n="report_view_dashboard">📈 Dashboard</option>
                             <option value="database" data-i18n="report_view_database">🗄️ Datenbank (SQL)</option>
+                            <option value="video-streaming" data-i18n="report_view_video_streaming">🎬 Video Streaming
+                            </option>
+                            <option value="audio-streaming" data-i18n="report_view_audio_streaming">🎵 Audio Streaming
+                            </option>
+                            <option value="parser" data-i18n="report_view_parser">🧠 Parser Reporting</option>
                         </select>
                         <button onclick="refreshReportingData()"
                             style="padding: 10px 20px; background: #388e3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
@@ -3253,6 +3356,35 @@
 
                 <div id="reporting-main-content">
                     <div id="reporting-dashboard-view">
+                        <div
+                            style="grid-column: span 2; background: #fff; border-radius: 12px; border: 1px solid #eee; padding: 15px; margin-bottom: 5px; display: flex; gap: 30px; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                            <div style="flex: 1;">
+                                <div style="display: flex; gap: 30px; align-items: center;">
+                                    <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                        <div
+                                            style="width: 10px; height: 10px; border-radius: 50%; background: #4caf50;">
+                                        </div>
+                                        <strong>Backend:</strong> <span id="report-engine-status"
+                                            style="color: #666;">Bottle / Gevent</span>
+                                    </div>
+                                    <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                        <div
+                                            style="width: 10px; height: 10px; border-radius: 50%; background: #2196f3;">
+                                        </div>
+                                        <strong>Runtime:</strong> <span id="report-gevent-status"
+                                            style="color: #666;">Gevent / Greenlet</span>
+                                    </div>
+                                    <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                        <div
+                                            style="width: 10px; height: 10px; border-radius: 50%; background: #ff9800;">
+                                        </div>
+                                        <strong>OS Platform:</strong> <span id="report-os-status"
+                                            style="color: #666;">Linux</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
                             <div id="status-pie-chart"
                                 style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;">
@@ -3290,6 +3422,32 @@
                                 <pre id="sql-content-renderer"
                                     style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.9em; min-height: 400px; overflow: auto; border: 1px solid #333;"></pre>
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="reporting-video-streaming-view" style="display: none;">
+                        <h3 style="margin-top: 0;" data-i18n="report_video_streaming_title">Video-Streaming Benchmarks
+                        </h3>
+                        <div id="video-benchmarks-container"
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                            <div id="video-benchmarks-list">Lade Benchmarks...</div>
+                        </div>
+                    </div>
+
+                    <div id="reporting-audio-streaming-view" style="display: none;">
+                        <h3 style="margin-top: 0;" data-i18n="report_audio_streaming_title">Audio-Streaming Benchmarks
+                        </h3>
+                        <div id="audio-benchmarks-container"
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                            <div id="audio-benchmarks-list">Lade Benchmarks...</div>
+                        </div>
+                    </div>
+
+                    <div id="reporting-parser-view" style="display: none;">
+                        <h3 style="margin-top: 0;" data-i18n="report_parser_title">Parser Performance</h3>
+                        <div id="parser-reporting-container"
+                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px;">
+                            Lade Parser-Daten...
                         </div>
                     </div>
                 </div>
@@ -8274,6 +8432,11 @@
                 console.warn('[UI] Plotly not loaded. Skipping charts.');
             }
             renderReportingTable(history);
+
+            // Update infrastructure stats
+            safeText('report-engine-status', 'Bottle / WSGI');
+            safeText('report-gevent-status', 'Aktiv (Gevent / Greenlet)');
+            safeText('report-os-status', navigator.platform || 'Linux');
         }
 
         function renderCharts(history) {
