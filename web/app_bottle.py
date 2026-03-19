@@ -262,6 +262,32 @@ def serve_cover(filepath):
     return bottle.HTTPError(404, "No cover found")
 
 
+@bottle.route('/direct/<filepath:path>')
+def serve_direct(filepath):
+    """
+    @brief Serves media files directly (Range-compatible) for Direct Play.
+    """
+    full_path = _resolve_path(filepath)
+    if not full_path or not full_path.exists():
+        return bottle.HTTPError(404, "File not found")
+        
+    mime_type, _ = mimetypes.guess_type(str(full_path))
+    return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)
+
+
+@bottle.route('/cache/<filepath:path>')
+def serve_cache(filepath):
+    """
+    @brief Serves files from the local media cache (Remuxed/Extracted).
+    """
+    cache_path = CACHE_DIR / "media" / filepath
+    if not cache_path.exists():
+        return bottle.HTTPError(404, "Cache file not found")
+        
+    mime_type, _ = mimetypes.guess_type(str(cache_path))
+    return bottle.static_file(cache_path.name, root=str(cache_path.parent), mimetype=mime_type)
+
+
 @bottle.error(500)
 def error500(error):
     """

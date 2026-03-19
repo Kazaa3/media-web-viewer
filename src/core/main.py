@@ -6212,6 +6212,14 @@ def get_streaming_capability_matrix():
             "codecs": ["Lossless PCM"],
             "features": ["System Audio Capture", "Network Audio"],
             "notes": "Specialized for lossless audio streaming to network devices (Stream What You Hear)."
+        },
+        {
+            "engine": "PyPlayer (Integrated)",
+            "modes": ["Direct Python"],
+            "formats": ["All (FFmpeg compatible)"],
+            "codecs": ["All"],
+            "features": ["Zero external dependencies", "Native control"],
+            "notes": "Built-in Python-based media engine for fallback and simple playback."
         }
     ]
 
@@ -6219,7 +6227,7 @@ def get_streaming_capability_matrix():
 def get_media_compatibility_report():
     """Generates a detailed compatibility matrix for all media items in the library."""
     from src.core import db
-    from src.parsers.format_utils import is_chrome_native_ext
+    from src.parsers.format_utils import is_chrome_native
     
     try:
         items = db.get_all_media()
@@ -6230,7 +6238,7 @@ def get_media_compatibility_report():
             codec = tags.get('video_codec', tags.get('codec', ''))
             ext = item.get('extension', '').lower()
             
-            is_chrome = is_chrome_native_ext(ext, codec)
+            is_chrome = is_chrome_native(ext, codec)
             is_mtx = ext in ['.mp4', '.mkv', '.avi', '.mov', '.ts'] # FFmpeg can remux these
             is_vlc = True # VLC plays everything
             is_ffplay = True # FFmpeg plays everything
@@ -6251,8 +6259,151 @@ def get_media_compatibility_report():
                 'ffplay': is_ffplay,
                 'notes': "ISO/Image requiring VLC" if is_disc else ""
             })
-            
         return report
     except Exception as e:
         log.error(f"Failed to generate compatibility report: {e}")
         return []
+
+
+# --- Media Routing Test Suite & Cache Logic ---
+
+MEDIA_CACHE = Path(logger.APP_DATA_DIR) / "cache" / "media"
+
+def remux_to_mp4_cache(full_path: str | Path) -> str:
+    """
+    Remuxes compatible MKV/AVI to MP4 in cache for Direct Play.
+    Returns the absolute path to the cached MP4.
+    """
+    MEDIA_CACHE.mkdir(parents=True, exist_ok=True)
+    full = Path(full_path)
+    # Generate unique hash based on path and mtime
+    import hashlib
+    h = hashlib.md5(f"{full}{full.stat().st_mtime}".encode()).hexdigest()
+    out = MEDIA_CACHE / f"{h}.mp4"
+    
+    if out.exists():
+        return str(out)
+        
+    log.info(f"Remuxing to cache: {full} -> {out}")
+    cmd = [
+        "ffmpeg", "-y", "-i", str(full),
+        "-map", "0:v:0?", "-map", "0:a:0?",
+        "-c", "copy", "-movflags", "+faststart",
+        str(out)
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+        return str(out)
+    except Exception as e:
+        log.error(f"Remux failed: {e}")
+        return str(full) # Fallback to original
+
+
+def extract_main_from_iso(iso_path: str | Path) -> str:
+    """
+    Extracts the main movie from ISO to cache.
+    """
+    MEDIA_CACHE.mkdir(parents=True, exist_ok=True)
+    full = Path(iso_path)
+    import hashlib
+    h = hashlib.md5(f"{full}{full.stat().st_mtime}".encode()).hexdigest()
+    out = MEDIA_CACHE / f"{h}_iso.mp4"
+    
+    if out.exists():
+        return str(out)
+        
+    log.info(f"Extracting main feature from ISO: {full} -> {out}")
+    # Simplified strategy: take first title/longest spur
+    cmd = [
+        "ffmpeg", "-y", "-i", str(full),
+        "-map", "0:v:0?", "-map", "0:a:0?",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-c:a", "aac", "-b:a", "128k",
+        "-movflags", "+faststart",
+        str(out)
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, timeout=300)
+        return str(out)
+    except Exception as e:
+        log.error(f"ISO extraction failed: {e}")
+        return ""
+
+
+@eel.expose
+def analyze_media(relpath: str, client: str = 'browser'):
+    """
+    Deep analysis for routing decisions.
+    """
+    from src.parsers.format_utils import ffprobe_suite, ffprobe_quality_score, is_direct_play_capable
+    
+    # Resolve relative path to full path
+    lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+    full = Path(lib_dir) / relpath
+    
+    if not full.exists():
+        return {"error": "File not found"}
+        
+    analysis = ffprobe_suite(full)
+    score = ffprobe_quality_score(analysis)
+    
+    direct = is_direct_play_capable(full, client)
+    ext = full.suffix.lower()
+    
+    # Routing decision
+    if direct:
+        mode = "direct"
+        url = f"/direct/{relpath}"
+    elif ext == ".iso" or analysis.get("hdr") or analysis.get("video_codec") in ["hevc", "vc1"]:
+        # Complex/HDR/ISO goes to VLC
+        mode = "vlc"
+        url = None
+    else:
+        # Standard fallback to HLS
+        mode = "hls"
+        url = None # Will be resolved by ensure_hls
+        
+    return {
+        "analysis": analysis,
+        "quality_score": score,
+        "direct_play_browser": direct,
+        "recommended_mode": mode,
+        "direct_url": url,
+        "relpath": relpath
+    }
+
+
+@eel.expose
+def get_play_source(item_path: str, client: str = 'browser'):
+    """
+    Resolves the final abspielbare URL, handling cache/remuxing.
+    """
+    from src.parsers.format_utils import is_direct_play_capable, ffprobe_suite
+    
+    lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+    full = Path(lib_dir) / item_path
+    
+    if not full.exists():
+        return {"mode": "error", "message": "File not found"}
+        
+    # 1. ISO Handling
+    if full.suffix.lower() == ".iso":
+        playable = extract_main_from_iso(full)
+        if playable:
+            rel_cache = Path(playable).name
+            return {"mode": "direct", "url": f"/cache/{rel_cache}"}
+        return {"mode": "vlc", "path": str(full)}
+        
+    # 2. MKV/Direct Play Handling
+    if is_direct_play_capable(full, client):
+        return {"mode": "direct", "url": f"/direct/{item_path}"}
+        
+    # 3. MKV Remux Check (Optional/Heuristic)
+    analysis = ffprobe_suite(full)
+    if full.suffix.lower() == ".mkv" and analysis.get("video_codec") == "h264":
+        remuxed = remux_to_mp4_cache(full)
+        rel_cache = Path(remuxed).name
+        return {"mode": "direct", "url": f"/cache/{rel_cache}"}
+        
+    # 4. Fallback to HLS (logic handled in app.html usually, but here as API)
+    return {"mode": "hls", "path": item_path}

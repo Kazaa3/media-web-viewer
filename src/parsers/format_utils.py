@@ -3,6 +3,8 @@ from typing import Any, Optional
 import re
 import os
 import json
+import subprocess
+import shutil
 from src.core import logger
 
 # Get specialized logger for format_utils
@@ -829,3 +831,102 @@ def is_chrome_native(ext: str, codec: str = "") -> bool:
     
     codec_ok = any(nc in c for nc in native_codecs)
     return ext_ok and codec_ok
+
+
+def is_direct_play_capable(path: Path | str, client: str = 'browser') -> bool:
+    """
+    Standardized check if a file can be played directly in the browser (Chrome).
+    """
+    p = Path(path)
+    ext = p.suffix.lower()
+    
+    # Fast check by extension first
+    if ext not in {'.mp4', '.webm', '.mp3', '.ogg', '.wav', '.flac', '.m4a'}:
+        return False
+        
+    # Deep check with ffprobe if needed (optional optimization: cache this)
+    try:
+        analysis = ffprobe_suite(path)
+        v_codec = analysis.get('video_codec', '')
+        return is_chrome_native(ext, v_codec)
+    except Exception:
+        return is_chrome_native(ext)
+
+
+def ffprobe_suite(path: Path | str) -> dict[str, Any]:
+    """
+    Runs ffprobe on the given path and returns a structured analysis object.
+    """
+    ffprobe_path = shutil.which("ffprobe") or "ffprobe"
+    cmd = [
+        ffprobe_path, "-v", "error", 
+        "-show_format", "-show_streams", 
+        "-of", "json", str(path)
+    ]
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        data = json.loads(result.stdout)
+        
+        streams = data.get('streams', [])
+        fmt = data.get('format', {})
+        
+        v_stream = next((s for s in streams if s.get('codec_type') == 'video'), {})
+        a_streams = [s for s in streams if s.get('codec_type') == 'audio']
+        s_streams = [s for s in streams if s.get('codec_type') == 'subtitle']
+        
+        duration_raw = fmt.get('duration')
+        duration = float(duration_raw) / 60.0 if duration_raw else 0.0
+        
+        size_raw = fmt.get('size')
+        size_mb = float(size_raw) / (1024 * 1024) if size_raw else 0.0
+        
+        return {
+            "container": format_container(fmt.get('format_name', ''), Path(path).suffix),
+            "duration_min": round(float(duration), 1),
+            "size_mb": round(float(size_mb), 1),
+            "video_codec": str(v_stream.get('codec_name', 'unknown')),
+            "width": int(v_stream.get('width', 0)),
+            "height": int(v_stream.get('height', 0)),
+            "pix_fmt": str(v_stream.get('pix_fmt', '')),
+            "audio_codec": str(a_streams[0].get('codec_name', 'none')) if a_streams else 'none',
+            "audio_channels": int(a_streams[0].get('channels', 0)) if a_streams else 0,
+            "subs": len(s_streams),
+            "chapters": len(data.get('chapters', [])),
+            "hdr": 'hdr' in str(v_stream.get('color_transfer', '')).lower() or v_stream.get('color_space') == 'bt2020nc'
+        }
+    except Exception as e:
+        log.error(f"ffprobe failed for {path}: {e}")
+        return {}
+
+
+def ffprobe_quality_score(analysis: dict[str, Any]) -> int:
+    """
+    Calculates a quality score (0-100) based on tech specs.
+    """
+    if not analysis:
+        return 0
+        
+    score = 0
+    h = analysis.get('height', 0)
+    
+    # Resolution base
+    if h >= 2160: score += 50  # 4K
+    elif h >= 1080: score += 40 # FHD
+    elif h >= 720: score += 30  # HD
+    else: score += 10           # SD
+    
+    # HDR bonus
+    if analysis.get('hdr'):
+        score += 20
+        
+    # Audio bonus
+    channels = analysis.get('audio_channels', 0)
+    if channels >= 6: score += 15 # 5.1+
+    elif channels >= 2: score += 5 # Stereo
+    
+    # Extras
+    if analysis.get('subs', 0) > 0: score += 5
+    if analysis.get('chapters', 0) > 0: score += 10
+    
+    return min(100, score)

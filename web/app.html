@@ -2691,6 +2691,22 @@
                             data-i18n="cat_ebooks">E-Books</button>
                         <button class="filter-chip" style="border-color: #f39c12; color: #e67e22;" onclick="setLibraryFilter('film')"
                             data-i18n="cat_film">🎬 Film</button>
+                        <button class="filter-chip" style="border-color: #e74c3c; color: #c0392b;" onclick="setLibraryFilter('serie')"
+                            data-i18n="cat_serie">📺 Serie</button>
+                        <button class="filter-chip" style="border-color: #3498db; color: #2980b9;" onclick="setLibraryFilter('album')"
+                            data-i18n="cat_album">🎵 Album</button>
+                        <button class="filter-chip" style="border-color: #9b59b6; color: #8e44ad;" onclick="setLibraryFilter('soundtrack')"
+                            data-i18n="cat_soundtrack">🎧 Soundtrack</button>
+                        <button class="filter-chip" style="border-color: #27ae60; color: #1e8449;" onclick="setLibraryFilter('playlist')"
+                            data-i18n="cat_playlist">📜 Playlist</button>
+                        <button class="filter-chip" style="border-color: #e67e22; color: #d35400;" onclick="setLibraryFilter('podcast')"
+                            data-i18n="cat_podcast">📻 Podcast</button>
+                        <button class="filter-chip" style="border-color: #9b59b6; color: #8e44ad;" onclick="setLibraryFilter('compilation')"
+                            data-i18n="cat_compilation">💽 Compilation</button>
+                        <button class="filter-chip" style="border-color: #e74c3c; color: #c0392b;" onclick="setLibraryFilter('single')"
+                            data-i18n="cat_single">💿 Single</button>
+                        <button class="filter-chip" style="border-color: #f1c40f; color: #f39c12;" onclick="setLibraryFilter('klassik')"
+                            data-i18n="cat_klassik">🎻 Klassik</button>
                         <button class="filter-chip" onclick="setLibraryFilter('abbild')"
                             data-i18n="cat_abbild">ISO-Abbilder</button>
                         <button class="filter-chip" onclick="setLibraryFilter('spiel')"
@@ -2704,6 +2720,8 @@
                             <option value="audiobooks" data-i18n="filter_audiobooks">Hörbücher</option>
                             <option value="podcasts" data-i18n="filter_podcasts">Podcasts</option>
                             <option value="albums" data-i18n="filter_albums">Alben</option>
+                            <option value="soundtracks" data-i18n="filter_soundtracks">Soundtracks</option>
+                            <option value="playlists" data-i18n="filter_playlists">Playlisten</option>
                             <option value="others" data-i18n="filter_others">Sonstige</option>
                         </select>
                     </div>
@@ -4187,6 +4205,7 @@
                             
                             <button id="btn-pip" onclick="togglePip()" class="player-btn-premium" style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;" title="Picture in Picture">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><path d="M15 11h5v4h-5z"/></svg>
+                                Picture in Picture
                             </button>
                         </div>
 
@@ -4680,9 +4699,17 @@
         let coverflowItems = [];
 
         const CATEGORY_MAP = {
-            "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio"],
+            "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist"],
             "video": ["Video", "Film", "Serie"],
             "film": ["Film", "Film Object"],
+            "serie": ["Serie"],
+            "album": ["Album"],
+            "soundtrack": ["Soundtrack"],
+            "compilation": ["Compilation"],
+            "single": ["Single"],
+            "klassik": ["Klassik"],
+            "playlist": ["Playlist"],
+            "podcast": ["Podcast"],
             "images": ["Bilder"],
             "documents": ["Dokument"],
             "ebooks": ["E-Book"],
@@ -4787,13 +4814,25 @@
 
             const html = coverflowItems.map((item, idx) => {
                 const artwork = `/cover/${encodeURIComponent(item.name)}`;
+                const title = item.tags && item.tags.title ? item.tags.title : (item.name || 'Unknown');
+                const artist = item.tags && item.tags.artist ? item.tags.artist : '';
+                const displayTitle = artist ? `${artist} - ${title}` : title;
+                
+                let seriesInfo = '';
+                if (item.category === 'Serie' && item.tags && item.tags.season !== undefined) {
+                    const s = String(item.tags.season).padStart(2, '0');
+                    const e = String(item.tags.episode || 0).padStart(2, '0');
+                    seriesInfo = `<span style="color: #e74c3c; font-weight: bold; margin-left: 5px;">S${s}E${e}</span>`;
+                }
+
                 return `
                     <div class="grid-item" onclick="playMediaObject(coverflowItems[${idx}])">
                         <div class="grid-cover" style="background-image: url('${artwork}')">
                             ${item.is_chrome_native ? `<div class="native-badge" title="Chrome Native support">⚡ DIRECT</div>` : ''}
+                            ${getCategoryBadgeHtml(item)}
                         </div>
                         <div class="grid-info">
-                            <div class="grid-title" title="${item.name}">${item.name || 'Unknown'}</div>
+                            <div class="grid-title" title="${item.name}">${displayTitle}${seriesInfo}</div>
                             <div class="grid-meta">${item.category || ''} | ${item.type || ''}</div>
                         </div>
                     </div>
@@ -4841,6 +4880,17 @@
 
             const html = coverflowItems.map((item, idx) => {
                 const artwork = `/cover/${encodeURIComponent(item.name)}`;
+                const title = item.tags && item.tags.title ? item.tags.title : (item.name || 'Unknown');
+                const artist = item.tags && item.tags.artist ? item.tags.artist : '';
+                const displayTitle = artist ? `${artist} - ${title}` : title;
+
+                let seriesInfo = '';
+                if (item.category === 'Serie' && item.tags && item.tags.season !== undefined) {
+                    const s = String(item.tags.season).padStart(2, '0');
+                    const e = String(item.tags.episode || 0).padStart(2, '0');
+                    seriesInfo = `<span style="color: #ff5252; font-weight: 800; margin-left: 8px; font-size: 0.9em;">S${s}E${e}</span>`;
+                }
+
                 let classes = 'coverflow-item';
                 if (idx === coverflowIndex) classes += ' active';
                 else if (idx < coverflowIndex) classes += ' left';
@@ -4852,7 +4902,7 @@
                          tabindex="0">
                         ${item.is_chrome_native ? `<div class="native-badge" style="position: absolute; top: 10px; right: 10px; padding: 2px 6px; background: #4caf50; color: white; font-size: 0.7em; font-weight: bold; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">⚡ DIRECT</div>` : ''}
                         <div class="info">
-                            <div class="title">${item.name || 'Unknown'}</div>
+                            <div class="title">${displayTitle}${seriesInfo}</div>
                             <div class="meta">${item.category || ''} | ${item.type || ''}</div>
                         </div>
                     </div>
@@ -4943,7 +4993,7 @@
 
         function getCategoryBadgeHtml(item) {
             if (!item || !item.category) return '';
-            const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image'];
+            const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image', 'Soundtrack', 'Playlist'];
             if (!specialCategories.includes(item.category)) return '';
 
             let catIcon = '';
@@ -4955,6 +5005,8 @@
             else if (item.category === 'Bilder') catIcon = '🖼️';
             else if (item.category === 'ISO/Image') catIcon = '💿';
             else if (item.category === 'Compilation') catIcon = '💽';
+            else if (item.category === 'Soundtrack') catIcon = '🎼';
+            else if (item.category === 'Playlist') catIcon = '📜';
 
             if (!catIcon) return '';
             return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5;" title="${item.category}">${catIcon}</div>`;
@@ -6721,64 +6773,51 @@
             currentVideoItem = item;
             currentVideoPath = path;
 
-            // Switch to Video tab
-            const vlcBtn = document.getElementById('media-orchestrator-tab-trigger');
-            switchTab('vlc', vlcBtn);
-
-            const select = document.getElementById('video-mode');
-            const typeSelect = document.getElementById('player-type');
-            const type = typeSelect ? typeSelect.value : 'chrome';
-            const mode = select ? select.value : 'chrome_direct';
-
-            // Ensure audio is paused
-            if (activeAudioPipeline) activeAudioPipeline.pause();
-
-            showToast(`Lade Video (${type}/${mode})...`, 2000);
+            showToast(`🔍 Analysiere Media-Routing...`, 1500);
 
             try {
-                // Use open_video_smart for better routing as per logbuch
-                const res = await eel.open_video_smart(path, mode)();
-                console.log("Open video result:", res);
+                // 1. Technical Analysis via Test-Suite
+                // We use the relative path (relpath) if available, otherwise fallback to item.path
+                const relpath = item.relpath || item.path;
+                const info = await eel.analyze_media(relpath)();
+                
+                if (info.error) {
+                    showToast("Fehler bei der Analyse: " + info.error);
+                    return;
+                }
 
-                if (res && res.status === 'play') {
-                    console.info(">>> [Play-Trace] open_video_smart returned status=play, mode=", res.mode);
-                    if (res.mode === 'mediamtx') {
-                        showToast("STREAMING via MediaMTX (HLS/WebRTC)", 3000);
+                console.log("Analysis result:", info);
+                const score = info.quality_score;
+                const mode = info.recommended_mode;
+                
+                showToast(`✨ Quality: ${score}/100 | Mode: ${mode.toUpperCase()}`, 3000);
+
+                // 2. Resolve final play source
+                const source = await eel.get_play_source(relpath)();
+                console.log("Play source result:", source);
+
+                if (source.mode === 'direct') {
+                    showToast("🚀 DIRECT PLAY (Native/Remux)", 2000);
+                    // Switch to Player tab
+                    switchTab('vlc', document.getElementById('media-orchestrator-tab-trigger'));
+                    startEmbeddedVideo(item, source.url, null, 'video/mp4');
+                } else if (source.mode === 'vlc') {
+                    showToast("📺 VLC REQUIRED (ISO/HDR/Complex)", 3000);
+                    startVLC(source.path || path);
+                } else if (source.mode === 'hls') {
+                    showToast("🌐 FALLBACK TO HLS STREAMING", 3000);
+                    // Standard HLS routing via open_video_smart or direct
+                    const res = await eel.open_video_smart(path, 'hls')();
+                    if (res && res.status === 'play') {
                         const streamUrl = res.webrtc || res.hls;
-                        const streamType = res.webrtc ? 'video/webrtc' : 'application/x-mpegURL';
-                        startEmbeddedVideo(item, streamUrl, null, streamType);
-                    } else if (res.mode.startsWith('chrome_') || res.mode === 'vlc_embedded') {
-                        let msg = "DIRECT PLAYBACK (Chrome Native)";
-                        if (res.mode === 'vlc_embedded') msg = "VLC EMBEDDED HLS STREAM (DVD/ISO Engine)";
-                        else if (res.path && res.path.startsWith('/video-remux-stream/')) msg = "mkvmerge PIPE KIT (Direct FragMP4)";
-                        else if (res.path && res.path.startsWith('/video-stream/')) msg = "ON-THE-FLY TRANSCODING (FragMP4)";
-                        showToast(msg, 3000);
-                        startEmbeddedVideo(item, res.path, null, res.type);
-                    } else if (res.mode === 'vlc_browser') {
-                        startVLC(res.path);
+                        startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL');
                     }
-                } else if (res && res.status === 'ok') {
-                    if (res.mode === 'locked') {
-                        console.info(">>> [Play-Trace] open_video_smart locked (double trigger avoided)");
-                        return;
-                    }
-                    console.info(">>> [Play-Trace] open_video_smart returned status=ok, mode=", res.mode);
-                    // Standalone player started, update UI to reflect external playback
-                    showExternalStatus(path, res.mode);
-                    
-                    // CLEARLY inform the user in the video tab that it's playing externally
-                    const placeholder = document.getElementById('video-placeholder-message');
-                    if (placeholder) {
-                        const modeLabel = res.mode === 'vlc_dvd' ? 'VLC (DVD/ISO)' : (res.mode || 'Externer Player');
-                        placeholder.innerHTML = `<span style="color: #3498db; font-size: 1.2em; font-weight: bold;">📺 Externer Player aktiv</span><br><br><span style="color: #888;">Das Video "${item.name}" wird in <strong>${modeLabel}</strong> wiedergegeben.</span>`;
-                    }
-                } else if (res && res.status === 'error') {
-                    console.error(">>> [Play-Trace] open_video_smart ERROR:", res.error);
-                    showToast(res.error);
+                } else if (source.mode === 'error') {
+                    showToast("Fehler: " + source.message);
                 }
             } catch (err) {
-                console.error("Open video error:", err);
-                showToast("Fehler beim Starten des Players");
+                console.error("Routing error:", err);
+                showToast("Kritisches Routing-Fehler");
             }
         }
 

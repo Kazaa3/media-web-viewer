@@ -279,7 +279,7 @@ class MediaItem:
                 return 'Hörbuch'
 
             if 'podcast' in path_str or 'podcast' in genre:
-                return 'Podcasts'
+                return 'Podcast'
 
             # Priority 2: Music specific tags
             artist = (tags.get('artist') or "").lower()
