@@ -3035,15 +3035,16 @@
                 style="padding: 20px; overflow-y: auto; height: 100%;">
                 <h2 id="options-main-header" style="margin-bottom: 25px;" data-i18n="options_title">Optionen</h2>
 
+                <!-- ===================== OPTIONS SUB-TAB NAVIGATION ===================== -->
                 <div class="options-nav-tabs"
                     style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">
-                    <button class="options-subtab active" onclick="switchOptionsView('general')">
+                    <button class="options-subtab active" onclick="switchOptionsView('general')" id="options-subtab-general">
                         Allgemeine Einstellungen
                     </button>
-                    <button class="options-subtab" onclick="switchOptionsView('tools')">
+                    <button class="options-subtab" onclick="switchOptionsView('tools')" id="options-subtab-tools">
                         Advanced Tools
                     </button>
-                    <button class="options-subtab" onclick="switchOptionsView('environment')">
+                    <button class="options-subtab" onclick="switchOptionsView('environment')" id="options-subtab-environment">
                         System-Infrastruktur
                     </button>
                 </div>
@@ -3353,9 +3354,11 @@
                     </div> <!-- closes right column -->
                 </div> <!-- closes options-general-view -->
 
-                <div id="options-tools-view" class="options-view"
-                    style="display: none; padding: 20px; overflow-y: auto; height: 100%;">
-
+            <div id="options-tools-view" class="options-view"
+                style="display: none; padding: 20px; overflow-y: auto; height: 100%;">
+                <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
+                    <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
+                </h2>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <!-- HandBrake Section -->
@@ -3459,33 +3462,34 @@
                         </div>
                     </div>
 
-                    <!-- Tool Output / Logs Section -->
-                    <div
-                        style="background: #1e1e1e; border-radius: 12px; padding: 20px; margin-top: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                        <h3
-                            style="margin: 0 0 15px 0; color: #eee; font-size: 1.1em; display: flex; align-items: center; gap: 10px;">
-                            <span class="icon-terminal" style="color: #00ff00;"></span> <span>Tool Output /
-                                Logs</span>
-                            <button onclick="clearToolLogs()"
-                                style="margin-left: auto; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; transition: all 0.2s;">Clear</button>
-                        </h3>
-                        <div id="tool-logs-container"
-                            style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 0.85em; color: #00ff00; border: 1px solid #222; scroll-behavior: smooth;">
-                            <div id="tool-logs-content">
-                                <div style="color: #666; font-style: italic;">Waiting for tool output...</div>
-                            </div>
+                <!-- Tool Output / Logs Section -->
+                <div
+                    style="background: #1e1e1e; border-radius: 12px; padding: 20px; margin-top: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <h3
+                        style="margin: 0 0 15px 0; color: #eee; font-size: 1.1em; display: flex; align-items: center; gap: 10px;">
+                        <span class="icon-terminal" style="color: #00ff00;"></span> <span>Tool Output /
+                            Logs</span>
+                        <button onclick="clearToolLogs()"
+                            style="margin-left: auto; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; transition: all 0.2s;">Clear</button>
+                    </h3>
+                    <div id="tool-logs-container"
+                        style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 0.85em; color: #00ff00; border: 1px solid #222; scroll-behavior: smooth;">
+                        <div id="tool-logs-content">
+                            <div style="color: #666; font-style: italic;">Waiting for tool output...</div>
                         </div>
                     </div>
                 </div>
-            </div> <!-- closes options-tools-view -->
+            </div>
 
-                <div id="options-environment-view" class="options-view"
-                    style="display: none; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%;">
-                    <div style="flex: 1; max-width: 500px;">
-
-                        <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
-                            data-i18n="options_environment_desc">
-                            Informationen über die aktuell verwendete Python-Umgebung.</p>
+            <!-- ===================== OPTIONS: ENVIRONMENT SUB-VIEW START ===================== -->
+            <div id="options-environment-view" class="options-view"
+                style="display: none; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%;">
+                <div style="flex: 1; max-width: 500px;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
+                        Python-Umgebung</h3>
+                    <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
+                        data-i18n="options_environment_desc">
+                        Informationen über die aktuell verwendete Python-Umgebung.</p>
 
                         <div class="kernarchitektur-section">
                             <h3 data-i18n="env_architecture_title">Kernarchitektur & Systemstatus</h3>
@@ -3513,12 +3517,9 @@
                                             id="env-app-version">-</span></li>
                                     <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
                                         <span id="env-python-version">-</span>
-                                    </li>
-                                    <li><strong data-i18n="env_label_environment">Umgebung:</strong> <span
-                                            id="env-venv-status">-</span></li>
-                                    <li><strong data-i18n="env_label_system">System:</strong> <span
-                                            id="env-platform">-</span></li>
-                                    <li><strong data-i18n="env_label_eel_ws">Eel / WS:</strong> <span
+                                    </div>
+                                </div>
+                        <!-- ===================== OPTIONS: ENVIRONMENT SUB-VIEW END ===================== -->
                                             id="env-eel-status">✅
                                             Eel | ✅
                                             Websocket</span></li>
@@ -3738,42 +3739,38 @@
                                 </div>
                             </div>
 
-                            <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
-                                <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;"
-                                    data-i18n="options_danger_zone">
-                                    Gefahrenzone (Reset)
-                                </h3>
-                                <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
-                                    data-i18n="options_danger_zone_desc">Löscht nur die
-                                    Datenbank, oder zusätzlich die Konfigurationsdateien (Werkszustand).</p>
-                                <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-                                    <button onclick="clearDatabase()"
-                                        style="padding: 10px 16px; background: #fff; color: #f4d; border: 1px solid #f4d; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;"
-                                        data-i18n="options_btn_clear_db">
-                                        <span class="icon-trash" style="background-color: #f4d;"></span> Nur DB leeren
-                                    </button>
-                                    <button onclick="resetApp()"
-                                        style="padding: 10px 18px; border: 1px solid #c0392b; background: white; color: #c0392b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
-                                        class="btn-hover-danger">
-                                        <span class="icon-fire" style="background-color: #c0392b;"></span> <span
-                                            data-i18n="options_app_reset">App Reset (Alles Löschen)</span>
-                                    </button>
-                                </div>
-                                <div style="margin-top: 15px; color: #c0392b; font-size: 0.8em; font-weight: bold;"
-                                    data-i18n="options_danger_caution">
-                                    Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
-                                </div>
-                            </div> <!-- closes danger zone -->
-                        </div> <!-- closes environment contents wrapper -->
-                    </div> <!-- closes options-environment-view -->
-                </div> <!-- closes system-configuration-persistence-panel -->
-            <!-- TAB: Options END -->
+                <div style="margin-top: 40px; border-top: 1px dashed #eee; padding-top: 20px;">
+                    <h3 style="font-size: 1.1em; color: #c0392b; margin-bottom: 5px;" data-i18n="options_danger_zone">
+                        Gefahrenzone (Reset)
+                    </h3>
+                    <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
+                        data-i18n="options_danger_zone_desc">Löscht nur die
+                        Datenbank, oder zusätzlich die Konfigurationsdateien (Werkszustand).</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                        <button onclick="clearDatabase()"
+                            style="padding: 10px 16px; background: #fff; color: #f4d; border: 1px solid #f4d; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;"
+                            data-i18n="options_btn_clear_db">
+                            <span class="icon-trash" style="background-color: #f4d;"></span> Nur DB leeren
+                        </button>
+                        <button onclick="resetApp()"
+                            style="padding: 10px 18px; border: 1px solid #c0392b; background: white; color: #c0392b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
+                            class="btn-hover-danger">
+                            <span class="icon-fire" style="background-color: #c0392b;"></span> <span
+                                data-i18n="options_app_reset">App Reset (Alles Löschen)</span>
+                        </button>
+                    </div>
+                    <div style="margin-top: 15px; color: #c0392b; font-size: 0.8em; font-weight: bold;"
+                        data-i18n="options_danger_caution">
+                        Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
+                    </div>
+                </div> <!-- closes danger zone -->
+            </div> <!-- closes options-environment-view -->
+        </div> <!-- closes system-configuration-persistence-panel -->
 
-                <!-- TAB: Parser START -->
-            <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
-
-                    style="padding: 20px; overflow-y: auto; height: 100%;">
-                    <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
+        <!-- ===================== PARSER TAB START ===================== -->
+        <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
+                style="padding: 20px; overflow-y: auto; height: 100%;">
+                <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
 
                     <div style="display: flex; gap: 30px; align-items: flex-start;">
                         <!-- Left Column: Core Parser Settings -->
@@ -3832,30 +3829,25 @@
                             </div>
                         </div>
 
-                        <!-- Right Column: Parser-Specific Options -->
-                        <div id="parser-details-column"
-                            style="flex: 1; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
-                            <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">
-                                Parser-Optionen</h3>
-                            <div id="parser-options-placeholder"
-                                style="color: #999; font-style: italic; margin-top: 20px;"
-                                data-i18n="parser_options_desc">
-                                Wähle einen Parser links aus, um seine Einstellungen zu sehen.
-                            </div>
-                            <div id="parser-options-container"
-                                style="display: none; flex-direction: column; gap: 20px;">
-                                <!-- Options will be rendered here -->
-                            </div>
+                    <!-- Right Column: Parser-Specific Options -->
+                    <div id="parser-details-column"
+                        style="flex: 1; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
+                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">
+                            Parser-Optionen</h3>
+                        <div id="parser-options-placeholder" style="color: #999; font-style: italic; margin-top: 20px;"
+                            data-i18n="parser_options_desc">
+                            Wähle einen Parser links aus, um seine Einstellungen zu sehen.
+                        </div>
+                        <div id="parser-options-container" style="display: none; flex-direction: column; gap: 20px;">
+                            <!-- Options will be rendered here -->
                         </div>
                     </div>
                 </div>
-            <!-- TAB: Parser END -->
+            </div>
 
-
-                <!-- TAB: Debug START -->
+            <!-- ===================== DEBUG TAB START ===================== -->
             <div id="debug-flag-persistence-panel" class="tab-content"
-
-                    style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
+                style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
 
                     <!-- Left Column: Settings and DB Overview -->
                     <div
@@ -3933,47 +3925,43 @@
                             </div>
                         </div>
 
-                        <div
-                            style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-                            <span data-i18n="debug_console">Konsole / Logs</span>
-                            <button onclick="safeText('debug-output', '')"
-                                style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
-                                data-i18n="common_clear">Clear</button>
-                        </div>
-                        <div style="flex: 1; overflow-y: auto; padding: 0;">
-                            <pre id="debug-output"
-                                style="color: #0f0; padding: 15px; font-size: 0.9em; margin: 0; min-height: 100%; white-space: pre-wrap; word-wrap: break-word; font-family: 'Fira Code', monospace;"></pre>
-                        </div>
-                        <!-- Hidden textarea for compatibility with old code if any -->
-                        <textarea id="browse-results-debug" style="display: none;"></textarea>
+                    <div
+                        style="padding: 8px 15px; background: #333; color: #eee; font-size: 0.8em; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                        <span data-i18n="debug_console">Konsole / Logs</span>
+                        <button onclick="safeText('debug-output', '')"
+                            style="background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.9em;"
+                            data-i18n="common_clear">Clear</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 0;">
+                        <pre id="debug-output"
+                            style="color: #0f0; padding: 15px; font-size: 0.9em; margin: 0; min-height: 100%; white-space: pre-wrap; word-wrap: break-word; font-family: 'Fira Code', monospace;"></pre>
+                    </div>
+                    <!-- Hidden textarea for compatibility with old code if any -->
+                    <textarea id="browse-results-debug" style="display: none;"></textarea>
+                </div>
+            </div>
+
+            <!-- Tests Tab -->
+            <!-- ===================== TESTS TAB START ===================== -->
+            <div id="quality-assurance-regression-suite-panel" class="tab-content"
+                style="display: none; padding: 20px; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0;" data-i18n="test_title">Unit Tests & Verifizierung</h2>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span id="test-run-summary"
+                            style="font-weight: bold; font-size: 1.1em; color: #444; background: #f0f0f0; padding: 6px 12px; border-radius: 6px; display: none;"></span>
+                        <button id="run-selected-tests-btn" onclick="runSelectedTests()"
+                            style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
+                            data-i18n="test_run_selected">
+                            ▶ Ausgewählte Tests ausführen
+                        </button>
+                        <button onclick="createNewTest()"
+                            style="padding: 10px 20px; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
+                            data-i18n="test_new">
+                            ➕ Neuer Test
+                        </button>
                     </div>
                 </div>
-            <!-- TAB: Debug END -->
-
-
-                <!-- Tests Tab -->
-                <!-- TAB: Tests START -->
-            <div id="quality-assurance-regression-suite-panel" class="tab-content"
-
-                    style="display: none; padding: 20px; overflow-y: auto;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <h2 style="margin: 0;" data-i18n="test_title">Unit Tests & Verifizierung</h2>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span id="test-run-summary"
-                                style="font-weight: bold; font-size: 1.1em; color: #444; background: #f0f0f0; padding: 6px 12px; border-radius: 6px; display: none;"></span>
-                            <button id="run-selected-tests-btn" onclick="runSelectedTests()"
-                                style="padding: 10px 20px; background: #2a7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
-                                data-i18n="test_run_selected">
-                                ▶ Ausgewählte Tests ausführen
-                            </button>
-                            <button onclick="createNewTest()"
-                                style="padding: 10px 20px; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.2s;"
-                                data-i18n="test_new">
-                                ➕ Neuer Test
-                            </button>
-                        </div>
-                    </div>
 
                     <div style="margin-bottom: 16px; padding: 10px 12px; border-radius: 8px; background: #fff8e1; border: 1px solid #ffe082; color: #6d4c41; font-size: 0.9em;"
                         data-i18n="test_interactive_hint">
@@ -3989,49 +3977,43 @@
                             Tests...</div>
                     </div>
 
-                    <div id="test-results-container" style="display: none; width: 100%;">
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="test_results_label">
-                            Testergebnisse
-                            (Logs):
-                        </h3>
-                        <pre id="test-output"
-                            style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
+                <div id="test-results-container" style="display: none; width: 100%;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="test_results_label">
+                        Testergebnisse
+                        (Logs):
+                    </h3>
+                    <pre id="test-output"
+                        style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
+                </div>
+            </div>
+
+            <!-- ===================== REPORTING TAB START ===================== -->
+            <!-- ===================== REPORTING TAB START ===================== -->
+            <div id="reporting-dashboard-panel" class="tab-content"
+                style="display: none; padding: 20px; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0;" data-i18n="report_title">Test Reporting & Dashboard</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="reporting-view-select" onchange="switchReportingView(this.value)"
+                            style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
+                            <option value="dashboard" data-i18n="report_view_dashboard">📈 Dashboard</option>
+                            <option value="database" data-i18n="report_view_database">🗄️ Datenbank (SQL)</option>
+                            <option value="video-streaming" data-i18n="report_view_video_streaming">🎬 Video Streaming
+                            </option>
+                            <option value="audio-streaming" data-i18n="report_view_audio_streaming">🎵 Audio Streaming
+                            </option>
+                            <option value="parser" data-i18n="report_view_parser">🧠 Parser Reporting</option>
+                            <option value="model-analysis" data-i18n="report_view_model_analysis">🧠 Modell-Analyse</option>
+                            <option value="routing-suite" data-i18n="report_view_routing_suite">🧭 Routing Suite</option>
+                        </select>
+                        <button onclick="refreshReportingData()"
+                            style="padding: 10px 20px; background: #388e3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            🔄 Daten aktualisieren
+                        </button>
                     </div>
                 </div>
-            <!-- TAB: Tests END -->
 
-
-                <!-- TAB: Reporting START -->
-            <div id="reporting-dashboard-panel" class="tab-content"
-
-                    style="display: none; padding: 20px; overflow-y: auto;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <h2 style="margin: 0;" data-i18n="report_title">Test Reporting & Dashboard</h2>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <select id="reporting-view-select" onchange="switchReportingView(this.value)"
-                                style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
-                                <option value="dashboard" data-i18n="report_view_dashboard">📈 Dashboard</option>
-                                <option value="database" data-i18n="report_view_database">🗄️ Datenbank (SQL)</option>
-                                <option value="video-streaming" data-i18n="report_view_video_streaming">🎬 Video
-                                    Streaming
-                                </option>
-                                <option value="audio-streaming" data-i18n="report_view_audio_streaming">🎵 Audio
-                                    Streaming
-                                </option>
-                                <option value="parser" data-i18n="report_view_parser">🧠 Parser Reporting</option>
-                                <option value="model-analysis" data-i18n="report_view_model_analysis">🧠 Modell-Analyse
-                                </option>
-                                <option value="routing-suite" data-i18n="report_view_routing_suite">🧭 Routing Suite
-                                </option>
-                            </select>
-                            <button onclick="refreshReportingData()"
-                                style="padding: 10px 20px; background: #388e3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                                🔄 Daten aktualisieren
-                            </button>
-                        </div>
-                    </div>
-
+                    <!-- ===================== REPORTING SUB-TAB NAVIGATION ===================== -->
                     <div id="reporting-main-content">
                         <div id="reporting-dashboard-view">
                             <div
@@ -4244,7 +4226,7 @@
             <!-- TAB: Reporting END -->
 
             <!-- Video Player Tab -->
-            <!-- TAB: Video START -->
+            <!-- ===================== VIDEO PLAYER TAB START ===================== -->
             <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
 
                 style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
@@ -4862,7 +4844,7 @@
 
 
             <!-- Logbuch Tab -->
-            <!-- TAB: Logbuch START -->
+            <!-- ===================== LOGBUCH TAB START ===================== -->
             <div id="localized-markdown-documentation-journal-panel" class="tab-content"
 
                 style="display: none; padding: 20px; overflow-y: auto;">
@@ -5072,6 +5054,8 @@
         </div>
     </div>
 
+    <!-- ===================== MODALS START ===================== -->
+    <!-- ===================== MODALS START ===================== -->
     <!-- Debug Flags Modal -->
     <div id="debug-flags-modal"
         style="display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); width: 350px; background: #ffffff; border: 1px solid #f4c2c2; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); z-index: 2000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;">
@@ -5182,6 +5166,8 @@
     </div>
 
     <!-- Logbuch Editor Modal -->
+    <!-- ===================== MODALS END ===================== -->
+    <!-- ===================== MODALS END ===================== -->
     <div id="logbuch-editor-modal"
         style="display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 700px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 5000; padding: 0; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; max-height: 80vh; flex-direction: column;">
         <div
@@ -7146,14 +7132,10 @@
             // Update footer status message with proper spacing and translations
             const playingLabel = t('player_status_playing') || 'Playing: ';
             const byLabel = t('player_status_by') || ' by ';
-            const titleStr = item.tags ? (item.tags.title || item.name) : (item.name || '');
-            const finalArtistStr = item.tags ? (item.tags.artist || 'Unknown') : 'Unknown';
-
-            if (titleStr && titleStr !== 'Wähle ein Lied aus der Liste!') {
-                safeHtml('active-orchestration-status-message-renderer', `${playingLabel} &nbsp; <strong>${titleStr}</strong> &nbsp; ${byLabel} &nbsp; ${finalArtistStr}`);
-            } else {
-                safeHtml('active-orchestration-status-message-renderer', t('player_select_song') || 'Wähle ein Lied aus der Liste!');
-            }
+            const titleStr = item.tags.title || item.name;
+            const finalArtistStr = item.tags.artist || 'Unknown';
+            
+            safeHtml('active-orchestration-status-message-renderer', `${playingLabel} &nbsp; <strong>${titleStr}</strong> &nbsp; ${byLabel} &nbsp; ${finalArtistStr}`);
         }
 
         // ============ Video Player ============
