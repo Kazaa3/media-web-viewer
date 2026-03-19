@@ -1617,7 +1617,15 @@
             if (target) {
                 target.style.display = (viewId === 'general' || viewId === 'environment') ? 'flex' : 'block';
                 const btn = document.querySelector(`.options-subtab[onclick*="'${viewId}'"]`);
-                if (btn) btn.classList.add('active');
+                if (btn) {
+                    btn.classList.add('active');
+                    // Update main header to reflect sub-chapter title
+                    const header = document.getElementById('options-main-header');
+                    if (header) {
+                        const subTitle = btn.innerText;
+                        header.innerText = subTitle;
+                    }
+                }
             }
         }
 
@@ -2598,7 +2606,9 @@
     <div class="header-container">
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1 data-i18n="app_title">dict</h1>
+            <!-- TAB BUTTONS START -->
             <div class="tab-buttons">
+
                 <button id="active-queue-tab-trigger" class="tab-btn active" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
                 <button id="coverflow-library-tab-trigger" class="tab-btn" onclick="switchTab('library', this)"
@@ -2647,6 +2657,8 @@
                     onclick="toggleDebugMenu()" data-i18n="nav_flags">
                     <span class="icon-flags"></span> <span data-i18n="nav_flags">Flags</span></button>
             </div>
+            <!-- TAB BUTTONS END -->
+
         </div>
         <div style="display:flex; align-items:center; gap:12px; flex: 1; justify-content: flex-end; overflow: hidden;">
             <button onclick="toggleFeatureStatus()"
@@ -2663,7 +2675,9 @@
 
     <div class="layout-container" id="main-split-container">
         <!-- Sidebar -->
+        <!-- SIDEBAR START -->
         <div id="main-sidebar" class="sidebar">
+
             <img id="sidebar-artwork-raster-buffer" class="sidebar-cover"
                 src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="opacity: 0.5;">
             <div id="sidebar-metadata-primary-string-renderer" class="sidebar-title" data-i18n="sb_no_song">Kein Lied
@@ -2677,17 +2691,24 @@
                 style="font-size: 0.75em; color: #999; margin-top: 15px; margin-bottom: 8px; text-align: center; white-space: pre-wrap;">
             </div>
         </div>
+        <!-- SIDEBAR END -->
 
         <!-- Main Splitter -->
         <div class="splitter-v" id="main-splitter"></div>
 
         <!-- Main Right Content Area -->
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-width: 0;">
+            <!-- TAB: Player START -->
             <div id="state-orchestrated-active-queue-list-container" class="tab-content active"
+
                 style="padding: 10px; overflow-y: auto; height: 100%;">
             </div>
+            <!-- TAB: Player END -->
 
+
+            <!-- TAB: Filesystem START -->
             <div id="filesystem-crawler-directory-panel" class="tab-content"
+
                 style="display: none; height: 100%; width: 100%; flex-direction: column;">
                 <div id="browser-top-pane"
                     style="flex: 2; overflow-y: auto; padding: 20px; border-bottom: 2px solid #eee; height: 60%;">
@@ -2744,9 +2765,13 @@
                     </div>
                 </div>
             </div>
+            <!-- TAB: Filesystem END -->
+
 
             <!-- New Coverflow Library Tab -->
+            <!-- TAB: Library START -->
             <div id="coverflow-library-panel" class="tab-content"
+
                 style="padding: 20px; overflow-y: auto; height: 100%;">
                 <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
                     <!-- Sub-Tab Navigation -->
@@ -2842,13 +2867,21 @@
                     </div>
                 </div>
             </div>
+            <!-- TAB: Library END -->
 
+
+            <!-- TAB: Item START -->
             <div id="indexed-sqlite-media-repository-panel" class="tab-content"
+
                 style="display: none; overflow-y: auto; width: 100%;">
                 <div id="persistent-sqlite-repository-item-grid"></div>
             </div>
+            <!-- TAB: Item END -->
 
+
+            <!-- TAB: Playlist START -->
             <div id="json-serialized-sequence-buffer-panel" class="tab-content"
+
                 style="overflow-y: auto; width: 100%; padding: 10px;">
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
@@ -2885,8 +2918,12 @@
                 </div>
                 <div id="json-serialized-sequence-item-container"></div>
             </div>
+            <!-- TAB: Playlist END -->
 
+
+            <!-- TAB: Edit START -->
             <div id="metadata-writer-crud-panel" class="tab-content"
+
                 style="padding: 20px; flex-direction: column; display: none; height: 100%; width: 100%;">
                 <h2 style="margin-bottom: 5px;" data-i18n="edit_title">Metadaten Editor</h2>
                 <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;" data-i18n="edit_subtitle">Passe Tags
@@ -2973,10 +3010,13 @@
                     </div>
                 </div>
             </div>
+            <!-- TAB: Edit END -->
 
+
+            <!-- TAB: Options START -->
             <div id="system-configuration-persistence-panel" class="tab-content"
                 style="padding: 20px; overflow-y: auto; height: 100%;">
-                <h2 style="margin-bottom: 25px;" data-i18n="options_title">Optionen</h2>
+                <h2 id="options-main-header" style="margin-bottom: 25px;" data-i18n="options_title">Optionen</h2>
 
                 <div class="options-nav-tabs"
                     style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">
@@ -3301,9 +3341,7 @@
 
                 <div id="options-tools-view" class="options-view"
                     style="display: none; padding: 20px; overflow-y: auto; height: 100%;">
-                    <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
-                        <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
-                    </h2>
+
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <!-- HandBrake Section -->
@@ -3429,10 +3467,7 @@
                 <div id="options-environment-view" class="options-view"
                     style="display: none; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%;">
                     <div style="flex: 1; max-width: 500px;">
-                        <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;"
-                            data-i18n="options_environment">
-                            <span class="icon-server"></span> <span>System-Infrastruktur</span>
-                        </h2>
+
                         <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
                             data-i18n="options_environment_desc">
                             Informationen über die aktuell verwendete Python-Umgebung.</p>
@@ -3717,8 +3752,11 @@
                         </div> <!-- closes environment contents wrapper -->
                     </div> <!-- closes options-environment-view -->
                 </div> <!-- closes system-configuration-persistence-panel -->
+            <!-- TAB: Options END -->
 
-                <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
+                <!-- TAB: Parser START -->
+            <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
+
                     style="padding: 20px; overflow-y: auto; height: 100%;">
                     <h2 style="margin-bottom: 25px;" data-i18n="parser_title">Parser Konfiguration</h2>
 
@@ -3796,8 +3834,12 @@
                         </div>
                     </div>
                 </div>
+            <!-- TAB: Parser END -->
 
-                <div id="debug-flag-persistence-panel" class="tab-content"
+
+                <!-- TAB: Debug START -->
+            <div id="debug-flag-persistence-panel" class="tab-content"
+
                     style="display: none; height: calc(100vh - 200px); flex-direction: row; gap: 0; overflow: hidden; padding: 0;">
 
                     <!-- Left Column: Settings and DB Overview -->
@@ -3891,9 +3933,13 @@
                         <textarea id="browse-results-debug" style="display: none;"></textarea>
                     </div>
                 </div>
+            <!-- TAB: Debug END -->
+
 
                 <!-- Tests Tab -->
-                <div id="quality-assurance-regression-suite-panel" class="tab-content"
+                <!-- TAB: Tests START -->
+            <div id="quality-assurance-regression-suite-panel" class="tab-content"
+
                     style="display: none; padding: 20px; overflow-y: auto;">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
@@ -3937,8 +3983,12 @@
                             style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.5; max-height: 400px; border: 1px solid #333; margin: 0;"></pre>
                     </div>
                 </div>
+            <!-- TAB: Tests END -->
 
-                <div id="reporting-dashboard-panel" class="tab-content"
+
+                <!-- TAB: Reporting START -->
+            <div id="reporting-dashboard-panel" class="tab-content"
+
                     style="display: none; padding: 20px; overflow-y: auto;">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
@@ -4179,7 +4229,9 @@
             </div>
 
             <!-- Video Player Tab -->
+            <!-- TAB: Video START -->
             <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
+
                 style="display: none; padding: 20px; overflow-y: auto; background: #fafafa;">
                 <div style="max-width: 1000px; margin: 0 auto;">
                     <div
@@ -4791,10 +4843,13 @@
                     </div>
                 </div>
             </div>
+            <!-- TAB: Video END -->
 
 
             <!-- Logbuch Tab -->
+            <!-- TAB: Logbuch START -->
             <div id="localized-markdown-documentation-journal-panel" class="tab-content"
+
                 style="display: none; padding: 20px; overflow-y: auto;">
                 <h2 style="margin-bottom: 25px;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
                 <div style="display: flex; gap: 30px;">
@@ -7003,6 +7058,7 @@
             safeText('sidebar-metadata-extended-attribute-grid', extraInfoSb + "\n\n" + (item.duration || '0:00'));
 
             let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
+            if (item.is_transcoded) badgeText = '[TRANSCODED] ' + badgeText;
             if (badgeText) {
                 safeText('sidebar-status-tag-visualizer', badgeText);
                 safeStyle('sidebar-status-tag-visualizer', 'display', 'inline-block');
@@ -7075,10 +7131,14 @@
             // Update footer status message with proper spacing and translations
             const playingLabel = t('player_status_playing') || 'Playing: ';
             const byLabel = t('player_status_by') || ' by ';
-            const titleStr = item.tags.title || item.name;
-            const finalArtistStr = item.tags.artist || 'Unknown';
+            const titleStr = item.tags ? (item.tags.title || item.name) : (item.name || '');
+            const finalArtistStr = item.tags ? (item.tags.artist || 'Unknown') : 'Unknown';
 
-            safeHtml('active-orchestration-status-message-renderer', `${playingLabel} &nbsp; <strong>${titleStr}</strong> &nbsp; ${byLabel} &nbsp; ${finalArtistStr}`);
+            if (titleStr && titleStr !== 'Wähle ein Lied aus der Liste!') {
+                safeHtml('active-orchestration-status-message-renderer', `${playingLabel} &nbsp; <strong>${titleStr}</strong> &nbsp; ${byLabel} &nbsp; ${finalArtistStr}`);
+            } else {
+                safeHtml('active-orchestration-status-message-renderer', t('player_select_song') || 'Wähle ein Lied aus der Liste!');
+            }
         }
 
         // ============ Video Player ============
