@@ -6,7 +6,7 @@ def validate_gui_file(filepath, trace=False):
     print(f"--- Auditing {filepath} ---")
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
+            content = f.read()
     except Exception as e:
         print(f"Error reading file: {e}")
         return
@@ -15,67 +15,97 @@ def validate_gui_file(filepath, trace=False):
     brace_depth = 0
     script_mode = False
     style_mode = False
-    comment_mode = False
+    js_template_mode = False
     
     errors = []
-
-    for i, line in enumerate(lines, 1):
-        line_clean = line.strip()
+    
+    # Matches: backtick, open/close script/style, open/close div, curly braces, comments, newline.
+    # Order matters: check for backtick first inside script mode.
+    pattern = re.compile(r'(`|<\/?script.*?>|<\/?style.*?>|<\/?div.*?>|[{}]|<!--.*?-->|\n)', re.DOTALL | re.IGNORECASE)
+    
+    line_num = 1
+    pos = 0
+    
+    for match in pattern.finditer(content):
+        before_match = content[pos:match.start()]
+        line_num += before_match.count('\n')
+        pos = match.end()
         
-        # Refined segment parsing
-        segments = re.split(r'(<[^>]+>)', line)
-        for seg in segments:
-            if not seg or not seg.strip(): continue
-            seg_lower = seg.lower()
-            if trace and i == 2677: print(f"DEBUG {i}: seg='{seg}' comment={comment_mode} script={script_mode}")
+        token = match.group(0)
+        token_lower = token.lower()
+        
+        if token == '\n':
+            line_num += 1
+            continue
+
+        # Mode Toggles
+        if token_lower.startswith('<script'):
+            script_mode = True
+            continue
+        if token_lower == '</script>':
+            script_mode = False
+            js_template_mode = False
+            continue
+        if token_lower.startswith('<style'):
+            style_mode = True
+            continue
+        if token_lower == '</style>':
+            style_mode = False
+            continue
+
+        # JS Backtick Toggle
+        if script_mode and token == '`':
+            js_template_mode = not js_template_mode
+            continue
+
+        # If we are in a mode to be skipped, skip everything except the closing tags/backticks
+        if js_template_mode or style_mode:
+            continue
+        
+        # If in script mode (but not template), only track braces
+        if script_mode:
+            if token == '{':
+                brace_depth += 1
+            elif token == '}':
+                brace_depth -= 1
+                if brace_depth < 0:
+                    errors.append(f"Line {line_num}: Negative JS BRACE depth ({brace_depth})")
+                    brace_depth = 0
+            continue
+
+        # HTML Comments
+        if token.startswith('<!--'):
+            continue
+
+        # Tag Tracking
+        if token_lower.startswith('<div'):
+            id_match = re.search(r'id=["\']([^"\']+)["\']', token, re.IGNORECASE)
+            class_match = re.search(r'class=["\']([^"\']+)["\']', token, re.IGNORECASE)
+            label = "div"
+            if id_match: label += f'#{id_match.group(1)}'
+            elif class_match: label += f'.{class_match.group(1).split()[0]}'
             
-            if seg.startswith('<!--'): comment_mode = True
-            if '-->' in seg: 
-                comment_mode = False
-                continue
-            if comment_mode: continue
-
-            if '<script' in seg_lower: script_mode = True
-            if '</script' in seg_lower: 
-                script_mode = False
-                continue
-            if '<style' in seg_lower: style_mode = True
-            if '</style' in seg_lower: 
-                style_mode = False
-                continue
-
-            if script_mode or style_mode: continue
-
-            # Track DIVs (Open)
-            opens = re.findall(r'<div([^>]*?)(?:>|$)', seg, re.IGNORECASE)
-            for attr_str in opens:
-                id_match = re.search(r'id=["\']([^"\']+)["\']', attr_str, re.IGNORECASE)
-                class_match = re.search(r'class=["\']([^"\']+)["\']', attr_str, re.IGNORECASE)
-                label = "div"
-                if id_match: label += f'#{id_match.group(1)}'
-                elif class_match: label += f'.{class_match.group(1).split()[0]}'
-                div_stack.append((i, label))
-                if trace: print(f"{i:5} | {'  '*len(div_stack)} OPEN {label}")
+            div_stack.append((line_num, label))
+            if trace: print(f"{line_num:5} | {'  '*len(div_stack)} OPEN {label}")
             
-            # Track DIVs (Close)
-            closes = re.findall(r'</div', seg, re.IGNORECASE)
-            for _ in closes:
-                if div_stack:
-                    ln, label = div_stack.pop()
-                    if trace: print(f"{i:5} | {'  '*len(div_stack)} CLOSE {label} (from line {ln})")
-                else:
-                    errors.append(f"Line {i}: EXTRA </div> detected (orphaned) | {line_clean[:60]}...")
+        elif token_lower == '</div>':
+            if div_stack:
+                ln, label = div_stack.pop()
+                if trace: print(f"{line_num:5} | {'  '*len(div_stack)} CLOSE {label} (from line {ln})")
+            else:
+                ctx_start = max(0, match.start()-40)
+                ctx_end = min(len(content), match.end()+40)
+                context = content[ctx_start:ctx_end].replace('\n', ' ')
+                errors.append(f"Line {line_num}: EXTRA </div> detected | ...{context}...")
 
-        # Brace tracking (mainly for CSS and JS)
-        brace_opens = line.count('{')
-        brace_closes = line.count('}')
-        
-        brace_depth += brace_opens
-        brace_depth -= brace_closes
-        
-        if brace_depth < 0:
-            errors.append(f"Line {i}: Negative BRACE depth ({brace_depth}) | {line_clean[:60]}...")
-            brace_depth = 0
+        # Braces outside scripts/styles (likely CSS or rare inline HTML)
+        elif token == '{':
+            brace_depth += 1
+        elif token == '}':
+            brace_depth -= 1
+            if brace_depth < 0:
+                errors.append(f"Line {line_num}: Negative HTML/CSS BRACE depth ({brace_depth})")
+                brace_depth = 0
 
     print(f"\nAudit Complete.")
     print(f"Final DIV stack size: {len(div_stack)}")

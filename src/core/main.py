@@ -2538,7 +2538,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     start_time = time.time()
     logging.info(
-        f"[Scan-Trace] Media Scan started at {
+        f"🔍 [Scan-Trace] Media Scan started at {
             time.strftime(
                 '%H:%M:%S',
                 time.localtime(start_time))}")
@@ -2565,9 +2565,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             if p.exists():
                 scan_roots.append(p)
             else:
-                debug_log(f"[Scan] Skipping non-existent directory: {d}")
+                debug_log(f"🔍 [Scan] Skipping non-existent directory: {d}")
 
-    logging.info(f"🚀 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
+    logging.info(f"🔍 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
     
     count: int = 0
     try:
@@ -2576,7 +2576,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # Determine if we should use lightweight mode based on path or config
         is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
         if is_network:
-            logging.info("[Scan] Network mount detected. Enabling automatic lightweight mode.")
+            logging.info("🔍 [Scan] Network mount detected. Enabling automatic lightweight mode.")
             parser_mode = "lightweight"
         else:
             parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
@@ -2610,7 +2610,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # Reset counters
         count: int = 0
         for scan_root in scan_roots:
-            log.info(f"🚀 [Scan] Starting scan of: {scan_root}")
+            log.info(f"🔍 [Scan] Starting scan of: {scan_root}")
 
             # Hierarchical grouping: Folder-to-Object mapping
             folder_id_map: dict[Path, int] = {}
@@ -2649,7 +2649,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                     skip_subpaths.add(d)
                                 logger.debug("scan", f"✅ [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
                         except Exception as e:
-                            logger.debug("scan", f"Fehler bei Object-Ordner {d.name}: {e}")
+                            logger.debug("scan", f"🔍 [Scan] Fehler bei Object-Ordner {d.name}: {e}")
 
             # Second pass: Files (Items)
             for f in scan_root.rglob('*'):
@@ -2675,7 +2675,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                 continue 
 
                             # 2. Extract metadata & Link to Object
-                            logger.debug("scan", f"🔨 [Scan] Processing item: {f.name}")
+                            logger.debug("scan", f"🔍 [Scan] Processing item: {f.name}")
                             
                             # Check for parent object
                             parent_id = folder_id_map.get(f.parent)
@@ -2691,7 +2691,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             logger.debug("scan", f"✅ [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
                             count += 1
                         except Exception as e:
-                            logger.debug("scan", f"Fehler bei {f.name}: {e}")
+                            logger.debug("scan", f"🔍 [Scan] Fehler bei {f.name}: {e}")
                             continue
 
         elapsed = time.time() - start_time

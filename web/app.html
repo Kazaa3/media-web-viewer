@@ -227,6 +227,7 @@
             width: 100%;
             height: 100%;
             box-sizing: border-box;
+            background: white; /* Ensure consistent background */
         }
 
         .tab-content.active {
@@ -258,19 +259,40 @@
 
         .options-subtab {
             padding: 10px 15px;
-            background: none;
-            border: none;
+            background: rgba(0,0,0,0.03);
+            border: 1px solid #ddd;
+            border-radius: 6px;
             color: #666;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            border-bottom: 3px solid transparent;
-            border-radius: 0;
             transition: all 0.2s;
         }
 
         .options-subtab.active {
-            border-bottom: 3px solid #3498db;
-            color: #3498db;
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .sub-nav-container {
+            background: #f4f6f8;
+            border-bottom: 2px solid #e1e4e8;
+            padding: 10px 20px;
+            display: flex;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-bottom: 20px;
+        }
+
+        /* Scrolling View Base */
+        .scrolling-view {
+            overflow-y: auto;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         /* Filter Chips and Selects */
@@ -2794,13 +2816,12 @@
                 style="padding: 20px; overflow-y: auto; height: 100%;">
                 <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
                     <!-- Sub-Tab Navigation -->
-                    <div
-                        style="display: flex; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
-                        <button id="lib-tab-btn-coverflow" class="tab-btn active"
+                    <div class="sub-nav-container">
+                        <button id="lib-tab-btn-coverflow" class="options-subtab active"
                             onclick="switchLibrarySubTab('coverflow')" data-i18n="lib_tab_coverflow">Cover Flow</button>
-                        <button id="lib-tab-btn-grid" class="tab-btn" onclick="switchLibrarySubTab('grid')"
+                        <button id="lib-tab-btn-grid" class="options-subtab" onclick="switchLibrarySubTab('grid')"
                             data-i18n="lib_tab_grid">CD / Film Cover</button>
-                        <button id="lib-tab-btn-details" class="tab-btn" onclick="switchLibrarySubTab('details')"
+                        <button id="lib-tab-btn-details" class="options-subtab" onclick="switchLibrarySubTab('details')"
                             data-i18n="lib_tab_details">Dateimanager (Details)</button>
                     </div>
 
@@ -3034,12 +3055,11 @@
                 style="display: none; flex-direction: column; height: 100%; border: none; padding: 0; overflow: hidden;">
 
                 <!-- FIXED HEADER & NAV -->
-                <div style="padding: 20px 20px 0 20px; border-bottom: 1px solid #ddd; background: #fff; z-index: 10;">
-                    <h2 id="options-main-header" style="margin-bottom: 15px;" data-i18n="options_title">Optionen</h2>
+                <div class="sub-nav-container">
+                    <h2 id="options-main-header" style="margin: 0; font-size: 1.2em;" data-i18n="options_title">Optionen</h2>
 
                     <!-- ===================== OPTIONS SUB-TAB NAVIGATION ===================== -->
-                    <div class="options-nav-tabs"
-                        style="display: flex; gap: 10px; margin-bottom: 15px; padding-bottom: 0;">
+                    <div class="options-nav-tabs">
                         <button class="options-subtab active" onclick="switchOptionsView('general')"
                             id="options-subtab-general">
                             Allgemeine Einstellungen
@@ -3055,10 +3075,10 @@
                 </div>
 
                 <!-- SCROLLABLE CONTENT AREA wrapper START -->
-                <div id="options-scroll-container" style="flex: 1; overflow-y: auto; padding: 20px;">
+                <div id="options-scroll-container" class="scrolling-view">
 
                     <div id="options-general-view" class="options-view"
-                        style="display: flex; gap: 40px; align-items: flex-start;">
+                        style="display: flex; gap: 40px; align-items: flex-start; min-height: min-content;">
                         <!-- Left Column: Core Settings -->
                         <div style="flex: 1; max-width: 500px;">
 
@@ -3542,16 +3562,11 @@
                                         <li><strong data-i18n="env_label_app_version">App-Version:</strong> <span
                                                 id="env-app-version">-</span></li>
                                         <li><strong data-i18n="env_label_python_version">Python-Version:</strong>
-                                            <span id="env-python-version">-</span>
-                                </div>
-                            </div>
-                            <!-- ===================== OPTIONS: ENVIRONMENT SUB-VIEW END ===================== -->
-                            id="env-eel-status">✅
-                            Eel | ✅
-                            Websocket</span></li>
-                            <li><strong data-i18n="env_label_bottle_ws">Bottle / WS:</strong> <span
-                                    id="env-bottle-status">-</span>
-                            </li>
+                                            <span id="env-python-version">-</span></li>
+                                        <li><strong data-i18n="env_label_eel_ws">Eel / Websocket:</strong>
+                                            <span id="env-eel-status">✅ Eel | ✅ Websocket</span></li>
+                                        <li><strong data-i18n="env_label_bottle_ws">Bottle / WS:</strong>
+                                            <span id="env-bottle-status">-</span></li>
                             <li><strong data-i18n="env_label_gevent_ws">Gevent / Greenlet:</strong> <span
                                     id="env-gevent-status">-</span>
                             </li>
@@ -4345,9 +4360,9 @@
                                         </svg>
                                         PyPlayer
                                     </button>
-                                </div> <!-- closes routing-suite-view -->
-                            </div> <!-- closes reporting-scroll-container -->
-                        </div> <!-- closes reporting-dashboard-panel -->
+                                </div> <!-- closes engine-selector-bar -->
+                            </div> <!-- closes header-row -->
+                        
 
                         <!-- Hidden legacy inputs kept for backward compat -->
                         <input type="hidden" id="player-type" value="auto">
@@ -4360,7 +4375,7 @@
                             </svg>
                             Öffnen mit
                         </button>
-                    </div>
+                    
 
                     <!-- SUB-MODE PANELS (one per engine, shown/hidden by selectEngine) -->
 
@@ -4609,7 +4624,7 @@
                             hardwarebeschleunigtes Rendering.
                         </div>
                     </div>
-                </div>
+                
                 <!-- Coordinated Renderer Pipeline -->
                 <div id="toast-container"></div>
                 <div id="coordinated-media-renderer-pipeline-viewport" class="premium-player-container"
@@ -4642,7 +4657,7 @@
                         </svg>
                     </button>
 
-                    <button id="btn-shuffle" onclick="toggleShuffle()" class="player-btn-premium"
+                    <button id="btn-shuffle-video" onclick="toggleShuffle()" class="player-btn-premium"
                         style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;"
                         title="Shuffle">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5"
@@ -4655,7 +4670,7 @@
                         </svg>
                     </button>
 
-                    <button id="btn-repeat" onclick="toggleRepeat()" class="player-btn-premium"
+                    <button id="btn-repeat-video" onclick="toggleRepeat()" class="player-btn-premium"
                         style="width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:10px; border:none; background:#eee; cursor:pointer;"
                         title="Repeat">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5"
@@ -4925,7 +4940,7 @@
         <!-- Debug Tab duplicate removed -->
     </div> <!-- End of logbuch-tab -->
     </div> <!-- End of right content flex column -->
-    </div> <!-- End of layout-container (main-split-container) -->
+    </div> <!-- End of layout-container -->
 
     <!-- Sticky Footer Player -->
     <div class="player-container" style="display: flex; align-items: center; gap: 10px;">
