@@ -131,7 +131,17 @@ def init_db():
             codec TEXT,
             has_artwork BOOLEAN DEFAULT 0,
             art_path TEXT,
-            full_tags TEXT
+            full_tags TEXT,
+            media_type TEXT,
+            subtype TEXT,
+            file_type TEXT,
+            isbn TEXT,
+            imdb TEXT,
+            tmdb TEXT,
+            discogs TEXT,
+            amazon_cover TEXT,
+            parent_id INTEGER,
+            FOREIGN KEY(parent_id) REFERENCES media(id)
         )
     """)
 
@@ -160,7 +170,16 @@ def init_db():
         ("tag_type", "TEXT"),
         ("codec", "TEXT"),
         ("art_path", "TEXT"),
-        ("full_tags", "TEXT")
+        ("full_tags", "TEXT"),
+        ("media_type", "TEXT"),
+        ("subtype", "TEXT"),
+        ("file_type", "TEXT"),
+        ("isbn", "TEXT"),
+        ("imdb", "TEXT"),
+        ("tmdb", "TEXT"),
+        ("discogs", "TEXT"),
+        ("amazon_cover", "TEXT"),
+        ("parent_id", "INTEGER")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -210,8 +229,10 @@ def insert_media(item_dict):
     try:
         cursor.execute("""
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
-                             transcoded_format, tags, extension, container, tag_type, codec, has_artwork, art_path, full_tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             transcoded_format, tags, extension, container, tag_type, codec, 
+                             has_artwork, art_path, full_tags, media_type, subtype, file_type,
+                             isbn, imdb, tmdb, discogs, amazon_cover, parent_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -227,13 +248,24 @@ def insert_media(item_dict):
             item_dict.get('codec'),
             1 if item_dict.get('has_artwork') else 0,
             item_dict.get('art_path'),
-            json.dumps(item_dict.get('full_tags', {}))
+            json.dumps(item_dict.get('full_tags', {})),
+            item_dict.get('media_type'),
+            item_dict.get('subtype'),
+            item_dict.get('file_type'),
+            item_dict.get('isbn'),
+            item_dict.get('imdb'),
+            item_dict.get('tmdb'),
+            item_dict.get('discogs'),
+            item_dict.get('amazon_cover'),
+            item_dict.get('parent_id')
         ))
         conn.commit()
-    except sqlite3.IntegrityError:
-        pass  # Schon vorhanden
-    finally:
+        last_id = cursor.lastrowid
         conn.close()
+        return last_id
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None
 
 
 def get_all_media():
@@ -266,7 +298,16 @@ def get_all_media():
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'media_type': row['media_type'],
+            'subtype': row['subtype'],
+            'file_type': row['file_type'],
+            'isbn': row['isbn'],
+            'imdb': row['imdb'],
+            'tmdb': row['tmdb'],
+            'discogs': row['discogs'],
+            'amazon_cover': row['amazon_cover'],
+            'parent_id': row['parent_id']
         })
     conn.close()
     return media_list

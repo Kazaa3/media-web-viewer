@@ -1398,7 +1398,25 @@
         }
 
         function getTabButton(tabId) {
-            return document.querySelector(`.tab-btn[onclick*="switchTab('${tabId}'"]`);
+            const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${tabId}'"]`);
+            if (btn) return btn;
+            // Fallback Mapping for robust ID-based lookup
+            const idMap = {
+                'player': 'active-queue-tab-trigger',
+                'library': 'coverflow-library-tab-trigger',
+                'item': 'indexed-sqlite-repository-tab-trigger',
+                'file': 'filesystem-crawler-tab-trigger',
+                'edit': 'crud-metadata-tab-trigger',
+                'options': 'system-registry-tab-trigger',
+                'parser': 'chain-config-tab-trigger',
+                'debug': 'telemetry-inspector-tab-trigger',
+                'tests': 'qa-validation-tab-trigger',
+                'reporting': 'reporting-dashboard-tab-trigger',
+                'logbuch': 'documentation-journal-tab-trigger',
+                'playlist': 'sequential-buffer-tab-trigger',
+                'vlc': 'media-orchestrator-tab-trigger'
+            };
+            return document.getElementById(idMap[tabId]);
         }
 
         let mwv_config = {
@@ -1819,7 +1837,7 @@
                                     row.style.display = text.includes(filter) ? '' : 'none';
                                 });
                             }
-                        </script>
+                        <\/script>
 
                     </div>`;
                 }
@@ -9743,16 +9761,18 @@
                 const versionEl = document.getElementById('version-label');
                 if (versionEl) versionEl.textContent = 'v' + version;
 
-                // Update app title in sidebar if it's there
-                const appTitleHeader = document.querySelector('h1[data-i18n="app_title"]');
-                if (appTitleHeader) appTitleHeader.textContent = appName;
-
-                document.title = appName;
+                // Sync app title in multiple places (sidebar header, span, title)
+                document.title = appName + " v" + version;
+                
+                const appNameElements = document.querySelectorAll('[data-i18n="app_title"]');
+                appNameElements.forEach(el => {
+                    el.textContent = appName;
+                });
 
                 // Update modal title if exists
                 const modalTitle = document.getElementById('about-imprint-title');
                 if (modalTitle) {
-                    modalTitle.textContent = (t('common_about_imprint') || 'About') + ' v' + version;
+                    modalTitle.textContent = (t('common_about_imprint') || 'About') + ' ' + appName + ' v' + version;
                 }
 
                 // Initialize Library Sub-Tabs

@@ -1778,6 +1778,9 @@ def get_preferred_browser():
 
 def open_session_url(url: str) -> bool:
     """Open a session URL in app-mode window when possible, else fallback browser."""
+    if os.environ.get("MWV_NO_BROWSER", "0") == "1":
+        logging.info("[Session] MWV_NO_BROWSER is set. Skipping browser launch.")
+        return True
     import shutil
 
     browser_candidates = [
@@ -2447,6 +2450,85 @@ def ping():
 
 
 @eel.expose
+def normalize_isbn(isbn: str) -> str:
+    """
+    @brief Cleans ISBN string from hyphens, spaces and common prefixes.
+    """
+    if not isbn: return ""
+    # Remove common ISBN prefixes/labels if present
+    cleaned = re.sub(r'^(ISBN[:\s]*)', '', isbn, flags=re.IGNORECASE)
+    # Remove all non-alphanumeric except X for ISBN-10
+    cleaned = re.sub(r'[^0-9X]', '', cleaned.upper())
+    return cleaned
+
+@eel.expose
+def api_scan_isbn(isbn: str):
+    """
+    @brief Scans an ISBN and returns metadata (v2.5).
+    @details Normalizes the ISBN, searches DB, and fetches from OpenLibrary if missing.
+    """
+    cleaned = normalize_isbn(isbn)
+    if not cleaned:
+        return {"error": "Invalid ISBN input"}
+
+    log.info(f"🔍 [ISBN] Request for: {cleaned}")
+    
+    # 1. Check local DB first
+    # TODO: Implement find_by_isbn in db.py if needed, for now we can filter all media
+    existing = [m for m in db.get_all_media() if normalize_isbn(m.get('isbn')) == cleaned]
+    if existing:
+        log.info(f"✅ [ISBN] Found in local DB: {existing[0]['name']}")
+        return existing[0]
+
+    # 2. Fetch from External API (OpenLibrary)
+    try:
+        url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{cleaned}&format=json&jscmd=data"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            key = f"ISBN:{cleaned}"
+            if key in data:
+                book = data[key]
+                authors = [a['name'] for a in book.get('authors', [])]
+                
+                # Try to get best cover
+                cover_url = None
+                if 'cover' in book:
+                    cover_url = book['cover'].get('large') or book['cover'].get('medium')
+                
+                # Amazon Cover Logic (often ISBN-based)
+                amazon_cover = f"https://images-na.ssl-images-amazon.com/images/P/{cleaned}.01._SCLZZZZZZZ_.jpg"
+                
+                result = {
+                    "id": f"isbn_{cleaned}",
+                    "title": book.get('title', 'Unknown Title'),
+                    "artist": ", ".join(authors) if authors else "Unknown Author",
+                    "year": book.get('publish_date', ''),
+                    "isbn": cleaned,
+                    "amazon_cover": amazon_cover,
+                    "cover": cover_url or amazon_cover,
+                    "media_type": "container",
+                    "subtype": "book",
+                    "description": book.get('notes', '')
+                }
+                log.info(f"✅ [ISBN] Fetched from OpenLibrary: {result['title']}")
+                
+                # Create a placeholder MediaObject in DB? 
+                # (User might want to confirm first, for now just return)
+                return result
+    except Exception as e:
+        log.error(f"❌ [ISBN] Error fetching metadata: {e}")
+
+    # 3. Fallback: Search Amazon cover even if no metadata found
+    return {
+        "isbn": cleaned,
+        "amazon_cover": f"https://images-na.ssl-images-amazon.com/images/P/{cleaned}.01._SCLZZZZZZZ_.jpg",
+        "media_type": "container",
+        "subtype": "unknown",
+        "error": "No metadata found, but here is a potential cover link."
+    }
+
+
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
@@ -2525,90 +2607,87 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # print(f"🔍 [Scan] Supported extensions: {len(all_exts)}")
 
         # Reset counters
-        total_count: int = 0
+        count: int = 0
         for scan_root in scan_roots:
             log.info(f"🚀 [Scan] Starting scan of: {scan_root}")
 
-            # Collect items to avoid sub-file duplicates
+            # Hierarchical grouping: Folder-to-Object mapping
+            folder_id_map: dict[Path, int] = {}
+            # Folders to skip for file pass if they are "Black Box" media folders (DVD/BD/ISO)
             skip_subpaths: set[Path] = set()
 
-            # First pass: Identify "Media Folders" (DVD/BD/ISO-Folders)
+            # First pass: Identify "Media Objects" (Folders like Albums, Series, DVDs)
             for d in scan_root.rglob('*'):
                 if d.is_dir():
-                    is_media_folder = (
-                        d /
-                        'VIDEO_TS').exists() or (
-                        d /
-                        'BDMV').exists()
+                    # 1. Specialized Media Folders (DVD/BD)
+                    is_blackbox = (d / 'VIDEO_TS').exists() or (d / 'BDMV').exists()
                     
-                    if not is_media_folder:
-                        # Smarter DVD Bundle detection: "Name (Year)" folder with an .iso inside
-                        # and possibly a cover image.
+                    if not is_blackbox:
+                        # Smarter DVD Bundle detection
                         isos = list(d.glob('*.iso'))
-                        if len(isos) == 1:
-                            # If the folder name looks like "Name (Year)", treat as a bundle
-                            import re
-                            if re.search(r'\(\d{4}\)', d.name):
-                                is_media_folder = True
+                        if len(isos) == 1 and re.search(r'\(\d{4}\)', d.name):
+                            is_blackbox = True
 
-                    if is_media_folder:
-                        logger.debug("scan", f"🎬 [Scan] Detected Media Folder: {d.name}")
+                    # 2. General Objects (folder with multiple media files, e.g. Album)
+                    is_general_object = False
+                    if not is_blackbox:
+                        media_files = [f for f in d.glob('*') if f.is_file() and f.suffix.lower() in all_exts]
+                        if len(media_files) > 1:
+                            is_general_object = True
+
+                    if is_blackbox or is_general_object:
+                        logger.debug("scan", f"🎬 [Scan] Detected Object: {d.name}")
                         try:
                             item = MediaItem(d.name, d)
                             item_dict = item.to_dict()
-                            db.insert_media(item_dict)
-                            count += 1
-                            skip_subpaths.add(d)
-                            logger.debug("scan", f"✅ [Scan] Indexed Media Folder: {d.name} (Category: {item_dict.get('category')})")
+                            obj_id = db.insert_media(item_dict)
+                            if obj_id:
+                                folder_id_map[d] = obj_id
+                                count += 1
+                                if is_blackbox:
+                                    skip_subpaths.add(d)
+                                logger.debug("scan", f"✅ [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
                         except Exception as e:
-                            logger.debug(
-                                "scan", f"Fehler bei Ordner {
-                                    d.name}: {e}")
+                            logger.debug("scan", f"Fehler bei Object-Ordner {d.name}: {e}")
 
-            # Second pass: Files
+            # Second pass: Files (Items)
             for f in scan_root.rglob('*'):
                 if f.is_file():
-                    # Skip if parent is already a recognized media folder
-                    should_skip = False
-                    for p in skip_subpaths:
-                        if f.is_relative_to(p):
-                            should_skip = True
-                            break
-                    if should_skip:
+                    # Skip if parent is a blackbox media folder (files inside DVD/BD are not indexed individually)
+                    if any(f.is_relative_to(p) for p in skip_subpaths):
                         continue
 
                     ext = f.suffix.lower()
                     if ext in all_exts:
-                        # Überspringe den Transcoding-Cache
-                        if '.cache' in f.parts:
-                            continue
+                        # Skip transcoding cache
+                        if '.cache' in f.parts: continue
 
                         # Blacklist
                         name_lower = f.name.lower()
-                        if any(
-                            x in name_lower for x in [
-                                'cover art',
-                                'captcha',
-                                'thumb',
-                                'folder',
-                                'albumart',
-                                'al_cave']):
+                        if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
                             continue
 
-                        logger.debug("scan", f"Verarbeite: {f.name}")
                         try:
-                            # 1. Check if already in DB and not modified (basic check by path)
-                            existing_item = existing_media.get(str(f))
-                            if existing_item:
+                            # 1. Check if already in DB
+                            if str(f) in existing_media:
                                 count += 1
-                                continue # Already indexed, skip deep parsing
+                                continue 
 
-                            # 2. Extract metadata
+                            # 2. Extract metadata & Link to Object
                             logger.debug("scan", f"🔨 [Scan] Processing item: {f.name}")
+                            
+                            # Check for parent object
+                            parent_id = folder_id_map.get(f.parent)
+                            
                             item = MediaItem(f.name, f)
                             item_dict = item.to_dict()
+                            
+                            # Inject parent_id if found
+                            if parent_id:
+                                item_dict['parent_id'] = parent_id
+                                
                             db.insert_media(item_dict)
-                            logger.debug("scan", f"✅ [Scan] Indexed: {f.name} (has_art: {item_dict.get('has_artwork')})")
+                            logger.debug("scan", f"✅ [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
                             count += 1
                         except Exception as e:
                             logger.debug("scan", f"Fehler bei {f.name}: {e}")

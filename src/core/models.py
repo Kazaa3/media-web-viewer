@@ -119,17 +119,40 @@ class MediaItem:
             ext = ext.lstrip('.').lower()
         self.extension = ext
 
-        # Normalize media_type to a stable, lowercase token for tests and UI
+        # --- v2.5: Item/Object Split & Remote IDs ---
+        self.media_type = 'container' if self.is_directory else 'file'
+        
+        # Mapping which media_type tokens are stable (backward compat with old media_type mapping)
         lt = (self.logical_type or '')
-        mapping = {
+        lt_mapping = {
             'video': 'video', 'Video': 'video',
             'Audio': 'audio', 'audio': 'audio', 'Hörbuch': 'audio', 'Album': 'audio', 
-            'Klassik': 'audio', 'Klassik': 'audio', 'Podcast': 'audio', 'Soundtrack': 'audio',
+            'Klassik': 'audio', 'Podcast': 'audio', 'Soundtrack': 'audio',
             'Compilation': 'audio', 'Single': 'audio', 'Playlist': 'playlist',
             'Bilder': 'image', 'E-Book': 'ebook', 'Dokument': 'document', 'Abbild': 'disk',
-            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Serie': 'video', 'Unbekannt': 'unknown'
+            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Unbekannt': 'unknown'
         }
-        self.media_type = mapping.get(lt, str(lt).lower())
+        self.type_token = lt_mapping.get(lt, str(lt).lower())
+        
+        # Subtype (for containers) and FileType (for files)
+        self.category = self.get_category()
+        if self.media_type == 'container':
+             self.subtype = self.category.lower().replace(' ', '_')
+             self.file_type = None
+        else:
+             self.subtype = None
+             self.file_type = f"{self.type_token.lower()}-file"
+             if self.category == 'Hörbuch' and self.extension == 'm4b':
+                 self.file_type = 'hoerbuch-m4b'
+
+        # Remote IDs from tags
+        self.isbn = self.tags.get('isbn')
+        self.imdb = self.tags.get('imdb')
+        self.tmdb = self.tags.get('tmdb')
+        self.discogs = self.tags.get('discogs')
+        self.amazon_cover = self.tags.get('amazon_cover')
+        self.parent_id = self.tags.get('parent_id')
+
         self.container = self.tags.get('container', self.extension)
         self.tag_type = self.tags.get('tagtype', 'plain')
         self.codec = self.tags.get('codec', self.extension)
@@ -223,6 +246,31 @@ class MediaItem:
                 return 'Film'
                 
             return 'Ordner'
+
+        # 2. Audio-based Sub-Categorization
+        if logical == 'Audio':
+            genre = tags.get('genre', '').lower()
+            if any(k in genre for k in ['klassik', 'classical', 'opera']):
+                return 'Klassik'
+            if any(k in path_str for k in ['podcast']):
+                return 'Podcast'
+            if 'compilation' in tags:
+                 return 'Compilation'
+                 
+            # Single check: If it's a folder-object and contains < 3 files
+            if self.is_directory:
+                from src.parsers.format_utils import AUDIO_EXTENSIONS
+                tracks = [f for f in self.path.glob('*') if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS]
+                if 0 < len(tracks) < 3:
+                     return 'Single'
+            else:
+                # If it's a file but name contains 'Single' or similar
+                if 'single' in self.path.name.lower():
+                     return 'Single'
+
+        # 3. Book detection (ISBN)
+        if tags.get('isbn') or logical == 'E-Book':
+            return 'Buch'
 
         if logical == 'Video':
             if any(k in path_str for k in ['serie', 'tv', 'season', 'staffel', 'erie']) or tags.get('is_series'):
@@ -402,5 +450,14 @@ class MediaItem:
             'transcoded_format': transcoded_format,
             'is_chrome_native': is_chrome_native,
             'year': filtered_tags.get('year', ''),
-            'film_title': filtered_tags.get('title', self.name)
+            'film_title': filtered_tags.get('title', self.name),
+            'media_type': self.media_type,
+            'subtype': self.subtype,
+            'file_type': self.file_type,
+            'isbn': self.isbn,
+            'imdb': self.imdb,
+            'tmdb': self.tmdb,
+            'discogs': self.discogs,
+            'amazon_cover': self.amazon_cover,
+            'parent_id': self.parent_id
         }
