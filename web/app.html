@@ -256,6 +256,23 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
+        .options-subtab {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            color: #666;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+
+        .options-subtab.active {
+            border-bottom: 3px solid #3498db;
+            color: #3498db;
+        }
+
         /* Filter Chips and Selects */
         .filter-chip {
             padding: 6px 14px;
@@ -3020,16 +3037,13 @@
 
                 <div class="options-nav-tabs"
                     style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">
-                    <button class="tab-btn options-subtab active" onclick="switchOptionsView('general')"
-                        style="padding: 10px 15px; background: none; border: none; border-bottom: 3px solid #3498db; color: #3498db; font-weight: bold; cursor: pointer;">
+                    <button class="options-subtab active" onclick="switchOptionsView('general')">
                         Allgemeine Einstellungen
                     </button>
-                    <button class="tab-btn options-subtab" onclick="switchOptionsView('tools')"
-                        style="padding: 10px 15px; background: none; border: none; color: #666; font-weight: bold; cursor: pointer;">
+                    <button class="options-subtab" onclick="switchOptionsView('tools')">
                         Advanced Tools
                     </button>
-                    <button class="tab-btn options-subtab" onclick="switchOptionsView('environment')"
-                        style="padding: 10px 15px; background: none; border: none; color: #666; font-weight: bold; cursor: pointer;">
+                    <button class="options-subtab" onclick="switchOptionsView('environment')">
                         System-Infrastruktur
                     </button>
                 </div>
@@ -3463,6 +3477,7 @@
                         </div>
                     </div>
                 </div>
+            </div> <!-- closes options-tools-view -->
 
                 <div id="options-environment-view" class="options-view"
                     style="display: none; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%;">
@@ -4226,7 +4241,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            <!-- TAB: Reporting END -->
 
             <!-- Video Player Tab -->
             <!-- TAB: Video START -->
