@@ -300,3 +300,63 @@ This walkthrough documents the repairs made to web/app.html and scripts/gui_vali
 ### Automated Tests
 - Verified eel.scan_media and eel.get_version are correctly exposed and functional.
 - Prepared the environment for subsequent Selenium-based testing.
+
+## Debugging Missing Player Panels in `app.html`
+
+I've successfully standardized the GUI and verified structural integrity. The native-html5-audio-pipeline-element and footer-playback-info are located around line 5115, and the body/html tags are correctly closed. The next step is to analyze the playback control logic to resolve missing player panel issues.
+
+### Progress Updates
+1. Analyzed the Video Player tab content in app.html (lines 4400-4800) for unclosed div tags or structural issues that could hide the footer.
+2. Searched for playVideo, playAudio, or play( in app.html to identify playback control logic and verify correct audio/video element IDs.
+3. Used grep -n to find play() in app.html and check playback control logic for correct element IDs.
+4. Analyzed app.html (lines 1450-1550 and 6800-7000) to examine the play() function and identify the element IDs being used for playback control.
+5. Confirmed that body and html tags are properly closed, ruling out global structural issues.
+
+### Next Steps
+- Finalize analysis of the play() function and playback control logic to ensure the correct element IDs are targeted for both audio and video playback.
+- Cross-check the IDs used in play(), playVideo(), and playAudio() with the actual DOM elements in the Video Player and Audio Player panels.
+- If mismatches or missing IDs are found, update the playback logic or panel markup to ensure correct linkage.
+- Re-test tab switching and playback to confirm that the Video Player and Audio Player panels are visible and functional.
+- Continue monitoring audit status and update the logbook with findings and fixes.
+
+## Task Overview: Planning and Analysis
+
+### Planning and Analysis
+- Analyze app.html structure and identified bugs
+- Check main.py for scan_media and Eel exposure
+- Review scripts/gui_validator.py logic
+
+### Fix scripts/gui_validator.py
+- Handle multi-line tags
+- Handle comments
+
+### Repair web/app.html Structure
+- Fix escaped nested script tags
+- Fix DIV/Brace imbalances
+
+### GUI Rebuild (Scrolling & Tab Separation)
+- Update CSS (scrolling-view, sub-nav-container, modals)
+- Rebuild Options Tab structure
+- Rebuild Library Tab structure
+- Rebuild Video Tab structure
+- Rebuild Reporting Tab structure
+- Rebuild Modals
+
+### Backend Fixes
+- [ ] Fix eel.scan_media exposure in main.py
+- [ ] Fix appendUiTrace ReferenceError
+- [ ] Synchronize App Naming ("dict" v1.34)
+- [ ] Fix Pyre/IDE Lints in main.py and models.py
+
+### New Features and Integrations
+- [ ] Create VLC/Stream/Drag&Drop subtab
+- [ ] Implement ISBN scanning API and frontend integration
+- [ ] Upgrade categorization in format_utils.py
+
+### Verification and Testing
+- [ ] Develop Selenium-based GUI test suite (tests/gui_test.py)
+- [ ] Run scan_media and verify record types
+- [ ] Verify ISBN scan
+
+### Final Walkthrough
+- [ ] Document and verify all completed tasks
