@@ -3273,7 +3273,6 @@
                         </div>
 
                     </div> <!-- closes right column -->
-                </div> <!-- closes options-general-view flex row -->
             </div> <!-- closes options-general-view -->
 
             <div id="options-tools-view" class="options-view"
@@ -3405,8 +3404,9 @@
             <div id="options-environment-view" class="options-view"
                 style="display: none; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%;">
                 <div style="flex: 1; max-width: 500px;">
-                    <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_environment">
-                        Python-Umgebung</h3>
+                    <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;" data-i18n="options_environment">
+                    <span class="icon-server"></span> <span>System-Infrastruktur</span>
+                </h2>
                     <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
                         data-i18n="options_environment_desc">
                         Informationen über die aktuell verwendete Python-Umgebung.</p>
@@ -3681,8 +3681,10 @@
                         Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
                     </div>
                 </div> <!-- closes danger zone -->
+                </div> <!-- closes environment contents wrapper -->
             </div> <!-- closes options-environment-view -->
         </div> <!-- closes system-configuration-persistence-panel -->
+    </div> <!-- Final closure to shut down main tab container -->
 
         <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
                 style="padding: 20px; overflow-y: auto; height: 100%;">
@@ -4524,7 +4526,7 @@
                     </button>
                 </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.95em; color: #444;">
+            <div id="footer-playback-info" style="display: none; align-items: center; gap: 6px; font-size: 0.95em; color: #444;">
                 <span id="footer-status-label" data-i18n="player_status_playing"></span>
                 <span id="footer-status-title" style="font-weight: bold;"></span>
                 <span id="footer-status-by" style="margin: 0 4px; color: #888;" data-i18n="player_status_by"></span>
