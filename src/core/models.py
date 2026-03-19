@@ -123,9 +123,11 @@ class MediaItem:
         lt = (self.logical_type or '')
         mapping = {
             'video': 'video', 'Video': 'video',
-            'Audio': 'audio', 'audio': 'audio', 'Hörbuch': 'audio', 'Album': 'audio', 'Klassik': 'audio', 'Klaqssik': 'audio',
+            'Audio': 'audio', 'audio': 'audio', 'Hörbuch': 'audio', 'Album': 'audio', 
+            'Klassik': 'audio', 'Klassik': 'audio', 'Podcast': 'audio', 'Soundtrack': 'audio',
+            'Compilation': 'audio', 'Single': 'audio', 'Playlist': 'playlist',
             'Bilder': 'image', 'E-Book': 'ebook', 'Dokument': 'document', 'Abbild': 'disk',
-            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Erie': 'video', 'Unbekannt': 'unknown'
+            'Ordner': 'folder', 'Serie': 'video', 'Film': 'video', 'Serie': 'video', 'Unbekannt': 'unknown'
         }
         self.media_type = mapping.get(lt, str(lt).lower())
         self.container = self.tags.get('container', self.extension)

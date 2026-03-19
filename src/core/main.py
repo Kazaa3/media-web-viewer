@@ -6163,6 +6163,75 @@ def get_cover_extraction_report():
         return {'error': str(e)}
 
 @eel.expose
+def get_routing_suite_report():
+    """
+    @brief Aggregates routing statistics and quality scores for the entire library.
+    """
+    try:
+        from src.parsers.format_utils import ffprobe_quality_score, is_direct_play_capable
+        items = db.get_all_media()
+        
+        report = {
+            'total_items': len(items),
+            'avg_quality_score': 0,
+            'modes': {
+                'direct': 0,
+                'vlc': 0,
+                'hls': 0,
+                'error': 0
+            },
+            'top_quality_items': [],
+            'complex_items': [],
+            'incompatible_count': 0
+        }
+        
+        total_score = 0
+        video_count = 0
+        
+        for item in items:
+            mt = item.get('type') # media_type
+            if mt != 'video':
+                continue
+                
+            video_count += 1
+            path = item.get('path', '')
+            tags = item.get('tags', {})
+            
+            score = ffprobe_quality_score(tags)
+            total_score += score
+            
+            # Determine recommended mode
+            ext = item.get('extension', '').lower()
+            is_direct = is_direct_play_capable(path, 'browser')
+            
+            mode = 'direct' if is_direct else 'hls'
+            if ext in ('.iso', '.bin', '.img') or 'mpeg' in str(tags.get('codec', '')).lower():
+                mode = 'vlc'
+                
+            report['modes'][mode] = report['modes'].get(mode, 0) + 1
+            if not is_direct:
+                report['incompatible_count'] += 1
+            
+            # Track top and bottom
+            list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
+            if score >= 80:
+                report['top_quality_items'].append(list_item)
+            elif score < 40 or mode == 'vlc':
+                report['complex_items'].append(list_item)
+                
+        if video_count > 0:
+            report['avg_quality_score'] = round(total_score / video_count, 1)
+            
+        # Limit list sizes and sort
+        report['top_quality_items'] = sorted(report['top_quality_items'], key=lambda x: x['score'], reverse=True)[:10]
+        report['complex_items'] = sorted(report['complex_items'], key=lambda x: x['score'])[:10]
+        
+        return report
+    except Exception as e:
+        log.error(f"Failed to get routing suite report: {e}")
+        return {'error': str(e)}
+
+@eel.expose
 def get_streaming_capability_matrix():
     return [
         {
