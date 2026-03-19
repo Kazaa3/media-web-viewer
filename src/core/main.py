@@ -484,7 +484,6 @@ def get_imprint_info():
         "last_fix": "dict",
     }
 
-
 @eel.expose
 def get_version():
     """Returns the application version."""
@@ -2528,7 +2527,7 @@ def api_scan_isbn(isbn: str):
         "error": "No metadata found, but here is a potential cover link."
     }
 
-
+@eel.expose
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
@@ -2568,10 +2567,12 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             else:
                 debug_log(f"[Scan] Skipping non-existent directory: {d}")
 
+    logging.info(f"🚀 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
+    
     count: int = 0
     try:
-        from src.parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS
-
+        from src.parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS
+        
         # Determine if we should use lightweight mode based on path or config
         is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
         if is_network:
@@ -2579,13 +2580,16 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             parser_mode = "lightweight"
         else:
             parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
+        
+        logging.info(f"🔍 [Scan] Parser Mode: {parser_mode}")
 
         # Get existing media from DB for caching
         existing_media = {m['path']: m for m in db.get_all_media()}
+        logging.info(f"🔍 [Scan] Cached items in DB: {len(existing_media)}")
 
         # Determine which categories are enabled
         indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-        # print(f"🔍 [Scan] Enabled categories: {indexed_cats}")
+        logging.info(f"🔍 [Scan] Enabled categories: {indexed_cats}")
         
         all_exts = set()
         if "audio" in indexed_cats:
@@ -2593,18 +2597,15 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         if "video" in indexed_cats:
             all_exts |= VIDEO_EXTENSIONS
         if "images" in indexed_cats:
-            from src.parsers.format_utils import IMAGE_EXTENSIONS
             all_exts |= IMAGE_EXTENSIONS
         if "documents" in indexed_cats:
-            from src.parsers.format_utils import DOCUMENT_EXTENSIONS
             all_exts |= DOCUMENT_EXTENSIONS
         if "ebooks" in indexed_cats:
             all_exts |= EBOOK_EXTENSIONS
         if "abbild" in indexed_cats:
-            from src.parsers.format_utils import DISK_IMAGE_EXTENSIONS
             all_exts |= DISK_IMAGE_EXTENSIONS
-
-        # print(f"🔍 [Scan] Supported extensions: {len(all_exts)}")
+        
+        logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {list(all_exts)[:10]}...")
 
         # Reset counters
         count: int = 0
