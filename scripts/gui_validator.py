@@ -15,34 +15,50 @@ def validate_gui_file(filepath, trace=False):
     brace_depth = 0
     script_mode = False
     style_mode = False
+    comment_mode = False
     
     errors = []
 
     for i, line in enumerate(lines, 1):
         line_clean = line.strip()
         
-        # Detect block transitions
-        if '<script' in line.lower(): script_mode = True
-        if '</script>' in line.lower(): script_mode = False
-        if '<style' in line.lower(): style_mode = True
-        if '</style>' in line.lower(): style_mode = False
-        
-        # Tag tracking (Ignore inside script/style)
-        if not script_mode and not style_mode:
-            # Find opens like <div id="foo" class="bar">
-            opens = re.findall(r'<div([^>]*?)>', line, re.IGNORECASE)
+        # Refined segment parsing
+        segments = re.split(r'(<[^>]+>)', line)
+        for seg in segments:
+            if not seg or not seg.strip(): continue
+            seg_lower = seg.lower()
+            if trace and i == 2677: print(f"DEBUG {i}: seg='{seg}' comment={comment_mode} script={script_mode}")
+            
+            if seg.startswith('<!--'): comment_mode = True
+            if '-->' in seg: 
+                comment_mode = False
+                continue
+            if comment_mode: continue
+
+            if '<script' in seg_lower: script_mode = True
+            if '</script' in seg_lower: 
+                script_mode = False
+                continue
+            if '<style' in seg_lower: style_mode = True
+            if '</style' in seg_lower: 
+                style_mode = False
+                continue
+
+            if script_mode or style_mode: continue
+
+            # Track DIVs (Open)
+            opens = re.findall(r'<div([^>]*?)(?:>|$)', seg, re.IGNORECASE)
             for attr_str in opens:
-                # Try to find ID or Class for context
-                id_match = re.search(r'id=["\']([^"\']+)["\']', attr_str)
-                class_match = re.search(r'class=["\']([^"\']+)["\']', attr_str)
+                id_match = re.search(r'id=["\']([^"\']+)["\']', attr_str, re.IGNORECASE)
+                class_match = re.search(r'class=["\']([^"\']+)["\']', attr_str, re.IGNORECASE)
                 label = "div"
                 if id_match: label += f'#{id_match.group(1)}'
                 elif class_match: label += f'.{class_match.group(1).split()[0]}'
                 div_stack.append((i, label))
                 if trace: print(f"{i:5} | {'  '*len(div_stack)} OPEN {label}")
-                
-            # Find closes </div>
-            closes = re.findall(r'</div', line, re.IGNORECASE)
+            
+            # Track DIVs (Close)
+            closes = re.findall(r'</div', seg, re.IGNORECASE)
             for _ in closes:
                 if div_stack:
                     ln, label = div_stack.pop()
