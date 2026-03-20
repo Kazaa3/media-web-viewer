@@ -6101,7 +6101,6 @@ if __name__ == "__main__":
             transcode_mgr = transcoder.TranscoderManager()
 
             # 6. Config Dirs
-            from src.parsers.format_utils import ensure_default_scan_dir
             ensure_default_scan_dir()
             config_dirs = PARSER_CONFIG.get("scan_dirs", [])
             for d in config_dirs:

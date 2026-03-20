@@ -5324,7 +5324,6 @@
                         aria-label="player_next">⏭️</button>
                 </div>
                 <audio id="native-html5-audio-pipeline-element" controls style="flex: 1; height: 32px;"></audio>
-                <button onclick="resetBackend()" class="action-btn" style="font-size: 0.7em; padding: 2px 8px; background: #fff3e0; color: #e67e22; border-color: #ffe0b2; margin-left: 10px; cursor: pointer; border-radius: 4px; height: 28px; font-weight: bold;">Reset Backend</button>
 
                 <script>
                     if ('mediaSession' in navigator) {
@@ -9852,7 +9851,7 @@
             if (!confirm("Möchten Sie das Backend wirklich zurücksetzen? Die Verbindung wird kurzzeitig unterbrochen.")) return;
             try {
                 const res = await eel.reset_backend()();
-                if (res && res.status === 'ok') {
+                if (res && res.status === 'success') {
                     alert("Backend-Reset erfolgreich: " + res.message);
                     location.reload(); // Refresh to re-initialize everything
                 } else {
@@ -11159,6 +11158,11 @@
             <div id="vsync-field"
                 style="font-size: 0.8em; color: #999; border-left: 1px solid #ddd; padding-left: 10px; margin-left: 5px; display: none;">
                 vSync: <span id="vsync-status" style="color: #4caf50; font-weight: bold;">ON</span>
+            </div>
+            <div id="reconnect-trigger-field" style="border-left: 1px solid #ddd; padding-left: 10px; margin-left: 5px; display: flex; align-items: center;">
+                <a href="javascript:void(0)" onclick="resetBackend()" style="color: #999; font-size: 0.82em; text-decoration: none; opacity: 0.8; transition: opacity 0.2s; display: flex; align-items: center; gap: 5px; font-weight: 500;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+                    <span style="font-size: 1.25em; line-height: 1;">⟳</span> <span>Reset Backend System</span>
+                </a>
             </div>
         </div>
         <div style="display: flex; gap: 15px;">
