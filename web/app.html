@@ -2920,11 +2920,6 @@
                     </svg>
                     <span data-i18n="nav_video">Video</span></button>
 
-                <button id="global-backend-reset-trigger" class="tab-btn" onclick="resetBackend()"
-                    style="margin-left: 20px; background: #fff3e0; border-color: #ff9800; color: #e65100; font-weight: bold; display: flex; align-items: center; gap: 6px;">
-                    <span class="icon-refresh"></span>
-                    <span>Reset Backend</span>
-                </button>
                 <button class="tab-btn"
                     style="background: #fdf5e6; border-color: #f4d; display: flex; align-items: center; gap: 8px;"
                     onclick="toggleDebugMenu()" data-i18n="nav_flags">
@@ -5329,6 +5324,7 @@
                         aria-label="player_next">⏭️</button>
                 </div>
                 <audio id="native-html5-audio-pipeline-element" controls style="flex: 1; height: 32px;"></audio>
+                <button onclick="resetBackend()" class="action-btn" style="font-size: 0.7em; padding: 2px 8px; background: #fff3e0; color: #e67e22; border-color: #ffe0b2; margin-left: 10px; cursor: pointer; border-radius: 4px; height: 28px; font-weight: bold;">Reset Backend</button>
 
                 <script>
                     if ('mediaSession' in navigator) {

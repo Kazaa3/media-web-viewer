@@ -10,7 +10,6 @@ APP_URL = "http://localhost:8000"  # or the correct port
 def setup_browser():
     options = webdriver.ChromeOptions()
     options.binary_location = "/usr/bin/chromium"
-    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)

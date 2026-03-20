@@ -20,7 +20,7 @@ OPTIONS_SUBTABS = [
 
 def setup_browser():
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
+    options.binary_location = "/usr/bin/chromium"
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
