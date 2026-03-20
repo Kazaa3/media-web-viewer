@@ -58,7 +58,13 @@ class UIHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
+            
+            # Avoid recursion if msg already contains UI-Trace tag
+            if "[UI-Trace]" in msg:
+                return
+
             LOG_BUFFER.append(msg)
+
             # Keep buffer size manageable
             if len(LOG_BUFFER) > MAX_BUFFER_SIZE:
                 LOG_BUFFER.pop(0)

@@ -1743,7 +1743,7 @@ def get_environment_info(force_refresh=False):
         "platform_system": platform.system(),
         "platform_release": platform.release(),
         "pid": os.getpid(),
-        "browser_pid": BROWSER_PID,
+        "browser_pid": BROWSER_PID if BROWSER_PID is not None else 0,
         "testbed_pid": find_venv_pid('.venv_testbed'),
         "selenium_pid": find_venv_pid('.venv_selenium'),
         "version": VERSION,
@@ -2453,10 +2453,10 @@ def get_library():
 
     allowed_internal_cats = []
     for cat in displayed_cats:
-        allowed_internal_cats.extend(cat_map.get(cat, []))
+        allowed_internal_cats.extend([c.lower() for c in cat_map.get(cat.lower(), [])])
 
-    filtered_media = [item for item in all_media if item.get(
-        'category') in allowed_internal_cats]
+    # Case-insensitive category check to match German/Capitalized DB entries
+    filtered_media = [item for item in all_media if str(item.get('category' or '')).lower() in allowed_internal_cats]
     return sanitize_json_utf8({"media": filtered_media})
 
 
