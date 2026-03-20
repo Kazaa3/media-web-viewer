@@ -6859,14 +6859,14 @@
                 cancelPick();
             }
         }
-// 
-//         function onGrabPointerLeave(e, index) {
-//             // e.stopPropagation(); // Might break things
-//             if (pickTimer) {
-//                 console.log(`[Picking] Mouse left handle ${index} during press - continuing timer for robustness`);
-//                 // We DON'T cancel here anymore. Only mouseup or a very far move should cancel.
-//                 // But for simplicity, we let the timer finish if they stay within reasonable bounds.
-//                 // If they release outside, we still have the mouseup on body or similar?
+
+        function onGrabPointerLeave(e, index) {
+            // e.stopPropagation(); // Might break things
+            if (pickTimer) {
+                console.log(`[Picking] Mouse left handle ${index} during press - continuing timer for robustness`);
+                // We DON'T cancel here anymore. Only mouseup or a very far move should cancel.
+                // But for simplicity, we let the timer finish if they stay within reasonable bounds.
+                // If they release outside, we still have the mouseup on body or similar?
 //                 // Actually, let's keep it but make it less sensitive.
 // 
 //                 // If we want it to be REALLY robust, we should listen to mouseup on window.
@@ -6892,17 +6892,17 @@
 //             document.body.classList.add('is-picking');
 // 
 //             // Add global cancel listener if user releases outside elements
-            const onGlobalUp = (e) => {
-                if (pickedIndex !== -1) {
-                    console.log("[Picking] Global mouseup detected - checking if we need to cancel");
-                    // If we are here, we might have missed a specific drop target mouseup
-                    // We'll give it a tiny delay to see if releasePick was called
-                    setTimeout(() => {
-                        if (pickedIndex !== -1) cancelPick();
-                    }, 50);
-                }
-                window.removeEventListener('mouseup', onGlobalUp);
-            };
+//             const onGlobalUp = (e) => {
+//                 if (pickedIndex !== -1) {
+//                     console.log("[Picking] Global mouseup detected - checking if we need to cancel");
+//                     // If we are here, we might have missed a specific drop target mouseup
+//                     // We'll give it a tiny delay to see if releasePick was called
+//                     setTimeout(() => {
+//                         if (pickedIndex !== -1) cancelPick();
+//                     }, 50);
+//                 }
+//                 window.removeEventListener('mouseup', onGlobalUp);
+//             };
             window.addEventListener('mouseup', onGlobalUp);
 
             // Visual confirmation
