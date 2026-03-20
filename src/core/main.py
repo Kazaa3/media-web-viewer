@@ -6111,7 +6111,8 @@ if __name__ == "__main__":
                 log.info(f"[Telemetry] {ts:6.3f}s | {msg}")
             
             # Helpers for info
-            from src.core.main_helpers import get_environment_info_dict 
+            # Environment info function is defined locally
+            # from src.core.main_helpers import get_environment_info_dict 
             log.info(f"[Startup] Environment Info: {get_environment_info_dict()}")
         except Exception as e:
             logging.error(f"[Startup] Delayed initialization failed: {e}")

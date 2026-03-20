@@ -127,4 +127,20 @@ Alle geplanten Bugfixes und UI-Verbesserungen wurden erfolgreich umgesetzt und g
 
 ---
 
+## Klammer-Balance-Check (web/app.html)
+
+Um Syntaxfehler durch unbalancierte geschweifte Klammern zu vermeiden, wurde vor und nach den Refactorings die Anzahl der öffnenden und schließenden Klammern gezählt:
+
+**Vorher (Zeilen 10439–10580):**
+    sed -n '10439,10580p' web/app.html | grep -o "{" | wc -l
+    sed -n '10439,10580p' web/app.html | grep -o "}" | wc -l
+
+**Gesamtdatei (nachher):**
+    grep -o "{" web/app.html | wc -l
+    grep -o "}" web/app.html | wc -l
+
+Die Werte wurden eingerückt ausgegeben (| sed 's/^/     /'), um die Übersicht zu verbessern. Stimmen die Zahlen überein, ist die Blockstruktur korrekt und keine Klammer wurde vergessen oder zu viel gesetzt.
+
+---
+
 *Logbuch-Eintrag erstellt: 20. März 2026*
