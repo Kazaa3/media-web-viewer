@@ -10873,6 +10873,41 @@
                 showToast("Bitte zuerst ein Video auswählen.");
                 return;
             }
+            /* 
+            // SIDECAR / METADATA SIDEBAR DYNAMIC GENERATION (Relocated to Parser Tab)
+            let sidebar = document.getElementById('active-item-metadata-sidebar');
+            if (!sidebar) {
+                sidebar = document.createElement('div');
+                sidebar.id = 'active-item-metadata-sidebar';
+                sidebar.className = 'sidebar sidebar-metadata';
+                sidebar.style.cssText = 'width: 120px; background: #fdfdfd; border-left: 1px solid #ddd; display: flex; flex-direction: column; overflow: hidden; position: relative;';
+                
+                // Vertical Label
+                const label = document.createElement('div');
+                label.className = 'vertical-text';
+                label.style.cssText = 'writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 20px 10px; font-weight: 800; color: #555; font-size: 1.1em; letter-spacing: 1px; flex: 1; display: flex; align-items: center; justify-content: center; opacity: 0.6;';
+                label.setAttribute('data-i18n', 'env_label_mediainfo');
+                label.textContent = 'MediaInfo:';
+                sidebar.appendChild(label);
+
+                // Add to main container
+                const container = document.getElementById('main-split-container');
+                
+                // Add Splitter first
+                const splitter = document.createElement('div');
+                splitter.id = 'right-splitter';
+                splitter.className = 'splitter-v';
+                splitter.style.cssText = 'width: 1px; background: #ddd; cursor: col-resize;';
+                
+                container.appendChild(splitter);
+                container.appendChild(sidebar);
+                
+                // Init Splitter
+                if (typeof initSplitter === 'function') {
+                    initSplitter('right-splitter', 'main-split-container', 'sidebar-metadata', 'vertical-reverse');
+                }
+            }
+            */
             const input = currentVideoItem.path;
             const output = input.replace(/\.[^/.]+$/, "") + ".webm";
 
