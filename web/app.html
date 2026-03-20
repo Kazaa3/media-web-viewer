@@ -1795,6 +1795,55 @@
             }
         }
 
+        async function runWebSocketStressTest() {
+            const statusEl = document.getElementById('rtt-status-text');
+            const btns = document.querySelectorAll('#options-sync-view .action-btn');
+            const count = 100;
+            let successes = 0;
+            let totalTime = 0;
+
+            if (statusEl) statusEl.innerText = `Starting Stress Test (0/${count})...`;
+            btns.forEach(btn => btn.disabled = true);
+
+            try {
+                appendUiTrace(`[Stress] Starting WebSocket stress test: ${count} pings...`);
+                const startTotal = performance.now();
+                
+                const batchSize = 10;
+                for (let i = 0; i < count; i += batchSize) {
+                    const batchPromises = [];
+                    for (let j = 0; j < batchSize && (i + j) < count; j++) {
+                        const idx = i + j;
+                        const start = performance.now();
+                        batchPromises.push(eel.rtt_stress_ping(idx, count)().then(res => {
+                            const end = performance.now();
+                            totalTime += (end - start);
+                            successes++;
+                            if (statusEl && successes % 5 === 0) {
+                                statusEl.innerText = `Stress Test (${successes}/${count})...`;
+                            }
+                        }));
+                    }
+                    await Promise.all(batchPromises);
+                }
+
+                const endTotal = performance.now();
+                const avgRtt = (totalTime / count).toFixed(2);
+                const totalDuration = (endTotal - startTotal).toFixed(0);
+
+                appendUiTrace(`[Stress] Finished: ${successes}/${count} OK. Avg RTT: ${avgRtt}ms. Total: ${totalDuration}ms`);
+                
+                if (statusEl) {
+                    statusEl.innerHTML = `STRESS: <strong style="color: #2a7;">${successes}/${count} OK</strong> (Avg: ${avgRtt}ms, Total: ${totalDuration}ms)`;
+                }
+            } catch (e) {
+                appendUiTrace(`[Stress] Error: ${e}`);
+                if (statusEl) statusEl.innerText = "Stress Error: " + e;
+            } finally {
+                btns.forEach(btn => btn.disabled = false);
+            }
+        }
+
         function switchOptionsView(viewId) {
             console.log("Switching options view to:", viewId);
             document.querySelectorAll('.options-view').forEach(el => el.style.display = 'none');
@@ -3998,6 +4047,13 @@
                                     <span style="font-size: 0.85em; color: #888;">Nested data structures & UTF-8 validation (Stage 2 & 3).</span>
                                 </div>
                                 
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                                    <button onclick="runWebSocketStressTest()" class="action-btn" style="min-width: 150px; background: #f0f7ff; border-color: #007bff; color: #007bff;">
+                                        WS Stress Test
+                                    </button>
+                                    <span style="font-size: 0.85em; color: #888;">Flood backend with 100 rapid requests to verify stability.</span>
+                                </div>
+                                
                                 <div id="rtt-status-container" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #f0f0f0;">
                                     <span style="font-weight: bold; font-size: 0.8em; color: #555;">Status:</span>
                                     <span id="rtt-status-text" style="font-family: monospace; font-size: 0.85em; color: #e67e22; margin-left: 10px;">Waiting for trigger...</span>
@@ -5383,6 +5439,23 @@
                         <div id="about-imprint-body" class="modal-body" data-i18n="about_imprint_content">
                             <!-- content from i18n -->
                         </div>
+                
+                <!-- Bottom Status Bar -->
+                <div id="app-bottom-bar" class="bottom-bar">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-weight: 800; color: #555;">dict</span>
+                        <span id="version-label" style="font-family: monospace; opacity: 0.8;">v1.34</span>
+                    </div>
+                    <div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                        <div id="sync-indicator" style="display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 12px; background: #eee; transition: all 0.3s;">
+                            <div id="sync-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #bbb;"></div>
+                            <span id="sync-text" style="font-size: 0.9em; font-weight: 500;">- Initialisierung</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <a href="javascript:void(0)" onclick="openAboutImprint()" style="color: inherit; text-decoration: none; border-bottom: 1px dotted #ccc;" data-i18n="common_about_imprint">Über & Impressum</a>
+                    </div>
+                </div>
                         <div class="modal-footer">
                             <button onclick="closeAboutImprint()"
                                 style="padding: 10px 24px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s;"
@@ -10342,8 +10415,29 @@
 
                     // Check connection every 5 seconds
                     setInterval(checkConnection, 5000);
-                    // Initial check after a short delay
-                    setTimeout(checkConnection, 1000);
+                    checkConnection();
+
+                    async function checkGeventStatus() {
+                        try {
+                            const status = await eel.get_gevent_status()();
+                            if (status.active) {
+                                const patchInfo = Object.entries(status.patched)
+                                    .filter(([k, v]) => v)
+                                    .map(([k, v]) => k)
+                                    .join(', ');
+                                appendUiTrace(`[System] Gevent ${status.version} active (Greenlet ${status.greenlet}). Patched: ${patchInfo}`);
+                                
+                                if (!status.patched.threading) {
+                                    safeStyle('sync-indicator', 'border', '2px solid #f44');
+                                    appendUiTrace(`[System] WARNING: Threading NOT patched! WebSocket might be unstable.`, 'warn');
+                                }
+                            }
+                        } catch (e) {
+                            console.error("Gevent status check failed:", e);
+                        }
+                    }
+                    
+                    setTimeout(checkGeventStatus, 2000);
 
                     // ============ About & Imprint ============
                     function openAboutImprint() {

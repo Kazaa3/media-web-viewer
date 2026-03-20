@@ -41,6 +41,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 # main.py – Entry point: initializes Eel, exposes API functions to the
 # frontend, and starts the app.
 
+try:
+    from gevent import monkey
+    monkey.patch_all()
+except ImportError:
+    pass
+
 import sys
 import os
 import platform
@@ -218,6 +224,42 @@ def rtt_item_test(data):
         "timestamp": time.time(),
         "item_echo": data
     })
+
+@eel.expose
+def rtt_stress_ping(index, total):
+    """Rapid-fire ping for stress testing."""
+    # Minimize logging for stress test to avoid I/O bottleneck
+    if index % 10 == 0 or index == total - 1:
+        log.info(f"[RTT-Stress] Ping {index+1}/{total}")
+    return {"status": "ok", "index": index}
+
+@eel.expose
+def get_gevent_status():
+    """Returns the status of gevent patching and version info."""
+    try:
+        import gevent
+        from gevent import monkey
+        import greenlet
+        import threading
+        
+        # Check if threading is actually monkey-patched
+        # (Standard threading.current_thread() is replaced by gevent's version)
+        is_patched = monkey.is_module_patched("socket")
+        
+        return {
+            "active": True,
+            "version": gevent.__version__,
+            "greenlet": greenlet.__version__,
+            "patched": {
+                "socket": monkey.is_module_patched("socket"),
+                "thread": monkey.is_module_patched("thread"),
+                "time": monkey.is_module_patched("time"),
+                "sys": monkey.is_module_patched("sys"),
+                "threading": monkey.is_module_patched("threading")
+            }
+        }
+    except ImportError:
+        return {"active": False, "error": "gevent not installed"}
 
 @eel.expose
 def confirm_receipt(event_name):
