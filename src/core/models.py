@@ -269,7 +269,6 @@ class MediaItem:
                  
             # Single check: If it's a folder-object and contains < 3 files
             if self.is_directory:
-                from src.parsers.format_utils import AUDIO_EXTENSIONS
                 tracks = [f for f in self.path.glob('*') if f.is_file() and f.suffix.lower() in AUDIO_EXTENSIONS]
                 if 0 < len(tracks) < 3:
                      return 'Single'

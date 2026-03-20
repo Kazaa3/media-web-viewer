@@ -1766,8 +1766,14 @@
                 } else {
                     testData = {
                         id: "test-rtt-" + Date.now(),
-                        title: "RTT Test Item",
+                        title: "RTT Test Item (Music)",
                         artist: "Frontend Sync Test",
+                        album: "Latency Benchmarks",
+                        genre: "Diagnostic",
+                        duration: "3:45",
+                        extension: "flac",
+                        codec: "FLAC",
+                        type: "file",
                         timestamp: new Date().toISOString(),
                         complex: { a: 1, b: [1, 2, 3], c: { d: "nested" } }
                     };
@@ -1825,6 +1831,8 @@
                         }));
                     }
                     await Promise.all(batchPromises);
+                    // Add a small delay between batches to prevent socket congestion
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
 
                 const endTotal = performance.now();
