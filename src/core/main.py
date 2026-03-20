@@ -45,7 +45,6 @@ import sys
 import os
 import platform
 import time
-import requests
 import json
 from pathlib import Path
 from urllib.parse import unquote
@@ -66,8 +65,17 @@ for sub in ["core", "parsers"]:
 
 # Performance Telemetry: Global startup anchor
 STARTUP_TIME = time.time()
+CHECKPOINTS = []
 
-# --- Imports ---
+def log_checkpoint(msg: str):
+    """Log a timing checkpoint for startup profiling."""
+    elapsed = time.time() - STARTUP_TIME
+    CHECKPOINTS.append((msg, elapsed))
+    # print(f"[Telemetry] {elapsed:6.3f}s | {msg}") # Optional: direct output for debugging
+
+log_checkpoint("Module start")
+
+# --- Base Imports ---
 import eel
 import logging
 import threading
@@ -76,12 +84,13 @@ import re
 import shutil
 import bottle
 import psutil
+import requests
 from typing import cast
 
 # Internal imports
 from src.parsers.format_utils import (
     PARSER_CONFIG, load_parser_config, save_parser_config,
-    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format
 )
 import env_handler
 import src.core.logger as logger
@@ -90,11 +99,12 @@ from src.parsers import tag_writer
 from src.core import hardware_detector
 from src.core import transcoder
 
-# Initialize transcoder manager
-transcode_mgr = transcoder.TranscoderManager()
+# transcode_mgr deferred
+transcode_mgr = None
 
 # Central logger for main
 log = get_logger("main")
+log_checkpoint("Base imports complete")
 
 
 def ensure_singleton():
@@ -1910,8 +1920,7 @@ def open_session_url(url: str) -> bool:
             import urllib.parse
             parsed_url = urllib.parse.urlparse(url)
             if parsed_url.port:
-                logging.info(f"[Browser] Waiting for port {parsed_url.port} before launch...")
-                if not wait_for_port(parsed_url.port, timeout=12.0):
+                if not wait_for_port(parsed_url.port, timeout=3.0):
                     logging.warning(f"[Browser] Port {parsed_url.port} not reachable after timeout. Launching anyway.")
 
             args = [
@@ -2169,7 +2178,7 @@ def debug_log(message: str) -> None:
     # Eel callback if front-end is already listening
     try:
         if hasattr(eel, 'log_to_debug'):
-            eel.log_to_debug(message)()
+            eel.log_to_debug(message)
     except Exception:
         pass
 
@@ -2684,7 +2693,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
     if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
         try:
-            eel.set_db_status(True)()
+            eel.set_db_status(True)
         except Exception:
             pass
 
@@ -2847,7 +2856,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     finally:
         if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
             try:
-                eel.set_db_status(False)()
+                eel.set_db_status(False)
             except Exception:
                 pass
 
@@ -5724,7 +5733,7 @@ def run_tests(test_files):
                 output_lines.append(line)
                 try:
                     if hasattr(eel, "append_test_output"):
-                        eel.append_test_output(line)()
+                        eel.append_test_output(line)
                 except Exception:
                     pass
             elif process.poll() is not None:
@@ -5740,7 +5749,7 @@ def run_tests(test_files):
                 output_lines.append(tail)
                 try:
                     if hasattr(eel, "append_test_output"):
-                        eel.append_test_output(tail)()
+                        eel.append_test_output(tail)
                 except Exception:
                     pass
 
@@ -5950,7 +5959,9 @@ def get_transcode_status(task_id: str):
 
 # --- Main Entry Point ---
 if __name__ == "__main__":
+    log_checkpoint("Main entry")
     _ensure_project_venv_active()
+    log_checkpoint("Venv check complete")
     
     # Start UI immediately for "Fast Boot"
     # We delay singleton checks, DB init, and env validation until AFTER the browser is requested.
@@ -5969,12 +5980,14 @@ if __name__ == "__main__":
             session_port = s.getsockname()[1]
 
     web_dir = str(PROJECT_ROOT / "web")
+    log_checkpoint("Initializing Eel")
     eel.init(web_dir)
     
     def close_callback(page, sockets):
         if not sockets:
             sys.exit(0)
 
+    log_checkpoint("Starting Eel server")
     eel.start(
         "app.html",
         mode=False,
@@ -5984,11 +5997,11 @@ if __name__ == "__main__":
         close_callback=close_callback
     )
 
-    # Longer delay to ensure Bottle server is fully ready
-    time.sleep(2.0)
-
+    # No explicit sleep needed - wait_for_port in open_session_url handles readiness
     session_url = f"http://127.0.0.1:{session_port}/app.html"
+    log_checkpoint("Requesting browser launch")
     open_session_url(session_url)
+    log_checkpoint("Browser requested")
 
     # --- Background / Delayed Tasks ---
     def _delayed_scan():
@@ -6005,25 +6018,40 @@ if __name__ == "__main__":
 
     def _finish_initialization():
         try:
-            # 1. Singleton check (Slow)
+            log_checkpoint("Background init start")
+            # 1. Explicitly load config first
+            load_parser_config()
+            
+            # 2. Singleton check (Slow)
             global _SINGLETON_LOCK
             if not _SINGLETON_LOCK:
                 _SINGLETON_LOCK = ensure_singleton()
             
-            # 2. Env Validation
+            # 3. Env Validation
             env_handler.validate_safe_startup()
             
-            # 3. DB Init
+            # 4. DB Init
+            from src.core import db
             db.init_db()
             
-            # 4. Config Dirs
+            # 5. Transcoder Init
+            global transcode_mgr
+            transcode_mgr = transcoder.TranscoderManager()
+
+            # 6. Config Dirs
+            from src.parsers.format_utils import ensure_default_scan_dir
             ensure_default_scan_dir()
             config_dirs = PARSER_CONFIG.get("scan_dirs", [])
             for d in config_dirs:
                 Path(d).mkdir(parents=True, exist_ok=True)
                 
-            logging.info("[Startup] Backend initialization finalized.")
-            debug_log(f"[Startup] Environment Info: {get_environment_info_dict()}")
+            log_checkpoint("Backend initialization finalized")
+            for msg, ts in CHECKPOINTS:
+                log.info(f"[Telemetry] {ts:6.3f}s | {msg}")
+            
+            # Helpers for info
+            from src.core.main_helpers import get_environment_info_dict 
+            log.info(f"[Startup] Environment Info: {get_environment_info_dict()}")
         except Exception as e:
             logging.error(f"[Startup] Delayed initialization failed: {e}")
 

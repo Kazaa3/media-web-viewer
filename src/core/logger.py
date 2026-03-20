@@ -67,7 +67,7 @@ class UIHandler(logging.Handler):
             import eel
             if hasattr(eel, 'appendUiTrace') and getattr(eel, '_websocket', None):
                 try:
-                    eel.appendUiTrace(msg)()
+                    eel.appendUiTrace(msg) # Asynchronous push, don't wait for return
                 except Exception:
                     pass
         except Exception:

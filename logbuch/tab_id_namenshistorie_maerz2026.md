@@ -102,3 +102,19 @@ UI- und Performance-Probleme im gui_media_web_viewer nachhaltig beheben:
 - Parser-Fehler werden robust abgefangen, Logs sind ausreichend detailliert
 - Warnings zu Dependencies und fehlende Cover sollten mittelfristig adressiert werden
 - WebSocket-Fehler sind harmlos, solange keine UI-Funktionalität betroffen ist
+
+---
+
+## Advanced Media Tools: HandBrake, WebM, VLC (März 2026)
+
+### Änderung
+- Die erweiterten Medientools (HandBrake-Transcoding, WebM-Konvertierung, VLC-Playlist-Tools) wurden aus den allgemeinen Einstellungen entfernt und als eigenständige, dedizierte Tools/Module im UI platziert.
+- Ziel: Übersichtlichkeit und klare Trennung zwischen Basis-Einstellungen und fortgeschrittenen Medienfunktionen.
+
+### Umsetzung
+- HandBrake-Transcoding, WebM-Konvertierung und VLC-Playlist-Tools sind jetzt nur noch über eigene Menüpunkte oder Tool-Tabs erreichbar.
+- Die allgemeinen Einstellungen enthalten nur noch globale, nicht-medienbezogene Optionen.
+
+### Lessons Learned
+- Fortgeschrittene Tools sollten klar von Basis-Einstellungen getrennt werden, um die UI für Endnutzer übersichtlich zu halten.
+- Eine modulare Tool-Struktur erleichtert Wartung, Erweiterung und gezielte Rechteverwaltung.

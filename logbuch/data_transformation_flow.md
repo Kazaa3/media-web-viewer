@@ -1,41 +1,52 @@
-# Data Transformation Flow
+# Data Transformation Flow: Media Item Journey
 
-This document describes the journey of a media item's data through the system, from raw file extraction to the final JSON response sent to the frontend.
+Dieses Dokument beschreibt den Weg eines Media-Items durch das System – von der Rohdatei bis zur fertigen JSON-Antwort im Frontend.
 
 ---
 
 ## 1. Raw Extraction (Parser Layer)
-- **Input:** Raw file on disk (.mp3, .mp4, etc.).
-- **Tools:** mutagen, pymediainfo, ffprobe.
-- **Transformation:** Tool-specific metadata objects are converted into a standard Python dict.
-- **Data Type:** dict (e.g., {'title': 'Song', 'artist': 'Artist', ...}).
+- **Input:** Rohdatei auf Disk (z.B. `.mp3`, `.mp4`)
+- **Tools:** mutagen, pymediainfo, ffprobe
+- **Transformation:** Tool-spezifische Metadatenobjekte werden in ein Standard-Python-`dict` überführt
+- **Datentyp:**
+  ```python
+  {'title': 'Song', 'artist': 'Artist', ...}
+  ```
 
 ## 2. Internal Normalization (Core Layer)
-- **Transformation:** Multiple parser results are merged into a single "Media Object".
-- **Data Type:** dict with standardized keys (e.g., name, path, category, tags).
-- **Nesting:** tags and full_tags are nested dicts.
-- **Data Type:** dict of dict (e.g., {'name': '...', 'tags': {'album': '...'}}).
+- **Transformation:** Ergebnisse mehrerer Parser werden zu einem "Media Object" zusammengeführt
+- **Datentyp:**
+  ```python
+  {'name': '...', 'path': '...', 'category': '...', 'tags': {'album': '...'}, ...}
+  ```
+- **Nesting:** `tags` und `full_tags` sind verschachtelte Dicts
 
 ## 3. Database Storage (Persistence Layer)
-- **Transformation:** The normalized dict is flattened for SQL storage.
-- **Serialization:** Nested dictionaries (tags, full_tags) are converted to JSON strings using json.dumps().
-- **SQL Execution:** INSERT INTO media (...) VALUES (?, ?, ...).
-- **Data Type:** SQL Row (Text, Integer, JSON-string).
+- **Transformation:** Das normalisierte Dict wird für SQL-Storage "geflacht"
+- **Serialisierung:** Verschachtelte Dicts (`tags`, `full_tags`) werden mit `json.dumps()` zu Strings
+- **SQL:**
+  ```sql
+  INSERT INTO media (...) VALUES (?, ?, ...)
+  ```
+- **Datentyp:** SQL-Row (Text, Integer, JSON-String)
 
 ## 4. Collection Retrieval (API Layer)
-- **Transformation:** SELECT * FROM media fetches rows.
-- **Deserialization:** JSON strings are converted back into Python dicts using json.loads().
-- **Aggregation:** Multiple items are gathered into a list.
-- **Data Type:** list of dicts (e.g., [{'name': 'A'}, {'name': 'B'}, ...]).
+- **Transformation:** `SELECT * FROM media` holt Rows
+- **Deserialisierung:** JSON-Strings werden mit `json.loads()` zurück in Dicts gewandelt
+- **Aggregation:** Mehrere Items werden zu einer Liste zusammengefasst
+- **Datentyp:**
+  ```python
+  [{'name': 'A'}, {'name': 'B'}, ...]
+  ```
 
 ## 5. WebSocket Transmission (Transport Layer)
-- **Transformation:** Eel (and underlying gevent-websocket) serializes the response to a JSON string.
-- **Encoding:** The JSON string is encoded to UTF-8 bytes for transmission over the WebSocket.
-- **Data Type:** JSON String (serialized Python dict).
+- **Transformation:** Eel (bzw. gevent-websocket) serialisiert die Antwort zu einem JSON-String
+- **Encoding:** Der JSON-String wird als UTF-8-Bytes über den WebSocket gesendet
+- **Datentyp:** JSON-String (serialisiertes Python-Dict)
 
 ## 6. Frontend Consumption (UI Layer)
-- **Transformation:** The browser receives valid UTF-8 bytes, decodes them to a string, and parses the JSON.
-- **Data Type:** Javascript Object (automatically mapped from JSON).
+- **Transformation:** Der Browser empfängt UTF-8-Bytes, dekodiert sie zu String und parst das JSON
+- **Datentyp:** Javascript-Objekt (automatisch aus JSON gemappt)
 
 ---
 

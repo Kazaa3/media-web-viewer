@@ -75,7 +75,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 0;
+            padding: 0 0 128px 0; /* Updated for stacked fixed footers */
             margin: 0;
             height: 100vh;
             display: flex;
@@ -666,11 +666,31 @@
         }
 
         .player-container {
+            position: fixed;
+            bottom: 24px; /* Offset for the bottom status bar */
+            left: 0;
+            right: 0;
             background-color: #ffffff;
             border-top: 1px solid #ddd;
-            padding: 15px 20px;
+            padding: 12px 20px;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-            z-index: 10;
+            z-index: 1001; /* Above everything but maybe context menu */
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 24px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 0.72em;
+            color: #888;
         }
 
         #player {
@@ -1728,78 +1748,50 @@
             }
         }
 
-        async function runRTTTest() {
-            const statusEl = document.getElementById('rtt-status');
-            const btn = document.getElementById('btn-rtt-test');
+        async function runRTTTest(testType = 'ping') {
+            const statusEl = document.getElementById('rtt-status-text');
+            const btns = document.querySelectorAll('#options-sync-view .action-btn');
             
-            if (statusEl) statusEl.innerText = "Testing...";
-            if (btn) btn.disabled = true;
+            if (statusEl) statusEl.innerText = (testType === 'complex' ? "Complex RTT Testing..." : "Ping Testing...");
+            btns.forEach(btn => btn.disabled = true);
 
             try {
-                const testData = {
-                    stage1: { key: "normal_dict" },
-                    stage2: { nested: { a: 1, b: 2 } },
-                    stage3: [{ id: 1, val: "list_of_dicts" }, { id: 2, val: "item" }]
-                };
+                let testData;
+                if (testType === 'ping') {
+                    testData = {
+                        stage1: { key: "normal_dict" },
+                        stage2: { nested: { a: 1, b: 2 } },
+                        stage3: [{ id: 1, val: "list_of_dicts" }, { id: 2, val: "item" }]
+                    };
+                } else {
+                    testData = {
+                        id: "test-rtt-" + Date.now(),
+                        title: "RTT Test Item",
+                        artist: "Frontend Sync Test",
+                        timestamp: new Date().toISOString(),
+                        complex: { a: 1, b: [1, 2, 3], c: { d: "nested" } }
+                    };
+                }
 
-                appendUiTrace("RTT: Sending multi-stage data to backend...");
+                appendUiTrace(`RTT [${testType}]: Sending data to backend...`);
                 const start = performance.now();
                 const response = await eel.rtt_ping(testData)();
                 const end = performance.now();
                 const rtt = (end - start).toFixed(2);
 
-                appendUiTrace(`RTT: Backend responded in ${rtt}ms. Status: ${response.status}`);
+                appendUiTrace(`RTT [${testType}]: Backend responded in ${rtt}ms. Status: ${response.status}`);
                 
-                // Stage 4: Closing the loop (Confirm Receipt) as requested
-                appendUiTrace("RTT: Confirming receipt to backend...");
-                await eel.confirm_receipt("RTT_PONG_RECEIVED")();
+                // Confirm Receipt
+                await eel.confirm_receipt(testType === 'complex' ? "ITEM_RTT_RECEIVED" : "RTT_PONG_RECEIVED")();
                 
                 if (statusEl) {
-                    statusEl.innerHTML = `RTT: <strong style="color: #2a7;">${rtt}ms</strong> (Sync OK)`;
+                    statusEl.innerHTML = `${testType.toUpperCase()}: <strong style="color: #2a7;">${rtt}ms</strong> (Sync OK)`;
                 }
             } catch (e) {
-                appendUiTrace(`RTT Error: ${e}`);
+                appendUiTrace(`RTT [${testType}] Error: ${e}`);
                 if (statusEl) statusEl.innerText = "Error: " + e;
             } finally {
-                if (btn) btn.disabled = false;
-            }
-        }
-
-        async function runRTTItemTest() {
-            const statusEl = document.getElementById('rtt-status');
-            const btn = document.getElementById('btn-rtt-item-test');
-            
-            if (statusEl) statusEl.innerText = "Item Testing...";
-            if (btn) btn.disabled = true;
-
-            try {
-                const testData = {
-                    id: "test-rtt-" + Date.now(),
-                    title: "RTT Test Item",
-                    artist: "Frontend Sync Test",
-                    timestamp: new Date().toISOString(),
-                    complex: { a: 1, b: [1, 2, 3], c: { d: "nested" } }
-                };
-
-                appendUiTrace("RTT-Item: Sending complex item to backend...");
-                const start = performance.now();
-                const response = await eel.rtt_item_test(testData)();
-                const end = performance.now();
-                const diff = (end - start).toFixed(2);
-
-                if (response && response.status === 'success') {
-                    appendUiTrace(`RTT-Item: Backend echoed item in ${diff}ms. Sync OK.`);
-                    if (statusEl) {
-                        statusEl.innerHTML = `Item RTT: <strong style="color: #0277bd;">${diff}ms</strong> (Integrity OK)`;
-                    }
-                } else {
-                    throw new Error("Invalid echo response");
-                }
-            } catch (err) {
-                appendUiTrace(`RTT-Item Error: ${err}`);
-                if (statusEl) statusEl.textContent = "Item Error: " + err;
-            } finally {
-                if (btn) btn.disabled = false;
+                btns.forEach(btn => btn.disabled = false);
             }
         }
 
@@ -3245,6 +3237,10 @@
                             id="options-subtab-environment">
                             System-Infrastruktur
                         </button>
+                        <button class="options-subtab" onclick="switchOptionsView('sync')"
+                            id="options-subtab-sync">
+                            Synchronization & RTT
+                        </button>
                     </div>
                 </div>
 
@@ -3372,19 +3368,6 @@
                                         <span id="hardware-network-mount" style="font-weight: bold;">-</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div
-                                style="background: #fff3e0; border: 1px solid #ff9800; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-                                <div>
-                                    <div style="font-weight: bold; color: #e65100;">Advanced Media Tools</div>
-                                    <div style="font-size: 0.85em; color: #666; margin-top: 4px;">HandBrake Transcoding,
-                                        WebM Conversion & VLC Playlist Tools.</div>
-                                </div>
-                                <button onclick="switchTab('tools', null)"
-                                    style="padding: 10px 20px; background: #ff9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                                    Open Tools
-                                </button>
                             </div>
 
                             <div
@@ -3539,7 +3522,7 @@
                                         style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
                                         <option value="player">Player</option>
                                         <option value="library">Bibliothek</option>
-                                        <option value="browser">Browser</option>
+                                        <option value="file">Browser (Crawler)</option>
                                         <option value="vlc">Video Player</option>
                                         <option value="logbuch">Logbuch</option>
                                         <option value="playlist">Playlist</option>
@@ -3547,8 +3530,8 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
-
+                        </div> <!-- closes Left Column: Core Settings -->
+                        
                         <!-- Right Column: General & Debug Settings -->
                         <div style="flex: 1; max-width: 500px;">
                             <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_general_debug">
@@ -3557,7 +3540,7 @@
                             <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;"
                                 data-i18n="options_debug_desc">
                                 Im Options-Reiter können die Flags für das Logging gesetzt werden.</p>
-
+                            
                             <div id="debug-flags-container"
                                 style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
                                 <!-- Flags werden dynamisch geladen -->
@@ -3570,8 +3553,7 @@
                                     style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #c0392b; background: #fff; color: #c0392b; cursor: pointer; font-weight: bold;"
                                     data-i18n="options_debug_all_off">Alle Flags aus</button>
                             </div>
-
-                        </div> <!-- closes right column -->
+                        </div> <!-- closes Right Column: General & Debug Settings -->
                     </div> <!-- closes options-general-view -->
 
                     <div id="options-tools-view" class="options-view scrolling-view"
@@ -3776,7 +3758,7 @@
                                         </li>
                                         <li><strong data-i18n="env_label_mutagen">Mutagen:</strong> <span
                                                 id="env-mutagen-status">-</span></li>
-                                        <li><strong data-i18n="env_label_mediainfo">MediaInfo:</strong> <span
+                                        <li><strong data-i18n="env_label_mediainfo">MediaInfo:</b> <span
                                                 id="env-mediainfo-status">-</span></li>
                                         <li><strong data-i18n="env_label_ffmpeg">FFmpeg:</strong> <span
                                                 id="env-ffmpeg-status">-</span></li>
@@ -3935,6 +3917,7 @@
                                     style="background: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 6px; font-size: 0.8em; max-height: 140px; overflow-y: auto; font-family: monospace;">
                                     <span style="color: #999;" data-i18n="common_loading_short">Lade...</span>
                                 </div>
+                            </div> <!-- closes requirements section at 3909 -->
 
                                 <!-- Installed Packages (active environment) -->
                                 <div style="margin-top: 25px;">
@@ -3991,7 +3974,38 @@
                                 </div> <!-- closes flex layout -->
                             </div> <!-- closes padding div -->
                         </div> <!-- closes options-environment-view -->
-                    </div> <!-- closes options-scroll-container -->
+
+                    <div id="options-sync-view" class="options-view" style="display: none; padding: 20px;">
+                        <div style="max-width: 800px;">
+                            <h3 data-i18n="options_sync_header">Synchronization & RTT Test</h3>
+                            <p style="color: #666; margin-bottom: 20px; font-size: 0.9em;">
+                                Verify backend-frontend latency and message integrity. 
+                                These tests measure the Round-Trip Time (RTT) for various data structures.
+                            </p>
+                            
+                            <div style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                    <button onclick="runRTTTest('ping')" class="action-btn" style="min-width: 150px;">
+                                        Basic Ping
+                                    </button>
+                                    <span style="font-size: 0.85em; color: #888;">Simple JSON ping-pong check (Stage 1).</span>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                    <button onclick="runRTTTest('complex')" class="action-btn" style="min-width: 150px;">
+                                        Item RTT (Complex)
+                                    </button>
+                                    <span style="font-size: 0.85em; color: #888;">Nested data structures & UTF-8 validation (Stage 2 & 3).</span>
+                                </div>
+                                
+                                <div id="rtt-status-container" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #f0f0f0;">
+                                    <span style="font-weight: bold; font-size: 0.8em; color: #555;">Status:</span>
+                                    <span id="rtt-status-text" style="font-family: monospace; font-size: 0.85em; color: #e67e22; margin-left: 10px;">Waiting for trigger...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- closes options-scroll-container -->
                 </div> <!-- closes system-configuration-persistence-panel -->
 
 
@@ -4091,22 +4105,6 @@
                                     style="font-size: 0.9em; color: #666; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px;">
                                     <!-- DB Stats will be loaded here -->
                                     <span data-i18n="debug_db_loading_stats">Lade Datenbank-Statistiken...</span>
-                                </div>
-                            </div>
-
-                            <div style="margin-bottom: 25px;">
-                                <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_sync_test">
-                                    Synchronization & RTT Test</h3>
-                                <div style="background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                    <button id="btn-rtt-test" onclick="runRTTTest()" class="tab-btn" style="background: #2a7; color: white; border-color: #216d41; margin: 0; min-width: 120px;">
-                                        Basic Ping
-                                    </button>
-                                    <button id="btn-rtt-item-test" onclick="runRTTItemTest()" class="tab-btn" style="background: #0277bd; color: white; border-color: #01579b; margin: 0; min-width: 120px;">
-                                        Item RTT (Complex)
-                                    </button>
-                                    <div id="rtt-status" style="font-size: 0.85em; color: #666; width: 100%; margin-top: 8px;">
-                                        Waiting for trigger...
-                                    </div>
                                 </div>
                             </div>
 
@@ -5281,6 +5279,7 @@
                             </div>
                             <audio id="native-html5-audio-pipeline-element" controls
                                 style="flex: 1; height: 32px;"></audio>
+                            
                             <script>
                                 if ('mediaSession' in navigator) {
                                     const updateMediaMetadata = (meta) => {
@@ -5592,7 +5591,6 @@
                                 data-i18n="common_save">Speichern</button>
                         </div>
                     </div>
-                </div>
                 </div>
 
                 <script>
@@ -6249,7 +6247,7 @@
                         const folder = await eel.pick_folder()();
                         if (folder) {
                             // Switch to browser tab automatically after folder selection
-                            switchTab('browser', document.querySelector('.tab-btn[onclick*="browser"]'));
+                            switchTab('file', document.querySelector('.tab-btn[onclick*="file"]'));
                             fbNavigate(folder);
                         }
                     }
@@ -6340,7 +6338,7 @@
                             <span style="font-weight: bold; color: #333; font-size: 1.1em;">
                                 <span class="icon-database" style="background-color: #2980b9;"></span> ${t('database_item') || 'Items'}: 
                                 <span style="color: #2980b9; margin-left: 5px;">${stats.total_items}</span>
-                            </div>
+                            </span>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 `;
@@ -11031,30 +11029,7 @@
                     </div>
                 </div>
 
-                <!-- Footer mit Impressum -->
-                <div id="app-footer"
-                    style="background: #f5f5f5; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #666; width: 100%; box-sizing: border-box;">
-                    <div>
-                        <span data-i18n="app_title">dict</span>
-                        <span style="margin: 0 8px; color: #ccc;">•</span>
-                        <span id="version-label" style="color: #999;">-</span>
-                    </div>
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <!-- Sync Status Indicator -->
-                        <div id="sync-indicator" title="Backend Status" data-i18n="[title]sync_backend_status"
-                            style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #eee; border-radius: 20px; transition: all 0.3s ease;">
-                            <div id="sync-dot" style="width: 8px; height: 8px; background: #999; border-radius: 50%;">
-                            </div>
-                            <span id="sync-text" style="font-size: 0.85em; font-weight: 500;"
-                                data-i18n="sync_initializing">Initialisierung...</span>
-                        </div>
-                        <a id="imprint-link" href="#" onclick="openAboutImprint()"
-                            style="color: #888; text-decoration: none; font-size: 0.8em;"
-                            data-i18n="common_about_imprint">Über
-                            &
-                            Impressum</a>
-                    </div>
-                </div>
+                <!-- Original Footer removed and integrated into Player Footer -->
 
 </body>
 

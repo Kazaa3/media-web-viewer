@@ -41,9 +41,16 @@ class TestUIIntegrity(unittest.TestCase):
                  logbuch-tab, etc.) to ensure the UI structure is complete.
         """
         required_ids = [
-            "media-list", "library-tab", "browser-tab", "edit-tab", 
-            "options-tab", "parser-tab", "debug-tab", "tests", 
-            "logbuch-tab", "video-tab"
+            "active-queue-tab-trigger", 
+            "coverflow-library-tab-trigger", 
+            "filesystem-crawler-tab-trigger", 
+            "system-registry-tab-trigger", 
+            "app-footer",
+            "sync-indicator",
+            "main-split-container",
+            "qa-validation-tab-trigger", 
+            "documentation-journal-tab-trigger",
+            "media-orchestrator-tab-trigger"
         ]
         for rid in required_ids:
             # Look for id="rid"
@@ -61,7 +68,7 @@ class TestUIIntegrity(unittest.TestCase):
         self.assertTrue(match, "tabMap definition not found in switchTab function")
         
         tab_map_str = match.group(1)
-        required_keys = ['player', 'library', 'browser', 'edit', 'options', 'parser', 'debug', 'tests', 'logbuch', 'vlc']
+        required_keys = ['player', 'library', 'item', 'file', 'edit', 'options', 'parser', 'debug', 'tests', 'logbuch', 'playlist', 'vlc']
         
         for key in required_keys:
             self.assertIn(f"'{key}'", tab_map_str, f"Key '{key}' missing from tabMap")
@@ -81,6 +88,8 @@ class TestUIIntegrity(unittest.TestCase):
         valid_keys = re.findall(r"'([^']+)'\s*:", tab_map_str)
         
         for call_id in calls:
+            if call_id.startswith("${"):
+                continue
             self.assertIn(call_id, valid_keys, f"switchTab called with unknown ID '{call_id}'")
 
     def test_sync_indicator_elements(self):
