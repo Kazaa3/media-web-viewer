@@ -2967,14 +2967,7 @@
                 <div id="sidebar-performance-container" style="margin-top: 10px;"></div>
             </div>
 
-            <div
-                style="margin-top: auto; padding-top: 20px; border-top: 1px solid #eee; width: 100%; text-align: center;">
-                <button
-                    onclick="switchTab('parser', document.getElementById('parser-tab-trigger')); switchParserView('mediainfo')"
-                    style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
-                    🛠️ <span data-i18n="env_label_mediainfo">MediaInfo</span> Details
-                </button>
-            </div>
+            <!-- MediaInfo shortcut removed -->
         </div>
         <!-- SIDEBAR END -->
 
@@ -6866,39 +6859,39 @@
                 cancelPick();
             }
         }
-
-        function onGrabPointerLeave(e, index) {
-            // e.stopPropagation(); // Might break things
-            if (pickTimer) {
-                console.log(`[Picking] Mouse left handle ${index} during press - continuing timer for robustness`);
-                // We DON'T cancel here anymore. Only mouseup or a very far move should cancel.
-                // But for simplicity, we let the timer finish if they stay within reasonable bounds.
-                // If they release outside, we still have the mouseup on body or similar?
-                // Actually, let's keep it but make it less sensitive.
-
-                // If we want it to be REALLY robust, we should listen to mouseup on window.
-            }
-        }
-
-        function clearPickProgress(index) {
-            const progress = document.getElementById(`pick-progress-${index}`);
-            if (progress) {
-                progress.style.transition = 'none';
-                progress.style.width = '0%';
-                setTimeout(() => { if (progress) progress.style.transition = 'width 0.4s linear'; }, 50);
-            }
-        }
-
-        function pickItem(index) {
-            console.log("pickItem activated for index:", index);
-            if (isShuffle) {
-                alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
-                return;
-            }
-            pickedIndex = index;
-            document.body.classList.add('is-picking');
-
-            // Add global cancel listener if user releases outside elements
+// 
+//         function onGrabPointerLeave(e, index) {
+//             // e.stopPropagation(); // Might break things
+//             if (pickTimer) {
+//                 console.log(`[Picking] Mouse left handle ${index} during press - continuing timer for robustness`);
+//                 // We DON'T cancel here anymore. Only mouseup or a very far move should cancel.
+//                 // But for simplicity, we let the timer finish if they stay within reasonable bounds.
+//                 // If they release outside, we still have the mouseup on body or similar?
+//                 // Actually, let's keep it but make it less sensitive.
+// 
+//                 // If we want it to be REALLY robust, we should listen to mouseup on window.
+//             }
+//         }
+// 
+//         function clearPickProgress(index) {
+//             const progress = document.getElementById(`pick-progress-${index}`);
+//             if (progress) {
+//                 progress.style.transition = 'none';
+//                 progress.style.width = '0%';
+//                 setTimeout(() => { if (progress) progress.style.transition = 'width 0.4s linear'; }, 50);
+//             }
+//         }
+// 
+//         function pickItem(index) {
+//             console.log("pickItem activated for index:", index);
+//             if (isShuffle) {
+//                 alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
+//                 return;
+//             }
+//             pickedIndex = index;
+//             document.body.classList.add('is-picking');
+// 
+//             // Add global cancel listener if user releases outside elements
             const onGlobalUp = (e) => {
                 if (pickedIndex !== -1) {
                     console.log("[Picking] Global mouseup detected - checking if we need to cancel");
