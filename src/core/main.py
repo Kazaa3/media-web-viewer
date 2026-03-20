@@ -1830,6 +1830,26 @@ def get_debug_logs():
 
 
 @eel.expose
+def reset_backend():
+    """
+    Exposed function to reset backend connections and clear ephemeral state.
+    """
+    logging.info("[System] Backend Reset triggered by UI.")
+    try:
+        # Clear any caches or ephemeral state if needed
+        global _ENV_INFO_CACHE
+        _ENV_INFO_CACHE = {} 
+        
+        # You could also perform database connection resets or other cleanup here
+        # db.reset_connection() 
+        
+        return {"status": "ok", "message": "Backend successfully reset."}
+    except Exception as e:
+        logging.error(f"[System] Backend Reset failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
 def set_log_level(level_name: str):
     """
     @brief Sets the global log level.

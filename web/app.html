@@ -1872,8 +1872,9 @@
                         const subTitle = btn.innerText;
                         header.innerText = subTitle;
                     }
-                }
             }
+        }
+
         function switchParserView(viewId) {
             console.log("Switching parser view to:", viewId);
             document.querySelectorAll('.parser-view').forEach(el => el.style.display = 'none');
@@ -1889,8 +1890,6 @@
                 const btn = document.getElementById('parser-subtab-' + viewId);
                 if (btn) btn.classList.add('active');
             }
-        }
-
         }
 
         // --- Reporting View & SQL Logic ---
@@ -2921,6 +2920,12 @@
                         <polyline points="10 8 14 10.5 10 13 10 8" />
                     </svg>
                     <span data-i18n="nav_video">Video</span></button>
+
+                <button id="global-backend-reset-trigger" class="tab-btn" onclick="resetBackend()"
+                    style="margin-left: 20px; background: #fff3e0; border-color: #ff9800; color: #e65100; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                    <span class="icon-refresh"></span>
+                    <span>Reset Backend</span>
+                </button>
                 <button class="tab-btn"
                     style="background: #fdf5e6; border-color: #f4d; display: flex; align-items: center; gap: 8px;"
                     onclick="toggleDebugMenu()" data-i18n="nav_flags">
@@ -3372,6 +3377,11 @@
                                 style="padding: 8px 16px; background: #f3f8ff; color: #2a62c9; border: 1px solid #2a62c9; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px; margin-left: 8px;"
                                 data-i18n="options_add_default_dir">
                                 📁 Standardordner media/ wiederherstellen
+                            </button>
+
+                            <button onclick="resetBackend()"
+                                style="padding: 8px 16px; background: #fff3e0; color: #e65100; border: 1px solid #ff9800; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px; margin-left: 8px;">
+                                🔄 Reset Backend (Sofort)
                             </button>
 
                             <h3 style="font-size: 1.1em; margin-bottom: 15px;">🔧 Pfad-Konfiguration</h3>
@@ -4050,13 +4060,19 @@
                                 <span class="icon-trash" style="background-color: #f4d;"></span> Nur DB
                                 leeren
                             </button>
-                            <button onclick="resetApp()"
-                                style="padding: 10px 18px; border: 1px solid #c0392b; background: white; color: #c0392b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
-                                class="btn-hover-danger">
-                                <span class="icon-fire" style="background-color: #c0392b;"></span> <span
-                                    data-i18n="options_app_reset">App Reset (Alles Löschen)</span>
-                            </button>
-                        </div>
+                                <button onclick="resetApp()"
+                                    style="padding: 10px 18px; border: 1px solid #c0392b; background: white; color: #c0392b; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
+                                    class="btn-hover-danger">
+                                    <span class="icon-fire" style="background-color: #c0392b;"></span> <span
+                                        data-i18n="options_app_reset">App Reset (Alles Löschen)</span>
+                                </button>
+                                <button onclick="resetBackend()"
+                                    style="padding: 10px 18px; border: 1px solid #e67e22; background: white; color: #e67e22; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: all 0.2s;"
+                                    class="btn-hover-warning">
+                                    <span class="icon-refresh" style="background-color: #e67e22;"></span> <span
+                                        data-i18n="options_backend_reset">Reset Backend (Verbindung neu)</span>
+                                </button>
+                            </div>
                         <div style="margin-top: 15px; color: #c0392b; font-size: 0.8em; font-weight: bold;"
                             data-i18n="options_danger_caution">
                             Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
@@ -9834,6 +9850,22 @@
                     alert(t("reset_success_db"));
                     loadLibrary(); // Update views
                 }
+            }
+        }
+
+        async function resetBackend() {
+            if (!confirm("Möchten Sie das Backend wirklich zurücksetzen? Die Verbindung wird kurzzeitig unterbrochen.")) return;
+            try {
+                const res = await eel.reset_backend()();
+                if (res && res.status === 'ok') {
+                    alert("Backend-Reset erfolgreich: " + res.message);
+                    location.reload(); // Refresh to re-initialize everything
+                } else {
+                    alert("Fehler beim Backend-Reset: " + (res ? res.message : 'Unknown error'));
+                }
+            } catch (e) {
+                console.error("Backend Reset Exception:", e);
+                alert("Fehler bei der Kommunikation mit dem Backend.");
             }
         }
 
