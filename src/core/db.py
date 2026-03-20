@@ -232,7 +232,7 @@ def insert_media(item_dict):
                              transcoded_format, tags, extension, container, tag_type, codec, 
                              has_artwork, art_path, full_tags, media_type, subtype, file_type,
                              isbn, imdb, tmdb, discogs, amazon_cover, parent_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -444,9 +444,26 @@ def update_media_tags(name, tags_dict):
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE media
-        SET tags = ?, full_tags = ?
+        SET tags = ?, 
+            full_tags = ?,
+            isbn = ?,
+            imdb = ?,
+            tmdb = ?,
+            discogs = ?,
+            amazon_cover = ?,
+            parent_id = ?
         WHERE name = ?
-    """, (json.dumps(tags_dict), json.dumps(tags_dict.get('full_tags', {})), name))
+    """, (
+        json.dumps(tags_dict), 
+        json.dumps(tags_dict.get('full_tags', {})),
+        tags_dict.get('isbn'),
+        tags_dict.get('imdb'),
+        tags_dict.get('tmdb'),
+        tags_dict.get('discogs'),
+        tags_dict.get('amazon_cover'),
+        tags_dict.get('parent_id'),
+        name
+    ))
     conn.commit()
     conn.close()
 

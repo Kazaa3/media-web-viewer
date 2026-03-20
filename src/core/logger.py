@@ -5,7 +5,7 @@
 """
 # logger.py - Centralized Logging System
 
-Dieses Modul stellt ein zentrales Logging-System für das Media Web Viewer Projekt bereit.
+Dieses Modul stellt ein zentrales Logging-System für das dict-Projekt bereit.
 
 Features:
 - Logging für Backend, UI und Tests
@@ -62,6 +62,14 @@ class UIHandler(logging.Handler):
             # Keep buffer size manageable
             if len(LOG_BUFFER) > MAX_BUFFER_SIZE:
                 LOG_BUFFER.pop(0)
+            
+            # Real-time UI tracing if Eel is initialized and has a connection
+            import eel
+            if hasattr(eel, 'appendUiTrace') and getattr(eel, '_websocket', None):
+                try:
+                    eel.appendUiTrace(msg)()
+                except Exception:
+                    pass
         except Exception:
             self.handleError(record)
 

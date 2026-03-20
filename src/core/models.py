@@ -16,16 +16,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
 from pathlib import Path
 from typing import Optional, Any
-from ..parsers.format_utils import (
-    PARSER_CONFIG, SLOW_PARSERS, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
-    DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS,
-    DISK_IMAGE_EXTENSIONS
-)
-from parsers import media_parser
-import logger
+
+try:
+    from src.parsers.format_utils import (
+        PARSER_CONFIG, SLOW_PARSERS, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
+        DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS,
+        DISK_IMAGE_EXTENSIONS
+    )
+    from src.parsers import media_parser
+    from src.core import logger
+except ImportError:
+    # Fallback for environments where src is in PYTHONPATH
+    from parsers.format_utils import (
+        PARSER_CONFIG, SLOW_PARSERS, AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
+        DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, IMAGE_EXTENSIONS,
+        DISK_IMAGE_EXTENSIONS
+    )
+    from parsers import media_parser
+    import logger
 import re
 
 # Get specialized logger for models
@@ -102,7 +112,7 @@ class MediaItem:
         self.file_format = detect_file_format(self.path, self.tags)
         self.content_type = self.detect_content_type()
         
-        from parsers.format_utils import is_playable
+        from src.parsers.format_utils import is_playable
         tags_with_path = (self.tags or {}).copy()
         tags_with_path['path'] = str(self.path)
         self.is_playable = is_playable(self.file_format, tags_with_path)
@@ -249,7 +259,7 @@ class MediaItem:
 
         # 2. Audio-based Sub-Categorization
         if logical == 'Audio':
-            genre = tags.get('genre', '').lower()
+            genre = str(tags.get('genre') or '').lower()
             if any(k in genre for k in ['klassik', 'classical', 'opera']):
                 return 'Klassik'
             if any(k in path_str for k in ['podcast']):
@@ -316,9 +326,9 @@ class MediaItem:
         # 2. Audio Parser Logic
         if ext in AUDIO_EXTENSIONS or ext == '.m4b':
             # Priority 1: Hörbuch (m4b extension or keyword in path/genre)
-            genre = (tags.get('genre') or '').lower()
-            album = (tags.get('album') or '').lower()
-            artist = (tags.get('artist') or '').lower()
+            genre = str(tags.get('genre') or '').lower()
+            album = str(tags.get('album') or '').lower()
+            artist = str(tags.get('artist') or '').lower()
             path_str = str(self.path).lower()
             if ext == '.m4b' or any(
                 k in path_str for k in [
@@ -332,8 +342,8 @@ class MediaItem:
                 return 'Podcast'
 
             # Priority 2: Music specific tags
-            artist = (tags.get('artist') or "").lower()
-            album = (tags.get('album') or "").lower()
+            artist = str(tags.get('artist') or "").lower()
+            album = str(tags.get('album') or "").lower()
 
             # Priority 3: Klassik
             if any(k in genre for k in ['klassik', 'classical', 'klaqssik']) or \
@@ -369,7 +379,7 @@ class MediaItem:
         @details Extrahiert eingebettete Cover-Bilder.
         @return Path to the extracted image or None.
         """
-        from parsers.artwork_extractor import extractor
+        from src.parsers.artwork_extractor import extractor
         logical = getattr(self, 'logical_type', 'Unbekannt')
         return extractor.extract(self.path, self.tags, logical)
 
@@ -396,7 +406,7 @@ class MediaItem:
         else:
             duration_str = f"{mins}:{secs:02d}"
 
-        codec = self.tags.get('codec', '').upper()
+        codec = str(self.tags.get('codec') or '').upper()
         # Lossless ALAC → transcode to FLAC
         is_alac = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
         # Lossy WMA → transcode to OGG (Opus)
@@ -448,7 +458,7 @@ class MediaItem:
             'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format,
-            'is_chrome_native': is_chrome_native,
+            'is_chrome_native': chrome_native,
             'year': filtered_tags.get('year', ''),
             'film_title': filtered_tags.get('title', self.name),
             'media_type': self.media_type,

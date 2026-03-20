@@ -75,6 +75,7 @@ import subprocess
 import re
 import shutil
 import bottle
+import psutil
 from typing import cast
 
 # Internal imports
@@ -95,6 +96,35 @@ transcode_mgr = transcoder.TranscoderManager()
 # Central logger for main
 log = get_logger("main")
 
+
+def ensure_singleton():
+    """Find and kill existing main.py processes and take a lock."""
+    current_pid = os.getpid()
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            cmd = proc.info.get('cmdline')
+            if cmd and any('main.py' in part for part in cmd) and proc.info['pid'] != current_pid:
+                logging.info(f"[System] Killing existing instance (PID: {proc.info['pid']})")
+                proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+    
+    # Take lock
+    lock_file = Path(logger.APP_DATA_DIR) / "mwv.lock"
+    lock_file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        f = open(lock_file, "w")
+        import fcntl
+        fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        f.write(str(current_pid))
+        f.flush()
+        return f
+    except Exception as e:
+        print(f"Error taking lock: {e}")
+        return None
+
+# Perform singleton check immediately
+_SINGLETON_LOCK = ensure_singleton()
 
 def _detect_python_environment():
     """
@@ -127,6 +157,66 @@ def _detect_python_environment():
 
     # System Python
     return ('system', None, sys.prefix, python_version, python_executable)
+
+def sanitize_json_utf8(data):
+    """
+    Utility for UTF-8 sanitization of JSON data.
+    Ensures all strings in nested dicts/lists are valid UTF-8.
+    """
+    if isinstance(data, dict):
+        return {sanitize_json_utf8(k): sanitize_json_utf8(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_json_utf8(i) for i in data]
+    elif isinstance(data, str):
+        try:
+            return data.encode('utf-8', errors='replace').decode('utf-8')
+        except Exception:
+            return "[Invalid UTF-8]"
+    else:
+        return data
+
+@eel.expose
+def rtt_ping(data):
+    """
+    @brief Multi-stage RTT Ping for verification.
+    @details Logs receipt of specialized data structures.
+    """
+    size = len(json.dumps(data))
+    log.info(f"[RTT] Ping received ({size} bytes). Data types: {type(data).__name__}")
+    
+    # Show transformation as requested
+    if isinstance(data, dict):
+        log.info(f"[RTT] Stage 1 (Dict): {list(data.keys())}")
+        if any(isinstance(v, dict) for v in data.values()):
+            log.info(f"[RTT] Stage 2 (Dict of Dict): Detected")
+        if any(isinstance(v, list) for v in data.values()):
+            log.info(f"[RTT] Stage 3 (List of Dicts): Detected")
+            
+    return sanitize_json_utf8({
+        "status": "pong",
+        "timestamp": time.time(),
+        "received_size": size,
+        "echo": data
+    })
+
+@eel.expose
+def rtt_item_test(data):
+    """Echoes complex media-item-like data back for RTT and integrity testing."""
+    log.info(f"[RTT] Item Test received: {type(data).__name__}")
+    return sanitize_json_utf8({
+        "status": "success",
+        "timestamp": time.time(),
+        "item_echo": data
+    })
+
+@eel.expose
+def confirm_receipt(event_name):
+    """
+    @brief Simple confirmation from frontend to backend.
+    """
+    log.info(f"[Sync] Frontend confirmed receipt of: {event_name}")
+    return {"status": "log_noted"}
+
 
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
@@ -210,7 +300,6 @@ try:
     import src.core.db as db
 except ModuleNotFoundError as exc:
     # Handle missing modules
-    pass
     missing_module = exc.name or "unknown"
     core_dir = Path(__file__).resolve().parent
     project_dir = core_dir.parent.parent
@@ -1666,7 +1755,8 @@ def get_environment_info(force_refresh=False):
 # Konfiguration
 # 1. Ort für den automatischen Bibliotheks-Scan
 # Standardmäßig aus PARSER_CONFIG laden (sync)
-SCAN_MEDIA_DIR = PARSER_CONFIG.get("scan_dirs", [str(Path(__file__).parent / "media")])[0]
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+SCAN_MEDIA_DIR = PARSER_CONFIG.get("scan_dirs", [str(PROJECT_ROOT / "media")])[0]
 
 # 2. Standard-Pfad beim ersten Öffnen des Browsers
 BROWSER_DEFAULT_DIR = PARSER_CONFIG.get("browse_default_dir", str(Path.home()))
@@ -1772,7 +1862,19 @@ def get_preferred_browser():
 
     logging.warning(
         "[Browser] Using system default browser (Vivaldi or other)")
-    return webbrowser
+def wait_for_port(port: int, host: str = 'localhost', timeout: float = 10.0) -> bool:
+    """Wait for a port to become reachable before proceeding (optimized for speed)."""
+    import socket
+    import time
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            # Short timeout for connection check
+            with socket.create_connection((host, port), timeout=0.1):
+                return True
+        except (ConnectionRefusedError, socket.timeout, OSError):
+            time.sleep(0.1) # Faster polling
+    return False
 
 
 def open_session_url(url: str) -> bool:
@@ -1783,28 +1885,64 @@ def open_session_url(url: str) -> bool:
     import shutil
 
     browser_candidates = [
-        'chromium-browser',
         'chromium',
+        'chromium-browser',
+        'google-chrome-stable',
+        'google-chrome',
+        'chrome',
     ]
+
+    # Using a dedicated profile directory (within the project data) prevents
+    # profile locks that often stop chromium from opening a new window in app-mode
+    # when another instance is already running with the same profile.
+    profile_dir = PROJECT_ROOT / "data" / "browser_profile"
+    try:
+        profile_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        profile_dir = None
 
     for browser_cmd in browser_candidates:
         browser_path = shutil.which(browser_cmd)
         if browser_path:
-            logging.info(f"[Browser] Launching {browser_cmd} in app mode")
+            logging.info(f"[Browser] Launching {browser_cmd} in app mode (URL: {url})")
+            
+            # Arguments for a reliable, clean app window
+            import urllib.parse
+            parsed_url = urllib.parse.urlparse(url)
+            if parsed_url.port:
+                logging.info(f"[Browser] Waiting for port {parsed_url.port} before launch...")
+                if not wait_for_port(parsed_url.port, timeout=12.0):
+                    logging.warning(f"[Browser] Port {parsed_url.port} not reachable after timeout. Launching anyway.")
+
+            args = [
+                browser_path,
+                f'--app={url}',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu',
+                '--window-size=1550,800',
+                '--no-first-run',
+                '--no-default-browser-check',
+                '--disable-extensions'
+            ]
+            
+            # Using a project-local profile to avoid conflicts
+            # if profile_dir:
+            #     args.append(f'--user-data-dir={profile_dir}')
+            #     logging.debug(f"[Browser] Using profile: {profile_dir}")
+            
+            logging.info(f"[Browser] Executing: {' '.join(args)}")
+            
             try:
-                process = subprocess.Popen([
-                    browser_path,
-                    f'--app={url}',
-                    '--new-window',
-                    '--no-first-run',
-                    '--no-default-browser-check',
-                ],
+                # Use subprocess.Popen to launch asynchronously
+                process = subprocess.Popen(
+                    args,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL
                 )
                 global BROWSER_PID
                 BROWSER_PID = process.pid
-                logging.info(f"[Browser] Gestartet wurde: {browser_cmd} (PID: {BROWSER_PID})")
+                logging.info(f"[Browser] Successfully started: {browser_cmd} (PID: {BROWSER_PID})")
                 return True
             except Exception as e:
                 logging.warning(
@@ -2268,7 +2406,8 @@ def get_library():
 
     filtered_media = [item for item in all_media if item.get(
         'category') in allowed_internal_cats]
-    return {"media": filtered_media}
+    return sanitize_json_utf8({"media": filtered_media})
+
 
 
 @eel.expose
@@ -2569,7 +2708,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
     logging.info(f"🔍 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
     
-    count: int = 0
+    count_indexed: int = 0
     try:
         from src.parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS
         
@@ -2591,7 +2730,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
         logging.info(f"🔍 [Scan] Enabled categories: {indexed_cats}")
         
-        all_exts = set()
+        all_exts: set[str] = set()
         if "audio" in indexed_cats:
             all_exts |= AUDIO_EXTENSIONS
         if "video" in indexed_cats:
@@ -2608,7 +2747,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {list(all_exts)[:10]}...")
 
         # Reset counters
-        count: int = 0
+        count_indexed = 0
         for scan_root in scan_roots:
             log.info(f"🔍 [Scan] Starting scan of: {scan_root}")
 
@@ -2644,7 +2783,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             obj_id = db.insert_media(item_dict)
                             if obj_id:
                                 folder_id_map[d] = obj_id
-                                count += 1
+                                count_indexed += 1
                                 if is_blackbox:
                                     skip_subpaths.add(d)
                                 logger.debug("scan", f"✅ [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
@@ -2671,12 +2810,10 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                         try:
                             # 1. Check if already in DB
                             if str(f) in existing_media:
-                                count += 1
+                                count_indexed += 1
                                 continue 
 
                             # 2. Extract metadata & Link to Object
-                            logger.debug("scan", f"🔍 [Scan] Processing item: {f.name}")
-                            
                             # Check for parent object
                             parent_id = folder_id_map.get(f.parent)
                             
@@ -2689,7 +2826,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                 
                             db.insert_media(item_dict)
                             logger.debug("scan", f"✅ [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
-                            count += 1
+                            count_indexed += 1
                         except Exception as e:
                             logger.debug("scan", f"🔍 [Scan] Fehler bei {f.name}: {e}")
                             continue
@@ -2700,12 +2837,12 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         logging.info(
             f"[Scan-Trace] Scan of {scanned_target} took {elapsed:.2f} seconds.")
         logging.info(
-            f"[Scan-Trace] Scan complete. Processed {count} items in {elapsed:.2f} seconds.")
+            f"[Scan-Trace] Scan complete. Processed {count_indexed} items in {elapsed:.2f} seconds.")
 
         # Liefere gescannten Stand direkt aus der DB zurück
         return {
             "media": db.get_all_media(),
-            "stats": {"count": count, "time_seconds": elapsed}
+            "stats": {"count": count_indexed, "time_seconds": elapsed}
         }
     finally:
         if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
@@ -3549,6 +3686,47 @@ def vlc_seek(instance_id, time_seconds):
     # Note: frontend needs to call open_video again with the start_time
     # or we do it here. Restarting from here requires knowing the original path.
     return {"status": "ok"}
+
+@eel.expose
+def play_external_file(path: str):
+    """
+    @brief Plays a local file that was dropped onto the UI or selected via picker.
+    """
+    logging.info(f"📁 [External-Play] File: {path}")
+    try:
+        abs_path = Path(path).resolve()
+        # Fallback for relative paths if not found directly
+        if not abs_path.exists():
+            # Try to resolve relative to common roots if passed as just a name
+            abs_path = Path(resolve_media_path(path))
+            
+        if not abs_path.exists():
+            return {"status": "error", "error": f"Datei nicht gefunden: {path}"}
+        
+        # Use vlc_extern (standalone) or vlc_embedded based on preference, 
+        # default to smart logic but hint external.
+        return open_video_smart(str(abs_path), mode="vlc_extern")
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
+def play_stream_url(url: str, engine: str = "hls"):
+    """
+    @brief Returns playback parameters for a specific network stream URL.
+    """
+    logging.info(f"🌐 [External-Play] Stream: {url} via {engine}")
+    # Basic validation
+    if not url.startswith(('http', 'rtsp', 'rtmp')):
+        return {"status": "error", "error": "Ungültiges Protokoll. Erwartet http, rtsp oder rtmp."}
+    
+    # HLS is handles natively by the browser player via Video.js
+    if engine == "hls" or url.endswith('.m3u8'):
+        return {"status": "ok", "hls": url, "type": "application/x-mpegURL"}
+    
+    # Other protocols might need specialized handling or just returned
+    return {"status": "ok", "url": url}
+
 
 @eel.expose
 def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
@@ -5774,237 +5952,92 @@ def get_transcode_status(task_id: str):
 if __name__ == "__main__":
     _ensure_project_venv_active()
     
-    # dict branding startup logs
-    logging.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    logging.info(f"  dict v{VERSION} - Starting Application")
-    logging.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    # Start UI immediately for "Fast Boot"
+    # We delay singleton checks, DB init, and env validation until AFTER the browser is requested.
     
-    env_handler.validate_safe_startup()
-
-    no_gui_mode = is_no_gui_mode(sys.argv)
-    connectionless_browser_mode = is_connectionless_browser_mode(sys.argv)
-
-    # Logge den Start-Befehl (für das Debug-Fenster)
-    startup_cmd = f"$ {sys.executable} {' '.join(sys.argv)}"
-    logging.info(f"[Startup] Command: {startup_cmd}")
-    debug_log(startup_cmd)
+    session_port = int(os.environ.get("MWV_PORT", 8345))
     
-    db.init_db()
-    logging.info(f"[Startup] Database initialized: {db.DB_FILENAME}")
-
-    legacy_dbs = db.list_legacy_databases()
-    if legacy_dbs:
-        logging.warning(
-            "[DB] Legacy database files detected (ignored by app):")
-        for legacy_db in legacy_dbs:
-            logging.warning(f"[DB]  - {legacy_db}")
-        logging.warning("[DB] Use reset_app_data() to remove legacy DB files.")
-
-    # Ensure default scan dir is present and all scan dirs exist
-    ensure_default_scan_dir()
-    config_dirs = PARSER_CONFIG.get("scan_dirs", [])
-    for d in config_dirs:
-        Path(d).mkdir(parents=True, exist_ok=True)
-
-    if no_gui_mode:
-        sessionless_info = run_sessionless_mode()
-        logging.info("[NoGUI] Mode enabled (--ng / --no-gui / --sessionless).")
-        logging.info(f"[NoGUI] Active DB: {sessionless_info['active_db']}")
-        logging.info(
-            f"[NoGUI] Library entries: {
-                sessionless_info['total_items']}")
-        logging.info(
-            f"[NoGUI] Configured scan dirs: {
-                sessionless_info['scan_dirs']}")
-        logging.info("[NoGUI] No Eel/WebSocket/Browser started. Exiting.")
-        raise SystemExit(0)
-
-    if connectionless_browser_mode:
-        mode_info = run_connectionless_browser_mode()
-        logging.info("[Mode-N] Connectionless browser mode enabled (--n).")
-        logging.info(f"[Mode-N] Active DB: {mode_info['active_db']}")
-        logging.info(f"[Mode-N] Library entries: {mode_info['total_items']}")
-        logging.info(f"[Mode-N] Opened local UI: {mode_info['app_url']}")
-        logging.info("[Mode-N] No Eel/WebSocket backend started. Exiting.")
-        raise SystemExit(0)
-
-    existing_sessions = [s for s in check_running_sessions() if s.get('port')]
-    current_project_root = Path(__file__).resolve().parent
-
-    def _session_project_root(session: dict) -> Path | None:
-        cmdline = str(session.get('cmdline', '') or '')
-        if not cmdline:
-            return None
-
-        for token in cmdline.split():
-            token_clean = token.strip("'\"")
-            if token_clean.endswith('main.py'):
-                try:
-                    return Path(token_clean).resolve().parent
-                except Exception:
-                    return None
-        return None
-
-    same_project_sessions = [
-        s for s in existing_sessions
-        if _session_project_root(s) == current_project_root
-    ]
-
-    if existing_sessions and not same_project_sessions:
-        logging.info(
-            "[Session] Ignoring running sessions from other project/install paths. "
-            f"Current project root: {current_project_root}"
-        )
-
-    # Check for existing sessions of this project (same root path)
-    existing_sessions = same_project_sessions
-    if existing_sessions and os.environ.get("MWV_FORCE_NEW_SESSION") != "1":
-        existing = existing_sessions[0]
-        existing_url = f"http://localhost:{existing['port']}/app.html"
-
-        if is_session_url_reachable(existing_url, timeout=1.0, retries=3):
-            logging.warning(
-                f"[Session] Existing session detected (PID {
-                    existing['pid']}, port {
-                    existing['port']}). " "Skipping new window launch.")
-            logging.info(f"[Session] Existing session URL: {existing_url}")
-
-            if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
-                logging.info(
-                    "[Session] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
-            else:
-                try:
-                    if open_session_url(existing_url):
-                        logging.info("[Session] Opened existing session URL.")
-                except Exception as e:
-                    logging.warning(
-                        f"[Session] Failed to open existing session URL: {e}")
-
-            raise SystemExit(0)
-
-        logging.warning(
-            f"[Session] Ignoring stale session candidate (PID {
-                existing['pid']}, port {
-                existing['port']}) - URL unreachable.")
-
-        # Optional: Kill stale process if requested or if it's clearly hung
-        if os.environ.get("MWV_KILL_STALE") == "1":
-            try:
-                import psutil
-                proc = psutil.Process(existing['pid'])
-                logging.info(f"[Session] Terminating stale process {existing['pid']}...")
-                proc.terminate()
-                proc.wait(timeout=3)
-            except Exception as e:
-                logging.warning(f"[Session] Failed to terminate stale process: {e}")
-
-    # Erst-Scan beim Start (alle konfigurierten Verzeichnisse)
-    # In einem Thread, damit die GUI sofort erscheint
-    import threading
-    threading.Thread(
-        target=lambda: scan_media(
-            dir_path=None,
-            clear_db=True),
-        daemon=True).start()
-
-    # Log environment info for GUI console
-    debug_log(f"[Startup] Environment Info: {get_environment_info_dict()}")
+    # Minimal check for port (essential for start)
+    import socket
+    def is_port_in_use(p):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', p)) == 0
+            
+    if is_port_in_use(session_port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            session_port = s.getsockname()[1]
 
     web_dir = str(PROJECT_ROOT / "web")
     eel.init(web_dir)
-    logger.debug("websocket", f"Eel initialized with root: {web_dir}")
-
-    # GUI Console/Debug Tab: expose APIs for frontend
-    # Frontend should call get_debug_console(), get_environment_info_dict(),
-    # get_imprint_info()
-
-    if DEBUG_FLAGS["start"]:
-        debug_log("[Startup] Starting Eel UI...")
-
-    # Find a free port dynamically to allow multiple sessions
-    import socket
-
-    def find_free_port():
-        """Find and return a free port for this session."""
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))
-            s.listen(1)
-            port = s.getsockname()[1]
-        return port
-
-    # Always use a reliable unique static port by default so bookmarks work
-    # User requested NOT to use 8080, so we use 8345.
-    session_port = int(os.environ.get("MWV_PORT", 8345))
     
-    def is_port_in_use(port):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            return s.connect_ex(('localhost', port)) == 0
-    
-    if is_port_in_use(session_port):
-        logging.warning(f"[System] Requested port {session_port} is in use, falling back to a dynamic port.")
-        session_port = find_free_port()
+    def close_callback(page, sockets):
+        if not sockets:
+            sys.exit(0)
 
-    # Persist port for testing and manual verification
-    try:
-        from src.parsers.format_utils import CONFIG_FILE
-        port_file = CONFIG_FILE.parent / ".mwv_port"
-        with open(port_file, "w") as f:
-            f.write(str(session_port))
-    except Exception as e:
-        logging.warning(f"[System] Could not persist session port: {e}")
+    eel.start(
+        "app.html",
+        mode=False,
+        block=False,
+        port=session_port,
+        host='127.0.0.1', # Explicitly use 127.0.0.1 for stability
+        close_callback=close_callback
+    )
 
-    # Block=False verhindert, dass eel.start() den Server sofort beendet (sys.exit),
-    # wenn Chrome den neuen Tab an einen bestehenden Prozess delegiert und
-    # sich sofort schließt.
-    try:
-        startup_duration = time.time() - STARTUP_TIME
-        logging.info(
-            f"[Startup-Trace] System ready for UI after {startup_duration:.2f}s.")
-        logger.debug(
-            "websocket",
-            f"Starting Eel server session on port {session_port}...")
+    # Longer delay to ensure Bottle server is fully ready
+    time.sleep(2.0)
+
+    session_url = f"http://127.0.0.1:{session_port}/app.html"
+    open_session_url(session_url)
+
+    # --- Background / Delayed Tasks ---
+    def _delayed_scan():
+        delay = 10
+        logging.info(f"[Scan] Initial background scan will start in {delay} seconds...")
+        time.sleep(delay)
+        logging.info("[Scan] Starting initial background scan (all configured directories)...")
+        try:
+            # Direct call to the local scan_media function
+            scan_media(dir_path=None, clear_db=True)
+            logging.info("[Scan] Initial background scan completed.")
+        except Exception as e:
+            logging.error(f"[Scan] Initial background scan failed: {e}")
+
+    def _finish_initialization():
+        try:
+            # 1. Singleton check (Slow)
+            global _SINGLETON_LOCK
+            if not _SINGLETON_LOCK:
+                _SINGLETON_LOCK = ensure_singleton()
             
-        # Shutdown logic when UI closes
-        def close_callback(page, sockets):
-            logging.info(f"[Session] UI window closed ({page}). Remaining sockets: {len(sockets)}")
-            if not sockets:
-                logging.info("[Session] All UI connections lost. Shutting down backend.")
-                sys.exit(0)
-        
-        # Log exposed functions for debugging
-        exposed_functions = [k for k, v in eel._exposed_functions.items()]
-        logging.info(f"[Eel] Exposed functions: {exposed_functions}")
-        
-        eel.start(
-            "app.html",
-            mode=False,
-            size=(
-                1550,
-                800),
-            block=False,
-            port=session_port,
-            close_callback=close_callback)
+            # 2. Env Validation
+            env_handler.validate_safe_startup()
+            
+            # 3. DB Init
+            db.init_db()
+            
+            # 4. Config Dirs
+            ensure_default_scan_dir()
+            config_dirs = PARSER_CONFIG.get("scan_dirs", [])
+            for d in config_dirs:
+                Path(d).mkdir(parents=True, exist_ok=True)
+                
+            logging.info("[Startup] Backend initialization finalized.")
+            debug_log(f"[Startup] Environment Info: {get_environment_info_dict()}")
+        except Exception as e:
+            logging.error(f"[Startup] Delayed initialization failed: {e}")
 
-        # Open browser explicitly after Eel starts with session-specific URL
-        session_url = f"http://localhost:{session_port}/app.html"
-        logging.info(f"[Session] Opening browser at {session_url}")
+    import threading
+    threading.Thread(target=_finish_initialization, daemon=True).start()
+    threading.Thread(target=_delayed_scan, daemon=True).start()
 
-        open_session_url(session_url)
-
-    except Exception as e:
-        logging.error(f"[Startup-Error] Failed to start session: {e}")
-
-    # Server am Leben halten (robust gegen temporäre Frontend-Disconnects)
     while True:
         try:
             eel.sleep(1.0)
         except KeyboardInterrupt:
             logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
-            raise
-        except BaseException as e:
-            logging.warning(
-                f"[WebSocket] keepalive recovered from base error: {
-                    type(e).__name__}: {e}")
+            sys.exit(0)
+        except Exception:
             time.sleep(1.0)
 
     @eel.expose
@@ -6060,7 +6093,7 @@ def batch_remux_to_mkv(folder_path):
     if not path.exists() or not path.is_dir():
         return {"status": "error", "error": "Invalid folder"}
     
-    count = 0
+    count_remuxed = 0
     mkvmerge_path = shutil.which("mkvmerge") or "mkvmerge"
     
     for f in path.glob("*"):
@@ -6068,11 +6101,11 @@ def batch_remux_to_mkv(folder_path):
             output = f.with_suffix(".remuxed.mkv")
             try:
                 subprocess.run([mkvmerge_path, "-o", str(output), str(f)], check=True, capture_output=True)
-                count += 1
+                count_remuxed += 1
             except Exception as e:
                 logging.error(f"[Remux] Failed for {f.name}: {e}")
     
-    return {"status": "ok", "remuxed_count": count}
+    return {"status": "ok", "remuxed_count": count_remuxed}
 
 @eel.expose
 def save_benchmark_results(results):

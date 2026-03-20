@@ -1515,6 +1515,7 @@
                 testOutput.scrollTop = testOutput.scrollHeight;
             }
         }
+        eel.expose(appendUiTrace);
 
         function getTabButton(tabId) {
             const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${tabId}'"]`);
@@ -1724,6 +1725,81 @@
             }
             if (tabId === 'tests') {
                 if (typeof loadTestSuites === 'function') loadTestSuites();
+            }
+        }
+
+        async function runRTTTest() {
+            const statusEl = document.getElementById('rtt-status');
+            const btn = document.getElementById('btn-rtt-test');
+            
+            if (statusEl) statusEl.innerText = "Testing...";
+            if (btn) btn.disabled = true;
+
+            try {
+                const testData = {
+                    stage1: { key: "normal_dict" },
+                    stage2: { nested: { a: 1, b: 2 } },
+                    stage3: [{ id: 1, val: "list_of_dicts" }, { id: 2, val: "item" }]
+                };
+
+                appendUiTrace("RTT: Sending multi-stage data to backend...");
+                const start = performance.now();
+                const response = await eel.rtt_ping(testData)();
+                const end = performance.now();
+                const rtt = (end - start).toFixed(2);
+
+                appendUiTrace(`RTT: Backend responded in ${rtt}ms. Status: ${response.status}`);
+                
+                // Stage 4: Closing the loop (Confirm Receipt) as requested
+                appendUiTrace("RTT: Confirming receipt to backend...");
+                await eel.confirm_receipt("RTT_PONG_RECEIVED")();
+                
+                if (statusEl) {
+                    statusEl.innerHTML = `RTT: <strong style="color: #2a7;">${rtt}ms</strong> (Sync OK)`;
+                }
+            } catch (e) {
+                appendUiTrace(`RTT Error: ${e}`);
+                if (statusEl) statusEl.innerText = "Error: " + e;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function runRTTItemTest() {
+            const statusEl = document.getElementById('rtt-status');
+            const btn = document.getElementById('btn-rtt-item-test');
+            
+            if (statusEl) statusEl.innerText = "Item Testing...";
+            if (btn) btn.disabled = true;
+
+            try {
+                const testData = {
+                    id: "test-rtt-" + Date.now(),
+                    title: "RTT Test Item",
+                    artist: "Frontend Sync Test",
+                    timestamp: new Date().toISOString(),
+                    complex: { a: 1, b: [1, 2, 3], c: { d: "nested" } }
+                };
+
+                appendUiTrace("RTT-Item: Sending complex item to backend...");
+                const start = performance.now();
+                const response = await eel.rtt_item_test(testData)();
+                const end = performance.now();
+                const diff = (end - start).toFixed(2);
+
+                if (response && response.status === 'success') {
+                    appendUiTrace(`RTT-Item: Backend echoed item in ${diff}ms. Sync OK.`);
+                    if (statusEl) {
+                        statusEl.innerHTML = `Item RTT: <strong style="color: #0277bd;">${diff}ms</strong> (Integrity OK)`;
+                    }
+                } else {
+                    throw new Error("Invalid echo response");
+                }
+            } catch (err) {
+                appendUiTrace(`RTT-Item Error: ${err}`);
+                if (statusEl) statusEl.textContent = "Item Error: " + err;
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
@@ -3095,6 +3171,23 @@
                                 </div>
                             </div>
 
+                            <!-- ISBN Scanner Action Bar -->
+                            <div style="background: #fffcf0; border: 1px solid #f9e1a0; padding: 15px; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                                <div style="background: #f39c12; color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.4em;">🔍</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: bold; font-size: 0.95em; color: #7d5a00;">ISBN-Metadaten Auto-Fix</div>
+                                    <div style="font-size: 0.8em; color: #967316; opacity: 0.85;">Details & Cover automatisch vervollständigen.</div>
+                                </div>
+                                <div style="display: flex; gap: 8px; background: white; padding: 4px; border-radius: 8px; border: 1px solid #e1e4e8;">
+                                    <input type="text" id="isbn-scanner-input" placeholder="ISBN (z.B. 978...)" 
+                                           style="padding: 8px 12px; border: none; outline: none; font-size: 0.9em; width: 160px; font-family: monospace;">
+                                    <button onclick="triggerIsbnScan()" 
+                                            style="padding: 8px 16px; background: #f39c12; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: background 0.2s;">
+                                        Scannen
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Dynamic Tags List -->
                             <div id="edit-dynamic-tags" style="display: flex; flex-direction: column; gap: 4px;">
                                 <!-- One row per JSON entry -->
@@ -3895,10 +3988,12 @@
                                         Vorsicht: Diese Aktion kann nicht rückgängig gemacht werden!
                                     </div>
 
-                                </div> <!-- closes danger zone -->
-                            </div> <!-- closes options-environment-view -->
-                        </div> <!-- closes options-scroll-container -->
-                    </div> <!-- closes system-configuration-persistence-panel -->
+                                </div> <!-- closes flex layout -->
+                            </div> <!-- closes padding div -->
+                        </div> <!-- closes options-environment-view -->
+                    </div> <!-- closes options-scroll-container -->
+                </div> <!-- closes system-configuration-persistence-panel -->
+
 
                     <!-- ===================== PARSER TAB START ===================== -->
                     <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
@@ -3996,6 +4091,22 @@
                                     style="font-size: 0.9em; color: #666; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px;">
                                     <!-- DB Stats will be loaded here -->
                                     <span data-i18n="debug_db_loading_stats">Lade Datenbank-Statistiken...</span>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;" data-i18n="debug_sync_test">
+                                    Synchronization & RTT Test</h3>
+                                <div style="background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <button id="btn-rtt-test" onclick="runRTTTest()" class="tab-btn" style="background: #2a7; color: white; border-color: #216d41; margin: 0; min-width: 120px;">
+                                        Basic Ping
+                                    </button>
+                                    <button id="btn-rtt-item-test" onclick="runRTTItemTest()" class="tab-btn" style="background: #0277bd; color: white; border-color: #01579b; margin: 0; min-width: 120px;">
+                                        Item RTT (Complex)
+                                    </button>
+                                    <div id="rtt-status" style="font-size: 0.85em; color: #666; width: 100%; margin-top: 8px;">
+                                        Waiting for trigger...
+                                    </div>
                                 </div>
                             </div>
 
@@ -4397,8 +4508,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+
                         <!-- TAB: Reporting END -->
 
                         <!-- Video Player Tab -->
@@ -4476,6 +4586,18 @@
                                                     <path d="M2 12l10 5 10-5" />
                                                 </svg>
                                                 PyPlayer
+                                            </button>
+                                            <button class="engine-btn" data-engine="external"
+                                                onclick="selectEngine('external',this)" title="VLC Stream / Drag & Drop"
+                                                style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #ddd;background:#fafafa;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                    <polyline points="7 10 12 15 17 10" />
+                                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                                </svg>
+                                                Stream / D&D
                                             </button>
                                         </div> <!-- closes engine-selector-bar -->
                                     </div> <!-- closes header-row -->
@@ -4769,7 +4891,49 @@
                                         </div>
                                     </div>
 
-                                    <!-- Coordinated Renderer Pipeline -->
+                                    <!-- EXTERNAL SOURCES / DRAG & DROP -->
+                                    <div id="submode-external" class="submode-panel" style="display:none;margin-top:8px;">
+                                        <div style="background: white; border-radius: 10px; border: 1px solid #eee; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                                <!-- Left: Drag & Drop Zone -->
+                                                <div id="external-dnd-zone" 
+                                                    style="border: 2px dashed #3498db; border-radius: 8px; background: #f7fbff; color: #2980b9; padding: 25px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;"
+                                                    ondragover="event.preventDefault(); this.style.background='#ebf5fb';"
+                                                    ondragleave="this.style.background='#f7fbff';"
+                                                    ondrop="handleExternalDrop(event)">
+                                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                        <polyline points="17 8 12 3 7 8" />
+                                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                                    </svg>
+                                                    <div style="font-weight: bold; font-size: 0.9em;">Datei hierher ziehen</div>
+                                                    <div style="font-size: 0.75em; opacity: 0.8;">Local File Drag & Drop</div>
+                                                    <button onclick="pickAndPlayExternal()" 
+                                                        style="margin-top:8px; padding:6px 14px; background:#3498db; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.8em; font-weight:600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                                        Datei auswählen
+                                                    </button>
+                                                </div>
+
+                                                <!-- Right: Stream URL Input -->
+                                                <div style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
+                                                    <div style="font-weight: bold; font-size: 0.9em; color: #444; display: flex; align-items: center; gap: 6px;">
+                                                        <span class="icon-link"></span> Network Stream URL
+                                                    </div>
+                                                    <div style="display: flex; gap: 8px;">
+                                                        <input id="external-stream-url" type="text" placeholder="https://... | rtsp://..." 
+                                                            style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.85em;">
+                                                        <button onclick="playExternalStream()" 
+                                                            style="padding: 10px 14px; background: #8e44ad; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                                            ▶ Start
+                                                        </button>
+                                                    </div>
+                                                    <div style="font-size: 0.72em; color: #777;">
+                                                        Unterstützt HLS (.m3u8), RTSP (Kameras), RTMP und Direct MP4 URLs.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div id="toast-container"></div>
                                     <div id="coordinated-media-renderer-pipeline-viewport"
                                         class="premium-player-container"
@@ -5207,30 +5371,6 @@
                     </div>
                 </div>
 
-                <!-- Footer mit Impressum -->
-                <div
-                    style="background: #f5f5f5; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #666;">
-                    <div>
-                        <span data-i18n="app_title">Media Web Viewer</span>
-                        <span style="margin: 0 8px; color: #ccc;">•</span>
-                        <span id="version-label" style="color: #999;">-</span>
-                    </div>
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <!-- Sync Status Indicator -->
-                        <div id="sync-indicator" title="Backend Status" data-i18n="[title]sync_backend_status"
-                            style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #eee; border-radius: 20px; transition: all 0.3s ease;">
-                            <div id="sync-dot" style="width: 8px; height: 8px; background: #999; border-radius: 50%;">
-                            </div>
-                            <span id="sync-text" style="font-size: 0.85em; font-weight: 500;"
-                                data-i18n="sync_initializing">Initialisierung...</span>
-                        </div>
-                        <a id="imprint-link" href="#" onclick="openAboutImprint()"
-                            style="color: #888; text-decoration: none; font-size: 0.8em;"
-                            data-i18n="common_about_imprint">Über
-                            &
-                            Impressum</a>
-                    </div>
-                </div>
 
                 <!-- Impressum Modal -->
                 <!-- About & Imprint Modal -->
@@ -6044,11 +6184,35 @@
                         const elements = document.querySelectorAll('[data-i18n]');
                         elements.forEach(el => {
                             const key = el.getAttribute('data-i18n');
-                            if (translations[lang] && translations[lang][key]) {
-                                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                                    el.placeholder = translations[lang][key];
+                            let val = null;
+
+                            // Handle [attribute]key format
+                            const attrMatch = key.match(/^\[([^\]]+)\](.+)$/);
+                            if (attrMatch) {
+                                const attr = attrMatch[1];
+                                const subKey = attrMatch[2];
+                                val = t(subKey);
+                                if (typeof val === 'string') {
+                                    el.setAttribute(attr, val);
+                                }
+                                return;
+                            }
+
+                            val = t(key);
+                            if (val === key || typeof val !== 'string') return;
+
+                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                                el.placeholder = val;
+                            } else {
+                                // Important: Only overwrite if it's a simple text-only element
+                                // to avoid destroying nested icons/spans.
+                                if (el.children.length === 0) {
+                                    el.innerHTML = val;
                                 } else {
-                                    el.innerHTML = translations[lang][key];
+                                    // For elements with children, find the first text node
+                                    // Or look for a child with same data-i18n
+                                    // Here we just skip to avoid destruction if it's a complex button.
+                                    // The inner span will be handled by its own data-i18n.
                                 }
                             }
                         });
@@ -6916,8 +7080,13 @@
                         const container = document.getElementById('edit-dynamic-tags');
                         if (container) container.innerHTML = '';
 
-                        // Alphabetisch sortieren für Ordnung
-                        const keys = Object.keys(item.tags).sort();
+                        // Alphabetisch sortieren für Ordnung + Core-Felder sicherstellen
+                        let keys = Object.keys(item.tags).sort();
+                        const coreKeys = ['title', 'artist', 'album', 'year', 'genre', 'isbn', 'imdb', 'tmdb', 'discogs'];
+                        coreKeys.forEach(k => {
+                            if (!keys.includes(k)) keys.push(k);
+                        });
+                        keys.sort();
 
                         keys.forEach(key => {
                             if (key === 'chapters' || key === '_parser_times') return;
@@ -7067,6 +7236,54 @@
                                 alert(t('edit_delete_success'));
                             }
 
+                        }
+                    }
+
+                    async function triggerIsbnScan() {
+                        const isbnInput = document.getElementById('isbn-scanner-input');
+                        const isbn = isbnInput ? isbnInput.value.trim() : '';
+                        if (!isbn) {
+                            showToast("⚠️ Bitte ISBN eingeben.", 3000);
+                            return;
+                        }
+
+                        showToast(`🔍 Scanne ISBN: ${isbn}...`, 2000);
+                        const result = await eel.api_scan_isbn(isbn)();
+                        
+                        if (result && !result.error) {
+                            showToast(`✅ Gefunden: ${result.title}`, 3000);
+                            
+                            // Update the current editor inputs if they match the key
+                            const inputs = document.querySelectorAll('.edit-dynamic-input');
+                            let updatedCount = 0;
+                            inputs.forEach(input => {
+                                const key = input.dataset.key;
+                                if (result[key]) {
+                                    input.value = result[key];
+                                    input.style.background = '#e8f5e9'; // Highlight change
+                                    updatedCount++;
+                                }
+                            });
+                            
+                            // If title input didn't exist or wasn't updated, we might need to add it
+                            // but usually it exists.
+                            
+                            // Specific handling for cover if available
+                            if (result.cover) {
+                                const coverImg = document.getElementById('edit-cover');
+                                if (coverImg) {
+                                    coverImg.src = result.cover;
+                                    coverImg.style.boxShadow = '0 0 15px rgba(46, 204, 113, 0.4)';
+                                }
+                                // Also update specific hidden fields or tags if needed
+                            }
+                        } else if (result && result.amazon_cover && !result.error) {
+                             // Fallback with cover
+                             showToast("ℹ️ Nur Cover gefunden.", 3000);
+                             const coverImg = document.getElementById('edit-cover');
+                             if (coverImg) coverImg.src = result.amazon_cover;
+                        } else {
+                            showToast(`❌ Fehler: ${result ? result.error : 'Unbekannt'}`, 4000);
                         }
                     }
 
@@ -7421,10 +7638,12 @@
                             b.style.background = '#fafafa';
                         });
                         if (btn) {
-                            const colors = { auto: '#2a7', chrome: '#2a7', vlc: '#e67e22', mtx: '#2980b9', pyplayer: '#8e44ad' };
-                            const bgs = { auto: '#e8f8f0', chrome: '#e8f8f0', vlc: '#fff3e0', mtx: '#eaf4fb', pyplayer: '#f5eafb' };
-                            btn.style.border = `2px solid ${colors[engine] || '#2a7'}`;
-                            btn.style.background = bgs[engine] || '#e8f8f0';
+                            const colors = { auto: '#2a7', chrome: '#2a7', vlc: '#e67e22', mtx: '#2980b9', pyplayer: '#8e44ad', external: '#8e44ad' };
+                            const bgs = { auto: '#e8f8f0', chrome: '#e8f8f0', vlc: '#fff3e0', mtx: '#eaf4fb', pyplayer: '#f5eafb', external: '#f5eafb' };
+                            const targetColor = colors[engine] || '#2a7';
+                            const targetBg = bgs[engine] || '#e8f8f0';
+                            btn.style.border = `2px solid ${targetColor}`;
+                            btn.style.background = targetBg;
                         }
 
                         // Show/hide submode panels
@@ -7433,7 +7652,7 @@
                         if (panel) panel.style.display = '';
 
                         // Set default mode for the engine
-                        const defaults = { auto: 'auto', chrome: 'chrome_direct', vlc: 'vlc_embedded', mtx: 'mtx_hls', pyplayer: 'pyplayer_native' };
+                        const defaults = { auto: 'auto', chrome: 'chrome_direct', vlc: 'vlc_embedded', mtx: 'mtx_hls', pyplayer: 'pyplayer_native', external: 'external_stream' };
                         const modeInput = document.getElementById('video-mode');
                         if (modeInput) modeInput.value = defaults[engine] || 'auto';
 
@@ -7506,6 +7725,60 @@
                             pyplayer_mini: 'Mini-Overlay: Kompakte Wiedergabe in einem schwebenden Fenster.'
                         };
                         if (pyInfo && pyInfoTexts[mode]) pyInfo.textContent = pyInfoTexts[mode];
+
+                        // External / D&D Info Strip
+                        const extInfo = document.getElementById('external-info-strip');
+                        const extInfoTexts = {
+                            external_stream: 'Network Stream: Direkte Wiedergabe von URLs (HLS, RTSP, RTMP) im Browser-Player oder VLC.',
+                            external_dnd: 'Drag & Drop: Ziehe lokale Dateien hierher, um sie sofort abzuspielen.'
+                        };
+                        if (extInfo && extInfoTexts[mode]) extInfo.textContent = extInfoTexts[mode];
+                    }
+
+                    // --- External Sources Handlers ---
+                    async function handleExternalDrop(event) {
+                        event.preventDefault();
+                        const zone = document.getElementById('external-dnd-zone');
+                        if (zone) zone.style.background = '#f7fbff';
+                        
+                        if (event.type === 'dragleave') return;
+                        
+                        let path = event.dataTransfer.getData('text/plain') || event.dataTransfer.getData('text/uri-list');
+                        console.log("Drop event detected. Data:", path);
+                        
+                        if (path && path.startsWith('file://')) {
+                            path = decodeURIComponent(path.replace('file://', ''));
+                            path = path.split('\n')[0].split('\r')[0];
+                        }
+                        
+                        if (path) {
+                            showToast(`📂 Externes File: ${path}`, 2000);
+                            await eel.play_external_file(path)();
+                        } else if (event.dataTransfer.files.length > 0) {
+                            showToast("ℹ️ Pfad-Maskierung: Nutze 'Datei auswählen'.", 4000);
+                        }
+                    }
+
+                    async function playExternalStream() {
+                        const urlInput = document.getElementById('external-stream-url');
+                        const url = urlInput ? urlInput.value.trim() : '';
+                        if (!url) return;
+                        
+                        showToast(`🌐 Stream: ${url}`, 2000);
+                        const res = await eel.play_stream_url(url, 'hls')();
+                        if (res && res.status === 'ok') {
+                            const streamUrl = res.hls || url;
+                            startEmbeddedVideo({name: 'Stream', path: url}, streamUrl, null, res.type || 'application/x-mpegURL');
+                            orchestrateVideoPlaybackMode();
+                        }
+                    }
+
+                    async function pickAndPlayExternal() {
+                        const path = await eel.pick_file("Mediendatei auswählen")();
+                        if (path) {
+                            showToast(`📂 Öffne: ${path}`, 2000);
+                            await eel.play_external_file(path)();
+                        }
                     }
 
                     // Legacy: kept for backward compat, delegates to selectEngine
@@ -10415,18 +10688,20 @@
                             // Ensure eel is ready
                             if (typeof eel === 'undefined') return;
 
-                            const version = await eel.get_version()();
-                            const appName = await eel.get_app_name()();
+                            const version = (await eel.get_version()()) || '1.34';
+                            const appName = (await eel.get_app_name()()) || 'dict';
 
                             const versionEl = document.getElementById('version-label');
-                            if (versionEl) versionEl.textContent = 'v' + version;
+                            if (versionEl) {
+                                versionEl.textContent = 'v' + (typeof version === 'string' ? version : (version.version || '1.34'));
+                            }
 
                             // Sync app title in multiple places (sidebar header, span, title)
-                            document.title = appName + " v" + version;
+                            document.title = (typeof appName === 'string' ? appName : 'dict') + " v" + (typeof version === 'string' ? version : '1.34');
 
                             const appNameElements = document.querySelectorAll('[data-i18n="app_title"]');
                             appNameElements.forEach(el => {
-                                el.textContent = appName;
+                                el.textContent = typeof appName === 'string' ? appName : (appName.name || 'dict');
                             });
 
                             // Update modal title if exists
@@ -10753,6 +11028,31 @@
                             <line x1="10" y1="14" x2="21" y2="3" />
                         </svg>
                         <span data-i18n="video_mode_vlc_external">VLC (Extern)</span>
+                    </div>
+                </div>
+
+                <!-- Footer mit Impressum -->
+                <div id="app-footer"
+                    style="background: #f5f5f5; border-top: 1px solid #ddd; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #666; width: 100%; box-sizing: border-box;">
+                    <div>
+                        <span data-i18n="app_title">dict</span>
+                        <span style="margin: 0 8px; color: #ccc;">•</span>
+                        <span id="version-label" style="color: #999;">-</span>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <!-- Sync Status Indicator -->
+                        <div id="sync-indicator" title="Backend Status" data-i18n="[title]sync_backend_status"
+                            style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #eee; border-radius: 20px; transition: all 0.3s ease;">
+                            <div id="sync-dot" style="width: 8px; height: 8px; background: #999; border-radius: 50%;">
+                            </div>
+                            <span id="sync-text" style="font-size: 0.85em; font-weight: 500;"
+                                data-i18n="sync_initializing">Initialisierung...</span>
+                        </div>
+                        <a id="imprint-link" href="#" onclick="openAboutImprint()"
+                            style="color: #888; text-decoration: none; font-size: 0.8em;"
+                            data-i18n="common_about_imprint">Über
+                            &
+                            Impressum</a>
                     </div>
                 </div>
 
