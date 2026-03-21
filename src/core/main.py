@@ -3628,6 +3628,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
     except Exception as e:
         return {"status": "error", "error": f"VLC start failed: {e}"}
 
+@eel.expose
 def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", source: str = "direct", start_time: float = 0):
     """
     @brief Explicitly opens a media file with a specific player type and mode.
@@ -6717,6 +6718,7 @@ def get_routing_suite_report():
                 'direct': 0,
                 'vlc': 0,
                 'hls': 0,
+                'transcode': 0,
                 'error': 0
             },
             'top_quality_items': [],
@@ -6743,9 +6745,18 @@ def get_routing_suite_report():
             ext = item.get('extension', '').lower()
             is_direct = is_direct_play_capable(path, 'browser')
             
-            mode = 'direct' if is_direct else 'hls'
-            if ext in ('.iso', '.bin', '.img') or 'mpeg' in str(tags.get('codec', '')).lower():
-                mode = 'vlc'
+            # Routing priority: Direct > Transcode (DVD/ISO) > HLS > VLC (HDR)
+            if is_direct:
+                mode = 'direct'
+            elif ext in ('.iso', '.bin', '.img') or item.get('is_disc'):
+                mode = 'transcode'
+            elif 'mpeg' in str(tags.get('codec', '')).lower() or 'vc1' in str(tags.get('codec', '')).lower():
+                 # Interlaced or old codecs go to transcode for better MSE handling
+                 mode = 'transcode'
+            elif tags.get('hdr'):
+                 mode = 'vlc'
+            else:
+                 mode = 'hls'
                 
             report['modes'][mode] = report['modes'].get(mode, 0) + 1
             if not is_direct:
@@ -6755,7 +6766,7 @@ def get_routing_suite_report():
             list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
             if score >= 80:
                 report['top_quality_items'].append(list_item)
-            elif score < 40 or mode == 'vlc':
+            elif score < 40 or mode in ['vlc', 'transcode']:
                 report['complex_items'].append(list_item)
                 
         if video_count > 0:
@@ -6946,8 +6957,7 @@ def analyze_media(relpath: str, client: str = 'browser'):
     from src.parsers.format_utils import ffprobe_suite, ffprobe_quality_score, is_direct_play_capable
     
     # Resolve relative path to full path
-    lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
-    full = Path(lib_dir) / relpath
+    full = Path(resolve_media_path(relpath))
     
     if not full.exists():
         return {"error": "File not found"}
@@ -6963,7 +6973,7 @@ def analyze_media(relpath: str, client: str = 'browser'):
     if direct:
         mode = "direct"
         url = f"/direct/{urllib.parse.quote(str(relpath))}"
-    elif ext == ".iso" or analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
+    elif ext == ".iso" or full.is_dir() or analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
         # Standard Transcode for DVD/Complex formats
         mode = "transcode"
         url = f"/transcode/{urllib.parse.quote(str(relpath))}"

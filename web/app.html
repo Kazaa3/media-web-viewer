@@ -2812,9 +2812,10 @@
                     return;
                 }
 
-                safeText('suite-avg-score', report.avg_quality_score || "0.0");
                 safeText('suite-direct-count', (report.modes && report.modes.direct) || 0);
-                safeText('suite-vlc-count', (report.modes && report.modes.vlc) || 0);
+                const vlcCount = (report.modes && report.modes.vlc) || 0;
+                const transcodeCount = (report.modes && report.modes.transcode) || 0;
+                safeText('suite-vlc-count', vlcCount + transcodeCount);
 
                 const total = report.total_items || 1;
                 const incompatiblePct = (((report.incompatible_count || 0) / total) * 100).toFixed(1);
@@ -5739,8 +5740,9 @@
                             <div
                                 style="background: #fff3e0; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ffe0b2;">
                                 <div
-                                    style="font-size: 0.8em; color: #e65100; font-weight: 700; text-transform: uppercase;">
-                                    VLC / Fallback</div>
+                                    style="font-size: 0.8em; color: #e65100; font-weight: 700; text-transform: uppercase;"
+                                    title="Includes DVD Transcoding & VLC Fallback">
+                                    VLC / Transcode</div>
                                 <div id="suite-vlc-count" style="font-size: 2em; font-weight: 800; color: #ef6c00;">0
                                 </div>
                             </div>
@@ -6666,6 +6668,23 @@
 
 
             <!-- Impressum Modal -->
+            <div id="impressum-modal" class="modal-overlay">
+                <div class="modal-container" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 data-i18n="common_about_imprint">Über & Impressum</h3>
+                        <button onclick="toggleImpressum()" class="modal-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body" style="line-height:1.6;" data-i18n="about_imprint_content">
+                        <!-- Dynamically via i18n -->
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="toggleImpressum()"
+                            style="padding: 8px 16px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: 600;"
+                            data-i18n="common_close">Schließen</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- ===================== MODALS START ===================== -->
             <!-- Debug Flags Modal -->
             <div id="debug-flags-modal" class="modal-overlay">
@@ -7153,6 +7172,13 @@
                 addToQueue(item);
                 switchTab('player', document.getElementById('active-queue-tab-trigger'));
             }
+        }
+
+        function addToQueue(item) {
+            if (!currentPlaylist) currentPlaylist = [];
+            currentPlaylist.push(item);
+            if (typeof renderPlaylist === 'function') renderPlaylist();
+            showToast(t('pl_added_to_queue') || "Added to queue");
         }
 
         window.jumpToChapter = function (startTime) {
@@ -9498,6 +9524,10 @@
                         const streamUrl = res.webrtc || res.hls;
                         startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL');
                     }
+                } else if (source.mode === 'transcode') {
+                    showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
+                    switchTab('vlc', document.getElementById('media-orchestrator-tab-trigger'));
+                    startEmbeddedVideo(item, source.url, null, 'video/mp4');
                 } else if (source.mode === 'error') {
                     showToast("Fehler: " + source.message);
                 }
@@ -12096,8 +12126,28 @@
             appendUiTrace(`DOM Stats: Total Nodes: ${allNodes}, Total Divs: ${allDivs}`);
             console.log("DOM nodes count:", allNodes, "Div count:", allDivs);
         };
+        function toggleImpressum() {
+            const modal = document.getElementById('impressum-modal');
+            if (modal) {
+                modal.style.display = (modal.style.display === 'flex' ? 'none' : 'flex');
+            }
+        }
+        function toggleDebugDict() {
+            const trigger = document.getElementById('telemetry-inspector-tab-trigger');
+            if (trigger) switchTab('debug', trigger);
+        }
     </script>
     </div>
+    </div>
+    <div class="bottom-bar">
+        <div style="flex: 1; display:flex; align-items:center; gap:20px;">
+            <span onclick="toggleDebugDict()" style="cursor:pointer; font-weight:bold; color:#2a7; letter-spacing:0.5px;">DICT</span>
+            <span style="color:#666; font-size:0.95em;">VSNC: <span style="color:#2a7; font-weight:bold;">OK</span></span>
+        </div>
+        <div style="flex: 1; text-align:right;">
+            <span onclick="toggleImpressum()" style="cursor:pointer; text-decoration:underline; font-weight:500;"
+                data-i18n="footer_imprint">Impressum / imprint</span>
+        </div>
     </div>
 </body>
 

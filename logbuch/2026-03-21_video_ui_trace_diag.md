@@ -151,6 +151,24 @@
 
 ---
 
+## 🚀 Bottom-Bar & Impressum-Modal (21.03.2026)
+
+### Untere Statusleiste (Bottom-Bar)
+- "DICT": Klick öffnet Telemetry Inspector Tab (Item-Dictionaries & Debug-Daten)
+- "VSNC": Status-Indikator (Standard: VSNC: OK)
+- "Impressum / imprint": Rechts verlinkt, öffnet Info-Modal
+
+### Impressum-Modal
+- Modal mit Inhalten aus i18n.json verknüpft
+- Enthält technische Architektur (Python, Bottle, Eel), Features & rechtliche Hinweise (Entwickler, Standort, Datenschutz)
+
+### Interaktivität & Steuerung
+- toggleImpressum() & toggleDebugDict() am Dokumentende ergänzt
+- CSS für .bottom-bar (24px, fixiert) wird korrekt genutzt
+- Leiste sitzt fest unter Audio-Player-Footer, bietet geforderte Infos & Verknüpfungen
+
+---
+
 # Video Player Fixes & UI-Trace Diagnostics (21.03.2026)
 
 ## 🛠️ Key Improvements & Fixes
