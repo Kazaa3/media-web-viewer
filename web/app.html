@@ -5252,6 +5252,10 @@
                                     <button class="test-btn-run test-btn-direct" onclick="runVideoPlayerTest('ffmpeg')">▶ FFmpeg</button>
                                 </div>
                                 <div class="test-card">
+                                    <div style="font-size: 0.7em; color: #888; margin-bottom: 5px; text-transform: uppercase;">FFplay</div>
+                                    <button class="test-btn-run test-btn-direct" onclick="runVideoPlayerTest('ffplay')" style="background: #ef6c00;">▶ FFplay</button>
+                                </div>
+                                <div class="test-card">
                                     <div style="font-size: 0.7em; color: #888; margin-bottom: 5px; text-transform: uppercase;">MP4Frag</div>
                                     <button class="test-btn-run test-btn-direct" onclick="runVideoPlayerTest('mp4frag')">▶ Frag</button>
                                 </div>
@@ -11341,10 +11345,17 @@
                     entry.status = 'pass';
                     entry.details = 'WebM Transcoding Pipeline (VP9) aktiv.';
                 } else if (mode === 'ffmpeg') {
-                    // Logic for FFmpeg streaming test
-                    await new Promise(r => setTimeout(r, 900));
+                    await triggerFFmpegPlay();
                     entry.status = 'pass';
                     entry.details = 'FFmpeg HLS/DASH Stream initialisiert.';
+                } else if (mode === 'ffplay') {
+                    if (typeof eel.open_ffplay === 'function') {
+                        await eel.open_ffplay(videoPath)();
+                        entry.status = 'pass';
+                        entry.details = 'FFplay Fenster gestartet.';
+                    } else {
+                        throw new Error("FFplay Backend (open_ffplay) nicht gefunden.");
+                    }
                 } else if (mode === 'mp4frag') {
                     // Logic for MP4Frag test
                     if (typeof eel.start_mp4frag_conversion === 'function') {
