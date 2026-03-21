@@ -17,7 +17,7 @@ sys.path.append(str(PROJECT_ROOT))
 # Configuration for testing
 logging.basicConfig(level=logging.INFO)
 
-from src.core.main import get_play_source, resolve_media_path
+from src.core.main import get_play_source, resolve_media_path, analyze_media
 
 def run_test():
     print("--- DVD/ISO ROUTING VERIFICATION TEST ---")
@@ -65,6 +65,18 @@ def run_test():
     else:
          print(f"⚠️ [NOTICE] Absolute path routing differs: {abs_source.get('mode')}")
 
+    # STEP 4: Deep Analysis verification (for duration/seeking)
+    print("\n[STEP 4] Calling analyze_media(resolved)...")
+    info = analyze_media(resolved)
+    analysis = info.get('analysis', {})
+    d_sec = analysis.get('duration_sec')
+    print(f"         Result Duration Sec: {d_sec}")
+    if d_sec and d_sec > 0:
+        print("✅ [SUCCESS] Duration detected for folder (via internal ISO).")
+    else:
+        print("❌ [FAILURE] Duration missing or zero.")
+        sys.exit(1)
+        
     print("\n--- TEST COMPLETED ---")
     return True
 

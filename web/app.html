@@ -9529,7 +9529,7 @@
                 } else if (source.mode === 'transcode') {
                     showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
-                    startEmbeddedVideo(item, source.url, null, 'video/mp4');
+                    startEmbeddedVideo(item, source.url, null, 'video/mp4', info.duration_sec);
                 } else if (source.mode === 'error') {
                     showToast("Fehler: " + source.message);
                 }
@@ -9562,7 +9562,7 @@
             }
         }
 
-        function startEmbeddedVideo(item, path, onErrorCallback = null, type = null) {
+        function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
@@ -9639,12 +9639,12 @@
                 const newTime = vjsPlayer.currentTime();
                 const currentSrc = vjsPlayer.src();
 
-                if (currentSrc.includes('/video-remux-stream/') || currentSrc.includes('/video-stream/')) {
+                if (currentSrc.includes('/video-remux-stream/') || currentSrc.includes('/video-stream/') || currentSrc.includes('/transcode/')) {
                     console.info("[Video.js] Stream seek requested, hot-reloading at:", newTime);
                     const base = currentSrc.split('?')[0];
-                    const newPath = `${base}?ss=${newTime}`;
+                    const connector = base.includes('?') ? '&' : '?';
+                    const newPath = `${base}${connector}ss=${newTime}`;
                     // Important: We must not trigger seeking again in a loop
-                    // Video.js src() call might trigger it. Use a flag if needed.
                     vjsPlayer.src({ src: newPath, type: vjsPlayer.currentType() });
                     vjsPlayer.play();
                 } else if (currentSrc.includes('/vlc-hls-live/')) {

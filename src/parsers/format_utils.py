@@ -874,10 +874,20 @@ def ffprobe_suite(path: Path | str) -> dict[str, Any]:
     Runs ffprobe on the given path and returns a structured analysis object.
     """
     ffprobe_path = shutil.which("ffprobe") or "ffprobe"
+    
+    p = Path(path)
+    if p.exists() and p.is_dir():
+         try:
+             iso_file = next((f for f in os.listdir(p) if f.lower().endswith(('.iso', '.bin', '.img'))), None)
+             if iso_file:
+                 p = p / iso_file
+         except:
+             pass
+
     cmd = [
         ffprobe_path, "-v", "error", 
         "-show_format", "-show_streams", 
-        "-of", "json", str(path)
+        "-of", "json", str(p)
     ]
     
     try:
@@ -900,6 +910,7 @@ def ffprobe_suite(path: Path | str) -> dict[str, Any]:
         return {
             "container": format_container(fmt.get('format_name', ''), Path(path).suffix),
             "duration_min": round(float(duration), 1),
+            "duration_sec": float(fmt.get('duration', 0.0)),
             "size_mb": round(float(size_mb), 1),
             "video_codec": str(v_stream.get('codec_name', 'unknown')),
             "width": int(v_stream.get('width', 0)),

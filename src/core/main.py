@@ -6180,8 +6180,17 @@ if __name__ == "__main__":
              vf.append("yadif=0:-1:0")
         
         # FFmpeg command for Real-time Fragmented MP4 (Chrome Native support)
-        cmd = [
-            "ffmpeg", "-i", str(p),
+        # Handle seeking via ?ss= query param
+        start_time = bottle.request.query.get('ss', '0')
+        
+        cmd = ["ffmpeg"]
+        
+        # Fast seeking for disc images/large files
+        if float(start_time) > 0:
+            cmd += ["-ss", start_time]
+            
+        cmd += [
+            "-i", str(p),
             "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
             "-crf", "25", "-maxrate", "4M", "-bufsize", "8M"
         ]

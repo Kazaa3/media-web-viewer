@@ -272,3 +272,33 @@
 
 **Kein manuelles Refresh nötig, aber für alte Items ggf. hilfreich.**
 
+---
+
+## ⏩ Seeking & Accurate Duration for DVD/ISO Transcoding (22.03.2026)
+
+### Time-Offset Seeking
+- /transcode/-Backend unterstützt jetzt ss-Parameter (Start-Seek): Bei Timeline-Sprung wird FFmpeg mit -ss neu gestartet
+- Nahtloses Navigieren durch lange Medien möglich
+
+### Accurate Film Length
+- ffprobe_suite & analyze_media berechnen jetzt die Gesamtdauer (Sekunden) von DVD-Ordnern & Disc-Images
+- Dauer wird vor Playback an das Frontend übergeben
+- Video.js überschreibt Duration für Transcode-Streams, Timeline zeigt echte Filmlänge (z.B. 1h 45m)
+
+### DVD Folder Analysis
+- ffprobe_suite erkennt und analysiert verschachtelte .iso-Dateien in DVD-Ordnern, Metadaten werden korrekt gemeldet
+
+### Verification Results
+| Test Case         | Scenario              | Expected Behavior      | Result                |
+|-------------------|----------------------|-----------------------|-----------------------|
+| Duration Detection| DVD Folder with ISO  | Detect total seconds  | ✅ Detected (e.g. 5448s)|
+| Timeline Display  | Start Playback       | Show full movie length| ✅ Full time shown     |
+| Seeking           | Click midway on slider| Restart at offset    | ✅ Seek Successful     |
+| Routing           | Plain .iso file      | Open in Chrome        | ✅ Native Playback     |
+
+### Automated Testing
+- tests/test_dvd_playback.py deckt alle neuen Features ab
+- Testlauf: .venv_run/bin/python tests/test_dvd_playback.py
+
+**DVDs & ISOs jetzt mit voller Timeline-Kontrolle und exakter Dauer im Browser!**
+
