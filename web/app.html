@@ -2235,6 +2235,19 @@
             }
         }
 
+        async function startSpotifyBridge() {
+            try {
+                if (typeof eel.start_spotify_bridge === 'function') {
+                    const res = await eel.start_spotify_bridge()();
+                    showToast("Spotify Bridge Status: " + res.status.toUpperCase(), 'info');
+                } else {
+                    showToast("Spotify Backend nicht verfügbar.", 'error');
+                }
+            } catch (e) {
+                console.error("Spotify Bridge error:", e);
+            }
+        }
+
         async function runJsErrorScan() {
             const resultsDiv = document.getElementById('js-error-scan-results');
             if (!resultsDiv) return;
@@ -11147,6 +11160,39 @@
                 if (v.path === currentVal) opt.selected = true;
                 selector.appendChild(opt);
             });
+        }
+
+        /* --- Video Mode Triggers (Missing implementations) --- */
+        async function triggerVLCPlay() {
+            if (typeof eel.open_vlc === 'function') {
+                return await eel.open_vlc(currentVideoItem.path)();
+            } else {
+                throw new Error("VLC Backend (open_vlc) nicht gefunden.");
+            }
+        }
+
+        async function triggerWebMTranscode() {
+            if (typeof eel.trigger_webm_transcode === 'function') {
+                return await eel.trigger_webm_transcode(currentVideoItem.path)();
+            } else {
+                throw new Error("WebM Backend (trigger_webm_transcode) nicht gefunden.");
+            }
+        }
+
+        async function triggerFFmpegPlay() {
+            if (typeof eel.trigger_ffmpeg_stream === 'function') {
+                return await eel.trigger_ffmpeg_stream(currentVideoItem.path)();
+            } else {
+                throw new Error("FFmpeg Backend (trigger_ffmpeg_stream) nicht gefunden.");
+            }
+        }
+
+        async function triggerFragMP4Play() {
+            if (typeof eel.start_mp4frag_conversion === 'function') {
+                return await eel.start_mp4frag_conversion(currentVideoItem.path, "")();
+            } else {
+                throw new Error("FragMP4 Backend (start_mp4frag_conversion) nicht gefunden.");
+            }
         }
 
         async function runVideoPlayerTest(mode) {
