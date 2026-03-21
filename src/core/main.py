@@ -4789,19 +4789,29 @@ def stream_to_mediamtx(file_path, protocol="hls"):
     # but for now we rely on a global cleanup or just add to list)
     
     try:
-        # 2. Build FFmpeg command
-        is_dvd = str(file_path).lower().endswith('.iso') or (os.path.isdir(file_path) and "VIDEO_TS" in os.listdir(file_path))
+        # 2. Path normalization & DVD detection
+        source_p = Path(file_path)
+        if source_p.is_dir():
+            # Look for an ISO file inside the folder
+            iso_candidate = next((f for f in source_p.iterdir() if f.suffix.lower() == ".iso"), None)
+            if iso_candidate:
+                source_p = iso_candidate
+                logging.info(f"[mediamtx] Resolved folder to internal ISO: {source_p}")
+
+        is_dvd = source_p.suffix.lower() == '.iso' or (source_p.is_dir() and "VIDEO_TS" in os.listdir(source_p))
         
-        # We use RTSP as the ingest protocol for MediaMTX (default port 8554)
+        # 3. Build FFmpeg command
         rtsp_target = f"rtsp://localhost:8554/{safe_name}"
-        
-        ffmpeg_cmd = ["ffmpeg", "-re"] # -re = read at native frame rate (essential for live streams)
+        ffmpeg_cmd = ["ffmpeg", "-re"] 
         
         if is_dvd:
              # DVD Transcode (H.264 + AAC)
-             # Note: dvd:// protocol requires libdvdnav support in ffmpeg
-             prefix = "dvd://" if os.path.isdir(file_path) else ""
-             ffmpeg_cmd += ["-i", f"{prefix}{file_path}", "-c:v", "libx264", "-preset", "ultrafast", "-acodec", "aac"]
+             # If it's a folder, point to it, otherwise point to the ISO file
+             source_arg = str(source_p)
+             if source_p.is_dir():
+                  source_arg = f"dvd://{source_p}"
+             
+             ffmpeg_cmd += ["-i", source_arg, "-c:v", "libx264", "-preset", "ultrafast", "-acodec", "aac"]
         else:
              # File Remux (Copy codecs if possible, or force h264 for browser compat)
              # To be safe and fast, we try 'copy' first, but MediaMTX/Browsers prefer H264
@@ -4832,6 +4842,72 @@ def stream_to_mediamtx(file_path, protocol="hls"):
     except Exception as e:
         logging.error(f"[mediamtx] Setup error: {e}")
         return {"status": "error", "error": str(e)}
+
+@eel.expose
+def run_mtx_validation(file_path):
+    """
+    @brief Comprehensive test of MediaMTX paths for a specific file.
+    """
+    logging.info(f"[QA] Starting MTX Validation for: {file_path}")
+    report = {
+        "file": file_path,
+        "server_up": False,
+        "hls_push_ok": False,
+        "hls_read_ok": False,
+        "webrtc_push_ok": False,
+        "webrtc_read_ok": False,
+        "logs": []
+    }
+    
+    # 1. Health check
+    try:
+        r = requests.get("http://localhost:8888", timeout=2)
+        report["server_up"] = True
+        report["logs"].append("✅ MediaMTX HLS Listener found on :8888.")
+    except:
+        report["logs"].append("❌ MediaMTX not running or HLS port closed.")
+        return report
+
+    # 2. Test HLS
+    hls_res = stream_to_mediamtx(file_path, protocol="hls")
+    if hls_res.get("status") == "play":
+        report["hls_push_ok"] = True
+        url = hls_res.get("path")
+        report["logs"].append(f"✅ HLS Push started. URL: {url}")
+        
+        # Poll for manifest
+        found = False
+        for i in range(10):
+            time.sleep(1)
+            try:
+                r = requests.get(url, timeout=1)
+                if r.status_code == 200:
+                    found = True
+                    break
+            except: pass
+        if found:
+            report["hls_read_ok"] = True
+            report["logs"].append("✅ HLS Manifest is active and reachable.")
+        else:
+            report["logs"].append("❌ HLS Manifest timeout (Stream not starting).")
+    else:
+        report["logs"].append(f"❌ HLS Push failed: {hls_res.get('error')}")
+
+    # 3. Test WebRTC
+    rtc_res = stream_to_mediamtx(file_path, protocol="webrtc")
+    if rtc_res.get("status") == "play":
+        report["webrtc_push_ok"] = True
+        url = rtc_res.get("path")
+        report["logs"].append(f"✅ WebRTC (WHEP) Endpoint initialized: {url}")
+        try:
+             # Basic reachability check for WHEP (it might return 405 on GET, which is fine)
+             r = requests.get(url, timeout=1)
+             if r.status_code in [200, 404, 405]:
+                 report["webrtc_read_ok"] = True
+                 report["logs"].append("✅ WebRTC Listener is responsive.")
+        except: pass
+    
+    return report or {"error": "Unknown failure"}
 
 
 @eel.expose
@@ -6427,17 +6503,10 @@ def trigger_mkvmerge_remux(filepath):
 def trigger_mtx_stream(filepath, proto="hls"):
     """Starts a MediaMTX stream for the given protocol."""
     logging.info(f"[Video] Triggering MediaMTX ({proto}): {filepath}")
-    # For testing, we push a test pattern to a local MediaMTX (if running)
-    # or just simulate the setup
-    cmd = [
-        "ffmpeg", "-re", "-i", filepath, 
-        "-c", "copy", "-f", "rtsp", "rtsp://localhost:8554/mystream"
-    ]
-    try:
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return {"status": "ok", "details": f"Pushing to MediaMTX via RTSP (serving {proto.upper()})"}
-    except Exception as e:
-        return {"status": "error", "details": str(e)}
+    res = stream_to_mediamtx(filepath, protocol=proto)
+    if res.get("status") == "play":
+        return {"status": "ok", "details": f"MediaMTX {proto.upper()} stream active: {res.get('path')}"}
+    return {"status": "error", "details": res.get("error") or "Unknown error"}
 
 class FFmpegTestSuite:
     def __init__(self, input_path):

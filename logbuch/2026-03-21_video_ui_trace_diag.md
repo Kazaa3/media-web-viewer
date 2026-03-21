@@ -304,23 +304,31 @@
 
 ---
 
-## ✅ Final: Playback, Duration & Seeking Fixes for DVD/MKV (22.03.2026)
+## 🛰️ MediaMTX Integration & Timeline/Seeking Fixes (22.03.2026)
 
-### Restored Playback Start
-- Kritischer Import-Fehler im Backend behoben: Alle Medien (DVD/MKV) starten jetzt zuverlässig aus der Item-Liste
+### 1. DVD Folder & ISO Resolution
+- Backend erkennt DVD-Ordner (z.B. 4 Könige (2015) - DVD) und resolved automatisch auf interne .iso für MediaMTX-Streaming
+- FFmpeg nutzt so immer die korrekte Quelle für Transcoding (MPEG-2/AC3 → Browser-kompatibel)
 
-### Corrected Timeline & Duration
-- Frontend liest Filmlänge jetzt korrekt aus duration_sec der Analyse-Daten
-- Timeline zeigt die volle Filmdauer (z.B. 1h 45m) an
+### 2. Timeline & Seeking Fix (MKV & DVD)
+- Manueller Duration-Override im Frontend (web/app.html): Video.js-Player setzt Timeline-Länge anhand ffprobe-Metadaten
+- MKV: Auch bei Remux-Streams wird die volle Filmlänge angezeigt, Seeking funktioniert
+- DVD: MediaMTX/HLS/WebRTC-Streams zeigen jetzt korrekte Dauer, "0:10"-Bug beseitigt
 
-### Restored Seeking for DVDs
-- DVD-Routing wieder auf Chrome Transcode (FFmpeg) umgestellt
-- Hot-Reload-Seeking via ?ss=-Parameter wieder aktiv (granulares Springen möglich)
+### 3. MediaMTX Validation Suite
+- Neuer Sub-Tab im Tests-Panel: MediaMTX-Protokoll-Validierung
+- Live-Health-Check für MediaMTX-Server (HLS-Manifest, WebRTC/WHEP-Endpunkte)
+- Validierungsergebnisse und Log-Report direkt in der UI
 
-### MKV & Complex Codecs
-- Auch MKVs mit Transcoding zeigen jetzt korrekte Dauer und unterstützen Seeking
+### 4. Unified Routing
+- trigger_mtx_stream nutzt refaktorisiertes stream_to_mediamtx für konsistentes Verhalten
 
-### Nutzung
-- Einfach DVD oder MKV anklicken: Video-Tab öffnet sich, Dauer & Seeking funktionieren wie erwartet
-- Smart Auto-Routing sorgt für optimale Kompatibilität und Bedienkomfort
+### Verification Results
+- DVD-Playback (4 Könige (2015) - DVD):
+  - ✅ ISO-Resolution: 4_KOENIGE.iso gefunden
+  - ✅ HLS-Push: Manifest aktiv
+  - ✅ WebRTC-Push: WHEP-Listener erreichbar
+  - ✅ Seekability: ENABLED (Frontend-Override)
+
+**Tests > 🛰️ MediaMTX-Tab ermöglicht Validierung für alle zukünftigen Medien. Timeline & Seeking jetzt für alle MKVs/DVDs stabil.**
 

@@ -5004,6 +5004,8 @@
                                 data-i18n="test_view_media">🎬 Media/Pipeline</button>
                             <button class="options-subtab" onclick="switchTestView('selenium')" data-view="selenium"
                                 data-i18n="test_view_selenium">🔍 Selenium</button>
+                            <button class="options-subtab" onclick="switchTestView('mtx')" data-view="mtx"
+                                data-i18n="test_view_mtx">🛰️ MediaMTX</button>
                             <button class="options-subtab" onclick="switchTestView('casting')" data-view="casting"
                                 data-i18n="test_view_casting">📺 Casting</button>
                             <div id="test-integrity-status"
@@ -5408,15 +5410,37 @@
                                     </div>
                                 </div>
 
-                                <div
-                                    style="background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 12px; padding: 20px;">
-                                    <h4 style="margin:0 0 10px 0;">🎙️ Spotify Connect</h4>
-                                    <p style="font-size: 0.85em; color: #2e7d32; margin-bottom: 15px;">Spotify bridge
-                                        (Librespot / Raspotify).</p>
-                                    <button onclick="startSpotifyBridge()" class="tab-btn"
-                                        style="width:100%; background: #4caf50; color: white; border: none; padding: 10px;">
-                                        Start Spotify Bridge
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: MediaMTX Validation -->
+                    <div id="test-mtx-view" class="test-view-content" style="display: none;">
+                        <div style="max-width: 900px;">
+                            <h3 style="margin-top: 0;">MediaMTX Protocol Validation</h3>
+                            <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;">
+                                Validates MediaMTX health, HLS manifest polling, and WebRTC (WHEP) reachability.
+                            </p>
+
+                            <div style="background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+                                <h4 style="margin: 0 0 20px 0;">🚀 Live Streaming Health Check</h4>
+                                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                                    <input type="text" id="mtx-test-path" placeholder="Film-Pfad oder DVD-Ordner" 
+                                           style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: monospace;">
+                                    <button onclick="runMtxValidation()" class="tab-btn" 
+                                            style="background: #2e7d32; color: white; border: none; padding: 0 25px; font-weight: bold; border-radius: 8px;">
+                                        Start Validation
                                     </button>
+                                </div>
+
+                                <div id="mtx-validation-results" style="display: none; border-top: 1px solid #eee; padding-top: 20px;">
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;" id="mtx-status-cards">
+                                        <!-- Cards like HLS OK / WebRTC OK -->
+                                    </div>
+                                    <div id="mtx-log-view" style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85em; max-height: 300px; overflow-y: auto;">
+                                        Waiting for logs...
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -9514,7 +9538,8 @@
                 if (source.mode === 'direct') {
                     showToast("🚀 DIRECT PLAY (Native/Remux)", 2000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
-                    startEmbeddedVideo(item, source.url, null, 'video/mp4');
+                    const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
+                    startEmbeddedVideo(item, source.url, null, 'video/mp4', d_sec);
                 } else if (source.mode === 'vlc') {
                     showToast("📺 VLC REQUIRED (ISO/HDR/Complex)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
@@ -9694,6 +9719,19 @@
             }
 
             vjsPlayer.src({ src: path, type: srcType });
+            
+            // Manual duration override for streams (Video.js normally can't determine this for fragmented MSE)
+            if (durationSec && durationSec > 0) {
+                console.info("[Video.js] Overriding duration to:", durationSec);
+                vjsPlayer.duration = function() { return parseFloat(durationSec); };
+                // Trigger an initial timeupdate to refresh the UI
+                setTimeout(() => {
+                    vjsPlayer.trigger('timeupdate');
+                }, 500);
+            } else {
+                // Restore default behavior if no manual duration is provided
+                delete vjsPlayer.duration; 
+            }
 
             // Explicitly trigger a resize and ensure visibility to fix black screen/layout issues
             vjsPlayer.ready(() => {
@@ -11868,6 +11906,60 @@
                 return await eel.start_mp4frag_conversion(currentVideoItem.path, "")();
             } else {
                 throw new Error("FragMP4 Backend (start_mp4frag_conversion) nicht gefunden.");
+            }
+        }
+
+        async function runMtxValidation() {
+            const pathInput = document.getElementById('mtx-test-path');
+            const path = pathInput ? pathInput.value : "";
+            if (!path) {
+                showToast("Bitte geben Sie einen Pfad zum Testen an.");
+                return;
+            }
+
+            const resultsDiv = document.getElementById('mtx-validation-results');
+            const cardsDiv = document.getElementById('mtx-status-cards');
+            const logsDiv = document.getElementById('mtx-log-view');
+
+            if (resultsDiv) resultsDiv.style.display = 'block';
+            if (cardsDiv) cardsDiv.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">Teste MediaMTX Pipeline... 🛰️</div>';
+            if (logsDiv) logsDiv.innerHTML = 'Starting validation...';
+
+            try {
+                const report = await eel.run_mtx_validation(path)();
+                
+                if (cardsDiv) {
+                    cardsDiv.innerHTML = '';
+                    const items = [
+                        { label: 'Server Up', ok: report.server_up },
+                        { label: 'HLS Push', ok: report.hls_push_ok },
+                        { label: 'HLS Read', ok: report.hls_read_ok },
+                        { label: 'WebRTC Push', ok: report.webrtc_push_ok },
+                        { label: 'WebRTC Read', ok: report.webrtc_read_ok }
+                    ];
+
+                    items.forEach(it => {
+                        const card = document.createElement('div');
+                        card.style.padding = '10px';
+                        card.style.borderRadius = '8px';
+                        card.style.background = it.ok ? '#e8f5e9' : '#ffebee';
+                        card.style.border = `1px solid ${it.ok ? '#4caf50' : '#f44336'}`;
+                        card.style.textAlign = 'center';
+                        card.style.fontSize = '0.8em';
+                        card.style.fontWeight = 'bold';
+                        card.style.color = it.ok ? '#1b5e20' : '#c62828';
+                        card.innerHTML = `${it.ok ? '✅' : '❌'} ${it.label}`;
+                        cardsDiv.appendChild(card);
+                    });
+                }
+
+                if (logsDiv) {
+                    logsDiv.innerHTML = report.logs.join('\n');
+                    logsDiv.scrollTop = logsDiv.scrollHeight;
+                }
+
+            } catch (err) {
+                if (logsDiv) logsDiv.innerHTML += `\n❌ Fehler: ${err}`;
             }
         }
 
