@@ -6073,6 +6073,53 @@ if __name__ == "__main__":
             # sys.exit(0) # Disabled for testing
             pass
 
+    # 7. Media Routing (Custom Bottle Routes)
+    # This enables "Direct Play" and "Cache Play" by mapping URLs to local filesystem
+    @bottle.route('/direct/<path:path>')
+    def serve_direct_media(path):
+        import urllib.parse
+        from pathlib import Path
+        
+        # 1. Unquote the path to handle special characters and absolute paths
+        try:
+            decoded = urllib.parse.unquote(path)
+        except Exception as e:
+            log.error(f"Unquote failed for {path}: {e}")
+            decoded = path
+            
+        log.info(f"[Direct-Route] Request for: {decoded}")
+        
+        # 2. Determine the physical location
+        if os.path.isabs(decoded):
+            p = Path(decoded)
+        else:
+            lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+            p = Path(lib_dir) / decoded
+            
+        if not p.exists():
+            log.warning(f"[Direct-Route] File not found: {p}")
+            return bottle.HTTPError(404, "Media file found not found.")
+            
+        # 3. Detect MIME type for browser compatibility
+        mimetype = "video/mp4" # Default
+        ext = p.suffix.lower()
+        if ext == '.webm': mimetype = "video/webm"
+        elif ext == '.mkv': mimetype = "video/x-matroska"
+        elif ext == '.mp3': mimetype = "audio/mpeg"
+        elif ext == '.wav': mimetype = "audio/wav"
+        elif ext == '.m4a': mimetype = "audio/mp4"
+        elif ext in ['.jpg', '.jpeg']: mimetype = "image/jpeg"
+        elif ext == '.png': mimetype = "image/png"
+        
+        # 4. Use bottle.static_file with proper root/filename split
+        # This is critical for range requests (seeking) to work!
+        return bottle.static_file(p.name, root=str(p.parent), mimetype=mimetype)
+
+    @bottle.route('/cache/<path:path>')
+    def serve_cache_media(path):
+        cache_dir = str(PROJECT_ROOT / "cache")
+        return bottle.static_file(path, root=cache_dir)
+
     log_checkpoint("Starting Eel server")
     eel.start(
         "app.html",
@@ -6247,6 +6294,77 @@ def open_ffplay(filepath):
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@eel.expose
+def open_mpv(filepath):
+    """Opens a file in MPV player."""
+    logging.info(f"[Video] Opening in MPV: {filepath}")
+    try:
+        # --ontop: keep window visible for easy verification
+        subprocess.Popen(["mpv", "--ontop", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def trigger_mkvmerge_remux(filepath):
+    """Tests mkvmerge remuxing performance."""
+    logging.info(f"[Video] Triggering MKVmerge Remux: {filepath}")
+    out = PROJECT_ROOT / "cache" / f"remux_{Path(filepath).stem}.mkv"
+    out.parent.mkdir(exist_ok=True)
+    
+    cmd = ["mkvmerge", "-o", str(out), filepath]
+    try:
+        # Start in background
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"status": "ok", "details": f"Remux started -> {out.name}"}
+    except Exception as e:
+        return {"status": "error", "details": str(e)}
+
+@eel.expose
+def trigger_mtx_stream(filepath, proto="hls"):
+    """Starts a MediaMTX stream for the given protocol."""
+    logging.info(f"[Video] Triggering MediaMTX ({proto}): {filepath}")
+    # For testing, we push a test pattern to a local MediaMTX (if running)
+    # or just simulate the setup
+    cmd = [
+        "ffmpeg", "-re", "-i", filepath, 
+        "-c", "copy", "-f", "rtsp", "rtsp://localhost:8554/mystream"
+    ]
+    try:
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"status": "ok", "details": f"Pushing to MediaMTX via RTSP (serving {proto.upper()})"}
+    except Exception as e:
+        return {"status": "error", "details": str(e)}
+
+@eel.expose
+def run_video_matrix_test():
+    """Generates mock files and runs a full codec matrix test."""
+    from src.core.test_media_factory import prepare_test_suite_files
+    test_dir = PROJECT_ROOT / "media" / "tests" / "matrix"
+    test_dir.mkdir(parents=True, exist_ok=True)
+    
+    files = prepare_test_suite_files(test_dir)
+    results = []
+    for key, path in files.items():
+        results.append({
+            "id": key,
+            "path": str(path),
+            "status": "ready" if path and os.path.exists(path) else "failed"
+        })
+    return {"status": "ok", "matrix": results}
+
+@eel.expose
+def trigger_mp4tag_faststart(filepath):
+    """Optimizes MP4 for web playback (moov atom relocation)."""
+    logging.info(f"[Video] Optimizing MP4 atomic order (+faststart): {filepath}")
+    out = PROJECT_ROOT / "cache" / f"fast_{Path(filepath).name}"
+    cmd = ["ffmpeg", "-y", "-i", filepath, "-c", "copy", "-movflags", "+faststart", str(out)]
+    try:
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"status": "ok", "details": f"FastStart optimization started -> {out.name}"}
+    except Exception as e:
+        return {"status": "error", "details": str(e)}
 
 @eel.expose
 def trigger_webm_transcode(filepath):
@@ -6719,10 +6837,11 @@ def analyze_media(relpath: str, client: str = 'browser'):
     direct = is_direct_play_capable(full, client)
     ext = full.suffix.lower()
     
+    import urllib.parse
     # Routing decision
     if direct:
         mode = "direct"
-        url = f"/direct/{relpath}"
+        url = f"/direct/{urllib.parse.quote(str(relpath))}"
     elif ext == ".iso" or analysis.get("hdr") or analysis.get("video_codec") in ["hevc", "vc1"]:
         # Complex/HDR/ISO goes to VLC
         mode = "vlc"
@@ -6765,7 +6884,8 @@ def get_play_source(item_path: str, client: str = 'browser'):
         
     # 2. MKV/Direct Play Handling
     if is_direct_play_capable(full, client):
-        return {"mode": "direct", "url": f"/direct/{item_path}"}
+        import urllib.parse
+        return {"mode": "direct", "url": f"/direct/{urllib.parse.quote(str(item_path))}"}
         
     # 3. MKV Remux Check (Optional/Heuristic)
     analysis = ffprobe_suite(full)
