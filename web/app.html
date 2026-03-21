@@ -1738,8 +1738,11 @@
 
             const start = Date.now();
             try {
-                const res = await eel.rtt_ping("sync_check")();
+                const res = await eel.rtt_ping(testType, testData)();
                 const rtt = Date.now() - start;
+                const footerLatency = document.getElementById('footer-latency');
+                if (footerLatency) footerLatency.innerText = rtt + 'ms';
+                appendUiTrace(`RTT ${testType}: ${rtt}ms (Status: ${res.status})`);
                 if (res.status === 'pong') {
                     statusDiv.innerHTML = `✅ <strong>Backend Synchronized.</strong> RTT: ${rtt}ms | Status: Stable`;
                     statusDiv.style.background = "#e8f5e9";
@@ -1977,6 +1980,7 @@
 
         async function runRTTTest(testType = 'ping') {
             const statusEl = document.getElementById('rtt-status-text');
+            const footerLatency = document.getElementById('footer-latency');
             const btns = document.querySelectorAll('#options-sync-view .action-btn, #test-base-view .tab-btn');
             const resContainer = document.getElementById('rtt-results-container');
 
@@ -5796,7 +5800,7 @@
             <!-- Video Player Tab -->
             <!-- ===================== VIDEO PLAYER TAB START ===================== -->
             <div id="multiplexed-media-player-orchestrator-panel" class="tab-content"
-                style="display: none; padding: 0; overflow: hidden; background: #fafafa; height: calc(100vh - 60px);">
+                style="display: none; padding: 0; overflow: hidden; background: #000; height: calc(100vh - 165px);">
                 <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
                     <div
                         style="background: white; flex: 1; display:flex; flex-direction:column; overflow: hidden;">
@@ -12139,14 +12143,16 @@
     </script>
     </div>
     </div>
-    <div class="bottom-bar">
-        <div style="flex: 1; display:flex; align-items:center; gap:20px;">
-            <span onclick="toggleDebugDict()" style="cursor:pointer; font-weight:bold; color:#2a7; letter-spacing:0.5px;">DICT</span>
-            <span style="color:#666; font-size:0.95em;">VSNC: <span style="color:#2a7; font-weight:bold;">OK</span></span>
+    <div class="bottom-bar" style="background: #111; color: #999; border-top: 1px solid #222; font-size: 0.7em; height: 26px; z-index: 1002; display: flex; align-items: center; padding: 0 15px; position: fixed; bottom: 0; left: 0; right: 0;">
+        <div style="flex: 1; display:flex; align-items:center; gap:15px;">
+            <span onclick="toggleDebugMenu()" style="cursor:pointer; font-weight:700; color:#4caf50; letter-spacing:0.5px; background: rgba(76,175,80,0.1); padding: 1px 5px; border-radius: 3px;">DICT</span>
+            <span style="opacity: 0.8;">VSNC: <span style="color:#4caf50; font-weight:bold;">ACTIVE</span></span>
+            <span style="opacity: 0.6; margin-left:10px;">LAT: <span id="footer-latency" style="color: #2196f3; font-weight: bold;">--ms</span></span>
         </div>
         <div style="flex: 1; text-align:right;">
-            <span onclick="toggleImpressum()" style="cursor:pointer; text-decoration:underline; font-weight:500;"
-                data-i18n="footer_imprint">Impressum / imprint</span>
+            <a href="#" onclick="toggleImpressum(); return false;" style="color: #888; text-decoration: none; border-bottom: 1px dotted #444; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" data-i18n="footer_imprint">Impressum / imprint</a>
+            <span style="margin: 0 10px; opacity: 0.3;">|</span>
+            <span style="opacity: 0.5;">© 2026 MWV Core</span>
         </div>
     </div>
 </body>

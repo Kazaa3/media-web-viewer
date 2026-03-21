@@ -196,8 +196,30 @@
 
 ---
 
-**Status:**
-- Major JS errors resolved
-- UI-Trace diagnostics and error capture fully operational
-- Video player test suite integrated and stable
+## 🟢 Final: DVD-Playback Fix & Transcode-Integration (21.03.2026)
+
+### Media Routing Logic
+- get_play_source in src/core/main.py erkennt jetzt explizit DVD-Strukturen (VIDEO_TS-Ordner, .iso)
+- Neuer "transcode"-Modus: Frontend erhält MSE-kompatiblen MP4-Stream via internen FFmpeg-Transcoder
+- analyze_media empfiehlt optimalen Modus basierend auf Codec/Container-Analyse
+
+### Frontend Integration
+- playVideo in app.html erkennt/handhabt "transcode"-Modus
+- addToQueue wiederhergestellt, Toasts für Analyse-Feedback
+- Video-Tab: Höhe/Overflow optimiert, kein Scrollen mehr nötig
+
+### Automated Test Suite
+- test_dvd_playback.py prüft Routing für DVD-Ordner & .iso → Transcoder
+- Test wird automatisch im Reporting/Tests-Tab integriert
+
+### Reporting Dashboard
+- Reporting-Tab trackt jetzt "Transcode"-Events neben Direct/VLC
+- Dashboard zeigt Routing-Verteilung für gesamte Mediathek
+
+### UI Polish & Footer
+- Bottom-Bar modernisiert (dunkles Design)
+- Live DICT VSNC-Status & RTT-Tracking im Footer
+- Impressum/Imprint-Link sauber im neuen Footer integriert
+
+**Alle DVD-basierten Medien werden jetzt direkt im Browser abgespielt. Testbar via Reporting → Tests → test_dvd_playback.**
 
