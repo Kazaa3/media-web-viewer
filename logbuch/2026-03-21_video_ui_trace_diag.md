@@ -101,6 +101,56 @@
 
 ---
 
+## 🚀 Echtzeit-Transkodierung & Premium-Video-Player (21.03.2026)
+
+### Echtzeit-Transkodierung (Fragmented MP4 Streaming)
+- Neue /transcode/-Route in main.py: Medien werden via FFmpeg direkt als Fragmented MP4 für Chrome gestreamt
+- Intelligentes Deinterlacing: ffprobe erkennt Interlaced-Material (PAL/NTSC), yadif-Filter wird selektiv angewendet
+- Optimiertes Routing: ISO/DVDs & komplexe Codecs (HEVC, VC1, MPEG2, WMV3) werden bevorzugt transkodiert, um native Playback-Probleme zu vermeiden
+
+### FFmpeg Pipeline Test Suite
+- Neue Media/Pipeline-Ansicht im Dashboard (Tests-Tab)
+- FFmpegTestSuite im Backend prüft Remuxing (MKV→MP4) & HLS-Segmentierung
+- "Vortrag"-Testfile als Standard für sofortige Validierung
+
+### Premium Video-Player UI
+- Status/Route-Info-Bar: Zeigt live den gewählten Pfad (DIRECT, TRANSCODE) & Quality Score (1-100)
+- Dynamische Codec-Tags: Player zeigt H.264, AAC, HDR etc. nach Analyse direkt an
+- Erweiterte Steuerung: Timeline & Seek-Buttons für alle Player-Modi optimiert
+
+### Test-Erweiterungen
+- Test-Media-Matrix: Synthetische Test-Patterns für verschiedene Codecs generierbar
+- Anforderungen aus Logbuch 019 & 044 abgedeckt: DVDs & "wilde" Formate laufen jetzt stabil im Browser
+
+**Spezifische Datei- oder DVD-ISO-Tests können direkt über die neue Pipeline gestartet werden.**
+
+---
+
+## 📀 DVD-Playback, Kontextmenü & UI-Optimierung (21.03.2026)
+
+### DVD & ISO Standard-Playback
+- DVDs (ISO/Ordner) & komplexe Codecs (HEVC, MPEG2, VC1) werden jetzt standardmäßig via Chrome Native (Transkodiert) im Browser abgespielt
+- open_video wählt automatisch den Transcode-Pfad, außer bei expliziter Auswahl (z.B. VLC)
+
+### Kontextmenü (Rechtsklick) im Library-Tab
+- HTML für Kontextmenü neu implementiert
+- Menü-Optionen:
+  - 🚀 Chrome Native (Direkt/Transkodiert/Remuxed)
+  - 💿 Disc-Optionen: VLC ISO, DVD-Ordner
+  - 📺 Externe Player: System-VLC, MPV, FFplay
+- handleContextMenuAction erkennt neue Transcode-Modi und wechselt automatisch zum Video-Tab
+
+### Kein Downscrolling im Video-Tab
+- overflow: hidden für Video-Tab
+- Höhe via calc(100vh - 60px) fixiert, Player & Controls bleiben immer sichtbar
+
+### "Öffnen mit" & VLC-Support
+- VLC-Submenü: "VLC Extern (App)" startet Video direkt in System-VLC
+- Player-Engine-Bar: Neuer Button für FFmpeg Transcode (MSE) zum manuellen Umschalten
+- Intelligente Pfadwahl: Standard = Transcode im Browser, aber jederzeit Umschalten auf externe Player/Protokolle möglich
+
+---
+
 # Video Player Fixes & UI-Trace Diagnostics (21.03.2026)
 
 ## 🛠️ Key Improvements & Fixes

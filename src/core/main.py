@@ -97,7 +97,8 @@ import ast
 # Internal imports
 from src.parsers.format_utils import (
     PARSER_CONFIG, load_parser_config, save_parser_config,
-    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
+    ffprobe_suite, ffprobe_quality_score
 )
 import env_handler
 import src.core.logger as logger
@@ -3659,7 +3660,7 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
     # 2. Auto-Detection Logic (only runs when mode is truly 'auto')
     if mode == "auto":
         if is_dvd_iso or is_dvd_folder:
-            player_type, mode = "vlc", "vlc_embedded" # Prefer embedded streamer
+            player_type, mode = "chrome", "chrome_transcode" # Prefer native transcode streamer
         elif is_audio:
             player_type, mode = "chrome", "chrome_direct"
         else:
@@ -3698,6 +3699,16 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
 
         prefix = "dvd://" if is_dvd_folder or is_dvd_iso else ""
         # Default to embedded HLS if not specified as browser (standalone)
+        if mode == "vlc_extern":
+             # Launch standalone VLC
+             vlc_path = shutil.which("vlc") or "vlc"
+             try:
+                 proc = subprocess.Popen([str(vlc_path), str(file_path)])
+                 ACTIVE_SUBPROCESSES.append(proc)
+                 return {"status": "ok", "mode": "vlc_extern"}
+             except Exception as e:
+                 return {"status": "error", "error": f"VLC failed: {e}"}
+                 
         if mode == "auto" or mode == "vlc_embedded":
              return start_vlc_guarded(target_path, "vlc_embedded", prefix, source=f"open_video_{source}", start_time=start_time)
         return start_vlc_guarded(target_path, mode, prefix, source=f"open_video_{source}", start_time=start_time)
@@ -3735,6 +3746,12 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
             # Redirect to MediaMTX handler
             variant = "webrtc" if mode == "mtx_webrtc" else "hls"
             return stream_to_mediamtx(file_path, protocol=variant)
+
+        if mode == "chrome_transcode":
+            import urllib.parse
+            rel = os.path.relpath(file_path, PROJECT_ROOT / "media")
+            safe_rel = urllib.parse.quote(rel, safe='')
+            return {"status": "play", "path": f"/transcode/{safe_rel}", "mode": "chrome_transcode", "type": "video/mp4"}
 
         if mode == "chrome_direct":
             import urllib.parse
@@ -6403,47 +6420,85 @@ def trigger_mtx_stream(filepath, proto="hls"):
     except Exception as e:
         return {"status": "error", "details": str(e)}
 
-@eel.expose
-def run_video_matrix_test():
-    """Generates mock files and runs a full codec matrix test."""
-    from src.core.test_media_factory import prepare_test_suite_files
-    test_dir = PROJECT_ROOT / "media" / "tests" / "matrix"
-    test_dir.mkdir(parents=True, exist_ok=True)
+class FFmpegTestSuite:
+    def __init__(self, input_path):
+        from src.parsers.format_utils import ffprobe_suite
+        self.input = input_path
+        self.input_analysis = ffprobe_suite(input_path)
+        self.tests = []
     
-    files = prepare_test_suite_files(test_dir)
-    results = []
-    for key, path in files.items():
-        results.append({
-            "id": key,
-            "path": str(path),
-            "status": "ready" if path and os.path.exists(path) else "failed"
-        })
-    return {"status": "ok", "matrix": results}
+    def test_remux_mkv_mp4(self):
+        """MKV -> MP4 Lossless Check"""
+        from src.parsers.format_utils import ffprobe_suite
+        out = PROJECT_ROOT / "cache" / f"test_remux_{Path(self.input).stem}.mp4"
+        cmd = ['ffmpeg', '-y', '-i', self.input, '-c', 'copy', '-movflags', '+faststart', str(out)]
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, timeout=60)
+            output_analysis = ffprobe_suite(out)
+            
+            # Simple validation
+            v_match = self.input_analysis.get('video_codec') == output_analysis.get('video_codec')
+            d_match = abs(self.input_analysis.get('duration_min', 0) - output_analysis.get('duration_min', 0)) < 0.2
+            
+            return {
+                'name': 'MKV->MP4 Remux',
+                'status': 'pass' if (v_match and d_match) else 'fail',
+                'details': f"In: {self.input_analysis.get('video_codec')} | Out: {output_analysis.get('video_codec')}"
+            }
+        except Exception as e:
+            return {'name': 'MKV->MP4 Remux', 'status': 'fail', 'details': str(e)}
+
+    def test_hls_generation(self):
+        """HLS Streaming Segment Test"""
+        out_dir = PROJECT_ROOT / "cache" / f"test_hls_{Path(self.input).stem}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        playlist = out_dir / "playlist.m3u8"
+        
+        cmd = [
+            'ffmpeg', '-y', '-i', self.input,
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
+            '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',
+            str(playlist)
+        ]
+        try:
+            # We only run for a short time to verify segments
+            subprocess.run(cmd, check=True, capture_output=True, timeout=15)
+            segments = list(out_dir.glob("*.ts"))
+            return {
+                'name': 'HLS Generation',
+                'status': 'pass' if len(segments) > 0 else 'fail',
+                'details': f"Generated {len(segments)} HLS segments"
+            }
+        except subprocess.TimeoutExpired:
+            # Timeout is actually okay if segments were created
+            segments = list(out_dir.glob("*.ts"))
+            return {
+                'name': 'HLS Generation',
+                'status': 'pass' if len(segments) > 0 else 'fail',
+                'details': f"Verified {len(segments)} segments before timeout"
+            }
+        except Exception as e:
+            return {'name': 'HLS Generation', 'status': 'fail', 'details': str(e)}
+
+    def run_full_suite(self):
+        """Runs all enabled pipeline tests."""
+        results = [
+            self.test_remux_mkv_mp4(),
+            self.test_hls_generation()
+        ]
+        return results
 
 @eel.expose
-def trigger_mp4tag_faststart(filepath):
-    """Optimizes MP4 for web playback (moov atom relocation)."""
-    logging.info(f"[Video] Optimizing MP4 atomic order (+faststart): {filepath}")
-    out = PROJECT_ROOT / "cache" / f"fast_{Path(filepath).name}"
-    cmd = ["ffmpeg", "-y", "-i", filepath, "-c", "copy", "-movflags", "+faststart", str(out)]
-    try:
-        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return {"status": "ok", "details": f"FastStart optimization started -> {out.name}"}
-    except Exception as e:
-        return {"status": "error", "details": str(e)}
-
-@eel.expose
-def trigger_webm_transcode(filepath):
-    """Starts a WebM/VP9 transcode of the file."""
-    logging.info(f"[Video] Triggering WebM Transcode: {filepath}")
-    # In a real app, this would use TranscoderManager
-    return {"status": "ok", "details": "WebM Pipeline initiated (Background)"}
-
-@eel.expose
-def trigger_ffmpeg_stream(filepath):
-    """Starts an FFmpeg HLS/DASH streaming server."""
-    logging.info(f"[Video] Triggering FFmpeg Stream: {filepath}")
-    return {"status": "ok", "details": "FFmpeg Stream active on port 8080"}
+def run_ffmpeg_pipeline_test(relpath):
+    """Bridge for the full FFmpeg Pipeline Suite."""
+    lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+    full = Path(lib_dir) / relpath
+    if not full.exists():
+        return {"status": "error", "message": "File not found"}
+        
+    suite = FFmpegTestSuite(str(full))
+    results = suite.run_full_suite()
+    return {"status": "ok", "results": results}
 
 @eel.expose
 def start_mp4frag_conversion(filepath, options=""):
@@ -6955,13 +7010,13 @@ def get_play_source(item_path: str, client: str = 'browser'):
         return {"mode": "direct", "url": f"/direct/{urllib.parse.quote(str(item_path))}"}
         
     # 2. ISO / DVD Real-time Transcoding
-    if ext == ".iso":
-        return {"mode": "direct", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
+    if ext == ".iso" or full.is_dir():
+        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
         
     # 3. Complex Codec Transcoding
     analysis = ffprobe_suite(full)
     if analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
-        return {"mode": "direct", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
+        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
         
     # 4. MKV Remux Check (Optional/Heuristic)
     if ext == ".mkv" and analysis.get("video_codec") == "h264":
