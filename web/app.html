@@ -1984,8 +1984,78 @@
                     // Update main header to reflect sub-chapter title
                     const header = document.getElementById('options-main-header');
                     if (header) {
+                        header.innerText = (viewId === 'startup') ? 'Start-Konfiguration' : 'Optionen';
+                    }
+                    if (viewId === 'startup') {
+                        loadStartupConfig();
                     }
                 }
+            }
+        }
+
+        async function loadStartupConfig() {
+            try {
+                const config = await eel.get_startup_config()();
+                if (config) {
+                    if (config.browser_choice) {
+                        document.getElementById('startup-browser-choice').value = config.browser_choice;
+                    }
+                    if (config.browser_flags) {
+                        const flags = config.browser_flags || [];
+                        document.getElementById('startup-browser-flags').value = flags.join('\n');
+                    }
+                    if (config.env_vars) {
+                        let envStr = "";
+                        for (const [k, v] of Object.entries(config.env_vars)) {
+                            envStr += `${k}=${v}\n`;
+                        }
+                        const envEl = document.getElementById('startup-env-vars');
+                        if (envEl) envEl.value = envStr.trim();
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading startup config:", err);
+            }
+        }
+
+        async function saveStartupConfig() {
+            try {
+                const choice = document.getElementById('startup-browser-choice').value;
+                const flagsRaw = document.getElementById('startup-browser-flags').value;
+                const envRaw = document.getElementById('startup-env-vars').value;
+
+                console.log("Saving startup config:", { choice, flagsRaw, envRaw });
+
+                const flags = flagsRaw.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+                
+                const envVars = {};
+                envRaw.split('\n').forEach(line => {
+                    const parts = line.split('=');
+                    if (parts.length >= 2) {
+                        const key = parts[0].trim();
+                        const value = parts.slice(1).join('=').trim();
+                        if (key) envVars[key] = value;
+                    }
+                });
+
+                const result = await eel.update_startup_config({
+                    "browser_choice": choice,
+                    "browser_flags": flags,
+                    "env_vars": envVars
+                })();
+
+                if (result && result.status === "success") {
+                    if (typeof showToast === "function") {
+                        showToast("Startup-Konfiguration gespeichert! Bitte die App neustarten.", "success");
+                    } else {
+                        alert("Startup-Konfiguration gespeichert! Bitte die App neustarten.");
+                    }
+                } else {
+                    alert("Fehler beim Speichern der Konfiguration.");
+                }
+            } catch (err) {
+                console.error("Error saving startup config:", err);
+                alert("Kritischer Fehler beim Speichern: " + err);
             }
         }
 
@@ -3601,6 +3671,10 @@
                             id="options-subtab-environment">
                             System-Infrastruktur
                         </button>
+                        <button class="options-subtab" onclick="switchOptionsView('startup')"
+                            id="options-subtab-startup">
+                            Start-Konfiguration
+                        </button>
                         <button class="options-subtab" onclick="switchOptionsView('sync')" id="options-subtab-sync">
                             Synchronization & RTT
                         </button>
@@ -4340,6 +4414,70 @@
                     </div> <!-- closes flex layout -->
                 </div> <!-- closes padding div -->
             </div> <!-- closes options-environment-view -->
+
+            <div id="options-startup-view" class="options-view" style="display: none; padding: 20px;">
+                <div style="max-width: 800px;">
+                    <h3 style="display: flex; align-items: center; gap: 10px;">
+                        <span class="icon-power" style="color: #e74c3c;"></span>
+                        Start-Konfiguration (Browser & Umgebung)
+                    </h3>
+                    <p style="color: #666; margin-bottom: 25px; font-size: 0.9em;">
+                        Konfigurieren Sie hier, wie die Anwendung gestartet wird. Diese Einstellungen werden beim nächsten Neustart wirksam.
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                        <!-- Browser Selection -->
+                        <div style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
+                                <span class="icon-expand"></span> Browser Auswahl
+                            </h4>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; font-size: 0.85em; font-weight: 600; color: #555; margin-bottom: 6px;">Bevorzugter Browser:</label>
+                                <select id="startup-browser-choice" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9em;">
+                                    <option value="auto">Auto-Detect (Chromium/Chrome)</option>
+                                    <option value="google-chrome">Google Chrome</option>
+                                    <option value="chromium-browser">Chromium</option>
+                                    <option value="chromium">Chromium (Alternative Path)</option>
+                                    <option value="firefox">Firefox (Experimental)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.85em; font-weight: 600; color: #555; margin-bottom: 6px;">Browser Flags (Einer pro Zeile):</label>
+                                <textarea id="startup-browser-flags" rows="8" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Cascadia Code', monospace; font-size: 0.8em; resize: vertical;"
+                                    placeholder="--no-sandbox&#10;--disable-gpu&#10;--window-size=1550,800"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Env Vars Selection -->
+                        <div style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
+                                <span class="icon-gear"></span> Umgebungsvariablen
+                            </h4>
+                            <p style="font-size: 0.8em; color: #888; margin-bottom: 15px;">
+                                Setzen Sie hier zusätzliche Umgebungsvariablen für das Backend und den Browser.
+                            </p>
+                            <div>
+                                <label style="display: block; font-size: 0.85em; font-weight: 600; color: #555; margin-bottom: 6px;">Environment Variables (KEY=VALUE):</label>
+                                <textarea id="startup-env-vars" rows="12" 
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Cascadia Code', monospace; font-size: 0.8em; resize: vertical;"
+                                    placeholder="EEL_MODE=production&#10;PYTHONPATH=.&#10;DEBUG=1"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+                        <button onclick="loadStartupConfig()" 
+                            style="padding: 10px 20px; background: #eee; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Abbrechen / Laden
+                        </button>
+                        <button onclick="saveStartupConfig()" 
+                            style="padding: 10px 25px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);">
+                            Konfiguration Speichern
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <div id="options-sync-view" class="options-view" style="display: none; padding: 20px;">
                 <div style="max-width: 800px;">

@@ -879,9 +879,25 @@ def update_library_dir(path):
 
 
 @eel.expose
-def update_additional_library_dirs(dirs):
-    """Updates the list of additional library directories."""
-    PARSER_CONFIG["additional_library_dirs"] = dirs
+def get_startup_config():
+    """Returns the current startup (browser/env) configuration."""
+    return {
+        "browser_choice": PARSER_CONFIG.get("browser_choice", "auto"),
+        "browser_flags": PARSER_CONFIG.get("browser_flags", []),
+        "env_vars": PARSER_CONFIG.get("env_vars", {}),
+    }
+
+
+@eel.expose
+def update_startup_config(config):
+    """Updates the startup configuration and saves to disk."""
+    if "browser_choice" in config:
+        PARSER_CONFIG["browser_choice"] = config["browser_choice"]
+    if "browser_flags" in config:
+        PARSER_CONFIG["browser_flags"] = config["browser_flags"]
+    if "env_vars" in config:
+        PARSER_CONFIG["env_vars"] = config["env_vars"]
+    
     save_parser_config()
     return {"status": "success"}
 
@@ -1982,6 +1998,11 @@ def open_session_url(url: str) -> bool:
     except Exception:
         profile_dir = None
 
+    # Handle browser selection
+    choice = PARSER_CONFIG.get("browser_choice", "auto")
+    if choice != "auto":
+        browser_candidates = [choice] + [c for c in browser_candidates if c != choice]
+
     for browser_cmd in browser_candidates:
         browser_path = shutil.which(browser_cmd)
         if browser_path:
@@ -1994,23 +2015,14 @@ def open_session_url(url: str) -> bool:
                 if not wait_for_port(parsed_url.port, timeout=3.0):
                     logging.warning(f"[Browser] Port {parsed_url.port} not reachable after timeout. Launching anyway.")
 
-            args = [
-                browser_path,
-                f'--app={url}',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-gpu',
-                '--window-size=1550,800',
-                '--no-first-run',
-                '--no-default-browser-check',
-                '--disable-extensions',
-                '--remote-debugging-port=9222'
-            ]
+            custom_flags = PARSER_CONFIG.get("browser_flags", [])
+            args = [browser_path, f'--app={url}'] + custom_flags
             
-            # Using a project-local profile to avoid conflicts
-            # if profile_dir:
-            #     args.append(f'--user-data-dir={profile_dir}')
-            #     logging.debug(f"[Browser] Using profile: {profile_dir}")
+            # Apply environment variables
+            env = os.environ.copy()
+            user_envs = PARSER_CONFIG.get("env_vars", {})
+            for k, v in user_envs.items():
+                env[str(k)] = str(v)
             
             logging.info(f"[Browser] Executing: {' '.join(args)}")
             
@@ -2019,7 +2031,8 @@ def open_session_url(url: str) -> bool:
                 process = subprocess.Popen(
                     args,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    env=env
                 )
                 global BROWSER_PID
                 BROWSER_PID = process.pid

@@ -330,6 +330,22 @@ PARSER_CONFIG: dict[str, Any] = {
         "write_mode": False
     },
 
+    "browser_choice": "auto",  # auto, google-chrome, chromium, chrome, chromium-browser
+    "browser_flags": [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--window-size=1550,800",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-extensions",
+        "--remote-debugging-port=9222"
+    ],
+    "env_vars": {
+        "EEL_MODE": "production",
+        "PYTHONPATH": "."
+    },
+
     "log_level": "INFO",
     "api_timeout": 10,
     "env": "production",
