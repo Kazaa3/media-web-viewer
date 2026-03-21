@@ -130,6 +130,34 @@ Die Selenium-Test-Suite wurde erfolgreich integriert, die UI-Integrität (DIV-Ba
 
 ---
 
+## Benutzerdefinierte Start-Konfiguration & Stabilitätsfixes
+
+1. **Zentrale Start-Konfiguration:**
+   - PARSER_CONFIG (src/parsers/format_utils.py) und Browser-Startlogik (src/core/main.py) unterstützen jetzt:
+     - **Browser-Wahl:** Auto-Detect, Google Chrome, Chromium, Firefox (experimentell)
+     - **Custom Browser Flags:** Beliebige Kommandozeilen-Argumente (z.B. --incognito, --disable-gpu, Fenstergrößen)
+     - **Umgebungsvariablen:** Frei definierbar, werden an Browser- und Backend-Subprozesse übergeben
+
+2. **Neue Optionen-Sub-Tab: Start-Konfiguration:**
+   - Premium-UI im Optionen-Menü für diese Einstellungen (Grid-Layout, Kontext-Hilfetexte)
+   - Persistente Speicherung via neue Eel-APIs: get_startup_config & update_startup_config
+   - Interaktives Feedback: Toasts bei Erfolg/Fehler
+
+3. **Stabilitäts- und Main-Loop-Fixes:**
+   - Entfernte Dead Code: Unnötige while True-Schleife in run_selenium_session_tests entfernt
+   - Main Event Loop: Am Ende von main.py eingeführt, hält die App nach eel.start aktiv (verhindert vorzeitiges Beenden)
+
+4. **Selenium-Testplattform-Verbesserungen:**
+   - App Mode & No-Sandbox Flags jetzt voll interaktiv und werden korrekt an Backend/Selenium weitergegeben
+
+**Nutzung:**
+- Optionen → Start-Konfiguration: Einstellungen anpassen, speichern, App neu starten für Übernahme
+
+**Status:**
+- Task abgeschlossen, Konfiguration jetzt vollständig UI-gesteuert und robust. Neustart empfohlen zur Verifikation.
+
+---
+
 ## Hinweise
 - Selenium-Tests können im Tests-Tab unter "Selenium Suite" ausgeführt werden (Port 9222 muss frei sein).
 - Die Anwendung ist jetzt stabiler, mit konsistenterem Layout und besserer Fehlerdiagnose.

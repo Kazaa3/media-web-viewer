@@ -6197,15 +6197,6 @@ def run_selenium_session_tests(options=None):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-    while True:
-        try:
-            eel.sleep(1.0)
-        except KeyboardInterrupt:
-            logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
-            sys.exit(0)
-        except Exception as e:
-            logging.error(f"[MainLoop] Error: {e}")
-            time.sleep(1.0)
 
 @eel.expose
 def discover_cast_devices():
@@ -6864,4 +6855,18 @@ def check_ui_integrity():
     except Exception as e:
         logging.error(f"[QA] UI Integrity Check failed: {e}")
         return {"status": "error", "message": str(e)}
+
+
+if __name__ == "__main__":
+    # The actual startup logic is around line 6046, but we need
+    # a loop here to prevent the main thread from exiting if we're at the root.
+    while True:
+        try:
+            eel.sleep(1.0)
+        except KeyboardInterrupt:
+            logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
+            sys.exit(0)
+        except Exception as e:
+            logging.error(f"[MainLoop] Error: {e}")
+            time.sleep(1.0)
 
