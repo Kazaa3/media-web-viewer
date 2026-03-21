@@ -3861,14 +3861,12 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     # 1. Compatibility Check (simplified version of logbuch logic)
     meta = get_video_metadata(file_path)
     codec = meta.get('codec', '').lower()
-    # Special: Browsers hate MPEG-1/2 (DVD PAL format). Force VLC if detected.
-    if "mpeg" in codec or "mp2" in codec:
-         logging.info(f"DEBUG: [Player-Trace] MPEG-1/2 (PAL) detected in {file_path}. Forcing VLC Embedded fallback.")
-         return open_video(file_path, "vlc", "vlc_embedded", source="smart_router_mpeg_pal")
-
-    # Special: Check if it's a DVD structure
-    is_dvd = False
     is_disc_img = str(file_path).lower().endswith(('.iso', '.bin', '.img'))
+
+    # Special: Browsers hate MPEG-1/2 (DVD PAL format) or ISOs. Route to Transcode Pipeline.
+    if "mpeg" in codec or "mp2" in codec or is_disc_img:
+         logging.info(f"DEBUG: [Player-Trace] MPEG/ISO detected in {file_path}. Using Chrome Transcode Pipeline.")
+         return open_video(file_path, "chrome", "chrome_transcode", source="smart_router_upgrade")
     
     if os.path.exists(file_path) and os.path.isdir(file_path):
         try:
@@ -7004,8 +7002,8 @@ def get_play_source(item_path: str, client: str = 'browser'):
     from src.parsers.format_utils import is_direct_play_capable, ffprobe_suite
     import urllib.parse
     
-    lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
-    full = Path(lib_dir) / item_path
+    # 0. Robust path resolution
+    full = Path(resolve_media_path(item_path))
     
     if not full.exists():
         return {

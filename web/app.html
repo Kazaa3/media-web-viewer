@@ -9012,8 +9012,13 @@
                 item.type === 'movie' ||
                 item.category === 'video' ||
                 item.category === 'movie' ||
+                item.category === 'Film' ||
+                item.category === 'Serie' ||
                 item.category === 'abbild' ||
+                item.category === 'Abbild' ||
                 item.category === 'movie/abbild' ||
+                item.logical_type === 'Video' ||
+                item.logical_type === 'Film' ||
                 (!item.extension) || // Folders are likely videos in the movie lib context
                 (item.extension && videoExts.includes(item.extension.toLowerCase()));
 
@@ -9514,23 +9519,23 @@
 
                 if (source.mode === 'direct') {
                     showToast("🚀 DIRECT PLAY (Native/Remux)", 2000);
-                    // Switch to Player tab
-                    switchTab('vlc', document.getElementById('media-orchestrator-tab-trigger'));
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                     startEmbeddedVideo(item, source.url, null, 'video/mp4');
                 } else if (source.mode === 'vlc') {
                     showToast("📺 VLC REQUIRED (ISO/HDR/Complex)", 3000);
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                     startVLC(source.path || path);
                 } else if (source.mode === 'hls') {
                     showToast("🌐 FALLBACK TO HLS STREAMING", 3000);
-                    // Standard HLS routing via open_video_smart or direct
                     const res = await eel.open_video_smart(path, 'hls')();
                     if (res && res.status === 'play') {
+                        switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                         const streamUrl = res.webrtc || res.hls;
                         startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL');
                     }
                 } else if (source.mode === 'transcode') {
                     showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
-                    switchTab('vlc', document.getElementById('media-orchestrator-tab-trigger'));
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                     startEmbeddedVideo(item, source.url, null, 'video/mp4');
                 } else if (source.mode === 'error') {
                     showToast("Fehler: " + source.message);
