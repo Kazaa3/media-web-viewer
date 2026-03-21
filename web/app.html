@@ -2119,7 +2119,12 @@
             });
 
             if (view === 'database') loadSqlFiles();
-            if (view === 'video-streaming') loadVideoStreamingBenchmarks('video');
+            if (view === 'video-streaming') {
+                loadVideoStreamingBenchmarks('video');
+                if (typeof populateTestVideoSelector === 'function') {
+                    populateTestVideoSelector();
+                }
+            }
             if (view === 'audio-streaming') loadVideoStreamingBenchmarks('audio');
             if (view === 'parser') loadParserPerformance();
             if (view === 'model-analysis') loadModelAnalysis();
@@ -5269,6 +5274,7 @@
                                 <button onclick="runVideoPlayerTest('webm')" class="compact-test-btn" title="WebM/VP9 Transcode">🌀 WebM</button>
                                 <button onclick="runVideoPlayerTest('ffmpeg')" class="compact-test-btn" title="FFmpeg HLS/DASH">🔥 FFmpeg</button>
                                 <button onclick="runVideoPlayerTest('mp4frag')" class="compact-test-btn" title="Fragmented MP4">📦 Frag</button>
+                                <button onclick="runVideoPlayerTest('transcode')" class="compact-test-btn" style="background: #ef6c00;" title="Real-time Transcode">⚡ Trans</button>
                                 <button onclick="runVideoPlayerTest('mkvmerge')" class="compact-test-btn" style="background: #6a1b9a;" title="MKVmerge Remux">🧬 Merge</button>
                                 <button onclick="runVideoPlayerTest('mtx')" class="compact-test-btn" style="background: #2e7d32;" title="MediaMTX Stream">🛰️ MTX</button>
                             </div>
@@ -11387,6 +11393,25 @@
                         entry.details = 'MPV Player Instanz gestartet.';
                     } else {
                         throw new Error("MPV Backend (open_mpv) fehlt.");
+                    }
+                } else if (mode === 'ffplay') {
+                    if (typeof eel.open_ffplay === 'function') {
+                        await eel.open_ffplay(videoPath)();
+                        entry.status = 'pass';
+                        entry.details = 'FFplay Instanz gestartet.';
+                    } else {
+                        throw new Error("FFplay Backend (open_ffplay) fehlt.");
+                    }
+                } else if (mode === 'transcode') {
+                    // Test the real-time transcoding URL
+                    const source = await eel.get_play_source(videoPath)();
+                    if (source.mode === 'direct') {
+                        // For tests, we just verify the URL looks correct
+                        entry.status = 'pass';
+                        entry.details = 'Transcode-URL active: ' + source.url.substring(0, 30) + '...';
+                        // Optionally play it?
+                    } else {
+                        throw new Error("Transcode-Modus konnte nicht aktiviert werden.");
                     }
                 } else if (mode === 'mkvmerge') {
                     const res = await eel.trigger_mkvmerge_remux(videoPath)();

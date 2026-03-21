@@ -45,6 +45,62 @@
 
 ---
 
+## 🆕 Video Player: Expanded Test Suite & MP4 Fixes (21.03.2026)
+
+### 1. Robust Media Routing & Playback Fix
+- MP4-Playback-Probleme gelöst: Backend-Routing für /direct/ gehärtet (Pfadhandling, Unquoting, explizite MIME-Typen)
+- URL-Encoding: Alle Media-URLs werden jetzt mit urllib.parse.quote kodiert (Spaces/Sonderzeichen sicher)
+- Seeking-Support: bottle.static_file optimiert für Range-Requests (schnelles Spulen bei großen MP4s)
+
+### 2. Expanded Test Suite UI
+- Reporting-Tab: Kompakte Button-Icons, lokalisierte Labels für alle Testmodi
+- "Test-Medium"-Selector: Dynamisch mit allen abspielbaren Videos befüllt
+- History/Progress: Ergebnis-Tabelle zeigt detaillierte Statusmeldungen der Backend-Prozesse
+
+### 3. New Backend Test Bridges
+- MPV & FFplay: Direkter Launch für lokale Playback-Tests
+- MKVmerge: Hintergrund-Remux in cache/-Verzeichnis
+- MediaMTX: RTSP-Bridge für automatisierte HLS/WebRTC-Tests
+- MP4 FastStart: FFmpeg-Test für moov-Atom-Optimierung
+
+### 4. Automated Codec Matrix
+- "Generate & Run": test_media_factory erzeugt Mini-Mocks für H.264, H.265, VP9, MP3, FLAC, OPUS
+- Status-Indikatoren: UI zeigt Verfügbarkeit/Erfolg (grün/rot) für alle Test-Assets
+
+### File Modifications
+- main.py: Routing gehärtet, Bridges/Subprozesse, URL-Handling verbessert
+- app.html: Reporting-UI verfeinert, Testmodi/Selector-Logik ergänzt
+- test_media_factory.py: MKV/OPUS-Mock-Support
+
+**Alle Testvarianten direkt im Reporting → Video-Tab verfügbar.**
+
+---
+
+## ⚡ Real-time Transcoding for PAL/NTSC DVDs & Wild Formats (21.03.2026)
+
+### 1. Real-time FFmpeg Streaming Pipeline
+- Neuer /transcode/<path>-Route im Backend: On-the-fly-Transcoding mit FFmpeg in Fragmented MP4 für Chrome
+- Hardware-Effizienz: libx264, ultrafast, zerolatency für minimale Startverzögerung
+- Intelligentes Deinterlacing: ffprobe erkennt PAL/NTSC-Interlacing, yadif-Filter wird nur bei Bedarf aktiviert
+
+### 2. Automatic Format Routing
+- get_play_source & analyze_media priorisieren jetzt den Transcoder für .iso und "wilde" Formate (MPEG-2, HEVC/H.265, VC-1, WMV3)
+- DVD-ISOs werden direkt gestreamt, keine langsame Extraktion mehr
+- Fallback: Komplexe Dateien werden zuerst transkodiert, erst dann an VLC etc. übergeben
+
+### 3. Frontend Integration & Test Suite
+- Neuer "⚡ Trans"-Button im Reporting → Video-Tab: Manuelles Testen des Transcoding-Pipelines für beliebige Dateien
+- Automatische Wiedergabe: DVD/Komplexformate starten sofort im Embedded Player mit Transcode-Stream
+
+### File Modifications
+- main.py: /transcode/-Route, Routing-Logik erweitert
+- format_utils.py: ffprobe_suite extrahiert scan_type (interlaced/progressive)
+- app.html: "Real-time Transcode"-Button & Routing-Update
+
+**DVD-ISOs & komplexe Formate jetzt direkt im Browser abspielbar – mit Deinterlacing!**
+
+---
+
 # Video Player Fixes & UI-Trace Diagnostics (21.03.2026)
 
 ## 🛠️ Key Improvements & Fixes

@@ -6120,6 +6120,72 @@ if __name__ == "__main__":
         cache_dir = str(PROJECT_ROOT / "cache")
         return bottle.static_file(path, root=cache_dir)
 
+    @bottle.route('/transcode/<path:path>')
+    def stream_transcode(path):
+        import urllib.parse
+        from pathlib import Path
+        import subprocess
+        
+        try:
+            decoded = urllib.parse.unquote(path)
+        except:
+            decoded = path
+            
+        if os.path.isabs(decoded):
+            p = Path(decoded)
+        else:
+            lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+            p = Path(lib_dir) / decoded
+            
+        if not p.exists():
+            return bottle.HTTPError(404, "Target for transcode not found.")
+
+        log.info(f"[Transcode-Route] Streaming: {p}")
+        
+        # Determine if deinterlacing is needed (DVDs are often interlaced)
+        from src.parsers.format_utils import ffprobe_suite
+        analysis = ffprobe_suite(p)
+        vf = []
+        
+        # Check if it's interlaced content
+        scan = analysis.get("scan_type", "progressive").lower()
+        if scan != "progressive" or p.suffix.lower() == ".iso":
+             # Apply deinterlacing for non-progressive or ISO/DVD content
+             vf.append("yadif=0:-1:0")
+        
+        # FFmpeg command for Real-time Fragmented MP4 (Chrome Native support)
+        cmd = [
+            "ffmpeg", "-i", str(p),
+            "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
+            "-crf", "25", "-maxrate", "4M", "-bufsize", "8M"
+        ]
+        
+        if vf:
+            cmd += ["-vf", ",".join(vf)]
+            
+        cmd += [
+            "-c:a", "aac", "-b:a", "128k", "-ac", "2",
+            "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+            "pipe:1"
+        ]
+        
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        
+        bottle.response.content_type = 'video/mp4'
+        
+        def stream():
+            try:
+                while True:
+                    data = process.stdout.read(1024 * 16)
+                    if not data:
+                        break
+                    yield data
+            finally:
+                if process.poll() is None:
+                    process.terminate()
+                    
+        return stream()
+
     log_checkpoint("Starting Eel server")
     eel.start(
         "app.html",
@@ -6842,14 +6908,18 @@ def analyze_media(relpath: str, client: str = 'browser'):
     if direct:
         mode = "direct"
         url = f"/direct/{urllib.parse.quote(str(relpath))}"
-    elif ext == ".iso" or analysis.get("hdr") or analysis.get("video_codec") in ["hevc", "vc1"]:
-        # Complex/HDR/ISO goes to VLC
+    elif ext == ".iso" or analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
+        # Standard Transcode for DVD/Complex formats
+        mode = "transcode"
+        url = f"/transcode/{urllib.parse.quote(str(relpath))}"
+    elif analysis.get("hdr"):
+        # HDR still better in VLC for now (color mapping)
         mode = "vlc"
         url = None
     else:
         # Standard fallback to HLS
         mode = "hls"
-        url = None # Will be resolved by ensure_hls
+        url = None
         
     return {
         "analysis": analysis,
@@ -6864,37 +6934,43 @@ def analyze_media(relpath: str, client: str = 'browser'):
 @eel.expose
 def get_play_source(item_path: str, client: str = 'browser'):
     """
-    Resolves the final abspielbare URL, handling cache/remuxing.
+    Resolves the final abspielbare URL, handling cache/remuxing/transcoding.
     """
     from src.parsers.format_utils import is_direct_play_capable, ffprobe_suite
+    import urllib.parse
     
     lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
     full = Path(lib_dir) / item_path
     
     if not full.exists():
-        return {"mode": "error", "message": "File not found"}
+        return {
+            "mode": "error", 
+            "message": f"File not found: {item_path}"
+        }
+    
+    ext = full.suffix.lower()
         
-    # 1. ISO Handling
-    if full.suffix.lower() == ".iso":
-        playable = extract_main_from_iso(full)
-        if playable:
-            rel_cache = Path(playable).name
-            return {"mode": "direct", "url": f"/cache/{rel_cache}"}
-        return {"mode": "vlc", "path": str(full)}
-        
-    # 2. MKV/Direct Play Handling
+    # 1. MKV/Direct Play Handling (Highest Priority)
     if is_direct_play_capable(full, client):
-        import urllib.parse
         return {"mode": "direct", "url": f"/direct/{urllib.parse.quote(str(item_path))}"}
         
-    # 3. MKV Remux Check (Optional/Heuristic)
-    analysis = ffprobe_suite(full)
-    if full.suffix.lower() == ".mkv" and analysis.get("video_codec") == "h264":
-        remuxed = remux_to_mp4_cache(full)
-        rel_cache = Path(remuxed).name
-        return {"mode": "direct", "url": f"/cache/{rel_cache}"}
+    # 2. ISO / DVD Real-time Transcoding
+    if ext == ".iso":
+        return {"mode": "direct", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
         
-    # 4. Fallback to HLS (logic handled in app.html usually, but here as API)
+    # 3. Complex Codec Transcoding
+    analysis = ffprobe_suite(full)
+    if analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
+        return {"mode": "direct", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
+        
+    # 4. MKV Remux Check (Optional/Heuristic)
+    if ext == ".mkv" and analysis.get("video_codec") == "h264":
+        remuxed = remux_to_mp4_cache(full)
+        if remuxed:
+            rel_cache = Path(remuxed).name
+            return {"mode": "direct", "url": f"/cache/{rel_cache}"}
+        
+    # 5. Fallback to HLS
     return {"mode": "hls", "path": item_path}
 
 

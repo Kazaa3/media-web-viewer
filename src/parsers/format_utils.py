@@ -909,6 +909,7 @@ def ffprobe_suite(path: Path | str) -> dict[str, Any]:
             "audio_channels": int(a_streams[0].get('channels', 0)) if a_streams else 0,
             "subs": len(s_streams),
             "chapters": len(data.get('chapters', [])),
+            "scan_type": str(v_stream.get('field_order', 'progressive')),
             "hdr": 'hdr' in str(v_stream.get('color_transfer', '')).lower() or v_stream.get('color_space') == 'bt2020nc'
         }
     except Exception as e:
