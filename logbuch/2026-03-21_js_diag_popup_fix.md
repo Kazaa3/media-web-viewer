@@ -1,26 +1,28 @@
-# JavaScript-Debugging, Popup-Interception & Stabilitätsfixes (21.03.2026)
+---
 
-## 1. JavaScript-Stabilität
-- **Script-Split:** Monolithisches <script> in Core, Components, Data, Diagnostics aufgeteilt → bessere Fehlereingrenzung, zuverlässigere Ausführung
-- **Redundanz entfernt:** Doppelte t(key)-Funktion eliminiert, UI-Übersetzungen jetzt konsistent
-- **Redeclaration-Fix:** Block-Scoped-Variable (activeAudioPipeline) korrekt deklariert, Script lädt überall
-- **Eel-Kommunikation:** Fehlende () bei eel.log_js_error & Co. ergänzt, Fehler werden jetzt sicher an Backend gemeldet
+## Summary of Fixes & Improvements (EN)
 
-## 2. HTML-Integrität
-- **DIV-Balance:** 649 öffnende/649 schließende Tags, keine Layout-Shifts mehr
-- **Automatisierte Prüfung:** window.logDivBalancePerTab() prüft pro Sub-Tab die Struktur
+### JavaScript Stability
+- Monolithic script split into Core, Components, Data, Diagnostics blocks for better error isolation and browser reliability.
+- Removed duplicate t(key) translation function for consistent UI behavior.
+- Fixed block-scoped variable redeclaration (activeAudioPipeline) to ensure script loads in all contexts.
+- Corrected Eel communication: added missing () to eel.log_js_error and similar calls, so errors now reach the backend.
 
-## 3. Moderne Debugging-Tools
-- **Diagnose-Suite:** tests/run_diagnostics.py verbindet sich via Selenium mit laufender App, pollt Logs, prüft DOM, macht Screenshots
-- **Popup-Interceptor:** window.alert/confirm/prompt werden abgefangen, in UI-Trace und Backend geloggt
+### HTML Integrity
+- Balanced DIV structure: 649 opening/649 closing tags, preventing layout shifts and ensuring stable sub-tab rendering.
+- Automated verification: window.logDivBalancePerTab() checks structure per sub-tab.
 
-## 4. Verifikation
-- Diagnostics Suite meldet: DOM Integrity: True, Alert Proxy: True
-- Backend-Logs zeigen [UI-Trace]-Meldungen bei Popups/JS-Fehlern
+### Modern Debugging Tools
+- Permanent diagnostics suite: tests/run_diagnostics.py connects via Selenium to a running app, polls logs, checks DOM, takes screenshots.
+- Popup interceptor: window.alert/confirm/prompt are now proxied, logged to UI Trace and backend for auditing.
 
-## Nutzung
-- Diagnostics: .venv_run/bin/python tests/run_diagnostics.py
-- Fehler/Popups: Debug-Tab im UI oder Backend-Log prüfen
+### Verification
+- Diagnostics suite reports: DOM Integrity: True, Alert Proxy: True
+- Backend logs show [UI-Trace] messages for popups/JS errors
+
+### Usage
+- Run diagnostics: .venv_run/bin/python tests/run_diagnostics.py
+- Monitor errors/popups: Debug tab in UI or backend log
 
 ---
 

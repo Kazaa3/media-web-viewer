@@ -4917,6 +4917,35 @@
                             Waiting for errors or pop-ups...
                         </div>
                     </div>
+
+                    <!-- Simulate Failures (Validation Suite) -->
+                    <div style="background: #fff5f5; border: 1px solid #ffcdd2; border-radius: 12px; padding: 20px; margin-top: 25px;">
+                        <h4 style="margin: 0 0 15px 0; color: #b71c1c; display: flex; align-items: center; gap: 8px;">
+                            🐞 Simulate & Verify Failure Capture
+                        </h4>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="(() => { nonExistentFunction(); })()" 
+                                style="padding: 8px 15px; background: #e53935; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                Force ReferenceError
+                            </button>
+                            <button onclick="(() => { Promise.reject(new Error('Simulated Unhandled Rejection')); })()" 
+                                style="padding: 8px 15px; background: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                Force Promise Rejection
+                            </button>
+                            <button onclick="(() => { alert('Interception Test: Alert captured and logged to backend.'); })()" 
+                                style="padding: 8px 15px; background: #f9a825; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                Test Alert Proxy
+                            </button>
+                            <button onclick="(() => { if(confirm('Sync Test: Do you see this in Backend logs?')) { console.log('Confirm accepted'); } })()" 
+                                style="padding: 8px 15px; background: #8e24aa; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                Test Confirm Proxy
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.8em; color: #757575;">
+                            Gebrauch: Nutze diese Buttons, um zu verifizieren, dass der <code>initUiTraceHooks</code>-Interceptor 
+                            Events korrekt abfängt und via <code>eel.log_js_error()</code> an das Backend sendet.
+                        </p>
+                    </div>
                 </div>
             </div>
 
