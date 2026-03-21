@@ -6237,6 +6237,18 @@ def open_vlc(filepath):
         return {"status": "error", "message": str(e)}
 
 @eel.expose
+def open_ffplay(filepath):
+    """Opens a file in FFplay."""
+    logging.info(f"[Video] Opening in FFplay: {filepath}")
+    try:
+        # -autoexit: closes window when playback ends
+        # -sn: disable subtitles for performance during test
+        subprocess.Popen(["ffplay", "-autoexit", "-sn", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
 def trigger_webm_transcode(filepath):
     """Starts a WebM/VP9 transcode of the file."""
     logging.info(f"[Video] Triggering WebM Transcode: {filepath}")
