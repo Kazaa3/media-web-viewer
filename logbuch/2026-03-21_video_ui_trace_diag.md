@@ -18,6 +18,33 @@
 
 ---
 
+## 🚀 Finalization: Video Player Diagnostic & Stress Suite (21.03.2026)
+
+### FFplay Bridge Completion
+- open_ffplay in src/core/main.py implementiert (mit -autoexit, -sn für Performance-Tests)
+- FFplay-Testbutton im Reporting → Video-UI ergänzt
+- "FFmpeg"-Test im Frontend jetzt mit echtem trigger_ffmpeg_stream-Callback verbunden
+
+### JS Error Interception & Eel Bridge
+- log_js_error und toggle_swyh_rs korrekt via @eel.expose angebunden (Fehler-Reporting jetzt backend-seitig sichtbar)
+- Doppel-Exposure-Bug bei @eel.expose behoben
+
+### UI Trace & Validation
+- "Simulate & Verify Failure Capture"-Panel in Tests → Startup geprüft
+- initUiTraceHooks: alert/confirm/prompt-Proxy & globale Fehler-Events werden korrekt abgefangen und geloggt
+
+### Process Sanitization
+- Hintergrundprozesse (Selenium/Python) bereinigt, Startup-Performance verbessert
+
+### 🧪 System State Check
+- Video-Testmodi: Native, VLC, WebM, FFmpeg, FFplay, FragMP4 — alle verlinkt & einsatzbereit
+- Fehlerpipeline: Frontend-Errors werden an log.error im Backend weitergeleitet
+- DIV-Integrität: 651/651 — balanciert
+
+**Suite ist bereit für Cross-Codec-Stresstest (MKV/H265/ISO).**
+
+---
+
 # Video Player Fixes & UI-Trace Diagnostics (21.03.2026)
 
 ## 🛠️ Key Improvements & Fixes
