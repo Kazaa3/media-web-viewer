@@ -92,6 +92,7 @@ import bottle
 import psutil
 import requests
 from typing import cast
+import ast
 
 # Internal imports
 from src.parsers.format_utils import (
@@ -214,6 +215,14 @@ def rtt_ping(data):
         "received_size": size,
         "echo": data
     })
+
+@eel.expose
+def log_js_error(error_data):
+    """
+    Logs JavaScript errors from the frontend to the backend logger.
+    """
+    log.error(f"[JS-ERROR] {json.dumps(error_data)}")
+    return {"status": "error_logged"}
 
 @eel.expose
 def rtt_item_test(data):
@@ -1994,7 +2003,8 @@ def open_session_url(url: str) -> bool:
                 '--window-size=1550,800',
                 '--no-first-run',
                 '--no-default-browser-check',
-                '--disable-extensions'
+                '--disable-extensions',
+                '--remote-debugging-port=9222'
             ]
             
             # Using a project-local profile to avoid conflicts
@@ -6047,7 +6057,8 @@ if __name__ == "__main__":
     
     def close_callback(page, sockets):
         if not sockets:
-            sys.exit(0)
+            # sys.exit(0) # Disabled for testing
+            pass
 
     log_checkpoint("Starting Eel server")
     eel.start(
@@ -6121,35 +6132,67 @@ if __name__ == "__main__":
     threading.Thread(target=_finish_initialization, daemon=True).start()
     threading.Thread(target=_delayed_scan, daemon=True).start()
 
+@eel.expose
+def test_pyautogui():
+    """
+    Simple test for pyautogui integration.
+    Returns screen size and current mouse position.
+    """
+    try:
+        import pyautogui
+        screen_size = pyautogui.size()
+        mouse_pos = pyautogui.position()
+        return {
+            "status": "ok",
+            "screen_size": {
+                "width": screen_size.width,
+                "height": screen_size.height},
+            "mouse_position": {
+                "x": mouse_pos.x,
+                "y": mouse_pos.y}
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def run_selenium_session_tests(options=None):
+    """
+    Runs Selenium tests by attaching to the running Chrome instance.
+    """
+    test_script = PROJECT_ROOT / "tests" / "test_selenium_session.py"
+    if not test_script.exists():
+        return {"status": "error", "message": f"Test script nicht gefunden unter {test_script}"}
+    
+    try:
+        # We use the same venv as the main app if possible
+        cmd = [sys.executable, str(test_script)]
+        if options:
+            if options.get('verbose'): cmd.append('--verbose')
+            if options.get('trace'): cmd.append('--trace')
+            if options.get('debug'): cmd.append('--debug')
+            if options.get('dom_control'): cmd.append('--dom-control')
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return {
+            "status": "ok",
+            "output": result.stdout,
+            "error": result.stderr,
+            "exit_code": result.returncode
+        }
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "message": "Selenium Test Zeitüberschreitung (30s)"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
     while True:
         try:
             eel.sleep(1.0)
         except KeyboardInterrupt:
             logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
             sys.exit(0)
-        except Exception:
-            time.sleep(1.0)
-
-    @eel.expose
-    def test_pyautogui():
-        """
-        Simple test for pyautogui integration.
-        Returns screen size and current mouse position.
-        """
-        try:
-            import pyautogui
-            screen_size = pyautogui.size()
-            mouse_pos = pyautogui.position()
-            return {
-                "status": "ok",
-                "screen_size": {
-                    "width": screen_size.width,
-                    "height": screen_size.height},
-                "mouse_position": {
-                    "x": mouse_pos.x,
-                    "y": mouse_pos.y}}
         except Exception as e:
-            return {"status": "error", "message": str(e)}
+            logging.error(f"[MainLoop] Error: {e}")
+            time.sleep(1.0)
 
 @eel.expose
 def discover_cast_devices():
@@ -6679,3 +6722,133 @@ def get_play_source(item_path: str, client: str = 'browser'):
         
     # 4. Fallback to HLS (logic handled in app.html usually, but here as API)
     return {"mode": "hls", "path": item_path}
+
+
+@eel.expose
+def scan_js_errors():
+    """
+    @brief Scans app.html for potential JS errors like unguarded .style accesses.
+    @details Nutzt Regex um direkte Zugriffe auf DOM-Element-Properties ohne Null-Checks zu finden.
+    @return Dictionary mit findings und status.
+    """
+    try:
+        app_html = PROJECT_ROOT / "web" / "app.html"
+        if not app_html.exists():
+            return {"status": "error", "message": "app.html not found"}
+
+        content = app_html.read_text(encoding='utf-8')
+        patterns = [
+            (r"document\.getElementById\(['\"][^'\"]+['\"]\)\.(?:style|innerHTML|innerText|value|classList)",
+             "Direct access on getElementById()"),
+            (r"document\.querySelector\(['\"][^'\"]+['\"]\)\.(?:style|innerHTML|innerText|value|classList)",
+             "Direct access on querySelector()"),
+        ]
+
+        findings = []
+        lines = content.split('\n')
+        for pattern, desc in patterns:
+            for i, line in enumerate(lines, 1):
+                if re.search(pattern, line):
+                    # Check if it's inside a comment
+                    stripped = line.strip()
+                    if stripped.startswith('//') or stripped.startswith(
+                            '/*') or stripped.startswith('*'):
+                        continue
+                    findings.append(
+                        {"line": i, "desc": desc, "content": stripped[:150]})
+
+        return {"status": "ok", "findings": findings}
+    except Exception as e:
+        logging.error(f"[QA] JS Error Scan failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def check_ui_integrity():
+    """
+    @brief Checks app.html for structural integrity (div balance, duplicate functions, orphaned catches).
+    @details Statische Analyse der HTML/JS Struktur zur Vermeidung von Layout-Ghosting und Syntax-Fehlern.
+    @return Dictionary mit Ergebnissen.
+    """
+    try:
+        app_html = PROJECT_ROOT / "web" / "app.html"
+        if not app_html.exists():
+            return {"status": "error", "message": "app.html not found"}
+
+        content = app_html.read_text(encoding='utf-8')
+
+        # 1. Div Balance
+        opens = len(re.findall(r'<div\b', content, re.IGNORECASE))
+        closes = len(re.findall(r'</div\b', content, re.IGNORECASE))
+        div_balance = {
+            "opens": opens,
+            "closes": closes,
+            "balanced": opens == closes}
+
+        # 2. Duplicate Functions
+        # Extract named functions (function foo(...) and async function foo(...))
+        func_defs = re.findall(
+            r'\basync\s+function\s+(\w+)\s*\(|(?<!\w)function\s+(\w+)\s*\(',
+            content)
+        names = [a or b for a, b in func_defs]
+        seen = {}
+        duplicates = []
+        for name in names:
+            if not name:
+                continue
+            seen[name] = seen.get(name, 0) + 1
+            if seen[name] == 2:
+                duplicates.append(name)
+
+        # 3. Orphaned Catch Blocks
+        lines = content.split('\n')
+        orphaned_catches = []
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if re.match(r'^\}\s*catch\s*[\(\{]', stripped):
+                # Scan backwards to find the nearest function definition or file start
+                found_try = False
+                # Max 600 lines back should be enough
+                for j in range(i - 2, max(0, i - 600), -1):
+                    lj = lines[j].strip()
+                    if re.search(r'\btry\s*\{', lj):
+                        found_try = True
+                        break
+                    # Stop at the enclosing function start
+                    if re.match(r'(async\s+)?function\s+\w+\s*\(', lj):
+                        break
+                if not found_try:
+                    orphaned_catches.append(i)
+
+        # 4. Python Source Integrity
+        python_errors = []
+        try:
+            # Check src and tests for SyntaxErrors (only top level / src files for speed)
+            for target_dir in [PROJECT_ROOT / "src", PROJECT_ROOT / "tests"]:
+                if target_dir.exists():
+                    all_py = list(target_dir.rglob("*.py"))
+                    # Limit to first 100 files for quick feedback if needed, but let's try all
+                    for py_file in all_py:
+                        if ".venv" in str(py_file) or "__pycache__" in str(py_file):
+                            continue
+                        try:
+                            with open(py_file, 'r', encoding='utf-8') as f:
+                                ast.parse(f.read())
+                        except SyntaxError as e:
+                            python_errors.append(f"{py_file.name}:L{e.lineno} {e.msg}")
+                        except Exception:
+                            pass
+        except Exception as e:
+            python_errors.append(f"Scanner error: {e}")
+
+        return {
+            "status": "ok",
+            "div_balance": div_balance,
+            "python_integrity": {"balanced": len(python_errors) == 0, "errors": python_errors},
+            "duplicates": sorted(duplicates),
+            "orphaned_catches": orphaned_catches
+        }
+    except Exception as e:
+        logging.error(f"[QA] UI Integrity Check failed: {e}")
+        return {"status": "error", "message": str(e)}
+

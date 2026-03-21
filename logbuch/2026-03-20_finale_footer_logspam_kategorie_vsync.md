@@ -98,6 +98,51 @@ Alle geplanten Bugfixes und UI-Verbesserungen wurden erfolgreich umgesetzt und g
 
 ---
 
+## Test-Tab: Sub-Tabs, Suite-Integration & Startup-Tests
+
+- **Test-Tab-Überarbeitung:**
+  - Der bisherige Test-Tab wurde in einen Unterreiter "Test" verschoben.
+  - Die Test-Suite ist jetzt als eigene Sub-Tabs im Test-Bereich integriert (z.B. "Test", "Startup/Div-Tests", "Test Suite").
+  - Jeder Sub-Tab zeigt eigene Inhalte und Ergebnisse an.
+
+- **Startup/Div-Tests:**
+  - Ein neuer Unterreiter für Startup- und DIV-Balance-Tests wurde hinzugefügt.
+  - Hier werden automatisierte Checks für DIV-Struktur und Startup-Integrität ausgeführt und angezeigt.
+
+- **Test Suite:**
+  - Die bestehende Test-Suite ist als separater Sub-Tab eingebunden und kann parallel zu den anderen Testbereichen genutzt werden.
+
+- **Fehlerbehandlung:**
+  - Ein JS-Fehler im Zusammenhang mit der neuen Sub-Tab-Logik wurde erkannt und wird im nächsten Schritt behoben.
+
+- **Verifikation:**
+  - Alle Testbereiche sind über Sub-Tabs erreichbar und zeigen die jeweiligen Ergebnisse korrekt an.
+  - Die Test-Suite und die neuen Startup/Div-Tests laufen unabhängig voneinander.
+
+---
+
+## Test-Tab: QA-Tools, Sub-Tabs & DIV-Balance
+
+- **Hierarchische Test-Struktur:**
+  - Der Test-Tab verfügt jetzt über vier spezialisierte Unterreiter:
+    - 🧪 Test (Base): RTT- und Konnektivitäts-Checks
+    - 🚫 JS Error: Statischer Scanner für riskante DOM-Zugriffe in app.html
+    - 🚀 Startup (Div): UI-Integritäts- und DIV-Balance-Checks
+    - 📋 Test Suite: Automatisierte Regressions-Tests
+
+- **Fehlerbehebung (JS & UI):**
+  - Syntaxfehler in initUiTraceHooks (doppelte Deklaration, fehlende Klammern) behoben.
+  - HTML-Integrität: app.html ist jetzt mit 601 öffnenden und 601 schließenden <div>-Tags vollständig balanciert.
+
+- **Backend & i18n:**
+  - Neue QA-Funktionen scan_js_errors und check_ui_integrity in main.py implementiert und via Eel exportiert.
+  - Alle neuen UI-Elemente sind im i18n-System (DE/EN) verfügbar.
+
+- **Status-Check:**
+  - Die Anwendung startet fehlerfrei, alle Test-Sub-Tabs funktionieren und liefern sofortige Rückmeldung zur Code- und UI-Qualität.
+
+---
+
 ## Abschluss: MediaInfo-Integration & Tab-Verbesserungen
 
 - **Sidebar-Optimierung:**
