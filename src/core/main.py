@@ -3661,7 +3661,8 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
     # 2. Auto-Detection Logic (only runs when mode is truly 'auto')
     if mode == "auto":
         if is_dvd_iso or is_dvd_folder:
-            player_type, mode = "chrome", "chrome_transcode" # Prefer native transcode streamer
+             # Prefer native transcode for seeking support (?ss=)
+             player_type, mode = "chrome", "chrome_transcode"
         elif is_audio:
             player_type, mode = "chrome", "chrome_direct"
         else:
@@ -3866,7 +3867,7 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     # Special: Browsers hate MPEG-1/2 (DVD PAL format) or ISOs. Route to Transcode Pipeline.
     if "mpeg" in codec or "mp2" in codec or is_disc_img:
          logging.info(f"DEBUG: [Player-Trace] MPEG/ISO detected in {file_path}. Using Chrome Transcode Pipeline.")
-         return open_video(file_path, "chrome", "chrome_transcode", source="smart_router_upgrade")
+         return open_video(file_path, "chrome", "chrome_transcode", source="smart_router_upgrade", start_time=start_time)
     
     if os.path.exists(file_path) and os.path.isdir(file_path):
         try:
@@ -7037,23 +7038,27 @@ def get_play_source(item_path: str, client: str = 'browser'):
         return {"mode": "direct", "url": f"/direct/{urllib.parse.quote(str(item_path))}"}
         
     # 2. ISO / DVD Real-time Transcoding
+    # Perform analysis once for all subsequent checks
+    analysis = ffprobe_suite(full)
+    d_sec = analysis.get("duration_sec", 0)
+
     if ext == ".iso" or full.is_dir():
-        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
+        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}", "duration_sec": d_sec}
         
     # 3. Complex Codec Transcoding
-    analysis = ffprobe_suite(full)
+    # Always include duration_sec in the source result if available
     if analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
-        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}"}
+        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}", "duration_sec": d_sec}
         
     # 4. MKV Remux Check (Optional/Heuristic)
     if ext == ".mkv" and analysis.get("video_codec") == "h264":
         remuxed = remux_to_mp4_cache(full)
         if remuxed:
             rel_cache = Path(remuxed).name
-            return {"mode": "direct", "url": f"/cache/{rel_cache}"}
+            return {"mode": "direct", "url": f"/cache/{rel_cache}", "duration_sec": d_sec}
         
-    # 5. Fallback to HLS
-    return {"mode": "hls", "path": item_path}
+    # 5. Fallback to Transcode (Better than HLS for seeking)
+    return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}", "duration_sec": d_sec}
 
 
 @eel.expose

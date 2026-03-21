@@ -302,3 +302,25 @@
 
 **DVDs & ISOs jetzt mit voller Timeline-Kontrolle und exakter Dauer im Browser!**
 
+---
+
+## ✅ Final: Playback, Duration & Seeking Fixes for DVD/MKV (22.03.2026)
+
+### Restored Playback Start
+- Kritischer Import-Fehler im Backend behoben: Alle Medien (DVD/MKV) starten jetzt zuverlässig aus der Item-Liste
+
+### Corrected Timeline & Duration
+- Frontend liest Filmlänge jetzt korrekt aus duration_sec der Analyse-Daten
+- Timeline zeigt die volle Filmdauer (z.B. 1h 45m) an
+
+### Restored Seeking for DVDs
+- DVD-Routing wieder auf Chrome Transcode (FFmpeg) umgestellt
+- Hot-Reload-Seeking via ?ss=-Parameter wieder aktiv (granulares Springen möglich)
+
+### MKV & Complex Codecs
+- Auch MKVs mit Transcoding zeigen jetzt korrekte Dauer und unterstützen Seeking
+
+### Nutzung
+- Einfach DVD oder MKV anklicken: Video-Tab öffnet sich, Dauer & Seeking funktionieren wie erwartet
+- Smart Auto-Routing sorgt für optimale Kompatibilität und Bedienkomfort
+

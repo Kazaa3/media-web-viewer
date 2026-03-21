@@ -9493,9 +9493,10 @@
                 if (tagsContainer) {
                     tagsContainer.innerHTML = '';
                     const codecs = [];
-                    if (info.video_codec) codecs.push(info.video_codec.toUpperCase());
-                    if (info.audio_codec) codecs.push(info.audio_codec.toUpperCase());
-                    if (info.hdr) codecs.push('HDR');
+                    const a = info.analysis || {};
+                    if (a.video_codec) codecs.push(a.video_codec.toUpperCase());
+                    if (a.audio_codec) codecs.push(a.audio_codec.toUpperCase());
+                    if (a.hdr) codecs.push('HDR');
                     codecs.forEach(c => {
                         const span = document.createElement('span');
                         span.style = "font-size: 0.65em; padding: 2px 6px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; color: #666; font-weight: bold;";
@@ -9524,12 +9525,14 @@
                     if (res && res.status === 'play') {
                         switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                         const streamUrl = res.webrtc || res.hls;
-                        startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL');
+                        const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
+                        startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL', d_sec);
                     }
                 } else if (source.mode === 'transcode') {
                     showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
-                    startEmbeddedVideo(item, source.url, null, 'video/mp4', info.duration_sec);
+                    const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
+                    startEmbeddedVideo(item, source.url, null, 'video/mp4', d_sec);
                 } else if (source.mode === 'error') {
                     showToast("Fehler: " + source.message);
                 }
