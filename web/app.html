@@ -1555,12 +1555,7 @@
             }
         };
 
-        function t(key) {
-            if (translations[currentLanguage] && translations[currentLanguage][key]) {
-                return translations[currentLanguage][key];
-            }
-            return key;
-        }
+
 
         function filterCompatibilityTable() {
             const input = document.getElementById('compatibility-search');
@@ -6394,7 +6389,9 @@
         </div>
     </div>
     </div>
+    </div>
 
+    <!-- Core Initialization & Environment -->
     <script>
         activeAudioPipeline = document.getElementById('native-html5-audio-pipeline-element');
         currentLogbuchEntries = [];
@@ -7008,10 +7005,8 @@
                     if (el.children.length === 0) {
                         el.innerHTML = val;
                     } else {
-                        // For elements with children, find the first text node
-                        // Or look for a child with same data-i18n
-                        // Here we just skip to avoid destruction if it's a complex button.
-                        // The inner span will be handled by its own data-i18n.
+                        // For elements with children, more complex logic might be needed
+                        // e.g., finding a specific child to update or leaving it alone.
                     }
                 }
             });
@@ -7040,7 +7035,31 @@
         // Initialize on load
         window.addEventListener('load', initTranslations);
 
-        // ============ File Browser ============
+        // Add to switchTab logic to refresh playlist if it's selected
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function (tabId, btn) {
+            if (typeof originalSwitchTab === 'function') {
+                originalSwitchTab(tabId, btn);
+            } else {
+                // Fallback if not yet defined
+                const contents = document.querySelectorAll('.tab-content');
+                contents.forEach(c => c.classList.remove('active'));
+                const target = document.getElementById(tabId + '-tab') || document.getElementById(tabId);
+                if (target) target.classList.add('active');
+
+                const btns = document.querySelectorAll('.tab-btn');
+                btns.forEach(b => b.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+            }
+
+            if (tabId === 'playlist') {
+                renderPlaylist();
+            }
+        };
+    </script>
+
+    <!-- File Browser Logic -->
+    <script>
         let fbCurrentPath = null;
         let fbParentPath = null;
 
@@ -7125,7 +7144,10 @@
         function fbBack() {
             if (fbParentPath) fbNavigate(fbParentPath);
         }
+    </script>
 
+    <!-- Debug Log & Environment Logic -->
+    <script>
         // ============ Debug Log Logic ============
         async function loadDebugDBInfo() {
             const infoEl = document.getElementById('debug-db-info');
@@ -7137,7 +7159,7 @@
                     <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; border: 1px solid #eef;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee;">
                             <span style="font-weight: bold; color: #333; font-size: 1.1em;">
-                                <span class="icon-database" style="background-color: #2980b9;"></span> ${t('database_item') || 'Items'}: 
+                                <span class="icon-database" style="background-color: #2980b9;"></span> ${t('database_item') || 'Items'}:
                                 <span style="color: #2980b9; margin-left: 5px;">${stats.total_items}</span>
                             </span>
                         </div>
@@ -7255,7 +7277,132 @@
             loadDebugLogs(); // Refresh
         }
 
-        // ============ Playlist UI Logic ============
+        // JSON Syntax Highlighting mit optimierten Farben
+        function syntaxHighlight(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, null, 2);
+            }
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, function (match) {
+                let cls = 'json-number';
+                let color = '#b5cea8'; // Numbers: soft green
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                        color = '#9cdcfe'; // Keys: bright blue
+                        match = match.replace(/^"(.*)":$/, '"<span style="color: #9cdcfe; font-weight: 500;">$1</span>":');
+                        return match;
+                    } else {
+                        cls = 'json-string';
+                        color = '#ce9178'; // Strings: orange
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                    color = '#569cd6'; // Booleans: blue
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                    color = '#569cd6'; // Null: blue
+                }
+                return '<span style="color: ' + color + ';">' + match + '</span>';
+            });
+        }
+
+        async function loadDebugFlags() {
+            try {
+                const flags = await eel.get_debug_flags()();
+                const optionsContainer = document.getElementById('debug-flags-container');
+                const modalContainer = document.getElementById('modal-debug-flags');
+                const reusedContainer = document.getElementById('debug-flags-container-reused');
+
+                const flagsHtml = Object.entries(flags).map(([key, value]) => {
+                    const labelText = t(`debug_flag_${key}`) || key.toUpperCase();
+                    return `
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.1s;"
+                                           onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
+                                        <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
+                                        <span style="font-family: monospace; font-size: 0.95em;">${labelText}</span>
+                                    </label>`;
+                }).join('');
+
+                if (optionsContainer) optionsContainer.innerHTML = flagsHtml;
+                if (modalContainer) modalContainer.innerHTML = flagsHtml;
+                if (reusedContainer) reusedContainer.innerHTML = flagsHtml;
+
+            } catch (e) {
+                console.error("Failed to load debug flags:", e);
+            }
+        }
+
+        async function toggleDebugFlag(key, value) {
+            await eel.set_debug_flag(key, value)();
+            // Refresh both locations
+            loadDebugFlags();
+        }
+
+        async function setAllFlags(value) {
+            await eel.set_all_debug_flags(value)();
+            loadDebugFlags();
+        }
+
+        function toggleDebugMenu() {
+            const modal = document.getElementById('debug-flags-modal');
+            if (modal.style.display === 'none') {
+                modal.style.display = 'block';
+                safeStyle('feature-status-modal', 'display', 'none'); // Close other
+                loadDebugFlags();
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        eel.expose(log_to_debug);
+        function log_to_debug(message) {
+            const debugTextarea = document.getElementById('browse-results-debug');
+            if (debugTextarea) {
+                if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
+                    debugTextarea.value += '\n';
+                }
+                debugTextarea.value += message + '\n';
+                debugTextarea.scrollTop = debugTextarea.scrollHeight;
+            }
+        }
+
+        eel.expose(set_db_status);
+        function set_db_status(isVisible) {
+            const container = document.getElementById('db-status-container');
+            if (container) {
+                container.style.display = isVisible ? 'flex' : 'none';
+            }
+        }
+
+        let __testOutputBuffer = '';
+        function appendTestOutputChunk(chunk) {
+            const resultsContainer = document.getElementById('test-results-container');
+            const outputArea = document.getElementById('test-output');
+            if (!outputArea) return;
+
+            if (resultsContainer) {
+                resultsContainer.style.display = 'block';
+            }
+
+            const maxOutputChars = 250000;
+            const truncatedPrefix = '[Ausgabe gekürzt - nur die letzten Zeichen werden angezeigt]\n\n';
+            __testOutputBuffer += chunk;
+            if (__testOutputBuffer.length > maxOutputChars) {
+                __testOutputBuffer = truncatedPrefix + __testOutputBuffer.slice(-maxOutputChars);
+            }
+            outputArea.textContent = __testOutputBuffer;
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        eel.expose(append_test_output);
+        function append_test_output(message) {
+            appendTestOutputChunk(String(message || ''));
+        }
+    </script>
+
+    <!-- Playlist UI Logic -->
+    <script>
         async function moveItemUp(index) {
             // Call backend to persist reorder, then refresh playlist from backend
             try {
@@ -7292,7 +7439,7 @@
 
                     if (isShuffle) {
                         // In shuffle mode, we don't want to reshuffle the whole list,
-                        // but we need to stay consistent. For now, disable reorder in shuffle 
+                        // but we need to stay consistent. For now, disable reorder in shuffle
                         // or update the shuffled list too.
                         // Choice: disable reorder buttons in renderPlaylist if isShuffle?
                         // Better: If isShuffle is active, we should probably move the item in shuffled list too.
@@ -7553,18 +7700,18 @@
                         <span style="font-size: 0.8em;">${artistDisplay}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-left: auto; padding-right: 10px;">
-                         <div class="grab-icon" 
-                              onmousedown="onGrabPointerDown(event, ${index})" 
-                              onmouseup="onGrabPointerUp(event, ${index})" 
+                         <div class="grab-icon"
+                              onmousedown="onGrabPointerDown(event, ${index})"
+                              onmouseup="onGrabPointerUp(event, ${index})"
                               onmouseleave="onGrabPointerLeave(event, ${index})"
                               title="${t('pl_grab') || 'Grab to move'}">☰
                          </div>
                         <div class="playlist-controls" style="display: flex; gap: 5px;">
-                            <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}" 
+                            <button onclick="event.stopPropagation(); moveItemUp(${index})" title="${t('pl_move_up') || 'Up'}"
                                 ${isShuffle ? 'disabled style="opacity:0.3; cursor:default;"' : 'style="background:transparent; border:none; cursor:pointer; display: flex; align-items: center; justify-content: center; padding: 5px;"'}>
                                 <span class="icon-up" style="width: 16px; height: 16px;"></span>
                             </button>
-                            <button onclick="event.stopPropagation(); moveItemDown(${index})" title="${t('pl_move_down') || 'Down'}" 
+                            <button onclick="event.stopPropagation(); moveItemDown(${index})" title="${t('pl_move_down') || 'Down'}"
                                 ${isShuffle ? 'disabled style="opacity:0.3; cursor:default;"' : 'style="background:transparent; border:none; cursor:pointer; display: flex; align-items: center; justify-content: center; padding: 5px;"'}>
                                 <span class="icon-down" style="width: 16px; height: 16px;"></span>
                             </button>
@@ -7654,11 +7801,11 @@
                 // But for simplicity, we let the timer finish if they stay within reasonable bounds.
                 // If they release outside, we still have the mouseup on body or similar?
 //                 // Actually, let's keep it but make it less sensitive.
-// 
+//
 //                 // If we want it to be REALLY robust, we should listen to mouseup on window.
 //             }
 //         }
-// 
+//
 //         function clearPickProgress(index) {
 //             const progress = document.getElementById(`pick-progress-${index}`);
 //             if (progress) {
@@ -7667,7 +7814,7 @@
 //                 setTimeout(() => { if (progress) progress.style.transition = 'width 0.4s linear'; }, 50);
 //             }
 //         }
-// 
+//
 //         function pickItem(index) {
 //             console.log("pickItem activated for index:", index);
 //             if (isShuffle) {
@@ -7676,7 +7823,7 @@
 //             }
 //             pickedIndex = index;
 //             document.body.classList.add('is-picking');
-// 
+//
 //             // Add global cancel listener if user releases outside elements
 //             const onGlobalUp = (e) => {
 //                 if (pickedIndex !== -1) {
@@ -7689,6 +7836,39 @@
 //                 }
 //                 window.removeEventListener('mouseup', onGlobalUp);
 //             };
+            }
+        }
+
+        function clearPickProgress(index) {
+            const progress = document.getElementById(`pick-progress-${index}`);
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.width = '0%';
+                setTimeout(() => { if (progress) progress.style.transition = 'width 0.4s linear'; }, 50);
+            }
+        }
+
+        function pickItem(index) {
+            console.log("pickItem activated for index:", index);
+            if (isShuffle) {
+                alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
+                return;
+            }
+            pickedIndex = index;
+            document.body.classList.add('is-picking');
+
+            // Add global cancel listener if user releases outside elements
+            const onGlobalUp = (e) => {
+                if (pickedIndex !== -1) {
+                    console.log("[Picking] Global mouseup detected - checking if we need to cancel");
+                    // If we are here, we might have missed a specific drop target mouseup
+                    // We'll give it a tiny delay to see if releasePick was called
+                    setTimeout(() => {
+                        if (pickedIndex !== -1) cancelPick();
+                    }, 50);
+                }
+                window.removeEventListener('mouseup', onGlobalUp);
+            };
             window.addEventListener('mouseup', onGlobalUp);
 
             // Visual confirmation
@@ -7780,29 +7960,12 @@
 
             renderPlaylist();
         }
+    </script>
 
-        // Add to switchTab logic to refresh playlist if it's selected
-        const originalSwitchTab = window.switchTab;
-        window.switchTab = function (tabId, btn) {
-            if (typeof originalSwitchTab === 'function') {
-                originalSwitchTab(tabId, btn);
-            } else {
-                // Fallback if not yet defined
-                const contents = document.querySelectorAll('.tab-content');
-                contents.forEach(c => c.classList.remove('active'));
-                const target = document.getElementById(tabId + '-tab') || document.getElementById(tabId);
-                if (target) target.classList.add('active');
-
-                const btns = document.querySelectorAll('.tab-btn');
-                btns.forEach(b => b.classList.remove('active'));
-                if (btn) btn.classList.add('active');
-            }
-
-            if (tabId === 'playlist') {
-                renderPlaylist();
-            }
-        };
+    <!-- Editor Logic -->
+    <script>
         let allLibraryItems = [];
+        let currentEditingTestFile = null; // For test suite editing
 
         async function loadEditItems(retryCount) {
             retryCount = retryCount || 0;
@@ -8172,6 +8335,159 @@
             }
         }
 
+        async function saveToFileUI() {
+            const name = readValue('edit-item-name');
+            if (!name) {
+                alert(t('edit_no_selection_error'));
+                return;
+            }
+
+            const tags = {};
+            const tagRows = document.querySelectorAll('.edit-tag-row');
+            tagRows.forEach(row => {
+                const keyEl = row.querySelector('.tag-key');
+                const valEl = row.querySelector('.tag-val');
+                if (keyEl && valEl) {
+                    const key = keyEl.innerText.replace(':', '').trim().toLowerCase();
+                    tags[key] = valEl.value;
+                }
+            });
+
+            // Button context
+            const btn = event.currentTarget;
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = (t('edit_saving') || 'Speichern...') + ' ⏳';
+            btn.disabled = true;
+
+            try {
+                const result = await eel.save_tags_to_file(name, tags)();
+                if (result.success) {
+                    alert(t('edit_save_to_file_success') || 'Erfolgreich in Datei gespeichert!');
+                    loadLibrary(); // Refresh library to show updated tags
+                } else {
+                    alert((t('edit_save_to_file_error') || 'Fehler beim Speichern in Datei: ') + result.error);
+                }
+            } catch (e) {
+                alert('Eel error: ' + e);
+            } finally {
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
+        }
+
+        async function loadLibrary(retryCount) {
+            retryCount = retryCount || 0;
+            try {
+                let result = await eel.get_library()();
+                if (result && result.media && result.media.length > 0) {
+                    safeHtml('state-orchestrated-active-queue-list-container', '');
+                } else {
+                    console.warn("[loadLibrary] No media found in library.");
+                    safeHtml('state-orchestrated-active-queue-list-container', `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`);
+                    return;
+                }
+
+                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB.");
+
+                const dictSelect = document.getElementById('debug-dict-select');
+                if (!dictSelect || dictSelect.value === 'library') {
+                    const highlighted = syntaxHighlight(result.media);
+                    safeHtml('debug-items-json', highlighted);
+                }
+
+                // Update current playlist for Shuffle/Next/Prev
+                currentPlaylist = [...result.media];
+                if (isShuffle) {
+                    // Re-shuffle if shuffle is active
+                    shuffledPlaylist = [...currentPlaylist];
+                    for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+                    }
+                }
+
+                // Keep backend in sync with the dynamically loaded library list
+                if (typeof eel !== 'undefined' && typeof eel.set_current_playlist === 'function') {
+                    eel.set_current_playlist(currentPlaylist)().catch(console.error);
+                }
+
+                const list = document.getElementById('state-orchestrated-active-queue-list-container');
+                if (!list) return;
+
+                if (typeof renderPlaylist === 'function') {
+                    renderPlaylist();
+                }
+
+                result.media.forEach((item, index) => {
+                    let div = document.createElement('div');
+                    div.className = 'implementation-encapsulated-state-buffer-node';
+                    let tags = item.tags || {}; // Fallback if tags object is completely missing
+                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
+                    let trackStr = tags.track ? t('lib_track_prefix') + tags.track : '';
+                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
+
+                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
+
+                    // Fallbacks if metadata is missing
+                    let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
+                    let artistDisplay = tags.artist || t('lib_unknown_artist');
+                    let itemName = item.name || item.filename || "unknown";
+                    let badgeHtml = getCategoryBadgeHtml(item);
+
+                    div.innerHTML = `
+                        <div style="position:relative; display:inline-block; margin-right:12px; flex-shrink:0;">
+                            <img class="media-cover" style="margin-right:0;" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
+                            ${badgeHtml}
+                        </div>
+                        <div class="media-info">
+                            <strong>${titleDisplay}</strong>
+                            <span>${artistDisplay}</span>
+                            <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
+                        </div>
+                    `;
+
+                    let mediaUrl = '/media/' + encodeURIComponent(itemName);
+                    if (item.is_transcoded && item.transcoded_format) {
+                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
+                    }
+
+                    div.onclick = (e) => {
+                        if (e) e.stopPropagation();
+                        playlistIndex = index;
+                        // If shuffle is active, find this item in the shuffled list
+                        if (isShuffle) {
+                            playlistIndex = shuffledPlaylist.indexOf(item);
+                        }
+                        play(item, mediaUrl);
+                    };
+                    div.oncontextmenu = (e) => showContextMenu(e, item);
+                    list.appendChild(div);
+                });
+            } catch (e) {
+                console.error('[loadLibrary] Error loading library:', e);
+                if (retryCount < 3) {
+                    console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
+                    setTimeout(() => loadLibrary(retryCount + 1), 1000);
+                } else {
+                    safeHtml('state-orchestrated-active-queue-list-container', `<p style="padding: 20px; color: #c33;">${t('lib_error_loading')}${e.message}</p>`);
+                }
+            }
+        }
+
+        function jumpToEdit(item) {
+            const editBtn = document.querySelector('button[onclick*="\'edit\'"]');
+            switchTab('edit', editBtn);
+            openEditForm(item);
+        }
+    </script>
+
+    <!-- Player Logic -->
+    <script>
+        activeAudioPipeline = document.getElementById('native-html5-audio-pipeline-element');
+        let currentVideoItem = null;
+        let currentVideoPath = null;
+        let vjsPlayer = null;
+
         function play(item, path) {
             console.info(">>> [Play-Trace] play() called for:", item.name, "path:", path);
             const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
@@ -8225,7 +8541,7 @@
                 const list = isShuffle ? shuffledPlaylist : currentPlaylist;
                 const idx = list.indexOf(item);
                 if (idx !== -1) {
-                    eel.jump_to_index(idx)().catch(console.error);
+                    eel.jump_to_index(idx)();
                 }
             }
 
@@ -8331,7 +8647,7 @@
             }
 
             let transcodeHtml = item.is_transcoded ? `<br><br><span style="color: #d9534f;">${t('sb_transcoding_msg').replace('{fmt}', item.transcoded_format || 'FLAC')}</span>` : '';
-            
+
             // Update sidebar performance/parsing times
             safeHtml('sidebar-performance-container', parserTimesHtml);
 
@@ -8367,9 +8683,6 @@
         }
 
         // ============ Video Player ============
-        let currentVideoItem = null;
-        let currentVideoPath = null;
-
         function showUnsupportedVideoHint() {
             safeStyle('video-unsupported-hint', 'display', 'block');
             safeStyle('btn-open-vlc', 'display', 'flex');
@@ -8413,7 +8726,7 @@
             if (res && res.status === 'play') {
                 console.info('>>> [Play-Trace] triggerOpenWith returned status=play, mode=', res.mode);
                 startEmbeddedVideo(currentVideoItem, res.path, null, res.type || null);
-                updateStatusStrip(engine, mode, targetPath, true);
+                orchestrateVideoPlaybackMode();
             } else if (res && res.status === 'ok') {
                 console.info('>>> [Play-Trace] triggerOpenWith returned status=ok, mode=', res.mode);
                 updateStatusStrip(engine, mode, targetPath, false);
@@ -8619,8 +8932,6 @@
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        let vjsPlayer = null;
-
         async function playVideo(item, path) {
             console.info(">>> [Play-Trace] playVideo() called for:", path);
             if (window._locking_video_playback) {
@@ -8734,7 +9045,7 @@
                 // Automatic playlist progression
                 vjsPlayer.on('ended', () => {
                     console.info("[Video.js] Video ended, triggering next...");
-                    if (isRepeat === 'one') {
+                    if (repeatStatus === 'one') {
                         vjsPlayer.play();
                     } else {
                         playNext();
@@ -8982,12 +9293,6 @@
             }
         }
 
-        function jumpToEdit(item) {
-            const editBtn = document.querySelector('button[onclick*="\'edit\'"]');
-            switchTab('edit', editBtn);
-            openEditForm(item);
-        }
-
         window.jumpToChapter = function (startTime) {
             let p = document.getElementById('native-html5-audio-pipeline-element');
             if (p) {
@@ -8995,178 +9300,10 @@
                 p.play();
             }
         };
+    </script>
 
-        // JSON Syntax Highlighting mit optimierten Farben
-        function syntaxHighlight(json) {
-            if (typeof json !== 'string') {
-                json = JSON.stringify(json, null, 2);
-            }
-            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, function (match) {
-                let cls = 'json-number';
-                let color = '#b5cea8'; // Numbers: soft green
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'json-key';
-                        color = '#9cdcfe'; // Keys: bright blue
-                        match = match.replace(/^"(.*)":$/, '"<span style="color: #9cdcfe; font-weight: 500;">$1</span>":');
-                        return match;
-                    } else {
-                        cls = 'json-string';
-                        color = '#ce9178'; // Strings: orange
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'json-boolean';
-                    color = '#569cd6'; // Booleans: blue
-                } else if (/null/.test(match)) {
-                    cls = 'json-null';
-                    color = '#569cd6'; // Null: blue
-                }
-                return '<span style="color: ' + color + ';">' + match + '</span>';
-            });
-        }
-
-        async function saveToFileUI() {
-            const name = readValue('edit-item-name');
-            if (!name) {
-                alert(t('edit_no_selection_error'));
-                return;
-            }
-
-            const tags = {};
-            const tagRows = document.querySelectorAll('.edit-tag-row');
-            tagRows.forEach(row => {
-                const keyEl = row.querySelector('.tag-key');
-                const valEl = row.querySelector('.tag-val');
-                if (keyEl && valEl) {
-                    const key = keyEl.innerText.replace(':', '').trim().toLowerCase();
-                    tags[key] = valEl.value;
-                }
-            });
-
-            // Button context
-            const btn = event.currentTarget;
-            const originalBtnText = btn.innerHTML;
-            btn.innerHTML = (t('edit_saving') || 'Speichern...') + ' ⏳';
-            btn.disabled = true;
-
-            try {
-                const result = await eel.save_tags_to_file(name, tags)();
-                if (result.success) {
-                    alert(t('edit_save_to_file_success') || 'Erfolgreich in Datei gespeichert!');
-                    loadLibrary(); // Refresh library to show updated tags
-                } else {
-                    alert((t('edit_save_to_file_error') || 'Fehler beim Speichern in Datei: ') + result.error);
-                }
-            } catch (e) {
-                alert('Eel error: ' + e);
-            } finally {
-                btn.innerHTML = originalBtnText;
-                btn.disabled = false;
-            }
-        }
-
-        async function loadLibrary(retryCount) {
-            retryCount = retryCount || 0;
-            try {
-                let result = await eel.get_library()();
-                if (result && result.media && result.media.length > 0) {
-                    safeHtml('state-orchestrated-active-queue-list-container', '');
-                } else {
-                    console.warn("[loadLibrary] No media found in library.");
-                    safeHtml('state-orchestrated-active-queue-list-container', `<p style="padding: 20px; color: #999;" data-i18n="lib_no_media_desc">${t('lib_no_media_desc')}</p>`);
-                    return;
-                }
-
-                console.log("[loadLibrary] Loaded " + result.media.length + " items from DB.");
-
-                const dictSelect = document.getElementById('debug-dict-select');
-                if (!dictSelect || dictSelect.value === 'library') {
-                    const highlighted = syntaxHighlight(result.media);
-                    safeHtml('debug-items-json', highlighted);
-                }
-
-                // Update current playlist for Shuffle/Next/Prev
-                currentPlaylist = [...result.media];
-                if (isShuffle) {
-                    // Re-shuffle if shuffle is active
-                    shuffledPlaylist = [...currentPlaylist];
-                    for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
-                    }
-                }
-
-                // Keep backend in sync with the dynamically loaded library list
-                if (typeof eel !== 'undefined' && typeof eel.set_current_playlist === 'function') {
-                    eel.set_current_playlist(currentPlaylist)().catch(console.error);
-                }
-
-                const list = document.getElementById('state-orchestrated-active-queue-list-container');
-                if (!list) return;
-
-                if (typeof renderPlaylist === 'function') {
-                    renderPlaylist();
-                }
-
-                result.media.forEach((item, index) => {
-                    let div = document.createElement('div');
-                    div.className = 'implementation-encapsulated-state-buffer-node';
-                    let tags = item.tags || {}; // Fallback if tags object is completely missing
-                    let displayYear = tags.year ? String(tags.year).substring(0, 4) : '';
-                    let trackStr = tags.track ? t('lib_track_prefix') + tags.track : '';
-                    if (tags.track && tags.totaltracks) trackStr += '/' + tags.totaltracks;
-
-                    let extraInfo = [displayYear, tags.genre, trackStr, tags.album ? '💿 ' + tags.album : ''].filter(Boolean).join(' • ');
-
-                    // Fallbacks if metadata is missing
-                    let titleDisplay = tags.title || item.name || item.filename || t('lib_unknown_title');
-                    let artistDisplay = tags.artist || t('lib_unknown_artist');
-                    let itemName = item.name || item.filename || "unknown";
-                    let badgeHtml = getCategoryBadgeHtml(item);
-
-                    div.innerHTML = `
-                        <div style="position:relative; display:inline-block; margin-right:12px; flex-shrink:0;">
-                            <img class="media-cover" style="margin-right:0;" src="/cover/${encodeURIComponent(itemName)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; this.style.backgroundColor='transparent';" alt="">
-                            ${badgeHtml}
-                        </div>
-                        <div class="media-info">
-                            <strong>${titleDisplay}</strong>
-                            <span>${artistDisplay}</span>
-                            <span style="font-size: 0.8em; color: #888; margin-top: 2px;">${extraInfo}</span>
-                        </div>
-                    `;
-
-                    let mediaUrl = '/media/' + encodeURIComponent(itemName);
-                    if (item.is_transcoded && item.transcoded_format) {
-                        mediaUrl += '.' + item.transcoded_format.toLowerCase() + '_transcoded';
-                    }
-
-                    div.onclick = (e) => {
-                        if (e) e.stopPropagation();
-                        playlistIndex = index;
-                        // If shuffle is active, find this item in the shuffled list
-                        if (isShuffle) {
-                            playlistIndex = shuffledPlaylist.indexOf(item);
-                        }
-                        play(item, mediaUrl);
-                    };
-                    div.oncontextmenu = (e) => showContextMenu(e, item);
-                    list.appendChild(div);
-                });
-            } catch (e) {
-                console.error('[loadLibrary] Error loading library:', e);
-                if (retryCount < 3) {
-                    console.log('[loadLibrary] Retrying in 1 second... (attempt ' + (retryCount + 1) + ')');
-                    setTimeout(() => loadLibrary(retryCount + 1), 1000);
-                } else {
-                    safeHtml('state-orchestrated-active-queue-list-container', `<p style="padding: 20px; color: #c33;">${t('lib_error_loading')}${e.message}</p>`);
-                }
-            }
-        }
-
-
-        // Parser GUI Logic
+    <!-- Parser GUI Logic -->
+    <script>
         const ALL_PARSERS = ["filename", "container", "mkvmerge", "mkvinfo", "vlc", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser", "ebml", "mkvparse", "enzyme", "pycdlib", "pymkv", "tinytag", "eyed3", "music_tag"];
         let SLOW_PARSERS = [];
         let currentParserChain = [];
@@ -9345,7 +9482,7 @@
                             Parser Details
                         </h3>
                         <p style="color: #555; font-size: 0.9em; margin-bottom: 20px; line-height: 1.6;">${pCaps.description || ''}</p>
-                        
+
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div>
                                 <h4 style="font-size: 0.8em; color: #888; text-transform: uppercase; margin-bottom: 8px;">Supported Tags</h4>
@@ -9679,43 +9816,21 @@
             });
         }
 
-        async function loadDebugFlags() {
-            try {
-                const flags = await eel.get_debug_flags()();
-                const optionsContainer = document.getElementById('debug-flags-container');
-                const modalContainer = document.getElementById('modal-debug-flags');
-                const reusedContainer = document.getElementById('debug-flags-container-reused');
-
-                const flagsHtml = Object.entries(flags).map(([key, value]) => {
-                    const labelText = t(`debug_flag_${key}`) || key.toUpperCase();
-                    return `
-                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.1s;"
-                                           onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
-                                        <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
-                                        <span style="font-family: monospace; font-size: 0.95em;">${labelText}</span>
-                                    </label>`;
-                }).join('');
-
-                if (optionsContainer) optionsContainer.innerHTML = flagsHtml;
-                if (modalContainer) modalContainer.innerHTML = flagsHtml;
-                if (reusedContainer) reusedContainer.innerHTML = flagsHtml;
-
-            } catch (e) {
-                console.error("Failed to load debug flags:", e);
+        // Toggle Parser Times function
+        function toggleParserTimes(show) {
+            // Re-render the sidebar info if a song is currently playing
+            if (activeAudioPipeline.src) {
+                // Find current item based on the title, or we can just trigger a re-render of the file info
+                const titleText = readText('sidebar-metadata-primary-string-renderer');
+                if (titleText !== t('sb_no_song')) {
+                    // The easiest way is to let the user re-click for now, but we saved the preference.
+                }
             }
         }
+    </script>
 
-        async function toggleDebugFlag(key, value) {
-            await eel.set_debug_flag(key, value)();
-            // Refresh both locations
-            loadDebugFlags();
-        }
-
-        async function setAllFlags(value) {
-            await eel.set_all_debug_flags(value)();
-            loadDebugFlags();
-        }
-
+    <!-- Environment Info & Package Management -->
+    <script>
         let packageSearchTimer = null;
 
         function normalizeInstalledPackages(rawPackages) {
@@ -10059,7 +10174,6 @@
 
                 const categorizedKeys = new Set([
                     'bottle', 'bottle-websocket', 'eel', 'websocket-client',
-                    'gevent', 'gevent-websocket', 'greenlet', 'm3u8',
                     ...testPackages.map(([pkgKey]) => pkgKey),
                     ...devPackages.map(([pkgKey]) => pkgKey),
                     ...buildPackages.map(([pkgKey]) => pkgKey),
@@ -10130,6 +10244,7 @@
                 if (envTestToolsStatusEl) envTestToolsStatusEl.textContent = testToolsText;
                 if (envDevToolsStatusEl) envDevToolsStatusEl.textContent = devToolsText;
                 if (envBuildToolsStatusEl) envBuildToolsStatusEl.textContent = buildToolsText;
+                if (envCorePackagesStatusEl) envCorePackagesStatusEl.textContent = corePackagesText;
                 if (envRequirementsListEl) envRequirementsListEl.textContent = requirementsListText;
                 if (envBaseDependenciesStatusEl) envBaseDependenciesStatusEl.textContent = baseDependenciesText;
                 if (envPlatformEl) envPlatformEl.textContent = info.platform || info.system || '-';
@@ -10398,7 +10513,10 @@
             packagesHtml += '</tbody></table>';
             packagesList.innerHTML = packagesHtml;
         }
+    </script>
 
+    <!-- Diagnostics & Testing -->
+    <script>
         window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
             const count = Math.max(1, Math.min(30, Number(samples) || 5));
             const size = Math.max(0, Math.min(200000, Number(payloadSize) || 0));
@@ -10448,17 +10566,6 @@
 
             console.info('[LatencyDiagnostics]', result);
             return result;
-        }
-
-        function toggleDebugMenu() {
-            const modal = document.getElementById('debug-flags-modal');
-            if (modal.style.display === 'none') {
-                modal.style.display = 'block';
-                safeStyle('feature-status-modal', 'display', 'none'); // Close other
-                loadDebugFlags();
-            } else {
-                modal.style.display = 'none';
-            }
         }
 
         async function loadFeatureStatus() {
@@ -10654,51 +10761,6 @@
             }
         }
 
-        eel.expose(log_to_debug);
-        function log_to_debug(message) {
-            const debugTextarea = document.getElementById('browse-results-debug');
-            if (debugTextarea) {
-                if (debugTextarea.value.length > 0 && !debugTextarea.value.endsWith('\n')) {
-                    debugTextarea.value += '\n';
-                }
-                debugTextarea.value += message + '\n';
-                debugTextarea.scrollTop = debugTextarea.scrollHeight;
-            }
-        }
-
-        eel.expose(set_db_status);
-        function set_db_status(isVisible) {
-            const container = document.getElementById('db-status-container');
-            if (container) {
-                container.style.display = isVisible ? 'flex' : 'none';
-            }
-        }
-
-        let __testOutputBuffer = '';
-        function appendTestOutputChunk(chunk) {
-            const resultsContainer = document.getElementById('test-results-container');
-            const outputArea = document.getElementById('test-output');
-            if (!outputArea) return;
-
-            if (resultsContainer) {
-                resultsContainer.style.display = 'block';
-            }
-
-            const maxOutputChars = 250000;
-            const truncatedPrefix = '[Ausgabe gekürzt - nur die letzten Zeichen werden angezeigt]\n\n';
-            __testOutputBuffer += chunk;
-            if (__testOutputBuffer.length > maxOutputChars) {
-                __testOutputBuffer = truncatedPrefix + __testOutputBuffer.slice(-maxOutputChars);
-            }
-            outputArea.textContent = __testOutputBuffer;
-            outputArea.scrollTop = outputArea.scrollHeight;
-        }
-
-        eel.expose(append_test_output);
-        function append_test_output(message) {
-            appendTestOutputChunk(String(message || ''));
-        }
-
         // ============ Resizable Splitter Logic ============
         (function () {
             function initSplitter(splitterId, leftPaneId, containerId, orientation = 'vertical') {
@@ -10771,17 +10833,6 @@
             initSplitter('main-splitter', 'main-sidebar', 'main-split-container', 'vertical');
             initSplitter('browser-tab-splitter', 'browser-top-pane', 'filesystem-crawler-directory-panel', 'horizontal');
         })();
-        // Toggle Parser Times function
-        function toggleParserTimes(show) {
-            // Re-render the sidebar info if a song is currently playing
-            if (activeAudioPipeline.src) {
-                // Find current item based on the title, or we can just trigger a re-render of the file info
-                const titleText = readText('sidebar-metadata-primary-string-renderer');
-                if (titleText !== t('sb_no_song')) {
-                    // The easiest way is to let the user re-click for now, but we saved the preference.
-                }
-            }
-        }
 
         async function loadTestSuites(retryCount) {
             retryCount = retryCount || 0;
@@ -11165,15 +11216,15 @@
         function populateTestVideoSelector() {
             const selector = document.getElementById('test-video-selector');
             if (!selector) return;
-            
+
             const currentVal = selector.value;
-            selector.innerHTML = '<option value="">-- Kein Video ausgewählt --</option>';
+            selector.innerHTML = '<option value="">-- Kein Video ausgewaehlt --</option>';
 
             if (typeof allLibraryItems === 'undefined' || !allLibraryItems) return;
 
             const videos = allLibraryItems.filter(item => {
                 const path = (item.path || "").toLowerCase();
-                return path.endsWith('.mp4') || path.endsWith('.mkv') || path.endsWith('.avi') || 
+                return path.endsWith('.mp4') || path.endsWith('.mkv') || path.endsWith('.avi') ||
                        path.endsWith('.mov') || path.endsWith('.webm') || path.endsWith('.ts');
             });
 
@@ -11230,7 +11281,7 @@
             const videoName = selector.options[selector.selectedIndex].text;
             const startTime = performance.now();
             const resultId = Date.now();
-            
+
             const entry = {
                 id: resultId,
                 date: new Date().toLocaleTimeString(),
@@ -11275,7 +11326,7 @@
                         throw new Error("MP4Frag Backend nicht verfügbar.");
                     }
                 }
-                
+
                 entry.time = ((performance.now() - startTime) / 1000).toFixed(2) + 's';
             } catch (err) {
                 entry.status = 'fail';
@@ -11316,53 +11367,73 @@
                 updateTestResultsTable();
             }
         }
+    </script>
 
+    <!-- Diagnostic Helpers & Error Handling -->
+    <script>
         (function initUiTraceHooks() {
             // Hijack alerts to log to backend
+            if (window._trace_hooks_active) return;
+            window._trace_hooks_active = true;
+
+            appendUiTrace('initUiTraceHooks: hijacking popups and error handlers...');
+
+            // --- POPUP HIJACKER ---
             const origAlert = window.alert;
             window.alert = function(msg) {
-                appendUiTrace('alert intercepted: ' + msg);
+                appendUiTrace('[ALERT-PROXIED] ' + msg);
                 if (window.eel && eel.log_js_error) {
-                    eel.log_js_error({
-                        type: 'POPUP_ALERT',
-                        message: msg,
-                        timestamp: new Date().toISOString()
-                    });
+                    eel.log_js_error({ type: 'POPUP_ALERT', message: msg, timestamp: new Date().toISOString() })();
                 }
-                return origAlert.apply(this, arguments);
+                origAlert(msg); // Call original alert
             };
 
-            window.addEventListener('beforeunload', () => appendUiTrace('window event: beforeunload'));
-            window.addEventListener('pagehide', () => appendUiTrace('window event: pagehide'));
-            window.addEventListener('unload', () => appendUiTrace('window event: unload'));
-            document.addEventListener('visibilitychange', () => appendUiTrace('visibilitychange: ' + document.visibilityState));
-            
+            const origConfirm = window.confirm;
+            window.confirm = function(msg) {
+                appendUiTrace('[CONFIRM-PROXIED] ' + msg);
+                if (window.eel && eel.log_js_error) {
+                    eel.log_js_error({ type: 'POPUP_CONFIRM', message: msg, timestamp: new Date().toISOString() })();
+                }
+                return origConfirm(msg);
+            };
+
+            const origPrompt = window.prompt;
+            window.prompt = function(msg, defaultVal) {
+                appendUiTrace('[PROMPT-PROXIED] ' + msg, defaultVal);
+                if (window.eel && eel.log_js_error) {
+                    eel.log_js_error({ type: 'POPUP_PROMPT', message: msg, timestamp: new Date().toISOString() })();
+                }
+                return origPrompt(msg, defaultVal);
+            };
+
+            // --- ERROR HIJACKER ---
             window.addEventListener('error', (e) => {
-                const msg = 'js-error: ' + e.message;
+                const msg = `js-error: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`;
                 appendUiTrace(msg);
                 if (window.eel && eel.log_js_error) {
                     eel.log_js_error({
+                        type: 'RUNTIME_ERROR',
                         message: e.message,
-                        source: e.filename,
+                        stack: e.error ? e.error.stack : null,
+                        file: e.filename,
                         line: e.lineno,
-                        col: e.colno,
-                        error: e.error ? e.error.stack : null
-                    });
+                        col: e.colno
+                    })();
                 }
             });
-            
+
             window.addEventListener('unhandledrejection', (e) => {
                 const msg = 'js-error (unhandledrejection): ' + (e.reason || e.message);
                 appendUiTrace(msg);
                 if (window.eel && eel.log_js_error) {
                     eel.log_js_error({
+                        type: 'UNHANDLED_REJECTION',
                         message: msg,
-                        reason: e.reason ? (e.reason.stack || e.reason.message) : null
-                    });
+                    })();
                 }
             });
-            
-            appendUiTrace('initUiTraceHooks: attached to window events (and backend logging enabled)');
+
+            appendUiTrace('initUiTraceHooks: attached successfully.');
         })();
 
         /* --- DOM INTEGRITY HELP FUNCTIONS (Diagnostic) --- */
@@ -11403,5 +11474,7 @@
             console.log("DOM nodes count:", allNodes, "Div count:", allDivs);
         };
     </script>
+    </div>
+    </div>
 </body>
 </html>
