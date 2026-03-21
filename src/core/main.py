@@ -6153,8 +6153,18 @@ if __name__ == "__main__":
             lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
             p = Path(lib_dir) / decoded
             
-        if not p.exists():
-            return bottle.HTTPError(404, "Target for transcode not found.")
+        if p.exists() and p.is_dir():
+             # For DVD folders, find the internal .iso image if possible
+             try:
+                 iso_file = next((f for f in os.listdir(p) if f.lower().endswith(('.iso', '.bin', '.img'))), None)
+                 if iso_file:
+                     p = p / iso_file
+                     log.info(f"[Transcode-Route] Auto-resolved DVD folder {decoded} to internal image: {p}")
+             except Exception as e:
+                 log.error(f"[Transcode-Route] Failed to list DVD folder {decoded}: {e}")
+
+        if not p.exists() or p.is_dir():
+            return bottle.HTTPError(404, "Target for transcode not found or is a directory without image.")
 
         log.info(f"[Transcode-Route] Streaming: {p}")
         

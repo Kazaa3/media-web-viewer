@@ -9010,15 +9010,8 @@
             const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
             const isVideo = item.type === 'video' ||
                 item.type === 'movie' ||
-                item.category === 'video' ||
-                item.category === 'movie' ||
-                item.category === 'Film' ||
-                item.category === 'Serie' ||
-                item.category === 'abbild' ||
-                item.category === 'Abbild' ||
-                item.category === 'movie/abbild' ||
-                item.logical_type === 'Video' ||
-                item.logical_type === 'Film' ||
+                ['video', 'movie', 'Film', 'Serie', 'abbild', 'Abbild', 'ISO/Image', 'Disk-Abbild'].includes(item.category) ||
+                ['Video', 'Film', 'Abbild'].includes(item.logical_type) ||
                 (!item.extension) || // Folders are likely videos in the movie lib context
                 (item.extension && videoExts.includes(item.extension.toLowerCase()));
 

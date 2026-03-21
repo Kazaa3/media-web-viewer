@@ -309,7 +309,9 @@ class MediaItem:
             if any(k in path_str for k in ['buch', 'book', 'beigabe']):
                 return 'Beigabe'
                 
-            return 'Film' if any(k in path_str for k in ['film', 'movie']) else 'Abbild'
+            if any(k in path_str for k in ['film', 'movie']) or ext in ('.iso', '.img', '.bin'):
+                 return 'Film'
+            return 'Abbild'
 
         if ext in EBOOK_EXTENSIONS:
             return 'E-Book'

@@ -245,7 +245,7 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
         '.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', 
         '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff',
         '.mpeg', '.mpg', '.mov', '.webm', '.wmv', '.m4v',
-        '.3gp', '.ogv', '.vob', '.m2ts'
+        '.3gp', '.ogv', '.vob', '.m2ts', '.iso', '.bin', '.img'
     )
     if ext in playable_exts:
         return True

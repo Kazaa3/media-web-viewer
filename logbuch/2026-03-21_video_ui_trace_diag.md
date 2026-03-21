@@ -223,3 +223,52 @@
 
 **Alle DVD-basierten Medien werden jetzt direkt im Browser abgespielt. Testbar via Reporting → Tests → test_dvd_playback.**
 
+---
+
+## 🛠️ Dispatcher-Fixes & Tab-Fokus für DVD/ISO-Playback (21.03.2026)
+
+### Dispatcher Logic (JS)
+- isVideo-Erkennung im Playback-Entry-Point erweitert: Lokalisierte Kategorien wie 'Film', 'Abbild', 'Serie' etc. werden jetzt als Video erkannt
+- DVDs/ISOs landen nicht mehr im Audio-Player, sondern korrekt im Video-Container
+
+### Forced Tab Focusing (JS)
+- playVideo ruft jetzt für alle Modi (Direct, HLS, Transcode) explizit switchTab('video', ...)
+- UI springt immer direkt zum Video-Tab, auch bei Fallback/Transcode
+
+### Smart Router & Path Resolution (Python)
+- open_video_smart in src/core/main.py: MPEG-1/2 (PAL/NTSC-DVDs) werden jetzt korrekt an chrome_transcode statt VLC geroutet
+- get_play_source nutzt resolve_media_path für konsistente Pfadbehandlung (absolut/relativ)
+- DVD-Strukturen werden zuverlässig erkannt, unabhängig vom Indexierungsmodus
+
+### Ergebnis
+- Item List (Coverflow/Grid) & Playlist starten DVD-Medien jetzt immer im Video-Tab mit nativer Transcode-Wiedergabe
+- test_dvd_playback.py: Alle DVD-bezogenen Tests erfolgreich
+
+---
+
+## 🟢 Final: "Going Raw" & Plain ISO Playback Fixes (21.03.2026)
+
+### Plain ISO Identification
+- is_playable in format_utils.py erkennt jetzt explizit .iso, .bin, .img als abspielbare Medien
+- Auch "rohe" Disc-Images ohne Metadaten werden korrekt erkannt
+
+### Automatische 'Film'-Kategorisierung
+- MediaItem in models.py: Disc-Images werden standardmäßig als 'Film' klassifiziert, wenn kein anderes Tag vorhanden ist
+- Items erscheinen korrekt in Video-Player-Filtern und Grids
+
+### Dispatcher Routing (JS)
+- isVideo-Check im Frontend erweitert: Kategorien wie 'Disk-Abbild', 'Abbild' werden als Video erkannt
+- "Going Raw"-Items landen immer im playVideo-Flow
+
+### Real-time Transcoding
+- Backend routet Plain ISOs über /transcode/ (FFmpeg frag_mp4), Chrome spielt nativ ab
+
+### Verifizierte Ergebnisse
+| Item Type              | Category | Action     | Result                                 |
+|------------------------|----------|------------|----------------------------------------|
+| DVD Folder (VIDEO_TS)  | Film     | Click Play | ✅ Tab switch + Chrome Native Transcode |
+| Plain ISO (movie.iso)  | Film     | Click Play | ✅ Tab switch + Chrome Native Transcode |
+| Non-Movie ISO (raw.iso)| Abbild   | Click Play | ✅ Tab switch + Chrome Native Transcode |
+
+**Kein manuelles Refresh nötig, aber für alte Items ggf. hilfreich.**
+
