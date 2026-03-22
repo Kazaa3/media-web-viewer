@@ -5340,6 +5340,7 @@ def get_test_media_files():
     ]
     
     extensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.ts']
+
     results = []
     
     for d in search_dirs:
@@ -5367,13 +5368,15 @@ def get_test_suites():
         return []
 
     suites = []
-    for f in sorted(test_dir.rglob("*.py")):
-        if f.name.startswith("__"):
+    # Discover .py and .sh files
+    files = sorted(list(test_dir.rglob("*.py")) + list(test_dir.rglob("*.sh")), key=lambda x: str(x.relative_to(test_dir)))
+    
+    for f in files:
+        if f.name.startswith("__") or f.name.startswith("."):
             continue
-        # Include all .py files in tests/ as they might be utility scripts the
-        # user wants
+            
         try:
-            content = f.read_text(encoding='utf-8')
+            content = f.read_text(encoding='utf-8', errors='ignore')
         except Exception:
             content = ""
 
@@ -5389,25 +5392,22 @@ def get_test_suites():
             if line.startswith("# Kategorie:"):
                 metadata["category"] = line.split(":", 1)[1].strip()
             elif line.startswith("# Eingabewerte:"):
-                metadata["inputs"] = line.split(":", 1)[1].strip()
+                metadata["inputs"] = line.split(":", 1) [1].strip()
             elif line.startswith("# Ausgabewerte:"):
-                metadata["outputs"] = line.split(":", 1)[1].strip()
+                metadata["outputs"] = line.split(":", 1) [1].strip()
             elif line.startswith("# Testdateien:"):
-                metadata["files"] = line.split(":", 1)[1].strip()
+                metadata["files"] = line.split(":", 1) [1].strip()
             elif line.startswith("# Kommentar:"):
-                metadata["comment"] = line.split(":", 1)[1].strip()
+                metadata["comment"] = line.split(":", 1) [1].strip()
 
-        display_name = f.stem.replace(
-            "test_",
-            "").replace(
-            "benchmark_",
-            "Benchmark: ").replace(
-            "_",
-            " ").title()
+        # Build nice name with path context
+        rel_path = f.relative_to(test_dir)
+        display_name = str(rel_path)
+        
         suites.append({
-            "id": str(f.relative_to(test_dir)),
+            "id": str(rel_path), 
             "name": display_name,
-            "path": str(f),
+            "folder": str(rel_path.parent) if str(rel_path.parent) != "." else "",
             "metadata": metadata
         })
     return suites

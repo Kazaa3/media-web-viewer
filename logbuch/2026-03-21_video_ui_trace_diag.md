@@ -332,3 +332,26 @@
 
 **Tests > 🛰️ MediaMTX-Tab ermöglicht Validierung für alle zukünftigen Medien. Timeline & Seeking jetzt für alle MKVs/DVDs stabil.**
 
+---
+
+## 📝 Logbook, Test Runner & UI Layout Fixes (22.03.2026)
+
+### 1. Unified & Improved Test Discovery
+- get_test_suites() (src/core/main.py) findet jetzt rekursiv .py und .sh Tests in beliebiger Verzeichnistiefe
+- Testnamen zeigen jetzt den relativen Pfad (z.B. GUI/test_navigation.py) für bessere Unterscheidbarkeit
+- Metadaten-Extraktion (Category, Status, ...) auf die ersten 50 Zeilen pro Datei begrenzt (Performance & Format-Sicherheit)
+
+### 2. "Loading..." & Performance Issues
+- loadTestSuites und renderLogbuchEntries (app.html) nutzen jetzt DocumentFragment für sofortiges Rendering vieler Testkarten/Logbuch-Einträge
+- Beide Container (test-suites-container & test-scripts-list) werden synchron befüllt, "Lade Test-Verzeichnis..."-Bug behoben
+
+### 3. UI Layout & Isolation Fixes
+- DIV-Balance: Un-/überflüssige <div>-Tags in Test-, Video- und Logbuch-Tab korrigiert
+- Logbuch wird nicht mehr im Video-Tab verschachtelt, Tabs sind jetzt echte Geschwister im Main-Content
+- Main-Column bleibt erhalten, Layout nach Logbuch bleibt stabil
+
+### 4. Robust Python Backend
+- get_test_suites prüft jetzt robust auf Lese-/Encoding-Fehler und überspringt problematische Dateien statt EEL-Session zu crashen
+
+**Bitte prüfen: Logbuch-Einträge und Test Runner sollten jetzt vollständig und performant angezeigt werden.**
+
