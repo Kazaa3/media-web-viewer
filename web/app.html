@@ -227,7 +227,8 @@
         .tab-content {
             display: none;
             flex: 1;
-            overflow-y: auto !important; /* Force scrollability across all tabs */
+            overflow-y: auto !important;
+            /* Force scrollability across all tabs */
             width: 100%;
             height: 100%;
             box-sizing: border-box;
@@ -352,7 +353,8 @@
 
         .modal-body {
             padding: 24px;
-            overflow-y: auto !important; /* Force scrollability in modals */
+            overflow-y: auto !important;
+            /* Force scrollability in modals */
             flex: 1;
             max-height: 75vh;
         }
@@ -3369,7 +3371,7 @@
                         <span title="DE/EN">🌐 ${meta.titleDe ? '🇩🇪' : ''}${meta.titleEn ? '🇬🇧' : ''}</span>
                     `;
                 }
-                
+
                 let html;
                 if (typeof marked !== 'undefined') {
                     marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
@@ -3395,7 +3397,7 @@
                 editBtn.onclick = () => openLogbookEditor(name, filename, markdown);
                 footer.appendChild(editBtn);
                 contentEl.appendChild(footer);
-                
+
             } catch (e) {
                 console.error('[loadLogbuchContent] Error:', e);
                 safeHtml('logbuch-tab-content', `<p style="color: #f44; text-align:center;">${t('edit_error_loading')} ${e}</p>`);
@@ -5046,57 +5048,66 @@
                     <!-- VIEW: Media Routing (New) -->
                     <div id="test-routing-view" class="test-view-content" style="display: none;">
                         <div style="max-width: 1200px; margin: 0 auto; width: 100%;">
-                        <div style="width: 100%;">
-                            <h3 style="margin-top: 0;">Media Routing Infrastructure</h3>
-                            <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;">
-                                Validierung der Media-Serving Routes (/media-raw, /video-stream) sowie Cache Management für spezialisierte Audioformate.
-                            </p>
-                            
-                            <!-- Analysis Linking -->
-                            <div style="background: #e3f2fd; border-radius: 8px; padding: 15px; border-left: 5px solid #1976d2; margin-bottom: 30px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <h4 style="margin: 0; color: #1565c0;">📑 Media Routing Analysis Documentation</h4>
-                                        <div style="font-size: 0.85em; color: #555; margin-top: 5px;">Comprehensive study of the media serving strategy and routing layer artifacts.</div>
+                            <div style="width: 100%;">
+                                <h3 style="margin-top: 0;">Media Routing Infrastructure</h3>
+                                <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;">
+                                    Validierung der Media-Serving Routes (/media-raw, /video-stream) sowie Cache
+                                    Management für spezialisierte Audioformate.
+                                </p>
+
+                                <!-- Analysis Linking -->
+                                <div
+                                    style="background: #e3f2fd; border-radius: 8px; padding: 15px; border-left: 5px solid #1976d2; margin-bottom: 30px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <h4 style="margin: 0; color: #1565c0;">📑 Media Routing Analysis
+                                                Documentation</h4>
+                                            <div style="font-size: 0.85em; color: #555; margin-top: 5px;">Comprehensive
+                                                study of the media serving strategy and routing layer artifacts.</div>
+                                        </div>
+                                        <button
+                                            onclick="window.open('/home/xc/.gemini/antigravity/brain/d7af57f8-0c86-4b5d-9160-c6e6c8384b69/media_routing_analysis.md')"
+                                            class="tab-btn"
+                                            style="background: white; border: 1px solid #1976d2; color: #1976d2; padding: 6px 12px; font-size: 0.8em; cursor: pointer;">
+                                            Dokumentation öffnen
+                                        </button>
                                     </div>
-                                    <button onclick="window.open('/home/xc/.gemini/antigravity/brain/d7af57f8-0c86-4b5d-9160-c6e6c8384b69/media_routing_analysis.md')" 
-                                            class="tab-btn" style="background: white; border: 1px solid #1976d2; color: #1976d2; padding: 6px 12px; font-size: 0.8em; cursor: pointer;">
-                                        Dokumentation öffnen
+                                </div>
+
+                                <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                                    <button onclick="runRoutingBenchmark('latency')" class="tab-btn"
+                                        style="background: #fff8e1; border-color: #ffca28; color: #f57f17; display: flex; align-items: center; gap: 8px;">
+                                        ⏱️ Run Latency Benchmark
+                                    </button>
+                                    <button onclick="runRoutingBenchmark('multi')" class="tab-btn"
+                                        style="background: #f3e5f5; border-color: #ab47bc; color: #7b1fa2; display: flex; align-items: center; gap: 8px;">
+                                        🧬 Run Format Coverage
+                                    </button>
+                                    <button onclick="loadTestSuites()" class="tab-btn"
+                                        style="background: #f5f5f5; border-color: #ddd; color: #666; display: flex; align-items: center; gap: 8px;">
+                                        🔄 Refresh List
                                     </button>
                                 </div>
-                            </div>
 
-                            <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
-                                <button onclick="runRoutingBenchmark('latency')" class="tab-btn" 
-                                        style="background: #fff8e1; border-color: #ffca28; color: #f57f17; display: flex; align-items: center; gap: 8px;">
-                                    ⏱️ Run Latency Benchmark
-                                </button>
-                                <button onclick="runRoutingBenchmark('multi')" class="tab-btn" 
-                                        style="background: #f3e5f5; border-color: #ab47bc; color: #7b1fa2; display: flex; align-items: center; gap: 8px;">
-                                    🧬 Run Format Coverage
-                                </button>
-                                <button onclick="loadTestSuites()" class="tab-btn" 
-                                        style="background: #f5f5f5; border-color: #ddd; color: #666; display: flex; align-items: center; gap: 8px;">
-                                    🔄 Refresh List
-                                </button>
-                            </div>
-
-                            <div id="routing-benchmark-results" style="display: none; margin-bottom: 30px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <h4 style="margin: 0;">Benchmark Results</h4>
-                                    <button onclick="document.getElementById('routing-benchmark-results').style.display='none'" 
+                                <div id="routing-benchmark-results"
+                                    style="display: none; margin-bottom: 30px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                        <h4 style="margin: 0;">Benchmark Results</h4>
+                                        <button
+                                            onclick="document.getElementById('routing-benchmark-results').style.display='none'"
                                             style="border: none; background: none; cursor: pointer; color: #999;">✕</button>
+                                    </div>
+                                    <pre id="routing-benchmark-output"
+                                        style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.85em; max-height: 400px; overflow-y: auto; white-space: pre-wrap;"></pre>
                                 </div>
-                                <pre id="routing-benchmark-output" 
-                                     style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.85em; max-height: 400px; overflow-y: auto; white-space: pre-wrap;"></pre>
-                            </div>
 
-                            <div id="routing-test-scripts-list" 
-                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%;">
-                                <!-- Populate with routing tests -->
+                                <div id="routing-test-scripts-list"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%;">
+                                    <!-- Populate with routing tests -->
+                                </div>
                             </div>
                         </div>
-                    </div>
                     </div>
 
                     <!-- VIEW: Base (Connectivity / RTT) -->
@@ -5406,14 +5417,14 @@
                                         </select>
                                     </div>
                                     <div style="display: flex; gap: 8px;">
-                                        <button onclick="populateTestVideoSelector()" class="tab-btn" 
-                                                title="Refresh Library & Test Media"
-                                                style="padding: 10px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px;">
+                                        <button onclick="populateTestVideoSelector()" class="tab-btn"
+                                            title="Refresh Library & Test Media"
+                                            style="padding: 10px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px;">
                                             🔄
                                         </button>
-                                        <button onclick="pickTestVideoFile()" class="tab-btn" 
-                                                title="Pick Custom Local File"
-                                                style="padding: 10px; background: #e3f2fd; border: 1px solid #bbdefb; color: #1565c0; border-radius: 6px;">
+                                        <button onclick="pickTestVideoFile()" class="tab-btn"
+                                            title="Pick Custom Local File"
+                                            style="padding: 10px; background: #e3f2fd; border: 1px solid #bbdefb; color: #1565c0; border-radius: 6px;">
                                             ➕ Own File
                                         </button>
                                     </div>
@@ -5527,7 +5538,8 @@
                             <div
                                 style="background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 20px;">
                                 <h4 style="margin: 0 0 15px 0; font-size: 1.1em;">Konfektionierte Test-Pakete</h4>
-                                <div id="test-suites-container" style="display: flex; flex-wrap: wrap; gap: 10px; max-height: 70vh; overflow-y: auto; padding-right: 5px; align-content: flex-start;">
+                                <div id="test-suites-container"
+                                    style="display: flex; flex-wrap: wrap; gap: 10px; max-height: 70vh; overflow-y: auto; padding-right: 5px; align-content: flex-start;">
                                     <div
                                         style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 0.8em; color: #888;">
                                         Suche nach verfügbaren Test-Skripten im Tests-Ordner...
@@ -5535,7 +5547,8 @@
                                 </div>
                             </div>
 
-                            <div id="test-results-container" style="display: none; margin-top: 30px; max-width: 1200px; margin-left: auto; margin-right: auto;">
+                            <div id="test-results-container"
+                                style="display: none; margin-top: 30px; max-width: 1200px; margin-left: auto; margin-right: auto;">
                                 <h3 style="font-size: 1.1em; margin-bottom: 15px;">Output Stream:</h3>
                                 <pre id="test-output"
                                     style="background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 0.9em; max-height: 400px; overflow-y: auto;"></pre>
@@ -11412,8 +11425,33 @@
                     }
                 }
             }
-
             // ============ Resizable Splitter Logic ============
+            async function runRoutingBenchmark(type) {
+                const resultsContainer = document.getElementById('routing-benchmark-results');
+                const outputPre = document.getElementById('routing-benchmark-output');
+                if (!resultsContainer || !outputPre) return;
+
+                resultsContainer.style.display = 'block';
+                outputPre.innerHTML = `🚀 [Benchmark] Initialisiere ${type === 'latency' ? 'Latenz-Test' : 'Format-Coverage'}...\n\n`;
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+
+                const script_id = type === 'latency' ? 'routing/test_perf_latency.py' : 'routing/test_multi_format_router.py';
+
+                try {
+                    // We use the existing run_tests logic which streams output
+                    const result = await eel.run_tests(script_id)();
+
+                    if (result.status === 'finished') {
+                        outputPre.innerHTML += `\n✅ [Benchmark] Fertiggestellt mit Status: ${result.code}\n`;
+                    } else if (result.status === 'error') {
+                        outputPre.innerHTML += `\n❌ [Benchmark] Fehler: ${result.error}\n`;
+                    }
+                } catch (err) {
+                    console.error('[runRoutingBenchmark] Exception:', err);
+                    outputPre.innerHTML += `\n❌ [Benchmark] System-Fehler: ${err}\n`;
+                }
+            }
+
             (function () {
                 function initSplitter(splitterId, leftPaneId, containerId, orientation = 'vertical') {
                     const splitter = document.getElementById(splitterId);
@@ -12385,7 +12423,7 @@
                 if (trigger) switchTab('debug', trigger);
             }
 
-            window.runRoutingBenchmark = async function(type) {
+            window.runRoutingBenchmark = async function (type) {
                 const resultsContainer = document.getElementById('routing-benchmark-results');
                 const outputArea = document.getElementById('routing-benchmark-output');
                 if (!resultsContainer || !outputArea) return;

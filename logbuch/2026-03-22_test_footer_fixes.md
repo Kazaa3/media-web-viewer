@@ -132,3 +132,17 @@ Die Media Routing Suite ist jetzt ein vollwertiges Werkzeug zur Performance-Quan
 
 **Fazit:**
 Die gesamte Backend-Frontend-Kommunikation ist jetzt standardisiert, durchsuchbar und professionell nachvollziehbar.
+
+## Media Routing Test Suite: Finales Frontend & Workflow (22.03.2026)
+
+- **Frontend-Logik (`app.html`):**
+  - `runRoutingBenchmark(type)`: Steuert jetzt die Benchmark-Buttons (Latenz, Format Coverage) und ruft das Backend via `run_tests` auf.
+  - **Live-Feedback:** Benchmark-Ausgaben werden in Echtzeit im Ergebnis-Panel gestreamt.
+  - **Auto-Scroll:** Ergebnis-Panel scrollt automatisch bei neuen Ausgaben/progress.
+- **Workflow-Abschluss:**
+  - Alle `print`-Aufrufe in Benchmark-Skripten erfolgreich auf Logging migriert.
+  - Kleiner Bugfix im VLC-Standalone-Launcher nach Logging-Refaktor.
+  - Renderer für Test-Suite-Liste standardisiert, Routing-Tests und Summaries werden korrekt angezeigt.
+
+**Ergebnis:**
+Die "Media Routing"-Sektion ist jetzt voll interaktiv: Benchmarks und Kompatibilitätsprüfungen laufen direkt aus der UI, Ergebnisse erscheinen live und übersichtlich im eigenen Konsolenfenster.
