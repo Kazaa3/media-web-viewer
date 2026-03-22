@@ -11490,6 +11490,7 @@
             async function loadTestSuites(retryCount) {
                 retryCount = retryCount || 0;
                 const container = document.getElementById('test-suites-container');
+                const scriptsList = document.getElementById('test-scripts-list');
                 const routingList = document.getElementById('routing-test-scripts-list');
                 if (!container) return;
 
@@ -12372,6 +12373,33 @@
                 const trigger = document.getElementById('telemetry-inspector-tab-trigger');
                 if (trigger) switchTab('debug', trigger);
             }
+
+            window.runRoutingBenchmark = async function(type) {
+                const resultsContainer = document.getElementById('routing-benchmark-results');
+                const outputArea = document.getElementById('routing-benchmark-output');
+                if (!resultsContainer || !outputArea) return;
+
+                resultsContainer.style.display = 'block';
+                outputArea.textContent = 'Benchmarking starting...\n';
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+
+                const scriptMap = {
+                    'latency': 'routing/test_perf_latency.py',
+                    'multi': 'routing/test_multi_format_router.py'
+                };
+
+                const scriptId = scriptMap[type];
+                if (!scriptId) return;
+
+                try {
+                    outputArea.textContent += `Executing: tests/${scriptId}\n\n`;
+                    // Use run_tests since it handles the environment and subprocess correctly
+                    const result = await eel.run_tests([scriptId])();
+                    outputArea.textContent += result.output || result.error || 'No output returned.';
+                } catch (err) {
+                    outputArea.textContent += `\nError: ${err}`;
+                }
+            };
         </script>
         <div class="bottom-bar">
             <div style="flex: 1; display:flex; align-items:center; gap:12px;">

@@ -59,3 +59,16 @@ Die Testübersicht nutzt jetzt die volle Fensterbreite, ist scrollbar und zeigt 
 
 **Fazit:**
 Die "Media Routing"-Sektion ist jetzt ein professionelles Audit- und Performance-Tool für die Medieninfrastruktur – weit über reine Konnektivitätsprüfungen hinaus.
+
+## Media Routing Test Suite: JavaScript Fehlerbehebung (22.03.2026)
+
+- **Fehlende globale Funktion (`runRoutingBenchmark`)**
+  - Ursache: Benchmark-Buttons im "Media Routing"-Tab riefen eine Funktion auf, die nicht im globalen Scope registriert war (window.runRoutingBenchmark fehlte).
+  - Lösung: `window.runRoutingBenchmark` explizit am Ende des Hauptscripts definiert. Die Funktion leitet Benchmark-Anfragen jetzt korrekt via eel.run_tests an das Backend weiter.
+- **Container-Initialisierung (`scriptsList`)**
+  - Überprüft, dass `loadTestSuites` alle relevanten UI-Container (container, scriptsList, routingList) initialisiert, sodass keine "undefined"-Fehler mehr auftreten.
+- **Echtzeit-Ausgabe-Pufferung**
+  - Benchmark-Ergebnisse werden jetzt im Bereich `routing-benchmark-output` mit Auto-Scrolling angezeigt. Fortschritt von Latenztests und Format-Scans ist live sichtbar.
+
+**Ergebnis:**
+Die "Media Routing"-Benchmarks (Latenz, Format Coverage) laufen jetzt fehlerfrei und ohne Konsolenfehler. Die UI ist robust und alle Buttons/Funktionen sind wie vorgesehen nutzbar.
