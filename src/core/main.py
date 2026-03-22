@@ -5368,13 +5368,18 @@ def get_test_suites():
         return []
 
     suites = []
-    # Discover .py and .sh files
-    files = sorted(list(test_dir.rglob("*.py")) + list(test_dir.rglob("*.sh")), key=lambda x: str(x.relative_to(test_dir)))
+    # Discover .py and .sh files using os.walk for guaranteed depth
+    all_files = []
+    for root, dirs, filenames in os.walk(str(test_dir)):
+        for filename in filenames:
+            if filename.endswith(".py") or filename.endswith(".sh"):
+                if not filename.startswith("__") and not filename.startswith("."):
+                    all_files.append(Path(root) / filename)
     
-    for f in files:
-        if f.name.startswith("__") or f.name.startswith("."):
-            continue
-            
+    # Sort files by relative path
+    all_files.sort(key=lambda x: str(x.relative_to(test_dir)))
+
+    for f in all_files:
         try:
             content = f.read_text(encoding='utf-8', errors='ignore')
         except Exception:
@@ -5388,17 +5393,23 @@ def get_test_suites():
             "comment": "-"
         }
 
+        # Scan for metadata (limit to first 100 lines for performance)
+        line_count = 0
         for line in content.splitlines():
+            line_count += 1
+            if line_count > 100:
+                break
+            line = line.strip()
             if line.startswith("# Kategorie:"):
                 metadata["category"] = line.split(":", 1)[1].strip()
             elif line.startswith("# Eingabewerte:"):
-                metadata["inputs"] = line.split(":", 1) [1].strip()
+                metadata["inputs"] = line.split(":", 1)[1].strip()
             elif line.startswith("# Ausgabewerte:"):
-                metadata["outputs"] = line.split(":", 1) [1].strip()
+                metadata["outputs"] = line.split(":", 1)[1].strip()
             elif line.startswith("# Testdateien:"):
-                metadata["files"] = line.split(":", 1) [1].strip()
+                metadata["files"] = line.split(":", 1)[1].strip()
             elif line.startswith("# Kommentar:"):
-                metadata["comment"] = line.split(":", 1) [1].strip()
+                metadata["comment"] = line.split(":", 1)[1].strip()
 
         # Build nice name with path context
         rel_path = f.relative_to(test_dir)

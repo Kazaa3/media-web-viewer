@@ -699,7 +699,7 @@
 
         .player-container {
             position: fixed;
-            bottom: 24px;
+            bottom: 26px;
             /* Offset for the bottom status bar */
             left: 0;
             right: 0;
@@ -716,7 +716,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 24px;
+            height: 26px;
             background-color: #f9f9f9;
             border-top: 1px solid #eee;
             display: flex;
@@ -11407,21 +11407,49 @@
                     }
                 });
 
+                // Grouping by folder hierarchy
+                const tree = {};
                 suites.forEach(suite => {
-                    const card = createTestCard(suite);
-                    if (container) container.appendChild(card.cloneNode(true));
-                    if (scriptsList) scriptsList.appendChild(card);
-                    
-                    // Log for debugging if many items are present
-                    if (suites.length > 50 && suite.id === suites[0].id) {
-                        console.log(`[loadTestSuites] Rendering ${suites.length} items...`);
-                    }
+                    const parts = (suite.folder || '').split('/').filter(p => p !== '');
+                    let current = tree;
+                    parts.forEach(part => {
+                        if (!current.sub) current.sub = {};
+                        if (!current.sub[part]) current.sub[part] = { sub: {}, suites: [] };
+                        current = current.sub[part];
+                    });
+                    if (!current.suites) current.suites = [];
+                    current.suites.push(suite);
                 });
+
+                function renderTree(node, level = 0) {
+                    if (node.sub) {
+                        const sortedDirs = Object.keys(node.sub).sort();
+                        sortedDirs.forEach(dirName => {
+                            const subNode = node.sub[dirName];
+                            const header = document.createElement('div');
+                            const indent = level * 15;
+                            header.style.cssText = `grid-column: 1/-1; padding: ${level === 0 ? '15px' : '8px'} 5px 5px ${5 + indent}px; font-weight: bold; font-size: ${level === 0 ? '1.1em' : '0.95em'}; color: ${level === 0 ? '#444' : '#666'}; border-bottom: ${level === 0 ? '2px solid #edeff5' : '1px solid #f5f6fa'}; margin-top: ${level === 0 ? '10px' : '0'}; display: flex; align-items:center; gap: 8px; position: sticky; top: ${level * 30}px; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); z-index: ${20 - level};`;
+                            header.innerHTML = `<span>${level === 0 ? '📂' : '📁'}</span> ${dirName}`;
+                            if (container) container.appendChild(header.cloneNode(true));
+                            if (scriptsList) scriptsList.appendChild(header);
+                            renderTree(subNode, level + 1);
+                        });
+                    }
+                    if (node.suites) {
+                        node.suites.sort((a, b) => a.name.localeCompare(b.name)).forEach(suite => {
+                            const card = createTestCard(suite);
+                            if (container) container.appendChild(card.cloneNode(true));
+                            if (scriptsList) scriptsList.appendChild(card);
+                        });
+                    }
+                }
+
+                renderTree(tree);
                 
                 if (suites.length > 0) {
                     if (container) {
                         const info = document.createElement('div');
-                        info.style.cssText = 'width: 100%; text-align: right; font-size: 0.8em; color: #888; padding: 10px;';
+                        info.style.cssText = 'grid-column: 1/-1; width: 100%; text-align: right; font-size: 0.8em; color: #888; padding: 10px;';
                         info.innerText = `${suites.length} Tests gefunden`;
                         container.prepend(info);
                     }
@@ -12232,15 +12260,13 @@
     </div>
     </div>
     <div class="bottom-bar" style="background: #111; color: #999; border-top: 1px solid #222; font-size: 0.7em; height: 26px; z-index: 1002; display: flex; align-items: center; padding: 0 15px; position: fixed; bottom: 0; left: 0; right: 0;">
-        <div style="flex: 1; display:flex; align-items:center; gap:15px;">
+        <div style="flex: 1; display:flex; align-items:center; gap:12px;">
             <span onclick="toggleDebugMenu()" style="cursor:pointer; font-weight:700; color:#4caf50; letter-spacing:0.5px; background: rgba(76,175,80,0.1); padding: 1px 5px; border-radius: 3px;">DICT</span>
-            <span style="opacity: 0.8;">VSNC: <span style="color:#4caf50; font-weight:bold;">ACTIVE</span></span>
-            <span style="opacity: 0.6; margin-left:10px;">LAT: <span id="footer-latency" style="color: #2196f3; font-weight: bold;">--ms</span></span>
+            <span id="footer-version" style="opacity: 0.5; font-family: monospace;">v1.0.0</span>
+            <button onclick="resetAppData()" style="background: rgba(244,67,54,0.1); color: #f44336; border: 1px solid rgba(244,67,54,0.2); border-radius: 3px; padding: 0 4px; font-size: 0.9em; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(244,67,54,0.2)'" onmouseout="this.style.background='rgba(244,67,54,0.1)'">RESET</button>
         </div>
         <div style="flex: 1; text-align:right;">
-            <a href="#" onclick="toggleImpressum(); return false;" style="color: #888; text-decoration: none; border-bottom: 1px dotted #444; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" data-i18n="footer_imprint">Impressum / imprint</a>
-            <span style="margin: 0 10px; opacity: 0.3;">|</span>
-            <span style="opacity: 0.5;">© 2026 MWV Core</span>
+            <a href="#" onclick="toggleImpressum(); return false;" style="color: #888; text-decoration: none; border-bottom: 1px dotted #444; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" data-i18n="footer_imprint">Impressum</a>
         </div>
     </div>
 </body>

@@ -355,3 +355,24 @@
 
 **Bitte prüfen: Logbuch-Einträge und Test Runner sollten jetzt vollständig und performant angezeigt werden.**
 
+---
+
+## 🏁 Final Adjustments: Test Suite & Bottom Bar (22.03.2026)
+
+### 1. Deep & Organized Test Discovery
+- Vollständig rekursive os.walk-Suche in main.py: Alle Testdateien in allen Unterordnern von tests/ werden gefunden
+- UI gruppiert Tests automatisch nach Parent-Folder, Sticky Header (z.B. 📁 unit/parsers) für bessere Navigation
+- Sortierung: Zuerst nach Ordnerpfad, dann nach Dateiname (Test- & Reporting-Tab)
+
+### 2. Simplified Bottom Bar
+- Linke Seite: Nur noch DICT (debug-clickable), App-Version (z.B. v1.2.3), kleiner roter RESET-Button
+- Rechte Seite: Nur noch Impressum-Link, alle Entwickler-Credits, Status-Flags und Latenz-Anzeigen entfernt
+- Version wird automatisch vom Backend beim Laden der Umgebungsinfos gesetzt
+
+### 3. GUI & JS Integration
+- Test Discovery: Rekursive os.walk-Suche in main.py via Eel, alle Tests inkl. Ordnerkontext werden gefunden
+- Test Grouping: Frontend gruppiert Tests nach Ordner, Sticky Header für bessere Navigation
+- RESET-Button: Löst resetAppData() aus, mit Bestätigung vor State-Löschung
+
+**Footer ist jetzt minimal, funktional und auf das Wesentliche reduziert.**
+
