@@ -40,3 +40,22 @@
 
 **Ergebnis:**
 Die Testübersicht nutzt jetzt die volle Fensterbreite, ist scrollbar und zeigt alle Test-Kacheln in einem dichten, flexiblen Grid an. Das Problem, dass nur 3 Kacheln sichtbar waren und die Ansicht zu schmal wirkte, ist damit behoben. Alle 504 Tests werden wie gewünscht dargestellt.
+
+## Media Routing Test Suite: Benchmarks & Codec Coverage (22.03.2026)
+
+- **Leistungs-Benchmarks:**
+  - `test_perf_latency.py` misst Time to First Byte (TTFB) und Durchsatz für verschiedene Formate (Opus, MP3, WAV, MP4).
+  - Vergleicht Overhead von /media-raw/ vs. /video-stream/ und liefert Median-Latenzwerte in ms.
+- **Format- & Codec-Analyse:**
+  - `test_multi_format_router.py` scannt das gesamte `media/`-Verzeichnis mit ffprobe und erkennt alle Video-/Audio-Codecs.
+  - Simuliert Routing-Logik: Welche Dateien sind "Native Ready", welche benötigen Transcoding (basierend auf Browser-Kompatibilität)?
+  - Gibt eine Zusammenfassung der Fähigkeiten aus (z.B. "75% Native / 25% Needs Transcode").
+- **UI-Erweiterungen im Routing-Tab:**
+  - **Benchmark-Dashboard:**
+    - ⏱️ "Run Latency Benchmark"-Button für Live-Messungen
+    - 🧬 "Run Format Coverage"-Button für vollständigen Codec-Audit
+  - **Terminal-View:** Dunkler, scrollbarerer Ergebniscontainer für Benchmark-Ausgaben
+  - **Automatische Gruppierung:** Alle Skripte in `tests/routing/` werden automatisch im Routing-View angezeigt
+
+**Fazit:**
+Die "Media Routing"-Sektion ist jetzt ein professionelles Audit- und Performance-Tool für die Medieninfrastruktur – weit über reine Konnektivitätsprüfungen hinaus.

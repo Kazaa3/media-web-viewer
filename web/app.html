@@ -5065,6 +5065,31 @@
                                 </div>
                             </div>
 
+                            <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                                <button onclick="runRoutingBenchmark('latency')" class="tab-btn" 
+                                        style="background: #fff8e1; border-color: #ffca28; color: #f57f17; display: flex; align-items: center; gap: 8px;">
+                                    ⏱️ Run Latency Benchmark
+                                </button>
+                                <button onclick="runRoutingBenchmark('multi')" class="tab-btn" 
+                                        style="background: #f3e5f5; border-color: #ab47bc; color: #7b1fa2; display: flex; align-items: center; gap: 8px;">
+                                    🧬 Run Format Coverage
+                                </button>
+                                <button onclick="loadTestSuites()" class="tab-btn" 
+                                        style="background: #f5f5f5; border-color: #ddd; color: #666; display: flex; align-items: center; gap: 8px;">
+                                    🔄 Refresh List
+                                </button>
+                            </div>
+
+                            <div id="routing-benchmark-results" style="display: none; margin-bottom: 30px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0;">Benchmark Results</h4>
+                                    <button onclick="document.getElementById('routing-benchmark-results').style.display='none'" 
+                                            style="border: none; background: none; cursor: pointer; color: #999;">✕</button>
+                                </div>
+                                <pre id="routing-benchmark-output" 
+                                     style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 0.85em; max-height: 400px; overflow-y: auto; white-space: pre-wrap;"></pre>
+                            </div>
+
                             <div id="routing-test-scripts-list" 
                                 style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%;">
                                 <!-- Populate with routing tests -->
