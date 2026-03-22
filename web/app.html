@@ -1892,6 +1892,7 @@
                     // Ensure block display for library and file tabs, flex for debug/edit, block for others
                     if (tabId === 'debug' || tabId === 'edit' || tabId === 'tests' || tabId === 'logbuch') {
                         targetEl.style.display = 'flex';
+                        targetEl.style.height = 'calc(100vh - 180px)'; 
                         if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') {
                             loadLogbuchTab();
                         }
