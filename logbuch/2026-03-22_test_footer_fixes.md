@@ -72,3 +72,16 @@ Die "Media Routing"-Sektion ist jetzt ein professionelles Audit- und Performance
 
 **Ergebnis:**
 Die "Media Routing"-Benchmarks (Latenz, Format Coverage) laufen jetzt fehlerfrei und ohne Konsolenfehler. Die UI ist robust und alle Buttons/Funktionen sind wie vorgesehen nutzbar.
+
+## UI Visual Refinement: Centered & Max-Width Test Views (22.03.2026)
+
+- **Zentrierte Content-Spalten:**
+  - Video Test Suite: `max-width: 1200px` und `margin: 0 auto` wiederhergestellt, damit Player-Controls und Videoauswahl im Reporting-Tab fokussiert und nicht zu breit dargestellt werden.
+  - Media Routing View: Gleiches Centering für Benchmark-Buttons und Beschreibungstexte, für bessere Lesbarkeit und Kompaktheit.
+- **Optimierte Testergebnisse:**
+  - Output-Stream/Terminal-Bereiche für alle Tests auf 1200px begrenzt und zentriert, damit lange Konsolenausgaben übersichtlich bleiben.
+- **UI-Konsistenz:**
+  - Alle Sub-Views im Reporting-Tab folgen jetzt demselben strukturellen Muster für ein professionelles, konsistentes Nutzererlebnis.
+
+**Fazit:**
+Die Test- und Reporting-Ansichten sind jetzt auf hochauflösenden Displays optisch ausgewogen, lesefreundlich und behalten einen "Premium"-Look.
