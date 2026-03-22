@@ -324,8 +324,8 @@
 - trigger_mtx_stream nutzt refaktorisiertes stream_to_mediamtx für konsistentes Verhalten
 
 ### Verification Results
-- DVD-Playback (4 Könige (2015) - DVD):
-  - ✅ ISO-Resolution: 4_KOENIGE.iso gefunden
+- DVD-Playback (DVD):
+  - ✅ ISO-Resolution: .iso gefunden
   - ✅ HLS-Push: Manifest aktiv
   - ✅ WebRTC-Push: WHEP-Listener erreichbar
   - ✅ Seekability: ENABLED (Frontend-Override)
