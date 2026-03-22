@@ -2241,7 +2241,7 @@
             const btn = document.querySelector(`#quality-assurance-regression-suite-panel .options-subtab[data-view="${view}"]`);
             if (btn) btn.classList.add('active');
 
-            if (view === 'scripts' || view === 'suite') {
+            if (view === 'scripts' || view === 'suite' || view === 'routing') {
                 loadTestSuites();
             }
             if (view === 'video') {
@@ -5021,6 +5021,8 @@
                                 data-i18n="test_view_selenium">🔍 Selenium</button>
                             <button class="options-subtab" onclick="switchTestView('suite')" data-view="suite"
                                 data-i18n="test_view_suite">📋 Suite</button>
+                            <button class="options-subtab" onclick="switchTestView('routing')" data-view="routing"
+                                data-i18n="test_view_routing">🛣️ Media Routing</button>
                             <div id="test-integrity-status"
                                 style="margin-left: 15px; font-size: 0.8em; padding: 2px 8px; border-radius: 12px; border: 1px solid #ddd; background: #fff; display: flex; align-items: center; gap: 5px;">
                                 <span style="color: #888;">Code:</span> <span id="integrity-badge-python"
@@ -5040,6 +5042,35 @@
                 <!-- SCROLLABLE CONTENT AREA -->
                 <div id="test-scroll-container" class="scrolling-view"
                     style="flex: 1; overflow-y: auto !important; padding: 25px; height: 100%; min-height: 0;">
+
+                    <!-- VIEW: Media Routing (New) -->
+                    <div id="test-routing-view" class="test-view-content" style="display: none;">
+                        <div style="width: 100%;">
+                            <h3 style="margin-top: 0;">Media Routing Infrastructure</h3>
+                            <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;">
+                                Validierung der Media-Serving Routes (/media-raw, /video-stream) sowie Cache Management für spezialisierte Audioformate.
+                            </p>
+                            
+                            <!-- Analysis Linking -->
+                            <div style="background: #e3f2fd; border-radius: 8px; padding: 15px; border-left: 5px solid #1976d2; margin-bottom: 30px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h4 style="margin: 0; color: #1565c0;">📑 Media Routing Analysis Documentation</h4>
+                                        <div style="font-size: 0.85em; color: #555; margin-top: 5px;">Comprehensive study of the media serving strategy and routing layer artifacts.</div>
+                                    </div>
+                                    <button onclick="window.open('/home/xc/.gemini/antigravity/brain/d7af57f8-0c86-4b5d-9160-c6e6c8384b69/media_routing_analysis.md')" 
+                                            class="tab-btn" style="background: white; border: 1px solid #1976d2; color: #1976d2; padding: 6px 12px; font-size: 0.8em; cursor: pointer;">
+                                        Dokumentation öffnen
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="routing-test-scripts-list" 
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; width: 100%;">
+                                <!-- Populate with routing tests -->
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- VIEW: Base (Connectivity / RTT) -->
                     <div id="test-base-view" class="test-view-content">
@@ -11434,13 +11465,14 @@
             async function loadTestSuites(retryCount) {
                 retryCount = retryCount || 0;
                 const container = document.getElementById('test-suites-container');
-                const scriptsList = document.getElementById('test-scripts-list');
+                const routingList = document.getElementById('routing-test-scripts-list');
                 if (!container) return;
 
                 if (retryCount === 0) {
                     const loadingHtml = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${t('test_loading', 'Suites werden geladen...')}</div>`;
                     if (container) container.innerHTML = loadingHtml;
                     if (scriptsList) scriptsList.innerHTML = loadingHtml;
+                    if (routingList) routingList.innerHTML = loadingHtml;
                 }
 
                 try {
@@ -11464,6 +11496,7 @@
 
                     if (container) container.innerHTML = '';
                     if (scriptsList) scriptsList.innerHTML = '';
+                    if (routingList) routingList.innerHTML = '';
 
                     // Group by folder, with UI folders prioritized and subfolders grouped
                     const groups = {};
@@ -11499,7 +11532,8 @@
                         header.innerHTML = `<span>${folder === 'Root' ? '📂' : (folder.toLowerCase().startsWith('ui') ? '🖥️' : '📁')}</span> ${folderLabel}`;
 
                         if (container) container.appendChild(header.cloneNode(true));
-                        if (scriptsList) scriptsList.appendChild(header);
+                        if (scriptsList) scriptsList.appendChild(header.cloneNode(true));
+                        if (routingList && folder.toLowerCase().includes('routing')) routingList.appendChild(header);
 
                         folderSuites.forEach(suite => {
                             try {
@@ -11510,6 +11544,10 @@
                                 if (scriptsList) {
                                     const card = createTestCard(suite);
                                     scriptsList.appendChild(card);
+                                }
+                                if (routingList && folder.toLowerCase().includes('routing')) {
+                                    const card = createTestCard(suite);
+                                    routingList.appendChild(card);
                                 }
                             } catch (e) {
                                 console.error('[loadTestSuites] Error creating card for', suite.name, e);

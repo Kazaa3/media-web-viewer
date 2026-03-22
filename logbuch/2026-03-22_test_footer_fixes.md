@@ -30,3 +30,13 @@
 
 **Ergebnis:**
 - UI ist stabil, Teststruktur vollständig sichtbar, Footer wie gewünscht umgesetzt.
+
+## UI Test Suite Layout & Scrolling Optimierung (22.03.2026)
+
+- **Width Restrictions entfernt:** Interne `max-width: 900px` und `max-width: 1000px` Begrenzungen in den Test-Sub-Tabs (Base, Test Scripts, Video Testing) entfernt. Stattdessen `width: 100%` gesetzt, damit das Grid die gesamte verfügbare Breite nutzt ("hier soll kein split sein").
+- **Grid-Dichte erhöht:** Die minimale Kachelbreite im Bereich "Test-Ordner" (`#test-scripts-list`) von 280px auf 220px reduziert, sodass mehr Kacheln pro Zeile auf einem Widescreen angezeigt werden können.
+- **Scrollbereiche erweitert:** Vertikales Scrollen explizit mit `overflow-y: auto !important` aktiviert und die `max-height` der Test-Container auf 80vh erhöht, damit alle 504 Tests sichtbar und erreichbar sind.
+- **Flex-Layout sichergestellt:** Das Haupt-Testpanel (`quality-assurance-regression-suite-panel`) ist auf `display: flex` gesetzt, sodass der scrollbare Bereich 100% der verfügbaren vertikalen Höhe einnimmt.
+
+**Ergebnis:**
+Die Testübersicht nutzt jetzt die volle Fensterbreite, ist scrollbar und zeigt alle Test-Kacheln in einem dichten, flexiblen Grid an. Das Problem, dass nur 3 Kacheln sichtbar waren und die Ansicht zu schmal wirkte, ist damit behoben. Alle 504 Tests werden wie gewünscht dargestellt.
