@@ -5326,6 +5326,37 @@ def pick_save_file_cli(
 
 
 @eel.expose
+def get_test_media_files():
+    """
+    Scans media/tests and other test-related directories for video files.
+    """
+    from src.core.main_helpers import resolve_media_path
+    
+    # Common test directories
+    search_dirs = [
+        Path(resolve_media_path("tests")),
+        Path(resolve_media_path("matrix")),
+        Path(__file__).parents[2] / "tests" / "assets",
+        Path(__file__).parents[2] / "tests" / "mockfiles"
+    ]
+    
+    extensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.ts']
+    results = []
+    
+    for d in search_dirs:
+        if d.exists() and d.is_dir():
+            for f in d.rglob("*"):
+                if f.suffix.lower() in extensions:
+                    results.append({
+                        "name": f.name,
+                        "path": str(f.absolute()),
+                        "relpath": str(f)
+                    })
+                    
+    return results
+
+
+@eel.expose
 def get_test_suites():
     """
     @brief Discovers all test files in the tests/ directory and extracts metadata.
