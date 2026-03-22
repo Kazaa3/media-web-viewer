@@ -85,3 +85,17 @@ Die "Media Routing"-Benchmarks (Latenz, Format Coverage) laufen jetzt fehlerfrei
 
 **Fazit:**
 Die Test- und Reporting-Ansichten sind jetzt auf hochauflösenden Displays optisch ausgewogen, lesefreundlich und behalten einen "Premium"-Look.
+
+## Video Testing: Lokaler Datei-Picker für Ad-hoc-Validierung (22.03.2026)
+
+- **"➕ Own File"-Button:**
+  - Direkt neben dem Refresh-Button im Video-Test-Suite-Tab platziert.
+  - Öffnet einen nativen Dateidialog, gefiltert auf gängige Videoformate (.mp4, .mkv, .avi, .mov, .webm, .ts).
+- **Dynamische Auswahl-Integration:**
+  - Nach Auswahl wird die Datei mit 🏠-Icon in die Testauswahl eingefügt und sofort selektiert.
+  - Alle Testmodi (Native, VLC Bridge, FragMP4 etc.) können direkt auf die gewählte Datei angewendet werden.
+- **Echtzeit-Trace:**
+  - Die Auswahl einer eigenen Datei wird im Output-Stream protokolliert, sodass nachvollziehbar ist, welche externen Dateien getestet wurden.
+
+**Vorteil:**
+Ad-hoc-Tests beliebiger Mediendateien sind jetzt möglich, ohne sie vorher ins /media-Verzeichnis verschieben zu müssen.

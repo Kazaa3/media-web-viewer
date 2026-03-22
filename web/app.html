@@ -5405,9 +5405,18 @@
                                             <option value="">-- Kein Video ausgewählt --</option>
                                         </select>
                                     </div>
-                                    <button onclick="populateTestVideoSelector()" class="tab-btn"
-                                        style="padding: 10px; background: #f0f0f0; border: 1px solid #ddd;">🔄
-                                        Refresh</button>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button onclick="populateTestVideoSelector()" class="tab-btn" 
+                                                title="Refresh Library & Test Media"
+                                                style="padding: 10px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px;">
+                                            🔄
+                                        </button>
+                                        <button onclick="pickTestVideoFile()" class="tab-btn" 
+                                                title="Pick Custom Local File"
+                                                style="padding: 10px; background: #e3f2fd; border: 1px solid #bbdefb; color: #1565c0; border-radius: 6px;">
+                                            ➕ Own File
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div
