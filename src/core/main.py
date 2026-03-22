@@ -5330,14 +5330,13 @@ def get_test_media_files():
     """
     Scans media/tests and other test-related directories for video files.
     """
-    from src.core.main_helpers import resolve_media_path
-    
+    # Use local resolve_media_path already defined in main.py
     # Common test directories
     search_dirs = [
         Path(resolve_media_path("tests")),
         Path(resolve_media_path("matrix")),
-        Path(__file__).parents[2] / "tests" / "assets",
-        Path(__file__).parents[2] / "tests" / "mockfiles"
+        PROJECT_ROOT / "tests" / "assets",
+        PROJECT_ROOT / "tests" / "mockfiles"
     ]
     
     extensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.ts']
