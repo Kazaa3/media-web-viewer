@@ -99,3 +99,21 @@ Die Test- und Reporting-Ansichten sind jetzt auf hochauflösenden Displays optis
 
 **Vorteil:**
 Ad-hoc-Tests beliebiger Mediendateien sind jetzt möglich, ohne sie vorher ins /media-Verzeichnis verschieben zu müssen.
+
+## Media Routing Test Suite: Finalisierung & UI-Optimierung (22.03.2026)
+
+- **Test Suite Erweiterung:**
+  - Neue Benchmarks: `test_perf_latency.py` (TTFB-Messungen), `test_multi_format_router.py` (Codec/Container Coverage)
+  - Backend: `test_media_raw.py` und `test_video_stream.py` prüfen Routing-Pfade gezielt.
+  - UI: 🛣️ Media Routing Sub-Tab im Reporting-Bereich mit Aktionsbuttons für automatisierte Benchmarks.
+- **Visuelle & Usability-Verbesserungen:**
+  - Widescreen-Fix: `max-width: 1200px` und zentrierte Ausrichtung für Video- und Routing-Views, bessere Lesbarkeit auf großen Monitoren.
+  - Lokaler Datei-Picker: "➕ Own File"-Button im Video-Testing, beliebige Mediendateien können direkt getestet werden.
+  - Terminal-Output: Einheitliches Styling für Testergebnis-Container.
+- **Stabilität & Codequalität:**
+  - Runtime-Fix: Fehlendes `urllib.parse`-Import für Benchmarks ergänzt.
+  - Type Hints: Python-Typannotationen für Kernfunktionen hinzugefügt.
+  - Rendering-Fix: Fehlerhafte Header-/Summary-Darstellung im Routing-View korrigiert.
+
+**Ergebnis:**
+Die Media Routing Suite ist jetzt ein vollwertiges Werkzeug zur Performance-Quantifizierung und Format-Routing-Validierung. Alle neuen Funktionen sind im Reporting → Media Routing Tab verfügbar.

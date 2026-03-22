@@ -11570,7 +11570,7 @@
 
                         if (container) container.appendChild(header.cloneNode(true));
                         if (scriptsList) scriptsList.appendChild(header.cloneNode(true));
-                        if (routingList && folder.toLowerCase().includes('routing')) routingList.appendChild(header);
+                        if (routingList && folder.toLowerCase().includes('routing')) routingList.appendChild(header.cloneNode(true));
 
                         folderSuites.forEach(suite => {
                             try {
@@ -11596,7 +11596,7 @@
 
                     if (suites.length > 0) {
                         const infoText = `${suites.length} Tests gefunden`;
-                        [container, scriptsList].forEach(el => {
+                        [container, scriptsList, routingList].forEach(el => {
                             if (el) {
                                 const info = document.createElement('div');
                                 info.style.cssText = 'grid-column: 1/-1; width: 100%; text-align: right; font-size: 0.8em; color: #888; padding: 10px;';

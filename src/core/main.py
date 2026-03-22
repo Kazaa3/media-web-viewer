@@ -91,7 +91,7 @@ import shutil
 import bottle
 import psutil
 import requests
-from typing import cast
+from typing import cast, Any
 import ast
 
 # Internal imports
@@ -2842,7 +2842,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {list(all_exts)[:10]}...")
 
         # Reset counters
-        count_indexed = 0
+        count_indexed: int = 0
         for scan_root in scan_roots:
             log.info(f"🔍 [Scan] Starting scan of: {scan_root}")
 
@@ -6761,7 +6761,7 @@ def get_model_analysis():
     """Aggregates stats on category, content_type, and media_type from the DB."""
     try:
         items = db.get_all_media()
-        stats = {
+        stats: dict[str, Any] = {
             'categories': {},
             'content_types': {},
             'media_types': {},
