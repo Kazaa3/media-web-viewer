@@ -376,3 +376,24 @@
 
 **Footer ist jetzt minimal, funktional und auf das Wesentliche reduziert.**
 
+---
+
+## 🧩 Final: Multi-Level Test Suite & Bottom Bar Layout (22.03.2026)
+
+### 1. Multi-Level Test Headers (Nested Tree)
+- Test-Tab rendert jetzt echte Baumstruktur für verschachtelte Unterordner (z.B. integration → tech → network)
+- Jede Ebene mit Einrückung und Sticky Header, Navigation auch bei vielen Tests übersichtlich
+- Rekursive Darstellung unterstützt beliebig viele Unterebenen
+
+### 2. Bottom Bar Visibility & Height
+- Höhe der Bottom Bar konsistent auf 26px (CSS & Inline-Styles)
+- Player-Container mit bottom: 26px Offset, perfekte Ausrichtung ohne Überlappung
+- Bar ist fixiert (z-index: 1002), immer sichtbar
+
+### 3. Integrated Reset & Version
+- Links: DICT, App-Version, RESET-Button
+- Rechts: Nur Impressum-Link, Footer minimal und klar
+
+- <div>-Balance geprüft, alle Tabs sind isoliert und valide.
+- Bei Anzeigeproblemen: Force Refresh (Ctrl+F5) empfohlen.
+

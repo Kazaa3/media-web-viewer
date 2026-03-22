@@ -5413,14 +5413,15 @@ def get_test_suites():
 
         # Build nice name with path context
         rel_path = f.relative_to(test_dir)
-        display_name = str(rel_path)
+        display_name = f.name # Just the filename
         
         suites.append({
             "id": str(rel_path), 
             "name": display_name,
-            "folder": str(rel_path.parent) if str(rel_path.parent) != "." else "",
+            "folder": str(rel_path.parent).replace("\\", "/") if str(rel_path.parent) != "." else "",
             "metadata": metadata
         })
+    print(f"[get_test_suites] Discovered {len(suites)} suites in {test_dir}. Returning to Eel now.")
     return suites
 
 
