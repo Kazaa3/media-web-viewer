@@ -5083,7 +5083,11 @@
                                         style="background: #f3e5f5; border-color: #ab47bc; color: #7b1fa2; display: flex; align-items: center; gap: 8px;">
                                         🧬 Run Format Coverage
                                     </button>
-                                    <button onclick="loadTestSuites()" class="tab-btn"
+                                    <button onclick="runRoutingBenchmark('playback')" class="tab-btn" 
+                                        style="background: #e1f5fe; border-color: #4fc3f7; color: #0288d1; display: flex; align-items: center; gap: 8px;">
+                                    📊 Run Playback Matrix
+                                </button>
+                                <button onclick="loadTestSuites()" class="tab-btn"
                                         style="background: #f5f5f5; border-color: #ddd; color: #666; display: flex; align-items: center; gap: 8px;">
                                         🔄 Refresh List
                                     </button>
@@ -11435,7 +11439,11 @@
                 outputPre.innerHTML = `🚀 [Benchmark] Initialisiere ${type === 'latency' ? 'Latenz-Test' : 'Format-Coverage'}...\n\n`;
                 resultsContainer.scrollIntoView({ behavior: 'smooth' });
 
-                const script_id = type === 'latency' ? 'routing/test_perf_latency.py' : 'routing/test_multi_format_router.py';
+                const script_id = {
+                    'latency': 'routing/test_perf_latency.py',
+                    'multi': 'routing/test_multi_format_router.py',
+                    'playback': 'routing/test_playback_matrix.py'
+                }[type] || 'routing/test_perf_latency.py';
 
                 try {
                     // We use the existing run_tests logic which streams output

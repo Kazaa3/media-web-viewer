@@ -5579,15 +5579,35 @@ def get_logbook_entry(feature_name, source="logbuch"):
     elif feature_name.upper() == "README" or feature_name.upper() == "README.MD":
         log_file = root_dir / "README.md"
     else:
-        log_dir = PROJECT_ROOT / "docs" / "logbuch"
-        log_file = log_dir / f"{feature_name}.md"
-        if not log_file.exists():
-            # Fallback without extension just in case it was passed directly
-            log_file = log_dir / feature_name
+        # Search recursively in the root logbuch folder
+        log_dir = PROJECT_ROOT / "logbuch"
+        log_file = None
+        
+        # Check if feature_name already has the full relative path
+        if "/" in feature_name:
+            # Try direct relative path
+            candidate = log_dir / feature_name
+            if not candidate.name.endswith(".md"):
+                 candidate = candidate.with_suffix(".md")
+            if candidate.exists():
+                log_file = candidate
 
-    if not log_file.exists():
-        return f"<h1>Error</h1><p>Logbook entry for '{
-            feature_name}' not found.</p>"
+        if not log_file:
+            # Fallback search
+            for f in log_dir.rglob("*.md"):
+                if f.stem == feature_name or f.name == feature_name:
+                    log_file = f
+                    break
+        
+        if not log_file:
+            # Try to match the stem if re-numbered (e.g., search for "The_Modular_Heart" in "010_2026-03-13_The_Modular_Heart...")
+            for f in log_dir.rglob("*.md"):
+                if feature_name in f.name:
+                    log_file = f
+                    break
+        
+        if not log_file or not log_file.exists():
+            return f"<h1>Error</h1><p>Logbook entry for '{feature_name}' not found.</p>"
 
     try:
         content = log_file.read_text(encoding='utf-8')
@@ -5615,7 +5635,7 @@ def list_logbook_entries():
     @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück.
     @return List of logbook entry objects / Liste von Logbuch-Eintrag-Objekten.
     """
-    log_dir = PROJECT_ROOT / "docs" / "logbuch"
+    log_dir = PROJECT_ROOT / "logbuch"
     if not log_dir.exists():
         return []
 
@@ -5649,8 +5669,11 @@ def list_logbook_entries():
                 "OPEN"]):
             return "ACTIVE"
         return s
-    # Natural sort by filename
-    for f in sorted(log_dir.glob("*.md")):
+    # Recursively find all markdown files
+    all_files = list(log_dir.rglob("*.md"))
+    all_files += list(log_dir.rglob("*.mmd"))
+
+    for f in sorted(all_files, key=lambda x: x.name):
         try:
             with open(f, 'r', encoding='utf-8') as fp:
                 # Mehr Zeilen lesen um alles zu finden

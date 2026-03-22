@@ -146,31 +146,3 @@ Die gesamte Backend-Frontend-Kommunikation ist jetzt standardisiert, durchsuchba
 
 **Ergebnis:**
 Die "Media Routing"-Sektion ist jetzt voll interaktiv: Benchmarks und Kompatibilitätsprüfungen laufen direkt aus der UI, Ergebnisse erscheinen live und übersichtlich im eigenen Konsolenfenster.
-
-## Systematische Benchmark-Tests: Container, Codecs & Dateiendungen (22.03.2026)
-
-- **Teststrategie:**
-  - Alle unterstützten Dateiendungen, Container-Formate und Codecs werden automatisiert mit den integrierten Audio- und Video-Playern getestet und gebenchmarkt.
-  - Ziel: Sicherstellen, dass jede Kombination (z.B. .mp4, .mkv, .webm, .mp3, .opus, .flac, .wav, .avi, .mov, .ts usw.) sowohl im Audio- als auch im Video-Player korrekt erkannt, abgespielt und in der Routing-Logik berücksichtigt wird.
-- **Ablauf:**
-  - Für jede Datei im Medienverzeichnis wird der Container und Codec per ffprobe analysiert.
-  - Die Datei wird nacheinander im Audio- und Video-Player geöffnet und die Abspielbarkeit sowie die Latenz (TTFB, Seek, etc.) gemessen.
-  - Ergebnisse werden zentral geloggt und im Benchmark-Dashboard visualisiert.
-- **Vorteil:**
-  - Vollständige Abdeckung aller Formate und Kombinationen, frühzeitige Erkennung von Inkompatibilitäten oder Performance-Problemen.
-  - Optimale Vorbereitung für neue Medienquellen und Geräte.
-
-## Playback Compatibility Matrix: Systematische Benchmark-Suite (22.03.2026)
-
-- **Test-Engine (`tests/routing/test_playback_matrix.py`):**
-  - Automatische Erkennung aller Container/Codec-Kombinationen in der Medienbibliothek (Container + Video-Codec + Audio-Codec).
-  - Für jede Kombination wird die Performance (TTFB) über verschiedene Routing-Pfade (RAW vs. Stream) gebenchmarkt.
-  - Pro Format wird ein Sample getestet, um Geschwindigkeit und Abdeckung zu optimieren.
-- **UI-Integration (`app.html`):**
-  - Neuer 📊 "Run Playback Matrix"-Button im Media Routing Tab.
-  - Ergebnisse werden live im Benchmark-Console gestreamt, inklusive Zusammenfassungstabelle für alle Formate.
-- **Architektur-Alignment:**
-  - Die Matrix liefert die Basisdaten für die Optimierung der nächsten GUI-Generation (Vue.js/Electron, mpv.js).
-
-**Nutzung:**
-Reporting → 🛣️ Media Routing → 📊 Run Playback Matrix. Sofortige Übersicht, welche Formate am performantesten sind und wo Transcoding-Optimierung nötig ist.
