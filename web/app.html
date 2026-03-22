@@ -1890,22 +1890,24 @@
                 if (targetEl) {
                     targetEl.classList.add('active');
                     // Ensure block display for library and file tabs, flex for debug/edit, block for others
-                    if (tabId === 'debug' || tabId === 'edit' || tabId === 'tests') {
+                    if (tabId === 'debug' || tabId === 'edit' || tabId === 'tests' || tabId === 'logbuch') {
                         targetEl.style.display = 'flex';
-                        if (tabId === 'file') {
-                            loadLibraryFolders();
+                        if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') {
+                            loadLogbuchTab();
+                        }
+                        if (tabId === 'tests' && typeof switchTestView === 'function') {
+                            switchTestView('base');
                         }
                     } else if (tabId === 'file') {
                         targetEl.style.display = 'block';
-                        switchReportingView('dashboard');
-                        loadSqlFiles();
-                        refreshReportingData(); // Auto-refresh for user convenience
-                    } else if (tabId === 'tests') {
-                        targetEl.style.display = 'flex';
-                        switchTestView('base');
+                    } else if (tabId === 'reporting') {
+                        targetEl.style.display = 'block';
+                        if (typeof switchReportingView === 'function') switchReportingView('dashboard');
+                        if (typeof loadSqlFiles === 'function') loadSqlFiles();
+                        if (typeof refreshReportingData === 'function') refreshReportingData(); 
                     } else if (tabId === 'options') {
                         targetEl.style.display = 'block';
-                        switchOptionsView('general');
+                        if (typeof switchOptionsView === 'function') switchOptionsView('general');
                     } else if (tabId === 'parser') {
                         targetEl.style.display = 'block';
                     } else {
@@ -6601,7 +6603,7 @@
             <!-- Logbuch Tab -->
             <!-- ===================== LOGBUCH TAB START ===================== -->
             <div id="localized-markdown-documentation-journal-panel" class="tab-content"
-                style="display: none; height: 100%; flex-direction: column; overflow: hidden; padding: 0; background: #fdfdfd;">
+                style="display: none; height: 100%; flex-direction: column; overflow: auto; padding: 0; background: #fdfdfd;">
                 <div class="sub-nav-container"
                     style="background: white; border-bottom: 1px solid #eee; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; position: relative;">
                     <h2 style="margin: 0; font-size: 1.25em; color: #333;" data-i18n="logbook_title">Vollständiges
