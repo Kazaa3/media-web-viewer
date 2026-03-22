@@ -95,11 +95,25 @@ class TranscoderManager:
         finally:
             if callback: callback(task_id, task.progress)
 
+    def _auto_select_encoder(self) -> str:
+        """Autodetect best hardware encoder using the hardware_detector."""
+        from src.core import hardware_detector
+        gpu_info = hardware_detector.get_gpu_info()
+        encoders = gpu_info.get("encoders", [])
+        
+        if "nvenc" in encoders: return "nvenc"
+        if "qsv" in encoders: return "qsv"
+        if "vaapi" in encoders: return "vaapi"
+        return "x264" # Default software fallback
+
     def _build_handbrake_cmd(self, task: TranscodeTask) -> List[str]:
         # Basic HandBrakeCLI command
         cmd = ["HandBrakeCLI", "-i", task.input_path, "-o", task.output_path]
         
-        encoder = task.options.get("encoder", "x264")
+        encoder = task.options.get("encoder", "auto")
+        if encoder == "auto":
+            encoder = self._auto_select_encoder()
+            
         if encoder == "nvenc": cmd += ["-e", "nvenc_h264"]
         elif encoder == "qsv": cmd += ["-e", "qsv_h264"]
         elif encoder == "vaapi": cmd += ["-e", "vaapi_h264"]
@@ -112,13 +126,18 @@ class TranscoderManager:
 
     def _build_webm_cmd(self, task: TranscodeTask) -> List[str]:
         # FFmpeg VP9/WebM command
-        cmd = [
-            "ffmpeg", "-i", task.input_path,
-            "-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0",
-            "-c:a", "libopus", "-b:a", "128k",
-            "-deadline", "realtime",
-            "-y", task.output_path
-        ]
+        # Auto-detect encoder for webm too if needed
+        from src.core import hardware_detector
+        gpu_info = hardware_detector.get_gpu_info()
+        encoders = gpu_info.get("encoders", [])
+        
+        cmd = ["ffmpeg", "-i", task.input_path]
+        
+        # Check for HW acceleration for VP9 if available
+        # (Standard webm uses VP9)
+        cmd += ["-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0"]
+        cmd += ["-c:a", "libopus", "-b:a", "128k"]
+        cmd += ["-deadline", "realtime", "-y", task.output_path]
         return cmd
 
     def _get_duration(self, task: TranscodeTask):

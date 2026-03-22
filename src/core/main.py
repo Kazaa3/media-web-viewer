@@ -145,6 +145,19 @@ def ensure_singleton():
         log.error(f"Error taking lock: {e}")
         return None
 
+def get_best_ffmpeg_encoder():
+    """Returns the best available H.264 encoder for FFmpeg (HW or SW)."""
+    try:
+        from src.core import hardware_detector
+        gpu_info = hardware_detector.get_gpu_info()
+        encoders = gpu_info.get("encoders", [])
+        if "nvenc" in encoders: return "h264_nvenc"
+        if "qsv" in encoders: return "h264_qsv"
+        if "vaapi" in encoders: return "h264_vaapi"
+    except Exception:
+        pass
+    return "libx264" # Default software fallback
+
 # Perform singleton check immediately
 _SINGLETON_LOCK = ensure_singleton()
 
@@ -3758,7 +3771,17 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
             import urllib.parse
             rel = os.path.relpath(file_path, PROJECT_ROOT / "media")
             safe_rel = urllib.parse.quote(rel, safe='')
-            return {"status": "play", "path": f"/transcode/{safe_rel}", "mode": "chrome_transcode", "type": "video/mp4"}
+            # Get best encoder to determine if HW accel is used
+            enc = get_best_ffmpeg_encoder()
+            is_hw = enc != "libx264"
+            return {
+                "status": "play", 
+                "path": f"/transcode/{safe_rel}", 
+                "mode": "chrome_transcode", 
+                "type": "video/mp4",
+                "hw_accel": is_hw,
+                "encoder": enc
+            }
 
         if mode == "chrome_direct":
             import urllib.parse
@@ -6338,7 +6361,7 @@ if __name__ == "__main__":
             
         cmd += [
             "-i", str(p),
-            "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
+            "-c:v", get_best_ffmpeg_encoder(), "-preset", "ultrafast", "-tune", "zerolatency",
             "-crf", "25", "-maxrate", "4M", "-bufsize", "8M"
         ]
         

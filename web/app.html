@@ -4037,22 +4037,28 @@
                                     onchange="updateBandwidthLimitUI(this.value)">
                             </div>
 
-                            <div
-                                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_hardware_info">
-                                    Hardware-Informationen</div>
+                                <div style="font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;" data-i18n="options_hardware_info">
+                                    🖥️ Hardware-Level Discovery</div>
                                 <div
-                                    style="font-size: 0.85em; color: #444; display: flex; flex-direction: column; gap: 4px;">
-                                    <div style="display: flex; justify-content: space-between;">
-                                        <span data-i18n="env_label_disk_type">Laufwerkstyp:</span>
-                                        <span id="hardware-disk-type" style="font-weight: bold;">-</span>
+                                    style="font-size: 0.85em; color: #444; display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
+                                        <span data-i18n="env_label_disk_type">Laufwerk:</span>
+                                        <span id="hardware-disk-type" style="font-weight: bold; color: #2e7d32;">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
+                                        <span data-i18n="env_label_pcie_gen">Bus Speed:</span>
+                                        <span id="hardware-pcie-gen" style="font-weight: bold; color: #1565c0;">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
+                                        <span data-i18n="env_label_gpu">GPU / Core:</span>
+                                        <span id="hardware-gpu-type" style="font-weight: bold; color: #6a1b9a;">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
+                                        <span>HW-Accelerator:</span>
+                                        <span id="hardware-encoders" style="font-weight: bold; color: #c62828;">-</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between;">
-                                        <span data-i18n="env_label_pcie_gen">PCIe Generation:</span>
-                                        <span id="hardware-pcie-gen" style="font-weight: bold;">-</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between;">
-                                        <span data-i18n="env_label_network_mount">Netzwerk-Mount:</span>
+                                        <span data-i18n="env_label_network_mount">Storage Type:</span>
                                         <span id="hardware-network-mount" style="font-weight: bold;">-</span>
                                     </div>
                                 </div>
@@ -5708,13 +5714,42 @@
                                                 style="color: #666;">Gevent /
                                                 Greenlet</span>
                                         </div>
-                                        <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                         <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
                                             <div
                                                 style="width: 10px; height: 10px; border-radius: 50%; background: #ff9800;">
                                             </div>
                                             <strong>OS Platform:</strong> <span id="report-os-status"
                                                 style="color: #666;">Linux</span>
                                         </div>
+                                        <div style="font-size: 0.9em; display: flex; align-items: center; gap: 8px; margin-left: auto;">
+                                            <div
+                                                style="width: 10px; height: 10px; border-radius: 50%; background: #9c27b0;">
+                                            </div>
+                                            <strong>GPU:</strong> <span id="report-gpu-status"
+                                                style="color: #666;">Scanning...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hardware & Transcode Summary Card -->
+                            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 12px; padding: 15px; margin-bottom: 20px; display: flex; gap: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #d1d9e6;">
+                                <div style="flex: 1; border-right: 1px solid rgba(0,0,0,0.1); padding-right: 20px;">
+                                    <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 0.9em; text-transform: uppercase;">
+                                        ⚡ Performance Engine</h4>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8em;">
+                                        <div>Storage: <span id="dash-hw-disk" style="font-weight: 600;">-</span></div>
+                                        <div>Interface: <span id="dash-hw-pcie" style="font-weight: 600;">-</span></div>
+                                        <div>Acceleration: <span id="dash-hw-accel" style="font-weight: 600; color: #2e7d32;">-</span></div>
+                                        <div>GPU: <span id="dash-hw-gpu" style="font-weight: 600;">-</span></div>
+                                    </div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 0.9em; text-transform: uppercase;">
+                                        🎬 Transcoding Matrix</h4>
+                                    <div style="font-size: 0.8em; color: #666;">
+                                        System ready for Real-Time Transcoding. <br>
+                                        Auto-switching: <span style="color: #1565c0; font-weight: 600;">Enabled</span>
                                     </div>
                                 </div>
                             </div>
@@ -6550,9 +6585,9 @@
                                 Native</span>
                             <span style="color:#555;">·</span>
                             <span id="status-strip-mode" style="color:#aaa;">Direct</span>
-                            <span style="color:#555;">·</span>
                             <span id="status-strip-file"
-                                style="color:#ccc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:300px;">—</span>
+                                style="color:#ccc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px;">—</span>
+                            <span id="status-strip-hw-badge" style="display:none; background:#2e7d32; color:white; padding:2px 6px; border-radius:4px; font-size:0.75em; font-weight:bold; letter-spacing:0.05em; box-shadow:0 0 8px rgba(46,125,50,0.4);">⚡ HW-ACCEL</span>
                         </div>
 
                         <!-- FOOTER: Stop + VLC Extern (pinned to bottom via margin-top:auto) -->
@@ -6622,7 +6657,7 @@
                 <div style="flex: 1; display: flex; overflow: hidden;">
                     <!-- SIDEBAR: Entries List -->
                     <div
-                        style="width: 340px; border-right: 1px solid #eee; background: #fff; display: flex; flex-direction: column; overflow: hidden;">
+                        style="width: 340px; border-right: 1px solid #eee; background: #fff; display: flex; flex-direction: column; overflow: auto;">
                         <div
                             style="padding: 15px; border-bottom: 1px solid #f9f9f9; display: flex; flex-direction: column; gap: 10px; background: #fafafa;">
                             <div style="display: flex; gap: 6px;">
@@ -9357,7 +9392,7 @@
                 }
             }
 
-            function updateStatusStrip(engine, mode, file, isPlaying) {
+            function updateStatusStrip(engine, mode, file, isPlaying, hwAccel = false) {
                 const strip = document.getElementById('active-engine-status-strip');
                 if (!strip) return;
                 strip.style.display = 'flex';
@@ -9366,10 +9401,12 @@
                 const modeEl = document.getElementById('status-strip-mode');
                 const fileEl = document.getElementById('status-strip-file');
                 const iconEl = document.getElementById('status-strip-icon');
+                const hwBadge = document.getElementById('status-strip-hw-badge');
 
                 if (engineEl) engineEl.textContent = engine.charAt(0).toUpperCase() + engine.slice(1);
                 if (modeEl) modeEl.textContent = mode;
                 if (fileEl) fileEl.textContent = file.split('/').pop();
+                if (hwBadge) hwBadge.style.display = hwAccel ? 'inline-block' : 'none';
 
                 if (iconEl) {
                     if (isPlaying) {
@@ -10645,13 +10682,22 @@
                     // Hardware Info
                     try {
                         const hwInfo = await eel.get_hardware_info()();
-                        if (hwInfo) {
+                         if (hwInfo) {
                             const diskTypeEl = document.getElementById('hardware-disk-type');
                             if (diskTypeEl) diskTypeEl.textContent = hwInfo.disk_type || '-';
                             const pcieGenEl = document.getElementById('hardware-pcie-gen');
                             if (pcieGenEl) pcieGenEl.textContent = hwInfo.pcie_gen || '-';
                             const networkMountEl = document.getElementById('hardware-network-mount');
-                            if (networkMountEl) networkMountEl.textContent = hwInfo.is_network_mount ? 'Yes' : 'No';
+                            if (networkMountEl) networkMountEl.textContent = hwInfo.is_network_mount ? 'Network (NFS/SMB)' : 'Local File System';
+                            
+                            // GPU & Encoders
+                            const gpuTypeEl = document.getElementById('hardware-gpu-type');
+                            if (gpuTypeEl) gpuTypeEl.textContent = hwInfo.gpu_type || 'Generic';
+                            const encodersEl = document.getElementById('hardware-encoders');
+                            if (encodersEl) {
+                                const encs = hwInfo.encoders || [];
+                                encodersEl.textContent = encs.length > 0 ? encs.join(', ').toUpperCase() : 'Software Only (FFmpeg)';
+                            }
                         }
                     } catch (hwErr) {
                         console.error('Failed to load hardware info:', hwErr);
@@ -11857,6 +11903,21 @@
                 safeText('report-engine-status', 'Bottle / WSGI');
                 safeText('report-gevent-status', 'Aktiv (Gevent / Greenlet)');
                 safeText('report-os-status', navigator.platform || 'Linux');
+
+                // Update Hardware card in Dashboard
+                try {
+                    const hw = await eel.get_hardware_info()();
+                    if (hw) {
+                        safeText('report-gpu-status', hw.gpu_type || 'Generic');
+                        safeText('dash-hw-disk', hw.disk_type || '-');
+                        safeText('dash-hw-pcie', hw.pcie_gen || '-');
+                        safeText('dash-hw-gpu', hw.gpu_type || '-');
+                        const acc = (hw.encoders || []).join(', ').toUpperCase();
+                        safeText('dash-hw-accel', acc || 'Software (CPU)');
+                    }
+                } catch (e) {
+                    console.warn('Dashboard HW info fail:', e);
+                }
             }
 
             function renderCharts(history) {

@@ -3,6 +3,7 @@ import sys
 import subprocess
 import logging
 import shutil
+import platform
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -63,42 +64,6 @@ def is_network_mount(path: str) -> bool:
         pass
     return False
 
-def get_hardware_info():
-    """Compiles a summary of relevant hardware info for Desktop-Mode."""
-    info: dict = {
-        "disks": [],
-        "os": sys.platform,
-        "is_linux": sys.platform.startswith("linux"),
-        "disk_type": "-",
-        "pcie_gen": "-",
-        "is_network_mount": False
-    }
-    
-    if info["is_linux"]:
-        try:
-            # List block devices
-            block_dir = Path("/sys/block")
-            if block_dir.exists():
-                for dev in block_dir.iterdir():
-                    if dev.name.startswith(("sd", "nvme")):
-                        disk_info = {
-                            "name": dev.name,
-                            "is_ssd": is_ssd(dev.name),
-                            "pcie_gen": get_pcie_generation(dev.name) if "nvme" in dev.name else "N/A"
-                        }
-                        info["disks"].append(disk_info)
-                
-                if info["disks"]:
-                    # Sort to get nvme first (usually boot drive)
-                    info["disks"].sort(key=lambda x: 0 if "nvme" in x["name"] else 1)
-                    m = info["disks"][0]
-                    info["disk_type"] = "SSD" if m["is_ssd"] else "HDD"
-                    info["pcie_gen"] = m["pcie_gen"]
-        except Exception:
-            pass
-            
-    return info
-
 def get_gpu_info() -> Dict[str, Any]:
     """Detects graphics hardware and available HW codecs."""
     encoders: List[str] = []
@@ -128,5 +93,49 @@ def get_gpu_info() -> Dict[str, Any]:
         pass
     return {"type": gpu_type, "encoders": encoders}
 
+def get_hardware_info():
+    """Compiles a summary of relevant hardware info for Desktop-Mode."""
+    info: dict = {
+        "disks": [],
+        "os": sys.platform,
+        "is_linux": sys.platform.startswith("linux"),
+        "disk_type": "-",
+        "pcie_gen": "-",
+        "is_network_mount": False,
+        "gpu_type": "Unknown",
+        "encoders": []
+    }
+    
+    if info["is_linux"]:
+        try:
+            # List block devices
+            block_dir = Path("/sys/block")
+            if block_dir.exists():
+                for dev in block_dir.iterdir():
+                    if dev.name.startswith(("sd", "nvme")):
+                        disk_info = {
+                            "name": dev.name,
+                            "is_ssd": is_ssd(dev.name),
+                            "pcie_gen": get_pcie_generation(dev.name) if "nvme" in dev.name else "N/A"
+                        }
+                        info["disks"].append(disk_info)
+                
+                if info["disks"]:
+                    # Sort to get nvme first (usually boot drive)
+                    info["disks"].sort(key=lambda x: 0 if "nvme" in x["name"] else 1)
+                    m = info["disks"][0]
+                    info["disk_type"] = "SSD" if m["is_ssd"] else "HDD"
+                    info["pcie_gen"] = m["pcie_gen"]
+        except Exception:
+            pass
+            
+    # Add GPU / Encoder detection
+    gpu = get_gpu_info()
+    info["gpu_type"] = gpu["type"]
+    info["encoders"] = gpu["encoders"]
+    
+    return info
+
 if __name__ == "__main__":
-    print(get_hardware_info())
+    import json
+    print(json.dumps(get_hardware_info(), indent=2))

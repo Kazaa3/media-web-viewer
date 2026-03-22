@@ -222,3 +222,50 @@ Das Logbuch ist wieder ein lückenloses, nummeriertes und optimal lesbares Entwi
 
 **Ergebnis:**
 Das Logbuch ist jetzt ein perfekt geordnetes, vollständig scrollbareres Entwicklungsarchiv, das mit der "Evolution from Skeleton" beginnt.
+
+## Nächste Schritte: Architektur- und Feature-Empfehlungen (22.03.2026)
+
+- **Automatisierte Regressionstests für Logbuch & Benchmark-UI:**
+  - End-to-End-Tests (z.B. Playwright/Selenium) für Scrollverhalten, Index-Synchronisation und Live-Benchmark-Ausgabe.
+- **Progressive Web App (PWA) Features:**
+  - Offline-Zugriff auf Logbuch und Test-Reports ermöglichen.
+  - Service Worker-Caching für Assets und Markdown-Dateien implementieren.
+- **Erweiterte Filter- und Suchfunktionen im Logbuch:**
+  - Volltextsuche und Tag-basierte Filterung für gezielte Recherche nach Themen, Zeiträumen oder Technologien.
+- **Automatische Format- und Codec-Kompatibilitätswarnungen:**
+  - UI-Hinweise bei neuen, (noch) nicht optimal unterstützten Medienformaten.
+  - Quick-Fix-Vorschläge wie Transcoding-Button oder Kompatibilitäts-Check.
+- **API-first-Ansatz für die nächste GUI-Generation:**
+  - OpenAPI-Schema für alle Backend-Endpunkte (Tests, Logbuch, Media-Routing) definieren.
+  - Erleichtert den Umstieg auf moderne Frontends (Vue.js/Electron).
+- **User-Feedback- und Telemetrie-Modul:**
+  - Anonymes Feedback und Fehlerberichte direkt aus der App ermöglichen.
+  - (Opt-in) Nutzungsstatistiken zur gezielten Weiterentwicklung sammeln.
+- **Dokumentations-Export:**
+  - Export aller Logbuch-Einträge als PDF, HTML oder Markdown-Archiv (z.B. für Audits oder externe Reviews).
+
+**Ziel:**
+Mit diesen Schritten wird der Media Web Viewer technisch, in Usability und Wartbarkeit zum Vorzeigeprojekt und ist optimal für die Zukunft gerüstet.
+
+## Architectural Performance Upgrade: Hardware-Aware Transcoding Engine (22.03.2026)
+
+- **GPU-Aware Hardware Detection:**
+  - `hardware_detector.py` erkennt jetzt NVENC (NVIDIA), QSV (Intel) und VAAPI (Linux) für Hardware-Beschleunigung.
+  - PCIe-Generationen und Storage-Typen (SSD/HDD) werden zur Performance-Profilierung erfasst.
+- **Intelligente Transcoder-Auswahl:**
+  - `TranscoderManager` wählt automatisch den optimalen Hardware-Encoder für Medienprozesse, reduziert CPU-Last bei Hintergrund-Transcodes.
+  - `get_best_ffmpeg_encoder()` in `main.py` sorgt für GPU-Beschleunigung auf allen Streaming-Routen.
+- **Hardware-beschleunigtes Echtzeit-Streaming:**
+  - Die `/transcode/`-Route nutzt jetzt beschleunigte FFmpeg-Pipelines, speziell für alte/heavy Formate (z.B. DVD/ISO, MPEG-2), für flüssige Wiedergabe ohne CPU-Überlastung.
+- **UI & Professional Visibility:**
+  - Hardware Discovery Console: Im Environment-Bereich werden GPU/Hardware-Details angezeigt.
+  - Reporting Dashboard 2.0: "Performance Engine"-Karte mit Systemübersicht und Echtzeit-Status.
+  - Smart Playback Badges: Video-Player zeigt automatisch "⚡ HW-ACCEL"-Badge bei aktiver GPU-Beschleunigung.
+- **Technische Zusammenfassung:**
+  - `hardware_detector.py`: Deep-Probing für GPU/Video-Codecs
+  - `transcoder.py`: Auto-Encoder-Selection für HandBrake/FFmpeg
+  - `main.py`: HW-Accel-Status im Frontend, Streaming-Routen aktualisiert
+  - `app.html`: Dashboard & Status-Strip mit Performance-Metriken
+
+**Ergebnis:**
+Die Anwendung ist jetzt "Pro-Ready" und nutzt die volle Hardware-Power für ein schnelleres, kühleres System.
