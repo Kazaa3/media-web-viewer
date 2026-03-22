@@ -79,6 +79,10 @@ def log_checkpoint(msg: str):
     CHECKPOINTS.append((msg, elapsed))
     # print(f"[Telemetry] {elapsed:6.3f}s | {msg}") # Optional: direct output for debugging
 
+def debug_ffmpeg_command(cmd):
+    """Log the FFmpeg command for terminal debugging."""
+    log.debug(f"[FFmpeg] Running command: {' '.join(cmd)}")
+
 log_checkpoint("Module start")
 
 # --- Base Imports ---
@@ -138,7 +142,7 @@ def ensure_singleton():
         f.flush()
         return f
     except Exception as e:
-        print(f"Error taking lock: {e}")
+        log.error(f"Error taking lock: {e}")
         return None
 
 # Perform singleton check immediately
@@ -3709,6 +3713,7 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
                  ACTIVE_SUBPROCESSES.append(proc)
                  return {"status": "ok", "mode": "vlc_extern"}
              except Exception as e:
+                 log.error(f"VLC standalone failed: {e}")
                  return {"status": "error", "error": f"VLC failed: {e}"}
                  
         if mode == "auto" or mode == "vlc_embedded":
@@ -5239,7 +5244,7 @@ def pick_file_cli(prompt="Dateipfad eingeben", extensions=None):
         if extensions:
             ext_info = f" (Erlaubte Formate: {', '.join(extensions)})"
 
-        print(f"\n{prompt}{ext_info}:")
+        log.info(f"\n{prompt}{ext_info}:")
         user_input = input("> ").strip()
 
         if not user_input:
@@ -5421,7 +5426,7 @@ def get_test_suites():
             "folder": str(rel_path.parent).replace("\\", "/") if str(rel_path.parent) != "." else "",
             "metadata": metadata
         })
-    print(f"[get_test_suites] Discovered {len(suites)} suites in {test_dir}. Returning to Eel now.")
+    log.info(f"[get_test_suites] Discovered {len(suites)} suites in {test_dir}. Returning to Eel now.")
     return suites
 
 

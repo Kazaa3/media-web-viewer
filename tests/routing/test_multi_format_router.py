@@ -76,9 +76,13 @@ def decide_route(v_codec, a_codec, container):
     return "Unknown / Logic Fallback"
 
 def main():
-    print("="*80)
-    print(f"{'FILE':<40} | {'CODEC (V/A)':<20} | {'ROUTE':<20} | {'TIME'}")
-    print("-" * 80)
+    import logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+    log = logging.getLogger("format_router")
+
+    log.info("="*80)
+    log.info(f"{'FILE':<40} | {'CODEC (V/A)':<20} | {'ROUTE':<20} | {'TIME'}")
+    log.info("-" * 80)
     
     files = [f for f in os.listdir(MEDIA_ROOT) if os.path.isfile(os.path.join(MEDIA_ROOT, f))]
     
@@ -97,24 +101,26 @@ def main():
         v_codec, a_codec, container, parse_time = get_file_info(path)
         
         if not v_codec and not a_codec:
+            log.debug(f"[SKIP] {filename} is not a recognized media file.")
             continue
             
         route = decide_route(v_codec, a_codec, container)
         
         codec_str = f"{v_codec or '-'}/{a_codec or '-'}"
-        print(f"{filename[:38]:<40} | {codec_str:<20} | {route:<20} | {parse_time:.1f}ms")
+        fn_display = str(filename)[:38]
+        log.info(f"{fn_display:<40} | {codec_str:<20} | {route:<20} | {parse_time:.1f}ms")
         
         summary["count"] += 1
         summary["total_time"] += parse_time
         if "Direct" in route: summary["direct"] += 1
         else: summary["transcode"] += 1
 
-    print("-" * 80)
+    log.info("-" * 80)
     if summary["count"] > 0:
         avg_time = summary["total_time"] / summary["count"]
-        print(f"TOTAL: {summary['count']} Files | AVG PARSE: {avg_time:.2f}ms")
-        print(f"CAPABILITY: {summary['direct']} Native / {summary['transcode']} Needs Transcode")
-    print("="*80)
+        log.info(f"TOTAL: {summary['count']} Files | AVG PARSE: {avg_time:.2f}ms")
+        log.info(f"CAPABILITY: {summary['direct']} Native / {summary['transcode']} Needs Transcode")
+    log.info("="*80)
 
 if __name__ == "__main__":
     main()

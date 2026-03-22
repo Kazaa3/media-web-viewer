@@ -71,9 +71,13 @@ def measure_ttfb(url):
         return None
 
 def main():
-    print("="*60)
-    print("MEDIA ROUTING PERFORMANCE BENCHMARK")
-    print("="*60)
+    import logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+    log = logging.getLogger("perf_benchmark")
+
+    log.info("="*60)
+    log.info("MEDIA ROUTING PERFORMANCE BENCHMARK")
+    log.info("="*60)
     
     t = threading.Thread(target=run_test_server, daemon=True)
     t.start()
@@ -82,11 +86,12 @@ def main():
     results = {}
 
     for filename in TEST_FILES:
-        if not os.path.exists(os.path.join(MEDIA_ROOT, filename)):
-            print(f"[SKIP] {filename} not found in {MEDIA_ROOT}")
+        full_path = os.path.join(MEDIA_ROOT, filename)
+        if not os.path.exists(full_path):
+            log.warning(f"[SKIP] {filename} not found in {MEDIA_ROOT}")
             continue
             
-        print(f"\nBenchmarking: {filename}")
+        log.info(f"Benchmarking: {filename} (Size: {os.path.getsize(full_path)} bytes)")
         
         # Test RAW
         url_raw = f"{BASE_URL}/media-raw/{urllib.parse.quote(filename)}"
@@ -97,7 +102,7 @@ def main():
         
         if raw_times:
             avg_raw = statistics.mean(raw_times)
-            print(f"  - [RAW] TTFB: {avg_raw:.2f}ms (avg of {len(raw_times)})")
+            log.info(f"  - [RAW] TTFB: {avg_raw:.2f}ms (avg of {len(raw_times)})")
         
         # Test STREAM
         url_stream = f"{BASE_URL}/video-stream/{urllib.parse.quote(filename)}?ss=0"
@@ -108,9 +113,9 @@ def main():
             
         if stream_times:
             avg_stream = statistics.mean(stream_times)
-            print(f"  - [STREAM] TTFB: {avg_stream:.2f}ms (avg of {len(stream_times)})")
+            log.info(f"  - [STREAM] TTFB: {avg_stream:.2f}ms (avg of {len(stream_times)})")
 
-    print("\nBenchmark complete.")
+    log.info("Benchmark complete.")
     sys.exit(0)
 
 if __name__ == "__main__":

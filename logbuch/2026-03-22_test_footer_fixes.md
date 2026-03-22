@@ -117,3 +117,18 @@ Ad-hoc-Tests beliebiger Mediendateien sind jetzt möglich, ohne sie vorher ins /
 
 **Ergebnis:**
 Die Media Routing Suite ist jetzt ein vollwertiges Werkzeug zur Performance-Quantifizierung und Format-Routing-Validierung. Alle neuen Funktionen sind im Reporting → Media Routing Tab verfügbar.
+
+## Logging-Refaktor: print → logger & UI-Trace (22.03.2026)
+
+- **Backend Core (`src/core/main.py`):**
+  - Alle `print`-Aufrufe in kritischen Bereichen (Startup-Telemetrie, RTT-Sync, FFmpeg-Debug, Testausführung) durch `log.info`, `log.error` oder `log.debug` ersetzt.
+  - Zusätzliche Logs im Test-Runner: 🚀 [Testing] Start/Ende/Fehler werden jetzt explizit geloggt und sind im UI-Trace sichtbar.
+  - Auch CLI-Prompts (z.B. `pick_file_cli`) nutzen jetzt das zentrale Logging.
+- **Media Routing Benchmarks:**
+  - `tests/routing/test_perf_latency.py`: Nutzt jetzt einen eigenen `perf_benchmark`-Logger, alle Ergebnisse und Statusmeldungen werden mit Timestamp geloggt.
+  - `tests/routing/test_multi_format_router.py`: Tabellarische Ausgaben werden als Log-Messages über einen `format_router`-Logger ausgegeben, inkl. Codec-Analyse und Routing-Entscheidungen.
+- **UI-Trace-Integration:**
+  - Da alle Logs über `logger.py` laufen, erscheinen sie automatisch in der Logbuch-/UI-Trace-Konsole in Echtzeit. Debugging ist dadurch deutlich komfortabler als mit versteckten Terminal-Prints.
+
+**Fazit:**
+Die gesamte Backend-Frontend-Kommunikation ist jetzt standardisiert, durchsuchbar und professionell nachvollziehbar.
