@@ -269,3 +269,28 @@ Mit diesen Schritten wird der Media Web Viewer technisch, in Usability und Wartb
 
 **Ergebnis:**
 Die Anwendung ist jetzt "Pro-Ready" und nutzt die volle Hardware-Power für ein schnelleres, kühleres System.
+
+## Master System Orchestration & Final Polish (22.03.2026)
+
+- **Logbuch-Architektur:**
+  - Master Sequence Script: 793 Einträge global neu indiziert (001-793), keine Lücken oder Überschneidungen.
+  - Foundation (001-025): "Skeleton", "Genese", "Philosophy" u.a. an den Anfang der Timeline kuratiert.
+  - Dateinamen bereinigt, keine redundanten IDs oder Datumsangaben mehr.
+- **Frontend & Scrolling:**
+  - Triple-Pane-Layout: Fester Header, unabhängig scrollbarerer Sidebar (TOC) und Viewer.
+  - CSS-Refaktor: Nested overflow entfernt, GPU-beschleunigtes, flüssiges Scrollen.
+  - Browser-Subagent-Test (Port 8345): Scrollverhalten 1:1 bestätigt.
+- **Performance & Hardware Acceleration:**
+  - /transcode/ nutzt jetzt automatisch NVENC, QSV oder VAAPI je nach GPU.
+  - "⚡ HW-ACCEL"-Badge im Player, "Hardware & Capabilities"-Karte im Reporting.
+- **Technische Verifikation:**
+  - TOC: ✅ Restored, IDs eindeutig
+  - Scrolling: ✅ Fixed, unabhängig
+  - History: ✅ Chronologisch, Foundation kuratiert
+  - Transcoding: ✅ HW-Accel aktiv
+- **UI-Änderungen & Bugs:**
+  - Optionen, Parser, Tests, Reporting, Logbuch, Video nach rechts verschoben (Menü-Layout aktualisiert)
+  - Debug-Flags im Options-Menü aktuell fehlerhaft (Bug für Nachbesserung notiert)
+
+**Ergebnis:**
+Das System ist jetzt sauber, performant und entspricht höchsten Dokumentations- und Architekturstandards.
