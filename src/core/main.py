@@ -2312,6 +2312,7 @@ def set_debug_flag(key, value):
     """
     if key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = value
+        save_parser_config()
         debug_log(f"[Debug] Flag '{key}' auf {value} gesetzt.")
 
 
@@ -2324,6 +2325,7 @@ def set_all_debug_flags(value):
     """
     for key in DEBUG_FLAGS:
         DEBUG_FLAGS[key] = value
+    save_parser_config()
     debug_log(f"[Debug] Alle Flags wurden auf {value} gesetzt.")
 
 

@@ -1890,34 +1890,44 @@
                 if (targetEl) {
                     targetEl.classList.add('active');
                     // Ensure block display for library and file tabs, flex for debug/edit, block for others
-                    if (tabId === 'debug' || tabId === 'edit' || tabId === 'tests' || tabId === 'logbuch') {
-                        targetEl.style.display = 'flex';
-                        targetEl.style.height = 'calc(100vh - 180px)'; 
-                        if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') {
-                            loadLogbuchTab();
-                        }
-                        if (tabId === 'tests' && typeof switchTestView === 'function') {
-                            switchTestView('base');
-                        }
-                    } else if (tabId === 'file') {
-                        targetEl.style.display = 'block';
-                    } else if (tabId === 'reporting') {
-                        targetEl.style.display = 'block';
-                        if (typeof switchReportingView === 'function') switchReportingView('dashboard');
-                        if (typeof loadSqlFiles === 'function') loadSqlFiles();
-                        if (typeof refreshReportingData === 'function') refreshReportingData(); 
-                    } else if (tabId === 'options') {
-                        targetEl.style.display = 'block';
-                        if (typeof switchOptionsView === 'function') switchOptionsView('general');
-                    } else if (tabId === 'parser') {
-                        targetEl.style.display = 'block';
+                    // List of tabs that require flex layout for their child panes
+                    const flexTabs = ['debug', 'edit', 'tests', 'logbuch', 'options', 'reporting', 'parser', 'library', 'vlc'];
+                    const managementTabs = ['options', 'parser', 'debug', 'tests', 'reporting', 'logbuch'];
+                    
+                    const sidebar = document.getElementById('main-sidebar');
+                    const splitter = document.getElementById('main-splitter');
+
+                    if (managementTabs.includes(tabId)) {
+                        if (sidebar) sidebar.style.display = 'none';
+                        if (splitter) splitter.style.display = 'none';
                     } else {
-                        targetEl.style.display = 'block';
+                        if (sidebar) sidebar.style.display = 'flex';
+                        if (splitter) splitter.style.display = 'block';
                     }
 
-                    if (tabId === 'library') renderLibrary();
-                    if (tabId === 'item') refreshLibrary();
-                    if (tabId === 'parser') loadParserPerformance('parser-tab-perf-container');
+                    if (flexTabs.includes(tabId)) {
+                        targetEl.style.display = 'flex';
+                        // Ensure all flex tabs use the standard height calculation
+                        targetEl.style.height = 'calc(100vh - 180px)'; 
+                        targetEl.style.flexDirection = 'column';
+                        
+                        if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') loadLogbuchTab();
+                        if (tabId === 'tests' && typeof switchTestView === 'function') switchTestView('base');
+                        if (tabId === 'reporting') {
+                            if (typeof switchReportingView === 'function') switchReportingView('dashboard');
+                            if (typeof loadSqlFiles === 'function') loadSqlFiles();
+                            if (typeof refreshReportingData === 'function') refreshReportingData(); 
+                        }
+                        if (tabId === 'options') {
+                            if (typeof switchOptionsView === 'function') switchOptionsView('general');
+                        }
+                        if (tabId === 'library') renderLibrary();
+                        if (tabId === 'vlc') initVLCPlayer();
+                        if (tabId === 'parser') loadParserPerformance('parser-tab-perf-container');
+                    } else {
+                        targetEl.style.display = tabId === 'file' ? 'block' : 'block';
+                        if (tabId === 'item') refreshLibrary();
+                    }
                     // The loadLibraryFolders for 'file' tab is now handled in the display logic above
                     // The loadSqlFiles for 'reporting' tab is now handled in the display logic above
                 } else {
@@ -7987,15 +7997,17 @@
                     const modalContainer = document.getElementById('modal-debug-flags');
                     const reusedContainer = document.getElementById('debug-flags-container-reused');
 
-                    const flagsHtml = Object.entries(flags).map(([key, value]) => {
+                    const flagsHtml = `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%;">` + 
+                        Object.entries(flags).map(([key, value]) => {
                         const labelText = t(`debug_flag_${key}`) || key.toUpperCase();
                         return `
-                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.1s;"
-                                           onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
-                                        <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)">
-                                        <span style="font-family: monospace; font-size: 0.95em;">${labelText}</span>
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 12px; border: 1px solid #f0f0f0; border-radius: 6px; background: #fff; transition: all 0.2s;"
+                                           onmouseover="this.style.background='#fafafa'; this.style.borderColor='#2a7'" 
+                                           onmouseout="this.style.background='#fff'; this.style.borderColor='#f0f0f0'">
+                                        <input type="checkbox" ${value ? 'checked' : ''} onchange="toggleDebugFlag('${key}', this.checked)" style="accent-color: #2a7; transform: scale(1.1); cursor: pointer;">
+                                        <span style="font-family: inherit; font-size: 0.82em; color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${labelText}</span>
                                     </label>`;
-                    }).join('');
+                    }).join('') + `</div>`;
 
                     if (optionsContainer) optionsContainer.innerHTML = flagsHtml;
                     if (modalContainer) modalContainer.innerHTML = flagsHtml;
@@ -11535,7 +11547,14 @@
                     const storageKey = `mwv_splitter_${splitterId}`;
 
                     // Restore previous state
-                    const savedPos = localStorage.getItem(storageKey);
+                    let savedPos = localStorage.getItem(storageKey);
+                    
+                    // Sanity check for huge values that push layout to the right
+                    if (savedPos && isVertical) {
+                        const numericPos = parseInt(savedPos);
+                        if (numericPos > 500) savedPos = "300"; // Reset if excessively large
+                    }
+
                     if (savedPos) {
                         if (isVertical) {
                             leftPane.style.width = savedPos + 'px';
