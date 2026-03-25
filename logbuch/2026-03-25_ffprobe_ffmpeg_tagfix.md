@@ -80,3 +80,26 @@ Gerne können wir nun mit der Überprüfung der Parser-Konfiguration oder den we
 - Die "Geister-Fläche" auf der linken Seite verschwindet.
 - Der Parser-Tab startet ganz links, mit klarer vertikaler Trennung und den Optionen auf der rechten Seite – wie im Screenshot gefordert.
 
+---
+
+# 2026-03-25 – Management-Tabs: Syntax-Fix, Header-Normalisierung & Einrückung
+
+## Korrigierte Probleme
+- **Syntax-Fehler:** Falsches/corruptes `<div>`-Tag im Logbuch-Tab behoben (z.B. `<div id="logbuch-tab-list" <div>`).
+- **Header-Normalisierung:**
+  - Im Reporting-Tab wurde die Überschrift aus dem Sub-Nav-Container herausgezogen und linksbündig platziert (wie im Parser).
+  - Im Debug-Tab wurde eine `h2`-Überschrift ("Debug & Datenbank") hinzugefügt.
+  - Im Tests-Tab und Logbuch-Tab wurden doppelte oder falsch platzierte Titel entfernt und die Hauptüberschrift an den Anfang gesetzt.
+- **Einrückungs- und Nesting-Korrektur:**
+  - Alle Tab-Container und ihre Schließungen wurden auf einheitliche 12-Leerzeichen-Einrückung gebracht.
+  - Die Hauptcontainer (`main-content-area`, `main-split-container`) werden erst nach dem letzten Tab geschlossen.
+  - Dadurch sind alle Management-Tabs wieder echte Geschwister innerhalb des Haupt-Content-Bereichs und erscheinen bündig am linken Rand.
+
+## Ergebnis
+- Keine horizontalen Verschiebungen oder "Ghosting"-Effekte mehr.
+- Einheitliche Header-Struktur und perfekte DOM-Balance für alle Management-Tabs.
+- Die Anwendung ist jetzt strukturell und visuell konsistent.
+
+**Nächste Schritte:**
+- Weitere UI-Optimierungen und Funktionsprüfungen können jetzt auf stabiler Basis erfolgen.
+

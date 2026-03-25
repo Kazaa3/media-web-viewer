@@ -2019,10 +2019,8 @@
                         targetEl.style.flex = '1';
                         targetEl.style.width = '100%';
                         targetEl.style.overflow = 'hidden';
-                        // Ensure vertical stacking for most management tabs
-                        if (tabId !== 'debug') {
-                            targetEl.style.flexDirection = 'column';
-                        }
+                        // Ensure vertical stacking for all management tabs
+                        targetEl.style.flexDirection = 'column';
 
                         if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') loadLogbuchTab();
                         if (tabId === 'tests' && typeof switchTestView === 'function') switchTestView('base');
@@ -2042,6 +2040,7 @@
                             if (typeof switchParserView === 'function') switchParserView('configuration');
                             loadParserPerformance('parser-tab-perf-container');
                         }
+                        if (tabId === 'debug' && typeof loadDebugDBInfo === 'function') loadDebugDBInfo();
                     } else {
                         // Block tabs (standard layouts)
                         targetEl.style.display = 'block';
@@ -5019,13 +5018,12 @@
                         </div>
                     </div>
             </div> <!-- closes options-scroll-container -->
-        </div> <!-- closes system-configuration-persistence-panel -->
+            </div> <!-- closes system-configuration-persistence-panel -->
 
             <!-- ===================== PARSER TAB START ===================== -->
             <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
                 style="padding: 0; overflow-y: hidden; height: 100%; display: none; flex-direction: column; border: none;">
-                <h2 style="margin-bottom: 10px; padding: 20px 20px 0 20px;" data-i18n="parser_title">Parser Konfiguration
-                </h2>
+                <h2 style="padding: 20px 20px 0 20px; margin-bottom: 10px; font-size: 1.4em;" data-i18n="parser_title">Parser Konfiguration</h2>
                 <div id="parser-tab-split-container"
                     style="display: flex; flex: 1; min-height: 0; gap: 0; border-top: 1px solid #eee;">
 
@@ -5094,15 +5092,17 @@
                                 <div id="parser-options-container"
                                     style="display: none; flex-direction: column; gap: 20px;"></div>
                             </div>
-                        </div> <!-- closes parser-view-content -->
-                    </div> <!-- closes parser-main-pane -->
-                </div> <!-- closes parser-tab-split-container -->
-            </div> <!-- closes regex-provider-chain-orchestrator-panel -->
+                        </div> <!-- closes parser-configuration-view -->
+                    </div> <!-- closes parser-view-content -->
+                </div> <!-- closes parser-main-pane -->
+            </div> <!-- closes parser-tab-split-container -->
+        </div> <!-- closes regex-provider-chain-orchestrator-panel -->
 
 
             <!-- ===================== DEBUG TAB START ===================== -->
             <div id="debug-flag-persistence-panel" class="tab-content"
                 style="padding: 0; flex-direction: column; display: none; height: 100%; border: none; background: #fff;">
+                <h2 style="padding: 20px 20px 0 20px; margin-bottom: 10px; font-size: 1.4em;">Debug & Datenbank</h2>
 
                 <div id="debug-tab-split-container" style="display: flex; flex: 1; min-height: 0; overflow: hidden;">
                     <!-- LEFT Column: Settings and DB Overview -->
@@ -5204,12 +5204,13 @@
             <!-- ===================== TESTS TAB START ===================== -->
             <div id="quality-assurance-regression-suite-panel" class="tab-content"
                 style="display: none; flex-direction: column; overflow: hidden; height: 100%; border: none; padding: 0;">
+                <h2 style="padding: 20px 20px 0 20px; margin-bottom: 10px; font-size: 1.4em;" data-i18n="test_title">Tests & Verifizierung</h2>
 
                 <!-- FIXED HEADER & NAV -->
                 <div class="sub-nav-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <h2 style="margin: 0; font-size: 1.2em;" data-i18n="test_title">Unit Tests & Verifizierung
-                        </h2>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                        </div>
 
                         <!-- ===================== TEST SUB-TAB NAVIGATION ===================== -->
                         <div class="options-nav-tabs">
@@ -5861,12 +5862,13 @@
             <!-- ===================== REPORTING TAB START ===================== -->
             <div id="reporting-dashboard-panel" class="tab-content"
                 style="display: none; flex-direction: column; overflow: hidden; height: 100%; border: none; padding: 0;">
+                <h2 style="padding: 20px 20px 0 20px; margin-bottom: 10px; font-size: 1.4em;" data-i18n="report_title">Reporting & Analysis</h2>
 
                 <!-- FIXED HEADER & NAV -->
                 <div class="sub-nav-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <h2 style="margin: 0; font-size: 1.2em;" data-i18n="report_title">Reporting & Analysis
-                        </h2>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                        </div>
 
                         <!-- ===================== REPORTING SUB-TAB NAVIGATION ===================== -->
                         <div class="options-nav-tabs">
@@ -6137,8 +6139,9 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- closes reporting-routing-suite-view -->
                     </div> <!-- closes reporting-scroll-container -->
-                </div> <!-- closes reporting-dashboard-panel -->
+            </div> <!-- closes reporting-dashboard-panel -->
 
 
             <!-- ===================== VIDEO PLAYER (VLC/FALLBACK) TAB START ===================== -->
@@ -6933,19 +6936,19 @@
                                 style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 0.85em;">Mischen</button>
                         </div>
                     </div> <!-- closes player-tab-split-container -->
-                </div> <!-- closes multiplexed-media-player-orchestrator-panel -->
+            </div> <!-- closes multiplexed-media-player-orchestrator-panel -->
 
 
             <!-- ===================== LOGBUCH TAB START ===================== -->
             <div id="localized-markdown-documentation-journal-panel" class="tab-content"
                 style="display: none; height: 100%; flex-direction: column; overflow: hidden; padding: 0; background: #fdfdfd;">
-                <h2 style="margin: 20px 20px 0 20px; font-size: 1.25em; color: #333;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
+                <h2 style="padding: 20px 20px 0 20px; margin-bottom: 10px; font-size: 1.4em;" data-i18n="logbook_title">Vollständiges Logbuch</h2>
 
                     <!-- Fixed Header for Logbuch -->
                     <div class="sub-nav-container"
                         style="flex: 0 0 auto; background: white; border-bottom: 1px solid #eee; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                        <h2 style="margin: 0; font-size: 1.25em; color: #333;" data-i18n="logbook_title">Vollständiges
-                            Logbuch</h2>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                        </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <button onclick="loadLogbuchTab()" class="tab-btn"
                                 style="padding: 6px 12px; font-size: 0.8em; background:#fff; border: 1px solid #ddd; border-radius: 6px; cursor:pointer;">🔄
@@ -6957,7 +6960,33 @@
                     </div>
 
                     <div id="logbuch-split-container" style="flex: 1; display: flex; overflow: hidden;">
-                        <!-- LEFT CONTENT: Entry Viewer -->
+                        <!-- LEFT SIDEBAR: Entries List (TOC) -->
+                        <div id="logbuch-sidebar"
+                            style="width: 360px; border-right: 1px solid #eee; background: #fff; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;">
+                            <div
+                                style="flex: 0 0 auto; padding: 15px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
+                                <div style="display: flex; gap: 6px;">
+                                    <select id="logbuch-category-filter"
+                                        onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
+                                        style="flex: 1; padding: 8px; border: 1px solid #eee; border-radius: 6px; font-size: 0.85em; background: white; cursor: pointer;">
+                                        <option value="Alle" data-i18n="logbook_category_all">Alle Kategorien</option>
+                                    </select>
+                                    <select id="logbuch-status-filter"
+                                        onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
+                                        style="flex: 1; padding: 8px; border: 1px solid #eee; border-radius: 6px; font-size: 0.85em; background: white; cursor: pointer;">
+                                        <option value="ALL" data-i18n="logbook_status_all">Alle Status</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="logbuch-tab-list"
+                                style="color: #bbb; text-align: center; margin-top: 60px; font-style: italic;"
+                                data-i18n="logbook_loading_items">Einträge werden geladen...</div>
+                        </div> <!-- closes logbuch-sidebar -->
+
+                        <!-- Splitter -->
+                        <div id="logbuch-splitter" class="splitter-v"></div>
+
+                        <!-- RIGHT CONTENT: Entry Viewer -->
                         <div id="logbuch-viewer-pane"
                             style="flex: 1; background: #fff; display: flex; flex-direction: column; overflow: hidden; position: relative;">
                             <div id="logbuch-viewer-header"
@@ -6978,38 +7007,12 @@
                                             Willkommen
                                         </h3>
                                         <p style="color: #bbb; font-size: 0.9em;" data-i18n="logbook_select_entry">Wähle
-                                            rechts einen Eintrag aus, um ihn zu lesen.</p>
+                                            links einen Eintrag aus, um ihn zu lesen.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Splitter -->
-                        <div id="logbuch-splitter" class="splitter-v"></div>
-
-                        <!-- RIGHT SIDEBAR: Entries List (TOC) -->
-                        <div id="logbuch-sidebar"
-                            style="width: 360px; border-left: 1px solid #eee; background: #fff; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;">
-                            <div
-                                style="flex: 0 0 auto; padding: 15px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
-                                <div style="display: flex; gap: 6px;">
-                                    <select id="logbuch-category-filter"
-                                        onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
-                                        style="flex: 1; padding: 8px; border: 1px solid #eee; border-radius: 6px; font-size: 0.85em; background: white; cursor: pointer;">
-                                        <option value="Alle" data-i18n="logbook_category_all">Alle Kategorien</option>
-                                    </select>
-                                    <select id="logbuch-status-filter"
-                                        onchange="renderLogbuchEntries(currentLogbuchEntries || [])"
-                                        style="flex: 1; padding: 8px; border: 1px solid #eee; border-radius: 6px; font-size: 0.85em; background: white; cursor: pointer;">
-                                        <option value="ALL" data-i18n="logbook_status_all">Alle Status</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div id="logbuch-tab-list" <div
-                                style="color: #bbb; text-align: center; margin-top: 60px; font-style: italic;"
-                                data-i18n="logbook_loading_items">Einträge werden geladen...</div>
-                        </div> <!-- closes logbuch-tab-list -->
-                    </div> <!-- closes logbuch-sidebar -->
+                    </div> <!-- closes logbuch-split-container -->
                 </div> <!-- closes logbuch-split-container -->
             </div> <!-- closes localized-markdown-documentation-journal-panel -->
 
