@@ -60,36 +60,42 @@ def run_tests(args):
 
         # 2. NAVIGATION: Left to Right across all major menus
         print("\n[STEP 2] Multi-Tab Navigation & Integrity Check (Left -> Right)...")
-        # Tuples of (tab_id, panel_id, label)
+        # Tuples of (tab_id, panel_id, label, button_id)
         tabs = [
-            ('player', 'state-orchestrated-active-queue-list-container', 'Player/Queue'),
-            ('library', 'coverflow-library-panel', 'Library/Index'),
-            ('item', 'indexed-sqlite-media-repository-panel', 'Item Meta'),
-            ('file', 'filesystem-crawler-directory-panel', 'File Crawler'),
-            ('edit', 'metadata-writer-crud-panel', 'CRUD Edit'),
-            ('options', 'system-configuration-persistence-panel', 'Options'),
-            ('parser', 'regex-provider-chain-orchestrator-panel', 'Parser Chain'),
-            ('debug', 'debug-flag-persistence-panel', 'Telemetry'),
-            ('tests', 'quality-assurance-regression-suite-panel', 'QA Tests'),
-            ('logbuch', 'localized-markdown-documentation-journal-panel', 'Documentation'),
-            ('playlist', 'json-serialized-sequence-buffer-panel', 'Playlist'),
-            ('vlc', 'multiplexed-media-player-orchestrator-panel', 'Video Renderer')
+            ('player', 'state-orchestrated-active-queue-list-container', 'Player/Queue', 'active-queue-tab-trigger'),
+            ('library', 'coverflow-library-panel', 'Library/Index', 'coverflow-library-tab-trigger'),
+            ('item', 'indexed-sqlite-media-repository-panel', 'Item Meta', 'indexed-sqlite-repository-tab-trigger'),
+            ('file', 'filesystem-crawler-directory-panel', 'File Crawler', 'filesystem-crawler-tab-trigger'),
+            ('edit', 'metadata-writer-crud-panel', 'CRUD Edit', 'crud-metadata-tab-trigger'),
+            ('options', 'system-configuration-persistence-panel', 'Options', 'system-registry-tab-trigger'),
+            ('parser', 'regex-provider-chain-orchestrator-panel', 'Parser Chain', 'chain-config-tab-trigger'),
+            ('debug', 'debug-flag-persistence-panel', 'Telemetry', 'telemetry-inspector-tab-trigger'),
+            ('tests', 'quality-assurance-regression-suite-panel', 'QA Tests', 'qa-validation-tab-trigger'),
+            ('reporting', 'reporting-dashboard-panel', 'Reporting', 'reporting-dashboard-tab-trigger'),
+            ('logbuch', 'localized-markdown-documentation-journal-panel', 'Logbuch', 'documentation-journal-tab-trigger'),
+            ('playlist', 'json-serialized-sequence-buffer-panel', 'Playlist', 'sequential-buffer-tab-trigger'),
+            ('vlc', 'multiplexed-media-player-orchestrator-panel', 'Video Player', 'media-orchestrator-tab-trigger')
         ]
         
-        for tab_id, panel_id, label in tabs:
+        for tab_id, panel_id, label, btn_id in tabs:
             try:
                 print(f"  -> Checking {label:15} [{tab_id:10}]...", end=" ")
-                if args.dom_control:
+                
+                # In PP Mode (Production/Performance), we skip some delay or do direct interaction
+                if args.pp_mode:
+                    driver.execute_script(f"switchTab('{tab_id}')")
+                elif args.dom_control:
                     driver.execute_script(f"switchTab('{tab_id}')")
                 else:
-                    # Attempt visual click if possible or fallback to JS
                     try:
-                        btn = driver.find_element(By.ID, f"{tab_id}-tab-trigger") # Many use this pattern
+                        btn = driver.find_element(By.ID, btn_id)
+                        driver.execute_script("arguments[0].scrollIntoView();", btn)
                         btn.click()
                     except:
                         driver.execute_script(f"switchTab('{tab_id}')")
                 
-                time.sleep(0.3)
+                # Performance-adjusted sleep
+                time.sleep(0.15 if args.pp_mode else 0.4)
                 
                 balance = check_div_balance(driver, panel_id)
                 if balance.get('status') == 'missing':

@@ -5870,7 +5870,7 @@ def save_logbook_entry(filename, content):
     @param content Markdown content / Markdown-Inhalt.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    log_dir = PROJECT_ROOT / "docs" / "logbuch"
+    log_dir = PROJECT_ROOT / "logbuch"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Sichere den Dateinamen
@@ -5900,7 +5900,7 @@ def delete_logbook_entry(filename):
     @param filename Entry filename / Dateiname des Eintrags.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    log_dir = PROJECT_ROOT / "docs" / "logbuch"
+    log_dir = PROJECT_ROOT / "logbuch"
 
     if not filename.endswith('.md'):
         filename = filename + '.md'
@@ -6507,6 +6507,7 @@ def run_selenium_session_tests(options=None):
             if options.get('trace'): cmd.append('--trace')
             if options.get('debug'): cmd.append('--debug')
             if options.get('dom_control'): cmd.append('--dom-control')
+            if options.get('pp_mode'): cmd.append('--pp-mode')
         
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         return {
@@ -6874,9 +6875,9 @@ def get_cover_extraction_report():
                     report['sources']['embedded_or_cache'] += 1
                 else:
                     report['sources']['local_folder'] += 1
-                
                 # Format stats
-                ext = art_path.suffix.lower().lstrip('.')
+                p = Path(art_path)
+                ext = p.suffix.lower().lstrip('.')
                 if ext:
                     report['formats'][ext] = report['formats'].get(ext, 0) + 1
             else:
@@ -6896,27 +6897,18 @@ def get_routing_suite_report():
         from src.parsers.format_utils import ffprobe_quality_score, is_direct_play_capable
         items = db.get_all_media()
         
-        report = {
-            'total_items': len(items),
-            'avg_quality_score': 0,
-            'modes': {
-                'direct': 0,
-                'vlc': 0,
-                'hls': 0,
-                'transcode': 0,
-                'error': 0
-            },
-            'top_quality_items': [],
-            'complex_items': [],
-            'incompatible_count': 0
-        }
+        # Local distribution counters to satisfy static analysis
+        dist = {'0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0}
+        modes = {'direct': 0, 'vlc': 0, 'hls': 0, 'transcode': 0, 'error': 0}
         
         total_score = 0
         video_count = 0
+        top_quality_items = []
+        complex_items = []
+        incompatible_count = 0
         
         for item in items:
-            mt = item.get('type') # media_type
-            if mt != 'video':
+            if item.get('type') != 'video':
                 continue
                 
             video_count += 1
@@ -6926,40 +6918,50 @@ def get_routing_suite_report():
             score = ffprobe_quality_score(tags)
             total_score += score
             
-            # Determine recommended mode
+            # Update distribution
+            if score <= 20: dist['0-20'] += 1
+            elif score <= 40: dist['21-40'] += 1
+            elif score <= 60: dist['41-60'] += 1
+            elif score <= 80: dist['61-80'] += 1
+            else: dist['81-100'] += 1
+
+            # Determine Recommended Mode
             ext = item.get('extension', '').lower()
             is_direct = is_direct_play_capable(path, 'browser')
             
-            # Routing priority: Direct > Transcode (DVD/ISO) > HLS > VLC (HDR)
             if is_direct:
                 mode = 'direct'
             elif ext in ('.iso', '.bin', '.img') or item.get('is_disc'):
                 mode = 'transcode'
             elif 'mpeg' in str(tags.get('codec', '')).lower() or 'vc1' in str(tags.get('codec', '')).lower():
-                 # Interlaced or old codecs go to transcode for better MSE handling
                  mode = 'transcode'
             elif tags.get('hdr'):
                  mode = 'vlc'
             else:
                  mode = 'hls'
                 
-            report['modes'][mode] = report['modes'].get(mode, 0) + 1
+            modes[mode] = modes.get(mode, 0) + 1
             if not is_direct:
-                report['incompatible_count'] += 1
+                incompatible_count += 1
             
-            # Track top and bottom
             list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
             if score >= 80:
-                report['top_quality_items'].append(list_item)
+                top_quality_items.append(list_item)
             elif score < 40 or mode in ['vlc', 'transcode']:
-                report['complex_items'].append(list_item)
+                complex_items.append(list_item)
                 
-        if video_count > 0:
-            report['avg_quality_score'] = round(total_score / video_count, 1)
-            
-        # Limit list sizes and sort
-        report['top_quality_items'] = sorted(report['top_quality_items'], key=lambda x: x['score'], reverse=True)[:10]
-        report['complex_items'] = sorted(report['complex_items'], key=lambda x: x['score'])[:10]
+        avg_score = total_score / video_count if video_count > 0 else 0
+        
+        report = {
+            'total_items': len(items),
+            'video_items': video_count,
+            'avg_quality_score': float(f"{avg_score:.1f}"),
+            'modes': modes,
+            'score_distribution': dist,
+            'top_quality_items': sorted(top_quality_items, key=lambda x: x['score'], reverse=True)[:10],
+            'complex_items': sorted(complex_items, key=lambda x: x['score'])[:10],
+            'incompatible_count': incompatible_count
+        }
         
         return report
     except Exception as e:
@@ -7139,7 +7141,8 @@ def analyze_media(relpath: str, client: str = 'browser'):
     """
     Deep analysis for routing decisions.
     """
-    from src.parsers.format_utils import ffprobe_suite, ffprobe_quality_score, is_direct_play_capable
+    from src.parsers.format_utils import ffprobe_quality_score, is_direct_play_capable
+    from src.core.handlers import get_handler_for_file
     
     # Resolve relative path to full path
     full = Path(resolve_media_path(relpath))
@@ -7147,36 +7150,22 @@ def analyze_media(relpath: str, client: str = 'browser'):
     if not full.exists():
         return {"error": "File not found"}
         
-    analysis = ffprobe_suite(full)
-    score = ffprobe_quality_score(analysis)
+    handler = get_handler_for_file(full)
+    route_info = handler.process(client=client, relpath=relpath)
     
-    direct = is_direct_play_capable(full, client)
-    ext = full.suffix.lower()
-    
-    import urllib.parse
-    # Routing decision
-    if direct:
-        mode = "direct"
-        url = f"/direct/{urllib.parse.quote(str(relpath))}"
-    elif ext == ".iso" or full.is_dir() or analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
-        # Standard Transcode for DVD/Complex formats
-        mode = "transcode"
-        url = f"/transcode/{urllib.parse.quote(str(relpath))}"
-    elif analysis.get("hdr"):
-        # HDR still better in VLC for now (color mapping)
-        mode = "vlc"
-        url = None
-    else:
-        # Standard fallback to HLS
-        mode = "hls"
-        url = None
+    analysis = route_info.get("analysis")
+    if not analysis:
+        analysis = handler.extract_metadata()
         
+    score = ffprobe_quality_score(analysis)
+    direct = is_direct_play_capable(full, client)
+    
     return {
         "analysis": analysis,
         "quality_score": score,
         "direct_play_browser": direct,
-        "recommended_mode": mode,
-        "direct_url": url,
+        "recommended_mode": route_info.get("mode"),
+        "direct_url": route_info.get("url"),
         "relpath": relpath
     }
 
@@ -7184,48 +7173,20 @@ def analyze_media(relpath: str, client: str = 'browser'):
 @eel.expose
 def get_play_source(item_path: str, client: str = 'browser'):
     """
-    Resolves the final abspielbare URL, handling cache/remuxing/transcoding.
+    Resolves the final abspielbare URL, handling cache/remuxing/transcoding via Handlers.
     """
-    from src.parsers.format_utils import is_direct_play_capable, ffprobe_suite
-    import urllib.parse
+    from src.core.handlers import get_handler_for_file
     
     # 0. Robust path resolution
     full = Path(resolve_media_path(item_path))
-    
     if not full.exists():
         return {
             "mode": "error", 
             "message": f"File not found: {item_path}"
         }
-    
-    ext = full.suffix.lower()
         
-    # 1. MKV/Direct Play Handling (Highest Priority)
-    if is_direct_play_capable(full, client):
-        return {"mode": "direct", "url": f"/direct/{urllib.parse.quote(str(item_path))}"}
-        
-    # 2. ISO / DVD Real-time Transcoding
-    # Perform analysis once for all subsequent checks
-    analysis = ffprobe_suite(full)
-    d_sec = analysis.get("duration_sec", 0)
-
-    if ext == ".iso" or full.is_dir():
-        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}", "duration_sec": d_sec}
-        
-    # 3. Complex Codec Transcoding
-    # Always include duration_sec in the source result if available
-    if analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
-        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}", "duration_sec": d_sec}
-        
-    # 4. MKV Remux Check (Optional/Heuristic)
-    if ext == ".mkv" and analysis.get("video_codec") == "h264":
-        remuxed = remux_to_mp4_cache(full)
-        if remuxed:
-            rel_cache = Path(remuxed).name
-            return {"mode": "direct", "url": f"/cache/{rel_cache}", "duration_sec": d_sec}
-        
-    # 5. Fallback to Transcode (Better than HLS for seeking)
-    return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(item_path))}", "duration_sec": d_sec}
+    handler = get_handler_for_file(full)
+    return handler.process(client=client, relpath=item_path)
 
 
 @eel.expose
