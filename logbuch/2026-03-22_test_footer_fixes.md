@@ -294,3 +294,50 @@ Die Anwendung ist jetzt "Pro-Ready" und nutzt die volle Hardware-Power für ein 
 
 **Ergebnis:**
 Das System ist jetzt sauber, performant und entspricht höchsten Dokumentations- und Architekturstandards.
+
+# 2026-03-25 – MPV Native Player Integration & Layout Fixes
+
+## Key Improvements & Integration
+
+### 1. MPV Player Orchestration
+- **Backend Integration:** Updated the `open_video` orchestrator in `src/core/main.py` to route requests to the `open_mpv` backend function when the MPV engine is selected.
+- **Frontend Controls:** Added the MPV Native engine button and a dedicated submode-mpv panel in the Video tab.
+- **Native Launch:** Implemented the `startMPV` JavaScript function which safely pauses any active browser playback and launches the external MPV process with on-top window priority.
+- **Visual Logic:** Integrated MPV into the `selectEngine` and `selectSubMode` functions, including custom color-coding (#d32f2f) and default submode selection (mpv_native).
+
+### 2. Layout & UI Stability
+- **Footer Restoration:** Fixed the "layout leakage" where the bottom status bar (containing Dict status and versioning) was hidden in management tabs. It is now persistent across all tabs ('Logbuch', 'Reporting', 'Parser', 'Optionen').
+- **Debug Tab Fix:** Restored the debug-flag-persistence-panel wrapping container in the Options tab. This resolved the issue where debug elements were shifted or invisible due to missing DIV nesting.
+- **Parser View Optimization:** Restructured the Parser tab to correctly nest MediaInfo results within the main split-pane container, preventing the UI from shifting to the right.
+- **JS Error Resolution:** Fixed the `initVLCPlayer is not defined` error in `switchTab` by implementing a safe typeof check and expanding the initialization triggers for both 'vlc' and 'video' tabs.
+
+## Technical Summary
+
+| Component      | Change Location         | Description                                                      |
+|---------------|------------------------|------------------------------------------------------------------|
+| Backend       | main.py                | Added player_type == "mpv" routing to the orchestrator.          |
+| UI Header     | app.html               | Added MPV Native engine selector button.                         |
+| UI Logic      | app.html               | Implemented `startMPV` and fixed `switchTab` safe triggers.      |
+| CSS/Layout    | app.html               | Restored structural DIV for the Debug tab and footer visibility. |
+
+The application now supports seamless switching between embedded browser playback (Chrome), VLC streaming, and Native MPV playback, all while maintaining a stable, responsive layout in the management and debugging views.
+
+---
+
+# 2026-03-25 – Parser-Layout, Edit-Tab Subreiter & FFprobe-Overlay
+
+## Bugfix: Zerschossenes Layout ab Parser & FFprobe-Overlay
+- Fehlerursache: Falsch geschlossener HTML-Tag (`</b>` statt `</strong>`) beim Environment Status und fehlende schließende `</div>`-Tags im Parser-Baum.
+- Korrektur: Tags bereinigt, alle offenen Container geschlossen.
+- Ergebnis: Layout für alle Tabs (ab Parser) ist wieder korrekt linksbündig, "FFprobe:" hängt nicht mehr oben links.
+
+## Edit-Tab: Drei neue Sub-Reiter
+- **Metadaten:** Standard-Eingabemaske und Tag-Bearbeitung (wie vorher).
+- **MediaInfo:** Detaillierte MediaInfo-Ansicht aus dem Parser-Tab wurde hierhin verschoben.
+- **FFprobe Analyse:** Neuer Reiter, der die FFprobe-JSON-Metadaten der gewählten Datei über das Backend ausliest und formatiert anzeigt. Zuvor war FFprobe fast nur ein Konsolen-Log, jetzt gibt es eine eigene, saubere Anzeige.
+
+## Hinweise
+- Seite neu laden, damit alle Splitter und Tabs korrekt funktionieren.
+- Alle Leerräume und Layout-Fehlstellungen ab Parser sollten behoben sein.
+
+**Feedback willkommen, falls noch irgendwo Layout-Probleme auftreten!**

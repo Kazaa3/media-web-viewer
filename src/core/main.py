@@ -3763,6 +3763,9 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
         except Exception as e:
             return {"status": "error", "error": f"PyPlayer failed: {e}"}
 
+    elif player_type == "mpv":
+        return open_mpv(file_path)
+
     if player_type == "chrome":
         if mode.startswith("mtx_"):
             # Redirect to MediaMTX handler
