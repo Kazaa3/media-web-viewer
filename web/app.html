@@ -1941,24 +1941,29 @@
                     // Ensure block display for library and file tabs, flex for debug/edit, block for others
                     // List of tabs that require flex layout for their child panes
                     const flexTabs = ['debug', 'edit', 'tests', 'logbuch', 'options', 'reporting', 'parser', 'library', 'vlc'];
-                    const managementTabs = ['options', 'parser', 'debug', 'tests', 'reporting', 'logbuch'];
-                    
                     const sidebar = document.getElementById('main-sidebar');
                     const splitter = document.getElementById('main-splitter');
+                    const managementTabs = ['options', 'parser', 'debug', 'tests', 'reporting', 'logbuch', 'vlc'];
 
                     if (managementTabs.includes(tabId)) {
                         if (sidebar) sidebar.style.display = 'none';
                         if (splitter) splitter.style.display = 'none';
                     } else {
-                        if (sidebar) sidebar.style.display = 'flex';
+                        if (sidebar) {
+                            sidebar.style.display = 'flex';
+                            // Restore width if needed (from localStorage or default)
+                            const saved = localStorage.getItem('mwv_splitter_main-splitter');
+                            sidebar.style.width = (saved && parseInt(saved) < 500) ? saved + 'px' : '300px';
+                        }
                         if (splitter) splitter.style.display = 'block';
                     }
 
                     if (flexTabs.includes(tabId)) {
                         targetEl.style.display = 'flex';
-                        // Ensure all flex tabs use the standard height calculation
-                        targetEl.style.height = 'calc(100vh - 180px)'; 
-                        targetEl.style.flexDirection = 'column';
+                        targetEl.style.flex = '1';
+                        targetEl.style.height = '100%'; 
+                        // Note: Internal flex-direction (row/column) should be defined by the tab ID's own style/class.
+                        targetEl.style.overflow = 'hidden'; 
                         
                         if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') loadLogbuchTab();
                         if (tabId === 'tests' && typeof switchTestView === 'function') switchTestView('base');
@@ -1972,7 +1977,10 @@
                         }
                         if (tabId === 'library') renderLibrary();
                         if (tabId === 'vlc') initVLCPlayer();
-                        if (tabId === 'parser') loadParserPerformance('parser-tab-perf-container');
+                        if (tabId === 'parser') {
+                            if (typeof switchParserView === 'function') switchParserView('configuration');
+                            loadParserPerformance('parser-tab-perf-container');
+                        }
                     } else {
                         targetEl.style.display = tabId === 'file' ? 'block' : 'block';
                         if (tabId === 'item') refreshLibrary();
