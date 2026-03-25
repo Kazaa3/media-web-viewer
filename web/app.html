@@ -1743,7 +1743,17 @@
                 'nav_logbook': 'Logbuch',
                 'nav_video': 'Video',
                 'nav_playlist': 'Playlist',
-                'nav_debug': 'Debug'
+                'nav_debug': 'Debug',
+                'debug_python_dict': 'Python Dicts (Details)',
+                'debug_dict_library': 'Bibliothek (Media Items)',
+                'debug_dict_parser': 'Parser Konfiguration',
+                'debug_dict_environment': 'System Umgebung',
+                'debug_dict_flags': 'Debug Flags',
+                'debug_runtime_info': 'Laufzeit-Info & Log-Level',
+                'debug_item_db_overview': 'Item DB (Übersicht)',
+                'debug_db_loading_stats': 'Lade Datenbank-Statistiken...',
+                'debug_console': 'Konsole / Logs',
+                'debug_db_desc': 'Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank und das Frontend gesendet wird.'
             },
             'en': {
                 'logbook_loading_items': 'Loading entries...',
@@ -1757,7 +1767,17 @@
                 'nav_logbook': 'Logbook',
                 'nav_video': 'Video',
                 'nav_playlist': 'Playlist',
-                'nav_debug': 'Debug'
+                'nav_debug': 'Debug',
+                'debug_python_dict': 'Python Dicts (Details)',
+                'debug_dict_library': 'Library (Media Items)',
+                'debug_dict_parser': 'Parser Config',
+                'debug_dict_environment': 'System Env',
+                'debug_dict_flags': 'Debug Flags',
+                'debug_runtime_info': 'Runtime Info & Logs',
+                'debug_item_db_overview': 'Item DB (Overview)',
+                'debug_db_loading_stats': 'Loading DB stats...',
+                'debug_console': 'Console / Logs',
+                'debug_db_desc': 'Shows the internal item dictionary from the Python backend before it is persisted.'
             }
         };
 
@@ -5029,7 +5049,7 @@
 
                 <!-- Sidebar (Left) -->
                 <div id="parser-left-settings"
-                    style="width: 400px; flex-shrink: 0; padding: 25px; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #eee;">
+                    style="flex: 1; flex-shrink: 0; padding: 25px; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #eee; min-height: 0;">
                     <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_core_settings">Erweiterter
                         Parser-Modus</h3>
                     <div
@@ -5070,7 +5090,7 @@
 
                 <!-- Main Content (Right) -->
                 <div id="parser-main-pane"
-                    style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff;">
+                    style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-height: 0;">
 
                     <div class="sub-nav-container" style="margin-bottom: 0; border-bottom: 1px solid #eee;">
                         <button id="parser-subtab-configuration" class="options-subtab active"
@@ -5107,7 +5127,7 @@
                 <div id="debug-tab-split-container" style="display: flex; flex: 1; min-height: 0; overflow: hidden;">
                     <!-- LEFT Column: Settings and DB Overview -->
                     <div id="debug-settings-pane"
-                        style="width: 450px; flex-shrink: 0; display: flex; flex-direction: column; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #ddd; padding: 20px;">
+                        style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #ddd; padding: 20px;">
                         <div style="margin-bottom: 25px;">
                             <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #333;"
                                 data-i18n="debug_item_db_overview">
@@ -5144,7 +5164,7 @@
 
                             <div id="debug-items-dict-container"
                                 style="flex: 1; background: #1e1e1e; border: 1px solid #333; border-radius: 12px; font-size: 0.85em; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
-                                <div style="padding: 15px; flex: 1; overflow: auto;">
+                                <div id="debug-items-json" style="padding: 15px; flex: 1; overflow: auto; white-space: pre-wrap; font-family: 'Fira Code', monospace; font-size: 0.9em; background: #1e1e1e; color: #d4d4d4;">
                                 </div>
                             </div>
                         </div>
@@ -5155,7 +5175,7 @@
 
                     <!-- RIGHT Column: Results/Console -->
                     <div id="debug-console-pane"
-                        style="flex: 1.5; display: flex; flex-direction: column; overflow: hidden; background: #1a1a1a;">
+                        style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #1a1a1a;">
                         <!-- Runtime Info -->
                         <div style="padding: 15px; background: #222; border-bottom: 1px solid #333;">
                             <h3 style="margin: 0 0 10px 0; font-size: 1.1em; color: #ddd;"
@@ -6959,10 +6979,10 @@
                         </div>
                     </div>
 
-                    <div id="logbuch-split-container" style="flex: 1; display: flex; overflow: hidden;">
+                    <div id="logbuch-split-container" style="flex: 1; display: flex; overflow: hidden; min-height: 0;">
                         <!-- LEFT SIDEBAR: Entries List (TOC) -->
                         <div id="logbuch-sidebar"
-                            style="width: 360px; border-right: 1px solid #eee; background: #fff; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;">
+                            style="flex: 1; border-right: 1px solid #eee; background: #fff; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; min-height: 0;">
                             <div
                                 style="flex: 0 0 auto; padding: 15px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
                                 <div style="display: flex; gap: 6px;">
@@ -6979,7 +6999,7 @@
                                 </div>
                             </div>
                             <div id="logbuch-tab-list"
-                                style="color: #bbb; text-align: center; margin-top: 60px; font-style: italic;"
+                                style="flex: 1; overflow-y: auto; color: #444; padding: 0;"
                                 data-i18n="logbook_loading_items">Einträge werden geladen...</div>
                         </div> <!-- closes logbuch-sidebar -->
 
@@ -6988,7 +7008,7 @@
 
                         <!-- RIGHT CONTENT: Entry Viewer -->
                         <div id="logbuch-viewer-pane"
-                            style="flex: 1; background: #fff; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+                            style="flex: 1; background: #fff; display: flex; flex-direction: column; overflow: hidden; position: relative; min-height: 0;">
                             <div id="logbuch-viewer-header"
                                 style="display:none; padding: 25px 40px; border-bottom: 1px solid #f5f5f5; background: #fff;">
                                 <h2 id="logbuch-tab-title"
@@ -6997,8 +7017,8 @@
                                     style="margin-top: 10px; display: flex; gap: 20px; font-size: 0.8em; color: #888;">
                                 </div>
                             </div>
-                            <div id="logbuch-scroll-container"
-                                style="flex: 1; overflow-y: auto; padding: 40px; scroll-behavior: smooth;">
+                            <div id="logbuch-scroll-container" class="scrolling-view"
+                                style="flex: 1; overflow-y: auto; padding: 40px; scroll-behavior: smooth; min-height: 0;">
                                 <div id="logbuch-tab-content"
                                     style="line-height: 1.8; color: #333; font-size: 1.1em; max-width: 850px; margin: 0 auto; word-wrap: break-word;">
                                     <div style="text-align: center; padding: 80px 20px; color: #ddd;">
@@ -7011,8 +7031,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div> <!-- closes logbuch-split-container -->
+                    </div> <!-- closes logbuch-viewer-pane -->
                 </div> <!-- closes logbuch-split-container -->
             </div> <!-- closes localized-markdown-documentation-journal-panel -->
 
@@ -7772,7 +7791,7 @@
         window.addEventListener('scroll', () => hideContextMenu(), true);
         let playlistIndex = -1;
         let isShuffle = false;
-        let repeatStatus = 'off'; // 'off', 'all', 'one'
+        let isRepeat = 'off'; // 'off', 'all', 'one'
         let shuffledPlaylist = [];
         // Pick-and-insert state
         let pickedIndex = -1;
@@ -7781,7 +7800,7 @@
         // Auto-play next song
         if (activeAudioPipeline) {
             activeAudioPipeline.onended = () => {
-                if (repeatStatus === 'one') {
+                if (isRepeat === 'one') {
                     activeAudioPipeline.play();
                 } else {
                     playNext();
