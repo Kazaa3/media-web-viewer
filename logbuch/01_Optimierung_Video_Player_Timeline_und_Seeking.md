@@ -1,3 +1,82 @@
+## Refactoring Video Player UI and Test Suite (26.03.2026)
+
+**Goal Description**
+Vereinfachung der Video Player UI durch Entfernen des horizontalen Splits/Sub-Tabs und Reorganisation von "Test-Artefakten" (fehlplatzierte Python-Skripte) in einen eigenen tests/scr-Ordner.
+
+**Proposed Changes**
+
+**Video Player UI Cleanup**
+- [MODIFY] app.html: Entferne vlc-info Panel (Zeilen 6947-6962).
+- Entferne active-engine-status-strip (Zeilen 6965-6981).
+- Entferne vlc-extern-fallback-bar (Zeilen 6996-7023).
+- Stelle sicher, dass player-main-content-pane den gesamten vertikalen Platz für das Video nutzt.
+
+**Test Suite Reorganization**
+- [NEW] tests/scr/: Ordner für Utility- und Maintenance-Skripte.
+- [MOVE] src/core/test_media_factory.py → tests/unit/core/test_media_factory.py
+- [MOVE] src/core/curate_logbuch*.py → tests/scr/
+- [MOVE] src/core/fix_logbuch_numbers*.py → tests/scr/
+- [MOVE] src/core/reorganize_logbuch.py → tests/scr/
+- [MOVE] src/core/foundational_restoration.py → tests/scr/
+- [MOVE] src/core/final_history_fix.py → tests/scr/
+- [MOVE] src/core/final_history_polish.py → tests/scr/
+- [MOVE] inspect_db.py → tests/scr/
+- [MOVE] Ausgewählte Dateien aus scripts/ (z.B. gui_validator.py, performance_test.py) → tests/scr/
+
+**Verification Plan**
+
+*Automated Tests*
+- pytest tests/ ausführen, um sicherzustellen, dass die Kern-Tests weiterhin bestehen.
+- Überprüfen, dass die verschobenen Skripte weiterhin ausgeführt werden können.
+
+*Manual Verification*
+- Video Player Tab öffnen und prüfen, dass das Layout aufgeräumt, vollflächig und ohne Split/Info-Panels ist.
+- Prüfen, dass das Klicken auf ein Video in der Audio-Playlist weiterhin korrekt zum bereinigten Video Player führt.
+## Bug: Unerwünschter horizontaler Split im Video Player Tab (26.03.2026)
+
+**Beschreibung:**
+Im Video Player Tab sorgt ein Splitter-Element (`player-analytics-splitter`) zusammen mit dem rechten Bereich (`video-queue-pane`) für einen horizontalen Split der Ansicht. Dies führt zu einer unnötig geteilten Oberfläche und beeinträchtigt das immersive Videoplayer-Erlebnis.
+
+**Geplante Lösung:**
+- Entfernen des Splitter-Elements und des rechten Playlist-Bereichs.
+- Der Player-Bereich soll die volle Breite erhalten und als einspaltige Ansicht dargestellt werden.
+- Die Initialisierung des Splitters im JavaScript wird entfernt.
+
+**Status:**
+Umbau zur einspaltigen, aufgeräumten Video-Player-Ansicht ist geplant.
+## Walkthrough: Video Player Integration and UI Enhancements (26.03.2026)
+
+### Changes Made
+
+#### Frontend (Web UI)
+- **Automatic Video Detection:**
+	- Die Funktion `playMediaObject` erkennt jetzt Video-Dateien anhand ihrer Kategorie (z.B. 'Film', 'Serie', 'ISO/Image') und Dateiendung (.mp4, .mkv, .iso).
+- **Seamless Redirection:**
+	- Ein Klick auf ein Video-Item wechselt automatisch zum Video-Player-Tab und startet die Wiedergabe.
+- **Larger, Responsive Player:**
+	- Der Video-Player nutzt jetzt den maximal verfügbaren Platz (`flex: 1`, `max-height: 85vh`).
+	- `aspect-ratio: 16 / 9` sorgt für ein kinoreifes, responsives Layout.
+	- Verbesserte Optik durch Farbverlauf und Schatten für "Premium-Feeling".
+- **Layout Stability Fix:**
+	- Rücknahme zu aggressiver Flexbox-Einstellungen, die zu leeren/broken Tabs führten. `overflow-y: auto` stellt sicher, dass alle Controls erreichbar bleiben.
+- **Audio Queue Redirection:**
+	- Klick auf MP4-Dateien in der Audio-Queue leitet jetzt korrekt zum Video-Player-Tab weiter.
+- **Syntax Integrity:**
+	- Syntaxfehler (fehlende Klammer) in `onPlaylistItemClick` behoben.
+
+### Verification Results
+
+#### Manual Verification
+- **MP4 Playback:** Klick auf MP4 in der Bibliothek → Video-Tab, sofortige Wiedergabe im großen Fenster.
+- **MKV Playback:** Gleiches Verhalten für MKV-Dateien.
+- **ISO/DVD Support:** ISO/DVD triggern VLC/HLS-Backend und werden im Video-Tab angezeigt.
+- **Tab Switching:** Video-Tab wird korrekt hervorgehoben.
+- **PiP Mode:** Picture-in-Picture-Button funktioniert und öffnet das Video im schwebenden Fenster.
+- **Standard Library UI:** Alle anderen Navigations- und Bibliotheksfunktionen bleiben intakt.
+
+### Hinweis
+
+Der Video-Player verwendet jetzt standardmäßig ein "Theater Mode"-Layout im Video-Tab für ein immersiveres Filmerlebnis.
 # Logbuch: Optimierung Video Player Timeline und Seeking
 
 ## Ziel
