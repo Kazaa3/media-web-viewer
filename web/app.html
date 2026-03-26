@@ -10808,7 +10808,12 @@
                     const newPath = `${base}${connector}ss=${newTime}`;
                     // Important: We must not trigger seeking again in a loop
                     vjsPlayer.src({ src: newPath, type: vjsPlayer.currentType() });
-                    vjsPlayer.play();
+                    // Restore position and play once the new stream is ready
+                    vjsPlayer.one('canplay', () => {
+                        console.info("[Video.js] Stream ready at new position, enforcing time:", newTime);
+                        vjsPlayer.currentTime(newTime);
+                        vjsPlayer.play();
+                    });
                 } else if (currentSrc.includes('/vlc-hls-live/')) {
                     console.info("[Video.js] VLC HLS seek requested, signaling backend...");
                     if (vjsPlayer.originalPath) {
@@ -10863,9 +10868,14 @@
                 };
                 vjsPlayer.on('loadedmetadata', applyOverride);
                 vjsPlayer.on('durationchange', () => {
-                   // Re-apply if VJS tries to reset it to 0 or something else
                    if (vjsPlayer.duration() !== parseFloat(durationSec)) {
-                       vjsPlayer.duration = function () { return parseFloat(durationSec); };
+                       applyOverride();
+                   }
+                });
+                // Also re-apply periodically during playback to handle "TS chunk" duration resets
+                vjsPlayer.on('progress', () => {
+                   if (vjsPlayer.duration() < parseFloat(durationSec) * 0.9) {
+                       applyOverride();
                    }
                 });
                 applyOverride();

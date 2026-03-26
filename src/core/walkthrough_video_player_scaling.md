@@ -1,3 +1,46 @@
+## Logbuch: Fallback für Auflösung bei fehlgeschlagenem Metadata-Probe (26.03.2026)
+
+- **Fallback-Logik:**
+  - Wenn die Metadaten-Probe (ffprobe) keine Höhe liefert, wird die Auflösung anhand der Dateigröße geschätzt:
+    - >30GB → 2160p (4K)
+    - >2GB → 1080p (HD)
+    - Sonst SD
+  - Loggt die Annahme inkl. Dateigröße für Nachvollziehbarkeit.
+  - is_hd und is_4k werden entsprechend gesetzt.
+## Logbuch: FFmpeg Error Handling & Hardware Acceleration (26.03.2026)
+
+- **FFmpeg stderr Capture:**
+  - Vorher: stderr wurde blockierend erst nach Prozessende gelesen, Debugging von Startfehlern unmöglich.
+  - Fix: Backend prüft stderr jetzt proaktiv, wenn der Prozess zu früh endet. Startfehler werden sofort erkannt und ins Logbuch geschrieben.
+- **Hardware Acceleration Flags:**
+  - vaapi_device und weitere Flags werden jetzt korrekt gesetzt, inkl. Fallback-Logik für CPU-only.
+  - -level 5.1 für 4K hinzugefügt, um "media could not be loaded"-Fehler zu vermeiden.
+- **Weitere Verbesserungen:**
+  - Bitrate und Transcode-Settings für 4K/HD optimiert.
+  - Deinterlacing und Syntax/Linting-Fehler im Backend behoben.
+  - Timeline Seeking und TS-Offset im Stream stabilisiert.
+  - Logbuch-API und Logger-Struktur geprüft und dokumentiert.
+## Logbuch: 4K ISO Playback & Seeking Fixes (26.03.2026)
+
+- **4K ISO Playback:**
+  - Problem: Standard-FFmpeg kann große Blu-ray-ISOs nicht direkt lesen.
+  - Fix: Backend (ffprobe_suite, stream_transcode) erkennt große ISOs und nutzt automatisch das bluray:-Protokoll. Dauer (8.928s/148min) wird korrekt extrahiert, Streaming funktioniert.
+- **Transcoding Seeking Fix:**
+  - Problem: Seeking im Webplayer lud den Stream neu, setzte Timeline aber auf 0.
+  - Fix: Backend setzt -output_ts_offset in FFmpeg, damit Timestamps stimmen. Frontend (app.html) stellt Playback-Position nach Hot-Reload automatisch wieder her und erzwingt sie.
+- **Performance & Qualität:**
+  - 15M Bitrate für 4K bestätigt, Hardware-Transcoding (VAAPI/NVENC) aktiv mit korrekten Flags.
+- **Test:**
+  - 2001 - 4K ISO (86GB) getestet: Seeking ist flüssig, Timeline bleibt synchron.
+## Logbuch: Debug Video Player Seeking & Timeline (26.03.2026)
+
+- **JS Error Fix:** Variable scope bug (currentTimeSpan) behoben, Slider-Interaktion wirft keinen Fehler mehr.
+- **Sticky Timeline:** Timeline-Logik optimiert, Timeline erzwingt jetzt aggressiv die korrekte Filmlänge aus der Datenbank, auch wenn der Stream keine Duration meldet (z.B. fragmented MP4). Seeking über die gesamte Filmlänge möglich.
+- **Transcoding Investigation:** ffprobe meldet bei ISO/DVD oft nur wenige Minuten (z.B. 2:42). Fix in app.html nutzt jetzt die gespeicherte Duration aus der DB für die UI.
+- **Nächste Schritte/Fragen:**
+  - Tritt das 2:42-Limit bei allen Filmen auf oder nur bei bestimmten (ISO/DVD)?
+  - Stoppt das Video wirklich nach 2:42 (Backend-Truncation) oder ist nur die Progressbar zu kurz?
+  - Seeking sollte jetzt deutlich besser funktionieren!
 ## Logbuch: Task-Status Media Library Expansion & Video Library (26.03.2026)
 
 - **Video Player & Routing:**

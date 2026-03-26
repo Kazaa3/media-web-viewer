@@ -6502,6 +6502,19 @@ if __name__ == "__main__":
         # Check if it's interlaced content
         scan = analysis.get("scan_type", "progressive").lower()
         height = int(analysis.get("height", 0))
+        
+        # Robust fallback for resolution if metadata probe failed
+        size_gb = p.stat().st_size / (1024**3) if p.exists() else 0
+        if height == 0:
+            if size_gb > 30: 
+                height = 2160
+                log.info(f"[Transcode-Route] Height missing, assuming 4K based on size ({size_gb:.1f} GB)")
+            elif size_gb > 2: 
+                height = 1080
+                log.info(f"[Transcode-Route] Height missing, assuming HD based on size ({size_gb:.1f} GB)")
+            else:
+                log.info(f"[Transcode-Route] Height missing, assuming SD for small file ({size_gb:.1f} GB)")
+
         is_hd = height >= 720
         is_4k = height >= 2160
 
@@ -6520,11 +6533,22 @@ if __name__ == "__main__":
         if encoder == "h264_vaapi":
             cmd += ["-vaapi_device", "/dev/dri/renderD128"]
             
+        # Input source path/protocol
+        input_src = str(p)
+        if p.suffix.lower() == ".iso":
+            # For ISOs, we check if standard input works. If not, we'll try bluray: protocol
+            # But since we're in a real-time stream, we'll stick to bluray: for 4K/large ISOs
+            if p.stat().st_size > 10 * 1024 * 1024 * 1024: # > 10GB is likely a Blu-ray
+                input_src = f"bluray:{p}"
+                log.info(f"[Transcode-Route] Large ISO detected, using bluray: protocol: {p}")
+            
         # Fast seeking for disc images/large files
         if float(start_time) > 0:
             cmd += ["-ss", start_time]
+            # Offset output timestamps so the player knows the actual time position
+            cmd += ["-output_ts_offset", start_time]
             
-        cmd += ["-i", str(p)]
+        cmd += ["-i", input_src]
         
         # Bitrate selection based on resolution
         if is_4k:
@@ -6540,16 +6564,24 @@ if __name__ == "__main__":
             vf.insert(0, "format=nv12,hwupload")
             cmd += ["-vf", ",".join(vf)]
             v_rate = "12M" if is_4k else "6M"
-            cmd += ["-c:v", "h264_vaapi", "-b:v", v_rate, "-maxrate", v_rate]
+            cmd += ["-c:v", "h264_vaapi", "-b:v", v_rate, "-maxrate", v_rate, "-hwaccel_output_format", "vaapi"]
+            if is_4k:
+                cmd += ["-level", "5.1"]
+            else:
+                cmd += ["-level", "4.1"]
         elif encoder == "h264_nvenc":
             if vf: cmd += ["-vf", ",".join(vf)]
-            cmd += ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "ll", "-rc", "vbr", "-cq", "28", 
+            cmd += ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "hq", "-rc", "vbr", "-cq", "24", 
                     "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
         else:
             # Software fallback (libx264)
             if vf: cmd += ["-vf", ",".join(vf)]
             cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency", 
-                    "-crf", "25", "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high", "-level", "4.1"]
+                    "-crf", "25", "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
+            if is_4k:
+                cmd += ["-level", "5.1"]
+            else:
+                cmd += ["-level", "4.1"]
             
         cmd += [
             "-c:a", "aac", "-b:a", "128k", "-ac", "2",

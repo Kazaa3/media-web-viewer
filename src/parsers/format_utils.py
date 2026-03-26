@@ -884,15 +884,24 @@ def ffprobe_suite(path: Path | str) -> dict[str, Any]:
          except:
              pass
 
-    cmd = [
-        ffprobe_path, "-v", "error", 
-        "-show_format", "-show_streams", 
-        "-of", "json", str(p)
-    ]
-    
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        data = json.loads(result.stdout)
+        # Try normal probe first
+        data = None
+        result = subprocess.run([ffprobe_path, "-v", "error", "-show_format", "-show_streams", "-of", "json", str(p)], 
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+        elif p.suffix.lower() == ".iso":
+            # Fallback for Blu-ray ISOs
+            log.info(f"[ffprobe] Normal probe failed for ISO, trying bluray: protocol for {p}")
+            result = subprocess.run([ffprobe_path, "-v", "error", "-show_format", "-show_streams", "-of", "json", f"bluray:{p}"], 
+                                    capture_output=True, text=True)
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+        
+        if not data:
+            log.error(f"ffprobe failed completely for {path}")
+            return {}
         
         streams = data.get('streams', [])
         fmt = data.get('format', {})
