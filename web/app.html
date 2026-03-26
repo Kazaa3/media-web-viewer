@@ -2173,6 +2173,10 @@
             if (tabId === 'tests') {
                 if (typeof loadTestSuites === 'function') loadTestSuites();
             }
+
+            // Ensure the button is marked as active
+            const finalBtn = btn || getTabButton(tabId);
+            if (finalBtn) finalBtn.classList.add('active');
         }
 
         async function runRTTTest(testType = 'ping') {
@@ -6760,10 +6764,10 @@
                             </div>
                             <div id="toast-container"></div>
                             <div id="coordinated-media-renderer-pipeline-viewport" class="premium-player-container"
-                                style="width: 100%; min-height: 480px; margin-bottom: 20px; overflow: hidden; position: relative; background: #000; display: block;">
+                                style="width: 100%; min-height: 480px; margin-bottom: 20px; overflow: hidden; position: relative; background: #000; display: block; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);">
                                 <video id="native-html5-video-resource-node" class="video-js vjs-default-skin" controls
                                     preload="auto"
-                                    style="width: 100%; height: 100%; border-radius: 8px; z-index: 1;"></video>
+                                    style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px; z-index: 1;"></video>
                                 <div id="idle-state-media-icon-symbol"
                                     style="color: #666; text-align: center; padding: 40px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; background: rgba(26,26,26,0.8); pointer-events: none;">
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ddd"
@@ -7752,10 +7756,36 @@
             }
         });
 
+        function isVideoItem(item) {
+            if (!item) return false;
+            // 1. Check Category
+            const videoCategories = ['Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons'];
+            if (item.category && videoCategories.includes(item.category)) return true;
+
+            // 2. Check Extension
+            const path = item.path || item.relpath || "";
+            const videoExtensions = ['.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv'];
+            const ext = path.toLowerCase().slice(((path.lastIndexOf(".") - 1) >>> 0) + 2);
+            if (ext && videoExtensions.includes("." + ext)) return true;
+
+            return false;
+        }
+
         function playMediaObject(item) {
-            if (typeof addToQueue === 'function') {
-                addToQueue(item);
-                switchTab('player', document.getElementById('active-queue-tab-trigger'));
+            if (isVideoItem(item)) {
+                console.info("[Play-Routing] Video detected, switching to Video Player tab:", item.path);
+                switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                // Delay slightly to ensure tab logic completes
+                setTimeout(() => {
+                    if (typeof playVideo === 'function') {
+                        playVideo(item, item.path);
+                    }
+                }, 100);
+            } else {
+                if (typeof addToQueue === 'function') {
+                    addToQueue(item);
+                    switchTab('player', document.getElementById('active-queue-tab-trigger'));
+                }
             }
         }
 
