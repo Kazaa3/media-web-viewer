@@ -1650,7 +1650,115 @@
             overflow: hidden;
             text-overflow: ellipsis;
             color: #333;
-            margin-bottom: 4px;
+        }
+
+        /* Video Streaming Grid (YouTube Style) */
+        .streaming-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+
+        .video-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f0f0f0;
+        }
+
+        .video-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+            z-index: 10;
+        }
+
+        .video-card-preview {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-card-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s;
+        }
+
+        .video-card-preview video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .video-card:hover .video-card-preview video {
+            display: block;
+        }
+
+        .video-card:hover .video-card-preview img {
+            opacity: 0;
+        }
+
+        .video-card-info {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .video-card-title {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #111;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-card-meta {
+            font-size: 0.8em;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .playback-progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: #e53935;
+            z-index: 5;
+            transition: width 0.3s;
+        }
+
+        .video-duration-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            z-index: 5;
         }
 
         .grid-meta {
@@ -3098,6 +3206,23 @@
                     Plotly.newPlot('routing-mode-pie-chart', [trace], layout, {responsive: true});
                 }
 
+                // Chart: Codec Distribution
+                if (report.codec_distribution) {
+                    const trace = {
+                        x: Object.keys(report.codec_distribution),
+                        y: Object.values(report.codec_distribution),
+                        type: 'bar',
+                        marker: { color: '#2196f3' }
+                    };
+                    const layout = {
+                        title: 'Codec Distribution',
+                        font: { size: 10 },
+                        margin: { t: 40, b: 60, l: 30, r: 10 },
+                        showlegend: false
+                    };
+                    Plotly.newPlot('routing-codec-distribution-chart', [trace], layout, {responsive: true});
+                }
+
                 // Top Items
                 const topBody = document.getElementById('suite-top-items-body');
                 if (topBody) {
@@ -3923,6 +4048,8 @@
                             data-i18n="lib_tab_grid">CD / Film Cover</button>
                         <button id="lib-tab-btn-details" class="options-subtab" onclick="switchLibrarySubTab('details')"
                             data-i18n="lib_tab_details">Dateimanager (Details)</button>
+                        <button id="lib-tab-btn-streaming" class="options-subtab" onclick="switchLibrarySubTab('streaming')"
+                            style="background: #fff3e0; border-color: #ffb74d; color: #e65100;">🎬 Videos (Streaming)</button>
                     </div>
 
                     <!-- Filter Area -->
@@ -3976,6 +4103,11 @@
                             <option value="others" data-i18n="filter_others">Sonstige</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Video Streaming View -->
+                <div id="lib-view-streaming" class="library-sub-content">
+                    <div id="streaming-grid-container" class="streaming-grid"></div>
                 </div>
 
                 <div id="lib-view-coverflow" class="library-sub-content active">
@@ -5430,6 +5562,10 @@
                                         style="background: #e1f5fe; border-color: #4fc3f7; color: #0288d1; display: flex; align-items: center; gap: 8px;">
                                         📊 Run Playback Matrix
                                     </button>
+                                    <button onclick="runRoutingBenchmark('complete')" class="tab-btn"
+                                        style="background: #e8f5e9; border-color: #81c784; color: #2e7d32; display: flex; align-items: center; gap: 8px;">
+                                        🏁 Complete Endpoint Test
+                                    </button>
                                     <button onclick="loadTestSuites()" class="tab-btn"
                                         style="background: #f5f5f5; border-color: #ddd; color: #666; display: flex; align-items: center; gap: 8px;">
                                         🔄 Refresh List
@@ -6185,9 +6321,10 @@
                         </div>
                         
                         <!-- Analysis Charts for Routing (Re-stored) -->
-                        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; margin-bottom: 30px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;">
                             <div id="routing-score-distribution-chart" style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;"></div>
                             <div id="routing-mode-pie-chart" style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;"></div>
+                            <div id="routing-codec-distribution-chart" style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 15px; height: 350px;"></div>
                         </div>
 
                         <div
@@ -6283,13 +6420,13 @@
                                 <!-- ENGINE SELECTOR BAR -->
                                 <div class="sub-nav-container"
                                     style="border:none; background:transparent; padding:0; margin:0;">
-                                    <button class="options-subtab active" data-engine="auto"
+                                    <button class="options-subtab" data-engine="auto"
                                         onclick="selectEngine('auto',this)" title="Smart Auto-Routing">
                                         Auto
                                     </button>
-                                    <button class="options-subtab" data-engine="chrome"
+                                    <button class="options-subtab active" data-engine="chrome"
                                         onclick="selectEngine('chrome',this)" title="Chrome Native/Video.js"
-                                        style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #ddd;background:#fafafa;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
+                                        style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:2px solid #2a7;background:#e8f8f0;font-weight:600;font-size:0.82em;cursor:pointer;transition:all 0.2s;">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -6958,7 +7095,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div> <!-- end of player-main-content-pane -->
 
                     <!-- Splitter -->
                     <div id="player-analytics-splitter" class="splitter-v"></div>
@@ -7474,8 +7610,9 @@
             localStorage.setItem('mwv_library_sub_tab', tabId);
 
             // Update buttons
-            document.querySelectorAll('#coverflow-library-panel .tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`lib-tab-btn-${tabId}`).classList.add('active');
+            document.querySelectorAll('#coverflow-library-panel button.options-subtab').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById(`lib-tab-btn-${tabId}`);
+            if (btn) btn.classList.add('active');
 
             // Update views
             document.querySelectorAll('.library-sub-content').forEach(view => view.style.display = 'none');
@@ -7527,7 +7664,7 @@
                     const noMediaHtml = `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`;
                     safeHtml('coverflow-track', noMediaHtml);
                     safeHtml('grid-container', noMediaHtml);
-                    safeHtml('details-table-body', `<tr><td colspan="5" style="text-align:center; padding: 50px;">Keine Medien gefunden</td></tr>`);
+                    safeHtml('streaming-grid-container', noMediaHtml);
                     return;
                 }
 
@@ -7537,11 +7674,62 @@
                     renderGridView();
                 } else if (librarySubTab === 'details') {
                     renderDetailedView();
+                } else if (librarySubTab === 'streaming') {
+                    renderVideoStreamingView();
                 }
 
             } catch (e) {
                 console.error("Failed to render library:", e);
             }
+        }
+
+        function renderVideoStreamingView() {
+            const container = document.getElementById('streaming-grid-container');
+            if (!container) return;
+
+            const videos = coverflowItems.filter(i => i.type === 'video');
+            let html = '';
+            
+            videos.forEach((item) => {
+                const progressWidth = item.duration_sec ? ((item.playback_position || 0) / item.duration_sec) * 100 : 0;
+                const cover = item.art_path ? `/direct/${encodeURIComponent(item.art_path)}` : 'img/default_video.png';
+                const streamUrl = `/direct/${encodeURIComponent(item.path)}`;
+                
+                html += `
+                <div class="video-card" onclick="playMediaObject(coverflowItems.find(v => v.name === '${item.name.replace(/'/g, "\\'")}'))">
+                    <div class="video-card-preview">
+                        <img src="${cover}" alt="${item.name}">
+                        <video src="${streamUrl}" muted loop preload="none"></video>
+                        <div class="video-duration-badge">${item.duration || ''}</div>
+                        ${item.playback_position > 0 ? `<div class="playback-progress-bar" style="width: ${progressWidth}%"></div>` : ''}
+                    </div>
+                    <div class="video-card-info">
+                        <div class="video-card-title">${item.name}</div>
+                        <div class="video-card-meta">
+                            <span>${item.codec || ''} • ${item.extension || ''}</span>
+                            <span>${item.last_played ? new Date(item.last_played).toLocaleDateString() : ''}</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            safeHtml('streaming-grid-container', html || '<div style="padding: 40px; color: #999; text-align: center; width: 100%;">Keine Videos gefunden</div>');
+
+            container.querySelectorAll('.video-card').forEach(card => {
+                const video = card.querySelector('video');
+                card.addEventListener('mouseenter', () => {
+                   if (video) {
+                       video.currentTime = 0;
+                       video.play().catch(e => console.warn('Preview play failed:', e));
+                   }
+                });
+                card.addEventListener('mouseleave', () => {
+                    if (video) {
+                        video.pause();
+                        video.currentTime = 0;
+                    }
+                });
+            });
         }
 
         function renderGridView() {
@@ -9998,7 +10186,7 @@
         }
 
         async function playVideo(item, path) {
-            console.info(">>> [Play-Trace] playVideo() called for:", path);
+            console.info(">>> [Play-Trace] playVideo() called for:", path, "item:", item);
             if (window._locking_video_playback) {
                 console.warn(">>> [Play-Trace] Playback LOCK detected. Skipping double call.");
                 return;
@@ -10164,17 +10352,25 @@
                     }
                 });
 
+                let lastSavedPos = 0;
                 vjsPlayer.on('timeupdate', () => {
                     const slider = document.getElementById('video-seek-slider');
                     const currentTimeSpan = document.getElementById('video-current-time');
                     const durationSpan = document.getElementById('video-duration');
 
+                    const now = vjsPlayer.currentTime();
                     if (slider && !slider.matches(':active')) {
-                        const progress = (vjsPlayer.currentTime() / vjsPlayer.duration()) * 100;
+                        const progress = (now / vjsPlayer.duration()) * 100;
                         slider.value = isFinite(progress) ? progress : 0;
                     }
-                    if (currentTimeSpan) currentTimeSpan.innerText = formatTime(vjsPlayer.currentTime());
+                    if (currentTimeSpan) currentTimeSpan.innerText = formatTime(now);
                     if (durationSpan) durationSpan.innerText = formatTime(vjsPlayer.duration());
+
+                    // Persist playback position (throttled to every 5 seconds)
+                    if (Math.abs(now - lastSavedPos) > 5 && currentVideoItem) {
+                        lastSavedPos = now;
+                        eel.update_playback_position(currentVideoItem.name, now)();
+                    }
                 });
 
                 const seekSlider = document.getElementById('video-seek-slider');
@@ -10268,6 +10464,14 @@
             } else {
                 // Restore default behavior if no manual duration is provided
                 delete vjsPlayer.duration;
+            }
+
+            // Restore playback position
+            if (item && item.playback_position > 0) {
+                console.info("[Video.js] Restoring playback position to:", item.playback_position);
+                vjsPlayer.one('canplay', () => {
+                    vjsPlayer.currentTime(item.playback_position);
+                });
             }
 
             // Explicitly trigger a resize and ensure visibility to fix black screen/layout issues
@@ -11937,7 +12141,8 @@
             const script_id = {
                 'latency': 'routing/test_perf_latency.py',
                 'multi': 'routing/test_multi_format_router.py',
-                'playback': 'routing/test_playback_matrix.py'
+                'playback': 'routing/test_playback_matrix.py',
+                'complete': 'routing/test_complete_routing_suite.py'
             }[type] || 'routing/test_perf_latency.py';
 
             try {
@@ -12040,6 +12245,7 @@
         initSplitter('debug-splitter', 'debug-settings-pane', 'debug-flag-persistence-panel', 'vertical', 'right');
         initSplitter('logbuch-splitter', 'logbuch-sidebar', 'logbuch-split-container', 'vertical', 'right');
         initSplitter('player-analytics-splitter', 'video-queue-pane', 'player-tab-split-container', 'vertical', 'right');
+        selectEngine('chrome', document.querySelector('.options-subtab[data-engine=chrome]'));
         initSplitter('browser-tab-splitter', 'browser-top-pane', 'filesystem-crawler-directory-panel', 'horizontal', 'top');
 
         async function syncVersionInfo() {

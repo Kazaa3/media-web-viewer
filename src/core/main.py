@@ -110,6 +110,7 @@ from src.core.logger import get_logger
 from src.parsers import tag_writer
 from src.core import hardware_detector
 from src.core import transcoder
+from src.core import db
 
 # transcode_mgr deferred
 transcode_mgr = None
@@ -662,6 +663,30 @@ def get_version():
 def get_app_name():
     """Returns the application name."""
     return "dict"
+
+
+@eel.expose
+def update_playback_position(name, position):
+    """Updates the persistent playback position."""
+    try:
+        import db
+        db.update_playback_position(name, position)
+        return {"ok": True}
+    except Exception as e:
+        _logger.exception("Failed to update playback position")
+        return {"ok": False, "error": str(e)}
+
+
+@eel.expose
+def get_playback_position(name):
+    """Retrieves the last stored playback position."""
+    try:
+        import db
+        pos = db.get_playback_position(name)
+        return {"ok": True, "position": pos}
+    except Exception as e:
+        _logger.exception("Failed to get playback position")
+        return {"ok": False, "error": str(e)}
 
 # --- Environment Info API ---
 
@@ -6273,19 +6298,26 @@ if __name__ == "__main__":
         
         # 1. Unquote the path to handle special characters and absolute paths
         try:
-            decoded = urllib.parse.unquote(path)
+            decoded = str(urllib.parse.unquote(path))
         except Exception as e:
             log.error(f"Unquote failed for {path}: {e}")
-            decoded = path
+            decoded = str(path)
             
         log.info(f"[Direct-Route] Request for: {decoded}")
         
         # 2. Determine the physical location
-        if os.path.isabs(decoded):
-            p = Path(decoded)
-        else:
-            lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
-            p = Path(lib_dir) / decoded
+        # Handle cases where Bottle might have stripped the leading slash of an absolute path
+        p = Path(decoded)
+        if not p.is_absolute():
+            # If the path actually exists with a leading slash, treat it as absolute
+            p_abs = Path("/" + decoded.lstrip("/"))
+            if p_abs.exists():
+                p = p_abs
+            else:
+                # Fallback to library directory
+                lib_dir_raw = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+                lib_dir = str(lib_dir_raw)
+                p = Path(lib_dir) / decoded.lstrip("/")
             
         if not p.exists():
             log.warning(f"[Direct-Route] File not found: {p}")
@@ -6906,6 +6938,7 @@ def get_routing_suite_report():
         top_quality_items = []
         complex_items = []
         incompatible_count = 0
+        codec_dist = {}
         
         for item in items:
             if item.get('type') != 'video':
@@ -6941,6 +6974,10 @@ def get_routing_suite_report():
                  mode = 'hls'
                 
             modes[mode] = modes.get(mode, 0) + 1
+            
+            codec = str(tags.get('codec', 'unknown')).lower()
+            codec_dist[codec] = codec_dist.get(codec, 0) + 1
+
             if not is_direct:
                 incompatible_count += 1
             
@@ -6960,7 +6997,8 @@ def get_routing_suite_report():
             'score_distribution': dist,
             'top_quality_items': sorted(top_quality_items, key=lambda x: x['score'], reverse=True)[:10],
             'complex_items': sorted(complex_items, key=lambda x: x['score'])[:10],
-            'incompatible_count': incompatible_count
+            'incompatible_count': incompatible_count,
+            'codec_distribution': codec_dist
         }
         
         return report

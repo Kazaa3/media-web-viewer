@@ -141,6 +141,9 @@ def init_db():
             discogs TEXT,
             amazon_cover TEXT,
             parent_id INTEGER,
+            playback_position REAL DEFAULT 0,
+            last_played TEXT,
+            duration_sec REAL,
             FOREIGN KEY(parent_id) REFERENCES media(id)
         )
     """)
@@ -179,7 +182,9 @@ def init_db():
         ("tmdb", "TEXT"),
         ("discogs", "TEXT"),
         ("amazon_cover", "TEXT"),
-        ("parent_id", "INTEGER")
+        ("parent_id", "INTEGER"),
+        ("playback_position", "REAL"),
+        ("last_played", "TEXT")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -307,7 +312,10 @@ def get_all_media():
             'tmdb': row['tmdb'],
             'discogs': row['discogs'],
             'amazon_cover': row['amazon_cover'],
-            'parent_id': row['parent_id']
+            'parent_id': row['parent_id'],
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
         })
     conn.close()
     return media_list
@@ -360,7 +368,10 @@ def get_media_by_name(name):
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
         }
     return None
 
@@ -394,7 +405,10 @@ def get_media_by_id(media_id):
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
         }
     return None
 
@@ -428,7 +442,10 @@ def get_media_by_path(path):
             'is_transcoded': bool(row['is_transcoded']),
             'transcoded_format': row['transcoded_format'],
             'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {}
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
         }
     return None
 
@@ -524,3 +541,32 @@ def get_db_stats():
         'total_items': total_items,
         'categories': categories
     }
+
+
+def update_playback_position(name, position):
+    """
+    @brief Updates the persistent playback position for a media item.
+    """
+    import datetime
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE media 
+        SET playback_position = ?, 
+            last_played = ?
+        WHERE name = ?
+    """, (position, datetime.datetime.now().isoformat(), name))
+    conn.commit()
+    conn.close()
+
+
+def get_playback_position(name):
+    """
+    @brief Retrieves the last stored playback position.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT playback_position FROM media WHERE name = ?", (name,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else 0
