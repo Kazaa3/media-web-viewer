@@ -1,3 +1,14 @@
+## Logbuch: Fix Logbuch-Tab Rendering & Layout (26.03.2026)
+
+- **Problem:** Logbuch-Tab zeigte weißen Bildschirm, Einträge wurden nicht geladen.
+- **Ursache:**
+  - Fehlende Backend-Funktion `read_file` verhinderte das Laden der Markdown-Dateien.
+  - HTML-Strukturfehler: Fehlender Schließ-Tag bei `video-queue-pane` führte dazu, dass der Logbuch-Panel im DOM versteckt/nicht sichtbar war.
+- **Lösung:**
+  - `read_file` in main.py implementiert.
+  - HTML-Struktur geprüft und fehlenden Schließ-Tag ergänzt.
+  - Gesamtes Layout auf weitere Strukturfehler auditiert.
+- **Ergebnis:** Logbuch-Tab lädt und zeigt Markdown-Einträge wieder korrekt an. Layout ist stabil.
 ## Walkthrough: Media Library Expansion & Playback Debugging (26.03.2026)
 
 ### Key Accomplishments
