@@ -42,6 +42,7 @@ tests/e2e/selenium/reference_screenshots/
 !/tests/
 !/logbuch/
 !/media/
+!/.github/
 
 docs/latex/
 

@@ -2,7 +2,7 @@ name: Main CI / Release Gate
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'meilenstein/**', 'milestone/**']
   pull_request:
     branches: [main]
 

@@ -2,9 +2,9 @@ name: Develop CI
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, 'milestone/**', 'meilenstein/**', 'feature/**']
   pull_request:
-    branches: [develop]
+    branches: ['**']
 
 jobs:
   tier-1-2-tests:
