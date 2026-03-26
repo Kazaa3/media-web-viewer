@@ -91,6 +91,7 @@ rsync -a \
     --exclude '.mypy_cache/' \
     --exclude 'reinstall_deb.sh' \
     --exclude 'data/' \
+    --exclude 'packages/' \
     --max-size=50M \
     "$ROOT_DIR/" "$STAGED_APP_DEST/"
 

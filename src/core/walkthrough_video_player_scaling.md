@@ -1,3 +1,133 @@
+## Logbuch: Task-Status Media Library Expansion & Video Library (26.03.2026)
+
+- **Video Player Sichtbarkeit:** Redundante Tags entfernt, Player wird korrekt angezeigt.
+- **Pfadauflösung /direct/:** Bug bei absoluter Pfadauflösung behoben.
+- **Routing Suite Report:** get_routing_suite_report via Eel bereitgestellt.
+- **Architektur-Doku:** Video Player Architektur im Logbuch dokumentiert.
+- **Routing Test Suite:** Test Suite für Routing erweitert.
+- **Video Library & Persistence:**
+  - Backend: Spalten playback_position, last_played, duration_sec zur media-Tabelle hinzugefügt.
+  - Backend: Persistence-API in db.py implementiert.
+  - Backend: Persistence-API in main.py via Eel bereitgestellt.
+  - Debug: Leere Video-Library (Streaming-Tab) gefixt (Filter nutzt jetzt isVideoItem).
+  - CATEGORY_MAP['video'] um weitere Kategorien ergänzt.
+  - Frontend: "Videos"- und "Datenbank"-Sub-Tabs in der Bibliothek ergänzt.
+  - Frontend: Zentrale Datenbank-Tabelle mit Suche & Aktionen implementiert.
+  - Frontend: Video-Grid mit Hover-Preview umgesetzt.
+  - Frontend: Video.js an Persistence-API angebunden (Progress speichern/laden).
+- **Verifikation & Final Polish:**
+  - End-to-End-Test der Persistence (Schema und Backend-Logik verifiziert).
+  - MP4-Playback-Bug behoben (Pfad-Fehler in serve_direct_media).
+  - Universal Tab Switching für Videos implementiert.
+  - onPlaylistItemClick für Sidebar/Playlists vereinheitlicht.
+  - Album-Darstellung verfeinert (CD-Style, 1:1, object-fit: contain).
+- **Video Playback (DVD/MKV):**
+  - Backend: ISO/DVD werden zu VLC geroutet.
+  - Frontend: Playback-Error-Modal für technisches Debugging integriert.
+  - Technische Infos (Codecs, Score, Mode) im Fehler-Modal angezeigt.
+- **Video Format Test Suite:**
+  - Backend: .iso in Test-Media-Discovery aufgenommen.
+  - Frontend: monitorVjsPlayback prüft echte Frame-Bewegung.
+  - Automatisches Tab-Switching während Tests.
+  - Fehler-Reporting in Test-Historie.
+- **Playback Failure Debugging:**
+  - playVideo-Signatur gefixt (Test-Suite).
+  - Fehler-Reporting im catch-Block verbessert.
+  - Circular Dependency in VideoHandler via remux_utils.py gelöst.
+  - analyze_media mit robustem try-except.
+- **Walkthrough & Features:**
+  - Walkthrough mit neuen Bibliotheksfeatures aktualisiert.
+  - Media-Duration-Sync für exakte Fortschrittsbalken.
+- **Logbuch Tab Rendering:**
+  - Backend: read_file in main.py implementiert und exposed.
+  - Backend: list_logbook_entries geprüft.
+  - Frontend: loadLogbuchTab auf Fehler geprüft.
+  - Frontend: DOM-Nesting-Fehler (fehlendes </div>) behoben.
+  - Frontend: Layout des markdown-documentation-journal-panels geprüft.
+- **Logging Infrastructure:**
+  - Alle Logfiles nach /logs/ verschoben.
+  - src/core/logger.py auf root logs/ angepasst.
+  - .gitignore um /logs/ und /packages/ erweitert.
+- **Translations:**
+  - Fehlende env_label_ Keys zu web/i18n.json (EN) ergänzt.
+- **Build Stabilisierung:**
+  - Build-Test mit SKIP_BUILD_TESTS=0 ./infra/build_deb.sh bestanden.
+  - Pyre2-Lint-Fehler in src/core/main.py systematisch adressiert.
+- **Media Routing Tests:**
+  - direct, transcode, hls-Logik validiert.
+  - Funktionale Tests für alle Streaming-Endpunkte.
+  - Echtzeit-Frame-Monitoring für Standardformate.
+## Logbuch: Task-Status Media Library Expansion & Video Library (26.03.2026)
+
+- **Video Player Sichtbarkeit:** Redundante Tags entfernt, Player wird korrekt angezeigt.
+- **Pfadauflösung /direct/:** Bug bei absoluter Pfadauflösung behoben.
+- **Routing Suite Report:** get_routing_suite_report via Eel bereitgestellt.
+- **Architektur-Doku:** Video Player Architektur im Logbuch dokumentiert.
+- **Routing Test Suite:** Test Suite für Routing erweitert.
+- **Video Library & Persistence:**
+  - Backend: Spalten playback_position, last_played, duration_sec zur media-Tabelle hinzugefügt.
+  - Backend: Persistence-API in db.py implementiert.
+  - Backend: Persistence-API in main.py via Eel bereitgestellt.
+  - Debug: Leere Video-Library (Streaming-Tab) gefixt (Filter nutzt jetzt isVideoItem).
+  - CATEGORY_MAP['video'] um weitere Kategorien ergänzt.
+  - Frontend: "Videos"- und "Datenbank"-Sub-Tabs in der Bibliothek ergänzt.
+  - Frontend: Zentrale Datenbank-Tabelle mit Suche & Aktionen implementiert.
+  - Frontend: Video-Grid mit Hover-Preview umgesetzt.
+  - Frontend: Video.js an Persistence-API angebunden (Progress speichern/laden).
+- **Verifikation & Final Polish:**
+  - End-to-End-Test der Persistence (Schema und Backend-Logik verifiziert).
+  - MP4-Playback-Bug behoben (Pfad-Fehler in serve_direct_media).
+  - Universal Tab Switching für Videos implementiert.
+  - onPlaylistItemClick für Sidebar/Playlists vereinheitlicht.
+  - Album-Darstellung verfeinert (CD-Style, 1:1, object-fit: contain).
+- **Video Playback (DVD/MKV):**
+  - Backend: ISO/DVD werden zu VLC geroutet.
+  - Frontend: Playback-Error-Modal für technisches Debugging integriert.
+  - Technische Infos (Codecs, Score, Mode) im Fehler-Modal angezeigt.
+- **Video Format Test Suite:**
+  - Backend: .iso in Test-Media-Discovery aufgenommen.
+  - Frontend: monitorVjsPlayback prüft echte Frame-Bewegung.
+  - Automatisches Tab-Switching während Tests.
+  - Fehler-Reporting in Test-Historie.
+- **Playback Failure Debugging:**
+  - playVideo-Signatur gefixt (Test-Suite).
+  - Fehler-Reporting im catch-Block verbessert.
+  - Circular Dependency in VideoHandler via remux_utils.py gelöst.
+  - analyze_media mit robustem try-except.
+- **Walkthrough & Features:**
+  - Walkthrough mit neuen Bibliotheksfeatures aktualisiert.
+  - Media-Duration-Sync für exakte Fortschrittsbalken.
+- **Logbuch Tab Rendering:**
+  - Backend: read_file in main.py implementiert und exposed.
+  - Backend: list_logbook_entries geprüft.
+  - Frontend: loadLogbuchTab auf Fehler geprüft.
+  - Frontend: DOM-Nesting-Fehler (fehlendes </div>) behoben.
+  - Frontend: Layout des markdown-documentation-journal-panels geprüft.
+- **Logging Infrastructure:**
+  - Alle Logfiles nach /logs/ verschoben.
+  - src/core/logger.py auf root logs/ angepasst.
+  - .gitignore um /logs/ und /packages/ erweitert.
+- **Translations:**
+  - Fehlende env_label_ Keys zu web/i18n.json (EN) ergänzt.
+- **Build Stabilisierung:**
+  - Build-Test mit SKIP_BUILD_TESTS=0 ./infra/build_deb.sh bestanden.
+  - Pyre2-Lint-Fehler in src/core/main.py systematisch adressiert.
+- **Media Routing Tests:**
+  - direct, transcode, hls-Logik validiert.
+  - Funktionale Tests für alle Streaming-Endpunkte.
+  - Echtzeit-Frame-Monitoring für Standardformate.
+## Logbuch: Build-Prozess & Log-Migration (26.03.2026)
+
+- **Problem:** Build-Prozess schlug fehl, da in .venv_build Kern-Abhängigkeiten fehlten und Logfiles nicht zentral verwaltet wurden.
+- **Analyse:**
+  - Fehlende Pakete in .venv_build führten zu Import- und Collection-Fehlern bei pytest.
+  - Logfiles lagen verstreut (z.B. src/core/logs/) und waren nicht in .gitignore.
+- **Lösung:**
+  - Alle Kern-Abhängigkeiten aus infra/requirements-core.txt in .venv_build installiert.
+  - Logfiles und Debug-Logs ins zentrale /logs-Verzeichnis verschoben.
+  - .gitignore um logs/ und *.log erweitert.
+  - src/core/logger.py auf das neue Log-Verzeichnis angepasst.
+- **Ergebnis:** Build und Tests laufen wieder durch, Logs sind sauber verwaltet und werden nicht mehr versioniert.
 ## Logbuch: Fix Logbuch-Tab Rendering & Layout (26.03.2026)
 
 - **Problem:** Logbuch-Tab zeigte weißen Bildschirm, Einträge wurden nicht geladen.

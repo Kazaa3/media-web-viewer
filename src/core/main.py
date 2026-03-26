@@ -6306,6 +6306,21 @@ def get_transcode_status(task_id: str):
 # --- Main Entry Point ---
 if __name__ == "__main__":
     log_checkpoint("Main entry")
+    
+    # --- Session Guard ---
+    # Check if another session of MWV is already running.
+    # If so, we open the existing session URL instead of starting a new one.
+    existing_sessions = [s for s in check_running_sessions() if s.get('port')]
+    if existing_sessions:
+        existing_url = f"http://127.0.0.1:{existing_sessions[0]['port']}/app.html"
+        logging.info(f"[Session] Found existing session candidate on port {existing_sessions[0]['port']}")
+        if is_session_url_reachable(existing_url, timeout=0.8):
+            logging.info("[Session] Existing session is reachable. Skipping new window launch.")
+            open_session_url(existing_url)
+            sys.exit(0)
+        else:
+            logging.warning(f"[Session] Ignoring stale session candidate: {existing_url}")
+
     _ensure_project_venv_active()
     log_checkpoint("Venv check complete")
     
@@ -7347,7 +7362,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
             sys.exit(0)
-        except Exception as e:
-            logging.error(f"[MainLoop] Error: {e}")
+        except BaseException as e:
+            logging.error(f"[MainLoop] keepalive recovered from base error: {e}")
             time.sleep(1.0)
 

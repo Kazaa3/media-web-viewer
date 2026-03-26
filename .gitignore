@@ -8,6 +8,7 @@ tests/e2e/selenium/reference_screenshots/
 # Referenz-Screenshots für Tests
 /tests/reference_screenshots/
 /logs/
+/packages/
 
 # 1. Broad Ignores
 **/__pycache__/
