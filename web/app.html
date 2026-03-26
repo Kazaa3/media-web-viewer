@@ -10871,58 +10871,35 @@
                 });
             });
         }
-        }
 
         async function startMPV(filePath) {
             const video = document.getElementById('native-html5-video-resource-node');
-            if (video) {
-                video.pause();
-                video.style.display = 'none';
-            }
-            // Stop other things
-            if (typeof eel !== 'undefined' && typeof eel.stop_vlc === 'function') {
-                eel.stop_vlc()();
-            }
-
-            if (typeof showToast === 'function') showToast("🚀 LAUNCHING MPV (Native Overlay)...", 3000);
+            if (video) { video.pause(); video.style.display = 'none'; }
+            if (typeof eel !== 'undefined' && typeof eel.stop_vlc === 'function') eel.stop_vlc()();
+            if (typeof showToast === 'function') showToast("🚀 MPV...", 3000);
             try {
                 const res = await eel.open_mpv(filePath)();
-                if (res && res.status === 'ok') {
-                    if (typeof showToast === 'function') showToast("MPV gestartet.", 2000);
-                } else {
-                    if (typeof showToast === 'function') showToast("Fehler beim Starten von MPV: " + (res.message || 'unbekannt'), 5000);
-                }
-            } catch (e) {
-                console.error("MPV Launch Error:", e);
-            }
+                if (res && res.status === 'ok') showToast("MPV gestartet.", 2000);
+            } catch (e) { console.error("MPV Error:", e); }
         }
 
         async function startVLC(filePath, displayName = null) {
             const video = document.getElementById('native-html5-video-resource-node');
-            if (video) {
-                video.pause();
-                video.style.display = 'none';
-            }
+            if (video) { video.pause(); video.style.display = 'none'; }
             safeStyle('idle-state-media-icon-symbol', 'display', 'block');
             safeStyle('btn-open-vlc', 'display', 'none');
             hideUnsupportedVideoHint();
-
             safeStyle('vlc-info', 'display', 'block');
             const shownName = displayName || (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
             safeText('vlc-current-file', shownName);
-
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
-                showPlaybackError("VLC Fehler", "VLC konnte nicht gestartet werden. Bitte prüfe ob VLC installiert und im PATH ist.", {
-                    mode: "VLC",
-                    path: filePath,
-                    error: res.error
-                });
+                showPlaybackError("VLC Fehler", "Fehler beim Starten.", { error: res.error });
                 safeHtml('vlc-pipe-log-feed', '<span style="color:#f33;">FEHLER:</span> ' + res.error);
                 safeStyle('vlc-status-badge', 'background', '#e74c3c');
                 safeText('vlc-status-badge', 'Fehler');
             } else {
-                safeHtml('vlc-pipe-log-feed', 'Subprocess erfolgreich gestartet.');
+                safeHtml('vlc-pipe-log-feed', 'Aktiv.');
                 safeStyle('vlc-status-badge', 'background', '#2a7');
                 safeText('vlc-status-badge', 'Aktiv');
             }
@@ -10930,83 +10907,44 @@
 
         function showExternalStatus(filePath, mode) {
             const video = document.getElementById('native-html5-video-resource-node');
-            if (video) {
-                video.pause();
-                video.style.display = 'none';
-            }
+            if (video) { video.pause(); video.style.display = 'none'; }
             safeStyle('idle-state-media-icon-symbol', 'display', 'block');
-            safeStyle('btn-open-vlc', 'display', 'none');
-            hideUnsupportedVideoHint();
-
             safeStyle('vlc-info', 'display', 'block');
             const shownName = (currentVideoItem && currentVideoItem.name) || String(filePath || '-');
             safeText('vlc-current-file', shownName + " [Extern: " + mode + "]");
-            safeHtml('vlc-pipe-log-feed', 'Wird in externem Fenster abgespielt (' + mode + '). Das Video läuft nun in einem eigenen Fenster. Die GUI wartet hier.');
+            safeHtml('vlc-pipe-log-feed', 'Extern.');
             safeStyle('vlc-status-badge', 'background', '#3498db');
             safeText('vlc-status-badge', 'Extern');
         }
+
         async function togglePip() {
             const video = document.getElementById('native-html5-video-resource-node');
             if (!video) return;
-
             try {
-                if (document.pictureInPictureElement) {
-                    await document.exitPictureInPicture();
-                    console.info("[PiP] Exited Picture-in-Picture mode.");
-                } else if (document.pictureInPictureEnabled) {
-                    await video.requestPictureInPicture();
-                    console.info("[PiP] Entered Picture-in-Picture mode.");
-                } else {
-                    console.warn("[PiP] Picture-in-Picture is not supported or enabled in this browser.");
-                    alert(t('pip_not_supported') || 'Picture-in-Picture is not supported in your browser.');
-                }
-            } catch (error) {
-                console.error("[PiP] Error toggling Picture-in-Picture:", error);
-            }
+                if (document.pictureInPictureElement) await document.exitPictureInPicture();
+                else if (document.pictureInPictureEnabled) await video.requestPictureInPicture();
+            } catch (error) { console.error("PiP Error:", error); }
         }
 
-        function seekVideo(delta) {
-            if (vjsPlayer) {
-                const currentTime = vjsPlayer.currentTime();
-                vjsPlayer.currentTime(currentTime + delta);
-            }
-        }
-
+        function seekVideo(delta) { if (vjsPlayer) vjsPlayer.currentTime(vjsPlayer.currentTime() + delta); }
         function toggleSpeed() {
             if (vjsPlayer) {
                 const currentRate = vjsPlayer.playbackRate();
                 const rates = [1, 1.25, 1.5, 2, 0.5];
-                let nextIdx = rates.indexOf(currentRate) + 1;
-                if (nextIdx >= rates.length) nextIdx = 0;
+                let nextIdx = (rates.indexOf(currentRate) + 1) % rates.length;
                 vjsPlayer.playbackRate(rates[nextIdx]);
                 showToast(`Speed: ${rates[nextIdx]}x`, 1000);
             }
         }
-
-        function openEQ() {
-            showToast("Equalizer ist in diesem Modus noch nicht verfügbar (Native Browser EQ coming soon)", 2000);
-        }
+        function openEQ() { showToast("EQ soon", 2000); }
 
         async function stopVideo() {
             const video = document.getElementById('native-html5-video-resource-node');
-            if (vjsPlayer) {
-                try { vjsPlayer.pause(); } catch (e) { }
-            } else if (video && typeof video.pause === 'function') {
-                video.pause();
-            }
-            if (video) {
-                video.src = "";
-                video.style.display = 'none';
-            }
-            if (document.getElementById('video-placeholder')) {
-                safeStyle('idle-state-media-icon-symbol', 'display', 'block');
-            }
-            hideUnsupportedVideoHint();
-
+            if (vjsPlayer) { try { vjsPlayer.pause(); } catch (e) { } }
+            if (video) { video.src = ""; video.style.display = 'none'; }
+            safeStyle('idle-state-media-icon-symbol', 'display', 'block');
             await eel.stop_vlc()();
             safeStyle('vlc-info', 'display', 'none');
-            safeStyle('btn-open-vlc', 'display', 'none');
-
             currentVideoItem = null;
             currentVideoPath = null;
         }
