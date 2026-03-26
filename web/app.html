@@ -1893,7 +1893,8 @@
         let mwv_config = {
             start_page: 'player',
             app_mode: 'High-Performance',
-            parser_mode: 'lightweight'
+            parser_mode: 'lightweight',
+            minimal_player_view: false
         };
 
         async function loadConfig() {
@@ -1993,8 +1994,9 @@
                 const splitter = document.getElementById('main-splitter');
                 const contentArea = document.getElementById('main-content-area');
                 
-                // Define management tabs (full-width, no sidebar)
-                const managementTabs = ['debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools'];
+                // Define tabs that should use the full-width layout (no main sidebar)
+                // Now including standard navigation tabs (library, item, file, edit, options) as requested by the user
+                const managementTabs = ['library', 'item', 'file', 'edit', 'options', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools', 'parser'];
                 const isManagement = managementTabs.includes(tabId);
                 const isSidebarVisible = !isManagement;
 
@@ -2071,6 +2073,8 @@
                         }
                         if (tabId === 'options') {
                             if (typeof switchOptionsView === 'function') switchOptionsView('general');
+                            const miniToggle = document.getElementById('toggle-minimal-player');
+                            if (miniToggle) miniToggle.checked = mwv_config.minimal_player_view || false;
                         }
                         if (tabId === 'library') renderLibrary();
                         if (tabId === 'vlc' || tabId === 'video') {
@@ -2078,6 +2082,36 @@
                         }
                         if (tabId === 'parser') {
                             if (typeof switchParserView === 'function') switchParserView('configuration');
+                        }
+
+                        // --- Minimal Player View Logic ---
+                        const minimalMode = mwv_config.minimal_player_view || false;
+                        const standardTabs = [
+                            'coverflow-library-tab-trigger',
+                            'indexed-sqlite-repository-tab-trigger',
+                            'filesystem-crawler-tab-trigger',
+                            'crud-metadata-tab-trigger',
+                            'system-registry-tab-trigger'
+                        ];
+                        const bottomBar = document.querySelector('.bottom-bar');
+                        const playerFooter = document.querySelector('.player-container');
+
+                        if (tabId === 'player' && minimalMode) {
+                            standardTabs.forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el) el.style.display = 'none';
+                            });
+                            if (bottomBar) bottomBar.style.display = 'none';
+                            if (playerFooter) playerFooter.style.bottom = '0';
+                        } else {
+                            standardTabs.forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el) el.style.display = 'inline-block';
+                            });
+                            if (bottomBar) bottomBar.style.display = 'flex';
+                            if (playerFooter) playerFooter.style.bottom = '26px';
+                        }
+                        if (tabId === 'parser') {
                             loadParserPerformance('parser-tab-perf-container');
                         }
                         if (tabId === 'debug' && typeof loadDebugDBInfo === 'function') loadDebugDBInfo();
@@ -4309,6 +4343,21 @@
                             <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">
                                 Darstellung
                             </h3>
+                            <div
+                                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-minimal-player"
+                                        onchange="updateMinimalPlayerMode(this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                                <div>
+                                    <div style="font-weight: 500;">Header- & Footer-Bereinigung</div>
+                                    <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                                        Blendet die Navigationstabs und die Statuszeile im Player-Modus aus.
+                                    </div>
+                                </div>
+                            </div>
+
                             <div
                                 style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
                                 <label class="switch">
@@ -7124,9 +7173,35 @@
                             pipelineElement.addEventListener('play', () => updateMediaMetadata({ title: document.querySelector('#status') ? document.querySelector('#status').textContent : '' }));
                         }
                     }
-                    function set_media_session(meta) {
-                        try {
-                            if (!('mediaSession' in navigator)) return;
+                    function updateMinimalPlayerMode(enabled) {
+            mwv_config.minimal_player_view = enabled;
+            saveParserChainUI(); // Re-use this for global config save
+            const activeTab = localStorage.getItem('mwv_active_tab') || 'player';
+            switchTab(activeTab, getTabButton(activeTab));
+        }
+
+        function getTabButton(tabId) {
+            const btnMap = {
+                'player': 'active-queue-tab-trigger',
+                'library': 'coverflow-library-tab-trigger',
+                'item': 'indexed-sqlite-repository-tab-trigger',
+                'file': 'filesystem-crawler-tab-trigger',
+                'edit': 'crud-metadata-tab-trigger',
+                'options': 'system-registry-tab-trigger',
+                'parser': 'chain-config-tab-trigger',
+                'debug': 'telemetry-inspector-tab-trigger',
+                'tests': 'qa-validation-tab-trigger',
+                'reporting': 'reporting-dashboard-tab-trigger',
+                'logbuch': 'documentation-journal-tab-trigger',
+                'playlist': 'sequential-buffer-tab-trigger',
+                'vlc': 'media-orchestrator-tab-trigger',
+                'video': 'media-orchestrator-tab-trigger'
+            };
+            return document.getElementById(btnMap[tabId]);
+        }
+        function set_media_session(meta) {
+            try {
+                if (!('mediaSession' in navigator)) return;
                             const artwork = (meta.artwork && meta.artwork.length) ? meta.artwork[0].src : document.getElementById('footer-artwork-raster-buffer').src;
                             navigator.mediaSession.metadata = new MediaMetadata({
                                 title: meta.title || '',
@@ -10887,7 +10962,8 @@
                 "parser_mode": newMode,
                 "fast_scan_enabled": fastScanEnabled,
                 "indexed_categories": indexedCats,
-                "displayed_categories": displayedCats
+                "displayed_categories": displayedCats,
+                "minimal_player_view": mwv_config.minimal_player_view
             };
 
             console.log("Saving full parser config:", finalConfig);
