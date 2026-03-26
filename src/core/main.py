@@ -670,10 +670,23 @@ def update_playback_position(name, position):
     """Updates the persistent playback position."""
     try:
         import db
-        db.update_playback_position(name, position)
+        if db.db_path.exists():
+            db.update_playback_position(name, position)
         return {"ok": True}
     except Exception as e:
         _logger.exception("Failed to update playback position")
+        return {"ok": False, "error": str(e)}
+
+
+@eel.expose
+def update_media_duration(name: str, duration_sec: float):
+    """Updates the persistent media duration."""
+    try:
+        from src.core import db
+        db.update_media_duration(name, duration_sec)
+        return {"ok": True}
+    except Exception as e:
+        _logger.exception("Failed to update media duration")
         return {"ok": False, "error": str(e)}
 
 

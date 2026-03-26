@@ -1,5 +1,315 @@
 ---
 
+## Walkthrough: Media Library & Video Streaming Enhancements (26.03.2026)
+
+### 1. Dedizierte Video-Bibliothek
+Ein neuer "Videos"-Sub-Tab wurde zur Bibliothek hinzugefügt und bietet ein modernes, YouTube-ähnliches Grid für komfortables Browsen.
+
+**Key Features:**
+- Responsive Grid: Dunkles, modernes Layout, optimiert für Videoinhalte
+- Hover-to-Play Previews: Mouseover auf eine Video-Karte startet eine stummgeschaltete, loopende Vorschau
+- Visuelle Fortschrittsbalken: Bereits angesehene Videos zeigen einen roten Fortschrittsbalken am Thumbnail
+
+**Video Library Overview:**
+Beispiel für das neue Video-Streaming-Grid mit Hover-Preview und Fortschrittsanzeige.
+
+### 2. Playback Position Persistence
+Die Anwendung merkt sich jetzt automatisch, wo du in jedem Video aufgehört hast.
+
+**Funktionsweise:**
+- Automatisches Speichern: Während der Wiedergabe wird die Position alle 5 Sekunden in der Datenbank gespeichert
+- Nahtloses Fortsetzen: Beim erneuten Abspielen springt der Player automatisch zur letzten gespeicherten Position
+- Datenbank-Backend: Nutzt die neuen Spalten `playback_position` und `last_played` in der `media`-Tabelle
+
+### 3. Media Routing & Reporting
+Das Reporting-Dashboard wurde um detaillierte Metriken zu Video-Codecs und Routing-Performance erweitert.
+
+- Codec Distribution: Visuelle Aufschlüsselung der Videoformate in der Bibliothek
+- Routing Analysis: Detaillierte Reports, ob ein Video per Direct Remux, HLS Fallback oder Transcoding abgespielt wurde
+
+**Verifikation:**
+Alle Backend-Persistence-APIs und Frontend-UI-Komponenten sind funktional und getestet.
+---
+
+## Task-Status: Media Library Expansion & Video Library (26.03.2026)
+
+### Status
+- Video Player Sichtbarkeit repariert (redundante Tags entfernt)
+- Bug bei absoluter Pfadauflösung im /direct/-Route behoben
+- get_routing_suite_report via Eel bereitgestellt
+- Video Player Architektur im Logbuch dokumentiert
+- Routing Test Suite erweitert
+- Video Library & Persistence:
+  - Backend: Spalten playback_position, last_played, duration_sec zur media-Tabelle hinzugefügt
+  - Backend: Persistence-API in db.py implementiert
+  - Backend: Persistence-API in main.py via Eel bereitgestellt
+  - Frontend: "Videos"-Sub-Tab in der Bibliothek ergänzt
+  - Frontend: Video Streaming Grid mit Hover-Preview umgesetzt
+  - Frontend: Video.js an Persistence-API angebunden (Progress speichern/laden)
+
+### Verifikation & Final Polish
+- End-to-End-Test der Persistence (Schema und Backend-Logik verifiziert)
+- Walkthrough mit Video-Library-Demo aktualisiert
+- Media-Duration-Sync für exakte Fortschrittsbalken
+
+### Details: Video Streaming Library
+- Dedizierter Sub-Tab in der Bibliothek
+- YouTube-ähnliches Card-Layout mit Hover-to-Play-Vorschau
+- Fortschrittsbalken auf Video-Karten für angefangene Inhalte
+- Automatische Positionswiederherstellung beim Starten der Wiedergabe
+- Dynamisches Duration-Syncing für stets akkurate Fortschrittsanzeigen
+
+### Details: Media Routing Tests
+- Validierung der direct-, transcode- und hls-Logik
+- Funktionaler Test für alle wichtigen Streaming-Endpunkte
+---
+
+## Walkthrough: Finalisierung Video Library & Playback Persistence (26.03.2026)
+
+### Highlights
+- **Full Persistence:** Der Player merkt sich Wiedergabeposition und Gesamtdauer jedes Videos – auch nach Neustart.
+- **Verbesserte UI:** Der Video-Library-Unterreiter nutzt ein responsives Grid mit Hover-to-Play-Previews und Fortschrittsanzeige.
+- **Backend-Stabilität:** Das Datenbankschema ist geprüft, alle Persistence-Spalten sind korrekt indiziert und werden via Eel aktualisiert.
+- **Auto-Sync:** Die Frontend-Logik synchronisiert die Videodauer automatisch mit dem Backend, sodass der Fortschritt für alle Medien exakt getrackt wird.
+
+**Details zur Implementierung und Verifikation sind in task.md und walkthrough.md dokumentiert.**
+---
+
+## Notiz: MongoDB als Alternative für Medienverwaltung (26.03.2026)
+
+**Was ist MongoDB?**
+MongoDB ist eine dokumentenorientierte NoSQL-Datenbank. Sie speichert Daten als flexible JSON-ähnliche Dokumente (BSON) statt in starren Tabellen.
+
+**Vorteile:**
+- Sehr flexibel bei sich ändernden oder unstrukturierten Daten (z.B. Medien mit variablen Metadaten, viele Cover, Scraper-Infos)
+- Keine feste Schemadefinition nötig, Felder können je Dokument unterschiedlich sein
+- Gute Skalierbarkeit und Performance bei großen Datenmengen
+- Einfache Speicherung von verschachtelten Strukturen (z.B. Listen von Covern, Autoren, Editionen)
+
+**Nachteile:**
+- Keine klassischen SQL-Tabellen, keine Joins wie in relationalen DBs
+- Konsistenz und Transaktionen eingeschränkt im Vergleich zu SQL
+- Für sehr strukturierte, relationale Datenmodelle weniger geeignet
+
+**Einsatzszenario:**
+MongoDB eignet sich besonders, wenn Medienobjekte sehr unterschiedliche oder dynamische Metadaten haben, viele verschachtelte Listen (z.B. mehrere Cover, Autoren, Editionen) oder wenn das Datenmodell häufig angepasst werden muss.
+
+**Fazit:**
+Für klassische Medienverwaltungen mit klaren Beziehungen ist SQL/SQLAlchemy meist besser. Für sehr flexible, dynamische Medien- und Metadatenstrukturen kann MongoDB eine sinnvolle Alternative sein.
+---
+
+## Notiz: Migration von Datenbanken (26.03.2026)
+
+**Was ist eine Migration?**
+Eine Migration bezeichnet die Übertragung von Daten und/oder Struktur von einer Datenbank in eine andere – z.B. von SQLite nach PostgreSQL, von einer alten Struktur auf ein neues Modell oder zwischen verschiedenen DB-Typen.
+
+**Typische Migrationsszenarien:**
+- Wechsel von SQLite auf PostgreSQL/MySQL für bessere Skalierbarkeit
+- Umstellung von Einzel-DB auf Multi-DB-Architektur
+- Strukturänderungen (z.B. neue Felder, Tabellen, Beziehungen)
+- Zusammenführung oder Aufteilung von Datenbanken
+
+**Herausforderungen:**
+- Datenkonsistenz und -integrität sicherstellen
+- Migration von Beziehungen, Fremdschlüsseln, Indizes
+- Umgang mit großen Datenmengen (Performance, Downtime)
+- Anpassung von Applikationslogik und Schnittstellen
+
+**Tools & Strategien:**
+- ORMs wie SQLAlchemy bieten Migrations-Frameworks (z.B. Alembic) für strukturierte, versionierte Migrationen
+- Für reine Datenmigration: Export/Import (CSV, SQL-Dump, ETL-Tools)
+- Schrittweise Migration (z.B. Shadow-DB, Parallelbetrieb, schrittweises Umschalten)
+
+**Empfehlung:**
+- Migrationen immer testen und dokumentieren (Testdatenbank, Backups!)
+- Automatisierte Migrationsskripte nutzen, keine manuellen Einzeländerungen
+- Nach Migration: Validierung der Daten und Funktionstests durchführen
+---
+
+## Notiz: Multi-Datenbank-Strategien für unterschiedliche Medientypen (26.03.2026)
+
+**Ansatz:**
+Es ist möglich, in einer Anwendung mehrere Datenbanken parallel zu betreiben – z.B. eine SQLite-DB für Items, eine weitere für komplexe Medienobjekte (DVDs, Bücher, etc.), oder sogar verschiedene DB-Typen (z.B. SQLite + PostgreSQL/GraphDB).
+
+**Vorteile:**
+- Trennung der Datenmodelle nach Medientyp (z.B. Audio, Video, Bücher, Sammlungen)
+- Optimierung der jeweiligen DB-Struktur und Abfragen für den konkreten Anwendungsfall
+- Unabhängige Skalierung und Wartung der einzelnen Datenbanken
+
+**Nachteile:**
+- Komplexere Verwaltung und Synchronisation zwischen den Datenbanken
+- Höherer Entwicklungs- und Wartungsaufwand
+
+**Empfehlung:**
+- Für einfache Szenarien reicht meist eine zentrale DB mit klaren Tabellen für die verschiedenen Typen.
+- Bei sehr unterschiedlichen Anforderungen (z.B. klassische Items vs. komplexe Sammlungsobjekte) kann eine Multi-DB-Strategie sinnvoll sein.
+- Wichtig: Klare Schnittstellen und Synchronisationsmechanismen zwischen den Datenbanken definieren.
+---
+
+## Notiz: SQLite-Limits und Skalierbarkeit für Item-Verwaltung (26.03.2026)
+
+**Aktuelle Definition:**
+Die Item-Verwaltung nutzt SQLite als Datenbank.
+
+**Wie viele Items können verwaltet werden?**
+- SQLite kann theoretisch bis zu ca. 140 Terabyte pro Datenbankdatei speichern (praktisch meist durch das Dateisystem limitiert).
+- Einzelne Tabellen können bis zu 2^64 Zeilen enthalten.
+- Die maximale Zeilengröße beträgt standardmäßig 1 GB (kann kompiliert werden).
+- Die Anzahl gleichzeitiger Schreibzugriffe ist begrenzt, da SQLite keine echte Mehrbenutzer-DB ist.
+
+**Fazit:**
+Für Einzelplatz- und kleine Mehrbenutzeranwendungen ist SQLite für sehr große Item-Mengen (Millionen Datensätze) geeignet. Bei massiv parallelem Zugriff oder extremen Datenmengen empfiehlt sich ein Umstieg auf PostgreSQL/MySQL.
+---
+
+## Logbuch: Datenbankstrategie für Item- und Objektverwaltung (26.03.2026)
+
+### Ausgangslage
+Im System gibt es aktuell zwei zentrale Begriffe:
+- **Item:** Einzelnes Medium (z.B. Musikstück, Track), aktuell mit SQLite verwaltet.
+- **Objekt:** Übergeordnete Medienobjekte (z.B. DVD, Buch, Sammlung), die komplexere Metadaten, Cover, Scraper-Informationen etc. benötigen.
+
+### Optionen für die zentrale Medienverwaltung
+
+**1. SQLite (klassisch, wie bei Items):**
+- Einfach, schnell, für kleine/mittlere Datenmengen geeignet.
+- Relationale Struktur, aber wenig Komfort bei komplexen Beziehungen und Migrationen.
+
+**2. SQLAlchemy (ORM für relationale DBs):**
+- Abstraktionsschicht für verschiedene relationale Datenbanken (SQLite, PostgreSQL, MySQL).
+- Komfortable Modellierung von Objekten, Beziehungen, Migrationen und Abfragen.
+- Ideal für strukturierte Medienverwaltung mit vielen Feldern (Titel, Jahr, Cover, Scraper-Metadaten, etc.).
+- Unterstützt flexible Erweiterung und spätere Migration auf größere DB-Systeme.
+
+**3. Graphdatenbanken (z.B. Neo4j):**
+- Speziell für sehr komplexe, dynamische Beziehungsnetze (z.B. Serien, Editionen, Autoren, Empfehlungen).
+- Abfragen nach Verbindungen/Netzwerken sind sehr effizient.
+- Für klassische Listen/Tabellen weniger geeignet.
+
+### Speicherstruktur für Medienobjekte
+- Medienobjekte (z.B. DVD-Images, Cover) können nach logischer Struktur im Dateisystem abgelegt werden:
+  - Beispiel: `/Medien/DVDs/Titel (Jahr)/Titel CD2.iso`, `/Medien/DVDs/Titel (Jahr)/cover.jpg`
+- Die Datenbank (z.B. via SQLAlchemy) speichert Pfade, Metadaten und Verknüpfungen.
+- Diese Struktur erleichtert das Parsen, Scrapen und die spätere Automatisierung.
+
+### Empfehlung
+- Für Items kann SQLite bestehen bleiben.
+- Für komplexere Medienobjekte und zentrale Verwaltung ist SQLAlchemy (mit SQLite oder PostgreSQL) ideal.
+- Graphdatenbanken nur bei Bedarf an hochkomplexen Beziehungen.
+- Medienobjekte und Cover sollten nach klarer Ordnerstruktur abgelegt werden, Pfade und Metadaten in der DB.
+
+**Stichwort:** DVD-Objekte mit .iso und Cover nach Schema `Titel (Jahr)` im Ordner, um Parser und Scraper zu unterstützen.
+---
+
+## Entscheidungsnotiz: Datenbankstrategie für zentrale Medienverwaltung (26.03.2026)
+
+**Ziel:**
+Alle CDs, DVDs, Bücher und weitere Medientypen sowie deren Metadaten (inkl. diverser Coverbilder) sollen zentral erfasst und verwaltet werden.
+
+**Option 1: SQLAlchemy (relationale DB, z.B. SQLite/PostgreSQL)**
+- Sehr gut geeignet für strukturierte Medienverwaltung mit klaren Tabellen (Medien, Autoren, Cover, Kategorien etc.).
+- ORM-Komfort, Migrationen, flexible Abfragen, große Community.
+- SQLite für kleine/mittlere Projekte ausreichend, für größere Datenmengen/Mehrbenutzerbetrieb besser PostgreSQL.
+- Speicherung von Metadaten und Coverpfaden/Binärdaten problemlos möglich.
+
+**Option 2: Graphdatenbank (z.B. Neo4j)**
+- Sinnvoll bei sehr komplexen, dynamischen Beziehungen (z.B. Netzwerke, Empfehlungen, Serien, Editionen, Vererbungen).
+- Ideal für verschachtelte Sammlungen und Beziehungsabfragen, aber weniger für klassische Listen/Tabellen.
+
+**Empfehlung:**
+- SQLAlchemy mit relationaler DB ist für die meisten Medienverwaltungen ausreichend, wartbar und flexibel.
+- Graphdatenbank nur bei sehr komplexen, dynamischen Beziehungsnetzen nötig.
+- Bestehende SQLite-DB für Items kann weiter genutzt werden, zentrale Medienverwaltung kann auf SQLAlchemy umgestellt werden.
+
+**Hinweis zu Coverbildern:**
+- Speicherung als Datei (mit Pfad in der DB) ist meist effizienter als als BLOB.
+
+**Fazit:**
+SQLAlchemy ist für das Ziel sehr gut geeignet und flexibel erweiterbar. Graphdatenbank nur bei Bedarf an hochkomplexen Beziehungen.
+---
+
+## Anleitung: Unterreiter "Bibliothek" in der Bibliotheksansicht erstellen (26.03.2026)
+
+Um den Unterreiter "Bibliothek" in der Bibliotheksansicht zu erstellen, sind folgende Schritte im Frontend (z.B. in web/app.html) notwendig:
+
+1. **Tab-Button ergänzen:**
+  Im Tab-Bereich der Bibliothek einen neuen Button hinzufügen:
+  ```html
+  <button id="library-tab-bibliothek" onclick="switchLibrarySubTab('bibliothek')">Bibliothek</button>
+  ```
+
+2. **Container für die Ansicht erstellen:**
+  ```html
+  <div id="lib-view-bibliothek" class="lib-view" style="display:none;">
+    <!-- Hier werden alle Medien gelistet -->
+  </div>
+  ```
+
+3. **switchLibrarySubTab anpassen:**
+  In der Funktion `switchLibrarySubTab` die Logik ergänzen, um den neuen Unterreiter anzuzeigen:
+  ```js
+  function switchLibrarySubTab(tab) {
+    // ...existing code...
+    document.getElementById('lib-view-bibliothek').style.display = (tab === 'bibliothek') ? '' : 'none';
+    // ...existing code...
+  }
+  ```
+
+4. **Rendering der Medienliste:**
+  Die Medienliste im neuen Container per JS dynamisch rendern.
+
+Optional: Ein vollständiger Code-Snippet für app.html oder die JS-Logik kann auf Wunsch bereitgestellt werden.
+---
+
+## Geplant: Unterreiter "Bibliothek" in der Bibliothek (26.03.2026)
+
+Ein neuer Unterreiter "Bibliothek" wird im Bibliotheksbereich eingeführt. Dieser dient als zentrale Übersicht aller Medien, unabhängig von Typ oder Status.
+
+### Features
+- Gesamtliste aller Medien (Audio, Video, Bilder etc.)
+- Einheitliche Such- und Filterfunktionen
+- Direkter Zugriff auf Medieninfos, Aktionen und Status
+- Grundlage für weitere Unterreiter wie "Videos", "Datenbank" etc.
+
+### Nächste Schritte
+- UI-Integration des "Bibliothek"-Tabs
+- Backend-Anpassung für vollständige Medienabfrage
+- Verknüpfung mit bestehenden und geplanten Unterreitern
+---
+
+## Geplant: Sortierung, Statusanzeige & Ordneransicht in der Bibliothek (26.03.2026)
+
+### Ziel
+Die Bibliothek erhält erweiterte Sortieroptionen, eine Statusanzeige für Medien (z.B. gescrappt, analysiert, fehlerhaft) und eine Ordneransicht zur besseren Navigation durch die Medienstruktur.
+
+### Features
+- Sortierung nach Name, Datum, Typ, Status etc.
+- Filter- und Suchoptionen für gezielte Medienauswahl
+- Status-Icons oder Badges für Medien (z.B. "neu", "fehlerhaft", "vollständig")
+- Ordneransicht: Anzeige der Medien nach Verzeichnisstruktur, inkl. Auf- und Zuklappen
+
+### Nächste Schritte
+- UI-Design für Sortier- und Filterfunktionen
+- Implementierung der Statusanzeige und Badges
+- Integration der Ordneransicht in die Bibliothek
+- Backend-Anpassungen für Status- und Verzeichnisabfragen
+---
+
+## Geplant: Unterreiter "Datenbank" in der Bibliothek (26.03.2026)
+
+Ein neuer Unterreiter "Datenbank" wird in der Bibliothek eingeführt. Dieser dient als zentraler Ort, um Medien zu scrappen, Metadaten zu erfassen und Datenbankoperationen durchzuführen.
+
+### Features
+- Übersicht aller gescrappten Medien und Metadaten
+- Buttons/Tools zum Anstoßen von Scraping- und Analyseprozessen
+- Möglichkeit, Medien manuell zu aktualisieren oder zu taggen
+- Zentrale Verwaltung und Monitoring von Datenbank-Operationen
+
+### Nächste Schritte
+- UI-Design und Integration des "Datenbank"-Tabs in die Bibliothek
+- Backend-Anbindung für Scraping- und Analysefunktionen
+- Dokumentation und Testfälle für die neuen Workflows
+---
+
 ## Implementation Plan: Video Library & Persistence (26.03.2026)
 
 ### Ziel

@@ -184,7 +184,8 @@ def init_db():
         ("amazon_cover", "TEXT"),
         ("parent_id", "INTEGER"),
         ("playback_position", "REAL"),
-        ("last_played", "TEXT")
+        ("last_played", "TEXT"),
+        ("duration_sec", "REAL")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -570,3 +571,18 @@ def get_playback_position(name):
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else 0
+
+
+def update_media_duration(name, duration_sec):
+    """
+    @brief Updates the total duration in seconds for a media item.
+    """
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE media 
+        SET duration_sec = ?
+        WHERE name = ?
+    """, (duration_sec, name))
+    conn.commit()
+    conn.close()
