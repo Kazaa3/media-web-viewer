@@ -1,3 +1,14 @@
+## Logbuch: Verbesserter Film TXT Import (26.03.2026)
+
+- **Film TXT Button:**
+  - Neuer "Film TXT"-Button im Datenbank-Sub-Tab ergänzt.
+- **Parsing-Verbesserung:**
+  - Backend erkennt jetzt Zeilen wie "Filmname (2026) [Extended  Cut] - DVD" als vollständigen Namen und ordnet sie korrekt der Kategorie "Film" und dem Typ "Video" zu.
+  - Funktioniert auch, wenn der Ordner/Dateipfad beim Import noch nicht existiert.
+- **Robustheit:**
+  - Bugfix: Import schlägt nicht mehr fehl, wenn die TXT nur Namen/relative Pfade enthält.
+- **Verifikation:**
+  - Import mit spezifischem Film-Format erfolgreich getestet, alle Einträge korrekt in der Datenbank.
 ## Logbuch: Fix ImportError durch relative Imports in main.py (26.03.2026)
 
 - **Problem:**
