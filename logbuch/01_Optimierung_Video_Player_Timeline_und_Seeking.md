@@ -1,3 +1,33 @@
+## Walkthrough: Media Library & Video Streaming Enhancements (26.03.2026)
+
+Dieser Walkthrough demonstriert die neue dedizierte Video-Library-Ansicht und das persistente Wiedergabesystem.
+
+### 1. Dedizierte Video-Library
+Ein neuer "Videos"-Sub-Tab wurde zur Bibliotheksansicht hinzugefügt und bietet ein YouTube-ähnliches Grid für komfortables Browsen.
+
+**Key Features:**
+- **Responsives Grid:** Modernes, dunkles Grid-Layout, optimiert für Videoinhalte.
+- **Hover-to-Play Previews:** Beim Überfahren einer Videokarte startet eine stummgeschaltete, loopende Vorschau.
+- **Visuelle Fortschrittsbalken:** Bereits teilweise gesehene Videos zeigen einen roten Fortschrittsbalken am unteren Rand des Thumbnails.
+
+**Video Library Overview**
+Beispiel für das neue Video-Streaming-Grid mit Hover-Previews und Fortschrittsanzeige.
+
+### 2. Playback Position Persistence
+Die Anwendung merkt sich jetzt automatisch, wo du in jedem Video aufgehört hast.
+
+**Funktionsweise:**
+- **Automatisches Speichern:** Während des Schauens wird die Position alle 5 Sekunden in der Datenbank gespeichert.
+- **Nahtloses Fortsetzen:** Beim erneuten Abspielen springt der Player automatisch zur letzten gespeicherten Position.
+- **Datenbank-Backend:** Nutzt die neuen Spalten `playback_position` und `last_played` in der `media`-Tabelle.
+
+### 3. Media Routing & Reporting
+Das Reporting-Dashboard wurde um detaillierte Metriken zu Video-Codecs und Routing-Performance erweitert.
+
+- **Codec-Verteilung:** Visuelle Aufschlüsselung der Videoformate in deiner Bibliothek.
+- **Routing-Analyse:** Detaillierte Berichte, ob ein Video per Direct Remux, HLS Fallback oder Echtzeit-Transcoding abgespielt wurde.
+
+**Verifikation:** Alle Backend-Persistenz-APIs und Frontend-UI-Komponenten sind funktional.
 ## Refactoring Video Player UI and Test Suite (26.03.2026)
 
 **Goal Description**
