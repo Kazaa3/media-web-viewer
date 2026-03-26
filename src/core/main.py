@@ -99,18 +99,18 @@ from typing import cast, Any
 import ast
 
 # Internal imports
-from src.parsers.format_utils import (
+from src.parsers.format_utils import (  # type: ignore
     PARSER_CONFIG, load_parser_config, save_parser_config,
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
     ffprobe_suite, ffprobe_quality_score
 )
-import env_handler
-import src.core.logger as logger
-from src.core.logger import get_logger
-from src.parsers import tag_writer
-from src.core import hardware_detector
-from src.core import transcoder
-from src.core import db
+import env_handler  # type: ignore
+import src.core.logger as logger  # type: ignore
+from src.core.logger import get_logger  # type: ignore
+from src.parsers import tag_writer  # type: ignore
+from . import hardware_detector  # type: ignore
+from . import transcoder  # type: ignore
+from . import db  # type: ignore
 
 # transcode_mgr deferred
 transcode_mgr = None
@@ -149,7 +149,7 @@ def ensure_singleton():
 def get_best_ffmpeg_encoder():
     """Returns the best available H.264 encoder for FFmpeg (HW or SW)."""
     try:
-        from src.core import hardware_detector
+        from . import hardware_detector
         gpu_info = hardware_detector.get_gpu_info()
         encoders = gpu_info.get("encoders", [])
         if "nvenc" in encoders: return "h264_nvenc"
@@ -376,8 +376,8 @@ if BROWSER_PID:
     logging.info(f"[System] Browser PID: {BROWSER_PID}")
 
 try:
-    from src.core.models import MediaItem
-    import src.core.db as db
+    from src.core.models import MediaItem  # type: ignore
+    import src.core.db as db              # type: ignore
 except ModuleNotFoundError as exc:
     # Handle missing modules
     missing_module = exc.name or "unknown"
@@ -604,7 +604,7 @@ def handle_click(event_type: str, payload: dict):
             # example: toggle pin state in db (implement db.toggle_pin if
             # available)
             try:
-                from db import toggle_pin
+                from .db import toggle_pin
                 toggled = toggle_pin(media_id)
                 return {
                     "ok": True,
@@ -2896,7 +2896,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         if "abbild" in indexed_cats:
             all_exts |= DISK_IMAGE_EXTENSIONS
         
-        logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {list(all_exts)[:10]}...")
+        ext_list = list(all_exts)
+        logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
 
         # Reset counters
         count_indexed: int = 0
@@ -5005,7 +5006,7 @@ def remux_mkv_batch(folder_path):
             continue  # Skip existing MKVs
         video_files.extend(list(p.glob(f"*{ext}")))
 
-    results = {"total": len(video_files), "success": 0, "errors": []}
+    results: dict[str, Any] = {"total": len(video_files), "success": 0, "errors": []}
 
     for vf in video_files:
         output = vf.with_suffix(".mkv")
@@ -5137,7 +5138,7 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
 
             lines.append(f"#EXTINF:{duration},{extinf_title}\n")
             lines.append(f"{file_path}\n")
-            exported += 1
+            exported = int(exported) + 1
 
         playlist_file.write_text("".join(lines), encoding='utf-8')
 
@@ -6130,9 +6131,11 @@ def run_tests(test_files):
             history = []
             if results_path.exists():
                 try:
-                    history = json.loads(results_path.read_text(encoding='utf-8'))
-                except:
-                    history = []
+                    data = json.loads(results_path.read_text(encoding='utf-8'))
+                    if isinstance(data, list):
+                        history = data
+                except (json.JSONDecodeError, IOError):
+                    pass
             
             history.append({
                 "timestamp": timestamp,
@@ -6143,7 +6146,7 @@ def run_tests(test_files):
                 "files": test_files
             })
             # Keep last 100 runs
-            last_100 = history[-100:]
+            last_100: list[dict] = history[-100:]  # type: ignore
             results_path.write_text(json.dumps(last_100, indent=2), encoding='utf-8')
         except Exception as e:
             logging.error(f"[Reporting] Error saving results: {e}")
