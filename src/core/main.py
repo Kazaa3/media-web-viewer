@@ -5863,6 +5863,32 @@ def list_logbook_entries():
 
 
 @eel.expose
+def read_file(filename, context='logbuch'):
+    """
+    @brief Reads the content of a file from a specific context.
+    @param filename Name of the file.
+    @param context Context/Folder (default: 'logbuch').
+    @return File content as string or None if error.
+    """
+    try:
+        if context == 'logbuch':
+            base_path = PROJECT_ROOT / "logbuch"
+        else:
+            # For security, only allow logbuch for now
+            return None
+
+        file_path = base_path / filename
+        if not file_path.exists() or not file_path.is_file():
+            return None
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        print(f"read_file error: {e}")
+        return None
+
+
+@eel.expose
 def list_feature_modal_items():
     """
     Returns feature modal items from logbook plus selected markdown files from the project root.

@@ -6,6 +6,7 @@
   - **Persistence Layer:** `playback_position` und `duration_sec` werden in der Datenbank getrackt, um Videos an letzter Stelle fortzusetzen.
   - **Hover Preview:** YouTube-ähnlicher Hover-Effekt, der eine stummgeschaltete Vorschau auf der Karte abspielt.
   - **CD-Style Albums:** Album-Ansicht nutzt 1:1-Format mit `object-fit: contain` für unbeschnittene Cover.
+  - **Datenbank View:** Neuer "Datenbank"-Sub-Tab mit durchsuchbarer Tabelle aller indizierten Medien und Schnellaktionen für Playback und Metadatenbearbeitung.
 
 2. **Enhanced Video Format Test Suite**
   - **ISO Support:** .iso-Dateien werden automatisch in die Test-Suite aufgenommen.

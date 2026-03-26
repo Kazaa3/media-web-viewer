@@ -201,6 +201,16 @@
             -webkit-user-select: none;
         }
 
+        /* Database View Badges */
+        .badge-video { background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; border: 1px solid #bbdefb; }
+        .badge-audio { background: #f3e5f5; color: #7b1fa2; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; border: 1px solid #e1bee7; }
+        .badge-images { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; border: 1px solid #c8e6c9; }
+        .badge-abbild { background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; border: 1px solid #ffe0b2; }
+        .badge-unknown { background: #f5f5f5; color: #616161; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; border: 1px solid #e0e0e0; }
+        
+        .icon-btn { cursor: pointer; border: none; background: none; font-size: 1.2em; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+        .icon-btn:hover { background: #f0f0f0; }
+
         .grab-icon {
             position: relative;
             cursor: grab;
@@ -4097,6 +4107,8 @@
                             style="background: #fff3e0; border-color: #ffb74d; color: #e65100;">🎬 Videos (Streaming)</button>
                         <button id="lib-tab-btn-album" class="options-subtab" onclick="switchLibrarySubTab('album')">🎵 Album</button>
                         <button id="lib-tab-btn-following" class="options-subtab" onclick="switchLibrarySubTab('following')">📺 Der Folgende</button>
+                        <button id="lib-tab-btn-database" class="options-subtab" onclick="switchLibrarySubTab('database')"
+                            style="background: #e8f5e9; border-color: #2a7; color: #1b5e20;">💾 Datenbank (Alle)</button>
                     </div>
 
                     <!-- Filter Area -->
@@ -4155,6 +4167,34 @@
                 <!-- Video Streaming View -->
                 <div id="lib-view-streaming" class="library-sub-content">
                     <div id="streaming-grid-container" class="streaming-grid"></div>
+                </div>
+
+                <!-- Database Master View -->
+                <div id="lib-view-database" class="library-sub-content" style="display: none;">
+                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <input type="text" id="lib-db-search" placeholder="Datenbank durchsuchen..." 
+                            oninput="renderDatabaseView()"
+                            style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; width: 300px; outline: none;">
+                        <div id="lib-db-stats" style="font-size: 0.9em; color: #666;"></div>
+                    </div>
+                    <div class="table-container" style="max-height: 600px; overflow-y: auto;">
+                        <table class="details-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Typ</th>
+                                    <th>Kategorie</th>
+                                    <th>Name</th>
+                                    <th>Artist / Album</th>
+                                    <th>Dateipfad</th>
+                                    <th>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lib-db-table-body">
+                                <!-- Rows rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div id="lib-view-coverflow" class="library-sub-content active">
@@ -7754,6 +7794,8 @@
                     renderAlbumView();
                 } else if (librarySubTab === 'following') {
                     renderFollowingView();
+                } else if (librarySubTab === 'database') {
+                    renderDatabaseView();
                 }
 
             } catch (e) {
@@ -7993,12 +8035,84 @@
                         <td>${item.category || '---'}</td>
                         <td>${item.type || '---'}</td>
                         <td title="${item.path}">${item.path || '---'}</td>
-                        <td>${item.tags || '---'}</td>
+                        <td>${item.tags ? JSON.stringify(item.tags) : '---'}</td>
                     </tr>
                 `;
             }).join('');
 
             safeHtml('details-table-body', html);
+        }
+
+        async function renderDatabaseView() {
+            const body = document.getElementById('lib-db-table-body');
+            const stats = document.getElementById('lib-db-stats');
+            const searchInput = document.getElementById('lib-db-search');
+            if (!body) return;
+
+            try {
+                // We fetch the FULL library for the database view, ignoring current filters
+                const library = await eel.get_library()();
+                let items = library.media || [];
+
+                // Filter by search term
+                const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                if (searchTerm) {
+                    items = items.filter(i => 
+                        (i.name || '').toLowerCase().includes(searchTerm) ||
+                        (i.path || '').toLowerCase().includes(searchTerm) ||
+                        (i.category || '').toLowerCase().includes(searchTerm) ||
+                        (i.type || '').toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                if (stats) stats.innerText = `${items.length} Objekte in der Datenbank`;
+
+                const html = items.map((item, idx) => {
+                    const artist = item.tags && item.tags.artist ? item.tags.artist : '';
+                    const album = item.tags && item.tags.album ? item.tags.album : '';
+                    const info = [artist, album].filter(Boolean).join(' / ');
+                    
+                    return `
+                        <tr>
+                            <td style="font-family: monospace; font-size: 0.8em; color: #888;">${item.id || '---'}</td>
+                            <td><span class="badge-${(item.type || 'unknown').toLowerCase()}">${item.type || '---'}</span></td>
+                            <td>${item.category || '---'}</td>
+                            <td style="font-weight: 500;">${item.name || '---'}</td>
+                            <td style="font-size: 0.9em; color: #444;">${info || '---'}</td>
+                            <td style="font-size: 0.8em; color: #666; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.path}">
+                                ${item.path || '---'}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="icon-btn" onclick="playMediaObjectByName('${item.name.replace(/'/g, "\\'")}')" title="Abspielen">▶️</button>
+                                    <button class="icon-btn" onclick="openMetaEditor('${item.name.replace(/'/g, "\\'")}')" title="Editieren">✏️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                safeHtml('lib-db-table-body', html || '<tr><td colspan="7" style="text-align: center; padding: 20px;">Keine Einträge gefunden</td></tr>');
+
+            } catch (e) {
+                console.error("Failed to render database view:", e);
+                safeHtml('lib-db-table-body', '<tr><td colspan="7" style="color: red;">Fehler beim Laden der Datenbank</td></tr>');
+            }
+        }
+
+        async function playMediaObjectByName(name) {
+            const media = await eel.get_media_by_name(name)();
+            if (media) playMediaObject(media);
+        }
+
+        async function openMetaEditor(name) {
+            const media = await eel.get_media_by_name(name)();
+            if (media) {
+                switchTab('edit');
+                openEditForm(media);
+            } else {
+                alert("Medium nicht in Datenbank gefunden.");
+            }
         }
 
         function updateCoverflowDisplay() {
