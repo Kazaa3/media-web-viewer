@@ -6501,28 +6501,55 @@ if __name__ == "__main__":
         
         # Check if it's interlaced content
         scan = analysis.get("scan_type", "progressive").lower()
-        if scan != "progressive" or p.suffix.lower() == ".iso":
-             # Apply deinterlacing for non-progressive or ISO/DVD content
+        height = int(analysis.get("height", 0))
+        is_hd = height >= 720
+        is_4k = height >= 2160
+
+        if (scan != "progressive" or p.suffix.lower() == ".iso") and not is_4k:
+             # Apply deinterlacing for non-progressive or ISO/DVD content, but skip for 4K (it's too slow)
              vf.append("yadif=0:-1:0")
         
         # FFmpeg command for Real-time Fragmented MP4 (Chrome Native support)
         # Handle seeking via ?ss= query param
         start_time = bottle.request.query.get('ss', '0')
+        encoder = get_best_ffmpeg_encoder()
         
-        cmd = ["ffmpeg"]
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         
+        # HW Acceleration setup
+        if encoder == "h264_vaapi":
+            cmd += ["-vaapi_device", "/dev/dri/renderD128"]
+            
         # Fast seeking for disc images/large files
         if float(start_time) > 0:
             cmd += ["-ss", start_time]
             
-        cmd += [
-            "-i", str(p),
-            "-c:v", get_best_ffmpeg_encoder(), "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency",
-            "-crf", "25", "-maxrate", "4M", "-bufsize", "8M"
-        ]
+        cmd += ["-i", str(p)]
         
-        if vf:
+        # Bitrate selection based on resolution
+        if is_4k:
+            max_rate, buf_size = "15M", "30M"
+        elif is_hd:
+            max_rate, buf_size = "8M", "16M"
+        else:
+            max_rate, buf_size = "4M", "8M"
+
+        # Video filters & Encoder flags
+        if encoder == "h264_vaapi":
+            # VAAPI needs specific pix_fmt and filter chain
+            vf.insert(0, "format=nv12,hwupload")
             cmd += ["-vf", ",".join(vf)]
+            v_rate = "12M" if is_4k else "6M"
+            cmd += ["-c:v", "h264_vaapi", "-b:v", v_rate, "-maxrate", v_rate]
+        elif encoder == "h264_nvenc":
+            if vf: cmd += ["-vf", ",".join(vf)]
+            cmd += ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "ll", "-rc", "vbr", "-cq", "28", 
+                    "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
+        else:
+            # Software fallback (libx264)
+            if vf: cmd += ["-vf", ",".join(vf)]
+            cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency", 
+                    "-crf", "25", "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high", "-level", "4.1"]
             
         cmd += [
             "-c:a", "aac", "-b:a", "128k", "-ac", "2",
@@ -6530,17 +6557,34 @@ if __name__ == "__main__":
             "pipe:1"
         ]
         
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        log.info(f"[Transcode-Route] Launching FFmpeg: {' '.join(cmd)}")
+        
+        # Use stdout=PIPE and stderr=PIPE to catch errors
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         bottle.response.content_type = 'video/mp4'
         
         def stream():
             try:
+                # Local ref to avoid NoneType issues during generator teardown
+                p_stdout = process.stdout
+                p_stderr = process.stderr
+                if p_stdout is None or p_stderr is None:
+                    log.error("[Transcode-Route] Subprocess pipes not initialized.")
+                    return
+                    
                 while True:
-                    data = process.stdout.read(1024 * 16)
+                    data = p_stdout.read(1024 * 64)
                     if not data:
+                        # Check stderr if process finished early
+                        if process.poll() is not None and process.returncode != 0:
+                            err_data = p_stderr.read()
+                            err = err_data.decode(errors='replace') if isinstance(err_data, bytes) else str(err_data)
+                            log.error(f"[Transcode-Route] FFmpeg crashed (code {process.returncode}): {err}")
                         break
                     yield data
+            except Exception as e:
+                log.error(f"[Transcode-Route] Stream generator error: {e}")
             finally:
                 if process.poll() is None:
                     process.terminate()

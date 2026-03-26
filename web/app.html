@@ -10775,6 +10775,7 @@
                 if (seekSlider) {
                     // Update display ONLY during drag
                     seekSlider.addEventListener('input', (e) => {
+                         const currentTimeSpan = document.getElementById('video-current-time');
                          if (vjsPlayer && vjsPlayer.duration()) {
                              const previewTime = (e.target.value / 100) * vjsPlayer.duration();
                              if (currentTimeSpan) currentTimeSpan.innerText = formatTime(previewTime);
@@ -10786,6 +10787,8 @@
                         if (vjsPlayer && vjsPlayer.duration()) {
                             const newTime = (e.target.value / 100) * vjsPlayer.duration();
                             console.info("[Video-Player] Seek commit at:", newTime);
+                            
+                            // For streams, ensure we update our internal duration if it was overridden
                             vjsPlayer.currentTime(newTime);
                         }
                     });
@@ -10853,14 +10856,20 @@
 
             // Manual duration override for streams (Video.js normally can't determine this for fragmented MSE)
             if (durationSec && durationSec > 0) {
-                console.info("[Video.js] Overriding duration to:", durationSec);
-                vjsPlayer.duration = function () { return parseFloat(durationSec); };
-                // Trigger an initial timeupdate to refresh the UI
-                setTimeout(() => {
-                    vjsPlayer.trigger('timeupdate');
-                }, 500);
+                console.info("[Video.js] Setting up duration override:", durationSec);
+                const applyOverride = () => {
+                    vjsPlayer.duration = function () { return parseFloat(durationSec); };
+                    vjsPlayer.trigger('durationchange');
+                };
+                vjsPlayer.on('loadedmetadata', applyOverride);
+                vjsPlayer.on('durationchange', () => {
+                   // Re-apply if VJS tries to reset it to 0 or something else
+                   if (vjsPlayer.duration() !== parseFloat(durationSec)) {
+                       vjsPlayer.duration = function () { return parseFloat(durationSec); };
+                   }
+                });
+                applyOverride();
             } else {
-                // Restore default behavior if no manual duration is provided
                 delete vjsPlayer.duration;
             }
 

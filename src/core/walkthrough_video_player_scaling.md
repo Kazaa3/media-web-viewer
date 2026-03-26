@@ -1,3 +1,51 @@
+## Logbuch: Task-Status Media Library Expansion & Video Library (26.03.2026)
+
+- **Video Player & Routing:**
+  - Sichtbarkeits- und DOM-Bugs behoben, absolute Pfadauflösung in /direct/ gefixt.
+  - get_routing_suite_report via Eel bereitgestellt, Routing Test Suite erweitert.
+  - Video Player Architektur dokumentiert.
+- **Video Library & Persistence:**
+  - Spalten playback_position, last_played, duration_sec zur media-Tabelle hinzugefügt.
+  - Persistence-API in db.py und main.py (Eel) implementiert.
+  - Leere Video-Library gefixt (isVideoItem-Filter), CATEGORY_MAP['video'] erweitert.
+  - "Videos"- und "Datenbank"-Sub-Tabs, Video-Grid mit Hover-Preview, zentrale DB-Tabelle mit Suche & Aktionen, Video.js-Persistenz.
+- **Verification & Polish:**
+  - End-to-End-Test der Persistence, MP4-Playback-Bug (serve_direct_media) behoben.
+  - Universal Tab Switching, onPlaylistItemClick vereinheitlicht, Album-Darstellung (CD-Style, object-fit: contain).
+- **Video Playback (DVD/MKV):**
+  - ISO/DVD zu VLC geroutet, Playback-Error-Modal mit technischen Infos integriert.
+- **Video Format Test Suite:**
+  - .iso in Test-Media-Discovery, monitorVjsPlayback, automatisches Tab-Switching, Fehler-Reporting.
+- **Playback Failure Debugging:**
+  - playVideo-Signatur gefixt, Fehler-Reporting verbessert, Circular Dependency gelöst, analyze_media robust.
+- **Walkthrough & Features:**
+  - Walkthrough aktualisiert, Media-Duration-Sync für Fortschrittsbalken.
+- **Logbuch Tab Rendering:**
+  - read_file in main.py, list_logbook_entries geprüft, loadLogbuchTab auditiert, DOM-Nesting-Fehler behoben.
+- **Logging Infrastructure:**
+  - Logs nach /logs/, Logger und .gitignore angepasst.
+- **Translations:**
+  - Fehlende env_label_ Keys ergänzt.
+- **Build Stabilisierung & GitHub Actions:**
+  - Build-Test-Gate bestanden, CI-Trigger erweitert, .github/ whitelisted, Pyre2-Linting systematisch adressiert.
+- **TXT Import & DB-Optimierung:**
+  - TXT-Import-API und UI für Audio, Film, Video, Serie implementiert.
+  - Optimierte DB-Lookups (get_media_by_remote_id, get_media_by_category, ...), Memory-Loads ersetzt.
+  - Item-Nummerierung und suchbare, hervorgehobene IDs in der DB-Ansicht.
+- **Metadaten-Parsing & Import:**
+  - Parser erkennt komplexe Titel (Editionen, Suffixe), extrahiert Metadaten auch bei fehlenden Dateien/Ordnern.
+  - Import robust für reine Ordnerlisten und komplexe TXT-Formate.
+## Logbuch: Verbesserte TXT-Import- & Metadaten-Parsing-Logik (26.03.2026)
+
+- **Directory/Missing File Parsing:**
+  - Bottleneck behoben: Metadaten werden jetzt auch extrahiert, wenn die Datei/der Ordner lokal nicht existiert ("Folder-only"-Import).
+- **Komplexe Movie-Titel:**
+  - Der Filename-Parser erkennt jetzt Formate wie "Title (Year) [Edition] - br" und extrahiert Editionen ([Director's Cut]) als eigenes Tag.
+  - Junk-Suffixe wie - br, - bd, - dvd werden entfernt.
+- **Verifikation:**
+  - Mit komplexen Beispielen wie "Filmname (1999) [4K] - br" und "Filmname [Director's Cut] - bd" erfolgreich getestet.
+- **Ergebnis:**
+  - Datenbank-Importe sind jetzt deutlich robuster und genauer – auch für reine Ordnerlisten oder noch nicht vorhandene Dateien.
 ## Logbuch: Verbesserte ID-Sichtbarkeit & Nummerierung in Datenbankansicht (26.03.2026)
 
 - **Sequence Number (#):**
