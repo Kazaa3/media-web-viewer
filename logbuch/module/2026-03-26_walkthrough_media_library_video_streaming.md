@@ -1,3 +1,63 @@
+# Debugging: Video-Library bleibt leer & Video-Playback startet nicht (26.03.2026)
+
+## Problem
+- Trotz vorhandener Video-Dateien (z.B. mp4, mkv) mit korrekten Kategorien/Extensions bleibt die Video-Library leer.
+- MP4-Videos starten nicht beim Klick.
+
+## Analyse
+- Die Filterung in renderLibrary und renderVideoStreamingView nutzt jetzt isVideoItem(item), aber die HTML-Container (z.B. video-streaming-view-container, streaming-grid-container) waren nicht korrekt benannt oder existierten nicht im DOM.
+- Die Suche nach den Containern in app.html ergab keine Treffer, was auf ein Problem im HTML-Layout oder Naming hindeutet.
+- Die Funktion playVideo wurde geprüft, um Fehler beim Starten von MP4-Videos zu identifizieren.
+
+## Nächste Schritte
+- Sicherstellen, dass die benötigten Container im HTML korrekt benannt und vorhanden sind.
+- renderVideoStreamingView und alle relevanten Komponenten auf isVideoItem(item) umstellen.
+- Backend- und Handler-Logik (get_play_source, get_handler_for_file) auf korrekte Pfad- und Typenübergabe prüfen.
+- Weitere DOM- und Event-Fehler im Zusammenspiel von UI und Backend analysieren.
+
+## Status
+Debugging läuft, HTML- und Backend-Struktur werden weiter geprüft und angepasst.
+# Finaler Bugfix: Video-Library-Filter, Tab-Switching & universelle Video-Redirection (26.03.2026)
+
+## Problem
+- Die Video-Library zeigte "Keine Videos gefunden", da die Filterlogik zu eng war.
+- Das Klicken auf Video-Items in Sidebar, Playlist oder per Next/Prev-Button wechselte nicht immer korrekt zum Video-Tab.
+
+## Lösung
+- Die Filterung nutzt jetzt isVideoItem(m) mit erweiterten Kategorien (inkl. Movie, TV Show) und prüft zuverlässig Extension und Kategorie.
+- updateSidebarPlaylists verwendet jetzt onPlaylistItemClick und isVideoItem für robustes Handling.
+- Die Funktionen playNext und playPrev wurden so angepasst, dass sie bei Video-Items immer automatisch zum Video-Tab umschalten.
+- Alle relevanten Stellen, an denen play(item, ...) aufgerufen wird, prüfen nun, ob ein Video vorliegt und schalten ggf. die UI um.
+
+## Ergebnis
+- Die Video-Library zeigt jetzt alle Videos korrekt an.
+- Navigation und Redirection zwischen Audio- und Video-Inhalten ist nahtlos und konsistent.
+- Die Änderungen sind in task.md und walkthrough.md dokumentiert.
+# Anhang: Video-Item-Erkennung – isVideoItem-Logik (26.03.2026)
+
+Die folgende Funktion wird verwendet, um Video-Items in der Bibliothek zuverlässig zu erkennen:
+
+```js
+function isVideoItem(item) {
+	if (!item) return false;
+	// 1. Check Category
+	const videoCategories = ['Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons', 'Movie', 'TV Show'];
+	if (item.category && videoCategories.includes(item.category)) return true;
+
+	// 2. Check Extension
+	const path = item.path || item.relpath || "";
+	const videoExtensions = ['.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv'];
+	const ext = path.toLowerCase().slice(((path.lastIndexOf(".") - 1) >>> 0) + 2);
+	if (ext && videoExtensions.includes("." + ext)) return true;
+
+	return false;
+}
+```
+
+**Erläuterung:**
+- Zuerst wird geprüft, ob das Item einer typischen Video-Kategorie zugeordnet ist.
+- Falls nicht, wird die Dateiendung (Extension) geprüft und mit einer Liste gängiger Videoformate abgeglichen.
+- Nur wenn mindestens eine Bedingung erfüllt ist, gilt das Item als Video und wird in der Video-Library angezeigt.
 # Systematische Analyse & finale Verifikation: Video-Library-Filter & Tab-Switching (26.03.2026)
 
 ## Vorgehen

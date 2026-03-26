@@ -35,7 +35,7 @@ class VideoHandler(MediaHandler):
             
         # 2. ISO / DVD
         if ext == ".iso" or self.filepath.is_dir():
-            return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(relpath))}", "duration_sec": d_sec}
+            return {"mode": "vlc", "path": str(self.filepath), "duration_sec": d_sec}
             
         # 3. Complex Codec Transcoding
         if analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:

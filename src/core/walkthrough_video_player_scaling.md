@@ -1,6 +1,39 @@
----
+## Update: Album-Card-Format, ISO/DVD-Routing & Playback-Error-Modal (26.03.2026)
+
+### Verbesserte Album-Ansicht
+- Albumkarten nutzen jetzt ein quadratisches CD-Cover-Format (1:1) für authentische, visuell geordnete Darstellung.
+- Cover werden mit `object-fit: contain` im Original-Seitenverhältnis angezeigt – kein Artwork geht verloren.
+
+### Robustes Video-Routing für ISO/DVD
+- ISO/DVD-Dateien werden automatisch an VLC weitergeleitet, statt im Browser transkodiert zu werden.
+- Dadurch funktionieren Menüs und komplexe Disc-Strukturen stabil und originalgetreu.
+
+### Playback Error Modal & Debugging
+- Ein neues Playback-Error-Modal erscheint, wenn ein Video nicht geladen werden kann.
+- Das Modal zeigt technische Metadaten (Video-/Audio-Codecs, Quality Score, Routing Mode, Dateipfad) zur schnellen Fehleranalyse.
+- Hilft beim Testen und Debuggen von problematischen Formaten und Codecs.
+
+**Fazit:**
+Diese Verbesserungen sorgen für ein hochwertigeres Album-Erlebnis und bieten volle technische Transparenz bei der Videowiedergabe und beim Debugging.
 
 ## Walkthrough: Media Library & Video Streaming Enhancements (26.03.2026)
+
+## Update: Neue Sub-Tabs "Album" & "Der Folgende" sowie Video Library/MP4-Fixes (26.03.2026)
+
+### Neue Sub-Tabs in der Bibliothek
+- **Album-Ansicht:** Eigener Unterreiter, der alle Audiodateien nach Album gruppiert. Ermöglicht das Durchstöbern und Abspielen kompletter Alben mit nur einem Klick.
+- **Der Folgende (TV/Serien):** Spezieller Sub-Tab für Serien und Episoden. Hier können Nutzer direkt in ihre Lieblingsserien einsteigen und die nächste Folge abspielen.
+
+### Video Library & MP4-Playback Fixes
+- **Leere Video-Library behoben:** Die Filterlogik für Videos wurde erweitert, sodass alle relevanten Kategorien und Dateitypen erkannt werden. Dadurch werden jetzt alle Videos korrekt im Streaming-Tab angezeigt.
+- **MP4-Playback repariert:** Ein Fehler in der Pfadauflösung im Backend wurde behoben. MP4-Dateien werden jetzt zuverlässig abgespielt, unabhängig vom Ursprungsort oder der Kategorie.
+
+### UI & Konsistenz-Verbesserungen
+- Einheitliches Playback-Routing: Das Abspielen von Medien funktioniert jetzt konsistent über Sidebar, Playlists und Bibliothek hinweg.
+- Navigation: Die neuen Sub-Tabs sind direkt in der Bibliothek verfügbar und bieten eine übersichtliche Navigation für verschiedene Medientypen.
+- Walkthrough und Logbuch wurden mit Details zu den neuen Navigationsfeatures und Bugfixes aktualisiert.
+
+**Hinweis:** Die neuen Tabs findest du im Bibliotheksbereich. Bei weiteren Wünschen oder Anpassungen bitte melden!
 
 ### 1. Dedizierte Video-Bibliothek
 Ein neuer "Videos"-Sub-Tab wurde zur Bibliothek hinzugefügt und bietet ein modernes, YouTube-ähnliches Grid für komfortables Browsen.

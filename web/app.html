@@ -1712,6 +1712,51 @@
             opacity: 0;
         }
 
+        /* Album View - CD Cover Format (Square) */
+        .album-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f0f0f0;
+            width: 100%;
+        }
+
+        .album-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+            z-index: 10;
+        }
+
+        .album-card-preview {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #fdfdfd;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .album-card-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s;
+            padding: 2px;
+        }
+        
+        .album-card:hover .album-card-preview img {
+            transform: scale(1.05);
+        }
+
         .video-card-info {
             padding: 12px;
             display: flex;
@@ -4050,6 +4095,8 @@
                             data-i18n="lib_tab_details">Dateimanager (Details)</button>
                         <button id="lib-tab-btn-streaming" class="options-subtab" onclick="switchLibrarySubTab('streaming')"
                             style="background: #fff3e0; border-color: #ffb74d; color: #e65100;">🎬 Videos (Streaming)</button>
+                        <button id="lib-tab-btn-album" class="options-subtab" onclick="switchLibrarySubTab('album')">🎵 Album</button>
+                        <button id="lib-tab-btn-following" class="options-subtab" onclick="switchLibrarySubTab('following')">📺 Der Folgende</button>
                     </div>
 
                     <!-- Filter Area -->
@@ -4136,6 +4183,18 @@
                                 <!-- Rows rendered dynamically -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <div id="lib-view-album" class="library-sub-content" style="display: none;">
+                    <div id="album-grid-container" class="media-grid">
+                        <!-- Album grid items rendered dynamically -->
+                    </div>
+                </div>
+
+                <div id="lib-view-following" class="library-sub-content" style="display: none;">
+                    <div id="following-grid-container" class="media-grid">
+                        <!-- Following grid items rendered dynamically -->
                     </div>
                 </div>
             </div>
@@ -7466,6 +7525,22 @@
     </div>
 
     <!-- Logbuch Editor Modal -->
+    <div id="playback-error-modal" class="modal-overlay">
+        <div class="modal-container" style="max-width: 500px; border: 2px solid #ff5252;">
+            <div class="modal-header" style="background: #fff0f0; border-bottom: 1px solid #ffdcdc;">
+                <h3 style="color: #d32f2f; margin: 0; display: flex; align-items: center; gap: 10px;">
+                    Playback Error
+                </h3>
+                <button onclick="safeStyle('playback-error-modal', 'display', 'none')" class="modal-close-btn">&times;</button>
+            </div>
+            <div id="playback-error-body" class="modal-body" style="background: #fff; padding: 20px;">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer" style="background: #fafafa; border-top: 1px solid #eee;">
+                <button onclick="safeStyle('playback-error-modal', 'display', 'none')" class="btn btn-primary" style="background: #d32f2f; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Schließen</button>
+            </div>
+        </div>
+    </div>
     <div id="logbuch-editor-modal" class="modal-overlay">
         <div class="modal-container" style="max-width: 800px;">
             <div class="modal-header">
@@ -7555,7 +7630,6 @@
             </div>
         </div>
     </div>
-    </div>
 
     <!-- Core Initialization & Environment -->
     <script>
@@ -7571,8 +7645,8 @@
         let coverflowItems = [];
 
         const CATEGORY_MAP = {
-            "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist"],
-            "video": ["Video", "Film", "Serie"],
+            "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Song"],
+            "video": ["Video", "Film", "Serie", "ISO/Image", "Musikvideos", "Animes", "Cartoons", "Movie", "TV Show"],
             "film": ["Film", "Film Object"],
             "serie": ["Serie"],
             "album": ["Album"],
@@ -7676,6 +7750,10 @@
                     renderDetailedView();
                 } else if (librarySubTab === 'streaming') {
                     renderVideoStreamingView();
+                } else if (librarySubTab === 'album') {
+                    renderAlbumView();
+                } else if (librarySubTab === 'following') {
+                    renderFollowingView();
                 }
 
             } catch (e) {
@@ -7683,11 +7761,136 @@
             }
         }
 
+        function renderAlbumView() {
+            const container = document.getElementById('album-grid-container');
+            if (!container) return;
+
+            // Group by Album name
+            const albums = {};
+            coverflowItems.forEach(item => {
+                let albumName = 'Unknown Album';
+                if (item.tags && item.tags.album) albumName = item.tags.album;
+                else if (item.category === 'Album') albumName = item.name;
+
+                if (!albums[albumName]) {
+                    albums[albumName] = {
+                        name: albumName,
+                        art: item.art_path,
+                        items: []
+                    };
+                }
+                albums[albumName].items.push(item);
+            });
+
+            let html = '';
+            Object.values(albums).forEach(album => {
+                const cover = album.art ? `/direct/${encodeURIComponent(album.art)}` : 'img/default_album.png';
+                html += `
+                <div class="video-card" onclick="playAlbum('${album.name.replace(/'/g, "\\'")}')">
+                    <div class="video-card-preview">
+                        <img src="${cover}" alt="${album.name}">
+                        <div class="video-duration-badge">${album.items.length} Items</div>
+                    </div>
+                    <div class="video-card-info">
+                        <div class="video-card-title">${album.name}</div>
+                        <div class="video-card-meta">
+                            <span>Album • ${album.items[0].tags.artist || 'Unknown Artist'}</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            safeHtml('album-grid-container', html || '<div style="padding: 40px; color: #999; text-align: center; width: 100%;">Keine Alben gefunden</div>');
+        }
+
+        function renderFollowingView() {
+            const container = document.getElementById('following-grid-container');
+            if (!container) return;
+
+            // Group by Series
+            const series = {};
+            coverflowItems.filter(i => isVideoItem(i) || i.category === 'Serie').forEach(item => {
+                const seriesName = (item.tags && item.tags.series) || (item.category === 'Serie' ? item.name : 'Other Videos');
+                if (!series[seriesName]) {
+                    series[seriesName] = {
+                        name: seriesName,
+                        items: []
+                    };
+                }
+                series[seriesName].items.push(item);
+            });
+
+            let html = '';
+            Object.values(series).forEach(s => {
+                const firstItem = s.items[0];
+                const cover = firstItem.art_path ? `/direct/${encodeURIComponent(firstItem.art_path)}` : 'img/default_video.png';
+                html += `
+                <div class="video-card" onclick="playSeries('${s.name.replace(/'/g, "\\'")}')">
+                    <div class="video-card-preview">
+                        <img src="${cover}" alt="${s.name}">
+                        <div class="video-duration-badge">${s.items.length} Folgen</div>
+                    </div>
+                    <div class="video-card-info">
+                        <div class="video-card-title">${s.name}</div>
+                        <div class="video-card-meta">
+                            <span>Serie • ${s.items.length} Episoden</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            safeHtml('following-grid-container', html || '<div style="padding: 40px; color: #999; text-align: center; width: 100%;">Keine Folgen gefunden</div>');
+        }
+
+        function playAlbum(albumName) {
+            const items = coverflowItems.filter(item => (item.tags && item.tags.album === albumName) || (item.category === 'Album' && item.name === albumName));
+            if (items.length > 0) {
+                currentPlaylist = [...items];
+                playlistIndex = 0;
+                isShuffle = false;
+                if (typeof updateShuffleUI === 'function') updateShuffleUI();
+                
+                const firstItem = currentPlaylist[0];
+                if (isVideoItem(firstItem)) {
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                    setTimeout(() => {
+                        if (typeof playVideo === 'function') playVideo(firstItem, firstItem.path);
+                    }, 100);
+                } else {
+                    if (typeof play === 'function') play(firstItem, getMediaUrl(firstItem));
+                    switchTab('player', document.getElementById('active-queue-tab-trigger'));
+                }
+                if (typeof renderPlaylist === 'function') renderPlaylist();
+            }
+        }
+
+        function playSeries(seriesName) {
+            const items = coverflowItems.filter(item => (item.tags && item.tags.series === seriesName) || (item.category === 'Serie' && item.name === seriesName));
+            if (items.length > 0) {
+                currentPlaylist = [...items];
+                playlistIndex = 0;
+                isShuffle = false;
+                if (typeof updateShuffleUI === 'function') updateShuffleUI();
+
+                const firstItem = currentPlaylist[0];
+                if (isVideoItem(firstItem)) {
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                    setTimeout(() => {
+                        if (typeof playVideo === 'function') playVideo(firstItem, firstItem.path);
+                    }, 100);
+                } else {
+                    if (typeof play === 'function') play(firstItem, getMediaUrl(firstItem));
+                    switchTab('player', document.getElementById('active-queue-tab-trigger'));
+                }
+                if (typeof renderPlaylist === 'function') renderPlaylist();
+            }
+        }
+
         function renderVideoStreamingView() {
             const container = document.getElementById('streaming-grid-container');
             if (!container) return;
 
-            const videos = coverflowItems.filter(i => i.type === 'video');
+            const videos = coverflowItems.filter(i => isVideoItem(i));
             let html = '';
             
             videos.forEach((item) => {
@@ -9745,12 +9948,7 @@
             console.info(">>> [Play-Trace] play() called for:", item.name, "path:", path);
             const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
             const extFromPath = (item.name || path || "").split('.').pop().toLowerCase();
-            const isVideo = item.type === 'video' ||
-                item.type === 'movie' ||
-                ['video', 'movie', 'Film', 'Serie', 'abbild', 'Abbild', 'ISO/Image', 'Disk-Abbild'].includes(item.category) ||
-                ['Video', 'Film', 'Abbild'].includes(item.logical_type) ||
-                (item.extension && videoExts.includes(item.extension.toLowerCase())) ||
-                (!item.extension && videoExts.includes(extFromPath));
+            const isVideo = isVideoItem(item);
 
             currentVideoItem = item;
             updateMediaSidebar(item, path);
@@ -10279,12 +10477,49 @@
                     const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
                     startEmbeddedVideo(item, source.url, null, 'video/mp4', d_sec);
                 } else if (source.mode === 'error') {
-                    showToast("Fehler: " + source.message);
+                    showPlaybackError("Routing Fehler", source.message || "Unbekannter Fehler beim Routing", {
+                        mode: "ERROR",
+                        score: score,
+                        v_codec: (info.analysis && info.analysis.video_codec) || '-',
+                        a_codec: (info.analysis && info.analysis.audio_codec) || '-',
+                        path: relpath
+                    });
                 }
             } catch (err) {
                 console.error("Routing error:", err);
-                showToast("Kritisches Routing-Fehler");
+                showPlaybackError("Kritischer Fehler", "Die Media-Analyse ist fehlgeschlagen.", {
+                    mode: "CRITICAL",
+                    path: currentVideoPath
+                });
             }
+        }
+
+        function showPlaybackError(title, message, technicalInfo = {}) {
+            const body = document.getElementById('playback-error-body');
+            if (!body) {
+                alert(title + ": " + message);
+                return;
+            }
+            
+            let html = `
+                <div style="font-weight: bold; font-size: 1.1em; color: #333; margin-bottom: 10px;">${title}</div>
+                <div style="color: #666; margin-bottom: 20px; line-height: 1.5;">${message}</div>
+                
+                <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px;">
+                    <div style="font-size: 0.8em; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; font-weight: bold;">Technische Details</div>
+                    <table style="width: 100%; font-size: 0.9em; border-collapse: collapse;">
+                        <tr><td style="padding: 4px 0; color: #495057; font-weight: 600; width: 40%;">Modus</td><td style="padding: 4px 0; color: #212529;">${technicalInfo.mode || '-'}</td></tr>
+                        <tr><td style="padding: 4px 0; color: #495057; font-weight: 600;">Qualität</td><td style="padding: 4px 0; color: #212529;">${technicalInfo.score || '-'} / 100</td></tr>
+                        <tr><td style="padding: 4px 0; color: #495057; font-weight: 600;">Video Codec</td><td style="padding: 4px 0; color: #212529;">${technicalInfo.v_codec || '-'}</td></tr>
+                        <tr><td style="padding: 4px 0; color: #495057; font-weight: 600;">Audio Codec</td><td style="padding: 4px 0; color: #212529;">${technicalInfo.a_codec || '-'}</td></tr>
+                        <tr><td style="padding: 4px 0; color: #495057; font-weight: 600;">Dateipfad</td><td style="padding: 4px 0; color: #212529; word-break: break-all; font-family: monospace; font-size: 0.85em;">${technicalInfo.path || '-'}</td></tr>
+                    </table>
+                </div>
+            `;
+            
+            body.innerHTML = html;
+            safeStyle('playback-error-modal', 'display', 'flex');
+            safeStyle('playback-error-modal', 'zIndex', '5000');
         }
 
         async function runBatchRemux() {
@@ -10555,7 +10790,11 @@
 
             const res = await eel.play_vlc(filePath)();
             if (res && res.error) {
-                alert(t('vlc_error_prefix') + res.error);
+                showPlaybackError("VLC Fehler", "VLC konnte nicht gestartet werden. Bitte prüfe ob VLC installiert und im PATH ist.", {
+                    mode: "VLC",
+                    path: filePath,
+                    error: res.error
+                });
                 safeHtml('vlc-pipe-log-feed', '<span style="color:#f33;">FEHLER:</span> ' + res.error);
                 safeStyle('vlc-status-badge', 'background', '#e74c3c');
                 safeText('vlc-status-badge', 'Fehler');

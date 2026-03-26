@@ -2557,7 +2557,7 @@ def get_library():
         allowed_internal_cats.extend([c.lower() for c in cat_map.get(cat.lower(), [])])
 
     # Case-insensitive category check to match German/Capitalized DB entries
-    filtered_media = [item for item in all_media if str(item.get('category' or '')).lower() in allowed_internal_cats]
+    filtered_media = [item for item in all_media if str(item.get('category', '')).lower() in allowed_internal_cats]
     return sanitize_json_utf8({"media": filtered_media})
 
 
@@ -3166,6 +3166,12 @@ def resolve_media_path(file_path: str) -> str:
     # 1. Try direct filesystem check first (some absolute paths might exist)
     if os.path.exists(path_decoded):
         return str(Path(path_decoded).resolve())
+    
+    # 1b. Handle absolute paths where Bottle might have stripped the leading slash
+    if not path_decoded.startswith("/"):
+        p_abs = "/" + path_decoded
+        if os.path.exists(p_abs):
+            return str(Path(p_abs).resolve())
 
     # 2. Strip /media/ prefix if present and handle virtual pathing
     stripped_path = path_decoded
@@ -6319,18 +6325,9 @@ if __name__ == "__main__":
         log.info(f"[Direct-Route] Request for: {decoded}")
         
         # 2. Determine the physical location
-        # Handle cases where Bottle might have stripped the leading slash of an absolute path
-        p = Path(decoded)
-        if not p.is_absolute():
-            # If the path actually exists with a leading slash, treat it as absolute
-            p_abs = Path("/" + decoded.lstrip("/"))
-            if p_abs.exists():
-                p = p_abs
-            else:
-                # Fallback to library directory
-                lib_dir_raw = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
-                lib_dir = str(lib_dir_raw)
-                p = Path(lib_dir) / decoded.lstrip("/")
+        # Use our robust resolver which handles /media/ prefix, absolute paths and DB lookups
+        full_path = resolve_media_path(decoded)
+        p = Path(full_path)
             
         if not p.exists():
             log.warning(f"[Direct-Route] File not found: {p}")
