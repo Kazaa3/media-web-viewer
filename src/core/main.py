@@ -6408,7 +6408,7 @@ if __name__ == "__main__":
             
         cmd += [
             "-i", str(p),
-            "-c:v", get_best_ffmpeg_encoder(), "-preset", "ultrafast", "-tune", "zerolatency",
+            "-c:v", get_best_ffmpeg_encoder(), "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency",
             "-crf", "25", "-maxrate", "4M", "-bufsize", "8M"
         ]
         

@@ -10456,17 +10456,22 @@
                 if (source.mode === 'direct') {
                     showToast("🚀 DIRECT PLAY (Native/Remux)", 2000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                    selectEngine('chrome');
+                    const btn = document.querySelector('[data-mode="chrome_direct"]');
+                    selectSubMode('chrome_direct', btn, 'chrome');
                     const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
                     startEmbeddedVideo(item, source.url, null, 'video/mp4', d_sec);
                 } else if (source.mode === 'vlc') {
                     showToast("📺 VLC REQUIRED (ISO/HDR/Complex)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                    selectEngine('vlc');
                     startVLC(source.path || path);
                 } else if (source.mode === 'hls') {
                     showToast("🌐 FALLBACK TO HLS STREAMING", 3000);
                     const res = await eel.open_video_smart(path, 'hls')();
                     if (res && res.status === 'play') {
                         switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                        selectEngine('mtx');
                         const streamUrl = res.webrtc || res.hls;
                         const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
                         startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL', d_sec);
@@ -10474,6 +10479,9 @@
                 } else if (source.mode === 'transcode') {
                     showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                    selectEngine('chrome');
+                    const btn = document.querySelector('[data-mode="chrome_transcode"]');
+                    selectSubMode('chrome_transcode', btn, 'chrome');
                     const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
                     startEmbeddedVideo(item, source.url, null, 'video/mp4', d_sec);
                 } else if (source.mode === 'error') {

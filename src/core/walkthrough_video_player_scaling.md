@@ -1,3 +1,33 @@
+## Walkthrough: Media Library Expansion & Playback Debugging (26.03.2026)
+
+### Key Accomplishments
+1. **Video Library Expansion**
+  - **Dedicated Video View:** "Videos"-Sub-Tab in der Bibliothek mit responsivem Card-Grid.
+  - **Persistence Layer:** `playback_position` und `duration_sec` werden in der Datenbank getrackt, um Videos an letzter Stelle fortzusetzen.
+  - **Hover Preview:** YouTube-ähnlicher Hover-Effekt, der eine stummgeschaltete Vorschau auf der Karte abspielt.
+  - **CD-Style Albums:** Album-Ansicht nutzt 1:1-Format mit `object-fit: contain` für unbeschnittene Cover.
+
+2. **Enhanced Video Format Test Suite**
+  - **ISO Support:** .iso-Dateien werden automatisch in die Test-Suite aufgenommen.
+  - **Real-Time Playback Monitoring:** `monitorVjsPlayback` prüft echte Frame-Bewegung statt nur Player-Init.
+  - **Automated UI Flow:** Tests wechseln automatisch in den "Video"-Tab für visuelles Feedback.
+
+3. **Critical Playback Debugging**
+  - **Circular Dependency Fix:** Kritischer Fehler durch zirkulären Import in `VideoHandler` behoben (Remux-Logik ausgelagert nach `remux_utils.py`).
+  - **Signature Mismatch:** Fehlerhafte `playVideo`-Aufrufe aus der Test-Suite korrigiert.
+  - **Robustness:** `analyze_media` global mit try-except abgesichert, Frontend-Fehlermodal zeigt jetzt technische Exception-Details.
+
+### Visual Proof
+- **Video Streaming Selection:** Automatisierte Test-Suite läuft mit verschiedenen Videoformaten.
+- **Playback Error Modal:** Neues Debugging-Modal zur Identifikation von Media-Analyse-Fehlern.
+
+### Technical Changes
+**Backend:**
+- `src/core/main.py`: `analyze_media` refaktoriert, Remux-Logik ausgelagert.
+- `src/core/remux_utils.py`: Neue Utility zur Auflösung von Abhängigkeitskreisen.
+- `src/core/handlers/video_handler.py`: Importe aktualisiert.
+**Frontend:**
+- `web/app.html`: `playVideo`-Aufrufe gefixt, `onPlaylistItemClick` verbessert, Modal-Fehleranzeige erweitert.
 ## Walkthrough: Media Library & Video Verification (26.03.2026)
 
 ### 1. Library & UI Expansions
