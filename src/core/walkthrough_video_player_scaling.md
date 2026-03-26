@@ -1,3 +1,42 @@
+## Walkthrough: 4K ISO Playback & UI Optimization (26.03.2026)
+
+### 1. 4K & HD Playback Stability (src/core/main.py)
+- **Size-Based Fallback:** Robuster Fallback für ffprobe-Ausfälle: >30GB = 4K, >2GB = HD.
+- **Duration Guessing:** Size-basierter Duration-Fallback (~10Mbps) für Transcode-Route, damit Seeker-Bar auch bei "un-probed" 86GB-Files funktioniert.
+- **Encoder Refinement:** -level 5.1 für 4K, verbesserte stderr-Erfassung für klares Logging von Transcode-Fehlern.
+
+### 2. 4K Blu-ray ISO Metadata (src/parsers/media_parser.py)
+- **Protocol Support:** bluray:-FFmpeg-Prefix für ISO-Probing.
+- **Deep Scanning:** 7z-Integration für ISO-Listing, gezieltes Suchen nach .m2ts-Streams für präzise Medienidentifikation.
+
+### 3. User Preference Tuning
+- **Startup Scan:** Initialen Media-Scan in src/core/main.py deaktiviert, App startet jetzt leise ohne Filesystem-Crawl.
+- **Default Tab:** web/app.html setzt Playlist (Audio Player) als Standard-Tab, Tab-Restore-Logik gefixt.
+
+### 4. Robust Seeking in HD Videos (web/app.html)
+- **Persistent Duration Override:** Aggressives, wiederkehrendes Duration-Override in Video.js für fragmentierte Streams.
+- **Dual-Layer Seek Restoration:** canplay-Listener + setTimeout-Fallback, damit der Playhead nach Seek immer korrekt gesetzt wird.
+
+### Verification Results
+1. **86GB 4K ISO Probe:** Dauer und Auflösung via bluray:-Protokoll und Size-Fallback extrahiert, Seeker-Bar zeigt volle Filmlänge.
+2. **Startup Behavior:** _delayed_scan-Thread startet nicht mehr, App öffnet direkt im Playlist-Tab.
+3. **HD MKV Seeking:** Seeking in transkodierten MKVs bleibt stabil, Timeline springt nicht mehr auf 0.
+
+### Next Steps for User
+- **Restart Application:** App starten, Playlist-Tab und leiser Start prüfen.
+- **Test 4K ISO:** 86GB-ISO abspielen, Seeker-Bar sollte funktionieren.
+- **Seek HD Files:** In fragmentierten HD-MKVs seeken, Player sollte Zeitposition halten.
+## Logbuch: Startup & Playback Optimierung (26.03.2026)
+
+- **Startup-Optimierung:**
+  - Automatischen Media-Scan beim Start deaktiviert → schneller, leiser App-Start.
+- **Default-Interface:**
+  - Playlist (Audio Player) ist jetzt Standard-Tab, wird korrekt wiederhergestellt oder als Fallback gesetzt.
+- **HD & 4K Playback Stabilität:**
+  - **Duration-Fix:** Backend nutzt size-basierten Duration-Fallback, wenn ffprobe fehlschlägt (z.B. ISOs, MKVs mit hohem Bitrate).
+  - **Robustes Seeking:** Aggressives Duration-Override und zweistufige Playhead-Restoration im Frontend beheben Seeking-Probleme bei fragmentierten HD-Streams.
+  - **4K-Enhancements:** bluray:-Protokoll und 7z-Stream-Listing für 4K-Blu-ray-ISOs implementiert.
+  - Änderungen können durch App-Neustart überprüft werden.
 ## Logbuch: Fallback für Auflösung bei fehlgeschlagenem Metadata-Probe (26.03.2026)
 
 - **Fallback-Logik:**

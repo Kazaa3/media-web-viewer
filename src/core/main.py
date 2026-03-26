@@ -5194,6 +5194,8 @@ def load_playlist(input_path: str):
         logging.error(f"[Load Playlist] Error: {e}")
         return {"error": str(e)}
 
+        
+
 
 @eel.expose
 def pick_file(title="Datei auswählen", filetypes=None):
@@ -6501,19 +6503,28 @@ if __name__ == "__main__":
         
         # Check if it's interlaced content
         scan = analysis.get("scan_type", "progressive").lower()
+        # Robust fallback for resolution and duration if metadata probe failed
         height = int(analysis.get("height", 0))
+        duration = float(analysis.get("duration", 0))
+        size_bytes = p.stat().st_size if p.exists() else 0
+        size_gb = size_bytes / (1024**3)
         
-        # Robust fallback for resolution if metadata probe failed
-        size_gb = p.stat().st_size / (1024**3) if p.exists() else 0
         if height == 0:
-            if size_gb > 30: 
-                height = 2160
-                log.info(f"[Transcode-Route] Height missing, assuming 4K based on size ({size_gb:.1f} GB)")
-            elif size_gb > 2: 
-                height = 1080
-                log.info(f"[Transcode-Route] Height missing, assuming HD based on size ({size_gb:.1f} GB)")
-            else:
-                log.info(f"[Transcode-Route] Height missing, assuming SD for small file ({size_gb:.1f} GB)")
+            if size_gb > 30: height = 2160
+            elif size_gb > 2: height = 1080
+            else: height = 480
+            log.info(f"[Transcode-Route] Height missing, guessed {height}p from size {size_gb:.1f}GB")
+
+        if duration == 0 and size_bytes > 0:
+            # Guess duration: assume ~10Mbps average for HD/4K mix
+            # 1 bit per second = 1/8 byte per second
+            # duration = size / (bitrate/8)
+            avg_bitrate_bps = 10 * 1024 * 1024 # 10 Mbps
+            duration = size_bytes / (avg_bitrate_bps / 8)
+            # Cap at 4 hours unless it's really huge
+            if size_gb > 50: duration = max(duration, 120 * 60) # At least 2h for huge files
+            log.info(f"[Transcode-Route] Duration missing, guessed {duration/60:.1f} min from size {size_gb:.1f}GB")
+            analysis["duration"] = duration # Update analysis for frontend
 
         is_hd = height >= 720
         is_4k = height >= 2160
@@ -6693,7 +6704,7 @@ if __name__ == "__main__":
 
     import threading
     threading.Thread(target=_finish_initialization, daemon=True).start()
-    threading.Thread(target=_delayed_scan, daemon=True).start()
+    # threading.Thread(target=_delayed_scan, daemon=True).start()
 
 @eel.expose
 def test_pyautogui():

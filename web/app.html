@@ -2107,8 +2107,8 @@
             try {
                 // Default to 'player' or global config unless explicitly saved and not 'playlist'
                 let savedTab = localStorage.getItem('mwv_active_tab');
-                if (!savedTab || savedTab === 'playlist') {
-                    savedTab = mwv_config.start_page || 'player';
+                if (!savedTab) {
+                    savedTab = mwv_config.start_page || 'playlist';
                 }
                 const savedBtn = getTabButton(savedTab);
                 if (savedBtn) {
@@ -3917,7 +3917,7 @@
             <!-- TAB BUTTONS START -->
             <div class="tab-buttons">
 
-                <button id="active-queue-tab-trigger" class="tab-btn active" onclick="switchTab('player', this)"
+                <button id="active-queue-tab-trigger" class="tab-btn" onclick="switchTab('player', this)"
                     data-i18n="nav_player">Player</button>
                 <button id="coverflow-library-tab-trigger" class="tab-btn" onclick="switchTab('library', this)"
                     data-i18n="nav_library">Bibliothek</button>
@@ -3943,7 +3943,7 @@
                     style="background: #e1f5fe; border-color: #0277bd; color: #0277bd; display: flex; align-items: center; gap: 8px;"
                     data-i18n="nav_logbook">
                     <span class="icon-logbook"></span> <span data-i18n="nav_logbook">Logbuch</span></button>
-                <button id="sequential-buffer-tab-trigger" class="tab-btn" onclick="switchTab('playlist', this)"
+                <button id="sequential-buffer-tab-trigger" class="tab-btn active" onclick="switchTab('playlist', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_playlist">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;">
@@ -10706,7 +10706,6 @@
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
-            // Initialize Video.js if not already done
             if (!vjsPlayer) {
                 vjsPlayer = videojs('native-html5-video-resource-node', {
                     fluid: true,
@@ -10714,48 +10713,31 @@
                     playbackRates: [0.5, 1, 1.5, 2],
                     controlBar: {
                         children: [
-                            'playToggle',
-                            'volumePanel',
-                            'currentTimeDisplay',
-                            'timeDivider',
-                            'durationDisplay',
-                            'progressControl',
-                            'remainingTimeDisplay',
-                            'playbackRateMenuButton',
-                            'subsCapsButton',
-                            'audioTrackButton',
-                            'fullscreenToggle',
-                            'pictureInPictureToggle'
+                            'playToggle', 'volumePanel', 'currentTimeDisplay', 'timeDivider',
+                            'durationDisplay', 'progressControl', 'remainingTimeDisplay',
+                            'playbackRateMenuButton', 'subsCapsButton', 'audioTrackButton',
+                            'fullscreenToggle', 'pictureInPictureToggle'
                         ]
                     }
                 });
 
-                // Automatic playlist progression
                 vjsPlayer.on('ended', () => {
-                    console.info("[Video.js] Video ended, triggering next...");
-                    if (repeatStatus === 'one') {
-                        vjsPlayer.play();
-                    } else {
-                        playNext();
-                    }
+                    if (repeatStatus === 'one') vjsPlayer.play();
+                    else playNext();
                 });
 
-                // Error handling fallback
                 vjsPlayer.on('error', () => {
                     const error = vjsPlayer.error();
-                    console.error("[Video.js] Player Error:", error);
-                    if (error && error.code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
+                    if (error && error.code === 4) {
                         showUnsupportedVideoHint();
                         if (typeof onErrorCallback === 'function') onErrorCallback();
                     }
                 });
 
-                let lastSavedPos = 0;
                 vjsPlayer.on('timeupdate', () => {
                     const slider = document.getElementById('video-seek-slider');
                     const currentTimeSpan = document.getElementById('video-current-time');
                     const durationSpan = document.getElementById('video-duration');
-
                     const now = vjsPlayer.currentTime();
                     if (slider && !slider.matches(':active')) {
                         const progress = (now / vjsPlayer.duration()) * 100;
@@ -10764,87 +10746,68 @@
                     if (currentTimeSpan) currentTimeSpan.innerText = formatTime(now);
                     if (durationSpan) durationSpan.innerText = formatTime(vjsPlayer.duration());
 
-                    // Persist playback position (throttled to every 5 seconds)
-                    if (Math.abs(now - lastSavedPos) > 5 && currentVideoItem) {
-                        lastSavedPos = now;
-                        eel.update_playback_position(currentVideoItem.name, now)();
+                    // Throttled position update to backend
+                    if (Math.abs(now - (vjsPlayer.lastPersist || 0)) > 5 && (item || currentVideoItem)) {
+                        const mediaName = (item && item.name) || (currentVideoItem && currentVideoItem.name);
+                        if (mediaName) {
+                            vjsPlayer.lastPersist = now;
+                            eel.update_playback_position(mediaName, now)();
+                        }
                     }
                 });
 
                 const seekSlider = document.getElementById('video-seek-slider');
                 if (seekSlider) {
-                    // Update display ONLY during drag
                     seekSlider.addEventListener('input', (e) => {
-                         const currentTimeSpan = document.getElementById('video-current-time');
-                         if (vjsPlayer && vjsPlayer.duration()) {
-                             const previewTime = (e.target.value / 100) * vjsPlayer.duration();
-                             if (currentTimeSpan) currentTimeSpan.innerText = formatTime(previewTime);
-                         }
+                        if (vjsPlayer && vjsPlayer.duration()) {
+                            const previewTime = (e.target.value / 100) * vjsPlayer.duration();
+                            const currentTimeSpan = document.getElementById('video-current-time');
+                            if (currentTimeSpan) currentTimeSpan.innerText = formatTime(previewTime);
+                        }
                     });
-                    
-                    // Trigger actual seek ONLY on release (avoids backend spam for streams)
                     seekSlider.addEventListener('change', (e) => {
                         if (vjsPlayer && vjsPlayer.duration()) {
                             const newTime = (e.target.value / 100) * vjsPlayer.duration();
-                            console.info("[Video-Player] Seek commit at:", newTime);
-                            
-                            // For streams, ensure we update our internal duration if it was overridden
                             vjsPlayer.currentTime(newTime);
                         }
                     });
                 }
             }
 
-            // Seeking logic for streams
+            // Centralized seeking logic for all transcode-style streams
             vjsPlayer.off('seeking');
             vjsPlayer.on('seeking', () => {
                 const newTime = vjsPlayer.currentTime();
                 const currentSrc = vjsPlayer.src();
-
-                if (currentSrc.includes('/video-remux-stream/') || currentSrc.includes('/video-stream/') || currentSrc.includes('/transcode/')) {
-                    console.info("[Video.js] Stream seek requested, hot-reloading at:", newTime);
+                if (currentSrc.includes('/stream_transcode') || currentSrc.includes('/video-stream') || currentSrc.includes('/transcode')) {
+                    console.info("[Video.js] Hot-reloading stream for seek at:", newTime);
                     const base = currentSrc.split('?')[0];
-                    const connector = base.includes('?') ? '&' : '?';
-                    const newPath = `${base}${connector}ss=${newTime}`;
-                    // Important: We must not trigger seeking again in a loop
+                    const newPath = `${base}?filepath=${encodeURIComponent(path)}&ss=${newTime}`;
                     vjsPlayer.src({ src: newPath, type: vjsPlayer.currentType() });
-                    // Restore position and play once the new stream is ready
                     vjsPlayer.one('canplay', () => {
-                        console.info("[Video.js] Stream ready at new position, enforcing time:", newTime);
                         vjsPlayer.currentTime(newTime);
                         vjsPlayer.play();
                     });
-                } else if (currentSrc.includes('/vlc-hls-live/')) {
-                    console.info("[Video.js] VLC HLS seek requested, signaling backend...");
-                    if (vjsPlayer.originalPath) {
-                        eel.open_video_smart(vjsPlayer.originalPath, "vlc_embedded", newTime)();
-                    }
                 }
             });
 
             vjsPlayer.originalPath = path;
-
-            // Stop VLC if running
             eel.stop_vlc()();
             safeStyle('vlc-info', 'display', 'none');
             hideUnsupportedVideoHint();
 
-            // Ensure Video.js container is visible and placeholder is hidden
             if (placeholder) {
                 placeholder.style.setProperty('display', 'none', 'important');
                 placeholder.style.zIndex = '-1';
             }
 
-            // Video.js wrapper management
             const vjsWrapper = video.closest('.video-js');
             if (vjsWrapper) {
                 vjsWrapper.style.display = 'block';
                 vjsWrapper.style.width = '100%';
-                // Let Video.js fluid mode handle height via aspect ratio padding hack
                 vjsWrapper.style.zIndex = '50';
             }
 
-            // Force underlying video element to be visible
             video.style.display = 'block';
             video.style.visibility = 'visible';
             video.style.opacity = '1';
@@ -10853,53 +10816,41 @@
             let srcType = type || 'video/mp4';
             if (path && (path.includes('index.m3u8') || path.endsWith('.m3u8'))) {
                 srcType = 'application/x-mpegURL';
-            } else if (type === 'video/mp2t' || (path && path.includes(':'))) {
-                srcType = 'video/mp2t';
             }
-
             vjsPlayer.src({ src: path, type: srcType });
 
-            // Manual duration override for streams (Video.js normally can't determine this for fragmented MSE)
+            // Restore position
+            const seekTime = (item && item.playback_position) || 0;
+            if (seekTime > 0) {
+                const restoreSeek = () => {
+                    if (Math.abs(vjsPlayer.currentTime() - seekTime) > 1) {
+                        vjsPlayer.currentTime(seekTime);
+                    }
+                };
+                vjsPlayer.one('canplay', restoreSeek);
+                setTimeout(restoreSeek, 2000);
+            }
+
+            // Stubborn duration override
             if (durationSec && durationSec > 0) {
-                console.info("[Video.js] Setting up duration override:", durationSec);
+                const targetDuration = parseFloat(durationSec);
                 const applyOverride = () => {
-                    vjsPlayer.duration = function () { return parseFloat(durationSec); };
+                    vjsPlayer.duration = function () { return targetDuration; };
                     vjsPlayer.trigger('durationchange');
                 };
                 vjsPlayer.on('loadedmetadata', applyOverride);
                 vjsPlayer.on('durationchange', () => {
-                   if (vjsPlayer.duration() !== parseFloat(durationSec)) {
-                       applyOverride();
-                   }
+                    if (Math.abs(vjsPlayer.duration() - targetDuration) > 1) applyOverride();
                 });
-                // Also re-apply periodically during playback to handle "TS chunk" duration resets
                 vjsPlayer.on('progress', () => {
-                   if (vjsPlayer.duration() < parseFloat(durationSec) * 0.9) {
-                       applyOverride();
-                   }
+                    if (vjsPlayer.duration() < targetDuration * 0.9) applyOverride();
                 });
                 applyOverride();
             } else {
                 delete vjsPlayer.duration;
             }
 
-            if (item && item.playback_position > 0) {
-                console.info("[Video.js] Restoring playback position to:", item.playback_position);
-                vjsPlayer.one('canplay', () => {
-                    vjsPlayer.currentTime(item.playback_position);
-                    
-                    // Also sync duration if missing in DB
-                    const duration = vjsPlayer.duration();
-                    if (duration > 0 && (!item.duration_sec || item.duration_sec === 0)) {
-                        console.info("[Video.js] Syncing duration to backend:", duration);
-                        eel.update_media_duration(item.name, duration)();
-                    }
-                });
-            }
-
-            // Explicitly trigger a resize and ensure visibility to fix black screen/layout issues
             vjsPlayer.ready(() => {
-                // Wait a tiny bit for the DOM to settle
                 setTimeout(() => {
                     const vjsWrapper = video.closest('.video-js');
                     if (vjsWrapper) {
@@ -10907,11 +10858,6 @@
                         vjsWrapper.style.opacity = '1';
                         vjsWrapper.style.display = 'block';
                     }
-                    // Explicitly force the actual video tag (tech) to show
-                    video.style.display = 'block';
-                    video.style.visibility = 'visible';
-                    video.style.opacity = '1';
-
                     if (placeholder) {
                         placeholder.style.setProperty('display', 'none', 'important');
                         placeholder.style.visibility = 'hidden';
@@ -10924,6 +10870,7 @@
                     if (typeof onErrorCallback === 'function') onErrorCallback();
                 });
             });
+        }
         }
 
         async function startMPV(filePath) {
