@@ -1,3 +1,17 @@
+## Logbuch: Erweiterte Video.js Control Bar & Custom Buttons (26.03.2026)
+
+- **Unified Control Bar:**
+  - Die controlBar wurde komplett neu konfiguriert (mehrzeilig, alle Standard-Controls: Play, Volume, Time, Progress, Rates, Subs, Audio, Fullscreen, PiP).
+- **Custom Buttons:**
+  - **VLC-Button:** Stream kann direkt an eine externe VLC-Instanz übergeben werden.
+  - **MPV-Button:** Startet das Video in einem MPV-Overlay für fortgeschrittene Hardware-Beschleunigung.
+  - **Snapshot-Button:** Erstellt einen hochauflösenden Screenshot des aktuellen Frames und lädt ihn als PNG herunter.
+  - **Stop-Button:** Beendet sofort den Stream und den Backend-Transcoder, Player geht in Idle.
+- **Premium UI-Integration:**
+  - Alle neuen Features sind als eigene Video.js-Komponenten registriert, mit Standardverhalten (Hover, Tooltip, Accessibility) und vollständiger Integration in den Player-Lifecycle.
+- **Ergebnis:**
+  - Die Video-Player-Oberfläche ist jetzt ein professionelles "All-in-One"-Interface, das Web-UI und lokale Tools nahtlos verbindet.
+  - Testbar im Video-Tab.
 ## Walkthrough: 4K ISO Playback & UI Optimization (26.03.2026)
 
 ### 1. 4K & HD Playback Stability (src/core/main.py)
