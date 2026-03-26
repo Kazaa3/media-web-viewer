@@ -6838,7 +6838,7 @@
                                         style="color: #666; font-family: 'Inter', ui-monospace, monospace; font-size: 0.85em; width: 45px; font-variant-numeric: tabular-nums;">00:00</span>
                                     <div style="flex:1; position:relative; display:flex; align-items:center;">
                                         <input type="range" id="video-seek-slider" min="0" max="100" value="0"
-                                            style="width: 100%; height: 6px; cursor: pointer; accent-color: #2a7; border-radius: 3px; -webkit-appearance: none; background: #e0e0e0; transition: background 0.2s;">
+                                            style="width: 100%; height: 6px; cursor: pointer; accent-color: #2a7; border-radius: 3px; -webkit-appearance: none; appearance: none; background: #e0e0e0; transition: background 0.2s;">
                                         <style>
                                             #video-seek-slider::-webkit-slider-thumb {
                                                 -webkit-appearance: none;
@@ -10204,9 +10204,19 @@
 
                 const seekSlider = document.getElementById('video-seek-slider');
                 if (seekSlider) {
+                    // Update display ONLY during drag
                     seekSlider.addEventListener('input', (e) => {
+                         if (vjsPlayer && vjsPlayer.duration()) {
+                             const previewTime = (e.target.value / 100) * vjsPlayer.duration();
+                             if (currentTimeSpan) currentTimeSpan.innerText = formatTime(previewTime);
+                         }
+                    });
+                    
+                    // Trigger actual seek ONLY on release (avoids backend spam for streams)
+                    seekSlider.addEventListener('change', (e) => {
                         if (vjsPlayer && vjsPlayer.duration()) {
                             const newTime = (e.target.value / 100) * vjsPlayer.duration();
+                            console.info("[Video-Player] Seek commit at:", newTime);
                             vjsPlayer.currentTime(newTime);
                         }
                     });
