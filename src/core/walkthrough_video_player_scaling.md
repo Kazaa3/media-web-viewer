@@ -1,3 +1,33 @@
+## Walkthrough: Media Library & Video Verification (26.03.2026)
+
+### 1. Library & UI Expansions
+Die Bibliothek wurde um zwei neue Navigations-Ebenen erweitert:
+
+- **Album View:** Eine quadratische CD-Cover Ansicht (1:1), die Cover im Originalformat (un-cropped) anzeigt.
+- **Folge-View:** Eine dedizierte Ansicht für Serien und aufeinanderfolgende Medien.
+- **Video Grid:** Ein modernes YouTube-ähnliches Grid mit Hover-Preview und Fortschrittsbalken.
+
+### 2. Video Test-Suite (Enriched)
+Die Test-Matrix im Reporting-Tab kann nun die tatsächliche Wiedergabe validieren:
+
+- **Playback Monitoring:** Das System misst, ob der Player wirklich Frames abspielt (currentTime > 0.1s).
+- **Fehler-Erkennung:** Video.js Fehler (z.B. Codec-Inkompatibilität) werden abgefangen und in der Historie geloggt.
+- **ISO/DVD Support:** .iso Dateien werden jetzt automatisch zu VLC geroutet und sind Teil der Test-Matrix.
+- **Technical Feedback:** Ein neues Modal zeigt bei Fehlern detaillierte Codec- und Routing-Infos an.
+
+### 3. Playback Persistence
+- **Auto-Resume:** Die Anwendung speichert alle 5s die Position und stellt sie beim nächsten Start wieder her.
+- **Progress Sync:** Die Duration wird beim ersten Playback synchronisiert, um korrekte Balken im Grid zu zeigen.
+
+### 4. Codec & Routing Fixes
+- **MP4 Direct Play:** Bug im Path-Mapping für /direct/ behoben.
+- **ISO Routing:** Korrektes Routing zu VLC für Disk-Images statt FFmpeg-Transcode.
+
+### Verification Results
+- **Video Library:** Alle Kategorien (Film, Serie, etc.) sichtbar.
+- **Album View:** Korrektes 1:1 Aspect Ratio und proportionales Scaling.
+- **Test Suite:** Automatischer Tab-Wechsel und Playback-Validierung aktiv.
+- **Persistence:** Positionen bleiben über Sessions hinweg erhalten.
 ## Update: Album-Card-Format, ISO/DVD-Routing & Playback-Error-Modal (26.03.2026)
 
 ### Verbesserte Album-Ansicht

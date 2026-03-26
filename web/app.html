@@ -13042,7 +13042,7 @@
                 allLibraryItems.forEach(v => {
                     const path = (v.path || "").toLowerCase();
                     if (path.endsWith('.mp4') || path.endsWith('.mkv') || path.endsWith('.avi') ||
-                        path.endsWith('.mov') || path.endsWith('.webm') || path.endsWith('.ts')) {
+                        path.endsWith('.mov') || path.endsWith('.webm') || path.endsWith('.ts') || path.endsWith('.iso')) {
                         options.push({ value: v.path, text: `📁 ${v.name}` });
                     }
                 });
@@ -13196,17 +13196,25 @@
                 currentVideoItem = item;
 
                 if (mode === 'direct') {
-                    await new Promise(r => setTimeout(r, 600));
-                    entry.status = 'pass';
-                    entry.details = 'Chrome Native HTML5 Player gestartet.';
+                    switchTab('video');
+                    await playVideo(item.path);
+                    const res = await monitorVjsPlayback();
+                    entry.status = res.status;
+                    entry.details = res.details;
+                    entry.time = res.time + 's';
                 } else if (mode === 'vlc') {
                     await triggerVLCPlay();
                     entry.status = 'pass';
                     entry.details = 'VLC Bridge Handshake erfolgreich.';
                 } else if (mode === 'webm') {
-                    await triggerWebMTranscode();
-                    entry.status = 'pass';
-                    entry.details = 'WebM Transcoding Pipeline (VP9) aktiv.';
+                    switchTab('video');
+                    // Force webm transcode by calling playVideo with a mock analysis or similar
+                    // Actually playVideo already determines mode.
+                    await playVideo(item.path); 
+                    const res = await monitorVjsPlayback();
+                    entry.status = res.status;
+                    entry.details = res.details;
+                    entry.time = res.time + 's';
                 } else if (mode === 'ffmpeg') {
                     await triggerFFmpegPlay();
                     entry.status = 'pass';
@@ -13269,6 +13277,32 @@
             }
 
             updateTestResultsTable();
+        }
+
+        function monitorVjsPlayback(timeoutMs = 15000) {
+            return new Promise((resolve, reject) => {
+                if (!vjsPlayer) return reject("Video.js Player nicht initialisiert.");
+                
+                const startTime = Date.now();
+                const checker = setInterval(() => {
+                    if (vjsPlayer.currentTime() > 0.1 && !vjsPlayer.paused()) {
+                        clearInterval(checker);
+                        resolve({ 
+                            status: 'pass', 
+                            details: `Playback OK: ${vjsPlayer.currentType()} @ ${vjsPlayer.currentTime().toFixed(1)}s`,
+                            time: ((Date.now() - startTime) / 1000).toFixed(2)
+                        });
+                    }
+                    if (vjsPlayer.error()) {
+                        clearInterval(checker);
+                        reject(`VJS Error: ${vjsPlayer.error().message}`);
+                    }
+                    if (Date.now() - startTime > timeoutMs) {
+                        clearInterval(checker);
+                        reject(`Timeout: Playback did not start within ${timeoutMs/1000}s`);
+                    }
+                }, 500);
+            });
         }
 
         function updateTestResultsTable() {

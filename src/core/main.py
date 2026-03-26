@@ -5416,7 +5416,7 @@ def get_test_media_files():
         PROJECT_ROOT / "tests" / "mockfiles"
     ]
     
-    extensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.ts']
+    extensions = ['.mp4', '.mkv', '.avi', '.mov', '.webm', '.ts', '.iso']
 
     results = []
     
