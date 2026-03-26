@@ -10487,9 +10487,10 @@
                 }
             } catch (err) {
                 console.error("Routing error:", err);
-                showPlaybackError("Kritischer Fehler", "Die Media-Analyse ist fehlgeschlagen.", {
+                showPlaybackError("Kritischer Fehler", `Media-Analyse fehlgeschlagen: ${err.message || err}`, {
                     mode: "CRITICAL",
-                    path: currentVideoPath
+                    path: currentVideoPath,
+                    error_details: String(err)
                 });
             }
         }
@@ -13197,7 +13198,7 @@
 
                 if (mode === 'direct') {
                     switchTab('video');
-                    await playVideo(item.path);
+                    await playVideo(item, item.path);
                     const res = await monitorVjsPlayback();
                     entry.status = res.status;
                     entry.details = res.details;
@@ -13210,7 +13211,7 @@
                     switchTab('video');
                     // Force webm transcode by calling playVideo with a mock analysis or similar
                     // Actually playVideo already determines mode.
-                    await playVideo(item.path); 
+                    await playVideo(item, item.path); 
                     const res = await monitorVjsPlayback();
                     entry.status = res.status;
                     entry.details = res.details;

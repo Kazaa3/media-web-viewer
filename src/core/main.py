@@ -7123,65 +7123,7 @@ def get_media_compatibility_report():
 
 MEDIA_CACHE = Path(logger.APP_DATA_DIR) / "cache" / "media"
 
-def remux_to_mp4_cache(full_path: str | Path) -> str:
-    """
-    Remuxes compatible MKV/AVI to MP4 in cache for Direct Play.
-    Returns the absolute path to the cached MP4.
-    """
-    MEDIA_CACHE.mkdir(parents=True, exist_ok=True)
-    full = Path(full_path)
-    # Generate unique hash based on path and mtime
-    import hashlib
-    h = hashlib.md5(f"{full}{full.stat().st_mtime}".encode()).hexdigest()
-    out = MEDIA_CACHE / f"{h}.mp4"
-    
-    if out.exists():
-        return str(out)
-        
-    log.info(f"Remuxing to cache: {full} -> {out}")
-    cmd = [
-        "ffmpeg", "-y", "-i", str(full),
-        "-map", "0:v:0?", "-map", "0:a:0?",
-        "-c", "copy", "-movflags", "+faststart",
-        str(out)
-    ]
-    try:
-        subprocess.run(cmd, check=True, capture_output=True)
-        return str(out)
-    except Exception as e:
-        log.error(f"Remux failed: {e}")
-        return str(full) # Fallback to original
-
-
-def extract_main_from_iso(iso_path: str | Path) -> str:
-    """
-    Extracts the main movie from ISO to cache.
-    """
-    MEDIA_CACHE.mkdir(parents=True, exist_ok=True)
-    full = Path(iso_path)
-    import hashlib
-    h = hashlib.md5(f"{full}{full.stat().st_mtime}".encode()).hexdigest()
-    out = MEDIA_CACHE / f"{h}_iso.mp4"
-    
-    if out.exists():
-        return str(out)
-        
-    log.info(f"Extracting main feature from ISO: {full} -> {out}")
-    # Simplified strategy: take first title/longest spur
-    cmd = [
-        "ffmpeg", "-y", "-i", str(full),
-        "-map", "0:v:0?", "-map", "0:a:0?",
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-        "-c:a", "aac", "-b:a", "128k",
-        "-movflags", "+faststart",
-        str(out)
-    ]
-    try:
-        subprocess.run(cmd, check=True, capture_output=True, timeout=300)
-        return str(out)
-    except Exception as e:
-        log.error(f"ISO extraction failed: {e}")
-        return ""
+from src.core.remux_utils import remux_to_mp4_cache, extract_main_from_iso
 
 
 @eel.expose
@@ -7189,33 +7131,37 @@ def analyze_media(relpath: str, client: str = 'browser'):
     """
     Deep analysis for routing decisions.
     """
-    from src.parsers.format_utils import ffprobe_quality_score, is_direct_play_capable
-    from src.core.handlers import get_handler_for_file
-    
-    # Resolve relative path to full path
-    full = Path(resolve_media_path(relpath))
-    
-    if not full.exists():
-        return {"error": "File not found"}
+    try:
+        from src.parsers.format_utils import ffprobe_quality_score, is_direct_play_capable
+        from src.core.handlers import get_handler_for_file
         
-    handler = get_handler_for_file(full)
-    route_info = handler.process(client=client, relpath=relpath)
-    
-    analysis = route_info.get("analysis")
-    if not analysis:
-        analysis = handler.extract_metadata()
+        # Resolve relative path to full path
+        full = Path(resolve_media_path(relpath))
         
-    score = ffprobe_quality_score(analysis)
-    direct = is_direct_play_capable(full, client)
-    
-    return {
-        "analysis": analysis,
-        "quality_score": score,
-        "direct_play_browser": direct,
-        "recommended_mode": route_info.get("mode"),
-        "direct_url": route_info.get("url"),
-        "relpath": relpath
-    }
+        if not full.exists():
+            return {"error": "File not found"}
+            
+        handler = get_handler_for_file(full)
+        route_info = handler.process(client=client, relpath=relpath)
+        
+        analysis = route_info.get("analysis")
+        if not analysis:
+            analysis = handler.extract_metadata()
+            
+        score = ffprobe_quality_score(analysis)
+        direct = is_direct_play_capable(full, client)
+        
+        return {
+            "analysis": analysis,
+            "quality_score": score,
+            "direct_play_browser": direct,
+            "recommended_mode": route_info.get("mode"),
+            "direct_url": route_info.get("url"),
+            "relpath": relpath
+        }
+    except Exception as e:
+        log.exception(f"Critical error in analyze_media for {relpath}")
+        return {"error": str(e), "mode": "error"}
 
 
 @eel.expose

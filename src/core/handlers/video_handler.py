@@ -23,7 +23,7 @@ class VideoHandler(MediaHandler):
         @brief Route video playback based on codec, container, and client capabilities.
         """
         from src.parsers.format_utils import is_direct_play_capable
-        from src.core.main import remux_to_mp4_cache  # Avoid circular import, should be refactored
+        from src.core.remux_utils import remux_to_mp4_cache
         
         analysis = self.extract_metadata()
         d_sec = analysis.get("duration_sec", 0)
