@@ -6277,14 +6277,48 @@ def run_gui_tests():
 
 @eel.expose
 def ui_trace(message):
-    """
-    Receives frontend UI trace lines and writes them to backend logs.
-    """
-    try:
-        logging.info(f"[UI-Trace] {message}")
-    except Exception:
-        pass
+    try: logging.info(f"[UI-Trace] {message}")
+    except Exception: pass
     return {"status": "ok"}
+
+@eel.expose
+def get_media_tracks(filepath):
+    """Probes available audio and subtitle tracks for a media file."""
+    try:
+        from src.parsers.format_utils import ffprobe_suite
+        # Use a more low-level probe if needed, but ffprobe_suite usually handles it.
+        # However, for track switching, we need the specific stream indices and languages.
+        cmd = [
+            "ffprobe", "-v", "error", 
+            "-show_entries", "stream=index,codec_type,codec_name:stream_tags=language,title", 
+            "-of", "json", filepath
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(res.stdout)
+        
+        audio = []
+        subs = []
+        
+        # Stream index mapping
+        a_count = 0
+        s_count = 0
+        
+        for s in data.get('streams', []):
+            stype = s.get('codec_type')
+            tags = s.get('tags', {})
+            label = tags.get('title') or tags.get('language') or f"Track {s.get('index')}"
+            
+            if stype == "audio":
+                audio.append({"id": a_count, "label": label, "codec": s.get('codec_name')})
+                a_count += 1
+            elif stype == "subtitle":
+                subs.append({"id": s_count, "label": label, "codec": s.get('codec_name')})
+                s_count += 1
+                
+        return {"audio": audio, "subtitles": subs}
+    except Exception as e:
+        log.error(f"[Metadata] failed to get tracks for {filepath}: {e}")
+        return {"audio": [], "subtitles": []}
 
 
 @eel.expose
@@ -6470,129 +6504,95 @@ if __name__ == "__main__":
         from pathlib import Path
         import subprocess
         
-        try:
-            decoded = urllib.parse.unquote(path)
-        except:
-            decoded = path
+        try: decoded = urllib.parse.unquote(path)
+        except: decoded = path
             
-        if os.path.isabs(decoded):
-            p = Path(decoded)
+        if os.path.isabs(decoded): p = Path(decoded)
         else:
             lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
             p = Path(lib_dir) / decoded
             
+        # Track Selection Params
+        audio_idx = bottle.request.query.get('audio_idx', '0')
+        subs_idx = bottle.request.query.get('subs_idx', None)
+        start_time = bottle.request.query.get('ss', '0')
+
         if p.exists() and p.is_dir():
-             # For DVD folders, find the internal .iso image if possible
              try:
                  iso_file = next((f for f in os.listdir(p) if f.lower().endswith(('.iso', '.bin', '.img'))), None)
-                 if iso_file:
-                     p = p / iso_file
-                     log.info(f"[Transcode-Route] Auto-resolved DVD folder {decoded} to internal image: {p}")
-             except Exception as e:
-                 log.error(f"[Transcode-Route] Failed to list DVD folder {decoded}: {e}")
+                 if iso_file: p = p / iso_file
+             except Exception as e: log.error(f"[Transcode] DVD resolve fail: {e}")
 
         if not p.exists() or p.is_dir():
-            return bottle.HTTPError(404, "Target for transcode not found or is a directory without image.")
+            return bottle.HTTPError(404, "Target for transcode not found.")
 
-        log.info(f"[Transcode-Route] Streaming: {p}")
+        log.info(f"[Transcode-Route] Streaming: {p} (Audio:{audio_idx}, Subs:{subs_idx}, Seek:{start_time})")
         
-        # Determine if deinterlacing is needed (DVDs are often interlaced)
         from src.parsers.format_utils import ffprobe_suite
         analysis = ffprobe_suite(p)
         vf = []
-        
-        # Check if it's interlaced content
         scan = analysis.get("scan_type", "progressive").lower()
-        # Robust fallback for resolution and duration if metadata probe failed
         height = int(analysis.get("height", 0))
-        duration = float(analysis.get("duration", 0))
         size_bytes = p.stat().st_size if p.exists() else 0
-        size_gb = size_bytes / (1024**3)
         
         if height == 0:
-            if size_gb > 30: height = 2160
-            elif size_gb > 2: height = 1080
-            else: height = 480
-            log.info(f"[Transcode-Route] Height missing, guessed {height}p from size {size_gb:.1f}GB")
-
-        if duration == 0 and size_bytes > 0:
-            # Guess duration: assume ~10Mbps average for HD/4K mix
-            # 1 bit per second = 1/8 byte per second
-            # duration = size / (bitrate/8)
-            avg_bitrate_bps = 10 * 1024 * 1024 # 10 Mbps
-            duration = size_bytes / (avg_bitrate_bps / 8)
-            # Cap at 4 hours unless it's really huge
-            if size_gb > 50: duration = max(duration, 120 * 60) # At least 2h for huge files
-            log.info(f"[Transcode-Route] Duration missing, guessed {duration/60:.1f} min from size {size_gb:.1f}GB")
-            analysis["duration"] = duration # Update analysis for frontend
+             size_gb = size_bytes / (1024**3)
+             if size_gb > 30: height = 2160
+             elif size_gb > 2: height = 1080
+             else: height = 480
 
         is_hd = height >= 720
         is_4k = height >= 2160
 
         if (scan != "progressive" or p.suffix.lower() == ".iso") and not is_4k:
-             # Apply deinterlacing for non-progressive or ISO/DVD content, but skip for 4K (it's too slow)
              vf.append("yadif=0:-1:0")
+
+        # Subtitle Burning (Hard-code for fragmented streaming reliability)
+        if subs_idx is not None and subs_idx.isdigit():
+            # Use FFmpeg subtitles filter: subtitles='path/to/file':si=N
+            # si index is 0-based within subtitle streams.
+            esc_path = str(p).replace("\\", "/").replace(":", "\\:")
+            vf.append(f"subtitles='{esc_path}':si={subs_idx}")
         
-        # FFmpeg command for Real-time Fragmented MP4 (Chrome Native support)
-        # Handle seeking via ?ss= query param
-        start_time = bottle.request.query.get('ss', '0')
         encoder = get_best_ffmpeg_encoder()
-        
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
-        
-        # HW Acceleration setup
-        if encoder == "h264_vaapi":
-            cmd += ["-vaapi_device", "/dev/dri/renderD128"]
+        if encoder == "h264_vaapi": cmd += ["-vaapi_device", "/dev/dri/renderD128"]
             
-        # Input source path/protocol
         input_src = str(p)
-        if p.suffix.lower() == ".iso":
-            # For ISOs, we check if standard input works. If not, we'll try bluray: protocol
-            # But since we're in a real-time stream, we'll stick to bluray: for 4K/large ISOs
-            if p.stat().st_size > 10 * 1024 * 1024 * 1024: # > 10GB is likely a Blu-ray
-                input_src = f"bluray:{p}"
-                log.info(f"[Transcode-Route] Large ISO detected, using bluray: protocol: {p}")
+        if p.suffix.lower() == ".iso" and p.stat().st_size > 10 * 1024**3:
+            input_src = f"bluray:{p}"
             
-        # Fast seeking for disc images/large files
         if float(start_time) > 0:
             cmd += ["-ss", start_time]
-            # Offset output timestamps so the player knows the actual time position
             cmd += ["-output_ts_offset", start_time]
             
         cmd += ["-i", input_src]
         
-        # Bitrate selection based on resolution
-        if is_4k:
-            max_rate, buf_size = "15M", "30M"
-        elif is_hd:
-            max_rate, buf_size = "8M", "16M"
-        else:
-            max_rate, buf_size = "4M", "8M"
+        # --- Mapping ---
+        # Map first video stream, selected audio stream
+        cmd += ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
+        
+        if is_4k: max_rate, buf_size = "15M", "30M"
+        elif is_hd: max_rate, buf_size = "8M", "16M"
+        else: max_rate, buf_size = "4M", "8M"
 
-        # Video filters & Encoder flags
         if encoder == "h264_vaapi":
-            # VAAPI needs specific pix_fmt and filter chain
             vf.insert(0, "format=nv12,hwupload")
             cmd += ["-vf", ",".join(vf)]
             v_rate = "12M" if is_4k else "6M"
             cmd += ["-c:v", "h264_vaapi", "-b:v", v_rate, "-maxrate", v_rate, "-hwaccel_output_format", "vaapi"]
-            if is_4k:
-                cmd += ["-level", "5.1"]
-            else:
-                cmd += ["-level", "4.1"]
+            if is_4k: cmd += ["-level", "5.1"]
+            else: cmd += ["-level", "4.1"]
         elif encoder == "h264_nvenc":
             if vf: cmd += ["-vf", ",".join(vf)]
             cmd += ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "hq", "-rc", "vbr", "-cq", "24", 
                     "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
         else:
-            # Software fallback (libx264)
             if vf: cmd += ["-vf", ",".join(vf)]
             cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency", 
                     "-crf", "25", "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
-            if is_4k:
-                cmd += ["-level", "5.1"]
-            else:
-                cmd += ["-level", "4.1"]
+            if is_4k: cmd += ["-level", "5.1"]
+            else: cmd += ["-level", "4.1"]
             
         cmd += [
             "-c:a", "aac", "-b:a", "128k", "-ac", "2",
@@ -6600,38 +6600,25 @@ if __name__ == "__main__":
             "pipe:1"
         ]
         
-        log.info(f"[Transcode-Route] Launching FFmpeg: {' '.join(cmd)}")
-        
-        # Use stdout=PIPE and stderr=PIPE to catch errors
+        log.info(f"[Transcode] Launch: {' '.join(cmd)}")
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
         bottle.response.content_type = 'video/mp4'
-        
         def stream():
             try:
-                # Local ref to avoid NoneType issues during generator teardown
                 p_stdout = process.stdout
                 p_stderr = process.stderr
-                if p_stdout is None or p_stderr is None:
-                    log.error("[Transcode-Route] Subprocess pipes not initialized.")
-                    return
-                    
+                if p_stdout is None or p_stderr is None: return
                 while True:
                     data = p_stdout.read(1024 * 64)
                     if not data:
-                        # Check stderr if process finished early
                         if process.poll() is not None and process.returncode != 0:
-                            err_data = p_stderr.read()
-                            err = err_data.decode(errors='replace') if isinstance(err_data, bytes) else str(err_data)
-                            log.error(f"[Transcode-Route] FFmpeg crashed (code {process.returncode}): {err}")
+                            err = p_stderr.read().decode(errors='replace')
+                            log.error(f"[Transcode] FFmpeg crashed: {err}")
                         break
                     yield data
-            except Exception as e:
-                log.error(f"[Transcode-Route] Stream generator error: {e}")
+            except Exception as e: log.error(f"[Transcode] Stream error: {e}")
             finally:
-                if process.poll() is None:
-                    process.terminate()
-                    
+                if process.poll() is None: process.terminate()
         return stream()
 
     log_checkpoint("Starting Eel server")

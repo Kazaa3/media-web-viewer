@@ -10704,6 +10704,64 @@
 
         // --- Video.js Custom Component Definitions ---
         const vjsBtn = videojs.getComponent('Button');
+        const vjsMenuBtn = videojs.getComponent('MenuButton');
+        const vjsMenuItem = videojs.getComponent('MenuItem');
+
+        let currentVideoTracks = { audio: [], subtitles: [] };
+        let currentAudioIdx = 0;
+        let currentSubsIdx = null;
+
+        videojs.registerComponent('AudioTrackMenuButton', videojs.extend(vjsMenuBtn, {
+            constructor: function() { vjsMenuBtn.apply(this, arguments); },
+            createMenu: function() {
+                const menu = new (videojs.getComponent('Menu'))(this.player_);
+                if (currentVideoTracks && currentVideoTracks.audio) {
+                    currentVideoTracks.audio.forEach(t => {
+                        const item = new vjsMenuItem(this.player_, {
+                            label: t.label, selectable: true,
+                            selected: String(t.id) === String(currentAudioIdx)
+                        });
+                        item.on('click', () => {
+                            currentAudioIdx = t.id;
+                            startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
+                        });
+                        menu.addItem(item);
+                    });
+                }
+                return menu;
+            },
+            buildCSSClass: function() { return "vjs-icon-audio vjs-control vjs-button vjs-menu-button"; },
+            controlText_: "Audio"
+        }));
+
+        videojs.registerComponent('SubtitleTrackMenuButton', videojs.extend(vjsMenuBtn, {
+            constructor: function() { vjsMenuBtn.apply(this, arguments); },
+            createMenu: function() {
+                const menu = new (videojs.getComponent('Menu'))(this.player_);
+                const offItem = new vjsMenuItem(this.player_, { label: "Off", selectable: true, selected: currentSubsIdx === null });
+                offItem.on('click', () => {
+                    currentSubsIdx = null;
+                    startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, null);
+                });
+                menu.addItem(offItem);
+                if (currentVideoTracks && currentVideoTracks.subtitles) {
+                    currentVideoTracks.subtitles.forEach(t => {
+                        const item = new vjsMenuItem(this.player_, {
+                            label: t.label, selectable: true,
+                            selected: String(t.id) === String(currentSubsIdx)
+                        });
+                        item.on('click', () => {
+                            currentSubsIdx = t.id;
+                            startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
+                        });
+                        menu.addItem(item);
+                    });
+                }
+                return menu;
+            },
+            buildCSSClass: function() { return "vjs-icon-subtitles vjs-control vjs-button vjs-menu-button"; },
+            controlText_: "Subs"
+        }));
 
         videojs.registerComponent('StopButton', videojs.extend(vjsBtn, {
             constructor: function() { vjsBtn.apply(this, arguments); },
@@ -10732,20 +10790,18 @@
                 const v = document.getElementById('native-html5-video-resource-node');
                 if(!v) return;
                 const canvas = document.createElement('canvas');
-                canvas.width = v.videoWidth;
-                canvas.height = v.videoHeight;
+                canvas.width = v.videoWidth; canvas.height = v.videoHeight;
                 canvas.getContext('2d').drawImage(v, 0, 0);
                 const data = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
                 link.download = `snapshot_${new Date().getTime()}.png`;
-                link.href = data;
-                link.click();
+                link.href = data; link.click();
             },
             buildCSSClass: function() { return "vjs-icon-photo vjs-control vjs-button snapshot-btn"; },
             controlText_: "Snapshot"
         }));
 
-        function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null) {
+        function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
@@ -10756,22 +10812,13 @@
                     playbackRates: [0.5, 1, 1.25, 1.5, 2],
                     controlBar: {
                         children: [
-                            'playToggle',
-                            'volumePanel',
-                            'currentTimeDisplay',
-                            'timeDivider',
-                            'durationDisplay',
-                            'progressControl',
-                            'remainingTimeDisplay',
+                            'playToggle', 'volumePanel', 'currentTimeDisplay', 'timeDivider',
+                            'durationDisplay', 'progressControl', 'remainingTimeDisplay',
                             'playbackRateMenuButton',
-                            'subsCapsButton',
-                            'audioTrackButton',
-                            'VlcButton',
-                            'MpvButton',
-                            'SnapshotButton',
-                            'StopButton',
-                            'fullscreenToggle',
-                            'pictureInPictureToggle'
+                            'AudioTrackMenuButton',
+                            'SubtitleTrackMenuButton',
+                            'VlcButton', 'MpvButton', 'SnapshotButton', 'StopButton',
+                            'fullscreenToggle', 'pictureInPictureToggle'
                         ]
                     }
                 });
@@ -10868,11 +10915,31 @@
             video.style.opacity = '1';
             video.style.zIndex = '10';
 
-            let srcType = type || 'video/mp4';
-            if (path && (path.includes('index.m3u8') || path.endsWith('.m3u8'))) {
-                srcType = 'application/x-mpegURL';
+            let finalPath = path;
+            if (path && (path.includes('/stream_transcode') || path.includes('/video-stream') || path.includes('/transcode'))) {
+                const url = new URL(path.includes('://') ? path : 'http://localhost' + path);
+                url.searchParams.set('audio_idx', audioIdx);
+                if (subsIdx !== null) url.searchParams.set('subs_idx', subsIdx);
+                else url.searchParams.delete('subs_idx');
+                finalPath = url.pathname + url.search;
             }
-            vjsPlayer.src({ src: path, type: srcType });
+
+            vjsPlayer.src({ src: finalPath, type: srcType });
+
+            // Fetch tracks for the menu if not already loaded for this path
+            if (vjsPlayer.lastProbedPath !== path) {
+                vjsPlayer.lastProbedPath = path;
+                eel.get_media_tracks(path)((tracks) => {
+                    currentVideoTracks = tracks || { audio: [], subtitles: [] };
+                    // Re-calculate menus
+                    if (vjsPlayer.controlBar.childNameIndex_['AudioTrackMenuButton']) {
+                        vjsPlayer.controlBar.childNameIndex_['AudioTrackMenuButton'].update();
+                    }
+                    if (vjsPlayer.controlBar.childNameIndex_['SubtitleTrackMenuButton']) {
+                        vjsPlayer.controlBar.childNameIndex_['SubtitleTrackMenuButton'].update();
+                    }
+                });
+            }
 
             // Restore position
             const seekTime = (item && item.playback_position) || 0;

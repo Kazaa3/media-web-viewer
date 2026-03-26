@@ -1,3 +1,20 @@
+## Logbuch: Premium Multi-Track & Subtitle Support im Video.js Player (26.03.2026)
+
+- **Dynamische Track-Auswahl:**
+  - AudioTrackMenuButton: Erkennt und zeigt alle verfügbaren Audiostreams im Video.js-Menü.
+  - SubtitleTrackMenuButton: Erkennt und zeigt alle Untertitel-Tracks, die per FFmpeg-Filter "on-the-fly" ins Video gebrannt werden (volle Browser-Kompatibilität, keine externen VTT nötig).
+- **Full-Stack Track Switching:**
+  - Backend (stream_transcode) unterstützt jetzt dynamische -map-Overrides via audio_idx und subs_idx.
+  - Frontend startet den Stream bei Trackwechsel nahtlos an der aktuellen Position neu.
+- **Advanced Metadata API:**
+  - Neue Eel-API get_media_tracks(filepath) nutzt ffprobe für exakte Stream- und Sprachinfos.
+- **UI-Integration:**
+  - Track-Menüs sind in der Video.js-Bar integriert, zusammen mit VLC, MPV, Snapshot, Stop.
+- **Optimierte Logik:**
+  - Player cached den letzten analysierten Pfad, um unnötige ffprobe-Aufrufe zu vermeiden.
+- **Ergebnis:**
+  - Der Webplayer bietet jetzt professionelle Multi-Track- und Subtitle-Funktionalität wie VLC/MPV – direkt im Browser.
+  - Audio- und Subs-Menüs sind im Video-Tab verfügbar.
 ## Logbuch: Erweiterte Video.js Control Bar & Custom Buttons (26.03.2026)
 
 - **Unified Control Bar:**
