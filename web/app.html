@@ -10702,6 +10702,49 @@
             }
         }
 
+        // --- Video.js Custom Component Definitions ---
+        const vjsBtn = videojs.getComponent('Button');
+
+        videojs.registerComponent('StopButton', videojs.extend(vjsBtn, {
+            constructor: function() { vjsBtn.apply(this, arguments); },
+            handleClick: function() { stopVideo(); },
+            buildCSSClass: function() { return "vjs-icon-cancel vjs-control vjs-button stop-btn"; },
+            controlText_: "Stop"
+        }));
+
+        videojs.registerComponent('VlcButton', videojs.extend(vjsBtn, {
+            constructor: function() { vjsBtn.apply(this, arguments); },
+            handleClick: function() { if(typeof switchToVLC === 'function') switchToVLC(); },
+            buildCSSClass: function() { return "vjs-icon-share vjs-control vjs-button vlc-btn"; },
+            controlText_: "VLC"
+        }));
+
+        videojs.registerComponent('MpvButton', videojs.extend(vjsBtn, {
+            constructor: function() { vjsBtn.apply(this, arguments); },
+            handleClick: function() { if(currentVideoPath) if(typeof startMPV === 'function') startMPV(currentVideoPath); },
+            buildCSSClass: function() { return "vjs-icon-circle-inner-circle vjs-control vjs-button mpv-btn"; },
+            controlText_: "MPV"
+        }));
+
+        videojs.registerComponent('SnapshotButton', videojs.extend(vjsBtn, {
+            constructor: function() { vjsBtn.apply(this, arguments); },
+            handleClick: function() { 
+                const v = document.getElementById('native-html5-video-resource-node');
+                if(!v) return;
+                const canvas = document.createElement('canvas');
+                canvas.width = v.videoWidth;
+                canvas.height = v.videoHeight;
+                canvas.getContext('2d').drawImage(v, 0, 0);
+                const data = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `snapshot_${new Date().getTime()}.png`;
+                link.href = data;
+                link.click();
+            },
+            buildCSSClass: function() { return "vjs-icon-photo vjs-control vjs-button snapshot-btn"; },
+            controlText_: "Snapshot"
+        }));
+
         function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
@@ -10710,13 +10753,25 @@
                 vjsPlayer = videojs('native-html5-video-resource-node', {
                     fluid: true,
                     aspectRatio: '16:9',
-                    playbackRates: [0.5, 1, 1.5, 2],
+                    playbackRates: [0.5, 1, 1.25, 1.5, 2],
                     controlBar: {
                         children: [
-                            'playToggle', 'volumePanel', 'currentTimeDisplay', 'timeDivider',
-                            'durationDisplay', 'progressControl', 'remainingTimeDisplay',
-                            'playbackRateMenuButton', 'subsCapsButton', 'audioTrackButton',
-                            'fullscreenToggle', 'pictureInPictureToggle'
+                            'playToggle',
+                            'volumePanel',
+                            'currentTimeDisplay',
+                            'timeDivider',
+                            'durationDisplay',
+                            'progressControl',
+                            'remainingTimeDisplay',
+                            'playbackRateMenuButton',
+                            'subsCapsButton',
+                            'audioTrackButton',
+                            'VlcButton',
+                            'MpvButton',
+                            'SnapshotButton',
+                            'StopButton',
+                            'fullscreenToggle',
+                            'pictureInPictureToggle'
                         ]
                     }
                 });
