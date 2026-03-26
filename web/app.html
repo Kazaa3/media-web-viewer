@@ -4171,12 +4171,21 @@
 
                 <!-- Database Master View -->
                 <div id="lib-view-database" class="library-sub-content" style="display: none;">
-                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                        <input type="text" id="lib-db-search" placeholder="Datenbank durchsuchen..." 
-                            oninput="renderDatabaseView()"
-                            style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; width: 300px; outline: none;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="lib-db-search" placeholder="Datenbank durchsuchen..." 
+                                oninput="renderDatabaseView()"
+                                style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; width: 250px; outline: none;">
+                            
+                            <div class="import-group" style="display: flex; gap: 5px;">
+                                <button onclick="triggerTxtImport('Audio')" class="sidebar-badge" 
+                                    style="background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; cursor: pointer;">📁 Audio TXT</button>
+                                <button onclick="triggerTxtImport('Film')" class="sidebar-badge" 
+                                    style="background: #e1f5fe; color: #0288d1; border: 1px solid #b3e5fc; cursor: pointer;">📁 Film TXT</button>
+                                <button onclick="triggerTxtImport('Serie')" class="sidebar-badge" 
+                                    style="background: #fce4ec; color: #c2185b; border: 1px solid #f8bbd0; cursor: pointer;">📁 Serie TXT</button>
+                            </div>
+                        </div>
                         <div id="lib-db-stats" style="font-size: 0.9em; color: #666;"></div>
-                    </div>
                     <div class="table-container" style="max-height: 600px; overflow-y: auto;">
                         <table class="details-table">
                             <thead>
@@ -8042,6 +8051,25 @@
             }).join('');
 
             safeHtml('details-table-body', html);
+        }
+
+        async function triggerTxtImport(category) {
+            try {
+                showToast(`Starte TXT Import für ${category}...`, 'info');
+                const result = await eel.import_txt_to_db(category)();
+                
+                if (result.status === 'ok') {
+                    showToast(`Import erfolgreich: ${result.imported} Items hinzugefügt, ${result.skipped} übersprungen.`, 'success');
+                    renderDatabaseView(); // Refresh table
+                } else if (result.status === 'cancelled') {
+                    showToast("Import abgebrochen.", 'info');
+                } else if (result.error) {
+                    showToast(`Import Fehler: ${result.error}`, 'error');
+                }
+            } catch (e) {
+                console.error("TXT Import failed:", e);
+                showToast("Interner Fehler beim Import.", 'error');
+            }
         }
 
         async function renderDatabaseView() {

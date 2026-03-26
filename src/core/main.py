@@ -108,9 +108,9 @@ import env_handler  # type: ignore
 import src.core.logger as logger  # type: ignore
 from src.core.logger import get_logger  # type: ignore
 from src.parsers import tag_writer  # type: ignore
-from . import hardware_detector  # type: ignore
-from . import transcoder  # type: ignore
-from . import db  # type: ignore
+from src.core import hardware_detector  # type: ignore
+from src.core import transcoder         # type: ignore
+from src.core import db                 # type: ignore
 
 # transcode_mgr deferred
 transcode_mgr = None
@@ -5230,6 +5230,79 @@ def pick_file(title="Datei auswählen", filetypes=None):
     except Exception as e:
         logging.error(f"[System] File picker failed: {e}")
         return None
+
+
+@eel.expose
+def import_txt_to_db(category="Video"):
+    """
+    @brief Imports media from a TXT file into the database.
+    @details Importiert Medien aus einer TXT-Datei in die Datenbank.
+    @param category Target category (Video, Serie, Audio).
+    """
+    try:
+        file_path = pick_file(
+            title=f"TXT Import für {category} auswählen",
+            filetypes=[("Textdateien", "*.txt"), ("Alle Dateien", "*.*")]
+        )
+        if not file_path:
+            return {"status": "cancelled"}
+
+        lines = Path(file_path).read_text(encoding='utf-8').splitlines()
+        imported = 0
+        skipped = 0
+
+        for line in lines:
+            path_str = line.strip()
+            if not path_str or path_str.startswith("#"):
+                continue
+
+            # Create a simple media item
+            p = Path(path_str)
+            name = p.name if p.name else path_str
+            
+            # Use MediaItem class if possible for consistent metadata structure
+            try:
+                from src.core.models import MediaItem
+                item = MediaItem(name, p)
+                item_dict = item.to_dict()
+                
+                # Force category and type if provided
+                if category:
+                    item_dict['category'] = category
+                    if category == "Audio":
+                        item_dict['type'] = "Audio"
+                    elif category in ["Video", "Serie", "Film"]:
+                        item_dict['type'] = "Video"
+            except Exception as item_err:
+                logging.debug(f"[Import] MediaItem init failed for {name}: {item_err}")
+                # Basic fallback if MediaItem fails (e.g. path doesn't exist)
+                item_dict = {
+                    'name': name,
+                    'path': path_str,
+                    'type': "Video" if category != "Audio" else "Audio",
+                    'category': category or ("Video" if category != "Audio" else "Audio"),
+                    'duration': "00:00:00",
+                    'is_transcoded': False,
+                    'tags': {},
+                    'extension': p.suffix.lower() if p.suffix else "",
+                    'has_artwork': False
+                }
+
+            res = db.insert_media(item_dict)
+            if res:
+                imported += 1
+            else:
+                skipped += 1
+
+        return {
+            "status": "ok",
+            "imported": imported,
+            "skipped": skipped,
+            "total_processed": len(lines)
+        }
+    except Exception as e:
+        logging.error(f"[Import] TXT Import failed: {e}")
+        return {"error": str(e)}
 
 
 @eel.expose

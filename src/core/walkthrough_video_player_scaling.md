@@ -1,3 +1,34 @@
+## Logbuch: Fix ImportError durch relative Imports in main.py (26.03.2026)
+
+- **Problem:**
+  - Beim Versuch, Pyre2-Linting-Fehler zu beheben, wurden in src/core/main.py relative Imports (from . import ...) verwendet.
+  - Dies führte zu einem ImportError beim direkten Ausführen von main.py, da src/core nicht als Package erkannt wurde.
+- **Lösung:**
+  - Alle betroffenen Imports wieder auf absolute Imports (from src.core import ...) umgestellt.
+  - # type: ignore-Kommentare beibehalten, um Umgebungsartefakte für den Linter zu unterdrücken.
+- **Ergebnis:**
+  - Die Anwendung startet wieder korrekt, TXT-Import-Feature funktioniert wie erwartet.
+## Logbuch: TXT Import Feature für Datenbank (26.03.2026)
+
+- **Import-Buttons:**
+  - "Audio TXT", "Video TXT" und "Serie TXT" Buttons im "Datenbank (Alle)"-Sub-Tab der Bibliothek ergänzt.
+- **Backend API:**
+  - import_txt_to_db-API implementiert, die .txt-Dateien (ein Pfad pro Zeile) einliest und mit der gewählten Kategorie in die SQLite-DB einträgt.
+- **Native Experience:**
+  - Der Import nutzt den nativen Dateiauswahldialog des Betriebssystems für die TXT-Quelldatei.
+- **Ergebnis:**
+  - Die Bibliothek kann jetzt einfach aus bestehenden Verzeichnislisten oder Textdateien befüllt werden.
+## Logbuch: Implementierung & Verifikation Database TXT Import (26.03.2026)
+
+- **Backend:**
+  - API-Endpunkt für den Import von TXT-Dateien implementiert.
+  - Logik zum Parsen und Einfügen der Media-Items in die Datenbank entwickelt.
+- **Frontend:**
+  - UI-Komponente für den TXT-Import ergänzt.
+  - JavaScript-Logik zur Ansteuerung des Imports und zur Anzeige des Status integriert.
+- **Verifikation:**
+  - Eigener Verifikations-Skript erstellt, der den TXT-Import testet.
+  - Erfolgreich geprüft: Media-Items werden korrekt aus TXT geparst und in die Datenbank übernommen.
 ## Logbuch: Abschluss Stabilisierung, Linting & GitHub Actions (26.03.2026)
 
 - **GitHub Actions Enabled:**
