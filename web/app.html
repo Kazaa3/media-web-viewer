@@ -7882,7 +7882,7 @@
         function isVideoItem(item) {
             if (!item) return false;
             // 1. Check Category
-            const videoCategories = ['Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons'];
+            const videoCategories = ['Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons', 'Movie', 'TV Show'];
             if (item.category && videoCategories.includes(item.category)) return true;
 
             // 2. Check Extension
@@ -8166,7 +8166,11 @@
                 }
             }
             const item = list[playlistIndex];
-            play(item, getMediaUrl(item), true);
+            if (isVideoItem(item)) {
+                onPlaylistItemClick(playlistIndex, item);
+            } else {
+                play(item, getMediaUrl(item), true);
+            }
         }
 
         async function playPrev() {
@@ -8182,7 +8186,11 @@
                 }
             }
             const item = list[playlistIndex];
-            play(item, getMediaUrl(item), true);
+            if (isVideoItem(item)) {
+                onPlaylistItemClick(playlistIndex, item);
+            } else {
+                play(item, getMediaUrl(item), true);
+            }
         }
 
         function getMediaUrl(item) {
@@ -9038,9 +9046,7 @@
 
                     div.onclick = (e) => {
                         if (e) e.stopPropagation();
-                        playlistIndex = index;
-                        play(item, mediaUrl);
-                        renderPlaylist();
+                        onPlaylistItemClick(index, item);
                     };
                     div.oncontextmenu = (e) => showContextMenu(e, item);
                     container.appendChild(div);
