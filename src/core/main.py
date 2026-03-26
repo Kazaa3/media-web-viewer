@@ -2764,11 +2764,10 @@ def api_scan_isbn(isbn: str):
     log.info(f"🔍 [ISBN] Request for: {cleaned}")
     
     # 1. Check local DB first
-    # TODO: Implement find_by_isbn in db.py if needed, for now we can filter all media
-    existing = [m for m in db.get_all_media() if normalize_isbn(m.get('isbn')) == cleaned]
-    if existing:
-        log.info(f"✅ [ISBN] Found in local DB: {existing[0]['name']}")
-        return existing[0]
+    existing_item = db.get_media_by_remote_id('isbn', cleaned)
+    if existing_item:
+        log.info(f"✅ [ISBN] Found in local DB: {existing_item['name']}")
+        return existing_item
 
     # 2. Fetch from External API (OpenLibrary)
     try:
@@ -4075,8 +4074,7 @@ def _play_index(idx: int):
     try:
         if path and not Path(path).exists():
             # Attempt to find in DB by name
-            all_media = db.get_all_media()
-            match = next((m for m in all_media if m.get("name") == path), None)
+            match = db.get_media_by_name(path)
             if match:
                 path = match.get("path") or path
     except Exception:
@@ -5115,12 +5113,8 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
         exported: int = 0
         missing = []
 
-        # Get all media and create a lookup dict
-        all_media = db.get_all_media()
-        media_dict = {item['name']: item for item in all_media}
-
         for name in media_names:
-            item_dict = media_dict.get(name)
+            item_dict = db.get_media_by_name(name)
             if not item_dict:
                 missing.append(name)
                 continue
@@ -5189,13 +5183,11 @@ def load_playlist(input_path: str):
         import json
         media_names = json.loads(path.read_text(encoding='utf-8'))
 
-        all_media = db.get_all_media()
-        media_dict = {item['name']: item for item in all_media}
-
         items = []
         for name in media_names:
-            if name in media_dict:
-                items.append(media_dict[name])
+            item = db.get_media_by_name(name)
+            if item:
+                items.append(item)
 
         return {"status": "ok", "items": items}
     except Exception as e:

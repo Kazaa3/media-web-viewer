@@ -4192,7 +4192,8 @@
                         <table class="details-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th style="width: 40px;">#</th>
+                                    <th style="width: 60px;">ID</th>
                                     <th>Typ</th>
                                     <th>Kategorie</th>
                                     <th>Name</th>
@@ -8089,6 +8090,7 @@
                 const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
                 if (searchTerm) {
                     items = items.filter(i => 
+                        String(i.id || '').includes(searchTerm) ||
                         (i.name || '').toLowerCase().includes(searchTerm) ||
                         (i.path || '').toLowerCase().includes(searchTerm) ||
                         (i.category || '').toLowerCase().includes(searchTerm) ||
@@ -8105,7 +8107,8 @@
                     
                     return `
                         <tr>
-                            <td style="font-family: monospace; font-size: 0.8em; color: #888;">${item.id || '---'}</td>
+                            <td style="color: #999; font-size: 0.8em; text-align: center;">${idx + 1}</td>
+                            <td style="font-family: monospace; font-size: 0.85em; color: #2196F3; font-weight: bold;">${item.id || '---'}</td>
                             <td><span class="badge-${(item.type || 'unknown').toLowerCase()}">${item.type || '---'}</span></td>
                             <td>${item.category || '---'}</td>
                             <td style="font-weight: 500;">${item.name || '---'}</td>

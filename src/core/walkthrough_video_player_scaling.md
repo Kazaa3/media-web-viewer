@@ -1,3 +1,45 @@
+## Logbuch: Verbesserte ID-Sichtbarkeit & Nummerierung in Datenbankansicht (26.03.2026)
+
+- **Sequence Number (#):**
+  - Neue Spalte mit fortlaufender Nummerierung (1, 2, 3, ...) für alle Items in der aktuellen Ansicht ergänzt.
+- **Suchbare IDs:**
+  - Die Datenbank-ID ist jetzt direkt über die Suchleiste filterbar.
+- **ID-Layout:**
+  - Die ID-Spalte ist blau hervorgehoben und fett, um die Identifikation zu erleichtern.
+- **Ergebnis:**
+  - Das Auffinden und Unterscheiden von Objekten (auch ohne Metadaten wie ISBN) ist jetzt deutlich einfacher.
+## Walkthrough: Build Stabilization, GitHub Actions & Database TXT Import (26.03.2026)
+
+### 1. GitHub Actions & CI/CD
+- **.gitignore Fix:** .github/-Verzeichnis whitelisted, damit Workflows getrackt werden.
+- **Trigger erweitert:** ci-main.yml und ci-develop.yml triggern jetzt auf alle meilenstein/*, milestone/*, feature/* Branches und alle Pull Requests.
+- **Dependency Fixes:** Alle aktuellen Fixes (pymkv, requests, env_label_mutagen) sind im Branch und werden von CI geprüft.
+
+### 2. Main Branch Update
+- **Lokaler Merge:** meilenstein-1-mediaplayer wurde in main gemerged.
+- **Lokale Verifikation:** build_system.py --test all und ./infra/build_deb.sh laufen fehlerfrei durch.
+- **Repository-Status:** meilenstein-1-mediaplayer ist auf origin aktuell und triggert CI.
+
+### 3. Build & Stability Improvements
+- **Session Guard:** Schutz gegen Mehrfach-Instanzen in src/core/main.py wiederhergestellt.
+- **Log Migration:** Alle Logs ins Root-/logs/-Verzeichnis verschoben, Logger angepasst.
+- **Translation Fix:** Fehlende Labels in web/i18n.json ergänzt, UI-Tests laufen durch.
+
+### 4. Database TXT Import
+- **Neues Feature:** Import von Medienlisten aus .txt-Dateien direkt in die Datenbank implementiert.
+- **Kategorie-Support:** Eigene Buttons für Audio, Film, Video und Serie TXT-Import im Datenbank-Sub-Tab ergänzt.
+- **Datenbank-Optimierung:** Zielgerichtete SQLite-Lookups (get_media_by_remote_id, get_media_by_category, ...) ersetzen ineffiziente Memory-Loads und beschleunigen ISBN-Suche, Playback und Playlists.
+- **Logik:** Jede Zeile der TXT wird als Pfad behandelt, ein MediaItem (mit gewählter Kategorie) wird erzeugt und in die DB eingefügt.
+- **UX:** Native OS-Dateiauswahl (Tkinter) für die Quell-TXT.
+
+### Verification Results
+- **GitHub Actions:** Actions laufen jetzt auf meilenstein-1-mediaplayer und validieren Build/Test/Package in der Cloud.
+- **Build-Test-Gate (Local):**
+  - `./infra/build_deb.sh` → 21 Tests bestanden, .deb erfolgreich generiert.
+
+### Next Steps
+- **GitHub PR:** Im Browser die laufenden Actions auf meilenstein-1-mediaplayer prüfen.
+- **Merge to Main:** Nach erfolgreichem CI-Run kann der PR nach main gemerged werden (Branch-Protection wird durch erfolgreiche Actions erfüllt).
 ## Logbuch: Verbesserter Film TXT Import (26.03.2026)
 
 - **Film TXT Button:**

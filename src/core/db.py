@@ -451,6 +451,46 @@ def get_media_by_path(path):
     return None
 
 
+def get_media_by_remote_id(field, value):
+    """
+    @brief Retrieves a media item by a remote ID field (isbn, imdb, tmdb, discogs).
+    """
+    if field not in ['isbn', 'imdb', 'tmdb', 'discogs']:
+        return None
+        
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM media WHERE {field} = ?", (value,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
+        }
+    return None
+
+
 def update_media_tags(name, tags_dict):
     """
     @brief Updates the tags of a media item in the database.
@@ -586,3 +626,118 @@ def update_media_duration(name, duration_sec):
     """, (duration_sec, name))
     conn.commit()
     conn.close()
+
+
+def get_media_by_category(category):
+    """
+    @brief Retrieves all media items belonging to a specific category.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM media WHERE category = ? ORDER BY name", (category,))
+    rows = cursor.fetchall()
+    
+    media_list = []
+    for row in rows:
+        media_list.append({
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
+        })
+    conn.close()
+    return media_list
+
+
+def search_media(query):
+    """
+    @brief Searches for media items by name or tags.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    # Basic search in name and path
+    sql_query = f"%{query}%"
+    cursor.execute("SELECT * FROM media WHERE name LIKE ? OR path LIKE ? ORDER BY name", (sql_query, sql_query))
+    rows = cursor.fetchall()
+    
+    media_list = []
+    for row in rows:
+        media_list.append({
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
+        })
+    conn.close()
+    return media_list
+
+
+def get_media_by_path(path):
+    """
+    @brief Retrieves a single media item by its filesystem path.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM media WHERE path = ?", (str(path),))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'duration': row['duration'],
+            'category': row['category'],
+            'extension': row['extension'],
+            'container': row['container'],
+            'tag_type': row['tag_type'],
+            'codec': row['codec'],
+            'art_path': row['art_path'],
+            'has_artwork': bool(row['has_artwork']),
+            'is_transcoded': bool(row['is_transcoded']),
+            'transcoded_format': row['transcoded_format'],
+            'tags': json.loads(row['tags']) if row['tags'] else {},
+            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
+            'playback_position': row['playback_position'] or 0,
+            'last_played': row['last_played'],
+            'duration_sec': row['duration_sec'] or 0
+        }
+    return None
