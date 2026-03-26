@@ -26,9 +26,10 @@ from typing import List, Optional
 
 # Setup paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-LOCAL_LOG_DIR = PROJECT_ROOT / "data" / "logs"
+LOCAL_LOG_DIR = PROJECT_ROOT / "logs"
 
-if LOCAL_LOG_DIR.exists():
+if LOCAL_LOG_DIR.exists() or not (Path.home() / ".media-web-viewer").exists():
+    LOCAL_LOG_DIR.mkdir(parents=True, exist_ok=True)
     APP_DATA_DIR = LOCAL_LOG_DIR
     LOG_FILE = APP_DATA_DIR / "app.log"
     DEBUG_LOG_FILE = APP_DATA_DIR / "debug.log"
@@ -36,7 +37,7 @@ else:
     APP_DATA_DIR = Path.home() / ".media-web-viewer"
     APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
     LOG_FILE = APP_DATA_DIR / "app.log"
-    DEBUG_LOG_FILE = Path(__file__).parent / "logs" / "debug.log"
+    DEBUG_LOG_FILE = PROJECT_ROOT / "logs" / "debug.log"
 
 # UI Log Buffer (accessible by Eel)
 LOG_BUFFER: List[str] = []
