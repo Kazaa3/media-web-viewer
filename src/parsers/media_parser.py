@@ -243,26 +243,14 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
     file_type = path_obj.suffix.lower()
     from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
 
-    if not path_obj.is_file():
-        log.warning(f"Early exit: '{filename}' is not a file (type: {'directory' if path_obj.is_dir() else 'unknown'})")
-        tags = {
-            'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
-            'codec': '', 'size': '', 'tagtype': '', 'container': '',
-            'has_art': 'No', 'title': '', 'artist': '', 'album': '',
-            'date': '', 'genre': '', 'track': '', 'totaltracks': '',
-            'disc': '', 'totaldiscs': '',
-            'error': 'Not a file',
-            'name': filename,
-            'type': 'directory' if path_obj.is_dir() else 'unknown',
-        }
-        return tags, {}
-
     tags: dict[str, Any] = {
         'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
         'codec': '', 'size': '', 'tagtype': '', 'container': '',
         'has_art': 'No', 'title': '', 'artist': '', 'album': '',
         'date': '', 'genre': '', 'track': '', 'totaltracks': '',
-        'disc': '', 'totaldiscs': ''
+        'disc': '', 'totaldiscs': '',
+        'name': filename,
+        'type': 'directory' if path_obj.is_dir() else 'file' if path_obj.is_file() else 'missing',
     }
     if mode in ('full', 'ultimate'):
         tags['full_tags'] = {}

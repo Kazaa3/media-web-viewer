@@ -54,6 +54,17 @@ def parse(
 
     working_filename = filename
     
+    # 1. Clean common media suffixes/junk (e.g. "- br", "- bd", "[4K]")
+    media_junk_pattern = re.compile(r'\s*-\s*(?:br|bd|dvd|blu-ray|bluray|uhd|4k|1080p|720p|sd|web-dl|hdtv|x264|x265|hevc)\b', re.IGNORECASE)
+    working_filename = media_junk_pattern.sub('', working_filename).strip()
+    
+    # Extract [Edition] or other bracketed info
+    edition_pattern = re.compile(r'\[(.*?)\]')
+    e_matches = edition_pattern.findall(working_filename)
+    if e_matches:
+        tags['edition'] = " ".join(e_matches)
+        working_filename = edition_pattern.sub('', working_filename).strip()
+
     # 1. Series/Episode Extraction (e.g. "Serien Name S01E01", "Show 1x01")
     series_pattern = re.compile(r'[sS](\d+)[eE](\d+)')
     episode_pattern = re.compile(r'(\d+)x(\d+)')
@@ -86,7 +97,11 @@ def parse(
             working_filename = track_match.group(2)
 
     # 4. Title & Artist Extraction
+    # Heuristic: If we have a dash but it's likely a movie (identified by year/edition/type), 
+    # we might still want to treat the whole thing as title if it doesn't look like music artist.
     if " - " in working_filename:
+        # Check if it looks like music (Artist - Title) or just a title with a dash
+        # For now, keep the split but allow fallback
         parts = working_filename.split(" - ", 1)
         if not tags.get('artist'):
             tags['artist'] = parts[0].strip()
