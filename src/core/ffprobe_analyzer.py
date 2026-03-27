@@ -53,9 +53,31 @@ def ffprobe_analyze(file_path):
         color_space = str(v_stream.get("color_space", "")) if isinstance(v_stream, dict) else ""
         is_hdr = "bt2020" in color_space or "pq" in str(v_stream.get("color_transfer", "")) if isinstance(v_stream, dict) else False
         
-        # 3. Atmos / Surround Awareness
+        # 3. Atmos / Surround Awareness & Languages
         has_atmos = any("atmos" in str(s.get("tags", {})).lower() for s in a_streams)
         channels = max([int(s.get("channels", 0)) for s in a_streams]) if a_streams else 0
+        
+        audio_tracks = []
+        for i, s in enumerate(a_streams):
+            tags = s.get("tags", {})
+            audio_tracks.append({
+                "index": s.get("index"),
+                "codec": s.get("codec_name"),
+                "language": tags.get("language", "und"),
+                "title": tags.get("title", f"Audio {i+1}"),
+                "channels": s.get("channels")
+            })
+
+        sub_streams = [s for s in streams if s.get("codec_type") == "subtitle"]
+        subtitle_tracks = []
+        for i, s in enumerate(sub_streams):
+            tags = s.get("tags", {})
+            subtitle_tracks.append({
+                "index": s.get("index"),
+                "codec": s.get("codec_name"),
+                "language": tags.get("language", "und"),
+                "title": tags.get("title", f"Subtitle {i+1}")
+            })
         
         # 4. PAL/NTSC detection (Frame Rate)
         fps_str = str(v_stream.get("r_frame_rate", "0/0")) if isinstance(v_stream, dict) else "0/0"
@@ -67,7 +89,7 @@ def ffprobe_analyze(file_path):
         
         is_pal = 24.5 < fps < 25.5 or 49.5 < fps < 50.5
         is_ntsc = 23.5 < fps < 24.5 or 29.5 < fps < 30.5 or 59.5 < fps < 60.5
-
+        
         return {
             "path": str(file_path),
             "container": format_info.get("format_name", "unknown"),
@@ -80,6 +102,8 @@ def ffprobe_analyze(file_path):
             "is_hdr": is_hdr,
             "atmos": has_atmos,
             "channels": channels,
+            "audio_tracks": audio_tracks,
+            "subtitle_tracks": subtitle_tracks,
             "fps": fps,
             "is_pal": is_pal,
             "is_ntsc": is_ntsc,

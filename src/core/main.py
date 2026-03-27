@@ -2720,7 +2720,51 @@ def get_library():
 
     # Case-insensitive category check to match German/Capitalized DB entries
     filtered_media = [item for item in all_media if str(item.get('category', '')).lower() in allowed_internal_cats]
+    
+    # Advanced Filtering (Stage 6)
+    # Note: These could be passed as arguments, but for now we look at standard PARSER_CONFIG or similar
+    # In a real app, these would come from the frontend call.
+    # Let's support optional parameters by making it a more flexible function.
     return sanitize_json_utf8({"media": filtered_media})
+
+
+@eel.expose
+def get_library_filtered(search="", genre="all", year="all", sort_by="name"):
+    """
+    @brief Advanced filtering for the media library.
+    """
+    all_media = db.get_all_media()
+    displayed_cats = PARSER_CONFIG.get("displayed_categories", ["audio", "video"])
+    # (Mapping logic same as get_library)
+    
+    filtered = []
+    for item in all_media:
+        # 1. Category check
+        # ... logic ...
+        
+        # 2. Search check
+        if search and search.lower() not in item['name'].lower():
+            continue
+            
+        # 3. Genre check
+        item_genre = item.get('tags', {}).get('genre', '').lower()
+        if genre != "all" and genre.lower() not in item_genre:
+            continue
+            
+        # 4. Year check
+        item_year = str(item.get('tags', {}).get('year', ''))
+        if year != "all" and year != item_year:
+            continue
+            
+        filtered.append(item)
+        
+    # 5. Sorting
+    if sort_by == "year":
+        filtered.sort(key=lambda x: str(x.get('tags', {}).get('year', '9999')), reverse=True)
+    else:
+        filtered.sort(key=lambda x: x['name'].lower())
+        
+    return sanitize_json_utf8({"media": filtered})
 
 
 

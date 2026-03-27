@@ -40,7 +40,12 @@ def smart_route(file_path):
     
     # Priority 5: HLS fMP4 (2s Latenz, 25% CPU)
     # Universal fallback for 4K / HDR / High-End content or Multi-Client support
-    return 'hls_fmp4'
+    mode = 'hls_fmp4'
+    
+    return {
+        "mode": mode,
+        "info": info
+    }
 
 def get_mode_description(mode):
     """

@@ -4438,6 +4438,19 @@
 
                         <div style="width: 1px; height: 24px; background: #ddd; margin: 0 10px;"></div>
 
+                        <!-- Advanced Filters (Stage 6) -->
+                        <input type="text" id="library-search-input" class="filter-select" 
+                            placeholder="Suchen..." oninput="handleLibrarySearch(this.value)"
+                            style="width: 150px; padding: 5px 10px; margin-right: 5px; border-radius: 4px; border: 1px solid #ddd;">
+
+                        <select id="library-genre-filter" class="filter-select" onchange="setLibraryGenreFilter(this.value)" style="margin-right: 5px;">
+                            <option value="all">Alle Genres</option>
+                        </select>
+
+                        <select id="library-year-filter" class="filter-select" onchange="setLibraryYearFilter(this.value)" style="margin-right: 5px;">
+                            <option value="all">Alle Jahre</option>
+                        </select>
+
                         <select id="library-subcategory-filter" class="filter-select"
                             onchange="setLibrarySubFilter(this.value)">
                             <option value="all" data-i18n="filter_sub_all">Alle Unterkategorien</option>
@@ -7990,8 +8003,11 @@
         // ============ Player Expansion State ============
         let currentPlaylist = [];
         const cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"];
-        let libraryFilter = 'all';
+        let libraryFilter = 'video';
         let librarySubFilter = 'all';
+        let librarySearch = '';
+        let libraryGenre = 'all';
+        let libraryYear = 'all';
         let coverflowIndex = 0;
         let coverflowItems = [];
 
@@ -8014,6 +8030,53 @@
             "spiel": ["PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)", "Spiel"],
             "beigabe": ["Supplement", "Beigabe", "Software"]
         };
+
+        // State is already declared above
+
+        function handleLibrarySearch(val) {
+            librarySearch = val;
+            renderLibrary();
+        }
+
+        function setLibraryGenreFilter(val) {
+            libraryGenre = val;
+            renderLibrary();
+        }
+
+        function setLibraryYearFilter(val) {
+            libraryYear = val;
+            renderLibrary();
+        }
+
+        function updateFilterOptions(media) {
+            const genreSelect = document.getElementById('library-genre-filter');
+            const yearSelect = document.getElementById('library-year-filter');
+            if (!genreSelect || !yearSelect) return;
+
+            const genres = new Set();
+            const years = new Set();
+
+            media.forEach(item => {
+                if (item.tags) {
+                    if (item.tags.genre) genres.add(item.tags.genre);
+                    if (item.tags.year) years.add(item.tags.year);
+                }
+            });
+
+            // Genre options
+            let genreHtml = '<option value="all">Alle Genres</option>';
+            [...genres].sort().forEach(g => {
+                genreHtml += `<option value="${g}" ${libraryGenre === g ? 'selected' : ''}>${g}</option>`;
+            });
+            genreSelect.innerHTML = genreHtml;
+
+            // Year options
+            let yearHtml = '<option value="all">Alle Jahre</option>';
+            [...years].sort((a, b) => b - a).forEach(y => {
+                yearHtml += `<option value="${y}" ${libraryYear === y ? 'selected' : ''}>${y}</option>`;
+            });
+            yearSelect.innerHTML = yearHtml;
+        }
 
         function setLibraryFilter(cat) {
             libraryFilter = cat;
@@ -8057,10 +8120,20 @@
             if (!track) return;
 
             try {
-                const library = await eel.get_library()();
+                // Use advanced filtering (Stage 6)
+                const library = await eel.get_library_filtered(
+                    librarySearch,
+                    libraryGenre,
+                    libraryYear,
+                    'name' // Default sort
+                )();
+
                 coverflowItems = library.media || [];
 
-                // Filter logic
+                // Populate dynamic filters based on current data
+                updateFilterOptions(coverflowItems);
+
+                // Main Category Filter (existing logic, can be offloaded to backend later)
                 if (libraryFilter !== 'all') {
                     const allowedTypes = CATEGORY_MAP[libraryFilter] || [];
                     coverflowItems = coverflowItems.filter(i => allowedTypes.includes(i.category));
@@ -8070,6 +8143,7 @@
                 const subFilterSelect = document.getElementById('library-subcategory-filter');
                 if (subFilterSelect) {
                     const currentVal = subFilterSelect.value;
+                    // Use the UNFILTERED library for category list to keep it consistent
                     const categories = [...new Set(library.media.map(i => i.category))].filter(Boolean).sort();
 
                     let optionsHtml = `<option value="all" data-i18n="filter_sub_all">Alle Unterkategorien</option>`;
@@ -8078,6 +8152,7 @@
                     });
 
                     subFilterSelect.innerHTML = optionsHtml;
+                    // Keep selection if it still exists
                     subFilterSelect.value = categories.map(c => c.toLowerCase()).includes(currentVal.toLowerCase()) ? currentVal : 'all';
                 }
 
