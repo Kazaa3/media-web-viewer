@@ -11421,8 +11421,9 @@
             if(overlay) overlay.classList.toggle('active');
         };
 
-        function startEmbeddedVideo(item, path, startTime = 0, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
-            // Reset VLC control interface port
+        async function startEmbeddedVideo(item, path, startTime = 0, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
+            // Reset state
+            const filePath = item ? item.path : path;
             window._vlc_control_port = null;
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
@@ -11435,39 +11436,34 @@
             if (mpvPlayer && typeof mpvPlayer.stop === 'function') mpvPlayer.stop();
             video.style.display = 'block';
 
-            // Special Case: MPV WASM for ISO/DVD
-            if (type === 'mpv_wasm' || (item && item.path && item.path.toLowerCase().endsWith('.iso'))) {
+            // 1. Smart Routing (Backend Intelligence)
+            showToast("🔍 Analysiere Medienformat...", 1000);
+            const mode = await eel.smart_route(filePath)();
+            const streamUrl = await eel.get_universal_stream_url(filePath, mode, audioIdx, subsIdx, startTime)();
+            
+            console.log(`[UniversalPlayer] Mode: ${mode}, URL: ${streamUrl}`);
+
+            // Metadata Transparency for "Stats for Nerds"
+            currentPlaybackProtocol = mode === 'direct_play' ? "Direct Play (Native)" : 
+                                      mode === 'mse' ? "MSE (Ultra-Fast Remux)" : 
+                                      mode === 'hls_fmp4' ? "HLS (fMP4 Universal)" : 
+                                      mode === 'vlc_bridge' ? "VLC Bridge (ISO/DVD)" : mode;
+            currentPlaybackEngine = (mode === 'direct_play') ? "Native Chromium" : "Video.js / FFmpeg";
+
+            // Special Case: MPV WASM for manual override (if type is specifically requested)
+            if (type === 'mpv_wasm') {
                 currentPlaybackProtocol = "libmpv zu Canvas (WASM)";
                 currentPlaybackEngine = "mpv-wasm / WebGL2";
-                
-                if (vjsPlayer) {
-                    vjsPlayer.pause();
-                    vjsPlayer.hide();
-                }
-                
+                if (vjsPlayer) { vjsPlayer.pause(); vjsPlayer.hide(); }
                 video.style.display = 'none';
-                placeholder.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'none';
                 if (mpvCanvas) mpvCanvas.style.display = 'block';
                 if (mpvOverlay) mpvOverlay.style.display = 'flex';
-                
-                showToast("💿 Starte libmpv zu Canvas (WASM Mode)...", 3000);
-                mpvPlayer.play(item.path);
+                mpvPlayer.play(filePath);
                 return;
             }
             
             if (vjsPlayer) vjsPlayer.show();
-
-            // Metadata Transparency
-            if (path.includes('remux_stream')) {
-                currentPlaybackProtocol = "FFmpeg HLS Remux";
-                currentPlaybackEngine = "MSE / Video.js";
-            } else if (path.includes('transcode_stream') || path.includes('/transcode')) {
-                currentPlaybackProtocol = "FFmpeg fMP4 zu MSE";
-                currentPlaybackEngine = "Direct / Video.js";
-            } else {
-                currentPlaybackProtocol = "Direct / Native Engine";
-                currentPlaybackEngine = "Video.js";
-            }
 
             if (!vjsPlayer) {
                 vjsPlayer = videojs('native-html5-video-resource-node', {
@@ -11493,33 +11489,13 @@
                     }
                 });
 
-                vjsPlayer.resumeTime = startTime;
-
                 vjsPlayer.on('ended', () => {
                     if (repeatStatus === 'one') vjsPlayer.play();
                     else playNext();
                 });
 
-                vjsPlayer.on('error', () => {
-                    const error = vjsPlayer.error();
-                    if (error && error.code === 4) {
-                        showUnsupportedVideoHint();
-                        if (typeof onErrorCallback === 'function') onErrorCallback();
-                    }
-                });
-
                 vjsPlayer.on('timeupdate', () => {
-                    const slider = document.getElementById('video-seek-slider');
-                    const currentTimeSpan = document.getElementById('video-current-time');
-                    const durationSpan = document.getElementById('video-duration');
                     const now = vjsPlayer.currentTime();
-                    if (slider && !slider.matches(':active')) {
-                        const progress = (now / vjsPlayer.duration()) * 100;
-                        slider.value = isFinite(progress) ? progress : 0;
-                    }
-                    if (currentTimeSpan) currentTimeSpan.innerText = formatTime(now);
-                    if (durationSpan) durationSpan.innerText = formatTime(vjsPlayer.duration());
-
                     // Throttled position update to backend
                     if (Math.abs(now - (vjsPlayer.lastPersist || 0)) > 5 && (item || currentVideoItem)) {
                         const mediaName = (item && item.name) || (currentVideoItem && currentVideoItem.name);
@@ -11529,24 +11505,21 @@
                         }
                     }
                 });
-
-                const seekSlider = document.getElementById('video-seek-slider');
-                if (seekSlider) {
-                    seekSlider.addEventListener('input', (e) => {
-                        if (vjsPlayer && vjsPlayer.duration()) {
-                            const previewTime = (e.target.value / 100) * vjsPlayer.duration();
-                            const currentTimeSpan = document.getElementById('video-current-time');
-                            if (currentTimeSpan) currentTimeSpan.innerText = formatTime(previewTime);
-                        }
-                    });
-                    seekSlider.addEventListener('change', (e) => {
-                        if (vjsPlayer && vjsPlayer.duration()) {
-                            const newTime = (e.target.value / 100) * vjsPlayer.duration();
-                            vjsPlayer.currentTime(newTime);
-                        }
-                    });
-                }
             }
+
+            // Set the optimal source
+            let mimeType = (mode === 'hls_fmp4' || mode === 'vlc_bridge') ? "application/x-mpegURL" : "video/mp4";
+            vjsPlayer.src({ src: streamUrl, type: mimeType });
+            
+            if (startTime > 0) {
+                vjsPlayer.resumeTime = startTime;
+            }
+            
+            vjsPlayer.play().catch(err => {
+                console.error("VideoJS Play Error:", err);
+                showToast("❌ Wiedergabefehler: " + mode, 5000);
+            });
+        }
 
             // Centralized seeking logic for all transcode-style streams
             vjsPlayer.off('seeking');

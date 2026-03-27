@@ -119,6 +119,11 @@ from src.parsers import tag_writer  # type: ignore
 from src.core import hardware_detector  # type: ignore
 from src.core import transcoder         # type: ignore
 from src.core import db                 # type: ignore
+from src.core.mode_router import smart_route
+from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
+
+# Force expose the router and streaming engine
+eel.expose(smart_route)
 
 # transcode_mgr deferred
 transcode_mgr = None
@@ -166,6 +171,21 @@ def get_best_ffmpeg_encoder():
     except Exception:
         pass
     return "libx264" # Default software fallback
+
+@eel.expose
+def get_universal_stream_url(file_path, mode, audio_idx=0, subs_idx=None, start_time=0):
+    """
+    @brief Returns the optimal stream URL for a given file and mode.
+    """
+    if mode == 'direct_play':
+        return f"/direct/{file_path}"
+    elif mode == 'mse':
+        return f"/transcode/{file_path}?audio_idx={audio_idx}&ss={start_time}" + (f"&subs_idx={subs_idx}" if subs_idx else "")
+    elif mode == 'hls_fmp4':
+        return hls_fmp4.setup_hls_stream(file_path, audio_idx, subs_idx, start_time)
+    elif mode == 'vlc_bridge':
+        return vlc_bridge.start_vlc_hls_bridge(file_path)
+    return f"/direct/{file_path}"
 
 # Perform singleton check immediately
 _SINGLETON_LOCK = ensure_singleton()
@@ -6674,9 +6694,16 @@ if __name__ == "__main__":
         elif ext in ['.jpg', '.jpeg']: mimetype = "image/jpeg"
         elif ext == '.png': mimetype = "image/png"
         
-        # 4. Use bottle.static_file with proper root/filename split
-        # This is critical for range requests (seeking) to work!
-        return bottle.static_file(p.name, root=str(p.parent), mimetype=mimetype)
+        # Use modular DirectPlay
+        return direct_play.serve_direct_media(full_path)
+
+    @bottle.route('/hls_tmp/<path:path>')
+    def serve_hls_tmp(path):
+        return hls_fmp4.serve_hls_segment(path)
+
+    @bottle.route('/vlc_tmp/<path:path>')
+    def serve_vlc_tmp(path):
+        return vlc_bridge.serve_vlc_hls(path)
 
     @bottle.route('/cache/<path:path>')
     def serve_cache_media(path):
@@ -6712,9 +6739,8 @@ if __name__ == "__main__":
             return bottle.HTTPError(404, "Target for transcode not found.")
 
         log.info(f"[Transcode-Route] Streaming: {p} (Audio:{audio_idx}, Subs:{subs_idx}, Seek:{start_time})")
-        
-        from src.parsers.format_utils import ffprobe_suite
-        analysis = ffprobe_suite(p)
+        # Use modular MSE stream
+        return mse_stream.stream_mse(p, audio_idx, subs_idx, start_time)
         vf = []
         scan = analysis.get("scan_type", "progressive").lower()
         height = int(analysis.get("height", 0))
