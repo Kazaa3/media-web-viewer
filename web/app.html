@@ -465,6 +465,44 @@
 
         #video-player-container-root-wrapper.cinema-expanded .video-js {
             height: 80vh !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        /* Carbon/Glass Theme for Video.js */
+        .video-js.vjs-default-skin {
+            background-color: #0a0a0a; /* Carbon depth */
+        }
+        .vjs-control-bar {
+            background: rgba(15, 15, 15, 0.8) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            height: 4em !important;
+        }
+        .vjs-button > .vjs-icon-placeholder:before {
+            color: #00f0ff; /* Neon cyan icons */
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+        }
+        .vjs-play-progress {
+            background-color: #00f0ff !important;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+        }
+        .vjs-slider {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .vjs-stats-overlay {
+            background: rgba(0, 0, 0, 0.75) !important;
+            backdrop-filter: blur(15px) !important;
+            border: 1px solid rgba(0, 240, 255, 0.3) !important;
+            color: #00f0ff !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .stats-header {
+            color: #fff !important;
+            letter-spacing: 1px;
+            font-weight: 800 !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
         }
 
         body.is-picking {

@@ -6,8 +6,9 @@ from src.core.hardware_detector import get_best_hw_encoder # type: ignore
 
 log = logging.getLogger("streams.hls_stream")
 
+from typing import Dict, Any
 # Global dict to track active HLS sessions
-HLS_SESSIONS = {}
+HLS_SESSIONS: Dict[str, Dict[str, Any]] = {}
 
 def start_hls_fmp4(file_path, output_dir, session_id, audio_idx=0, subs_idx=None, start_time=0):
     """

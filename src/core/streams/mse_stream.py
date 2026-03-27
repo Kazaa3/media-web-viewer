@@ -7,8 +7,9 @@ from src.core.hardware_detector import get_best_hw_encoder # type: ignore
 
 log = logging.getLogger("streams.mse_stream")
 
+from typing import Dict
 # Global dict to track active streaming processes
-ACTIVE_STREAMS = {}
+ACTIVE_STREAMS: Dict[str, subprocess.Popen] = {}
 
 def start_mse_stream(file_path, stream_id, audio_idx=0, subs_idx=None, start_time=0):
     """

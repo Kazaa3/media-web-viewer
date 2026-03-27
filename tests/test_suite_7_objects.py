@@ -63,6 +63,38 @@ class TestSuite7Objects(unittest.TestCase):
         # Check if full_tags JSON is preserved
         self.assertIn("audio_tracks", retrieved[0]["full_tags"])
 
+    # --- LEVEL 7: Real Media Path Verification ---
+    def test_level7_real_media(self):
+        media_dir = PROJECT_ROOT / "media"
+        if not media_dir.exists():
+            self.skipTest("Media directory not found")
+        
+        # Pick 3 different extensions to test
+        exts = [".mkv", ".iso", ".mp3", ".m4a", ".aac"]
+        found_files = []
+        for f in media_dir.iterdir():
+            if f.suffix.lower() in exts and f.is_file():
+                found_files.append(f)
+                if len(found_files) >= 5: break
+        
+        if not found_files:
+            self.skipTest("No real media files found for Level 7")
+
+        import src.core.ffprobe_analyzer as ff
+        import uuid
+        
+        print(f"\n[Level 7] Probing {len(found_files)} real media files (Masked Results):")
+        for f in found_files:
+            res = ff.ffprobe_analyze(f)
+            self.assertNotIn("error", res, f"Analysis failed for {f.suffix}")
+            
+            # Mask filename for copyright/privacy
+            masked_name = f"MEDIA_{uuid.uuid4().hex[:8]}{f.suffix}"
+            print(f"  - Ext: {f.suffix} | Mask: {masked_name} | Res: {res.get('resolution')} | Codec: {res.get('codec')}")
+            
+            self.assertIn("codec", res)
+            self.assertIn("container", res)
+
     # --- LEVEL 3: Mode Router ---
     def test_level3_router_logic(self):
         # Mock ffprobe_analyze in the router's namespace

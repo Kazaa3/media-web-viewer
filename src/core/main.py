@@ -214,16 +214,25 @@ def get_playback_stats():
     try:
         gpu_util = hardware_detector.get_gpu_usage_safe()
         hw = hardware_detector.get_gpu_info()
+        
+        # Mocking Atmos/Bitstream for now or hooking into active session
         return {
-            "codec": "H.264", 
+            "codec": "H.264 / HEVC", 
             "bitrate": "8.5 Mbps", 
             "gpu_info": f"{hw.get('type', 'Unknown')} ({gpu_util:.1f}%)",
             "gpu_util": gpu_util,
-            "rtt_ms": 12
+            "rtt_ms": 12,
+            "audio_engine": "FFmpeg Premium Remux",
+            "atmos": False,
+            "bitstream": False
         }
     except Exception as e:
         log.error(f"[Stats] Error: {e}")
-        return None
+        return {
+            "audio_engine": "Fallback Direct",
+            "atmos": False,
+            "bitstream": False
+        }
 
 # Perform singleton check immediately
 _SINGLETON_LOCK = ensure_singleton()
@@ -6561,47 +6570,6 @@ def ui_trace(message):
     try: logging.info(f"[UI-Trace] {message}")
     except Exception: pass
     return {"status": "ok"}
-
-@eel.expose
-def get_db_stats():
-    """Returns general database health metrics for diagnostics."""
-    try:
-        from src.core.database import get_db
-        db = get_db()
-        items = db.execute("SELECT COUNT(*) FROM media_items").fetchone()[0]
-        categories = db.execute("SELECT COUNT(DISTINCT category) FROM media_items").fetchone()[0]
-        return {
-            "status": "ok",
-            "total_items": items,
-            "unique_categories": categories,
-            "db_path": str(db.path) if hasattr(db, 'path') else "unknown"
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@eel.expose
-def get_playback_stats():
-    """Returns real-time performance and metadata for the current playback session."""
-    try:
-        # Mocking some metrics for the UI until a real-time monitor is attached
-        import psutil
-        cpu = psutil.cpu_percent()
-        ram = psutil.virtual_memory().percent
-        
-        # Pull Atmos/Bitstream from current analysis global (if stored)
-        # For Level 5 we return enriched mock if no file is playing
-        return {
-            "cpu": cpu,
-            "gpu_util": 0, # Requires specialized probing
-            "ram_mb": psutil.Process().memory_info().rss / 1024 / 1024,
-            "net_recv_kb": 0,
-            "net_sent_kb": 0,
-            "audio_engine": "FFmpeg Direct-Stream",
-            "atmos": False,
-            "bitstream": False
-        }
-    except Exception:
-        return {}
 
 @eel.expose
 def get_media_tracks(filepath):
