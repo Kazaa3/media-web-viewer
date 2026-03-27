@@ -8,6 +8,7 @@
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="js/mpv-player.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         (function () {
@@ -3202,7 +3203,7 @@
                             <div style="background: #f3e5f5; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #e1bee7;">
                                 <div style="font-size: 0.75em; color: #7b1fa2; font-weight: bold; text-transform: uppercase;">Incompatible</div>
                                 <div style="font-size: 1.6em; font-weight: 800; color: #4a148c;">${analysis.incompatible_videos.length}</div>
-                                <div style="font-size: 0.7em; color: #666;">Requires VLC/Transcode</div>
+                                <div style="font-size: 0.7em; color: #666;">Requires VLC HLS zu MSE</div>
                             </div>
                         </div>
 
@@ -4132,23 +4133,23 @@
         <div id="custom-context-menu" class="custom-context-menu glassmorphic-panel">
         <div id="ctx-video-section">
             <div class="context-menu-header">🎬 Video Wiedergabe</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('auto')" title="Premium UI mit Video.js">💎 Premium UI (Video.js)</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')" title="Native Browser-Wiedergabe">🚀 Browser Direct (Native)</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')" title="FFmpeg WebM Echtzeit-Transcoding">✨ FFmpeg WebM (Transcode)</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" title="FFmpeg HLS Remuxing">📦 FFmpeg HLS (Remuxed)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('auto')" title="Premium UI mit Video.js">💎 Video.js (MSE/HLS Standard)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')" title="Native Browser-Wiedergabe">🚀 Chromium Native Wiedergabe</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')" title="FFmpeg fMP4 zu MSE">✨ FFmpeg fMP4 zu MSE</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" title="FFmpeg fMP4 zu HLS Remuxing">📦 FFmpeg fMP4 zu HLS (Remuxed)</div>
         </div>
 
         <div id="ctx-audio-section" style="display: none;">
             <div class="context-menu-header">🎵 Audio Optionen</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('audio_direct')">🔊 Standard Audio-Player</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('audio_direct')">🔊 Direkte Dateiübertragung</div>
             <div id="ctx-resume-item" class="context-menu-item" style="display: none;" onclick="handleContextMenuAction('resume')">🕒 Fortsetzen bei <span id="ctx-resume-time">0:00</span></div>
         </div>
 
         <div class="context-menu-divider"></div>
         <div id="ctx-disc-section">
             <div class="context-menu-header">💿 DVD / Disc Optionen</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg DVD WebM (Transcode)</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('vlc_iso')">💿 FFmpeg HLS (VLC/ISO Mode)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg DVD fMP4 zu MSE</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('vlc_iso')">💿 VLC HLS zu MSE (Interaktiv)</div>
             <div class="context-menu-item" onclick="handleContextMenuAction('vlc_embedded')">📁 VLC DVD-Folder Mode</div>
             <div class="context-menu-divider"></div>
         </div>
@@ -6735,7 +6736,7 @@
                                 style="background: #fff3e0; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ffe0b2;">
                                 <div style="font-size: 0.8em; color: #e65100; font-weight: 700; text-transform: uppercase;"
                                     title="Includes DVD Transcoding & VLC Fallback">
-                                    VLC / Transcode</div>
+                                    VLC HLS zu MSE (Transcode)</div>
                                 <div id="suite-vlc-count" style="font-size: 2em; font-weight: 800; color: #ef6c00;">
                                     0
                                 </div>
@@ -7004,7 +7005,7 @@
                                             <path d="M11 5L6 9H2v6h4l5 4V5z" />
                                             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
                                         </svg>
-                                        FFmpeg Transcode (MSE)
+                                        FFmpeg fMP4 zu MSE
                                     </button>
                                 </div>
                                 <div id="chrome-info-strip"
@@ -7290,6 +7291,14 @@
                                 <video id="native-html5-video-resource-node" class="video-js vjs-default-skin vjs-big-play-centered" 
                                     controls preload="auto"
                                     style="object-fit: contain; z-index: 1;"></video>
+                                <canvas id="mpv-canvas" 
+                                    style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: none; z-index: 5; background: #000;"></canvas>
+                                <div id="mpv-menu-overlay" 
+                                    style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 6; display: none; align-items: flex-end; justify-content: center; padding-bottom: 50px;">
+                                    <div style="background: rgba(0,0,0,0.6); color: #fff; padding: 10px 20px; border-radius: 20px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); font-size: 0.9em; pointer-events: auto;">
+                                        💿 <b>WASM DVD Menu Mode</b> | Use Arrows & Enter to Navigate
+                                    </div>
+                                </div>
                                 <div id="idle-state-media-icon-symbol"
                                     style="color: #666; text-align: center; padding: 40px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; background: rgba(26,26,26,0.8); pointer-events: none;">
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ddd"
@@ -8684,7 +8693,7 @@
             }
 
             if (mode === 'vlc_embedded' || mode === 'vlc_interactive') {
-                showToast("🚀 Starte VLC Interactive Stream...", 2000);
+                showToast("🚀 Starte VLC HLS zu MSE (Interaktiv)...", 2000);
                 const res = await eel.open_video(item.path, 'vlc', 'vlc_embedded')();
                 if (res && res.status === 'play') {
                     startEmbeddedVideo(item, res.path, 0, res.type);
@@ -10945,7 +10954,7 @@
                         startEmbeddedVideo(item, streamUrl, startTime, 'application/x-mpegURL', d_sec);
                     }
                 } else if (source.mode === 'transcode') {
-                    showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
+                    showToast("🛠️ FFmpeg fMP4 zu MSE (Echtzeit)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                     selectEngine('chrome');
                     const btn = document.querySelector('[data-mode="chrome_transcode"]');
@@ -11417,13 +11426,43 @@
             window._vlc_control_port = null;
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
+            const mpvCanvas = document.getElementById('mpv-canvas');
+            const mpvOverlay = document.getElementById('mpv-menu-overlay');
+
+            // Reset visibility
+            if (mpvCanvas) mpvCanvas.style.display = 'none';
+            if (mpvOverlay) mpvOverlay.style.display = 'none';
+            if (mpvPlayer && typeof mpvPlayer.stop === 'function') mpvPlayer.stop();
+            video.style.display = 'block';
+
+            // Special Case: MPV WASM for ISO/DVD
+            if (type === 'mpv_wasm' || (item && item.path && item.path.toLowerCase().endsWith('.iso'))) {
+                currentPlaybackProtocol = "libmpv zu Canvas (WASM)";
+                currentPlaybackEngine = "mpv-wasm / WebGL2";
+                
+                if (vjsPlayer) {
+                    vjsPlayer.pause();
+                    vjsPlayer.hide();
+                }
+                
+                video.style.display = 'none';
+                placeholder.style.display = 'none';
+                if (mpvCanvas) mpvCanvas.style.display = 'block';
+                if (mpvOverlay) mpvOverlay.style.display = 'flex';
+                
+                showToast("💿 Starte libmpv zu Canvas (WASM Mode)...", 3000);
+                mpvPlayer.play(item.path);
+                return;
+            }
+            
+            if (vjsPlayer) vjsPlayer.show();
 
             // Metadata Transparency
             if (path.includes('remux_stream')) {
                 currentPlaybackProtocol = "FFmpeg HLS Remux";
                 currentPlaybackEngine = "MSE / Video.js";
             } else if (path.includes('transcode_stream') || path.includes('/transcode')) {
-                currentPlaybackProtocol = "FFmpeg WebM Transcode";
+                currentPlaybackProtocol = "FFmpeg fMP4 zu MSE";
                 currentPlaybackEngine = "Direct / Video.js";
             } else {
                 currentPlaybackProtocol = "Direct / Native Engine";

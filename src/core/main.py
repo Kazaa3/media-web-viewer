@@ -776,8 +776,8 @@ def get_app_name():
 def update_playback_position(name, position):
     """Updates the persistent playback position."""
     try:
-        import db
-        if db.db_path.exists():
+        from src.core import db
+        if db.get_active_db_path().exists():
             db.update_playback_position(name, position)
         return {"ok": True}
     except Exception as e:
@@ -6805,6 +6805,35 @@ if __name__ == "__main__":
             finally:
                 if process.poll() is None: process.terminate()
         return stream()
+    
+    # --- MPV WASM Security & Streaming ---
+    @bottle.hook('after_request')
+    def enable_coop_coep():
+        """Add security headers required for SharedArrayBuffer (WASM performance)."""
+        bottle.response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+        bottle.response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
+        # Also ensure CORS for local streaming if needed
+        bottle.response.headers['Access-Control-Allow-Origin'] = '*'
+
+    @bottle.route('/iso-stream/<path:path>')
+    def stream_iso(path):
+        """Serve ISO/Media files directly for WASM-side parsing with Range support."""
+        decoded_path = unquote(path)
+        # Security: Ensure path is within allowed media directories or resolve absolutely
+        # For simplicity in this project, we treat the path as absolute if it starts with /
+        # but caution is advised in production environments.
+        file_path = decoded_path if os.path.isabs(decoded_path) else os.path.abspath(decoded_path)
+        
+        if not os.path.exists(file_path):
+            return bottle.HTTPError(404, "ISO file not found.")
+            
+        return bottle.static_file(os.path.basename(file_path), root=os.path.dirname(file_path))
+
+    @eel.expose
+    def get_iso_stream_url(file_path):
+        """Returns the local server URL for a media file to be consumed by MPV WASM."""
+        safe_path = file_path # In main.py, paths are already absolute usually
+        return f"http://127.0.0.1:{session_port}/iso-stream/{safe_path}"
 
     log_checkpoint("Starting Eel server")
     eel.start(
