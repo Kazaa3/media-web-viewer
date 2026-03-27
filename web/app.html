@@ -78,6 +78,199 @@
         })();
     </script>
     <style>
+        /* --- Premium Video.js Custom Buttons --- */
+        .vjs-control.vjs-button.cinema-btn,
+        .vjs-control.vjs-button.vlc-btn,
+        .vjs-control.vjs-button.mpv-btn,
+        .vjs-control.vjs-button.snapshot-btn,
+        .vjs-control.vjs-button.stop-btn,
+        .vjs-control.vjs-button.vjs-menu-button {
+            width: 3.5em !important;
+            opacity: 0.9;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .vjs-control.vjs-button:hover {
+            opacity: 1 !important;
+            transform: translateY(-2px) scale(1.05);
+            color: #7df !important;
+        }
+        .vjs-menu-button-popup .vjs-menu {
+            left: -2em;
+        }
+        .cinema-btn.vjs-control.vjs-button { color: #f1c40f !important; }
+        .vlc-btn.vjs-control.vjs-button { color: #e67e22 !important; }
+        .mpv-btn.vjs-control.vjs-button { color: #d32f2f !important; }
+        .vjs-control.vjs-button.stop-btn { color: #e74c3c !important; }
+        .vjs-control.vjs-button.stats-btn { 
+            color: #00f2fe !important; 
+            border: 1px solid rgba(0, 242, 254, 0.4) !important;
+            border-radius: 6px !important;
+            height: 24px !important;
+            margin-top: 8px !important;
+            line-height: 22px !important;
+            background: rgba(0, 242, 254, 0.1) !important;
+            text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+            font-size: 0.85em !important;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Premium Video.js Control Bar & Progress --- */
+        .vjs-control-bar {
+            background: rgba(15, 15, 15, 0.6) !important;
+            backdrop-filter: blur(14px) saturate(180%);
+            -webkit-backdrop-filter: blur(14px) saturate(180%);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            height: 4.5em !important;
+            display: flex !important;
+            align-items: center;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .vjs-progress-control {
+            height: 5px !important;
+            position: absolute !important;
+            top: -5px;
+            width: 100% !important;
+            transition: height 0.2s ease;
+        }
+        .vjs-progress-control:hover { height: 10px !important; top: -10px; }
+        .vjs-play-progress {
+            background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%) !important;
+        }
+        .vjs-play-progress:before {
+            display: block !important;
+            top: -0.4em !important;
+            font-size: 1.25em !important;
+            color: #fff !important;
+            text-shadow: 0 0 10px #00f2fe;
+        }
+        .vjs-slider { background: rgba(255, 255, 255, 0.1) !important; }
+        .vjs-load-progress { background: rgba(255, 255, 255, 0.2) !important; }
+
+        /* --- Glassy Big Play Button --- */
+        .vjs-big-play-button {
+            background: rgba(0, 242, 254, 0.1) !important;
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 50% !important;
+            width: 3.5em !important;
+            height: 3.5em !important;
+            line-height: 3.3em !important;
+            margin-top: -1.75em !important;
+            margin-left: -1.75em !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .vjs-big-play-button:hover {
+            background: rgba(0, 242, 254, 0.2) !important;
+            border-color: #00f2fe !important;
+            transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+        }
+        .vjs-loading-spinner {
+            border-radius: 50% !important;
+            border: 4px solid rgba(0, 242, 254, 0.1) !important;
+            border-top: 4px solid #00f2fe !important;
+        }
+
+        /* --- Stats Overlay Glassmorphism --- */
+        #vjs-stats-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 240px;
+            padding: 15px;
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #eee;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            z-index: 1001;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            pointer-events: none;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+        #vjs-stats-overlay.active { display: block; }
+        .stats-header { color: #7df; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .stats-val { color: #fff; text-shadow: 0 0 5px rgba(125, 255, 255, 0.3); }
+
+        /* --- Premium Settings Panel Overlay --- */
+        #vjs-settings-panel {
+            position: absolute;
+            top: 20px;
+            right: -320px;
+            width: 280px;
+            max-height: calc(100% - 100px);
+            padding: 20px;
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            z-index: 1002;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+            transition: right 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            overflow-y: auto;
+        }
+        #vjs-settings-panel.active { right: 20px; }
+        .settings-section { margin-bottom: 24px; }
+        .settings-title { 
+            font-size: 0.8em; 
+            color: #7df; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(119, 221, 255, 0.2);
+            padding-bottom: 4px;
+        }
+        .settings-list { list-style: none; padding: 0; margin: 0; }
+        .settings-item {
+            padding: 10px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9em;
+        }
+        .settings-item:hover { background: rgba(255, 255, 255, 0.1); }
+        .settings-item.active { background: rgba(0, 242, 254, 0.2); color: #00f2fe; }
+        .settings-item i { font-size: 1.2em; }
+        
+        .speed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .speed-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: white;
+            padding: 6px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .speed-btn:hover { background: rgba(255, 255, 255, 0.15); }
+        .speed-btn.active { background: #00f2fe; color: #000; font-weight: bold; border-color: #00f2fe; }
+
+        /* Premium Player Buttons */
+        .settings-btn { color: #00f2fe !important; font-size: 1.4em !important; transition: transform 0.4s ease; }
+        .settings-btn:hover { transform: rotate(90deg); color: #fff !important; text-shadow: 0 0 10px rgba(0, 242, 254, 0.8); }
+        .vlc-btn { color: #ff9800 !important; }
+        .mpv-btn { color: #607d8b !important; }
+        .snapshot-btn { color: #4caf50 !important; }
+        .cinema-btn { color: #e91e63 !important; }
+        .stats-btn { color: #7df !important; }
+        .stop-btn { color: #f44 !important; }
+        
+        .vjs-button:hover { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 0 0 128px 0;
@@ -3885,26 +4078,25 @@
 </head>
 
 <body>
-    <div id="custom-context-menu" class="custom-context-menu">
+        <div id="custom-context-menu" class="custom-context-menu">
         <div class="context-menu-header">🎬 Wiedergabe-Optionen</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')">🚀 Chrome Native (Direkt)
-        </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ Chrome Native
-            (Transkodiert)</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')">📦 Chrome Native (Remuxed)
-        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('auto')">💎 Premium UI (Video.js)</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')">🚀 Browser Direct (Native API)</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg WebM (Transcode)</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')">📦 FFmpeg HLS (Remuxed)</div>
 
         <div class="context-menu-divider"></div>
         <div class="context-menu-header">💿 DVD / Disc Optionen</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ DVD Transcoded (Native)
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg DVD WebM (Transcode)
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_iso')">💿 VLC ISO HLS Modus</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_embedded')">📁 VLC DVD-Ordner</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_iso')">💿 FFmpeg HLS (VLC/ISO Mode)</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_embedded')">📁 VLC DVD-Folder Mode</div>
 
         <div class="context-menu-divider"></div>
         <div class="context-menu-header">📺 Externe Player</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')">🧡 VLC Player (System)</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('mpv')">🖤 MPV Player</div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('pyplayer')">🐍 PyPlayer</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('ffplay')">💙 FFplay</div>
 
         <div class="context-menu-divider"></div>
@@ -8260,7 +8452,7 @@
 
             // 2. Check Extension
             const path = item.path || item.relpath || "";
-            const videoExtensions = ['.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv'];
+            const videoExtensions = ['.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m2ts', '.vob', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv'];
             const ext = path.toLowerCase().slice(((path.lastIndexOf(".") - 1) >>> 0) + 2);
             if (ext && videoExtensions.includes("." + ext)) return true;
 
@@ -9442,13 +9634,19 @@
             playlistIndex = index;
             if (isVideoItem(item)) {
                 // Redirect video items to Video Tab
-                console.info("[Queue-Redirect] Video clicked in audio queue, redirecting...");
+                console.info("🚀 [Queue-Redirect] Video clicked in audio queue, routing to Premium Player.");
                 switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
                 setTimeout(() => {
-                    if (typeof playVideo === 'function') playVideo(item, item.path);
-                }, 100);
+                    if (typeof playVideo === 'function') {
+                        // Ensure it uses the standard Video.js player if not otherwise specified
+                        playVideo(item, item.path);
+                    } else {
+                        console.error("❌ playVideo function not found!");
+                    }
+                }, 250);
             } else {
                 // Standard Audio Play
+                console.info("🎵 [Queue-Play] Audio item clicked, using Native Pipeline.");
                 play(item, getMediaUrl(item));
             }
             renderPlaylist();
@@ -10726,6 +10924,7 @@
 
         // --- Video.js Custom Component Definitions (ES6 Classes for Video.js 8) ---
         const vjsBtn = videojs.getComponent('Button');
+        const vjsComponent = videojs.getComponent('Component');
         const vjsMenuBtn = videojs.getComponent('MenuButton');
         const vjsMenuItem = videojs.getComponent('MenuItem');
         const vjsMenu = videojs.getComponent('Menu');
@@ -10734,10 +10933,58 @@
         let currentAudioIdx = 0;
         let currentSubsIdx = null;
 
+        // --- Visual Stats Overlay Component ---
+        class VisualStatsOverlay extends vjsComponent {
+            constructor(player, options) {
+                super(player, options);
+                this.el().id = 'vjs-stats-overlay';
+                this.updateContent({});
+            }
+            createEl() { return videojs.dom.createEl('div', { className: 'vjs-stats-overlay' }); }
+            updateContent(data) {
+                const cpu = data.cpu || 0;
+                const ram = data.ram_mb || 0;
+                const netRecv = (data.net_recv_kb || 0).toFixed(1);
+                const netSent = (data.net_sent_kb || 0).toFixed(1);
+                const fps = window._vjs_fps || 0;
+                const br = window._vjs_bitrate || 0;
+                const buf = window._vjs_buffer || 0;
+                const dropped = window._vjs_dropped || 0;
+
+                this.el().innerHTML = `
+                    <div class="stats-header">SYSTEM METRICS</div>
+                    <div class="stats-row"><span>Backend CPU</span><span class="stats-val">${cpu}%</span></div>
+                    <div class="stats-row"><span>RAM (Used)</span><span class="stats-val">${Math.round(ram)} MB</span></div>
+                    <div class="stats-row"><span>Net ↓ / ↑</span><span class="stats-val">${netRecv} / ${netSent} KB/s</span></div>
+                    <div style="margin-top:10px;" class="stats-header">PLAYER METRICS</div>
+                    <div class="stats-row"><span>Frames/s</span><span class="stats-val">${Math.round(fps)}</span></div>
+                    <div class="stats-row"><span>Bitrate</span><span class="stats-val">${Math.round(br)} kbps</span></div>
+                    <div class="stats-row"><span>Buffer</span><span class="stats-val">${buf}s</span></div>
+                    <div class="stats-row"><span>Dropped</span><span class="stats-val">${dropped}</span></div>
+                `;
+            }
+        }
+        videojs.registerComponent('VisualStatsOverlay', VisualStatsOverlay);
+
+        class StatsButton extends vjsBtn {
+            constructor(player, options) {
+                super(player, options);
+                this.controlText('Stats');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STATS</span>';
+            }
+            handleClick() {
+                const overlay = document.getElementById('vjs-stats-overlay');
+                if(overlay) overlay.classList.toggle('active');
+            }
+            buildCSSClass() { return "vjs-icon-graph-bar vjs-control vjs-button stats-btn"; }
+        }
+        videojs.registerComponent('StatsButton', StatsButton);
+
         class AudioTrackMenuButton extends vjsMenuBtn {
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Audio');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">AUDIO</span>';
             }
             createMenu() {
                 const menu = new vjsMenu(this.player_);
@@ -10756,6 +11003,21 @@
                 }
                 return menu;
             }
+            update() {
+                const menu = this.createMenu();
+                if (this.menu) {
+                    this.removeChild(this.menu);
+                }
+                this.menu = menu;
+                this.addChild(this.menu);
+                if (this.items && this.items.length > 0) {
+                    this.show();
+                } else if (currentVideoTracks && currentVideoTracks.audio && currentVideoTracks.audio.length > 0) {
+                     this.show();
+                } else {
+                    this.hide();
+                }
+            }
             buildCSSClass() { return "vjs-icon-audio vjs-control vjs-button vjs-menu-button"; }
         }
         videojs.registerComponent('AudioTrackMenuButton', AudioTrackMenuButton);
@@ -10764,6 +11026,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Subs');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SUBS</span>';
             }
             createMenu() {
                 const menu = new vjsMenu(this.player_);
@@ -10788,6 +11051,19 @@
                 }
                 return menu;
             }
+            update() {
+                const menu = this.createMenu();
+                if (this.menu) {
+                    this.removeChild(this.menu);
+                }
+                this.menu = menu;
+                this.addChild(this.menu);
+                if (currentVideoTracks && currentVideoTracks.subtitles && currentVideoTracks.subtitles.length > 0) {
+                    this.show();
+                } else {
+                    this.hide();
+                }
+            }
             buildCSSClass() { return "vjs-icon-subtitles vjs-control vjs-button vjs-menu-button"; }
         }
         videojs.registerComponent('SubtitleTrackMenuButton', SubtitleTrackMenuButton);
@@ -10797,6 +11073,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Ratio');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">RATIO</span>';
             }
             createMenu() {
                 const menu = new vjsMenu(this.player_);
@@ -10821,6 +11098,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Cinema');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">CINEMA</span>';
             }
             handleClick() { 
                 const container = document.getElementById('video-player-container-root-wrapper');
@@ -10837,6 +11115,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Visual FX');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">FX</span>';
             }
             createMenu() {
                 const menu = new vjsMenu(this.player_);
@@ -10864,6 +11143,8 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Stop');
+                this.addClass('vjs-visible-text');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STOP</span>';
             }
             handleClick() { stopVideo(); }
             buildCSSClass() { return "vjs-icon-cancel vjs-control vjs-button stop-btn"; }
@@ -10874,6 +11155,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('VLC');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">VLC</span>';
             }
             handleClick() { if(typeof switchToVLC === 'function') switchToVLC(); }
             buildCSSClass() { return "vjs-icon-share vjs-control vjs-button vlc-btn"; }
@@ -10884,6 +11166,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('MPV');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">MPV</span>';
             }
             handleClick() { if(currentVideoPath) if(typeof startMPV === 'function') startMPV(currentVideoPath); }
             buildCSSClass() { return "vjs-icon-circle-inner-circle vjs-control vjs-button mpv-btn"; }
@@ -10894,6 +11177,7 @@
             constructor(player, options) {
                 super(player, options);
                 this.controlText('Snapshot');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SNAP</span>';
             }
             handleClick() { 
                 const v = document.getElementById('native-html5-video-resource-node');
@@ -10910,6 +11194,119 @@
         }
         videojs.registerComponent('SnapshotButton', SnapshotButton);
 
+        class SettingsButton extends vjsBtn {
+            constructor(player, options) {
+                super(player, options);
+                this.controlText('Settings');
+                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SETTINGS</span>';
+            }
+            handleClick() {
+                const panel = document.getElementById('vjs-settings-panel');
+                if(panel) {
+                    panel.classList.toggle('active');
+                    if (panel.classList.contains('active')) {
+                        updateSettingsPanel();
+                    }
+                }
+            }
+            buildCSSClass() { return "vjs-icon-cog vjs-control vjs-button settings-btn"; }
+        }
+        videojs.registerComponent('SettingsButton', SettingsButton);
+
+        function updateSettingsPanel() {
+            const panel = document.getElementById('vjs-settings-panel');
+            if(!panel) return;
+
+            let html = `
+                <div class="settings-section">
+                    <div class="settings-title">Audio Track</div>
+                    <ul class="settings-list">
+                        ${(currentVideoTracks.audio || []).map(t => `
+                            <li class="settings-item ${String(t.id) === String(currentAudioIdx) ? 'active' : ''}" onclick="selectAudioTrack(${t.id})">
+                                ${t.label} <span>${String(t.id) === String(currentAudioIdx) ? '✓' : ''}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-title">Subtitles</div>
+                    <ul class="settings-list">
+                        <li class="settings-item ${currentSubsIdx === null ? 'active' : ''}" onclick="selectSubsTrack(null)">
+                            Off <span>${currentSubsIdx === null ? '✓' : ''}</span>
+                        </li>
+                        ${(currentVideoTracks.subtitles || []).map(t => `
+                            <li class="settings-item ${String(t.id) === String(currentSubsIdx) ? 'active' : ''}" onclick="selectSubsTrack(${t.id})">
+                                ${t.label} <span>${String(t.id) === String(currentSubsIdx) ? '✓' : ''}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-title">Playback Speed</div>
+                    <div class="speed-grid">
+                        ${[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => `
+                            <div class="speed-btn ${vjsPlayer.playbackRate() === s ? 'active' : ''}" onclick="setPlaybackSpeed(${s})">${s}x</div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-title">Visual Filters</div>
+                    <ul class="settings-list">
+                        ${[
+                            { l: 'Natural', f: 'none' }, 
+                            { l: 'Vibrant', f: 'saturate(1.4) contrast(1.1)' },
+                            { l: 'Cinematic', f: 'contrast(1.2) sepia(0.1)' }, 
+                            { l: 'B&W', f: 'grayscale(1)' }
+                        ].map(f => `
+                            <li class="settings-item" onclick="setVideoFilter('${f.f}', '${f.l}')">${f.l}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">External Players</div>
+                    <div class="speed-grid">
+                        <div class="speed-btn" onclick="switchToVLC()">VLC</div>
+                        <div class="speed-btn" onclick="switchToMPV()">MPV</div>
+                        <div class="speed-btn" onclick="switchToPyPlayer()">PyPlayer</div>
+                        <div class="speed-btn" onclick="switchToChromeNative()">Browser Direct</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Misc</div>
+                    <div class="settings-item" onclick="toggleStatsOverlay()">
+                        Stats for Nerds <span>⚡</span>
+                    </div>
+                </div>
+            `;
+            panel.innerHTML = html;
+        }
+
+        window.selectAudioTrack = (id) => {
+            currentAudioIdx = id;
+            updateSettingsPanel();
+            startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
+        };
+        window.selectSubsTrack = (id) => {
+            currentSubsIdx = id;
+            updateSettingsPanel();
+            startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
+        };
+        window.setPlaybackSpeed = (s) => {
+            if(vjsPlayer) vjsPlayer.playbackRate(s);
+            updateSettingsPanel();
+        };
+        window.setVideoFilter = (f, label) => {
+            const v = document.getElementById('native-html5-video-resource-node_html5_api');
+            if(v) v.style.filter = f;
+            showToast(`Filter: ${label}`, 800);
+        };
+        window.toggleStatsOverlay = () => {
+            const overlay = document.getElementById('vjs-stats-overlay');
+            if(overlay) overlay.classList.toggle('active');
+        };
+
         function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
@@ -10917,18 +11314,13 @@
             if (!vjsPlayer) {
                 vjsPlayer = videojs('native-html5-video-resource-node', {
                     fluid: true,
-                    aspectRatio: '16:9',
                     playbackRates: [0.5, 1, 1.25, 1.5, 2],
                     controlBar: {
                         children: [
                             'playToggle', 'volumePanel', 'currentTimeDisplay', 'timeDivider',
                             'durationDisplay', 'progressControl', 'remainingTimeDisplay',
-                            'playbackRateMenuButton',
-                            'AudioTrackMenuButton',
-                            'SubtitleTrackMenuButton',
-                            'AspectRatioMenuButton',
-                            'VisualFXMenuButton',
-                            'VlcButton', 'MpvButton', 'SnapshotButton', 'CinemaModeButton', 'StopButton',
+                            'SettingsButton',
+                            'VlcButton', 'MpvButton', 'SnapshotButton', 'CinemaModeButton', 'StatsButton', 'StopButton',
                             'fullscreenToggle', 'pictureInPictureToggle'
                         ]
                     }
@@ -10992,7 +11384,7 @@
             vjsPlayer.on('seeking', () => {
                 const newTime = vjsPlayer.currentTime();
                 const currentSrc = vjsPlayer.src();
-                if (currentSrc.includes('/stream_transcode') || currentSrc.includes('/video-stream') || currentSrc.includes('/transcode')) {
+                if (currentSrc.includes('/stream_transcode') || currentSrc.includes('/video-stream') || currentSrc.includes('/transcode') || currentSrc.includes('/video-remux-stream')) {
                     console.info("[Video.js] Hot-reloading stream for seek at:", newTime);
                     const base = currentSrc.split('?')[0];
                     const newPath = `${base}?filepath=${encodeURIComponent(path)}&ss=${newTime}`;
@@ -11027,7 +11419,7 @@
             video.style.zIndex = '10';
 
             let finalPath = path;
-            if (path && (path.includes('/stream_transcode') || path.includes('/video-stream') || path.includes('/transcode'))) {
+            if (path && (path.includes('/stream_transcode') || path.includes('/video-stream') || path.includes('/transcode') || path.includes('/video-remux-stream'))) {
                 const url = new URL(path.includes('://') ? path : 'http://localhost' + path);
                 url.searchParams.set('audio_idx', audioIdx);
                 if (subsIdx !== null) url.searchParams.set('subs_idx', subsIdx);
@@ -11035,8 +11427,63 @@
                 finalPath = url.pathname + url.search;
             }
 
-            const finalType = type || 'video/mp4';
+            // --- Stats Loop Init ---
+            if (!window._statsLoopStarted) {
+                window._statsLoopStarted = true;
+                let lastRAF = performance.now();
+                let frames = 0;
+                const updateMetrics = () => {
+                    if (!vjsPlayer || vjsPlayer.paused()) {
+                        requestAnimationFrame(updateMetrics);
+                        return;
+                    }
+                    
+                    frames++;
+                    const now = performance.now();
+                    if (now - lastRAF >= 1000) {
+                        window._vjs_fps = frames;
+                        frames = 0;
+                        lastRAF = now;
+                    }
+
+                    try {
+                        const tech = vjsPlayer.tech({ IWillNotUseThisInPlugins: 'yet' });
+                        window._vjs_bitrate = (tech && tech.vhs && tech.vhs.stats && tech.vhs.stats.bandwidth) ? (tech.vhs.stats.bandwidth / 1000) : 0;
+                        
+                        const videoNode = document.getElementById('native-html5-video-resource-node_html5_api');
+                        if (videoNode && videoNode.buffered.length) {
+                            window._vjs_buffer = (videoNode.buffered.end(0) - videoNode.currentTime).toFixed(1);
+                            window._vjs_dropped = videoNode.getVideoPlaybackQuality ? videoNode.getVideoPlaybackQuality().droppedVideoFrames : 0;
+                        }
+                    } catch(e) {}
+
+                    requestAnimationFrame(updateMetrics);
+                };
+                updateMetrics();
+            }
+
+            let finalType = type || 'video/mp4';
+            if (!type && path) {
+                const lower = path.toLowerCase();
+                if (lower.endsWith('.mkv')) finalType = 'video/x-matroska';
+                else if (lower.endsWith('.webm')) finalType = 'video/webm';
+                else if (lower.endsWith('.mp4')) finalType = 'video/mp4';
+                else if (lower.endsWith('.ogv')) finalType = 'video/ogg';
+            }
+
+            console.info("[Video.js] Setting source:", finalPath, "Type:", finalType);
             vjsPlayer.src({ src: finalPath, type: finalType });
+            
+            if (!vjsPlayer.getChild('VisualStatsOverlay')) {
+                vjsPlayer.addChild('VisualStatsOverlay');
+            }
+
+            // Create settings panel if missing
+            if (!document.getElementById('vjs-settings-panel')) {
+                const panel = document.createElement('div');
+                panel.id = 'vjs-settings-panel';
+                vjsPlayer.el().appendChild(panel);
+            }
 
             // Fetch tracks for the menu if not already loaded for this path
             if (vjsPlayer.lastProbedPath !== path) {
@@ -11044,11 +11491,16 @@
                 eel.get_media_tracks(path)((tracks) => {
                     currentVideoTracks = tracks || { audio: [], subtitles: [] };
                     // Re-calculate menus
-                    if (vjsPlayer.controlBar.childNameIndex_['AudioTrackMenuButton']) {
-                        vjsPlayer.controlBar.childNameIndex_['AudioTrackMenuButton'].update();
+                    if (vjsPlayer.controlBar.getChild('AudioTrackMenuButton')) {
+                        vjsPlayer.controlBar.getChild('AudioTrackMenuButton').update();
                     }
-                    if (vjsPlayer.controlBar.childNameIndex_['SubtitleTrackMenuButton']) {
-                        vjsPlayer.controlBar.childNameIndex_['SubtitleTrackMenuButton'].update();
+                    if (vjsPlayer.controlBar.getChild('SubtitleTrackMenuButton')) {
+                        vjsPlayer.controlBar.getChild('SubtitleTrackMenuButton').update();
+                    }
+                    // Refresh Settings Panel if active
+                    const panel = document.getElementById('vjs-settings-panel');
+                    if(panel && panel.classList.contains('active')) {
+                        updateSettingsPanel();
                     }
                 });
             }
@@ -11188,6 +11640,33 @@
                 safeValue('player-type', 'vlc');
                 updateVideoModes();
                 safeValue('video-mode', 'vlc_extern');
+                playVideo(currentVideoItem, currentVideoItem.path);
+            }
+        }
+
+        function switchToMPV() {
+            if (currentVideoItem) {
+                safeValue('player-type', 'mpv');
+                updateVideoModes();
+                safeValue('video-mode', 'auto');
+                playVideo(currentVideoItem, currentVideoItem.path);
+            }
+        }
+
+        function switchToPyPlayer() {
+            if (currentVideoItem) {
+                safeValue('player-type', 'pyplayer');
+                updateVideoModes();
+                safeValue('video-mode', 'auto');
+                playVideo(currentVideoItem, currentVideoItem.path);
+            }
+        }
+
+        function switchToChromeNative() {
+            if (currentVideoItem) {
+                safeValue('player-type', 'chrome');
+                updateVideoModes();
+                safeValue('video-mode', 'chrome_direct');
                 playVideo(currentVideoItem, currentVideoItem.path);
             }
         }
@@ -13848,6 +14327,15 @@
                     splitter.classList.remove('active');
                 }
             });
+        }
+
+        // --- Backend Stats Integration ---
+        eel.expose(update_system_stats);
+        function update_system_stats(stats) {
+            if (vjsPlayer) {
+                const overlayInstance = vjsPlayer.getChild('VisualStatsOverlay');
+                if (overlayInstance) overlayInstance.updateContent(stats);
+            }
         }
     </script>
     <div class="bottom-bar">

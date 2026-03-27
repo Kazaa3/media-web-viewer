@@ -1,3 +1,185 @@
+## Logbuch: Echtzeit-Backend- und Player-Stats im Video.js 8 Player (27.03.2026)
+
+- **Backend-Integration:**
+  - Bottle + geventwebsocket: /ws/stats liefert CPU/GPU/RAM/Netz live via WebSocket (psutil, GPUtil).
+  - Python-Thread pusht Stats an alle Clients, 1s-Intervall.
+- **Frontend (Video.js 8, ES6):**
+  - WebSocket-Client zeigt Backend-Stats als Overlay im Player (CPU, RAM, GPU, Netz).
+  - HLS/Player-Stats (FPS, Bitrate, Buffer, Dropped Frames) via VHS und VideoPlaybackQuality, Overlay mit requestAnimationFrame.
+- **Features:**
+  - Overlay absolut positioniert, Debugging für FFmpeg-Streams.
+  - In Eel via eel.spawn für FFmpeg/Monitor integrierbar.
+  - Kombiniert System- und Stream-Stats für vollständige Transparenz.
+## Logbuch: Ressourcen & Monitoring für Real-Time-Transcoding (27.03.2026)
+
+| Format         | CPU (iGPU QSV) | RAM    | GPU-Mem | Netz (LAN)      | Bottleneck         |
+|---------------|----------------|--------|---------|-----------------|--------------------|
+| PAL-DVD (576p)| 5-10%          | 500 MB | 100 MB  | 5-10 Mbit/s     | Kein               |
+| HD Blu-ray    | 10-20%         | 1 GB   | 300 MB  | 15-25 Mbit/s    | Filter             |
+| 3D (SBS)      | 15-25%         | 1.5 GB | 400 MB  | 20-30 Mbit/s    | Decode             |
+| 4K HDR        | 20-50%         | 2-4 GB | 1 GB    | 40-80 Mbit/s    | Encode/Bandbreite  |
+
+- **Backend-Monitoring (Python):**
+  - psutil für CPU/RAM/Netz, GPUtil für GPU-Last.
+  - Beispiel:
+    import psutil; import GPUtil
+    def monitor_resources(proc):
+        stats = {
+            'cpu_percent': psutil.cpu_percent(interval=1),
+            'ram_mb': psutil.virtual_memory().used / 1024**2,
+            'gpu_util': GPUtil.getGPUs()[0].load * 100 if GPUtil.getGPUs() else 0,
+            'net_sent': psutil.net_io_counters().bytes_sent / 1024**2
+        }
+        print(stats)
+        return stats
+  - Loop im Thread während FFmpeg läuft, WebSocket zu Video.js möglich.
+- **Netzwerk-Optimierung:**
+  - LAN: Gigabit reicht für 4K, HLS-Segmente ~2s, Puffer 10-20s.
+  - WAN: ABR-Varianten, CDN für Skalierung.
+  - HLS-Flag delete_segments spart Speicher.
+- **Praxis:**
+  - Skaliert auf Core i5/i7 (11th+), Monitoring mit htop, intel-gpu-tools.
+## Logbuch: Echtzeit-Stats in Chrome Native mit Video.js 8 & ES6 (27.03.2026)
+
+- **Echtzeit-Stats:**
+  - FPS, Bitrate, Buffer, Requests, Dropped Frames via VHS/HLS-Plugin (@videojs/http-streaming) und VideoPlaybackQuality-API.
+  - Overlay-Div für Stats, live aktualisiert mit requestAnimationFrame.
+- **ES6/Video.js 8 Beispiel:**
+  - <video-js> mit HLS-Source, VHS-Stats via player.tech().vhs.stats.
+  - FPS-Berechnung per RAF, Buffer/Bitrate/Requests/Drops im Overlay.
+- **Features:**
+  - Perfekt für Debugging von FFmpeg-Streams (PAL/4K), Latenz- und Qualitätsanalyse.
+  - Anpassbar für Eel-Frontend, Overlay beliebig positionierbar.
+## Logbuch: Intel iGPU für HD-Blu-ray, 3D, 4K – QSV/VAAPI (27.03.2026)
+
+- **HD-Blu-ray (1080p HEVC):**
+  - ffmpeg -hwaccel qsv -i bd_iso.iso -c:v hevc_qsv -preset medium -global_quality 22 -r 24 -c:a aac -f hls -hls_time 2 output.m3u8
+  - QSV unterstützt H.264/HEVC Decode/Encode.
+- **3D Blu-ray (MVC):**
+  - ffmpeg -hwaccel qsv -i 3d_bd.iso -vf stereoscope=mode=side_by_side -c:v h264_qsv -preset fast -global_quality 23 -c:a aac -f hls output.m3u8
+  - stereoscope-Filter für 3D-zu-2D, Direct-MVC selten.
+- **4K UHD (HDR10/HEVC 10-bit):**
+  - ffmpeg -hwaccel qsv -i uhd_iso.iso -vf tonemap=hdr=bt2390 -c:v hevc_qsv -preset slow -global_quality 20 -pix_fmt yuv420p10le -c:a aac -f hls output.m3u8
+  - QSV für 10-bit HEVC, tonemap für SDR-Ausgabe in Chrome.
+- **Limits & Tipps:**
+  - iGPU vor 7th Gen: Kein 10-bit/HEVC-Encode, dann CPU nutzen.
+  - ffmpeg -encoders | grep qsv prüfen.
+  - Python: subprocess wie gehabt, Flags dynamisch nach ffprobe.
+  - Synology/Docker: VAAPI-Passthrough aktivieren.
+## Logbuch: Intel Onboard-GPU (Quick Sync/VAAPI) für PAL-DVD-Transcoding (27.03.2026)
+
+- **Setup:**
+  - MX Linux/Debian: sudo apt install intel-media-va-driver-non-free vainfo ffmpeg libmfx1
+  - vainfo prüfen: h264/vaapi muss angezeigt werden.
+- **FFmpeg-Befehl (QSV):**
+  - ffmpeg -hwaccel qsv -hwaccel_output_format qsv -i pal_dvd.iso \
+    -c:v h264_qsv -preset fast -global_quality 23 -r 25 \
+    -c:a aac -f hls -hls_time 2 -hls_flags delete_segments output.m3u8
+  - QSV = Quick Sync Video, sehr schnell, niedrige CPU-Last.
+- **Alternative VAAPI:**
+  - -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -c:v h264_vaapi
+- **Python-Integration:**
+  - subprocess.Popen([...]) wie im Beispiel, proc.terminate() für Stop.
+- **Vorteil:**
+  - Bis zu 10x schneller als CPU-Transcoding, ideal für Echtzeit-Streaming.
+## Logbuch: PAL-DVD direkt zu HLS für Chrome (27.03.2026)
+
+- **Kein MKV nötig:**
+  - Für Web-Streaming (Chrome) transcodiert/remuxt FFmpeg die PAL-DVD direkt zu HLS (.m3u8 + .ts), kein MKV-Zwischenschritt.
+  - MKV ist ideal für lokale Remuxes, aber HLS ist das Web-Streaming-Format.
+- **Workflow:**
+  - ffmpeg -hwaccel cuda -i pal_dvd.iso -c:v libx264 -preset ultrafast -crf 23 -r 25 -c:a aac -f hls -hls_time 2 -hls_flags delete_segments output.m3u8
+  - -r 25 erhält PAL-Framerate.
+  - Chrome lädt Segmente mit hls.js, keine Zwischenspeicherung nötig.
+  - Serve via Bottle/static_file, fertig.
+- **Hinweis:**
+  - Für Byte-Range-Direct-Play (ohne Transcode) müssen Range-Requests in Python/Server unterstützt werden, aber Transcode ist für PAL→Chrome robuster.
+## Logbuch: PAL-DVD zu Chrome Native streamen (27.03.2026)
+
+- **Empfohlener Workflow:**
+  - FFmpeg transcodiert PAL-DVD (ISO/VOB) in Echtzeit zu HLS:
+    ffmpeg -hwaccel cuda -i /path/to/pal_dvd.iso -c:v libx264 -preset ultrafast -crf 23 -vf fps=24 -g 48 -sc_threshold 0 -c:a aac -b:a 128k -f hls -hls_time 2 -hls_list_size 4 -hls_flags delete_segments+append_list+program_date_time output.m3u8
+  - HTTP-Server (z.B. Bottle):
+    @route('/stream.m3u8') → static_file('output.m3u8')
+  - Chrome-Frontend:
+    <video> + hls.js lädt http://localhost:8080/stream.m3u8
+- **Tipps:**
+  - -vf fps=24 für NTSC-Kompatibilität, PAL meist direkt abspielbar.
+  - ffplay output.m3u8 zum Testen.
+  - In Eel: FFmpeg-Prozess killbar für Stop, Latenz ca. 5-10s.
+  - Adaptive Bitrate optional mit mehreren -var_stream_map.
+## Logbuch: Tool-Vergleich – FFmpeg, mkvmerge, VLC, MPV, MediaMTX (27.03.2026)
+
+| Tool       | Stärke                        | Real-Time? | Use-Case                                      |
+|------------|------------------------------|------------|-----------------------------------------------|
+| FFmpeg     | Transcoding, HLS/RTMP, GPU   | Ja         | Haupt-Transcoder für ISO/DVD/Blu-ray zu Web   |
+| mkvmerge   | Remux zu MKV (no re-encode)  | Nein       | Post-Processing: Streams muxen, Chapters/Subs |
+| VLC        | Live-Transcode, Testing      | Ja (einfach)| Quick-Tests, RTSP/HLS von ISO, aber langsamer |
+| MPV        | Leichtes Playback            | Nein       | Frontend-Player mit GPU-Decode für Dev-Tests  |
+| MediaMTX   | RTSP/WebRTC-Server           | Ja         | Pull/Push Streams zu FFmpeg, low-latency      |
+
+- **Empfehlung:**
+  - FFmpeg für Transcoding → mkvmerge für finale MKV → MediaMTX für RTSP-Input/Output → Chrome mit HLS.js.
+  - VLC/MPV zum Validieren (ffplay-Alternative).
+  - Python-Subprocess für alle Tools, ideal für Open-Source-Workflows.
+## Logbuch: FFmpeg pur vs. Jellyfin – Custom Media-Library-Setup (27.03.2026)
+
+- **Vorteile FFmpeg pur:**
+  - Volle Kontrolle: FFmpeg via subprocess für HLS-Streams (ISO/DVD/Blu-ray, GPU-Flags) direkt aus Python.
+  - Minimaler Overhead: Kein Webserver/DB nötig, nur FFmpeg + Bottle/Eel für das Frontend.
+  - Perfekt für Test-Suites mit ffprobe/ffplay, nahtlose Python-Integration.
+- **Implementierung:**
+  - Beispiel: subprocess.Popen(['ffmpeg', '-hwaccel', 'cuda', '-i', 'input.iso', '-c:v', 'h264_nvenc', '-f', 'hls', 'output.m3u8'])
+  - m3u8-Stream via hls.js zu Chrome, skalierbar mit mehreren Prozessen.
+  - Metadaten/Library in DB, Transcoding via FFmpeg.
+- **Wann Jellyfin?**
+  - Erst bei Multi-User, App-Support oder DLNA/Apps nötig. Für Single-User/Custom-UI reicht FFmpeg + Web-Frontend völlig aus.
+## Logbuch: ISO-Menüs & Streaming-Alternativen (27.03.2026)
+
+- **Problem:**
+  - DVD/Blu-ray-Menüs funktionieren bei Real-Time-Transcoding mit FFmpeg/Jellyfin nicht (keine Interaktivität, HLS unterstützt keine Menüs).
+- **Herausforderungen:**
+  - Menüs basieren auf MPEG-2 (DVD) oder HDMV (Blu-ray), FFmpeg behandelt sie als statischen Stream, Jellyfin spielt meist nur Haupttitel.
+- **Alternativen:**
+  - Direct Play: ISO in Jellyfin/Kodi/VLC öffnen, dort native Menü-Unterstützung.
+  - Rippen: MakeMKV zu MKV (ohne Menüs) für echtes Real-Time-Transcoding.
+  - FFmpeg-Hack: Menüs + Titel per concat zusammenfügen (nicht interaktiv).
+  - Im Projekt: Fallback "Open in VLC" für ISOs mit Menüs anbieten.
+- **Jellyfin vs. Chrome-Native:**
+  - Jellyfin: Automatisches Transcoding, Hardware-Accel, Subtitel-Muxing, Multi-User, DLNA, Edge-Case-Support (PAL/NTSC).
+  - Chrome-Native: FFmpeg erzeugt HLS, <video>+hls.js/MSE spielt ab, aber Bibliothek/User-Management muss selbst gebaut werden.
+  - Für Single-User-Webapp (Eel/Bottle): FFmpeg on-demand + HLS reicht, für Voll-Features Jellyfin-API kombinieren.
+## Logbuch: Beste Methode für Real-Time-Transcoding (DVD, PAL, NTSC, MKV, ISO, Blu-ray) (27.03.2026)
+
+- **Empfohlene Lösung:**
+  - FFmpeg mit Hardware-Beschleunigung (NVENC, VAAPI, Quick Sync) und ggf. Jellyfin als Streaming-Frontend.
+  - FFmpeg liest ISO/DVD/Blu-ray direkt, konvertiert PAL↔NTSC mit setpts/fps-Filtern, streamt als HLS für niedrige Latenz.
+  - Für Blu-ray: bluray:/path/to/iso als Input, libbluray-Unterstützung nötig (ggf. FFmpeg mit --enable-libbluray kompilieren).
+- **Beispiel-Befehle:**
+  - DVD/ISO (PAL→NTSC, HLS, NVIDIA):
+    ffmpeg -hwaccel cuda -i input.iso -c:v h264_nvenc -preset ll -vf fps=23.976,setpts=PTS*25/23.976 -c:a aac -f hls -hls_time 4 -hls_list_size 0 output.m3u8
+  - Blu-ray (HLS, NVIDIA):
+    ffmpeg -hwaccel cuda -i bluray:/path/to/disc.iso -c:v h264_nvenc -preset ll -vf scale=1920:-2 -c:a aac -f hls -hls_time 4 output.m3u8
+- **Integration:**
+  - In Python (Eel/Bottle): FFmpeg-Prozesse via subprocess für On-Demand-Transcoding starten.
+  - Jellyfin-API nutzen für Bibliotheks-Streaming und Hardware-Transcoding (perfekt für NAS/Docker).
+- **Tipps:**
+  - ffprobe zur PAL/NTSC-Erkennung: ffprobe -i file.iso
+  - Für Blu-ray: Rippen mit MakeMKV zu MKV/BDMV für einfacheres Streaming, libbluray und GPU-Passthrough in Docker sicherstellen.
+  - Hardware-Transcoding ist für 4K/HDR essenziell.
+## Logbuch: Premium-Feature-Sichtbarkeit & Seeking-Fix (27.03.2026)
+
+- **Seeking Fix (MKV/Remux):**
+  - Kritischer Bug im remux-Route behoben: Seeking wird jetzt korrekt per FFmpeg -ss für MKVs angewendet, wenn Browser kein natives Seeking unterstützt.
+- **Premium Features Visibility:**
+  - Explizite CSS für Custom-Buttons (Cinema, FX, VLC etc.) injiziert, korrekte Dimensionen und Sichtbarkeit.
+  - Fallback-Labels (AUDIO, SUBS, FX, CINEMA, STOP) in Buttons, damit sie auch ohne Icon-Font lesbar/klickbar bleiben.
+- **MIME Type Accuracy:**
+  - Frontend und Backend nutzen jetzt video/x-matroska für MKVs, damit Chromium Byte-Range-Seeking korrekt unterstützt.
+- **Layout & Format:**
+  - Erzwungenes 16:9-Format entfernt, Player passt sich automatisch dem Videoformat an.
+- **Ergebnis:**
+  - Alle Premium-Features sind sichtbar, Seeking funktioniert auch für komplexe MKVs präzise und zuverlässig.
 ## Walkthrough: Cinematic Media Player Stabilization v1.0.1 (27.03.2026)
 
 ### Frontend Logic & Stability

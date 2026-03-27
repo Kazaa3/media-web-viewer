@@ -49,6 +49,7 @@ except ImportError:
 
 import sys
 import os
+import glob
 import platform
 import time
 import json
@@ -466,6 +467,105 @@ def process_any_file(path: str) -> str:
     except Exception as e:
         _logger.exception("process_any_file failed")
         return json.dumps({"error": str(e)})
+
+
+def get_gpu_usage_safe():
+    """Tries to get GPU usage via Intel iGPU, AMD, Intel Arc, or Nvidia."""
+    # 1. Intel On-board (iGPU) - Priority 1 (Most common)
+    try:
+        cur_f = '/sys/class/drm/card0/gt_act_freq_mhz'
+        max_f = '/sys/class/drm/card0/gt_max_freq_mhz'
+        if os.path.exists(cur_f) and os.path.exists(max_f):
+            with open(cur_f, 'r') as f1, open(max_f, 'r') as f2:
+                cur = float(f1.read().strip())
+                m = float(f2.read().strip())
+                if m > 0: return (cur / m) * 100
+    except: pass
+
+    # 2. AMD / Intel Arc / Generic (Linux sysfs)
+    try:
+        cards = glob.glob('/sys/class/drm/card*/device/gpu_busy_percent')
+        if cards:
+            for card_path in cards:
+                with open(card_path, 'r') as f:
+                    val = float(f.read().strip())
+                    
+                    # Intel Arc Scaling (0-1000 -> 0-100)
+                    vendor_path = card_path.replace('gpu_busy_percent', 'vendor')
+                    if os.path.exists(vendor_path):
+                        with open(vendor_path, 'r') as vf:
+                            if "0x8086" in vf.read(): # Intel
+                                return val / 10.0
+                    
+                    # AMD / Others (Standard 0-100)
+                    return val
+    except: pass
+
+    # 3. Nvidia (Nvidia-smi)
+    try:
+        res = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+            stderr=subprocess.DEVNULL
+        ).decode().strip().split('\n')[0]
+        return float(res)
+    except: pass
+
+    return 0
+
+def system_stats_pusher():
+    """
+    Background thread to broadcast CPU, RAM, and Network metrics to the UI.
+    Broadcastet CPU-, RAM- und Netzwerk-Metriken an die UI.
+    """
+    last_net_io = psutil.net_io_counters()
+    
+    while True:
+        try:
+            # 1. CPU & RAM
+            cpu = psutil.cpu_percent(interval=None)
+            ram = psutil.virtual_memory()
+            
+            # 2. Network speed (delta)
+            curr_net_io = psutil.net_io_counters()
+            sent_diff = (curr_net_io.bytes_sent - last_net_io.bytes_sent) / 1024 # KB
+            recv_diff = (curr_net_io.bytes_recv - last_net_io.bytes_recv) / 1024 # KB
+            last_net_io = curr_net_io
+            
+            # 3. GPU (Try nvidia-smi fallback)
+            gpu_util = get_gpu_usage_safe()
+            
+            # Optional: try to get GPU info from hardware_detector if available
+            try:
+                from src.core import hardware_detector
+                gpu_info = hardware_detector.get_gpu_info()
+                # If we had a live GPU load detector, we'd use it here.
+            except: pass
+            
+            stats = {
+                "cpu": cpu,
+                "ram_mb": ram.used / (1024 * 1024),
+                "ram_percent": ram.percent,
+                "net_sent_kb": sent_diff / 2, # Assuming 2s interval
+                "net_recv_kb": recv_diff / 2,
+                "gpu": gpu_util
+            }
+            
+            # 4. Push to all connected Eel clients
+            if hasattr(eel, 'update_system_stats'):
+                eel.update_system_stats(stats)()
+                
+        except Exception as e:
+            logging.error(f"[Stats] Pusher error: {e}")
+            
+        eel.sleep(2.0)
+
+@eel.expose
+def get_system_stats_static():
+    """One-time point-in-time system metrics check."""
+    return {
+        "cpu": psutil.cpu_percent(),
+        "ram": psutil.virtual_memory().percent
+    }
 
 
 # --- Compatibility stubs expected by tests ---
@@ -2899,7 +2999,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
 
         # Reset counters
-        count_indexed: int = 0
+        count_indexed = 0
         for scan_root in scan_roots:
             log.info(f"🔍 [Scan] Starting scan of: {scan_root}")
 
@@ -3261,11 +3361,17 @@ def serve_media_raw(file_path):
     if not os.path.exists(resolved_path):
         return bottle.HTTPError(404, "File not found")
         
+    mimetype = 'auto'
+    if resolved_path.lower().endswith('.mkv'):
+        mimetype = 'video/x-matroska'
+    elif resolved_path.lower().endswith('.webm'):
+        mimetype = 'video/webm'
+
     import bottle as btl
     return btl.static_file(
         os.path.basename(resolved_path), 
         root=os.path.dirname(resolved_path),
-        mimetype='auto',
+        mimetype=mimetype,
         download=False
     )
 
@@ -3277,6 +3383,8 @@ def stream_video_fragmented(file_path):
     """
     import bottle
     start_time = bottle.request.query.get('ss', '0')
+    audio_idx = bottle.request.query.get('audio_idx', '0')
+    subs_idx = bottle.request.query.get('subs_idx', None)
     
     resolved_path = resolve_media_path(file_path)
     if not os.path.exists(resolved_path):
@@ -3294,14 +3402,28 @@ def stream_video_fragmented(file_path):
     def ffmpeg_stream():
         # Auto-detect best encoder for performance
         encoder = get_best_hw_encoder()
-        logging.info(f"[stream] Using encoder: {encoder} for {resolved_path}")
+        logging.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
         
         # Base command for H.264 FragMP4
         ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
+        is_iso = str(resolved_path).lower().endswith('.iso')
+        
+        # ISO / DVD optimization
+        input_args = []
+        if is_iso:
+            input_args += ["-analyzeduration", "100M", "-probesize", "100M"]
+            
+        map_args = ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
+        if subs_idx is not None and str(subs_idx).lower() != 'none':
+            map_args += ["-map", f"0:s:{subs_idx}"]
+
         cmd = [
-            "ffmpeg", "-re"
+            "ffmpeg"
+        ] + input_args + [
+            "-re"
         ] + ss_args + [
-            "-i", str(resolved_path),
+            "-i", str(resolved_path)
+        ] + map_args + [
             "-c:v", encoder, "-preset", "ultrafast", "-tune", "zerolatency",
             "-c:a", "aac", "-b:a", "128k",
             "-movflags", "frag_keyframe+empty_moov+default_base_moof",
@@ -3314,7 +3436,8 @@ def stream_video_fragmented(file_path):
             cmd = [
                 "ffmpeg", "-re", "-vaapi_device", "/dev/dri/renderD128"
             ] + ss_args + [
-                "-i", str(resolved_path),
+                "-i", str(resolved_path)
+            ] + map_args + [
                 "-vf", "format=nv12,hwupload",
                 "-c:v", "h264_vaapi",
                 "-c:a", "aac", "-b:a", "128k",
@@ -3445,6 +3568,8 @@ def video_remux_stream(item_id):
     """
     import bottle
     start_time = bottle.request.query.get('ss', '0')
+    audio_idx = bottle.request.query.get('audio_idx', '0')
+    subs_idx = bottle.request.query.get('subs_idx', None)
     
     try:
         from src.core import db
@@ -3465,7 +3590,7 @@ def video_remux_stream(item_id):
         else:
             file_path = item['path']
 
-        logging.info(f"🚀 [Remux] Starting live Pipe-Kit stream for: {file_path}")
+        logging.info(f"🚀 [Remux] Starting live Pipe-Kit (Audio:{audio_idx}, Subs:{subs_idx}) for: {file_path}")
 
         mkvmerge_path = shutil.which('mkvmerge') or 'mkvmerge'
         ffmpeg_path = shutil.which('ffmpeg') or 'ffmpeg'
@@ -3477,7 +3602,22 @@ def video_remux_stream(item_id):
             ffmpeg_proc = None
             
             try:
-                if is_mkvtoolnix_available():
+                # Seeking support
+                ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
+                is_iso = str(file_path).lower().endswith('.iso')
+                
+                # FOR DVDs: Force transcoding because fMP4 in Chrome doesn't support MPEG-2 (VOB/ISO)
+                if is_iso:
+                    logging.info(f"💿 [Remux] ISO detected, redirecting to transcode flow for compatibility.")
+                    return stream_video_fragmented(item_id)
+
+                # Mapping support for track switching
+                map_args = ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
+                if subs_idx is not None and str(subs_idx).lower() != 'none':
+                    map_args += ["-map", f"0:s:{subs_idx}"]
+
+                if is_mkvtoolnix_available() and float(start_time) == 0 and audio_idx == '0' and not subs_idx:
+                    # Lossless remux via mkvmerge for start (best compatibility)
                     mkv_proc = subprocess.Popen(
                         [mkvmerge_path, "-o", "-", str(file_path)],
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024
@@ -3495,9 +3635,12 @@ def video_remux_stream(item_id):
                     )
                     log_process_stderr(ffmpeg_proc, "FFmpeg-Frag")
                 else:
-                    # Fallback to pure FFmpeg remux if mkvtoolnix is missing
+                    # Use FFmpeg for seeking/mapping remux (more reliable for mid-stream offsets/tracks)
                     ffmpeg_cmd = [
-                        ffmpeg_path, "-loglevel", "error", "-i", str(file_path),
+                        ffmpeg_path, "-loglevel", "error"
+                    ] + ss_args + [
+                        "-i", str(file_path)
+                    ] + map_args + [
                         "-c", "copy", "-f", "mp4",
                         "-movflags", "frag_keyframe+empty_moov+default_base_moof",
                         "-"
@@ -3505,7 +3648,7 @@ def video_remux_stream(item_id):
                     ffmpeg_proc = subprocess.Popen(
                         ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024
                     )
-                    log_process_stderr(ffmpeg_proc, "FFmpeg-Remux")
+                    log_process_stderr(ffmpeg_proc, "FFmpeg-Remux-SS")
 
                 # Stream chunks to browser
                 while True:
@@ -6288,8 +6431,14 @@ def get_media_tracks(filepath):
         from src.parsers.format_utils import ffprobe_suite
         # Use a more low-level probe if needed, but ffprobe_suite usually handles it.
         # However, for track switching, we need the specific stream indices and languages.
+        # Handle ISO probing with larger buffer
+        probe_args = []
+        if str(filepath).lower().endswith('.iso'):
+            probe_args = ["-analyzeduration", "100M", "-probesize", "100M"]
+
         cmd = [
-            "ffprobe", "-v", "error", 
+            "ffprobe", "-v", "error"
+        ] + probe_args + [
             "-show_entries", "stream=index,codec_type,codec_name:stream_tags=language,title", 
             "-of", "json", filepath
         ]
@@ -6638,6 +6787,9 @@ if __name__ == "__main__":
     log_checkpoint("Browser requested")
 
     # --- Background / Delayed Tasks ---
+    # 1. System Stats Pusher (2s interval)
+    threading.Thread(target=system_stats_pusher, daemon=True).start()
+
     def _delayed_scan():
         delay = 10
         logging.info(f"[Scan] Initial background scan will start in {delay} seconds...")
@@ -6957,7 +7109,7 @@ def save_benchmark_results(results):
             "timestamp": time.time(),
             "results": results
         })
-        bench_file.write_text(json.dumps(history[-50:], indent=2), encoding='utf-8')
+        bench_file.write_text(json.dumps(list(history[-50:]), indent=2), encoding='utf-8')
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "error": str(e)}
@@ -7093,13 +7245,13 @@ def get_cover_extraction_report():
         for item in items:
             art = item.get('art_path') or item.get('artwork')
             if art:
-                report['has_artwork'] += 1
+                report['has_artwork'] = report.get('has_artwork', 0) + 1
                 art_path = Path(art)
                 # Check if it is in cache
                 if '.cache' in str(art_path):
-                    report['sources']['embedded_or_cache'] += 1
+                    report['sources']['embedded_or_cache'] = report['sources'].get('embedded_or_cache', 0) + 1
                 else:
-                    report['sources']['local_folder'] += 1
+                    report['sources']['local_folder'] = report['sources'].get('local_folder', 0) + 1
                 # Format stats
                 p = Path(art_path)
                 ext = p.suffix.lower().lstrip('.')
@@ -7172,7 +7324,7 @@ def get_routing_suite_report():
             codec_dist[codec] = codec_dist.get(codec, 0) + 1
 
             if not is_direct:
-                incompatible_count += 1
+                incompatible_count = incompatible_count + 1
             
             list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
             if score >= 80:
