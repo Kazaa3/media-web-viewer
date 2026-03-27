@@ -156,6 +156,10 @@ def ensure_singleton():
             pass
     
     # 2. Take lock
+    if os.environ.get("MWV_ALLOW_MULTIPLE_SESSIONS"):
+        logging.info("[System] Multi-session mode enabled. Bypassing singleton lock.")
+        return open(os.devnull, "w") # Dummy lock handle
+        
     lock_file = Path(logger.APP_DATA_DIR) / "mwv.lock"
     lock_file.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -182,7 +186,8 @@ def ensure_singleton():
 # We take the lock as early as possible after logger init to prevent multiple backends.
 _SINGLETON_LOCK = ensure_singleton()
 SESSION_ID = f"{os.getpid()}_{int(time.time())}"
-log.info(f"[System] Session Initialized: {SESSION_ID}")
+session_port = int(os.environ.get("MWV_PORT", 8345))
+log.info(f"[System] Session Initialized: {SESSION_ID} on port {session_port}")
 
 @eel.expose
 def get_session_id():
@@ -6719,7 +6724,7 @@ if __name__ == "__main__":
     # Start UI immediately for "Fast Boot"
     # We delay singleton checks, DB init, and env validation until AFTER the browser is requested.
     
-    session_port = int(os.environ.get("MWV_PORT", 8345))
+    # (session_port already initialized at module level)
     
     # Minimal check for port (essential for start)
     import socket
@@ -7661,9 +7666,12 @@ def check_ui_integrity():
 
         content = app_html.read_text(encoding='utf-8')
 
-        # 1. Div Balance
-        opens = len(re.findall(r'<div\b', content, re.IGNORECASE))
-        closes = len(re.findall(r'</div\b', content, re.IGNORECASE))
+        # 1. Div Balance - STRIP SCRIPTS/STYLES FIRST to avoid false positives!
+        clean_content = re.sub(r'<script.*?>.*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
+        clean_content = re.sub(r'<style.*?>.*?</style>', '', clean_content, flags=re.DOTALL | re.IGNORECASE)
+        
+        opens = len(re.findall(r'<div\b', clean_content, re.IGNORECASE))
+        closes = len(re.findall(r'</div\b', clean_content, re.IGNORECASE))
         div_balance = {
             "opens": opens,
             "closes": closes,

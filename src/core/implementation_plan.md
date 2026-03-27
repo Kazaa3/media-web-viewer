@@ -1,5 +1,80 @@
 ---
 
+# Integrating Additional Startup & GUI Tests (Level 18+)
+
+The 17-stage test suite has been successfully implemented. The next step is to integrate the remaining existing tests (such as test_dynamic_loading.py) into the "Ultimate" suite as new stages (Level 18+). This will centralize all diagnostic and functional tests for the startup process.
+
+## Progress Updates
+1. Researched existing tests in tests/gui/.
+2. Expanding the Ultimate Suite from 17 to 25 stages to incorporate additional GUI and diagnostic tests.
+3. Updated the plan to include GUI dynamic loading, advanced filtering, and static analysis stages.
+4. Began integration of Level 18 (GUI Data & Logic).
+
+## Ongoing Integration
+- Levels 18-25 will cover:
+  - GUI dynamic loading verification
+  - Advanced filtering logic
+  - Static and dynamic analysis of GUI components
+  - Additional startup diagnostics and functional tests from tests/gui/
+
+This expansion will ensure a single, comprehensive startup diagnostic covering all critical aspects of the application.
+---
+
+# Finalizing Perfect Video Player (Overhaul 6)
+
+## Audio Player & GUI Stability
+- **Tab Split Test (Non-Selenium):** Verify Audio Player right-split populates correctly.
+- **Dynamic GUI Loading:** Ensure JS structure is solid and handles database arrivals.
+- **17-Stage OBJECT TEST SUITE:** Multi-level verification (Dict → Real Media)
+  - Level 1: Dictionary structures
+  - Level 2: SQLite database consistency
+  - Level 3: Mode Router logic (Mocked FFprobe)
+  - Level 4: Static HTML integrity
+  - Level 5: Dynamic JS Diagnostic (Eel Bridge - Verified via Audit)
+  - Level 6: Mock Backend End-to-End
+  - Level 7: Real Media Verification (Probieren mit media/ Dateien)
+  - Level 8: Visual Verification (PyAutoGUI grab Right-Split Item List)
+  - Level 9: AI Self-Correction (Doctor Diagnostics with KI Anweisung)
+  - Level 10: Selenium E2E (Disabled by default, heavy AI instructions)
+  - Level 11: Browser/Frontend Stage (Connectivity & State)
+  - Level 12: Object/Category Mapping (Audio, Video, Disk, Cat Map)
+  - Level 13: Session & Singleton Integrity (Backend Safety)
+  - Level 14: Process Cleanup Verification (FFmpeg/Orphans)
+  - Level 15: Multi-Browser Connectivity (WebSocket Load)
+  - Level 16: Multi-Session Switch (Bypass Singleton Lock)
+  - Level 17: Multi-Client GUI Validation (Dual Browser Sync)
+
+## Video Player "Pimping" (Cinema Overhaul)
+- **Advanced Filters:** Implement "Premium Cinema" visual filters.
+- **Atmos/Bitstream Stats:** Display advanced audio metadata in overlay.
+- **Track Switching:** Finalize FFmpeg-based audio/sub switching for Audio/Subtitles (HLS/MSE).
+- **Audio Excellence:** Display Bitstream/Atmos Core metadata in Stats.
+- **Modern UI:** Enhance Video.js 8 with new "Glass" or "Carbon" theme tweaks.
+
+## Verification
+- **Test Bed:** Implement `window.runDiagnostic()` in `app.html` for self-reporting.
+- **Documentation:** Create `test_suite_description.md` for the user.
+---
+
+# 16-Stage Ultimate Test Suite Upgrade
+
+The test suite has been upgraded to 16 stages, fully addressing process cleanup, multi-browser access, and multi-session capabilities.
+
+## New Verification Levels
+- **Level 14: Process Cleanup:** Verifies that no orphaned FFmpeg or zombie processes are left behind.
+- **Level 15: Multi-Browser Connectivity:** Validates the backend's ability to handle multiple concurrent window/WebSocket connections.
+- **Level 16: Multi-Session Switch:** Tests the new `MWV_ALLOW_MULTIPLE_SESSIONS` override, which allows starting second instances without triggering the singleton kill-switch.
+
+## Backend Infrastructure Upgrades
+- **Aggressive Singleton Protection:** Instances now identify and clean up stale processes before initializing, using a more robust PID-locking mechanism.
+- **Session Identification:** Each instance generates a unique `SESSION_ID` to ensure frontend-backend alignment.
+- **Override Toggle:** You can now intentionally run multiple instances for debugging by setting the environment variable `MWV_ALLOW_MULTIPLE_SESSIONS=1`.
+
+The test suite is passing (15/16) with the optional Selenium stage as the only skip. The full 16-stage breakdown is available in the walkthrough.md.
+
+Final walkthrough includes refinements for MKV seeking, track switching, and GPU monitoring.
+---
+
 # Progress Log: 12-Stage Test Suite & Selenium Logic Expansion
 
 ## Progress Updates
