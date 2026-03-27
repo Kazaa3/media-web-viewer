@@ -1,5 +1,69 @@
 ---
 
+# Ultimate Media Player Test Strategy (9-Stage Suite)
+
+Expanding the non-Selenium test suite to include visual and AI-driven verification.
+
+## Proposed Changes
+
+### [Component] 9-Stage Ultimate Test Suite
+- **[MODIFY] tests/test_suite_7_objects.py → tests/test_suite_ultimate.py**
+  - **Level 8: Visual Pattern Check (PyAutoGUI focus)**
+    - Use `pyautogui` or image comparison to verify that the "Right Split" in the Audio Player contains visible items.
+    - Screenshot analysis to detect item-grid patterns without Selenium.
+  - **Level 9: AI Self-Correction (KI Anweisung)**
+    - Implement a "Doctor" function that checks for common failures (Eel port blocked, FFmpeg missing) and provides automated fix instructions.
+    - Stage-Gate: Mock Files → Real Media Files (Level 7 expansion).
+
+### [Component] Audio Player GUI Tests
+- **[NEW] tests/gui/test_audio_list_population.py**
+  - Specific focus on the right-split item list.
+  - Uses BeautifulSoup to find the container and verifies `childElementCount` via a secondary JS diagnostic.
+
+## Verification Plan
+
+### Automated Tests
+- `python3 tests/test_suite_ultimate.py`
+- `python3 tests/gui/test_audio_list_population.py`
+
+### Visual Verification
+- Use browser subagent to capture "Proof of GUI" screenshots of the right split.
+---
+
+# Walkthrough – Perfect Media Player (Stage 6 Overhaul) ✅
+
+The "Perfect Media Player" architecture has been finalized with a 7-level non-Selenium test suite and a premium cinematic UI.
+
+## Key Accomplishments (Stage 6)
+
+1. **7-Level Non-Selenium Test Suite**
+  - `test_suite_7_objects.py`: A comprehensive suite verifying 7 layers of abstraction:
+    - Level 1: Dict/Mock data validation.
+    - Level 2: SQLite Database integration.
+    - Level 3: Router logic (Smart-Route).
+    - Level 4: Static HTML integrity (Search/Filter IDs).
+    - Level 5: JS Diagnostic Bed (`window.runDiagnostic`).
+    - Level 6: Mock Backend E2E flow.
+    - Level 7: Real Media Verification (with masked results for privacy).
+  - **Result:** All levels passing (Level 5 verified via manual audit).
+
+2. **Premium Cinema UI ("Carbon/Glass")**
+  - Visual Filters: Integrated "HDR Cinema" and "Midnight" presets into the FX menu.
+  - Glassmorphism: Applied deep-blur, carbon-dark backgrounds, and neon cyan accents to the Video.js player and stats overlay.
+  - Stats for Nerds: Added real-time Atmos and Bitstream metadata fields.
+
+3. **Advanced Library Filtering**
+  - Dynamic Search: High-performance search by title/file.
+  - Smart Filters: Genre and Year dropdowns integrated into the Library tab.
+
+4. **Backend Stability**
+  - Type Safety: Added type hints to streaming session managers.
+  - Handler Cleanup: Resolved duplicate Eel expose conflicts in `main.py`.
+
+## Summary
+The system now provides a robust, verifiable foundation for high-end media playback with a modern, aesthetic interface and transparent performance monitoring.
+---
+
 ## Finalizing Perfect Video Player (Overhaul 6)
 
 ### Audio Player & GUI Stability
