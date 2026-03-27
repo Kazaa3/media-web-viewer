@@ -98,6 +98,13 @@ import psutil
 import requests
 from typing import cast, Any
 import ast
+import socket
+
+def find_free_port():
+    """Utility to find an available TCP port."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
 
 # Internal imports
 from src.parsers.format_utils import (  # type: ignore
@@ -2999,7 +3006,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
 
         # Reset counters
-        count_indexed = 0
+        count_indexed: int = 0
         for scan_root in scan_roots:
             log.info(f"🔍 [Scan] Starting scan of: {scan_root}")
 
@@ -3796,15 +3803,21 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
         )
         
         try:
-             logging.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file}")
+             control_port = find_free_port()
+             logging.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file} (Control: {control_port})")
+             
              cmd = [
-                 str(vlc_path), "-I", "dummy", "--no-video-title-show", "--quiet"
+                 str(vlc_path), "-I", "dummy", "--no-video-title-show", "--quiet",
+                 "--intf", "http", "--http-port", str(control_port), "--http-password", "mwv"
              ]
              if float(start_time) > 0:
                  cmd += ["--start-time", str(start_time)]
              
+             # Optimization: Shorter segments for better interactive feel (low delay)
+             sout_interactive = sout.replace("seglen=5", "seglen=1")
+             
              cmd += [
-                 f"{prefix}{file_path}", "--sout", sout,
+                 f"{prefix}{file_path}", "--sout", sout_interactive,
                  "--sout-all", "--sout-keep", "vlc://quit"
              ]
              
@@ -3817,7 +3830,8 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
                  "path": "/vlc-hls-live/stream.m3u8", 
                  "mode": "vlc_embedded", 
                  "type": "application/x-mpegURL",
-                 "instance_id": pid_tag
+                 "instance_id": pid_tag,
+                 "control_port": control_port
              }
         except Exception as e:
              logging.error(f"[VLC-HLS-Streamer] HLS-Out failed: {e}")
@@ -3833,6 +3847,28 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
         return {"status": "ok", "mode": mode, "instance_id": pid_tag}
     except Exception as e:
         return {"status": "error", "error": f"VLC start failed: {e}"}
+
+@eel.expose
+def send_vlc_command(port, command, val=None):
+    """
+    @brief Proxies control commands to the local VLC instance's HTTP interface.
+    @param port The HTTP port of the VLC instance.
+    @param command The command to send (e.g. 'key').
+    @param val The value for the command (e.g. 'key-up').
+    """
+    try:
+        url = f"http://localhost:{port}/requests/status.xml"
+        params = {"command": command}
+        if val:
+            params["val"] = val
+            
+        # VLC HTTP Auth: username is empty, password is 'mwv'
+        response = requests.get(url, params=params, auth=('', 'mwv'), timeout=1)
+        if response.status_code == 200:
+            return {"status": "ok"}
+        return {"status": "error", "code": response.status_code}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
 @eel.expose
 def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", source: str = "direct", start_time: float = 0):
@@ -6449,8 +6485,8 @@ def get_media_tracks(filepath):
         subs = []
         
         # Stream index mapping
-        a_count = 0
-        s_count = 0
+        a_count: int = 0
+        s_count: int = 0
         
         for s in data.get('streams', []):
             stype = s.get('codec_type')
@@ -7151,10 +7187,12 @@ def get_multimedia_analysis():
                 }
                 if is_dvd_image or is_dvd_folder:
                     analysis['dvd_objects'].append(obj)
-                    analysis['stats']['total_dvds'] += 1
+                    stats_dict = cast(dict[str, int], analysis['stats'])
+                    stats_dict['total_dvds'] += 1
                 else:
                     analysis['film_objects'].append(obj)
-                    analysis['stats']['total_films'] += 1
+                    stats_dict = cast(dict[str, int], analysis['stats'])
+                    stats_dict['total_films'] += 1
 
             # 2. Chrome Native Compatibility (MP4 / H.264 / VP8 / VP9 / AV1)
             is_chrome_native_ext = ext in ('.mp4', '.webm', '.ogg')
@@ -7231,7 +7269,7 @@ def get_cover_extraction_report():
     """Analyzes artwork efficiency and sources."""
     try:
         items = db.get_all_media()
-        report = {
+        report: dict[str, Any] = {
             'total': len(items),
             'has_artwork': 0,
             'missing_artwork': 0,
@@ -7282,7 +7320,7 @@ def get_routing_suite_report():
         video_count = 0
         top_quality_items = []
         complex_items = []
-        incompatible_count = 0
+        incompatible_count: int = 0
         codec_dist = {}
         
         for item in items:
@@ -7324,7 +7362,7 @@ def get_routing_suite_report():
             codec_dist[codec] = codec_dist.get(codec, 0) + 1
 
             if not is_direct:
-                incompatible_count = incompatible_count + 1
+                incompatible_count = int(incompatible_count) + 1
             
             list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
             if score >= 80:

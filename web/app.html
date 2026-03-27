@@ -8661,10 +8661,91 @@
         }
 
         async function handleContextMenuAction(mode) {
+            if (!contextMenuItem) return;
+            const item = contextMenuItem;
+            hideContextMenu();
+
+            if (mode === 'resume') {
+                const pos = item.playback_position || 0;
+                if (isVideoItem(item)) {
+                    playVideo(item, item.path, pos);
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                } else {
+                    playAudio(item, pos);
+                    switchTab('player', document.getElementById('active-queue-tab-trigger'));
+                }
+                return;
+            }
+
+            if (mode === 'audio_direct') {
+                playAudio(item);
+                switchTab('player', document.getElementById('active-queue-tab-trigger'));
+                return;
+            }
+
+            if (mode === 'vlc_embedded' || mode === 'vlc_interactive') {
+                showToast("🚀 Starte VLC Interactive Stream...", 2000);
+                const res = await eel.open_video(item.path, 'vlc', 'vlc_embedded')();
+                if (res && res.status === 'play') {
+                    startEmbeddedVideo(item, res.path, 0, res.type);
+                    if (res.control_port) {
+                        window._vlc_control_port = res.control_port;
+                        showToast(`🕹️ Interaktiver Modus aktiv (Port ${res.control_port})`, 3000);
+                    }
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                } else {
+                    showToast(res.error || "VLC Error");
+                }
+                return;
+            }
+
+            const res = await eel.open_video(item.path, 'auto', mode)();
+            if (res && res.status === 'play') {
+                const embeddedModes = ['mediamtx', 'mediamtx_webrtc', 'chrome_native', 'chrome_direct', 'chrome_hls', 'chrome_fragmp4', 'ffmpeg_browser', 'chrome_remux', 'chrome_transcode', 'transcode'];
+                if (embeddedModes.includes(res.mode) || embeddedModes.includes(mode)) {
+                    startEmbeddedVideo(item, res.path, 0, res.type);
+                    switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+                }
+            } else if (res && res.status === 'error') {
+                showToast(res.error);
+            } else if (res && res.status === 'ok') {
+                showToast(res.message || "Aktion gestartet");
+            }
+        }
 
 
         window.addEventListener('click', () => hideContextMenu());
         window.addEventListener('scroll', () => hideContextMenu(), true);
+
+        // VLC Interactive Remote Bridge
+        document.addEventListener('keydown', async (e) => {
+            if (!window._vlc_control_port) return;
+            
+            // Only capture navigation keys when media orchestrator is active or in video tab
+            const activeTab = localStorage.getItem('mwv_active_tab');
+            if (activeTab !== 'video') return;
+
+            let vlcKey = null;
+            switch(e.key) {
+                case 'ArrowUp': vlcKey = 'key-up'; break;
+                case 'ArrowDown': vlcKey = 'key-down'; break;
+                case 'ArrowLeft': vlcKey = 'key-left'; break;
+                case 'ArrowRight': vlcKey = 'key-right'; break;
+                case 'Enter': vlcKey = 'key-enter'; break;
+                case 'Escape': vlcKey = 'key-nav-activate'; break; // Toggle menu
+                case 'm': case 'M': vlcKey = 'key-disc-menu'; break;
+            }
+
+            if (vlcKey) {
+                e.preventDefault();
+                console.info("🕹️ [VLC-Remote] Sending key:", vlcKey);
+                try {
+                    await eel.send_vlc_command(window._vlc_control_port, 'key', vlcKey)();
+                } catch(err) {
+                    console.error("VLC Remote Error:", err);
+                }
+            }
+        });
         let playlistIndex = -1;
         let isShuffle = false;
         let isRepeat = 'off'; // 'off', 'all', 'one'
@@ -11332,6 +11413,8 @@
         };
 
         function startEmbeddedVideo(item, path, startTime = 0, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
+            // Reset VLC control interface port
+            window._vlc_control_port = null;
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 

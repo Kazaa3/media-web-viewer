@@ -60,3 +60,65 @@ Mit diesen Änderungen wird der Logbuch-Tab wieder zuverlässig gerendert und is
     - Audiobook Position Persistence (Save/Resume)
 - **Research & Integration:**
     - Laufende Optimierung und Feature-Integration
+
+# Premium Media Player Refinement Task (27.03.2026)
+
+## Premium Video.js UI Restoration
+- Re-integriere Volume Slider (nicht-inline) in die vjsPlayer-Controlbar
+- Füge audioTrackButton und subsCapsButton für native Track-Auswahl hinzu
+- Stelle ein responsives Premium-Layout für alle Steuerelemente sicher
+
+## Context-Aware Menu Logic
+- Implementiere bedingte Anzeige in `showContextMenu`:
+  - "Video Options" nur für Video/ISO
+  - "Audio Options" nur für Audio
+  - "Resume" nur, wenn gespeicherte Position existiert
+- Überarbeite Kontextmenü-CSS: Glassmorphism (Blur, Transparenz, Neon)
+- Refaktoriere `handleContextMenuAction` für 'resume' und kontextspezifische Playbacks
+
+## Playback Position Persistence (Resume)
+- Aktualisiere `play()`, `playVideo()`, `startEmbeddedVideo()` für `startTime`-Support
+- Implementiere persistentes State-Tracking für Audio:
+  - `ontimeupdate`-Listener in `activeAudioPipeline`
+  - Alle 10s Sync via `eel.update_playback_position`
+- Stelle sicher, dass Video.js Resume-Logik `currentTime` auf `loadedmetadata` korrekt setzt
+
+## Final Audit & Polish
+- Konsolidiere `isVideoItem`-Helper
+- Prüfe, dass Engine/Protocol-Labels (Transparenz) weiterhin korrekt angezeigt werden
+- Finaler CSS-Check für Premium-Optik
+
+# Premium Media Player Refinement Walkthrough (27.03.2026)
+
+## Key Changes
+
+### 1. Glassmorphic Context Menu
+- Modern Glassmorphism: Kontextmenü mit Blur, Transparenz, Neon-Cyan-Akzenten
+- Kontext-Aware Filtering:
+  - "Video Options" (z.B. VLC, WebM Transcode) nur für Video/ISO
+  - "Audio Options" (z.B. Audio Direct) nur für Audio
+  - "Resume Playback" erscheint nur bei gespeicherter Position (>5s)
+
+### 2. Video.js UI Restoration
+- Volume Slider: Standard-Panel (nicht-inline) wieder integriert
+- Track Selection: Native audioTrackButton und subsCapsButton (CC) in der Controlbar
+
+### 3. Persistent Playback (Resume)
+- Automatisches Sync: Player synchronisiert alle 10s die aktuelle Position ins Backend
+- Universal: Funktioniert für Video (Video.js) und Audio (Native Pipeline)
+- Audiobook-Optimierung: Lesezeichen für lange Audiofiles, Resume exakt an letzter Stelle
+
+## Verification Steps
+
+### Automated Testing
+- DB-Schema (`db.py`): Spalten `playback_position`, `last_played` geprüft
+- Backend (`main.py`): Route `update_playback_position` auditiert
+
+### Manual Verification
+- Kontextmenü: Rechtsklick auf MKV → "Video Options" sichtbar, auf MP3 → nur "Audio Options"
+- Resume-Test: Video 30s abspielen, schließen, erneut öffnen → "Resume Playback" startet bei 30s
+- Audio-Persistenz: Audio 15s abspielen, DB/Contextmenü prüfen → Position aktualisiert
+- UI-Check: Glassmorphism im Kontextmenü, Volume Slider in Video.js sichtbar
+
+**Tipp:**
+- "Resume"-Feature gezielt mit Audiobooks testen, um 10s-Sync zu validieren.
