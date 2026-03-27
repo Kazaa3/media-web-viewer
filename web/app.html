@@ -198,6 +198,57 @@
         .stats-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .stats-val { color: #fff; text-shadow: 0 0 5px rgba(125, 255, 255, 0.3); }
 
+        /* --- Glassmorphic Context Menu --- */
+        .custom-context-menu.glassmorphic-panel {
+            background: rgba(18, 18, 18, 0.75) !important;
+            backdrop-filter: blur(16px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+            padding: 8px 0 !important;
+            min-width: 220px !important;
+            overflow: hidden !important;
+        }
+        .custom-context-menu .context-menu-header {
+            padding: 10px 16px 6px 16px !important;
+            font-size: 0.75rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1.2px !important;
+            color: rgba(255, 255, 255, 0.45) !important;
+            border-bottom: none !important;
+            background: none !important;
+        }
+        .custom-context-menu .context-menu-item {
+            padding: 10px 16px !important;
+            font-size: 0.9rem !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            transition: all 0.2s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            cursor: pointer !important;
+        }
+        .custom-context-menu .context-menu-item:hover {
+            background: rgba(0, 242, 254, 0.15) !important;
+            color: #00f2fe !important;
+            padding-left: 20px !important;
+        }
+        .custom-context-menu .context-menu-divider {
+            height: 1px !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            margin: 6px 0 !important;
+        }
+        #ctx-resume-item {
+            background: rgba(76, 175, 80, 0.08) !important;
+            border-left: 3px solid #4caf50 !important;
+            margin-top: 4px !important;
+        }
+        #ctx-resume-item:hover {
+            background: rgba(76, 175, 80, 0.15) !important;
+            color: #81c784 !important;
+        }
+
         /* --- Premium Settings Panel Overlay --- */
         #vjs-settings-panel {
             position: absolute;
@@ -4078,21 +4129,30 @@
 </head>
 
 <body>
-        <div id="custom-context-menu" class="custom-context-menu">
-        <div class="context-menu-header">🎬 Wiedergabe-Optionen</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('auto')">💎 Premium UI (Video.js)</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')">🚀 Browser Direct (Native API)</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg WebM (Transcode)</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')">📦 FFmpeg HLS (Remuxed)</div>
-
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-header">💿 DVD / Disc Optionen</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg DVD WebM (Transcode)
+        <div id="custom-context-menu" class="custom-context-menu glassmorphic-panel">
+        <div id="ctx-video-section">
+            <div class="context-menu-header">🎬 Video Wiedergabe</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('auto')" title="Premium UI mit Video.js">💎 Premium UI (Video.js)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')" title="Native Browser-Wiedergabe">🚀 Browser Direct (Native)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')" title="FFmpeg WebM Echtzeit-Transcoding">✨ FFmpeg WebM (Transcode)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" title="FFmpeg HLS Remuxing">📦 FFmpeg HLS (Remuxed)</div>
         </div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_iso')">💿 FFmpeg HLS (VLC/ISO Mode)</div>
-        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_embedded')">📁 VLC DVD-Folder Mode</div>
+
+        <div id="ctx-audio-section" style="display: none;">
+            <div class="context-menu-header">🎵 Audio Optionen</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('audio_direct')">🔊 Standard Audio-Player</div>
+            <div id="ctx-resume-item" class="context-menu-item" style="display: none;" onclick="handleContextMenuAction('resume')">🕒 Fortsetzen bei <span id="ctx-resume-time">0:00</span></div>
+        </div>
 
         <div class="context-menu-divider"></div>
+        <div id="ctx-disc-section">
+            <div class="context-menu-header">💿 DVD / Disc Optionen</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')">✨ FFmpeg DVD WebM (Transcode)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('vlc_iso')">💿 FFmpeg HLS (VLC/ISO Mode)</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('vlc_embedded')">📁 VLC DVD-Folder Mode</div>
+            <div class="context-menu-divider"></div>
+        </div>
+
         <div class="context-menu-header">📺 Externe Player</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')">🧡 VLC Player (System)</div>
         <div class="context-menu-item" onclick="handleContextMenuAction('mpv')">🖤 MPV Player</div>
@@ -8541,27 +8601,34 @@
             const menu = document.getElementById('custom-context-menu');
             if (!menu) return;
 
-            // Dynamically hide/show items based on file extension
             const ext = item.name.toLowerCase().split('.').pop();
-            const isVideo = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'ts'].includes(ext);
-            const isDisc = ['iso', 'dvd', 'udf', 'img'].includes(ext) || item.is_directory || item.category === 'Film';
+            const isVideo = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'ts', 'm2ts', 'vob'].includes(ext);
             const isAudio = ['mp3', 'flac', 'm4a', 'wav', 'ogg', 'opus'].includes(ext);
+            const isDisc = ['iso', 'dvd', 'udf', 'img'].includes(ext) || item.is_directory || item.category === 'Film';
 
-            const groupHeaders = menu.querySelectorAll('.context-menu-header');
-            const dividers = menu.querySelectorAll('.context-menu-divider');
-            const items = menu.querySelectorAll('.context-menu-item');
+            // Differentiate sections
+            const videoSect = document.getElementById('ctx-video-section');
+            const audioSect = document.getElementById('ctx-audio-section');
+            const discSect = document.getElementById('ctx-disc-section');
+            const resumeItem = document.getElementById('ctx-resume-item');
+            const resumeTime = document.getElementById('ctx-resume-time');
 
-            // Hide/Show based on type
-            items.forEach(el => {
-                const action = el.getAttribute('onclick');
-                if (action.includes('dvd_native') || action.includes('bluray_native') || action.includes('vlc_iso')) {
-                    el.style.display = isDisc ? 'flex' : 'none';
-                } else if (action.includes('chrome_native') || action.includes('mediamtx') || action.includes('ffmpeg_browser') || action.includes('vlc_ts')) {
-                    el.style.display = (isVideo || isAudio) ? 'flex' : 'none';
-                } else if (action.includes('vlc_extern') || action.includes('cvlc')) {
-                    el.style.display = 'flex'; // Always show general VLC
+            if (videoSect) videoSect.style.display = isVideo ? 'block' : 'none';
+            if (audioSect) audioSect.style.display = isAudio ? 'block' : 'none';
+            if (discSect) discSect.style.display = isDisc ? 'block' : 'none';
+
+            // Resume Logic
+            if (resumeItem && resumeTime) {
+                const pos = item.playback_position || 0;
+                if (pos > 5) {
+                    resumeItem.style.display = 'flex';
+                    resumeTime.innerText = formatTime(pos);
+                } else {
+                    resumeItem.style.display = 'none';
                 }
-            });
+            }
+
+            menu.style.display = 'block';
 
             // Adjust headers and dividers (simplified)
             groupHeaders.forEach(h => {
@@ -8594,36 +8661,6 @@
         }
 
         async function handleContextMenuAction(mode) {
-            if (!contextMenuItem) return;
-            const item = contextMenuItem;
-            hideContextMenu();
-
-            if (mode === 'vlc_ts') {
-                const res = await eel.vlc_ts_mode(item.path)();
-                if (res.status === 'play') {
-                    startEmbeddedVideo(item, res.path, null, res.type);
-                } else {
-                    showToast(res.error || "VLC TS Error");
-                }
-                return;
-            }
-
-            const res = await eel.open_video(item.path, mode)();
-            if (res && res.status === 'play') {
-                const embeddedModes = ['mediamtx', 'mediamtx_webrtc', 'chrome_native', 'chrome_direct', 'chrome_hls', 'chrome_fragmp4', 'ffmpeg_browser', 'chrome_remux', 'chrome_transcode', 'transcode'];
-                if (embeddedModes.includes(res.mode) || embeddedModes.includes(mode)) {
-                    if (typeof startEmbeddedVideo === 'function') {
-                        startEmbeddedVideo(item, res.path, null, res.type);
-                        switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
-                    }
-                }
-            } else if (res && res.status === 'error') {
-                if (typeof showToast === 'function') showToast(res.error);
-                else console.error(res.error);
-            } else if (res && res.status === 'ok') {
-                showToast(res.message || "Aktion gestartet");
-            }
-        }
 
 
         window.addEventListener('click', () => hideContextMenu());
@@ -10312,59 +10349,41 @@
         let currentVideoPath = null;
         let vjsPlayer = null;
 
-        function play(item, path) {
-            console.info(">>> [Play-Trace] play() called for:", item.name, "path:", path);
-            const videoExts = ['mp4', 'mkv', 'webm', 'ogg', 'mov', 'avi', 'm4v', 'iso'];
-            const extFromPath = (item.name || path || "").split('.').pop().toLowerCase();
+        function play(item, path, startTime = 0) {
+            console.info(">>> [Play-Trace] play() called for:", item.name, "path:", path, "startAt:", startTime);
             const isVideo = isVideoItem(item);
 
             currentVideoItem = item;
             updateMediaSidebar(item, path);
 
             if (isVideo) {
-                console.info(">>> [Play-Trace] isVideo IDENTIFIED (type: " + item.type + ", cat: " + item.category + "). Calling playVideo().");
-                playVideo(item, path);
+                playVideo(item, path, startTime);
                 return;
             }
-            // Ensure video is stopped if audio starts
+            
             stopVideo();
+            playAudio(item, startTime);
+        }
 
-            // Highlight in list (audio specific)
-            document.querySelectorAll('.implementation-encapsulated-state-buffer-node').forEach((el, idx) => {
-                let list = isShuffle ? shuffledPlaylist : currentPlaylist;
-                if (list[idx] === item) {
-                    el.classList.add('playing');
-                } else {
-                    el.classList.remove('playing');
-                }
-            });
-
-            // Update Playlist UI if open
-            if (typeof renderPlaylist === 'function') {
-                renderPlaylist();
+        function playAudio(item, startTime = 0) {
+            activeAudioPipeline.src = item.path;
+            if (startTime > 0) {
+                activeAudioPipeline.currentTime = startTime;
             }
-
-            activeAudioPipeline.src = path;
             activeAudioPipeline.play().catch(e => {
-                if (isUnsupportedMediaError(e)) {
-                    console.warn('Audio playback unsupported for source:', path, e);
-                    safeText('active-orchestration-status-message-renderer', (t('player_unsupported_source') || 'Unsupported media source for browser playback.'));
-                    return;
-                }
                 console.error('Audio playback failed:', e);
             });
 
-            // Synchronize backend index
-            if (typeof eel !== 'undefined' && typeof eel.jump_to_index === 'function') {
-                const list = isShuffle ? shuffledPlaylist : currentPlaylist;
-                const idx = list.indexOf(item);
-                if (idx !== -1) {
-                    eel.jump_to_index(idx)();
+            // Persist position for audiobooks
+            activeAudioPipeline.ontimeupdate = () => {
+                const now = activeAudioPipeline.currentTime;
+                if (Math.abs(now - (activeAudioPipeline.lastPersist || 0)) > 10) {
+                    activeAudioPipeline.lastPersist = now;
+                    eel.update_playback_position(item.name, now)();
                 }
-            }
+            };
 
-            // Python Backend anfunken (ONLY FOR AUDIO)
-            eel.play_media(path)();
+            eel.play_media(item.path)();
         }
 
         function updateMediaSidebar(item, path) {
@@ -10548,7 +10567,7 @@
 
             if (res && res.status === 'play') {
                 console.info('>>> [Play-Trace] triggerOpenWith returned status=play, mode=', res.mode);
-                startEmbeddedVideo(currentVideoItem, res.path, null, res.type || null);
+                startEmbeddedVideo(currentVideoItem, res.path, 0, res.type || null);
                 orchestrateVideoPlaybackMode();
             } else if (res && res.status === 'ok') {
                 console.info('>>> [Play-Trace] triggerOpenWith returned status=ok, mode=', res.mode);
@@ -10757,7 +10776,7 @@
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        async function playVideo(item, path) {
+        async function playVideo(item, path, startTime = 0) {
             console.info(">>> [Play-Trace] playVideo() called for:", path, "item:", item);
             if (window._locking_video_playback) {
                 console.warn(">>> [Play-Trace] Playback LOCK detected. Skipping double call.");
@@ -10828,7 +10847,7 @@
                     const btn = document.querySelector('[data-mode="chrome_direct"]');
                     selectSubMode('chrome_direct', btn, 'chrome');
                     const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
-                    startEmbeddedVideo(item, source.url, null, 'video/mp4', d_sec);
+                    startEmbeddedVideo(item, source.url, startTime, 'video/mp4', d_sec);
                 } else if (source.mode === 'vlc') {
                     showToast("📺 VLC REQUIRED (ISO/HDR/Complex)", 3000);
                     switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
@@ -10842,7 +10861,7 @@
                         selectEngine('mtx');
                         const streamUrl = res.webrtc || res.hls;
                         const d_sec = (info.analysis && info.analysis.duration_sec) || 0;
-                        startEmbeddedVideo(item, streamUrl, null, 'application/x-mpegURL', d_sec);
+                        startEmbeddedVideo(item, streamUrl, startTime, 'application/x-mpegURL', d_sec);
                     }
                 } else if (source.mode === 'transcode') {
                     showToast("🛠️ REAL-TIME TRANSCODE (FFmpeg/MSE)", 3000);
@@ -11312,7 +11331,7 @@
             if(overlay) overlay.classList.toggle('active');
         };
 
-        function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
+        function startEmbeddedVideo(item, path, startTime = 0, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
 
@@ -11333,15 +11352,26 @@
                     fluid: true,
                     playbackRates: [0.5, 1, 1.25, 1.5, 2],
                     controlBar: {
+                        volumePanel: { inline: false },
                         children: [
                             'playToggle', 'volumePanel', 'currentTimeDisplay', 'timeDivider',
                             'durationDisplay', 'progressControl', 'remainingTimeDisplay',
+                            'audioTrackButton', 'subsCapsButton', 'playbackRateMenuButton',
                             'SettingsButton',
                             'VlcButton', 'MpvButton', 'SnapshotButton', 'CinemaModeButton', 'StatsButton', 'StopButton',
                             'fullscreenToggle', 'pictureInPictureToggle'
                         ]
                     }
                 });
+
+                vjsPlayer.on('loadedmetadata', () => {
+                    if (vjsPlayer.resumeTime) {
+                        vjsPlayer.currentTime(vjsPlayer.resumeTime);
+                        vjsPlayer.resumeTime = 0;
+                    }
+                });
+
+                vjsPlayer.resumeTime = startTime;
 
                 vjsPlayer.on('ended', () => {
                     if (repeatStatus === 'one') vjsPlayer.play();
