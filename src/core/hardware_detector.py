@@ -6,6 +6,7 @@ import shutil
 import platform
 from pathlib import Path
 from typing import Any, Dict, List
+import glob
 
 logger = logging.getLogger("hardware_detector")
 
@@ -92,6 +93,62 @@ def get_gpu_info() -> Dict[str, Any]:
     except Exception:
         pass
     return {"type": gpu_type, "encoders": encoders}
+
+def get_best_hw_encoder() -> str:
+    """
+    @brief Returns the best available HW encoder for H.264.
+    @details Priority: QSV (Intel) > NVENC (NVIDIA) > VAAPI (Generic) > libx264 (Software)
+    """
+    try:
+        hw = get_gpu_info()
+        available = hw.get("encoders", [])
+        
+        if "qsv" in available: return "h264_qsv"
+        if "nvenc" in available: return "h264_nvenc"
+        if "vaapi" in available: return "h264_vaapi"
+    except Exception:
+        pass
+    return "libx264"
+
+def get_gpu_usage_safe() -> float:
+    """
+    @brief Returns precise GPU utilization (0-100%).
+    @details Supports Intel Arc (gpu_busy_percent), AMD, and NVIDIA.
+    """
+    try:
+        # 1. Intel Arc / AMD (sysfs)
+        # kernel 6.1+ / Mesa 24+ for Arc
+        cards = glob.glob('/sys/class/drm/card*/device/gpu_busy_percent')
+        if cards:
+            with open(cards[0], 'r') as f:
+                val = int(f.read().strip())
+                # Intel uses 0-1000 for busy_percent in some drivers
+                if val > 100: return val / 10.0
+                return float(val)
+
+        # 2. Fallback iGPU (Frequency Proxy)
+        freq_file = '/sys/class/drm/card0/gt_cur_freq_mhz'
+        max_freq_file = '/sys/class/drm/card0/gt_max_freq_mhz'
+        if os.path.exists(freq_file) and os.path.exists(max_freq_file):
+            try:
+                with open(freq_file, 'r') as f1, open(max_freq_file, 'r') as f2:
+                    cur = int(f1.read().strip())
+                    max_f = int(f2.read().strip())
+                    return (cur / max_f) * 100.0 if max_f > 0 else 0.0
+            except: pass
+
+        # 3. NVIDIA (nvidia-smi)
+        if shutil.which("nvidia-smi"):
+            res = subprocess.run(
+                ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+                capture_output=True, text=True, timeout=1
+            )
+            if res.returncode == 0:
+                return float(res.stdout.strip())
+                
+    except Exception:
+        pass
+    return 0.0
 
 def get_hardware_info():
     """Compiles a summary of relevant hardware info for Desktop-Mode."""

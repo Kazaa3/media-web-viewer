@@ -1,67 +1,69 @@
 import subprocess
+import os
 import logging
 import time
-import os
-import bottle
-import shutil
-from pathlib import Path
+import requests # type: ignore
 
-# Specialized logger
-log = logging.getLogger("streams.vlc")
+log = logging.getLogger("streams.vlc_bridge")
 
-def start_vlc_hls_bridge(file_path):
+# Global dict to track vlc processes
+VLC_PROCESSES = {}
+
+def start_vlc_bridge(file_path, port=8080, password="admin"):
     """
-    @brief Starts a VLC instance that transcodes ISO/DVD to HLS for the browser.
-    @details Enables interactive menus by bridging VLC's engine to an HLS stream.
-    @param file_path Path to the ISO/DVD file.
-    @return URL to the HLS playlist or None if failed.
+    @brief Starts VLC with HTTP interface and HLS streaming for interactive playback.
+    @details Essential for DVD/Blu-ray menus and advanced Atmos/Surround.
+    @param file_path Source path (ISO or file).
+    @param port HTTP control port.
+    @return True if started.
     """
-    output_dir = Path("/tmp/mwv_vlc_hls")
-    if output_dir.exists():
-        try: shutil.rmtree(output_dir)
-        except: pass
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    playlist_name = "playlist.m3u8"
-    playlist_path = output_dir / playlist_name
-    
-    # VLC command to stream HLS via sout
-    # We use a standard H.264/AAC transcode compatible with Video.js
-    vlc_bin = shutil.which("cvlc") or shutil.which("vlc") or "vlc"
-    
-    # sout-chain for livehttp (HLS)
-    sout = (
-        f"#transcode{{vcodec=h264,vb=4000,acodec=mp4a,ab=128,channels=2,samplerate=44100}}:"
-        f"std{{access=livehttp{{seglen=4,deldone=true,num_segs=10,"
-        f"index={playlist_path},index-url=segment-####.ts}},"
-        f"mux=ts,dst={output_dir}/segment-####.ts}}"
-    )
-    
+    if not os.path.exists(file_path):
+        log.error(f"[VLC] File not found: {file_path}")
+        return False
+
+    log.info(f"[VLC] Starting Bridge for {file_path} on port {port}")
+
+    # VLC command for HTTP control + HLS streaming
+    # We use -I http for the web interface and --sout for the stream
     cmd = [
-        vlc_bin, "-I", "dummy", 
-        "--no-osd", "--no-stats", "--no-video-title-show",
+        "vlc",
+        "-I", "http",
+        "--http-port", str(port),
+        "--http-password", password,
         str(file_path),
-        "--sout", sout,
-        "vlc://quit"
+        "--sout", f"#transcode{{vcodec=h264,vb=800,scale=auto,acodec=aac,ab=128,channels=2,samplerate=44100}}:std{{access=livehttp,mux=mpegts,dst=web/streams/vlc/vlc.m3u8}}"
     ]
-    
-    log.info(f"[VLC-Bridge] Launching VLC HLS: {' '.join(cmd)}")
-    # We use Popen so it runs in background
-    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    
-    # Polling for playlist availability
-    max_retries = 15
-    for i in range(max_retries):
-        if playlist_path.exists():
-            log.info(f"[VLC-Bridge] HLS Playlist ready after {i}s")
-            return f"/vlc_tmp/{playlist_name}"
-        time.sleep(1)
-        
-    log.error("[VLC-Bridge] Failed to generate HLS playlist within timeout.")
-    return None
 
-def serve_vlc_hls(path):
-    """
-    @brief Bottle route handler for VLC HLS segments and playlists.
-    """
-    return bottle.static_file(path, root="/tmp/mwv_vlc_hls")
+    try:
+        # Ensure output directory exists
+        os.makedirs("web/streams/vlc", exist_ok=True)
+        
+        process = subprocess.Popen(cmd)
+        VLC_PROCESSES[port] = process
+        return True
+    except Exception as e:
+        log.error(f"[VLC] Failed to start bridge: {e}")
+        return False
+
+def send_vlc_command(command, port=8080, password="admin"):
+    """Sends a control command to the VLC HTTP interface."""
+    url = f"http://127.0.0.1:{port}/requests/status.json?command={command}"
+    try:
+        response = requests.get(url, auth=("", password), timeout=2)
+        return response.json()
+    except Exception as e:
+        log.error(f"[VLC] Command {command} failed: {e}")
+        return {"error": str(e)}
+
+def stop_vlc_bridge(port=8080):
+    """Stops the VLC bridge."""
+    process = VLC_PROCESSES.pop(port, None)
+    if process:
+        if hasattr(process, "terminate"):
+            process.terminate()
+            try:
+                process.wait(timeout=3)
+            except:
+                process.kill()
+        return True
+    return False

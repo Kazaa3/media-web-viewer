@@ -3,112 +3,90 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Any
 
 # Specialized logger
 log = logging.getLogger("ffprobe_analyzer")
 
-def ffprobe_analyze(file_path: str | Path) -> Dict[str, Any]:
+def ffprobe_analyze(file_path):
     """
-    @brief Deep analysis of media file using ffprobe.
-    @details Detects codec, container, resolution, fps, interlacing (PAL), ISO structure, Atmos.
+    @brief Performs deep media detection using ffprobe.
+    @details Detects resolution, codecs, HDR, Atmos, ISO/DVD status, and more.
     @param file_path Path to the media file.
-    @return Dictionary with detected features.
+    @return Dictionary with detailed media metadata.
     """
+    if not os.path.exists(file_path):
+        return {"error": "File not found"}
+
+    is_iso = str(file_path).lower().endswith('.iso')
+    
+    # Base command
+    cmd = [
+        "ffprobe",
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format",
+        "-show_streams",
+        str(file_path)
+    ]
+
     try:
-        # 1. Basic Probe
-        cmd = [
-            "ffprobe", "-v", "error",
-            "-show_format", "-show_streams",
-            "-of", "json", str(file_path)
-        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        if result.returncode != 0:
+            return {"error": "ffprobe failed", "stderr": result.stderr}
         
-        # Increase probe size for complex files (ISOs)
-        if str(file_path).lower().endswith('.iso'):
-            cmd.insert(1, "-analyzeduration")
-            cmd.insert(2, "100M")
-            cmd.insert(3, "-probesize")
-            cmd.insert(4, "100M")
+        data = json.loads(result.stdout)
+        format_info = data.get("format", {})
+        streams = data.get("streams", [])
+        
+        v_stream = next((s for s in streams if s.get("codec_type") == "video"), {})
+        a_streams = [s for s in streams if s.get("codec_type") == "audio"]
+        
+        # 1. Resolution classification
+        width = int(v_stream.get("width", 0)) if isinstance(v_stream, dict) else 0
+        height = int(v_stream.get("height", 0)) if isinstance(v_stream, dict) else 0
+        res_tag = "SD"
+        if width >= 3840 or height >= 2160: res_tag = "4K"
+        elif width >= 1920 or height >= 1080: res_tag = "1080p"
+        elif width >= 1280 or height >= 720: res_tag = "720p"
 
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
-        if res.returncode != 0:
-            log.error(f"FFprobe failed for {file_path}: {res.stderr}")
-            return {"error": res.stderr}
+        # 2. HDR Awareness
+        color_space = str(v_stream.get("color_space", "")) if isinstance(v_stream, dict) else ""
+        is_hdr = "bt2020" in color_space or "pq" in str(v_stream.get("color_transfer", "")) if isinstance(v_stream, dict) else False
         
-        data: Dict[str, Any] = json.loads(res.stdout)
-        format_info: Dict[str, Any] = data.get("format", {})
-        streams: List[Dict[str, Any]] = data.get("streams", [])
+        # 3. Atmos / Surround Awareness
+        has_atmos = any("atmos" in str(s.get("tags", {})).lower() for s in a_streams)
+        channels = max([int(s.get("channels", 0)) for s in a_streams]) if a_streams else 0
         
-        # Explicitly find first video/audio streams
-        video_stream: Dict[str, Any] = {}
-        audio_streams: List[Dict[str, Any]] = []
+        # 4. PAL/NTSC detection (Frame Rate)
+        fps_str = str(v_stream.get("r_frame_rate", "0/0")) if isinstance(v_stream, dict) else "0/0"
+        try:
+            num, den = map(int, fps_str.split('/'))
+            fps = num / den if den != 0 else 0
+        except:
+            fps = 0
         
-        for s in streams:
-            if s.get("codec_type") == "video" and not video_stream:
-                video_stream = s
-            elif s.get("codec_type") == "audio":
-                audio_streams.append(s)
+        is_pal = 24.5 < fps < 25.5 or 49.5 < fps < 50.5
+        is_ntsc = 23.5 < fps < 24.5 or 29.5 < fps < 30.5 or 59.5 < fps < 60.5
 
-        # 2. Extract Basic Metrics
-        width = int(video_stream.get("width", 0))
-        height = int(video_stream.get("height", 0))
-        fps = _parse_fps(str(video_stream.get("r_frame_rate", "0")))
-        codec = str(video_stream.get("codec_name", "unknown"))
-        container = str(format_info.get("format_name", "unknown"))
-        
-        # 3. Features & Logic
-        is_iso = str(file_path).lower().endswith(('.iso', '.img', '.bin'))
-        
-        # Atmos / High-End Audio detection
-        has_atmos = False
-        for s in audio_streams:
-            tags = str(s.get("tags", {})).lower()
-            codec_name = str(s.get("codec_name", ""))
-            layout = str(s.get("channel_layout", ""))
-            
-            if "atmos" in tags or "truehd" in codec_name:
-                has_atmos = True
-                break
-            if codec_name == "eac3" and "7.1" in layout:
-                has_atmos = True
-                break
-
-        # PAL Heuristic (25fps or 50i)
-        is_interlaced = str(video_stream.get("field_order", "progressive")) != "progressive"
-        is_pal = (fps in [25.0, 50.0]) or (is_interlaced and fps == 25.0)
-        
-        result: Dict[str, Any] = {
-            "codec": codec,
-            "container": container,
+        return {
+            "path": str(file_path),
+            "container": format_info.get("format_name", "unknown"),
+            "duration": float(format_info.get("duration", 0)),
+            "bitrate": int(format_info.get("bit_rate", 0)),
+            "codec": v_stream.get("codec_name", "unknown") if isinstance(v_stream, dict) else "unknown",
+            "resolution": res_tag,
             "width": width,
             "height": height,
+            "is_hdr": is_hdr,
+            "atmos": has_atmos,
+            "channels": channels,
             "fps": fps,
             "is_pal": is_pal,
-            "is_interlaced": is_interlaced,
+            "is_ntsc": is_ntsc,
             "is_iso": is_iso,
-            "has_menus": is_iso or str(file_path).lower().endswith('.vob'),
-            "atmos": has_atmos,
-            "bitrate": int(format_info.get("bit_rate", 0)) if str(format_info.get("bit_rate", "0")).isdigit() else 0,
-            "duration": float(format_info.get("duration", 0)),
+            "has_menus": is_iso or (os.path.isdir(str(file_path)) and os.path.exists(os.path.join(str(file_path), "VIDEO_TS")))
         }
-        
-        # Resolution Labeling
-        if height >= 2160: result["resolution"] = "4K"
-        elif height >= 1080: result["resolution"] = "1080p"
-        elif height >= 720: result["resolution"] = "720p"
-        else: result["resolution"] = "SD"
-            
-        return result
-    except Exception as e:
-        log.error(f"Analyzer crash for {file_path}: {e}")
-        return {"error": str(e)}
 
-def _parse_fps(fps_str: str) -> float:
-    if not fps_str: return 0.0
-    try:
-        if "/" in fps_str:
-            n_v, d_v = map(float, fps_str.split("/"))
-            return n_v / d_v if d_v != 0 else 0.0
-        return float(fps_str)
-    except:
-        return 0.0
+    except Exception as e:
+        log.error(f"[Analyzer] Error profiling {file_path}: {e}")
+        return {"error": str(e)}

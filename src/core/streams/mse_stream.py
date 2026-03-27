@@ -1,109 +1,89 @@
 import subprocess
-import logging
-import bottle # type: ignore
 import os
-import shutil
-from pathlib import Path
-from .utils import get_best_ffmpeg_encoder, get_base_ffmpeg_args, get_video_filter # type: ignore
-from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
+import logging
+import threading
+import time
+from src.core.hardware_detector import get_best_hw_encoder # type: ignore
 
-# Specialized logger
-log = logging.getLogger("streams.mse")
+log = logging.getLogger("streams.mse_stream")
 
-def stream_mse(file_path, audio_idx=0, subs_idx=None, start_time=0):
+# Global dict to track active streaming processes
+ACTIVE_STREAMS = {}
+
+def start_mse_stream(file_path, stream_id, audio_idx=0, subs_idx=None, start_time=0):
     """
-    @brief Fragmented MP4 stream for MediaSource Extensions (Video.js).
-    @details Provides ultra-low latency (0.5s) by avoiding HLS segmentation.
-    @param file_path Path to the media file.
-    @param audio_idx Index of the audio track to include.
-    @param subs_idx Optional index of subtitle track to burn.
+    @brief Starts an FFmpeg process to remux media into Fragmented MP4 for MSE.
+    @details Supports fast seeking (-ss before -i) and track mapping.
+    @param file_path Path to the source file.
+    @param stream_id Unique identifier for the stream session.
+    @param audio_idx Index of the audio track to map.
+    @param subs_idx Index of the subtitle track to map (if any).
     @param start_time Seek position in seconds.
-    @return Generator for streaming binary data.
+    @return subprocess.Popen instance.
     """
-    analysis = ffprobe_analyze(file_path)
-    if "error" in analysis:
-        log.error(f"[MSE-Stream] Analysis failed: {analysis['error']}")
-        return bottle.HTTPError(404, f"Analysis failed: {analysis['error']}")
+    if not os.path.exists(file_path):
+        log.error(f"[MSE] File not found: {file_path}")
+        return None
 
-    is_4k = analysis.get("resolution") == "4K"
-    is_hd = analysis.get("resolution") == "1080p" or analysis.get("resolution") == "720p"
+    # Stop existing stream for this ID if any
+    stop_mse_stream(stream_id)
+
+    encoder = get_best_hw_encoder()
+    log.info(f"[MSE] Starting stream {stream_id} (Seek: {start_time}s, Audio: {audio_idx}) using {encoder}")
+
+    # FFmpeg command for FragMP4 remuxing
+    # -ss BEFORE -i for fast seeking
+    cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
     
-    encoder = get_best_ffmpeg_encoder()
-    cmd = get_base_ffmpeg_args(encoder)
-    
-    if float(start_time or 0) > 0:
-        cmd += ["-ss", str(start_time), "-output_ts_offset", str(start_time)]
+    if float(start_time) > 0:
+        cmd.extend(["-ss", str(start_time)])
         
-    # Input handling (bluray support if ISO)
-    input_src = str(file_path)
-    if str(file_path).lower().endswith('.iso') and analysis.get('bitrate', 0) > 20000000:
-        input_src = f"bluray:{file_path}"
-
-    cmd += ["-i", input_src]
+    cmd.extend(["-i", str(file_path)])
     
-    # Stream Mapping
-    cmd += ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
-    
-    # Filters
-    vf = get_video_filter(analysis, subs_idx, is_4k)
-    
-    # Subtitle Burning Heuristic
+    # Mapping
+    cmd.extend(["-map", "0:v:0"]) # Always first video track
+    cmd.extend(["-map", f"0:a:{audio_idx}"])
     if subs_idx is not None:
-        try:
-            # Handle subtitle burn
-            esc_path = str(file_path).replace("\\", "/").replace(":", "\\:")
-            vf.append(f"subtitles='{esc_path}':si={subs_idx}")
-        except: pass
-
-    # Bitrate selection
-    if is_4k: max_rate, buf_size = "15M", "30M"
-    elif is_hd: max_rate, buf_size = "8M", "16M"
-    else: max_rate, buf_size = "4M", "8M"
-
-    # Encoder specific tuning
-    if encoder == "h264_vaapi":
-        vf.insert(0, "format=nv12,hwupload")
-        cmd += ["-vf", ",".join(vf)]
-        v_rate = "12M" if is_4k else "6M"
-        cmd += ["-c:v", "h264_vaapi", "-b:v", v_rate, "-maxrate", v_rate, "-hwaccel_output_format", "vaapi"]
-        if is_4k: cmd += ["-level", "5.1"]
-    elif encoder == "h264_nvenc":
-        if vf: cmd += ["-vf", ",".join(vf)]
-        cmd += ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "hq", "-rc", "vbr", "-cq", "24", 
-                "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
-    else:
-        if vf: cmd += ["-vf", ",".join(vf)]
-        cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency", 
-                "-crf", "25", "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
-
-    # Output Format: Fragmented MP4 for MSE
-    cmd += [
-        "-c:a", "aac", "-b:a", "128k", "-ac", "2",
-        "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+        cmd.extend(["-map", f"0:s:{subs_idx}"])
+    
+    # Encoding / Remuxing
+    cmd.extend([
+        "-c:v", encoder if encoder != "libx264" else "libx264",
+        "-preset", "ultrafast",
+        "-tune", "zerolatency",
+        "-c:a", "aac", "-b:a", "128k",
+        "-f", "mp4",
+        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
         "pipe:1"
-    ]
-    
-    log.info(f"[MSE-Stream] Launching: {' '.join(cmd)}")
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
-    bottle.response.content_type = 'video/mp4'
-    def stream():
-        if not process.stdout:
-            log.error("[MSE-Stream] process.stdout is None")
-            return
-        try:
-            while True:
-                data = process.stdout.read(1024 * 64)
-                if not data:
-                    if process.poll() is not None: break
-                    continue
-                yield data
-        except Exception as e:
-            log.error(f"[MSE-Stream] Runtime error: {e}")
-        finally:
-            if process.poll() is None:
-                process.terminate()
-                try: process.wait(timeout=1)
-                except: process.kill()
-            
-    return stream()
+    ])
+
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ACTIVE_STREAMS[stream_id] = process
+        
+        # Start a cleanup thread
+        threading.Thread(target=_monitor_process, args=(stream_id, process), daemon=True).start()
+        
+        return process
+    except Exception as e:
+        log.error(f"[MSE] Failed to start FFmpeg: {e}")
+        return None
+
+def _monitor_process(stream_id, process):
+    """Monitors and cleans up the FFmpeg process."""
+    process.wait()
+    ACTIVE_STREAMS.pop(stream_id, None)
+    log.info(f"[MSE] Stream {stream_id} terminated.")
+
+def stop_mse_stream(stream_id):
+    """Stops an active MSE stream."""
+    if stream_id in ACTIVE_STREAMS:
+        process = ACTIVE_STREAMS.pop(stream_id, None)
+        if hasattr(process, "terminate"):
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except:
+                process.kill()
+        return True
+    return False

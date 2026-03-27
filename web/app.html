@@ -6320,13 +6320,13 @@
                                         MPV</button>
                                     <button onclick="runVideoPlayerTest('ffplay')" class="compact-test-btn">🎹
                                         FFplay</button>
+                                    <button onclick="runVideoPlayerTest('frag')" class="compact-test-btn">📦
+                                        fMP4 zu HLS</button>
                                     <button onclick="runVideoPlayerTest('webm')" class="compact-test-btn"
                                         style="background: #f3e5f5; color: #7b1fa2; border-color: #ce93d8;">🌀
                                         WebM</button>
                                     <button onclick="runVideoPlayerTest('ffmpeg')" class="compact-test-btn">📽️
                                         FFmpeg</button>
-                                    <button onclick="runVideoPlayerTest('frag')" class="compact-test-btn">📦
-                                        FragMP4</button>
                                     <button onclick="runVideoPlayerTest('trans')" class="compact-test-btn">🛠️
                                         Transcode</button>
                                     <button onclick="runVideoPlayerTest('merge')" class="compact-test-btn">🧬
@@ -6547,6 +6547,9 @@
                             <button class="options-subtab" onclick="switchReportingView('routing-suite')"
                                 data-view="routing-suite" data-i18n="report_view_routing_suite">🧭
                                 Routing</button>
+                            <button class="options-subtab" onclick="VideoTestSuite.run()" style="color:#00f0ff; border-color:#00f0ff;">
+                                🧪 JS Playback Test
+                            </button>
                         </div>
 
                         <button onclick="refreshReportingData()"
@@ -6980,7 +6983,7 @@
                                             <line x1="17" y1="2" x2="17" y2="22" />
                                             <line x1="2" y1="12" x2="22" y2="12" />
                                         </svg>
-                                        FFmpeg FragMP4
+                                        FFmpeg fMP4 zu HLS
                                     </button>
                                     <button class="submode-btn" data-mode="chrome_hls"
                                         onclick="selectSubMode('chrome_hls',this,'chrome')"
@@ -8640,6 +8643,7 @@
             menu.style.display = 'block';
 
             // Adjust headers and dividers (simplified)
+            const groupHeaders = menu.querySelectorAll('.context-menu-header');
             groupHeaders.forEach(h => {
                 if (h.innerText.includes('Disc') && !isDisc) h.style.display = 'none';
                 else h.style.display = 'block';
@@ -10758,7 +10762,7 @@
             const chromeInfoTexts = {
                 chrome_direct: 'Direct Play: MP4/WebM werden nativ im Browser abgespielt — keine Transkodierung.',
                 chrome_remux: 'mkvmerge Remux: MKV-Dateien werden via Pipe-Kit für Chrome kompatibel gemacht.',
-                chrome_fragmp4: 'FFmpeg FragMP4: Universelle Echtzeit-Transkodierung über FragMP4 für alle Formate.',
+                chrome_fragmp4: 'FFmpeg fMP4 zu HLS: Universelle Echtzeit-Transkodierung über fMP4 (HLS) für alle Formate.',
                 chrome_hls: 'Internal HLS: Experimentelles HLS-Streaming über das interne Backend.'
             };
             if (chromeInfo && chromeInfoTexts[mode]) chromeInfo.textContent = chromeInfoTexts[mode];
@@ -11085,8 +11089,11 @@
                     this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STATS</span>';
                 }
                 handleClick() {
-                    const overlay = document.getElementById('vjs-stats-overlay');
-                    if(overlay) overlay.classList.toggle('active');
+                    if (window.StatsOverlay) window.StatsOverlay.toggle();
+                    else {
+                        const overlay = document.getElementById('vjs-stats-overlay');
+                        if(overlay) overlay.classList.toggle('active');
+                    }
                 }
                 buildCSSClass() { return "vjs-icon-graph-bar vjs-control vjs-button stats-btn"; }
             }
@@ -11582,11 +11589,23 @@
             const video = document.getElementById('native-html5-video-resource-node');
             if (video) { video.pause(); video.style.display = 'none'; }
             if (typeof eel !== 'undefined' && typeof eel.stop_vlc === 'function') eel.stop_vlc()();
-            if (typeof showToast === 'function') showToast("🚀 MPV...", 3000);
-            try {
-                const res = await eel.open_mpv(filePath)();
-                if (res && res.status === 'ok') showToast("MPV gestartet.", 2000);
-            } catch (e) { console.error("MPV Error:", e); }
+            
+            if (window.mpvPlayer) {
+                showToast("🚀 libmpv WASM zu Canvas...", 3000);
+                try {
+                    await window.mpvPlayer.play(filePath);
+                } catch (e) {
+                    console.error("MPV WASM Error:", e);
+                    showToast("❌ MPV WASM Fehler, Fallback zu Desktop...", 3000);
+                    eel.open_mpv(filePath)();
+                }
+            } else {
+                showToast("🚀 MPV Desktop...", 3000);
+                try {
+                    const res = await eel.open_mpv(filePath)();
+                    if (res && res.status === 'ok') showToast("MPV gestartet.", 2000);
+                } catch (e) { console.error("MPV Error:", e); }
+            }
         }
 
         async function startVLC(filePath, displayName = null) {
@@ -14375,6 +14394,8 @@
                 data-i18n="footer_imprint">Impressum</a>
         </div>
     </div>
+    <script src="js/video_test_suite.js"></script>
+    <script src="js/stats-overlay.js"></script>
 </body>
 
 </html>

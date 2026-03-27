@@ -69,7 +69,7 @@ fi
 # Discovery & Categorization logic
 ALL_TESTS=$(ls "$PROJECT_ROOT"/tests/test_*.py)
 S1_PATTERNS=("eel" "api" "env_handler" "logbuffer" "health" "network")
-S2_PATTERNS=("db" "parser" "process" "transcoding" "media" "format" "models" "parse" "artwork" "mkv" "mp3" "pcm" "bitdepth" "iso" "stream" "chapter" "tag")
+S2_PATTERNS=("db" "parser" "process" "transcoding" "media" "format" "models" "parse" "artwork" "mkv" "mp3" "pcm" "bitdepth" "iso" "stream" "chapter" "tag" "router")
 S3_PATTERNS=("i18n" "ui_events" "playlist" "tabs" "refresh" "integrity" "html" "css" "json" "rendering")
 S4_PATTERNS=("pyautogui" "launcher" "vlc" "selenium" "browser" "session" "docker")
 S5_PATTERNS=("subprocess" "version" "build" "markdown" "linting" "doxygen" "cleanup" "package" "repo" "pip")
