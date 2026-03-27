@@ -3147,7 +3147,7 @@ def get_parser_mapping():
     @brief Returns the parser-to-filetype mapping.
     @return Mapping dictionary / Mapping-Dictionary.
     """
-    from src.parsers.media_parser import PARSER_MAPPING
+    from src.parsers.media_parser import PARSER_MAPPING # type: ignore
     return PARSER_MAPPING
 
 
