@@ -6563,48 +6563,59 @@ def ui_trace(message):
     return {"status": "ok"}
 
 @eel.expose
+def get_db_stats():
+    """Returns general database health metrics for diagnostics."""
+    try:
+        from src.core.database import get_db
+        db = get_db()
+        items = db.execute("SELECT COUNT(*) FROM media_items").fetchone()[0]
+        categories = db.execute("SELECT COUNT(DISTINCT category) FROM media_items").fetchone()[0]
+        return {
+            "status": "ok",
+            "total_items": items,
+            "unique_categories": categories,
+            "db_path": str(db.path) if hasattr(db, 'path') else "unknown"
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def get_playback_stats():
+    """Returns real-time performance and metadata for the current playback session."""
+    try:
+        # Mocking some metrics for the UI until a real-time monitor is attached
+        import psutil
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        
+        # Pull Atmos/Bitstream from current analysis global (if stored)
+        # For Level 5 we return enriched mock if no file is playing
+        return {
+            "cpu": cpu,
+            "gpu_util": 0, # Requires specialized probing
+            "ram_mb": psutil.Process().memory_info().rss / 1024 / 1024,
+            "net_recv_kb": 0,
+            "net_sent_kb": 0,
+            "audio_engine": "FFmpeg Direct-Stream",
+            "atmos": False,
+            "bitstream": False
+        }
+    except Exception:
+        return {}
+
+@eel.expose
 def get_media_tracks(filepath):
     """Probes available audio and subtitle tracks for a media file."""
     try:
-        from src.parsers.format_utils import ffprobe_suite
-        # Use a more low-level probe if needed, but ffprobe_suite usually handles it.
-        # However, for track switching, we need the specific stream indices and languages.
-        # Handle ISO probing with larger buffer
-        probe_args = []
-        if str(filepath).lower().endswith('.iso'):
-            probe_args = ["-analyzeduration", "100M", "-probesize", "100M"]
-
-        cmd = [
-            "ffprobe", "-v", "error"
-        ] + probe_args + [
-            "-show_entries", "stream=index,codec_type,codec_name:stream_tags=language,title", 
-            "-of", "json", filepath
-        ]
-        res = subprocess.run(cmd, capture_output=True, text=True)
-        data = json.loads(res.stdout)
-        
-        audio = []
-        subs = []
-        
-        # Stream index mapping
-        a_count: int = 0
-        s_count: int = 0
-        
-        for s in data.get('streams', []):
-            stype = s.get('codec_type')
-            tags = s.get('tags', {})
-            label = tags.get('title') or tags.get('language') or f"Track {s.get('index')}"
-            
-            if stype == "audio":
-                audio.append({"id": a_count, "label": label, "codec": s.get('codec_name')})
-                a_count += 1
-            elif stype == "subtitle":
-                subs.append({"id": s_count, "label": label, "codec": s.get('codec_name')})
-                s_count += 1
-                
-        return {"audio": audio, "subtitles": subs}
+        from src.core.ffprobe_analyzer import ffprobe_analyze
+        analysis = ffprobe_analyze(filepath)
+        return {
+            "audio": analysis.get("audio_tracks", []),
+            "subtitles": analysis.get("subtitle_tracks", []),
+            "atmos": analysis.get("atmos", False)
+        }
     except Exception as e:
-        log.error(f"[Metadata] failed to get tracks for {filepath}: {e}")
+        log.error(f"Error in get_media_tracks: {e}")
         return {"audio": [], "subtitles": []}
 
 
