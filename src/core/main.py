@@ -796,7 +796,7 @@ def get_app_name():
 def update_playback_position(name, position):
     """Updates the persistent playback position."""
     try:
-        from src.core import db
+        from src.core import db # type: ignore
         if db.get_active_db_path().exists():
             db.update_playback_position(name, position)
         return {"ok": True}
@@ -3062,7 +3062,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             obj_id = db.insert_media(item_dict)
                             if obj_id:
                                 folder_id_map[d] = obj_id
-                                count_indexed += 1
+                                count_indexed += 1 # type: ignore
                                 if is_blackbox:
                                     skip_subpaths.add(d)
                                 logger.debug("scan", f"✅ [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")

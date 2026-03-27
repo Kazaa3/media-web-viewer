@@ -11032,300 +11032,315 @@
         }
 
         // --- Video.js Custom Component Definitions (ES6 Classes for Video.js 8) ---
-        const vjsBtn = videojs.getComponent('Button');
-        const vjsComponent = videojs.getComponent('Component');
-        const vjsMenuBtn = videojs.getComponent('MenuButton');
-        const vjsMenuItem = videojs.getComponent('MenuItem');
-        const vjsMenu = videojs.getComponent('Menu');
+        let vjsComponentsRegistered = false;
+        function registerVjsComponents() {
+            if (vjsComponentsRegistered || typeof videojs === 'undefined') return;
+            
+            const vjsBtn = videojs.getComponent('Button');
+            const vjsComponent = videojs.getComponent('Component');
+            const vjsMenuBtn = videojs.getComponent('MenuButton');
+            const vjsMenuItem = videojs.getComponent('MenuItem');
+            const vjsMenu = videojs.getComponent('Menu');
+
+            // --- Visual Stats Overlay Component ---
+            class VisualStatsOverlay extends vjsComponent {
+                constructor(player, options) {
+                    super(player, options);
+                    this.el().id = 'vjs-stats-overlay';
+                    this.updateContent({});
+                }
+                createEl() { return videojs.dom.createEl('div', { className: 'vjs-stats-overlay' }); }
+                updateContent(data) {
+                    const cpu = data.cpu || 0;
+                    const ram = data.ram_mb || 0;
+                    const netRecv = (data.net_recv_kb || 0).toFixed(1);
+                    const netSent = (data.net_sent_kb || 0).toFixed(1);
+                    const fps = window._vjs_fps || 0;
+                    const br = window._vjs_bitrate || 0;
+                    const buf = window._vjs_buffer || 0;
+                    const dropped = window._vjs_dropped || 0;
+
+                    this.el().innerHTML = `
+                        <div class="stats-header">SYSTEM METRICS</div>
+                        <div class="stats-row"><span>Backend CPU</span><span class="stats-val">${cpu}%</span></div>
+                        <div class="stats-row"><span>RAM (Used)</span><span class="stats-val">${Math.round(ram)} MB</span></div>
+                        <div class="stats-row"><span>Net ↓ / ↑</span><span class="stats-val">${netRecv} / ${netSent} KB/s</span></div>
+                        <div style="margin-top:10px;" class="stats-header">PLAYER METRICS</div>
+                        <div class="stats-row"><span>Frames/s</span><span class="stats-val">${Math.round(fps)}</span></div>
+                        <div class="stats-row"><span>Bitrate</span><span class="stats-val">${Math.round(br)} kbps</span></div>
+                        <div class="stats-row"><span>Buffer</span><span class="stats-val">${buf}s</span></div>
+                        <div class="stats-row"><span>Dropped</span><span class="stats-val">${dropped}</span></div>
+                        <div style="margin-top:10px;" class="stats-header">ENGINE DETAILS</div>
+                        <div class="stats-row"><span>Engine</span><span class="stats-val">${currentPlaybackEngine}</span></div>
+                        <div class="stats-row"><span>Protocol</span><span class="stats-val">${currentPlaybackProtocol}</span></div>
+                    `;
+                }
+            }
+            videojs.registerComponent('VisualStatsOverlay', VisualStatsOverlay);
+
+            class StatsButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Stats');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STATS</span>';
+                }
+                handleClick() {
+                    const overlay = document.getElementById('vjs-stats-overlay');
+                    if(overlay) overlay.classList.toggle('active');
+                }
+                buildCSSClass() { return "vjs-icon-graph-bar vjs-control vjs-button stats-btn"; }
+            }
+            videojs.registerComponent('StatsButton', StatsButton);
+
+            class AudioTrackMenuButton extends vjsMenuBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Audio');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">AUDIO</span>';
+                }
+                createMenu() {
+                    const menu = new vjsMenu(this.player_);
+                    if (currentVideoTracks && currentVideoTracks.audio) {
+                        currentVideoTracks.audio.forEach(t => {
+                            const item = new vjsMenuItem(this.player_, {
+                                label: t.label, selectable: true,
+                                selected: String(t.id) === String(currentAudioIdx)
+                            });
+                            item.on('click', () => {
+                                currentAudioIdx = t.id;
+                                startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
+                            });
+                            menu.addItem(item);
+                        });
+                    }
+                    return menu;
+                }
+                update() {
+                    const menu = this.createMenu();
+                    if (this.menu) {
+                        this.removeChild(this.menu);
+                    }
+                    this.menu = menu;
+                    this.addChild(this.menu);
+                    if (this.items && this.items.length > 0) {
+                        this.show();
+                    } else if (currentVideoTracks && currentVideoTracks.audio && currentVideoTracks.audio.length > 0) {
+                         this.show();
+                    } else {
+                        this.hide();
+                    }
+                }
+                buildCSSClass() { return "vjs-icon-audio vjs-control vjs-button vjs-menu-button"; }
+            }
+            videojs.registerComponent('AudioTrackMenuButton', AudioTrackMenuButton);
+
+            class SubtitleTrackMenuButton extends vjsMenuBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Subs');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SUBS</span>';
+                }
+                createMenu() {
+                    const menu = new vjsMenu(this.player_);
+                    const offItem = new vjsMenuItem(this.player_, { label: "Off", selectable: true, selected: currentSubsIdx === null });
+                    offItem.on('click', () => {
+                        currentSubsIdx = null;
+                        startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, null);
+                    });
+                    menu.addItem(offItem);
+                    if (currentVideoTracks && currentVideoTracks.subtitles) {
+                        currentVideoTracks.subtitles.forEach(t => {
+                            const item = new vjsMenuItem(this.player_, {
+                                label: t.label, selectable: true,
+                                selected: String(t.id) === String(currentSubsIdx)
+                            });
+                            item.on('click', () => {
+                                currentSubsIdx = t.id;
+                                startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
+                            });
+                            menu.addItem(item);
+                        });
+                    }
+                    return menu;
+                }
+                update() {
+                    const menu = this.createMenu();
+                    if (this.menu) {
+                        this.removeChild(this.menu);
+                    }
+                    this.menu = menu;
+                    this.addChild(this.menu);
+                    if (currentVideoTracks && currentVideoTracks.subtitles && currentVideoTracks.subtitles.length > 0) {
+                        this.show();
+                    } else {
+                        this.hide();
+                    }
+                }
+                buildCSSClass() { return "vjs-icon-subtitles vjs-control vjs-button vjs-menu-button"; }
+            }
+            videojs.registerComponent('SubtitleTrackMenuButton', SubtitleTrackMenuButton);
+
+            class AspectRatioMenuButton extends vjsMenuBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Ratio');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">RATIO</span>';
+                }
+                createMenu() {
+                    const menu = new vjsMenu(this.player_);
+                    const ratios = ['Auto', '16:9', '21:9', '4:3', '1:1'];
+                    ratios.forEach(r => {
+                        const item = new vjsMenuItem(this.player_, { label: r, selectable: true, selected: r === currentAspectRatio });
+                        item.on('click', () => {
+                            currentAspectRatio = r;
+                            if(r === 'Auto') { this.player_.fluid(true); this.player_.aspectRatio(''); }
+                            else { this.player_.fluid(false); this.player_.aspectRatio(r); }
+                            showToast(`Aspect Ratio: ${r}`, 1000);
+                        });
+                        menu.addItem(item);
+                    });
+                    return menu;
+                }
+                buildCSSClass() { return "vjs-icon-spinner vjs-control vjs-button vjs-menu-button"; }
+            }
+            videojs.registerComponent('AspectRatioMenuButton', AspectRatioMenuButton);
+
+            class CinemaModeButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Cinema');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">CINEMA</span>';
+                }
+                handleClick() { 
+                    const container = document.getElementById('video-player-container-root-wrapper');
+                    if(container) {
+                        container.classList.toggle('cinema-expanded');
+                        showToast(container.classList.contains('cinema-expanded') ? "Cinema Mode: ON" : "Cinema Mode: OFF", 1000);
+                    }
+                }
+                buildCSSClass() { return "vjs-icon-layout vjs-control vjs-button cinema-btn"; }
+            }
+            videojs.registerComponent('CinemaModeButton', CinemaModeButton);
+
+            class VisualFXMenuButton extends vjsMenuBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Visual FX');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">FX</span>';
+                }
+                createMenu() {
+                    const menu = new vjsMenu(this.player_);
+                    const fx = [
+                        { l: 'Natural', f: 'none' }, { l: 'Vibrant', f: 'saturate(1.4) contrast(1.1)' },
+                        { l: 'Cinematic', f: 'contrast(1.2) sepia(0.1)' }, { l: 'B&W', f: 'grayscale(1)' },
+                        { l: 'Warmer', f: 'sepia(0.3) saturate(1.2)' }
+                    ];
+                    fx.forEach(f => {
+                        const item = new vjsMenuItem(this.player_, { label: f.l, selectable: true });
+                        item.on('click', () => {
+                            const v = document.getElementById('native-html5-video-resource-node');
+                            if(v) v.style.filter = f.f;
+                            showToast(`FX: ${f.l}`, 800);
+                        });
+                        menu.addItem(item);
+                    });
+                    return menu;
+                }
+                buildCSSClass() { return "vjs-icon-circle vjs-control vjs-button vjs-menu-button"; }
+            }
+            videojs.registerComponent('VisualFXMenuButton', VisualFXMenuButton);
+
+            class StopButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Stop');
+                    this.addClass('vjs-visible-text');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STOP</span>';
+                }
+                handleClick() { stopVideo(); }
+                buildCSSClass() { return "vjs-icon-cancel vjs-control vjs-button stop-btn"; }
+            }
+            videojs.registerComponent('StopButton', StopButton);
+
+            class VlcButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('VLC');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">VLC</span>';
+                }
+                handleClick() { if(typeof switchToVLC === 'function') switchToVLC(); }
+                buildCSSClass() { return "vjs-icon-share vjs-control vjs-button vlc-btn"; }
+            }
+            videojs.registerComponent('VlcButton', VlcButton);
+
+            class MpvButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('MPV');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">MPV</span>';
+                }
+                handleClick() { if(currentVideoPath) if(typeof startMPV === 'function') startMPV(currentVideoPath); }
+                buildCSSClass() { return "vjs-icon-circle-inner-circle vjs-control vjs-button mpv-btn"; }
+            }
+            videojs.registerComponent('MpvButton', MpvButton);
+
+            class SnapshotButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Snapshot');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SNAP</span>';
+                }
+                handleClick() { 
+                    const v = document.getElementById('native-html5-video-resource-node');
+                    if(!v) return;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+                    canvas.getContext('2d').drawImage(v, 0, 0);
+                    const data = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `snapshot_${new Date().getTime()}.png`;
+                    link.href = data; link.click();
+                }
+                buildCSSClass() { return "vjs-icon-photo vjs-control vjs-button snapshot-btn"; }
+            }
+            videojs.registerComponent('SnapshotButton', SnapshotButton);
+
+            class SettingsButton extends vjsBtn {
+                constructor(player, options) {
+                    super(player, options);
+                    this.controlText('Settings');
+                    this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SETTINGS</span>';
+                }
+                handleClick() {
+                    const panel = document.getElementById('vjs-settings-panel');
+                    if(panel) {
+                        panel.classList.toggle('active');
+                        if (panel.classList.contains('active')) {
+                            updateSettingsPanel();
+                        }
+                    }
+                }
+                buildCSSClass() { return "vjs-icon-cog vjs-control vjs-button settings-btn"; }
+            }
+            videojs.registerComponent('SettingsButton', SettingsButton);
+            
+            vjsComponentsRegistered = true;
+        }
+
+        (function waitVjs() {
+            if (typeof videojs !== 'undefined') {
+                registerVjsComponents();
+            } else {
+                setTimeout(waitVjs, 50);
+            }
+        })();
 
         let currentVideoTracks = { audio: [], subtitles: [] };
         let currentAudioIdx = 0;
         let currentSubsIdx = null;
         let currentPlaybackEngine = "Video.js (Premium UI)";
         let currentPlaybackProtocol = "Direct Play";
-
-        // --- Visual Stats Overlay Component ---
-        class VisualStatsOverlay extends vjsComponent {
-            constructor(player, options) {
-                super(player, options);
-                this.el().id = 'vjs-stats-overlay';
-                this.updateContent({});
-            }
-            createEl() { return videojs.dom.createEl('div', { className: 'vjs-stats-overlay' }); }
-            updateContent(data) {
-                const cpu = data.cpu || 0;
-                const ram = data.ram_mb || 0;
-                const netRecv = (data.net_recv_kb || 0).toFixed(1);
-                const netSent = (data.net_sent_kb || 0).toFixed(1);
-                const fps = window._vjs_fps || 0;
-                const br = window._vjs_bitrate || 0;
-                const buf = window._vjs_buffer || 0;
-                const dropped = window._vjs_dropped || 0;
-
-                this.el().innerHTML = `
-                    <div class="stats-header">SYSTEM METRICS</div>
-                    <div class="stats-row"><span>Backend CPU</span><span class="stats-val">${cpu}%</span></div>
-                    <div class="stats-row"><span>RAM (Used)</span><span class="stats-val">${Math.round(ram)} MB</span></div>
-                    <div class="stats-row"><span>Net ↓ / ↑</span><span class="stats-val">${netRecv} / ${netSent} KB/s</span></div>
-                    <div style="margin-top:10px;" class="stats-header">PLAYER METRICS</div>
-                    <div class="stats-row"><span>Frames/s</span><span class="stats-val">${Math.round(fps)}</span></div>
-                    <div class="stats-row"><span>Bitrate</span><span class="stats-val">${Math.round(br)} kbps</span></div>
-                    <div class="stats-row"><span>Buffer</span><span class="stats-val">${buf}s</span></div>
-                    <div class="stats-row"><span>Dropped</span><span class="stats-val">${dropped}</span></div>
-                    <div style="margin-top:10px;" class="stats-header">ENGINE DETAILS</div>
-                    <div class="stats-row"><span>Engine</span><span class="stats-val">${currentPlaybackEngine}</span></div>
-                    <div class="stats-row"><span>Protocol</span><span class="stats-val">${currentPlaybackProtocol}</span></div>
-                `;
-            }
-        }
-        videojs.registerComponent('VisualStatsOverlay', VisualStatsOverlay);
-
-        class StatsButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Stats');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STATS</span>';
-            }
-            handleClick() {
-                const overlay = document.getElementById('vjs-stats-overlay');
-                if(overlay) overlay.classList.toggle('active');
-            }
-            buildCSSClass() { return "vjs-icon-graph-bar vjs-control vjs-button stats-btn"; }
-        }
-        videojs.registerComponent('StatsButton', StatsButton);
-
-        class AudioTrackMenuButton extends vjsMenuBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Audio');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">AUDIO</span>';
-            }
-            createMenu() {
-                const menu = new vjsMenu(this.player_);
-                if (currentVideoTracks && currentVideoTracks.audio) {
-                    currentVideoTracks.audio.forEach(t => {
-                        const item = new vjsMenuItem(this.player_, {
-                            label: t.label, selectable: true,
-                            selected: String(t.id) === String(currentAudioIdx)
-                        });
-                        item.on('click', () => {
-                            currentAudioIdx = t.id;
-                            startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
-                        });
-                        menu.addItem(item);
-                    });
-                }
-                return menu;
-            }
-            update() {
-                const menu = this.createMenu();
-                if (this.menu) {
-                    this.removeChild(this.menu);
-                }
-                this.menu = menu;
-                this.addChild(this.menu);
-                if (this.items && this.items.length > 0) {
-                    this.show();
-                } else if (currentVideoTracks && currentVideoTracks.audio && currentVideoTracks.audio.length > 0) {
-                     this.show();
-                } else {
-                    this.hide();
-                }
-            }
-            buildCSSClass() { return "vjs-icon-audio vjs-control vjs-button vjs-menu-button"; }
-        }
-        videojs.registerComponent('AudioTrackMenuButton', AudioTrackMenuButton);
-
-        class SubtitleTrackMenuButton extends vjsMenuBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Subs');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SUBS</span>';
-            }
-            createMenu() {
-                const menu = new vjsMenu(this.player_);
-                const offItem = new vjsMenuItem(this.player_, { label: "Off", selectable: true, selected: currentSubsIdx === null });
-                offItem.on('click', () => {
-                    currentSubsIdx = null;
-                    startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, null);
-                });
-                menu.addItem(offItem);
-                if (currentVideoTracks && currentVideoTracks.subtitles) {
-                    currentVideoTracks.subtitles.forEach(t => {
-                        const item = new vjsMenuItem(this.player_, {
-                            label: t.label, selectable: true,
-                            selected: String(t.id) === String(currentSubsIdx)
-                        });
-                        item.on('click', () => {
-                            currentSubsIdx = t.id;
-                            startEmbeddedVideo(currentVideoItem, currentVideoPath, null, null, null, currentAudioIdx, currentSubsIdx);
-                        });
-                        menu.addItem(item);
-                    });
-                }
-                return menu;
-            }
-            update() {
-                const menu = this.createMenu();
-                if (this.menu) {
-                    this.removeChild(this.menu);
-                }
-                this.menu = menu;
-                this.addChild(this.menu);
-                if (currentVideoTracks && currentVideoTracks.subtitles && currentVideoTracks.subtitles.length > 0) {
-                    this.show();
-                } else {
-                    this.hide();
-                }
-            }
-            buildCSSClass() { return "vjs-icon-subtitles vjs-control vjs-button vjs-menu-button"; }
-        }
-        videojs.registerComponent('SubtitleTrackMenuButton', SubtitleTrackMenuButton);
-
         let currentAspectRatio = '16:9';
-        class AspectRatioMenuButton extends vjsMenuBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Ratio');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">RATIO</span>';
-            }
-            createMenu() {
-                const menu = new vjsMenu(this.player_);
-                const ratios = ['Auto', '16:9', '21:9', '4:3', '1:1'];
-                ratios.forEach(r => {
-                    const item = new vjsMenuItem(this.player_, { label: r, selectable: true, selected: r === currentAspectRatio });
-                    item.on('click', () => {
-                        currentAspectRatio = r;
-                        if(r === 'Auto') { this.player_.fluid(true); this.player_.aspectRatio(''); }
-                        else { this.player_.fluid(false); this.player_.aspectRatio(r); }
-                        showToast(`Aspect Ratio: ${r}`, 1000);
-                    });
-                    menu.addItem(item);
-                });
-                return menu;
-            }
-            buildCSSClass() { return "vjs-icon-spinner vjs-control vjs-button vjs-menu-button"; }
-        }
-        videojs.registerComponent('AspectRatioMenuButton', AspectRatioMenuButton);
-
-        class CinemaModeButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Cinema');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">CINEMA</span>';
-            }
-            handleClick() { 
-                const container = document.getElementById('video-player-container-root-wrapper');
-                if(container) {
-                    container.classList.toggle('cinema-expanded');
-                    showToast(container.classList.contains('cinema-expanded') ? "Cinema Mode: ON" : "Cinema Mode: OFF", 1000);
-                }
-            }
-            buildCSSClass() { return "vjs-icon-layout vjs-control vjs-button cinema-btn"; }
-        }
-        videojs.registerComponent('CinemaModeButton', CinemaModeButton);
-
-        class VisualFXMenuButton extends vjsMenuBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Visual FX');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">FX</span>';
-            }
-            createMenu() {
-                const menu = new vjsMenu(this.player_);
-                const fx = [
-                    { l: 'Natural', f: 'none' }, { l: 'Vibrant', f: 'saturate(1.4) contrast(1.1)' },
-                    { l: 'Cinematic', f: 'contrast(1.2) sepia(0.1)' }, { l: 'B&W', f: 'grayscale(1)' },
-                    { l: 'Warmer', f: 'sepia(0.3) saturate(1.2)' }
-                ];
-                fx.forEach(f => {
-                    const item = new vjsMenuItem(this.player_, { label: f.l, selectable: true });
-                    item.on('click', () => {
-                        const v = document.getElementById('native-html5-video-resource-node');
-                        if(v) v.style.filter = f.f;
-                        showToast(`FX: ${f.l}`, 800);
-                    });
-                    menu.addItem(item);
-                });
-                return menu;
-            }
-            buildCSSClass() { return "vjs-icon-circle vjs-control vjs-button vjs-menu-button"; }
-        }
-        videojs.registerComponent('VisualFXMenuButton', VisualFXMenuButton);
-
-        class StopButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Stop');
-                this.addClass('vjs-visible-text');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STOP</span>';
-            }
-            handleClick() { stopVideo(); }
-            buildCSSClass() { return "vjs-icon-cancel vjs-control vjs-button stop-btn"; }
-        }
-        videojs.registerComponent('StopButton', StopButton);
-
-        class VlcButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('VLC');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">VLC</span>';
-            }
-            handleClick() { if(typeof switchToVLC === 'function') switchToVLC(); }
-            buildCSSClass() { return "vjs-icon-share vjs-control vjs-button vlc-btn"; }
-        }
-        videojs.registerComponent('VlcButton', VlcButton);
-
-        class MpvButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('MPV');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">MPV</span>';
-            }
-            handleClick() { if(currentVideoPath) if(typeof startMPV === 'function') startMPV(currentVideoPath); }
-            buildCSSClass() { return "vjs-icon-circle-inner-circle vjs-control vjs-button mpv-btn"; }
-        }
-        videojs.registerComponent('MpvButton', MpvButton);
-
-        class SnapshotButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Snapshot');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SNAP</span>';
-            }
-            handleClick() { 
-                const v = document.getElementById('native-html5-video-resource-node');
-                if(!v) return;
-                const canvas = document.createElement('canvas');
-                canvas.width = v.videoWidth; canvas.height = v.videoHeight;
-                canvas.getContext('2d').drawImage(v, 0, 0);
-                const data = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = `snapshot_${new Date().getTime()}.png`;
-                link.href = data; link.click();
-            }
-            buildCSSClass() { return "vjs-icon-photo vjs-control vjs-button snapshot-btn"; }
-        }
-        videojs.registerComponent('SnapshotButton', SnapshotButton);
-
-        class SettingsButton extends vjsBtn {
-            constructor(player, options) {
-                super(player, options);
-                this.controlText('Settings');
-                this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">SETTINGS</span>';
-            }
-            handleClick() {
-                const panel = document.getElementById('vjs-settings-panel');
-                if(panel) {
-                    panel.classList.toggle('active');
-                    if (panel.classList.contains('active')) {
-                        updateSettingsPanel();
-                    }
-                }
-            }
-            buildCSSClass() { return "vjs-icon-cog vjs-control vjs-button settings-btn"; }
-        }
-        videojs.registerComponent('SettingsButton', SettingsButton);
 
         function updateSettingsPanel() {
             const panel = document.getElementById('vjs-settings-panel');
@@ -11422,6 +11437,11 @@
         };
 
         async function startEmbeddedVideo(item, path, startTime = 0, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
+            if (typeof videojs === 'undefined' || !vjsComponentsRegistered) {
+                console.info("[UniversalPlayer] Warten auf Video.js Initialisierung...");
+                setTimeout(() => startEmbeddedVideo(item, path, startTime, type, durationSec, audioIdx, subsIdx), 250);
+                return;
+            }
             // Reset state
             const filePath = item ? item.path : path;
             window._vlc_control_port = null;

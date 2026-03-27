@@ -1,8 +1,10 @@
 import subprocess
 import logging
-import bottle
-import time
-from .utils import get_best_ffmpeg_encoder, get_base_ffmpeg_args, get_video_filter
+import bottle # type: ignore
+import os
+import shutil
+from pathlib import Path
+from .utils import get_best_ffmpeg_encoder, get_base_ffmpeg_args, get_video_filter # type: ignore
 from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
 
 # Specialized logger
@@ -86,6 +88,9 @@ def stream_mse(file_path, audio_idx=0, subs_idx=None, start_time=0):
     
     bottle.response.content_type = 'video/mp4'
     def stream():
+        if not process.stdout:
+            log.error("[MSE-Stream] process.stdout is None")
+            return
         try:
             while True:
                 data = process.stdout.read(1024 * 64)
