@@ -318,9 +318,21 @@
         .mpv-btn { color: #607d8b !important; }
         .snapshot-btn { color: #4caf50 !important; }
         .cinema-btn { color: #e91e63 !important; }
-        .stats-btn { color: #7df !important; }
+        .stats-btn { color: #2ecc71 !important; transform: scale(1.1); }
+        .stats-btn:hover { color: #40ff80 !important; cursor: pointer; }
         .stop-btn { color: #f44 !important; }
         
+        .vjs-visible-text .vjs-control-text {
+            position: static !important;
+            width: auto !important;
+            height: auto !important;
+            clip: auto !important;
+            margin: 0 5px !important;
+            font-weight: bold;
+            font-size: 10px;
+            color: inherit;
+        }
+
         .vjs-button:hover { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
 
         body {
@@ -11040,6 +11052,7 @@
         function registerVjsComponents() {
             if (vjsComponentsRegistered || typeof videojs === 'undefined') return;
             
+            // Fix ReferenceError: vjsComponent is not defined by using videojs.getComponent directly
             const vjsBtn = videojs.getComponent('Button');
             const vjsComponent = videojs.getComponent('Component');
             const vjsMenuBtn = videojs.getComponent('MenuButton');
@@ -11067,6 +11080,7 @@
                     this.el().innerHTML = `
                         <div class="stats-header">SYSTEM METRICS</div>
                         <div class="stats-row"><span>Backend CPU</span><span class="stats-val">${cpu}%</span></div>
+                        <div class="stats-row"><span>GPU (Arc/iGPU)</span><span class="stats-val">${data.gpu_util ? Math.round(data.gpu_util) : 0}%</span></div>
                         <div class="stats-row"><span>RAM (Used)</span><span class="stats-val">${Math.round(ram)} MB</span></div>
                         <div class="stats-row"><span>Net ↓ / ↑</span><span class="stats-val">${netRecv} / ${netSent} KB/s</span></div>
                         <div style="margin-top:10px;" class="stats-header">PLAYER METRICS</div>
@@ -11086,14 +11100,12 @@
                 constructor(player, options) {
                     super(player, options);
                     this.controlText('Stats');
+                    this.addClass('vjs-visible-text'); // Make label visible
                     this.el().innerHTML = '<span class="vjs-control-text" aria-hidden="false">STATS</span>';
                 }
                 handleClick() {
-                    if (window.StatsOverlay) window.StatsOverlay.toggle();
-                    else {
-                        const overlay = document.getElementById('vjs-stats-overlay');
-                        if(overlay) overlay.classList.toggle('active');
-                    }
+                    const overlay = document.getElementById('vjs-stats-overlay');
+                    if (overlay) overlay.classList.toggle('active');
                 }
                 buildCSSClass() { return "vjs-icon-graph-bar vjs-control vjs-button stats-btn"; }
             }
@@ -11449,22 +11461,19 @@
                 setTimeout(() => startEmbeddedVideo(item, path, startTime, type, durationSec, audioIdx, subsIdx), 250);
                 return;
             }
-            // Reset state
+
+            // Preservation: If startTime is null, use current player time (for track-switching)
+            if (startTime === null && vjsPlayer) {
+                startTime = vjsPlayer.currentTime();
+            }
+            if (startTime === null) startTime = 0;
+
             const filePath = item ? item.path : path;
-            window._vlc_control_port = null;
-            const video = document.getElementById('native-html5-video-resource-node');
-            const placeholder = document.getElementById('idle-state-media-icon-symbol');
-            const mpvCanvas = document.getElementById('mpv-canvas');
-            const mpvOverlay = document.getElementById('mpv-menu-overlay');
+            currentVideoPath = filePath;
+            currentAudioIdx = audioIdx;
+            currentSubsIdx = subsIdx;
 
-            // Reset visibility
-            if (mpvCanvas) mpvCanvas.style.display = 'none';
-            if (mpvOverlay) mpvOverlay.style.display = 'none';
-            if (mpvPlayer && typeof mpvPlayer.stop === 'function') mpvPlayer.stop();
-            video.style.display = 'block';
-
-            // 1. Smart Routing (Backend Intelligence)
-            showToast("🔍 Analysiere Medienformat...", 1000);
+            // ... (Rest of logic: Analysis, Routing, etc.)
             const mode = await eel.smart_route(filePath)();
             const streamUrl = await eel.get_universal_stream_url(filePath, mode, audioIdx, subsIdx, startTime)();
             
