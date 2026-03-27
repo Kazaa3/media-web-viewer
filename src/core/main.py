@@ -140,32 +140,54 @@ transcode_mgr = None
 log = get_logger("main")
 log_checkpoint("Base imports complete")
 
-
 def ensure_singleton():
-    """Find and kill existing main.py processes and take a lock."""
+    """Find and kill existing main.py processes and take a lock. Exits if failed."""
     current_pid = os.getpid()
+    # 1. Kill stale processes with similar cmdline
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
             cmd = proc.info.get('cmdline')
             if cmd and any('main.py' in part for part in cmd) and proc.info['pid'] != current_pid:
-                logging.info(f"[System] Killing existing instance (PID: {proc.info['pid']})")
-                proc.kill()
+                # Extra check: make sure it's actually our script
+                if any(str(PROJECT_ROOT) in part for part in cmd):
+                    logging.info(f"[System] Killing existing instance (PID: {proc.info['pid']})")
+                    proc.kill()
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
     
-    # Take lock
+    # 2. Take lock
     lock_file = Path(logger.APP_DATA_DIR) / "mwv.lock"
     lock_file.parent.mkdir(parents=True, exist_ok=True)
     try:
-        f = open(lock_file, "w")
+        f = open(lock_file, "a+") # Open for append/read
         import fcntl
-        fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        f.write(str(current_pid))
+        try:
+            fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            # Another process holds the lock
+            logging.error("❌ CRITICAL: Another instance of MWV is already running and could not be stopped.")
+            logging.error("   Please close the existing window or kill the process manually.")
+            sys.exit(1)
+            
+        f.seek(0)
+        f.truncate()
+        f.write(f"{current_pid}\n")
         f.flush()
         return f
     except Exception as e:
-        log.error(f"Error taking lock: {e}")
-        return None
+        logging.error(f"Error taking singleton lock: {e}")
+        sys.exit(1)
+
+# --- Singleton & Session Safety ---
+# We take the lock as early as possible after logger init to prevent multiple backends.
+_SINGLETON_LOCK = ensure_singleton()
+SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+log.info(f"[System] Session Initialized: {SESSION_ID}")
+
+@eel.expose
+def get_session_id():
+    """Returns the current backend session ID."""
+    return SESSION_ID
 
 def get_best_ffmpeg_encoder():
     """Returns the best available H.264 encoder for FFmpeg (HW or SW)."""
@@ -235,7 +257,7 @@ def get_playback_stats():
         }
 
 # Perform singleton check immediately
-_SINGLETON_LOCK = ensure_singleton()
+# _SINGLETON_LOCK already initialized above
 
 def _detect_python_environment():
     """
@@ -6874,10 +6896,10 @@ if __name__ == "__main__":
             # 1. Explicitly load config first
             load_parser_config()
             
-            # 2. Singleton check (Slow)
-            global _SINGLETON_LOCK
-            if not _SINGLETON_LOCK:
-                _SINGLETON_LOCK = ensure_singleton()
+            # 1. Explicitly load config first
+            load_parser_config()
+            
+            # (Singleton check already handled at early startup)
             
             # 3. Env Validation
             env_handler.validate_safe_startup()
