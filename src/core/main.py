@@ -95,8 +95,9 @@ import re
 import shutil
 import bottle
 import psutil
+import base64
 import requests
-from typing import cast, Any
+from typing import Dict, Any, List, Optional, cast
 import ast
 
 # Perfect Video Player Modular Backends
@@ -2689,7 +2690,7 @@ from web import app_bottle  # noqa: F401  # Register bottle routes: /media and /
 
 
 @eel.expose
-def get_library():
+def get_library() -> Dict[str, Any]:
     """
     @brief Returns all media items from the database without re-scanning.
     @details Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen.
@@ -2768,7 +2769,7 @@ def get_library():
 
 
 @eel.expose
-def get_library_filtered(search="", genre="all", year="all", sort_by="name"):
+def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name") -> Dict[str, Any]:
     """
     @brief Advanced filtering for the media library.
     """
