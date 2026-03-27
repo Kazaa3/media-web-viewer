@@ -4134,14 +4134,14 @@
         <div id="ctx-video-section">
             <div class="context-menu-header">🎬 Video Wiedergabe</div>
             <div class="context-menu-item" onclick="handleContextMenuAction('auto')" title="Premium UI mit Video.js">💎 Video.js (MSE/HLS Standard)</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')" title="Native Browser-Wiedergabe">🚀 Chromium Native Wiedergabe</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('chrome_direct')" title="Video.js Native Wiedergabe">🚀 Video.js (Native)</div>
             <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')" title="FFmpeg fMP4 zu MSE">✨ FFmpeg fMP4 zu MSE</div>
             <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" title="FFmpeg fMP4 zu HLS Remuxing">📦 FFmpeg fMP4 zu HLS (Remuxed)</div>
         </div>
 
         <div id="ctx-audio-section" style="display: none;">
             <div class="context-menu-header">🎵 Audio Optionen</div>
-            <div class="context-menu-item" onclick="handleContextMenuAction('audio_direct')">🔊 Direkte Dateiübertragung</div>
+            <div class="context-menu-item" onclick="handleContextMenuAction('audio_direct')">🔊 Direct Play</div>
             <div id="ctx-resume-item" class="context-menu-item" style="display: none;" onclick="handleContextMenuAction('resume')">🕒 Fortsetzen bei <span id="ctx-resume-time">0:00</span></div>
         </div>
 
