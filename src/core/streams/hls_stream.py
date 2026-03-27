@@ -9,13 +9,16 @@ log = logging.getLogger("streams.hls_stream")
 # Global dict to track active HLS sessions
 HLS_SESSIONS = {}
 
-def start_hls_fmp4(file_path, output_dir, session_id):
+def start_hls_fmp4(file_path, output_dir, session_id, audio_idx=0, subs_idx=None, start_time=0):
     """
     @brief Starts an FFmpeg process for universal HLS (fMP4) streaming.
     @details High compatibility across all Apple and modern Android/Web clients.
     @param file_path Source path.
     @param output_dir Directory where the playlist and segments are stored.
     @param session_id Unique identifier.
+    @param audio_idx Select specific audio track index.
+    @param subs_idx Select specific subtitle track index (None if off).
+    @param start_time Seek to position in seconds.
     @return subprocess.Popen instance.
     """
     if not os.path.exists(output_dir):
@@ -24,18 +27,34 @@ def start_hls_fmp4(file_path, output_dir, session_id):
     encoder = get_best_hw_encoder()
     playlist_path = os.path.join(output_dir, "master.m3u8")
 
-    log.info(f"[HLS] Starting {session_id} using {encoder} -> {playlist_path}")
+    log.info(f"[HLS] Starting {session_id} using {encoder} -> {playlist_path} (Audio:{audio_idx}, Subs:{subs_idx}, SS:{start_time})")
 
     # FFmpeg command for HLS fMP4
-    # -hls_segment_type fmp4 for modern HLS
-    # -hls_flags delete_segments to save disk space
+    # -ss before -i for fast input seeking
     cmd = [
         "ffmpeg",
         "-hide_banner", "-loglevel", "error",
+        "-ss", str(float(start_time)),
         "-i", str(file_path),
+        "-map", "0:v:0", # Map first video stream
+        "-map", f"0:{audio_idx}", # Map selected audio stream (using global index from ffprobe)
+    ]
+    
+    if subs_idx is not None and str(subs_idx).lower() != 'null':
+        cmd += ["-map", f"0:{subs_idx}"]
+
+    cmd += [
         "-c:v", encoder if encoder != "libx264" else "libx264",
         "-preset", "veryfast",
         "-c:a", "aac", "-b:a", "128k",
+    ]
+
+    # Handle Subtitles (experimental, often needs conversion to webvtt for HLS, 
+    # but for now we try mapping text subs into the fMP4 container if supported)
+    if subs_idx is not None:
+         cmd += ["-c:s", "mov_text"] # fMP4 typically uses mov_text or webvtt
+
+    cmd += [
         "-f", "hls",
         "-hls_time", "6", # 6 second segments
         "-hls_list_size", "10", # Keep 10 segments in playlist

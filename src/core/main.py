@@ -192,12 +192,15 @@ def get_universal_stream_url(file_path, mode=None, audio_idx=0, subs_idx=None, s
     if target_mode == 'direct_play':
         return f"/stream/via/direct/{file_path}"
     elif target_mode == 'mse':
-        return f"/stream/via/transcode/{file_path}?audio_idx={audio_idx}&ss={start_time}" + (f"&subs_idx={subs_idx}" if subs_idx else "")
+        url = f"/stream/via/transcode/{file_path}?audio_idx={audio_idx}&ss={start_time}"
+        if subs_idx is not None and str(subs_idx).lower() != 'null':
+            url += f"&subs_idx={subs_idx}"
+        return url
     elif target_mode == 'hls_fmp4':
         # Setup HLS session
         session_id = f"hls_{int(time.time())}"
         output_dir = f"web/streams/hls/{session_id}"
-        hls_stream.start_hls_fmp4(file_path, output_dir, session_id)
+        hls_stream.start_hls_fmp4(file_path, output_dir, session_id, audio_idx=audio_idx, subs_idx=subs_idx, start_time=start_time)
         return f"/streams/hls/{session_id}/master.m3u8"
     elif target_mode == 'vlc_bridge':
         vlc_bridge.start_vlc_bridge(file_path)

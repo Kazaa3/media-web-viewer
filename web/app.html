@@ -11530,6 +11530,38 @@
             if(overlay) overlay.classList.toggle('active');
         };
 
+        function selectAudioTrack(idx) {
+            console.log("[Video.js] Switching to Audio Track:", idx);
+            if (vjsPlayer) {
+                const currentTime = vjsPlayer.currentTime();
+                startEmbeddedVideo(null, currentVideoPath, currentTime, null, null, idx, currentSubsIdx);
+            }
+        }
+
+        function selectSubsTrack(idx) {
+            console.log("[Video.js] Switching to Subtitle Track:", idx);
+            if (vjsPlayer) {
+                const currentTime = vjsPlayer.currentTime();
+                startEmbeddedVideo(null, currentVideoPath, currentTime, null, null, currentAudioIdx, idx);
+            }
+        }
+
+        function setPlaybackSpeed(rate) {
+            if (vjsPlayer) {
+                vjsPlayer.playbackRate(rate);
+                updateSettingsPanel();
+            }
+        }
+
+        function setVideoFilter(filter, label) {
+            const v = document.querySelector('#native-html5-video-resource-node video');
+            if (v) {
+                v.style.filter = filter;
+                console.log("[Video.js] Visual Filter applied:", label);
+                updateSettingsPanel();
+            }
+        }
+
         async function startEmbeddedVideo(item, path, startTime = 0, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
             if (typeof videojs === 'undefined' || !vjsComponentsRegistered) {
                 console.info("[UniversalPlayer] Warten auf Video.js Initialisierung...");
@@ -11549,10 +11581,29 @@
             currentSubsIdx = subsIdx;
 
             // ... (Rest of logic: Analysis, Routing, etc.)
-            const mode = await eel.smart_route(filePath)();
+            const routing = await eel.smart_route(filePath)();
+            const mode = routing.mode;
+            const info = routing.info;
             const streamUrl = await eel.get_universal_stream_url(filePath, mode, audioIdx, subsIdx, startTime)();
             
             console.log(`[UniversalPlayer] Mode: ${mode}, URL: ${streamUrl}`);
+            console.log(`[UniversalPlayer] Metadata:`, info);
+
+            // Populate Track Info for Settings Panel (Stage 6)
+            currentVideoTracks = {
+                audio: (info.audio_tracks || []).map(t => ({
+                    id: t.index,
+                    label: `${t.language || 'Unknown'} (${t.codec || '??'}) ${t.title || ''}`,
+                    codec: t.codec,
+                    lang: t.language
+                })),
+                subtitles: (info.subtitle_tracks || []).map(t => ({
+                    id: t.index,
+                    label: `${t.language || 'Unknown'} (${t.codec || '??'}) ${t.title || ''}`,
+                    codec: t.codec,
+                    lang: t.language
+                }))
+            };
 
             // Metadata Transparency for "Stats for Nerds"
             currentPlaybackProtocol = mode === 'direct_play' ? "Direct Play (Native)" : 
