@@ -1,8 +1,7 @@
-import logging
-from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
-
 # Specialized logger
-log = logging.getLogger("mode_router")
+from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
+from src.core.logger import get_logger
+log = get_logger("mode_router")
 
 def smart_route(file_path):
     """
@@ -17,13 +16,17 @@ def smart_route(file_path):
         return {"mode": "direct_play", "info": info}
 
     # Final Decision
+    codec = info.get('codec', 'unknown')
+    container = info.get('container', 'unknown')
+    resolution = info.get('resolution', 'SD')
+    
     mode = 'hls_fmp4'
-    if info['codec'] == 'h264' and info['container'] in ['mp4', 'mov', 'm4a', 'quicktime']:
-        if info['resolution'] != "4K":
+    if codec == 'h264' and container in ['mp4', 'mov', 'm4a', 'quicktime']:
+        if resolution != "4K":
             mode = 'direct_play'
-    elif info['is_iso'] or info['has_menus'] or info['atmos']:
+    elif info.get('is_iso') or info.get('has_menus') or info.get('atmos'):
         mode = 'vlc_bridge'
-    elif info['resolution'] in ["SD", "720p", "1080p"]:
+    elif resolution in ["SD", "720p", "1080p"]:
         mode = 'mse'
 
     return {

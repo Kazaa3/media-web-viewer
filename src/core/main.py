@@ -124,6 +124,7 @@ from src.parsers.format_utils import (  # type: ignore
 import env_handler  # type: ignore
 import src.core.logger as logger  # type: ignore
 from src.core.logger import get_logger  # type: ignore
+log = get_logger("main")
 from src.parsers import tag_writer  # type: ignore
 from src.core import hardware_detector  # type: ignore
 from src.core import transcoder         # type: ignore
@@ -137,8 +138,7 @@ eel.expose(smart_route)
 # transcode_mgr deferred
 transcode_mgr = None
 
-# Central logger for main
-log = get_logger("main")
+# logger already initialized above
 log_checkpoint("Base imports complete")
 
 def ensure_singleton():
@@ -151,14 +151,14 @@ def ensure_singleton():
             if cmd and any('main.py' in part for part in cmd) and proc.info['pid'] != current_pid:
                 # Extra check: make sure it's actually our script
                 if any(str(PROJECT_ROOT) in part for part in cmd):
-                    logging.info(f"[System] Killing existing instance (PID: {proc.info['pid']})")
+                    log.info(f"[System] Killing existing instance (PID: {proc.info['pid']})")
                     proc.kill()
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
     
     # 2. Take lock
     if os.environ.get("MWV_ALLOW_MULTIPLE_SESSIONS"):
-        logging.info("[System] Multi-session mode enabled. Bypassing singleton lock.")
+        log.info("[System] Multi-session mode enabled. Bypassing singleton lock.")
         return open(os.devnull, "w") # Dummy lock handle
         
     lock_file = Path(logger.APP_DATA_DIR) / "mwv.lock"
@@ -170,8 +170,8 @@ def ensure_singleton():
             fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             # Another process holds the lock
-            logging.error("❌ CRITICAL: Another instance of MWV is already running and could not be stopped.")
-            logging.error("   Please close the existing window or kill the process manually.")
+            log.error("❌ CRITICAL: Another instance of MWV is already running and could not be stopped.")
+            log.error("   Please close the existing window or kill the process manually.")
             sys.exit(1)
             
         f.seek(0)
@@ -180,7 +180,7 @@ def ensure_singleton():
         f.flush()
         return f
     except Exception as e:
-        logging.error(f"Error taking singleton lock: {e}")
+        log.error(f"Error taking singleton lock: {e}")
         sys.exit(1)
 
 # --- Singleton & Session Safety ---
@@ -434,7 +434,7 @@ def initialize_debug_flags(args=None):
         for key in DEBUG_FLAGS:
             DEBUG_FLAGS[key] = True
         logger.set_debug_flags(DEBUG_FLAGS)
-        logging.info(
+        log.info(
             "[System] Full Debug-Mode activated (--debug). All flags set to True.")
     else:
         # Use flags as defined in PARSER_CONFIG
@@ -471,12 +471,12 @@ BROWSER_PID = None  # Global to track browser process
 main_pid = os.getpid()
 testbed_pid = find_venv_pid('.venv_testbed')
 selenium_pid = find_venv_pid('.venv_selenium')
-logging.info(f"[System] Main PID: {main_pid}")
-logging.info(f"[System] Testbed PID: {testbed_pid if testbed_pid else 'nicht aktiv'}")
-logging.info(f"[System] Selenium PID: {selenium_pid if selenium_pid else 'nicht aktiv'}")
+log.info(f"[System] Main PID: {main_pid}")
+log.info(f"[System] Testbed PID: {testbed_pid if testbed_pid else 'nicht aktiv'}")
+log.info(f"[System] Selenium PID: {selenium_pid if selenium_pid else 'nicht aktiv'}")
 # Logge Browser-PID, falls schon gesetzt (z.B. bei Headless-Start)
 if BROWSER_PID:
-    logging.info(f"[System] Browser PID: {BROWSER_PID}")
+    log.info(f"[System] Browser PID: {BROWSER_PID}")
 
 try:
     from src.core.models import MediaItem  # type: ignore
@@ -657,7 +657,7 @@ def system_stats_pusher():
                 eel.update_system_stats(stats)()
                 
         except Exception as e:
-            logging.error(f"[Stats] Pusher error: {e}")
+            log.error(f"[Stats] Pusher error: {e}")
             
         eel.sleep(2.0)
 
@@ -1038,7 +1038,7 @@ def list_sql_files():
         # No, request specifically said SQL files.
         return sorted([f.name for f in sql_files])
     except Exception as e:
-        logging.error(f"Failed to list SQL files: {e}")
+        log.error(f"Failed to list SQL files: {e}")
         return []
 
 
@@ -1056,7 +1056,7 @@ def get_sql_content(filename):
             return p.read_text(encoding='utf-8')
         return f"-- Error: File '{filename}' not found or access denied."
     except Exception as e:
-        logging.error(f"Failed to read SQL content for {filename}: {e}")
+        log.error(f"Failed to read SQL content for {filename}: {e}")
         return f"-- Error: {str(e)}"
 
 
@@ -1074,7 +1074,7 @@ def get_library_folders():
             folders.add(str(p.parent))
         return sorted(list(folders))
     except Exception as e:
-        logging.error(f"Failed to get library folders: {e}")
+        log.error(f"Failed to get library folders: {e}")
         return []
 
 
@@ -1234,7 +1234,7 @@ def pip_install_packages(packages):
     try:
         # Using sys.executable to ensure we install in the current environment
         cmd = [sys.executable, "-m", "pip", "install", *packages]
-        logging.info(f"Running pip install: {' '.join(cmd)}")
+        log.info(f"Running pip install: {' '.join(cmd)}")
 
         result = subprocess.run(
             cmd,
@@ -1244,7 +1244,7 @@ def pip_install_packages(packages):
         )
 
         if result.returncode == 0:
-            logging.info(
+            log.info(
                 f"Successfully installed packages: {', '.join(packages)}")
             # After installation, we should probably clear the environment info
             # cache
@@ -1262,7 +1262,7 @@ def pip_install_packages(packages):
                     still_missing.append(p)
 
             if still_missing:
-                logging.error(
+                log.error(
                     f"[PIP] Installation reported success but packages still missing: {still_missing}")
                 return {
                     "status": "error",
@@ -1276,7 +1276,7 @@ def pip_install_packages(packages):
                 "installed": packages}
         else:
             error_msg = result.stderr or result.stdout or "Unknown pip error"
-            logging.error(f"Failed to install packages: {error_msg}")
+            log.error(f"Failed to install packages: {error_msg}")
             return {
                 "status": "error",
                 "error": error_msg,
@@ -1284,10 +1284,10 @@ def pip_install_packages(packages):
             }
 
     except subprocess.TimeoutExpired:
-        logging.error("Pip install timed out")
+        log.error("Pip install timed out")
         return {"status": "error", "error": "Installation timed out"}
     except Exception as e:
-        logging.error(f"Error during pip install: {str(e)}")
+        log.error(f"Error during pip install: {str(e)}")
         return {"status": "error", "error": str(e)}
 
 
@@ -1395,7 +1395,7 @@ def _get_requirements_status():
                 if package_name:
                     requirement_names.add(package_name)
         except Exception as e:
-            logging.error(f"Error parsing {file_path}: {e}")
+            log.error(f"Error parsing {file_path}: {e}")
 
     parse_requirements(requirements_file)
     
@@ -1643,7 +1643,7 @@ def get_environment_info(force_refresh=False):
                             "name", "").lower())
                     source = "pip_list_json"
                 except (json.JSONDecodeError, TypeError, KeyError):
-                    logging.warning(
+                    log.warning(
                         "Failed to parse pip list JSON - falling back")
                     packages = _get_packages_fallback()
                     source = "importlib_or_pkg_resources"
@@ -1671,7 +1671,7 @@ def get_environment_info(force_refresh=False):
                     packages = _get_packages_fallback()
                     source = "importlib_or_pkg_resources"
         except (subprocess.TimeoutExpired, Exception) as e:
-            logging.warning(
+            log.warning(
                 f"pip list failed ({
                     type(e).__name__}) - using importlib fallback")
             packages = _get_packages_fallback()
@@ -1767,7 +1767,7 @@ def get_environment_info(force_refresh=False):
                         "role": "FALLBACK"
                     })
         except Exception as e:
-            logging.debug(f"Error finding local venvs: {e}")
+            log.debug(f"Error finding local venvs: {e}")
 
         return venvs
 
@@ -2117,7 +2117,7 @@ def reset_backend():
     """
     Exposed function to reset backend connections and clear ephemeral state.
     """
-    logging.info("[System] Backend Reset triggered by UI.")
+    log.info("[System] Backend Reset triggered by UI.")
     try:
         # Clear any caches or ephemeral state if needed
         global _ENV_INFO_CACHE
@@ -2128,7 +2128,7 @@ def reset_backend():
         
         return {"status": "ok", "message": "Backend successfully reset."}
     except Exception as e:
-        logging.error(f"[System] Backend Reset failed: {e}")
+        log.error(f"[System] Backend Reset failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -2139,7 +2139,7 @@ def set_log_level(level_name: str):
     @param level_name One of DEBUG, INFO, WARNING, ERROR, CRITICAL.
     """
     # Log the action BEFORE changing the level so it's always captured at current level
-    logging.info(f"[System] Manually setting Log-Level to {level_name.upper()}")
+    log.info(f"[System] Manually setting Log-Level to {level_name.upper()}")
     
     level = getattr(logging, level_name.upper(), logging.INFO)
     logging.getLogger().setLevel(level)
@@ -2206,16 +2206,16 @@ def get_preferred_browser():
     for browser_cmd, browser_name in browser_candidates:
         browser_path = shutil.which(browser_cmd)
         if browser_path:
-            logging.info(f"[Browser] Selected: {
+            log.info(f"[Browser] Selected: {
                          browser_name} ({browser_path})")
             try:
                 return webbrowser.get(f'{browser_path} %s')
             except Exception as e:
-                logging.warning(
+                log.warning(
                     f"[Browser] Failed to register {browser_name}: {e}")
                 continue
 
-    logging.warning(
+    log.warning(
         "[Browser] Using system default browser (Vivaldi or other)")
 def wait_for_port(port: int, host: str = 'localhost', timeout: float = 10.0) -> bool:
     """Wait for a port to become reachable before proceeding (optimized for speed)."""
@@ -2235,7 +2235,7 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 10.0) -> 
 def open_session_url(url: str) -> bool:
     """Open a session URL in app-mode window when possible, else fallback browser."""
     if os.environ.get("MWV_NO_BROWSER", "0") == "1":
-        logging.info("[Session] MWV_NO_BROWSER is set. Skipping browser launch.")
+        log.info("[Session] MWV_NO_BROWSER is set. Skipping browser launch.")
         return True
     import shutil
 
@@ -2264,14 +2264,14 @@ def open_session_url(url: str) -> bool:
     for browser_cmd in browser_candidates:
         browser_path = shutil.which(browser_cmd)
         if browser_path:
-            logging.info(f"[Browser] Launching {browser_cmd} in app mode (URL: {url})")
+            log.info(f"[Browser] Launching {browser_cmd} in app mode (URL: {url})")
             
             # Arguments for a reliable, clean app window
             import urllib.parse
             parsed_url = urllib.parse.urlparse(url)
             if parsed_url.port:
                 if not wait_for_port(parsed_url.port, timeout=3.0):
-                    logging.warning(f"[Browser] Port {parsed_url.port} not reachable after timeout. Launching anyway.")
+                    log.warning(f"[Browser] Port {parsed_url.port} not reachable after timeout. Launching anyway.")
 
             custom_flags = PARSER_CONFIG.get("browser_flags", [])
             args = [browser_path, f'--app={url}'] + custom_flags
@@ -2282,7 +2282,7 @@ def open_session_url(url: str) -> bool:
             for k, v in user_envs.items():
                 env[str(k)] = str(v)
             
-            logging.info(f"[Browser] Executing: {' '.join(args)}")
+            log.info(f"[Browser] Executing: {' '.join(args)}")
             
             try:
                 # Use subprocess.Popen to launch asynchronously
@@ -2294,20 +2294,20 @@ def open_session_url(url: str) -> bool:
                 )
                 global BROWSER_PID
                 BROWSER_PID = process.pid
-                logging.info(f"[Browser] Successfully started: {browser_cmd} (PID: {BROWSER_PID})")
+                log.info(f"[Browser] Successfully started: {browser_cmd} (PID: {BROWSER_PID})")
                 return True
             except Exception as e:
-                logging.warning(
+                log.warning(
                     f"[Browser] Failed to launch {browser_cmd}: {e}")
 
-    logging.warning(
+    log.warning(
         "[Browser] Chromium not found, falling back to preferred browser")
     try:
         browser = get_preferred_browser()
         browser.open(url)
         return True
     except Exception as e:
-        logging.warning(f"[Browser] Fallback browser launch failed: {e}")
+        log.warning(f"[Browser] Fallback browser launch failed: {e}")
         return False
 
 
@@ -2339,7 +2339,7 @@ def run_connectionless_browser_mode() -> dict:
     app_url = app_file.as_uri()
 
     if os.environ.get("MWV_DISABLE_BROWSER_OPEN") == "1":
-        logging.info(
+        log.info(
             "[Mode-N] Browser launch suppressed by MWV_DISABLE_BROWSER_OPEN=1")
     else:
         browser = get_preferred_browser()
@@ -2475,7 +2475,7 @@ def _ensure_project_venv_active() -> None:
     if not (venv_python.is_file() and os.access(venv_python, os.X_OK)):
         return
 
-    logging.info(f"[Startup] Re-exec into project-local environment: {venv_python}")
+    log.info(f"[Startup] Re-exec into project-local environment: {venv_python}")
     os.environ["MWV_AUTO_VENV_REEXEC"] = "1"
     # IMPORTANT: Do NOT use .resolve() here. We MUST execute the symlink 
     # itself so the Python interpreter finds its local site-packages correctly.
@@ -2489,25 +2489,25 @@ def _log_environment_info():
     """Log Python environment details at startup."""
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
 
-    logging.info("═" * 60)
-    logging.info("[Startup] Application started - Environment Information")
-    logging.info("─" * 60)
+    log.info("═" * 60)
+    log.info("[Startup] Application started - Environment Information")
+    log.info("─" * 60)
 
     if env_type == 'conda':
-        logging.info(f"  Environment Type: Conda")
-        logging.info(f"  Environment Name: {env_name}")
-        logging.info(f"  Environment Path: {env_path}")
+        log.info(f"  Environment Type: Conda")
+        log.info(f"  Environment Name: {env_name}")
+        log.info(f"  Environment Path: {env_path}")
     elif env_type == 'venv':
-        logging.info(f"  Environment Type: Virtual Environment (venv)")
-        logging.info(f"  Environment Name: {env_name}")
-        logging.info(f"  Environment Path: {env_path}")
+        log.info(f"  Environment Type: Virtual Environment (venv)")
+        log.info(f"  Environment Name: {env_name}")
+        log.info(f"  Environment Path: {env_path}")
     else:
-        logging.info(f"  Environment Type: System Python")
-        logging.info(f"  Environment Path: {env_path}")
+        log.info(f"  Environment Type: System Python")
+        log.info(f"  Environment Path: {env_path}")
 
-    logging.info(f"  Python Version: {py_ver}")
-    logging.info(f"  Python Executable: {py_exec}")
-    logging.info("═" * 60)
+    log.info(f"  Python Version: {py_ver}")
+    log.info(f"  Python Executable: {py_exec}")
+    log.info("═" * 60)
 
 
 _log_environment_info()
@@ -2517,7 +2517,7 @@ def debug_log(message: str) -> None:
     """
     @brief Universal logging helper (bridged to central logging system).
     """
-    logging.info(message)
+    log.info(message)
     # Eel callback if front-end is already listening
     try:
         if hasattr(eel, 'log_to_debug'):
@@ -3073,7 +3073,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
     start_time = time.time()
-    logging.info(
+    log.info(
         f"🔍 [Scan-Trace] Media Scan started at {
             time.strftime(
                 '%H:%M:%S',
@@ -3103,7 +3103,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             else:
                 debug_log(f"🔍 [Scan] Skipping non-existent directory: {d}")
 
-    logging.info(f"🔍 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
+    log.info(f"🔍 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
     
     count_indexed: int = 0
     try:
@@ -3112,20 +3112,20 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # Determine if we should use lightweight mode based on path or config
         is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
         if is_network:
-            logging.info("🔍 [Scan] Network mount detected. Enabling automatic lightweight mode.")
+            log.info("🔍 [Scan] Network mount detected. Enabling automatic lightweight mode.")
             parser_mode = "lightweight"
         else:
             parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
         
-        logging.info(f"🔍 [Scan] Parser Mode: {parser_mode}")
+        log.info(f"🔍 [Scan] Parser Mode: {parser_mode}")
 
         # Get existing media from DB for caching
         existing_media = {m['path']: m for m in db.get_all_media()}
-        logging.info(f"🔍 [Scan] Cached items in DB: {len(existing_media)}")
+        log.info(f"🔍 [Scan] Cached items in DB: {len(existing_media)}")
 
         # Determine which categories are enabled
         indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-        logging.info(f"🔍 [Scan] Enabled categories: {indexed_cats}")
+        log.info(f"🔍 [Scan] Enabled categories: {indexed_cats}")
         
         all_exts: set[str] = set()
         if "audio" in indexed_cats:
@@ -3142,7 +3142,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             all_exts |= DISK_IMAGE_EXTENSIONS
         
         ext_list = list(all_exts)
-        logging.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
+        log.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
 
         # Reset counters
         count_indexed: int = 0
@@ -3232,9 +3232,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         elapsed = time.time() - start_time
         scanned_target = ", ".join(str(p)
                                    for p in scan_roots) if scan_roots else "none"
-        logging.info(
+        log.info(
             f"[Scan-Trace] Scan of {scanned_target} took {elapsed:.2f} seconds.")
-        logging.info(
+        log.info(
             f"[Scan-Trace] Scan complete. Processed {count_indexed} items in {elapsed:.2f} seconds.")
 
         # Liefere gescannten Stand direkt aus der DB zurück
@@ -3359,7 +3359,7 @@ def play_media(path):
     is_dir = os.path.exists(path) and os.path.isdir(path)
     video_exts = ['.mp4', '.mkv', '.webm', '.ogg', '.mov', '.avi', '.m4v', '.iso', '.ts', '.m2ts']
     if ext in video_exts or is_dir:
-        logging.warning(f"DEBUG: [Player-Trace] play_media REJECTED for video/dir: {path}. Use open_video_smart.")
+        log.warning(f"DEBUG: [Player-Trace] play_media REJECTED for video/dir: {path}. Use open_video_smart.")
         return {"status": "error", "message": "Invalid call: Use open_video_smart for Video/Dir"}
 
     mode = PARSER_CONFIG.get("playback_mode", "chrome_native")
@@ -3377,7 +3377,7 @@ def play_media(path):
             return {"status": "play", "path": path, "mode": "chrome_native"}
         else:
             # Fallback to ffmpeg/vlc if not supported natively
-            logging.info(f"[Player] {ext} not natively supported, falling back to VLC pipe.")
+            log.info(f"[Player] {ext} not natively supported, falling back to VLC pipe.")
             return stream_to_vlc(path)
 
     if mode == "cvlc" or mode == "ffmpeg" or mode == "mkvmerge":
@@ -3494,7 +3494,7 @@ def get_best_hw_encoder():
             return "h264_qsv"
             
     except Exception as e:
-        logging.warning(f"[HW Detect] Failed to probe encoders: {e}")
+        log.warning(f"[HW Detect] Failed to probe encoders: {e}")
     
     return "libx264"
 
@@ -3548,7 +3548,7 @@ def stream_video_fragmented(file_path):
     def ffmpeg_stream():
         # Auto-detect best encoder for performance
         encoder = get_best_hw_encoder()
-        logging.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
+        log.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
         
         # Base command for H.264 FragMP4
         ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
@@ -3607,7 +3607,7 @@ def stream_video_fragmented(file_path):
                     process.wait(timeout=2)
                 except subprocess.TimeoutExpired:
                     process.kill()
-            logging.info(f"🚀 [Stream] Finalized fragment stream for: {resolved_path}")
+            log.info(f"🚀 [Stream] Finalized fragment stream for: {resolved_path}")
 
     return bottle.HTTPResponse(ffmpeg_stream(), content_type="video/mp4")
 
@@ -3652,7 +3652,7 @@ def vlc_stream(item_id):
                     process.wait(timeout=2)
                 except subprocess.TimeoutExpired:
                     process.kill()
-            logging.info(f"🚀 [VLC] Finalized stream for: {file_path}")
+            log.info(f"🚀 [VLC] Finalized stream for: {file_path}")
 
     return bottle.HTTPResponse(generate(), content_type='video/mp4')
 
@@ -3674,7 +3674,7 @@ def log_process_stderr(process, label):
                     line = line.decode('utf-8', errors='replace')
                 except:
                     continue
-            logging.info(f"🚀 [{label}] {line.strip()}")
+            log.info(f"🚀 [{label}] {line.strip()}")
         process.stderr.close()
     
     thread = threading.Thread(target=reader, daemon=True)
@@ -3729,14 +3729,14 @@ def video_remux_stream(item_id):
                 if os.path.exists(item_path):
                     file_path = item_path
                 else:
-                    logging.warning(f"❌ [Remux] Field not found in DB or filesystem: {item_id}")
+                    log.warning(f"❌ [Remux] Field not found in DB or filesystem: {item_id}")
                     return bottle.HTTPResponse(status=404)
             else:
                 file_path = item['path']
         else:
             file_path = item['path']
 
-        logging.info(f"🚀 [Remux] Starting live Pipe-Kit (Audio:{audio_idx}, Subs:{subs_idx}) for: {file_path}")
+        log.info(f"🚀 [Remux] Starting live Pipe-Kit (Audio:{audio_idx}, Subs:{subs_idx}) for: {file_path}")
 
         mkvmerge_path = shutil.which('mkvmerge') or 'mkvmerge'
         ffmpeg_path = shutil.which('ffmpeg') or 'ffmpeg'
@@ -3754,7 +3754,7 @@ def video_remux_stream(item_id):
                 
                 # FOR DVDs: Force transcoding because fMP4 in Chrome doesn't support MPEG-2 (VOB/ISO)
                 if is_iso:
-                    logging.info(f"💿 [Remux] ISO detected, redirecting to transcode flow for compatibility.")
+                    log.info(f"💿 [Remux] ISO detected, redirecting to transcode flow for compatibility.")
                     return stream_video_fragmented(item_id)
 
                 # Mapping support for track switching
@@ -3804,7 +3804,7 @@ def video_remux_stream(item_id):
                         break
                     yield chunk
             except Exception as e:
-                logging.error(f"❌ [Remux] Generator error: {e}")
+                log.error(f"❌ [Remux] Generator error: {e}")
             finally:
                 # Cleanup processes
                 for p in [ffmpeg_proc, mkv_proc]:
@@ -3815,12 +3815,12 @@ def video_remux_stream(item_id):
                         except:
                             try: p.kill() 
                             except: pass
-                logging.info(f"🚀 [Remux] Finalized Pipe-Kit stream for: {file_path}")
+                log.info(f"🚀 [Remux] Finalized Pipe-Kit stream for: {file_path}")
 
         return bottle.HTTPResponse(generate(), content_type="video/mp4")
     except Exception as e:
         import traceback
-        logging.error(f"💥 [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
+        log.error(f"💥 [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
         return bottle.HTTPError(500, f"Remux Error: {e}")
 
 def get_video_metadata(file_path: str) -> dict:
@@ -3849,7 +3849,7 @@ def get_video_metadata(file_path: str) -> dict:
             "duration": float(format_info.get('duration', 0))
         }
     except Exception as e:
-        logging.error(f"[ffprobe] Auto-detect failed: {e}")
+        log.error(f"[ffprobe] Auto-detect failed: {e}")
         return {}
 
 
@@ -3864,7 +3864,7 @@ def open_with_ffplay(file_path: str):
         ffplay_path = shutil.which("ffplay") or "ffplay"
         proc = subprocess.Popen([str(ffplay_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
-        logging.info(f"🚀 [FFplay] Started for: {file_path}")
+        log.info(f"🚀 [FFplay] Started for: {file_path}")
         return {"status": "ok", "mode": "ffplay"}
     except Exception as e:
         return {"status": "error", "error": f"FFplay failed: {e}"}
@@ -3877,7 +3877,7 @@ def open_with_vlc(file_path: str):
         vlc_path = shutil.which("vlc") or "vlc"
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
-        logging.info(f"🚀 [VLC] Started for: {file_path}")
+        log.info(f"🚀 [VLC] Started for: {file_path}")
         return {"status": "ok", "mode": "vlc"}
     except Exception as e:
         return {"status": "error", "error": f"VLC failed: {e}"}
@@ -3890,7 +3890,7 @@ def open_with_cvlc(file_path: str):
         vlc_path = shutil.which("cvlc") or "cvlc"
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
-        logging.info(f"🚀 [CVLC] Started for: {file_path}")
+        log.info(f"🚀 [CVLC] Started for: {file_path}")
         return {"status": "ok", "mode": "cvlc"}
     except Exception as e:
         return {"status": "error", "error": f"CVLC failed: {e}"}
@@ -3910,7 +3910,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
     Supports start_time for HLS seeking.
     """
     pid_tag = f"{source}|{os.getpid()}"
-    logging.info(f"✨ [VLC-Instance-Trace] {pid_tag} Attempting start for: {file_path}")
+    log.info(f"✨ [VLC-Instance-Trace] {pid_tag} Attempting start for: {file_path}")
 
     # 1. Stop any existing VLC managed by us
     try:
@@ -3943,7 +3943,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
         
         try:
              control_port = find_free_port()
-             logging.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file} (Control: {control_port})")
+             log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file} (Control: {control_port})")
              
              cmd = [
                  str(vlc_path), "-I", "dummy", "--no-video-title-show", "--quiet",
@@ -3973,11 +3973,11 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
                  "control_port": control_port
              }
         except Exception as e:
-             logging.error(f"[VLC-HLS-Streamer] HLS-Out failed: {e}")
+             log.error(f"[VLC-HLS-Streamer] HLS-Out failed: {e}")
              return {"status": "error", "error": f"VLC HLS Streamer failed: {e}"}
 
     try:
-        logging.info(f"[VLC-Starter] {pid_tag} Launching binary: {vlc_path} {full_path}")
+        log.info(f"[VLC-Starter] {pid_tag} Launching binary: {vlc_path} {full_path}")
         proc = subprocess.Popen([str(vlc_path), str(full_path)], 
                                 stdout=subprocess.DEVNULL, 
                                 stderr=subprocess.DEVNULL,
@@ -4015,14 +4015,14 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
     @brief Explicitly opens a media file with a specific player type and mode.
     Handles 'auto' routing and specializes for ISO, DVD, Audio.
     """
-    logging.info(f"DEBUG: [Player-Trace] open_video called from {source} for: {file_path} (type: {player_type}, mode: {mode})")
+    log.info(f"DEBUG: [Player-Trace] open_video called from {source} for: {file_path} (type: {player_type}, mode: {mode})")
     file_path = resolve_media_path(file_path)
     
     # Global double-trigger lock (Python side - SECOND LAYER)
     now = time.time()
     lock_key = f"{file_path}_lock"
     if now - PLAYBACK_LOCKS.get(lock_key, 0) < 2.0:
-         logging.warning(f"DEBUG: [Player-Trace] open_video REJECTED by lock for {file_path} (Source: {source})")
+         log.warning(f"DEBUG: [Player-Trace] open_video REJECTED by lock for {file_path} (Source: {source})")
          return {"status": "ok", "mode": "locked"}
     PLAYBACK_LOCKS[lock_key] = now
     
@@ -4037,7 +4037,7 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
         ])
     is_audio = str(file_path).lower().endswith(('.mp3', '.m4b', '.opus', '.flac', '.wav'))
     
-    logging.info(f"DEBUG: [Player-Trace] Analysis: ISO={is_dvd_iso}, DVD_Folder={is_dvd_folder}, Audio={is_audio}")
+    log.info(f"DEBUG: [Player-Trace] Analysis: ISO={is_dvd_iso}, DVD_Folder={is_dvd_folder}, Audio={is_audio}")
 
     # 2. Auto-Detection Logic (only runs when mode is truly 'auto')
     if mode == "auto":
@@ -4078,7 +4078,7 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
         target_path = file_path
         if is_dvd_folder and os.path.basename(str(file_path)).upper() == "VIDEO_TS":
             target_path = os.path.dirname(str(file_path))
-            logging.info(f"DEBUG: [Player-Trace] DVD Normalization: {file_path} -> {target_path}")
+            log.info(f"DEBUG: [Player-Trace] DVD Normalization: {file_path} -> {target_path}")
 
         prefix = "dvd://" if is_dvd_folder or is_dvd_iso else ""
         # Default to embedded HLS if not specified as browser (standalone)
@@ -4180,7 +4180,7 @@ def vlc_seek(instance_id, time_seconds):
     @param instance_id The PID tag or process reference.
     @param time_seconds The timestamp to jump to.
     """
-    logging.info(f"✨ [VLC-Seek] Jumping to {time_seconds}s for instance {instance_id}")
+    log.info(f"✨ [VLC-Seek] Jumping to {time_seconds}s for instance {instance_id}")
     
     # 1. Kill old process
     # We need to find the process by its item path or similar if instance_id isn't enough
@@ -4200,7 +4200,7 @@ def play_external_file(path: str):
     """
     @brief Plays a local file that was dropped onto the UI or selected via picker.
     """
-    logging.info(f"📁 [External-Play] File: {path}")
+    log.info(f"📁 [External-Play] File: {path}")
     try:
         abs_path = Path(path).resolve()
         # Fallback for relative paths if not found directly
@@ -4223,7 +4223,7 @@ def play_stream_url(url: str, engine: str = "hls"):
     """
     @brief Returns playback parameters for a specific network stream URL.
     """
-    logging.info(f"🌐 [External-Play] Stream: {url} via {engine}")
+    log.info(f"🌐 [External-Play] Stream: {url} via {engine}")
     # Basic validation
     if not url.startswith(('http', 'rtsp', 'rtmp')):
         return {"status": "error", "error": "Ungültiges Protokoll. Erwartet http, rtsp oder rtmp."}
@@ -4242,13 +4242,13 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     @brief Smart routing for video playback as described in videoplayer logbuch.
     Supports Direct Play, MediaMTX (HLS/WebRTC), and FragMP4.
     """
-    logging.info(f"DEBUG: [Player-Trace] open_video_smart called for: {file_path} (mode: {mode})")
+    log.info(f"DEBUG: [Player-Trace] open_video_smart called for: {file_path} (mode: {mode})")
     
     # Global double-trigger lock (Python side)
     now = time.time()
     last_trigger = PLAYBACK_LOCKS.get(str(file_path), 0)
     if now - last_trigger < 2.0:
-         logging.warning(f"DEBUG: [Player-Trace] open_video_smart LOCK active for {file_path}. Skipping.")
+         log.warning(f"DEBUG: [Player-Trace] open_video_smart LOCK active for {file_path}. Skipping.")
          return {"status": "error", "error": "Debounced"}
     PLAYBACK_LOCKS[str(file_path)] = now
 
@@ -4261,7 +4261,7 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
 
     # Special: Browsers hate MPEG-1/2 (DVD PAL format) or ISOs. Route to Transcode Pipeline.
     if "mpeg" in codec or "mp2" in codec or is_disc_img:
-         logging.info(f"DEBUG: [Player-Trace] MPEG/ISO detected in {file_path}. Using Chrome Transcode Pipeline.")
+         log.info(f"DEBUG: [Player-Trace] MPEG/ISO detected in {file_path}. Using Chrome Transcode Pipeline.")
          return open_video(file_path, "chrome", "chrome_transcode", source="smart_router_upgrade", start_time=start_time)
     
     if os.path.exists(file_path) and os.path.isdir(file_path):
@@ -4279,7 +4279,7 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     category = db_item.get('category', '') if db_item else ''
     
     if is_dvd or is_disc_img or category in ('Film', 'Abbild'):
-         logging.info(f"DEBUG: [Player-Trace] DVD/Film/DiscImg detected in smart router (Category: {category}). Forcing VLC Embedded.")
+         log.info(f"DEBUG: [Player-Trace] DVD/Film/DiscImg detected in smart router (Category: {category}). Forcing VLC Embedded.")
          return open_video(file_path, "vlc", "vlc_embedded", source="smart_router_dvd_film")
 
     return open_video(file_path, "auto", mode, source="smart_router_auto")
@@ -4299,7 +4299,7 @@ def analyse_media(path):
         analysis = ffprobe_parser.parse(Path(path), Path(path).suffix, dummy_tags, mode='full', settings={'timeout': 5})
         return {"status": "ok", "analysis": analysis}
     except Exception as e:
-        logging.error(f"[Analyse] Failed for {path}: {e}")
+        log.error(f"[Analyse] Failed for {path}: {e}")
         return {"status": "error", "message": str(e)}
 
 @eel.expose
@@ -4314,7 +4314,7 @@ def write_media_tags(path, tags):
     ext = Path(path).suffix.lower()
     if ext in ('.iso', '.mkv'):
         # For ISO/MKV, we use mkvpropedit if available
-        logging.info(f"[Write] Using specialized writer for {ext}")
+        log.info(f"[Write] Using specialized writer for {ext}")
     
     try:
         success = tag_writer.write_tags(path, tags)
@@ -4665,7 +4665,7 @@ def move_current_up():
     global CURRENT_INDEX
     if CURRENT_INDEX is None or CURRENT_INDEX < 0:
         return {"status": "error", "message": "no current item"}
-    logging.debug(
+    log.debug(
         f"[Playlist] move_current_up called. CURRENT_INDEX={CURRENT_INDEX}")
     return move_item_up(CURRENT_INDEX)
 
@@ -4676,7 +4676,7 @@ def move_current_down():
     global CURRENT_INDEX
     if CURRENT_INDEX is None or CURRENT_INDEX < 0:
         return {"status": "error", "message": "no current item"}
-    logging.debug(
+    log.debug(
         f"[Playlist] move_current_down called. CURRENT_INDEX={CURRENT_INDEX}")
     return move_item_down(CURRENT_INDEX)
 
@@ -4693,7 +4693,7 @@ def move_item_to(old_index: int, new_index: int):
         n = int(new_index)
     except Exception:
         return {"status": "error", "message": "invalid index"}
-    logging.debug(f"[Playlist] move_item_to called. old={
+    log.debug(f"[Playlist] move_item_to called. old={
                   o}, new={n}, CURRENT_INDEX={CURRENT_INDEX}")
 
     if not CURRENT_PLAYLIST:
@@ -4751,7 +4751,7 @@ def open_in_explorer(path_str):
     """
     path_obj = Path(path_str)
     if not path_obj.exists():
-        logging.warning(
+        log.warning(
             "[FileExplorer] Path does not exist / Pfad existiert nicht")
         return {"error": "Nicht gefunden"}
 
@@ -4768,7 +4768,7 @@ def open_in_explorer(path_str):
             subprocess.run(['xdg-open', str(path_obj.parent)])
         return {"status": "ok"}
     except Exception as e:
-        logging.error(
+        log.error(
             f"[FileExplorer] Error opening path / Fehler beim Oeffnen: {e}")
         return {"error": str(e)}
 
@@ -4829,7 +4829,7 @@ def pick_folder():
         root.destroy()
         return folder_path if folder_path else None
     except Exception as e:
-        logging.error(f"[System] Folder picker failed: {e}")
+        log.error(f"[System] Folder picker failed: {e}")
         return None
 
 
@@ -4931,15 +4931,15 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     """
     file_path = resolve_media_path(file_path)
     file_path = resolve_dvd_bundle_path(file_path)
-    logging.info(f"[vlc pipe] Requesting stream for: {file_path}")
+    log.info(f"[vlc pipe] Requesting stream for: {file_path}")
 
     if not file_path or not os.path.exists(str(file_path)):
-        logging.error(f"[vlc pipe] File not found: {file_path}")
+        log.error(f"[vlc pipe] File not found: {file_path}")
         return {"status": "error", "error": f"Datei nicht gefunden: {file_path}"}
 
     # Directory Check: If it's a directory, it's likely a DVD/Blu-ray folder
     if os.path.isdir(str(file_path)):
-        logging.info(f"[vlc] Directory detected, opening as native media: {file_path}")
+        log.info(f"[vlc] Directory detected, opening as native media: {file_path}")
         try:
             vlc_path = shutil.which('cvlc') or shutil.which('vlc') or 'cvlc'
             # Use dvd:// with absolute path for folders
@@ -4947,7 +4947,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
             subprocess.Popen(cmd)
             return {"status": "ok", "mode": "vlc_native_directory"}
         except Exception as e:
-            logging.error(f"[vlc] Failed to open directory: {e}")
+            log.error(f"[vlc] Failed to open directory: {e}")
             return {"status": "error", "error": str(e)}
 
     # ISO/DVD/Blu-ray Handling: Native playback
@@ -4965,14 +4965,14 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
                 elif engine == "cdrom_native" or "cdda" in file_path_str:
                     protocol = "cdda://"
                 
-                logging.info(f"[vlc] Native media detected, using {protocol} for {file_path}")
+                log.info(f"[vlc] Native media detected, using {protocol} for {file_path}")
                 cmd = [str(vlc_path), f"{protocol}{file_path}"]
             
             subprocess.Popen(cmd)
             return {"status": "ok", "mode": "vlc_native"}
 
         except Exception as e:
-            logging.error(f"[vlc] Native Playback error: {e}")
+            log.error(f"[vlc] Native Playback error: {e}")
             return {"status": "error", "error": str(e)}
 
     # Direct VLC Solo (No Pipe)
@@ -4980,7 +4980,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         try:
             vlc_cmd = 'cvlc'
             vlc_path = shutil.which(vlc_cmd) or shutil.which('vlc') or vlc_cmd
-            logging.info(f"[vlc] Opening external: {file_path}")
+            log.info(f"[vlc] Opening external: {file_path}")
             subprocess.Popen([str(vlc_path), str(file_path)])
             return {"status": "ok", "mode": "vlc_external"}
         except Exception as e:
@@ -4989,7 +4989,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
     if engine == "ffplay_solo":
         try:
             ffplay_path = shutil.which("ffplay") or "ffplay"
-            logging.info(f"[ffplay] Opening external: {file_path}")
+            log.info(f"[ffplay] Opening external: {file_path}")
             subprocess.Popen([str(ffplay_path), str(file_path)])
             return {"status": "ok", "mode": "ffplay_external"}
         except Exception as e:
@@ -4997,12 +4997,12 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
 
     # Check for engines, but allow fallback if mkvtoolnix is missing but engine is ffmpeg
     if engine == "mkvmerge" and not is_mkvtoolnix_available():
-        logging.warning("[vlc pipe] mkvmerge requested but not found, falling back to ffmpeg")
+        log.warning("[vlc pipe] mkvmerge requested but not found, falling back to ffmpeg")
         engine = "ffmpeg"
 
     vlc_path = shutil.which('cvlc') or shutil.which('vlc') or 'cvlc'
     if not vlc_path:
-        logging.error("[vlc pipe] vlc not found in PATH")
+        log.error("[vlc pipe] vlc not found in PATH")
         return {"status": "error", "error": "VLC Media Player nicht installiert oder nicht im PATH"}
 
     try:
@@ -5020,7 +5020,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         # Removed --no-mjpeg-demux as it's not supported in all VLC versions or causing issues.
         vlc_cmd = [str(vlc_path), "--demux", "mkv", "fd://0"]
 
-        logging.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c) for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
+        log.info(f"[vlc pipe] Launching {engine} Pipe: {' '.join(str(c) for c in remux_cmd)} | {' '.join(str(c) for c in vlc_cmd)}")
 
         # Start remuxer
         p1 = subprocess.Popen(remux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -5040,7 +5040,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
             err_msg = ""
             if p1.stderr:
                 err_msg = p1.stderr.read().decode('utf-8', errors='ignore')
-            logging.error(f"[vlc pipe] {engine} failed: {err_msg.strip()}. Falling back to direct VLC.")
+            log.error(f"[vlc pipe] {engine} failed: {err_msg.strip()}. Falling back to direct VLC.")
             # Fallback to external VLC
             if p2.poll() is None:
                 p2.terminate()
@@ -5050,12 +5050,12 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
         
         # Monitor p2 (VLC) as well
         if p2.poll() is not None:
-             logging.error(f"[vlc pipe] VLC exited prematurely with code {p2.returncode}")
+             log.error(f"[vlc pipe] VLC exited prematurely with code {p2.returncode}")
              return {"status": "error", "error": f"VLC beendet: Code {p2.returncode}"}
 
         return {"status": "ok", "message": "Streaming gestartet"}
     except Exception as e:
-        logging.error(f"[vlc pipe] Critical Pipe Error: {e}")
+        log.error(f"[vlc pipe] Critical Pipe Error: {e}")
         return {"status": "error", "error": str(e)}
 
 
@@ -5094,7 +5094,7 @@ def vlc_ts_mode(file_path):
             '--sout', f'#std{{access=http,mux=ts,dst=:{port}/}}',
             '--no-video-title-show', '--loop'
         ]
-        logging.info(f"[cvlc] Launching TS Stream on port {port}: {file_path}")
+        log.info(f"[cvlc] Launching TS Stream on port {port}: {file_path}")
         subprocess.Popen(cmd)
 
         # Wait for TS-Stream to be active
@@ -5102,7 +5102,7 @@ def vlc_ts_mode(file_path):
         for i in range(max_retries):
             time.sleep(0.5)
             if detect_ts_stream(port):
-                logging.info(f"[cvlc] TS Stream active on port {port}")
+                log.info(f"[cvlc] TS Stream active on port {port}")
                 # We return a URL that the frontend can play via Video.js (type: video/mp2t)
                 return {"status": "play", "path": f"http://localhost:{port}/", "mode": "chrome_native", "type": "video/mp2t"}
 
@@ -5126,7 +5126,7 @@ def pyvidplayer2_mode(file_path):
              player = pv.Video(file_path)
              player.play()
         
-        logging.info(f"[pyvidplayer2] Launching for: {file_path}")
+        log.info(f"[pyvidplayer2] Launching for: {file_path}")
         import threading
         threading.Thread(target=run_pv, daemon=True).start()
         return {"status": "ok", "message": "pyvidplayer2 gestartet"}
@@ -5148,7 +5148,7 @@ def mkvmerge_standalone_mode(file_path):
         out_file = temp_dir / (Path(file_path).stem + ".mkv")
 
         if not out_file.exists():
-            logging.info(f"[mkvmerge] Remuxing to standalone: {file_path}")
+            log.info(f"[mkvmerge] Remuxing to standalone: {file_path}")
             subprocess.run(["mkvmerge", "-o", str(out_file), str(file_path)], check=True)
 
         vlc_path = shutil.which("vlc") or "vlc"
@@ -5169,7 +5169,7 @@ def stream_to_mediamtx(file_path, protocol="hls"):
     @brief Starts a stream for the browser via MediaMTX (rtsp-simple-server) using FFmpeg push.
     @param protocol "hls" or "webrtc"
     """
-    logging.info(f"[mediamtx] Requesting {protocol} stream for: {file_path}")
+    log.info(f"[mediamtx] Requesting {protocol} stream for: {file_path}")
     
     file_path = resolve_media_path(file_path)
     if not file_path or not os.path.exists(str(file_path)):
@@ -5190,7 +5190,7 @@ def stream_to_mediamtx(file_path, protocol="hls"):
             iso_candidate = next((f for f in source_p.iterdir() if f.suffix.lower() == ".iso"), None)
             if iso_candidate:
                 source_p = iso_candidate
-                logging.info(f"[mediamtx] Resolved folder to internal ISO: {source_p}")
+                log.info(f"[mediamtx] Resolved folder to internal ISO: {source_p}")
 
         is_dvd = source_p.suffix.lower() == '.iso' or (source_p.is_dir() and "VIDEO_TS" in os.listdir(source_p))
         
@@ -5213,7 +5213,7 @@ def stream_to_mediamtx(file_path, protocol="hls"):
 
         ffmpeg_cmd += ["-f", "rtsp", rtsp_target]
         
-        logging.info(f"[mediamtx] Spawning FFmpeg push: {' '.join(ffmpeg_cmd)}")
+        log.info(f"[mediamtx] Spawning FFmpeg push: {' '.join(ffmpeg_cmd)}")
         
         # Start the push process in the background
         # Use stdout/stderr=DEVNULL to avoid clogging the buffers
@@ -5234,7 +5234,7 @@ def stream_to_mediamtx(file_path, protocol="hls"):
             
         return {"status": "play", "path": src_url, "mode": mode, "type": "application/x-mpegURL" if protocol == "hls" else "video/webrtc"}
     except Exception as e:
-        logging.error(f"[mediamtx] Setup error: {e}")
+        log.error(f"[mediamtx] Setup error: {e}")
         return {"status": "error", "error": str(e)}
 
 @eel.expose
@@ -5242,7 +5242,7 @@ def run_mtx_validation(file_path):
     """
     @brief Comprehensive test of MediaMTX paths for a specific file.
     """
-    logging.info(f"[QA] Starting MTX Validation for: {file_path}")
+    log.info(f"[QA] Starting MTX Validation for: {file_path}")
     report = {
         "file": file_path,
         "server_up": False,
@@ -5334,10 +5334,10 @@ def remux_mkv_batch(folder_path):
             cmd = ["mkvmerge", str(vf), "-o", str(output)]
             subprocess.run(cmd, check=True, capture_output=True)
             results["success"] += 1
-            logging.info(f"Remux Erfolg: {vf.name} -> {output.name}")
+            log.info(f"Remux Erfolg: {vf.name} -> {output.name}")
         except Exception as e:
             results["errors"].append(f"{vf.name}: {str(e)}")
-            logging.error(f"Remux Fehler {vf.name}: {e}")
+            log.error(f"Remux Fehler {vf.name}: {e}")
 
     return {"status": "ok", "results": results}
 
@@ -5409,7 +5409,7 @@ def import_vlc_playlist(m3u_path: str):
             "count": len(imported)
         }
     except Exception as e:
-        logging.error(f"[VLC Import] Error: {e}")
+        log.error(f"[VLC Import] Error: {e}")
         return {"error": str(e)}
 
 
@@ -5466,7 +5466,7 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
             "missing": missing
         }
     except Exception as e:
-        logging.error(f"[VLC Export] Error: {e}")
+        log.error(f"[VLC Export] Error: {e}")
         return {"error": str(e)}
 
 
@@ -5484,7 +5484,7 @@ def save_playlist(media_names: list, output_path: str):
         path.write_text(json.dumps(media_names, indent=4), encoding='utf-8')
         return {"status": "ok", "path": str(path)}
     except Exception as e:
-        logging.error(f"[Save Playlist] Error: {e}")
+        log.error(f"[Save Playlist] Error: {e}")
         return {"error": str(e)}
 
 
@@ -5509,7 +5509,7 @@ def load_playlist(input_path: str):
 
         return {"status": "ok", "items": items}
     except Exception as e:
-        logging.error(f"[Load Playlist] Error: {e}")
+        log.error(f"[Load Playlist] Error: {e}")
         return {"error": str(e)}
 
         
@@ -5540,7 +5540,7 @@ def pick_file(title="Datei auswählen", filetypes=None):
         root.destroy()
         return file_path if file_path else None
     except Exception as e:
-        logging.error(f"[System] File picker failed: {e}")
+        log.error(f"[System] File picker failed: {e}")
         return None
 
 
@@ -5586,7 +5586,7 @@ def import_txt_to_db(category="Video"):
                     elif category in ["Video", "Serie", "Film"]:
                         item_dict['type'] = "Video"
             except Exception as item_err:
-                logging.debug(f"[Import] MediaItem init failed for {name}: {item_err}")
+                log.debug(f"[Import] MediaItem init failed for {name}: {item_err}")
                 # Basic fallback if MediaItem fails (e.g. path doesn't exist)
                 item_dict = {
                     'name': name,
@@ -5613,7 +5613,7 @@ def import_txt_to_db(category="Video"):
             "total_processed": len(lines)
         }
     except Exception as e:
-        logging.error(f"[Import] TXT Import failed: {e}")
+        log.error(f"[Import] TXT Import failed: {e}")
         return {"error": str(e)}
 
 
@@ -5653,7 +5653,7 @@ def pick_save_file(
         root.destroy()
         return file_path if file_path else None
     except Exception as e:
-        logging.error(f"[System] File save picker failed: {e}")
+        log.error(f"[System] File save picker failed: {e}")
         return None
 
 
@@ -6270,7 +6270,7 @@ def read_file(filename, context='logbuch'):
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
-        print(f"read_file error: {e}")
+        log.error(f"read_file error: {e}")
         return None
 
 
@@ -6416,14 +6416,14 @@ def run_tests(test_files):
     venv_found = False
     
     known_venvs = [".venv_testbed", ".venv_dev", "venv"]
-    logging.info(f"[Tests] Searching for test environment in {PROJECT_ROOT}...")
+    log.info(f"[Tests] Searching for test environment in {PROJECT_ROOT}...")
     
     for venv_name in known_venvs:
         venv_bin = PROJECT_ROOT / venv_name / "bin" / "python"
         if venv_bin.exists():
             test_python = str(venv_bin)
             venv_found = True
-            logging.info(f"[Tests] Found specialized test venv: {venv_name} -> {test_python}")
+            log.info(f"[Tests] Found specialized test venv: {venv_name} -> {test_python}")
             break
         else:
             if DEBUG_FLAGS.get("tests"):
@@ -6432,11 +6432,11 @@ def run_tests(test_files):
     if not venv_found:
         import importlib.util
         if importlib.util.find_spec("pytest") is None:
-            logging.warning(f"[Tests] No specialized venv found and pytest missing in current env ({sys.executable}).")
+            log.warning(f"[Tests] No specialized venv found and pytest missing in current env ({sys.executable}).")
         else:
-            logging.info(f"[Tests] Using current interpreter (pytest found): {sys.executable}")
+            log.info(f"[Tests] Using current interpreter (pytest found): {sys.executable}")
     
-    logging.info(f"[Tests] Final execution command python: {test_python}")
+    log.info(f"[Tests] Final execution command python: {test_python}")
 
     # Run pytest in a subprocess to avoid issues with repeat runs/sys.modules
     # Stream output lines live to frontend for real-time refresh.
@@ -6534,7 +6534,7 @@ def run_tests(test_files):
             last_100: list[dict] = history[-100:]  # type: ignore
             results_path.write_text(json.dumps(last_100, indent=2), encoding='utf-8')
         except Exception as e:
-            logging.error(f"[Reporting] Error saving results: {e}")
+            log.error(f"[Reporting] Error saving results: {e}")
 
         return {
             "exit_code": result_code,
@@ -6575,7 +6575,7 @@ def run_gui_tests():
       - Alternativen: WebDriver (Selenium), CDP (Playwright), PyAutoGUI für Desktop.
       - Eel expose() ermöglicht bidirektionale Python-JS-Calls für Test-Trigger.
     """
-    logging.info(
+    log.info(
         "GUI-Tests: Siehe MCP-Agent oder Browser-Subagent für KlickEvents/DOM.")
     return {
         "status": "info",
@@ -6595,7 +6595,7 @@ def run_gui_tests():
 
 @eel.expose
 def ui_trace(message):
-    try: logging.info(f"[UI-Trace] {message}")
+    try: log.info(f"[UI-Trace] {message}")
     except Exception: pass
     return {"status": "ok"}
 
@@ -6711,13 +6711,13 @@ if __name__ == "__main__":
     existing_sessions = [s for s in check_running_sessions() if s.get('port')]
     if existing_sessions:
         existing_url = f"http://127.0.0.1:{existing_sessions[0]['port']}/app.html"
-        logging.info(f"[Session] Found existing session candidate on port {existing_sessions[0]['port']}")
+        log.info(f"[Session] Found existing session candidate on port {existing_sessions[0]['port']}")
         if is_session_url_reachable(existing_url, timeout=0.8):
-            logging.info("[Session] Existing session is reachable. Skipping new window launch.")
+            log.info("[Session] Existing session is reachable. Skipping new window launch.")
             open_session_url(existing_url)
             sys.exit(0)
         else:
-            logging.warning(f"[Session] Ignoring stale session candidate: {existing_url}")
+            log.warning(f"[Session] Ignoring stale session candidate: {existing_url}")
 
     _ensure_project_venv_active()
     log_checkpoint("Venv check complete")
@@ -6886,15 +6886,15 @@ if __name__ == "__main__":
 
     def _delayed_scan():
         delay = 10
-        logging.info(f"[Scan] Initial background scan will start in {delay} seconds...")
+        log.info(f"[Scan] Initial background scan will start in {delay} seconds...")
         time.sleep(delay)
-        logging.info("[Scan] Starting initial background scan (all configured directories)...")
+        log.info("[Scan] Starting initial background scan (all configured directories)...")
         try:
             # Direct call to the local scan_media function
             scan_media(dir_path=None, clear_db=True)
-            logging.info("[Scan] Initial background scan completed.")
+            log.info("[Scan] Initial background scan completed.")
         except Exception as e:
-            logging.error(f"[Scan] Initial background scan failed: {e}")
+            log.error(f"[Scan] Initial background scan failed: {e}")
 
     def _finish_initialization():
         try:
@@ -6933,7 +6933,7 @@ if __name__ == "__main__":
             # from src.core.main_helpers import get_environment_info_dict 
             log.info(f"[Startup] Environment Info: {get_environment_info_dict()}")
         except Exception as e:
-            logging.error(f"[Startup] Delayed initialization failed: {e}")
+            log.error(f"[Startup] Delayed initialization failed: {e}")
 
     import threading
     threading.Thread(target=_finish_initialization, daemon=True).start()
@@ -6999,29 +6999,29 @@ def discover_cast_devices():
     devices = {"chromecast": [], "dlna": []}
     try:
         # Placeholder for pychromecast / dlnap discovery
-        # logging.info("[Cast] Starting device discovery...")
+        # log.info("[Cast] Starting device discovery...")
         pass
     except Exception as e:
-        logging.error(f"[Cast] Discovery error: {e}")
+        log.error(f"[Cast] Discovery error: {e}")
     return devices
 
 @eel.expose
 def start_cast(device_id, media_url):
     """Starts casting a URL to a specific device."""
-    logging.info(f"[Cast] Casting {media_url} to {device_id}")
+    log.info(f"[Cast] Casting {media_url} to {device_id}")
     return {"status": "ok"}
 
 @eel.expose
 def toggle_swyh_rs(enabled=True):
     """Toggles swyh-rs (Stream What You Hear) state."""
     state = "enabled" if enabled else "disabled"
-    logging.info(f"[swyh-rs] Toggling to {state}")
+    log.info(f"[swyh-rs] Toggling to {state}")
     return {"status": "ok", "state": state}
 
 @eel.expose
 def open_vlc(filepath):
     """Opens a file in VLC player."""
-    logging.info(f"[Video] Opening in VLC: {filepath}")
+    log.info(f"[Video] Opening in VLC: {filepath}")
     try:
         if sys.platform == "win32":
             os.startfile(filepath) # Or full VLC path
@@ -7034,7 +7034,7 @@ def open_vlc(filepath):
 @eel.expose
 def open_ffplay(filepath):
     """Opens a file in FFplay."""
-    logging.info(f"[Video] Opening in FFplay: {filepath}")
+    log.info(f"[Video] Opening in FFplay: {filepath}")
     try:
         # -autoexit: closes window when playback ends
         # -sn: disable subtitles for performance during test
@@ -7046,7 +7046,7 @@ def open_ffplay(filepath):
 @eel.expose
 def open_mpv(filepath):
     """Opens a file in MPV player."""
-    logging.info(f"[Video] Opening in MPV: {filepath}")
+    log.info(f"[Video] Opening in MPV: {filepath}")
     try:
         # --ontop: keep window visible for easy verification
         subprocess.Popen(["mpv", "--ontop", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -7057,7 +7057,7 @@ def open_mpv(filepath):
 @eel.expose
 def trigger_mkvmerge_remux(filepath):
     """Tests mkvmerge remuxing performance."""
-    logging.info(f"[Video] Triggering MKVmerge Remux: {filepath}")
+    log.info(f"[Video] Triggering MKVmerge Remux: {filepath}")
     out = PROJECT_ROOT / "cache" / f"remux_{Path(filepath).stem}.mkv"
     out.parent.mkdir(exist_ok=True)
     
@@ -7072,7 +7072,7 @@ def trigger_mkvmerge_remux(filepath):
 @eel.expose
 def trigger_mtx_stream(filepath, proto="hls"):
     """Starts a MediaMTX stream for the given protocol."""
-    logging.info(f"[Video] Triggering MediaMTX ({proto}): {filepath}")
+    log.info(f"[Video] Triggering MediaMTX ({proto}): {filepath}")
     res = stream_to_mediamtx(filepath, protocol=proto)
     if res.get("status") == "play":
         return {"status": "ok", "details": f"MediaMTX {proto.upper()} stream active: {res.get('path')}"}
@@ -7161,13 +7161,13 @@ def run_ffmpeg_pipeline_test(relpath):
 @eel.expose
 def start_mp4frag_conversion(filepath, options=""):
     """Starts fragmented MP4 conversion for MSE playback."""
-    logging.info(f"[Video] Starting FragMP4 conversion: {filepath}")
+    log.info(f"[Video] Starting FragMP4 conversion: {filepath}")
     return {"status": "ok", "details": "Fragmented MP4 stream ready"}
 
 @eel.expose
 def start_spotify_bridge():
     """Starts the Spotify bridge subprocess."""
-    logging.info("[Cast] Starting Spotify Bridge (Librespot)...")
+    log.info("[Cast] Starting Spotify Bridge (Librespot)...")
     return {"status": "ok", "details": "Spotify Bridge active"}
 
 @eel.expose
@@ -7187,7 +7187,7 @@ def batch_remux_to_mkv(folder_path):
                 subprocess.run([mkvmerge_path, "-o", str(output), str(f)], check=True, capture_output=True)
                 count_remuxed += 1
             except Exception as e:
-                logging.error(f"[Remux] Failed for {f.name}: {e}")
+                log.error(f"[Remux] Failed for {f.name}: {e}")
     
     return {"status": "ok", "remuxed_count": count_remuxed}
 
@@ -7649,7 +7649,7 @@ def scan_js_errors():
 
         return {"status": "ok", "findings": findings}
     except Exception as e:
-        logging.error(f"[QA] JS Error Scan failed: {e}")
+        log.error(f"[QA] JS Error Scan failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -7742,7 +7742,7 @@ def check_ui_integrity():
             "orphaned_catches": orphaned_catches
         }
     except Exception as e:
-        logging.error(f"[QA] UI Integrity Check failed: {e}")
+        log.error(f"[QA] UI Integrity Check failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -7753,9 +7753,9 @@ if __name__ == "__main__":
         try:
             eel.sleep(1.0)
         except KeyboardInterrupt:
-            logging.info("[Shutdown] KeyboardInterrupt received. Exiting.")
+            log.info("[Shutdown] KeyboardInterrupt received. Exiting.")
             sys.exit(0)
         except BaseException as e:
-            logging.error(f"[MainLoop] keepalive recovered from base error: {e}")
+            log.error(f"[MainLoop] keepalive recovered from base error: {e}")
             time.sleep(1.0)
 

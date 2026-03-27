@@ -98,10 +98,14 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
     root_logger.setLevel(level)
 
     # Format
-    formatter = logging.Formatter(
-        '%(asctime)s [%(levelname)s] [%(name)s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
+    # In debug mode, we include more technical details (file, line, thread)
+    force_debug = os.environ.get("MWV_DEBUG_FORCE") == "1"
+    if debug_mode or force_debug:
+        format_str = '%(asctime)s [%(levelname).4s] [%(name)s] [%(threadName)s] [%(filename)s:%(lineno)d] %(message)s'
+    else:
+        format_str = '%(asctime)s [%(levelname).4s] [%(name)s] %(message)s'
+
+    formatter = logging.Formatter(format_str, datefmt='%H:%M:%S')
 
     # 1. Console Handler
     console_handler = logging.StreamHandler()
@@ -147,7 +151,10 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
 def get_logger(name: str):
     """
     Returns a logger instance for a specific module.
+    Automatically prefixes with 'app.' to allow global filtering.
     """
+    if name.startswith("src.core."):
+        name = name.replace("src.core.", "")
     return logging.getLogger(f"app.{name}")
 
 

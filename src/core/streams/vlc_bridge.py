@@ -1,10 +1,9 @@
 import subprocess
 import os
-import logging
 import time
 import requests # type: ignore
-
-log = logging.getLogger("streams.vlc_bridge")
+from src.core.logger import get_logger
+log = get_logger("streams.vlc_bridge")
 
 # Global dict to track vlc processes
 VLC_PROCESSES = {}

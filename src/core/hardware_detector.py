@@ -1,14 +1,13 @@
 import os
 import sys
 import subprocess
-import logging
 import shutil
 import platform
+import glob
 from pathlib import Path
 from typing import Any, Dict, List
-import glob
-
-logger = logging.getLogger("hardware_detector")
+from src.core.logger import get_logger
+log = get_logger("hardware_detector")
 
 def is_ssd(device_name: str) -> bool:
     """Check if a device is an SSD (non-rotational)."""

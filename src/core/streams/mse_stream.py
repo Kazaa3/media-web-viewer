@@ -1,11 +1,9 @@
 import subprocess
 import os
-import logging
 import threading
-import time
 from src.core.hardware_detector import get_best_hw_encoder # type: ignore
-
-log = logging.getLogger("streams.mse_stream")
+from src.core.logger import get_logger
+log = get_logger("streams.mse_stream")
 
 from typing import Dict
 # Global dict to track active streaming processes

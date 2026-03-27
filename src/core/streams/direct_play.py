@@ -1,9 +1,8 @@
 import bottle
 import os
-import logging
 from pathlib import Path
-
-log = logging.getLogger("streams.direct_play")
+from src.core.logger import get_logger
+log = get_logger("streams.direct_play")
 
 def handle_direct_play(file_path):
     """

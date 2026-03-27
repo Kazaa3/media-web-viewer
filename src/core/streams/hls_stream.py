@@ -1,10 +1,9 @@
 import subprocess
 import os
-import logging
 import shutil
 from src.core.hardware_detector import get_best_hw_encoder # type: ignore
-
-log = logging.getLogger("streams.hls_stream")
+from src.core.logger import get_logger
+log = get_logger("streams.hls_stream")
 
 from typing import Dict, Any
 # Global dict to track active HLS sessions

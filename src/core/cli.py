@@ -56,30 +56,34 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == 'parse':
         extract = _get_callable_from_module('extract_metadata', 'main')
         if not extract:
-            import logging
-            logging.error('Error: extract_metadata not available')
+            from src.core.logger import get_logger
+            log = get_logger("cli")
+            log.error('Error: extract_metadata not available')
             return 2
         try:
             meta = extract(args.path)
             _write_output(meta, getattr(args, 'output', None))
             return 0
         except Exception as e:
-            import logging
-            logging.error(f'Error during parse: {e}')
+            from src.core.logger import get_logger
+            log = get_logger("cli")
+            log.error(f'Error during parse: {e}')
             return 2
 
     if args.cmd == 'health':
         info = _get_callable_from_module('get_environment_info', 'main')
         if not info:
-            import logging
-            logging.error('Error: get_environment_info not available')
+            from src.core.logger import get_logger
+            log = get_logger("cli")
+            log.error('Error: get_environment_info not available')
             return 2
         try:
             _write_output(info(), None)
             return 0
         except Exception as e:
-            import logging
-            logging.error(f'Error during health: {e}')
+            from src.core.logger import get_logger
+            log = get_logger("cli")
+            log.error(f'Error during health: {e}')
             return 2
 
     if args.cmd == 'logs':
@@ -88,8 +92,9 @@ def main(argv: list[str] | None = None) -> int:
             logger = importlib.import_module('logger')
             get_ui_logs = getattr(logger, 'get_ui_logs')
         except Exception:
-            import logging
-            logging.error('Error: logger.get_ui_logs not available')
+            from src.core.logger import get_logger
+            log = get_logger("cli")
+            log.error('Error: logger.get_ui_logs not available')
             return 2
         logs = get_ui_logs()[: args.limit]
         print('\n'.join(logs))
@@ -102,8 +107,9 @@ def main(argv: list[str] | None = None) -> int:
             _write_output(res, getattr(args, 'output', None))
             return 0
         except Exception as e:
-            import logging
-            logging.error(f'Error running ffprobe: {e}')
+            from src.core.logger import get_logger
+            log = get_logger("cli")
+            log.error(f'Error running ffprobe: {e}')
             return 2
 
     parser.print_help()

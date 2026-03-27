@@ -7,7 +7,8 @@ import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 
-logger = logging.getLogger("transcoder")
+from src.core.logger import get_logger
+log = get_logger("transcoder")
 
 class TranscodeTask:
     def __init__(self, input_path: str, output_path: str, task_type: str, options: Dict[str, Any]):
@@ -71,9 +72,9 @@ class TranscoderManager:
                     
                     # Log to system logger for UI visibility
                     if task.task_type == "handbrake":
-                        logging.info(f"🚀 [HandBrake] {line}")
+                        log.info(f"🚀 [HandBrake] {line}")
                     elif task.task_type == "webm":
-                        logging.info(f"🌐 [WebM] {line}")
+                        log.info(f"🌐 [WebM] {line}")
 
                     progress = self._parse_progress(line, task)
                     if progress is not None:
@@ -91,7 +92,7 @@ class TranscoderManager:
         except Exception as e:
             task.status = "error"
             task.error_message = str(e)
-            logger.error(f"Transcode error: {e}")
+            log.error(f"Transcode error: {e}")
         finally:
             if callback: callback(task_id, task.progress)
 
@@ -148,7 +149,7 @@ class TranscoderManager:
             if result.returncode == 0:
                 task.duration = float(result.stdout.strip())
         except Exception as e:
-            logger.warning(f"Could not get duration for {task.input_path}: {e}")
+            log.warning(f"Could not get duration for {task.input_path}: {e}")
 
     def _parse_progress(self, line: str, task: TranscodeTask) -> Optional[float]:
         if task.task_type == "handbrake":

@@ -8,6 +8,8 @@ Ensures the app runs in a clean, exclusive, and verified virtual environment.
 import sys
 import os
 import logging
+from src.core.logger import get_logger
+log = get_logger("env")
 from pathlib import Path
 from typing import Dict, List, Optional
 import hashlib
@@ -168,18 +170,6 @@ class EnvironmentManager:
         for pkg in missing_apt:
             errors.append(f"Missing critical system binary/package: {pkg}")
             
-        # Check browser binaries (at least one must be present)
-        import shutil
-        if not any(shutil.which(b) for b in BROWSER_BINARIES):
-            errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
-            
-        return errors
-            
-        # Check browser binaries (at least one must be present)
-        import shutil
-        if not any(shutil.which(b) for b in BROWSER_BINARIES):
-            errors.append(f"No suitable browser found (searched for: {', '.join(BROWSER_BINARIES)})")
-            
         return errors
 
     def validate_safe_startup(self):
@@ -188,7 +178,7 @@ class EnvironmentManager:
         """
         header = "Environment Validation"
         if self.is_debug:
-            logging.debug(f"[{header}] Fingerprint: {self.get_environment_fingerprint()}")
+            log.debug(f"[{header}] Fingerprint: {self.get_environment_fingerprint()}")
 
         # 1. Check exclusivity
         if not self.is_exclusive_venv():
@@ -198,7 +188,7 @@ class EnvironmentManager:
                 f"Expected .venv: {self.venv_path}\n"
                 "Please use ./run.sh to start the application."
             )
-            logging.error(f"[{header}] {msg}")
+            log.error(f"[{header}] {msg}")
             # In production, we might want to be strict. For now, we log a warning.
             # print(msg, file=sys.stderr)
             # sys.exit(1)
@@ -206,13 +196,13 @@ class EnvironmentManager:
         # 2. Check dependency integrity
         dep_errors = self.verify_dependencies()
         if dep_errors:
-            logging.error(f"[{header}] Integrity check failed:")
+            log.error(f"[{header}] Integrity check failed:")
             for err in dep_errors:
-                logging.error(f"  - {err}")
+                log.error(f"  - {err}")
             
-            logging.critical("\n❌ CRITICAL: Environment Integrity Check Failed")
+            log.critical("\n❌ CRITICAL: Environment Integrity Check Failed")
             for err in dep_errors:
-                logging.error(f"   - {err}")
+                log.error(f"   - {err}")
             
             fix_cmd = "./run.sh"
             installer_hint = "automatically install all dependencies"
@@ -221,12 +211,12 @@ class EnvironmentManager:
             else:
                 installer_hint += " via pip/apt"
                 
-            logging.error(f"\n   👉 Fix: Run '{fix_cmd}' to {installer_hint}.")
-            logging.error(f"   (Or use '{fix_cmd} --rebuild' to recreate the environment from scratch)")
+            log.error(f"\n   👉 Fix: Run '{fix_cmd}' to {installer_hint}.")
+            log.error(f"   (Or use '{fix_cmd} --rebuild' to recreate the environment from scratch)")
             sys.exit(1)
 
         if self.is_debug:
-            logging.debug(f"[{header}] Status: CLEAN & VERIFIED")
+            log.debug(f"[{header}] Status: CLEAN & VERIFIED")
 
 
 def validate_safe_startup():

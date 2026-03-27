@@ -19,6 +19,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import sqlite3
 import json
+from src.core.logger import get_logger
+log = get_logger("db")
 
 from pathlib import Path
 from typing import Iterable
@@ -110,6 +112,7 @@ def init_db():
     @brief Initializes the SQLite database and creates necessary tables.
     @details Initialisiert die SQLite-Datenbank und erstellt die notwendigen Tabellen.
     """
+    log.info(f"Checking database integrity at {DB_FILENAME}...")
     DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
@@ -193,6 +196,10 @@ def init_db():
             conn.commit()
         except sqlite3.OperationalError:
             pass  # Already exists
+        except Exception as e:
+            log.error(f"Migration error for column {col_name}: {e}")
+
+    log.debug("Database initialization/migration complete.")
 
     conn.commit()
     conn.close()
