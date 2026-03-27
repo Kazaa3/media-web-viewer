@@ -11505,197 +11505,55 @@
                         }
                     }
                 });
+
+                // Centralized seeking logic for all transcode/fragmented streams
+                vjsPlayer.on('seeking', () => {
+                    const newTime = vjsPlayer.currentTime();
+                    const currentSrc = vjsPlayer.src();
+                    // If we are in MSE mode, we might want to hot-reload for faster seeking if backend supports it
+                    if (mode === 'mse') {
+                        console.info("[Video.js] Hot-reloading MSE stream for seek at:", newTime);
+                        // Mode router already handles the URL, we just need to re-query with offset
+                        eel.get_universal_stream_url(filePath, mode, audioIdx, subsIdx, newTime)((newUrl) => {
+                            vjsPlayer.src({ src: newUrl, type: vjsPlayer.currentType() });
+                            vjsPlayer.one('canplay', () => {
+                                vjsPlayer.play();
+                            });
+                        });
+                    }
+                });
             }
 
-            // Set the optimal source
-            let mimeType = (mode === 'hls_fmp4' || mode === 'vlc_bridge') ? "application/x-mpegURL" : "video/mp4";
-            vjsPlayer.src({ src: streamUrl, type: mimeType });
-            
-            if (startTime > 0) {
-                vjsPlayer.resumeTime = startTime;
-            }
-            
-            vjsPlayer.play().catch(err => {
-                console.error("VideoJS Play Error:", err);
-                showToast("❌ Wiedergabefehler: " + mode, 5000);
-            });
-        }
-
-            // Centralized seeking logic for all transcode-style streams
-            vjsPlayer.off('seeking');
-            vjsPlayer.on('seeking', () => {
-                const newTime = vjsPlayer.currentTime();
-                const currentSrc = vjsPlayer.src();
-                if (currentSrc.includes('/stream_transcode') || currentSrc.includes('/video-stream') || currentSrc.includes('/transcode') || currentSrc.includes('/video-remux-stream')) {
-                    console.info("[Video.js] Hot-reloading stream for seek at:", newTime);
-                    const base = currentSrc.split('?')[0];
-                    const newPath = `${base}?filepath=${encodeURIComponent(path)}&ss=${newTime}`;
-                    vjsPlayer.src({ src: newPath, type: vjsPlayer.currentType() });
-                    vjsPlayer.one('canplay', () => {
-                        vjsPlayer.currentTime(newTime);
-                        vjsPlayer.play();
-                    });
-                }
-            });
-
-            vjsPlayer.originalPath = path;
+            // UI Synchronization & Setup
+            vjsPlayer.originalPath = filePath;
             eel.stop_vlc()();
             safeStyle('vlc-info', 'display', 'none');
             hideUnsupportedVideoHint();
-
             if (placeholder) {
                 placeholder.style.setProperty('display', 'none', 'important');
                 placeholder.style.zIndex = '-1';
             }
 
-            const vjsWrapper = video.closest('.video-js');
-            if (vjsWrapper) {
-                vjsWrapper.style.display = 'block';
-                vjsWrapper.style.width = '100%';
-                vjsWrapper.style.zIndex = '50';
-            }
-
-            video.style.display = 'block';
-            video.style.visibility = 'visible';
-            video.style.opacity = '1';
-            video.style.zIndex = '10';
-
-            let finalPath = path;
-            if (path && (path.includes('/stream_transcode') || path.includes('/video-stream') || path.includes('/transcode') || path.includes('/video-remux-stream'))) {
-                const url = new URL(path.includes('://') ? path : 'http://localhost' + path);
-                url.searchParams.set('audio_idx', audioIdx);
-                if (subsIdx !== null) url.searchParams.set('subs_idx', subsIdx);
-                else url.searchParams.delete('subs_idx');
-                finalPath = url.pathname + url.search;
-            }
-
-            // --- Stats Loop Init ---
-            if (!window._statsLoopStarted) {
-                window._statsLoopStarted = true;
-                let lastRAF = performance.now();
-                let frames = 0;
-                const updateMetrics = () => {
-                    if (!vjsPlayer || vjsPlayer.paused()) {
-                        requestAnimationFrame(updateMetrics);
-                        return;
-                    }
-                    
-                    frames++;
-                    const now = performance.now();
-                    if (now - lastRAF >= 1000) {
-                        window._vjs_fps = frames;
-                        frames = 0;
-                        lastRAF = now;
-                    }
-
-                    try {
-                        const tech = vjsPlayer.tech({ IWillNotUseThisInPlugins: 'yet' });
-                        window._vjs_bitrate = (tech && tech.vhs && tech.vhs.stats && tech.vhs.stats.bandwidth) ? (tech.vhs.stats.bandwidth / 1000) : 0;
-                        
-                        const videoNode = document.getElementById('native-html5-video-resource-node_html5_api');
-                        if (videoNode && videoNode.buffered.length) {
-                            window._vjs_buffer = (videoNode.buffered.end(0) - videoNode.currentTime).toFixed(1);
-                            window._vjs_dropped = videoNode.getVideoPlaybackQuality ? videoNode.getVideoPlaybackQuality().droppedVideoFrames : 0;
-                        }
-                    } catch(e) {}
-
-                    requestAnimationFrame(updateMetrics);
-                };
-                updateMetrics();
-            }
-
-            let finalType = type || 'video/mp4';
-            if (!type && path) {
-                const lower = path.toLowerCase();
-                if (lower.endsWith('.mkv')) finalType = 'video/x-matroska';
-                else if (lower.endsWith('.webm')) finalType = 'video/webm';
-                else if (lower.endsWith('.mp4')) finalType = 'video/mp4';
-                else if (lower.endsWith('.ogv')) finalType = 'video/ogg';
-            }
-
-            console.info("[Video.js] Setting source:", finalPath, "Type:", finalType);
-            vjsPlayer.src({ src: finalPath, type: finalType });
+            // Source Assignment
+            let mimeType = (mode === 'hls_fmp4' || mode === 'vlc_bridge') ? "application/x-mpegURL" : "video/mp4";
+            vjsPlayer.src({ src: streamUrl, type: mimeType });
             
-            if (!vjsPlayer.getChild('VisualStatsOverlay')) {
-                vjsPlayer.addChild('VisualStatsOverlay');
-            }
+            if (startTime > 0) vjsPlayer.resumeTime = startTime;
 
-            // Create settings panel if missing
-            if (!document.getElementById('vjs-settings-panel')) {
-                const panel = document.createElement('div');
-                panel.id = 'vjs-settings-panel';
-                vjsPlayer.el().appendChild(panel);
-            }
-
-            // Fetch tracks for the menu if not already loaded for this path
-            if (vjsPlayer.lastProbedPath !== path) {
-                vjsPlayer.lastProbedPath = path;
-                eel.get_media_tracks(path)((tracks) => {
+            // Stats Loop & Track Probing
+            if (vjsPlayer.lastProbedPath !== filePath) {
+                vjsPlayer.lastProbedPath = filePath;
+                eel.get_media_tracks(filePath)((tracks) => {
                     currentVideoTracks = tracks || { audio: [], subtitles: [] };
-                    // Re-calculate menus
-                    if (vjsPlayer.controlBar.getChild('AudioTrackMenuButton')) {
-                        vjsPlayer.controlBar.getChild('AudioTrackMenuButton').update();
-                    }
-                    if (vjsPlayer.controlBar.getChild('SubtitleTrackMenuButton')) {
-                        vjsPlayer.controlBar.getChild('SubtitleTrackMenuButton').update();
-                    }
-                    // Refresh Settings Panel if active
-                    const panel = document.getElementById('vjs-settings-panel');
-                    if(panel && panel.classList.contains('active')) {
-                        updateSettingsPanel();
-                    }
+                    if (vjsPlayer.controlBar.getChild('AudioTrackMenuButton')) vjsPlayer.controlBar.getChild('AudioTrackMenuButton').update();
+                    if (vjsPlayer.controlBar.getChild('SubtitleTrackMenuButton')) vjsPlayer.controlBar.getChild('SubtitleTrackMenuButton').update();
                 });
-            }
-
-            // Restore position
-            const seekTime = (item && item.playback_position) || 0;
-            if (seekTime > 0) {
-                const restoreSeek = () => {
-                    if (Math.abs(vjsPlayer.currentTime() - seekTime) > 1) {
-                        vjsPlayer.currentTime(seekTime);
-                    }
-                };
-                vjsPlayer.one('canplay', restoreSeek);
-                setTimeout(restoreSeek, 2000);
-            }
-
-            // Stubborn duration override
-            if (durationSec && durationSec > 0) {
-                const targetDuration = parseFloat(durationSec);
-                const applyOverride = () => {
-                    vjsPlayer.duration = function () { return targetDuration; };
-                    vjsPlayer.trigger('durationchange');
-                };
-                vjsPlayer.on('loadedmetadata', applyOverride);
-                vjsPlayer.on('durationchange', () => {
-                    if (Math.abs(vjsPlayer.duration() - targetDuration) > 1) applyOverride();
-                });
-                vjsPlayer.on('progress', () => {
-                    if (vjsPlayer.duration() < targetDuration * 0.9) applyOverride();
-                });
-                applyOverride();
-            } else {
-                delete vjsPlayer.duration;
             }
 
             vjsPlayer.ready(() => {
-                setTimeout(() => {
-                    const vjsWrapper = video.closest('.video-js');
-                    if (vjsWrapper) {
-                        vjsWrapper.style.visibility = 'visible';
-                        vjsWrapper.style.opacity = '1';
-                        vjsWrapper.style.display = 'block';
-                    }
-                    if (placeholder) {
-                        placeholder.style.setProperty('display', 'none', 'important');
-                        placeholder.style.visibility = 'hidden';
-                    }
-                    vjsPlayer.trigger('resize');
-                }, 150);
-
-                vjsPlayer.play().catch(e => {
-                    console.warn("Video.js playback failed:", e);
-                    if (typeof onErrorCallback === 'function') onErrorCallback();
+                vjsPlayer.play().catch(err => {
+                    console.error("VideoJS Play Error:", err);
+                    showToast("❌ Wiedergabefehler: " + mode, 5000);
                 });
             });
         }

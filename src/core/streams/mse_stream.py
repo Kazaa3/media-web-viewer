@@ -3,7 +3,7 @@ import logging
 import bottle
 import time
 from .utils import get_best_ffmpeg_encoder, get_base_ffmpeg_args, get_video_filter
-from src.core.ffprobe_analyzer import ffprobe_analyze
+from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
 
 # Specialized logger
 log = logging.getLogger("streams.mse")

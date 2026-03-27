@@ -119,8 +119,8 @@ from src.parsers import tag_writer  # type: ignore
 from src.core import hardware_detector  # type: ignore
 from src.core import transcoder         # type: ignore
 from src.core import db                 # type: ignore
-from src.core.mode_router import smart_route
-from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
+from src.core.mode_router import smart_route    # type: ignore
+from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge # type: ignore
 
 # Force expose the router and streaming engine
 eel.expose(smart_route)
@@ -6741,96 +6741,6 @@ if __name__ == "__main__":
         log.info(f"[Transcode-Route] Streaming: {p} (Audio:{audio_idx}, Subs:{subs_idx}, Seek:{start_time})")
         # Use modular MSE stream
         return mse_stream.stream_mse(p, audio_idx, subs_idx, start_time)
-        vf = []
-        scan = analysis.get("scan_type", "progressive").lower()
-        height = int(analysis.get("height", 0))
-        size_bytes = p.stat().st_size if p.exists() else 0
-        
-        if height == 0:
-             size_gb = size_bytes / (1024**3)
-             if size_gb > 30: height = 2160
-             elif size_gb > 2: height = 1080
-             else: height = 480
-
-        is_hd = height >= 720
-        is_4k = height >= 2160
-
-        if (scan != "progressive" or p.suffix.lower() == ".iso") and not is_4k:
-             vf.append("yadif=0:-1:0")
-
-        # Subtitle Burning (Hard-code for fragmented streaming reliability)
-        if subs_idx is not None and subs_idx.isdigit():
-            # Use FFmpeg subtitles filter: subtitles='path/to/file':si=N
-            # si index is 0-based within subtitle streams.
-            esc_path = str(p).replace("\\", "/").replace(":", "\\:")
-            vf.append(f"subtitles='{esc_path}':si={subs_idx}")
-        
-        encoder = get_best_ffmpeg_encoder()
-        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
-        if encoder == "h264_vaapi": cmd += ["-vaapi_device", "/dev/dri/renderD128"]
-            
-        input_src = str(p)
-        if p.suffix.lower() == ".iso" and p.stat().st_size > 10 * 1024**3:
-            input_src = f"bluray:{p}"
-            
-        if float(start_time) > 0:
-            cmd += ["-ss", start_time]
-            cmd += ["-output_ts_offset", start_time]
-            
-        cmd += ["-i", input_src]
-        
-        # --- Mapping ---
-        # Map first video stream, selected audio stream
-        cmd += ["-map", "0:v:0", "-map", f"0:a:{audio_idx}"]
-        
-        if is_4k: max_rate, buf_size = "15M", "30M"
-        elif is_hd: max_rate, buf_size = "8M", "16M"
-        else: max_rate, buf_size = "4M", "8M"
-
-        if encoder == "h264_vaapi":
-            vf.insert(0, "format=nv12,hwupload")
-            cmd += ["-vf", ",".join(vf)]
-            v_rate = "12M" if is_4k else "6M"
-            cmd += ["-c:v", "h264_vaapi", "-b:v", v_rate, "-maxrate", v_rate, "-hwaccel_output_format", "vaapi"]
-            if is_4k: cmd += ["-level", "5.1"]
-            else: cmd += ["-level", "4.1"]
-        elif encoder == "h264_nvenc":
-            if vf: cmd += ["-vf", ",".join(vf)]
-            cmd += ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "hq", "-rc", "vbr", "-cq", "24", 
-                    "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
-        else:
-            if vf: cmd += ["-vf", ",".join(vf)]
-            cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-tune", "zerolatency", 
-                    "-crf", "25", "-maxrate", max_rate, "-bufsize", buf_size, "-profile:v", "high"]
-            if is_4k: cmd += ["-level", "5.1"]
-            else: cmd += ["-level", "4.1"]
-            
-        cmd += [
-            "-c:a", "aac", "-b:a", "128k", "-ac", "2",
-            "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-            "pipe:1"
-        ]
-        
-        log.info(f"[Transcode] Launch: {' '.join(cmd)}")
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        bottle.response.content_type = 'video/mp4'
-        def stream():
-            try:
-                p_stdout = process.stdout
-                p_stderr = process.stderr
-                if p_stdout is None or p_stderr is None: return
-                while True:
-                    data = p_stdout.read(1024 * 64)
-                    if not data:
-                        if process.poll() is not None and process.returncode != 0:
-                            err = p_stderr.read().decode(errors='replace')
-                            log.error(f"[Transcode] FFmpeg crashed: {err}")
-                        break
-                    yield data
-            except Exception as e: log.error(f"[Transcode] Stream error: {e}")
-            finally:
-                if process.poll() is None: process.terminate()
-        return stream()
     
     # --- MPV WASM Security & Streaming ---
     @bottle.hook('after_request')

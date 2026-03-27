@@ -1,5 +1,5 @@
 import logging
-from .ffprobe_analyzer import ffprobe_analyze
+from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
 
 # Specialized logger
 log = logging.getLogger("mode_router")
