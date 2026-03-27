@@ -1,5 +1,37 @@
 ---
 
+# Test Suite Expansion & Consolidation
+
+## Advanced Mocking (Items Suite)
+- Implemented Level 8: Transcode Logic (ALAC/WMA)
+- Implemented Level 9: Duration H:M:S Formatting
+- Implemented Level 10: Category to TypeToken Mapping
+- Implemented Level 11: Multi-Track ffprobe Resolution
+
+## Stress & Load Testing (Ultimate Suite)
+- Implemented Level 29: Transcoding Stress (Concurrent Popen Mocks)
+- Successfully verified all 29 Ultimate levels
+
+## Video Player Diagnostic Suite
+- Implemented Level 1: Seeking Injection Verification
+- Implemented Level 2: Session Lifecycle Management
+- Implemented Level 3: HW Acceleration Propagation
+- Implemented Level 4: VLC Bridge Logic Audit
+- Implemented Level 5: Seeking Precision (Float Math)
+
+## Legacy Test Modernization
+- **Integrity Suite:** Live MKV, MP3, and Artwork Extraction
+- **Network Suite:** Live Eel/Bottle Server & Static Servicing
+- **Quality Suite:** Eel API Alignment & HTML Sanity Audit
+
+## Workspace Cleanup
+- Relocated `parsers_deprecated/` to `tests/legacy/`
+- Moved `folders.txt` and root `media_library.db` to `tests/resources/`
+
+## Master Verification
+- All new and modernized suites are passing and integrated into the unified test architecture.
+---
+
 # Advanced Test Suite Overview & Documentation Consolidation
 
 ## Progress Updates

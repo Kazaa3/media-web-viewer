@@ -13,6 +13,9 @@ try:
     from tests.engines.suite_env import EnvSuiteEngine
     from tests.engines.suite_database import DatabaseSuiteEngine
     from tests.engines.suite_player import PlayerSuiteEngine
+    from tests.engines.suite_media_integrity import MediaIntegritySuiteEngine
+    from tests.engines.suite_network import NetworkIntegrationSuiteEngine
+    from tests.engines.suite_quality import CodeQualitySuiteEngine
 except ImportError:
     from engines.suite_ultimate import UltimateSuiteEngine
     from engines.suite_items import ItemsSuiteEngine
@@ -20,6 +23,9 @@ except ImportError:
     from engines.suite_env import EnvSuiteEngine
     from engines.suite_database import DatabaseSuiteEngine
     from engines.suite_player import PlayerSuiteEngine
+    from engines.suite_media_integrity import MediaIntegritySuiteEngine
+    from engines.suite_network import NetworkIntegrationSuiteEngine
+    from engines.suite_quality import CodeQualitySuiteEngine
 
 # Diagnostic Base
 try:
@@ -38,6 +44,9 @@ def run_master_diagnostic():
     EnvSuiteEngine().run_all()
     DatabaseSuiteEngine().run_all()
     PlayerSuiteEngine().run_all()
+    MediaIntegritySuiteEngine().run_all()
+    NetworkIntegrationSuiteEngine().run_all()
+    CodeQualitySuiteEngine().run_all()
     
     print("\n" + "="*60)
     print("MASTER DIAGNOSTIC COMPLETE")

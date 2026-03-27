@@ -25,10 +25,15 @@ The testing framework is divided into five specialized **Diagnostic Engines**:
    - **Coverage**: Multi-dependency audits (9 core pkgs) and deployment asset verification.
 6. **Player Suite** (`tests/engines/suite_player.py`):
    - **Coverage**: Seeking accuracy, playback session lifecycle, and hardware acceleration integration.
-   - **Key Levels**: Seeking Injection (L01), Session Termination (L02), Float-Based Precision Seeking (L05).
+7. **Integrity Suite** (`tests/engines/suite_media_integrity.py`):
+   - **Coverage**: Live media parsing (MKV), ID3 tag sync (Mutagen), and artwork extraction.
+8. **Network Suite** (`tests/engines/suite_network.py`):
+   - **Coverage**: Live Eel/Bottle server responsiveness, ping/pong, and static file serving.
+9. **Quality Suite** (`tests/engines/suite_quality.py`):
+   - **Coverage**: Eel API alignment (Frontend vs Backend) and HTML structural sanity audits.
 
 ## 📂 Directory Structure
-- `engines/`: Core modular diagnostic engines (6 specialized engines).
+- `engines/`: Core modular diagnostic engines (9 specialized engines).
 - `functional/`: Standalone validation tools (Environment, Performance, Headers).
 - `resources/`: Mock files, reference screenshots, and test databases.
 - `unit/`: Granular unit tests for core libraries (Eel, FFmpeg, CRUD).
