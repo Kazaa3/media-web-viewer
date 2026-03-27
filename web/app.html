@@ -10932,6 +10932,8 @@
         let currentVideoTracks = { audio: [], subtitles: [] };
         let currentAudioIdx = 0;
         let currentSubsIdx = null;
+        let currentPlaybackEngine = "Video.js (Premium UI)";
+        let currentPlaybackProtocol = "Direct Play";
 
         // --- Visual Stats Overlay Component ---
         class VisualStatsOverlay extends vjsComponent {
@@ -10961,6 +10963,9 @@
                     <div class="stats-row"><span>Bitrate</span><span class="stats-val">${Math.round(br)} kbps</span></div>
                     <div class="stats-row"><span>Buffer</span><span class="stats-val">${buf}s</span></div>
                     <div class="stats-row"><span>Dropped</span><span class="stats-val">${dropped}</span></div>
+                    <div style="margin-top:10px;" class="stats-header">ENGINE DETAILS</div>
+                    <div class="stats-row"><span>Engine</span><span class="stats-val">${currentPlaybackEngine}</span></div>
+                    <div class="stats-row"><span>Protocol</span><span class="stats-val">${currentPlaybackProtocol}</span></div>
                 `;
             }
         }
@@ -11310,6 +11315,18 @@
         function startEmbeddedVideo(item, path, onErrorCallback = null, type = null, durationSec = null, audioIdx = 0, subsIdx = null) {
             const video = document.getElementById('native-html5-video-resource-node');
             const placeholder = document.getElementById('idle-state-media-icon-symbol');
+
+            // Metadata Transparency
+            if (path.includes('remux_stream')) {
+                currentPlaybackProtocol = "FFmpeg HLS Remux";
+                currentPlaybackEngine = "MSE / Video.js";
+            } else if (path.includes('transcode_stream') || path.includes('/transcode')) {
+                currentPlaybackProtocol = "FFmpeg WebM Transcode";
+                currentPlaybackEngine = "Direct / Video.js";
+            } else {
+                currentPlaybackProtocol = "Direct / Native Engine";
+                currentPlaybackEngine = "Video.js";
+            }
 
             if (!vjsPlayer) {
                 vjsPlayer = videojs('native-html5-video-resource-node', {

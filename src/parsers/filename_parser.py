@@ -55,7 +55,7 @@ def parse(
     working_filename = filename
     
     # 1. Clean common media suffixes/junk (e.g. "- br", "- bd", "[4K]")
-    media_junk_pattern = re.compile(r'\s*-\s*(?:br|bd|dvd|blu-ray|bluray|uhd|4k|1080p|720p|sd|web-dl|hdtv|x264|x265|hevc)\b', re.IGNORECASE)
+    media_junk_pattern = re.compile(r'\s*-\s*(?:br|bd|dvd|blu-ray|bluray|uhd|4k|1080p|720p|sd|hdtv|x264|x265|hevc)\b', re.IGNORECASE)
     working_filename = media_junk_pattern.sub('', working_filename).strip()
     
     # Extract [Edition] or other bracketed info
