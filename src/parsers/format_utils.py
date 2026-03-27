@@ -832,7 +832,7 @@ def is_chrome_native(ext: str, codec: str = "") -> bool:
     """
     Returns True if both extension and codec are natively supported by Chrome.
     """
-    native_exts = {'.mp4', '.webm', '.ogv', '.mp3', '.wav', '.ogg', '.m4a', '.flac'}
+    native_exts = {'.mp4', '.mkv', '.webm', '.ogv', '.mp3', '.wav', '.ogg', '.m4a', '.flac'}
     ext_ok = (ext or "").lower() in native_exts
     
     if not codec:
@@ -857,7 +857,7 @@ def is_direct_play_capable(path: Path | str, client: str = 'browser') -> bool:
     ext = p.suffix.lower()
     
     # Fast check by extension first
-    if ext not in {'.mp4', '.webm', '.mp3', '.ogg', '.wav', '.flac', '.m4a'}:
+    if ext not in {'.mp4', '.mkv', '.webm', '.mp3', '.ogg', '.wav', '.flac', '.m4a'}:
         return False
         
     # Deep check with ffprobe if needed (optional optimization: cache this)
