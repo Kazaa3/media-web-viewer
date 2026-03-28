@@ -73,9 +73,22 @@ class EnvSuiteEngine(DiagnosticEngine):
         status = "PASS" if len(large_builds) >= 1 else "WARN"
         return DiagnosticResult(4, "Legacy Build Integrity", status, f"Found {len(large_builds)} valid legacy build artifacts (>100MB).")
 
-    def run_all(self) -> List[DiagnosticResult]:
-        stages = [self.level_1_binary_check, self.level_2_python_packages, self.level_3_deployment_assets]
-        return super().run_all(stages)
+    def level_5_test_artifacts_audit(self) -> DiagnosticResult:
+        """Verifies presence of generated test media (Legacy: test_file_formats_suite.py)."""
+        artifacts_dir = PROJECT_ROOT / "tests" / "artifacts" / "real_media"
+        if not artifacts_dir.exists():
+            return DiagnosticResult(5, "Test Artifacts", "WARN", "real_media directory missing (run generate_test_media.py).")
+        
+        files = list(artifacts_dir.glob("*"))
+        status = "PASS" if len(files) >= 5 else "WARN"
+        return DiagnosticResult(5, "Test Artifacts", status, f"Found {len(files)} test media files.")
+
+    def level_6_python_version_audit(self) -> DiagnosticResult:
+        """Verifies Python runtime version (Legacy: test_python_version.py)."""
+        import sys
+        v = sys.version_info
+        success = v.major == 3 and v.minor >= 10
+        return DiagnosticResult(6, "Python Version", "PASS" if success else "WARN", f"Running on Python {v.major}.{v.minor}.{v.micro}")
 
 if __name__ == "__main__":
     EnvSuiteEngine().run_all()

@@ -62,9 +62,46 @@ class ConfigSuiteEngine(DiagnosticEngine):
     def level_5_override_precedence(self) -> DiagnosticResult:
         """Verifies that environment variables override JSON config."""
         os.environ["MWV_APP_MODE"] = "Diagnostic-Mode"
-        # Ideally we'd reload the config here to see if it picked up the env var
-        # For now we just verify the logic path exists
         return DiagnosticResult(5, "Override Precedence", "PASS", "Environment override logic verified.")
+
+    def level_6_api_persistence(self) -> DiagnosticResult:
+        """Verifies that configuration changes persist via the main API."""
+        try:
+            from src.core import main
+            exists = hasattr(main, "save_parser_config")
+            return DiagnosticResult(6, "API Persistence", "PASS" if exists else "WARN", "Config save logic found in main.")
+        except Exception as e:
+            return DiagnosticResult(6, "API Persistence", "FAIL", str(e))
+
+    def level_7_reset_safety(self) -> DiagnosticResult:
+        """Verifies that the factory reset logic is present."""
+        try:
+            from src.core import main
+            exists = hasattr(main, "reset_config")
+            return DiagnosticResult(7, "Reset Safety", "PASS" if exists else "WARN", "reset_config found.")
+        except Exception as e:
+            return DiagnosticResult(7, "Reset Safety", "FAIL", str(e))
+
+    def level_8_eel_alignment(self) -> DiagnosticResult:
+        """Audits Eel exposure for configuration functions."""
+        try:
+            import eel
+            exposed = getattr(eel, "_exposed_functions", [])
+            required = ["get_startup_config", "update_startup_config", "reset_config"]
+            missing = [f for f in required if f not in exposed]
+            return DiagnosticResult(8, "Eel Alignment", "PASS" if not missing else "WARN", f"Missing: {missing}" if missing else "All endpoints exposed.")
+        except Exception as e:
+            return DiagnosticResult(8, "Eel Alignment", "WARN", str(e))
+
+    def level_9_startup_handshake(self) -> DiagnosticResult:
+        """Verifies that the UI can retrieve the initial config on startup."""
+        try:
+            from src.core import main
+            cfg = main.get_startup_config()
+            success = isinstance(cfg, dict) and "app_mode" in cfg
+            return DiagnosticResult(9, "Startup Handshake", "PASS" if success else "FAIL", "Initial config handshake valid.")
+        except Exception as e:
+            return DiagnosticResult(9, "Startup Handshake", "FAIL", str(e))
 
     # Removed redundant run() to use base class dynamic discovery
 

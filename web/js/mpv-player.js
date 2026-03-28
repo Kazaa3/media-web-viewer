@@ -1,6 +1,13 @@
 /**
- * MpvWasmPlayer – Frontend Bridge for libmpv via WASM (libmpv zu Canvas)
- * Handles initialization, file loading, and event bridging for interactive ISO playback.
+ * @file mpv-player.js
+ * @brief Frontend Bridge for libmpv via WASM (libmpv zu Canvas)
+ * @details Handles initialization, file loading, and event bridging for interactive ISO playback.
+ * 
+ * [AI-READINESS: High Level Context]
+ * This module provides a high-performance WASM-to-Canvas bridge for libmpv.
+ * Core Class: MpvWasmPlayer
+ * Main Entry: window.mpvPlayer.play(filePath)
+ * Complexity: High (WASM Memory Management & Event Bridging)
  */
 
 class MpvWasmPlayer {
@@ -46,7 +53,7 @@ class MpvWasmPlayer {
             console.log("[MPV-WASM] libmpv successfully initialized.");
         } catch (err) {
             console.error("[MPV-WASM] Initialization failed:", err);
-            showToast("❌ MPV WASM Init Fehler (Fehlende Binaries?)", 5000);
+            showToast("<svg width='14' height='14' style='vertical-align:middle;margin-right:4px;'><use href='#icon-delete'></use></svg> MPV WASM Init Fehler (Fehlende Binaries?)", 5000);
             throw err;
         }
     }

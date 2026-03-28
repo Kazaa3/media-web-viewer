@@ -8,7 +8,7 @@ window.VideoTestSuite = (function() {
     const results = [];
     
     async function runAllTests() {
-        console.info("🧪 [VideoTestSuite] Starting Automated JS Batch...");
+        console.info("<svg width='12' height='12'><use href='#icon-test'></use></svg> [VideoTestSuite] Starting Automated JS Batch...");
         results.length = 0; // Clear
         
         // 1. Check Video.js Presence
@@ -41,7 +41,7 @@ window.VideoTestSuite = (function() {
             logResult("Playback: MSE Remux", false, e.message);
         }
 
-        console.info("🧪 [VideoTestSuite] Finalizing results...");
+        console.info("<svg width='12' height='12'><use href='#icon-test'></use></svg> [VideoTestSuite] Finalizing results...");
         displayResults();
     }
 
@@ -80,8 +80,9 @@ window.VideoTestSuite = (function() {
     }
 
     function logResult(testName, success, message = "") {
-        console.log(`${success ? '✅' : '❌'} [VideoTestSuite] ${testName}: ${message}`);
-        results.push({ name: testName, success, message, time: new Date().toLocaleTimeString() });
+        const icon = success ? "<svg width='12' height='12'><use href='#icon-save'></use></svg>" : "<svg width='12' height='12'><use href='#icon-delete'></use></svg>";
+        console.log(`${icon} [VideoTestSuite] ${testName}: ${message}`);
+        results.push({ name: testName, success, message, icon, time: new Date().toLocaleTimeString() });
     }
 
     function displayResults() {
@@ -90,10 +91,10 @@ window.VideoTestSuite = (function() {
         div.className = 'test-suite-summary-overlay';
         div.style = "position:fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 12px; z-index: 9999; border: 1px solid #00f0ff; max-width: 400px; font-family: 'Inter', sans-serif; box-shadow: 0 0 20px rgba(0,240,255,0.3);";
         
-        let html = `<h2 style="margin-top:0; color:#00f0ff; display:flex; justify-content:space-between;">🧪 Test Suite <span>${results.filter(r => r.success).length}/${results.length}</span></h2><hr style="border:0; border-top:1px solid #333;">`;
+        let html = `<h2 style="margin-top:0; color:#00f0ff; display:flex; justify-content:space-between;"><svg width='20' height='20'><use href='#icon-test'></use></svg> Test Suite <span>${results.filter(r => r.success).length}/${results.length}</span></h2><hr style="border:0; border-top:1px solid #333;">`;
         results.forEach(r => {
             html += `<div style="margin: 8px 0; display:flex; justify-content:space-between;">
-                        <span style="${r.success ? 'color:#00ff88' : 'color:#ff4444'}">${r.success ? '✅' : '❌'} ${r.name}</span>
+                        <span style="${r.success ? 'color:#00ff88' : 'color:#ff4444'}">${r.icon} ${r.name}</span>
                         <small style="opacity:0.6;">${r.time}</small>
                      </div>`;
             if (r.message && !r.success) {

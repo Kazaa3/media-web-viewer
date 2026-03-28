@@ -6627,20 +6627,43 @@ def get_media_tracks(filepath):
 
 
 @eel.expose
-def get_benchmark_results():
-    """Returns stored playback benchmarks for the reporting dashboard."""
+def extract_subtitle(filepath, track_index):
+    """Extracts a specific subtitle track to a temp file."""
     try:
-        bench_file = PROJECT_ROOT / "benchmarks.json"
-        if bench_file.exists():
-            data = json.loads(bench_file.read_text(encoding='utf-8'))
-            # Normalize: if it's a dict of results, wrap it as a single 'run' for history log
-            if isinstance(data, dict) and "timestamp" not in data:
-                 return [{"timestamp": time.time(), "results": data}]
-            return data
-        return []
+        from src.core.subtitle_processor import SubtitleProcessor
+        filename = f"{Path(filepath).stem}_track{track_index}.srt"
+        output_path = str(PROJECT_ROOT / "cache" / filename)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        success = SubtitleProcessor.extract_track(filepath, track_index, output_path)
+        if success:
+            return {"status": "ok", "path": output_path, "filename": filename}
+        return {"status": "error", "message": "Extraction failed"}
     except Exception as e:
-        log.error(f"Failed to read benchmarks: {e}")
-        return []
+        log.error(f"Error extracting subtitle: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def adjust_subtitle_timing(subtitle_path, offset_ms):
+    """Adjusts the timing of a subtitle file."""
+    try:
+        from src.core.subtitle_processor import SubtitleProcessor
+        success = SubtitleProcessor.adjust_timing(subtitle_path, int(offset_ms))
+        if success:
+            return {"status": "ok"}
+        return {"status": "error", "message": "Adjustment failed"}
+    except Exception as e:
+        log.error(f"Error adjusting subtitle timing: {e}")
+        return {"status": "error", "message": str(e)}
+
+@eel.expose
+def get_subtitle_info(subtitle_path):
+    """Returns metadata about a subtitle file."""
+    try:
+        from src.core.subtitle_processor import SubtitleProcessor
+        return SubtitleProcessor.get_info(subtitle_path)
+    except Exception as e:
+        return {"error": str(e)}
 
 @eel.expose
 def get_parser_stats():

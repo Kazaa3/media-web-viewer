@@ -109,13 +109,46 @@ class MediaIntegritySuiteEngine(DiagnosticEngine):
             if temp_file.exists(): temp_file.unlink()
             if temp_img.exists(): temp_img.unlink()
 
-    def run_all(self, stages: List[Any] = None) -> List[DiagnosticResult]:
-        if not stages:
-            stages = [
-                self.level_1_live_mkv_parse, self.level_2_mutagen_id3_sync,
-                self.level_3_artwork_extraction
+    def level_4_registry_audit(self) -> DiagnosticResult:
+        """Verifies completeness of the media extension registry."""
+        try:
+            from src.parsers.format_utils import (
+                AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
+                EBOOK_EXTENSIONS, DOCUMENT_EXTENSIONS, IMAGE_EXTENSIONS
+            )
+            stats = [
+                len(AUDIO_EXTENSIONS), len(VIDEO_EXTENSIONS), len(DISK_IMAGE_EXTENSIONS),
+                len(EBOOK_EXTENSIONS), len(DOCUMENT_EXTENSIONS), len(IMAGE_EXTENSIONS)
             ]
-        return super().run_all(stages)
+            total = sum(stats)
+            if total < 50:
+                 return DiagnosticResult(4, "Registry Audit", "FAIL", f"Registry too small: {total} extensions.")
+            return DiagnosticResult(4, "Registry Audit", "PASS", f"Verified {total} extensions across 6 categories.")
+        except Exception as e:
+            return DiagnosticResult(4, "Registry Audit", "FAIL", str(e))
+
+    def level_5_categorization_logic(self) -> DiagnosticResult:
+        """Verifies category detection logic (Legacy: test_file_formats_suite.py)."""
+        try:
+            from src.parsers.format_utils import detect_file_format
+            tests = [
+                ("movie.mkv", "MKV"),
+                ("song.flac", "FLAC"),
+                ("doc.pdf", "PDF"),
+                ("disc.iso", "ISO"),
+                ("book.epub", "EPUB")
+            ]
+            failures = []
+            for filename, expected in tests:
+                res = detect_file_format(filename)
+                if res != expected:
+                    failures.append(f"{filename}->{res}")
+            
+            if failures:
+                return DiagnosticResult(5, "Categorization Logic", "FAIL", f"Mismatches: {failures}")
+            return DiagnosticResult(5, "Categorization Logic", "PASS", "Extension-to-category mapping verified.")
+        except Exception as e:
+            return DiagnosticResult(5, "Categorization Logic", "FAIL", str(e))
 
 if __name__ == "__main__":
     MediaIntegritySuiteEngine().run_all()

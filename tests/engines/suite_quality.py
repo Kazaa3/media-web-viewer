@@ -73,10 +73,39 @@ class CodeQualitySuiteEngine(DiagnosticEngine):
         return DiagnosticResult(3, "Tab Audit", "PASS" if success else "WARN", 
                                 f"Missing Tab IDs: {missing_tabs}" if not success else f"Verified {len(tab_calls)} tab definitions.")
 
-    def run_all(self, stages: List[Any] = None) -> List[DiagnosticResult]:
-        if not stages:
-            stages = [self.level_1_eel_api_alignment, self.level_2_html_sanity, self.level_3_tab_existence_audit]
-        return super().run_all(stages)
+    def level_4_subprocess_safety(self) -> DiagnosticResult:
+        """Audits subprocess tracking and cleanup (Legacy: test_subprocess_safety_stage5.py)."""
+        main_py = PROJECT_ROOT / "src" / "core" / "main.py"
+        if not main_py.exists(): return DiagnosticResult(4, "Subprocess Safety", "FAIL", "main.py missing.")
+        
+        with open(main_py, 'r', encoding='utf-8') as f: content = f.read()
+        
+        has_tracking = "ACTIVE_SUBPROCESSES = []" in content or "ACTIVE_SUBPROCESSES.append" in content
+        has_cleanup = "terminate()" in content or "cleanup_subprocesses" in content
+        
+        status = "PASS" if (has_tracking and has_cleanup) else "WARN"
+        return DiagnosticResult(4, "Subprocess Safety", status, 
+                                f"Tracking: {has_tracking}, Cleanup: {has_cleanup}")
+
+    def level_5_linting_readiness(self) -> DiagnosticResult:
+        """Verifies presence of modern linting configurations (Legacy: test_ruff.py)."""
+        configs = [".ruff.toml", "pyproject.toml", ".flake8", "mypy.ini"]
+        present = [c for c in configs if (PROJECT_ROOT / c).exists()]
+        return DiagnosticResult(5, "Linting Readiness", "PASS" if present else "WARN", f"Found configs: {present}")
+
+    def level_6_type_safety_markers(self) -> DiagnosticResult:
+        """Verifies type hint participation in core modules (Legacy: test_mypy.py)."""
+        core_files = list((PROJECT_ROOT / "src" / "core").glob("*.py"))
+        if not core_files: return DiagnosticResult(6, "Type Safety", "SKIP", "No core files.")
+        
+        # Sample check for '->' or ':' in first few files
+        hints_found = 0
+        for f in core_files[:3]:
+            with open(f, 'r', encoding='utf-8') as content:
+                if "->" in content.read(): hints_found += 1
+        
+        return DiagnosticResult(6, "Type Safety", "PASS" if hints_found > 0 else "WARN", 
+                                f"Type hints detected in {hints_found}/3 sampled core files.")
 
 if __name__ == "__main__":
     CodeQualitySuiteEngine().run_all()

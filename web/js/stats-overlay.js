@@ -2,6 +2,12 @@
  * @file stats-overlay.js
  * @brief Real-time performance monitoring for the Video Player.
  * @details Displays GPU usage, bitrate, FPS, and RTT via a glassmorphism overlay.
+ * 
+ * [AI-READINESS: High Level Context]
+ * This module orchestrates real-time diagnostic overlays for video playback.
+ * Main Entry: window.StatsOverlay.toggle()
+ * Dependencies: Video.js, eel (Python Backend)
+ * Complexity: Low (Pure DOM manipulation and interval polling)
  */
 
 window.StatsOverlay = (function() {
