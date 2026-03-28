@@ -4,8 +4,9 @@ try:
     monkey.patch_all()
 except ImportError:
     pass
+print("STDOUT: main.py EXECUTION START", flush=True)
 
-# dict – Web Media Player & Library Manager v1.34
+# dict  Web Media Player & Library Manager v1.34
 # -----------------------------------------
 # Main entry point: Initializes Eel, exposes API, starts app, and handles environment detection.
 #
@@ -45,7 +46,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
-# main.py – Entry point: initializes Eel, exposes API functions to the
+# main.py  Entry point: initializes Eel, exposes API functions to the
 # frontend, and starts the app.
 
 import sys
@@ -218,7 +219,7 @@ def ensure_singleton():
         
         # Try again after cleanup
         if not pm.acquire_lock():
-            log.error("❌ CRITICAL: Another instance of MWV is already running and could not be stopped.")
+            log.error(" CRITICAL: Another instance of MWV is already running and could not be stopped.")
             log.error("   Please close the existing window or kill the process manually.")
             sys.exit(1)
             
@@ -486,7 +487,7 @@ def initialize_debug_flags(args=None):
 VERSION = "1.34"
 
 
-# Nach Logging-Setup: PIDs loggen für Konsole. deswegen kein eel.expose
+# Nach Logging-Setup: PIDs loggen fr Konsole. deswegen kein eel.expose
 def find_venv_pid(venv_name):
     import psutil
     venv_path = str((PROJECT_ROOT / venv_name).resolve())
@@ -540,8 +541,8 @@ except ModuleNotFoundError as exc:
         and Path(sys.executable).resolve() != local_venv_python.resolve()
     ):
         log.info(
-            f"\nℹ️ Fehlende Abhängigkeit '{missing_module}' in aktueller Umgebung erkannt.\n"
-            f"→ Starte automatisch neu mit Projekt-Umgebung:\n"
+            f"\n Fehlende Abhngigkeit '{missing_module}' in aktueller Umgebung erkannt.\n"
+            f" Starte automatisch neu mit Projekt-Umgebung:\n"
             f"  {local_venv_python}\n"
         )
         os.environ["MWV_AUTO_REEXEC"] = "1"
@@ -551,27 +552,27 @@ except ModuleNotFoundError as exc:
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
 
     if env_type == 'conda':
-        current_env = f"📦 Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
+        current_env = f" Conda: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
     elif env_type == 'venv':
-        current_env = f"📦 Venv: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
+        current_env = f" Venv: {env_name}\n   Pfad: {env_path}\n   Python: {py_exec}"
     else:
-        current_env = f"⚙️  System Python {py_ver}\n   Python: {py_exec}"
+        current_env = f"  System Python {py_ver}\n   Python: {py_exec}"
 
     log.error(
-        f"\n❌ Abhängigkeit '{missing_module}' nicht installiert!\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📍 Aktuelle Umgebung:\n   {current_env}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"✅ Lösung: Starte mit der Projekt-Umgebung:\n\n"
+        f"\n Abhngigkeit '{missing_module}' nicht installiert!\n"
+        f"\n"
+        f" Aktuelle Umgebung:\n   {current_env}\n"
+        f"\n"
+        f" Lsung: Starte mit der Projekt-Umgebung:\n\n"
         f"   cd {project_dir}\n"
         f"   source .venv_core/bin/activate\n"
         f"   python main.py\n\n"
-        f"⚠️ Keine lokalen Virtual Environments gefunden!\n"
+        f" Keine lokalen Virtual Environments gefunden!\n"
         f"Falls .venv_core fehlt:\n"
         f"   python3 -m venv .venv_core\n"
         f"   source .venv_core/bin/activate\n"
         f"   pip install -r requirements.txt\n\n"
-        f"Alternative: Mit Conda (falls verfügbar):\n"
+        f"Alternative: Mit Conda (falls verfgbar):\n"
         f"   conda activate <env-name>\n"
         f"   pip install -r requirements.txt\n"
         f"   python main.py\n"
@@ -1077,7 +1078,7 @@ def update_parser_settings(new_settings):
 def list_sql_files():
     """
     Returns a list of .sql files in the data/ directory.
-    @details Gibt eine Liste aller .sql-Dateien im Datenverzeichnis zurück.
+    @details Gibt eine Liste aller .sql-Dateien im Datenverzeichnis zurck.
     """
     try:
         db_dir = db.DB_DIR
@@ -1094,7 +1095,7 @@ def list_sql_files():
 def get_sql_content(filename):
     """
     Returns the content of a specific SQL file in the data/ directory.
-    @details Gibt den Inhalt einer spezifischen SQL-Datei zurück.
+    @details Gibt den Inhalt einer spezifischen SQL-Datei zurck.
     """
     try:
         db_dir = db.DB_DIR
@@ -1112,7 +1113,7 @@ def get_sql_content(filename):
 def get_library_folders():
     """
     Returns a list of unique parent directories for all media in the DB.
-    @details Gibt eine Liste aller eindeutigen übergeordneten Verzeichnisse zurück.
+    @details Gibt eine Liste aller eindeutigen bergeordneten Verzeichnisse zurck.
     """
     try:
         items = db.get_all_media()
@@ -1259,7 +1260,7 @@ def api_ping(client_ts=None, payload_size=0):
     @details Minimal payload endpoint to measure frontend<->backend roundtrip and payload transfer time.
     @param client_ts Optional client timestamp / Optionaler Client-Timestamp.
     @param payload_size Optional echo payload size in bytes (0..200000) / Optionale Echo-Payload.
-    @return Dictionary with timestamps and payload size / Dictionary mit Zeitstempeln und Payload-Größe.
+    @return Dictionary with timestamps and payload size / Dictionary mit Zeitstempeln und Payload-Gre.
     """
     now_ms = int(time.time() * 1000)
 
@@ -1500,7 +1501,7 @@ def _get_requirements_status():
 def get_environment_info(force_refresh=False):
     """
     @brief Returns comprehensive information about the Python environment.
-    @details Gibt detaillierte Informationen über die Python-Umgebung zurück,
+    @details Gibt detaillierte Informationen ber die Python-Umgebung zurck,
              inklusive aktuelle Umgebung, System Python Installationen, und Conda Umgebungen.
     @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
     """
@@ -1748,15 +1749,15 @@ def get_environment_info(force_refresh=False):
         # Strategy definition: Detailed multi-venv concept
         VENV_STRATEGY = {
             ".venv_core": {
-                "purpose": "Zentrale Laufzeitumgebung für die App-Logik.",
+                "purpose": "Zentrale Laufzeitumgebung fr die App-Logik.",
                 "role": "CORE"
             },
             ".venv_run": {
-                "purpose": "Optimierte Laufzeitumgebung für den Anwenderbetrieb.",
+                "purpose": "Optimierte Laufzeitumgebung fr den Anwenderbetrieb.",
                 "role": "RUN"
             },
             ".venv_build": {
-                "purpose": "Umgebung für das Packaging (PyInstaller, .deb).",
+                "purpose": "Umgebung fr das Packaging (PyInstaller, .deb).",
                 "role": "BUILD"
             },
             ".venv_dev": {
@@ -1764,11 +1765,11 @@ def get_environment_info(force_refresh=False):
                 "role": "DEV"
             },
             ".venv_testbed": {
-                "purpose": "Isolierte Umgebung für Integrations-Tests.",
+                "purpose": "Isolierte Umgebung fr Integrations-Tests.",
                 "role": "TEST"
             },
             ".venv_selenium": {
-                "purpose": "Umgebung für E2E Browser-Tests.",
+                "purpose": "Umgebung fr E2E Browser-Tests.",
                 "role": "E2E"
             }
         }
@@ -2100,7 +2101,7 @@ def get_environment_info(force_refresh=False):
         "available_conda_environments": conda_envs,
         "available_system_pythons": system_pythons,
         "local_venvs": local_venvs,
-        "multi_venv_concept": "Dieses Projekt nutzt ein Multi-Virtual-Environment-Konzept zur strikten Trennung von Laufzeit-, Build- und Test-Abhängigkeiten.",
+        "multi_venv_concept": "Dieses Projekt nutzt ein Multi-Virtual-Environment-Konzept zur strikten Trennung von Laufzeit-, Build- und Test-Abhngigkeiten.",
 
         # Installed Packages
         "installed_packages": installed_packages,
@@ -2115,7 +2116,7 @@ def get_environment_info(force_refresh=False):
             "name": "venv_core",
             "type": "venv",
             "python_version": "3.14.2",
-            "reason": "Eigene venv für main.py empfohlen"
+            "reason": "Eigene venv fr main.py empfohlen"
         },
         "default_scan_dir": SCAN_MEDIA_DIR,
         "browse_default_dir": BROWSER_DEFAULT_DIR,
@@ -2139,10 +2140,10 @@ def get_environment_info(force_refresh=False):
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
         # Also print to console for immediate visibility
-        log.debug(f"\n🔍 UI-TRACE: get_environment_info() → packages={len(
+        log.debug(f"\n UI-TRACE: get_environment_info()  packages={len(
             installed_packages)}, source={installed_packages_source}, req={requirements_status}")
     except Exception as e:
-        log.error(f"⚠️  UI-TRACE logging failed: {e}")
+        log.error(f"  UI-TRACE logging failed: {e}")
 
     _ENV_INFO_CACHE["data"] = result
     _ENV_INFO_CACHE["ts"] = time.time()
@@ -2150,12 +2151,12 @@ def get_environment_info(force_refresh=False):
 
 
 # Konfiguration
-# 1. Ort für den automatischen Bibliotheks-Scan
-# Standardmäßig aus PARSER_CONFIG laden (sync)
+# 1. Ort fr den automatischen Bibliotheks-Scan
+# Standardmig aus PARSER_CONFIG laden (sync)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SCAN_MEDIA_DIR = PARSER_CONFIG.get("scan_dirs", [str(PROJECT_ROOT / "media")])[0]
 
-# 2. Standard-Pfad beim ersten Öffnen des Browsers
+# 2. Standard-Pfad beim ersten ffnen des Browsers
 BROWSER_DEFAULT_DIR = PARSER_CONFIG.get("browse_default_dir", str(Path.home()))
 # Redundante Definitionen entfernt, da diese nun aus parsers.format_utils importiert werden.
 # (AUDIO_EXTENSIONS, VIDEO_EXTENSIONS etc. werden oben importiert)
@@ -2551,9 +2552,9 @@ def _log_environment_info():
     """Log Python environment details at startup."""
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
 
-    log.info("═" * 60)
+    log.info("" * 60)
     log.info("[Startup] Application started - Environment Information")
-    log.info("─" * 60)
+    log.info("" * 60)
 
     if env_type == 'conda':
         log.info(f"  Environment Type: Conda")
@@ -2569,7 +2570,7 @@ def _log_environment_info():
 
     log.info(f"  Python Version: {py_ver}")
     log.info(f"  Python Executable: {py_exec}")
-    log.info("═" * 60)
+    log.info("" * 60)
 
 
 _log_environment_info()
@@ -2598,7 +2599,7 @@ if DEBUG_FLAGS["start"]:
 def get_debug_flags():
     """
     @brief Returns the current internal debug flags.
-    @details Gibt die aktuell gesetzten internen Debug-Flags zurück.
+    @details Gibt die aktuell gesetzten internen Debug-Flags zurck.
     @return Dictionary of debug flags / Dictionary der Debug-Flags.
     """
     return DEBUG_FLAGS
@@ -2635,7 +2636,7 @@ def set_all_debug_flags(value):
 def get_venv_summary():
     """
     @brief Returns a comprehensive summary of the current and available Python environments.
-    @details Gibt eine Zusammenfassung der aktuellen und verfügbaren Python-Umgebungen zurück.
+    @details Gibt eine Zusammenfassung der aktuellen und verfgbaren Python-Umgebungen zurck.
     @return Dictionary with environment details and recommendations.
     """
     env_type, env_name, env_path, py_ver, py_exec = _detect_python_environment()
@@ -2643,12 +2644,12 @@ def get_venv_summary():
     # Strategy definition: Detailed multi-venv concept
     VENV_STRATEGY = {
         ".venv_core": {
-            "purpose": "Zentrale Laufzeitumgebung für die App-Logik.",
+            "purpose": "Zentrale Laufzeitumgebung fr die App-Logik.",
             "role": "CORE",
             "required": True
         },
         ".venv_build": {
-            "purpose": "Umgebung für das Packaging (PyInstaller, .deb).",
+            "purpose": "Umgebung fr das Packaging (PyInstaller, .deb).",
             "role": "BUILD",
             "required": False
         },
@@ -2658,12 +2659,12 @@ def get_venv_summary():
             "required": False
         },
         ".venv_testbed": {
-            "purpose": "Isolierte Umgebung für Integrations-Tests.",
+            "purpose": "Isolierte Umgebung fr Integrations-Tests.",
             "role": "TEST",
             "required": False
         },
         ".venv_selenium": {
-            "purpose": "Umgebung für E2E Browser-Tests.",
+            "purpose": "Umgebung fr E2E Browser-Tests.",
             "role": "E2E",
             "required": False
         }
@@ -2710,7 +2711,7 @@ def get_venv_summary():
         "recommended_environment": {
             "name": ".venv_core",
             "type": "venv",
-            "reason": "Empfohlene Umgebung für den stabilen Betrieb der App."
+            "reason": "Empfohlene Umgebung fr den stabilen Betrieb der App."
         }
     }
 
@@ -2719,7 +2720,7 @@ def get_venv_summary():
 def get_language():
     """
     @brief Returns the currently selected UI language.
-    @details Gibt die aktuell gewählte Sprache zurück.
+    @details Gibt die aktuell gewhlte Sprache zurck.
     @return Language code (e.g. 'de', 'en') / Sprachcode.
     """
     return PARSER_CONFIG.get("language", "de")
@@ -2755,7 +2756,7 @@ from web import app_bottle  # noqa: F401  # Register bottle routes: /media and /
 def get_db_info():
     """
     @brief Returns summary statistics about the database and logs.
-    @details Gibt zusammenfassende Statistiken über die Datenbank und das Logbuch zurück.
+    @details Gibt zusammenfassende Statistiken ber die Datenbank und das Logbuch zurck.
     @return Dictionary with media_count, playlist_count, and log_count.
     """
     try:
@@ -2786,7 +2787,7 @@ def get_db_info():
 def get_library() -> Dict[str, Any]:
     """
     @brief Returns all media items from the database without re-scanning.
-    @details Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen.
+    @details Gibt alle Medien aus der Datenbank zurck ohne neu zu scannen.
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
     all_media = db.get_all_media()
@@ -2810,7 +2811,7 @@ def get_library() -> Dict[str, Any]:
         "audio": [
             "Audio",
             "Album",
-            "Hörbuch",
+            "Hrbuch",
             "Klassik",
             "Compilation",
             "Single",
@@ -2902,7 +2903,7 @@ def get_library_filtered(search: str = "", genre: str = "all", year: str = "all"
 def clear_database():
     """
     @brief Deletes all entries from the library database.
-    @details Löscht alle Einträge aus der Bibliothek-Datenbank.
+    @details Lscht alle Eintrge aus der Bibliothek-Datenbank.
     @return Status dictionary / Status-Dictionary.
     """
     if DEBUG_FLAGS["db"]:
@@ -2915,7 +2916,7 @@ def clear_database():
 def reset_app_data():
     """
     @brief Wipes the database and configuration files (private user data).
-    @details Löscht Datenbank und Konfigurationsdateien (Private Daten).
+    @details Lscht Datenbank und Konfigurationsdateien (Private Daten).
     @return Status dictionary with list of deleted paths / Status-Dictionary.
     """
     import shutil
@@ -2927,7 +2928,7 @@ def reset_app_data():
     # 1. ~/.media-web-viewer (Database)
     db_dir = db.DB_DIR
     # 2. ~/.config/gui_media_web_viewer (Parser Config)
-    # Programmname im config-Pfad für bessere Übersicht ändern
+    # Programmname im config-Pfad fr bessere bersicht ndern
     config_dir = Path.home() / ".config" / "gui_media_web_viewer"
 
     for p in [db_dir, config_dir]:
@@ -2960,7 +2961,7 @@ def reset_app_data():
 def update_tags(name, tags_dict):
     """
     @brief Saves customized tags for a media item in the database.
-    @details Speichert angepasste Tags für ein Item in der DB.
+    @details Speichert angepasste Tags fr ein Item in der DB.
     @param name Media record name / Datenbank-Name des Eintrags.
     @param tags_dict Dictionary of tags to update / Zu aktualisierende Tags.
     @return Status dictionary / Status-Dictionary.
@@ -2998,7 +2999,7 @@ def rename_media(old_name, new_name):
 def delete_media(name):
     """
     @brief Deletes a media item from the database.
-    @details Löscht ein Medium aus der DB.
+    @details Lscht ein Medium aus der DB.
     @param name Media record name / Datenbank-Name.
     """
     logger.debug("file_ops", f"Deleting record: {name}")
@@ -3009,7 +3010,7 @@ def delete_media(name):
 def get_db_stats():
     """
     @brief Returns statistical information about the database content.
-    @details Gibt Statistiken über den Inhalt der Datenbank zurück.
+    @details Gibt Statistiken ber den Inhalt der Datenbank zurck.
     @return Stats dictionary / Statistik-Dictionary.
     """
     return db.get_db_stats()
@@ -3019,7 +3020,7 @@ def get_db_stats():
 def get_default_media_dir():
     """
     @brief Returns the default media directory (absolute path).
-    @details Gibt den voreingestellten Medienordner (absoluter Pfad) zurück.
+    @details Gibt den voreingestellten Medienordner (absoluter Pfad) zurck.
     @return Path string / Pfad-String.
     """
     return SCAN_MEDIA_DIR
@@ -3069,7 +3070,7 @@ def update_browse_default_dir(new_path: str):
 def ping():
     """
     @brief Connectivity check.
-    @details Gibt eine Bestätigung zurück, dass das Backend erreichbar ist.
+    @details Gibt eine Besttigung zurck, dass das Backend erreichbar ist.
     @return dict with status 'ok' and message 'pong'.
     """
     return {"status": "ok", "message": "pong"}
@@ -3097,12 +3098,12 @@ def api_scan_isbn(isbn: str):
     if not cleaned:
         return {"error": "Invalid ISBN input"}
 
-    log.info(f"🔍 [ISBN] Request for: {cleaned}")
+    log.info(f" [ISBN] Request for: {cleaned}")
     
     # 1. Check local DB first
     existing_item = db.get_media_by_remote_id('isbn', cleaned)
     if existing_item:
-        log.info(f"✅ [ISBN] Found in local DB: {existing_item['name']}")
+        log.info(f" [ISBN] Found in local DB: {existing_item['name']}")
         return existing_item
 
     # 2. Fetch from External API (OpenLibrary)
@@ -3136,13 +3137,13 @@ def api_scan_isbn(isbn: str):
                     "subtype": "book",
                     "description": book.get('notes', '')
                 }
-                log.info(f"✅ [ISBN] Fetched from OpenLibrary: {result['title']}")
+                log.info(f" [ISBN] Fetched from OpenLibrary: {result['title']}")
                 
                 # Create a placeholder MediaObject in DB? 
                 # (User might want to confirm first, for now just return)
                 return result
     except Exception as e:
-        log.error(f"❌ [ISBN] Error fetching metadata: {e}")
+        log.error(f" [ISBN] Error fetching metadata: {e}")
 
     # 3. Fallback: Search Amazon cover even if no metadata found
     return {
@@ -3164,7 +3165,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     start_time = time.time()
     log.info(
-        f"🔍 [Scan-Trace] Media Scan started at {
+        f" [Scan-Trace] Media Scan started at {
             time.strftime(
                 '%H:%M:%S',
                 time.localtime(start_time))}")
@@ -3191,9 +3192,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             if p.exists():
                 scan_roots.append(p)
             else:
-                debug_log(f"🔍 [Scan] Skipping non-existent directory: {d}")
+                debug_log(f" [Scan] Skipping non-existent directory: {d}")
 
-    log.info(f"🔍 [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
+    log.info(f" [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
     
     count_indexed: int = 0
     try:
@@ -3202,20 +3203,20 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         # Determine if we should use lightweight mode based on path or config
         is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
         if is_network:
-            log.info("🔍 [Scan] Network mount detected. Enabling automatic lightweight mode.")
+            log.info(" [Scan] Network mount detected. Enabling automatic lightweight mode.")
             parser_mode = "lightweight"
         else:
             parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
         
-        log.info(f"🔍 [Scan] Parser Mode: {parser_mode}")
+        log.info(f" [Scan] Parser Mode: {parser_mode}")
 
         # Get existing media from DB for caching
         existing_media = {m['path']: m for m in db.get_all_media()}
-        log.info(f"🔍 [Scan] Cached items in DB: {len(existing_media)}")
+        log.info(f" [Scan] Cached items in DB: {len(existing_media)}")
 
         # Determine which categories are enabled
         indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-        log.info(f"🔍 [Scan] Enabled categories: {indexed_cats}")
+        log.info(f" [Scan] Enabled categories: {indexed_cats}")
         
         all_exts: set[str] = set()
         if "audio" in indexed_cats:
@@ -3232,12 +3233,12 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             all_exts |= DISK_IMAGE_EXTENSIONS
         
         ext_list = list(all_exts)
-        log.info(f"🔍 [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
+        log.info(f" [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
 
         # Reset counters
         count_indexed: int = 0
         for scan_root in scan_roots:
-            log.info(f"🔍 [Scan] Starting scan of: {scan_root}")
+            log.info(f" [Scan] Starting scan of: {scan_root}")
 
             # Hierarchical grouping: Folder-to-Object mapping
             folder_id_map: dict[Path, int] = {}
@@ -3264,7 +3265,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             is_general_object = True
 
                     if is_blackbox or is_general_object:
-                        logger.debug("scan", f"🎬 [Scan] Detected Object: {d.name}")
+                        logger.debug("scan", f" [Scan] Detected Object: {d.name}")
                         try:
                             item = MediaItem(d.name, d)
                             item_dict = item.to_dict()
@@ -3274,9 +3275,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                 count_indexed += 1 # type: ignore
                                 if is_blackbox:
                                     skip_subpaths.add(d)
-                                logger.debug("scan", f"✅ [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
+                                logger.debug("scan", f" [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
                         except Exception as e:
-                            logger.debug("scan", f"🔍 [Scan] Fehler bei Object-Ordner {d.name}: {e}")
+                            logger.debug("scan", f" [Scan] Fehler bei Object-Ordner {d.name}: {e}")
 
             # Second pass: Files (Items)
             for f in scan_root.rglob('*'):
@@ -3313,10 +3314,10 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                 item_dict['parent_id'] = parent_id
                                 
                             db.insert_media(item_dict)
-                            logger.debug("scan", f"✅ [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
+                            logger.debug("scan", f" [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
                             count_indexed += 1
                         except Exception as e:
-                            logger.debug("scan", f"🔍 [Scan] Fehler bei {f.name}: {e}")
+                            logger.debug("scan", f" [Scan] Fehler bei {f.name}: {e}")
                             continue
 
         elapsed = time.time() - start_time
@@ -3327,7 +3328,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         log.info(
             f"[Scan-Trace] Scan complete. Processed {count_indexed} items in {elapsed:.2f} seconds.")
 
-        # Liefere gescannten Stand direkt aus der DB zurück
+        # Liefere gescannten Stand direkt aus der DB zurck
         return {
             "media": db.get_all_media(),
             "stats": {"count": count_indexed, "time_seconds": elapsed}
@@ -3344,7 +3345,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 def get_parser_config():
     """
     @brief Returns the current parser configuration to the frontend.
-    @details Gibt die aktuelle Parser-Konfiguration an das Frontend zurück.
+    @details Gibt die aktuelle Parser-Konfiguration an das Frontend zurck.
     @return Configuration dictionary / Konfigurations-Dictionary.
     """
     return PARSER_CONFIG
@@ -3387,7 +3388,7 @@ def update_parser_config(new_config):
 def add_scan_dir():
     """
     @brief Opens a dialog to select a new directory for library scanning.
-    @details Öffnet einen Dialog zur Auswahl eines neuen Scan-Verzeichnisses.
+    @details ffnet einen Dialog zur Auswahl eines neuen Scan-Verzeichnisses.
     @return Status dictionary with updated directory list / Status-Dictionary mit aktualisierter Liste.
     """
     new_dir = pick_folder()
@@ -3536,7 +3537,7 @@ def resolve_media_path(file_path: str) -> str:
 def resolve_dvd_bundle_path(path_str: str) -> str:
     """
     @brief Resolves generic DVD/BD bundle folders to their underlying playable component.
-    @details Wenn ein Ordner an VLC übergeben wird, sucht diese Funktion nach VIDEO_TS, BDMV oder ISO.
+    @details Wenn ein Ordner an VLC bergeben wird, sucht diese Funktion nach VIDEO_TS, BDMV oder ISO.
     """
     p = Path(path_str)
     if not p.is_dir():
@@ -3697,7 +3698,7 @@ def stream_video_fragmented(file_path):
                     process.wait(timeout=2)
                 except subprocess.TimeoutExpired:
                     process.kill()
-            log.info(f"🚀 [Stream] Finalized fragment stream for: {resolved_path}")
+            log.info(f" [Stream] Finalized fragment stream for: {resolved_path}")
 
     return bottle.HTTPResponse(ffmpeg_stream(), content_type="video/mp4")
 
@@ -3790,14 +3791,14 @@ def video_remux_stream(item_id):
                 if os.path.exists(item_path):
                     file_path = item_path
                 else:
-                    log.warning(f"❌ [Remux] Field not found in DB or filesystem: {item_id}")
+                    log.warning(f" [Remux] Field not found in DB or filesystem: {item_id}")
                     return bottle.HTTPResponse(status=404)
             else:
                 file_path = item['path']
         else:
             file_path = item['path']
 
-        log.info(f"🚀 [Remux] Starting live Pipe-Kit (Audio:{audio_idx}, Subs:{subs_idx}) for: {file_path}")
+        log.info(f" [Remux] Starting live Pipe-Kit (Audio:{audio_idx}, Subs:{subs_idx}) for: {file_path}")
 
         mkvmerge_path = shutil.which('mkvmerge') or 'mkvmerge'
         ffmpeg_path = shutil.which('ffmpeg') or 'ffmpeg'
@@ -3815,7 +3816,7 @@ def video_remux_stream(item_id):
                 
                 # FOR DVDs: Force transcoding because fMP4 in Chrome doesn't support MPEG-2 (VOB/ISO)
                 if is_iso:
-                    log.info(f"💿 [Remux] ISO detected, redirecting to transcode flow for compatibility.")
+                    log.info(f" [Remux] ISO detected, redirecting to transcode flow for compatibility.")
                     return stream_video_fragmented(item_id)
 
                 # Mapping support for track switching
@@ -3865,7 +3866,7 @@ def video_remux_stream(item_id):
                         break
                     yield chunk
             except Exception as e:
-                log.error(f"❌ [Remux] Generator error: {e}")
+                log.error(f" [Remux] Generator error: {e}")
             finally:
                 # Cleanup processes
                 for p in [ffmpeg_proc, mkv_proc]:
@@ -3876,12 +3877,12 @@ def video_remux_stream(item_id):
                         except:
                             try: p.kill() 
                             except: pass
-                log.info(f"🚀 [Remux] Finalized Pipe-Kit stream for: {file_path}")
+                log.info(f" [Remux] Finalized Pipe-Kit stream for: {file_path}")
 
         return bottle.HTTPResponse(generate(), content_type="video/mp4")
     except Exception as e:
         import traceback
-        log.error(f"💥 [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
+        log.error(f" [Remux] CRITICAL ERROR: {e}\n{traceback.format_exc()}")
         return bottle.HTTPError(500, f"Remux Error: {e}")
 
 def get_video_metadata(file_path: str) -> dict:
@@ -3925,7 +3926,7 @@ def open_with_ffplay(file_path: str):
         ffplay_path = shutil.which("ffplay") or "ffplay"
         proc = subprocess.Popen([str(ffplay_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
-        log.info(f"🚀 [FFplay] Started for: {file_path}")
+        log.info(f" [FFplay] Started for: {file_path}")
         return {"status": "ok", "mode": "ffplay"}
     except Exception as e:
         return {"status": "error", "error": f"FFplay failed: {e}"}
@@ -3938,7 +3939,7 @@ def open_with_vlc(file_path: str):
         vlc_path = shutil.which("vlc") or "vlc"
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
-        log.info(f"🚀 [VLC] Started for: {file_path}")
+        log.info(f" [VLC] Started for: {file_path}")
         return {"status": "ok", "mode": "vlc"}
     except Exception as e:
         return {"status": "error", "error": f"VLC failed: {e}"}
@@ -3951,7 +3952,7 @@ def open_with_cvlc(file_path: str):
         vlc_path = shutil.which("cvlc") or "cvlc"
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
-        log.info(f"🚀 [CVLC] Started for: {file_path}")
+        log.info(f" [CVLC] Started for: {file_path}")
         return {"status": "ok", "mode": "cvlc"}
     except Exception as e:
         return {"status": "error", "error": f"CVLC failed: {e}"}
@@ -3971,7 +3972,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
     Supports start_time for HLS seeking.
     """
     pid_tag = f"{source}|{os.getpid()}"
-    log.info(f"✨ [VLC-Instance-Trace] {pid_tag} Attempting start for: {file_path}")
+    log.info(f" [VLC-Instance-Trace] {pid_tag} Attempting start for: {file_path}")
 
     # 1. Stop any existing VLC managed by us
     try:
@@ -4241,7 +4242,7 @@ def vlc_seek(instance_id, time_seconds):
     @param instance_id The PID tag or process reference.
     @param time_seconds The timestamp to jump to.
     """
-    log.info(f"✨ [VLC-Seek] Jumping to {time_seconds}s for instance {instance_id}")
+    log.info(f" [VLC-Seek] Jumping to {time_seconds}s for instance {instance_id}")
     
     # 1. Kill old process
     # We need to find the process by its item path or similar if instance_id isn't enough
@@ -4261,7 +4262,7 @@ def play_external_file(path: str):
     """
     @brief Plays a local file that was dropped onto the UI or selected via picker.
     """
-    log.info(f"📁 [External-Play] File: {path}")
+    log.info(f" [External-Play] File: {path}")
     try:
         abs_path = Path(path).resolve()
         # Fallback for relative paths if not found directly
@@ -4284,10 +4285,10 @@ def play_stream_url(url: str, engine: str = "hls"):
     """
     @brief Returns playback parameters for a specific network stream URL.
     """
-    log.info(f"🌐 [External-Play] Stream: {url} via {engine}")
+    log.info(f" [External-Play] Stream: {url} via {engine}")
     # Basic validation
     if not url.startswith(('http', 'rtsp', 'rtmp')):
-        return {"status": "error", "error": "Ungültiges Protokoll. Erwartet http, rtsp oder rtmp."}
+        return {"status": "error", "error": "Ungltiges Protokoll. Erwartet http, rtsp oder rtmp."}
     
     # HLS is handles natively by the browser player via Video.js
     if engine == "hls" or url.endswith('.m3u8'):
@@ -4806,7 +4807,7 @@ def move_item_to(old_index: int, new_index: int):
 def open_in_explorer(path_str):
     """
     @brief Opens a specific file or folder in the system's native file explorer.
-    @details Öffnet eine Datei oder einen Ordner im nativen Datei-Explorer des Systems.
+    @details ffnet eine Datei oder einen Ordner im nativen Datei-Explorer des Systems.
     @param path_str Absolute path / Absoluter Pfad.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
@@ -4838,7 +4839,7 @@ def open_in_explorer(path_str):
 def browse_dir(dir_path=None):
     """
     @brief Lists folders and audio files for the in-app file browser.
-    @details Listet Ordner und Audiodateien eines Verzeichnisses für den Datei-Browser.
+    @details Listet Ordner und Audiodateien eines Verzeichnisses fr den Datei-Browser.
     @param dir_path Directory path / Verzeichnispfad.
     @return Dictionary with path info and item list / Dictionary mit Pfad-Infos und Element-Liste.
     """
@@ -4877,8 +4878,8 @@ def browse_dir(dir_path=None):
 def pick_folder():
     """
     @brief Opens a native OS folder selection dialog using Tkinter.
-    @details Öffnet einen nativen Ordner-Auswahldialog mittels Tkinter.
-    @return Selected path or None / Gewählter Pfad oder None.
+    @details ffnet einen nativen Ordner-Auswahldialog mittels Tkinter.
+    @return Selected path or None / Gewhlter Pfad oder None.
     """
     try:
         import tkinter as tk
@@ -4898,7 +4899,7 @@ def pick_folder():
 def add_file_to_library(file_path):
     """
     @brief Adds a single file from the browser to the library.
-    @details Fügt eine einzelne Datei aus dem Datei-Browser der Bibliothek hinzu.
+    @details Fgt eine einzelne Datei aus dem Datei-Browser der Bibliothek hinzu.
     @param file_path Absolute path / Absoluter Pfad.
     @return Status dictionary / Status-Dictionary.
     """
@@ -4906,7 +4907,7 @@ def add_file_to_library(file_path):
     if not p.exists() or not p.is_file():
         return {"error": "Datei nicht gefunden"}
     if p.suffix.lower() not in AUDIO_EXTENSIONS and p.suffix.lower() not in VIDEO_EXTENSIONS:
-        return {"error": "Kein unterstütztes Audio- oder Videoformat"}
+        return {"error": "Kein untersttztes Audio- oder Videoformat"}
 
     known = db.get_known_media_names()
     if p.name in known:
@@ -5121,7 +5122,7 @@ def stream_to_vlc(file_path, engine="ffmpeg"):
 
 
 def detect_ts_stream(port):
-    """Prüft ob cvlc TS auf Port läuft."""
+    """Prft ob cvlc TS auf Port luft."""
     import requests
     try:
         # VLC simple HTTP check
@@ -5318,9 +5319,9 @@ def run_mtx_validation(file_path):
     try:
         r = requests.get("http://localhost:8888", timeout=2)
         report["server_up"] = True
-        report["logs"].append("✅ MediaMTX HLS Listener found on :8888.")
+        report["logs"].append(" MediaMTX HLS Listener found on :8888.")
     except:
-        report["logs"].append("❌ MediaMTX not running or HLS port closed.")
+        report["logs"].append(" MediaMTX not running or HLS port closed.")
         return report
 
     # 2. Test HLS
@@ -5328,7 +5329,7 @@ def run_mtx_validation(file_path):
     if hls_res.get("status") == "play":
         report["hls_push_ok"] = True
         url = hls_res.get("path")
-        report["logs"].append(f"✅ HLS Push started. URL: {url}")
+        report["logs"].append(f" HLS Push started. URL: {url}")
         
         # Poll for manifest
         found = False
@@ -5342,24 +5343,24 @@ def run_mtx_validation(file_path):
             except: pass
         if found:
             report["hls_read_ok"] = True
-            report["logs"].append("✅ HLS Manifest is active and reachable.")
+            report["logs"].append(" HLS Manifest is active and reachable.")
         else:
-            report["logs"].append("❌ HLS Manifest timeout (Stream not starting).")
+            report["logs"].append(" HLS Manifest timeout (Stream not starting).")
     else:
-        report["logs"].append(f"❌ HLS Push failed: {hls_res.get('error')}")
+        report["logs"].append(f" HLS Push failed: {hls_res.get('error')}")
 
     # 3. Test WebRTC
     rtc_res = stream_to_mediamtx(file_path, protocol="webrtc")
     if rtc_res.get("status") == "play":
         report["webrtc_push_ok"] = True
         url = rtc_res.get("path")
-        report["logs"].append(f"✅ WebRTC (WHEP) Endpoint initialized: {url}")
+        report["logs"].append(f" WebRTC (WHEP) Endpoint initialized: {url}")
         try:
              # Basic reachability check for WHEP (it might return 405 on GET, which is fine)
              r = requests.get(url, timeout=1)
              if r.status_code in [200, 404, 405]:
                  report["webrtc_read_ok"] = True
-                 report["logs"].append("✅ WebRTC Listener is responsive.")
+                 report["logs"].append(" WebRTC Listener is responsive.")
         except: pass
     
     return report or {"error": "Unknown failure"}
@@ -5375,7 +5376,7 @@ def remux_mkv_batch(folder_path):
 
     p = Path(folder_path)
     if not p.is_dir():
-        return {"status": "error", "error": "Ungültiges Verzeichnis"}
+        return {"status": "error", "error": "Ungltiges Verzeichnis"}
 
     video_files = []
     for ext in VIDEO_EXTENSIONS:
@@ -5459,7 +5460,7 @@ def import_vlc_playlist(m3u_path: str):
             debug_log(
                 f"[VLC Import] {
                     len(imported)} importiert, {
-                    len(skipped)} übersprungen, {
+                    len(skipped)} bersprungen, {
                     len(errors)} Fehler")
 
         return {
@@ -5478,9 +5479,9 @@ def import_vlc_playlist(m3u_path: str):
 def export_playlist_to_vlc(media_names: list, output_path: str):
     """
     @brief Exports selected media items to a VLC-compatible m3u8 playlist.
-    @details Exportiert ausgewählte Medien in eine VLC-kompatible m3u8 Playlist.
+    @details Exportiert ausgewhlte Medien in eine VLC-kompatible m3u8 Playlist.
     @param media_names List of media item names from database / Liste von Medien-Namen aus der DB.
-    @param output_path Target path for the .m3u8 file / Ziel-Pfad für die .m3u8-Datei.
+    @param output_path Target path for the .m3u8 file / Ziel-Pfad fr die .m3u8-Datei.
     @return Status dictionary / Status-Dictionary.
     """
     try:
@@ -5577,13 +5578,13 @@ def load_playlist(input_path: str):
 
 
 @eel.expose
-def pick_file(title="Datei auswählen", filetypes=None):
+def pick_file(title="Datei auswhlen", filetypes=None):
     """
     @brief Opens a native file picker dialog.
-    @details Öffnet einen nativen Datei-Auswahldialog.
+    @details ffnet einen nativen Datei-Auswahldialog.
     @param title Dialog title / Dialog-Titel.
     @param filetypes List of (description, extension) tuples / Liste von Dateifiltern.
-    @return Selected file path or None / Gewählter Pfad oder None.
+    @return Selected file path or None / Gewhlter Pfad oder None.
     """
     try:
         import tkinter as tk
@@ -5614,7 +5615,7 @@ def import_txt_to_db(category="Video"):
     """
     try:
         file_path = pick_file(
-            title=f"TXT Import für {category} auswählen",
+            title=f"TXT Import fr {category} auswhlen",
             filetypes=[("Textdateien", "*.txt"), ("Alle Dateien", "*.*")]
         )
         if not file_path:
@@ -5685,11 +5686,11 @@ def pick_save_file(
         default_name="playlist.m3u8"):
     """
     @brief Opens a native file save dialog.
-    @details Öffnet einen nativen Datei-Speichern-Dialog.
+    @details ffnet einen nativen Datei-Speichern-Dialog.
     @param title Dialog title / Dialog-Titel.
     @param filetypes List of (description, extension) tuples / Liste von Dateifiltern.
     @param default_name Default filename / Standard-Dateiname.
-    @return Selected file path or None / Gewählter Pfad oder None.
+    @return Selected file path or None / Gewhlter Pfad oder None.
     """
     try:
         import tkinter as tk
@@ -5722,9 +5723,9 @@ def pick_save_file(
 def pick_folder_cli(prompt="Ordnerpfad eingeben"):
     """
     @brief CLI-based folder picker without GUI dependencies.
-    @details CLI-basierter Ordner-Picker ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @details CLI-basierter Ordner-Picker ohne GUI-Abhngigkeiten (nur Bordmittel).
     @param prompt Input prompt text / Eingabe-Prompt-Text.
-    @return Valid folder path or None / Gültiger Ordnerpfad oder None.
+    @return Valid folder path or None / Gltiger Ordnerpfad oder None.
     """
     try:
         log.info(f"\n{prompt}:")
@@ -5739,7 +5740,7 @@ def pick_folder_cli(prompt="Ordnerpfad eingeben"):
         if folder_path.exists() and folder_path.is_dir():
             return str(folder_path)
         else:
-            log.error(f"Fehler: '{folder_path}' ist kein gültiger Ordner.")
+            log.error(f"Fehler: '{folder_path}' ist kein gltiger Ordner.")
             return None
     except (KeyboardInterrupt, EOFError):
         log.info("\nAbgebrochen.")
@@ -5753,10 +5754,10 @@ def pick_folder_cli(prompt="Ordnerpfad eingeben"):
 def pick_file_cli(prompt="Dateipfad eingeben", extensions=None):
     """
     @brief CLI-based file picker without GUI dependencies.
-    @details CLI-basierter Datei-Picker ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @details CLI-basierter Datei-Picker ohne GUI-Abhngigkeiten (nur Bordmittel).
     @param prompt Input prompt text / Eingabe-Prompt-Text.
     @param extensions Optional list of allowed extensions / Optionale Liste erlaubter Endungen.
-    @return Valid file path or None / Gültiger Dateipfad oder None.
+    @return Valid file path or None / Gltiger Dateipfad oder None.
     """
     try:
         ext_info = ""
@@ -5799,11 +5800,11 @@ def pick_save_file_cli(
         extensions=None):
     """
     @brief CLI-based save file dialog without GUI dependencies.
-    @details CLI-basierter Speichern-Dialog ohne GUI-Abhängigkeiten (nur Bordmittel).
+    @details CLI-basierter Speichern-Dialog ohne GUI-Abhngigkeiten (nur Bordmittel).
     @param prompt Input prompt text / Eingabe-Prompt-Text.
     @param default_name Default filename / Standard-Dateiname.
     @param extensions Optional list of allowed extensions / Optionale Liste erlaubter Endungen.
-    @return Valid save path or None / Gültiger Speicherpfad oder None.
+    @return Valid save path or None / Gltiger Speicherpfad oder None.
     """
     try:
         ext_info = ""
@@ -5836,7 +5837,7 @@ def pick_save_file_cli(
         if save_path.exists():
             overwrite = input(
                 f"Datei '{
-                    save_path.name}' existiert. Überschreiben? (j/n): ").strip().lower()
+                    save_path.name}' existiert. berschreiben? (j/n): ").strip().lower()
             if overwrite != 'j':
                 return None
 
@@ -6055,7 +6056,7 @@ def {safe_name}():
 def delete_test(filename):
     """
     @brief Deletes a specific test file from the disk.
-    @details Löscht eine bestimmte Testdatei von der Festplatte.
+    @details Lscht eine bestimmte Testdatei von der Festplatte.
     @param filename Test file name / Name der Testdatei.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
@@ -6151,7 +6152,7 @@ def get_logbook_entry(feature_name, source="logbuch"):
 def list_logbook_entries():
     """
     @brief Returns a list of all markdown files in the logbook folder with metadata.
-    @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurück.
+    @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurck.
     @return List of logbook entry objects / Liste von Logbuch-Eintrag-Objekten.
     """
     log_dir = PROJECT_ROOT / "logbuch"
@@ -6396,7 +6397,7 @@ def save_logbook_entry(filename, content):
 
     # Verhindere Directory Traversal
     if '/' in filename or '\\' in filename or filename.startswith('.'):
-        return {"error": "Ungültiger Dateiname"}
+        return {"error": "Ungltiger Dateiname"}
 
     file_path = log_dir / filename
 
@@ -6413,7 +6414,7 @@ def save_logbook_entry(filename, content):
 def delete_logbook_entry(filename):
     """
     @brief Deletes a logbook entry from the disk.
-    @details Löscht einen Logbuch-Eintrag.
+    @details Lscht einen Logbuch-Eintrag.
     @param filename Entry filename / Dateiname des Eintrags.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
@@ -6425,7 +6426,7 @@ def delete_logbook_entry(filename):
     # Verhindere Directory Traversal
     if '/' in filename or '\\' in filename or filename.startswith(
             '.') or '..' in filename:
-        return {"error": "Ungültiger Dateiname"}
+        return {"error": "Ungltiger Dateiname"}
 
     file_path = log_dir / filename
 
@@ -6443,7 +6444,7 @@ def delete_logbook_entry(filename):
 def run_tests(test_files):
     """
     @brief Executes selected pytest suites and returns the results.
-    @details Führt ausgewählte pytest-Suiten aus und gibt die Ergebnisse zurück.
+    @details Fhrt ausgewhlte pytest-Suiten aus und gibt die Ergebnisse zurck.
     @param test_files List of test filenames / Liste von Test-Dateinamen.
     @return Result dictionary with passes/fails and output / Ergebnis-Dictionary.
     """
@@ -6451,7 +6452,7 @@ def run_tests(test_files):
         debug_log(f"[Tests] Running files: {test_files}")
 
     if not test_files:
-        return {"error": "Keine Test-Suiten ausgewählt."}
+        return {"error": "Keine Test-Suiten ausgewhlt."}
 
     # Verify files exist
     valid_files = []
@@ -6463,7 +6464,7 @@ def run_tests(test_files):
             valid_files.append(str(p))
 
     if not valid_files:
-        return {"error": "Keine gültigen Test-Dateien gefunden."}
+        return {"error": "Keine gltigen Test-Dateien gefunden."}
 
     # We need to set PYTHONPATH so tests can import models/parsers
     env = os.environ.copy()
@@ -6626,32 +6627,32 @@ def get_test_results():
 def run_gui_tests():
     """
     @brief Placeholder for GUI tests (handled via the agent).
-    @details Dummy-Funktion für GUI-Tests (da diese über den Agenten laufen).
+    @details Dummy-Funktion fr GUI-Tests (da diese ber den Agenten laufen).
     @return Info dictionary / Info-Dictionary.
 
     Best Practices:
-      - In Produktion: Integriere Playwright oder Selenium für Eel-GUIs.
+      - In Produktion: Integriere Playwright oder Selenium fr Eel-GUIs.
       - Starte den Dev-Server und teste DOM-Interaktionen via Headless-Browser.
-      - Für MCP-Agenten: Nutze Inspector-Tool für Tool-Validierung und Event-Simulation.
-      - Alternativen: WebDriver (Selenium), CDP (Playwright), PyAutoGUI für Desktop.
-      - Eel expose() ermöglicht bidirektionale Python-JS-Calls für Test-Trigger.
+      - Fr MCP-Agenten: Nutze Inspector-Tool fr Tool-Validierung und Event-Simulation.
+      - Alternativen: WebDriver (Selenium), CDP (Playwright), PyAutoGUI fr Desktop.
+      - Eel expose() ermglicht bidirektionale Python-JS-Calls fr Test-Trigger.
     """
     log.info(
-        "GUI-Tests: Siehe MCP-Agent oder Browser-Subagent für KlickEvents/DOM.")
+        "GUI-Tests: Siehe MCP-Agent oder Browser-Subagent fr KlickEvents/DOM.")
     return {
         "status": "info",
-        "message": "GUI-Tests müssen über den MCP-Agenten DOM / Browser Subagent / KlickEvents gestartet werden.",
+        "message": "GUI-Tests mssen ber den MCP-Agenten DOM / Browser Subagent / KlickEvents gestartet werden.",
         "next_steps": [
             "pip install playwright pytest",
             "playwright install",
             "Beispiel: pytest mit page.goto('http://localhost:8000') und page.click()",
             "Alternativ: selenium, pyautogui, MCP Inspector"],
         "protocols": {
-            "WebDriver": "REST/HTTP, Selenium, geeignet für Eel",
+            "WebDriver": "REST/HTTP, Selenium, geeignet fr Eel",
             "CDP": "WebSocket, Playwright/Selenium4, direkter DOM-Zugriff",
-            "Eel expose": "Intern, Python-JS-Bridge, ideal für Test-Trigger",
+            "Eel expose": "Intern, Python-JS-Bridge, ideal fr Test-Trigger",
             "PyAutoGUI": "Pixel/Screen, Desktop-Automatisierung",
-            "MCP": "Agenten-basiert, Inspector für Event-Simulation"}}
+            "MCP": "Agenten-basiert, Inspector fr Event-Simulation"}}
 
 
 @eel.expose
@@ -7151,7 +7152,7 @@ def run_selenium_session_tests(options=None):
             "exit_code": result.returncode
         }
     except subprocess.TimeoutExpired:
-        return {"status": "error", "message": "Selenium Test Zeitüberschreitung (30s)"}
+        return {"status": "error", "message": "Selenium Test Zeitberschreitung (30s)"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

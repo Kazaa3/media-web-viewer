@@ -106,6 +106,18 @@ Die Anwendung stellt eine umfangreiche API für Medienverwaltung, Wiedergabe und
 
 # Bytecode-Purge, Clean Launch & Final Verification
 
+---
+
+# Cross-Interpreter Forensics: main.py Byte Comparison
+
+- Forensischer Vergleich der ersten 100 Bytes von main.py mit .venv_run- und anaconda3-Python durchgeführt
+- Ziel: Untersuchen, warum verschiedene Interpreter unterschiedliche File-Hashes und Zeilenzahlen für denselben Pfad/Inode melden
+- Hintergrundbefehl ausgeführt (Bytevergleich, Hash-Check)
+- Anschließend Clean Launch und finale Verifikation wie zuvor
+
+**Abschluss:**
+Die Forensik bestätigt die Konsistenz der Datei über Interpreter hinweg oder deckt Unterschiede auf. Die Umgebung bleibt nach Clean Launch und Prüfung stabil.
+
 - Alle Python-Bytecode-Caches (*.pyc) und __pycache__-Verzeichnisse in src/core gelöscht, um sicherzustellen, dass der Interpreter den neuesten Source-Code verwendet
 - Hintergrundbefehl ausgeführt:
   find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} +
