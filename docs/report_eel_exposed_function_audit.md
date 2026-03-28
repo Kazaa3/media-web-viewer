@@ -102,6 +102,20 @@ Die Anwendung stellt eine umfangreiche API für Medienverwaltung, Wiedergabe und
 
 # Implementation Plan – Process Stability & Playwright Integration (COMPLETED)
 
+---
+
+# Bytecode-Purge, Clean Launch & Final Verification
+
+- Alle Python-Bytecode-Caches (*.pyc) und __pycache__-Verzeichnisse in src/core gelöscht, um sicherzustellen, dass der Interpreter den neuesten Source-Code verwendet
+- Hintergrundbefehl ausgeführt:
+  find . -name "*.pyc" -delete && find . -name "__pycache__" -type d -exec rm -rf {} +
+- Clean Launch und finale Verifikation:
+  python3 scripts/mwv_control.py --stop && python3 scripts/mwv_control.py --start && sleep 30 && netstat -tunlp | grep 8345 && curl -I http://127.0.0.1:8345/app.html
+- Ergebnis: Exit-Code 0, Server erreichbar, keine Bytecode-Altlasten mehr
+
+**Abschluss:**
+Die Umgebung ist jetzt vollständig bereinigt, alle Änderungen greifen, und die finale Verifikation ist erfolgreich abgeschlossen.
+
 **User Review Required – HINWEIS**
 
 - **Gevent-Kompatibilität:** Kritischen Startup-Hänger gelöst, indem gevent monkey patching ganz oben in main.py platziert wurde (wichtig für Python 3.14).

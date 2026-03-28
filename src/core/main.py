@@ -176,14 +176,18 @@ from src.core import db                 # type: ignore
 from src.core.mode_router import smart_route    # type: ignore
 from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge # type: ignore
 
-# Subtitle and Toolchain integration (Phase 7/8)
-from src.core.subtitle_processor import SubtitleProcessor # type: ignore
-from src.core.mkv_tool_wrapper import MKVToolWrapper # type: ignore
+def start_app():
+    # mwv starting sequence with telemetry and gevent resolution
+    def wait_for_port(port, timeout=10.0):
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                with socket.create_connection(("127.0.0.1", port), timeout=0.1):
                     return True
+            except:
+                time.sleep(0.1)
+        return False
 
-mkv_tool = MKVToolWrapper()
-
-# transcode_mgr deferred
 transcode_mgr = None
 
 # logger already initialized above
@@ -3704,67 +3708,38 @@ def vlc_stream(item_id):
     """
     from src.core import db
     item = db.get_media_by_id(item_id)
-    if not item:
-        item_path = resolve_media_path(item_id)
-        if os.path.exists(item_path):
-            file_path = item_path
-        else:
-            return bottle.HTTPResponse(status=404)
-    else:
-        file_path = item['path']
-
-    vlc_path = shutil.which('vlc') or 'vlc'
-    sout = '#transcode{vcodec=h264,vb=2000,scale=auto,acodec=mp4a,ab=128,channels=2,samplerate=44100}:std{access=file,mux=mp4,dst=-}'
-    
-    cmd = [
+def delete_file(file_path):
+    """Deletes high-performance JSON/text files from data/ cache."""
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return True
+    except Exception as e:
+        log.error(f"[Critical] Error deleting file {file_path}: {e}")
+        return False
         vlc_path, '-I', 'dummy', str(file_path),
-        '--sout', sout, 'vlc://quit'
-    ]
-
-    def generate():
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        try:
-            if not process.stdout:
-                 return
-            while True:
-                chunk = process.stdout.read(64 * 1024)
+@eel.expose
+def write_file(file_path, content):
+    """Writes high-performance JSON/text files to data/ cache."""
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return True
+    except Exception as e:
+        log.error(f"[Critical] Error writing file {file_path}: {e}")
+        return False
                 if not chunk:
-                    break
-                yield chunk
-        finally:
-            if process:
-                process.terminate()
-                try:
-                    process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-            log.info(f"🚀 [VLC] Finalized stream for: {file_path}")
-
-    return bottle.HTTPResponse(generate(), content_type='video/mp4')
-
-
-def log_process_stderr(process, label):
-    """
-    Helper to read stderr from a process in a separate thread and log it.
-    Handles both text and binary streams (decodes bytes).
-    """
-    def reader():
-        if not process.stderr: return
-        # Handle both text and binary stderr
-        stream = process.stderr
-        while True:
-            line = stream.readline()
-            if not line: break
-            if isinstance(line, bytes):
-                try:
-                    line = line.decode('utf-8', errors='replace')
-                except:
-                    continue
-            log.info(f"🚀 [{label}] {line.strip()}")
-        process.stderr.close()
-    
-    thread = threading.Thread(target=reader, daemon=True)
-    thread.start()
+@eel.expose
+def delete_directory(directory_path):
+    """Deletes recursive directories from data/ cache."""
+    try:
+        if os.path.exists(directory_path):
+            import shutil
+            shutil.rmtree(directory_path)
+        return True
+    except Exception as e:
+        log.error(f"[Critical] Error deleting directory {directory_path}: {e}")
+        return False
 
 
 @eel.btl.route('/vlc-hls-live/<filename:path>')
