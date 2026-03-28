@@ -8608,25 +8608,6 @@
                         switchTab(activeTab, getTabButton(activeTab));
                     }
 
-                    function getTabButton(tabId) {
-                        const btnMap = {
-                            'player': 'active-queue-tab-trigger',
-                            'library': 'coverflow-library-tab-trigger',
-                            'item': 'indexed-sqlite-repository-tab-trigger',
-                            'file': 'filesystem-crawler-tab-trigger',
-                            'edit': 'crud-metadata-tab-trigger',
-                            'options': 'system-registry-tab-trigger',
-                            'parser': 'chain-config-tab-trigger',
-                            'debug': 'telemetry-inspector-tab-trigger',
-                            'tests': 'qa-validation-tab-trigger',
-                            'reporting': 'reporting-dashboard-tab-trigger',
-                            'logbuch': 'documentation-journal-tab-trigger',
-                            'playlist': 'sequential-buffer-tab-trigger',
-                            'vlc': 'media-orchestrator-tab-trigger',
-                            'video': 'media-orchestrator-tab-trigger'
-                        };
-                        return document.getElementById(btnMap[tabId]);
-                    }
                     function set_media_session(meta) {
                         try {
                             if (!('mediaSession' in navigator)) return;
