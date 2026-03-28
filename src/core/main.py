@@ -141,6 +141,17 @@ transcode_mgr = None
 # logger already initialized above
 log_checkpoint("Base imports complete")
 
+# --- UI State Tracking ---
+SIDEBAR_OPEN = True
+
+@eel.expose
+def toggle_sidebar():
+    """Toggles the sidebar open/closed state for diagnostic tracking."""
+    global SIDEBAR_OPEN
+    SIDEBAR_OPEN = not SIDEBAR_OPEN
+    log.info(f"[UI] Sidebar toggled. New state: {SIDEBAR_OPEN}")
+    return {"status": "ok", "state": SIDEBAR_OPEN}
+
 def ensure_singleton():
     """Find and kill existing main.py processes and take a lock. Exits if failed."""
     current_pid = os.getpid()

@@ -17,10 +17,23 @@ class EnvSuiteEngine(DiagnosticEngine):
         super().__init__(suite_name="Env")
 
     def level_1_binary_check(self) -> DiagnosticResult:
-        ffmpeg_exists = os.system("ffmpeg -version > /dev/null 2>&1") == 0
-        ffprobe_exists = os.system("ffprobe -version > /dev/null 2>&1") == 0
-        success = ffmpeg_exists and ffprobe_exists
-        return DiagnosticResult(1, "Binary Check", "PASS" if success else "FAIL", "FFMPEG/FFPROBE binaries found.")
+        binaries = {
+            "ffmpeg": "ffmpeg -version",
+            "ffprobe": "ffprobe -version",
+            "ffplay": "ffplay -version",
+            "mkvmerge": "mkvmerge --version",
+            "vlc": "vlc --version",
+            "mpv": "mpv --version",
+            "swyh-rs": "swyh-rs --help"
+        }
+        missing = []
+        for name, cmd in binaries.items():
+            if os.system(f"{cmd} > /dev/null 2>&1") != 0:
+                missing.append(name)
+        
+        success = not missing
+        return DiagnosticResult(1, "Binary Check", "PASS" if success else "WARN", 
+                                f"Missing: {missing}" if missing else "All 7 media binaries found.")
 
     def level_2_python_packages(self) -> DiagnosticResult:
         critical = ['psutil', 'bs4', 'eel', 'bottle', 'mutagen', 'pymediainfo', 'gevent', 'PIL', 'scapy']

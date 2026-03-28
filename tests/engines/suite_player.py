@@ -72,7 +72,7 @@ class PlayerSuiteEngine(DiagnosticEngine):
         import os
         
         processes = []
-        original_popen = subprocess.Popen
+        original_popen = mse.subprocess.Popen
         original_exists = os.path.exists
         
         def mock_popen(*args, **kwargs):
@@ -80,8 +80,9 @@ class PlayerSuiteEngine(DiagnosticEngine):
             processes.append(p)
             return p
             
-        subprocess.Popen = mock_popen
+        mse.subprocess.Popen = mock_popen
         os.path.exists = lambda x: True
+        mse.ACTIVE_STREAMS.clear()
         
         try:
             mse.start_mse_stream("/t.mkv", "sid_1")
@@ -94,7 +95,7 @@ class PlayerSuiteEngine(DiagnosticEngine):
             success = p1.terminated
             return DiagnosticResult(2, "Session Lifecycle", "PASS" if success else "FAIL", "Previous process terminated on restart.")
         finally:
-            subprocess.Popen = original_popen
+            mse.subprocess.Popen = original_popen
             os.path.exists = original_exists
 
     def level_3_hw_acceleration(self) -> DiagnosticResult:

@@ -21,6 +21,13 @@ try:
     from tests.engines.suite_casting import CastingSuiteEngine
     from tests.engines.suite_audioplayer import AudioplayerSuiteEngine
     from tests.engines.suite_playlist import PlaylistSuiteEngine
+    from tests.engines.suite_logbuch import LogbuchSuiteEngine
+    from tests.engines.suite_reporting import ReportingSuiteEngine
+    from tests.engines.suite_ui_integrity import UIIntegritySuiteEngine
+    from tests.engines.suite_parser import ParserSuiteEngine
+    from tests.engines.suite_edit import EditSuiteEngine
+    from tests.engines.suite_sidebar import SidebarSuiteEngine
+    from tests.engines.suite_options import OptionsSuiteEngine
 except ImportError:
     # Fallback for direct execution in engines dir or similar
     from engines.suite_ultimate import UltimateSuiteEngine
@@ -36,6 +43,13 @@ except ImportError:
     from engines.suite_casting import CastingSuiteEngine
     from engines.suite_audioplayer import AudioplayerSuiteEngine
     from engines.suite_playlist import PlaylistSuiteEngine
+    from engines.suite_logbuch import LogbuchSuiteEngine
+    from engines.suite_reporting import ReportingSuiteEngine
+    from engines.suite_ui_integrity import UIIntegritySuiteEngine
+    from engines.suite_parser import ParserSuiteEngine
+    from engines.suite_edit import EditSuiteEngine
+    from engines.suite_sidebar import SidebarSuiteEngine
+    from engines.suite_options import OptionsSuiteEngine
 
 def run_master_diagnostic():
     print("="*60)
@@ -55,6 +69,13 @@ def run_master_diagnostic():
     CastingSuiteEngine().run_all()
     AudioplayerSuiteEngine().run_all()
     PlaylistSuiteEngine().run_all()
+    LogbuchSuiteEngine().run_all()
+    ReportingSuiteEngine().run_all()
+    UIIntegritySuiteEngine().run_all()
+    ParserSuiteEngine().run_all()
+    EditSuiteEngine().run_all()
+    SidebarSuiteEngine().run_all()
+    OptionsSuiteEngine().run_all()
     
     print("\n" + "="*60)
     print("MASTER DIAGNOSTIC COMPLETE")
