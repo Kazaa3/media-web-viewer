@@ -28,3 +28,5 @@ music-tag>=0.4.3
 pymkv>=1.0.8
 pyautogui>=0.9.54
 pytest>=7.4.0
+pychromecast>=13.1.0
+zeroconf>=0.131.0

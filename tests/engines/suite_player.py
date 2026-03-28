@@ -38,15 +38,19 @@ class PlayerSuiteEngine(DiagnosticEngine):
         from src.core.streams import hls_stream as hls
         from src.core.streams import mse_stream as mse
         import subprocess
+        import os
         
         captured_cmds = []
         original_popen = subprocess.Popen
+        original_exists = os.path.exists
         
         def mock_popen(cmd, *args, **kwargs):
             captured_cmds.append(cmd)
             return MockProcess(cmd)
             
         subprocess.Popen = mock_popen
+        os.path.exists = lambda x: True # Mock all files as existing
+        
         try:
             hls.start_hls_fmp4("/t.mkv", "/tmp/hls", "test_hls", start_time=120)
             mse.start_mse_stream("/t.mkv", "test_mse", start_time=60)
@@ -59,22 +63,31 @@ class PlayerSuiteEngine(DiagnosticEngine):
                                     f"HLS SS Injection: {hls_ok}, MSE SS Injection: {mse_ok}")
         finally:
             subprocess.Popen = original_popen
+            os.path.exists = original_exists
 
     def level_2_session_lifecycle(self) -> DiagnosticResult:
         """Verifies that starting a new stream stops the previous one."""
         from src.core.streams import mse_stream as mse
         import subprocess
+        import os
         
         processes = []
         original_popen = subprocess.Popen
+        original_exists = os.path.exists
+        
         def mock_popen(*args, **kwargs):
             p = MockProcess()
             processes.append(p)
             return p
             
         subprocess.Popen = mock_popen
+        os.path.exists = lambda x: True
+        
         try:
             mse.start_mse_stream("/t.mkv", "sid_1")
+            if not processes:
+                return DiagnosticResult(2, "Session Lifecycle", "FAIL", "No process started for first session.")
+            
             p1 = processes[0]
             mse.start_mse_stream("/t.mkv", "sid_1")
             
@@ -82,6 +95,7 @@ class PlayerSuiteEngine(DiagnosticEngine):
             return DiagnosticResult(2, "Session Lifecycle", "PASS" if success else "FAIL", "Previous process terminated on restart.")
         finally:
             subprocess.Popen = original_popen
+            os.path.exists = original_exists
 
     def level_3_hw_acceleration(self) -> DiagnosticResult:
         """Verifies player streams respect hardware encoder detection."""

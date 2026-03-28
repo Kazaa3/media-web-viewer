@@ -56,7 +56,7 @@ class TranscoderManager:
             else:
                 raise ValueError(f"Unknown task type: {task.task_type}")
 
-            logger.info(f"Starting transcode: {' '.join(cmd)}")
+            log.info(f"Starting transcode: {' '.join(cmd)}")
             task.process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, universal_newlines=True
             )
