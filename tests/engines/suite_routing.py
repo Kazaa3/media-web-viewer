@@ -60,6 +60,7 @@ class RoutingSuiteEngine(DiagnosticEngine):
         
         try:
             res = smart_route("/movie.iso")
+            # In mode_router.py line 40: mode = 'vlc_bridge' for ISO
             success = (res["mode"] == "vlc_bridge")
             return DiagnosticResult(3, "VLC Bridge Trigger", "PASS" if success else "FAIL", f"ISO routed to {res['mode']}.")
         finally:

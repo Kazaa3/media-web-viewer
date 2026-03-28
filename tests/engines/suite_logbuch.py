@@ -76,6 +76,7 @@ class LogbuchSuiteEngine(DiagnosticEngine):
     def level_5_api_alignment(self) -> DiagnosticResult:
         """Audits Eel exposure for logbook management functions."""
         try:
+            from src.core import main # Ensure MockEel is active
             import eel
             exposed = getattr(eel, "_exposed_functions", [])
             required = ["list_logbook_entries", "get_logbook_entry", "read_file"]

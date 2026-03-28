@@ -60,8 +60,9 @@ class SidebarSuiteEngine(DiagnosticEngine):
     def level_5_api_alignment(self) -> DiagnosticResult:
         """Audits Eel exposure for sidebar management functions."""
         try:
+            from src.core import main # Ensure MockEel is active
             import eel
-            exposed = getattr(eel, "_exposed_functions", [])
+            exposed = main.eel._exposed_functions
             required = ["toggle_sidebar"]
             missing = [f for f in required if f not in exposed]
             

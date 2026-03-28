@@ -58,8 +58,9 @@ class EditSuiteEngine(DiagnosticEngine):
     def level_5_api_alignment(self) -> DiagnosticResult:
         """Audits Eel exposure for metadata editing functions."""
         try:
+            from src.core import main # Ensure MockEel is active
             import eel
-            exposed = getattr(eel, "_exposed_functions", [])
+            exposed = main.eel._exposed_functions
             required = ["save_tags_to_file", "update_metadata_entry"]
             missing = [f for f in required if f not in exposed]
             

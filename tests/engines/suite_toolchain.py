@@ -72,6 +72,37 @@ class ToolchainSuiteEngine(DiagnosticEngine):
             return DiagnosticResult(5, "GPU Acceleration", "PASS", f"Supported: {', '.join(features)}")
         return DiagnosticResult(5, "GPU Acceleration", "WARN", "No GPU acceleration detected via HandBrake CLI help.")
 
+    def level_10_integrity(self) -> DiagnosticResult:
+        """Verifies DB and Debugging/Logging infrastructure."""
+        try:
+            from src.core import db
+            from src.core import logger
+            
+            # Use try-except for the actual DB call if necessary, or just verify presence
+            log = logger.get_logger("test_integrity")
+            log.info("Integrity check running.")
+            
+            db_ok = hasattr(db, "get_db") or hasattr(db, "DatabaseHandler")
+            log_ok = hasattr(logger, "get_logger")
+            
+            if db_ok and log_ok:
+                return DiagnosticResult(10, "Integrity System", "PASS", "DB and Logger infrastructure verified.")
+            return DiagnosticResult(10, "Integrity System", "WARN", f"DB: {db_ok}, Log: {log_ok}")
+        except Exception as e:
+            return DiagnosticResult(10, "Integrity System", "FAIL", str(e))
+
+    def run_all(self, stages: List[Any] = None) -> List[DiagnosticResult]:
+        if not stages:
+            stages = [
+                self.level_1_mkvtoolnix_presence,
+                self.level_2_handbrake_presence,
+                self.level_3_ffplay_presence,
+                self.level_4_swyh_rs_presence,
+                self.level_5_gpu_acceleration_check,
+                self.level_10_integrity
+            ]
+        return super().run_all(stages)
+
 if __name__ == "__main__":
     engine = ToolchainSuiteEngine()
-    engine.run()
+    engine.run_all()

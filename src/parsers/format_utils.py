@@ -184,6 +184,7 @@ def detect_file_format(path: Optional[Path | str], tags: Optional[dict[str, Any]
         if size_gb > 0.1:
             return 'CD-ROM (Abbild)'
 
+        # Ensure .iso is standardized as 'Disk-Abbild' if no higher priority metadata is found
         return 'Disk-Abbild'
 
     # DSD / High-Res Audio detection

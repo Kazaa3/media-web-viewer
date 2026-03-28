@@ -1,8 +1,9 @@
-# Specialized logger
+import eel
 from src.core.ffprobe_analyzer import ffprobe_analyze # type: ignore
 from src.core.logger import get_logger
 log = get_logger("mode_router")
 
+@eel.expose
 def smart_route(file_path):
     """
     @brief The central decision engine for playback modes.

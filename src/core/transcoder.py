@@ -108,37 +108,66 @@ class TranscoderManager:
         return "x264" # Default software fallback
 
     def _build_handbrake_cmd(self, task: TranscodeTask) -> List[str]:
-        # Basic HandBrakeCLI command
+        # HandBrakeCLI with GPU support and optimized parameters
         cmd = ["HandBrakeCLI", "-i", task.input_path, "-o", task.output_path]
         
         encoder = task.options.get("encoder", "auto")
         if encoder == "auto":
             encoder = self._auto_select_encoder()
             
-        if encoder == "nvenc": cmd += ["-e", "nvenc_h264"]
-        elif encoder == "qsv": cmd += ["-e", "qsv_h264"]
-        elif encoder == "vaapi": cmd += ["-e", "vaapi_h264"]
-        else: cmd += ["-e", "x264"]
+        # GPU Encoders
+        if encoder == "nvenc":
+            cmd += ["-e", "nvenc_h264"]
+        elif encoder == "qsv":
+            cmd += ["-e", "qsv_h264"]
+        elif encoder == "vaapi":
+            cmd += ["-e", "vaapi_h264"]
+        else:
+            cmd += ["-e", "x264"]
 
+        # Additional optimizations for batch encoding
         preset = task.options.get("preset", "fast")
         cmd += ["--preset", preset]
         
+        # Audio Passthrough
+        cmd += ["--aencoder", "copy"]
+        
+        # Subtitle Passthrough
+        cmd += ["--subtitle", "scan", "--native-language", "ger", "--native-dub"]
+        
+        # Performance flags
+        cmd += ["--markers"]
+        
         return cmd
 
+    def add_batch_tasks(self, file_pairs: List[Dict[str, str]], options: Dict[str, Any]) -> List[str]:
+        """Adds a list of transcoding tasks as a batch."""
+        task_ids = []
+        for pair in file_pairs:
+            input_p = pair.get("input")
+            output_p = pair.get("output")
+            if input_p and output_p:
+                task_ids.append(self.add_task(input_p, output_p, "handbrake", options))
+        return task_ids
+
     def _build_webm_cmd(self, task: TranscodeTask) -> List[str]:
-        # FFmpeg VP9/WebM command
-        # Auto-detect encoder for webm too if needed
+        # FFmpeg VP9/WebM command with HW acceleration if available
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", task.input_path]
+        
         from src.core import hardware_detector
         gpu_info = hardware_detector.get_gpu_info()
         encoders = gpu_info.get("encoders", [])
         
-        cmd = ["ffmpeg", "-i", task.input_path]
-        
-        # Check for HW acceleration for VP9 if available
-        # (Standard webm uses VP9)
-        cmd += ["-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0"]
+        # VP9 HW Encoders (if available via ffmpeg)
+        if "nvenc" in encoders:
+            # Note: nvenc supports hevc/h264, vp9 support depends on hardware
+            cmd += ["-c:v", "vp9_nvenc"] if "vp9_nvenc" in str(subprocess.run(["ffmpeg", "-encoders"], capture_output=True).stdout) else ["-c:v", "libvpx-vp9"]
+        else:
+            cmd += ["-c:v", "libvpx-vp9"]
+
+        cmd += ["-crf", "30", "-b:v", "0"]
         cmd += ["-c:a", "libopus", "-b:a", "128k"]
-        cmd += ["-deadline", "realtime", "-y", task.output_path]
+        cmd += ["-deadline", "realtime", "-row-mt", "1", "-y", task.output_path]
         return cmd
 
     def _get_duration(self, task: TranscodeTask):

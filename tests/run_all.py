@@ -8,8 +8,12 @@ sys.path.append(str(PROJECT_ROOT / "src"))
 
 import argparse
 
-# Import all suites
-try:
+def run_master_diagnostic():
+    # Setup Test Mode before any imports
+    os.environ["MWV_TEST_MODE"] = "1"
+    from src.core import main # Ensure MockEel is active
+    
+    # Import all suites dynamically to avoid early eel capture
     from tests.engines.suite_ultimate import UltimateSuiteEngine
     from tests.engines.suite_items import ItemsSuiteEngine
     from tests.engines.suite_ui import UISuiteEngine
@@ -39,39 +43,6 @@ try:
     from tests.engines.suite_subtitles import SubtitleSuiteEngine
     from tests.engines.suite_toolchain import ToolchainSuiteEngine
     from tests.engines.suite_advanced_player import AdvancedPlayerSuite
-except ImportError:
-    # Fallback for direct execution in engines dir or similar
-    from engines.suite_ultimate import UltimateSuiteEngine
-    from engines.suite_items import ItemsSuiteEngine
-    from engines.suite_ui import UISuiteEngine
-    from engines.suite_env import EnvSuiteEngine
-    from engines.suite_database import DatabaseSuiteEngine
-    from engines.suite_player import PlayerSuiteEngine
-    from engines.suite_media_integrity import MediaIntegritySuiteEngine
-    from engines.suite_network import NetworkIntegrationSuiteEngine
-    from engines.suite_quality import CodeQualitySuiteEngine
-    from engines.suite_automation import AutomationSuiteEngine
-    from engines.suite_casting import CastingSuiteEngine
-    from engines.suite_audioplayer import AudioplayerSuiteEngine
-    from engines.suite_playlist import PlaylistSuiteEngine
-    from engines.suite_logbuch import LogbuchSuiteEngine
-    from engines.suite_reporting import ReportingSuiteEngine
-    from engines.suite_ui_integrity import UIIntegritySuiteEngine
-    from engines.suite_parser import ParserSuiteEngine
-    from engines.suite_edit import EditSuiteEngine
-    from engines.suite_sidebar import SidebarSuiteEngine
-    from engines.suite_config import ConfigSuiteEngine
-    from engines.suite_routing import RoutingSuiteEngine
-    from engines.suite_scripts import ScriptSuiteEngine
-    from engines.i18n import I18nSuiteEngine
-    from engines.suite_optimization import OptimizationSuiteEngine
-    from engines.suite_complexity import ComplexitySuiteEngine
-    from engines.suite_styles import StylesSuiteEngine
-    from engines.suite_subtitles import SubtitleSuiteEngine
-    from engines.suite_toolchain import ToolchainSuiteEngine
-    from engines.suite_advanced_player import AdvancedPlayerSuite
-
-def run_master_diagnostic():
     parser = argparse.ArgumentParser(description="Master Diagnostic Runner")
     parser.add_argument("--basis", action="store_true", help="Run only basis levels (L1-L2)")
     args = parser.parse_args()

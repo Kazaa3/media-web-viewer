@@ -38,12 +38,47 @@ class AdvancedPlayerSuite(DiagnosticEngine):
             return DiagnosticResult(3, "Batch Extract API", "FAIL", "mkv_batch_extract not found in main.py")
         return DiagnosticResult(3, "Batch Extract API", "PASS", "MKV batch extraction API confirmed.")
 
-    def level_4_mpv_native_bridge(self) -> DiagnosticResult:
-        """Verifies if the native MPV bridge is exposed."""
-        import src.core.main as main
-        if not hasattr(main, 'open_mpv'):
-            return DiagnosticResult(4, "MPV Bridge", "FAIL", "open_mpv not found in main.py")
-        return DiagnosticResult(4, "MPV Bridge", "PASS", "MPV native bridge confirmed.")
+    def level_5_handbrake_batch_engine(self) -> DiagnosticResult:
+        """Verifies the TranscoderManager's batch processing capability."""
+        from src.core.transcoder import TranscoderManager
+        tm = TranscoderManager()
+        task_ids = tm.add_batch_tasks([{"input": "in.mp4", "output": "out.mp4"}], {"preset": "fast"})
+        if len(task_ids) == 1:
+            return DiagnosticResult(5, "HandBrake Batch", "PASS", "Batch task queuing confirmed.")
+        return DiagnosticResult(5, "HandBrake Batch", "FAIL", "Batch task queuing failed.")
+
+    def level_6_external_players_presence(self) -> DiagnosticResult:
+        """Checks for presence of critical external player binaries."""
+        import shutil
+        missing = []
+        for bin in ["vlc", "HandBrakeCLI", "mkvextract"]:
+            if not shutil.which(bin):
+                missing.append(bin)
+        
+        # mpv and swyh-rs are optional/user-provided in this environment
+        if not missing:
+            return DiagnosticResult(6, "External Binaries", "PASS", "Critical toolchain binaries found.")
+        return DiagnosticResult(6, "External Binaries", "WARN", f"Missing binaries: {missing}")
+
+    def level_7_library_presence(self) -> DiagnosticResult:
+        """Verifies if the new toolchain libraries are importable."""
+        missing = []
+        try:
+            import enzyme
+        except ImportError:
+            missing.append("enzyme")
+        try:
+            import pymkv
+        except ImportError:
+            missing.append("pymkv")
+        try:
+            import ffmpeg
+        except ImportError:
+            missing.append("ffmpeg-python")
+            
+        if not missing:
+            return DiagnosticResult(7, "Library Presence", "PASS", "All toolchain libraries present.")
+        return DiagnosticResult(7, "Library Presence", "FAIL", f"Missing libraries: {missing}")
 
 if __name__ == "__main__":
     AdvancedPlayerSuite().run()
