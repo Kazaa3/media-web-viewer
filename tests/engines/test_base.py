@@ -16,9 +16,28 @@ class DiagnosticEngine:
     Base class for all diagnostic engines.
     Provides standard logging and result tracking.
     """
-    def __init__(self, suite_name: str = "Diagnostic Engine") -> None:
+    def __init__(self, suite_name: str = "Diagnostic Engine", kill_on_init: bool = False) -> None:
         self.suite_name = suite_name
         self.results: List[DiagnosticResult] = []
+        if kill_on_init:
+            self.kill_stale_processes()
+
+    def kill_stale_processes(self) -> None:
+        """Kills any lingering MWV-related processes to prevent port/file lock hangs."""
+        import os
+        import signal
+        import subprocess
+        try:
+            # Kill by filename pattern (main.py, suites, etc)
+            cmd = "ps aux | grep -E 'main.py|suite_|eel' | grep -v 'grep' | awk '{print $2}'"
+            pids = subprocess.check_output(cmd, shell=True).decode().split()
+            my_pid = str(os.getpid())
+            for pid in pids:
+                if pid != my_pid:
+                    try: os.kill(int(pid), signal.SIGKILL)
+                    except: pass
+        except:
+            pass
 
     def log_result(self, res: DiagnosticResult) -> None:
         self.results.append(res)

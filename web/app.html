@@ -3524,6 +3524,22 @@
             }
         }
 
+        async function checkSpawnedItems() {
+            appendUiTrace("Starting Spawned Items Check...");
+            const items = document.querySelectorAll('.media-item');
+            const total = items.length;
+            appendUiTrace(`Found ${total} items in DOM.`);
+            
+            items.forEach((item, idx) => {
+                const name = item.querySelector('.title-item')?.innerText || "Unknown";
+                const hasCover = !!item.querySelector('.cover-item img')?.getAttribute('src');
+                appendUiTrace(`Item ${idx+1}: [${name}] | Cover: ${hasCover}`);
+            });
+            
+            appendUiTrace("Spawned Items Check Complete.");
+            showToast(`Diagnostics (Item Spawn): ${total} items were discovered in the DOM.`);
+        }
+
         function refreshTestViews() {
             // Find active subtab
             const activeBtn = document.querySelector('#quality-assurance-regression-suite-panel .options-subtab.active');
@@ -4769,8 +4785,9 @@
                     data-i18n="nav_edit">Edit</button>
                 <button id="system-registry-tab-trigger" class="tab-btn" onclick="switchTab('options', this)"
                     data-i18n="nav_options">Optionen</button>
-                <button id="chain-config-tab-trigger" class="tab-btn" onclick="switchTab('parser', this)"
-                    data-i18n="nav_parser">Parser</button>
+                <button id="tools-tab-trigger" class="tab-btn" onclick="switchTab('tools', this)">
+                    Tools
+                </button>
                 <button id="telemetry-inspector-tab-trigger" class="tab-btn" onclick="switchTab('debug', this)"
                     data-i18n="nav_debug">Debug DB</button>
                 <button id="qa-validation-tab-trigger" class="tab-btn" onclick="switchTab('tests', this)"
@@ -5426,32 +5443,7 @@
 
                 <!-- FIXED HEADER & NAV -->
                 <div class="sub-nav-container">
-                    <h2 id="options-main-header" style="margin: 0; font-size: 1.2em;" data-i18n="options_title">Optionen
-                    </h2>
-
-                    <!-- ===================== OPTIONS SUB-TAB NAVIGATION ===================== -->
-                    <div class="options-nav-tabs">
-                        <button class="options-subtab active" onclick="switchOptionsView('general')"
-                            id="options-subtab-general" data-i18n="opt_tab_general">
-                            Allgemeine Einstellungen
-                        </button>
-                        <button class="options-subtab" onclick="switchOptionsView('tools')" id="options-subtab-tools"
-                            data-i18n="opt_tab_tools">
-                            Advanced Tools
-                        </button>
-                        <button class="options-subtab" onclick="switchOptionsView('environment')"
-                            id="options-subtab-environment" data-i18n="opt_tab_env">
-                            System-Infrastruktur
-                        </button>
-                        <button class="options-subtab" onclick="switchOptionsView('startup')"
-                            id="options-subtab-startup" data-i18n="opt_tab_startup">
-                            Start-Konfiguration
-                        </button>
-                        <button class="options-subtab" onclick="switchOptionsView('sync')" id="options-subtab-sync"
-                            data-i18n="opt_tab_sync">
-                            Synchronization & RTT
-                        </button>
-                    </div>
+                    <h2 id="options-main-header" style="margin: 0; font-size: 1.2em;" data-i18n="options_title">Optionen</h2>
                 </div>
 
                 <!-- SCROLLABLE CONTENT AREA wrapper START -->
@@ -5823,136 +5815,125 @@
                     </div> <!-- closes Right Column: General & Debug Settings -->
                 </div> <!-- closes options-general-view -->
 
-                <div id="options-tools-view" class="options-view scrolling-view"
-                    style="display: none; min-height: min-content;">
-                    <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
-                        <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
-                    </h2>
+                </div> <!-- closes options-scroll-container -->
+            </div> <!-- closes Options Tab -->
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <!-- HandBrake Section -->
-                        <div
-                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                            <h3 style="margin-top: 0; color: #d35400;"><svg width="12" height="12">
-                                    <use href="#icon-sparkles"></use>
-                                </svg> HandBrake (High-Level)</h3>
-                            <p style="font-size: 0.9em; color: #666;">Optimized batch encoding for high quality and
-                                small sizes.</p>
-
-                            <div style="margin-bottom: 15px;">
-                                <label
-                                    style="display: block; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">Encoder
-                                    Type:</label>
-                                <select id="hb-encoder"
-                                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
-                                    <option value="x264">Software (x264)</option>
-                                    <option value="qsv">Intel QuickSync (QSV)</option>
-                                    <option value="nvenc">NVIDIA (NVENC)</option>
-                                    <option value="vaapi">VAAPI (Generic HW)</option>
-                                </select>
-                            </div>
-
-                            <button onclick="triggerHBTranscode()"
-                                style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
-                                Start Transcoding
-                            </button>
-                        </div>
-
-                        <!-- WebM Section -->
-                        <div
-                            style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                            <h3 style="margin-top: 0; color: #2980b9;"><svg width="12" height="12">
-                                    <use href="#icon-satellite"></use>
-                                </svg> WebM (VP9 / Ultra Small)</h3>
-                            <p style="font-size: 0.9em; color: #666;">Best for web sharing. High compression with
-                                VP9/Opus.</p>
-
-                            <button onclick="triggerWebMTranscode()"
-                                style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 45px;">
-                                Convert to WebM
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Transcode Tasks (Full Width) -->
-                    <div id="transcoding-tasks-container" style="margin-top: 30px;">
-                        <h4 style="color: #666; border-bottom: 1px solid #eee; padding-bottom: 10px;">Active Tasks
-                        </h4>
-                        <div id="transcoding-task-list">
-                            <p style="font-size: 0.9em; color: #999; font-style: italic;">No active tasks.</p>
-                        </div>
-                    </div>
-
-                    <!-- VLC Integration Section (Full Width) -->
-                    <div
-                        style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 30px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                            <!-- VLC Stream Panel -->
-                            <div>
-                                <h3
-                                    style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                                    <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC
-                                        Stream</span>
-                                </h3>
-                                <div id="vlc-stream-panel" style="display: block;">
-                                    <div style="display: flex; gap: 10px;">
-                                        <input id="vlc-stream-url" type="text"
-                                            placeholder="https://... | rtsp://... | rtmp://..."
-                                            style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;"
-                                            data-i18n="[placeholder]vlc_stream_placeholder" />
-                                        <button onclick="playVLCStream()"
-                                            style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;">
-                                            ▶ <span data-i18n="vlc_usage_open_in_vlc">Stream starten</span>
-                                        </button>
-                                    </div>
-                                    <div id="vlc-ribbon-status"
-                                        style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.85em;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- VLC Playlist Panel -->
-                            <div>
-                                <h3
-                                    style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                                    <span class="icon-cassette"></span> <span
-                                        data-i18n="vlc_playlist_integration">Playlist
-                                        Tools</span>
-                                </h3>
-                                <div style="display: flex; gap: 10px;">
-                                    <button onclick="importVLCPlaylist()" class="sidebar-badge"
-                                        style="flex: 1; padding: 10px; cursor: pointer; background: #f0f8ff; border: 1px solid #b3d9ff; color: #2980b9; font-weight: bold;">
-                                        Import Playlist
-                                    </button>
-                                    <button onclick="exportToVLC()" class="sidebar-badge"
-                                        style="flex: 1; padding: 10px; cursor: pointer; background: #fff8f0; border: 1px solid #ffd9b3; color: #e67e22; font-weight: bold;">
-                                        Export to VLC
-                                    </button>
-                                </div>
-                                <div id="import-status" style="margin-top: 10px; font-size: 0.8em; display: none;">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tool Output / Logs Section -->
-                    <div
-                        style="background: #1e1e1e; border-radius: 12px; padding: 20px; margin-top: 30px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                        <h3
-                            style="margin: 0 0 15px 0; color: #eee; font-size: 1.1em; display: flex; align-items: center; gap: 10px;">
-                            <span class="icon-terminal" style="color: #00ff00;"></span> <span>Tool Output /
-                                Logs</span>
-                            <button onclick="clearToolLogs()"
-                                style="margin-left: auto; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; transition: all 0.2s;">Clear</button>
-                        </h3>
-                        <div id="tool-logs-container"
-                            style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto; font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 0.85em; color: #00ff00; border: 1px solid #222; scroll-behavior: smooth;">
-                            <div id="tool-logs-content">
-                                <div style="color: #666; font-style: italic;">Waiting for tool output...</div>
-                            </div>
-                        </div>
+            <!-- ===================== TOOLS TAB START ===================== -->
+            <div id="tools-tab" class="tab-content"
+                style="display: none; flex-direction: column; height: 100%; border: none; padding: 0; overflow: hidden;">
+                
+                <div class="sub-nav-container">
+                    <h2 style="margin: 0; font-size: 1.2em;">Tools & Advanced Components</h2>
+                    <div class="options-nav-tabs">
+                        <button class="options-subtab active" onclick="switchToolsView('parser')" id="tools-subtab-parser">
+                            Parser Chain
+                        </button>
+                        <button class="options-subtab" onclick="switchToolsView('transcoding')" id="tools-subtab-transcoding">
+                            Transcoding
+                        </button>
                     </div>
                 </div>
+
+                <div id="tools-content-container" class="scrolling-view" style="flex: 1; overflow: hidden;">
+                    
+                    <!-- TOOLS: PARSER VIEW -->
+                    <div id="tools-parser-view" class="tools-view" style="display: flex; height: 100%; flex-direction: column;">
+                        <!-- Parser content moves here via script or direct move -->
+                        <div id="parser-tab-split-container" style="display: flex; flex: 1; min-height: 0; gap: 0; border-top: 1px solid #eee;">
+                            <!-- Sidebar (Left) -->
+                            <div id="parser-left-settings" style="flex: 1; flex-shrink: 0; padding: 25px; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #eee; min-height: 0;">
+                                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_core_settings">Erweiterter Parser-Modus</h3>
+                                <div style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                                    <label class="switch">
+                                        <input type="checkbox" id="toggle-parser-mode" onchange="saveParserChainUI()">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <div>
+                                        <div style="font-weight: 500;" data-i18n="parser_mode_label">Effizienz-Modus</div>
+                                        <div id="parser-mode-status" style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;" data-i18n="parser_mode_light">Leichtgewicht (Schnell)</div>
+                                    </div>
+                                </div>
+                                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_arch_title">Parser-Architektur</h3>
+                                <div style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                                    <ul id="parser-list" class="parser-list"></ul>
+                                    <button onclick="saveParserChainUI()" style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;" data-i18n="parser_btn_save">Speichern</button>
+                                </div>
+                            </div>
+                            <!-- Parser Vertical Splitter -->
+                            <div id="parser-tab-splitter" class="splitter-v"></div>
+                            <!-- Main Content (Right) -->
+                            <div id="parser-main-pane" style="flex: 2; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-height: 0;">
+                                <div id="parser-view-content" class="scrolling-view" style="padding: 25px; overflow-y: auto; flex: 1; min-height: 0;">
+                                    <div id="parser-configuration-view" class="parser-view">
+                                        <div id="parser-details-column" style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
+                                            <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">Parser-Optionen</h3>
+                                            <div id="parser-options-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOOLS: TRANSCODING VIEW -->
+                    <div id="tools-transcoding-view" class="tools-view" style="display: none; padding: 25px; overflow-y: auto;">
+                        <h2 style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; color: #333;">
+                            <span class="icon-settings"></span> <span>Advanced Transcoding Tools</span>
+                        </h2>
+                        <!-- Moved from Options -->
+                        <div id="options-tools-view-content">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <!-- HandBrake Section -->
+                                <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                    <h3 style="margin-top: 0; color: #d35400;"><svg width="12" height="12"><use href="#icon-sparkles"></use></svg> HandBrake (High-Level)</h3>
+                                    <p style="font-size: 0.9em; color: #666;">Optimized batch encoding for high quality and small sizes.</p>
+                                    <div style="margin-bottom: 15px;">
+                                        <label style="display: block; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">Encoder Type:</label>
+                                        <select id="hb-encoder" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                                            <option value="x264">Software (x264)</option>
+                                            <option value="qsv">Intel QuickSync (QSV)</option>
+                                            <option value="nvenc">NVIDIA (NVENC)</option>
+                                            <option value="vaapi">VAAPI (Generic HW)</option>
+                                        </select>
+                                    </div>
+                                    <button onclick="triggerHBTranscode()" style="background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">Start Transcoding</button>
+                                </div>
+                                <!-- WebM Section -->
+                                <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                    <h3 style="margin-top: 0; color: #2980b9;"><svg width="12" height="12"><use href="#icon-satellite"></use></svg> WebM (VP9 / Ultra Small)</h3>
+                                    <p style="font-size: 0.9em; color: #666;">Best for web sharing. High compression with VP9/Opus.</p>
+                                    <button onclick="triggerWebMTranscode()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 45px;">Convert to WebM</button>
+                                </div>
+                            </div>
+
+                            <!-- VLC Integration -->
+                            <div style="background: white; border-radius: 12px; border: 1px solid #eee; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-top: 30px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                                    <div>
+                                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                            <span class="icon-video"></span> <span data-i18n="vlc_usage_open_in_vlc">VLC Stream</span>
+                                        </h3>
+                                        <div style="display: flex; gap: 10px;">
+                                            <input id="vlc-stream-url" type="text" placeholder="https://..." style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;" />
+                                            <button onclick="playVLCStream()" style="padding: 10px 14px; border: 1px solid #8e44ad; background: #8e44ad; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">▶</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                            <span class="icon-cassette"></span> <span>Playlist Tools</span>
+                                        </h3>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button onclick="importVLCPlaylist()" class="sidebar-badge" style="flex: 1; padding: 10px; cursor: pointer; background: #f0f8ff; border: 1px solid #b3d9ff; color: #2980b9; font-weight: bold;">Import</button>
+                                            <button onclick="exportToVLC()" class="sidebar-badge" style="flex: 1; padding: 10px; cursor: pointer; background: #fff8f0; border: 1px solid #ffd9b3; color: #e67e22; font-weight: bold;">Export</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- closes Tools Tab -->
 
                 <!-- ===================== OPTIONS: ENVIRONMENT SUB-VIEW START ===================== -->
                 <div id="options-environment-view" class="options-view scrolling-view"
@@ -6391,93 +6372,22 @@
             </div> <!-- closes system-configuration-persistence-panel -->
 
             <!-- ===================== PARSER TAB START ===================== -->
-            <div id="regex-provider-chain-orchestrator-panel" class="tab-content"
-                style="padding: 0; overflow-y: hidden; height: 100%; display: none; flex-direction: column; border: none;">
-                <h2 style="padding: 20px 20px 0 20px; margin-bottom: 2px; font-size: 1.4em;" data-i18n="features_title">
-                    <svg width="20" height="20" style="vertical-align: middle; margin-right: 8px;">
-                        <use href="#icon-sparkles"></use>
-                    </svg> Project Status & Features
-                </h2>
-                <div id="parser-tab-split-container"
-                    style="display: flex; flex: 1; min-height: 0; gap: 0; border-top: 1px solid #eee;">
-
-                    <!-- Sidebar (Left) -->
-                    <div id="parser-left-settings"
-                        style="flex: 1; flex-shrink: 0; padding: 25px; overflow-y: auto; background: #fdfdfd; border-right: 1px solid #eee; min-height: 0;">
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_core_settings">Erweiterter
-                            Parser-Modus</h3>
-                        <div
-                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
-                            <label class="switch">
-                                <input type="checkbox" id="toggle-parser-mode" onchange="saveParserChainUI()">
-                                <span class="slider"></span>
-                            </label>
-                            <div>
-                                <div style="font-weight: 500;" data-i18n="parser_mode_label">Effizienz-Modus</div>
-                                <div id="parser-mode-status"
-                                    style="font-size: 0.85em; color: #2a7; margin-top: 4px; font-weight: bold;"
-                                    data-i18n="parser_mode_light">Leichtgewicht (Schnell)</div>
-                                <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
-                                    data-i18n="parser_mode_desc">
-                                    Bestimmt, wie intensiv Metadaten extrahiert werden.</div>
-                            </div>
-                        </div>
-
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_arch_title">
-                            Parser-Architektur
-                        </h3>
-                        <div
-                            style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                            <ul id="parser-list" class="parser-list"></ul>
-                            <button onclick="saveParserChainUI()"
-                                style="margin-top: 15px; padding: 8px 16px; border-radius: 4px; border: none; background: #2a7; color: white; cursor: pointer; font-weight: bold;"
-                                data-i18n="parser_btn_save">Speichern</button>
-                        </div>
-
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px;"><svg width="12" height="12">
-                                <use href="#icon-generic"></use>
-                            </svg> Performance Übersicht</h3>
-                        <div id="parser-tab-perf-container"
-                            style="background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                            <p style="font-size: 0.85em; color: #666;">Lade Performance-Daten...</p>
-                        </div>
-                    </div>
-
-                    <!-- Parser Vertical Splitter -->
-                    <div id="parser-tab-splitter" class="splitter-v"></div>
-
-                    <!-- Main Content (Right) -->
-                    <div id="parser-main-pane"
-                        style="flex: 2; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-height: 0;">
-
-                        <div class="sub-nav-container" style="margin-bottom: 0; border-bottom: 1px solid #eee;">
-                            <button id="parser-subtab-configuration" class="options-subtab active"
-                                onclick="switchParserView('configuration')">
-                                <span class="icon-cog"></span> Konfiguration
-                            </button>
-                        </div>
-
-                        <div id="parser-view-content" class="scrolling-view" style="padding: 25px; overflow-y: auto; flex: 1; min-height: 0;">
-                            <!-- VIEW: Configuration (Details) -->
-                            <div id="parser-configuration-view" class="parser-view">
-                                <div id="parser-details-column"
-                                    style="background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 25px; min-height: 450px;">
-                                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="parser_options_title">
-                                        Parser-Optionen</h3>
-                                    <div id="parser-options-placeholder"
-                                        style="color: #999; font-style: italic; margin-top: 20px;"
-                                        data-i18n="parser_options_desc">Wähle einen Parser links aus.</div>
-                                    <div id="parser-options-container"
-                                        style="display: none; flex-direction: column; gap: 20px;"></div>
-                                </div>
-                            </div> <!-- closes parser-configuration-view -->
-                        </div> <!-- closes parser-view-content -->
-                    </div> <!-- closes parser-main-pane -->
-                </div> <!-- closes parser-tab-split-container -->
-            </div> <!-- closes regex-provider-chain-orchestrator-panel -->
 
 
             <!-- ===================== DEBUG TAB START ===================== -->
+            <div id="telemetry-inspector-tab-pane" class="tab-content" style="display: none; height: 100%; flex-direction: column;">
+                <div class="sub-nav-container">
+                    <h2 style="margin: 0; font-size: 1.2em;">Debug & Diagnostic Tools</h2>
+                </div>
+                <div class="scrolling-view" style="padding: 25px;">
+                        <button onclick="checkSpawnedItems()" style="padding: 10px 20px; background: #e1f5fe; color: #01579b; border: 1px solid #01579b; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                            Verify Spawned Items
+                        </button>
+                        <button onclick="checkGuiItemIntegrity()" style="padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            Validate GUI Items
+                        </button>
+                        <span style="font-size: 0.9em; color: #666; margin-left: 10px;">Audits all spawned media items in the DOM.</span>
+                    </div>
             <div id="debug-flag-persistence-panel" class="tab-content"
                 style="padding: 0; flex-direction: column; display: none; height: 100%; border: none; background: #fff;">
                 <h2 style="padding: 20px 20px 0 20px; margin-bottom: 10px; font-size: 1.4em;">Debug & Datenbank</h2>
@@ -9378,7 +9288,14 @@
 
             try {
                 // We fetch the FULL library for the database view, ignoring current filters
+                appendUiTrace("[Library] Requesting all media items from backend...");
                 const library = await eel.get_library()();
+                const media = library.media || [];
+                appendUiTrace(`[Library] Received ${media.length} items from backend.`);
+                
+                if (media.length === 0) {
+                    appendUiTrace("[Library] Warning: No media items returned. Is the database initialized?");
+                }
                 let items = library.media || [];
 
                 // Filter by search term
@@ -9934,8 +9851,10 @@
                 const activeTab = localStorage.getItem('mwv_active_tab') || 'player';
                 switchTab(activeTab, getTabButton(activeTab));
             } catch (e) {
-
                 console.error('Failed to load translations:', e);
+                if (typeof showToast === 'function') {
+                    showToast('Critical Boot Error: ' + e.message, 5000);
+                }
             }
         }
 
@@ -10282,7 +10201,9 @@
                 }
                 return '<span style="color: ' + color + ';">' + match + '</span>';
             });
-
+        }
+    </script>
+    <script>
         async function loadDebugFlags() {
             try {
                 const flags = await eel.get_debug_flags()();
@@ -15560,24 +15481,48 @@
                 e.preventDefault();
             });
 
-            document.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                const container = splitter.parentElement;
-                const containerRect = container.getBoundingClientRect();
-                const newHeight = e.clientY - containerRect.top;
+        }
 
-                if (newHeight > 50 && newHeight < containerRect.height - 50) {
-                    top.style.height = `${newHeight}px`;
+        // --- Tools Tab Navigation ---
+        function switchToolsView(viewId) {
+            const views = document.querySelectorAll('.tools-view');
+            views.forEach(v => v.style.display = 'none');
+            
+            const target = document.getElementById('tools-' + viewId + '-view');
+            if (target) {
+                target.style.display = (viewId === 'parser') ? 'flex' : 'block';
+            }
+
+            const tabs = document.querySelectorAll('#tools-tab-pane .options-subtab');
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            const activeTab = document.getElementById('tools-subtab-' + viewId);
+            if (activeTab) activeTab.classList.add('active');
+        }
+
+        // --- GUI Integrity Diagnostic ---
+        async function checkGuiItemIntegrity() {
+            console.log("[Diagnostic] Starting GUI Item Integrity Check...");
+            const items = document.querySelectorAll('.implementation-encapsulated-state-buffer-node, .playlist-item');
+            let issues = 0;
+            
+            items.forEach((item, idx) => {
+                const hasCover = item.querySelector('img.media-cover');
+                const hasInfo = item.querySelector('.media-info');
+                if (!hasCover || !hasInfo) {
+                    console.warn(`[Diagnostic] Item ${idx} is missing mandatory DOM elements!`, item);
+                    issues++;
                 }
             });
 
-            document.addEventListener('mouseup', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    document.body.style.cursor = 'default';
-                    splitter.classList.remove('active');
+            if (typeof showToast === 'function') {
+                if (issues === 0) {
+                    showToast("GUI Integrity Check: PASS (All items valid)");
+                } else {
+                    showToast(`GUI Integrity Check: FAIL (${issues} issues found in console)`, "error");
                 }
-            });
+            }
+            return issues === 0;
         }
 
         // --- Backend Stats Integration ---

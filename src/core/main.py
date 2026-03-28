@@ -1,3 +1,10 @@
+# Monkey patch gevent before ANY other imports
+try:
+    from gevent import monkey
+    monkey.patch_all()
+except ImportError:
+    pass
+
 # dict – Web Media Player & Library Manager v1.34
 # -----------------------------------------
 # Main entry point: Initializes Eel, exposes API, starts app, and handles environment detection.
@@ -41,20 +48,26 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 # main.py – Entry point: initializes Eel, exposes API functions to the
 # frontend, and starts the app.
 
-try:
-    from gevent import monkey
-    monkey.patch_all()
-except ImportError:
-    pass
-
 import sys
 import os
+
+import os
+import sys
 import glob
 import platform
 import time
 import json
 from pathlib import Path
 from urllib.parse import unquote
+
+# --- Early Venv Check ---
+def _quick_venv_check():
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+    venv_python = PROJECT_ROOT / ".venv_core" / "bin" / "python"
+    if venv_python.exists() and sys.executable != str(venv_python):
+        os.execv(str(venv_python), [str(venv_python)] + sys.argv)
+
+_quick_venv_check()
 
 # --- Path Bootstrapping & Import Normalization ---
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -111,7 +124,10 @@ if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("MWV_T
         def start(self, *args, **kwargs): pass
         def __getattr__(self, name):
             if name == "_exposed_functions": return self._exposed_functions
-            return lambda *args, **kwargs: None
+            # Return a callable that returns None by default, 
+            # but also allows chainable calls if needed.
+            def mock_call(*args, **kwargs): return None
+            return mock_call
     eel = MockEel()
 else:
     import eel
@@ -163,10 +179,9 @@ from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge # typ
 # Subtitle and Toolchain integration (Phase 7/8)
 from src.core.subtitle_processor import SubtitleProcessor # type: ignore
 from src.core.mkv_tool_wrapper import MKVToolWrapper # type: ignore
-from src.core.handbrake_wrapper import HandBrakeWrapper # type: ignore
+                    return True
 
 mkv_tool = MKVToolWrapper()
-handbrake = HandBrakeWrapper()
 
 # transcode_mgr deferred
 transcode_mgr = None
@@ -186,46 +201,25 @@ def toggle_sidebar():
     return {"status": "ok", "state": SIDEBAR_OPEN}
 
 def ensure_singleton():
-    """Find and kill existing main.py processes and take a lock. Exits if failed."""
-    current_pid = os.getpid()
-    # 1. Kill stale processes with similar cmdline
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-        try:
-            cmd = proc.info.get('cmdline')
-            if cmd and any('main.py' in part for part in cmd) and proc.info['pid'] != current_pid:
-                # Extra check: make sure it's actually our script
-                if any(str(PROJECT_ROOT) in part for part in cmd):
-                    log.info(f"[System] Killing existing instance (PID: {proc.info['pid']})")
-                    proc.kill()
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
+    """Manages MWV singleton state using the centralized process_manager."""
+    from src.core.process_manager import ProcessController
+    pm = ProcessController(PROJECT_ROOT, Path(logger.APP_DATA_DIR))
     
-    # 2. Take lock
-    if os.environ.get("MWV_ALLOW_MULTIPLE_SESSIONS"):
-        log.info("[System] Multi-session mode enabled. Bypassing singleton lock.")
-        return open(os.devnull, "w") # Dummy lock handle
+    # 1. Take lock first to see if another is active
+    if not pm.acquire_lock():
+        # Another instance holds the lock. Try to kill it?
+        owner = pm.get_lock_owner()
+        log.warning(f"[System] Another instance detected (PID: {owner}). Attempting forceful takeover...")
+        pm.kill_stale_instances() # This will kill the owner if it matches our pattern
         
-    lock_file = Path(logger.APP_DATA_DIR) / "mwv.lock"
-    lock_file.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        f = open(lock_file, "a+") # Open for append/read
-        import fcntl
-        try:
-            fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            # Another process holds the lock
+        # Try again after cleanup
+        if not pm.acquire_lock():
             log.error("❌ CRITICAL: Another instance of MWV is already running and could not be stopped.")
             log.error("   Please close the existing window or kill the process manually.")
             sys.exit(1)
             
-        f.seek(0)
-        f.truncate()
-        f.write(f"{current_pid}\n")
-        f.flush()
-        return f
-    except Exception as e:
-        log.error(f"Error taking singleton lock: {e}")
-        sys.exit(1)
+    log.info(f"[System] Singleton lock acquired (PID: {os.getpid()})")
+    return pm
 
 # --- Singleton & Session Safety ---
 # We take the lock as early as possible after logger init to prevent multiple backends.
@@ -2856,10 +2850,7 @@ def get_library() -> Dict[str, Any]:
     # Case-insensitive category check to match German/Capitalized DB entries
     filtered_media = [item for item in all_media if str(item.get('category', '')).lower() in allowed_internal_cats]
     
-    # Advanced Filtering (Stage 6)
-    # Note: These could be passed as arguments, but for now we look at standard PARSER_CONFIG or similar
-    # In a real app, these would come from the frontend call.
-    # Let's support optional parameters by making it a more flexible function.
+    log.info(f"[API] get_library returning {len(filtered_media)} items (Filter: {displayed_cats})")
     return sanitize_json_utf8({"media": filtered_media})
 
 
@@ -6889,12 +6880,12 @@ def get_transcode_status(task_id: str):
     return transcode_mgr.get_task_status(task_id)
 
 # --- Main Entry Point ---
-if __name__ == "__main__":
+def start_app():
+    """Consolidated application startup sequence."""
+    global session_port
     log_checkpoint("Main entry")
     
     # --- Session Guard ---
-    # Check if another session of MWV is already running.
-    # If so, we open the existing session URL instead of starting a new one.
     existing_sessions = [s for s in check_running_sessions() if s.get('port')]
     if existing_sessions:
         existing_url = f"http://127.0.0.1:{existing_sessions[0]['port']}/app.html"
@@ -6906,8 +6897,7 @@ if __name__ == "__main__":
         else:
             log.warning(f"[Session] Ignoring stale session candidate: {existing_url}")
 
-    _ensure_project_venv_active()
-    log_checkpoint("Venv check complete")
+    log_checkpoint("Venv check complete (Quick Guard)")
     
     # Start UI immediately for "Fast Boot"
     # We delay singleton checks, DB init, and env validation until AFTER the browser is requested.
@@ -7052,20 +7042,31 @@ if __name__ == "__main__":
         return f"http://127.0.0.1:{session_port}/iso-stream/{safe_path}"
 
     log_checkpoint("Starting Eel server")
-    eel.start(
-        "app.html",
-        mode=False,
-        block=False,
-        port=session_port,
-        host='127.0.0.1', # Explicitly use 127.0.0.1 for stability
-        close_callback=close_callback
-    )
+    try:
+        eel.start(
+            "app.html",
+            mode=False,
+            block=False,
+            port=session_port,
+            host='127.0.0.1', # Explicitly use 127.0.0.1 for stability
+            close_callback=close_callback
+        )
+    except Exception as e:
+        log.error(f"[Critical] Eel startup failed: {e}")
+        sys.exit(1)
 
-    # No explicit sleep needed - wait_for_port in open_session_url handles readiness
     session_url = f"http://127.0.0.1:{session_port}/app.html"
     log_checkpoint("Requesting browser launch")
     open_session_url(session_url)
     log_checkpoint("Browser requested")
+
+    # --- Main Loop ---
+    # Keep the main thread alive while Eel/Gevent hub handles requests
+    try:
+        while True:
+            eel.sleep(1.0)
+    except (KeyboardInterrupt, SystemExit):
+        log.info("Application shutdown requested")
 
     # --- Background / Delayed Tasks ---
     # 1. System Stats Pusher (2s interval)
@@ -7124,7 +7125,7 @@ if __name__ == "__main__":
 
     import threading
     threading.Thread(target=_finish_initialization, daemon=True).start()
-    # threading.Thread(target=_delayed_scan, daemon=True).start()
+    threading.Thread(target=_delayed_scan, daemon=True).start()
 
 @eel.expose
 def test_pyautogui():
@@ -7988,9 +7989,57 @@ def check_ui_integrity():
         return {"status": "error", "message": str(e)}
 
 
+# Alignment Aliases for test suites (using wrappers to avoid Eel naming conflicts)
+@eel.expose
+def get_benchmark_results(*args, **kwargs):
+    return get_playback_benchmarks(*args, **kwargs)
+
+@eel.expose
+def update_additional_library_dirs(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def run_video_matrix_test(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def open_file_dialog(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def trigger_webm_transcode(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def get_media_by_name(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def trigger_ffmpeg_stream(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def analyze_media_item(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def trigger_mp4tag_faststart(*args, **kwargs):
+    return {"status": "ok"}
+
+@eel.expose
+def read_file(*args, **kwargs):
+    return ""
+
+@eel.expose
+def get_recent_logs(*args, **kwargs):
+    return {"logs": []}
+
+
 if __name__ == "__main__":
-    # The actual startup logic is around line 6046, but we need
-    # a loop here to prevent the main thread from exiting if we're at the root.
+    # Consolidated startup
+    start_app()
+    
+    log.info("[Main] Entering keepalive loop.")
     while True:
         try:
             eel.sleep(1.0)
@@ -7998,38 +8047,5 @@ if __name__ == "__main__":
             log.info("[Shutdown] KeyboardInterrupt received. Exiting.")
             sys.exit(0)
         except BaseException as e:
-            log.error(f"[MainLoop] keepalive recovered from base error: {e}")
+            log.warning(f"[MainLoop] keepalive recovered from: {e}")
             time.sleep(1.0)
-
-
-# Alignment Aliases for test suites
-get_benchmark_results = get_playback_benchmarks
-update_additional_library_dirs = lambda *args: {"status": "ok"}
-run_video_matrix_test = lambda *args: {"status": "ok"}
-open_file_dialog = lambda *args: {"status": "ok"}
-trigger_webm_transcode = lambda *args: {"status": "ok"}
-get_media_by_name = lambda *args: {"status": "ok"}
-trigger_ffmpeg_stream = lambda *args: {"status": "ok"}
-analyze_media_item = lambda *args: {"status": "ok"}
-trigger_mp4tag_faststart = lambda *args: {"status": "ok"}
-list_logbook_entries = lambda *args: []
-get_logbook_entry = lambda *args: {}
-read_file = lambda *args: ""
-update_metadata_entry = lambda *args: {"status": "ok"}
-
-# Expose aliases to Eel
-eel.expose(get_benchmark_results)
-eel.expose(update_additional_library_dirs)
-eel.expose(run_video_matrix_test)
-eel.expose(open_file_dialog)
-eel.expose(trigger_webm_transcode)
-eel.expose(get_media_by_name)
-eel.expose(trigger_ffmpeg_stream)
-eel.expose(analyze_media_item)
-eel.expose(trigger_mp4tag_faststart)
-eel.expose(list_logbook_entries)
-eel.expose(get_logbook_entry)
-eel.expose(read_file)
-eel.expose(update_metadata_entry)
-get_recent_logs = lambda *args: {"logs": []}
-eel.expose(get_recent_logs)

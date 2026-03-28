@@ -303,6 +303,7 @@ def insert_media(item_dict):
         ))
         conn.commit()
         last_id = cursor.lastrowid
+        log.info(f"[DB] Inserted media item: {item_dict['name']} (Type: {item_dict['type']}, ID: {last_id})")
         conn.close()
         return last_id
     except sqlite3.IntegrityError:
