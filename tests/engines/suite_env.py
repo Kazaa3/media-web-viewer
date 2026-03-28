@@ -61,6 +61,18 @@ class EnvSuiteEngine(DiagnosticEngine):
         msg = f"Reorganized structure: {not missing}. Archives: {has_python and has_mtx}."
         return DiagnosticResult(3, "Deployment Assets", "PASS" if success else "FAIL", msg)
 
+    def level_4_legacy_build_integrity(self) -> DiagnosticResult:
+        """Verifies the presence and size of legacy build artifacts in dist/."""
+        dist_dir = PROJECT_ROOT / "dist"
+        if not dist_dir.exists():
+            return DiagnosticResult(4, "Legacy Build Integrity", "SKIP", "Dist directory missing.")
+        
+        builds = list(dist_dir.glob("MediaWebViewer*"))
+        large_builds = [b for b in builds if b.stat().st_size > 100 * 1024 * 1024]
+        
+        status = "PASS" if len(large_builds) >= 1 else "WARN"
+        return DiagnosticResult(4, "Legacy Build Integrity", status, f"Found {len(large_builds)} valid legacy build artifacts (>100MB).")
+
     def run_all(self) -> List[DiagnosticResult]:
         stages = [self.level_1_binary_check, self.level_2_python_packages, self.level_3_deployment_assets]
         return super().run_all(stages)
