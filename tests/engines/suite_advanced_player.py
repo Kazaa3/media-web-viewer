@@ -51,13 +51,18 @@ class AdvancedPlayerSuite(DiagnosticEngine):
         """Checks for presence of critical external player binaries."""
         import shutil
         missing = []
-        for bin in ["vlc", "HandBrakeCLI", "mkvextract"]:
+        # swyh-rs-cli is now a priority requirement for advanced streaming
+        for bin in ["vlc", "HandBrakeCLI", "mkvextract", "swyh-rs-cli"]:
             if not shutil.which(bin):
                 missing.append(bin)
         
-        # mpv and swyh-rs are optional/user-provided in this environment
+        # mpv is optional but recommended
+        mpv_exists = shutil.which("mpv")
+        
         if not missing:
-            return DiagnosticResult(6, "External Binaries", "PASS", "Critical toolchain binaries found.")
+            msg = "Critical tools found."
+            if not mpv_exists: msg += " (Note: mpv not found, skipping native MPV tests)"
+            return DiagnosticResult(6, "External Binaries", "PASS", msg)
         return DiagnosticResult(6, "External Binaries", "WARN", f"Missing binaries: {missing}")
 
     def level_7_library_presence(self) -> DiagnosticResult:

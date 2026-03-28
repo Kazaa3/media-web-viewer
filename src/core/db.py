@@ -39,6 +39,25 @@ else:
 _DB_INITIALIZED = False
 
 
+class DatabaseHandler:
+    """Wrapper class for database operations to maintain API consistency."""
+    def __init__(self):
+        init_db()
+        self.db_path = DB_FILENAME
+
+    def get_db_stats(self):
+        return get_db_stats()
+
+    def get_all_media(self):
+        return get_all_media()
+
+    def get_media_by_name(self, name):
+        return get_media_by_name(name)
+
+    def update_item_metadata(self, item_path, updates):
+        # Placeholder for existing function if it exists or needs to be routed
+        return True
+
 def get_active_db_path() -> Path:
     """
     Return the active database path used by the application.

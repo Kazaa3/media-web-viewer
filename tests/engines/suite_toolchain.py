@@ -78,16 +78,20 @@ class ToolchainSuiteEngine(DiagnosticEngine):
             from src.core import db
             from src.core import logger
             
-            # Use try-except for the actual DB call if necessary, or just verify presence
+            # 1. Logger Verification
             log = logger.get_logger("test_integrity")
             log.info("Integrity check running.")
             
-            db_ok = hasattr(db, "get_db") or hasattr(db, "DatabaseHandler")
+            # 2. DB Verification (Active)
+            handler = db.DatabaseHandler()
+            stats = handler.get_db_stats()
+            
+            db_ok = stats.get("total_items", -1) >= 0
             log_ok = hasattr(logger, "get_logger")
             
             if db_ok and log_ok:
-                return DiagnosticResult(10, "Integrity System", "PASS", "DB and Logger infrastructure verified.")
-            return DiagnosticResult(10, "Integrity System", "WARN", f"DB: {db_ok}, Log: {log_ok}")
+                return DiagnosticResult(10, "Integrity System", "PASS", f"DB Verified ({stats.get('total_items')} items), Logger active.")
+            return DiagnosticResult(10, "Integrity System", "WARN", f"DB healthy: {db_ok}, Log: {log_ok}")
         except Exception as e:
             return DiagnosticResult(10, "Integrity System", "FAIL", str(e))
 

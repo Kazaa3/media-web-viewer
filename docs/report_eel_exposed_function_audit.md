@@ -58,6 +58,70 @@ Die Anwendung stellt eine umfangreiche API für Medienverwaltung, Wiedergabe und
 
 # Toolchain & Advanced Playback Integration
 
+---
+
+# Implementation Plan – Final Stabilization & Advanced Playback
+
+---
+
+# Task: Finalizing Stabilization & Advanced Playback
+
+**Status:** [/] (in Bearbeitung)
+
+## 1. Diagnostic Infrastructure Enhancement [/]
+- Test-Imports refaktorieren, um "Missing export"-Warnungen zu beheben
+- MockEel so erweitern, dass decorator-basierte Exposure voll unterstützt wird
+- Robusten Level 10 Integrity Check in suite_toolchain.py implementieren
+- ISO-Kategorisierungslogik in format_utils.py fixen
+- Fehlende/aliased Eel-Handler für Reporting/Logbuch wiederherstellen
+
+## 2. Media Player Test Suite & Advanced Playback [/]
+- suite_advanced_player.py für umfassende Player-Verifikation ausbauen
+- swyh-rs-cli-Support und Verifikation ergänzen
+- mpv- und vlc-Bridge-Stabilität prüfen
+- Playback-Benchmarks an Reporting-UI anbinden
+
+## 3. GUI Stabilization & JS Scrub [/]
+- app.html auf JS-Syntaxfehler prüfen (verschachtelte Quotes, fehlende Handler)
+- Item-Anzeige und Dictionary-Loading sicherstellen
+- Tab-Navigation und Container-Nesting verifizieren
+
+## 4. Final Verification & Walkthrough [ ]
+- Alle Diagnostic Suites (Master Run) ausführen [/]
+- >90% Erfolgsquote erreichen (bekannte fehlende System-Binaries ignorieren) [/]
+- walkthrough.md mit Aufnahmen/Screenshots erstellen [/]
+
+Dieser Plan fokussiert sich auf die Erweiterung der Diagnose-Infrastruktur und die robuste Integration sowie Verifikation der Advanced-Playback-Features.
+
+## Proposed Changes
+
+### Toolchain & Advanced Player Suites
+- [MODIFY] suite_toolchain.py: Level 10 Integrity-Check um spezifische DB-Health-Checks (z.B. Connection, Schema-Version) erweitern
+- [MODIFY] suite_advanced_player.py: Levels für swyh-rs-cli-Präsenz und Funktionsprüfung ausbauen; MPV-Bridge und alle 10+ Modi verifizieren
+
+### Core Application Logic
+- [MODIFY] main.py: toggle_swyh_rs-Logik mit subprocess implementieren (Prozessmanagement für swyh-rs-cli)
+- Aliased Functions für Test-Alignment korrekt exposen
+- update_metadata_entry und weitere fehlende Handler aus dem Alignment-Audit ergänzen
+
+### GUI & JS Integrity
+- [MODIFY] app.html: JS-Syntaxfehler (verschachtelte Quotes, Brackets) bereinigen
+- Sicherstellen, dass log_js_error korrekt aufgerufen und im Backend empfangen wird
+- Fehler beheben, die "items displayed" oder "dict loading" verhindern (z.B. Race-Conditions beim Init)
+
+## Verification Plan
+
+### Automated Tests
+- Master Diagnostic Suite: python3 tests/run_all.py
+- suite_toolchain.py: Level 10 PASS
+- suite_advanced_player.py: Level 2 (SWYH) und Level 6 (Binaries) PASS (oder WARN, falls System fehlt)
+- suite_gui_integrity.py: 100% Pass auf Structural/Token Audits
+
+### Manual Verification
+- Reporting-Tab in der GUI öffnen und prüfen, ob der neue Media Player Testbereich sichtbar ist
+- Logbuch-Tab prüfen: Einträge korrekt angezeigt (dict loading)
+- SWYH-RS-Bridge im UI toggeln und Prozessmanagement im Hintergrund verifizieren
+
 Die UI-Integrität und die Datenbank-Komponenten wurden stabilisiert (100% Brace-Balance in app.html, alle Diagnostic-Levels bestanden). Ein umfassender Function-Audit (169 Eel-Items) und Theme-Review wurden durchgeführt, "AI-READINESS"-Anker identifiziert und doppelte JS-Definitionen entfernt.
 
 **Aktuelle Arbeiten und Fortschritte:**

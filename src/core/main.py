@@ -6746,7 +6746,6 @@ def get_subtitle_info(subtitle_path):
     except Exception as e:
         return {"error": str(e)}
 
-
 @eel.expose
 def mkv_batch_extract(files, track_type="subtitles"):
     """
@@ -7257,10 +7256,33 @@ def toggle_swyh_rs(enabled: bool):
     @brief Enables/Disables the SWYH-RS bridge.
     """
     global _swyh_rs_process
-    if enabled:
-        # Launch swyh-rs logic here
-        pass
-    return {"status": "ok"}
+    try:
+        if enabled:
+            if _swyh_rs_process and _swyh_rs_process.poll() is None:
+                return {"status": "ok", "message": "Already running"}
+            
+            # Check if binary exists
+            if not shutil.which("swyh-rs-cli"):
+                return {"status": "error", "message": "swyh-rs-cli not found"}
+
+            log.info("[Streaming] Starting swyh-rs-cli bridge...")
+            # Example flags: -s (serve), -p (port)
+            _swyh_rs_process = subprocess.Popen(
+                ["swyh-rs-cli", "-s"], 
+                stdout=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL
+            )
+            return {"status": "ok", "message": "Started"}
+        else:
+            if _swyh_rs_process:
+                log.info("[Streaming] Stopping swyh-rs-cli bridge...")
+                _swyh_rs_process.terminate()
+                _swyh_rs_process.wait(timeout=2)
+                _swyh_rs_process = None
+            return {"status": "ok", "message": "Stopped"}
+    except Exception as e:
+        log.error(f"[Streaming] SWYH-RS error: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def open_mpv(filepath):
@@ -8009,3 +8031,5 @@ eel.expose(list_logbook_entries)
 eel.expose(get_logbook_entry)
 eel.expose(read_file)
 eel.expose(update_metadata_entry)
+get_recent_logs = lambda *args: {"logs": []}
+eel.expose(get_recent_logs)

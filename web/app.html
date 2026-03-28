@@ -3132,9 +3132,9 @@
 
         async function saveStartupConfig() {
             try {
-                const choice = document.getElementById('startup-browser-choice').value;
-                const flagsRaw = document.getElementById('startup-browser-flags').value;
-                const envRaw = document.getElementById('startup-env-vars').value;
+                const choice = document.getElementById('startup-browser-choice')?.value || 'default';
+                const flagsRaw = document.getElementById('startup-browser-flags')?.value || '';
+                const envRaw = document.getElementById('startup-env-vars')?.value || '';
 
                 console.log("Saving startup config:", { choice, flagsRaw, envRaw });
 
@@ -3229,7 +3229,7 @@
 
             // If switching to ffprobe, trigger analysis if empty and a file is selected
             if (viewId === 'ffprobe') {
-                const currentItem = document.getElementById('edit-item-name').value;
+                const currentItem = document.getElementById('edit-item-name')?.value || '';
                 const ffprobeContent = document.getElementById('edit-ffprobe-content');
                 if (currentItem && ffprobeContent && ffprobeContent.innerText.includes('Führe Media Analyse aus')) {
                     ffprobeContent.innerText = 'Analysiere ' + currentItem + '...';
@@ -6718,7 +6718,7 @@
                                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                         <h4 style="margin: 0;">Benchmark Results</h4>
                                         <button
-                                            onclick="document.getElementById('routing-benchmark-results').style.display='none'"
+                                            onclick="const el=document.getElementById('routing-benchmark-results'); if(el) el.style.display='none'"
                                             style="border: none; background: none; cursor: pointer; color: #999;"><svg
                                                 width="12" height="12">
                                                 <use href="#icon-delete"></use>
@@ -14984,7 +14984,8 @@
             if (!relpath) {
                 // Default to the real-world test file from logbook if empty
                 relpath = "*.mp4";
-                document.getElementById('pipeline-test-path').value = relpath;
+                const el = document.getElementById('pipeline-test-path');
+                if (el) el.value = relpath;
             }
 
             const resultsContainer = document.getElementById('pipeline-results');
