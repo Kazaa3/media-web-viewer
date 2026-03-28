@@ -252,8 +252,8 @@ def insert_media(item_dict):
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
                              transcoded_format, tags, extension, container, tag_type, codec, 
                              has_artwork, art_path, full_tags, media_type, subtype, file_type,
-                             isbn, imdb, tmdb, discogs, amazon_cover, parent_id, is_mock)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             isbn, imdb, tmdb, discogs, amazon_cover, parent_id, is_mock, mock_stage)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -279,7 +279,8 @@ def insert_media(item_dict):
             item_dict.get('discogs'),
             item_dict.get('amazon_cover'),
             item_dict.get('parent_id'),
-            item_dict.get('is_mock', 0)
+            item_dict.get('is_mock', 0),
+            item_dict.get('mock_stage', 0)
         ))
         conn.commit()
         last_id = cursor.lastrowid
@@ -332,7 +333,9 @@ def get_all_media():
             'parent_id': row['parent_id'],
             'playback_position': row['playback_position'] or 0,
             'last_played': row['last_played'],
-            'duration_sec': row['duration_sec'] or 0
+            'duration_sec': row['duration_sec'] or 0,
+            'is_mock': bool(row['is_mock']),
+            'mock_stage': row['mock_stage'] or 0
         })
     conn.close()
     return media_list
@@ -590,12 +593,16 @@ def get_db_stats():
     cursor.execute("SELECT COUNT(*) FROM media")
     total_items = cursor.fetchone()[0]
 
+    cursor.execute("SELECT COUNT(*) FROM media WHERE is_mock = 1")
+    mock_items = cursor.fetchone()[0]
+
     cursor.execute("SELECT category, COUNT(*) FROM media GROUP BY category")
     categories = {row[0]: row[1] for row in cursor.fetchall()}
 
     conn.close()
     return {
         'total_items': total_items,
+        'mock_items': mock_items,
         'categories': categories
     }
 

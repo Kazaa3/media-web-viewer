@@ -877,7 +877,7 @@
         .tab-content {
             display: none;
             flex: 1;
-            overflow-y: auto !important;
+            overflow-y: auto;
             /* Force scrollability across all tabs */
             width: 100%;
             height: 100%;
@@ -2685,7 +2685,8 @@
             start_page: 'player',
             app_mode: 'High-Performance',
             parser_mode: 'lightweight',
-            minimal_player_view: false
+            minimal_player_view: false,
+            enable_mock_data: false
         };
 
         async function loadConfig() {
@@ -3186,6 +3187,7 @@
                 if (typeof showToast === 'function') {
                     showToast(enabled ? "Mock-Daten aktiviert" : "Mock-Daten deaktiviert", "info");
                 }
+                if (typeof renderLibrary === 'function') renderLibrary();
             } catch (err) {
                 console.error("Error toggling mock data:", err);
                 if (typeof showToast === 'function') {
@@ -9063,6 +9065,12 @@
 
                 coverflowItems = library.media || [];
 
+                // Mock Data Filter
+                const mockEnabled = await eel.get_mock_data_enabled()();
+                if (!mockEnabled) {
+                    coverflowItems = coverflowItems.filter(i => !i.is_mock);
+                }
+
                 // Populate dynamic filters based on current data
                 updateFilterOptions(coverflowItems);
 
@@ -10129,6 +10137,7 @@
             if (!infoEl) return;
             try {
                 const stats = await eel.get_db_stats()();
+                const showOnlyMock = document.getElementById('debug-filter-mock') ? document.getElementById('debug-filter-mock').checked : false;
 
                 let html = `
                     <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; border: 1px solid #eef;">
@@ -10136,7 +10145,15 @@
                             <span style="font-weight: bold; color: #333; font-size: 1.1em;">
                                 <span class="icon-database" style="background-color: #2980b9;"></span> ${t('database_item') || 'Items'}:
                                 <span style="color: #2980b9; margin-left: 5px;">${stats.total_items}</span>
+                                <span style="font-size: 0.8em; color: #888; margin-left: 10px;">(Mock: ${stats.mock_items || 0})</span>
                             </span>
+                        </div>
+                        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <label class="switch" style="transform: scale(0.8);">
+                                <input type="checkbox" id="debug-filter-mock" ${showOnlyMock ? 'checked' : ''} onchange="loadDebugDBInfo(); changeDebugDictView(document.getElementById('debug-dict-select').value);">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size: 0.85em; color: #666;">Nur Mock-Items in Details zeigen</span>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 `;
@@ -10226,6 +10243,10 @@
                 if (viewType === 'library') {
                     const res = await eel.get_library()();
                     data = res.media;
+                    const showOnlyMock = document.getElementById('debug-filter-mock') ? document.getElementById('debug-filter-mock').checked : false;
+                    if (showOnlyMock) {
+                        data = data.filter(i => i.is_mock);
+                    }
                 } else if (viewType === 'parser') {
                     data = await eel.get_parser_config()();
                 } else {
@@ -10280,7 +10301,6 @@
                 }
                 return '<span style="color: ' + color + ';">' + match + '</span>';
             });
-        }
 
         async function loadDebugFlags() {
             try {
@@ -10836,46 +10856,8 @@
         function onGrabPointerLeave(e, index) {
             // e.stopPropagation(); // Might break things
             if (pickTimer) {
-                console.log(`[Picking] Mouse left handle ${index} during press - continuing timer for robustness`);
-                // We DON'T cancel here anymore. Only mouseup or a very far move should cancel.
-                // But for simplicity, we let the timer finish if they stay within reasonable bounds.
-                // If they release outside, we still have the mouseup on body or similar?
-                //                 // Actually, let's keep it but make it less sensitive.
-                //
-                //                 // If we want it to be REALLY robust, we should listen to mouseup on window.
-                //             }
-                //         }
-                //
-                //         function clearPickProgress(index) {
-                //             const progress = document.getElementById(`pick-progress-${index}`);
-                //             if (progress) {
-                //                 progress.style.transition = 'none';
-                //                 progress.style.width = '0%';
-                //                 setTimeout(() => { if (progress) progress.style.transition = 'width 0.4s linear'; }, 50);
-                //             }
-                //         }
-                //
-                //         function pickItem(index) {
-                //             console.log("pickItem activated for index:", index);
-                //             if (isShuffle) {
-                //                 alert(t('pl_disable_shuffle') || 'Disable shuffle to reorder directly.');
-                //                 return;
-                //             }
-                //             pickedIndex = index;
-                //             document.body.classList.add('is-picking');
-                //
-                //             // Add global cancel listener if user releases outside elements
-                //             const onGlobalUp = (e) => {
-                //                 if (pickedIndex !== -1) {
-                //                     console.log("[Picking] Global mouseup detected - checking if we need to cancel");
-                //                     // If we are here, we might have missed a specific drop target mouseup
-                //                     // We'll give it a tiny delay to see if releasePick was called
-                //                     setTimeout(() => {
-                //                         if (pickedIndex !== -1) cancelPick();
-                //                     }, 50);
-                //                 }
-                //                 window.removeEventListener('mouseup', onGlobalUp);
-                //             };
+                clearTimeout(pickTimer);
+                pickTimer = null;
             }
         }
 
