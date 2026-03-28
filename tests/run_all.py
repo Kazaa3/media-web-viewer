@@ -37,6 +37,8 @@ try:
     from tests.engines.suite_complexity import ComplexitySuiteEngine
     from tests.engines.suite_styles import StylesSuiteEngine
     from tests.engines.suite_subtitles import SubtitleSuiteEngine
+    from tests.engines.suite_toolchain import ToolchainSuiteEngine
+    from tests.engines.suite_advanced_player import AdvancedPlayerSuite
 except ImportError:
     # Fallback for direct execution in engines dir or similar
     from engines.suite_ultimate import UltimateSuiteEngine
@@ -66,6 +68,8 @@ except ImportError:
     from engines.suite_complexity import ComplexitySuiteEngine
     from engines.suite_styles import StylesSuiteEngine
     from engines.suite_subtitles import SubtitleSuiteEngine
+    from engines.suite_toolchain import ToolchainSuiteEngine
+    from engines.suite_advanced_player import AdvancedPlayerSuite
 
 def run_master_diagnostic():
     parser = argparse.ArgumentParser(description="Master Diagnostic Runner")
@@ -87,7 +91,8 @@ def run_master_diagnostic():
         ParserSuiteEngine(), EditSuiteEngine(), SidebarSuiteEngine(),
         ConfigSuiteEngine(), RoutingSuiteEngine(),
         ScriptSuiteEngine(), I18nSuiteEngine(), OptimizationSuiteEngine(),
-        ComplexitySuiteEngine(), StylesSuiteEngine(), SubtitleSuiteEngine()
+        ComplexitySuiteEngine(), StylesSuiteEngine(), SubtitleSuiteEngine(),
+        ToolchainSuiteEngine(), AdvancedPlayerSuite()
     ]
     
     for suite in suites:

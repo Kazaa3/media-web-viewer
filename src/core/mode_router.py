@@ -15,19 +15,40 @@ def smart_route(file_path):
         log.warning(f"Routing fallback to direct_play due to analysis error: {info['error']}")
         return {"mode": "direct_play", "info": info}
 
-    # Final Decision
+    # Analysis
     codec = info.get('codec', 'unknown')
     container = info.get('container', 'unknown')
     resolution = info.get('resolution', 'SD')
+    bitrate = info.get('bitrate_kbps', 0)
     
+    # Defaults
     mode = 'hls_fmp4'
+    
+    # 1. Native Direct Play (Chrome compatible)
     if codec == 'h264' and container in ['mp4', 'mov', 'm4a', 'quicktime']:
-        if resolution != "4K":
+        if resolution != "4K" and bitrate < 20000:
             mode = 'direct_play'
-    elif info.get('is_iso') or info.get('has_menus') or info.get('atmos'):
+            
+    # 2. MSE (H.264 / VP9 / AV1 in various containers)
+    elif resolution in ["SD", "720p", "1080p"] and bitrate < 15000:
+        if codec in ['h264', 'vp9', 'av1']:
+            mode = 'mse'
+            
+    # 3. VLC Bridge (ISO / Heavy Containers / Atmos)
+    elif info.get('is_iso') or info.get('has_menus') or info.get('atmos') or container == 'ts':
         mode = 'vlc_bridge'
-    elif resolution in ["SD", "720p", "1080p"]:
-        mode = 'mse'
+        
+    # 4. DASH (Experimental high-bitrate)
+    elif container == 'mpd' or (resolution == '4K' and bitrate > 30000):
+        mode = 'dash'
+        
+    # 5. MPV WASM (Interactive / libmpv features)
+    elif info.get('is_interactive') or container == 'webm':
+        mode = 'mpv_wasm'
+
+    # 6. Fallback to Native External (Ultra high-end)
+    if resolution == '4K' and bitrate > 50000:
+        mode = 'mpv_native'
 
     return {
         "mode": mode,
@@ -43,6 +64,11 @@ def get_mode_description(mode):
         'mse': "FFmpeg fMP4 zu MSE (Ultra-Low-Latency)",
         'hls_fmp4': "FFmpeg fMP4 zu HLS (Universal)",
         'vlc_bridge': "VLC HLS zu MSE (Interaktiv / Menüs)",
-        'mpv_wasm': "libmpv zu Canvas (WASM / Interaktiv)"
+        'mpv_wasm': "libmpv zu Canvas (WASM / Interaktiv)",
+        'mpv_native': "Externer MPV Player (Verlustfrei / 4K)",
+        'vlc_native': "Externer VLC Player (Verlustfrei / ISO)",
+        'dash': "Dynamic Adaptive Streaming over HTTP (High-End)",
+        'webtorrent': "P2P WebTorrent Streaming (Dezentral)",
+        'hls_native': "Natives HLS (Safari / Edge compatible)"
     }
     return mapping.get(mode, "Unbekannter Modus")

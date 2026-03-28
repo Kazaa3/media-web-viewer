@@ -35,6 +35,8 @@ if LOCAL_DATA_DIR.exists():
 else:
     DB_DIR = Path.home() / ".media-web-viewer"
     DB_FILENAME = str(DB_DIR / "media_library.db")
+ 
+_DB_INITIALIZED = False
 
 
 def get_active_db_path() -> Path:
@@ -109,9 +111,12 @@ def cleanup_legacy_databases(candidates: Iterable[Path] | None = None) -> list[s
 
 def init_db():
     """
-    @brief Initializes the SQLite database and creates necessary tables.
-    @details Initialisiert die SQLite-Datenbank und erstellt die notwendigen Tabellen.
+    Initializes the database and runs migrations if needed.
     """
+    global _DB_INITIALIZED
+    if _DB_INITIALIZED:
+        return
+
     log.info(f"Checking database integrity at {DB_FILENAME}...")
     DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
@@ -147,6 +152,7 @@ def init_db():
             playback_position REAL DEFAULT 0,
             last_played TEXT,
             duration_sec REAL,
+            is_mock BOOLEAN DEFAULT 0,
             FOREIGN KEY(parent_id) REFERENCES media(id)
         )
     """)
@@ -188,7 +194,8 @@ def init_db():
         ("parent_id", "INTEGER"),
         ("playback_position", "REAL"),
         ("last_played", "TEXT"),
-        ("duration_sec", "REAL")
+        ("duration_sec", "REAL"),
+        ("is_mock", "BOOLEAN DEFAULT 0")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -199,6 +206,7 @@ def init_db():
         except Exception as e:
             log.error(f"Migration error for column {col_name}: {e}")
 
+    _DB_INITIALIZED = True
     log.debug("Database initialization/migration complete.")
 
     conn.commit()
@@ -244,8 +252,8 @@ def insert_media(item_dict):
             INSERT INTO media (name, path, type, duration, category, is_transcoded,
                              transcoded_format, tags, extension, container, tag_type, codec, 
                              has_artwork, art_path, full_tags, media_type, subtype, file_type,
-                             isbn, imdb, tmdb, discogs, amazon_cover, parent_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             isbn, imdb, tmdb, discogs, amazon_cover, parent_id, is_mock)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             item_dict['name'],
             item_dict['path'],
@@ -270,7 +278,8 @@ def insert_media(item_dict):
             item_dict.get('tmdb'),
             item_dict.get('discogs'),
             item_dict.get('amazon_cover'),
-            item_dict.get('parent_id')
+            item_dict.get('parent_id'),
+            item_dict.get('is_mock', 0)
         ))
         conn.commit()
         last_id = cursor.lastrowid

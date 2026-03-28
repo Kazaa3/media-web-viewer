@@ -99,6 +99,7 @@ import base64
 import requests
 from typing import Dict, Any, List, Optional, cast
 import ast
+import sqlite3
 
 # Perfect Video Player Modular Backends
 from src.core import mode_router
@@ -131,6 +132,14 @@ from src.core import transcoder         # type: ignore
 from src.core import db                 # type: ignore
 from src.core.mode_router import smart_route    # type: ignore
 from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge # type: ignore
+
+# Subtitle and Toolchain integration (Phase 7/8)
+from src.core.subtitle_processor import SubtitleProcessor # type: ignore
+from src.core.mkv_tool_wrapper import MKVToolWrapper # type: ignore
+from src.core.handbrake_wrapper import HandBrakeWrapper # type: ignore
+
+mkv_tool = MKVToolWrapper()
+handbrake = HandBrakeWrapper()
 
 # Force expose the router and streaming engine
 eel.expose(smart_route)
@@ -1143,6 +1152,20 @@ def update_browse_dir(path):
 def update_library_dir(path):
     """Updates the primary library/media directory."""
     PARSER_CONFIG["library_dir"] = path
+    save_parser_config()
+    return {"status": "success"}
+
+
+@eel.expose
+def get_mock_data_enabled():
+    """Returns whether mock data is enabled in the configuration."""
+    return PARSER_CONFIG.get("enable_mock_data", False)
+
+
+@eel.expose
+def set_mock_data_enabled(enabled):
+    """Updates the mock data enabled state and saves to disk."""
+    PARSER_CONFIG["enable_mock_data"] = enabled
     save_parser_config()
     return {"status": "success"}
 
@@ -2698,6 +2721,37 @@ def set_language(lang):
 from web import app_bottle  # noqa: F401  # Register bottle routes: /media and /cover
 
 # Models
+
+
+@eel.expose
+def get_db_info():
+    """
+    @brief Returns summary statistics about the database and logs.
+    @details Gibt zusammenfassende Statistiken über die Datenbank und das Logbuch zurück.
+    @return Dictionary with media_count, playlist_count, and log_count.
+    """
+    try:
+        stats = db.get_db_stats()
+        
+        # Count playlists
+        conn = sqlite3.connect(db.DB_FILENAME)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM playlists")
+        playlist_count = cursor.fetchone()[0]
+        conn.close()
+        
+        # Count logbook entries
+        log_dir = PROJECT_ROOT / "logbuch"
+        log_count = len(list(log_dir.glob("*.md"))) if log_dir.exists() else 0
+        
+        return {
+            "media_count": stats.get('total_items', 0),
+            "playlist_count": playlist_count,
+            "log_count": log_count
+        }
+    except Exception as e:
+        log.error(f"[API] Error in get_db_info: {e}")
+        return None
 
 
 @eel.expose
@@ -6630,7 +6684,6 @@ def get_media_tracks(filepath):
 def extract_subtitle(filepath, track_index):
     """Extracts a specific subtitle track to a temp file."""
     try:
-        from src.core.subtitle_processor import SubtitleProcessor
         filename = f"{Path(filepath).stem}_track{track_index}.srt"
         output_path = str(PROJECT_ROOT / "cache" / filename)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -6647,7 +6700,6 @@ def extract_subtitle(filepath, track_index):
 def adjust_subtitle_timing(subtitle_path, offset_ms):
     """Adjusts the timing of a subtitle file."""
     try:
-        from src.core.subtitle_processor import SubtitleProcessor
         success = SubtitleProcessor.adjust_timing(subtitle_path, int(offset_ms))
         if success:
             return {"status": "ok"}
@@ -6660,10 +6712,82 @@ def adjust_subtitle_timing(subtitle_path, offset_ms):
 def get_subtitle_info(subtitle_path):
     """Returns metadata about a subtitle file."""
     try:
-        from src.core.subtitle_processor import SubtitleProcessor
         return SubtitleProcessor.get_info(subtitle_path)
     except Exception as e:
         return {"error": str(e)}
+
+
+@eel.expose
+def mkv_batch_extract(files, track_type="subtitles"):
+    """
+    @brief Batch extraction of MKV tracks (Cleaver-style).
+    @param files List of paths to MKV files.
+    @param track_type Type of track to extract (e.g. 'subtitles', 'audio').
+    """
+    log.info(f"[MKV] Batch extracting {track_type} from {len(files)} files")
+    results = []
+    
+    # Get cache dir
+    cache_dir = PROJECT_ROOT / "cache" / "extracted"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    
+    for fpath in files:
+        try:
+            # 1. Get info
+            info = mkv_get_info(fpath)
+            if info["status"] != "ok":
+                results.append({"file": fpath, "status": "error", "error": info.get("error")})
+                continue
+                
+            # 2. Find tracks
+            tracks = info.get("tracks", [])
+            target_tracks = [t for t in tracks if track_type in t.get("type", "").lower()]
+            
+            # 3. Extract each target track
+            extracted = []
+            for t in target_tracks:
+                tid = t.get("id")
+                out_name = f"{Path(fpath).stem}_T{tid}.{t.get('codec', 'bin')}"
+                out_path = cache_dir / out_name
+                
+                res = mkv_extract_track(fpath, tid, str(out_path))
+                if res["status"] == "ok":
+                    extracted.append(str(out_path))
+            
+            results.append({"file": fpath, "status": "ok", "extracted": extracted})
+        except Exception as e:
+            results.append({"file": fpath, "status": "error", "error": str(e)})
+            
+    return {"status": "ok", "results": results}
+
+
+
+
+# --- MKVToolNix & HandBrake CLI API (Phase 8) ---
+@eel.expose
+def mkv_get_info(filepath):
+    """Deep inspection of MKV container."""
+    return mkv_tool.get_info(filepath)
+
+@eel.expose
+def mkv_extract_track(filepath, track_index, output_path):
+    """Extracts a track using mkvextract."""
+    return mkv_tool.extract_track(filepath, track_index, output_path)
+
+@eel.expose
+def mkv_mux_simple(output_path, input_files):
+    """Simple muxing of multiple files."""
+    return mkv_tool.mux_mkv(output_path, input_files)
+
+@eel.expose
+def hb_encode(input_path, output_path, preset="Very Fast 1080p30"):
+    """Encodes a file using HandBrakeCLI."""
+    return handbrake.encode(input_path, output_path, preset)
+
+@eel.expose
+def hb_get_presets():
+    """Returns available HandBrake presets."""
+    return handbrake.get_presets()
 
 @eel.expose
 def get_parser_stats():
@@ -7045,12 +7169,31 @@ def start_cast(device_id, media_url):
     log.info(f"[Cast] Casting {media_url} to {device_id}")
     return {"status": "ok"}
 
+_swyh_rs_process = None
+
 @eel.expose
 def toggle_swyh_rs(enabled=True):
     """Toggles swyh-rs (Stream What You Hear) state."""
-    state = "enabled" if enabled else "disabled"
-    log.info(f"[swyh-rs] Toggling to {state}")
-    return {"status": "ok", "state": state}
+    global _swyh_rs_process
+    try:
+        if enabled:
+            if _swyh_rs_process and _swyh_rs_process.poll() is None:
+                return {"status": "ok", "message": "SWYH-RS already running"}
+            
+            # Use source 0 and flac as default (based on logbuch reference)
+            cmd = ["swyh-rs-cli", "--source", "0", "--format", "flac"]
+            _swyh_rs_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            log.info("[swyh-rs] Started swyh-rs-cli")
+            return {"status": "ok", "state": "enabled"}
+        else:
+            if _swyh_rs_process:
+                _swyh_rs_process.terminate()
+                _swyh_rs_process = None
+                log.info("[swyh-rs] Stopped swyh-rs-cli")
+            return {"status": "ok", "state": "disabled"}
+    except Exception as e:
+        log.error(f"[swyh-rs] Toggle failed: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def open_vlc(filepath):
@@ -7237,7 +7380,8 @@ def save_benchmark_results(results):
             "timestamp": time.time(),
             "results": results
         })
-        bench_file.write_text(json.dumps(list(history[-50:]), indent=2), encoding='utf-8')
+        limited_history = list(history[-50:])
+        bench_file.write_text(json.dumps(limited_history, indent=2), encoding='utf-8')
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "error": str(e)}

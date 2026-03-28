@@ -52,7 +52,7 @@ class MediaItem:
     @details Repräsentiert eine einzelne Mediendatei mit umfassenden Metadaten.
     """
 
-    def __init__(self, name, path):
+    def __init__(self, name, path, is_mock=False):
         """
         @brief Initializes a MediaItem and triggers metadata extraction.
         @details Initialisiert ein MediaItem und startet die Metadaten-Extraktion.
@@ -67,6 +67,7 @@ class MediaItem:
         else:
             self.type = self.path.suffix.lower()
 
+        self.is_mock = is_mock
         # Debug mode is handled centrally through logger level
         parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
         # extract_metadata historically returned (duration, tags) but some
@@ -470,5 +471,6 @@ class MediaItem:
             'tmdb': self.tmdb,
             'discogs': self.discogs,
             'amazon_cover': self.amazon_cover,
-            'parent_id': self.parent_id
+            'parent_id': self.parent_id,
+            'is_mock': self.is_mock
         }

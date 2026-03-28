@@ -10,7 +10,7 @@
  * Complexity: High (WASM Memory Management & Event Bridging)
  */
 
-class MpvWasmPlayer {
+class MpvPlayer {
     constructor(canvasId, overlayId) {
         this.canvas = document.getElementById(canvasId);
         this.overlay = document.getElementById(overlayId);
@@ -53,7 +53,9 @@ class MpvWasmPlayer {
             console.log("[MPV-WASM] libmpv successfully initialized.");
         } catch (err) {
             console.error("[MPV-WASM] Initialization failed:", err);
-            showToast("<svg width='14' height='14' style='vertical-align:middle;margin-right:4px;'><use href='#icon-delete'></use></svg> MPV WASM Init Fehler (Fehlende Binaries?)", 5000);
+            if (typeof showToast === 'function') {
+                showToast("<svg width='14' height='14' style='vertical-align:middle;margin-right:4px;'><use href='#icon-delete'></use></svg> MPV WASM Init Fehler (Fehlende Binaries?)", 5000);
+            }
             throw err;
         }
     }
@@ -70,7 +72,7 @@ class MpvWasmPlayer {
 
         // Key bridging for DVD Menus
         window.addEventListener('keydown', (e) => {
-            if (this.canvas.style.display !== 'none') {
+            if (this.canvas && this.canvas.style.display !== 'none') {
                 this.handleKey(e);
             }
         });
@@ -99,8 +101,8 @@ class MpvWasmPlayer {
         if (!this.isInitialized) await this.init();
 
         this.currentPath = filePath;
-        this.canvas.style.display = 'block';
-        this.overlay.style.display = 'flex';
+        if (this.canvas) this.canvas.style.display = 'block';
+        if (this.overlay) this.overlay.style.display = 'flex';
 
         // Get the local streaming URL from the backend
         const streamUrl = await eel.get_iso_stream_url(filePath)();
@@ -114,8 +116,8 @@ class MpvWasmPlayer {
         if (this.mpv) {
             this.mpv.command('stop');
         }
-        this.canvas.style.display = 'none';
-        this.overlay.style.display = 'none';
+        if (this.canvas) this.canvas.style.display = 'none';
+        if (this.overlay) this.overlay.style.display = 'none';
     }
 
     destroy() {
@@ -128,4 +130,4 @@ class MpvWasmPlayer {
 }
 
 // Export a singleton instance
-window.mpvPlayer = new MpvWasmPlayer('mpv-canvas', 'mpv-menu-overlay');
+window.mpvPlayer = new MpvPlayer('mpv-canvas', 'mpv-menu-overlay');

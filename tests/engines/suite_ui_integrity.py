@@ -79,15 +79,106 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         return DiagnosticResult(5, "Responsive Sanity", "PASS" if len(queries) > 0 else "WARN", 
                                 f"Found {len(queries)} media queries.")
 
-    def run_all(self, stages: List[Any] = None) -> List[DiagnosticResult]:
-        if not stages:
-            stages = [
-                self.level_1_structural_balance,
-                self.level_2_css_token_audit,
-                self.level_3_critical_selectors,
-                self.level_4_backend_leakage,
-                self.level_5_responsive_sanity
-            ]
+    def level_6_js_string_syntax(self) -> DiagnosticResult:
+        """Checks for unescaped nested quotes in common JS patterns (e.g. showToast)."""
+        if not self.app_html.exists():
+            return DiagnosticResult(6, "JS Syntax", "FAIL", "web/app.html missing")
+        
+        content = self.app_html.read_text(encoding='utf-8')
+        # Heuristic: Find showToast("...width="...") or similar
+        malformed = re.findall(r'showToast\(".*?width=".*?"', content)
+        
+        if malformed:
+            return DiagnosticResult(6, "JS Syntax", "FAIL", f"Found {len(malformed)} malformed showToast strings (nested quotes).")
+        
+        return DiagnosticResult(6, "JS Syntax", "PASS", "No obvious nested quote syntax errors found in app.html.")
+
+    def level_7_svg_icon_refs(self) -> DiagnosticResult:
+        """Checks for malformed SVG icon references (e.g. spaces in IDs)."""
+        if not self.app_html.exists(): return DiagnosticResult(7, "SVG Icons", "SKIP", "No app.html")
+        content = self.app_html.read_text(encoding='utf-8')
+        # Find href="#icon - sparkles" or "#icon- sparkles" or "#icon -sparkles"
+        # We look for "#icon" followed by any whitespace or hyphen with whitespace
+        malformed = re.findall(r'href="#icon\s*-\s*[^"]*?\s+[^"]*?"', content)
+        # Also catch the specific " - " pattern
+        malformed += re.findall(r'href="#icon\s+-\s+[^"]+?"', content)
+        
+        if malformed:
+            unique_malformed: List[str] = list(set(malformed))
+            return DiagnosticResult(7, "SVG Icons", "FAIL", f"Found {len(malformed)} malformed icon references (spaces in IDs): {', '.join(unique_malformed[:3])}")
+        
+        return DiagnosticResult(7, "SVG Icons", "PASS", "SVG icon references are clean.")
+
+    def level_8_onerror_bridge_presence(self) -> DiagnosticResult:
+        """Verifies if the window.onerror bridge is present for real-time logging."""
+        if not self.app_html.exists(): return DiagnosticResult(8, "OnError Bridge", "SKIP", "No app.html")
+        content = self.app_html.read_text(encoding='utf-8')
+        if "window.onerror" in content and "eel.log_js_error" in content:
+            return DiagnosticResult(8, "OnError Bridge", "PASS", "Real-time JS error bridge found.")
+        return DiagnosticResult(8, "OnError Bridge", "FAIL", "window.onerror bridge missing or misconfigured.")
+
+    def level_9_tab_navigation(self) -> DiagnosticResult:
+        """Verifies that all switchTab calls have a valid mapping and target ID."""
+        if not self.app_html.exists(): return DiagnosticResult(9, "Tab Navigation", "SKIP", "No app.html")
+        content = self.app_html.read_text(encoding='utf-8')
+        
+        # 1. Extract tabMap from JS
+        tab_map_match = re.search(r'const tabMap = \{(.*?)\};', content, re.DOTALL)
+        if not tab_map_match:
+            return DiagnosticResult(9, "Tab Navigation", "FAIL", "Could not find tabMap in app.html")
+        
+        tab_map_str = tab_map_match.group(1)
+        # Parse it into a python dict (simple regex approach)
+        tab_map = {}
+        for line in tab_map_str.split('\n'):
+            match = re.search(r"['\"](\w+)['\"]\s*:\s*['\"]([\w-]+)['\"]", line)
+            if match:
+                tab_map[match.group(1)] = match.group(2)
+        
+        # 2. Find all switchTab calls in buttons
+        switch_calls = re.findall(r"switchTab\(\s*['\"](\w+)['\"]", content)
+        unique_calls = list(set(switch_calls))
+        
+        missing_mappings = [t for t in unique_calls if t not in tab_map]
+        missing_targets = [tab_map[t] for t in tab_map if f'id="{tab_map[t]}"' not in content and f"id='{tab_map[t]}'" not in content]
+        
+        errors = []
+        if missing_mappings:
+            errors.append(f"Missing mappings for: {missing_mappings}")
+        if missing_targets:
+            errors.append(f"Missing target elements for IDs: {missing_targets}")
+            
+        if errors:
+            return DiagnosticResult(9, "Tab Navigation", "FAIL", " | ".join(errors))
+            
+        return DiagnosticResult(9, "Tab Navigation", "PASS", f"Verified {len(unique_calls)} tab IDs and {len(tab_map)} target panels.")
+
+    def level_10_debug_db_view(self) -> DiagnosticResult:
+        """Verifies integrity of the Debug & Database view components."""
+        if not self.app_html.exists(): return DiagnosticResult(10, "Debug & DB View", "SKIP", "No app.html")
+        content = self.app_html.read_text(encoding='utf-8')
+        
+        required_elements = [
+            'id="debug-flag-persistence-panel"', 
+            'data-i18n="debug_db_loading_stats"',
+            'id="debug-db-info"',
+            'id="lib-db-table-body"'
+        ]
+        missing = [e for e in required_elements if e not in content]
+        
+        if missing:
+            return DiagnosticResult(10, "Debug & DB View", "FAIL", f"Missing Debug/DB components: {missing}")
+            
+        return DiagnosticResult(10, "Debug & DB View", "PASS", "Debug & Database view structure verified.")
+
+    def run_all(self) -> List[DiagnosticResult]:
+        stages = [
+            self.level_1_structural_balance, self.level_2_css_token_audit,
+            self.level_3_critical_selectors, self.level_4_backend_leakage,
+            self.level_5_responsive_sanity, self.level_6_js_string_syntax,
+            self.level_7_svg_icon_refs, self.level_8_onerror_bridge_presence,
+            self.level_9_tab_navigation, self.level_10_debug_db_view
+        ]
         return super().run_all(stages)
 
 if __name__ == "__main__":
