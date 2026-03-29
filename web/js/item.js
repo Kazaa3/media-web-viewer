@@ -1,0 +1,105 @@
+/**
+ * item.js
+ * Item-specific logic and UI helpers.
+ * Handles category badges, inventory list rendering, and detail views.
+ */
+
+const CATEGORY_MAP = {
+    "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Song"],
+    "video": ["Video", "Film", "Serie", "ISO/Image", "Musikvideos", "Animes", "Cartoons", "Movie", "TV Show"],
+    "film": ["Film", "Film Object"],
+    "serie": ["Serie"],
+    "album": ["Album"],
+    "soundtrack": ["Soundtrack"],
+    "compilation": ["Compilation"],
+    "single": ["Single"],
+    "klassik": ["Klassik"],
+    "playlist": ["Playlist"],
+    "podcast": ["Podcast"],
+    "images": ["Bilder"],
+    "documents": ["Dokument"],
+    "ebooks": ["E-Book"],
+    "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray", "PAL DVD (Abbild)", "NTSC DVD (Abbild)", "DVD (Abbild)", "Blu-ray (Abbild)", "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild", "DVD Object"],
+    "spiel": ["PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)", "Spiel"],
+    "beigabe": ["Supplement", "Beigabe", "Software"]
+};
+
+/**
+ * Returns consistent badge HTML for an item's category.
+ */
+function getCategoryBadgeHtml(item) {
+    if (!item || !item.category) return '';
+    const cat = (item.category || '').toLowerCase();
+    let color = '#ccc';
+    if (CATEGORY_MAP.audio.includes(item.category)) color = '#3498db';
+    if (CATEGORY_MAP.video.includes(item.category)) color = '#e74c3c';
+    if (CATEGORY_MAP.film.includes(item.category)) color = '#f39c12';
+    if (CATEGORY_MAP.serie.includes(item.category)) color = '#e74c3c';
+    if (CATEGORY_MAP.spiel.includes(item.category)) color = '#2ecc71';
+
+    return `<span class="category-badge" style="background: ${color}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${item.category}</span>`;
+}
+
+/**
+ * Loads and renders the inventory side-list in the Item/Edit tab.
+ */
+async function loadEditItems() {
+    if (typeof appendUiTrace === 'function') appendUiTrace("[Item] Loading inventory for Edit tab...");
+    const library = await getLibrary();
+    if (library && library.media) {
+        renderEditList(library.media);
+    }
+}
+
+/**
+ * Renders the inventory list.
+ */
+function renderEditList(items) {
+    const container = document.getElementById('item-category-list');
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div style="padding: 20px; color: #999; text-align: center;">Keine Einträge</div>`;
+        return;
+    }
+
+    const html = items.map(item => {
+        const title = item.tags && item.tags.title ? item.tags.title : (item.name || 'Unknown');
+        const artist = item.tags && item.tags.artist ? item.tags.artist : (item.category || '');
+        
+        return `
+            <div class="inventory-item" onclick="openEditFormByName('${item.name.replace(/'/g, "\\'")}')" 
+                 style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.1s;">
+                <div style="font-weight: 600; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.name}">${title}</div>
+                <div style="font-size: 0.8em; color: #888;">${artist}</div>
+            </div>
+        `;
+    }).join('');
+
+    if (typeof safeHtml === 'function') safeHtml('item-category-list', html);
+    else container.innerHTML = html;
+}
+
+/**
+ * Filters the inventory side-list based on input.
+ */
+function filterEditList(val) {
+    const query = val.toLowerCase();
+    const rows = document.querySelectorAll('#item-category-list .inventory-item');
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? 'block' : 'none';
+    });
+}
+
+/**
+ * Bridge for opening the edit form by item name.
+ */
+async function openEditFormByName(name) {
+    if (typeof appendUiTrace === 'function') appendUiTrace(`[Item] Fetching details for ${name} to edit...`);
+    const library = await getLibrary();
+    const item = library.media.find(i => i.name === name);
+    if (item && typeof openEditForm === 'function') {
+        openEditForm(item);
+    }
+}

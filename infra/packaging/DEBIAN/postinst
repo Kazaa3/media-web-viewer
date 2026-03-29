@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+APP_DIR="/opt/media-web-viewer"
+VENV_DIR="$APP_DIR/.venv"
+
+echo "Setting up Media Web Viewer..."
+
+# Recreate virtual environment to avoid stale dependency state on upgrades
+rm -rf "$VENV_DIR"
+
+# Create virtual environment
+python3 -m venv "$VENV_DIR"
+
+# Install Python dependencies
+"$VENV_DIR/bin/pip" install --upgrade pip --no-cache-dir --quiet
+"$VENV_DIR/bin/pip" install --no-cache-dir -r "$APP_DIR/infra/requirements.txt" --quiet
+
+# Ensure media directory exists
+mkdir -p "$APP_DIR/media"
+
+# Update desktop database to show in menu
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/share/applications
+fi
+
+echo "Installation complete. Run: media-web-viewer"

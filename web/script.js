@@ -1,3 +1,21 @@
+// Lädt die Environment-Infos und schreibt sie in die GUI
+async function loadEnvironmentInfo() {
+    try {
+        const res = await eel.get_konsole()();
+        const env = res.env || {};
+        document.getElementById('env-python-version').textContent = env.python_version || '-';
+        document.getElementById('env-venv-status').textContent = env.env_name || '-';
+        document.getElementById('env-platform').textContent = env.platform || '-';
+        document.getElementById('env-python-exec').textContent = env.python_executable || '-';
+        document.getElementById('env-venv-path').textContent = env.env_path || '-';
+        // Neue PID Felder
+        document.getElementById('env-main-pid').textContent = env.pid || '-';
+        document.getElementById('env-testbed-pid').textContent = env.testbed_pid !== undefined && env.testbed_pid !== null ? env.testbed_pid : 'nicht aktiv';
+        document.getElementById('env-selenium-pid').textContent = env.selenium_pid !== undefined && env.selenium_pid !== null ? env.selenium_pid : 'nicht aktiv';
+    } catch (e) {
+        console.error('Fehler beim Laden der Environment-Infos:', e);
+    }
+}
 async function loadMedia() {
     try {
         const result = await eel.scan_media()();

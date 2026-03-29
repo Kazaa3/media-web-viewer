@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=dict (v1.34)
+Comment=Lokaler Mediaplayer mit Metadaten-Verwaltung
+Exec=media-web-viewer
+Icon=multimedia-video-player
+Terminal=false
+Categories=AudioVideo;Player;
+Keywords=media;audio;player;library;

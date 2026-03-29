@@ -3,8 +3,8 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags like v1.3.3
-  workflow_dispatch:  # Allow manual trigger
+      - "v*" # Triggers on version tags like v1.33
+  workflow_dispatch: # Allow manual trigger
 
 concurrency:
   group: release-${{ github.ref }}
@@ -14,7 +14,45 @@ permissions:
   contents: write
 
 jobs:
+  validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo xvfb
+      - name: Install Geckodriver (Fallback)
+        run: |
+          if ! command -v geckodriver; then
+            echo "Geckodriver not found, downloading from Mozilla..."
+            GECKO_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep tag_name | cut -d '"' -f4)
+            wget -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/${GECKO_VERSION}/geckodriver-${GECKO_VERSION}-linux64.tar.gz"
+            tar -xzf geckodriver.tar.gz
+            chmod +x geckodriver
+            sudo mv geckodriver /usr/local/bin/
+            rm geckodriver.tar.gz
+          fi
+          geckodriver --version || (echo "Geckodriver installation failed" && exit 1)
+      - name: Install dependencies (selenium)
+        run: |
+          pip install --upgrade pip
+          pip install -r infra/requirements-core.txt
+          pip install -r infra/requirements-test.txt
+          pip install -r infra/requirements-selenium.txt
+      - name: Run Tech & Basic Tests
+        run: |
+          PYTHONPATH=. pytest tests/integration/category/tech/ tests/integration/category/basic/ -v
+      - name: Run UI Tests (Headless)
+        run: |
+          PYTHONPATH=. xvfb-run -a pytest tests/e2e/selenium/ -v
+
   build-linux:
+    needs: validation
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -24,29 +62,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg mediainfo
-          pip install -r requirements.txt
-          pip install pyinstaller
+          pip install -r infra/requirements-build.txt
 
-      - name: Build Linux Executable
+      - name: Build and Package (Linux)
         run: |
-          chmod +x build_exe.sh
-          ./build_exe.sh
-
-      - name: Prepare Linux executable artifact
-        run: |
-          VERSION=$(tr -d '[:space:]' < VERSION)
-          cp dist/MediaWebViewer dist/MediaWebViewer-${VERSION}-Linux
-
-      - name: Build DEB Package
-        run: |
-          chmod +x build_deb.sh
-          ./build_deb.sh
+          python infra/build_system.py --build all --monitor --skip-build-gate
 
       - name: Upload Linux Executable
         uses: actions/upload-artifact@v4
@@ -60,10 +86,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MediaWebViewer-DEB
-          path: media-web-viewer_*_amd64.deb
+          path: build/media-web-viewer_*_amd64.deb
           if-no-files-found: error
 
+      - name: Upload Management Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: Management-Reports-Release
+          path: build/management_reports/
+          if-no-files-found: warn
+
   build-windows:
+    needs: validation
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -72,13 +106,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         shell: bash
         run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
+          pip install -r infra/requirements-build.txt
 
       - name: Build Windows Executable
         shell: bash
@@ -143,32 +176,32 @@ jobs:
           generate_release_notes: true
           body: |
             ## 🚀 Media Web Viewer v${{ steps.meta.outputs.VERSION }}
-            
+
             ### Changes in this release
             - FFmpeg parser: Fixed 24-bit PCM detection
             - Tests: Updated to use real media files
             - Tests: Skip logic now fails instead of passing
-            
+
             ### Downloads
             - **Linux**: `MediaWebViewer-Linux` (executable)
             - **Linux**: `MediaWebViewer-DEB` (.deb package)
             - **Windows**: `MediaWebViewer-Windows.exe`
-            
+
             ### Installation
             #### Linux (DEB)
             ```bash
             sudo dpkg -i media-web-viewer_${{ steps.meta.outputs.VERSION }}_amd64.deb
             ```
-            
+
             #### Linux (Executable)
             ```bash
             chmod +x MediaWebViewer-*
             ./MediaWebViewer-*
             ```
-            
+
             #### Windows
             Simply run the `.exe` file (no installation required).
-            
+
             ### Requirements
             - FFmpeg (for media processing)
             - MediaInfo (for metadata extraction)

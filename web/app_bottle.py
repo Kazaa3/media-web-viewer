@@ -1,15 +1,20 @@
-import db
+import src.core.db as db
+import src.core.logger as logger
 import bottle
 import mimetypes
 import subprocess
+import os
 import uuid
+import shutil
 import sys
+import json
+from urllib.parse import unquote
 from pathlib import Path
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 
-import logger
+# import logger  (redundant now)
 import logging
 
 # Get specialized logger for web component
@@ -47,45 +52,60 @@ def _resolve_path(filename):
 
 @bottle.hook('before_request')
 def log_request():
-    _log(f"REQ IN: {bottle.request.url}")
+    # Keep request tracing lightweight: avoid unconditional INFO logging per request.
     logger.debug("network", f"HTTP Request: {bottle.request.method} {bottle.request.url}")
+
+
+@bottle.route('/health')
+def health_check():
+    """
+    @brief Lightweight health endpoint for HTTP latency diagnostics.
+    @details Sehr leichter Endpunkt zur Messung der Bottle/HTTP-Latenz.
+    @return Status dictionary / Status-Dictionary.
+    """
+    return {
+        "status": "ok",
+        "service": "media-web-viewer",
+        "timestamp": int(__import__('time').time() * 1000),
+    }
 
 
 @bottle.route('/media/<filepath:path>')
 def serve_media(filepath):
     """
     @brief Serves media files with optional on-the-fly transcoding.
-    @details Liefert Mediendateien aus, optional mit Live-Transkodierung (ALAC/WMA).
+    @details Liefert Mediendateien aus, optional mit Live-Transkodierung (ALAC→FLAC, WMA→OGG).
+             Uses FFmpeg for transcoding with optimized parameters:
+             - ALAC → FLAC: lossless, compression_level=5
+             - WMA → Opus: lossy, VBR, 128k bitrate
+             Transcoded files are cached in ~/.cache/MediaWebViewer/transcoded/
     @param filepath Relative path or filename / Pfad oder Dateiname.
     @return Static file or transcoding stream / Statische Datei oder Transkodierungs-Stream.
     """
     mime_type, _ = mimetypes.guess_type(filepath)
     ext = filepath.lower()
 
-    # Detect transcoding suffix: .flac_transcoded or .ogg_transcoded
+    # Detect transcoding suffix: .flac_transcoded, .ogg_transcoded, .mp3_transcoded, .aac_transcoded
     needs_transcoding = False
     transcode_format = None
 
-    if filepath.endswith('.flac_transcoded'):
-        filepath = filepath[:-16]
-        transcode_format = 'flac'
-        needs_transcoding = True
-    elif filepath.endswith('.ogg_transcoded'):
-        filepath = filepath[:-15]
-        transcode_format = 'ogg'
-        needs_transcoding = True
+    
+    suffixes = {
+        '.flac_transcoded': 'flac',
+        '.ogg_transcoded': 'ogg',
+        '.mp3_transcoded': 'mp3',
+        '.aac_transcoded': 'aac',
+        '.opus_transcoded': 'opus'
+    }
+    
+    for suffix, fmt in suffixes.items():
+        if filepath.endswith(suffix):
+            filepath = filepath[:-len(suffix)]
+            transcode_format = fmt
+            needs_transcoding = True
+            break
 
-    transcode_format = None
-    logger.debug("network", f"serve_media: filepath={filepath}")
-
-    if filepath.endswith('.flac_transcoded'):
-        filepath = filepath[:-16]
-        transcode_format = 'flac'
-        needs_transcoding = True
-    elif filepath.endswith('.ogg_transcoded'):
-        filepath = filepath[:-15]
-        transcode_format = 'ogg'
-        needs_transcoding = True
+    logger.debug("network", f"serve_media: filepath={filepath}, needs_transcoding={needs_transcoding}, format={transcode_format}")
 
     ext = filepath.lower()
     full_path = _resolve_path(filepath)
@@ -99,28 +119,70 @@ def serve_media(filepath):
         cache_path = CACHE_DIR / cache_filename
         tmp_path = cache_path.with_suffix(f'.{uuid.uuid4().hex[:6]}.tmp')
 
-        # FFmpeg output format and MIME type
-        if transcode_format == 'ogg':
-            ffmpeg_args = ['-c:a', 'libopus', '-b:a', '128k', '-f', 'ogg']
-            serve_mime = 'audio/ogg'
-        else:
-            ffmpeg_args = ['-f', 'flac']
-            serve_mime = 'audio/flac'
+        # FFmpeg configuration matrix
+        matrix = {
+            'mp3': (['audio/mpeg'], ['-c:a', 'libmp3lame', '-q:a', '2', '-f', 'mp3']),
+            'ogg': (['audio/ogg'], ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-f', 'ogg']),
+            'opus': (['audio/ogg'], ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-f', 'ogg']),
+            'aac': (['audio/aac'], ['-c:a', 'aac', '-b:a', '128k', '-f', 'adts']),
+            'flac': (['audio/flac'], ['-c:a', 'flac', '-compression_level', '5', '-f', 'flac'])
+        }
+        
+        serve_mime_list, ffmpeg_args = matrix.get(str(transcode_format), (['audio/mpeg'], ['-f', 'mp3']))
+        serve_mime = serve_mime_list[0]
 
         if not cache_path.exists():
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
             logger.debug("transcode", f"Transcoding required: {full_path} to {transcode_format}")
+            start_time = __import__('time').time()
             try:
-                subprocess.run(
-                    ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn'] + ffmpeg_args + [str(tmp_path)],
-                    check=True, capture_output=True, text=True
+                result = subprocess.run(
+                    ['ffmpeg', '-y', '-v', 'warning', '-i', str(full_path), '-vn', '-map', '0:a:0'] + ffmpeg_args + [str(tmp_path)],
+                    check=True, capture_output=True, text=True, timeout=120
                 )
-                tmp_path.replace(cache_path)
-                _log("TRANSCODING SUCCESS")
-                logger.debug("transcode", f"Transcoding success: {cache_path}")
+                
+                if tmp_path.exists() and tmp_path.stat().st_size > 0:
+                    latency = __import__('time').time() - start_time
+                    tmp_path.replace(cache_path)
+                    _log(f"TRANSCODING SUCCESS: {cache_path.stat().st_size} bytes in {latency:.4f}s")
+                    logger.debug("transcode", f"Transcoding success: {cache_path} ({cache_path.stat().st_size} bytes)")
+                    
+                    # Record benchmark
+                    try:
+                        bench_file = APP_ROOT / "benchmarks.json"
+                        history = []
+                        if bench_file.exists():
+                            history = json.loads(bench_file.read_text(encoding='utf-8'))
+                        history.append({
+                            "timestamp": __import__('time').time(),
+                            "results": {
+                                f"Audio Transcode: {filepath.rsplit('.', 1)[-1].upper()} -> {transcode_format.upper()}": {
+                                    "status": "ok",
+                                    "latency": latency
+                                }
+                            }
+                        })
+                        bench_file.write_text(json.dumps(history[-50:], indent=2), encoding='utf-8')
+                    except Exception as be:
+                        log.error(f"Failed to save audio benchmark: {be}")
+                else:
+                    raise RuntimeError("FFmpeg produced empty output")
+            except subprocess.TimeoutExpired:
+                _log(f"TRANSCODING TIMEOUT: {full_path}")
+                # ... (rest of the error handling remains the same)
+                logger.debug("transcode", f"Transcoding timeout for {full_path}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                return bottle.HTTPError(504, "Transcoding Timeout")
             except subprocess.CalledProcessError as e:
                 _log(f"TRANSCODING FAILED: {e.stderr}")
-                logger.debug("transcode", f"Transcoding failed for {full_path}: {e.stderr}")
+                logger.debug("transcode", f"Transcoding failed for {full_path}: stderr={e.stderr}, returncode={e.returncode}")
+                if tmp_path.exists():
+                    tmp_path.unlink()
+                return bottle.HTTPError(500, f"Transcoding Error: {e.stderr[:200]}")
+            except Exception as e:
+                _log(f"TRANSCODING ERROR: {e}")
+                logger.debug("transcode", f"Transcoding unexpected error for {full_path}: {e}")
                 if tmp_path.exists():
                     tmp_path.unlink()
                 return bottle.HTTPError(500, "Transcoding Error")
@@ -149,6 +211,15 @@ def serve_cover(filepath):
     @param filepath Media filename or path / Medien-Dateiname oder Pfad.
     @return Image data or 404 / Bilddaten oder 404.
     """
+    # Check database for cached artwork first
+    item_name = unquote(filepath)
+    db_item = db.get_media_by_name(item_name)
+    if db_item and db_item.get('art_path'):
+        art_path = Path(db_item['art_path'])
+        if art_path.exists():
+            mime_type, _ = mimetypes.guess_type(str(art_path))
+            return bottle.static_file(art_path.name, root=str(art_path.parent), mimetype=mime_type or 'image/jpeg')
+
     full_path = _resolve_path(filepath)
     if not full_path or not full_path.exists():
         return bottle.HTTPError(404, "File not found")
@@ -191,13 +262,36 @@ def serve_cover(filepath):
     return bottle.HTTPError(404, "No cover found")
 
 
+@bottle.route('/direct/<filepath:path>')
+def serve_direct(filepath):
+    """
+    @brief Serves media files directly (Range-compatible) for Direct Play.
+    """
+    full_path = _resolve_path(filepath)
+    if not full_path or not full_path.exists():
+        return bottle.HTTPError(404, "File not found")
+        
+    mime_type, _ = mimetypes.guess_type(str(full_path))
+    return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)
+
+
+@bottle.route('/cache/<filepath:path>')
+def serve_cache(filepath):
+    """
+    @brief Serves files from the local media cache (Remuxed/Extracted).
+    """
+    cache_path = CACHE_DIR / "media" / filepath
+    if not cache_path.exists():
+        return bottle.HTTPError(404, "Cache file not found")
+        
+    mime_type, _ = mimetypes.guess_type(str(cache_path))
+    return bottle.static_file(cache_path.name, root=str(cache_path.parent), mimetype=mime_type)
+
+
 @bottle.error(500)
 def error500(error):
     """
     @brief Custom 500 error handler with debug logging.
-    @details Benutzerdefinierter HTML 500 Fehler-Handler mit Debug-Logging.
-    @param error Error object / Fehler-Objekt.
-    @return Error message string / Fehlermeldungs-String.
     """
     import traceback
     log.error("\n--- ERROR 500 ---\n%s\nURL: %s", traceback.format_exc(), bottle.request.url)

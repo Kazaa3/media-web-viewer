@@ -1,0 +1,544 @@
+#app-progress-bar-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0,0,0,0.1); z-index: 10000; display: none; }
+#app-progress-bar { height: 100%; background: #2ecc71; width: 0%; transition: width 0.3s ease; box-shadow: 0 0 10px rgba(46,204,113,0.5); }
+#app-progress-text { position: fixed; top: 10px; right: 20px; font-size: 10px; color: #888; z-index: 10001; display: none; }
+
+/* --- Premium Video.js Custom Buttons --- */
+.vjs-control.vjs-button.cinema-btn,
+.vjs-control.vjs-button.vlc-btn,
+.vjs-control.vjs-button.mpv-btn,
+.vjs-control.vjs-button.snapshot-btn,
+.vjs-control.vjs-button.stop-btn,
+.vjs-control.vjs-button.vjs-menu-button {
+    width: 3.5em !important;
+    opacity: 0.9;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vjs-control.vjs-button:hover {
+    opacity: 1 !important;
+    transform: translateY(-2px) scale(1.05);
+    color: #7df !important;
+}
+
+.vjs-menu-button-popup .vjs-menu {
+    left: -2em;
+}
+
+.cinema-btn.vjs-control.vjs-button {
+    color: #f1c40f !important;
+}
+
+.vlc-btn.vjs-control.vjs-button {
+    color: #e67e22 !important;
+}
+
+.mpv-btn.vjs-control.vjs-button {
+    color: #d32f2f !important;
+}
+
+.vjs-control.vjs-button.stop-btn {
+    color: #e74c3c !important;
+}
+
+.vjs-control.vjs-button.stats-btn {
+    color: #00f2fe !important;
+    border: 1px solid rgba(0, 242, 254, 0.4) !important;
+    border-radius: 6px !important;
+    height: 24px !important;
+    margin-top: 8px !important;
+    line-height: 22px !important;
+    background: rgba(0, 242, 254, 0.1) !important;
+    text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+    font-size: 0.85em !important;
+    letter-spacing: 0.5px;
+}
+
+/* --- Premium Video.js Control Bar & Progress --- */
+.vjs-control-bar {
+    background: rgba(15, 15, 15, 0.6) !important;
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    height: 4.5em !important;
+    display: flex !important;
+    align-items: center;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.vjs-progress-control {
+    height: 5px !important;
+    position: absolute !important;
+    top: -5px;
+    width: 100% !important;
+    transition: height 0.2s ease;
+}
+
+.vjs-progress-control:hover {
+    height: 10px !important;
+    top: -10px;
+}
+
+.vjs-play-progress {
+    background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%) !important;
+}
+
+.vjs-play-progress:before {
+    display: block !important;
+    top: -0.4em !important;
+    font-size: 1.25em !important;
+    color: #fff !important;
+    text-shadow: 0 0 10px #00f2fe;
+}
+
+.vjs-slider {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.vjs-load-progress {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* --- Glassy Big Play Button --- */
+.vjs-big-play-button {
+    background: rgba(0, 242, 254, 0.1) !important;
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    width: 3.5em !important;
+    height: 3.5em !important;
+    line-height: 3.3em !important;
+    margin-top: -1.75em !important;
+    margin-left: -1.75em !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.vjs-big-play-button:hover {
+    background: rgba(0, 242, 254, 0.2) !important;
+    border-color: #00f2fe !important;
+    transform: scale(1.15);
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+}
+
+.vjs-loading-spinner {
+    border-radius: 50% !important;
+    border: 4px solid rgba(0, 242, 254, 0.1) !important;
+    border-top: 4px solid #00f2fe !important;
+}
+
+/* --- Stats Overlay Glassmorphism --- */
+#vjs-stats-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 240px;
+    padding: 15px;
+    background: rgba(15, 15, 15, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #eee;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    z-index: 1001;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+#vjs-stats-overlay.active {
+    display: block;
+}
+
+.stats-header {
+    color: #7df;
+    font-weight: bold;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 4px;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.stats-val {
+    color: #fff;
+    text-shadow: 0 0 5px rgba(125, 255, 255, 0.3);
+}
+
+/* --- Glassmorphic Context Menu --- */
+.custom-context-menu.glassmorphic-panel {
+    display: none;
+    position: absolute;
+    z-index: 10000;
+    background: rgba(18, 18, 18, 0.75) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+    padding: 8px 0 !important;
+    min-width: 220px !important;
+    overflow: hidden !important;
+}
+
+.custom-context-menu .context-menu-header {
+    padding: 10px 16px 6px 16px !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.2px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    border-bottom: none !important;
+    background: none !important;
+}
+
+.custom-context-menu .context-menu-item {
+    padding: 10px 16px !important;
+    font-size: 0.9rem !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    cursor: pointer !important;
+}
+
+.custom-context-menu .context-menu-item:hover {
+    background: rgba(0, 242, 254, 0.15) !important;
+    color: #00f2fe !important;
+    padding-left: 20px !important;
+}
+
+.custom-context-menu .context-menu-divider {
+    height: 1px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    margin: 6px 0 !important;
+}
+
+#ctx-resume-item {
+    background: rgba(76, 175, 80, 0.08) !important;
+    border-left: 3px solid #4caf50 !important;
+    margin-top: 4px !important;
+}
+
+#ctx-resume-item:hover {
+    background: rgba(76, 175, 80, 0.15) !important;
+    color: #81c784 !important;
+}
+
+/* --- Premium Settings Panel Overlay --- */
+#vjs-settings-panel {
+    position: absolute;
+    top: 20px;
+    right: -320px;
+    width: 280px;
+    max-height: calc(100% - 100px);
+    padding: 20px;
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #fff;
+    z-index: 1002;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+    transition: right 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    overflow-y: auto;
+}
+
+#vjs-settings-panel.active {
+    right: 20px;
+}
+
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-title {
+    font-size: 0.8em;
+    color: #7df;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(119, 221, 255, 0.2);
+    padding-bottom: 4px;
+}
+
+.settings-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.settings-item {
+    padding: 10px 12px;
+    margin: 4px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.settings-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.settings-item.active {
+    background: rgba(0, 242, 254, 0.2);
+    color: #00f2fe;
+}
+
+/* --- Subtitle Control Center Styles --- */
+#subtitle-control-center h3 {
+    color: #2a7;
+    text-shadow: 0 0 5px rgba(42, 119, 112, 0.1);
+}
+
+.subtitle-track-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.subtitle-track-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: translateX(4px);
+}
+
+.subtitle-track-item.active {
+    border-left: 4px solid #2a7;
+    background: rgba(42, 119, 112, 0.05);
+}
+
+.track-info-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.track-lang {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.track-codec {
+    font-size: 0.7em;
+    padding: 2px 6px;
+    background: #eee;
+    border-radius: 4px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.track-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.sub-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.sub-action-btn:hover {
+    background: #ddd;
+    color: #000;
+}
+
+/* ... rest of the CSS extracted from app.html ... */
+/* (I will consolidate all of it here) */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 0 0 128px 0;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    background-color: #fafafa;
+}
+
+.header-container {
+    padding: 20px 20px 10px 20px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.layout-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 300px;
+    background-color: #f7f7f7;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.hidden-collapse {
+    display: none !important;
+}
+
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background: white;
+    position: relative;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: #fff;
+    border-color: #2a7;
+    color: #2a7;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* --- New Hierarchical Navigation --- */
+.main-tabs {
+    display: flex;
+    gap: 8px;
+    margin-left: 20px;
+}
+
+.sub-nav-bar {
+    display: flex;
+    gap: 12px;
+    background: #f8f9fa;
+    padding: 10px 20px;
+    border-radius: 30px;
+    margin-left: 20px;
+    border: 1px solid #eee;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.sub-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #666;
+    border-radius: 20px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sub-tab-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #333;
+}
+
+.sub-tab-btn.active {
+    background: #2a7;
+    color: white;
+    box-shadow: 0 4px 10px rgba(42, 167, 112, 0.3);
+}
+
+.sub-tab-btn svg {
+    opacity: 0.7;
+}
+
+.sub-tab-btn.active svg {
+    opacity: 1;
+}
+
+.sub-nav-container {
+    background: #f4f6f8;
+    border-bottom: 2px solid #e1e4e8;
+    padding: 10px 20px;
+    display: flex;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ... more CSS ... */
