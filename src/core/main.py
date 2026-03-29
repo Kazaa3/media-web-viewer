@@ -25,7 +25,7 @@ def log_self_diagnostics():
     print(f"-------------------------", flush=True)
 
 def ensure_stable_environment():
-    """Ensures we are running in the correct .venv (unified) and Python 3.14.x."""
+    """Ensures we are running in the correct .venv (unified) and Python 3.10.x."""
     if os.environ.get("MWV_AUTO_REEXEC") == "1":
         return
 

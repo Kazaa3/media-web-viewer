@@ -1,5 +1,84 @@
 ---
 
+## Implementation Plan: Hierarchical Playwright Audit (30.03.2026)
+
+### Was sich ändert
+- **Navigations-Baum:** Das Audit-Skript versteht jetzt die Hierarchie (z.B. Options -> Appearance, Tests -> Video).
+- **Rekursiver Audit:** Nutzt die passenden JS-Funktionen (z.B. `switchOptionsView`), um in jeden Unter- und Unterunterreiter zu navigieren.
+- **Tiefe Beweissicherung:** Screenshots werden hierarchisch benannt (z.B. `options_appearance.png`), um Layout-Probleme exakt zu lokalisieren.
+- **Umfassender Report:** Der `audit_report.md` wird verschachtelt aufgebaut, um die App-Struktur abzubilden.
+
+### Frage zur Interaktion
+Sollen in den Unterreitern nur Sichtbarkeit und Konsolenfehler geprüft werden, oder soll das Skript auch einfache Interaktionen (wie "Save" oder "Run Tests") ausführen?
+
+Nach Freigabe wird das Diagnostics-Tool entsprechend erweitert.
+---
+
+## Walkthrough: Structural Restoration & Tab Alignment (30.03.2026)
+
+Wir haben die umfassende Wiederherstellung der diagnostischen und System-Tabs abgeschlossen. Alle Sub-Navigationen (Debug DB, Logbuch, Tests, Reporting) sind wieder voll funktionsfähig und korrekt ausgerichtet.
+
+### Key Accomplishments
+1. **Navigation & Mapping Fixes**
+  - Hauptursache der "broken" Tabs war ein Mapping-Fehler in `ui_nav_helpers.js`.
+  - **Panel IDs Restored:** Diagnosetabs adressieren jetzt wieder ihre Content-Panels (z.B. `telemetry-inspector-tab-pane`) statt Navigationsbuttons.
+  - **Initialization Actions:** Korrekte Helper-Funktionen (`loadLogbuchTab`, `updateAnalyticsDashboard`, `switchTestView`) werden beim Tab-Wechsel getriggert.
+
+2. **Layout & Order Restoration**
+  - Interne `flex-direction` und Reihenfolge der Kindelemente wurden an die "beautiful"- und Funktionsanforderungen angepasst.
+  - **Debug DB (Telemetry):** Horizontale Split-View wiederhergestellt (Dict links, Konsole rechts).
+  - **Logbuch & Optionen:** Horizontale Split-Views (Sidebar links) stabilisiert, vertikale Stapelung verhindert.
+  - **Structural Integrity:** Alle diagnostischen Root-Panels nutzen jetzt `flex-direction: column` für Header, mit internen Row-Split-Containern für den Content.
+
+3. **Isolated Browser Sessions**
+  - Eel-Startup-Logik in `src/core/main.py` verfeinert.
+  - **Chrome Prioritization:** App prüft proaktiv auf `google-chrome` oder `chromium-browser` im System-PATH.
+  - **Isolated Session Mode:** Chrome/Chromium wird erzwungen, um Fallbacks auf Standardbrowser (z.B. Vivaldi) zu vermeiden und eine saubere Dev-Session zu gewährleisten.
+
+### Verification Results
+**Tab Populating**
+- Alle Diagnosetabs zeigen wieder ihre echten Daten statt leerer Screens:
+  - Debug DB: Lädt erfolgreich DB-Statistiken und Python-Item-Dicts.
+  - Logbuch: Löst korrekt den Eintrags-Loader aus.
+  - Reporting: Aktiviert die Analytics-Dashboard-Funktionen.
+
+**Visual Layout**
+- `flex-direction: row` für Split-View-Container verifiziert.
+- "Links: Sidebar/Dict, Rechts: Content/Konsole"-Reihenfolge bestätigt.
+
+**IMPORTANT**
+
+**Browser Note:** Ist Chrome nicht installiert, gibt die App eine STDOUT-Warnung aus, versucht aber dennoch im Default-Mode zu starten. Für die beste isolierte Erfahrung sollte `google-chrome-stable` im PATH verfügbar sein.
+---
+
+## Abschluss: Playwright Automated Debugger & Audit Script (30.03.2026)
+
+### Neues Automation-Tool: `scripts/app_audit_playwright.py`
+
+- **Gesteuerte Sitzung:** Startet automatisch ein `managed_session.py` auf einem zufälligen freien Port (keine Konflikte mit laufenden Browsern).
+- **Tab-Crawl:** Besucht jeden Haupt-Tab (`player`, `library`, `video`, `debug`, `logbuch`, etc.).
+- **Fehler-Scan:** Fängt JavaScript-Fehler aus der Browser-Konsole ab und prüft, ob die DOM-Container sichtbar und korrekt gerendert sind.
+- **Visuelle Beweise:** Von jedem Tab wird ein Screenshot in `scripts/audit_reports/screenshots/` gespeichert.
+- **Markdown-Report:** Generiert einen zusammenfassenden `audit_report.md` mit allen Fehlern und Links zu den Screenshots.
+
+### Installation & Nutzung
+
+1. **Playwright installieren:**
+  ```bash
+  pip install playwright
+  playwright install chromium
+  ```
+2. **Audit-Lauf starten:**
+  ```bash
+  python3 scripts/app_audit_playwright.py
+  ```
+  Optional: Mit `--headed` dem Browser beim Testen zusehen.
+
+### Walkthrough: Playwright Debugger Implementation
+
+Dieses Tool spart bei künftigen Reparatur-Runden enorm viel Zeit, da nicht mehr jeder Tab manuell geprüft werden muss. Es erkennt sofort, ob ein Tab "weiß bleibt" oder Konsolenfehler wirft, und dokumentiert dies automatisch.
+---
+
 ## Implementation Plan: Playwright Automated Debugger & Audit Script (30.03.2026)
 
 ### Hauptmerkmale

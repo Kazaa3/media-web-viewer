@@ -372,290 +372,205 @@
 
             <!-- TAB: Filesystem START -->
             <div id="filesystem-crawler-directory-panel" class="tab-content"
-                style="display: none; height: 100%; width: 100%; flex-direction: column;">
-                <div id="browser-top-pane"
-                    style="flex: 2; overflow-y: auto; padding: 20px; border-bottom: 2px solid #eee; height: 60%;">
-                    <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 20px;">
-                        <button id="fb-back" onclick="fbBack()"
-                            style="padding: 10px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
-                            data-i18n="btn_back">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <div id="path-display"
-                            style="flex: 1; padding: 10px 15px; border: 1px solid #ddd; background: #fafafa; border-radius: 6px; font-family: monospace; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;"
-                            data-i18n="placeholder_path">
-                            /
-                        </div>
-
-                        <button onclick="fbNavigate(fbCurrentPath)" id="fb-refresh-btn"
-                            style="padding: 10px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
-                            data-i18n="btn_refresh">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M23 4v6h-6"></path>
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                            </svg>
-                        </button>
-
-                        <button onclick="fbPickFolder()" id="fb-pick-folder-btn"
-                            style="padding: 10px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
-                            data-i18n="btn_folder">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
-                                </path>
-                            </svg>
-                        </button>
-
-                        <input id="fb-path-input" type="text"
-                            onkeypress="if(event.key === 'Enter') fbNavigate(this.value)"
-                            style="flex: 1; padding: 10px 16px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 1em; color: #444;" />
-
-                        <button onclick="scan(readValue('fb-path-input'), false)"
-                            style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px;"
-                            data-i18n="fb_add_path">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                                style="margin-right:6px;">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                            <span data-i18n="fb_add_path">Hinzufügen</span></button>
+                style="display: none; height: 100%; width: 100%; flex-direction: row; overflow: hidden; background: #fff;">
+                
+                <!-- LEFT SIDEBAR: Library Folders -->
+                <div id="browser-left-sidebar" style="width: 280px; flex-shrink: 0; background: #fafafa; border-right: 1px solid #eee; display: flex; flex-direction: column; overflow: hidden;">
+                    <div style="padding: 15px; border-bottom: 1px solid #eee;">
+                        <h4 style="margin: 0; font-size: 1em; color: #333;" data-i18n="browser_folders_title">Library Folders</h4>
                     </div>
-
-                    <div id="fb-list"></div>
-                </div>
-                <!-- Browser Splitter -->
-                <div id="browser-tab-splitter" class="splitter-v"
-                    style="height: 6px; background: #f0f0f0; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; cursor: ns-resize;">
-                </div>
-                <div id="browser-bottom-pane"
-                    style="flex: 1; overflow-y: auto; padding: 20px; background: #fdfdfd; height: 40%;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 1em; color: #333;" data-i18n="browser_folders_title">
-                        Library Folders</h4>
-                    <div id="browser-folder-list"
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                    <div id="browser-folder-list" style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                         <!-- Folders rendered dynamically -->
                     </div>
                 </div>
+
+                <!-- Splitter -->
+                <div id="browser-tab-splitter" class="splitter-v"></div>
+
+                <!-- RIGHT CONTENT: Directory Browser -->
+                <div id="browser-main-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; padding: 20px;">
+                    <div id="browser-top-pane" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                        <div style="display: flex; align-items: stretch; gap: 8px; margin-bottom: 20px;">
+                            <button id="fb-back" onclick="fbBack()"
+                                style="padding: 10px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
+                                data-i18n="btn_back">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                            <div id="path-display"
+                                style="flex: 1; padding: 10px 15px; border: 1px solid #ddd; background: #fafafa; border-radius: 6px; font-family: monospace; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;"
+                                data-i18n="placeholder_path">
+                                /
+                            </div>
+
+                            <button onclick="fbNavigate(fbCurrentPath)" id="fb-refresh-btn"
+                                style="padding: 10px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
+                                data-i18n="btn_refresh">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 4v6h-6"></path>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                            </button>
+
+                            <button onclick="fbPickFolder()" id="fb-pick-folder-btn"
+                                style="padding: 10px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
+                                data-i18n="btn_folder">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                    </path>
+                                </svg>
+                            </button>
+
+                            <input id="fb-path-input" type="text"
+                                onkeypress="if(event.key === 'Enter') fbNavigate(this.value)"
+                                style="flex: 1; padding: 10px 16px; background: #fff; border: 1px solid #ccc; border-radius: 6px; font-family: monospace; font-size: 1em; color: #444;" />
+
+                            <button onclick="scan(readValue('fb-path-input'), false)"
+                                style="padding: 10px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px;"
+                                data-i18n="fb_add_path">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    style="margin-right:6px;">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                                <span data-i18n="fb_add_path">Hinzufügen</span></button>
+                        </div>
+
+                        <div id="fb-list"></div>
+                    </div>
+                </div>
             </div>
+            <!-- TAB: Filesystem END -->
 
             <!-- TAB: Library START -->
             <div id="coverflow-library-panel" class="tab-content"
-                style="padding: 20px; overflow-y: auto; height: 100%; display: none;">
-                    <div id="lib-nav-views-container" class="sub-nav-container" style="margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; gap: 5px;">
-                        <button id="lib-tab-btn-coverflow" class="options-subtab active" onclick="switchLibrarySubTab('coverflow')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 12h18"/></svg> Coverflow</button>
-                        <button id="lib-tab-btn-grid" class="options-subtab" onclick="switchLibrarySubTab('grid')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Grid</button>
-                        <button id="lib-tab-btn-details" class="options-subtab" onclick="switchLibrarySubTab('details')">
+                style="padding: 0; overflow: hidden; height: 100%; width: 100%; display: none;">
+                
+                <div id="lib-split-container" style="display: flex; width: 100%; height: 100%; overflow: hidden;">
+                    <!-- LEFT SIDEBAR: Filters & Categories -->
+                    <div id="lib-sidebar-left" style="width: 280px; flex-shrink: 0; background: #fafafa; border-right: 1px solid #eee; display: flex; flex-direction: column; overflow: hidden;">
+                        
+                        <!-- Top Sub-Tabs (Coverflow, Grid, etc.) -->
+                        <div id="lib-nav-views-container" class="sub-nav-container" style="padding: 15px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 5px;">
+                            <button id="lib-tab-btn-coverflow" class="options-subtab active" onclick="switchLibrarySubTab('coverflow')" style="width: 100%; justify-content: flex-start;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 12h18"/></svg> Coverflow</button>
+                            <button id="lib-tab-btn-grid" class="options-subtab" onclick="switchLibrarySubTab('grid')" style="width: 100%; justify-content: flex-start;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Grid</button>
+                            <button id="lib-tab-btn-details" class="options-subtab" onclick="switchLibrarySubTab('details')" style="width: 100%; justify-content: flex-start;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Details</button>
-                        <button id="lib-tab-btn-streaming" class="options-subtab" onclick="switchLibrarySubTab('streaming')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Streaming</button>
-                        <button id="lib-tab-btn-album" class="options-subtab" onclick="switchLibrarySubTab('album')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Alben</button>
-                        <button id="lib-tab-btn-following" class="options-subtab" onclick="switchLibrarySubTab('following')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Folge ich</button>
-                        <button id="lib-tab-btn-database" class="options-subtab" onclick="switchLibrarySubTab('database')"
-                            style="margin-left: auto; border-left: 1px solid #ddd; padding-left: 15px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Datenbank</button>
+                            <button id="lib-tab-btn-streaming" class="options-subtab" onclick="switchLibrarySubTab('streaming')" style="width: 100%; justify-content: flex-start;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Streaming</button>
+                            <button id="lib-tab-btn-album" class="options-subtab" onclick="switchLibrarySubTab('album')" style="width: 100%; justify-content: flex-start;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Alben</button>
+                            <button id="lib-tab-btn-following" class="options-subtab" onclick="switchLibrarySubTab('following')" style="width: 100%; justify-content: flex-start;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Folge ich</button>
+                            <button id="lib-tab-btn-database" class="options-subtab" onclick="switchLibrarySubTab('database')" style="width: 100%; justify-content: flex-start; margin-top: 5px; border-top: 1px solid #ddd; padding-top: 10px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Datenbank</button>
+                        </div>
+
+                        <!-- Category Filters -->
+                        <div id="lib-nav-container" style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 0.9em; text-transform: uppercase; color: #999; letter-spacing: 0.05em;" data-i18n="filter_title">Kategorien</h4>
+                            
+                            <input type="text" id="library-search-input" class="filter-select" placeholder="Suchen..."
+                                oninput="handleLibrarySearch(this.value)"
+                                style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 0.9em; box-sizing: border-box;">
+
+                            <button class="filter-chip active" data-cat="all" onclick="setLibraryFilter('all')" data-i18n="filter_all" style="width: 100%; text-align: left;">Alle</button>
+                            <button class="filter-chip" data-cat="audio" onclick="setLibraryFilter('audio')" data-i18n="filter_audio" style="width: 100%; text-align: left;">Audio</button>
+                            <button class="filter-chip" data-cat="video" onclick="setLibraryFilter('video')" data-i18n="filter_video" style="width: 100%; text-align: left;">Video</button>
+                            <button class="filter-chip" data-cat="film" onclick="setLibraryFilter('film')" data-i18n="cat_film" style="width: 100%; text-align: left; border-color: #f39c12; color: #e67e22;">Film</button>
+                            <button class="filter-chip" data-cat="serie" onclick="setLibraryFilter('serie')" data-i18n="cat_serie" style="width: 100%; text-align: left; border-color: #e74c3c; color: #c0392b;">Serie</button>
+                            <button class="filter-chip" data-cat="album" onclick="setLibraryFilter('album')" data-i18n="cat_album" style="width: 100%; text-align: left; border-color: #3498db; color: #2980b9;">Album</button>
+                            
+                            <div style="height: 1px; background: #eee; margin: 10px 0;"></div>
+                            
+                            <select id="library-genre-filter" class="filter-select" onchange="setLibraryGenreFilter(this.value)" style="width: 100%; margin-bottom: 8px;">
+                                <option value="all">Alle Genres</option>
+                            </select>
+                            <select id="library-year-filter" class="filter-select" onchange="setLibraryYearFilter(this.value)" style="width: 100%; margin-bottom: 8px;">
+                                <option value="all">Alle Jahre</option>
+                            </select>
+                            <select id="library-subcategory-filter" class="filter-select" onchange="setLibrarySubFilter(this.value)" style="width: 100%;">
+                                <option value="all" data-i18n="filter_sub_all">Unterkategorien</option>
+                                <option value="audiobooks" data-i18n="filter_audiobooks">Hörbücher</option>
+                                <option value="podcasts" data-i18n="filter_podcasts">Podcasts</option>
+                            </select>
+                        </div>
                     </div>
 
+                    <!-- Splitter -->
+                    <div id="lib-splitter" class="splitter-v"></div>
 
-            <div id="lib-nav-container" class="sub-nav-container">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <button class="filter-chip active" data-cat="all" onclick="setLibraryFilter('all')"
-                        data-i18n="filter_all">Alle</button>
-                    <button class="filter-chip" data-cat="audio" onclick="setLibraryFilter('audio')"
-                        data-i18n="filter_audio">Audio</button>
-                    <button class="filter-chip" data-cat="video" onclick="setLibraryFilter('video')"
-                        data-i18n="filter_video">Video</button>
-                    <button class="filter-chip" data-cat="images" onclick="setLibraryFilter('images')"
-                        data-i18n="filter_images">Bilder</button>
-                    <button class="filter-chip" data-cat="documents" onclick="setLibraryFilter('documents')"
-                        data-i18n="cat_documents">Dokumente</button>
-                    <button class="filter-chip" data-cat="ebooks" onclick="setLibraryFilter('ebooks')"
-                        data-i18n="cat_ebooks">E-Books</button>
-                    <button class="filter-chip" data-cat="film"
-                        style="border-color: #f39c12; color: #e67e22; display: flex; align-items: center; gap: 4px;"
-                        onclick="setLibraryFilter('film')" data-i18n="cat_film"><svg width="12" height="12">
-                            <use href="#icon-video"></use>
-                        </svg> <span data-i18n="cat_film">Film</span></button>
-                    <button class="filter-chip" data-cat="serie"
-                        style="border-color: #e74c3c; color: #c0392b; display: flex; align-items: center; gap: 4px;"
-                        onclick="setLibraryFilter('serie')" data-i18n="cat_serie"><svg width="12" height="12">
-                            <use href="#icon-tv"></use>
-                        </svg> <span data-i18n="cat_serie">Serie</span></button>
-                    <button class="filter-chip" data-cat="album"
-                        style="border-color: #3498db; color: #2980b9; display: flex; align-items: center; gap: 4px;"
-                        onclick="setLibraryFilter('album')" data-i18n="cat_album"><svg width="12" height="12">
-                            <use href="#icon-audio"></use>
-                        </svg> <span data-i18n="cat_album">Album</span></button>
-                    <button class="filter-chip" data-cat="soundtrack"
-                        style="border-color: #9b59b6; color: #8e44ad; display: flex; align-items: center; gap: 4px;"
-                        onclick="setLibraryFilter('soundtrack')" data-i18n="cat_soundtrack"><svg width="12" height="12">
-                            <use href="#icon-audio"></use>
-                        </svg> <span data-i18n="cat_soundtrack">Soundtrack</span></button>
-                    <button class="filter-chip" data-cat="playlist"
-                        style="border-color: #27ae60; color: #1e8449; display: flex; align-items: center; gap: 4px;"
-                        onclick="setLibraryFilter('playlist')" data-i18n="cat_playlist"><svg width="12" height="12">
-                            <use href="#icon-playlist"></use>
-                        </svg> <span data-i18n="cat_playlist">Playlist</span></button>
-                    <button class="filter-chip" data-cat="podcast" style="border-color: #e67e22; color: #d35400;"
-                        onclick="setLibraryFilter('podcast')" data-i18n="cat_podcast"><svg width="12" height="12">
-                            <use href="#icon-audio"></use>
-                        </svg> Podcast</button>
-                    <button class="filter-chip" data-cat="compilation" style="border-color: #9b59b6; color: #8e44ad;"
-                        onclick="setLibraryFilter('compilation')" data-i18n="cat_compilation"><svg width="12"
-                            height="12">
-                            <use href="#icon-save"></use>
-                        </svg>
-                        Compilation</button>
-                    <button class="filter-chip" data-cat="single" style="border-color: #e74c3c; color: #c0392b;"
-                        onclick="setLibraryFilter('single')" data-i18n="cat_single"><svg width="12" height="12">
-                            <use href="#icon-disk"></use>
-                        </svg> Single</button>
-                    <button class="filter-chip" data-cat="klassik" style="border-color: #f1c40f; color: #f39c12;"
-                        onclick="setLibraryFilter('klassik')" data-i18n="cat_klassik"><svg width="12" height="12">
-                            <use href="#icon-audio"></use>
-                        </svg> Klassik</button>
-                    <button class="filter-chip" data-cat="abbild" onclick="setLibraryFilter('abbild')"
-                        data-i18n="cat_abbild">ISO-Abbilder</button>
-                    <button class="filter-chip" data-cat="spiel" onclick="setLibraryFilter('spiel')"
-                        data-i18n="cat_spiel">PC-Spiele</button>
+                    <!-- MAIN CONTENT: Results -->
+                    <div id="lib-main-content-pane" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; position: relative;">
+                        
+                        <!-- Video Streaming View -->
+                        <div id="lib-view-streaming" class="library-sub-content" style="padding: 20px; overflow-y: auto;">
+                            <div id="streaming-grid-container" class="streaming-grid"></div>
+                        </div>
 
-                    <div style="width: 1px; height: 24px; background: #ddd; margin: 0 10px;"></div>
+                        <!-- Database Master View -->
+                        <div id="lib-view-database" class="library-sub-content" style="display: none; padding: 20px; overflow-y: auto;">
+                            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                                <input type="text" id="lib-db-search" placeholder="Datenbank durchsuchen..."
+                                    oninput="renderDatabaseView()"
+                                    style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; width: 250px; outline: none;">
 
-                    <!-- Advanced Filters (Stage 6) -->
-                    <input type="text" id="library-search-input" class="filter-select" placeholder="Suchen..."
-                        oninput="handleLibrarySearch(this.value)"
-                        style="width: 150px; padding: 5px 10px; margin-right: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                                <div class="import-group" style="display: flex; gap: 5px;">
+                                    <button onclick="triggerTxtImport('Audio')" class="sidebar-badge"><span class="icon-folder"></span> Audio TXT</button>
+                                    <button onclick="triggerTxtImport('Film')" class="sidebar-badge"><span class="icon-folder"></span> Film TXT</button>
+                                    <button onclick="triggerTxtImport('Video')" class="sidebar-badge"><span class="icon-folder"></span> Video TXT</button>
+                                    <button onclick="triggerTxtImport('Serie')" class="sidebar-badge"><span class="icon-folder"></span> Serie TXT</button>
+                                </div>
+                            </div>
+                            <div id="lib-db-stats" style="font-size: 0.9em; color: #666; margin-bottom: 10px;"></div>
+                            <div class="table-container">
+                                <table class="details-table">
+                                    <thead>
+                                        <tr><th style="width: 40px;">#</th><th>ID</th><th>Typ</th><th>Kategorie</th><th>Name</th><th>Artist / Album</th><th>Pfad</th><th>Aktionen</th></tr>
+                                    </thead>
+                                    <tbody id="lib-db-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                    <select id="library-genre-filter" class="filter-select" onchange="setLibraryGenreFilter(this.value)"
-                        style="margin-right: 5px;">
-                        <option value="all">Alle Genres</option>
-                    </select>
+                        <!-- Results Content -->
+                        <div id="lib-view-coverflow" class="library-sub-content active" style="flex: 1; overflow: hidden;">
+                            <div id="coverflow-container" class="coverflow-wrap">
+                                <div id="coverflow-track" class="coverflow-track"></div>
+                            </div>
+                        </div>
 
-                    <select id="library-year-filter" class="filter-select" onchange="setLibraryYearFilter(this.value)"
-                        style="margin-right: 5px;">
-                        <option value="all">Alle Jahre</option>
-                    </select>
+                        <div id="lib-view-grid" class="library-sub-content" style="display: none; padding: 20px; overflow-y: auto;">
+                            <div id="grid-container" class="media-grid"></div>
+                        </div>
 
-                    <select id="library-subcategory-filter" class="filter-select"
-                        onchange="setLibrarySubFilter(this.value)">
-                        <option value="all" data-i18n="filter_sub_all">Alle Unterkategorien</option>
-                        <option value="audiobooks" data-i18n="filter_audiobooks">Hörbücher</option>
-                        <option value="podcasts" data-i18n="filter_podcasts">Podcasts</option>
-                        <option value="albums" data-i18n="filter_albums">Alben</option>
-                        <option value="soundtracks" data-i18n="filter_soundtracks">Soundtracks</option>
-                        <option value="playlists" data-i18n="filter_playlists">Playlisten</option>
-                        <option value="others" data-i18n="filter_others">Sonstige</option>
-                    </select>
-                </div>
-            </div>
+                        <div id="lib-view-details" class="library-sub-content" style="display: none; padding: 20px; overflow-y: auto;">
+                            <div class="table-container">
+                                <table id="details-table" class="details-table">
+                                    <thead><tr id="details-table-header"></tr></thead>
+                                    <tbody id="details-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
 
-            <!-- Video Streaming View -->
-            <div id="lib-view-streaming" class="library-sub-content">
-                <div id="streaming-grid-container" class="streaming-grid"></div>
-            </div>
+                        <div id="lib-view-album" class="library-sub-content" style="display: none; padding: 20px; overflow-y: auto;">
+                            <div id="album-grid-container" class="media-grid"></div>
+                        </div>
 
-            <!-- Database Master View -->
-            <div id="lib-view-database" class="library-sub-content" style="display: none;">
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="lib-db-search" placeholder="Datenbank durchsuchen..."
-                        oninput="renderDatabaseView()"
-                        style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; width: 250px; outline: none;">
-
-                    <div class="import-group" style="display: flex; gap: 5px;">
-                        <button onclick="triggerTxtImport('Audio')" class="sidebar-badge"
-                            style="background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; cursor: pointer;"><svg
-                                width="12" height="12">
-                                <use href="#icon-folder"></use>
-                            </svg> Audio TXT</button>
-                        <button onclick="triggerTxtImport('Film')" class="sidebar-badge"
-                            style="background: #e1f5fe; color: #0288d1; border: 1px solid #b3e5fc; cursor: pointer;"><svg
-                                width="12" height="12">
-                                <use href="#icon-folder"></use>
-                            </svg> Film TXT</button>
-                        <button onclick="triggerTxtImport('Video')" class="sidebar-badge"
-                            style="background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; cursor: pointer;"><svg
-                                width="12" height="12">
-                                <use href="#icon-folder"></use>
-                            </svg> Video TXT</button>
-                        <button onclick="triggerTxtImport('Serie')" class="sidebar-badge"
-                            style="background: #fce4ec; color: #c2185b; border: 1px solid #f8bbd0; cursor: pointer;"><svg
-                                width="12" height="12">
-                                <use href="#icon-folder"></use>
-                            </svg> Serie TXT</button>
-                    </div>
-                </div>
-                <div id="lib-db-stats" style="font-size: 0.9em; color: #666;"></div>
-                <div class="table-container" style="max-height: 600px; overflow-y: auto;">
-                    <table class="details-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">#</th>
-                                <th style="width: 60px;">ID</th>
-                                <th>Typ</th>
-                                <th>Kategorie</th>
-                                <th>Name</th>
-                                <th>Artist / Album</th>
-                                <th>Dateipfad</th>
-                                <th>Aktionen</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lib-db-table-body">
-                            <!-- Rows rendered dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="lib-view-coverflow" class="library-sub-content active">
-                <div id="coverflow-container" class="coverflow-wrap">
-                    <div id="coverflow-track" class="coverflow-track">
-                        <!-- Items rendered dynamically -->
+                        <div id="lib-view-following" class="library-sub-content" style="display: none; padding: 20px; overflow-y: auto;">
+                            <div id="following-grid-container" class="media-grid"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div id="lib-view-grid" class="library-sub-content" style="display: none;">
-                <div id="grid-container" class="media-grid">
-                    <!-- Grid items rendered dynamically -->
-                </div>
-            </div>
-
-            <div id="lib-view-details" class="library-sub-content" style="display: none;">
-                <div class="table-container">
-                    <table id="details-table" class="details-table">
-                        <thead>
-                            <tr id="details-table-header">
-                                <!-- Headers rendered dynamically -->
-                            </tr>
-                        </thead>
-                        <tbody id="details-table-body">
-                            <!-- Rows rendered dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="lib-view-album" class="library-sub-content" style="display: none;">
-                <div id="album-grid-container" class="media-grid">
-                    <!-- Album grid items rendered dynamically -->
-                </div>
-            </div>
-
-            <div id="lib-view-following" class="library-sub-content" style="display: none;">
-                <div id="following-grid-container" class="media-grid">
-                    <!-- Following grid items rendered dynamically -->
-                </div>
-            </div>
-        </div>
-        <!-- TAB: Library END -->
+            <!-- TAB: Library END -->
 
 
     </div> <!-- closes coverflow-library-panel -->

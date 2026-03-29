@@ -16,12 +16,13 @@ function initAllSplitters() {
     if (typeof initSplitter === 'function') {
         const splitters = [
             ['edit-splitter', 'edit-sidebar-left', 'edit-split-container', 'vertical', 'left'],
+            ['lib-splitter', 'lib-sidebar-left', 'lib-split-container', 'vertical', 'left'],
             ['main-splitter', 'main-sidebar', 'main-split-container', 'vertical', 'left'],
             ['parser-tab-splitter', 'parser-left-settings', 'parser-tab-split-container', 'vertical', 'left'],
             ['debug-splitter', 'debug-settings-pane', 'debug-flag-persistence-panel', 'vertical', 'right'],
             ['logbuch-splitter', 'logbuch-sidebar', 'logbuch-split-container', 'vertical', 'right'],
             ['player-analytics-splitter', 'video-queue-pane', 'player-tab-split-container', 'vertical', 'right'],
-            ['browser-tab-splitter', 'browser-top-pane', 'filesystem-crawler-directory-panel', 'horizontal', 'top']
+            ['browser-tab-splitter', 'browser-left-sidebar', 'filesystem-crawler-directory-panel', 'vertical', 'left']
         ];
 
         splitters.forEach(params => {
@@ -106,14 +107,20 @@ function switchTab(tabId, btn) {
         const sidebar = document.getElementById('main-sidebar');
         const splitter = document.getElementById('main-splitter');
         if (sidebar && splitter) {
-            // Immersive/Full-width tabs where the global sidebar is distracting
-            const immersiveTabs = ['library', 'video', 'vlc', 'streaming'];
-            const shouldHide = immersiveTabs.includes(tabId);
-            sidebar.style.display = shouldHide ? 'none' : 'flex';
-            splitter.style.display = shouldHide ? 'none' : 'block';
+            // Sidebar is only visible in Audio Player and Video Player
+            const sidebarVisibleTabs = ['player', 'video', 'vlc'];
+            const shouldShow = sidebarVisibleTabs.includes(tabId);
+            sidebar.style.display = shouldShow ? 'flex' : 'none';
+            splitter.style.display = shouldShow ? 'none' : 'none'; // Keep global splitter hidden if sidebar is hidden
             
+            // If show, splitter should also show if there's a reason, but usually main-sidebar is enough.
+            // Actually, if we show main-sidebar, we usually want the splitter too.
+            if (shouldShow) {
+                splitter.style.display = 'block';
+            }
+
             // Log for diagnostics
-            console.log(`[UI] Sidebar state for '${tabId}': ${shouldHide ? 'HIDDEN' : 'VISIBLE'}`);
+            console.log(`[UI] Global Sidebar state for '${tabId}': ${shouldShow ? 'VISIBLE' : 'HIDDEN'}`);
         }
     }
 
