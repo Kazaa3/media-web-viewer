@@ -79,6 +79,29 @@ pip install --no-index --find-links ./packages tqdm rich alive-progress
 
 ## 7. DOM-Test-Hook & Watchdog-Integration
 
+---
+
+## 8. Walkthrough – GUI-Stabilisierung & Tools-Konsolidierung
+
+**Durchgeführte Änderungen:**
+- Legacy-Navigation entfernt: Redundantes data-tab="tools"-Div im Header gelöscht
+- Tools-Interface konsolidiert: Drei separate Tools-Implementierungen zu einer Quelle zusammengeführt
+- Parser-UI umbenannt (id="tools-tab" → id="tools"), damit Navigation korrekt funktioniert
+- Zwei leere/broken Tools-Panels entfernt
+- HTML-Fragmente bereinigt: Hängende, ungeschlossene Buttons/Tags entfernt, die das DOM zwischen Library und App korrupt machten
+- Doppelte IDs (icon-search, lib-tab-btn-*, tools-tab) entfernt
+
+**Verifikations-Ergebnisse:**
+- De-Duplication Audit: Automatischer Check für doppelte IDs in app.html
+  - id="tools": 1x (vorher 3x)
+  - id="lib-tab-btn-details": 1x (vorher 2x)
+  - id="icon-search": 1x (vorher 2x)
+- Navigation: switchTab('tools') öffnet jetzt korrekt die Parser Chain & Advanced Settings
+- Library-Panel-Layout nicht mehr durch Buttons/Container korrupt
+
+**Hinweis:**
+Die GUI ist jetzt deutlich responsiver und fehlerfreier. Console-Warnings zu Duplicate IDs sollten verschwunden sein.
+
 **Backend DOM Test Hook:**
 - Neue @eel.expose-Funktion report_items_spawned(count, source) in src/core/main.py
 - Loggt das erfolgreiche Rendern von UI-Elementen mit log.info(), wie gewünscht

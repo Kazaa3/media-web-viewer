@@ -4684,10 +4684,6 @@ function switchSubTab(subTabId) {
             <path fill="currentColor"
                 d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
         </symbol>
-        <symbol id="icon-search" viewBox="0 0 24 24">
-            <path fill="currentColor"
-                d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-        </symbol>
         <symbol id="icon-test" viewBox="0 0 24 24">
             <path fill="currentColor"
                 d="M14.73 13.31C15.52 12.24 16 10.93 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.17 0 2.27-.31 3.22-.85L18.29 20.73 19.71 19.31l-4.98-6zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
@@ -4714,10 +4710,6 @@ function switchSubTab(subTabId) {
         </symbol>
         <symbol id="icon-check" viewBox="0 0 24 24">
             <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-        </symbol>
-        <symbol id="icon-delete" viewBox="0 0 24 24">
-            <path fill="currentColor"
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
         </symbol>
         <symbol id="icon-warning" viewBox="0 0 24 24">
             <path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
@@ -4856,38 +4848,69 @@ function switchSubTab(subTabId) {
     <div class="header-container">
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1 data-i18n="app_title">dict</h1>
-            <div class="tab-link" data-tab="tools">
-                <i class="fas fa-tools"></i> Tools
-            </div>
+            <!-- Legacy Tools Link Removed -->
             <!-- TAB BUTTONS START -->
             <div class="tab-buttons">
 
                 <button id="active-queue-tab-trigger" class="tab-btn" onclick="switchTab('player', this)"
-                    data-i18n="nav_player">Player</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_player">
+                    <svg width="20" height="20">
+                        <use href="#icon-audio"></use>
+                    </svg> <span data-i18n="nav_player">Player</span></button>
                 <button id="coverflow-library-tab-trigger" class="tab-btn" onclick="switchTab('library', this)"
-                    data-i18n="nav_library">Bibliothek</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_library">
+                    <svg width="20" height="20">
+                        <use href="#icon-folder"></use>
+                    </svg> <span data-i18n="nav_library">Bibliothek</span></button>
                 <button id="indexed-sqlite-repository-tab-trigger" class="tab-btn" onclick="switchTab('item', this)"
-                    data-i18n="nav_item">Item</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_item">
+                    <svg width="20" height="20">
+                        <use href="#icon-search"></use>
+                    </svg> <span data-i18n="nav_item">Item</span></button>
                 <button id="filesystem-crawler-tab-trigger" class="tab-btn" onclick="switchTab('file', this)"
-                    data-i18n="nav_file">Datei</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_file">
+                    <svg width="20" height="20">
+                        <use href="#icon-folder"></use>
+                    </svg> <span data-i18n="nav_file">Datei</span></button>
                 <button id="crud-metadata-tab-trigger" class="tab-btn" onclick="switchTab('edit', this)"
-                    data-i18n="nav_edit">Edit</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_edit">
+                    <svg width="20" height="20">
+                        <use href="#icon-edit"></use>
+                    </svg> <span data-i18n="nav_edit">Edit</span></button>
                 <button id="system-registry-tab-trigger" class="tab-btn" onclick="switchTab('options', this)"
-                    data-i18n="nav_options">Optionen</button>
-                <button id="tools-tab-trigger" class="tab-btn" onclick="switchTab('tools', this)">
-                    Tools
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_options">
+                    <svg width="20" height="20">
+                        <use href="#icon-options"></use>
+                    </svg> <span data-i18n="nav_options">Optionen</span></button>
+                <button id="tools-tab-trigger" class="tab-btn" onclick="switchTab('tools', this)"
+                    style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20">
+                        <use href="#icon-settings"></use>
+                    </svg>
+                    <span>Tools</span>
                 </button>
                 <button id="telemetry-inspector-tab-trigger" class="tab-btn" onclick="switchTab('debug', this)"
-                    data-i18n="nav_debug">Debug DB</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_debug">
+                    <svg width="20" height="20">
+                        <use href="#icon-debug"></use>
+                    </svg> <span data-i18n="nav_debug">Debug DB</span></button>
                 <button id="qa-validation-tab-trigger" class="tab-btn" onclick="switchTab('tests', this)"
-                    data-i18n="nav_tests">Tests</button>
+                    style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_tests">
+                    <svg width="20" height="20">
+                        <use href="#icon-test"></use>
+                    </svg> <span data-i18n="nav_tests">Tests</span></button>
                 <button id="reporting-dashboard-tab-trigger" class="tab-btn" onclick="switchTab('reporting', this)"
-                    style="background: #f1f8e9; border-color: #388e3c; color: #388e3c;"
-                    data-i18n="nav_reporting">Reporting</button>
+                    style="background: #f1f8e9; border-color: #388e3c; color: #388e3c; display: flex; align-items: center; gap: 8px;"
+                    data-i18n="nav_reporting">
+                    <svg width="20" height="20">
+                        <use href="#icon-stats"></use>
+                    </svg> <span data-i18n="nav_reporting">Reporting</span></button>
                 <button id="documentation-journal-tab-trigger" class="tab-btn" onclick="switchTab('logbuch', this)"
                     style="background: #e1f5fe; border-color: #0277bd; color: #0277bd; display: flex; align-items: center; gap: 8px;"
                     data-i18n="nav_logbook">
-                    <span class="icon-logbook"></span> <span data-i18n="nav_logbook">Logbuch</span></button>
+                    <svg width="20" height="20">
+                        <use href="#icon-edit"></use>
+                    </svg> <span data-i18n="nav_logbook">Logbuch</span></button>
                 <button id="sequential-buffer-tab-trigger" class="tab-btn active" onclick="switchTab('playlist', this)"
                     style="display: flex; align-items: center; gap: 8px;" data-i18n="nav_playlist">
                     <svg width="20" height="20" style="margin-right:8px;">
@@ -5047,86 +5070,26 @@ function switchSubTab(subTabId) {
                     </div>
                 </div>
             </div>
-            <!-- TAB: Filesystem END -->
 
-
-            <!-- New Coverflow Library Tab -->
             <!-- TAB: Library START -->
-            <div id="coverflow-library-panel" class="tab-content"
-                style="padding: 20px; overflow-y: auto; height: 100%;">
+            <div id="coverflow-library-panel" class="tab-content" style="padding: 20px; overflow-y: auto; height: 100%; display: none;">
                 <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
-        <!-- Tools Tab -->
-        <div id="tools" class="tab-content hidden-collapse">
-            <div class="tools-layout" style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
-                <div class="sub-navbar" style="display: flex; gap: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                    <button class="sub-tab-link active" onclick="switchSubTab('tools-parser')" style="background: none; border: none; color: var(--text-color); cursor: pointer; padding: 5px 15px; border-radius: 5px;">
-                        <i class="fas fa-search"></i> Parser
-                    </button>
-                    <button class="sub-tab-link" onclick="switchSubTab('tools-advanced')" style="background: none; border: none; color: var(--text-color); cursor: pointer; padding: 5px 15px; border-radius: 5px;">
-                        <i class="fas fa-hammer"></i> Advanced
-                    </button>
+                    <button id="lib-nav-wrapper-legacy" class="options-subtab active" style="display:none;"></button>
                 </div>
-
-                <div id="tools-parser" class="sub-tab-content">
-                    <div class="parser-container">
-                        <div class="tool-card" id="repair-db">
-                            <i class="fas fa-hammer"></i>
-                            <div class="tool-info">
-                                <h4>Repair Database</h4>
-                                <p>Fix consistency issues and vacuum the DB.</p>
-                            </div>
-                        </div>
-                        <div class="tool-card" id="rebuild-index">
-                            <i class="fas fa-sync"></i>
-                            <div class="tool-info">
-                                <h4>Rebuild Index</h4>
-                                <p>Full re-index of all media metadata.</p>
-                            </div>
-                        </div>
-                        <div class="tool-card" id="clear-cache">
-                            <i class="fas fa-trash"></i>
-                            <div class="tool-info">
-                                <h4>Clear Cache</h4>
-                                <p>Remove all temporary files and transcodes.</p>
-                            </div>
-                        </div>
-                    </div>
+                
+                <div id="lib-nav-container" class="sub-nav-container">
+                    <button id="lib-tab-btn-coverflow" class="options-subtab active"
+                        onclick="switchLibrarySubTab('coverflow')" data-i18n="lib_tab_coverflow">Cover Flow</button>
+                    <button id="lib-tab-btn-grid" class="options-subtab" onclick="switchLibrarySubTab('grid')"
+                        data-i18n="lib_tab_grid">CD / Film Cover</button>
+                    <button id="lib-tab-btn-details" class="options-subtab" onclick="switchLibrarySubTab('details')"
+                        data-i18n="lib_tab_details">Dateimanager (Details)</button>
+                    <button id="lib-tab-btn-streaming" class="options-subtab"
+                        onclick="switchLibrarySubTab('streaming')" data-i18n="lib_tab_streaming"
+                        style="background: #fff6e0; border-color: #ffb74d; color: #e65100; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14"><use href="#icon-video"></use></svg> <span data-i18n="lib_tab_streaming">Videos (Streaming)</span></button>
                 </div>
             </div>
-        </div>
-        <div class="sub-nav-container">
-                        <button id="lib-tab-btn-coverflow" class="options-subtab active"
-                            onclick="switchLibrarySubTab('coverflow')" data-i18n="lib_tab_coverflow">Cover Flow</button>
-                        <button id="lib-tab-btn-grid" class="options-subtab" onclick="switchLibrarySubTab('grid')"
-                            data-i18n="lib_tab_grid">CD / Film Cover</button>
-                        <button id="lib-tab-btn-details" class="options-subtab" onclick="switchLibrarySubTab('details')"
-                            data-i18n="lib_tab_details">Dateimanager (Details)</button>
-                        <button id="lib-tab-btn-streaming" class="options-subtab"
-                            onclick="switchLibrarySubTab('streaming')" data-i18n="lib_tab_streaming"
-                            style="background: #fff3e0; border-color: #ffb74d; color: #e65100; display: flex; align-items: center; gap: 6px;">
-                            <svg width="14" height="14">
-                                <use href="#icon-video"></use>
-                            </svg> <span data-i18n="lib_tab_streaming">Videos (Streaming)</span></button>
-                        <button id="lib-tab-btn-album" class="options-subtab" onclick="switchLibrarySubTab('album')"
-                            data-i18n="lib_tab_album" style="display: flex; align-items: center; gap: 6px;">
-                            <svg width="14" height="14">
-                                <use href="#icon-audio"></use>
-                            </svg> <span data-i18n="lib_tab_album">Album</span></button>
-                        <button id="lib-tab-btn-following" class="options-subtab"
-                            onclick="switchLibrarySubTab('following')" data-i18n="lib_tab_following"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            <svg width="14" height="14">
-                                <use href="#icon-tv"></use>
-                            </svg> <span data-i18n="lib_tab_following">Der Folgende</span></button>
-                        <button id="lib-tab-btn-database" class="options-subtab"
-                            onclick="switchLibrarySubTab('database')" data-i18n="lib_tab_database"
-                            style="background: #e8f5e9; border-color: #2a7; color: #1b5e20; display: flex; align-items: center; gap: 6px;">
-                            <svg width="14" height="14">
-                                <use href="#icon-save"></use>
-                            </svg> <span data-i18n="lib_tab_database">Datenbank (Alle)</span></button>
-                    </div>
-
-                    <!-- Filter Area -->
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="filter-chip active" onclick="setLibraryFilter('all')"
                             data-i18n="filter_all">Alle</button>
@@ -5945,8 +5908,8 @@ function switchSubTab(subTabId) {
                 </div> <!-- closes options-scroll-container -->
             </div> <!-- closes Options Tab -->
 
-            <!-- ===================== TOOLS TAB START ===================== -->
-            <div id="tools-tab" class="tab-content"
+            <!-- ===================== TOOLS TAB START (Real Parser) ===================== -->
+            <div id="tools" class="tab-content"
                 style="display: none; flex-direction: column; height: 100%; border: none; padding: 0; overflow: hidden;">
                 
                 <div class="sub-nav-container">
@@ -8584,12 +8547,6 @@ function switchSubTab(subTabId) {
                 </div> <!-- closes logbuch-split-container -->
             </div> <!-- closes localized-markdown-documentation-journal-panel -->
 
-            <div id="tools-tab" class="tab-content"
-                style="display:none; flex: 1; flex-direction: column; height: 100%; width: 100%; overflow: hidden; background: #fff; padding: 40px;">
-                <h2 style="margin: 0 0 20px 0; color: #111;">System-Tools</h2>
-                <div style="color: #666; font-style: italic;">Internes Toolchain-Management. Integration folgt...
-                </div>
-            </div>
 
         </div> <!-- closes main-content-area (3715) -->
     </div> <!-- closes main-split-container (3682) -->
@@ -8652,12 +8609,6 @@ function switchSubTab(subTabId) {
                             navigator.mediaSession.metadata = new MediaMetadata({
                                 title: meta.title || '',
                                 artist: meta.artist || '',
-                                album: meta.album || '',
-                                artwork: [{ src: artwork, sizes: '96x96', type: 'image/png' }]
-                            });
-                        } catch (e) {
-                            console.warn('set_media_session failed', e);
-                        }
                     }
                     window.set_media_session = set_media_session;
                 </script>
