@@ -2702,6 +2702,27 @@
         let currentLogbookEditFilename = null;
         let lastSyncState = null;
 
+        function traceUiNav(type, name, details = {}) {
+            const detailStr = JSON.stringify(details);
+            const logMsg = `[JS-NAV] [${type}] ${name} ${detailStr !== '{}' ? detailStr : ''}`;
+            console.log(logMsg);
+            appendUiTrace(logMsg);
+            if (typeof eel !== "undefined" && typeof eel.log_ui_event === 'function') {
+                eel.log_ui_event(type, name, detailStr);
+            }
+        }
+
+        function toggleModal(modalId, forceState) {
+            const modal = document.getElementById(modalId);
+            if (!modal) {
+                console.warn(`[UI] Cannot toggle modal: ${modalId} not found.`);
+                return;
+            }
+            traceUiNav('MODAL', modalId, {force: forceState});
+            const newState = (forceState !== undefined) ? forceState : (modal.style.display === 'none' || modal.style.display === '');
+            modal.style.display = newState ? 'flex' : 'none';
+        }
+
         function appendUiTrace(message) {
             const timestamp = new Date().toLocaleTimeString();
             const logLine = `[UI-Trace ${timestamp}] ${message}`;
@@ -12697,7 +12718,7 @@
             vjsPlayer.ready(() => {
                 vjsPlayer.play().catch(err => {
                     console.error("VideoJS Play Error:", err);
-                    showToast("<svg width=\"12\" height=\"12\"><use href=\"#icon-delete\"></use></svg> Wiedergabefehler: " + mode, 5000);
+                    showToast(`<svg width="12" height="12"><use href="#icon-delete"></use></svg> Wiedergabefehler: ${mode}`, 5000);
                 });
                 // Sync Subtitle UI (Phase 7)
                 if (typeof updateSubtitleTracks === 'function') updateSubtitleTracks();
