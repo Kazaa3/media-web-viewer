@@ -6,6 +6,34 @@
 // Global state variables
 let librarySubTab = 'coverflow';
 let librarySubFilter = 'all';
+let currentMainCategory = 'media';
+
+/**
+ * Initialize all application splitters.
+ */
+function initAllSplitters() {
+    console.log("UI: Initializing splitters.");
+    if (typeof initSplitter === 'function') {
+        const splitters = [
+            ['edit-splitter', 'edit-sidebar-left', 'edit-split-container', 'vertical', 'left'],
+            ['main-splitter', 'main-sidebar', 'main-split-container', 'vertical', 'left'],
+            ['parser-tab-splitter', 'parser-left-settings', 'parser-tab-split-container', 'vertical', 'left'],
+            ['debug-splitter', 'debug-settings-pane', 'debug-flag-persistence-panel', 'vertical', 'right'],
+            ['logbuch-splitter', 'logbuch-sidebar', 'logbuch-split-container', 'vertical', 'right'],
+            ['player-analytics-splitter', 'video-queue-pane', 'player-tab-split-container', 'vertical', 'right'],
+            ['browser-tab-splitter', 'browser-top-pane', 'filesystem-crawler-directory-panel', 'horizontal', 'top']
+        ];
+
+        splitters.forEach(params => {
+            try {
+                initSplitter(...params);
+            } catch (e) {
+                console.warn(`[Splitter] Failed to initialize ${params[0]}:`, e);
+            }
+        });
+    }
+}
+
 
 /**
  * Traces UI navigation events to the backend log.
@@ -46,7 +74,7 @@ function switchTab(tabId, btn) {
         'edit': 'metadata-writer-crud-panel',
         'options': 'system-configuration-persistence-panel',
         'parser': 'regex-provider-chain-orchestrator-panel',
-        'debug': 'debug-flag-persistence-panel',
+        'debug': 'telemetry-inspector-tab-trigger', 
         'tests': 'quality-assurance-regression-suite-panel',
         'reporting': 'reporting-dashboard-panel',
         'logbuch': 'localized-markdown-documentation-journal-panel',
@@ -73,21 +101,102 @@ function switchTab(tabId, btn) {
         }
     }
 
-    document.querySelectorAll('.tab-btn, .nav-btn, .tab-link').forEach(b => b.classList.remove('active'));
+    // Update button states in both main and sub nav
+    document.querySelectorAll('.tab-btn, .nav-btn, .tab-link, .sub-tab-btn').forEach(b => b.classList.remove('active'));
+    
     if (btn) {
         btn.classList.add('active');
     } else {
-        const fallbackBtn = document.querySelector(`.nav-btn[onclick*="${tabId}"], .tab-btn[onclick*="${tabId}"], .tab-link[data-tab="${tabId}"]`);
-        if (fallbackBtn) fallbackBtn.classList.add('active');
+        // Try to find the button in the sub-nav-container first
+        const subNavBtn = document.querySelector(`#sub-nav-container .sub-tab-btn[onclick*="'${tabId}'"]`);
+        if (subNavBtn) {
+            subNavBtn.classList.add('active');
+        } else {
+            const fallbackBtn = document.querySelector(`.nav-btn[onclick*="${tabId}"], .tab-btn[onclick*="${tabId}"], .tab-link[data-tab="${tabId}"]`);
+            if (fallbackBtn) fallbackBtn.classList.add('active');
+        }
     }
 
     localStorage.setItem('mwv_active_tab', tabId);
 
+    // Context-specific actions
     if (tabId === 'library' && typeof renderLibrary === 'function') renderLibrary();
     if (tabId === 'item' && typeof refreshLibrary === 'function') refreshLibrary();
     if (tabId === 'options') {
         if (typeof loadDebugFlags === 'function') loadDebugFlags();
         if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
+    }
+}
+
+/**
+ * Switch top-level category and populate sub-navigation.
+ */
+function switchMainCategory(category, btn) {
+    currentMainCategory = category;
+    traceUiNav('MAIN-CAT', category);
+    
+    document.querySelectorAll('#main-nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const subNav = document.getElementById('sub-nav-container');
+    if (!subNav) return;
+
+    subNav.style.display = 'flex';
+    subNav.innerHTML = ''; // Clear existing
+
+    const subTabs = {
+        'media': [
+            { id: 'player', label: 'Player', icon: '#icon-audio' },
+            { id: 'library', label: 'Bibliothek', icon: '#icon-folder' },
+            { id: 'playlist', label: 'Playlist', icon: '#icon-playlist' },
+            { id: 'video', label: 'Video', icon: '#icon-video' }
+        ],
+        'management': [
+            { id: 'item', label: 'Item', icon: '#icon-search' },
+            { id: 'file', label: 'Datei', icon: '#icon-folder' },
+            { id: 'edit', label: 'Edit', icon: '#icon-edit' },
+            { id: 'parser', label: 'Parser', icon: '#icon-settings' },
+            { id: 'tools', label: 'Tools', icon: '#icon-settings' }
+        ],
+        'governance': [
+            { id: 'options', label: 'Optionen', icon: '#icon-options' },
+            { id: 'debug', label: 'Debug DB', icon: '#icon-debug' },
+            { id: 'flags', label: 'Flags', icon: '#icon-settings' }
+        ],
+        'diagnostics': [
+            { id: 'tests', label: 'Tests', icon: '#icon-test' },
+            { id: 'reporting', label: 'Reporting', icon: '#icon-stats' },
+            { id: 'logbuch', label: 'Logbuch', icon: '#icon-edit' }
+        ]
+    };
+
+    const tabs = subTabs[category] || [];
+    tabs.forEach(tab => {
+        const button = document.createElement('button');
+        button.className = 'sub-tab-btn';
+        button.innerHTML = `
+            <svg width="14" height="14"><use href="${tab.icon}"></use></svg>
+            <span>${tab.label}</span>
+        `;
+        button.onclick = (e) => switchTab(tab.id, button);
+        subNav.appendChild(button);
+    });
+
+    // Automatically switch to the first tab of the category if not already on one of them
+    const activeTab = localStorage.getItem('mwv_active_tab');
+    const isAlreadyInCategory = tabs.some(t => t.id === activeTab);
+    
+    if (!isAlreadyInCategory && tabs.length > 0) {
+        switchTab(tabs[0].id, subNav.firstChild);
+    } else if (isAlreadyInCategory) {
+        // Just activate the button in sub-nav
+        const searchStr = `'${activeTab}'`;
+        for(let child of subNav.children) {
+            if (child.onclick.toString().includes(searchStr)) {
+                child.classList.add('active');
+                break;
+            }
+        }
     }
 }
 
@@ -184,32 +293,6 @@ function switchEditView(viewId) {
 }
 
 /**
- * Switches between views in the Reporting panel.
- */
-function switchReportingView(view) {
-    traceUiNav('SUBTAB-REPORT', view);
-    const views = {
-        'dashboard': document.getElementById('reporting-dashboard-view'),
-        'database': document.getElementById('reporting-database-view'),
-        'video-streaming': document.getElementById('reporting-video-streaming-view'),
-        'audio-streaming': document.getElementById('reporting-audio-streaming-view'),
-        'parser': document.getElementById('reporting-parser-view'),
-        'model-analysis': document.getElementById('reporting-model-analysis-view'),
-        'routing-suite': document.getElementById('reporting-routing-suite-view')
-    };
-
-    for (const [key, el] of Object.entries(views)) {
-        if (el) el.style.display = (view === key) ? 'block' : 'none';
-    }
-
-    document.querySelectorAll('.reporting-subtab').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-view') === view);
-    });
-
-    if (view === 'database' && typeof loadSqlFiles === 'function') loadSqlFiles();
-}
-
-/**
  * Switches between Test sub-tabs.
  */
 function switchTestView(view) {
@@ -251,3 +334,135 @@ function switchParserView(viewId) {
         if (btn) btn.classList.add('active');
     }
 }
+
+/**
+ * Global progress bar update from Eel.
+ */
+if (typeof eel !== 'undefined' && eel.expose) {
+    try {
+        eel.expose(update_progress);
+    } catch (e) {
+        console.warn('[Eel] update_progress already exposed or failed.');
+    }
+}
+
+function update_progress(data) {
+    const bar = document.getElementById('app-progress-bar');
+    const container = document.getElementById('app-progress-bar-container');
+    const text = document.getElementById('app-progress-text');
+    
+    if (container) container.style.display = 'block';
+    if (text) {
+        text.style.display = 'block';
+        text.innerText = (data.task || 'Lade') + '...';
+    }
+    if (bar) {
+        bar.style.width = (data.percent || 0) + '%';
+        if (data.status === 'complete') {
+            setTimeout(() => {
+                if (container) container.style.display = 'none';
+                if (text) text.style.display = 'none';
+                bar.style.width = '0%';
+            }, 1000);
+            bar.style.background = '#2ecc71';
+        } else if (data.status === 'error') {
+            bar.style.background = '#e74c3c';
+        } else {
+            bar.style.background = '#2ecc71';
+        }
+    }
+}
+
+/**
+ * Utility to identify if a media error is due to an unsupported codec in the browser.
+ */
+function isUnsupportedMediaError(reason) {
+    if (!reason) return false;
+    const msg = String(reason).toLowerCase();
+    return msg.includes('not supported') || msg.includes('format') || msg.includes('missing');
+}
+
+/**
+ * Context Menu Logic
+ */
+let contextMenuItem = null;
+
+function hideContextMenu() {
+    const menu = document.getElementById('custom-context-menu');
+    if (menu) menu.style.display = 'none';
+}
+
+async function handleContextMenuAction(mode) {
+    if (!contextMenuItem) return;
+    const item = contextMenuItem;
+    hideContextMenu();
+
+    if (mode === 'resume') {
+        const pos = item.playback_position || 0;
+        if (typeof isVideoItem === 'function' && isVideoItem(item)) {
+            if (typeof playVideo === 'function') await playVideo(item, item.path, pos);
+            switchTab('video');
+        } else if (typeof playAudio === 'function') {
+            playAudio(item, pos);
+            switchTab('player');
+        }
+        return;
+    }
+
+    if (mode === 'audio_direct' && typeof playAudio === 'function') {
+        playAudio(item);
+        switchTab('player');
+        return;
+    }
+
+    if ((mode === 'vlc_embedded' || mode === 'vlc_interactive') && typeof eel.open_video === 'function') {
+        if (typeof showToast === 'function') showToast('Starte VLC HLS zu MSE...', 2000);
+        const res = await eel.open_video(item.path, 'vlc', 'vlc_embedded')();
+        if (res && res.status === 'play') {
+            if (typeof startEmbeddedVideo === 'function') startEmbeddedVideo(item, res.path, 0, res.type);
+            if (res.control_port) window._vlc_control_port = res.control_port;
+            switchTab('video');
+        } else if (typeof showToast === 'function') {
+            showToast(res.error || "VLC Error");
+        }
+        return;
+    }
+
+    if (typeof eel.open_video === 'function') {
+        const res = await eel.open_video(item.path, 'auto', mode)();
+        if (res && res.status === 'play') {
+            const embeddedModes = ['mediamtx', 'mediamtx_webrtc', 'chrome_native', 'chrome_direct', 'chrome_hls', 'chrome_fragmp4', 'ffmpeg_browser', 'chrome_remux', 'chrome_transcode', 'transcode'];
+            if (embeddedModes.includes(res.mode) || embeddedModes.includes(mode)) {
+                if (typeof startEmbeddedVideo === 'function') startEmbeddedVideo(item, res.path, 0, res.type);
+                switchTab('video');
+            }
+        } else if (res && res.status === 'error' && typeof showToast === 'function') {
+            showToast(res.error);
+        }
+    }
+}
+
+// VLC Interactive Remote Bridge
+document.addEventListener('keydown', async (e) => {
+    if (!window._vlc_control_port) return;
+    const activeTab = localStorage.getItem('mwv_active_tab');
+    if (activeTab !== 'video') return;
+
+    let vlcKey = null;
+    switch (e.key) {
+        case 'ArrowUp': vlcKey = 'key-up'; break;
+        case 'ArrowDown': vlcKey = 'key-down'; break;
+        case 'ArrowLeft': vlcKey = 'key-left'; break;
+        case 'ArrowRight': vlcKey = 'key-right'; break;
+        case 'Enter': vlcKey = 'key-enter'; break;
+        case 'Escape': vlcKey = 'key-nav-activate'; break;
+    }
+
+    if (vlcKey && typeof eel.vlc_remote_control === 'function') {
+        eel.vlc_remote_control(window._vlc_control_port, vlcKey)();
+    }
+});
+
+// Window listeners for menu dismissal
+window.addEventListener('click', () => hideContextMenu());
+window.addEventListener('scroll', () => hideContextMenu(), true);

@@ -2,6 +2,7 @@
 #dict - Desktop Media Player and Library Manager v1.34
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
 # logger.py - Centralized Logging System
 
@@ -17,6 +18,32 @@ Verwendung:
 - Für Desktop- und CI/CD-Integrationen, nicht für Browser-Frontend.
 
 """
+
+import json
+
+def log_frontend_error(error_type: str, message: str, context: dict = None):
+    """
+    Log a structured frontend error to logs/frontend_errors.log
+    :param error_type: Type/category of error (e.g. JS, UI, Network)
+    :param message: Error message
+    :param context: Additional context as dict (optional)
+    """
+    from datetime import datetime
+    log_path = LOCAL_LOG_DIR / "frontend_errors.log"
+    entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "type": error_type,
+        "message": message,
+        "context": context or {}
+    }
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception as e:
+        logging.error(f"Failed to write frontend error log: {e}")
+
+
+
 
 import logging
 import logging.handlers
@@ -81,6 +108,46 @@ class UIHandler(logging.Handler):
                     pass
         except Exception:
             self.handleError(record)
+
+
+def log_system_diagnostics():
+    """Logs detailed system and environment information for debugging."""
+    import sys
+    import platform
+    import eel
+    from datetime import datetime
+    
+    # Identify environment target (from venv path)
+    venv_path = sys.prefix
+    target = "unknown"
+    if ".venv_run" in venv_path or ".venv_core" in venv_path:
+        target = "core"
+    elif ".venv_dev" in venv_path:
+        target = "dev"
+    elif ".venv" == os.path.basename(venv_path):
+        target = "full"
+    elif ".venv_test" in venv_path:
+        target = "test"
+    elif ".venv_selenium" in venv_path:
+        target = "selenium"
+    elif ".venv_build" in venv_path:
+        target = "build"
+
+    logging.debug("--- [SYSTEM DIAGNOSTICS] START ---")
+    logging.debug(f"Timestamp: {datetime.utcnow().isoformat()}")
+    logging.debug(f"OS: {platform.system()} {platform.release()} ({platform.machine()})")
+    logging.debug(f"Python: {sys.version}")
+    logging.debug(f"Executable: {sys.executable}")
+    logging.debug(f"Venv Path: {venv_path}")
+    logging.debug(f"Runtime Target: {target}")
+    logging.debug(f"Eel Version: {getattr(eel, '__version__', 'unknown')}")
+    
+    # Log critical env vars
+    for key in ["MWV_DEBUG_FORCE", "PATH"]:
+        if key in os.environ:
+            logging.debug(f"Env Var {key}: {os.environ[key]}")
+    
+    logging.debug("--- [SYSTEM DIAGNOSTICS] END ---")
 
 
 def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
@@ -148,6 +215,7 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
     logging.info("Logging system initialized.")
     if debug_mode:
         logging.debug("Debug mode activated via command line or configuration.")
+        log_system_diagnostics()
 
 
 def get_logger(name: str):

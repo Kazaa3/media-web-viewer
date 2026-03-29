@@ -1,6 +1,75 @@
-# --- Early Path Bootstrapping & Standard Imports ---
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+main.py - Business Logic & Application Entry Point
+dict - Desktop Media Player and Library Manager v1.35
+"""
+
 import os
 import sys
+from pathlib import Path
+
+# 1. Immediate Path Calculation
+MAIN_FILE = Path(__file__).resolve()
+PROJECT_ROOT = MAIN_FILE.parent.parent.parent
+
+def log_self_diagnostics():
+    """Prints critical environment information if a mismatch is detected."""
+    print(f"--- [ENV DIAGNOSTICS] ---", flush=True)
+    print(f"Python: {sys.version}", flush=True)
+    print(f"Executable: {sys.executable}", flush=True)
+    print(f"Prefix: {sys.prefix}", flush=True)
+    print(f"Project Root: {PROJECT_ROOT}", flush=True)
+    print(f"Working Dir: {os.getcwd()}", flush=True)
+    print(f"-------------------------", flush=True)
+
+def ensure_stable_environment():
+    """Ensures we are running in the correct .venv (unified) and Python 3.14.x."""
+    if os.environ.get("MWV_AUTO_REEXEC") == "1":
+        return
+
+    # 1.1. Version Guard (Relaxed to 3.14.0+)
+    if sys.version_info < (3, 14, 0):
+        log_self_diagnostics()
+        sys.stderr.write(f"\nERROR: This application requires Python 3.14.0+. (Detected: {sys.version})\n")
+        sys.exit(1)
+
+    # 1.2. Venv Path Guard (Prefer .venv over .venv_run)
+    TARGET_VENVS = [PROJECT_ROOT / ".venv", PROJECT_ROOT / ".venv_run", PROJECT_ROOT / ".venv_core"]
+    selected_venv = None
+    for v in TARGET_VENVS:
+        if v.exists():
+            selected_venv = v
+            break
+            
+    if not selected_venv:
+        # Check if we are already in a venv that has psutil
+        try:
+            import psutil
+            return
+        except ImportError:
+            log_self_diagnostics()
+            sys.stderr.write(f"\nERROR: No suitable virtual environment found at {PROJECT_ROOT}. Please run mechanismus_helper.py bootstrap.\n")
+            sys.exit(1)
+
+    venv_python = selected_venv / "bin" / "python"
+    current_exe = os.path.abspath(sys.executable)
+    target_exe = os.path.abspath(str(venv_python))
+
+    if venv_python.exists() and current_exe != target_exe:
+        print(f"STDOUT: [Guard] Switching Environment to {selected_venv.name}: -> {venv_python}", flush=True)
+        os.environ["MWV_AUTO_REEXEC"] = "1"
+        try:
+            os.execv(target_exe, [target_exe, str(MAIN_FILE)] + sys.argv[1:])
+        except Exception as e:
+            log_self_diagnostics()
+            sys.stderr.write(f"\nERROR: Environment re-execution failed: {e}\n")
+            sys.exit(1)
+
+# --- EXECUTE GUARD IMMEDIATELY ---
+ensure_stable_environment()
+
+# --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
 import time
 import socket
 import logging
@@ -14,11 +83,17 @@ import glob
 import sqlite3
 import ast
 import threading
-from pathlib import Path
 from typing import Dict, Any, List, Optional, cast
-import psutil
-import requests
-import bottle
+
+# Third-party imports that require the virtual environment
+try:
+    import psutil
+    import requests
+    import bottle
+except ImportError as e:
+    log_self_diagnostics()
+    sys.stderr.write(f"\nCRITICAL: Missing dependency in stable environment: {e}\n")
+    sys.exit(1)
 
 # 1. Immediate Path Calculation
 MAIN_FILE = Path(__file__).resolve()
@@ -51,22 +126,7 @@ try:
 except ImportError:
     print("STDOUT: [Bootstrap] gevent not found, continuing without patching", flush=True)
 
-# 4. Environment Guard
-def ensure_stable_environment():
-    """Ensures we are running in the correct .venv_core and avoids recursive loops."""
-    if os.environ.get("MWV_AUTO_REEXEC") == "1": return
-    TARGET_VENV = PROJECT_ROOT / ".venv_core"
-    if not TARGET_VENV.exists(): TARGET_VENV = PROJECT_ROOT / ".venv_run"
-    venv_python = TARGET_VENV / "bin" / "python"
-    
-    if venv_python.exists() and os.path.abspath(sys.executable) != os.path.abspath(str(venv_python)):
-        print(f"STDOUT: [Guard] Switching Environment: -> {venv_python}", flush=True)
-        os.environ["MWV_AUTO_REEXEC"] = "1"
-        os.execv(str(venv_python), [str(venv_python)] + sys.argv)
-
 with StatusBar("Initializing Application Environment", total=100) as sb:
-    sb.update(10, "Checking Environment")
-    ensure_stable_environment()
     sb.update(40, "Environment Stabilized")
 
     # --- Core Imports & Logging ---
@@ -178,15 +238,22 @@ def start_app():
         while not spawn_event.is_set():
             now = time.time()
             if now - start_wait > timeout:
-                print(f"CRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
-                print("STDOUT: [Diagnostics] Verify port availability and browser connectivity.", flush=True)
-                # Fallback: continue anyway but mark as unstable
+                print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
+                print("--- [STARTUP DIAGNOSTICS] ---", flush=True)
+                print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
+                print(f"Python: {sys.version.split()[0]}", flush=True)
+                print(f"Eel Mode: {eel_mode}", flush=True)
+                print(f"Working Dir: {os.getcwd()}", flush=True)
+                print(f"App HTML: {'Exists' if (Path('web') / 'app.html').exists() else 'MISSING'}", flush=True)
+                print("-----------------------------", flush=True)
+                print("TIP: Check browser console (F12) for JavaScript errors.", flush=True)
                 break
             
             if now - last_alive >= 5:
                 elapsed = int(now - start_wait)
                 print(f"STDOUT: [Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...", flush=True)
                 last_alive = now
+            time.sleep(0.5)
                 
             time.sleep(0.5)
             
@@ -1342,8 +1409,7 @@ def pip_install_packages(packages):
                     f"[PIP] Installation reported success but packages still missing: {still_missing}")
                 return {
                     "status": "error",
-                    "error": f"Verification failed. Packages still missing: {
-                        ', '.join(still_missing)}",
+                    "error": f"Verification failed. Packages still missing: {', '.join(still_missing)}",
                     "output": result.stdout}
 
             return {
@@ -1750,8 +1816,7 @@ def get_environment_info(force_refresh=False):
                     source = "importlib_or_pkg_resources"
         except (subprocess.TimeoutExpired, Exception) as e:
             log.warning(
-                f"pip list failed ({
-                    type(e).__name__}) - using importlib fallback")
+                f"pip list failed ({type(e).__name__}) - using importlib fallback")
             packages = _get_packages_fallback()
             source = "importlib_or_pkg_resources"
 
@@ -2155,8 +2220,7 @@ def get_environment_info(force_refresh=False):
             f.write(f"python_executable: {result.get('python_executable')}\n")
 
         # Also print to console for immediate visibility
-        log.debug(f"\n UI-TRACE: get_environment_info()  packages={len(
-            installed_packages)}, source={installed_packages_source}, req={requirements_status}")
+        log.debug(f" UI-TRACE: get_environment_info() packages={len(installed_packages)}, source={installed_packages_source}, req={requirements_status}")
     except Exception as e:
         log.error(f"  UI-TRACE logging failed: {e}")
 
@@ -2285,8 +2349,7 @@ def get_preferred_browser():
     for browser_cmd, browser_name in browser_candidates:
         browser_path = shutil.which(browser_cmd)
         if browser_path:
-            log.info(f"[Browser] Selected: {
-                browser_name} ({browser_path})")
+            log.info(f"[Browser] Selected: {browser_name} ({browser_path})")
             try:
                 return webbrowser.get(f'{browser_path} %s')
             except Exception as e:
@@ -3210,11 +3273,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
     start_time = time.time()
-    log.info(
-        f" [Scan-Trace] Media Scan started at {
-            time.strftime(
-                '%H:%M:%S',
-                time.localtime(start_time))}")
+    log.info(f" [Scan-Trace] Media Scan started at {time.strftime('%H:%M:%S', time.localtime(start_time))}")
 
     if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
         try:
@@ -3321,8 +3380,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                 count_indexed += 1  # type: ignore
                                 if is_blackbox:
                                     skip_subpaths.add(d)
-                                logger.debug("scan", f" [Scan] Indexed Object: {d.name} (ID: {
-                                             obj_id}, Category: {item_dict.get('category')})")
+                                logger.debug("scan", f" [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
                         except Exception as e:
                             logger.debug("scan", f" [Scan] Fehler bei Object-Ordner {d.name}: {e}")
 
@@ -4031,8 +4089,7 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
 
         try:
             control_port = find_free_port()
-            log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {
-                     start_time}s: {full_path} -> {index_file} (Control: {control_port})")
+            log.info(f"[VLC-HLS-Streamer] {pid_tag} Starting Headless HLS at {start_time}s: {full_path} -> {index_file} (Control: {control_port})")
 
             cmd = [
                 str(vlc_path), "-I", "dummy", "--no-video-title-show", "--quiet",
@@ -4505,8 +4562,7 @@ def next_in_playlist():
     global CURRENT_INDEX, CURRENT_PLAYLIST
     if not CURRENT_PLAYLIST:
         return {"status": "error", "message": "no playlist"}
-    next_idx = CURRENT_INDEX + 1 if CURRENT_INDEX + \
-        1 < len(CURRENT_PLAYLIST) else -1
+    next_idx = CURRENT_INDEX + 1 if CURRENT_INDEX + 1 < len(CURRENT_PLAYLIST) else -1
     if next_idx == -1:
         return {"status": "end"}
     return _play_index(next_idx)
@@ -4626,8 +4682,7 @@ def move_item_up_by_key(key: str):
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
         if matches(it, key):
-            log.debug(f"[DEBUG] move_item_up_by_key: matched idx={
-                idx} key={key} item={it}")
+            log.debug(f"[DEBUG] move_item_up_by_key: matched idx={idx} key={key} item={it}")
             return move_item_up(idx)
 
     # last resort: try matching by stringified dict values
@@ -4672,8 +4727,7 @@ def move_item_down_by_key(key: str):
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
         if matches(it, key):
-            log.debug(f"[DEBUG] move_item_down_by_key: matched idx={
-                idx} key={key} item={it}")
+            log.debug(f"[DEBUG] move_item_down_by_key: matched idx={idx} key={key} item={it}")
             return move_item_down(idx)
 
     for idx, it in enumerate(CURRENT_PLAYLIST):
@@ -4791,8 +4845,7 @@ def move_item_to(old_index: int, new_index: int):
         n = int(new_index)
     except Exception:
         return {"status": "error", "message": "invalid index"}
-    log.debug(f"[Playlist] move_item_to called. old={
-        o}, new={n}, CURRENT_INDEX={CURRENT_INDEX}")
+    log.debug(f"[Playlist] move_item_to called. old={o}, new={n}, CURRENT_INDEX={CURRENT_INDEX}")
 
     if not CURRENT_PLAYLIST:
         return {"status": "error", "message": "no playlist"}
@@ -5502,10 +5555,7 @@ def import_vlc_playlist(m3u_path: str):
 
         if DEBUG_FLAGS["player"]:
             debug_log(
-                f"[VLC Import] {
-                    len(imported)} importiert, {
-                    len(skipped)} bersprungen, {
-                    len(errors)} Fehler")
+                f"[VLC Import] {len(imported)} importiert, {len(skipped)} bersprungen, {len(errors)} Fehler")
 
         return {
             "status": "ok",
@@ -5562,8 +5612,7 @@ def export_playlist_to_vlc(media_names: list, output_path: str):
 
         if DEBUG_FLAGS["player"]:
             debug_log(
-                f"[VLC Export] {exported} Tracks nach {
-                    playlist_file.name} exportiert")
+                f"[VLC Export] {exported} Tracks nach {playlist_file.name} exportiert")
 
         return {
             "status": "ok",
@@ -5878,8 +5927,7 @@ def pick_save_file_cli(
         # Warn if file exists
         if save_path.exists():
             overwrite = input(
-                f"Datei '{
-                    save_path.name}' existiert. berschreiben? (j/n): ").strip().lower()
+                f"Datei '{save_path.name}' existiert. berschreiben? (j/n): ").strip().lower()
             if overwrite != 'j':
                 return None
 
@@ -6132,11 +6180,9 @@ def get_logbook_entry(feature_name, source="logbuch"):
             "DEPENDENCIES.md",
             "LICENSE.md",
         }
-        requested = feature_name if feature_name.endswith(".md") else f"{
-            feature_name}.md"
+        requested = feature_name if feature_name.endswith(".md") else f"{feature_name}.md"
         if requested not in allowed_root_files:
-            return f"<h1>Error</h1><p>Root entry '{
-                feature_name}' not allowed.</p>"
+            return f"<h1>Error</h1><p>Root entry '{feature_name}' not allowed.</p>"
         log_file = root_dir / requested
     elif feature_name.upper() == "README" or feature_name.upper() == "README.MD":
         log_file = root_dir / "README.md"

@@ -1,215 +1,219 @@
 /**
- * System & Diagnostic Helpers
- * Extracted from app.html to improve modularity and avoid line-number drift.
+ * System & Environment Helpers
  */
+let mwv_config = {
+    start_page: 'player',
+    app_mode: 'High-Performance',
+    parser_mode: 'lightweight',
+    minimal_player_view: false,
+    enable_mock_data: false
+};
 
-/**
- * Runs a Round Trip Time (RTT) test between the UI and the backend.
- */
-async function runRTTTest(testType = 'ping') {
-    const statusEl = document.getElementById('rtt-status-text');
-    const footerLatency = document.getElementById('footer-latency');
-    const btns = document.querySelectorAll('#options-sync-view .action-btn, #test-base-view .tab-btn');
-    const resContainer = document.getElementById('rtt-results-container');
-
-    if (resContainer) resContainer.style.display = 'block';
-    if (statusEl) statusEl.innerText = (testType === 'complex' ? "Complex RTT Testing..." : "Ping Testing...");
-    btns.forEach(btn => btn.disabled = true);
-
+async function loadConfig() {
     try {
-        let testData;
-        if (testType === 'ping') {
-            testData = {
-                stage1: { key: "normal_dict" },
-                stage2: { nested: { a: 1, b: 2 } },
-                stage3: [{ id: 1, val: "list_of_dicts" }, { id: 2, val: "item" }]
-            };
-        } else {
-            testData = {
-                id: "test-rtt-" + Date.now(),
-                title: "RTT Test Item (Music)",
-                artist: "Frontend Sync Test",
-                album: "Latency Benchmarks",
-                genre: "Diagnostic",
-                duration: "3:45",
-                extension: "flac",
-                codec: "FLAC",
-                type: "file",
-                timestamp: new Date().toISOString(),
-                complex: { a: 1, b: [1, 2, 3], c: { d: "nested" } }
-            };
+        const response = await fetch('config.json');
+        if (response.ok) {
+            mwv_config = await response.json();
+            console.log('Global config loaded:', mwv_config);
         }
-
-        // appendUiTrace is assumed to be in common_helpers.js
-        if (typeof appendUiTrace === 'function') appendUiTrace(`RTT [${testType}]: Sending data to backend...`);
-        
-        const start = performance.now();
-        const response = await eel.rtt_ping(testData)();
-        const end = performance.now();
-        const rtt = (end - start).toFixed(2);
-
-        if (typeof appendUiTrace === 'function') appendUiTrace(`RTT [${testType}]: Backend responded in ${rtt}ms. Status: ${response.status}`);
-
-        // Confirm Receipt
-        if (typeof eel !== 'undefined' && typeof eel.confirm_receipt === 'function') {
-            await eel.confirm_receipt(testType === 'complex' ? "ITEM_RTT_RECEIVED" : "RTT_PONG_RECEIVED")();
-        }
-
-        if (statusEl) {
-            statusEl.innerHTML = `${testType.toUpperCase()}: <strong style="color: #2a7;">${rtt}ms</strong> (Sync OK)`;
-        }
-        if (footerLatency) footerLatency.innerText = rtt + 'ms';
     } catch (e) {
-        if (typeof appendUiTrace === 'function') appendUiTrace(`RTT [${testType}] Error: ${e}`);
-        if (statusEl) statusEl.innerText = "Error: " + e;
-    } finally {
-        btns.forEach(btn => btn.disabled = false);
+        console.warn('Failed to load config.json:', e);
     }
 }
 
-/**
- * Runs a WebSocket stress test with multiple concurrent pings.
- */
-async function runWebSocketStressTest() {
-    const statusEl = document.getElementById('rtt-status-text');
-    const btns = document.querySelectorAll('#options-sync-view .action-btn');
-    const count = 100;
-    let successes = 0;
-    let totalTime = 0;
-
-    if (statusEl) statusEl.innerText = `Starting Stress Test (0/${count})...`;
-    btns.forEach(btn => btn.disabled = true);
+async function checkBackendReachability() {
+    const statusText = document.getElementById('rtt-output');
+    const container = document.getElementById('rtt-results-container');
+    if (container) container.style.display = 'block';
+    if (statusText) statusText.innerText = "[Network] Probing 127.0.0.1 (Eel Port Bind Check)...";
 
     try {
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Stress] Starting WebSocket stress test: ${count} pings...`);
-        const startTotal = performance.now();
-
-        const batchSize = 10;
-        for (let i = 0; i < count; i += batchSize) {
-            const batchPromises = [];
-            for (let j = 0; j < batchSize && (i + j) < count; j++) {
-                const idx = i + j;
-                const start = performance.now();
-                batchPromises.push(eel.rtt_stress_ping(idx, count)().then(res => {
-                    const end = performance.now();
-                    totalTime += (end - start);
-                    successes++;
-                    if (statusEl && successes % 5 === 0) {
-                        statusEl.innerText = `Stress Test (${successes}/${count})...`;
-                    }
-                }));
+        const res = await eel.rtt_ping("localhost_check")();
+        if (res && res.status === 'pong') {
+            if (statusText) {
+                statusText.innerText = `[SUCCESS] Connection to 127.0.0.1 is active.\nStatus: Stable\nBackend ID: ${res.pid || 'running'}`;
+                statusText.style.color = "#2a7";
             }
-            await Promise.all(batchPromises);
-            await new Promise(resolve => setTimeout(resolve, 50));
-        }
-
-        const endTotal = performance.now();
-        const avgRtt = (totalTime / count).toFixed(2);
-        const totalDuration = (endTotal - startTotal).toFixed(0);
-
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Stress] Finished: ${successes}/${count} OK. Avg RTT: ${avgRtt}ms. Total: ${totalDuration}ms`);
-
-        if (statusEl) {
-            statusEl.innerHTML = `STRESS: <strong style="color: #2a7;">${successes}/${count} OK</strong> (Avg: ${avgRtt}ms, Total: ${totalDuration}ms)`;
-        }
-    } catch (e) {
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Stress] Error: ${e}`);
-        if (statusEl) statusEl.innerText = "Stress Error: " + e;
-    } finally {
-        btns.forEach(btn => btn.disabled = false);
-    }
-}
-
-/**
- * Loads the application's environment information from the backend.
- */
-async function loadEnvironmentInfo(forceRefresh = false) {
-    if (typeof appendUiTrace === 'function') appendUiTrace(`[Env] Loading environment info (force: ${forceRefresh})...`);
-    try {
-        const info = await eel.get_environment_info(forceRefresh)();
-        if (!info) return;
-
-        // Populate fields (Mapping depends on backend response keys)
-        safeText('env-app-version', info.app_version);
-        safeText('env-python-version', info.python_version);
-        safeText('env-python-exec', info.python_executable);
-        safeText('env-venv-path', info.venv_path);
-        safeText('env-main-pid', info.main_pid);
-        safeText('env-browser-pid', info.browser_pid);
-        
-        // Mediaplayers
-        safeText('env-mediaplayer-status', (info.player_status || []).join(', '));
-        safeText('env-ffmpeg-status', info.ffmpeg_version);
-        safeText('env-ffprobe-status', info.ffprobe_version);
-        
-        // Sync with hardware discovery view if needed
-        if (info.hardware) {
-            safeText('hardware-disk-type', info.hardware.disk || '-');
-            safeText('hardware-gpu-type', info.hardware.gpu || '-');
-        }
-
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Env] Environment info loaded successfully.`);
-    } catch (err) {
-        console.error("Error loading environment info:", err);
-    }
-}
-
-/**
- * Resets the application's backend state.
- */
-async function resetBackend() {
-    if (!confirm("Möchtest du das Backend wirklich zurücksetzen? Alle Caches werden gelöscht.")) return;
-    
-    if (typeof appendUiTrace === 'function') appendUiTrace("[System] Triggering Backend Reset...");
-    try {
-        const res = await eel.reset_backend()();
-        if (res && res.status === 'ok') {
-            if (typeof showToast === 'function') showToast("Backend erfolgreich zurückgesetzt. Die App wird neu geladen.", "success");
-            setTimeout(() => location.reload(), 2000);
         } else {
-            if (typeof showToast === 'function') showToast("Fehler beim Zurücksetzen: " + (res.message || 'unbekannt'), "error");
+            throw new Error("Invalid response from internal API");
         }
     } catch (err) {
-        if (typeof showToast === 'function') showToast("Kritischer Fehler beim Reset: " + err, "error");
+        if (statusText) {
+            statusText.innerText = `[FAILED] 127.0.0.1 refused the connection (ERR_CONNECTION_REFUSED).\nError: ${err.message}\n\nTroubleshooting:\n- Backend process might have crashed.\n- Port 8345 is blocked by firewall.\n- Eel server failed to bind to 127.0.0.1.`;
+            statusText.style.color = "#f44336";
+        }
     }
 }
 
-/**
- * Runs Selenium session integrity tests in the browser.
- */
-async function runSeleniumSessionTests() {
-    const outputEl = document.getElementById('selenium-output');
-    const container = document.getElementById('selenium-results-container');
-    const options = {
-        verbose: document.getElementById('selenium-flag-verbose')?.checked,
-        trace: document.getElementById('selenium-flag-trace')?.checked,
-        pp_mode: document.getElementById('selenium-flag-pp-mode')?.checked,
-        dom_control: document.getElementById('selenium-flag-dom-control')?.checked,
-        no_sandbox: document.getElementById('selenium-flag-nosandbox')?.checked
-    };
-
-    if (!outputEl || !container) return;
-
-    container.style.display = 'block';
-    outputEl.innerText = "[Status] Initializing Selenium Test Runner (Attach Mode)...\nConnecting to 127.0.0.1:9222...";
-    outputEl.style.color = "#d4d4d4";
+async function discoverCastingDevices() {
+    const status = document.getElementById('cast-scanner-status');
+    const list = document.getElementById('cast-device-list');
+    if (status) {
+        status.innerText = "SCANNING...";
+        status.style.color = "#9c27b0";
+    }
+    if (list) list.innerText = "Searching for Chromecast & DLNA nodes...";
 
     try {
-        const res = await eel.run_selenium_session_tests(options)();
-        if (res.status === 'ok') {
-            outputEl.innerText = res.output;
-            if (res.exit_code !== 0) {
-                outputEl.innerText += "\n\n[ERROR] Test Suite exited with code " + res.exit_code;
-                outputEl.style.color = "#ff6b6b";
+        const res = await eel.discover_cast_devices()();
+        if (status) {
+            status.innerText = "IDLE (Complete)";
+            status.style.color = "#2a7";
+        }
+        if (list) {
+            const total = (res.chromecast ? res.chromecast.length : 0) + (res.dlna ? res.dlna.length : 0);
+            if (total === 0) {
+                list.innerText = "No devices detected in current network segment.";
             } else {
-                outputEl.style.color = "#b9f6ca";
+                let html = "<strong>Found Devices:</strong><br>";
+                if (res.chromecast) res.chromecast.forEach(d => html += `<svg width="12" height="12"><use href="#icon-generic"></use></svg> Chromecast: ${d.name} (${d.ip})<br>`);
+                if (res.dlna) res.dlna.forEach(d => html += `<svg width="12" height="12"><use href="#icon-tv"></use></svg> DLNA: ${d.name} (${d.ip})<br>`);
+                list.innerHTML = html;
             }
+        }
+    } catch (e) {
+        if (status) status.innerText = "ERROR";
+        if (list) list.innerText = "Casting discovery failed: " + e;
+    }
+}
+
+async function toggleSwyhRs(enabled) {
+    try {
+        const res = await eel.toggle_swyh_rs(enabled)();
+        if (typeof showToast === 'function') {
+            showToast(`SWYH-RS ${res.status === 'ok' ? 'TOGGLED' : 'ERROR'}`, 'info');
+        }
+    } catch (e) {
+        console.error("Failed to toggle SWYH-RS:", e);
+    }
+}
+
+async function startSpotifyBridge() {
+    try {
+        if (typeof eel.start_spotify_bridge === 'function') {
+            const res = await eel.start_spotify_bridge()();
+            showToast("Spotify Bridge Status: " + res.status.toUpperCase(), 'info');
         } else {
-            outputEl.innerText = "Error: " + res.message;
-            outputEl.style.color = "#ff6b6b";
+            showToast("Spotify Backend nicht verfügbar.", 'error');
+        }
+    } catch (e) {
+        console.error("Spotify Bridge error:", e);
+    }
+}
+
+async function loadScanDirs() {
+    const container = document.getElementById('scan-dirs-list');
+    if (!container) return;
+    const config = await eel.get_parser_config()();
+    const dirs = config.scan_dirs || [];
+    const defaultMediaDir = await eel.get_default_media_dir()();
+
+    container.innerHTML = '';
+    if (dirs.length === 0) {
+        container.innerHTML = `<div style="color: #999; font-style: italic; font-size: 0.9em; padding: 10px; background: #f9f9f9; border-radius: 6px; border: 1px dashed #ddd;">No dirs configured</div>`;
+        return;
+    }
+
+    dirs.forEach(path => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; font-size: 0.9em;';
+
+        const pathEl = document.createElement('span');
+        pathEl.style.cssText = 'font-family: monospace; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin-right: 10px;';
+        pathEl.innerText = path;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = 'Remove';
+        removeBtn.onclick = async () => {
+            const res = await eel.remove_scan_dir(path)();
+            if (res.status === 'ok') loadScanDirs();
+        };
+
+        row.appendChild(pathEl);
+        row.appendChild(removeBtn);
+        container.appendChild(row);
+    });
+}
+
+async function addScanDirUI() {
+    const res = await eel.add_scan_dir()();
+    if (res.status === 'ok') {
+        loadScanDirs();
+    }
+}
+
+let lastSyncState = 'unknown';
+
+/**
+ * Periodically checks the connection to the Eel backend.
+ */
+async function checkConnection() {
+    const indicator = document.getElementById('sync-indicator');
+    const dot = document.getElementById('sync-dot');
+    const text = document.getElementById('sync-text');
+
+    if (typeof eel === 'undefined' || (window && window.__eel_missing__ === true)) {
+        if (typeof safeStyle === 'function') {
+            safeStyle('sync-dot', 'background', '#f44');
+            safeStyle('sync-indicator', 'background', '#ffebee');
+            safeStyle('sync-text', 'color', '#c62828');
+        }
+        if (typeof safeText === 'function') safeText('sync-text', typeof t === 'function' ? t('sync_offline_no_backend') : 'OFFLINE');
+        
+        if (lastSyncState !== 'missing-backend') {
+            if (typeof appendUiTrace === 'function') appendUiTrace('sync-state: missing backend');
+        }
+        lastSyncState = 'missing-backend';
+        return;
+    }
+
+    try {
+        const res = await eel.ping()();
+        if (res && res.status === 'ok') {
+            if (typeof safeStyle === 'function') {
+                safeStyle('sync-dot', 'background', '#4CAF50');
+                safeStyle('sync-dot', 'boxShadow', '0 0 8px #4CAF50');
+                safeStyle('sync-indicator', 'background', '#e8f5e9');
+                safeStyle('sync-text', 'color', '#2e7d32');
+                safeStyle('vsync-field', 'display', 'block');
+            }
+            if (typeof safeText === 'function') safeText('sync-text', typeof t === 'function' ? t('sync_synchronized') : 'Synchronized');
+            
+            if (lastSyncState !== 'ok') {
+                if (typeof appendUiTrace === 'function') appendUiTrace('sync-state: synchronized');
+            }
+            lastSyncState = 'ok';
+        } else {
+            throw new Error("Invalid response");
+        }
+    } catch (e) {
+        if (typeof safeStyle === 'function') {
+            safeStyle('sync-dot', 'background', '#ff9800');
+            safeStyle('sync-indicator', 'background', '#fff3e0');
+            safeStyle('sync-text', 'color', '#e65100');
+        }
+        if (typeof safeText === 'function') safeText('sync-text', typeof t === 'function' ? t('sync_connection_lost') : 'Connection Lost');
+        
+        if (lastSyncState !== 'lost') {
+            if (typeof appendUiTrace === 'function') appendUiTrace(`sync-state: connection lost (${e.message || e})`);
+        }
+        lastSyncState = 'lost';
+    }
+}
+
+/**
+ * Synchronizes version information from the backend to the UI.
+ */
+async function syncVersionInfo() {
+    try {
+        if (typeof eel.get_version === 'function') {
+            const version = await eel.get_version()();
+            const footerVersion = document.getElementById('footer-version');
+            if (footerVersion) footerVersion.innerText = `v${version}`;
+            const envAppVersionEl = document.getElementById('env-app-version');
+            if (envAppVersionEl) envAppVersionEl.textContent = version;
         }
     } catch (err) {
-        outputEl.innerText = "Fatal Error: " + err;
-        outputEl.style.color = "#ff6b6b";
+        console.warn('[syncVersionInfo] Failed to fetch version:', err);
     }
 }

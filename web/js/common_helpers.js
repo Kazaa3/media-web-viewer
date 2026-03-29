@@ -193,3 +193,63 @@ function initSplitter(splitterId, targetPaneId, containerId, orientation = 'vert
         document.body.style.cursor = 'default';
     });
 }
+
+/**
+ * Common Toast Notifications
+ */
+function showToast(message, duration = 3000) {
+    if (typeof eel !== "undefined" && typeof eel.log_js_error === 'function') {
+        eel.log_js_error({ type: 'TOAST', message: message });
+    }
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.remove();
+    }, duration + 300);
+}
+
+/**
+ * Media Type Detection
+ */
+function isVideoItem(item) {
+    if (!item) return false;
+    // 1. Check Category
+    const videoCategories = ['Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons', 'Movie', 'TV Show'];
+    if (item.category && videoCategories.includes(item.category)) return true;
+
+    // 2. Check Extension
+    const path = item.path || item.relpath || "";
+    const videoExtensions = ['.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m2ts', '.vob', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv'];
+    const ext = path.toLowerCase().slice(((path.lastIndexOf(".") - 1) >>> 0) + 2);
+    if (ext && videoExtensions.includes("." + ext)) return true;
+
+    return false;
+}
+
+/**
+ * Library UI Badges
+ */
+function getCategoryBadgeHtml(item) {
+    if (!item || !item.category) return '';
+    const specialCategories = ['H\u00f6rbuch', 'Compilation', 'Serie', 'Film', 'E-Book', 'Dokument', 'Bilder', 'ISO/Image', 'Soundtrack', 'Playlist'];
+    if (!specialCategories.includes(item.category)) return '';
+
+    let catIcon = '';
+    if (item.category === 'H\u00f6rbuch') catIcon = '<svg width="12" height="12"><use href="#icon-audio"></use></svg>';
+    else if (item.category === 'Film') catIcon = '<svg width="12" height="12"><use href="#icon-video"></use></svg>';
+    else if (item.category === 'Serie') catIcon = '<svg width="12" height="12"><use href="#icon-tv"></use></svg>';
+    else if (item.category === 'Dokument') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
+    else if (item.category === 'E-Book') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
+    else if (item.category === 'Bilder') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>️';
+    else if (item.category === 'ISO/Image') catIcon = '<svg width="12" height="12"><use href="#icon-disk"></use></svg>';
+    else if (item.category === 'Compilation') catIcon = '<svg width="12" height="12"><use href="#icon-save"></use></svg>';
+    else if (item.category === 'Soundtrack') catIcon = '<svg width="12" height="12"><use href="#icon-audio"></use></svg>';
+    else if (item.category === 'Playlist') catIcon = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
+
+    if (!catIcon) return '';
+    return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5;" title="${item.category}">${catIcon}</div>`;
+}
