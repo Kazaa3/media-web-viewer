@@ -247,17 +247,32 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         return DiagnosticResult(12, "Mock System", "PASS" if success else "FAIL", 
                                 "Mock toggle and logic verified." if success else f"Toggle: {has_toggle}, Logic: {has_logic}")
 
-    def level_13_toast_quote_audit(self) -> DiagnosticResult:
+    def level_13_audio_playback_readiness(self) -> DiagnosticResult:
+        """Verifies the UI structural readiness for media playback."""
+        try:
+            # check the HTML content for the audio element
+            html_path = os.path.join(PROJECT_ROOT, "web", "app.html")
+            with open(html_path, "r") as f:
+                content = f.read()
+            
+            has_player = "main-audio-player" in content or "activeAudioPipeline" in content
+            
+            return DiagnosticResult(13, "Playback Readiness", "PASS" if has_player else "FAIL", 
+                                    "Audio player DOM elements found." if has_player else "Audio player ID missing in DOM.")
+        except Exception as e:
+            return DiagnosticResult(13, "Playback Readiness", "WARN", f"Audit failed: {e}")
+
+    def level_15_toast_quote_audit(self) -> DiagnosticResult:
         """FAST: Scans for unescaped nested quotes in showToast calls."""
-        if not self.app_html.exists(): return DiagnosticResult(13, "Toast Quote Audit", "SKIP", "No app.html")
+        if not self.app_html.exists(): return DiagnosticResult(15, "Toast Quote Audit", "SKIP", "No app.html")
         content = self.app_html.read_text(encoding='utf-8')
         # Check for: showToast("...width="...") or showToast('...width='...')
         malformed = re.findall(r'showToast\("[^"]*?=[^"]*?"', content)
         malformed += re.findall(r"showToast\('[^']*?=[^']*?'", content)
         
         if malformed:
-            return DiagnosticResult(13, "Toast Quote Audit", "FAIL", f"Found {len(malformed)} potentially malformed toast strings.")
-        return DiagnosticResult(13, "Toast Quote Audit", "PASS", "No toast syntax errors found.")
+            return DiagnosticResult(15, "Toast Quote Audit", "FAIL", f"Found {len(malformed)} potentially malformed toast strings.")
+        return DiagnosticResult(15, "Toast Quote Audit", "PASS", "No toast syntax errors found.")
 
     def level_14_subtab_structural_audit(self) -> DiagnosticResult:
         """FAST: Ensures all switchTab and switchLibrarySubTab targets exist in DOM."""
@@ -279,7 +294,8 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         # Ordering by CRITICALITY and SPEED (Fastest first)
         stages = [
             self.level_1_structural_balance,  # Level 1 (Critical)
-            self.level_13_toast_quote_audit,   # Level 13 (Fast/Critical)
+            self.level_13_audio_playback_readiness, # Level 13 (Audio)
+            self.level_15_toast_quote_audit,   # Level 15 (Toast)
             self.level_6_js_string_syntax,     # Level 6
             self.level_9_tab_navigation,      # Level 9
             self.level_11_management_stability,# Level 11

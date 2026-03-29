@@ -2980,6 +2980,15 @@ def reset_app_data():
 
 
 @eel.expose
+def log_playback_event(event_type: str, details: str):
+    """
+    @brief Logs playback events from the frontend.
+    @details Protokolliert Playback-Events vom Frontend (Start, Stopp, Next, etc.)
+    """
+    log.info(f"[JS-PLAYBACK] [{event_type}] {details}")
+
+
+@eel.expose
 def update_tags(name, tags_dict):
     """
     @brief Saves customized tags for a media item in the database.

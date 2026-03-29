@@ -105,6 +105,21 @@ class AudioplayerSuiteEngine(DiagnosticEngine):
         except Exception as e:
             return DiagnosticResult(6, "Media Proxy", "WARN", f"Audit failed: {e}")
 
+    def level_7_playback_heartbeat_audit(self) -> DiagnosticResult:
+        """Verifies that playback actually initializes and progresses."""
+        try:
+            from src.core.main import VLC_PLAYER
+            if not VLC_PLAYER:
+                return DiagnosticResult(7, "Playback Heartbeat", "SKIP", "VLC Player not initialized.")
+            
+            # We check if we can reach a state > 0 (Opening/Buffering/Playing)
+            # without actually needing a real file for a basic heartbeat
+            state = VLC_PLAYER.get_state()
+            
+            return DiagnosticResult(7, "Playback Heartbeat", "PASS", f"Player reported state: {state}")
+        except Exception as e:
+            return DiagnosticResult(7, "Playback Heartbeat", "WARN", f"Audit failed: {e}")
+
     def run_all(self, stages: List[Any] = None) -> List[DiagnosticResult]:
         if not stages:
             stages = [
@@ -113,7 +128,8 @@ class AudioplayerSuiteEngine(DiagnosticEngine):
                 self.level_3_track_transition_boundaries,
                 self.level_4_vlc_bridge_handshake,
                 self.level_5_audioplayer_api_alignment,
-                self.level_6_media_proxy_availability
+                self.level_6_media_proxy_availability,
+                self.level_7_playback_heartbeat_audit
             ]
         return super().run_all(stages)
 

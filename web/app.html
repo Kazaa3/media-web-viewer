@@ -9868,6 +9868,7 @@
         }
 
         function toggleShuffle() {
+            if (typeof eel !== "undefined") eel.log_playback_event("SHUFFLE", isShuffle ? "ON" : "OFF");
             isShuffle = !isShuffle;
             updateShuffleUI();
 
@@ -9906,6 +9907,7 @@
         }
 
         async function playNext() {
+            if (typeof eel !== "undefined") eel.log_playback_event("NEXT", "nav");
             const list = isShuffle ? shuffledPlaylist : currentPlaylist;
             if (list.length === 0) return;
 
@@ -9927,6 +9929,7 @@
         }
 
         async function playPrev() {
+            if (typeof eel !== "undefined") eel.log_playback_event("PREV", "nav");
             const list = isShuffle ? shuffledPlaylist : currentPlaylist;
             if (list.length === 0) return;
 
@@ -11511,7 +11514,10 @@
             activeAudioPipeline.play().catch(e => {
                 console.error('Audio playback failed:', e);
                 appendUiTrace(`Playback Error: ${e.message}`);
+                if (typeof eel !== "undefined") eel.log_playback_event("ERROR", `${item.name}: ${e.message}`);
             });
+            
+            if (typeof eel !== "undefined") eel.log_playback_event("START", item.name);
 
             // Persist position for audiobooks
             activeAudioPipeline.ontimeupdate = () => {
@@ -12918,6 +12924,7 @@
         function openEQ() { showToast("EQ soon", 2000); }
 
         async function stopVideo() {
+            if (typeof eel !== "undefined") eel.log_playback_event("STOP", "player");
             const video = document.getElementById('native-html5-video-resource-node');
             if (vjsPlayer) { try { vjsPlayer.pause(); } catch (e) { } }
             if (video) { video.src = ""; video.style.display = 'none'; }
