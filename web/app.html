@@ -8,6 +8,20 @@
 <html>
 
 <head>
+    <script>
+        console.log("DOM: app.html initialization started.");
+        window.addEventListener('DOMContentLoaded', (event) => {
+            console.log("DOM: DOM fully loaded and parsed. Checking for Eel...");
+            if (typeof eel !== "undefined") {
+                console.log("DOM: Eel detected. Sending spawn confirmation...");
+                eel.report_spawn()(() => {
+                    console.log("DOM: Spawn confirmation acknowledged by backend.");
+                });
+            } else {
+                console.warn("DOM: Eel NOT detected at DOMContentLoaded. Waiting for late load...");
+            }
+        });
+    </script>
     <title data-i18n="app_title">dict</title> <!-- ohne: -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -2515,7 +2529,8 @@
         }
     </style>
     <script>
-    function switchSubTab(subTabId) {
+        let groupHeaders = [];
+function switchSubTab(subTabId) {
         const contents = document.querySelectorAll('.sub-tab-content');
         const links = document.querySelectorAll('.sub-tab-link');
         
@@ -15646,7 +15661,9 @@
         </div>
     </div>
     <script src="js/video_test_suite.js"></script>
-    <script src="js/stats-overlay.js"></script>
+    <script src="js/stats-overlay.js">    // Safe Startup Fallback
+    setTimeout(() => { if (typeof eel !== "undefined") eel.report_spawn(); }, 5000);
+</script>
 </body>
 
 </html>

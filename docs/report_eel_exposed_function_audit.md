@@ -114,6 +114,78 @@ Die Anwendung stellt eine umfangreiche API für Medienverwaltung, Wiedergabe und
 
 # UI Redesign & Infrastructure Enhancements
 
+---
+
+# Implementation Plan – Stabilizing Startup and Fixing Imports
+
+---
+
+# Implementation Plan – Stabilizing Startup & verifying 'Item Spawned' Success
+
+**User Review Required – WICHTIG**
+
+- Das Backend bleibt aktuell bei "Starting Eel..." stehen, da Initialisierungslogik und Sichtbarkeit für die Frontend-Connection fehlen.
+
+## Proposed Changes
+
+### Backend Startup
+- [MODIFY] main.py:
+  - eel.init(): eel.init(str(PROJECT_ROOT / 'web')) vor App-Start aufrufen
+  - Enhanced start_app(): Mehr Logging um eel.start(), Port-Verfügbarkeit vor Bind prüfen
+  - Deduplicate Logic: Nur EIN sauberer Einstiegspunkt, der korrekt initialisiert und auf das Frontend wartet
+  - STDOUT-Logs: Detaillierte Logs wie STDOUT: SEARCHING FOR WEB DIRS, STDOUT: EEL CORE INITIALIZED etc. ergänzen
+
+### Frontend Diagnostics
+- [MODIFY] app.html:
+  - Early Logging: Inline-Script ganz oben im <head>, das console.log("DOM: app.html loading...") und STDOUT: frontend starting loggt
+  - Eel Status: Loggen, ob eel definiert ist und wann report_spawn aufgerufen wird
+
+## Open Questions
+- Soll automatisch ein freier Port gesucht werden, wenn 8345 belegt ist, oder nur ein Fehler geloggt werden? (Aktuell: Fehler loggen und Alternativen vorschlagen)
+
+## Verification Plan
+
+**Automated Tests**
+- App starten und prüfen auf:
+  - STDOUT: EEL INITIALIZED
+  - STDOUT: Frontend spawned confirmation received
+- Prüfen, dass logs/debug.log detaillierte Startup-Telemetrie enthält
+
+**Manual Verification**
+- Browserfenster öffnet und lädt die Anwendung
+- Terminal zeigt Übergang von "Waiting..." zu "Item Spawned"
+
+**User Review Required – WICHTIG**
+
+- Das aktuelle main.py enthält viel redundante Logik (doppelte Imports, mehrfaches Monkey-Patching, widersprüchliche Pfadberechnung). Diese werden zu einer klaren, konsolidierten Startsequenz zusammengeführt.
+
+**Hinweis:**
+- Playwright und Selenium werden wie gewünscht NICHT im Core (src/core) verwendet und bleiben ausgeschlossen.
+
+## Proposed Changes
+
+### Core Startup Logic
+- [MODIFY] main.py:
+  - Path Bootstrapping fixen: ROOT_DIR korrekt auf das Projekt-Root setzen (3 Ebenen über main.py)
+  - Environment Guard konsolidieren: ensure_venv() und _quick_venv_check() zu einer robusten Funktion zusammenführen, die .venv_core erzwingt
+  - Early Logging: Logging direkt nach dem Pfad-Setup initialisieren, um alle Fehler zu erfassen
+  - Deduplication: Doppelte Imports und mehrfaches monkey.patch_all() entfernen
+  - Debug Instrumenting: print("STDOUT: ...", flush=True) und log.debug(...) im Startup für "everywhere" Logging ergänzen
+
+## Open Questions
+- Sollen alle @eel.expose-Funktionen exakt erhalten bleiben, oder kann für Lesbarkeit gruppiert werden? (Aktuell bleiben sie erhalten, um das Frontend nicht zu brechen)
+
+## Verification Plan
+
+**Automated Tests**
+- Anwendung mit dem spezifischen User-Command starten:
+  /home/xc/#Coding/gui_media_web_viewer/.venv_run/bin/python /home/xc/#Coding/gui_media_web_viewer/src/core/main.py
+- Auf "STDOUT" und "DEBUG"-Logs im Output prüfen
+
+**Manual Verification**
+- Sicherstellen, dass die Anwendung ohne ModuleNotFoundError startet
+- Prüfen, dass der Environment Guard bei falschem Interpreter korrekt re-executed
+
 Dieser Plan beschreibt die strukturellen Änderungen an der Navigation der Anwendung und die Einführung eines Offline-Paketmanagements.
 
 ## Proposed Changes

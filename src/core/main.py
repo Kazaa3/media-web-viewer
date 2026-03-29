@@ -1,252 +1,173 @@
-# Monkey patch gevent before ANY other imports
-try:
-    from gevent import monkey
-    monkey.patch_all()
-except ImportError:
-    pass
-
+# --- Early Path Bootstrapping & Monkey Patching ---
 import os
 import sys
 import time
 import socket
 import logging
-
-# Ensure project root is in path
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
-
-def ensure_venv():
-    # Check for critical dependencies before proceeding
-    try:
-        import eel, gevent
-    except ImportError:
-        packages_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "packages")
-        if os.path.isdir(packages_dir):
-            print("CRITICAL: Missing dependencies. Found ./packages/ directory. Run scripts/install_offline.sh to fix.")
-        else:
-            print("CRITICAL: Missing dependencies. Please run: pip install eel gevent")
-    """Ensures we are running in a stable virtual environment (venv or pyenv)."""
-    # 1. Check if already in a virtual environment
-    if hasattr(sys, 'real_prefix') or (sys.base_prefix != sys.prefix):
-        return
-
-    # 2. Candidate Python paths
-    candidates = []
-    
-    # Priority A: .venv_core (Local)
-    candidates.append(os.path.join(ROOT_DIR, ".venv_core", "bin", "python"))
-    
-    # Priority B: pyenv (using mkv-lib-3.12 or similar if configured)
-    pyenv_root = os.path.expanduser("~/.pyenv")
-    if os.path.exists(pyenv_root):
-        # Check for pyenv virtualenv: mkv-lib-3.12
-        mkv_lib_py = os.path.join(pyenv_root, "versions", "mkv-lib-3.12", "bin", "python")
-        if os.path.exists(mkv_lib_py):
-            candidates.insert(0, mkv_lib_py)
-            
-        # Check for .python-version file
-        ver_file = os.path.join(ROOT_DIR, ".python-version")
-        if os.path.exists(ver_file):
-            with open(ver_file, 'r') as f:
-                ver = f.read().strip()
-                candidates.insert(0, os.path.join(pyenv_root, "versions", ver, "bin", "python"))
-
-    # 3. Re-execute with first valid candidate
-    for py_path in candidates:
-        if os.path.exists(py_path):
-            print(f"STDOUT: Environment Guard: Re-executing via {py_path}", flush=True)
-            os.execl(py_path, py_path, *sys.argv)
-
-def main():
-    """Main application entry point."""
-    ensure_venv()
-    print("STDOUT: --- MWV STABLE ENTRY (RESTORATION VERIFIED) ---", flush=True)
-    # Start the actual server logic
-    start_app()
-    # Keepalive loop for gevent stability
-    while True:
-        try:
-            import eel
-            eel.sleep(1.0)
-        except:
-            time.sleep(1.0)
-
-from src.core.remux_utils import remux_to_mp4_cache, extract_main_from_iso
-from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge  # type: ignore
-from src.core.mode_router import smart_route    # type: ignore
-from src.core import db                 # type: ignore
-from src.core import transcoder         # type: ignore
-from src.core import hardware_detector  # type: ignore
-from src.parsers import tag_writer  # type: ignore
-from src.core.logger import get_logger  # type: ignore
-import src.core.logger as logger  # type: ignore
-import env_handler  # type: ignore
-from src.parsers.format_utils import (  # type: ignore
-    PARSER_CONFIG, load_parser_config, save_parser_config,
-    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
-    ffprobe_suite, ffprobe_quality_score
-)
-import socket
-from src.core import hardware_detector
-from src.core.streams import vlc_bridge
-from src.core.streams import hls_stream
-from src.core.streams import mse_stream
-from src.core.streams import direct_play
-from src.core import mode_router
+import platform
+import json
+import base64
+import re
+import shutil
+import subprocess
+import glob
 import sqlite3
 import ast
-from typing import Dict, Any, List, Optional, cast
-import requests
-import base64
-import psutil
-import bottle
-import shutil
-import re
-import subprocess
 import threading
-import logging
-from urllib.parse import unquote
 from pathlib import Path
-import json
-import time
-import platform
-import glob
-import os
-import sys
-print("STDOUT: --- MWV STABLE ENTRY (VERIFIED) ---", flush=True)
-# Monkey patch gevent before ANY other imports
+from typing import Dict, Any, List, Optional, cast
+import psutil
+import requests
+import bottle
+
+# 1. Immediate Path Calculation (CRITICAL for absolute imports)
+MAIN_FILE = Path(__file__).resolve()
+PROJECT_ROOT = MAIN_FILE.parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+print(f"STDOUT: MWV_ROOT set to {PROJECT_ROOT}", flush=True)
+
+# 2. Early Monkey Patching (MUST be before ANY gevent-aware imports)
 try:
     from gevent import monkey
     monkey.patch_all()
+    print("STDOUT: gevent monkey patching complete", flush=True)
 except ImportError:
-    pass
-print("STDOUT: main.py EXECUTION START", flush=True)
+    print("STDOUT: gevent not found, continuing without patching", flush=True)
 
-# dict  Web Media Player & Library Manager v1.34
-# -----------------------------------------
-# Main entry point: Initializes Eel, exposes API, starts app, and handles environment detection.
-#
-# Usage:   python src/core/main.py
-# License: GNU GPL v3 (see https://www.gnu.org/licenses/)
-# Author:  kazaa3
-#
-# Purpose:
-#   - Desktop/Browser Media Player & Library Manager
-#   - API exposure for frontend/backend communication
-#   - Environment & dependency detection
-#   - Modular extension point for future features
-#
-# Inputs:  sys, os, platform, Eel, core modules
-# Outputs: App status, API, log output
-# Tests:   src/core/main.py, tests/*
-#
-# TODO:
-#   - Modularization
-#   - API tests
-#   - Performance monitoring
+# --- Environment Guard ---
+def ensure_stable_environment():
+    """Ensures we are running in the correct .venv_core and avoids recursive loops."""
+    # Skip if we already auto-reexecuted or are already in a venv
+    if os.environ.get("MWV_AUTO_REEXEC") == "1":
+        return
 
-"""
-dict - Desktop Media Player and Library Manager
+    # Check for .venv_core (preferred environment)
+    # Target path for .venv_run (user command interpreter) is used too
+    TARGET_VENV = PROJECT_ROOT / ".venv_core"
+    if not TARGET_VENV.exists():
+        TARGET_VENV = PROJECT_ROOT / ".venv_run"
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
-"""
-
-# main.py  Entry point: initializes Eel, exposes API functions to the
-# frontend, and starts the app.
-
-
-# --- Early Venv Check ---
-
-def _quick_venv_check():
-    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-    venv_python = PROJECT_ROOT / ".venv_core" / "bin" / "python"
-    if venv_python.exists() and sys.executable != str(venv_python):
+    venv_python = TARGET_VENV / "bin" / "python"
+    
+    # If target venv exists and we aren't using it, re-execute
+    if venv_python.exists() and os.path.abspath(sys.executable) != os.path.abspath(str(venv_python)):
+        print(f"STDOUT: Environment Guard: Transitioning from {sys.executable} -> {venv_python}", flush=True)
+        os.environ["MWV_AUTO_REEXEC"] = "1"
         os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 
+ensure_stable_environment()
 
-_quick_venv_check()
+# --- Post-Guard Imports ---
+# Initialize logging early
+from src.core.logger import get_logger
+import src.core.logger as logger
 
-# --- Path Bootstrapping & Import Normalization ---
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-# Ensure project root is in sys.path for absolute imports from src
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-# Add src/ for absolute imports (core, parsers)
-SRC_DIR = PROJECT_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
-for sub in ["core", "parsers"]:
-    sub_path = str(SRC_DIR / sub)
-    if sub_path not in sys.path:
-        sys.path.insert(0, sub_path)
+def initialize_startup_logging():
+    """Initializes basic logging for the startup sequence."""
+    is_debug = "--debug" in sys.argv
+    log_level = logging.DEBUG if is_debug else logging.INFO
+    logger.setup_logging(debug_mode=is_debug, level=log_level)
+    print(f"STDOUT: Logging initialized (Level: {'DEBUG' if is_debug else 'INFO'})", flush=True)
 
-# Performance Telemetry: Global startup anchor
+initialize_startup_logging()
+log = get_logger("main")
+
+# Performance Tracking
 STARTUP_TIME = time.time()
 CHECKPOINTS = []
 
-
 def log_checkpoint(msg: str):
-    """Log a timing checkpoint for startup profiling."""
     elapsed = time.time() - STARTUP_TIME
     CHECKPOINTS.append((msg, elapsed))
-    # print(f"[Telemetry] {elapsed:6.3f}s | {msg}") # Optional: direct output for debugging
+    print(f"STDOUT: [Checkpoint] {elapsed:6.3f}s | {msg}", flush=True)
 
+log_checkpoint("Early bootstrap finished")
 
-def debug_ffmpeg_command(cmd):
-    """Log the FFmpeg command for terminal debugging."""
-    log.debug(f"[FFmpeg] Running command: {' '.join(cmd)}")
+# --- Core Dependencies & Mode Verification ---
+# (Eel initialization moved further down after Mock detection)
+log_checkpoint("Starting environment & dependency checks")
 
+# --- Import from src (This is where it used to fail) ---
+try:
+    from src.core.remux_utils import remux_to_mp4_cache, extract_main_from_iso
+    from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
+    from src.core.mode_router import smart_route
+    from src.core import db
+    from src.core import transcoder
+    from src.core import hardware_detector
+    from src.parsers import tag_writer
+    from src.parsers.format_utils import (
+        PARSER_CONFIG, load_parser_config, save_parser_config,
+        AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
+        ffprobe_suite, ffprobe_quality_score
+    )
+    log_checkpoint("Core src modules loaded successfully")
+except Exception as e:
+    print(f"CRITICAL: Failed to load src modules: {e}", flush=True)
+    # Log trace for debugging
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
 
-log_checkpoint("Module start")
+# --- Shared UI and system state ---
+SIDEBAR_OPEN = True
+VERSION = "1.34"
+SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+port = int(os.environ.get("MWV_PORT", 8345))
+eel_kwargs = {
+    'host': 'localhost',
+    'size': (1280, 800)
+}
+log_checkpoint("State initialization complete (port: " + str(port) + ")")
 
-# --- Base Imports ---
-# Mock eel for test environments if it might cause hangs on import
+# --- Mock or Real Eel Selection ---
 if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("MWV_TEST_MODE"):
-    class MockBtl:
-        def route(self, *args, **kwargs): return lambda x: x
-
+    print("STDOUT: Using MockEel environment", flush=True)
     class MockEel:
-        def __init__(self):
-            self.btl = MockBtl()
-            self._exposed_functions = []
-
+        def __init__(self): self._exposed_functions = []
         def expose(self, *args, **kwargs):
-            # Handle both @eel.expose and @eel.expose()
             def decorator(f):
-                if f.__name__ not in self._exposed_functions:
-                    self._exposed_functions.append(f.__name__)
+                if f.__name__ not in self._exposed_functions: self._exposed_functions.append(f.__name__)
                 return f
             if args and callable(args[0]):
-                if args[0].__name__ not in self._exposed_functions:
-                    self._exposed_functions.append(args[0].__name__)
+                if args[0].__name__ not in self._exposed_functions: self._exposed_functions.append(args[0].__name__)
                 return args[0]
             return decorator
-
         def sleep(self, *args, **kwargs): pass
-        def start(self, *args, **kwargs): pass
-
+        def start(self, *args, **kwargs): print(f"STDOUT: MockEel.start called with {args} {kwargs}", flush=True)
+        def init(self, *args, **kwargs): print(f"STDOUT: MockEel.init called with {args}", flush=True)
         def __getattr__(self, name):
-            if name == "_exposed_functions":
-                return self._exposed_functions
-            # Return a callable that returns None by default,
-            # but also allows chainable calls if needed.
             def mock_call(*args, **kwargs): return None
             return mock_call
     eel = MockEel()
 else:
     import eel
+    print("STDOUT: Real Eel module imported", flush=True)
+
+# CRITICAL: Initialize Eel with the web directory
+web_dir = str(PROJECT_ROOT / "web")
+if not os.path.exists(web_dir):
+    print(f"CRITICAL: Web directory not found at {web_dir}", flush=True)
+    sys.exit(1)
+eel.init(web_dir)
+print(f"STDOUT: EEL INITIALIZED (Web Dir: {web_dir})", flush=True)
+log_checkpoint("eel initialization successful")
+
+# --- Eel API Exposure ---
+import threading
+spawn_event = threading.Event()
+
+@eel.expose
+def report_spawn():
+    if not spawn_event.is_set():
+        spawn_event.set()
+        print("STDOUT: Frontend spawned confirmation received", flush=True)
+
+
+# --- Application Backends ---
+# (Eel init moved to top)
 
 # Perfect Video Player Modular Backends
 
@@ -263,17 +184,33 @@ log = get_logger("main")
 
 
 def start_app():
-    # mwv starting sequence with telemetry and gevent resolution
-    def wait_for_port(port, timeout=10.0):
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                with socket.create_connection(("127.0.0.1", port), timeout=0.1):
-                    return True
-            except:
-                time.sleep(0.1)
-        return False
+    """Launches the Eel application."""
+    print(f"STDOUT: Starting Eel on port {port} (app.html)...", flush=True)
+    
+    # Handle Eel flags (--n, --ng)
+    eel_mode = 'chrome' # default
+    if "--ng" in sys.argv:
+        eel_mode = False
+        print("STDOUT: Eel running in No-GUI mode", flush=True)
+    elif "--n" in sys.argv:
+        eel_mode = None
+        print("STDOUT: Eel running in Connectionless mode", flush=True)
 
+    try:
+        # Launch with non-blocking mode to allow DOM synchronization handshake
+        eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
+        print("STDOUT: Eel server thread started. Waiting for frontend SPAWN event...", flush=True)
+        
+        # Wait for the frontend to report back via @eel.expose report_spawn()
+        if not spawn_event.wait(timeout=60):
+            print("WARNING: UI synchronization timeout after 60s. Continuing startup sequence.", flush=True)
+        else:
+            print("STDOUT: --- FRONTEND READY (ITEM SPAWNED CONFIRMED) ---", flush=True)
+    except Exception as e:
+        print(f"CRITICAL: Failed to start Eel: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 transcode_mgr = None
 
@@ -6968,267 +6905,8 @@ def get_transcode_status(task_id: str):
 # --- Main Entry Point ---
 
 
-def start_app():
-    """Consolidated application startup sequence."""
-    global session_port
-    log_checkpoint("Main entry")
 
-    # --- Session Guard ---
-    existing_sessions = [s for s in check_running_sessions() if s.get('port')]
-    if existing_sessions:
-        existing_url = f"http://127.0.0.1:{existing_sessions[0]['port']}/app.html"
-        log.info(f"[Session] Found existing session candidate on port {existing_sessions[0]['port']}")
-        if is_session_url_reachable(existing_url, timeout=0.8):
-            log.info("[Session] Existing session is reachable. Skipping new window launch.")
-            open_session_url(existing_url)
-            sys.exit(0)
-        else:
-            log.warning(f"[Session] Ignoring stale session candidate: {existing_url}")
-
-    log_checkpoint("Venv check complete (Quick Guard)")
-
-    # Start UI immediately for "Fast Boot"
-    # We delay singleton checks, DB init, and env validation until AFTER the browser is requested.
-
-    # (session_port already initialized at module level)
-
-    # Minimal check for port (essential for start)
-    import socket
-
-    def is_port_in_use(p):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            return s.connect_ex(('localhost', p)) == 0
-
-    if is_port_in_use(session_port):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))
-            session_port = s.getsockname()[1]
-
-    web_dir = str(PROJECT_ROOT / "web")
-    log_checkpoint("Initializing Eel")
-    eel.init(web_dir)
-
-    def close_callback(page, sockets):
-        if not sockets:
-            # sys.exit(0) # Disabled for testing
-            pass
-
-    # 7. Media Routing (Custom Bottle Routes)
-    # This enables "Direct Play" and "Cache Play" by mapping URLs to local filesystem
-    @bottle.route('/direct/<path:path>')
-    def serve_direct_media(path):
-        import urllib.parse
-        from pathlib import Path
-
-        # 1. Unquote the path to handle special characters and absolute paths
-        try:
-            decoded = str(urllib.parse.unquote(path))
-        except Exception as e:
-            log.error(f"Unquote failed for {path}: {e}")
-            decoded = str(path)
-
-        log.info(f"[Direct-Route] Request for: {decoded}")
-
-        # 2. Determine the physical location
-        # Use our robust resolver which handles /media/ prefix, absolute paths and DB lookups
-        full_path = resolve_media_path(decoded)
-        p = Path(full_path)
-
-        if not p.exists():
-            log.warning(f"[Direct-Route] File not found: {p}")
-            return bottle.HTTPError(404, "Media file found not found.")
-
-        # 3. Detect MIME type for browser compatibility
-        mimetype = "video/mp4"  # Default
-        ext = p.suffix.lower()
-        if ext == '.webm':
-            mimetype = "video/webm"
-        elif ext == '.mkv':
-            mimetype = "video/x-matroska"
-        elif ext == '.mp3':
-            mimetype = "audio/mpeg"
-        elif ext == '.wav':
-            mimetype = "audio/wav"
-        elif ext == '.m4a':
-            mimetype = "audio/mp4"
-        elif ext in ['.jpg', '.jpeg']:
-            mimetype = "image/jpeg"
-        elif ext == '.png':
-            mimetype = "image/png"
-
-        # Use modular DirectPlay
-        return direct_play.serve_direct_media(full_path)
-
-    @bottle.route('/hls_tmp/<path:path>')
-    def serve_hls_tmp(path):
-        return hls_fmp4.serve_hls_segment(path)
-
-    @bottle.route('/vlc_tmp/<path:path>')
-    def serve_vlc_tmp(path):
-        return vlc_bridge.serve_vlc_hls(path)
-
-    @bottle.route('/cache/<path:path>')
-    def serve_cache_media(path):
-        cache_dir = str(PROJECT_ROOT / "cache")
-        return bottle.static_file(path, root=cache_dir)
-
-    @bottle.route('/transcode/<path:path>')
-    def stream_transcode(path):
-        import urllib.parse
-        from pathlib import Path
-        import subprocess
-
-        try:
-            decoded = urllib.parse.unquote(path)
-        except:
-            decoded = path
-
-        if os.path.isabs(decoded):
-            p = Path(decoded)
-        else:
-            lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
-            p = Path(lib_dir) / decoded
-
-        # Track Selection Params
-        audio_idx = bottle.request.query.get('audio_idx', '0')
-        subs_idx = bottle.request.query.get('subs_idx', None)
-        start_time = bottle.request.query.get('ss', '0')
-
-        if p.exists() and p.is_dir():
-            try:
-                iso_file = next((f for f in os.listdir(p) if f.lower().endswith(('.iso', '.bin', '.img'))), None)
-                if iso_file:
-                    p = p / iso_file
-            except Exception as e:
-                log.error(f"[Transcode] DVD resolve fail: {e}")
-
-        if not p.exists() or p.is_dir():
-            return bottle.HTTPError(404, "Target for transcode not found.")
-
-        log.info(f"[Transcode-Route] Streaming: {p} (Audio:{audio_idx}, Subs:{subs_idx}, Seek:{start_time})")
-        # Use modular MSE stream with parameters
-        process = mse_stream.start_mse_stream(p, "mse_default", audio_idx, subs_idx, start_time)
-        if not process:
-            return bottle.HTTPError(500, "Failed to start FFmpeg for MSE.")
-
-        return process.stdout
-
-    # --- MPV WASM Security & Streaming ---
-    @bottle.hook('after_request')
-    def enable_coop_coep():
-        """Add security headers required for SharedArrayBuffer (WASM performance)."""
-        bottle.response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
-        bottle.response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
-        # Also ensure CORS for local streaming if needed
-        bottle.response.headers['Access-Control-Allow-Origin'] = '*'
-
-    @bottle.route('/iso-stream/<path:path>')
-    def stream_iso(path):
-        """Serve ISO/Media files directly for WASM-side parsing with Range support."""
-        decoded_path = unquote(path)
-        # Security: Ensure path is within allowed media directories or resolve absolutely
-        # For simplicity in this project, we treat the path as absolute if it starts with /
-        # but caution is advised in production environments.
-        file_path = decoded_path if os.path.isabs(decoded_path) else os.path.abspath(decoded_path)
-
-        if not os.path.exists(file_path):
-            return bottle.HTTPError(404, "ISO file not found.")
-
-        return bottle.static_file(os.path.basename(file_path), root=os.path.dirname(file_path))
-
-    @eel.expose
-    def get_iso_stream_url(file_path):
-        """Returns the local server URL for a media file to be consumed by MPV WASM."""
-        safe_path = file_path  # In main.py, paths are already absolute usually
-        return f"http://127.0.0.1:{session_port}/iso-stream/{safe_path}"
-
-    log_checkpoint("Starting Eel server")
-    try:
-        eel.start(
-            "app.html",
-            mode=False,
-            block=False,
-            port=session_port,
-            host='127.0.0.1',  # Explicitly use 127.0.0.1 for stability
-            close_callback=close_callback
-        )
-    except Exception as e:
-        log.error(f"[Critical] Eel startup failed: {e}")
-        sys.exit(1)
-
-    session_url = f"http://127.0.0.1:{session_port}/app.html"
-    log_checkpoint("Requesting browser launch")
-    open_session_url(session_url)
-    log_checkpoint("Browser requested")
-
-    # --- Main Loop ---
-    # Keep the main thread alive while Eel/Gevent hub handles requests
-    try:
-        while True:
-            eel.sleep(1.0)
-    except (KeyboardInterrupt, SystemExit):
-        log.info("Application shutdown requested")
-
-    # --- Background / Delayed Tasks ---
-    # 1. System Stats Pusher (2s interval)
-    threading.Thread(target=system_stats_pusher, daemon=True).start()
-
-    def _delayed_scan():
-        delay = 10
-        log.info(f"[Scan] Initial background scan will start in {delay} seconds...")
-        time.sleep(delay)
-        log.info("[Scan] Starting initial background scan (all configured directories)...")
-        try:
-            # Direct call to the local scan_media function
-            scan_media(dir_path=None, clear_db=True)
-            log.info("[Scan] Initial background scan completed.")
-        except Exception as e:
-            log.error(f"[Scan] Initial background scan failed: {e}")
-
-    def _finish_initialization():
-        try:
-            log_checkpoint("Background init start")
-            # 1. Explicitly load config first
-            load_parser_config()
-
-            # 1. Explicitly load config first
-            load_parser_config()
-
-            # (Singleton check already handled at early startup)
-
-            # 3. Env Validation
-            env_handler.validate_safe_startup()
-
-            # 4. DB Init
-            from src.core import db
-            db.init_db()
-
-            # 5. Transcoder Init
-            global transcode_mgr
-            transcode_mgr = transcoder.TranscoderManager()
-
-            # 6. Config Dirs
-            ensure_default_scan_dir()
-            config_dirs = PARSER_CONFIG.get("scan_dirs", [])
-            for d in config_dirs:
-                Path(d).mkdir(parents=True, exist_ok=True)
-
-            log_checkpoint("Backend initialization finalized")
-            for msg, ts in CHECKPOINTS:
-                log.info(f"[Telemetry] {ts:6.3f}s | {msg}")
-
-            # Helpers for info
-            # Environment info function is defined locally
-            # from src.core.main_helpers import get_environment_info_dict
-            log.info(f"[Startup] Environment Info: {get_environment_info_dict()}")
-        except Exception as e:
-            log.error(f"[Startup] Delayed initialization failed: {e}")
-
-    import threading
-    threading.Thread(target=_finish_initialization, daemon=True).start()
-    threading.Thread(target=_delayed_scan, daemon=True).start()
-
-
+# --- Tests & Utility Functions ---
 @eel.expose
 def test_pyautogui():
     """
