@@ -1,5 +1,53 @@
 ---
 
+## Diagnostic & System Tab Structural Restoration (30.03.2026)
+
+### User Review Required
+**IMPORTANT**
+
+- **Mapping Errors:** Der Debug-Tab war fälschlich auf die Button-ID statt auf das Panel gemappt. Das wird für alle Diagnosetabs korrigiert.
+
+**NOTE**
+
+- **Layout Logic:** Alle Split-View-Tabs (Logbuch, Debug, Optionen) erhalten explizit eine horizontale Ausrichtung (Sidebar links, Content rechts) und erben keine vertikale Stapelung mehr.
+
+### Proposed Changes
+**[Component] Navigation Mapping (UI)**
+- **ui_nav_helpers.js**
+  - `tabMap` nutzt korrekte Panel-IDs:
+    - 'debug': `telemetry-inspector-tab-pane` (vorher Button-ID)
+    - 'tests': `quality-assurance-regression-suite-panel`
+    - 'reporting': `reporting-dashboard-panel`
+    - 'logbuch': `localized-markdown-documentation-journal-panel`
+  - Alle weiteren Keys in `tabMap` werden auf Konsistenz geprüft.
+
+**[Component] Tab Layouts & Split-Views (UI)**
+- **app.html**
+  - Alle Split-View-Container (Debug, Logbuch, Optionen) erhalten explizit `flex-direction: row`.
+  - Reihenfolge der Kindelemente prüfen:
+    - Debug DB: `debug-settings-pane` links, `debug-console-pane` rechts.
+    - Logbuch: `journal-sidebar-left` links.
+  - Die globale Sidebar (Status) wird für diese Tabs ggf. ausgeblendet, falls sie das interne Layout stört.
+
+**[Component] Environment & Browser (Backend)**
+- **main.py**
+  - `eel_mode` prüft proaktiv auf Chrome/Chromium und gibt eine Warnung aus, falls ein anderer Browser (z.B. Vivaldi) verwendet wird.
+
+### Open Questions
+- **Vivaldi vs Chrome:** Ist Chrome wegen spezieller Features bevorzugt oder nur zur Trennung der Dev-Session?
+- **Global Sidebar:** Soll die globale Sidebar im "Debug DB"-Tab sichtbar bleiben oder – wie in der Bibliothek – ausgeblendet werden?
+
+### Verification Plan
+**Automated Tests**
+- Mit Diagnostik-Probe prüfen, dass `switchTab('debug')` das Panel `telemetry-inspector-tab-pane` aktiviert.
+- Reihenfolge der Kindelemente im `debug-tab-split-container` prüfen.
+
+**Manual Verification**
+- System -> Debug DB, Flags durchklicken.
+- Diagnostics -> Tests, Reporting, Logbuch durchklicken.
+- Prüfen, dass im Debug DB-View das "Dict" links und die "Console" rechts ist.
+---
+
 ## Abschluss: UI Layout komplett restauriert (30.03.2026)
 
 ### Was korrigiert wurde

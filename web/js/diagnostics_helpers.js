@@ -49,6 +49,44 @@
             return result;
         };
 
+        // --- TAB RENDERING: DEBUG DATABASE ---
+        window.renderDebugDatabase = async function() {
+            const statsEl = document.getElementById('debug-db-info');
+            const dictEl = document.getElementById('debug-items-json');
+            const pidEl = document.getElementById('debug-python-pid');
+            
+            if (statsEl) statsEl.innerHTML = '<span style="color: #2a7;">Refresing Database Stats...</span>';
+            if (dictEl) dictEl.innerHTML = '<span style="color: #6a1;">Loading Python Dictionary...</span>';
+
+            try {
+                const stats = await eel.get_debug_stats()();
+                if (statsEl) {
+                    statsEl.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div><b>Media Items:</b> ${stats.total_items || 0}</div>
+                            <div><b>DB Version:</b> ${stats.db_version || 'v1.0'}</div>
+                            <div><b>Last Sync:</b> ${new Date().toLocaleTimeString()}</div>
+                            <div><b>Status:</b> <span style="color: #2a7;">Stable</span></div>
+                        </div>
+                    `;
+                }
+                
+                if (pidEl) pidEl.innerText = stats.pid || 'N/A';
+
+                const dictType = document.getElementById('debug-dict-select')?.value || 'library';
+                const dictData = await eel.get_debug_dict(dictType)();
+                if (dictEl) dictEl.innerText = JSON.stringify(dictData, null, 2);
+            } catch (err) {
+                if (statsEl) statsEl.innerHTML = `<span style="color: #f44;">Error: ${err.message}</span>`;
+            }
+        };
+
+        // --- TAB RENDERING: TOOLS ---
+        window.renderToolsDashboard = function() {
+            const container = document.getElementById('tools-dashboard-panel');
+            if (container) console.log("Tools Dashboard: Initialized");
+        };
+        
         // Startup health check fallback
         setTimeout(() => { 
             if (typeof eel !== "undefined" && typeof eel.report_spawn === 'function') {

@@ -248,10 +248,20 @@ def start_app():
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
     
     eel_mode = 'chrome'
-    if "--ng" in sys.argv: eel_mode = False
-    elif "--n" in sys.argv: eel_mode = None
+    if "--ng" in sys.argv: 
+        eel_mode = False
+    elif "--n" in sys.argv: 
+        eel_mode = None
+    
+    # Ensure isolation for automated sessions or user preference
+    import shutil
+    chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable") or shutil.which("chromium-browser")
+    if not chrome_path and eel_mode == 'chrome':
+        print("STDOUT: [Eel] WARNING: Chrome/Chromium not found in PATH. Browser session might not be isolated.", flush=True)
 
     try:
+        # We specify the port and block=False to allow the watchdog to run.
+        # mode='chrome' is the preferred isolated environment.
         eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
         print("STDOUT: [Eel] Server started. Monitoring for frontend synchronization...", flush=True)
         

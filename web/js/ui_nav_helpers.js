@@ -75,7 +75,7 @@ function switchTab(tabId, btn) {
         'edit': 'metadata-writer-crud-panel',
         'options': 'system-configuration-persistence-panel',
         'parser': 'regex-provider-chain-orchestrator-panel',
-        'debug': 'telemetry-inspector-tab-trigger', 
+        'debug': 'telemetry-inspector-tab-pane', 
         'tests': 'quality-assurance-regression-suite-panel',
         'reporting': 'reporting-dashboard-panel',
         'logbuch': 'localized-markdown-documentation-journal-panel',
@@ -154,11 +154,11 @@ function switchTab(tabId, btn) {
             if (typeof loadDebugFlags === 'function') loadDebugFlags();
             if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
         },
-        'debug': () => { if (typeof renderDebugTelemetrie === 'function') renderDebugTelemetrie(); },
+        'debug': () => { if (typeof renderDebugDatabase === 'function') renderDebugDatabase(); },
         'flags': () => { if (typeof loadDebugFlags === 'function') loadDebugFlags(); },
-        'reporting': () => { if (typeof renderReportingDashboard === 'function') renderReportingDashboard(); },
-        'logbuch': () => { if (typeof renderLogbuch === 'function') renderLogbuch(); },
-        'tests': () => { if (typeof renderVideoTestSuite === 'function') renderVideoTestSuite(); }
+        'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
+        'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
+        'tests': () => { if (typeof switchTestView === 'function') switchTestView('base'); }
     };
 
     if (initActions[tabId]) {
