@@ -90,6 +90,21 @@ class AudioplayerSuiteEngine(DiagnosticEngine):
         except Exception as e:
             return DiagnosticResult(5, "API Alignment", "WARN", f"Audit failed: {e}")
 
+    def level_6_media_proxy_availability(self) -> DiagnosticResult:
+        """Verifies that the /media/ proxy route is active and serving files."""
+        try:
+            from src.core import main
+            import eel
+            mapped = False
+            for route in eel.btl.routes:
+                if "/media/" in route.rule:
+                    mapped = True
+                    break
+            return DiagnosticResult(6, "Media Proxy", "PASS" if mapped else "FAIL", 
+                                    "Proxy route mapped to Bottle." if mapped else "Proxy route MISSING.")
+        except Exception as e:
+            return DiagnosticResult(6, "Media Proxy", "WARN", f"Audit failed: {e}")
+
     def run_all(self, stages: List[Any] = None) -> List[DiagnosticResult]:
         if not stages:
             stages = [
@@ -97,7 +112,8 @@ class AudioplayerSuiteEngine(DiagnosticEngine):
                 self.level_2_volume_propagation_audit,
                 self.level_3_track_transition_boundaries,
                 self.level_4_vlc_bridge_handshake,
-                self.level_5_audioplayer_api_alignment
+                self.level_5_audioplayer_api_alignment,
+                self.level_6_media_proxy_availability
             ]
         return super().run_all(stages)
 

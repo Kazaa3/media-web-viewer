@@ -11496,12 +11496,21 @@
         }
 
         function playAudio(item, startTime = 0) {
-            activeAudioPipeline.src = item.path;
-            if (startTime > 0) {
+            const proxyUrl = "/media/" + encodeURIComponent(item.path);
+            appendUiTrace(`playAudio: ${item.name} via ${proxyUrl}`);
+            activeAudioPipeline.src = proxyUrl;
+            
+            // Logic: Resume for audiobooks/video, else start at 0
+            const shouldResume = item.category === 'Audiobook' || item.category === 'Hörbruch' || item.type === 'video';
+            if (shouldResume && startTime > 0) {
                 activeAudioPipeline.currentTime = startTime;
+            } else {
+                activeAudioPipeline.currentTime = 0;
             }
+
             activeAudioPipeline.play().catch(e => {
                 console.error('Audio playback failed:', e);
+                appendUiTrace(`Playback Error: ${e.message}`);
             });
 
             // Persist position for audiobooks

@@ -3647,6 +3647,34 @@ def serve_media_raw(file_path):
     )
 
 
+@eel.btl.route('/media/<file_path:path>')
+def serve_media(file_path):
+    """
+    @brief Serves local media files via proxy to bypass Same-Origin-Policy.
+    """
+    import bottle
+    from urllib.parse import unquote
+    
+    # URL handle spaces and special chars
+    decoded_path = unquote(file_path)
+    # Use existing resolve_media_path if it exists, else use absolute path
+    resolved_path = os.path.abspath(decoded_path)
+    
+    if not os.path.exists(resolved_path):
+        return bottle.HTTPError(404, f"File not found: {resolved_path}")
+        
+    # MIME detection and serving
+    ext = os.path.splitext(resolved_path)[1].lower()
+    mimetype = 'audio/mpeg' if ext == '.mp3' else 'video/mp4' if ext == '.mp4' else None
+    
+    log.info(f"[MEDIA-PROXY] Serving: {resolved_path}")
+    return bottle.static_file(
+        os.path.basename(resolved_path),
+        root=os.path.dirname(resolved_path),
+        mimetype=mimetype,
+        download=False
+    )
+
 @eel.btl.route('/stream/via/transcode/<file_path:path>')
 def stream_video_fragmented(file_path):
     """

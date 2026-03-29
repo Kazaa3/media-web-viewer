@@ -555,7 +555,9 @@ def update_media_tags(name, tags_dict):
             tmdb = ?,
             discogs = ?,
             amazon_cover = ?,
-            parent_id = ?
+            parent_id = ?,
+            is_mock = ?,
+            mock_stage = ?
         WHERE name = ?
     """, (
         json.dumps(tags_dict), 
@@ -566,6 +568,8 @@ def update_media_tags(name, tags_dict):
         tags_dict.get('discogs'),
         tags_dict.get('amazon_cover'),
         tags_dict.get('parent_id'),
+        tags_dict.get('is_mock', 0),
+        tags_dict.get('mock_stage', 0),
         name
     ))
     conn.commit()
