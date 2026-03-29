@@ -1,5 +1,67 @@
 ---
 
+## Abschluss: UI Layout komplett restauriert (30.03.2026)
+
+### Was korrigiert wurde
+
+- **Immersive Bibliothek:** Die globale Seitenleiste (Playback-Status) wird nun automatisch ausgeblendet, wenn der Bibliothek-Tab oder der Video-Player aktiv ist. Die Cover erhalten so wieder den vollen Platz.
+- **Tab-Layout-Fix:** Die fehlerhafte Erzwingung der vertikalen Ausrichtung wurde entfernt. Management-Tabs wie Item, Datei oder Edit erscheinen wieder korrekt horizontal (Sidebar links, Liste rechts).
+- **Automatisches Umschalten:** Beim Wechsel zurück zu Player oder Management erscheint die Seitenleiste automatisch wieder, damit Status und Metadaten sichtbar bleiben.
+
+### Walkthrough: UI Layout Restoration
+
+| Tab             | Sidebar-Status | Layout-Ausrichtung                |
+|-----------------|:--------------:|-----------------------------------|
+| Bibliothek      | 🌑 Verborgen   | Full-Width (Beautiful)            |
+| Video Player    | 🌑 Verborgen   | Immersiv                          |
+| Item (Management)| 🌕 Sichtbar   | Horizontal-Split (Links: Inventory)|
+| Datei-Browser   | 🌕 Sichtbar    | Horizontal-Split (Links: Browser) |
+
+Die "schöne" Ansicht mit Cover-Flow ist nun wieder voll funktionsfähig und nutzt den gesamten Bildschirmplatz aus.
+---
+
+## UI Layout Restoration & Sidebar Management (30.03.2026)
+
+### User Review Required
+**IMPORTANT**
+
+- **Layout Fix:** Entfernen des globalen `flex-direction: column`-Overrides in `switchTab`. Dieser Fehler hatte horizontale Split-Views in vertikale Stacks verwandelt.
+
+**NOTE**
+
+- **Sidebar Visibility:** Die Haupt-Sidebar (Playback-Status) wird nun automatisch ausgeblendet, wenn der "Bibliothek"-Tab aktiv ist. So entsteht das gewünschte, vollflächige Coverflow-Erlebnis.
+
+### Proposed Changes
+**[Component] Navigation & Layout (UI)**
+- **ui_nav_helpers.js**
+  - Entferne das globale `panel.style.flexDirection = 'column'` in `switchTab`.
+  - Implementiere Sidebar-Toggle in `switchTab`:
+    - Wenn `tabId === 'library'`, blende `main-sidebar` und `main-splitter` aus.
+    - Für alle anderen Tabs: `main-sidebar` und `main-splitter` sichtbar (flex/block).
+  - Aktualisiere `tabMap` oder `isFlex`-Logik, damit Tabs mit Flex-Containern korrekt initialisiert werden, ohne destruktive Style-Overrides.
+
+**[MODIFY] app.html**
+- Stelle sicher, dass Split-View-Tabs (Item, File, Edit, Logbuch) explizit `flex-direction: row` im Inline-Style haben, um falsche Defaults zu verhindern.
+
+**[Component] Library (Bibliothek)**
+- **bibliothek.js**
+  - `renderLibrary()` berechnet Breite/Höhe korrekt für Vollbild, wenn Sidebar ausgeblendet ist.
+
+### Open Questions
+- **Video Player:** Soll die Sidebar auch im Video-Tab ausgeblendet werden?
+- **Animation:** Sidebar-Kollaps animieren oder sofort umschalten?
+
+### Verification Plan
+**Automated Tests**
+- Mit Diagnostik-Probe prüfen, dass `main-sidebar` bei aktivem Bibliothek-Tab `display: none` hat, bei Player/Item-Tabs `display: flex`.
+- Prüfen, dass `indexed-sqlite-media-repository-panel` `flex-direction: row` hat.
+
+**Manual Verification**
+- Zu "Bibliothek" navigieren und prüfen, dass Sidebar ausgeblendet ist.
+- Zu "Management -> Item" navigieren und prüfen, dass interne Sidebar links, Liste rechts ist.
+- Prüfen, dass "Coverflow" korrekt (volle Breite) angezeigt wird.
+---
+
 ## Abschluss: Tab-Reparatur & Multi-Session-Hilfsskript (30.03.2026)
 
 ### Wichtigste Änderungen

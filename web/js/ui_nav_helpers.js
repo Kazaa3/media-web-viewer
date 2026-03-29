@@ -98,7 +98,22 @@ function switchTab(tabId, btn) {
             panel.style.height = '100%';
             panel.style.width = '100%';
             panel.style.minWidth = '0';
-            panel.style.flexDirection = 'column';
+            // Note: We no longer force flexDirection: column here because some tabs 
+            // (Item, File, Edit, Logbuch) are horizontal split-views (flex-direction: row).
+        }
+
+        // --- NEW: Global Sidebar Management ---
+        const sidebar = document.getElementById('main-sidebar');
+        const splitter = document.getElementById('main-splitter');
+        if (sidebar && splitter) {
+            // Immersive/Full-width tabs where the global sidebar is distracting
+            const immersiveTabs = ['library', 'video', 'vlc', 'streaming'];
+            const shouldHide = immersiveTabs.includes(tabId);
+            sidebar.style.display = shouldHide ? 'none' : 'flex';
+            splitter.style.display = shouldHide ? 'none' : 'block';
+            
+            // Log for diagnostics
+            console.log(`[UI] Sidebar state for '${tabId}': ${shouldHide ? 'HIDDEN' : 'VISIBLE'}`);
         }
     }
 
