@@ -2515,6 +2515,50 @@
         }
     </style>
     <script>
+    function switchSubTab(subTabId) {
+        const contents = document.querySelectorAll('.sub-tab-content');
+        const links = document.querySelectorAll('.sub-tab-link');
+        
+        contents.forEach(c => {
+            c.style.display = (c.id === subTabId) ? 'block' : 'none';
+        });
+        
+        links.forEach(l => {
+            if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(subTabId)) {
+                l.classList.add('active');
+            } else {
+                l.classList.remove('active');
+            }
+        });
+    }
+
+    function switchTab(tabId) {
+        const links = document.querySelectorAll('.tab-link');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        links.forEach(l => {
+            if (l.getAttribute('data-tab') === tabId) {
+                l.classList.add('active');
+            } else {
+                l.classList.remove('active');
+            }
+        });
+        
+        contents.forEach(c => {
+            if (c.id === tabId) {
+                c.classList.add('active');
+                c.classList.remove('hidden-collapse');
+                if (tabId === 'tools') {
+                    // Slight delay to ensure DOM is ready
+                    setTimeout(() => switchSubTab('tools-parser'), 50);
+                }
+            } else {
+                c.classList.remove('active');
+                c.classList.add('hidden-collapse');
+            }
+        });
+    }
+
         // Pre-define functions
         let currentLanguage = 'de';
         let translations = {
@@ -4770,6 +4814,9 @@
     <div class="header-container">
         <div style="display: flex; align-items: center; gap: 20px;">
             <h1 data-i18n="app_title">dict</h1>
+            <div class="tab-link" data-tab="tools">
+                <i class="fas fa-tools"></i> Tools
+            </div>
             <!-- TAB BUTTONS START -->
             <div class="tab-buttons">
 
@@ -4966,8 +5013,46 @@
             <div id="coverflow-library-panel" class="tab-content"
                 style="padding: 20px; overflow-y: auto; height: 100%;">
                 <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px;">
-                    <!-- Sub-Tab Navigation -->
-                    <div class="sub-nav-container">
+        <!-- Tools Tab -->
+        <div id="tools" class="tab-content hidden-collapse">
+            <div class="tools-layout" style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+                <div class="sub-navbar" style="display: flex; gap: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    <button class="sub-tab-link active" onclick="switchSubTab('tools-parser')" style="background: none; border: none; color: var(--text-color); cursor: pointer; padding: 5px 15px; border-radius: 5px;">
+                        <i class="fas fa-search"></i> Parser
+                    </button>
+                    <button class="sub-tab-link" onclick="switchSubTab('tools-advanced')" style="background: none; border: none; color: var(--text-color); cursor: pointer; padding: 5px 15px; border-radius: 5px;">
+                        <i class="fas fa-hammer"></i> Advanced
+                    </button>
+                </div>
+
+                <div id="tools-parser" class="sub-tab-content">
+                    <div class="parser-container">
+                        <div class="tool-card" id="repair-db">
+                            <i class="fas fa-hammer"></i>
+                            <div class="tool-info">
+                                <h4>Repair Database</h4>
+                                <p>Fix consistency issues and vacuum the DB.</p>
+                            </div>
+                        </div>
+                        <div class="tool-card" id="rebuild-index">
+                            <i class="fas fa-sync"></i>
+                            <div class="tool-info">
+                                <h4>Rebuild Index</h4>
+                                <p>Full re-index of all media metadata.</p>
+                            </div>
+                        </div>
+                        <div class="tool-card" id="clear-cache">
+                            <i class="fas fa-trash"></i>
+                            <div class="tool-info">
+                                <h4>Clear Cache</h4>
+                                <p>Remove all temporary files and transcodes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sub-nav-container">
                         <button id="lib-tab-btn-coverflow" class="options-subtab active"
                             onclick="switchLibrarySubTab('coverflow')" data-i18n="lib_tab_coverflow">Cover Flow</button>
                         <button id="lib-tab-btn-grid" class="options-subtab" onclick="switchLibrarySubTab('grid')"

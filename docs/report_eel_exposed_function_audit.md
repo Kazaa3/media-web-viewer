@@ -110,6 +110,48 @@ Die Anwendung stellt eine umfangreiche API für Medienverwaltung, Wiedergabe und
 
 # Cross-Interpreter Forensics: main.py Byte Comparison
 
+---
+
+# UI Redesign & Infrastructure Enhancements
+
+Dieser Plan beschreibt die strukturellen Änderungen an der Navigation der Anwendung und die Einführung eines Offline-Paketmanagements.
+
+## Proposed Changes
+
+### Web Application
+- [MODIFY] app.html:
+  - Navbar: "Parser"-Tab-Link durch "Tools"-Tab-Link ersetzen (data-tab="tools", Icon fa-tools)
+  - Tab Content: #parser in #tools umbenennen
+  - Sub-Navigation in #tools: Zwei Links "Parser" und "Advanced" implementieren
+  - parser-container in Sub-Tab-Div (#tools-parser) wrappen
+  - Items aus #advanced-tools-menu in neue Sub-Tab-Div (#tools-advanced) verschieben
+  - Redundante #advanced-tools-menu-Kontextmenü-Definition entfernen
+- [MODIFY] app.js:
+  - Sub-Tab-Logik: switchSubTab(tabId) für Navigation innerhalb des Tools-Tabs implementieren
+  - Klick auf "Tools"-Tab setzt standardmäßig auf "Parser"-Subtab
+
+### Infrastructure
+- [NEW] install_offline.sh:
+  - Aktiviert automatisch die virtuelle Umgebung
+  - Installiert Pakete aus ./packages/ via pip install --no-index --find-links
+  - Unterstützt mehrere Environments falls nötig
+- [MODIFY] main.py:
+  - ensure_venv() prüft auf fehlende kritische Dependencies (z.B. eel, gevent)
+  - Falls Dependencies fehlen und ./packages/ existiert, Option oder Log-Hinweis zum Offline-Installer anzeigen
+
+## Verification Plan
+
+**Automated Tests**
+- Playwright Diagnostic Engine:
+  - Prüft, dass "Tools"-Tab-Link vorhanden und aktiv ist
+  - Klick auf "Tools" zeigt "Parser"-Subtab
+  - Klick auf "Advanced"-Subtab zeigt "Repair Database" und "Rebuild Index"-Buttons
+
+**Manual Verification**
+- App starten und neuen Navigationsfluss prüfen
+- "Parser"-Funktionalität im neuen Subtab testen
+- "Advanced Tools" (z.B. Repair Database) auf korrekte Backend-Anbindung prüfen
+
 - Forensischer Vergleich der ersten 100 Bytes von main.py mit .venv_run- und anaconda3-Python durchgeführt
 - Ziel: Untersuchen, warum verschiedene Interpreter unterschiedliche File-Hashes und Zeilenzahlen für denselben Pfad/Inode melden
 - Hintergrundbefehl ausgeführt (Bytevergleich, Hash-Check)
