@@ -56,6 +56,7 @@
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="js/mpv_player.js"></script>
+    <script src="js/ui_nav_helpers.js"></script>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
         // --- GUI Integrity Bridge (Non-Selenium) ---
@@ -2563,22 +2564,7 @@
     </style>
     <script>
         let groupHeaders = [];
-        function switchSubTab(subTabId) {
-            const contents = document.querySelectorAll('.sub-tab-content');
-            const links = document.querySelectorAll('.sub-tab-link');
 
-            contents.forEach(c => {
-                c.style.display = (c.id === subTabId) ? 'block' : 'none';
-            });
-
-            links.forEach(l => {
-                if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(subTabId)) {
-                    l.classList.add('active');
-                } else {
-                    l.classList.remove('active');
-                }
-            });
-        }
 
     eel.expose(update_progress);
     function update_progress(data) {
@@ -2603,32 +2589,7 @@
             bar.style.background = '#2ecc71';
         }
     }
-        function switchTab(tabId) {
-            const links = document.querySelectorAll('.tab-link');
-            const contents = document.querySelectorAll('.tab-content');
 
-            links.forEach(l => {
-                if (l.getAttribute('data-tab') === tabId) {
-                    l.classList.add('active');
-                } else {
-                    l.classList.remove('active');
-                }
-            });
-
-            contents.forEach(c => {
-                if (c.id === tabId) {
-                    c.classList.add('active');
-                    c.classList.remove('hidden-collapse');
-                    if (tabId === 'tools') {
-                        // Slight delay to ensure DOM is ready
-                        setTimeout(() => switchSubTab('tools-parser'), 50);
-                    }
-                } else {
-                    c.classList.remove('active');
-                    c.classList.add('hidden-collapse');
-                }
-            });
-        }
 
         // Pre-define functions
         let currentLanguage = 'de';
@@ -2702,15 +2663,7 @@
         let currentLogbookEditFilename = null;
         let lastSyncState = null;
 
-        function traceUiNav(type, name, details = {}) {
-            const detailStr = JSON.stringify(details);
-            const logMsg = `[JS-NAV] [${type}] ${name} ${detailStr !== '{}' ? detailStr : ''}`;
-            console.log(logMsg);
-            appendUiTrace(logMsg);
-            if (typeof eel !== "undefined" && typeof eel.log_ui_event === 'function') {
-                eel.log_ui_event(type, name, detailStr);
-            }
-        }
+
 
         function toggleModal(modalId, forceState) {
             const modal = document.getElementById(modalId);
@@ -2887,226 +2840,7 @@
             }
         }
 
-        function switchTab(tabId, btn) {
-            const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
-            traceUiNav('TAB', tabId, {from: previousTab});
 
-            // Reset all tabs
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.classList.remove('active');
-                el.style.display = 'none';
-            });
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-            const tabMap = {
-                'player': 'state-orchestrated-active-queue-list-container',
-                'library': 'coverflow-library-panel',
-                'item': 'indexed-sqlite-media-repository-panel',
-                'file': 'filesystem-crawler-directory-panel',
-                'edit': 'metadata-writer-crud-panel',
-                'options': 'system-configuration-persistence-panel',
-                'parser': 'regex-provider-chain-orchestrator-panel',
-                'debug': 'debug-flag-persistence-panel',
-                'tests': 'quality-assurance-regression-suite-panel',
-                'reporting': 'reporting-dashboard-panel',
-                'logbuch': 'localized-markdown-documentation-journal-panel',
-                'playlist': 'json-serialized-sequence-buffer-panel',
-                'video': 'multiplexed-media-player-orchestrator-panel',
-                'vlc': 'multiplexed-media-player-orchestrator-panel',
-                'tools': 'tools-tab',
-                'flags': 'debug-flag-persistence-panel'
-            };
-
-            const targetId = tabMap[tabId];
-            if (targetId) {
-                const sidebar = document.getElementById('main-sidebar');
-                const splitter = document.getElementById('main-splitter');
-                const contentArea = document.getElementById('main-content-area');
-
-                // Define tabs that should use the full-width layout (no main sidebar)
-                // Now including standard navigation tabs (library, item, file, edit, options) as requested by the user
-                const managementTabs = ['library', 'item', 'file', 'edit', 'options', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools', 'parser'];
-                const isManagement = managementTabs.includes(tabId);
-                const isSidebarVisible = !isManagement;
-
-                // Force Layout Mode
-                document.body.setAttribute('data-layout-mode', isManagement ? 'management' : 'standard');
-
-                // Hard-toggle Global UI Components
-                if (sidebar) {
-                    if (isManagement) {
-                        sidebar.style.display = 'none';
-                        sidebar.classList.add('hidden-collapse');
-                    } else {
-                        sidebar.style.display = 'flex';
-                        sidebar.style.width = '300px';
-                        sidebar.classList.remove('hidden-collapse');
-                    }
-                }
-                if (splitter) {
-                    if (isManagement) {
-                        splitter.style.display = 'none';
-                        splitter.classList.add('hidden-collapse');
-                    } else {
-                        splitter.style.display = 'block';
-                        splitter.classList.remove('hidden-collapse');
-                    }
-                }
-
-                // Ensure the content area itself fills the screen
-                if (contentArea) {
-                    if (isManagement) {
-                        contentArea.style.marginLeft = '0';
-                        contentArea.style.width = '100%';
-                    } else {
-                        contentArea.style.marginLeft = '0'; // Flexbox handles it in standard mode
-                        contentArea.style.width = 'auto'; // Let flex reach end
-                    }
-                }
-
-                // Reset all tab content displays
-                document.querySelectorAll('.tab-content').forEach(el => {
-                    el.style.display = 'none';
-                    el.classList.remove('active');
-                });
-
-                // Show target
-                const targetEl = document.getElementById(targetId);
-                if (targetEl) {
-                    targetEl.classList.add('active');
-                    const flexTabs = ['player', 'library', 'item', 'file', 'edit', 'options', 'parser', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools'];
-                    if (flexTabs.includes(tabId)) {
-                        targetEl.style.display = 'flex';
-                        targetEl.style.flex = '1';
-                        targetEl.style.height = '100%';
-                        targetEl.style.width = '100%';
-                        targetEl.style.minWidth = '0';
-                        targetEl.style.overflow = 'hidden';
-                        targetEl.style.flexDirection = 'column';
-
-                        // Initialize splitters
-                        if (tabId === 'debug') {
-                            setTimeout(() => initSplitterV('debug-splitter', 'debug-settings-pane', 'debug-console-pane', 50), 0);
-                        } else if (tabId === 'logbuch') {
-                            setTimeout(() => initSplitterV('logbuch-splitter', 'logbuch-sidebar', 'logbuch-viewer-pane', 25), 0);
-                        } else if (tabId === 'vlc' || tabId === 'video') {
-
-                        }
-
-                        if (tabId === 'logbuch' && typeof loadLogbuchTab === 'function') loadLogbuchTab();
-                        if (tabId === 'tests' && typeof switchTestView === 'function') switchTestView('base');
-                        if (tabId === 'reporting') {
-                            if (typeof switchReportingView === 'function') switchReportingView('dashboard');
-                            if (typeof loadSqlFiles === 'function') loadSqlFiles();
-                            if (typeof refreshReportingData === 'function') refreshReportingData();
-                        }
-                        if (tabId === 'options') {
-                            if (typeof switchOptionsView === 'function') switchOptionsView('general');
-                            const miniToggle = document.getElementById('toggle-minimal-player');
-                            if (miniToggle) miniToggle.checked = mwv_config.minimal_player_view || false;
-                        }
-                        if (tabId === 'library') renderLibrary();
-                        if (tabId === 'vlc' || tabId === 'video') {
-                            if (typeof initVlcPlayer === 'function') initVlcPlayer();
-                        }
-                        if (tabId === 'parser') {
-                            if (typeof switchParserView === 'function') switchParserView('configuration');
-                        }
-
-                        // --- Minimal Player View Logic ---
-                        const minimalMode = mwv_config.minimal_player_view || false;
-                        const standardTabs = [
-                            'coverflow-library-tab-trigger',
-                            'indexed-sqlite-repository-tab-trigger',
-                            'filesystem-crawler-tab-trigger',
-                            'crud-metadata-tab-trigger',
-                            'system-registry-tab-trigger'
-                        ];
-                        const bottomBar = document.querySelector('.bottom-bar');
-                        const playerFooter = document.querySelector('.player-container');
-
-                        if (tabId === 'player' && minimalMode) {
-                            standardTabs.forEach(id => {
-                                const el = document.getElementById(id);
-                                if (el) el.style.display = 'none';
-                            });
-                            if (bottomBar) bottomBar.style.display = 'none';
-                            if (playerFooter) playerFooter.style.bottom = '0';
-                        } else {
-                            standardTabs.forEach(id => {
-                                const el = document.getElementById(id);
-                                if (el) el.style.display = 'inline-block';
-                            });
-                            if (bottomBar) bottomBar.style.display = 'flex';
-                            if (playerFooter) playerFooter.style.bottom = '26px';
-                        }
-                        if (tabId === 'parser') {
-                            loadParserPerformance('parser-tab-perf-container');
-                        }
-                        if (tabId === 'debug' && typeof loadDebugDBInfo === 'function') loadDebugDBInfo();
-                    } else {
-                        // Block tabs (standard layouts)
-                        targetEl.style.display = 'block';
-                        if (tabId === 'item') refreshLibrary();
-                    }
-                } else {
-                    console.warn(`[UI] Target element not found for tab: ${tabId} (id: ${targetId})`);
-                }
-            }
-            const sidebarEl = document.getElementById('main-sidebar');
-            const splitterEl = document.getElementById('main-splitter');
-            const contentEl = document.getElementById('main-content-area');
-
-            localStorage.setItem('mwv_active_tab', tabId);
-
-            if (tabId === 'player') {
-                if (typeof loadLibrary === 'function') loadLibrary();
-            }
-            if (tabId === 'file' && !fbCurrentPath) {
-                if (typeof fbNavigate === 'function') fbNavigate();
-            }
-            if (tabId === 'library') {
-                if (typeof refreshLibrary === 'function') refreshLibrary();
-            }
-            if (tabId === 'options') {
-                if (typeof loadDebugFlags === 'function') loadDebugFlags();
-                if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
-                loadScanDirs();
-            }
-            if (tabId === 'edit') {
-                if (typeof loadEditItems === 'function') loadEditItems();
-            }
-            if (tabId === 'debug') {
-                if (typeof loadDebugLogs === 'function') loadDebugLogs();
-                // Start auto-refresh for logs
-                if (!window._debugLogInterval) {
-                    window._debugLogInterval = setInterval(() => {
-                        const activeTab = localStorage.getItem('mwv_active_tab');
-                        if (activeTab === 'debug') {
-                            loadDebugLogs();
-                        } else {
-                            clearInterval(window._debugLogInterval);
-                            window._debugLogInterval = null;
-                        }
-                    }, 2000);
-                }
-            } else {
-                if (window._debugLogInterval) {
-                    clearInterval(window._debugLogInterval);
-                    window._debugLogInterval = null;
-                }
-            }
-            if (tabId === 'logbuch') {
-                if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
-            }
-            if (tabId === 'tests') {
-                if (typeof loadTestSuites === 'function') loadTestSuites();
-            }
-
-            // Ensure the button is marked as active
-            const finalBtn = btn || getTabButton(tabId);
-            if (finalBtn) finalBtn.classList.add('active');
-        }
 
         async function runRTTTest(testType = 'ping') {
             const statusEl = document.getElementById('rtt-status-text');
@@ -3215,31 +2949,7 @@
             }
         }
 
-        function switchOptionsView(viewId) {
-            traceUiNav('SUBTAB-OPTIONS', viewId);
-            document.querySelectorAll('.options-view').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.options-subtab').forEach(el => el.classList.remove('active'));
 
-            const target = document.getElementById('options-' + viewId + '-view');
-            if (target) {
-                target.style.display = (viewId === 'general' || viewId === 'environment') ? 'flex' : 'block';
-                const btn = document.querySelector(`.options-subtab[onclick*="'${viewId}'"]`);
-                if (btn) {
-                    btn.classList.add('active');
-                    // Update main header to reflect sub-chapter title
-                    const header = document.getElementById('options-main-header');
-                    if (header) {
-                        header.innerText = (viewId === 'startup') ? 'Start-Konfiguration' : 'Optionen';
-                    }
-                    if (viewId === 'startup') {
-                        loadStartupConfig();
-                    }
-                    if (viewId === 'general') {
-                        loadMockDataConfig();
-                    }
-                }
-            }
-        }
 
         async function loadStartupConfig() {
             try {
@@ -3332,116 +3042,7 @@
             }
         }
 
-        function switchParserView(viewId) {
-            traceUiNav('SUBTAB-PARSER', viewId);
-            document.querySelectorAll('.parser-view').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.options-subtab').forEach(el => {
-                if (el.id && el.id.startsWith('parser-subtab-')) {
-                    el.classList.remove('active');
-                }
-            });
 
-            const target = document.getElementById('parser-' + viewId + '-view');
-            if (target) {
-                target.style.display = 'block';
-                const btn = document.getElementById('parser-subtab-' + viewId);
-                if (btn) btn.classList.add('active');
-            }
-        }
-
-        function switchEditView(viewId) {
-            traceUiNav('SUBTAB-EDIT', viewId);
-            document.querySelectorAll('.edit-view').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('#edit-main-content-pane .options-subtab').forEach(el => {
-                el.classList.remove('active');
-            });
-
-            const target = document.getElementById('edit-' + viewId + '-view');
-            if (target) {
-                target.style.display = 'block';
-                const btn = document.getElementById('edit-subtab-' + viewId);
-                if (btn) btn.classList.add('active');
-            }
-
-            // If switching to ffprobe, trigger analysis if empty and a file is selected
-            if (viewId === 'ffprobe') {
-                const currentItem = document.getElementById('edit-item-name')?.value || '';
-                const ffprobeContent = document.getElementById('edit-ffprobe-content');
-                if (currentItem && ffprobeContent && ffprobeContent.innerText.includes('Führe Media Analyse aus')) {
-                    ffprobeContent.innerText = 'Analysiere ' + currentItem + '...';
-                    eel.analyze_media_item(currentItem)(function (res) {
-                        try {
-                            if (res && res.ffprobe) {
-                                ffprobeContent.innerText = JSON.stringify(res.ffprobe, null, 2);
-                            } else {
-                                ffprobeContent.innerText = "Keine FFprobe Daten verfügbar oder Fehler bei der Analyse.\n\nRaw Result:\n" + JSON.stringify(res, null, 2);
-                            }
-                        } catch (e) {
-                            ffprobeContent.innerText = "Fehler: " + e;
-                        }
-                    });
-                }
-            }
-        }
-
-        // --- Reporting View & SQL Logic ---
-        function switchReportingView(view) {
-            traceUiNav('SUBTAB-REPORT', view);
-            const views = {
-                'dashboard': document.getElementById('reporting-dashboard-view'),
-                'database': document.getElementById('reporting-database-view'),
-                'video-streaming': document.getElementById('reporting-video-streaming-view'),
-                'audio-streaming': document.getElementById('reporting-audio-streaming-view'),
-                'parser': document.getElementById('reporting-parser-view'),
-                'model-analysis': document.getElementById('reporting-model-analysis-view'),
-                'routing-suite': document.getElementById('reporting-routing-suite-view')
-            };
-
-            for (const [key, el] of Object.entries(views)) {
-                if (el) el.style.display = (view === key) ? 'block' : 'none';
-            }
-
-            // Highlighting for new button-based navigation
-            document.querySelectorAll('.reporting-subtab').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-view') === view);
-            });
-
-            if (view === 'database') loadSqlFiles();
-            if (view === 'video-streaming') {
-                loadVideoStreamingBenchmarks('video');
-                if (typeof populateTestVideoSelector === 'function') {
-                    populateTestVideoSelector();
-                }
-            }
-            if (view === 'audio-streaming') loadVideoStreamingBenchmarks('audio');
-            if (view === 'parser') loadParserPerformance();
-            if (view === 'model-analysis') loadModelAnalysis();
-            if (view === 'routing-suite') loadRoutingSuiteReport();
-        }
-
-        // --- Quality Assurance & Test Suite Logic ---
-        function switchTestView(view) {
-            traceUiNav('SUBTAB-TESTS', view);
-            document.querySelectorAll('#quality-assurance-regression-suite-panel .test-view-content').forEach(el => {
-                el.style.display = 'none';
-            });
-            document.querySelectorAll('#quality-assurance-regression-suite-panel .options-subtab').forEach(el => {
-                el.classList.remove('active');
-            });
-
-            const targetView = document.getElementById(`test-${view}-view`);
-            if (targetView) targetView.style.display = 'block';
-
-            const btn = document.querySelector(`#quality-assurance-regression-suite-panel .options-subtab[data-view="${view}"]`);
-            if (btn) btn.classList.add('active');
-
-            if (view === 'scripts' || view === 'suite' || view === 'routing') {
-                loadTestSuites();
-            }
-            if (view === 'video') {
-                populateTestVideoSelector();
-            }
-        }
 
         async function runSeleniumSessionTests() {
             const outputEl = document.getElementById('selenium-output');
@@ -5346,8 +4947,29 @@
 
     <!-- TAB: Item START -->
     <div id="indexed-sqlite-media-repository-panel" class="tab-content"
-        style="display: none; overflow-y: auto; width: 100%;">
-        <div id="persistent-sqlite-repository-item-grid"></div>
+        style="display: none; flex-direction: column; height: 100%; width: 100%; padding: 0; overflow: hidden;">
+        <div id="item-split-container" style="display: flex; flex: 1; height: 100%; overflow: hidden;">
+            <!-- Sidebar (Left) -->
+            <div id="item-sidebar-left"
+                style="width: 280px; flex-shrink: 0; background: #fafafa; border-right: 1px solid #eee; display: flex; flex-direction: column;">
+                <div style="padding: 15px; border-bottom: 1px solid #eee;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.1em;" data-i18n="item_sidebar_title">Inventory</h3>
+                    <input type="text" id="item-search" placeholder="Search inventory..."
+                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em; box-sizing: border-box;">
+                </div>
+                <div id="item-category-list" style="flex: 1; overflow-y: auto; padding: 10px;">
+                    <!-- Categories or filters injected here -->
+                </div>
+            </div>
+
+            <!-- Splitter -->
+            <div id="item-splitter" class="splitter-v"></div>
+
+            <!-- Main Content -->
+            <div id="item-main-content-pane" style="flex: 1; padding: 20px; overflow-y: auto; background: #fff;">
+                <div id="persistent-sqlite-repository-item-grid"></div>
+            </div>
+        </div>
     </div>
     <!-- TAB: Item END -->
 
@@ -5589,379 +5211,302 @@
     <div id="system-configuration-persistence-panel" class="tab-content"
         style="display: none; flex-direction: column; height: 100%; border: none; padding: 0; overflow: hidden;">
 
-        <!-- FIXED HEADER & NAV -->
-        <div class="sub-nav-container">
-            <h2 id="options-main-header" style="margin: 0; font-size: 1.2em;" data-i18n="options_title">Optionen</h2>
+        <!-- Header with Sub-Navigation -->
+        <div class="sub-nav-container"
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-right: 20px;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <h2 id="options-main-header" style="margin: 0; font-size: 1.1em;" data-i18n="options_title">Optionen</h2>
+                <div class="options-nav-tabs" style="display: flex; gap: 2px;">
+                    <button id="opt-subtab-general" class="options-subtab active"
+                        onclick="switchOptionsView('general')">Allgemein</button>
+                    <button id="opt-subtab-appearance" class="options-subtab"
+                        onclick="switchOptionsView('appearance')">Darstellung</button>
+                    <button id="opt-subtab-indexing" class="options-subtab"
+                        onclick="switchOptionsView('indexing')">Indexierung</button>
+                    <button id="opt-subtab-transcoding" class="options-subtab"
+                        onclick="switchOptionsView('transcoding')">Streaming</button>
+                    <button id="opt-subtab-debug" class="options-subtab"
+                        onclick="switchOptionsView('debug')">Debug & Flags</button>
+                </div>
+            </div>
+            <div id="options-last-save" style="font-size: 0.8em; color: #999;"></div>
         </div>
 
-        <!-- SCROLLABLE CONTENT AREA wrapper START -->
-        <div id="options-scroll-container" class="scrolling-view">
+        <!-- Split Layout Wrapper -->
+        <div id="options-split-container" style="display: flex; flex: 1; height: 100%; overflow: hidden;">
+            <!-- Sidebar (Left) -->
+            <div id="options-sidebar-left"
+                style="width: 240px; flex-shrink: 0; background: #fafafa; border-right: 1px solid #eee; padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <div style="font-size: 0.85em; color: #666;" data-i18n="options_sidebar_desc">Systemkonfiguration und
+                    Feinabstimmung der Engine.</div>
 
-            <div id="options-general-view" class="options-view"
-                style="display: flex; gap: 40px; align-items: flex-start; min-height: min-content;">
-                <!-- Left Column: Core Settings -->
-                <div style="flex: 1; max-width: 500px;">
-
-                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_scan_dirs">
-                        Index-Verzeichnisse</h3>
-                    <p style="color: #666; font-size: 0.9em; margin-bottom: 12px;" data-i18n="options_scan_dirs_desc">
-                        Ordner, die beim Start oder Klick
-                        auf 'Scan' automatisch nach Medien durchsucht werden. Der Unterordner 'media' im
-                        Programmverzeichnis (/opt/media-web-viewer/media) wird standardmäßig indexiert.</p>
-                    <div id="scan-dirs-list"
-                        style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
-                        <!-- Dynamically loaded -->
+                <div style="margin-top: 10px;">
+                    <h4 style="font-size: 0.8em; text-transform: uppercase; color: #999; margin: 0 0 10px 0;">Modus</h4>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <button onclick="setAppModeUI('High-Performance')" id="mode-perf-sidebar" class="sidebar-badge"
+                            style="cursor: pointer; border: 1px solid #ddd; padding: 8px; font-size: 0.8em;">Perf</button>
+                        <button onclick="setAppModeUI('Low-Bandwidth')" id="mode-bw-sidebar" class="sidebar-badge"
+                            style="cursor: pointer; border: 1px solid #ddd; padding: 8px; font-size: 0.8em;">Band</button>
                     </div>
-                    <button onclick="addScanDirUI()"
-                        style="padding: 8px 16px; background: #e8f5e9; color: #2a7; border: 1px solid #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px;"
-                        data-i18n="options_add_dir">
-                        <svg width="12" height="12">
-                            <path d="M6 0v12M0 6h12" stroke="currentColor" stroke-width="2" />
-                        </svg>
-                        <span>Verzeichnis hinzufügen</span>
-                    </button>
+                </div>
 
-                    <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
-                        <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_mock_title">Mock Data
-                            System</h3>
+                <div id="options-system-status"
+                    style="margin-top: auto; padding: 10px; background: #fff; border: 1px solid #eee; border-radius: 6px;">
+                    <div style="font-size: 0.8em; font-weight: bold; color: #333; margin-bottom: 4px;">Status</div>
+                    <div id="options-status-badge" class="sidebar-badge" style="width: 100%; text-align: center;">
+                        Vollständig</div>
+                    <div id="options-engine-ver" style="font-size: 0.7em; color: #999; margin-top: 4px; text-align: center;">Engine v2.5</div>
+                </div>
+            </div>
+
+            <!-- Splitter -->
+            <div id="options-splitter" class="splitter-v"></div>
+
+            <!-- Main Content Area -->
+            <div id="options-main-content-pane" style="flex: 1; overflow-y: auto; padding: 30px; background: #fff;">
+
+                <!-- VIEW: General -->
+                <div id="options-general-view" class="options-view" style="display: block;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_general_debug">Allgemeine
+                        Einstellungen</h3>
+                    <div
+                        style="background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px;"
+                                data-i18n="options_language">Sprache / Language</label>
+                            <select id="language-select" onchange="changeLanguage(this.value)"
+                                style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; font-weight: 500; cursor: pointer; outline: none;">
+                                <option value="de" data-i18n="language_option_de">Deutsch</option>
+                                <option value="en" data-i18n="language_option_en">English</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px;"
+                                data-i18n="options_start_page">Start-Seite</label>
+                            <select id="start-page-select" onchange="updateStartPage(this.value)"
+                                style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-weight: 500; cursor: pointer; outline: none;">
+                                <option value="player">Player</option>
+                                <option value="library">Bibliothek</option>
+                                <option value="file">Browser (Crawler)</option>
+                                <option value="vlc">Video Player</option>
+                                <option value="logbuch">Logbuch</option>
+                                <option value="playlist">Playlist</option>
+                                <option value="options">Optionen</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="opt_path_config">Pfad-Konfiguration</h3>
+                    <div
+                        style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 15px;">
+                        <div>
+                            <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;"
+                                data-i18n="env_label_standard_folder">Browser Standard-Ordner:</label>
+                            <input type="text" id="config-browse-dir"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
+                                onchange="updateBrowseDirUI(this.value)">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;"
+                                data-i18n="options_main_dir_label">Haupt-Bibliothek-Ordner (Cache):</label>
+                            <input type="text" id="config-library-dir"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
+                                onchange="updateLibraryDirUI(this.value)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: Appearance -->
+                <div id="options-appearance-view" class="options-view" style="display: none;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">Darstellung</h3>
+                    <div
+                        style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-minimal-player"
+                                onchange="updateMinimalPlayerMode(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <div style="font-weight: 500;">Header- & Footer-Bereinigung</div>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
+                                Blendet die Navigationstabs und die Statuszeile im Player-Modus aus.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-parser-times" checked
+                                onchange="toggleParserTimes(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <div style="font-weight: 500;" data-i18n="options_show_parser_times">Parser-Zeiten in der
+                                Sidebar anzeigen</div>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
+                                data-i18n="options_show_parser_times_desc">Zeigt unten links an, wie lange jeder Parser
+                                gebraucht hat.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: Indexing -->
+                <div id="options-indexing-view" class="options-view" style="display: none;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_scan_dirs">Index-Verzeichnisse
+                    </h3>
+                    <p style="color: #666; font-size: 0.9em; margin-bottom: 12px;" data-i18n="options_scan_dirs_desc">
+                        Ordner, die beim Start oder Klick auf 'Scan' automatisch nach Medien durchsucht werden.</p>
+                    <div id="scan-dirs-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 30px;">
+                        <button onclick="addScanDirUI()"
+                            style="padding: 8px 16px; background: #e8f5e9; color: #2a7; border: 1px solid #2a7; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em;"
+                            data-i18n="options_add_dir">Verzeichnis hinzufügen</button>
+                        <button onclick="addDefaultScanDirUI()"
+                            style="padding: 8px 16px; background: #f3f8ff; color: #2a62c9; border: 1px solid #2a62c9; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em;"
+                            data-i18n="options_add_default_dir">Standardordner</button>
+                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_parser_mode">Parser-Modus</h3>
+                    <div
+                        style="display: flex; gap: 5px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                        <button onclick="setParserModeUI('lightweight')" id="pm-light" class="sidebar-badge"
+                            style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
+                            data-i18n="parser_mode_light">Light</button>
+                        <button onclick="setParserModeUI('full')" id="pm-full" class="sidebar-badge"
+                            style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
+                            data-i18n="parser_mode_full">Full</button>
+                        <button onclick="setParserModeUI('ultimate')" id="pm-ult" class="sidebar-badge"
+                            style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
+                            data-i18n="parser_mode_ultimate">Ultimate</button>
+                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_indexed_types">Indexierte
+                        Medientypen</h3>
+                    <div
+                        style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-audio" value="audio" onchange="saveParserChainUI()"> Audio
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-video" value="video" onchange="saveParserChainUI()"> Video
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-images" value="images" onchange="saveParserChainUI()"> Bilder
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-documents" value="documents" onchange="saveParserChainUI()">
+                            Dokumente
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-ebooks" value="ebooks" onchange="saveParserChainUI()"> E-Books
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-abbild" value="abbild" onchange="saveParserChainUI()">
+                            ISO-Abbilder
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-spiel" value="spiel" onchange="saveParserChainUI()"> PC-Spiele
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="cat-beigabe" value="beigabe" onchange="saveParserChainUI()">
+                            Beigaben
+                        </label>
+                    </div>
+                </div>
+
+                <!-- VIEW: Transcoding / Streaming -->
+                <div id="options-transcoding-view" class="options-view" style="display: none;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_playback_mode">Wiedergabe-Modus
+                    </h3>
+                    <div style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                        <select id="config-playback-mode" onchange="updatePlaybackModeUI(this.value)"
+                            style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; background: #fff;">
+                            <option value="chrome_native">Chrome Native</option>
+                            <option value="ffmpeg">FFmpeg (Transcode)</option>
+                            <option value="cvlc">VLC Stream</option>
+                            <option value="mkvmerge">mkvmerge (Direct)</option>
+                            <option value="direct">Direct Play</option>
+                        </select>
+                        <div id="config-bandwidth-container" style="margin-top: 15px;">
+                            <label style="display: block; font-size: 0.9em; font-weight: 500; margin-bottom: 5px;"
+                                data-i18n="options_bandwidth_limit">Bandbreiten-Limit (MB/s)</label>
+                            <input type="number" id="config-bandwidth-limit" value="20" min="1" step="1"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                                onchange="updateBandwidthLimitUI(this.value)">
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_hardware_info">Hardware Discovery
+                    </h3>
+                    <div
+                        style="background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                            <span data-i18n="env_label_disk_type">Laufwerk:</span>
+                            <span id="hardware-disk-type" style="font-weight: bold; color: #2e7d32;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                            <span data-i18n="env_label_pcie_gen">Bus Speed:</span>
+                            <span id="hardware-pcie-gen" style="font-weight: bold; color: #1565c0;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                            <span data-i18n="env_label_gpu">GPU / Core:</span>
+                            <span id="hardware-gpu-type" style="font-weight: bold; color: #6a1b9a;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>HW-Accelerator:</span>
+                            <span id="hardware-encoders" style="font-weight: bold; color: #c62828;">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: Debug -->
+                <div id="options-debug-view" class="options-view" style="display: none;">
+                    <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_general_debug">Debug & Flags</h3>
+                    <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_debug_desc">Steuerung
+                        der Engine-Logs und Engine-Reset.</p>
+
+                    <div id="debug-flags-container"
+                        style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
+                        <!-- Flags werden dynamisch geladen -->
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                        <button onclick="setAllFlags(true)"
+                            style="padding: 8px 16px; border-radius: 6px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; cursor: pointer; font-weight: bold;"
+                            data-i18n="options_debug_all_on">Alle Flags an</button>
+                        <button onclick="setAllFlags(false)"
+                            style="padding: 8px 16px; border-radius: 6px; border: 1px solid #c0392b; background: #fff; color: #c0392b; cursor: pointer; font-weight: bold;"
+                            data-i18n="options_debug_all_off">Alle Flags aus</button>
+                    </div>
+
+                    <h3 style="font-size: 1.1em; margin-bottom: 15px;">Wartung</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="resetBackend()"
+                            style="padding: 12px; background: #fff3e0; color: #e65100; border: 1px solid #ff9800; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                            data-i18n="opt_reset_backend">
+                            <svg width="14" height="14">
+                                <use href="#icon-clock"></use>
+                            </svg> Reset Backend (Sofort)
+                        </button>
                         <div
                             style="display: flex; align-items: center; gap: 15px; background: #f9fbfd; padding: 15px; border-radius: 10px; border: 1px solid #e1e8ef;">
                             <label class="switch">
-                                <input type="checkbox" id="config-mock-data-toggle"
-                                    onchange="toggleMockData(this.checked)">
+                                <input type="checkbox" id="config-mock-data-toggle" onchange="toggleMockData(this.checked)">
                                 <span class="slider"></span>
                             </label>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 600; font-size: 0.95em; color: #333;"
                                     data-i18n="options_mock_label">Mock-Daten aktivieren</span>
-                                <span style="font-size: 0.85em; color: #666;" data-i18n="options_mock_desc">Ermöglicht
-                                    das Testen von Migrationen und UI-Filtern mit Testdaten.</span>
+                                <span style="font-size: 0.85em; color: #666;"
+                                    data-i18n="options_mock_desc">Integrationstests mit Testdaten.</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <use href="#icon-generic"></use>
-                </svg> Verzeichnis hinzufügen
-                </button>
-
-                <button onclick="addDefaultScanDirUI()"
-                    style="padding: 8px 16px; background: #f3f8ff; color: #2a62c9; border: 1px solid #2a62c9; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px; margin-left: 8px;"
-                    data-i18n="options_add_default_dir">
-                    <svg width="12" height="12">
-                        <use href="#icon-folder"></use>
-                    </svg> Standardordner media/ wiederherstellen
-                </button>
-
-                <button onclick="resetBackend()"
-                    style="padding: 8px 16px; background: #fff3e0; color: #e65100; border: 1px solid #ff9800; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-bottom: 30px; margin-left: 8px;"
-                    data-i18n="opt_reset_backend">
-                    <svg width="12" height="12">
-                        <use href="#icon-clock"></use>
-                    </svg> Reset Backend (Sofort)
-                </button>
-
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="opt_path_config"><svg width="12"
-                        height="12">
-                        <use href="#icon-options"></use>
-                    </svg> Pfad-Konfiguration</h3>
-                <div
-                    style="background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px;">
-                    <div>
-                        <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;"
-                            data-i18n="env_label_standard_folder">Browser Standard-Ordner:</label>
-                        <input type="text" id="config-browse-dir"
-                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
-                            onchange="updateBrowseDirUI(this.value)">
-                    </div>
-                    <div>
-                        <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;"
-                            data-i18n="options_main_dir_label">Haupt-Bibliothek-Ordner:</label>
-                        <input type="text" id="config-library-dir"
-                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"
-                            onchange="updateLibraryDirUI(this.value)">
-                    </div>
-                    <div>
-                        <label data-i18n="options_additional_dirs"
-                            style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em;">Zusätzliche
-                            Bibliotheks-Ordner (einer pro Zeile):</label>
-                        <textarea id="config-additional-dirs"
-                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; resize: vertical;"
-                            rows="3" onchange="updateAdditionalDirsUI(this.value)"></textarea>
-                    </div>
-                </div>
-
-                <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_appearance">
-                    Darstellung
-                </h3>
-                <div
-                    style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-minimal-player"
-                            onchange="updateMinimalPlayerMode(this.checked)">
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <div style="font-weight: 500;">Header- & Footer-Bereinigung</div>
-                        <div style="font-size: 0.85em; color: #666; margin-top: 4px;">
-                            Blendet die Navigationstabs und die Statuszeile im Player-Modus aus.
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-parser-times" checked
-                            onchange="toggleParserTimes(this.checked)">
-                        <span class="slider"></span>
-                    </label>
-                    <div>
-                        <div style="font-weight: 500;" data-i18n="options_show_parser_times">Parser-Zeiten
-                            in
-                            der Sidebar anzeigen</div>
-                        <div style="font-size: 0.85em; color: #666; margin-top: 4px;"
-                            data-i18n="options_show_parser_times_desc">Zeigt unten links an, wie
-                            lange jeder Parser gebraucht hat.</div>
-                    </div>
-                </div>
-
-                <div
-                    style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_playback_mode">
-                        Wiedergabe-Modus</div>
-                    <select id="config-playback-mode" onchange="updatePlaybackModeUI(this.value)"
-                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">
-                        <option value="chrome_native" data-i18n="player_chrome_native">Chrome Native
-                        </option>
-                        <option value="ffmpeg" data-i18n="player_ffmpeg_transcode">FFmpeg (Transcode)
-                        </option>
-                        <option value="cvlc" data-i18n="player_vlc_stream">VLC Stream</option>
-                        <option value="mkvmerge" data-i18n="video_mode_mkvmerge">mkvmerge (Direct)</option>
-                        <option value="direct" data-i18n="player_direct_play">Direct Play</option>
-                    </select>
-                </div>
-
-                <div
-                    style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_bandwidth_limit">
-                        Bandbreiten-Limit (MB/s)</div>
-                    <input type="number" id="config-bandwidth-limit" value="20" min="1" step="1"
-                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
-                        onchange="updateBandwidthLimitUI(this.value)">
-                </div>
-
-                <div style="font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"
-                    data-i18n="options_hardware_info">
-                    <svg width="12" height="12">
-                        <use href="#icon-tv"></use>
-                    </svg>️ Hardware-Level Discovery
-                </div>
-                <div style="font-size: 0.85em; color: #444; display: flex; flex-direction: column; gap: 8px;">
-                    <div
-                        style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
-                        <span data-i18n="env_label_disk_type">Laufwerk:</span>
-                        <span id="hardware-disk-type" style="font-weight: bold; color: #2e7d32;">-</span>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
-                        <span data-i18n="env_label_pcie_gen">Bus Speed:</span>
-                        <span id="hardware-pcie-gen" style="font-weight: bold; color: #1565c0;">-</span>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
-                        <span data-i18n="env_label_gpu">GPU / Core:</span>
-                        <span id="hardware-gpu-type" style="font-weight: bold; color: #6a1b9a;">-</span>
-                    </div>
-                    <div
-                        style="display: flex; justify-content: space-between; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px;">
-                        <span>HW-Accelerator:</span>
-                        <span id="hardware-encoders" style="font-weight: bold; color: #c62828;">-</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span data-i18n="env_label_network_mount">Storage Type:</span>
-                        <span id="hardware-network-mount" style="font-weight: bold;">-</span>
-                    </div>
-                </div>
             </div>
-
-            <div
-                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_app_mode">
-                    App-Modus
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="setAppModeUI('High-Performance')" id="mode-perf" class="sidebar-badge"
-                        style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;"><svg width="12"
-                            height="12">
-                            <use href="#icon-sparkles"></use>
-                        </svg>
-                        <span data-i18n="status_performance">High-Performance</span></button>
-                    <button onclick="setAppModeUI('Low-Bandwidth')" id="mode-bw" class="sidebar-badge"
-                        style="flex: 1; cursor: pointer; border: 1px solid #ddd; padding: 8px;"><svg width="12"
-                            height="12">
-                            <use href="#icon-generic"></use>
-                        </svg> <span data-i18n="status_bandwidth">Low Bandwidth</span></button>
-                </div>
-            </div>
-
-            <div
-                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_parser_mode">
-                    Parser-Modus</div>
-                <div style="display: flex; gap: 5px;">
-                    <button onclick="setParserModeUI('lightweight')" id="pm-light" class="sidebar-badge"
-                        style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
-                        data-i18n="parser_mode_light">Light</button>
-                    <button onclick="setParserModeUI('full')" id="pm-full" class="sidebar-badge"
-                        style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
-                        data-i18n="parser_mode_full">Full</button>
-                    <button onclick="setParserModeUI('ultimate')" id="pm-ult" class="sidebar-badge"
-                        style="flex: 1; cursor: pointer; border: 1px solid #ddd; font-size: 0.8em;"
-                        data-i18n="parser_mode_ultimate">Ultimate</button>
-                </div>
-            </div>
-
-            <div
-                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_indexed_types">
-                    Indexierte Medientypen</div>
-                <div style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
-                    data-i18n="options_indexed_types_desc">Wähle aus, welche Dateitypen beim Scan
-                    indexiert
-                    werden sollen.</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-audio" value="audio" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_audio">Audio</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-video" value="video" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_video">Video</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-images" value="images" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_images">Bilder</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-documents" value="documents" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_documents">Dokumente</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-ebooks" value="ebooks" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_ebooks">E-Books</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-abbild" value="abbild" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_abbild">ISO-Abbilder</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-spiel" value="spiel" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_spiel">PC-Spiele</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="cat-beigabe" value="beigabe" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_beigabe">Beigaben</span>
-                    </label>
-                </div>
-            </div>
-
-            <div
-                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                <div style="font-weight: 500; margin-bottom: 10px;" data-i18n="options_displayed_types">
-                    Dargestellte Medientypen</div>
-                <div style="font-size: 0.85em; color: #666; margin-bottom: 15px;"
-                    data-i18n="options_displayed_types_desc">Wähle aus, welche Dateitypen aktuell in der
-                    Bibliothek angezeigt werden.</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-audio" value="audio" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_audio">Audio</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-video" value="video" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_video">Video</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-images" value="images" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_images">Bilder</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-documents" value="documents" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_documents">Dokumente</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-ebooks" value="ebooks" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_ebooks">E-Books</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-abbild" value="abbild" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_abbild">ISO-Abbilder</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-spiel" value="spiel" onchange="saveParserChainUI()"> <span
-                            data-i18n="cat_spiel">PC-Spiele</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="disp-cat-beigabe" value="beigabe" onchange="saveParserChainUI()">
-                        <span data-i18n="cat_beigabe">Beigaben</span>
-                    </label>
-                </div>
-            </div>
-
-            <h3 style="font-size: 1.1em; margin-bottom: 15px;" data-i18n="options_general_debug">
-                Allgemeine
-                Einstellungen</h3>
-            <div
-                style="background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 20px;">
-                <div>
-                    <label style="display: block; font-weight: 500; margin-bottom: 8px;"
-                        data-i18n="options_language">Sprache / Language</label>
-                    <select id="language-select" onchange="changeLanguage(this.value)"
-                        style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
-                        <option value="de" data-i18n="language_option_de">Deutsch</option>
-                        <option value="en" data-i18n="language_option_en">English</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="display: block; font-weight: 500; margin-bottom: 8px;"
-                        data-i18n="options_start_page">Start-Seite</label>
-                    <select id="start-page-select" onchange="updateStartPage(this.value)"
-                        style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; font-weight: 500; cursor: pointer; outline: none;">
-                        <option value="player">Player</option>
-                        <option value="library">Bibliothek</option>
-                        <option value="file">Browser (Crawler)</option>
-                        <option value="vlc">Video Player</option>
-                        <option value="logbuch">Logbuch</option>
-                        <option value="playlist">Playlist</option>
-                        <option value="options">Optionen</option>
-                    </select>
-                </div>
-            </div>
-        </div> <!-- closes Left Column: Core Settings -->
-
-        <!-- Right Column: General & Debug Settings -->
-        <div style="flex: 1; max-width: 500px;">
-            <h3 style="font-size: 1.1em; margin-bottom: 10px;" data-i18n="options_general_debug">
-                Allgemein &
-                Debug</h3>
-            <p style="color: #666; font-size: 0.85em; margin-bottom: 15px;" data-i18n="options_debug_desc">
-                Im Options-Reiter können die Flags für das Logging gesetzt werden.</p>
-
-            <div id="debug-flags-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
-                <!-- Flags werden dynamisch geladen -->
-            </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 30px;">
-                <button onclick="setAllFlags(true)"
-                    style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #2a7; background: #e8f5e9; color: #2a7; cursor: pointer; font-weight: bold;"
-                    data-i18n="options_debug_all_on">Alle Flags an</button>
-                <button onclick="setAllFlags(false)"
-                    style="padding: 5px 12px; font-size: 0.8em; border-radius: 4px; border: 1px solid #c0392b; background: #fff; color: #c0392b; cursor: pointer; font-weight: bold;"
-                    data-i18n="options_debug_all_off">Alle Flags aus</button>
-            </div>
-        </div> <!-- closes Right Column: General & Debug Settings -->
-    </div> <!-- closes options-general-view -->
-
-    </div> <!-- closes options-scroll-container -->
+        </div>
+    </div>
     </div> <!-- closes Options Tab -->
 
     <!-- ===================== TOOLS TAB START (Real Parser) ===================== -->
@@ -9083,22 +8628,7 @@
 
         let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
-        function switchLibrarySubTab(tabId) {
-            traceUiNav('SUBTAB-LIB', tabId);
-            librarySubTab = tabId;
-            localStorage.setItem('mwv_library_sub_tab', tabId);
 
-            // Update buttons
-            document.querySelectorAll('#coverflow-library-panel button.options-subtab').forEach(btn => btn.classList.remove('active'));
-            const btn = document.getElementById(`lib-tab-btn-${tabId}`);
-            if (btn) btn.classList.add('active');
-
-            // Update views
-            document.querySelectorAll('.library-sub-content').forEach(view => view.style.display = 'none');
-            document.getElementById(`lib-view-${tabId}`).style.display = 'block';
-
-            renderLibrary();
-        }
 
         function setLibrarySubFilter(val) {
             librarySubFilter = val;
@@ -15672,21 +15202,7 @@
         }
 
         // --- Tools Tab Navigation ---
-        function switchToolsView(viewId) {
-            const views = document.querySelectorAll('.tools-view');
-            views.forEach(v => v.style.display = 'none');
 
-            const target = document.getElementById('tools-' + viewId + '-view');
-            if (target) {
-                target.style.display = (viewId === 'parser') ? 'flex' : 'block';
-            }
-
-            const tabs = document.querySelectorAll('#tools-tab-pane .options-subtab');
-            tabs.forEach(t => t.classList.remove('active'));
-
-            const activeTab = document.getElementById('tools-subtab-' + viewId);
-            if (activeTab) activeTab.classList.add('active');
-        }
 
         // --- GUI Integrity Diagnostic ---
         async function checkGuiItemIntegrity() {
