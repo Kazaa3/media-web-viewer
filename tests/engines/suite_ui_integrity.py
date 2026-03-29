@@ -259,4 +259,4 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    UIIntegritySuiteEngine().run_all()
+    UIIntegritySuiteEngine().run()

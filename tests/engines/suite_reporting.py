@@ -108,4 +108,4 @@ class ReportingSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    ReportingSuiteEngine().run_all()
+    ReportingSuiteEngine().run()

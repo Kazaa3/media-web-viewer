@@ -151,4 +151,4 @@ class MediaIntegritySuiteEngine(DiagnosticEngine):
             return DiagnosticResult(5, "Categorization Logic", "FAIL", str(e))
 
 if __name__ == "__main__":
-    MediaIntegritySuiteEngine().run_all()
+    MediaIntegritySuiteEngine().run()

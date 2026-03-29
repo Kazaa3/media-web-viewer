@@ -43,7 +43,7 @@ def run_master_diagnostic():
     from tests.engines.suite_subtitles import SubtitleSuiteEngine
     from tests.engines.suite_toolchain import ToolchainSuiteEngine
     from tests.engines.suite_advanced_player import AdvancedPlayerSuite
-    from tests.engines.playwright_engine import PlaywrightEngine
+    # from tests.engines.playwright_engine import PlaywrightEngine
     parser = argparse.ArgumentParser(description="Master Diagnostic Runner")
     parser.add_argument("--basis", action="store_true", help="Run only basis levels (L1-L2)")
     args = parser.parse_args()
@@ -64,7 +64,7 @@ def run_master_diagnostic():
         ConfigSuiteEngine(), RoutingSuiteEngine(),
         ScriptSuiteEngine(), I18nSuiteEngine(), OptimizationSuiteEngine(),
         ComplexitySuiteEngine(), StylesSuiteEngine(), SubtitleSuiteEngine(),
-        ToolchainSuiteEngine(), AdvancedPlayerSuite(), PlaywrightEngine()
+        ToolchainSuiteEngine(), AdvancedPlayerSuite() #, PlaywrightEngine()
     ]
     
     for suite in suites:

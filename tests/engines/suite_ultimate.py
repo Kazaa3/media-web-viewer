@@ -279,4 +279,4 @@ class UltimateSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    UltimateSuiteEngine().run_all()
+    UltimateSuiteEngine().run()

@@ -85,4 +85,4 @@ class NetworkIntegrationSuiteEngine(DiagnosticEngine):
         return results
 
 if __name__ == "__main__":
-    NetworkIntegrationSuiteEngine().run_all()
+    NetworkIntegrationSuiteEngine().run()

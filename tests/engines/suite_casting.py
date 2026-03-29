@@ -112,4 +112,4 @@ class CastingSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    CastingSuiteEngine().run_all()
+    CastingSuiteEngine().run()

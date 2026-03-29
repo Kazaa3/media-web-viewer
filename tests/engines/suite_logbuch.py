@@ -99,4 +99,4 @@ class LogbuchSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    LogbuchSuiteEngine().run_all()
+    LogbuchSuiteEngine().run()

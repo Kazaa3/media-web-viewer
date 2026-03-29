@@ -171,4 +171,4 @@ class PlayerSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    PlayerSuiteEngine().run_all()
+    PlayerSuiteEngine().run()

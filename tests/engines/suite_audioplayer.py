@@ -102,4 +102,4 @@ class AudioplayerSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    AudioplayerSuiteEngine().run_all()
+    AudioplayerSuiteEngine().run()

@@ -44,7 +44,7 @@ class UISuiteEngine(DiagnosticEngine):
             'reporting': 'reporting-dashboard',
             'logbuch': 'documentation-journal',
             'debug': 'telemetry-inspector',
-            'tools': 'tools-tab',
+            'tools': 'tools',
             'item': 'crud-metadata'
         }
         
@@ -98,4 +98,4 @@ class UISuiteEngine(DiagnosticEngine):
 
 import re
 if __name__ == "__main__":
-    UISuiteEngine().run_all()
+    UISuiteEngine().run()

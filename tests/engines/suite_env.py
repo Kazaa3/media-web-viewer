@@ -91,4 +91,4 @@ class EnvSuiteEngine(DiagnosticEngine):
         return DiagnosticResult(6, "Python Version", "PASS" if success else "WARN", f"Running on Python {v.major}.{v.minor}.{v.micro}")
 
 if __name__ == "__main__":
-    EnvSuiteEngine().run_all()
+    EnvSuiteEngine().run()

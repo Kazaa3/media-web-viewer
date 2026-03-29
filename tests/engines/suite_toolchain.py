@@ -109,4 +109,4 @@ class ToolchainSuiteEngine(DiagnosticEngine):
 
 if __name__ == "__main__":
     engine = ToolchainSuiteEngine()
-    engine.run_all()
+    engine.run()

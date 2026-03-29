@@ -91,4 +91,4 @@ class ParserSuiteEngine(DiagnosticEngine):
             return DiagnosticResult(6, "Category Keywords", "FAIL", str(e))
 
 if __name__ == "__main__":
-    ParserSuiteEngine().run_all()
+    ParserSuiteEngine().run()

@@ -108,4 +108,4 @@ class CodeQualitySuiteEngine(DiagnosticEngine):
                                 f"Type hints detected in {hints_found}/3 sampled core files.")
 
 if __name__ == "__main__":
-    CodeQualitySuiteEngine().run_all()
+    CodeQualitySuiteEngine().run()

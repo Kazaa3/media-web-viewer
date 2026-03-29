@@ -83,4 +83,4 @@ class SidebarSuiteEngine(DiagnosticEngine):
         return super().run_all(stages)
 
 if __name__ == "__main__":
-    SidebarSuiteEngine().run_all()
+    SidebarSuiteEngine().run()
