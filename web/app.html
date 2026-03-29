@@ -10,6 +10,23 @@
 <head>
     <script>
         console.log("DOM: app.html initialization started.");
+        
+        // --- DOM TEST Watchdog ---
+        function checkDOMReadiness() {
+            const playlist = document.querySelector('.playlist-item, #playlist-container, .media-item');
+            if (playlist) {
+                const count = document.querySelectorAll('.playlist-item, .media-item').length;
+                console.log("DOM TEST: ITEM SIND GESPAWNED (Elements found). Reporting to backend...");
+                if (typeof eel !== "undefined") {
+                    eel.report_items_spawned(count, "DOM_WATCHDOG")((res) => {
+                        console.log("DOM TEST: Backend acknowledged report.", res);
+                    });
+                }
+                return true;
+            }
+            return false;
+        }
+
         window.addEventListener('DOMContentLoaded', (event) => {
             console.log("DOM: DOM fully loaded and parsed. Checking for Eel...");
             if (typeof eel !== "undefined") {
@@ -20,6 +37,16 @@
             } else {
                 console.warn("DOM: Eel NOT detected at DOMContentLoaded. Waiting for late load...");
             }
+
+            // Start polling for items rendered
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (checkDOMReadiness() || attempts > 20) {
+                    clearInterval(interval);
+                    if (attempts > 20) console.warn("DOM TEST: Watchdog timed out waiting for items.");
+                }
+            }, 1000);
         });
     </script>
     <title data-i18n="app_title">dict</title> <!-- ohne: -->

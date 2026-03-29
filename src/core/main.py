@@ -1,4 +1,4 @@
-# --- Early Path Bootstrapping & Monkey Patching ---
+# --- Early Path Bootstrapping & Standard Imports ---
 import os
 import sys
 import time
@@ -20,59 +20,69 @@ import psutil
 import requests
 import bottle
 
-# 1. Immediate Path Calculation (CRITICAL for absolute imports)
+# 1. Immediate Path Calculation
 MAIN_FILE = Path(__file__).resolve()
 PROJECT_ROOT = MAIN_FILE.parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+    
+# 2. Integrate Scripts Folder (for Status Bar etc.)
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
-print(f"STDOUT: MWV_ROOT set to {PROJECT_ROOT}", flush=True)
+# Import Status Tool
+try:
+    from status_bar_utils import StatusBar
+    print("STDOUT: [StatusTool] StatusBar integrated", flush=True)
+except ImportError:
+    # Minimal fallback
+    class StatusBar:
+        def __init__(self, msg, total=100): self.msg = msg
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+        def update(self, *a): print(f"STDOUT: [Progress] {self.msg} ({a[0]}%)", flush=True)
 
-# 2. Early Monkey Patching (MUST be before ANY gevent-aware imports)
+# 3. Early Monkey Patching
 try:
     from gevent import monkey
     monkey.patch_all()
-    print("STDOUT: gevent monkey patching complete", flush=True)
+    print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
 except ImportError:
-    print("STDOUT: gevent not found, continuing without patching", flush=True)
+    print("STDOUT: [Bootstrap] gevent not found, continuing without patching", flush=True)
 
-# --- Environment Guard ---
+# 4. Environment Guard
 def ensure_stable_environment():
     """Ensures we are running in the correct .venv_core and avoids recursive loops."""
-    # Skip if we already auto-reexecuted or are already in a venv
-    if os.environ.get("MWV_AUTO_REEXEC") == "1":
-        return
-
-    # Check for .venv_core (preferred environment)
-    # Target path for .venv_run (user command interpreter) is used too
+    if os.environ.get("MWV_AUTO_REEXEC") == "1": return
     TARGET_VENV = PROJECT_ROOT / ".venv_core"
-    if not TARGET_VENV.exists():
-        TARGET_VENV = PROJECT_ROOT / ".venv_run"
-
+    if not TARGET_VENV.exists(): TARGET_VENV = PROJECT_ROOT / ".venv_run"
     venv_python = TARGET_VENV / "bin" / "python"
     
-    # If target venv exists and we aren't using it, re-execute
     if venv_python.exists() and os.path.abspath(sys.executable) != os.path.abspath(str(venv_python)):
-        print(f"STDOUT: Environment Guard: Transitioning from {sys.executable} -> {venv_python}", flush=True)
+        print(f"STDOUT: [Guard] Switching Environment: -> {venv_python}", flush=True)
         os.environ["MWV_AUTO_REEXEC"] = "1"
         os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 
-ensure_stable_environment()
+with StatusBar("Initializing Application Environment", total=100) as sb:
+    sb.update(10, "Checking Environment")
+    ensure_stable_environment()
+    sb.update(40, "Environment Stabilized")
 
-# --- Post-Guard Imports ---
-# Initialize logging early
-from src.core.logger import get_logger
-import src.core.logger as logger
+    # --- Core Imports & Logging ---
+    from src.core.logger import get_logger
+    import src.core.logger as logger
+    sb.update(60, "Logger Initializing")
 
-def initialize_startup_logging():
-    """Initializes basic logging for the startup sequence."""
-    is_debug = "--debug" in sys.argv
-    log_level = logging.DEBUG if is_debug else logging.INFO
-    logger.setup_logging(debug_mode=is_debug, level=log_level)
-    print(f"STDOUT: Logging initialized (Level: {'DEBUG' if is_debug else 'INFO'})", flush=True)
+    def initialize_startup_logging():
+        is_debug = "--debug" in sys.argv
+        log_level = logging.DEBUG if is_debug else logging.INFO
+        logger.setup_logging(debug_mode=is_debug, level=log_level)
+        print(f"STDOUT: [System] Log initialized (Level: {'DEBUG' if is_debug else 'INFO'})", flush=True)
 
-initialize_startup_logging()
-log = get_logger("main")
+    initialize_startup_logging()
+    log = get_logger("main")
+    sb.update(100, "Core Ready")
 
 # Performance Tracking
 STARTUP_TIME = time.time()
@@ -83,178 +93,120 @@ def log_checkpoint(msg: str):
     CHECKPOINTS.append((msg, elapsed))
     print(f"STDOUT: [Checkpoint] {elapsed:6.3f}s | {msg}", flush=True)
 
-log_checkpoint("Early bootstrap finished")
-
-# --- Core Dependencies & Mode Verification ---
-# (Eel initialization moved further down after Mock detection)
-log_checkpoint("Starting environment & dependency checks")
-
-# --- Import from src (This is where it used to fail) ---
-try:
-    from src.core.remux_utils import remux_to_mp4_cache, extract_main_from_iso
-    from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
-    from src.core.mode_router import smart_route
-    from src.core import db
-    from src.core import transcoder
-    from src.core import hardware_detector
-    from src.parsers import tag_writer
-    from src.parsers.format_utils import (
-        PARSER_CONFIG, load_parser_config, save_parser_config,
-        AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
-        ffprobe_suite, ffprobe_quality_score
-    )
-    log_checkpoint("Core src modules loaded successfully")
-except Exception as e:
-    print(f"CRITICAL: Failed to load src modules: {e}", flush=True)
-    # Log trace for debugging
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-
-# --- Shared UI and system state ---
-SIDEBAR_OPEN = True
-VERSION = "1.34"
-SESSION_ID = f"{os.getpid()}_{int(time.time())}"
-port = int(os.environ.get("MWV_PORT", 8345))
-eel_kwargs = {
-    'host': 'localhost',
-    'size': (1280, 800)
-}
-log_checkpoint("State initialization complete (port: " + str(port) + ")")
-
-# --- Mock or Real Eel Selection ---
-if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("MWV_TEST_MODE"):
-    print("STDOUT: Using MockEel environment", flush=True)
-    class MockEel:
-        def __init__(self): self._exposed_functions = []
-        def expose(self, *args, **kwargs):
-            def decorator(f):
-                if f.__name__ not in self._exposed_functions: self._exposed_functions.append(f.__name__)
-                return f
-            if args and callable(args[0]):
-                if args[0].__name__ not in self._exposed_functions: self._exposed_functions.append(args[0].__name__)
-                return args[0]
-            return decorator
-        def sleep(self, *args, **kwargs): pass
-        def start(self, *args, **kwargs): print(f"STDOUT: MockEel.start called with {args} {kwargs}", flush=True)
-        def init(self, *args, **kwargs): print(f"STDOUT: MockEel.init called with {args}", flush=True)
-        def __getattr__(self, name):
-            def mock_call(*args, **kwargs): return None
-            return mock_call
-    eel = MockEel()
-else:
+# --- Application Initialization Sequence ---
+with StatusBar("Loading Core Components", total=100) as sb:
+    sb.update(0, "Importing Eel")
     import eel
-    print("STDOUT: Real Eel module imported", flush=True)
+    
+    sb.update(10, "Initializing Eel Assets")
+    web_dir = str(PROJECT_ROOT / "web")
+    if not os.path.exists(web_dir):
+        print(f"CRITICAL: Web dir not found at {web_dir}", flush=True)
+        sys.exit(1)
+    eel.init(web_dir)
+    sb.update(25, "Eel Assets Ready")
 
-# CRITICAL: Initialize Eel with the web directory
-web_dir = str(PROJECT_ROOT / "web")
-if not os.path.exists(web_dir):
-    print(f"CRITICAL: Web directory not found at {web_dir}", flush=True)
-    sys.exit(1)
-eel.init(web_dir)
-print(f"STDOUT: EEL INITIALIZED (Web Dir: {web_dir})", flush=True)
-log_checkpoint("eel initialization successful")
+    sb.update(30, "Loading Core SRC Modules")
+    try:
+        from src.core.remux_utils import remux_to_mp4_cache, extract_main_from_iso
+        from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
+        from src.core.mode_router import smart_route
+        from src.core import db
+        from src.core import transcoder
+        from src.core import hardware_detector
+        from src.parsers import tag_writer
+        from src.parsers.format_utils import (
+            PARSER_CONFIG, load_parser_config, save_parser_config,
+            AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
+            ffprobe_suite, ffprobe_quality_score
+        )
+        sb.update(80, "Core modules loaded")
+    except Exception as e:
+        print(f"CRITICAL: Resource load failure: {e}", flush=True)
+        import traceback; traceback.print_exc()
+        sys.exit(1)
 
-# --- Eel API Exposure ---
-import threading
+    sb.update(90, "Setting UI State")
+    SIDEBAR_OPEN = True
+    VERSION = "1.34"
+    SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+    port = int(os.environ.get("MWV_PORT", 8345))
+    eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
+    sb.update(100, "Initial State OK")
+
+# --- Eel Communication & Lifecycle ---
 spawn_event = threading.Event()
 
 @eel.expose
 def report_spawn():
     if not spawn_event.is_set():
         spawn_event.set()
-        print("STDOUT: Frontend spawned confirmation received", flush=True)
-
-
-# --- Application Backends ---
-# (Eel init moved to top)
-
-# Perfect Video Player Modular Backends
-
-
-def find_free_port():
-    """Utility to find an available TCP port."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
-
-
-# Internal imports
-log = get_logger("main")
-
-
-def start_app():
-    """Launches the Eel application."""
-    print(f"STDOUT: Starting Eel on port {port} (app.html)...", flush=True)
-    
-    # Handle Eel flags (--n, --ng)
-    eel_mode = 'chrome' # default
-    if "--ng" in sys.argv:
-        eel_mode = False
-        print("STDOUT: Eel running in No-GUI mode", flush=True)
-    elif "--n" in sys.argv:
-        eel_mode = None
-        print("STDOUT: Eel running in Connectionless mode", flush=True)
-
-    try:
-        # Launch with non-blocking mode to allow DOM synchronization handshake
-        eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
-        print("STDOUT: Eel server thread started. Waiting for frontend SPAWN event...", flush=True)
-        
-        # Wait for the frontend to report back via @eel.expose report_spawn()
-        if not spawn_event.wait(timeout=60):
-            print("WARNING: UI synchronization timeout after 60s. Continuing startup sequence.", flush=True)
-        else:
-            print("STDOUT: --- FRONTEND READY (ITEM SPAWNED CONFIRMED) ---", flush=True)
-    except Exception as e:
-        print(f"CRITICAL: Failed to start Eel: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
-
-transcode_mgr = None
-
-# logger already initialized above
-log_checkpoint("Base imports complete")
-
-# --- UI State Tracking ---
-SIDEBAR_OPEN = True
-
+        print("STDOUT: [Sync] Frontend spawned confirmed via @eel.expose", flush=True)
 
 @eel.expose
-def toggle_sidebar():
-    """Toggles the sidebar open/closed state for diagnostic tracking."""
-    global SIDEBAR_OPEN
-    SIDEBAR_OPEN = not SIDEBAR_OPEN
-    log.info(f"[UI] Sidebar toggled. New state: {SIDEBAR_OPEN}")
-    return {"status": "ok", "state": SIDEBAR_OPEN}
+def report_items_spawned(count, source="frontend"):
+    """
+    Formal DOM test reporting. Called when the frontend confirms
+    that key UI elements (like playlist items) are rendered.
+    """
+    msg = f"[DOM TEST] ITEM SIND GESPAWNED (Count: {count}, Source: {source})"
+    print(f"STDOUT: {msg}", flush=True)
+    log.info(msg)
+    # Also record in a dedicated status mark if needed
+    return {"status": "ok", "timestamp": time.time()}
 
+def start_app():
+    """Launches the Eel application with a robust startup watchdog."""
+    print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
+    
+    eel_mode = 'chrome'
+    if "--ng" in sys.argv: eel_mode = False
+    elif "--n" in sys.argv: eel_mode = None
+
+    try:
+        eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
+        print("STDOUT: [Eel] Server started. Monitoring for frontend synchronization...", flush=True)
+        
+        # --- Hang Detection / Watchdog ---
+        timeout = 60
+        start_wait = time.time()
+        last_alive = start_wait
+        
+        while not spawn_event.is_set():
+            now = time.time()
+            if now - start_wait > timeout:
+                print(f"CRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
+                print("STDOUT: [Diagnostics] Verify port availability and browser connectivity.", flush=True)
+                # Fallback: continue anyway but mark as unstable
+                break
+            
+            if now - last_alive >= 5:
+                elapsed = int(now - start_wait)
+                print(f"STDOUT: [Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...", flush=True)
+                last_alive = now
+                
+            time.sleep(0.5)
+            
+        if spawn_event.is_set():
+            print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
+            
+    except Exception as e:
+        print(f"CRITICAL: Eel launch failure: {e}", flush=True)
+        import traceback; traceback.print_exc()
+        sys.exit(1)
 
 def ensure_singleton():
     """Manages MWV singleton state using the centralized process_manager."""
     from src.core.process_manager import ProcessController
     pm = ProcessController(PROJECT_ROOT, Path(logger.APP_DATA_DIR))
-
-    # 1. Take lock first to see if another is active
     if not pm.acquire_lock():
-        # Another instance holds the lock. Try to kill it?
-        owner = pm.get_lock_owner()
-        log.warning(f"[System] Another instance detected (PID: {owner}). Attempting forceful takeover...")
-        pm.kill_stale_instances()  # This will kill the owner if it matches our pattern
-
-        # Try again after cleanup
+        pm.kill_stale_instances()
         if not pm.acquire_lock():
-            log.error(" CRITICAL: Another instance of MWV is already running and could not be stopped.")
-            log.error("   Please close the existing window or kill the process manually.")
-            sys.exit(1)
-
-    log.info(f"[System] Singleton lock acquired (PID: {os.getpid()})")
+            print("CRITICAL: Another instance is blocking the singleton lock.", flush=True); sys.exit(1)
     return pm
 
-
-# --- Singleton & Session Safety ---
-# We take the lock as early as possible after logger init to prevent multiple backends.
 _SINGLETON_LOCK = ensure_singleton()
+# --- End of Startup Block ---
 SESSION_ID = f"{os.getpid()}_{int(time.time())}"
 session_port = int(os.environ.get("MWV_PORT", 8345))
 log.info(f"[System] Session Initialized: {SESSION_ID} on port {session_port}")
@@ -7844,23 +7796,8 @@ def analyze_media_item(*args, **kwargs):
     return {"status": "ok"}
 
 
-@eel.expose
-def trigger_mp4tag_faststart(*args, **kwargs):
-    return {"status": "ok"}
-
-
-@eel.expose
-def read_file(*args, **kwargs):
-    return ""
-
-
-@eel.expose
-def get_recent_logs(*args, **kwargs):
-    return {"logs": []}
-
 
 if __name__ == "__main__":
-    # Consolidated startup
     start_app()
 
     log.info("[Main] Entering keepalive loop.")
