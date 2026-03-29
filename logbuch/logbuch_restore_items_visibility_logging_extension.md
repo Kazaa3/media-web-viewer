@@ -1,5 +1,49 @@
 ---
 
+## Implementation Plan: Playwright Automated Debugger & Audit Script (30.03.2026)
+
+### Hauptmerkmale
+- **Isolation:** Nutzt `managed_session.py`, um die App auf einem zufälligen Port zu starten (kein Konflikt mit laufenden Browser-Fenstern).
+- **Vollständiger Audit:** Besucht jeden Tab (player, library, video, debug, tests, etc.) und prüft:
+  - Ist der Container sichtbar (`display: block`)?
+  - Gibt es JavaScript-Fehler in der Konsole?
+  - Ist das Layout korrekt (z.B. Split-Views)?
+- **Reporting:** Erstellt einen `audit_report.md` mit Screenshots aller Fehlerzustände.
+
+### Entscheidungsfragen
+1. Soll das Skript **Headless** (im Hintergrund) oder **Headed** (mit sichtbarem Browser-Fenster) laufen? *(Headed ist oft besser für Live-Debugging.)*
+2. Soll von **jedem Tab** ein Screenshot gemacht werden oder **nur bei Fehlern**?
+
+Nach Bestätigung wird das Diagnostics-Tool implementiert.
+---
+
+## Abschluss: Structural & Layout Restoration Diagnostics (30.03.2026)
+
+### Highlights der Fertigstellung
+
+- **Struktureller Fix (Debug DB, Logbuch, Reporting):**
+  - Fehlzuordnung der Navigationsbuttons behoben. Jeder Klick aktiviert jetzt das korrekte Inhalts-Panel (`telemetry-inspector-tab-pane`, `localized-markdown-documentation-journal-panel`, etc.).
+  - Initialisierungs-Logik in `ui_nav_helpers.js` korrigiert, sodass Daten (z.B. Python-Dicts, Logbuch-Einträge) beim Tab-Wechsel sofort geladen werden.
+
+- **Layout-Perfektion:**
+  - Debug DB: Dict jetzt links, Konsole rechts, getrennt durch Splitter.
+  - Logbuch & Optionen: Horizontale Split-Views (Sidebar links) stabilisiert, vertikales Stapeln verhindert.
+
+- **Browser & Session (Chrome-Priorisierung):**
+  - `main.py` prüft proaktiv auf `google-chrome` oder `chromium-browser` im Systempfad, um Chrome-Sitzung zu erzwingen und Fallback auf Vivaldi zu vermeiden.
+
+### Walkthrough: Structural & Layout Restoration
+
+**Status-Check:**
+
+- Debug DB: ✅ Dict (L) / Konsole (R) – Funktion `renderDebugDatabase` aktiv.
+- Tests: ✅ UI-Test-Suite korrekt gemappt – Funktion `switchTestView` aktiv.
+- Logbuch: ✅ Logbuch-Helfer aktiv – Funktion `loadLogbuchTab` aktiv.
+- Browser: ✅ Chrome-Präferenz in `main.py` verankert.
+
+Damit ist die App in allen diagnostischen und System-Bereichen wieder stabil und ästhetisch korrekt ausgerichtet.
+---
+
 ## Diagnostic & System Tab Structural Restoration (30.03.2026)
 
 ### User Review Required
