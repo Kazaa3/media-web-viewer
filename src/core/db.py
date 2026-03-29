@@ -132,12 +132,16 @@ def init_db():
     """
     Initializes the database and runs migrations if needed.
     """
+    # Always ensure the directory exists, even if _DB_INITIALIZED is true,
+    # to handle cases where the directory was deleted (e.g., Factory Reset)
+    # while the process is running.
+    DB_DIR.mkdir(parents=True, exist_ok=True)
+
     global _DB_INITIALIZED
-    if _DB_INITIALIZED:
+    if _DB_INITIALIZED and Path(DB_FILENAME).exists():
         return
 
     log.info(f"Checking database integrity at {DB_FILENAME}...")
-    DB_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_FILENAME)
     cursor = conn.cursor()
 
@@ -321,7 +325,9 @@ def get_all_media():
     conn = sqlite3.connect(DB_FILENAME)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+    log.info("[DB] [get_all_media] Querying table...")
     cursor.execute("SELECT * FROM media ORDER BY name")
+    log.info(f"[DB] [get_all_media] Found {len(rows)} raw rows.")
     rows = cursor.fetchall()
 
     media_list = []

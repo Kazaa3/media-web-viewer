@@ -21,8 +21,10 @@ Verwendung:
 import logging
 import logging.handlers
 import os
+import time
+import contextlib
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Any
 
 # Setup paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -173,3 +175,37 @@ def get_ui_logs() -> List[str]:
     Returns the current UI log buffer.
     """
     return LOG_BUFFER
+
+def progress_update(task: str, percent: int, status: str = "active"):
+    """
+    Pushes a progress update to the UI via Eel.
+    @param task Name of the current operation.
+    @param percent Completion percentage (0-100).
+    @param status 'active', 'complete', or 'error'.
+    """
+    import eel
+    msg = f"[PROGRESS] {task}: {percent}% ({status})"
+    logging.info(msg)
+    if hasattr(eel, 'update_progress') and getattr(eel, '_websocket', None):
+        try:
+            eel.update_progress({"task": task, "percent": percent, "status": status})()
+        except Exception:
+            pass
+
+@contextlib.contextmanager
+def stall_watchdog(task_name: str, threshold: float = 2.0):
+    """
+    Context manager to monitor for stalls in backend functions.
+    Logs start, duration, and warnings if threshold is exceeded.
+    """
+    start_time = time.time()
+    logging.info(f"[WATCHDOG] START: {task_name}")
+    progress_update(task_name, 0, "active")
+    try:
+        yield
+    finally:
+        duration = time.time() - start_time
+        logging.info(f"[WATCHDOG] FINISH: {task_name} (took {duration:.2f}s)")
+        if duration > threshold:
+            logging.warning(f"[STALL] Task '{task_name}' exceeded threshold: {duration:.2f}s > {threshold}s")
+        progress_update(task_name, 100, "complete")

@@ -70,7 +70,7 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
     sb.update(40, "Environment Stabilized")
 
     # --- Core Imports & Logging ---
-    from src.core.logger import get_logger
+    from src.core.logger import get_logger, stall_watchdog, progress_update
     import src.core.logger as logger
     sb.update(60, "Logger Initializing")
 
@@ -149,11 +149,14 @@ def report_items_spawned(count, source="frontend"):
     Formal DOM test reporting. Called when the frontend confirms
     that key UI elements (like playlist items) are rendered.
     """
-    msg = f"[DOM TEST] ITEM SIND GESPAWNED (Count: {count}, Source: {source})"
+    if count > 0:
+        msg = f"[DOM-TEST] [SUCCESS] Items erfolgreich gespwant: {count} (Source: {source})"
+    else:
+        msg = f"[DOM-TEST] [EMPTY] Keine Medien gefunden (Source: {source})."
+    
     print(f"STDOUT: {msg}", flush=True)
     log.info(msg)
-    # Also record in a dedicated status mark if needed
-    return {"status": "ok", "timestamp": time.time()}
+    return {"status": "counts_logged", "timestamp": time.time()}
 
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
@@ -374,9 +377,12 @@ def rtt_ping(data):
 @eel.expose
 def log_js_error(error_data):
     """
-    Logs JavaScript errors from the frontend to the backend logger.
+    Logs JavaScript errors OR toast messages from the frontend to the backend logger.
     """
-    log.error(f"[JS-ERROR] {json.dumps(error_data)}")
+    if error_data.get('type') == 'TOAST':
+        log.info(f"[JS-TOAST] {error_data.get('message')}")
+    else:
+        log.error(f"[JS-ERROR] {json.dumps(error_data)}")
     return {"status": "error_logged"}
 
 
@@ -2802,7 +2808,12 @@ def get_library() -> Dict[str, Any]:
     @details Gibt alle Medien aus der Datenbank zurck ohne neu zu scannen.
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
-    all_media = db.get_all_media()
+    with stall_watchdog("Media Library Fetch", threshold=5.0):
+        log.info("[BACKEND] [get_library] Fetching...")
+        progress_update("Library: Fetching Rows", 20)
+        all_media = db.get_all_media()
+        log.info(f"[BACKEND] [get_library] Found {len(all_media) if all_media else 0} total items.")
+        progress_update("Library: Filtering Categories", 50)
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     # If explicitly None, default to everything (Legacy behavior or first run)
     # If empty list [], it means the user unchecked EVERYTHING (Respect that)
