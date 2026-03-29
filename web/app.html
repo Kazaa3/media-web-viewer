@@ -2455,6 +2455,7 @@
             line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -2867,10 +2868,7 @@
 
         function switchTab(tabId, btn) {
             const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
-            const logMsg = `switchTab: ${previousTab} → ${tabId}`;
-            console.log(`[FRONTEND] ${logMsg}`);
-            appendUiTrace(logMsg);
-            if (typeof eel !== "undefined") eel.log_js_error({type: 'TRACE', message: logMsg});
+            traceUiNav('TAB', tabId, {from: previousTab});
 
             // Reset all tabs
             document.querySelectorAll('.tab-content').forEach(el => {
@@ -3197,7 +3195,7 @@
         }
 
         function switchOptionsView(viewId) {
-            console.log("Switching options view to:", viewId);
+            traceUiNav('SUBTAB-OPTIONS', viewId);
             document.querySelectorAll('.options-view').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.options-subtab').forEach(el => el.classList.remove('active'));
 
@@ -3314,7 +3312,7 @@
         }
 
         function switchParserView(viewId) {
-            console.log("Switching parser view to:", viewId);
+            traceUiNav('SUBTAB-PARSER', viewId);
             document.querySelectorAll('.parser-view').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.options-subtab').forEach(el => {
                 if (el.id && el.id.startsWith('parser-subtab-')) {
@@ -3331,7 +3329,7 @@
         }
 
         function switchEditView(viewId) {
-            console.log("Switching edit view to:", viewId);
+            traceUiNav('SUBTAB-EDIT', viewId);
             document.querySelectorAll('.edit-view').forEach(el => el.style.display = 'none');
             document.querySelectorAll('#edit-main-content-pane .options-subtab').forEach(el => {
                 el.classList.remove('active');
@@ -3367,6 +3365,7 @@
 
         // --- Reporting View & SQL Logic ---
         function switchReportingView(view) {
+            traceUiNav('SUBTAB-REPORT', view);
             const views = {
                 'dashboard': document.getElementById('reporting-dashboard-view'),
                 'database': document.getElementById('reporting-database-view'),
@@ -3401,6 +3400,7 @@
 
         // --- Quality Assurance & Test Suite Logic ---
         function switchTestView(view) {
+            traceUiNav('SUBTAB-TESTS', view);
             document.querySelectorAll('#quality-assurance-regression-suite-panel .test-view-content').forEach(el => {
                 el.style.display = 'none';
             });
@@ -5116,64 +5116,64 @@
 
             <div id="lib-nav-container" class="sub-nav-container">
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <button class="filter-chip active" onclick="setLibraryFilter('all')"
+                    <button class="filter-chip active" data-cat="all" onclick="setLibraryFilter('all')"
                         data-i18n="filter_all">Alle</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('audio')"
+                    <button class="filter-chip" data-cat="audio" onclick="setLibraryFilter('audio')"
                         data-i18n="filter_audio">Audio</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('video')"
+                    <button class="filter-chip" data-cat="video" onclick="setLibraryFilter('video')"
                         data-i18n="filter_video">Video</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('images')"
+                    <button class="filter-chip" data-cat="images" onclick="setLibraryFilter('images')"
                         data-i18n="filter_images">Bilder</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('documents')"
+                    <button class="filter-chip" data-cat="documents" onclick="setLibraryFilter('documents')"
                         data-i18n="cat_documents">Dokumente</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('ebooks')"
+                    <button class="filter-chip" data-cat="ebooks" onclick="setLibraryFilter('ebooks')"
                         data-i18n="cat_ebooks">E-Books</button>
-                    <button class="filter-chip"
+                    <button class="filter-chip" data-cat="film"
                         style="border-color: #f39c12; color: #e67e22; display: flex; align-items: center; gap: 4px;"
                         onclick="setLibraryFilter('film')" data-i18n="cat_film"><svg width="12" height="12">
                             <use href="#icon-video"></use>
                         </svg> <span data-i18n="cat_film">Film</span></button>
-                    <button class="filter-chip"
+                    <button class="filter-chip" data-cat="serie"
                         style="border-color: #e74c3c; color: #c0392b; display: flex; align-items: center; gap: 4px;"
                         onclick="setLibraryFilter('serie')" data-i18n="cat_serie"><svg width="12" height="12">
                             <use href="#icon-tv"></use>
                         </svg> <span data-i18n="cat_serie">Serie</span></button>
-                    <button class="filter-chip"
+                    <button class="filter-chip" data-cat="album"
                         style="border-color: #3498db; color: #2980b9; display: flex; align-items: center; gap: 4px;"
                         onclick="setLibraryFilter('album')" data-i18n="cat_album"><svg width="12" height="12">
                             <use href="#icon-audio"></use>
                         </svg> <span data-i18n="cat_album">Album</span></button>
-                    <button class="filter-chip"
+                    <button class="filter-chip" data-cat="soundtrack"
                         style="border-color: #9b59b6; color: #8e44ad; display: flex; align-items: center; gap: 4px;"
                         onclick="setLibraryFilter('soundtrack')" data-i18n="cat_soundtrack"><svg width="12" height="12">
                             <use href="#icon-audio"></use>
                         </svg> <span data-i18n="cat_soundtrack">Soundtrack</span></button>
-                    <button class="filter-chip"
+                    <button class="filter-chip" data-cat="playlist"
                         style="border-color: #27ae60; color: #1e8449; display: flex; align-items: center; gap: 4px;"
                         onclick="setLibraryFilter('playlist')" data-i18n="cat_playlist"><svg width="12" height="12">
                             <use href="#icon-playlist"></use>
                         </svg> <span data-i18n="cat_playlist">Playlist</span></button>
-                    <button class="filter-chip" style="border-color: #e67e22; color: #d35400;"
+                    <button class="filter-chip" data-cat="podcast" style="border-color: #e67e22; color: #d35400;"
                         onclick="setLibraryFilter('podcast')" data-i18n="cat_podcast"><svg width="12" height="12">
                             <use href="#icon-audio"></use>
                         </svg> Podcast</button>
-                    <button class="filter-chip" style="border-color: #9b59b6; color: #8e44ad;"
+                    <button class="filter-chip" data-cat="compilation" style="border-color: #9b59b6; color: #8e44ad;"
                         onclick="setLibraryFilter('compilation')" data-i18n="cat_compilation"><svg width="12"
                             height="12">
                             <use href="#icon-save"></use>
                         </svg>
                         Compilation</button>
-                    <button class="filter-chip" style="border-color: #e74c3c; color: #c0392b;"
+                    <button class="filter-chip" data-cat="single" style="border-color: #e74c3c; color: #c0392b;"
                         onclick="setLibraryFilter('single')" data-i18n="cat_single"><svg width="12" height="12">
                             <use href="#icon-disk"></use>
                         </svg> Single</button>
-                    <button class="filter-chip" style="border-color: #f1c40f; color: #f39c12;"
+                    <button class="filter-chip" data-cat="klassik" style="border-color: #f1c40f; color: #f39c12;"
                         onclick="setLibraryFilter('klassik')" data-i18n="cat_klassik"><svg width="12" height="12">
                             <use href="#icon-audio"></use>
                         </svg> Klassik</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('abbild')"
+                    <button class="filter-chip" data-cat="abbild" onclick="setLibraryFilter('abbild')"
                         data-i18n="cat_abbild">ISO-Abbilder</button>
-                    <button class="filter-chip" onclick="setLibraryFilter('spiel')"
+                    <button class="filter-chip" data-cat="spiel" onclick="setLibraryFilter('spiel')"
                         data-i18n="cat_spiel">PC-Spiele</button>
 
                     <div style="width: 1px; height: 24px; background: #ddd; margin: 0 10px;"></div>
@@ -9031,14 +9031,17 @@
         }
 
         function setLibraryFilter(cat) {
+            traceUiNav('FILTER-CAT', cat);
             libraryFilter = cat;
             librarySubFilter = 'all'; // Reset sub-filter when switching main category
             const subFilterSelect = document.getElementById('library-subcategory-filter');
             if (subFilterSelect) subFilterSelect.value = 'all';
 
             coverflowIndex = 0;
+            // Robust active state update using categories
             document.querySelectorAll('#coverflow-library-panel .filter-chip').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${cat}'`));
+                const btnCat = btn.getAttribute('data-cat') || (btn.getAttribute('onclick') || '').match(/'(.*?)'/)?.[1];
+                btn.classList.toggle('active', btnCat === cat);
             });
             renderLibrary();
         }
@@ -9046,6 +9049,7 @@
         let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
         function switchLibrarySubTab(tabId) {
+            traceUiNav('SUBTAB-LIB', tabId);
             librarySubTab = tabId;
             localStorage.setItem('mwv_library_sub_tab', tabId);
 
@@ -9140,9 +9144,10 @@
                     renderFollowingView();
                 } else if (librarySubTab === 'database') {
                     renderDatabaseView();
-                appendUiTrace("renderLibrary: GUI Spawning complete.");
-                if (typeof eel !== "undefined") eel.report_items_spawned(10); // Dummy count for verification
                 }
+
+                appendUiTrace("renderLibrary: GUI Spawning complete.");
+                if (typeof eel !== "undefined") eel.report_items_spawned(coverflowItems.length);
 
             } catch (e) {
                 console.error("Failed to render library:", e);

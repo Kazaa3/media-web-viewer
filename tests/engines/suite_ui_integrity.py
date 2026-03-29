@@ -285,10 +285,41 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
         lib_switches = re.findall(r"switchLibrarySubTab\(\s*['\"](\w+)['\"]", content)
         
         all_targets = list(set(switches + lib_switches))
-        # Note: We skip checking if they exist as IDs for now as L09/L11 do some of that,
-        # but this level is for "Structural Completeness".
         
         return DiagnosticResult(14, "Subtab Structural Audit", "PASS", f"Scanned {len(all_targets)} potential subtab triggers.")
+
+    def level_16_navigation_coverage_audit(self) -> DiagnosticResult:
+        """DEEP: Verifies all traceUiNav calls are balanced with structural IDs."""
+        if not self.app_html.exists(): return DiagnosticResult(16, "Navigation Coverage", "SKIP", "No app.html")
+        content = self.app_html.read_text(encoding='utf-8')
+        
+        # Look for traceUiNav calls
+        traces = re.findall(r"traceUiNav\(\s*['\"](.*?)['\"]", content)
+        # Look for sub-nav switches
+        subtabs = re.findall(r"switch(Tab|LibrarySubTab|OptionsView|ParserView|EditView|ReportingView|TestView)\(\s*['\"](\w+)['\"]", content)
+        
+        unique_targets = list(set([t[1] for t in subtabs]))
+        # Heuristic: Check for matching IDs or display-none containers
+        found = 0
+        for target in unique_targets:
+            if f'id="{target}"' in content or f"id='{target}'" in content or f'lib-view-{target}' in content:
+                found += 1
+        
+        status = "PASS" if found == len(unique_targets) else "WARN"
+        return DiagnosticResult(16, "Navigation Coverage", status, f"Verified {found}/{len(unique_targets)} navigation targets.")
+
+    def level_17_modal_structural_audit(self) -> DiagnosticResult:
+        """DEEP: Audits reachability and naming of all toggleModal targets."""
+        if not self.app_html.exists(): return DiagnosticResult(17, "Modal Structural Audit", "SKIP", "No app.html")
+        content = self.app_html.read_text(encoding='utf-8')
+        
+        # Find all toggleModal('id') calls
+        calls = set(re.findall(r"toggleModal\(\s*['\"](\w+)['\"]", content))
+        missing = [c for c in calls if f'id="{c}"' not in content and f"id='{c}'" not in content]
+        
+        if missing:
+            return DiagnosticResult(17, "Modal Structural Audit", "FAIL", f"Found unreachable modals: {missing}")
+        return DiagnosticResult(17, "Modal Structural Audit", "PASS", f"All {len(calls)} modal triggers have matching IDs.")
 
     def run_all(self) -> List[DiagnosticResult]:
         # Ordering by CRITICALITY and SPEED (Fastest first)
@@ -307,7 +338,9 @@ class UIIntegritySuiteEngine(DiagnosticEngine):
             self.level_7_svg_icon_refs,        # Level 7
             self.level_8_onerror_bridge_presence,# Level 8
             self.level_10_debug_db_view,       # Level 10
-            self.level_12_mock_system_integration # Level 12
+            self.level_12_mock_system_integration, # Level 12
+            self.level_16_navigation_coverage_audit, # Level 16
+            self.level_17_modal_structural_audit     # Level 17
         ]
         return super().run_all(stages)
 

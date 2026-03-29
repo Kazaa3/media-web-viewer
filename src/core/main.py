@@ -2989,6 +2989,18 @@ def log_playback_event(event_type: str, details: str):
 
 
 @eel.expose
+def log_ui_event(event_type: str, name: str, details: str = ""):
+    """
+    @brief Logs UI navigation and interaction events.
+    @details Protokolliert UI-Interaktionen wie Tab-Wechsel, Modals etc.
+    """
+    msg = f"[JS-NAV] [{event_type}] {name}"
+    if details:
+        msg += f" | {details}"
+    log.info(msg)
+
+
+@eel.expose
 def update_tags(name, tags_dict):
     """
     @brief Saves customized tags for a media item in the database.
