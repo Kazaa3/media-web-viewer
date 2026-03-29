@@ -35,7 +35,9 @@ function playAudio(item, startTime = 0) {
     if (!pipeline) return;
 
     const proxyUrl = "/media/" + encodeURIComponent(item.path);
-    if (typeof appendUiTrace === 'function') appendUiTrace(`[Audio] Playing: ${item.name} via ${proxyUrl}`);
+    const logMsg = `[Audio] Attempting to play: ${item.name} | Path: ${item.path} | Proxy: ${proxyUrl}`;
+    console.log(logMsg);
+    if (typeof appendUiTrace === 'function') appendUiTrace(logMsg);
     
     pipeline.src = proxyUrl;
     
@@ -188,11 +190,22 @@ async function playPrev() {
  * Renders the global playlist in the Playlist tab.
  */
 function renderPlaylist() {
-    const list = document.getElementById('json-serialized-sequence-item-container');
-    const countEl = document.getElementById('json-serialized-sequence-length-renderer');
-    if (!list) return;
+    const containers = [
+        document.getElementById('json-serialized-sequence-item-container'),
+        document.getElementById('player-queue-pane'),
+        document.getElementById('active-playlist-container')
+    ].filter(el => el !== null);
 
-    list.ondragover = (e) => e.preventDefault();
+    const countEl = document.getElementById('json-serialized-sequence-length-renderer');
+    if (countEl) countEl.innerText = currentPlaylist.length;
+
+    console.log(`[Audio] Rendering playlist on ${containers.length} containers. Items: ${currentPlaylist.length}`);
+    if (containers.length === 0) return;
+
+    containers.forEach(list => {
+        list.innerHTML = ''; // Clear existing
+
+        list.ondragover = (e) => e.preventDefault();
     list.ondrop = (e) => {
         e.preventDefault();
         const data = e.dataTransfer.getData("text/plain");
@@ -206,8 +219,21 @@ function renderPlaylist() {
     };
 
     const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
-    list.innerHTML = '';
-    if (countEl) countEl.innerText = activeList.length + ' Items';
+    if (activeList.length === 0) {
+        list.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #888; text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;">🎵</div>
+                <h3 style="margin: 0 0 10px 0; font-weight: 500;">Die Warteschlange ist leer</h3>
+                <p style="font-size: 0.9em; max-width: 250px; margin: 0 auto 20px auto;">
+                    Füge Lieder aus der Bibliothek hinzu oder ziehe Dateien hierher.
+                </p>
+                <button onclick="switchTab('library')" class="tab-btn" style="background: #2a7; color: white; border: none; padding: 10px 20px;">
+                    Zur Bibliothek
+                </button>
+            </div>
+        `;
+        return;
+    }
 
     activeList.forEach((item, index) => {
         let div = document.createElement('div');
@@ -257,6 +283,7 @@ function renderPlaylist() {
         
         list.appendChild(div);
     });
+});
 }
 
 function moveItemUp(index) {

@@ -124,7 +124,7 @@ async function fbPickFolder() {
 /**
  * Context menu management for files.
  */
-let contextMenuItem = null;
+// let contextMenuItem = null;
 
 function showContextMenu(e, item) {
     e.preventDefault();

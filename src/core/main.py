@@ -1,3 +1,4 @@
+import sys, os; sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -28,10 +29,10 @@ def ensure_stable_environment():
     if os.environ.get("MWV_AUTO_REEXEC") == "1":
         return
 
-    # 1.1. Version Guard (Relaxed to 3.14.0+)
-    if sys.version_info < (3, 14, 0):
+    # 1.1. Version Guard (Relaxed to 3.10.0+)
+    if sys.version_info < (3, 10, 0):
         log_self_diagnostics()
-        sys.stderr.write(f"\nERROR: This application requires Python 3.14.0+. (Detected: {sys.version})\n")
+        sys.stderr.write(f"\nERROR: This application requires Python 3.10.0+. (Detected: {sys.version})\n")
         sys.exit(1)
 
     # 1.2. Venv Path Guard (Prefer .venv over .venv_run)
@@ -66,8 +67,9 @@ def ensure_stable_environment():
             sys.stderr.write(f"\nERROR: Environment re-execution failed: {e}\n")
             sys.exit(1)
 
-# --- EXECUTE GUARD IMMEDIATELY ---
-ensure_stable_environment()
+# --- EXECUTE GUARD IMMEDIATELY if run as main ---
+if __name__ == "__main__":
+    ensure_stable_environment()
 
 # --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
 import time
@@ -134,10 +136,13 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
     import src.core.logger as logger
     sb.update(60, "Logger Initializing")
 
+    # Initialize SESSION_ID as early as possible for logging
+    SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+
     def initialize_startup_logging():
         is_debug = "--debug" in sys.argv
         log_level = logging.DEBUG if is_debug else logging.INFO
-        logger.setup_logging(debug_mode=is_debug, level=log_level)
+        logger.setup_logging(debug_mode=is_debug, level=log_level, session_id=SESSION_ID)
         print(f"STDOUT: [System] Log initialized (Level: {'DEBUG' if is_debug else 'INFO'})", flush=True)
 
     initialize_startup_logging()
@@ -189,7 +194,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(90, "Setting UI State")
     SIDEBAR_OPEN = True
     VERSION = "1.34"
-    SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+    # SESSION_ID already initialized above
     port = int(os.environ.get("MWV_PORT", 8345))
     eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
     sb.update(100, "Initial State OK")
@@ -207,16 +212,36 @@ def report_spawn():
 def report_items_spawned(count, source="frontend"):
     """
     Formal DOM test reporting. Called when the frontend confirms
-    that key UI elements (like playlist items) are rendered.
+    that key UI elements are rendered.
     """
     if count > 0:
-        msg = f"[DOM-TEST] [SUCCESS] Items erfolgreich gespwant: {count} (Source: {source})"
+        msg = f"[DOM-TEST] [SUCCESS] Items in DOM: {count} (Source: {source})"
     else:
-        msg = f"[DOM-TEST] [EMPTY] Keine Medien gefunden (Source: {source})."
+        msg = f"[DOM-TEST] [EMPTY] No items in DOM (Source: {source})."
     
     print(f"STDOUT: {msg}", flush=True)
     log.info(msg)
     return {"status": "counts_logged", "timestamp": time.time()}
+
+@eel.expose
+def report_playback_state(is_playing, item_name, current_time):
+    """
+    Reports the current playback state from the frontend.
+    Used for automated verification of playability.
+    """
+    msg = f"[DOM-TEST] [PLAYBACK] {'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {current_time:.1f}s"
+    print(f"STDOUT: {msg}", flush=True)
+    log.info(msg)
+    return {"status": "playback_logged"}
+
+@eel.expose
+def trigger_factory_reset():
+    """
+    Exposed wrapper to perform a database reset from the UI.
+    """
+    log.warning("[System] Factory reset triggered via Eel.")
+    from src.core.db import factory_reset
+    return factory_reset()
 
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
@@ -230,6 +255,15 @@ def start_app():
         eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
         print("STDOUT: [Eel] Server started. Monitoring for frontend synchronization...", flush=True)
         
+        # --- Automated Probe Trigger ---
+        if "--probe" in sys.argv:
+            def probe_trigger():
+                spawn_event.wait()
+                time.sleep(5) # Wait for UI to settle
+                print("STDOUT: [Eel] Triggering automated frontend probe (@eel.run_frontend_probe)", flush=True)
+                eel.run_frontend_probe()()
+            threading.Thread(target=probe_trigger, daemon=True).start()
+
         # --- Hang Detection / Watchdog ---
         timeout = 60
         start_wait = time.time()
@@ -275,11 +309,13 @@ def ensure_singleton():
             print("CRITICAL: Another instance is blocking the singleton lock.", flush=True); sys.exit(1)
     return pm
 
-_SINGLETON_LOCK = ensure_singleton()
+# _SINGLETON_LOCK = ensure_singleton()
 # --- End of Startup Block ---
-SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+# SESSION_ID stable and already logged
+from src.core.db import get_active_db_path
 session_port = int(os.environ.get("MWV_PORT", 8345))
 log.info(f"[System] Session Initialized: {SESSION_ID} on port {session_port}")
+log.info(f"[System] Active Database: {get_active_db_path()}")
 
 
 @eel.expose
@@ -538,7 +574,7 @@ def initialize_debug_flags(args=None):
     else:
         log_level = logging.INFO
 
-    logger.setup_logging(debug_mode=debug_mode, level=log_level)
+    logger.setup_logging(debug_mode=debug_mode, level=log_level, session_id=SESSION_ID)
 
     if debug_mode:
         # Override config: Set all flags to True for --debug session

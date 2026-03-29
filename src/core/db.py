@@ -19,8 +19,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import sqlite3
 import json
+import os
 from src.core.logger import get_logger
 log = get_logger("db")
+log.info(f"[DB-INIT] Initializing DB module. PID: {os.getpid()}")
 
 from pathlib import Path
 from typing import Iterable
@@ -141,9 +143,13 @@ def init_db():
     if _DB_INITIALIZED and Path(DB_FILENAME).exists():
         return
 
-    log.info(f"Checking database integrity at {DB_FILENAME}...")
-    conn = sqlite3.connect(DB_FILENAME)
-    cursor = conn.cursor()
+    log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
+    try:
+        conn = sqlite3.connect(DB_FILENAME)
+        cursor = conn.cursor()
+    except Exception as e:
+        log.error(f"[DB-CRITICAL] Failed to connect to DB: {e}. Attempting reset...")
+        return factory_reset()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS media (
@@ -235,6 +241,28 @@ def init_db():
 
     conn.commit()
     conn.close()
+    log.info("[DB] Database initialization/migration successful.")
+
+
+def factory_reset():
+    """
+    Deletes the current database file and re-initializes from scratch.
+    """
+    log.warning(f"[DB] FACTORY RESET TRIGGERED. Deleting {DB_FILENAME}...")
+    db_path = Path(DB_FILENAME)
+    if db_path.exists():
+        try:
+            db_path.unlink()
+            log.info("[DB] Database file deleted successfully.")
+        except Exception as e:
+            log.error(f"[DB] Could not delete database file: {e}")
+            # Try to just clear tables if file delete fails
+            clear_media()
+    
+    global _DB_INITIALIZED
+    _DB_INITIALIZED = False
+    init_db()
+    return True
 
 
 def get_known_media_names():
@@ -308,12 +336,17 @@ def insert_media(item_dict):
         ))
         conn.commit()
         last_id = cursor.lastrowid
-        log.info(f"[DB] Inserted media item: {item_dict['name']} (Type: {item_dict['type']}, ID: {last_id})")
+        log.info(f"[DB] [INSERT-SUCCESS] {item_dict['name']} | Type: {item_dict['type']} | ID: {last_id}")
         conn.close()
         return last_id
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        log.warning(f"[DB] [INSERT-SKIP] IntegrityError: {item_dict['name']} might already exist. ({e})")
         conn.close()
         return None
+    except Exception as e:
+        log.error(f"[DB] [INSERT-ERROR] {item_dict['name']}: {e}")
+        conn.close()
+        raise
 
 
 def get_all_media():

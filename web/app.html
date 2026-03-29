@@ -293,6 +293,9 @@
                 <button class="tab-btn" onclick="switchMainCategory('media', this)" data-category="media">
                     <svg width="20" height="20"><use href="#icon-audio"></use></svg> Media
                 </button>
+                <button class="tab-btn active" onclick="switchMainCategory('video', this)" data-category="video">
+                    <svg width="20" height="20"><use href="#icon-video"></use></svg> Video
+                </button>
                 <button class="tab-btn" onclick="switchMainCategory('management', this)" data-category="management">
                     <svg width="20" height="20"><use href="#icon-folder"></use></svg> Management
                 </button>
@@ -313,16 +316,6 @@
 
         </div>
         <div style="display:flex; align-items:center; gap:12px; flex: 1; justify-content: flex-end; overflow: hidden;">
-            <button id="show-features-btn" class="glass-button"
-                style="padding: 8px 15px; font-size: 0.9em; min-width: 120px;" onclick="showFeaturesModal()"
-                data-i18n="btn_features">
-                <svg width="14" height="14" style="margin-right: 6px;">
-                    <use href="#icon-sparkles"></use>
-                </svg> Features</button>
-            <button onclick="scan(null, true)" id="media-index-crawler-trigger"
-                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; flex-shrink: 0;"
-                data-i18n="btn_scan_media">Scan
-                Media</button>
         </div>
     </header>
 
@@ -669,7 +662,7 @@
 
     <!-- TAB: Item START -->
     <div id="indexed-sqlite-media-repository-panel" class="tab-content"
-        style="display: none; flex-direction: column; height: 100%; width: 100%; padding: 0; overflow: hidden;">
+        style="display: none; height: 100%; flex-direction: row; align-items: stretch; justify-content: flex-start; padding: 0; background: #fafafa;">
         <div id="item-split-container" style="display: flex; flex: 1; height: 100%; overflow: hidden;">
             <!-- Sidebar (Left) -->
             <div id="item-sidebar-left"
@@ -1239,6 +1232,7 @@
 
             <div class="sub-nav-container">
                 <h2 style="margin: 0; font-size: 1.2em;">Tools & Advanced Components</h2>
+                <button onclick="scan(null, true)" class="tab-btn" style="margin-right: 15px; background: #fff; font-weight: bold; border: 2px solid #3498db; color: #2980b9;" data-i18n="btn_scan_media">Scan Media</button>
                 <div class="options-nav-tabs">
                     <button class="options-subtab active" onclick="switchToolsView('parser')" id="tools-subtab-parser">
                         Parser Chain
@@ -1753,7 +1747,7 @@
                 </div>
             </div>
 
-            <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+            <div style="margin-top: 30px; display: flex;  gap: 15px;">
                 <button onclick="loadStartupConfig()"
                     style="padding: 10px 20px; background: #eee; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Abbrechen / Laden
@@ -4223,6 +4217,10 @@
             <span onclick="toggleDebugMenu()"
                 style="cursor:pointer; font-weight:700; color:#4caf50; letter-spacing:0.5px; background: rgba(76,175,80,0.1); padding: 1px 5px; border-radius: 3px;">DICT</span>
             <span id="footer-version" style="opacity: 0.5; font-family: monospace;">v1.0.1 (ES6 Refactor)</span>
+            <button onclick="scan(null, true)"
+                style="background: rgba(42,167,112,0.1); color: #2a7; border: 1px solid rgba(42,167,112,0.2); border-radius: 3px; padding: 0 4px; font-size: 0.9em; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.background='rgba(42,167,112,0.2)'"
+                onmouseout="this.style.background='rgba(42,167,112,0.1)'">SCAN</button>
             <button onclick="resetAppData()"
                 style="background: rgba(244,67,54,0.1); color: #f44336; border: 1px solid rgba(244,67,54,0.2); border-radius: 3px; padding: 0 4px; font-size: 0.9em; cursor: pointer; transition: all 0.2s;"
                 onmouseover="this.style.background='rgba(244,67,54,0.2)'"
@@ -4238,7 +4236,6 @@
     <script src="js/video_test_suite.js"></script>
     <script src="js/stats-overlay.js"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
-    </div> <!-- closes main-content-area (Line 4988) -->
 </body>
 
 </html>

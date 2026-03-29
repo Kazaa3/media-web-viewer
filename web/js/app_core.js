@@ -5,11 +5,11 @@
 
 // --- Global Application State ---
 let activeAudioPipeline = document.getElementById('native-html5-audio-pipeline-element');
-let currentLogbuchEntries = [];
+// let currentLogbuchEntries = [];
 let currentPlaylist = []; // Shared across Audio/Video modules
 let currentVideoItem = null;
 let currentVideoPath = null;
-let vjsPlayer = null;
+let vjsPlayer = null; // Defined as a shared global in Orchestrator
 
 /**
  * Unified Media Playback Router
@@ -98,7 +98,7 @@ window.switchTab = function (tabId, btn) {
     }
 
     // Cross-tab logic requirements
-    if (tabId === 'playlist' && typeof renderPlaylist === 'function') {
+    if ((tabId === 'playlist' || tabId === 'player') && typeof renderPlaylist === 'function') {
         renderPlaylist();
     }
     if (tabId === 'library' && typeof renderLibrary === 'function') {
@@ -146,7 +146,50 @@ document.addEventListener('keydown', async (e) => {
 window.addEventListener('DOMContentLoaded', () => {
     console.log("Core Orchestrator: System checks passing.");
     
+    // Default Start Screen (Direct Tab Switch)
+    if (typeof switchMainCategory === 'function') switchMainCategory('media');
+    if (typeof switchTab === 'function') switchTab('player');
+    
     // Initialize Library & Inventory
+    if (typeof loadLibrary === 'function') loadLibrary();
     if (typeof loadLibrary === 'function') loadLibrary();
     if (typeof loadEditItems === 'function') loadEditItems();
 });
+
+/**
+ * [TEST-SUITE] [DOM-PROBE]
+ * Backend-triggered diagnostic that checks UI state and reports via Eel.
+ */
+if (typeof eel !== 'undefined') {
+    eel.expose(run_frontend_probe);
+}
+
+function run_frontend_probe() {
+    console.log("[DOM-PROBE] Starting automated UI check...");
+    
+    // 1. Check for rendered items
+    const playlistItems = document.querySelectorAll('.implementation-encapsulated-state-buffer-node');
+    const queueItems = document.querySelectorAll('#player-queue-pane .implementation-encapsulated-state-buffer-node');
+    const itemCount = Math.max(playlistItems.length, queueItems.length);
+    
+    if (typeof eel !== 'undefined' && typeof eel.report_items_spawned === 'function') {
+        eel.report_items_spawned(itemCount, "probe")();
+    }
+
+    // 2. Playback Check (If items exist)
+    if (itemCount > 0) {
+        const firstItemNode = playlistItems[0] || queueItems[0];
+        console.log("[DOM-PROBE] Attempting to trigger playback on first item...");
+        if (firstItemNode) firstItemNode.click();
+        
+        // Wait a bit for playback to start, then report state
+        setTimeout(() => {
+            const pipeline = document.getElementById('native-html5-audio-pipeline-element');
+            if (pipeline && typeof eel !== 'undefined' && typeof eel.report_playback_state === 'function') {
+                const isPlaying = !pipeline.paused && pipeline.currentTime > 0;
+                const itemName = pipeline.src.split('/').pop() || "unknown";
+                eel.report_playback_state(isPlaying, itemName, pipeline.currentTime)();
+            }
+        }, 2000);
+    }
+}

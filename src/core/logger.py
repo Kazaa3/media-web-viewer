@@ -150,11 +150,12 @@ def log_system_diagnostics():
     logging.debug("--- [SYSTEM DIAGNOSTICS] END ---")
 
 
-def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
+def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session_id: Optional[str] = None):
     """
     Initializes the centralized logging system.
     @param debug_mode If True, additional debug file loggers are activated.
     @param level Optional explicit logging level (e.g. logging.DEBUG, logging.INFO).
+    @param session_id If provided, creates a unique session log file in logs/.
     """
     root_logger = logging.getLogger()
     
@@ -165,6 +166,12 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
     if level is None:
         level = logging.DEBUG if debug_mode else logging.INFO
     root_logger.setLevel(level)
+
+    # Determine session-specific log file
+    session_log_path = None
+    if session_id:
+        session_log_path = LOCAL_LOG_DIR / f"session_{session_id}.log"
+        logging.info(f"Session-specific logging enabled: {session_log_path}")
 
     # Format
     # In debug mode, we include more technical details (file, line, thread)
@@ -190,6 +197,16 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None):
         root_logger.addHandler(file_handler)
     except Exception as e:
         logging.error(f"Failed to initialize file logger: {e}")
+
+    # 2b. Session-Specific File Handler
+    if session_log_path:
+        try:
+            session_file_handler = logging.FileHandler(session_log_path, encoding='utf-8')
+            session_file_handler.setFormatter(formatter)
+            root_logger.addHandler(session_file_handler)
+            logging.info(f"Session log initialized at: {session_log_path}")
+        except Exception as e:
+            logging.error(f"Failed to initialize session logger: {e}")
 
     # 3. Project-Local Debug File Handler (only if debug_mode is True)
     if debug_mode:

@@ -9,11 +9,11 @@ let allLibraryItems = [];
 let coverflowItems = [];
 let coverflowIndex = 0;
 let libraryFilter = 'all';
-let librarySubFilter = 'all';
+// let librarySubFilter = 'all';
 let libraryGenre = 'all';
 let libraryYear = 'all';
 let librarySearch = '';
-let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+// let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
 /**
  * Boots the library by fetching data from the DB.
@@ -23,12 +23,14 @@ async function loadLibrary(retryCount = 0) {
     try {
         const library = await getLibrary();
         allLibraryItems = library.media || [];
+        console.log(`[Library] Received ${allLibraryItems.length} items from backend.`);
         
-        const mockEnabled = typeof eel !== 'undefined' ? await eel.get_mock_data_enabled()() : false;
+        const mockEnabled = typeof eel !== 'undefined' ? await eel.get_mock_data_enabled() : false;
         if (!mockEnabled) {
             allLibraryItems = allLibraryItems.filter(i => !i.is_mock);
         }
 
+        console.info(`[Library] Rendering ${allLibraryItems.length} items.`);
         renderLibrary();
     } catch (e) {
         console.error("[Library] Load error:", e);
@@ -55,6 +57,7 @@ async function renderLibrary() {
 
     // Local filter stage
     coverflowItems = allLibraryItems;
+    console.debug(`[Library] renderLibrary starting with ${coverflowItems.length} items. Filter: ${libraryFilter}, Search: ${librarySearch}`);
 
     // Search
     if (librarySearch) {

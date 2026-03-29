@@ -58,6 +58,7 @@ function traceUiNav(category, target, details = {}) {
  * Switches between main application tabs.
  */
 function switchTab(tabId, btn) {
+    let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
     const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
     traceUiNav('TAB', tabId, {from: previousTab});
     
@@ -119,12 +120,37 @@ function switchTab(tabId, btn) {
 
     localStorage.setItem('mwv_active_tab', tabId);
 
-    // Context-specific actions
-    if (tabId === 'library' && typeof renderLibrary === 'function') renderLibrary();
-    if (tabId === 'item' && typeof refreshLibrary === 'function') refreshLibrary();
-    if (tabId === 'options') {
-        if (typeof loadDebugFlags === 'function') loadDebugFlags();
-        if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
+    // Context-specific actions (Repairing all tabs)
+    const initActions = {
+        'player': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
+        'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
+        'library': () => { 
+            if (typeof renderPlaylist === 'function') renderPlaylist();
+            if (typeof renderLibrary === 'function') renderLibrary(); 
+        },
+        'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
+        'vlc': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
+        'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
+        'item': () => { if (typeof refreshLibrary === 'function') refreshLibrary(); },
+        'edit': () => { if (typeof initEdit === 'function') initEdit(); },
+        'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
+        'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
+        'options': () => { 
+            if (typeof loadDebugFlags === 'function') loadDebugFlags();
+            if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
+        },
+        'debug': () => { if (typeof renderDebugTelemetrie === 'function') renderDebugTelemetrie(); },
+        'flags': () => { if (typeof loadDebugFlags === 'function') loadDebugFlags(); },
+        'reporting': () => { if (typeof renderReportingDashboard === 'function') renderReportingDashboard(); },
+        'logbuch': () => { if (typeof renderLogbuch === 'function') renderLogbuch(); },
+        'tests': () => { if (typeof renderVideoTestSuite === 'function') renderVideoTestSuite(); }
+    };
+
+    if (initActions[tabId]) {
+        // Use requestAnimationFrame to ensure the DOM is updated before rendering
+        requestAnimationFrame(() => {
+            initActions[tabId]();
+        });
     }
 }
 
@@ -148,8 +174,10 @@ function switchMainCategory(category, btn) {
         'media': [
             { id: 'player', label: 'Player', icon: '#icon-audio' },
             { id: 'library', label: 'Bibliothek', icon: '#icon-folder' },
-            { id: 'playlist', label: 'Playlist', icon: '#icon-playlist' },
-            { id: 'video', label: 'Video', icon: '#icon-video' }
+            { id: 'playlist', label: 'Playlist', icon: '#icon-playlist' }
+        ],
+        'video': [
+            { id: 'video', label: 'Video Player', icon: '#icon-video' }
         ],
         'management': [
             { id: 'item', label: 'Item', icon: '#icon-search' },
@@ -448,6 +476,7 @@ document.addEventListener('keydown', async (e) => {
     const activeTab = localStorage.getItem('mwv_active_tab');
     if (activeTab !== 'video') return;
 
+    // let vjsPlayer = null;
     let vlcKey = null;
     switch (e.key) {
         case 'ArrowUp': vlcKey = 'key-up'; break;
@@ -462,6 +491,34 @@ document.addEventListener('keydown', async (e) => {
         eel.vlc_remote_control(window._vlc_control_port, vlcKey)();
     }
 });
+
+
+/**
+ * Toggles the Impressum (Imprint) modal.
+ */
+function toggleImpressum() {
+    console.log("UI: Toggling Impressum.");
+    const existing = document.getElementById('impressum-modal');
+    if (existing) {
+        existing.style.display = (existing.style.display === 'none') ? 'flex' : 'none';
+    } else {
+        // Create simple modal if not in HTML
+        const modal = document.createElement('div');
+        modal.id = 'impressum-modal';
+        modal.className = 'glass-panel';
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+        modal.onclick = () => modal.style.display = 'none';
+        modal.innerHTML = `
+            <div style="background:white; padding:40px; border-radius:12px; max-width:500px; color:#333; position:relative;">
+                <h2>Impressum</h2>
+                <p>Media Web Viewer v1.35</p>
+                <p>Created for Advanced Media Management.</p>
+                <button class="tab-btn" style="margin-top:20px;">Schließen</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+}
 
 // Window listeners for menu dismissal
 window.addEventListener('click', () => hideContextMenu());

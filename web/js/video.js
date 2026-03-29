@@ -4,7 +4,7 @@
  * Handles Video.js setup, component registration, and playback control.
  */
 
-let vjsPlayer = null;
+// let vjsPlayer = null;
 let currentVideoTracks = { audio: [], subtitles: [] };
 let currentAudioIdx = 0;
 let currentSubsIdx = null;
