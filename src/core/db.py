@@ -218,7 +218,8 @@ def init_db():
         ("playback_position", "REAL"),
         ("last_played", "TEXT"),
         ("duration_sec", "REAL"),
-        ("is_mock", "BOOLEAN DEFAULT 0")
+        ("is_mock", "BOOLEAN DEFAULT 0"),
+        ("mock_stage", "INTEGER DEFAULT 0")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -327,8 +328,8 @@ def get_all_media():
     cursor = conn.cursor()
     log.info("[DB] [get_all_media] Querying table...")
     cursor.execute("SELECT * FROM media ORDER BY name")
-    log.info(f"[DB] [get_all_media] Found {len(rows)} raw rows.")
     rows = cursor.fetchall()
+    log.info(f"[DB] [get_all_media] Found {len(rows)} raw rows.")
 
     media_list = []
     for row in rows:
@@ -360,8 +361,8 @@ def get_all_media():
             'playback_position': row['playback_position'] or 0,
             'last_played': row['last_played'],
             'duration_sec': row['duration_sec'] or 0,
-            'is_mock': bool(row['is_mock']),
-            'mock_stage': row['mock_stage'] or 0
+            'is_mock': bool(row['is_mock']) if 'is_mock' in row.keys() else False,
+            'mock_stage': row['mock_stage'] if 'mock_stage' in row.keys() else 0
         })
     conn.close()
     return media_list

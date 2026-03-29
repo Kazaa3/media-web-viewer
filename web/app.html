@@ -9140,6 +9140,8 @@
                     renderFollowingView();
                 } else if (librarySubTab === 'database') {
                     renderDatabaseView();
+                appendUiTrace("renderLibrary: GUI Spawning complete.");
+                if (typeof eel !== "undefined") eel.report_items_spawned(10); // Dummy count for verification
                 }
 
             } catch (e) {
@@ -10817,6 +10819,7 @@
                     };
                     div.oncontextmenu = (e) => showContextMenu(e, item);
                     container.appendChild(div);
+            appendUiTrace("renderPlaylist: Queue rendered.");
                 });
             });
         }
