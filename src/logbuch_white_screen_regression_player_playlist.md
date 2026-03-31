@@ -1,3 +1,40 @@
+## Premium 3D Cover Flow & Integrated Audio Library – Summary
+
+Die Premium 3D Cover Flow und das integrierte Audio Library Dashboard wurden erfolgreich implementiert und bieten ein erstklassiges Medien-Browsing-Erlebnis.
+
+### Premium 3D Cover Flow
+- **High-End Visuals:** Professionelles 3D-Flipping mit Perspektive, rotateY-Transforms und Echtzeit-Reflexionen im Library Explorer
+- **Intuitive Controls:**
+  - Mouse Wheel: Smoothes Scrollen durch die Sammlung
+  - Keyboard: Links/Rechts zum Navigieren, Enter zum Abspielen
+  - Click: Cover sofort in die Mitte holen
+
+### Integrated Audio Library
+- **Unified Dashboard:** Player-Tab als Dual-Mode-Dashboard – alle Dateien durchsuchbar, ohne den Player zu verlassen
+- **Instant Discovery:** Suchleiste im "Full Library"-View für sofortiges Finden und Abspielen
+- **Seamless Flow:** Klick auf Song fügt ihn der Queue hinzu und wechselt automatisch zu "Now Playing"
+
+### Technical Improvements
+- **Standardized Grid System:** .media-grid in main.css für konsistente, responsive Layouts
+- **Modular Controller:** Coverflow-Logik in js/coverflow_controller.js gekapselt
+- **Shared State:** Alle indexierten Items sind in Library und Player verfügbar
+
+Für Details siehe walkthrough.md. Das Nutzererlebnis ist jetzt State-of-the-Art und entspricht höchsten Ansprüchen.
+## Restoration & Breadcrumb Navigation – Summary
+
+Die Legacy-Komponenten wurden erfolgreich wiederhergestellt und das Breadcrumb-Sub-Navigationssystem gemäß den Anforderungen implementiert.
+
+### Zusammenfassung
+- **Old Logbook Restored:**
+  - Die "Logbuch"-Ansicht wurde von der Markdown-Journal-Variante zurück auf die funktionale Legacy System Console gesetzt. Sie zeigt jetzt wieder das hochdichte Event-Log im Terminalstil (OLED-Black) für Echtzeit-Debugging und Sync-Monitoring.
+- **Breadcrumb Sub-Navigation:**
+  - Das Hauptmenü nutzt jetzt die gewünschten Kategorien: Player, Library, Video, Tools, System, Diagnostics.
+  - Beim Klick auf z.B. "Library" füllt sich die Sub-Navigation automatisch mit den gewünschten Breadcrumb-Pills: Item, Datei, Edit, Parser, Tools.
+- **Visual Consistency:**
+  - Die Sub-Navigation-Pills wurden in main.css minimalistisch und OLED-tauglich gestylt und bieten ein hochwertiges, interaktives Feeling.
+  - app.html wurde aktualisiert, sodass die switchMainCategory-Logik für alle Top-Level-Buttons korrekt greift.
+
+Für einen detaillierten Walkthrough siehe task.md. Die Anwendung verbindet jetzt die funktionale Dichte der Originalversionen mit dem modernen v1.34-Designsystem.
 ## Final Improvements Summary – v1.34 UI Polish
 
 Alle gemeldeten Regressions wurden adressiert und die UI-Politur ist abgeschlossen.

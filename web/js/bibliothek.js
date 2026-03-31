@@ -291,41 +291,13 @@ function switchLibrarySubTab(tab) {
 }
 
 /**
- * Coverflow Logic (restored from legacy).
+ * Coverflow Logic (Modern 3D v1.34).
  */
 function updateCoverflowDisplay() {
-    const track = document.getElementById('coverflow-track');
-    if (!track) return;
-
-    const html = coverflowItems.map((item, idx) => {
-        const artwork = `/cover/${encodeURIComponent(item.name)}`;
-        const title = item.tags && item.tags.title ? item.tags.title : (item.name || 'Unknown');
-        const artist = item.tags && item.tags.artist ? item.tags.artist : '-';
-        
-        let classes = 'coverflow-item';
-        if (idx === coverflowIndex) classes += ' active';
-        else if (idx < coverflowIndex) classes += ' left';
-        else classes += ' right';
-
-        return `
-            <div class="${classes}" style="background-image: url('${artwork}')" 
-                 onclick="selectCoverflowItem(${idx})" oncontextmenu="showContextMenu(event, coverflowItems[${idx}])">
-                <div class="info">
-                    <div class="title">${title}</div>
-                    <div class="meta">${artist} | ${item.category}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    if (typeof safeHtml === 'function') safeHtml('coverflow-track', html);
-    else track.innerHTML = html;
-
-    const activeEl = track.querySelector('.coverflow-item.active');
-    if (activeEl) {
-        const offset = activeEl.offsetLeft + (activeEl.offsetWidth / 2);
-        const containerHalf = track.parentElement.offsetWidth / 2;
-        track.style.transform = `translateX(${containerHalf - offset}px)`;
+    if (typeof window.initCoverflow === 'function') {
+        window.initCoverflow(coverflowItems);
+    } else {
+        console.warn("[Library] Coverflow controller not ready.");
     }
 }
 

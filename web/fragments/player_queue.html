@@ -27,30 +27,47 @@
     <!-- RIGHT COLUMN: Active Item Details (Main content) -->
     <div id="video-queue-pane" style="flex: 1; display:flex; flex-direction:column; overflow: hidden; background: var(--bg-primary); position: relative;">
         
-        <div id="player-now-playing-container" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);">
-            
-            <!-- Artwork Card -->
-            <div id="big-player-artwork-container" class="glass-card" style="width: 400px; height: 400px; margin-bottom: 40px; padding: 0; overflow: hidden; border-radius: 24px; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                <img id="big-player-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
+        <!-- Top Control Area (Now Playing & Toggle) -->
+        <div style="padding: 20px 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <h2 style="margin: 0; font-size: 1.1em; font-weight: 800; color: var(--text-primary);">Player Dashboard</h2>
+                <div class="options-nav-tabs" style="display: flex; gap: 4px;">
+                    <button id="player-view-btn-nowplaying" class="sub-tab-btn active" onclick="switchPlayerMainView('now-playing')">Now Playing</button>
+                    <button id="player-view-btn-browse" class="sub-tab-btn" onclick="switchPlayerMainView('browse')">Full Library</button>
+                </div>
+            </div>
+            <div id="player-search-bar" style="display: none; width: 300px;">
+                <input type="text" id="player-library-search" placeholder="Search indexed media..." 
+                    oninput="handlePlayerLibrarySearch(this.value)"
+                    style="width: 100%; padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 12px; outline: none;">
+            </div>
+        </div>
+
+        <div id="player-main-content-viewport" style="flex: 1; position: relative; overflow: hidden;">
+            <!-- View: Now Playing -->
+            <div id="player-view-now-playing" class="player-sub-view active" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%); transition: opacity 0.3s ease;">
+                <!-- Artwork Card -->
+                <div id="big-player-artwork-container" class="glass-card" style="width: 420px; height: 420px; margin-bottom: 30px; padding: 0; overflow: hidden; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <img id="big-player-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <!-- Metadata Info -->
+                <div id="big-player-info" style="max-width: 800px;">
+                    <h2 id="big-player-title" style="margin: 0; font-size: 2.2em; font-weight: 900; color: var(--text-primary); letter-spacing: -1px; line-height: 1.1;" data-i18n="player_select_song">Wählt ein Lied aus</h2>
+                    <h3 id="big-player-artist" style="margin: 10px 0 20px 0; font-size: 1.25em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">Warteschlange leer</h3>
+                </div>
+                <!-- Tech Details -->
+                <div id="big-player-metadata-grid" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <div id="big-bitrate-display" class="track-codec">-</div>
+                    <div id="big-samplerate-display" class="track-codec">-</div>
+                </div>
             </div>
 
-            <!-- Metadata Info -->
-            <div id="big-player-info" style="max-width: 800px;">
-                <h2 id="big-player-title" style="margin: 0; font-size: 2.5em; font-weight: 900; color: var(--text-primary); letter-spacing: -1px; line-height: 1.1;" data-i18n="player_select_song">Wählt ein Lied aus</h2>
-                <h3 id="big-player-artist" style="margin: 15px 0 25px 0; font-size: 1.4em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">Warteschlange leer</h3>
+            <!-- View: Library Browser (GRID) -->
+            <div id="player-view-browse" class="player-sub-view" style="display: none; height: 100%; overflow-y: auto; padding: 30px; background: var(--bg-primary);">
+                <div id="player-library-grid" class="media-grid">
+                    <!-- Populated via audioplayer.js -->
+                </div>
             </div>
-
-            <!-- Tech Details (Pills) -->
-            <div id="big-player-metadata-grid" style="display: flex; gap: 12px; margin-top: 10px;">
-                <div id="big-bitrate-display" class="track-codec">-</div>
-                <div id="big-samplerate-display" class="track-codec">-</div>
-            </div>
-
-            <!-- Lyrics Display -->
-            <div id="big-player-lyrics" style="margin-top: 40px; max-height: 250px; overflow-y: auto; color: var(--text-secondary); font-style: italic; font-size: 1.1em; width: 80%; line-height: 1.6; opacity: 0.6; font-weight: 500;">
-                <!-- Lyrics injected here -->
-            </div>
-
         </div>
 
         <!-- Overlay status -->

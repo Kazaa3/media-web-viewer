@@ -316,5 +316,87 @@ function removeItem(index) {
     renderPlaylist();
 }
 
+// --- Player Dashboard Logic (v1.34) ---
+let playerLibrarySearch = '';
+let playerMainView = 'now-playing';
+
+function switchPlayerMainView(viewId) {
+    playerMainView = viewId;
+    document.querySelectorAll('.player-sub-view').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.player-sub-view').forEach(el => el.classList.remove('active'));
+    
+    const target = document.getElementById(`player-view-${viewId}`);
+    if (target) {
+        target.style.display = viewId === 'now-playing' ? 'flex' : 'block';
+        setTimeout(() => target.classList.add('active'), 10);
+    }
+
+    document.querySelectorAll('#player-tab-split-container .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+    const btn = document.getElementById(`player-view-btn-${viewId.replace('-', '')}`);
+    if (btn) btn.classList.add('active');
+
+    const searchBar = document.getElementById('player-search-bar');
+    if (searchBar) searchBar.style.display = viewId === 'browse' ? 'block' : 'none';
+
+    if (viewId === 'browse') renderFullLibraryInPlayer();
+}
+
+function handlePlayerLibrarySearch(val) {
+    playerLibrarySearch = val;
+    renderFullLibraryInPlayer();
+}
+
+/**
+ * Renders the full indexed library inside the player tab.
+ */
+function renderFullLibraryInPlayer() {
+    const container = document.getElementById('player-library-grid');
+    if (!container) return;
+
+    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
+        container.innerHTML = '<div style="padding: 40px; color: var(--text-secondary);">No indexed items found. Refresh library in the Library tab.</div>';
+        return;
+    }
+
+    let items = allLibraryItems.filter(i => i.type === 'audio');
+    if (playerLibrarySearch) {
+        const q = playerLibrarySearch.toLowerCase();
+        items = items.filter(i => (i.name || '').toLowerCase().includes(q) || (i.tags?.title || '').toLowerCase().includes(q));
+    }
+
+    container.innerHTML = items.map((item, idx) => {
+        const artwork = `/cover/${encodeURIComponent(item.name)}`;
+        const title = item.tags?.title || item.name;
+        const artist = item.tags?.artist || 'Unknown Artist';
+        
+        return `
+            <div class="grid-item" onclick="addAndPlayNow(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})" style="animation: fadeIn 0.3s ease forwards;">
+                <div class="grid-cover" style="background-image: url('${artwork}')"></div>
+                <div class="grid-info">
+                    <div class="grid-title">${title}</div>
+                    <div class="grid-meta">${artist}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function addAndPlayNow(el, item) {
+    if (typeof currentPlaylist !== 'undefined') {
+        currentPlaylist.push(item);
+        playlistIndex = currentPlaylist.length - 1;
+        if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof playAudio === 'function') playAudio(item);
+        // Switch back to now playing to show the progress
+        switchPlayerMainView('now-playing');
+    }
+}
+
 // Initialize
-window.addEventListener('DOMContentLoaded', initAudioPipeline);
+window.addEventListener('DOMContentLoaded', () => {
+    initAudioPipeline();
+    // Re-check library data if already loaded
+    if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
+        renderFullLibraryInPlayer();
+    }
+});
