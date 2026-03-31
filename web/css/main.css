@@ -12,11 +12,13 @@
     --glass-border: rgba(255, 255, 255, 0.4);
     --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
     --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --radius-pill: 50px;
-    --radius-card: 16px;
-    --radius-sm: 8px;
-    --transition-snappy: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-fluid: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --radius-pill: 30px;
+    --radius-card: 20px;
+    --radius-sm: 10px;
+    --transition-snappy: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fluid: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    --glass-opacity: 0.7;
+    --glass-blur: 25px;
 }
 
 [data-theme="dark"] {
@@ -98,44 +100,49 @@ body {
     flex-direction: column;
 }
 
-/* --- Premium Buttons (v1.3.4 Pill Style) --- */
+/* --- Premium Buttons (v1.34 Pill Style) --- */
 .tab-btn, .nav-btn, .action-btn {
-    padding: 10px 20px;
+    padding: 10px 22px;
     border-radius: var(--radius-pill);
     border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
     color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 800;
     cursor: pointer;
     transition: all var(--transition-snappy);
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     outline: none;
-}
-
-.tab-btn:hover, .nav-btn:hover {
-    background: var(--border-color);
-    transform: translateY(-1px);
     box-shadow: var(--shadow-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.tab-btn.active, .nav-btn.active {
+.tab-btn:hover, .nav-btn:hover, .action-btn:hover {
+    background: var(--bg-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    border-color: var(--accent-color);
+}
+
+.tab-btn.active, .nav-btn.active, .action-btn.active {
     background: var(--accent-color);
     color: white;
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
 }
 
 .sub-tab-btn, .options-subtab {
-    padding: 8px 16px;
+    padding: 8px 18px;
     border-radius: var(--radius-pill);
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
     transition: all var(--transition-snappy);
     display: flex;
@@ -511,4 +518,85 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;
+}
+
+/* ==========================================================================
+   PREMIUM ACTION COMPONENTS (v1.34)
+   ========================================================================== */
+
+.premium-pill {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    padding: 10px 24px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all var(--transition-snappy);
+    box-shadow: var(--shadow-soft);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    outline: none;
+}
+
+.premium-pill:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--shadow-medium);
+    border-color: var(--accent-color);
+    background: var(--bg-secondary);
+}
+
+.premium-pill:active { transform: scale(0.98); }
+
+.premium-pill.active {
+    background: var(--accent-color) !important;
+    color: white !important;
+    border-color: transparent !important;
+}
+
+.premium-pill.danger:hover {
+    border-color: #ff5252;
+    color: #ff5252;
+}
+
+.premium-pill.loading {
+    opacity: 0.7;
+    cursor: wait;
+    pointer-events: none;
+}
+
+.premium-pill svg { 
+    width: 14px; 
+    height: 14px; 
+    stroke-width: 2.5;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Status Indicators */
+.status-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    opacity: 0.5;
+}
+
+.status-indicator.active {
+    background: var(--accent-color);
+    opacity: 1;
+    box-shadow: 0 0 8px var(--accent-color);
 }

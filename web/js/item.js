@@ -24,9 +24,14 @@ function getCategoryBadgeHtml(item) {
  * Loads and renders the inventory side-list in the Item/Edit tab.
  */
 async function loadEditItems() {
-    if (typeof appendUiTrace === 'function') appendUiTrace("[Item] Loading inventory for Edit tab...");
+    if (typeof appendUiTrace === 'function') appendUiTrace("[Item] Loading inventory for Item/Edit tabs...");
     const library = await getLibrary();
     if (library && library.media) {
+        // Update both inventory-count and total-library-count if they exist
+        const count = library.media.length;
+        const countEls = document.querySelectorAll('#inventory-count, #total-library-count');
+        countEls.forEach(el => el.innerText = `${count} Entries found`);
+        
         renderEditList(library.media);
     }
 }
@@ -39,7 +44,7 @@ function renderEditList(items) {
     if (!container) return;
 
     if (!items || items.length === 0) {
-        container.innerHTML = `<div style="padding: 20px; color: #999; text-align: center;">Keine Einträge</div>`;
+        container.innerHTML = `<div style="padding: 20px; color: #999; text-align: center;" data-i18n="item_no_entries">Keine Einträge</div>`;
         return;
     }
 
@@ -49,9 +54,9 @@ function renderEditList(items) {
         
         return `
             <div class="inventory-item" onclick="openEditFormByName('${item.name.replace(/'/g, "\\'")}')" 
-                 style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.1s;">
-                <div style="font-weight: 600; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.name}">${title}</div>
-                <div style="font-size: 0.8em; color: #888;">${artist}</div>
+                 style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.1s; border-radius: 8px; margin-bottom: 4px;">
+                <div style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);" title="${item.name}">${title}</div>
+                <div style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">${artist}</div>
             </div>
         `;
     }).join('');

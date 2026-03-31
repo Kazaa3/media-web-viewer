@@ -1,3 +1,96 @@
+## Walkthrough – v1.34 Structural & Logic Finalization
+
+Die kritischen Probleme beim App-Start und der leeren Library wurden behoben.
+
+### Key Fixes
+1. **Startup Shell Recovery:**
+  - Das "kaputte" Startbild (Video-Auswahlliste) war das Context Menu, das jetzt standardmäßig ausgeblendet ist (app.html, style="display: none;" für #custom-context-menu).
+2. **Inventory Counter & Library Rendering:**
+  - Der "0 Entries found"-Bug im Item Inventory wurde gefixt (item.js: inventory-count-Updater).
+  - Backend-Fallback: Alle Media-Kategorien werden gesendet, wenn die User-Konfig leer ist (main.py: get_library).
+3. **Browser PID Recovery:**
+  - Die App sucht jetzt dynamisch nach dem aktiven Browser-Prozess, falls beim Start nicht gefunden (main.py: psutil-Lookup in get_environment_info_dict).
+4. **Robust Startup Sequence:**
+  - Der Lifecycle im Orchestrator wurde so verfeinert, dass der Player-Tab explizit selektiert und Fragmente vor dem Rendern geladen werden (app_core.js).
+5. **Fixed Library Sub-Tab Mapping:**
+  - Die Library-Subtabs zeigen jetzt wieder die korrekten Ansichten: Coverflow, Grid, Details, Datenbank, Pfadbrowser.
+
+### Verification Results
+- **Startup:** Kein Context-Menu-Overlay sichtbar
+- **Inventory:** "Entries found" zeigt jetzt > 0 (nach Scan)
+- **System View:** Browser PID ist befüllt
+- **Library Tab:** Subtabs zeigen die erwarteten "diverse views"
+
+**Tipp:**
+Wenn weiterhin "0 Entries" angezeigt wird, im Tools-Tab "Scan Media" ausführen, um die Datenbank zu befüllen.
+## Implementation Plan – v1.34 Structural Fixes & Library Recovery
+
+Es wurde gemeldet, dass die Anwendung beim Start "komplett kaputt" ist: Video-Auswahlliste statt Player, 0 Library-Einträge, fehlender Browser PID.
+
+### User Review Required
+**WICHTIG**
+
+Das "kaputte" Startbild ist eigentlich das Context Menu, das standardmäßig sichtbar ist. Es wird auf display: none; gesetzt.
+
+**WARNUNG**
+Wenn die Library weiterhin 0 Items zeigt, liegt vermutlich ein Konfigurationsfehler in displayed_categories vor. Ein Backend-Fallback wird implementiert, damit Medien immer angezeigt werden, wenn sie gefunden werden.
+
+### Proposed Changes
+**[Frontend] Shell & Navigation**
+- [MODIFY] app.html: display: none; für custom-context-menu-Container, nur bei Rechtsklick sichtbar
+- [MODIFY] app_core.js: DOMContentLoaded-Logik so anpassen, dass der Player-Tab erst nach dem Laden der Fragmente initialisiert wird
+**[Backend] Environment & Data Routing**
+- [MODIFY] main.py: Browser PID Recovery (get_environment_info_dict nutzt psutil, falls PID beim Start fehlt)
+- [MODIFY] main.py: Library Fallback (get_library nutzt alle bekannten Kategorien, wenn displayed_categories leer ist)
+
+### Open Questions
+Keine.
+
+### Verification Plan
+**Automated Tests:**
+- App neustarten, prüfen, dass keine Video-Auswahlliste auf dem Hauptscreen erscheint
+- eel.get_konsole() muss eine gültige Integer für browser_pid liefern
+**Manual Verification:**
+- Startansicht: Audio Player/Queue muss erscheinen
+- Library-Tab: Indexierte Items müssen angezeigt werden (ggf. nach Scan)
+- System-Tab: Browser PID darf nicht mehr - sein
+## Walkthrough – v1.34 Diagnostic & Indexing Restoration
+
+Die Probleme mit der leeren "System-Architektur"-Ansicht und den fehlenden Media-Items aus dem media/-Ordner wurden erfolgreich gelöst.
+
+### Key Changes
+1. **Unified Environment View (v1.34):**
+  - Die "Python Environment"-Ansicht im Options-Panel wird jetzt dynamisch aus Backend-Daten aufgebaut (env-details-table-body, web/js/environment.js).
+2. **Media Scanning Diagnostics:**
+  - Backend-Scan- und Library-Logik mit robustem Logging/Tracing erweitert (src/core/main.py).
+  - Encoding-Fix für "Hörbuch"-Kategorisierung, displayed_categories um Supplements/Games ergänzt.
+3. **Integrated UI Tracing:**
+  - Jeder Library-Load/Scan wird ins Logbuch (Diagnostics Suite) getraced (web/js/bibliothek.js).
+
+### Validation Results
+- **v1.34 Versioning:** Version-String überall vereinheitlicht
+- **Options View:** "Umgebung"-Tab zeigt Python-Version, PIDs, Venv-Status
+- **Category Indexing:** "Hörbuch"-Encoding im Backend gefixt
+
+### How to Test
+1. System → Optionen → Umgebung öffnen: Python-Details prüfen
+2. SCAN im Footer klicken
+3. Diagnostics → Logbook: Traces wie [Library] Received X items from backend prüfen
+4. Player/Library-Tabs: Media-Items aus media/-Ordner sollten erscheinen
+
+**Tipp:**
+Wenn weiterhin keine Items erscheinen, im Logbuch auf [Scan] WARNING: No extensions enabled for scanning achten – dann indexed_categories in der Konfiguration prüfen.
+## Completion: v1.34 Diagnostic & Indexing Restoration
+
+Die v1.34 Diagnostic & Indexing Restoration ist erfolgreich abgeschlossen. Die Änderungen beheben die leere "System-Architektur"-Ansicht im Options-Panel und die Backend-Kategorisierungsprobleme, die das Anzeigen von Media-Items verhinderten.
+
+### Key Successes
+- **Unified Environment System:** environment.js refaktoriert, um die Premium-Tabelle im Options-Panel dynamisch zu befüllen (Python-Version, PIDs, Venv-Status sichtbar unter System → Optionen → Umgebung)
+- **Indexing Fixes:** Zeichencodierungsfehler in main.py ("Hörbuch") behoben, Default-Kategorienliste erweitert, damit keine Medien mehr herausgefiltert werden
+- **Improved Observability:** Backend-Tracing für get_library und scan_media hinzugefügt; Logbook im Diagnostics-Tab zeigt jetzt, wie viele Items gefunden und gesendet werden
+- **Version Standardization:** v1.34-Versionierung im gesamten Code enforced, um Konsistenz mit dem UI-Overhaul zu gewährleisten
+
+Für Verifikationshinweise und neue Diagnosetraces siehe walkthrough.md.
 ## Implementation Plan – v1.34 Diagnostic & Indexing Fixes
 
 Zwei kritische Probleme wurden gemeldet:

@@ -70,6 +70,9 @@ function switchTab(tabId, btn) {
         'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
         'file': { containerId: 'filesystem-crawler-directory-panel', path: 'fragments/filesystem_browser.html' },
         'library': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
+        'grid': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
+        'details': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
+        'album': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
         'item': { containerId: 'indexed-sqlite-media-repository-panel', path: 'fragments/item_inventory.html' },
         'edit': { containerId: 'metadata-writer-crud-panel', path: 'fragments/metadata_editor.html' },
         'video': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
@@ -84,6 +87,9 @@ function switchTab(tabId, btn) {
     const tabMap = {
         'player': 'state-orchestrated-active-queue-list-container',
         'library': 'coverflow-library-panel',
+        'grid': 'coverflow-library-panel',
+        'details': 'coverflow-library-panel',
+        'album': 'coverflow-library-panel',
         'item': 'indexed-sqlite-media-repository-panel',
         'file': 'filesystem-crawler-directory-panel',
         'edit': 'metadata-writer-crud-panel',
@@ -135,8 +141,13 @@ function finishSwitchTab(tabId, targetId, btn) {
     const panel = document.getElementById(targetId);
     if (panel) {
         panel.classList.add('active');
-        const isFlex = ['player', 'library', 'item', 'file', 'edit', 'options', 'parser', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools'].includes(tabId);
+        const isFlex = ['player', 'library', 'grid', 'details', 'album', 'item', 'file', 'edit', 'options', 'parser', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools'].includes(tabId);
         panel.style.display = isFlex ? 'flex' : 'block';
+        
+        // Library Sub-Tab Shorthands
+        if (['grid', 'details', 'album'].includes(tabId)) {
+            if (typeof switchLibrarySubTab === 'function') switchLibrarySubTab(tabId);
+        }
         
         if (typeof mwv_trace === 'function') {
             mwv_trace('NAV-TAB', tabId, { targetId });
@@ -236,11 +247,11 @@ function switchMainCategory(category, btn) {
             { id: 'playlist', label: 'Playlist Manager', icon: '#icon-playlist' }
         ],
         'library': [
-            { id: 'item', label: 'Item', icon: '#icon-search' },
-            { id: 'file', label: 'Datei', icon: '#icon-folder' },
-            { id: 'edit', label: 'Edit', icon: '#icon-edit' },
-            { id: 'parser', label: 'Parser', icon: '#icon-settings' },
-            { id: 'tools', label: 'Tools', icon: '#icon-settings' }
+            { id: 'library', label: 'Coverflow', icon: '#icon-sparkles' },
+            { id: 'grid', label: 'Grid', icon: '#icon-stats' },
+            { id: 'details', label: 'Details', icon: '#icon-stats' },
+            { id: 'item', label: 'Datenbank', icon: '#icon-stats' },
+            { id: 'file', label: 'Pfadbrowser', icon: '#icon-folder' }
         ],
         'video': [
             { id: 'video', label: 'Video Player', icon: '#icon-video' },

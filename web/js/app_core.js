@@ -144,30 +144,72 @@ document.addEventListener('keydown', async (e) => {
  * Application Boot Notification
  */
 window.addEventListener('DOMContentLoaded', async () => {
-    console.log("Core Orchestrator: System checks passing.");
+    console.log("Core Orchestrator: System checks passing. Initializing UI fragments...");
     
-    // 0. Load Modals Fragment
-    if (typeof FragmentLoader?.load === 'function') {
-        FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {
-            console.log("DOM: Modals fragment initialized.");
-            if (typeof initTranslations === 'function') initTranslations();
-        });
-    }
+    try {
+        // 0. Load Modals Fragment
+        if (typeof FragmentLoader?.load === 'function') {
+            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {
+                console.log("DOM: Modals fragment initialized.");
+                if (typeof initTranslations === 'function') initTranslations();
+            });
+        } else {
+            console.warn("DOM: FragmentLoader not found, modals might not load.");
+        }
 
-    // 1. Default Start Screen
-    if (typeof switchMainCategory === 'function') switchMainCategory('media');
-    if (typeof switchTab === 'function') switchTab('player');
-    
-    // 2. Initialize Library & Inventory
-    if (typeof loadLibrary === 'function') loadLibrary();
-    if (typeof loadEditItems === 'function') loadEditItems();
+        // 1. Default Start Screen
+        console.log("UI: Setting default category and tab...");
+        if (typeof switchMainCategory === 'function') switchMainCategory('media');
+        
+        // Ensure switchTab is called after a tiny delay to allow other modules to settle
+        setTimeout(() => {
+            if (typeof switchTab === 'function') {
+                console.log("UI: Switching to 'player' tab.");
+                switchTab('player');
+            } else {
+                console.error("UI: switchTab function missing during boot!");
+            }
+        }, 100);
+        
+        // 2. Initialize Library & Inventory
+        setTimeout(async () => {
+            console.log("Data: Triggering library and edit-item loads...");
+            if (typeof loadLibrary === 'function') await loadLibrary();
+            if (typeof loadEditItems === 'function') await loadEditItems();
+        }, 300);
+
+    } catch (e) {
+        console.error("CRITICAL: Application boot sequence failed:", e);
+    }
 });
 
 /**
  * [TEST-SUITE] [DOM-PROBE]
  * Backend-triggered diagnostic that checks UI state and reports via Eel.
  */
+/**
+ * Sets the Global DB Scanning status and updates UI.
+ */
+function set_db_status(isActive) {
+    console.log(`[DB] Scan status change: ${isActive}`);
+    const scanBtn = document.getElementById('footer-scan-btn');
+    if (scanBtn) {
+        if (isActive) {
+            scanBtn.classList.add('loading');
+            scanBtn.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> SCANNING...`;
+            if (typeof showToast === 'function') showToast("Bibliotheks-Scan gestartet...", "info");
+        } else {
+            scanBtn.classList.remove('loading');
+            scanBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> SCAN`;
+            if (typeof showToast === 'function') showToast("Scan abgeschlossen!", "success");
+            // Refresh counts
+            if (typeof loadEditItems === 'function') loadEditItems();
+        }
+    }
+}
+
 if (typeof eel !== 'undefined') {
+    eel.expose(set_db_status);
     eel.expose(run_frontend_probe);
 }
 

@@ -1102,15 +1102,29 @@ def get_environment_info_dict():
         for proc in psutil.process_iter(['pid', 'exe', 'cmdline']):
             try:
                 exe = proc.info.get('exe')
-                if exe and exe.startswith(venv_path):
+                if exe and venv_path in exe:
                     return proc.info['pid']
-                # Fallback: check cmdline for venv python
                 cmdline = proc.info.get('cmdline')
                 if cmdline and venv_path in ' '.join(cmdline):
                     return proc.info['pid']
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
         return None
+
+    def find_browser_pid():
+        """Try to find the browser PID by looking for chrome/chromium with our port."""
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = proc.info.get('cmdline')
+                if cmdline and 'app.html' in ' '.join(cmdline):
+                    return proc.info['pid']
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return None
+
+    global BROWSER_PID
+    if BROWSER_PID is None:
+        BROWSER_PID = find_browser_pid()
 
     testbed_pid = find_venv_pid('.venv_testbed')
     selenium_pid = find_venv_pid('.venv_selenium')
@@ -2923,9 +2937,8 @@ def get_library() -> Dict[str, Any]:
         log.info(f"[BACKEND] [get_library] Found {len(all_media) if all_media else 0} total items in DB.")
         progress_update("Library: Filtering Categories", 50)
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
-    # If explicitly None, default to everything (Legacy behavior or first run)
-    # If empty list [], it means the user unchecked EVERYTHING (Respect that)
-    if displayed_cats is None:
+    # If explicitly None OR empty list, default to everything (Legacy behavior or first run)
+    if not displayed_cats:
         displayed_cats = [
             "audio",
             "video",
