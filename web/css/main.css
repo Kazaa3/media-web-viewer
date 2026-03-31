@@ -184,6 +184,30 @@ body {
     transition: transform var(--transition-fluid), box-shadow var(--transition-fluid);
 }
 
+/* ==========================================================================
+   INTEGRATED MEDIA CONTROLLER
+   ========================================================================== */
+
+#native-html5-audio-pipeline-element {
+    height: 32px;
+    width: 320px;
+    filter: invert(0.9) hue-rotate(180deg) brightness(1.2) contrast(0.8);
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+#native-html5-audio-pipeline-element:hover {
+    opacity: 1;
+}
+
+#native-html5-audio-pipeline-element::-webkit-media-controls-enclosure {
+    background-color: transparent;
+}
+
+[data-theme="dark"] #native-html5-audio-pipeline-element {
+    filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(0.7);
+}
+
 .glass-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);

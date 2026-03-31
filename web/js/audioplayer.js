@@ -392,11 +392,31 @@ function addAndPlayNow(el, item) {
     }
 }
 
+/**
+ * Synchronizes the player queue with the current library state.
+ */
+function syncQueueWithLibrary() {
+    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
+        console.warn("[Audio] syncQueueWithLibrary: No library items found to sync.");
+        return;
+    }
+    
+    console.log(`[Audio] Syncing queue with ${allLibraryItems.length} items...`);
+    const audioItems = allLibraryItems.filter(i => i.type === 'audio');
+    
+    if (audioItems.length > 0) {
+        currentPlaylist = [...audioItems];
+        if (playlistIndex === -1) playlistIndex = 0;
+        if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
+    }
+}
+
 // Initialize
 window.addEventListener('DOMContentLoaded', () => {
     initAudioPipeline();
     // Re-check library data if already loaded
     if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
-        renderFullLibraryInPlayer();
+        syncQueueWithLibrary();
     }
 });

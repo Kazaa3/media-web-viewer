@@ -1,3 +1,47 @@
+## Implementation Plan – Logbook Restoration (v1.34)
+
+Der "Logbuch"-Tab fehlt aktuell in der v1.34-Header-Navigation. Ziel: Wiederherstellung des Zugriffs auf die Markdown-Journal-Einträge und Anpassung an das OLED-optimierte Designsystem.
+
+### User Review Required
+**WICHTIG**
+
+Das Logbuch wird als Hauptnavigationspunkt im Header wiederhergestellt. Das interne Styling wird von "Legacy White" auf "Premium Dark" umgestellt.
+
+### Proposed Changes
+**[Frontend] Main Shell & Navigation**
+- [MODIFY] app.html: Logbuch-Button zur .tab-pill-list im Header hinzufügen, #logbook-tab-container als Fragment-Platzhalter anlegen, Fragment in JS-Init-Sequenz registrieren
+**[Frontend] Logbook Interface**
+- [MODIFY] logbook_panel.html: Hardcodierte Farben durch CSS-Variablen ersetzen, Typografie auf Inter/JetBrains Mono umstellen, Buttons als .premium-pill/.round-action-btn stylen
+- [MODIFY] logbook_helpers.js: Rendering-Logik auf neue IDs/Struktur anpassen, Sidebar-Items ans Dark Theme angleichen
+
+### Open Questions
+Soll das Logbuch vor oder nach "Diagnostics" stehen? Vorgeschlagen: Nach "Video" als zentrales Info-Feature.
+
+### Verification Plan
+**Manual Verification:**
+- "Logbuch" erscheint in der Top-Navigation
+- Klick lädt Journal-Einträge aus dem Backend
+- Auswahl rendert Markdown im Viewer (Dark Theme)
+- "New Entry" öffnet weiterhin den Editor-Modal
+## Walkthrough – UI & Data Optimization (v1.34)
+
+Die Probleme mit dem Scrollen im Dateibrowser und leeren Player-Queues wurden durch Layout- und Synchronisationsoptimierungen gelöst.
+
+### Key Enhancements
+1. **Scrollable File Browser:**
+  - Der Pfadbrowser zeigt jetzt bei langen Listen korrekt einen vertikalen Scrollbalken (filesystem_browser.html: overflow/flex-shrink angepasst).
+2. **Auto-Populated Audio Player:**
+  - Die Warteschlange ist beim Start nicht mehr leer – alle Audio-Items werden nach Indexierung automatisch in die Queue übernommen (audioplayer.js: syncQueueWithLibrary()).
+3. **Robust Library Loading:**
+  - Synchronisationsproblem beim Library-Startup behoben, Infinite-Retry-Loop entfernt, Datenankunft wird per UI-Trace bestätigt (bibliothek.js).
+
+### Verification Results
+- **Scrolling:** Längere Verzeichnisse zeigen Scrollbar im Pfadbrowser
+- **Items:** Warteschlange zeigt korrekte Anzahl an Library-Items
+- **Stability:** Library-Loading klappt beim ersten Versuch
+
+**Tipp:**
+Drag & Drop von einzelnen Dateien aus Library oder Filebrowser in die Queue ist weiterhin möglich!
 ## Walkthrough – v1.34 Structural & Logic Finalization
 
 Die kritischen Probleme beim App-Start und der leeren Library wurden behoben.

@@ -41,11 +41,17 @@ async function loadLibrary(retryCount = 0) {
         }
 
         console.info(`[Library] Rendering ${allLibraryItems.length} items.`);
-        renderLibrary();
+        if (typeof renderLibrary === 'function') renderLibrary();
+        
+        // Sync Audio Player Queue (v1.34 Auto-Populate)
+        if (typeof syncQueueWithLibrary === 'function') {
+            syncQueueWithLibrary();
+        }
     } catch (e) {
-        console.error("[Library] Load error:", e);
-        if (retryCount < 3) {
-            setTimeout(() => loadLibrary(retryCount + 1), 1000);
+        console.error("[Library] Load error in loadLibrary:", e);
+        // Only retry if it's potentially a temporary startup issue
+        if (retryCount < 3 && !e.message.includes('eel is not defined')) {
+            setTimeout(() => loadLibrary(retryCount + 1), 1500);
         }
     }
 }
