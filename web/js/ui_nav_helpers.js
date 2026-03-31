@@ -59,35 +59,79 @@ function traceUiNav(category, target, details = {}) {
  * Switches between main application tabs.
  */
 function switchTab(tabId, btn) {
-    let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+    let librarySubTab = localStorage.getItem('mwv_active_tab') || 'player';
     const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
     traceUiNav('TAB', tabId, {from: previousTab});
     
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.style.display = 'none';
-        el.classList.remove('active');
-    });
-    
+    // Define fragment mapping
+    const fragmentMap = {
+        'debug': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
+        'tests': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
+        'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
+        'file': { containerId: 'filesystem-crawler-directory-panel', path: 'fragments/filesystem_browser.html' },
+        'library': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
+        'item': { containerId: 'indexed-sqlite-media-repository-panel', path: 'fragments/item_inventory.html' },
+        'edit': { containerId: 'metadata-writer-crud-panel', path: 'fragments/metadata_editor.html' },
+        'video': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
+        'vlc': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
+        'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
+        'options': { containerId: 'options-panel-container', path: 'fragments/options_panel.html' },
+        'logbuch': { containerId: 'logbook-panel-container', path: 'fragments/logbuch_panel.html' },
+        'player': { containerId: 'state-orchestrated-active-queue-list-container', path: 'fragments/player_queue.html' },
+        'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' }
+    };
+
     const tabMap = {
         'player': 'state-orchestrated-active-queue-list-container',
         'library': 'coverflow-library-panel',
         'item': 'indexed-sqlite-media-repository-panel',
         'file': 'filesystem-crawler-directory-panel',
         'edit': 'metadata-writer-crud-panel',
-        'options': 'system-configuration-persistence-panel',
-        'parser': 'regex-provider-chain-orchestrator-panel',
-        'debug': 'telemetry-inspector-tab-pane', 
-        'tests': 'quality-assurance-regression-suite-panel',
-        'reporting': 'reporting-dashboard-panel',
-        'logbuch': 'localized-markdown-documentation-journal-panel',
+        'options': 'options-panel-container',
+        'logbuch': 'logbook-panel-container',
+        'tools': 'tools-panel-container',
         'playlist': 'json-serialized-sequence-buffer-panel',
         'video': 'multiplexed-media-player-orchestrator-panel',
-        'vlc': 'multiplexed-media-player-orchestrator-panel',
-        'tools': 'tools-tab',
-        'flags': 'debug-flag-persistence-panel'
+        'vlc': 'multiplexed-media-player-orchestrator-panel'
     };
 
     const targetId = tabMap[tabId] || tabId;
+
+    // Handle Fragment Loading
+    if (fragmentMap[tabId]) {
+        const frag = fragmentMap[tabId];
+        FragmentLoader.load(frag.containerId, frag.path, () => {
+            // Once fragment is loaded, recursive call to show the actual panel
+            finishSwitchTab(tabId, targetId, btn);
+        });
+        // Show the container immediately (it might have a loader)
+        const container = document.getElementById(frag.containerId);
+        if (container) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
+            container.style.display = 'flex';
+            container.classList.add('active');
+        }
+    } else {
+        finishSwitchTab(tabId, targetId, btn);
+    }
+}
+
+/**
+ * UI Navigation Helpers
+ * Manages tab switching, sidebar visibility, and layout orchestration.
+ */
+
+// --- Global UI State ---
+let menuBarVisible = false;
+function finishSwitchTab(tabId, targetId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    });
+    
     const panel = document.getElementById(targetId);
     if (panel) {
         panel.classList.add('active');
@@ -99,38 +143,25 @@ function switchTab(tabId, btn) {
             panel.style.height = '100%';
             panel.style.width = '100%';
             panel.style.minWidth = '0';
-            // Note: We no longer force flexDirection: column here because some tabs 
-            // (Item, File, Edit, Logbuch) are horizontal split-views (flex-direction: row).
         }
 
-        // --- NEW: Global Sidebar Management ---
+        // --- Global Sidebar Management ---
         const sidebar = document.getElementById('main-sidebar');
         const splitter = document.getElementById('main-splitter');
         if (sidebar && splitter) {
-            // Sidebar is only visible in Audio Player and Video Player
-            const sidebarVisibleTabs = ['player', 'video', 'vlc'];
+            const sidebarVisibleTabs = ['player', 'video', 'vlc', 'playlist'];
             const shouldShow = sidebarVisibleTabs.includes(tabId);
             sidebar.style.display = shouldShow ? 'flex' : 'none';
-            splitter.style.display = shouldShow ? 'none' : 'none'; // Keep global splitter hidden if sidebar is hidden
-            
-            // If show, splitter should also show if there's a reason, but usually main-sidebar is enough.
-            // Actually, if we show main-sidebar, we usually want the splitter too.
-            if (shouldShow) {
-                splitter.style.display = 'block';
-            }
-
-            // Log for diagnostics
-            console.log(`[UI] Global Sidebar state for '${tabId}': ${shouldShow ? 'VISIBLE' : 'HIDDEN'}`);
+            splitter.style.display = shouldShow ? 'block' : 'none';
         }
     }
 
-    // Update button states in both main and sub nav
+    // Update button states
     document.querySelectorAll('.tab-btn, .nav-btn, .tab-link, .sub-tab-btn').forEach(b => b.classList.remove('active'));
     
     if (btn) {
         btn.classList.add('active');
     } else {
-        // Try to find the button in the sub-nav-container first
         const subNavBtn = document.querySelector(`#sub-nav-container .sub-tab-btn[onclick*="'${tabId}'"]`);
         if (subNavBtn) {
             subNavBtn.classList.add('active');
@@ -142,7 +173,7 @@ function switchTab(tabId, btn) {
 
     localStorage.setItem('mwv_active_tab', tabId);
 
-    // Context-specific actions (Repairing all tabs)
+    // Context-specific actions
     const initActions = {
         'player': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
         'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
@@ -169,7 +200,6 @@ function switchTab(tabId, btn) {
     };
 
     if (initActions[tabId]) {
-        // Use requestAnimationFrame to ensure the DOM is updated before rendering
         requestAnimationFrame(() => {
             initActions[tabId]();
         });
@@ -432,8 +462,35 @@ function isUnsupportedMediaError(reason) {
     return msg.includes('not supported') || msg.includes('format') || msg.includes('missing');
 }
 
+function toggleMenuBar() {
+    const bar = document.getElementById('program-menu-bar');
+    if (!bar) return;
+    menuBarVisible = !menuBarVisible;
+    bar.style.display = menuBarVisible ? 'flex' : 'none';
+}
+
 /**
- * Context Menu Logic
+ * Maps menu clicks to the main category switcher.
+ */
+function showMainCategory(cat) {
+    const btn = document.querySelector(`.tab-btn[data-category="${cat}"]`);
+    if (typeof switchMainCategory === 'function') {
+        switchMainCategory(cat, btn);
+    }
+    // Auto-hide menu bar after selection for a cleaner feel
+    toggleMenuBar();
+}
+
+// Listen for Alt key to toggle menu
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Alt') {
+        e.preventDefault();
+        toggleMenuBar();
+    }
+});
+
+/**
+ * Core Tab Switching Logic.
  */
 let contextMenuItem = null;
 
@@ -520,25 +577,11 @@ document.addEventListener('keydown', async (e) => {
  */
 function toggleImpressum() {
     console.log("UI: Toggling Impressum.");
-    const existing = document.getElementById('impressum-modal');
-    if (existing) {
-        existing.style.display = (existing.style.display === 'none') ? 'flex' : 'none';
+    const modal = document.getElementById('impressum-modal');
+    if (modal) {
+        modal.style.display = (modal.style.display === 'none' || modal.style.display === '') ? 'flex' : 'none';
     } else {
-        // Create simple modal if not in HTML
-        const modal = document.createElement('div');
-        modal.id = 'impressum-modal';
-        modal.className = 'glass-panel';
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
-        modal.onclick = () => modal.style.display = 'none';
-        modal.innerHTML = `
-            <div style="background:white; padding:40px; border-radius:12px; max-width:500px; color:#333; position:relative;">
-                <h2>Impressum</h2>
-                <p>Media Web Viewer v1.35</p>
-                <p>Created for Advanced Media Management.</p>
-                <button class="tab-btn" style="margin-top:20px;">Schließen</button>
-            </div>
-        `;
-        document.body.appendChild(modal);
+        console.warn("[UI] impressum-modal element not found. Ensure fragment is loaded.");
     }
 }
 

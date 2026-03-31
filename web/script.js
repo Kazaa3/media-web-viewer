@@ -1,116 +1,39 @@
-// Lädt die Environment-Infos und schreibt sie in die GUI
-async function loadEnvironmentInfo() {
-    try {
-        const res = await eel.get_konsole()();
-        const env = res.env || {};
-        document.getElementById('env-python-version').textContent = env.python_version || '-';
-        document.getElementById('env-venv-status').textContent = env.env_name || '-';
-        document.getElementById('env-platform').textContent = env.platform || '-';
-        document.getElementById('env-python-exec').textContent = env.python_executable || '-';
-        document.getElementById('env-venv-path').textContent = env.env_path || '-';
-        // Neue PID Felder
-        document.getElementById('env-main-pid').textContent = env.pid || '-';
-        document.getElementById('env-testbed-pid').textContent = env.testbed_pid !== undefined && env.testbed_pid !== null ? env.testbed_pid : 'nicht aktiv';
-        document.getElementById('env-selenium-pid').textContent = env.selenium_pid !== undefined && env.selenium_pid !== null ? env.selenium_pid : 'nicht aktiv';
-    } catch (e) {
-        console.error('Fehler beim Laden der Environment-Infos:', e);
-    }
-}
+/**
+ * script.js - Legacy application entry point (Modularization in progress)
+ */
+
 async function loadMedia() {
     try {
+        if (typeof eel === 'undefined') return;
         const result = await eel.scan_media()();
         const list = document.getElementById("media-list");
-        list.innerHTML = "";
-
-        for (const item of result.media) {
-            const li = document.createElement("li");
-            li.textContent = item.name;
-            list.appendChild(li);
+        if (list) {
+            list.innerHTML = "";
+            for (const item of result.media) {
+                const li = document.createElement("li");
+                li.textContent = item.name;
+                list.appendChild(li);
+            }
         }
     } catch (e) {
-        alert("Fehler: " + e.message);
+        console.error("Fehler beim Medien-Laden: " + e.message);
     }
 }
 
-// Populate default folder input from backend and wire Browse button (including debug controls)
-async function initDefaultFolder() {
-    try {
-        const dir = await eel.get_default_media_dir()();
-        const input = document.getElementById("default-folder-input");
-        const inputDebug = document.getElementById("default-folder-input-debug");
-        if (input) input.value = dir;
-        if (inputDebug) inputDebug.value = dir;
-
-        const btn = document.getElementById("browse-folder-btn");
-        if (btn) {
-            btn.addEventListener('click', async () => {
-                const d = document.getElementById("default-folder-input").value || null;
-                try {
-                    const res = await eel.browse_dir(d)();
-                    // Display in browser-tab textarea
-                    const out = document.getElementById('browse-results');
-                    if (res.error) {
-                        if (out) out.value = `# Fehler: ${res.error}`;
-                        else alert(res.error);
-                    } else {
-                        if (out) {
-                            const lines = [];
-                            if (res.items && res.items.length > 0) {
-                                for (const it of res.items) {
-                                    lines.push(`# ${it.name} [${it.type}] ${it.size ? '(' + it.size + ')' : ''}`);
-                                }
-                            } else {
-                                lines.push('# Kein Inhalt im Verzeichnis');
-                            }
-                            out.value = lines.join('\n');
-                        } else {
-                            console.log('browse_dir result:', res);
-                        }
-                    }
-                } catch (e) {
-                    alert('Fehler beim Durchsuchen: ' + e.message);
-                }
-            });
-        }
-
-        const btnDbg = document.getElementById("browse-folder-btn-debug");
-        if (btnDbg) {
-            btnDbg.addEventListener('click', async () => {
-                const d = document.getElementById("default-folder-input-debug").value || null;
-                try {
-                    const res = await eel.browse_dir(d)();
-                    const out = document.getElementById('browse-results-debug');
-                    if (res.error) {
-                        if (out) out.value = `# Fehler: ${res.error}`;
-                    } else {
-                        if (out) {
-                            const lines = [];
-                            if (res.items && res.items.length > 0) {
-                                for (const it of res.items) {
-                                    lines.push(`# ${it.name} [${it.type}] ${it.size ? '(' + it.size + ')' : ''}`);
-                                }
-                            } else {
-                                lines.push('# Kein Inhalt im Verzeichnis');
-                            }
-                            out.value = lines.join('\n');
-                        }
-                    }
-                } catch (e) {
-                    const out = document.getElementById('browse-results-debug');
-                    if (out) out.value = `# Fehler beim Durchsuchen: ${e.message}`;
-                }
-            });
-        }
-
-        const scanDbg = document.getElementById('scan-btn-debug');
-        if (scanDbg) scanDbg.addEventListener('click', () => scan());
-    } catch (e) {
-        console.error('Could not get default media dir:', e);
-    }
-}
-
+/**
+ * Unified Initialization Hook
+ */
 window.addEventListener('DOMContentLoaded', function () {
-    initDefaultFolder();
+    // Initialize Environment Module
+    if (typeof initEnvironmentModule === 'function') {
+        initEnvironmentModule();
+    } else {
+        // Fallback if environment.js is not yet loaded or failed
+        if (typeof initDefaultFolder === 'function') initDefaultFolder();
+        if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
+    }
+
+    // Diagnostics & Debug
     if (typeof loadDebugLogs === 'function') {
         loadDebugLogs();
     }

@@ -27,6 +27,7 @@ function initAudioPipeline() {
     };
 }
 
+
 /**
  * Main Audio Playback entry point.
  */
@@ -84,7 +85,7 @@ function updateMediaSidebar(item, path) {
     }
 
     const coverUrl = "/cover/" + encodeURIComponent(item.name);
-    ['sidebar-artwork-raster-buffer', 'parser-mediainfo-artwork', 'footer-artwork-raster-buffer'].forEach(id => {
+    ['sidebar-artwork-raster-buffer', 'parser-mediainfo-artwork', 'footer-artwork-raster-buffer', 'big-player-artwork'].forEach(id => {
         const img = document.getElementById(id);
         if (img) {
             img.src = coverUrl;
@@ -92,6 +93,13 @@ function updateMediaSidebar(item, path) {
             img.onerror = () => img.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
         }
     });
+
+    if (typeof safeText === 'function') {
+        safeText('big-player-title', tags.title || item.name);
+        safeText('big-player-artist', tags.artist || 'Unknown');
+        safeText('big-bitrate-display', tags.bitrate || '-');
+        safeText('big-samplerate-display', tags.samplerate || '-');
+    }
 
     // Tech Details
     let badgeText = [tags.codec, tags.bitdepth, tags.samplerate, tags.bitrate].filter(Boolean).join(' | ');
@@ -170,7 +178,7 @@ async function playNext() {
         else { playlistIndex = list.length - 1; return; }
     }
     const item = list[playlistIndex];
-    if (typeof play === 'function') play(item, item.path);
+    if (typeof playAudio === 'function') playAudio(item, 0);
 }
 
 async function playPrev() {
@@ -183,7 +191,7 @@ async function playPrev() {
         else playlistIndex = 0;
     }
     const item = list[playlistIndex];
-    if (typeof play === 'function') play(item, item.path);
+    if (typeof playAudio === 'function') playAudio(item, 0);
 }
 
 /**
@@ -191,13 +199,12 @@ async function playPrev() {
  */
 function renderPlaylist() {
     const containers = [
-        document.getElementById('json-serialized-sequence-item-container'),
-        document.getElementById('player-queue-pane'),
-        document.getElementById('active-playlist-container')
+        document.getElementById('playlist-content-render-target'),
+        document.getElementById('active-queue-list-render-target')
     ].filter(el => el !== null);
 
-    const countEl = document.getElementById('json-serialized-sequence-length-renderer');
-    if (countEl) countEl.innerText = currentPlaylist.length;
+    const countEl = document.getElementById('queue-item-count');
+    if (countEl) countEl.innerText = `${currentPlaylist.length} Items`;
 
     console.log(`[Audio] Rendering playlist on ${containers.length} containers. Items: ${currentPlaylist.length}`);
     if (containers.length === 0) return;
@@ -273,7 +280,7 @@ function renderPlaylist() {
 
         div.onclick = () => {
             playlistIndex = index;
-            if (typeof play === 'function') play(item, item.path);
+            if (typeof playAudio === 'function') playAudio(item, 0);
             renderPlaylist();
         };
         

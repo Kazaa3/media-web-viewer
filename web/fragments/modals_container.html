@@ -1,0 +1,121 @@
+<!-- 
+  Modal Container Fragment (v1.34)
+  Extracted from app.html for better maintainability.
+-->
+
+<!-- Logbook Detail Modal -->
+<div id="logbook-modal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 data-i18n="logbook_editor_title">Logbuch-Eintrag</h2>
+            <button onclick="safeStyle('logbook-modal', 'display', 'none')" class="modal-close-btn">&times;</button>
+        </div>
+        <div id="logbook-content" class="modal-body" data-i18n="logbook_loading">
+            Lade Details...
+        </div>
+        <div class="modal-footer">
+            <button onclick="safeStyle('logbook-modal', 'display', 'none')" class="tab-btn" data-i18n="common_close">Schließen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Test Edit Modal -->
+<div id="test-edit-modal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 style="margin: 0; font-size: 1.25em;" data-i18n="test_meta_title">Test-Metadaten</h3>
+            <button onclick="closeTestEditModal()" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body" style="gap: 15px; display: flex; flex-direction: column;">
+            <p id="test-edit-filename" style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.85em; color: var(--text-secondary);"></p>
+
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.8em; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;" data-i18n="test_meta_category">Kategorie</label>
+                <input type="text" id="test-edit-category" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.8em; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;" data-i18n="test_meta_inputs">Eingabewerte</label>
+                <input type="text" id="test-edit-inputs" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.8em; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;" data-i18n="test_meta_outputs">Ausgabewerte</label>
+                <input type="text" id="test-edit-outputs" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.8em; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;" data-i18n="test_meta_files">Testdateien</label>
+                <input type="text" id="test-edit-files" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.8em; font-weight: bold; color: var(--text-secondary); text-transform: uppercase;" data-i18n="test_meta_comment">Kommentar</label>
+                <textarea id="test-edit-comment" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); height: 80px; resize: vertical; background: var(--bg-primary); color: var(--text-primary);"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeTestEditModal()" class="tab-btn" data-i18n="common_cancel">Abbrechen</button>
+            <button onclick="saveTestMetadata()" class="tab-btn active" data-i18n="common_save">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- Playback Error Modal -->
+<div id="playback-error-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 500px; border: 2px solid #ff5252;">
+        <div class="modal-header" style="background: rgba(211, 47, 47, 0.1);">
+            <h3 style="color: #ff5252; margin: 0; display: flex; align-items: center; gap: 10px;">Playback Error</h3>
+            <button onclick="safeStyle('playback-error-modal', 'display', 'none')" class="modal-close-btn">&times;</button>
+        </div>
+        <div id="playback-error-body" class="modal-body" style="padding: 20px;"></div>
+        <div class="modal-footer">
+            <button onclick="safeStyle('playback-error-modal', 'display', 'none')" class="tab-btn active" style="background: #ff5252;">Schließen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Logbook Editor Modal -->
+<div id="logbuch-editor-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3 id="logbuch-editor-title" style="margin: 0; font-size: 1.25em;" data-i18n="logbook_edit_new">Neuer Eintrag</h3>
+            <button onclick="closeLogbookEditor()" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body" style="gap: 15px; display: flex; flex-direction: column;">
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 0.9em; font-weight: bold; color: var(--text-secondary);" data-i18n="logbook_edit_name_label">Name</label>
+                <input type="text" id="logbuch-editor-name" placeholder="z.B. Neue_Feature_XYZ" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: monospace; background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            <div class="glass-card" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; border-radius: var(--radius-sm);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <input type="text" id="logbuch-editor-category" placeholder="Category" style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary);">
+                    <input type="text" id="logbuch-editor-date" placeholder="YYYY-MM-DD" style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary);">
+                    <input type="text" id="logbuch-editor-title-de" placeholder="Titel (DE)" style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; grid-column: 1 / span 2; background: var(--bg-primary); color: var(--text-primary);">
+                </div>
+            </div>
+            <textarea id="logbuch-editor-content" placeholder="Inhalt in Markdown..." style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: monospace; resize: vertical; flex: 1; min-height: 250px; background: var(--bg-primary); color: var(--text-primary);"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeLogbookEditor()" class="tab-btn" data-i18n="common_cancel">Abbrechen</button>
+            <button onclick="saveLogbookEntry()" class="tab-btn active" data-i18n="common_save">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- Impressum Modal -->
+<div id="impressum-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2 data-i18n="footer_imprint">Impressum</h2>
+            <button onclick="safeStyle('impressum-modal', 'display', 'none')" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h3>Media Web Viewer v1.34</h3>
+            <p><strong>Version:</strong> v1.34 (ES6 Refactor)</p>
+            <p><strong>Entwickler:</strong> Media Orchestrator Team</p>
+            <p>Diese Software wurde für die effiziente Verwaltung und Wiedergabe von Medieninhalten entwickelt.</p>
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <p style="font-size: 0.9em; color: var(--text-secondary);">© 2026 Media Orchestrator. Alle Rechte vorbehalten.</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="safeStyle('impressum-modal', 'display', 'none')" class="tab-btn active" data-i18n="common_close">Schließen</button>
+        </div>
+    </div>
+</div>

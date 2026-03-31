@@ -4,26 +4,6 @@
  * Handles category badges, inventory list rendering, and detail views.
  */
 
-const CATEGORY_MAP = {
-    "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Song"],
-    "video": ["Video", "Film", "Serie", "ISO/Image", "Musikvideos", "Animes", "Cartoons", "Movie", "TV Show"],
-    "film": ["Film", "Film Object"],
-    "serie": ["Serie"],
-    "album": ["Album"],
-    "soundtrack": ["Soundtrack"],
-    "compilation": ["Compilation"],
-    "single": ["Single"],
-    "klassik": ["Klassik"],
-    "playlist": ["Playlist"],
-    "podcast": ["Podcast"],
-    "images": ["Bilder"],
-    "documents": ["Dokument"],
-    "ebooks": ["E-Book"],
-    "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray", "PAL DVD (Abbild)", "NTSC DVD (Abbild)", "DVD (Abbild)", "Blu-ray (Abbild)", "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild", "DVD Object"],
-    "spiel": ["PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)", "Spiel"],
-    "beigabe": ["Supplement", "Beigabe", "Software"]
-};
-
 /**
  * Returns consistent badge HTML for an item's category.
  */

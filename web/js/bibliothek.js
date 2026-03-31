@@ -137,7 +137,7 @@ function renderGridView() {
         }
 
         return `
-            <div class="grid-item" onclick="playMediaObject(coverflowItems[${idx}])">
+            <div class="grid-item" onclick="playMediaObject(coverflowItems[${idx}])" oncontextmenu="showContextMenu(event, coverflowItems[${idx}])">
                 <div class="grid-cover" style="background-image: url('${artwork}')">
                     ${item.is_chrome_native ? `<div class="native-badge" title="Chrome Native support">DIRECT</div>` : ''}
                     ${typeof getCategoryBadgeHtml === 'function' ? getCategoryBadgeHtml(item) : ''}
@@ -175,7 +175,7 @@ function renderDatabaseView() {
                 <td style="font-weight: 500;">${item.name || '---'}</td>
                 <td>${artist}</td>
                 <td style="font-size: 0.8em; color: #666; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.path}">${item.path}</td>
-                <td>
+                <td oncontextmenu="showContextMenu(event, coverflowItems[${idx}])">
                     <button class="icon-btn" onclick="playMediaObject(coverflowItems[${idx}])">▶️</button>
                     <button class="icon-btn" onclick="openEditFormByName('${item.name.replace(/'/g, "\\'")}')">Edit</button>
                 </td>
@@ -309,7 +309,7 @@ function updateCoverflowDisplay() {
 
         return `
             <div class="${classes}" style="background-image: url('${artwork}')" 
-                 onclick="selectCoverflowItem(${idx})">
+                 onclick="selectCoverflowItem(${idx})" oncontextmenu="showContextMenu(event, coverflowItems[${idx}])">
                 <div class="info">
                     <div class="title">${title}</div>
                     <div class="meta">${artist} | ${item.category}</div>

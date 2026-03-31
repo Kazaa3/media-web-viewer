@@ -143,15 +143,22 @@ document.addEventListener('keydown', async (e) => {
 /**
  * Application Boot Notification
  */
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     console.log("Core Orchestrator: System checks passing.");
     
-    // Default Start Screen (Direct Tab Switch)
+    // 0. Load Modals Fragment
+    if (typeof FragmentLoader?.load === 'function') {
+        FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {
+            console.log("DOM: Modals fragment initialized.");
+            if (typeof initTranslations === 'function') initTranslations();
+        });
+    }
+
+    // 1. Default Start Screen
     if (typeof switchMainCategory === 'function') switchMainCategory('media');
     if (typeof switchTab === 'function') switchTab('player');
     
-    // Initialize Library & Inventory
-    if (typeof loadLibrary === 'function') loadLibrary();
+    // 2. Initialize Library & Inventory
     if (typeof loadLibrary === 'function') loadLibrary();
     if (typeof loadEditItems === 'function') loadEditItems();
 });

@@ -341,7 +341,7 @@ def get_best_ffmpeg_encoder():
         gpu_info = hardware_detector.get_gpu_info()
         encoders = gpu_info.get("encoders", [])
         if "nvenc" in encoders:
-            return "h264_nvenc"
+            return "h264_nvenc" 
         if "qsv" in encoders:
             return "h264_qsv"
         if "vaapi" in encoders:

@@ -3,6 +3,26 @@
  * Extracted from app.html to improve modularity and avoid line-number drift.
  */
 
+const CATEGORY_MAP = {
+    "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Song"],
+    "video": ["Video", "Film", "Serie", "ISO/Image", "Musikvideos", "Animes", "Cartoons", "Movie", "TV Show"],
+    "film": ["Film", "Film Object"],
+    "serie": ["Serie"],
+    "album": ["Album"],
+    "soundtrack": ["Soundtrack"],
+    "compilation": ["Compilation"],
+    "single": ["Single"],
+    "klassik": ["Klassik"],
+    "playlist": ["Playlist"],
+    "podcast": ["Podcast"],
+    "images": ["Bilder"],
+    "documents": ["Dokument"],
+    "ebooks": ["E-Book"],
+    "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray", "PAL DVD (Abbild)", "NTSC DVD (Abbild)", "DVD (Abbild)", "Blu-ray (Abbild)", "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild", "DVD Object"],
+    "spiel": ["PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)", "Spiel"],
+    "beigabe": ["Supplement", "Beigabe", "Software"]
+};
+
 /**
  * Toggles a modal's visibility.
  */
@@ -118,7 +138,58 @@ function update_progress(data) {
 }
 
 /**
- * Global Splitter Initialization
+ * Global Context Menu Controller
+ */
+function showContextMenu(e, item) {
+    e.preventDefault();
+    const menu = document.getElementById('context-menu');
+    if (!menu) return;
+
+    if (typeof appendUiTrace === 'function') appendUiTrace(`[Context-Menu] Opening for: ${item.name}`);
+
+    menu.innerHTML = '';
+    menu.style.display = 'block';
+    
+    // Position menu at cursor
+    let x = e.pageX;
+    let y = e.pageY;
+    
+    // Boundary check for window
+    if (x + 200 > window.innerWidth) x -= 200;
+    if (y + 150 > window.innerHeight) y -= 150;
+    
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+
+    const options = [
+        { label: 'Abspielen', icon: '▶️', action: () => playMediaObject(item) },
+        { label: 'Warteschlange', icon: '➕', action: () => addToQueue(item) },
+        { label: 'Metadaten Editieren', icon: '📝', action: () => openEditForm(item) },
+        { label: 'Im Dateisystem öffnen', icon: '📁', action: () => { if (typeof eel !== "undefined") eel.open_in_explorer(item.path)(); } }
+    ];
+
+    options.forEach(opt => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'context-menu-item';
+        itemDiv.innerHTML = `<span style="margin-right:10px;">${opt.icon}</span> ${opt.label}`;
+        itemDiv.onclick = () => {
+            opt.action();
+            hideContextMenu();
+        };
+        menu.appendChild(opt.forEach ? opt : itemDiv);
+    });
+
+    // Close on click elsewhere
+    document.addEventListener('click', hideContextMenu, { once: true });
+}
+
+function hideContextMenu() {
+    const menu = document.getElementById('context-menu');
+    if (menu) menu.style.display = 'none';
+}
+
+/**
+ * Common Splitter Initialization
  * Side: 'left', 'right', 'top', 'bottom'.
  */
 function initSplitter(splitterId, targetPaneId, containerId, orientation = 'vertical', side = 'left') {

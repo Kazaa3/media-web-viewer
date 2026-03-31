@@ -1,0 +1,62 @@
+<!-- ===================== PLAYER QUEUE (v1.34) ===================== -->
+<div id="player-tab-split-container" style="display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-primary);">
+    
+    <!-- LEFT COLUMN: Active Queue (Sidebar) -->
+    <div id="player-left-sidebar" class="sidebar" style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border-color); background: var(--bg-sidebar);">
+        
+        <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+            <h3 style="margin: 0; font-size: 1.1em; font-weight: 800; color: var(--text-primary);" data-i18n="nav_queue">Warteschlange</h3>
+            <span id="queue-item-count" style="background: var(--accent-color); color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">0 Items</span>
+        </div>
+
+        <div id="player-queue-pane" style="flex: 1; overflow-y: auto; padding: 0;">
+            <div id="active-queue-list-render-target" style="display: flex; flex-direction: column; gap: 0;">
+                <!-- Queue items will be injected here via audioplayer.js -->
+            </div>
+        </div>
+
+        <div style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 8px; background: var(--bg-sidebar);">
+            <button onclick="clearQueue()" class="tab-btn" style="flex: 1; justify-content: center; font-size: 12px; color: #ff5252; border-color: rgba(255, 82, 82, 0.2);">Liste leeren</button>
+            <button onclick="shuffleQueue()" class="tab-btn" style="flex: 1; justify-content: center; font-size: 12px;">Mischen</button>
+        </div>
+    </div>
+
+    <!-- Splitter -->
+    <div class="splitter-v" id="player-analytics-splitter"></div>
+
+    <!-- RIGHT COLUMN: Active Item Details (Main content) -->
+    <div id="video-queue-pane" style="flex: 1; display:flex; flex-direction:column; overflow: hidden; background: var(--bg-primary); position: relative;">
+        
+        <div id="player-now-playing-container" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; text-align: center; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);">
+            
+            <!-- Artwork Card -->
+            <div id="big-player-artwork-container" class="glass-card" style="width: 400px; height: 400px; margin-bottom: 40px; padding: 0; overflow: hidden; border-radius: 24px; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <img id="big-player-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+
+            <!-- Metadata Info -->
+            <div id="big-player-info" style="max-width: 800px;">
+                <h2 id="big-player-title" style="margin: 0; font-size: 2.5em; font-weight: 900; color: var(--text-primary); letter-spacing: -1px; line-height: 1.1;" data-i18n="player_select_song">Wählt ein Lied aus</h2>
+                <h3 id="big-player-artist" style="margin: 15px 0 25px 0; font-size: 1.4em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">Warteschlange leer</h3>
+            </div>
+
+            <!-- Tech Details (Pills) -->
+            <div id="big-player-metadata-grid" style="display: flex; gap: 12px; margin-top: 10px;">
+                <div id="big-bitrate-display" class="track-codec">-</div>
+                <div id="big-samplerate-display" class="track-codec">-</div>
+            </div>
+
+            <!-- Lyrics Display -->
+            <div id="big-player-lyrics" style="margin-top: 40px; max-height: 250px; overflow-y: auto; color: var(--text-secondary); font-style: italic; font-size: 1.1em; width: 80%; line-height: 1.6; opacity: 0.6; font-weight: 500;">
+                <!-- Lyrics injected here -->
+            </div>
+
+        </div>
+
+        <!-- Overlay status -->
+        <div id="player-stats-overlay" style="position: absolute; top: 30px; right: 30px; pointer-events: none;">
+            <!-- optional diagnostics -->
+        </div>
+    </div>
+</div>
+<!-- ===================== PLAYER QUEUE END ===================== -->

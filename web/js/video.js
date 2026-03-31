@@ -252,3 +252,53 @@ function showPlaybackError(title, message, technicalInfo = {}) {
     if (typeof videojs !== 'undefined') registerVjsComponents();
     else setTimeout(waitVjs, 100);
 })();
+
+/**
+ * Renders the video queue in the Video player tab.
+ */
+function renderVideoQueue() {
+    const list = document.getElementById('player-playlist-container');
+    if (!list) return;
+
+    console.log("[Video] Rendering video queue...");
+    list.innerHTML = '';
+
+    if (currentPlaylist.length === 0) {
+        const emptyDiv = document.getElementById('player-playlist-empty');
+        if (emptyDiv) emptyDiv.style.display = 'block';
+        return;
+    }
+
+    const emptyDiv = document.getElementById('player-playlist-empty');
+    if (emptyDiv) emptyDiv.style.display = 'none';
+
+    currentPlaylist.forEach((item, index) => {
+        if (!isVideoItem(item)) return;
+
+        let div = document.createElement('div');
+        div.className = 'implementation-encapsulated-state-buffer-node';
+        if (typeof currentVideoItem !== 'undefined' && currentVideoItem && currentVideoItem.path === item.path) {
+            div.classList.add('playing');
+        }
+
+        let tags = item.tags || {};
+        div.innerHTML = `
+            <div style="flex: 1;">
+                <strong style="display:block; font-size: 0.9em; color: var(--text-color);">${tags.title || item.name}</strong>
+                <span style="font-size: 0.8em; color: #888;">${item.path.split('/').pop()}</span>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button onclick="event.stopPropagation(); removeItem(${index}); renderVideoQueue();" style="background:transparent; border:none; cursor:pointer; color: #f44;">
+                    <svg width="12" height="12"><use href="#icon-delete"></use></svg>
+                </button>
+            </div>
+        `;
+
+        div.onclick = () => {
+            if (typeof play === 'function') play(item, item.path);
+            renderVideoQueue();
+        };
+
+        list.appendChild(div);
+    });
+}

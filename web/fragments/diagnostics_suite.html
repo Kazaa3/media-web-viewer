@@ -1,0 +1,57 @@
+<!-- ===================== DIAGNOSTICS SUITE (v1.34) ===================== -->
+<div id="diagnostics-suite-fragment" style="display: flex; flex-direction: column; height: 100%; background: var(--bg-primary); border-radius: var(--radius-card); overflow: hidden;">
+    
+    <!-- Control Header -->
+    <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);" data-i18n="nav_diagnostics">Diagnose-Suite</h2>
+            <div id="diagnostics-status-badge" style="background: var(--accent-hover); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">System OK</div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="runAllTestsUI()" class="tab-btn active" style="box-shadow: 0 4px 10px rgba(46, 204, 113, 0.2); background: #2ecc71;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Run All Tests
+            </button>
+            <button onclick="clearDiagnosticsUI()" class="tab-btn">Reset</button>
+        </div>
+    </div>
+
+    <!-- Test Modules Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; padding: 30px; flex: 1; overflow-y: auto; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);">
+        
+        <!-- Module: Connectivity -->
+        <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card); border-top: 4px solid #3498db;">
+            <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><circle cx="12" cy="20" r="2"/></svg> Konnektivität
+            </h3>
+            <div id="diag-conn-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- Module: Playback Engine -->
+        <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card); border-top: 4px solid #9b59b6;">
+            <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Media Pipeline
+            </h3>
+            <div id="diag-playback-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- Module: File System -->
+        <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card); border-top: 4px solid #e67e22;">
+            <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Filesystem & DB
+            </h3>
+            <div id="diag-fs-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Panel (Terminal Style) -->
+    <div id="diagnostics-results-pane" style="margin: 0 30px 30px 30px; padding: 24px; background: #0f0f0f; border: 1px solid #333; color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 13px; height: 180px; overflow-y: auto; display: none; line-height: 1.5; box-shadow: var(--shadow-soft);">
+        <!-- Test output will be injected here -->
+    </div>
+</div>
+<!-- ===================== DIAGNOSTICS SUITE END ===================== -->

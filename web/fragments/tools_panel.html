@@ -1,0 +1,140 @@
+<!-- ===================== TOOLS PANEL (v1.34) ===================== -->
+<div id="regex-provider-chain-orchestrator-panel" style="height: 100%; width: 100%; display: flex; flex-direction: column; background: var(--bg-primary);">
+
+    <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);">Tools & Core Components</h2>
+            <div class="options-nav-tabs" style="display: flex; gap: 4px;">
+                <button class="sub-tab-btn active" onclick="switchToolsView('parser')" id="tools-subtab-parser">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Parser Chain
+                </button>
+                <button class="sub-tab-btn" onclick="switchToolsView('transcoding')" id="tools-subtab-transcoding">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Transcoding High-Level
+                </button>
+            </div>
+        </div>
+        <button onclick="scan(null, true)" class="tab-btn active" style="box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);" data-i18n="btn_scan_media">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Scan Media
+        </button>
+    </div>
+
+    <div id="tools-content-container" style="flex: 1; overflow: hidden; position: relative;">
+
+        <!-- TOOLS: PARSER VIEW -->
+        <div id="tools-parser-view" class="tools-view" style="display: flex; height: 100%; flex-direction: column;">
+            
+            <div id="parser-tab-split-container" style="display: flex; flex: 1; min-height: 0; gap: 0; border-top: 1px solid var(--border-color);">
+                
+                <!-- Sidebar (Left) -->
+                <div id="parser-left-settings" class="sidebar" style="width: 320px; flex-shrink: 0; padding: 24px; overflow-y: auto; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); min-height: 0;">
+                    
+                    <h3 style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 15px 0; letter-spacing: 1px; font-weight: 700;" data-i18n="parser_core_settings">Betriebsmodus</h3>
+                    
+                    <div class="glass-card" style="display: flex; align-items: center; gap: 15px; padding: 18px; margin-bottom: 30px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-parser-mode" onchange="saveParserChainUI()">
+                            <span class="slider"></span>
+                        </label>
+                        <div>
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;" data-i18n="parser_mode_label">Effizienz-Modus</div>
+                            <div id="parser-mode-status" style="font-size: 11px; color: var(--accent-color); margin-top: 2px; font-weight: 800; text-transform: uppercase;">Leichtgewicht</div>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 15px 0; letter-spacing: 1px; font-weight: 700;" data-i18n="parser_arch_title">Parser Chain Architektur</h3>
+                    
+                    <div class="glass-card" style="padding: 20px; margin-bottom: 30px;">
+                        <ul id="parser-list" class="parser-list" style="margin-bottom: 20px;"></ul>
+                        <button onclick="saveParserChainUI()" class="tab-btn active" style="width: 100%; justify-content: center;" data-i18n="parser_btn_save">Speichern</button>
+                    </div>
+                </div>
+
+                <!-- Parser Vertical Splitter -->
+                <div id="parser-tab-splitter" class="splitter-v"></div>
+
+                <!-- Main Content (Right) -->
+                <div id="parser-main-pane" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); min-height: 0;">
+                    <div id="parser-view-content" style="padding: 40px; overflow-y: auto; flex: 1; min-height: 0; background: radial-gradient(circle at top right, var(--bg-secondary) 0%, var(--bg-primary) 60%);">
+                        <div id="parser-configuration-view" class="parser-view">
+                            <div id="parser-details-column" class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                                <h3 style="margin: 0 0 25px 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);" data-i18n="parser_options_title">Modulare Parser-Optionen</h3>
+                                <div id="parser-options-container" style="display: flex; flex-direction: column; gap: 24px;">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOLS: TRANSCODING VIEW -->
+        <div id="tools-transcoding-view" class="tools-view" style="display: none; padding: 40px; overflow-y: auto; background: var(--bg-primary); height: 100%;">
+            
+            <h2 style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; color: var(--text-primary); font-weight: 900; letter-spacing: -1px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Advanced Transcoding Suite
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px;">
+                
+                <!-- HandBrake Section -->
+                <div class="glass-card" style="display: flex; flex-direction: column; border-top: 4px solid #e67e22; border-radius: var(--radius-card);">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #e67e22; font-weight: 800;">HandBrake High-Level</h3>
+                        <div style="padding: 2px 8px; background: rgba(230, 126, 34, 0.1); color: #e67e22; border-radius: 8px; font-size: 10px; font-weight: 800;">RECOMMENDED</div>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">Optimized batch encoding for high quality and minimal footprint.</p>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">Hardware Accelerator</label>
+                        <select id="hb-encoder" class="action-btn" style="width: 100%; border-radius: var(--radius-pill); background: var(--bg-secondary); padding: 12px 20px;">
+                            <option value="x264">Software CPU (x264)</option>
+                            <option value="qsv">Intel QuickSync (QSV)</option>
+                            <option value="nvenc">NVIDIA Core (NVENC)</option>
+                            <option value="vaapi">Linux Native (VAAPI)</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="triggerHBTranscode()" class="tab-btn active" style="background: #e67e22; width: 100%; justify-content: center; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2);">Start Processing</button>
+                </div>
+
+                <!-- WebM Section -->
+                <div class="glass-card" style="display: flex; flex-direction: column; border-top: 4px solid #3498db; border-radius: var(--radius-card);">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #3498db; font-weight: 800;">WebM VP9 Engine</h3>
+                        <div style="padding: 2px 8px; background: rgba(52, 152, 219, 0.1); color: #3498db; border-radius: 8px; font-size: 10px; font-weight: 800;">ULTRA SMALL</div>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">Best for web sharing and mobile archives. High compression VP9/Opus.</p>
+                    
+                    <div style="flex: 1;"></div>
+                    <button onclick="triggerWebMTranscode()" class="tab-btn active" style="background: #3498db; width: 100%; justify-content: center; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);">Convert to WebM Container</button>
+                </div>
+            </div>
+
+            <!-- VLC & Playlist Tools Section -->
+            <div class="glass-card" style="margin-top: 30px; padding: 30px; border-radius: var(--radius-card);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px;">
+                    <div>
+                        <h3 style="margin: 0 0 15px 0; color: var(--text-primary); font-size: 1.1em; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> VLC External Stream
+                        </h3>
+                        <div style="display: flex; gap: 8px; background: var(--bg-primary); padding: 5px; border-radius: var(--radius-pill); border: 1px solid var(--border-color);">
+                            <input id="vlc-stream-url" type="text" placeholder="https://external-stream.m3u8" style="flex: 1; padding: 10px 16px; border: none; background: transparent; outline: none; font-size: 13px; color: var(--text-primary);" />
+                            <button onclick="playVLCStream()" class="tab-btn active" style="background: #8e44ad;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0 0 15px 0; color: var(--text-primary); font-size: 1.1em; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Global Playlist Exchange
+                        </h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="importVLCPlaylist()" class="tab-btn" style="flex: 1; justify-content: center; font-weight: 700;">Import M3U</button>
+                            <button onclick="exportToVLC()" class="tab-btn" style="flex: 1; justify-content: center; font-weight: 700;">Export M3U</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- closes tools-transcoding-view -->
+    </div> <!-- closes tools-content-container -->
+</div>
