@@ -232,29 +232,33 @@ function switchMainCategory(category, btn) {
 
     const subTabs = {
         'media': [
-            { id: 'player', label: 'Player', icon: '#icon-audio' },
-            { id: 'library', label: 'Bibliothek', icon: '#icon-folder' },
-            { id: 'playlist', label: 'Playlist', icon: '#icon-playlist' }
+            { id: 'player', label: 'Warteschlange', icon: '#icon-audio' },
+            { id: 'playlist', label: 'Playlist Manager', icon: '#icon-playlist' }
         ],
-        'video': [
-            { id: 'video', label: 'Video Player', icon: '#icon-video' }
-        ],
-        'management': [
+        'library': [
             { id: 'item', label: 'Item', icon: '#icon-search' },
             { id: 'file', label: 'Datei', icon: '#icon-folder' },
             { id: 'edit', label: 'Edit', icon: '#icon-edit' },
             { id: 'parser', label: 'Parser', icon: '#icon-settings' },
             { id: 'tools', label: 'Tools', icon: '#icon-settings' }
         ],
-        'governance': [
+        'video': [
+            { id: 'video', label: 'Video Player', icon: '#icon-video' },
+            { id: 'vlc', label: 'VLC Proxy', icon: '#icon-video' }
+        ],
+        'tools': [
+            { id: 'parser', label: 'Parser Config', icon: '#icon-settings' },
+            { id: 'tools', label: 'Advanced Tools', icon: '#icon-settings' }
+        ],
+        'system': [
             { id: 'options', label: 'Optionen', icon: '#icon-options' },
             { id: 'debug', label: 'Debug DB', icon: '#icon-debug' },
             { id: 'flags', label: 'Flags', icon: '#icon-settings' }
         ],
         'diagnostics': [
-            { id: 'tests', label: 'Tests', icon: '#icon-test' },
-            { id: 'reporting', label: 'Reporting', icon: '#icon-stats' },
-            { id: 'logbuch', label: 'Logbuch', icon: '#icon-edit' }
+            { id: 'tests', label: 'Legacy Tests', icon: '#icon-test' },
+            { id: 'reporting', label: 'Analytics', icon: '#icon-stats' },
+            { id: 'logbuch', label: 'System Log', icon: '#icon-edit' }
         ]
     };
 

@@ -230,15 +230,57 @@ body {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* --- Sub-Navigation Bar --- */
+/* --- Breadcrumb Sub-Navigation Bar (Modern v1.34) --- */
 .sub-nav-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 24px;
-    background: var(--bg-secondary);
+    gap: 8px;
+    padding: 12px 28px;
+    background: transparent;
     border-bottom: 1px solid var(--border-color);
     z-index: 100;
+}
+
+.sub-tab-btn {
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-snappy);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.85;
+}
+
+.sub-tab-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    opacity: 1;
+}
+
+.sub-tab-btn.active {
+    background: var(--bg-primary);
+    color: var(--accent-color);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-soft);
+    opacity: 1;
+}
+
+[data-theme="dark"] .sub-tab-btn.active {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.sub-nav-separator {
+    width: 1px;
+    height: 16px;
+    background: var(--border-color);
+    margin: 0 4px;
 }
 
 /* --- Layout Main --- */

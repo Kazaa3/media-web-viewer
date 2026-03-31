@@ -29,20 +29,18 @@
         </select>
     </div>
 
-    <!-- Log List Area (Terminal Style) -->
-    <div id="log-content-area" style="flex: 1; margin: 0 30px 20px 30px; overflow-y: auto; background: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);">
-        <div id="log-entry-list" style="display: flex; flex-direction: column; gap: 6px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.6;">
-            <!-- Entries injected with .log-entry class styles from main.css -->
-        </div>
+    <!-- Log List Area (Terminal Style Console) -->
+    <div id="log-content-area" style="flex: 1; margin: 0 30px 20px 30px; overflow-y: auto; background: #000; border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: inset 0 2px 20px rgba(0,0,0,0.6);">
+        <pre id="log-entry-list" style="margin: 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11.5px; line-height: 1.5; color: #dcdccc; white-space: pre-wrap; word-break: break-all;"></pre>
     </div>
 
     <!-- Stats Footer -->
-    <div style="padding: 12px 30px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.5px;">
-        <div>Total Events: <span id="log-entry-count" style="color: var(--accent-color);">0</span></div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span id="log-sync-status" class="sidebar-badge" style="background: transparent; color: inherit; padding: 0;">Live Stream</span>
-            <span>Update: <span id="log-last-update">-</span></span>
+    <div style="padding: 12px 30px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); font-size: 11px; font-weight: 700; color: var(--text-secondary); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.5px;">
+        <div style="display: flex; gap: 20px;">
+            <span>Total Events: <span id="log-entry-count" style="color: var(--accent-color);">0</span></span>
+            <span style="color: #2ecc71;">● Live Sync Active</span>
         </div>
+        <div>Last Update: <span id="log-last-update" style="font-family: monospace;">--:--:--</span></div>
     </div>
 </div>
 <!-- ===================== LOGBOOK PANEL END ===================== -->
