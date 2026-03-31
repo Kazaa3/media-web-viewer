@@ -1,3 +1,49 @@
+## Implementation Plan: UI & Context Menu Final Polish
+
+Wir adressieren die gemeldeten UI-Regressions, insbesondere das Kontextmenü-Styling und verbleibende White-Screen-Bereiche in Player/Playlist.
+
+### User Review Required
+**WICHTIG**
+
+- **Context Menu Unification:** Vereinheitlichung aller Kontextmenü-Systeme zu einer modernen, glassmorphischen Komponente.
+- **OLED Audit:** Erzwingen der Dark-Theme-Variablen für Container, die noch weiß erscheinen.
+
+### Proposed Changes
+**Core Shell & CSS**
+- [MODIFY] main.css: Explizite Styles für #context-menu und .context-menu-item, robuste Theme-Transitions für .sidebar/.tab-content, OLED-Overrides für Legacy-Komponenten
+**Fragments & Layout**
+- [MODIFY] app.html: Inline-Styles von #context-menu entfernen, Sub-Navigation auf var(--bg-secondary) umstellen
+- [MODIFY] player_queue.html: Harte Hintergründe prüfen und fixen
+**Javascript Helpers**
+- [MODIFY] common_helpers.js: showContextMenu nutzt moderne CSS-Klassen statt Inline-Styles
+- [MODIFY] audioplayer.js: Dynamisches Listen-Rendering nutzt v1.34-Design-Tokens
+
+### Verification Plan
+**Automated Tests:**
+- ls web/css ausführen, um verwaiste Stylesheets zu finden
+- data-theme-Attribut am html-Tag per DOM-Audit prüfen
+**Manual Verification:**
+- Rechtsklick in verschiedenen Bereichen (Library, Playlist): Kontextmenü prüfen
+- Theme-Wechsel (Light/Dark): Alle Container (insb. Player Queue) müssen Farbschema korrekt übernehmen
+## Research Summary & OLED Regression Fix Plan
+
+### Kontextmenü
+Es existiert ein Legacy-Wrapper #context-menu in app.html mit festem background: white. Dieser muss nach main.css migriert und mit den v1.34-Glassmorphism-Tokens versehen werden.
+
+### OLED Regression (Player Queue)
+Die "Warteschlange"-Fläche und Sidebar greifen noch Light-Mode-Variablen ab, da einige Inline-Styles die theme-spezifischen Tokens aus main.css überschreiben.
+
+### Syntax Error
+Der SyntaxError in main.py, der das Backend blockierte, wurde bereits behoben.
+
+---
+
+## Proposed Solution
+- Kontextmenü-Styling nach main.css verschieben und v1.34-Designsystem verwenden
+- .tab-content und .sidebar zwingen, theme-aware Tokens zu respektieren
+- "ISBN Auto-Fix" und Queue-Item-Rendering in JS modernisieren, um visuelle Konsistenz sicherzustellen
+
+Siehe implementation_plan.md für Details. Bitte Review und Freigabe für die Umsetzung.
 ## Abschluss: v1.34 UI Modernization & Diagnostics Restoration
 
 Die umfassende v1.34 UI-Modernisierung und die Wiederherstellung der Diagnostik sind abgeschlossen. Die Anwendung hält sich jetzt strikt an das OLED-Dark-Designsystem, alle "White-Screen"-Regressions sind beseitigt und die technischen Debugging-Tools sind wieder zugänglich.

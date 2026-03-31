@@ -347,7 +347,7 @@ def get_best_ffmpeg_encoder():
         if "vaapi" in encoders:
             return "h264_vaapi"
     except Exception:
-        passdas rechtds klick menü wird flasch angezeigt.
+        pass
     return "libx264"  # Default software fallback
 
 
