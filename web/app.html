@@ -32,6 +32,7 @@
     <script src="js/common_helpers.js"></script>
     <script src="js/system_helpers.js"></script>
     <script src="js/ui_nav_helpers.js"></script>
+    <script src="js/trace_helpers.js"></script>
     <script src="js/video.js"></script>
     <script src="js/audioplayer.js"></script>
     <script src="js/browse.js"></script>
@@ -132,6 +133,12 @@
             </button>
             <button class="tab-btn" onclick="switchMainCategory('management'); switchTab('tools', this)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.77 2.77l-3.77 3.77a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.77 2.77l-3.77 3.77a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.77 2.77l-3.77 3.77a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.77 2.77l-3.77 3.77a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l4.3-4.3"/></svg> Tools
+            </button>
+            <button class="tab-btn" onclick="switchMainCategory('governance'); switchTab('options', this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> System
+            </button>
+            <button class="tab-btn" onclick="switchMainCategory('diagnostics'); switchTab('tests', this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Diagnostics
             </button>
         </nav>
 
@@ -356,8 +363,8 @@
         <!-- SIDEBAR START (Restored) -->
         <div id="main-sidebar" class="sidebar">
             <h3
-                style="margin-top: 0; font-size: 1.1em; color: #2a7; border-bottom: 2px solid #e8f5e9; padding-bottom: 8px; width: 100%; text-align: left;">
-                <svg width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+                style="margin-top: 0; font-size: 11px; text-transform: uppercase; color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px; width: 100%; text-align: left; letter-spacing: 1px; font-weight: 800;">
+                <svg width="14" height="14" style="vertical-align: middle; margin-right: 8px;">
                     <use href="#icon-info"></use>
                 </svg> <span data-i18n="sb_status">Status</span>
             </h3>
@@ -370,7 +377,7 @@
                 <div id="sidebar-metadata-primary-string-renderer" class="sidebar-title" data-i18n="sb_no_song"
                     style="font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">Kein Lied gewählt</div>
                 <div id="sidebar-metadata-secondary-string-renderer" class="sidebar-artist"
-                    style="color: #666; font-size: 0.9em; margin-bottom: 15px;">-</div>
+                    style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 15px;">-</div>
 
                 <div id="sidebar-metadata-extended-attribute-grid"
                     style="font-size: 0.85em; color: #888; margin-bottom: 10px; white-space: pre-wrap;"></div>
@@ -388,7 +395,7 @@
 
         <!-- Main Right Content Area -->
         <div id="main-content-area"
-            style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; min-width: 0;">
+            style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); min-width: 0;">
             
             <!-- SUB-NAV CONTAINER (Breadcrumb Style) -->
             <div id="sub-nav-container" class="sub-nav-bar" style="display: none; padding: 10px 25px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); z-index: 100;">

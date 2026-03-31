@@ -138,6 +138,10 @@ function finishSwitchTab(tabId, targetId, btn) {
         const isFlex = ['player', 'library', 'item', 'file', 'edit', 'options', 'parser', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools'].includes(tabId);
         panel.style.display = isFlex ? 'flex' : 'block';
         
+        if (typeof mwv_trace === 'function') {
+            mwv_trace('NAV-TAB', tabId, { targetId });
+        }
+
         if (isFlex) {
             panel.style.flex = '1';
             panel.style.height = '100%';
@@ -211,7 +215,11 @@ function finishSwitchTab(tabId, targetId, btn) {
  */
 function switchMainCategory(category, btn) {
     currentMainCategory = category;
-    traceUiNav('MAIN-CAT', category);
+    
+    // Log the category change
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('NAV-CATEGORY', category);
+    }
     
     document.querySelectorAll('#main-nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');

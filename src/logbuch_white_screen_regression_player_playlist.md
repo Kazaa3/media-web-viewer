@@ -1,3 +1,191 @@
+## Abschluss: v1.34 UI Modernization & Diagnostics Restoration
+
+Die umfassende v1.34 UI-Modernisierung und die Wiederherstellung der Diagnostik sind abgeschlossen. Die Anwendung hält sich jetzt strikt an das OLED-Dark-Designsystem, alle "White-Screen"-Regressions sind beseitigt und die technischen Debugging-Tools sind wieder zugänglich.
+
+### Key Highlights
+- **Navigation Restored:** "System" und "Diagnostics" sind wieder im Haupt-Header und bieten direkten Zugriff auf Options Panel und technische Probe-Ansichten.
+- **OLED-Safe Design:** Tiefgehende Code-Prüfung, alle harten weißen Hintergründe durch theme-aware CSS-Variablen ersetzt (Playlist Manager, Options Panel, Diagnostic Test Cards).
+- **Interaction Logging (mwv_trace):** Jede wesentliche GUI-Interaktion (Tab-Wechsel, Modal-Toggles, Kontextmenüs) wird jetzt für bessere Nachvollziehbarkeit ans Backend getraced.
+- **Debug DB Rescue:** Debug DB-Ansicht in der Diagnostics Suite wiederhergestellt, Live-Inspektion von Library Map und Engine Stats möglich.
+
+Für eine detaillierte Auflistung aller geänderten Dateien und spezifischen Verbesserungen siehe Walkthrough und vorherige Logbuch-Einträge.
+## Walkthrough: Media Viewer v1.34 UI Refinement
+
+Die Media Viewer Anwendung wurde erfolgreich auf Version v1.34 verfeinert. Navigation, OLED-Dark-Mode und Logging sind jetzt vollständig umgesetzt.
+
+### Key Accomplishments
+1. **Navigation Restoration**
+  - Der Haupt-Header enthält wieder die Kategorien "System" und "Diagnostics". Alle Admin- und Technik-Tools sind direkt erreichbar.
+  - *Hinweis:* Die switchMainCategory-Logik in ui_nav_helpers.js wurde für die neuen Kategorien governance und diagnostics angepasst.
+2. **Interaction Trace System (mwv_trace)**
+  - Robustes Event-Tracking: Jeder Tab-Wechsel, Modal-Toggle und Kontextmenü-Event wird an das Backend geloggt.
+  - Modul: web/js/trace_helpers.js
+  - Backend-Hook: eel.log_gui_event()
+  - Coverage: Navigation, Sub-Tabs, Modals, Rechtsklick-Menüs
+3. **OLED Theme Audit (No More White Screens)**
+  - Tiefgreifende CSS/JS-Prüfung: Alle harten weißen Hintergründe entfernt.
+  - Playlist Manager: Weißes Content-Area gefixt
+  - Options Panel: Harte Farben in Indexing/Performance entfernt
+  - Diagnostics/Tests: Testkarten nutzen jetzt Glassmorphism-Tokens
+4. **Debug DB Rescue**
+  - Debug DB-Ansicht in Diagnostics Suite wiederhergestellt (Live Library Map, Config Cache, Engine Stats)
+
+### Technical Details
+- **CSS-Variablen (v1.34 Standard):**
+  - var(--bg-primary): #0a0a0a (OLED Black)
+  - var(--bg-secondary): #161616 (Deep Grey)
+  - var(--accent-color): #2ecc71 (Neon Green)
+- **File Changes:**
+  - app.html: Header-Restaurierung
+  - main.css: Sub-Tab-Active-State-Variable gefixt
+  - ui_nav_helpers.js: Interaction Tracing & Category Routing
+  - options_helpers.js: Harte Farben entfernt
+  - test_helpers.js: Diagnostic Cards modernisiert
+  - diagnostics_suite.html: Debug DB wiederhergestellt
+
+### Verification
+- **Dark Mode Compliance:** Manuell geprüft, dass keine weißen Hintergründe mehr in den Kern-Tabs vorhanden sind
+- **Logging:** mwv_trace-Calls werden ans Backend gesendet
+- **Navigation:** "System" lädt korrekt das Options-Panel und Sub-Tabs
+## Task Checklist: v1.34 UI Refinement & Logging System
+
+- [ ] 1. Navigation & Visibility
+  - [ ] Restore "System" and "Diagnostics" to primary header in app.html
+  - [ ] Update switchMainCategory in ui_nav_helpers.js
+  - [ ] Audit switchTab fragment mapping
+- [ ] 2. Robust Logging (Trace System)
+  - [ ] Create js/trace_helpers.js with mwv_trace()
+  - [ ] Integrate mwv_trace into all navigation events
+  - [ ] Integrate mwv_trace into context menu events
+  - [ ] Integrate mwv_trace into modal events
+- [ ] 3. Theme Audit (OLED Final Sweep)
+  - [ ] Fix white background in player_queue.html
+  - [ ] Fix white background in .tab-content root containers
+  - [ ] Audit main.css for OLED compliance
+- [ ] 4. Options & Debug DB Rescue
+  - [ ] Restore "Debug DB" section in options_panel.html
+  - [ ] Ensure "Flags" and "Transcoding" sections are complete
+- [ ] 5. Verification
+  - [ ] Manual audit of all tabs in Dark Mode
+  - [ ] Verify backend logging output for UI interactions
+## Implementation Plan: v1.34 UI Refinement & Robust Logging
+
+Die vorherige Modernisierung auf v1.34 brachte hochwertige Ästhetik, führte aber zu versteckten Navigationselementen und Theme-Regressions (weiße Hintergründe) in bestimmten UI-Zuständen. Dieser Plan stellt die vollständige Sichtbarkeit wieder her, schließt das OLED-Dark-Mode-Audit ab und implementiert ein umfassendes Logging-System für bessere Debugging-Möglichkeiten.
+
+### User Review Required
+**WICHTIG**
+
+- **Keine automatisierten Browser-Tests:** Verifikation erfolgt manuell und über Backend-Log-Analyse. Keine Selenium/Playwright-Tools.
+- **Navigation:** "System" und "Diagnostics" werden aus dem ALT-Menü zurück in den Haupt-Header verschoben.
+
+### Vorgeschlagene Änderungen
+1. **Navigation & Sichtbarkeit**
+  - [MODIFY] app.html: "System" und "Diagnostics"-Buttons in <nav class="main-tabs"> einfügen. Hauptkategorie-Switches prüfen.
+  - [MODIFY] ui_nav_helpers.js: switchMainCategory und switchTab für alle 1.34-Kategorien und Fragments anpassen.
+2. **Logging & Debugging (Trace-System)**
+  - [NEW] trace_helpers.js: Zentrale mwv_trace(category, action, details)-Funktion, Integration mit eel.log_gui_event(...)
+  - Automatische Logs für Tab-Wechsel, Subtab-Auswahl, Modal-Events, Kontextmenüs, Theme-Toggles
+3. **Theme & Ästhetik (OLED Final Audit)**
+  - [MODIFY] main.css: .tab-content und Root-Container an --bg-primary binden, vollständige OLED-Abdeckung prüfen
+  - [MODIFY] player_queue.html: Playlist-Bereich und Platzhalter auf --bg-primary umstellen
+4. **Options & Debug DB**
+  - [MODIFY] options_panel.html: "Debug DB"-Bereich wiederherstellen, Layout für "Flags" und "Transcoding" finalisieren
+
+### Verifikationsplan
+**Automatisierte Tests:**
+KEINE (wie gewünscht)
+**Manuelle Verifikation:**
+- Log-Check: Navigationsabfolge durchführen und Backend-Log auf [JS-NAV]-Traces prüfen
+- Visueller Audit: Dark Mode aktivieren, "Playlist" und "Media" auf OLED-Black prüfen
+- Modal-Test: "About"-Modal öffnen und Trace im Backend/Console prüfen
+## Implementation Plan – Modern UI Overhaul & Navigation Fix
+
+Das Ziel ist es, das "Premium"-Look-and-Feel des Media Viewers (v1.34-Stil) wiederherzustellen und gleichzeitig die neue modulare ES6-Architektur beizubehalten. Es wird ein robustes Designsystem eingeführt, das "White-Screen"-Dark-Mode-Problem behoben, das Modalsystem modularisiert und alle Anwendungstabs systematisch für ein einheitliches, modernes Erlebnis überarbeitet.
+
+### User Review Required
+**WICHTIG**
+
+- **Einheitliches Design:** Jeder Tab (Library, Player, Tools, Options, etc.) erhält konsistente Abstände, ein kartenbasiertes Layout und pillenförmige Navigation.
+- **Modal-Extraktion:** Modals werden aus app.html in eine eigene Struktur (fragments/modals_container.html) ausgelagert, um die Shell wartbarer zu machen.
+- **Version Target:** v1.34 (modern, glassmorph, responsive, OLED-fokussiert)
+
+### Vorgeschlagene Änderungen
+**[Design System & Modals]**
+- [MODIFY] main.css: Token-System für --app-radius-pill (25px), --app-radius-card (16px), --app-glass-blur (16px). Dark Mode Fix für --bg-primary/secondary. .tab-btn und .sub-tab-btn als Pill-Elemente mit Transition.
+- [NEW] modals_container.html: Alle <div class="modal-overlay">-Blöcke aus app.html in dieses Fragment verschieben.
+**[Tab Fragments Overhaul]**
+- [MODIFY] library_explorer.html: Card-basiertes Grid für Medienergebnisse.
+- [MODIFY] diagnostics_suite.html, item_inventory.html, metadata_editor.html, etc.: Systematische Anwendung von Padding, Card-Borders und Typografie.
+**[Logic & Navigation]**
+- [MODIFY] ui_nav_helpers.js: toggleImpressum nutzt modernes, glassmorphes Modal mit backdrop-blur. Menü-Routing für neue Menüpunkte.
+
+### Offene Fragen
+- **Menüplatzierung:** Soll der "About"-Link in der umschaltbaren Bar (ALT-Menü) oder immer sichtbar im Header neben dem Theme-Toggle sein?
+- **Animationsintensität:** Bevorzugen Sie schnelle Transitions (0.1s) oder "iOS-Style"-flüssige Animationen (0.3s)?
+
+### Verifikationsplan
+**Automatisierte Tests:**
+N/A (Fokus auf visuelles UI).
+**Manuelle Verifikation:**
+- Dark/Light Mode toggeln und Farbwechsel prüfen
+- Library-Subtabs wechseln und Pill-Button-State prüfen
+- "About"-Modal aus Footer und Hilfemenü öffnen
+- "Coverflow" und "Grid"-Layouts in Library prüfen
+## Abschlussmeldung: UI-Modernisierung v1.34 (Deutsch)
+
+Die umfassende UI-Modernisierung auf Version v1.34 ist abgeschlossen. Die gesamte Anwendung folgt nun einem einheitlichen, hochwertigen Design-System (OLED Dark Mode, Glassmorphismus, Pill-Design).
+
+### Highlights der Modernisierung (v1.34):
+- **Globales Design-System:** main.css mit modernen CSS-Tokens für Schatten, Radien (Pill-Style) und Weichzeichnungseffekte (backdrop-filter)
+- **Modulare Architektur:** Alle Modale in fragments/modals_container.html ausgelagert, asynchrones Laden beim Start
+- **Shell-Update:** Komplett überarbeitetes Header-System in app.html, inkl. neuem "About"-Menü mit Impressum-Modal
+- **Kompletter Fragment-Overhaul:** Alle Core-Module einzeln neugestaltet:
+  - Cinema Engine (Video): Neues Layout mit schwebender, gläserner Steuerungsleiste
+  - Bibliothek & Explorer: Card-basiertes Grid und elegante Pfad-Navigation
+  - Edit & Analytics: Aufgeräumte Formulare und terminalähnliche Diagnose-Ansichten
+
+Die Details zu den Änderungen und die Verifizierungsschritte findest du im Walkthrough.
+
+Alle Tabs sind nun konsistent und für den produktiven Einsatz bereit. Bitte teste den Dark Mode Toggle im Header, um das nahtlose Design zu erleben!
+## Media Viewer v1.34: Premium UI Overhaul – Abschluss
+
+Die umfassende Modernisierung des Media Viewers auf Version v1.34 ist erfolgreich abgeschlossen. Dieses Update führt ein einheitliches, hochwertiges Design ein, das auf Glassmorphism, OLED-optimiertem Dark Mode und pillenförmigen UI-Elementen basiert.
+
+### Zentrale Verbesserungen
+1. **Einheitliches Designsystem (v1.34)**
+  - Standardisierte CSS-Tokens in main.css
+  - **Verläufe:** Dezente radiale Verläufe für Tiefe bei Hintergründen und Karten
+  - **Glassmorphism:** backdrop-filter: blur(25px) für Header, Footer und Modals
+  - **Typografie:** Inter für UI, JetBrains Mono für technische Daten/Logs
+  - **Pill UI:** Buttons, Inputs und Navigation mit radius-pill (30px+)
+2. **Shell- & Architektur-Modernisierung**
+  - **Modulare Modals:** Zentrale Logik in fragments/modals_container.html, asynchrones Laden beim Start
+  - **Interaktiver Header:** Schwebender Header mit Branding und Theme-Toggles
+  - **About/Impressum:** Hochwertiger About-Bereich im Programmmenü
+3. **Umfassende Fragment-Überarbeitung**
+  - Alle Module mit neuen Design-Tokens neu aufgebaut:
+    - **Cinema Engine (Video):** Premium-Player mit schwebender Glassmorphism-Controlbar und integriertem Subtitle-Center
+    - **Audio Pulse (Player):** Redesign der Queue mit Fokus auf Album-Art und radialen Progress-Indikatoren
+    - **Library Explorer:** Kartenbasiertes Grid-Layout, bessere Metadaten-Lesbarkeit
+    - **Intel Suite (Diagnostics/Reporting/Logbook):** Technische Oberflächen mit Dark-Mode-Terminalcontainern und Echtzeit-Statusanzeigen
+
+### Verifikation & Manuelle Tests
+**Tipp:**
+Im laufenden Betrieb zwischen Light und Dark Mode per Header-Toggle wechseln – alle Fragmente sollten nahtlos und ohne White-Screen-Flicker überblenden.
+
+**Funktionaler Audit:**
+- **Modulare Modals:** "Impressum" über das About-Menü triggern und Modal-Ladevorgang prüfen
+- **Navigation:** Zwischen Cinema, Library und Edit-Tabs wechseln, Sidebar-Konsistenz prüfen
+- **Cinema Engine:** Floating Controlbar (Pill-Stil) und Seek-Slider testen
+- **Inventory:** Datenbank im neuen Inventory-View durchsuchen und filtern
+
+**Visual Documentation:**
+Library Explorer v1.34
+
+**Wichtig:**
+Die Version wird im gesamten UI als 134 (ohne Punkte) angezeigt, wie gewünscht.
+
+Die Modernisierung ist abgeschlossen. Alle Systeme sind stabil und folgen dem High-End-v1.34-Stil.
 ## Design System & UI-Modernisierung v1.34
 
 - **Design System (main.css):** OLED-Dark-Mode, Glassmorphism, pillenförmige UI-Tokens

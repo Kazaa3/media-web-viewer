@@ -106,12 +106,11 @@ async function loadTestSuites(retryCount) {
             const folderSuites = groups[folder].sort((a, b) => a.name.localeCompare(b.name));
             if (folderSuites.length === 0) return;
 
-            const header = document.createElement('div');
-            let headerStyle = 'grid-column: 1/-1; width: 100%; padding: 15px 5px 5px 5px; font-weight: bold; font-size: 1.1em; color: #444; border-bottom: 2px solid #edeff5; margin-top: 20px; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); position: sticky; top: 0; z-index: 100;';
-            if (folder.toLowerCase().startsWith('ui')) headerStyle += ' background: #e3f2fd; color: #1565c0;';
-            header.style.cssText = headerStyle;
             const folderLabel = folder === 'Root' ? (typeof t === 'function' ? t('test_suites_root', 'Core Utilities & Tests') : 'Core Utilities & Tests') : folder;
-            header.innerHTML = `<span>${folder === 'Root' ? '<svg width="12" height="12"><use href="#icon-folder"></use></svg>' : (folder.toLowerCase().startsWith('ui') ? '<svg width="12" height="12"><use href="#icon-tv"></use></svg>️' : '<svg width="12" height="12"><use href="#icon-folder"></use></svg>')}</span> ${folderLabel}`;
+            const isUI = folder.toLowerCase().startsWith('ui');
+            const headerStyle = `grid-column: 1/-1; width: 100%; padding: 15px 5px 5px 5px; font-weight: bold; font-size: 1.1em; color: var(--text-primary); border-bottom: 2px solid var(--border-color); margin-top: 20px; display: flex; align-items: center; gap: 8px; background: ${isUI ? 'rgba(52, 152, 219, 0.1)' : 'var(--glass-bg)'}; backdrop-filter: blur(5px); position: sticky; top: 0; z-index: 100;`;
+            header.style.cssText = headerStyle;
+            header.innerHTML = `<span>${folder === 'Root' ? '<svg width="12" height="12"><use href="#icon-folder"></use></svg>' : (isUI ? '<svg width="12" height="12"><use href="#icon-tv"></use></svg>️' : '<svg width="12" height="12"><use href="#icon-folder"></use></svg>')}</span> ${folderLabel}`;
 
             fragContainer.appendChild(header.cloneNode(true));
             fragScripts.appendChild(header.cloneNode(true));
@@ -140,7 +139,8 @@ async function loadTestSuites(retryCount) {
 
 function createTestCard(suite) {
     const card = document.createElement('div');
-    card.style.cssText = 'background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s;';
+    card.className = 'glass-card';
+    card.style.cssText = 'padding: 20px; display: flex; flex-direction: column; position: relative; transition: transform 0.2s, box-shadow 0.2s;';
     
     const isInteractiveBrowserTest = (suiteId) => {
         const name = String(suiteId || '').toLowerCase();
@@ -163,18 +163,18 @@ function createTestCard(suite) {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 ${checkboxHtml}
-                <h3 style="margin: 0; font-size: 1.1em; color: #333;">${suite.name}</h3>
+                <h3 style="margin: 0; font-size: 1.1em; color: var(--text-primary);">${suite.name}</h3>
             </div>
             <div class="test-card-actions" style="display: flex; align-items: center; gap: 8px;">
                 ${categoryHtml}
             </div>
         </div>
-        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-size: 0.85em; color: #555; margin-bottom: 15px;">
-            <strong style="color: #333;">${typeof t === 'function' ? t('test_meta_inputs') : 'Inputs'}:</strong> <span>${m.inputs || '-'}</span>
-            <strong style="color: #333;">${typeof t === 'function' ? t('test_meta_outputs') : 'Outputs'}:</strong> <span>${m.outputs || '-'}</span>
-            <strong style="color: #333;">${typeof t === 'function' ? t('test_meta_files') : 'Files'}:</strong> <span style="font-family: monospace; background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">${m.files || '-'}</span>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 15px;">
+            <strong style="color: var(--text-primary);">${typeof t === 'function' ? t('test_meta_inputs') : 'Inputs'}:</strong> <span>${m.inputs || '-'}</span>
+            <strong style="color: var(--text-primary);">${typeof t === 'function' ? t('test_meta_outputs') : 'Outputs'}:</strong> <span>${m.outputs || '-'}</span>
+            <strong style="color: var(--text-primary);">${typeof t === 'function' ? t('test_meta_files') : 'Files'}:</strong> <span style="font-family: monospace; background: var(--bg-secondary); color: var(--accent-color); padding: 2px 4px; border-radius: 3px;">${m.files || '-'}</span>
         </div>
-        <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; font-size: 0.85em; color: #777; font-style: italic;">
+        <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid var(--border-color); font-size: 0.85em; color: var(--text-secondary); font-style: italic; opacity: 0.8;">
             ${m.comment || '-'}
         </div>
     `;
@@ -182,12 +182,12 @@ function createTestCard(suite) {
     if (!suite.isGuiTest) {
         const editBtn = document.createElement('button');
         editBtn.innerText = typeof t === 'function' ? t('test_btn_edit') : 'Edit';
-        editBtn.style.cssText = 'border: none; background: #f0f0f0; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; cursor: pointer; opacity: 0.6; transition: opacity 0.2s;';
+        editBtn.style.cssText = 'border: none; background: var(--bg-secondary); color: var(--text-primary); border-radius: 6px; padding: 4px 12px; font-size: 0.85em; cursor: pointer; transition: all 0.2s;';
         editBtn.onclick = (e) => { e.stopPropagation(); openTestEditModal(suite); };
         
         const delBtn = document.createElement('button');
-        delBtn.innerHTML = '<svg width="12" height="12"><use href="#icon-delete"></use></svg>';
-        delBtn.style.cssText = 'border: none; background: #fff; border-radius: 4px; padding: 4px 6px; font-size: 0.8em; cursor: pointer; opacity: 0.4; transition: all 0.2s;';
+        delBtn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+        delBtn.style.cssText = 'border: none; background: transparent; color: #ff5252; border-radius: 4px; padding: 4px 6px; cursor: pointer; opacity: 0.6; transition: all 0.2s;';
         delBtn.onclick = (e) => {
             e.stopPropagation();
             if (confirm(typeof t === 'function' ? t('confirm_delete') : 'Delete?')) deleteTest(suite.id);
@@ -261,12 +261,12 @@ async function runSelectedTests() {
             summaryBadge.style.display = 'inline-block';
             if (totalFails > 0) {
                 summaryBadge.textContent = `${totalFails} Failed, ${totalPasses} Passed`;
-                summaryBadge.style.background = '#ffebee';
-                summaryBadge.style.color = '#c62828';
+                summaryBadge.style.background = 'rgba(255, 82, 82, 0.15)';
+                summaryBadge.style.color = '#ff5252';
             } else {
                 summaryBadge.textContent = `Alle ${totalPasses} Tests Passed`;
-                summaryBadge.style.background = '#e8f5e9';
-                summaryBadge.style.color = '#2e7d32';
+                summaryBadge.style.background = 'rgba(46, 204, 113, 0.15)';
+                summaryBadge.style.color = '#2ecc71';
             }
         }
     } catch (e) {

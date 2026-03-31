@@ -154,7 +154,7 @@ body {
 }
 
 .sub-tab-btn.active, .options-subtab.active {
-    background: white;
+    background: var(--bg-primary);
     color: var(--accent-color);
     box-shadow: var(--shadow-soft);
 }
@@ -229,6 +229,22 @@ body {
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* --- Sub-Navigation Bar --- */
+.sub-nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+/* --- Layout Main --- */
+.layout-main {
+    background: var(--bg-primary);
+}
 
 /* --- Fixed Footer --- */
 .layout-footer {

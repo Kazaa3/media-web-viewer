@@ -228,13 +228,13 @@ function renderPlaylist() {
     const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
     if (activeList.length === 0) {
         list.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #888; text-align: center; padding: 40px;">
-                <div style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;">🎵</div>
-                <h3 style="margin: 0 0 10px 0; font-weight: 500;">Die Warteschlange ist leer</h3>
-                <p style="font-size: 0.9em; max-width: 250px; margin: 0 auto 20px auto;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 60px; background: var(--bg-primary);">
+                <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.3; filter: grayscale(1);">🎵</div>
+                <h3 style="margin: 0 0 12px 0; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">Warteschlange leer</h3>
+                <p style="font-size: 0.95em; max-width: 280px; margin: 0 auto 30px auto; opacity: 0.7;">
                     Füge Lieder aus der Bibliothek hinzu oder ziehe Dateien hierher.
                 </p>
-                <button onclick="switchTab('library')" class="tab-btn" style="background: #2a7; color: white; border: none; padding: 10px 20px;">
+                <button onclick="switchTab('library')" class="tab-btn active" style="padding: 12px 30px;">
                     Zur Bibliothek
                 </button>
             </div>

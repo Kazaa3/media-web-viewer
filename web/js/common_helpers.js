@@ -32,12 +32,13 @@ function toggleModal(modalId, forceState) {
         console.warn(`[UI] Cannot toggle modal: ${modalId} not found.`);
         return;
     }
-    // traceUiNav is assumed to be in ui_nav_helpers.js
-    if (typeof traceUiNav === 'function') {
-        traceUiNav('MODAL', modalId, {force: forceState});
+    const newState = (forceState !== undefined) ? forceState : (modal.style.display === 'none' || modal.style.display === '');
+    
+    // Log the modal change
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('MODAL', modalId, { newState });
     }
     
-    const newState = (forceState !== undefined) ? forceState : (modal.style.display === 'none' || modal.style.display === '');
     modal.style.display = newState ? 'flex' : 'none';
 }
 
@@ -146,6 +147,11 @@ function showContextMenu(e, item) {
     if (!menu) return;
 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Context-Menu] Opening for: ${item.name}`);
+
+    // Log context menu opening
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('UI-INPUT', 'CONTEXT-MENU-OPEN', { itemName: item.name });
+    }
 
     menu.innerHTML = '';
     menu.style.display = 'block';

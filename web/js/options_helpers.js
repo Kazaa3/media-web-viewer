@@ -162,10 +162,16 @@ function saveParserChainUI() {
 function updateAppModeButtons() {
     if (typeof mwv_config === 'undefined') return;
     const mode = mwv_config.app_mode || 'High-Performance';
-    document.querySelectorAll('[id^="mode-"]').forEach(el => el.style.background = '#fff');
+    document.querySelectorAll('[id^="mode-"]').forEach(el => {
+        el.style.background = 'var(--bg-secondary)';
+        el.style.color = 'var(--text-primary)';
+    });
     const target = mode === 'High-Performance' ? 'mode-perf' : 'mode-bw';
     const el = document.getElementById(target);
-    if (el) el.style.background = '#e6f7ff';
+    if (el) {
+        el.style.background = 'var(--accent-color)';
+        el.style.color = 'white';
+    }
 }
 
 /**
@@ -174,10 +180,16 @@ function updateAppModeButtons() {
 function updateParserModeButtons() {
     if (typeof mwv_config === 'undefined') return;
     const mode = mwv_config.parser_mode || 'lightweight';
-    document.querySelectorAll('[id^="pm-"]').forEach(el => el.style.background = '#fff');
+    document.querySelectorAll('[id^="pm-"]').forEach(el => {
+        el.style.background = 'var(--bg-secondary)';
+        el.style.color = 'var(--text-primary)';
+    });
     let target = 'pm-light';
     if (mode === 'full') target = 'pm-full';
     if (mode === 'ultimate') target = 'pm-ult';
     const el = document.getElementById(target);
-    if (el) el.style.background = '#f6ffed';
+    if (el) {
+        el.style.background = 'var(--accent-color)';
+        el.style.color = 'white';
+    }
 }
