@@ -3,7 +3,7 @@ import sys, os; sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(
 # -*- coding: utf-8 -*-
 """
 main.py - Business Logic & Application Entry Point
-dict - Desktop Media Player and Library Manager v1.35
+dict - Desktop Media Player and Library Manager v1.34
 """
 
 import os
@@ -193,7 +193,6 @@ with StatusBar("Loading Core Components", total=100) as sb:
 
     sb.update(90, "Setting UI State")
     SIDEBAR_OPEN = True
-    VERSION = "1.34"
     # SESSION_ID already initialized above
     port = int(os.environ.get("MWV_PORT", 8345))
     eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
@@ -2918,10 +2917,10 @@ def get_library() -> Dict[str, Any]:
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
     with stall_watchdog("Media Library Fetch", threshold=5.0):
-        log.info("[BACKEND] [get_library] Fetching...")
+        log.info(f"[BACKEND] [get_library] Fetching... (PID: {os.getpid()})")
         progress_update("Library: Fetching Rows", 20)
         all_media = db.get_all_media()
-        log.info(f"[BACKEND] [get_library] Found {len(all_media) if all_media else 0} total items.")
+        log.info(f"[BACKEND] [get_library] Found {len(all_media) if all_media else 0} total items in DB.")
         progress_update("Library: Filtering Categories", 50)
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     # If explicitly None, default to everything (Legacy behavior or first run)
@@ -2935,7 +2934,9 @@ def get_library() -> Dict[str, Any]:
             "ebooks",
             "abbild",
             "spiel",
-            "beigabe"]
+            "beigabe",
+            "supplements",
+            "games"]
 
     # We map internal categories to the setting keys
     # logical_type: 'Audio', 'Video', 'Bilder', 'Dokument', 'E-Book', 'Abbild'
@@ -2943,7 +2944,7 @@ def get_library() -> Dict[str, Any]:
         "audio": [
             "Audio",
             "Album",
-            "Hrbuch",
+            "Hörbuch",
             "Klassik",
             "Compilation",
             "Single",
@@ -2986,6 +2987,9 @@ def get_library() -> Dict[str, Any]:
 
     # Case-insensitive category check to match German/Capitalized DB entries
     filtered_media = [item for item in all_media if str(item.get('category', '')).lower() in allowed_internal_cats]
+
+    if not filtered_media and all_media:
+        log.warning(f"[API] get_library: ALL {len(all_media)} ITEMS FILTERED OUT! Allowed groups: {allowed_internal_cats}")
 
     log.info(f"[API] get_library returning {len(filtered_media)} items (Filter: {displayed_cats})")
     return sanitize_json_utf8({"media": filtered_media})
@@ -3346,6 +3350,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 debug_log(f" [Scan] Skipping non-existent directory: {d}")
 
     log.info(f" [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
+    if not scan_roots:
+        log.warning(" [Scan] No valid scan roots found!")
 
     count_indexed: int = 0
     try:
@@ -3384,7 +3390,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             all_exts |= DISK_IMAGE_EXTENSIONS
 
         ext_list = list(all_exts)
-        log.info(f" [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")  # type: ignore
+        if not ext_list:
+            log.warning(" [Scan] WARNING: No extensions enabled for scanning. Check 'indexed_categories' in config.")
+        log.info(f" [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")
 
         # Reset counters
         count_indexed: int = 0
@@ -3428,7 +3436,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                                     skip_subpaths.add(d)
                                 logger.debug("scan", f" [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
                         except Exception as e:
-                            logger.debug("scan", f" [Scan] Fehler bei Object-Ordner {d.name}: {e}")
+                            log.error(f" [Scan] Fehler bei Object-Ordner {d.name}: {e}")
 
             # Second pass: Files (Items)
             for f in scan_root.rglob('*'):
@@ -3469,7 +3477,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             logger.debug("scan", f" [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
                             count_indexed += 1
                         except Exception as e:
-                            logger.debug("scan", f" [Scan] Fehler bei {f.name}: {e}")
+                            log.error(f" [Scan] Fehler bei {f.name}: {e}")
                             continue
 
         elapsed = time.time() - start_time

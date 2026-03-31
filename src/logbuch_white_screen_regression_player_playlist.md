@@ -1,3 +1,49 @@
+## Implementation Plan – v1.34 Diagnostic & Indexing Fixes
+
+Zwei kritische Probleme wurden gemeldet:
+- **Leere Diagnostics:** Die Tabelle "System-Architektur & Backend-Abhängigkeiten" im Options-Panel ist leer.
+- **Fehlende Media:** Keine Items aus dem media/-Unterordner erscheinen im GUI.
+
+### User Review Required
+**WICHTIG**
+
+Das aktuelle environment.js nutzt hardcodierte Element-IDs für Umgebungsdaten, aber das modernisierte options_panel.html verwendet eine einheitliche Tabellenstruktur (env-details-table-body). Das JS wird refaktoriert, um diese Tabelle dynamisch zu befüllen.
+
+**WARNUNG**
+Die indexed_categories-Konfiguration in main.py und format_utils.py wird geprüft, damit alle Medientypen beim Scan korrekt erkannt werden.
+
+### Proposed Changes
+**[Frontend] UI & Environment Data**
+- [MODIFY] environment.js: loadEnvironmentInfo() refaktorieren, um env-details-table-body dynamisch mit Key-Value-Paaren aus dem Backend zu befüllen. Alle relevanten Daten (Python-Version, Venv-Status, Platform, PIDs) im neuen Premium-Tabellenformat anzeigen.
+- [MODIFY] options_panel.html: Tabellenstruktur für dynamische Befüllung optimieren.
+**[Backend] Media Scanning & Versioning**
+- [MODIFY] main.py: Versioning fixen (VERSION = "1.34"), Scanner-Logging erweitern, indexed_categories auf Vollständigkeit prüfen.
+**[Frontend] Library Logic**
+- [MODIFY] bibliothek.js: Trace-Event bei leerer Bibliothek einbauen, um Fetch/Render-Probleme zu diagnostizieren.
+
+### Open Questions
+Keine.
+
+### Verification Plan
+**Automated Tests:**
+- python3 src/core/main.py --test-scan ausführen (falls vorhanden) oder Backend-Logs auf "Indexed Item"-Meldungen prüfen
+- eel.get_konsole() muss das erwartete Environment-Dictionary liefern
+**Manual Verification:**
+- "System" → "Optionen" öffnen und prüfen, ob die "Environment"-Tabelle befüllt ist
+- "SCAN" im Footer triggern und prüfen, ob media/-Items in "Player" und "Library" erscheinen
+- "System Log" auf Scan-Fehler prüfen
+## Issue Analysis & Implementation Plan: System-Architektur & Media Indexing
+
+### Problem 1: Leere "System-Architektur"-Tabelle
+Die modernisierte UI in options_panel.html nutzt eine neue Tabellenstruktur, aber environment.js versucht noch, alte Element-IDs zu befüllen. Lösung: Refactoring des JS, sodass die Tabelle dynamisch aus Backend-Daten aufgebaut wird.
+
+### Problem 2: Fehlende Media-Items (media/ Folder)
+Vermutlich liegt ein Konfigurationsfehler in indexed_categories oder ein Fehler in der Filterlogik des Scan-Loops vor. Geplant ist ein Audit und ggf. eine Korrektur der Indexierung.
+
+### Weitere Maßnahme
+- Die Version-String-Anzeige wird auf v1.34 zurückgesetzt, wie gewünscht.
+
+Siehe implementation_plan.md für Details. Review und Freigabe zur Umsetzung erbeten.
 ## Premium 3D Cover Flow & Integrated Audio Library – Summary
 
 Die Premium 3D Cover Flow und das integrierte Audio Library Dashboard wurden erfolgreich implementiert und bieten ein erstklassiges Medien-Browsing-Erlebnis.

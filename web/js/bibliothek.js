@@ -19,15 +19,25 @@ let librarySearch = '';
  * Boots the library by fetching data from the DB.
  */
 async function loadLibrary(retryCount = 0) {
-    if (typeof appendUiTrace === 'function') appendUiTrace("[Library] Core initialization...");
+    if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Loading data (Attempt ${retryCount + 1})...`);
     try {
         const library = await getLibrary();
         allLibraryItems = library.media || [];
-        console.log(`[Library] Received ${allLibraryItems.length} items from backend.`);
+        const msg = `[Library] Received ${allLibraryItems.length} items from backend.`;
+        console.log(msg);
+        if (typeof appendUiTrace === 'function') appendUiTrace(msg);
         
         const mockEnabled = typeof eel !== 'undefined' ? await eel.get_mock_data_enabled() : false;
         if (!mockEnabled) {
+            const before = allLibraryItems.length;
             allLibraryItems = allLibraryItems.filter(i => !i.is_mock);
+            if (before !== allLibraryItems.length) {
+                if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Filtered out ${before - allLibraryItems.length} mock items.`);
+            }
+        }
+
+        if (allLibraryItems.length === 0) {
+            if (typeof appendUiTrace === 'function') appendUiTrace("[Library] [WARNING] Library is EMPTY after filtering.");
         }
 
         console.info(`[Library] Rendering ${allLibraryItems.length} items.`);

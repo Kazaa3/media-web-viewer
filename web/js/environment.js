@@ -12,40 +12,48 @@ async function loadEnvironmentInfo() {
         
         const res = await eel.get_konsole()();
         const env = res.env || {};
+        const tbody = document.getElementById('env-details-table-body');
         
-        // Map backend env data to DOM elements
-        const mappings = {
-            'env-python-version': env.python_version,
-            'env-venv-status': env.env_name,
-            'env-platform': env.platform,
-            'env-python-exec': env.python_executable,
-            'env-venv-path': env.env_path,
-            'env-main-pid': env.pid,
-            'env-app-version': res.version || '-',
-            'env-gui-status': 'Active (Eel)',
-            'env-browser-pid': env.browser_pid || '-'
-        };
-
-        for (const [id, value] of Object.entries(mappings)) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = value || '-';
+        if (!tbody) {
+            console.warn('[Environment] env-details-table-body not found in DOM.');
+            return;
         }
 
-        // Special handling for PIDs and status icons
-        const testbedPid = document.getElementById('env-testbed-pid');
-        if (testbedPid) {
-            testbedPid.textContent = (env.testbed_pid !== undefined && env.testbed_pid !== null) 
-                ? env.testbed_pid : 'nicht aktiv';
-        }
+        // Clear existing rows
+        tbody.innerHTML = '';
 
-        const seleniumPid = document.getElementById('env-selenium-pid');
-        if (seleniumPid) {
-            seleniumPid.textContent = (env.selenium_pid !== undefined && env.selenium_pid !== null) 
-                ? env.selenium_pid : 'nicht aktiv';
-        }
+        const data = [
+            { label: 'Programm-Version', value: res.version || 'v1.34', icon: '#icon-info' },
+            { label: 'Python Version', value: env.python_version || '-', icon: '#icon-generic' },
+            { label: 'Venv Status', value: env.env_name || 'System', icon: '#icon-settings' },
+            { label: 'Platform', value: env.platform || '-', icon: '#icon-generic' },
+            { label: 'Executable', value: env.python_executable || '-', icon: '#icon-folder' },
+            { label: 'Working Directory', value: env.cwd || '-', icon: '#icon-folder' },
+            { label: 'Main PID', value: env.pid || '-', icon: '#icon-debug' },
+            { label: 'Browser PID', value: env.browser_pid || '-', icon: '#icon-debug' },
+            { label: 'Testbed PID', value: env.testbed_pid || 'nicht aktiv', icon: '#icon-test' },
+            { label: 'Selenium PID', value: env.selenium_pid || 'nicht aktiv', icon: '#icon-test' }
+        ];
 
-        // gevent / bottle status
-        if (typeof getGeventStatus === 'function') getGeventStatus();
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); width: 220px;">
+                    <svg width="12" height="12" style="margin-right: 8px; vertical-align: middle; opacity: 0.6;">
+                        <use href="${item.icon}"></use>
+                    </svg>
+                    ${item.label}
+                </td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: var(--text-primary);">
+                    ${item.value}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Update other status elements if they exist
+        const geventEl = document.getElementById('env-gevent-status');
+        if (geventEl && typeof getGeventStatus === 'function') getGeventStatus();
 
     } catch (e) {
         console.error('[Environment] Failed to load info:', e);
