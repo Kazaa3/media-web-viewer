@@ -428,6 +428,46 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* --- Legacy Track Items (Playlist) --- */
+.legacy-track-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    margin-bottom: 6px;
+    cursor: default;
+    transition: all 0.2s var(--transition-snappy);
+    position: relative;
+    user-select: none;
+}
+
+.legacy-track-item:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent-color);
+    transform: translateX(4px);
+}
+
+.legacy-track-item.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
+}
+
+.legacy-track-item.active .legacy-track-title { color: #fff; }
+.legacy-track-item.active .legacy-track-meta { color: rgba(255,255,255,0.8); }
+.legacy-track-item.active .item-actions button { color: #fff; }
+
+.item-actions button:hover {
+    background: rgba(0,0,0,0.05) !important;
+    transform: scale(1.1);
+}
+
+[data-theme="dark"] .item-actions button:hover {
+    background: rgba(255,255,255,0.1) !important;
+}
+
 [data-theme="dark"] .sub-tab-btn.active {
     background: var(--bg-secondary);
     border-color: var(--border-color);

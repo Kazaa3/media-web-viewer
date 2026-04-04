@@ -99,35 +99,47 @@
 
 
 <body class="media-orchestrator-shell-environment">
-    <!-- Program Menu Bar (Toggleable Classic v1.34) -->
-    <div id="program-menu-bar" style="display: none; position: fixed; top: 0; left: 0; right: 0; height: 40px; background: var(--glass-bg); backdrop-filter: blur(25px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 15px; font-size: 12px; font-weight: 600; color: var(--text-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-        <div style="display: flex; align-items: center; gap: 18px; margin-right: 20px;">
-            <h1 style="margin: 0; font-size: 1.2em; font-weight: 900; letter-spacing: -0.8px; color: var(--text-primary); text-transform: lowercase; cursor: pointer;" onclick="toggleMenuBar()">dict</h1>
+    <!-- Master Persistent Header (Always Available v1.34) -->
+    <header id="master-persistent-header" style="position: fixed; top: 0; left: 0; right: 0; height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); user-select: none;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="dict-master-toggle" onclick="toggleMenuBar()" style="font-weight: 900; font-size: 1.2em; color: var(--text-primary); cursor: pointer; letter-spacing: -0.5px; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">dict</div>
+            <div style="width: 1px; height: 20px; background: var(--border-color); margin-left: 8px;"></div>
+            <div id="header-status-indicator" style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--text-secondary); opacity: 0.8;">
+                <div style="width: 6px; height: 6px; border-radius: 50%; background: #2ecc71;"></div>
+                <span id="current-category-label">MEDIA-ORCHESTRATOR</span>
+            </div>
         </div>
+
+        <!-- System Controls (Right) -->
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <button onclick="if(typeof refreshLibrary === 'function') refreshLibrary()" title="Synchronize Library" class="tab-btn" style="padding: 6px; border-radius: 6px; background: transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg></button>
+            <button onclick="if(typeof resetDatabase === 'function') resetDatabase()" title="Reset DB Index" class="tab-btn" style="padding: 6px; border-radius: 6px; background: transparent; color: #ff5252;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+            <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
+            <button onclick="window.close()" title="Exit App" class="tab-btn" style="padding: 6px; border-radius: 6px; background: transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg></button>
+        </div>
+    </header>
+
+    <!-- Program Menu Bar (Primary Navigation - Toggleable v1.34 Row 1) -->
+    <div id="program-menu-bar" style="display: none; position: fixed; top: 40px; left: 0; right: 0; height: 36px; background: var(--glass-bg); backdrop-filter: blur(25px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: translateY(-10px);">
         <div id="header-nav-buttons" style="display: flex; gap: 4px; align-items: center;">
-            <button class="tab-btn active" onclick="switchMainCategory('media', this)" data-category="media" style="padding: 6px 14px; font-size: 12px;">Audio-Player</button>
-            <button class="tab-btn" onclick="switchMainCategory('library', this)" data-category="library" style="padding: 6px 14px; font-size: 12px;">Library</button>
-            <button class="tab-btn" onclick="switchTab('file', this)" style="padding: 6px 14px; font-size: 12px;">Browser</button>
-            <button class="tab-btn" onclick="switchMainCategory('edit', this)" data-category="edit" style="padding: 6px 14px; font-size: 12px;">Edit</button>
-            <button class="tab-btn" onclick="switchMainCategory('system', this)" data-category="system" style="padding: 6px 14px; font-size: 12px;">Options</button>
-            <button class="tab-btn" onclick="switchMainCategory('debug', this)" data-category="debug" style="padding: 6px 14px; font-size: 12px;">Debug & DB</button>
-            <button class="tab-btn" onclick="switchMainCategory('tests', this)" data-category="tests" style="padding: 6px 14px; font-size: 12px;">Tests</button>
-            <button class="tab-btn" onclick="switchMainCategory('video', this)" data-category="video" style="padding: 6px 14px; font-size: 12px;">Video Player</button>
-        </div>
-        <div style="flex: 1;"></div>
-        <div style="display: flex; gap: 12px; align-items: center; opacity: 0.6;">
-            <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-secondary); font-weight: 700;">Alt for Menu</span>
+            <button class="nav-pill active" onclick="switchMainCategory('media', this)" data-category="media">Player</button>
+            <button class="nav-pill" onclick="switchMainCategory('library', this)" data-category="library">Bibliothek</button>
+            <button class="nav-pill" onclick="switchMainCategory('file', this)" data-category="file">Browser</button>
+            <button class="nav-pill" onclick="switchMainCategory('edit', this)" data-category="edit">Edit</button>
+            <button class="nav-pill" onclick="switchMainCategory('system', this)" data-category="system">Optionen</button>
+            <button class="nav-pill" onclick="switchMainCategory('parser', this)" data-category="parser">Parser</button>
+            <button class="nav-pill" onclick="switchMainCategory('debug', this)" data-category="debug">Debug & DB</button>
+            <button class="nav-pill" onclick="switchMainCategory('tests', this)" data-category="tests">Tests</button>
+            <button class="nav-pill" onclick="switchMainCategory('logbuch', this)" data-category="logbuch">Logbuch</button>
+            <button class="nav-pill" onclick="switchMainCategory('video', this)" data-category="video">Video Player</button>
         </div>
     </div>
 
-    <div id="sub-nav-container" class="sub-nav-bar" style="display: none; position: fixed; top: 40px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 9999; align-items: center; padding: 0 15px; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none;">
-        <!-- Dynamically populated -->
+    <!-- Secondary Navigation Bar (Contextual Pills - Toggleable v1.34 Row 2) -->
+    <div id="sub-nav-container" class="sub-nav-bar" style="display: none; position: fixed; top: 76px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 9999; align-items: center; padding: 0 20px; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none; transition: all 0.2s ease; opacity: 0; transform: translateY(-10px);">
+        <!-- Dynamically populated via updateGlobalSubNav -->
     </div>
     
-    <!-- [REMOVED: Menu Toggle FAB moved to Header for v1.34 UI Consistency] -->
-
-    <!-- (Header spacer removed for dynamic menu) -->
-
     <div id=app-progress-bar-container><div id=app-progress-bar></div></div>
     <div id=app-progress-text>Ready</div>
     

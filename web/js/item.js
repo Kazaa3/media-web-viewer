@@ -40,29 +40,67 @@ async function loadEditItems() {
  * Renders the inventory list.
  */
 function renderEditList(items) {
-    const container = document.getElementById('item-category-list');
-    if (!container) return;
+    const sidebar = document.getElementById('item-category-list');
+    const mainList = document.getElementById('item-list');
+    if (!sidebar || !mainList) return;
 
     if (!items || items.length === 0) {
-        container.innerHTML = `<div style="padding: 20px; color: #999; text-align: center;" data-i18n="item_no_entries">Keine Einträge</div>`;
+        mainList.innerHTML = `<div style="padding: 20px; color: #999; text-align: center;" data-i18n="item_no_entries">Keine Einträge</div>`;
         return;
     }
 
-    const html = items.map(item => {
+    // 1. Render Categories in Sidebar
+    const categories = [...new Set(items.map(i => i.category || 'Unknown'))].sort();
+    sidebar.innerHTML = `
+        <div class="inventory-category active" onclick="filterByCategory('all', this)" style="padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; margin-bottom: 4px;">Alle Medien <span style="float: right; opacity: 0.5;">${items.length}</span></div>
+    ` + categories.map(cat => {
+        const catCount = items.filter(i => i.category === cat).length;
+        return `<div class="inventory-category" onclick="filterByCategory('${cat}', this)" style="padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--text-secondary);">${cat} <span style="float: right; opacity: 0.5;">${catCount}</span></div>`;
+    }).join('');
+
+    // 2. Render Items in Main List
+    renderItemsInMainPane(items);
+}
+
+function renderItemsInMainPane(items) {
+    const mainList = document.getElementById('item-list');
+    if (!mainList) return;
+
+    mainList.innerHTML = items.map(item => {
         const title = item.tags && item.tags.title ? item.tags.title : (item.name || 'Unknown');
         const artist = item.tags && item.tags.artist ? item.tags.artist : (item.category || '');
+        const badge = typeof getCategoryBadgeHtml === 'function' ? getCategoryBadgeHtml(item) : '';
         
         return `
-            <div class="inventory-item" onclick="openEditFormByName('${item.name.replace(/'/g, "\\'")}')" 
-                 style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.1s; border-radius: 8px; margin-bottom: 4px;">
-                <div style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);" title="${item.name}">${title}</div>
-                <div style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">${artist}</div>
+            <div class="inventory-item-row" onclick="openEditFormByName('${item.name.replace(/'/g, "\\'")}')" 
+                 style="display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.1s; gap: 15px;">
+                <div style="width: 32px; height: 32px; background: var(--bg-secondary); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; position: relative;">
+                    ${badge}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);" title="${item.name}">${title}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">${artist} • <span style="opacity: 0.7;">${item.type || 'Media'}</span></div>
+                </div>
+                <div style="font-size: 10px; font-weight: 800; color: var(--accent-color); text-transform: uppercase;">Edit</div>
             </div>
         `;
     }).join('');
+}
 
-    if (typeof safeHtml === 'function') safeHtml('item-category-list', html);
-    else container.innerHTML = html;
+async function filterByCategory(cat, btn) {
+    document.querySelectorAll('.inventory-category').forEach(b => {
+        b.classList.remove('active');
+        b.style.color = 'var(--text-secondary)';
+        b.style.background = 'transparent';
+    });
+    btn.classList.add('active');
+    btn.style.color = 'var(--text-primary)';
+    btn.style.background = 'var(--bg-secondary)';
+
+    const library = await getLibrary();
+    const items = library.media || [];
+    const filtered = cat === 'all' ? items : items.filter(i => i.category === cat);
+    renderItemsInMainPane(filtered);
 }
 
 /**

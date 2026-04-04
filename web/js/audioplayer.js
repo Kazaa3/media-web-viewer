@@ -614,14 +614,8 @@ window.renderItemGallery = function() {
         return;
     }
 
-    // ── Audio categories: must match DB category strings (case-insensitive) ──
-    const AUDIO_CATS = new Set(['audio', 'album', 'klassik', 'hörbuch', 'hörspiel',
-                                'podcast', 'musik', 'compilation', 'single', 'radio']);
-
-    let items = allLibraryItems.filter(i => {
-        const cat = (i.category || i.logical_type || '').toLowerCase();
-        return AUDIO_CATS.has(cat);
-    });
+    // ── Broadened categories: allow all by default ──
+    let items = allLibraryItems;
 
     if (typeof appendUiTrace === 'function') {
         appendUiTrace(`[Gallery] After audio filter: ${items.length} / ${allLibraryItems.length} items.`, "UI-INFO");
@@ -697,7 +691,7 @@ function renderFullLibraryInPlayer() {
         return;
     }
 
-    let items = allLibraryItems.filter(i => i.type === 'audio');
+    let items = allLibraryItems;
     if (playerLibrarySearch) {
         const q = playerLibrarySearch.toLowerCase();
         items = items.filter(i => (i.name || '').toLowerCase().includes(q) || (i.tags?.title || '').toLowerCase().includes(q));

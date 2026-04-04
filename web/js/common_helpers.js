@@ -4,7 +4,7 @@
  */
 
 const CATEGORY_MAP = {
-    "audio": ["Audio", "Album", "Hörbuch", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Song"],
+    "audio": ["Audio", "Album", "Hörbuch", "Hörspiel", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Musik", "Song"],
     "video": ["Video", "Film", "Serie", "ISO/Image", "Musikvideos", "Animes", "Cartoons", "Movie", "TV Show"],
     "film": ["Film", "Film Object"],
     "serie": ["Serie"],

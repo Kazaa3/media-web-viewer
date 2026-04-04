@@ -344,21 +344,46 @@ function toggleMenuBar(forceState = null) {
     // Unified state: if forceState is provided use it, otherwise toggle
     menuSystemVisible = (forceState !== null) ? forceState : !menuSystemVisible;
     
-    bar.classList.toggle('visible', menuSystemVisible);
-    bar.style.display = menuSystemVisible ? 'flex' : 'none';
-    
-    // Sync sub-navigation visibility if entries exist
-    const hasSubNav = subBar && subBar.innerHTML.trim() !== '';
-    if (subBar) {
-        const subNavVisible = menuSystemVisible && hasSubNav;
-        subBar.classList.toggle('visible', subNavVisible);
-        subBar.style.display = subNavVisible ? 'flex' : 'none';
-        subBar.style.top = '40px'; 
+    if (menuSystemVisible) {
+        bar.style.display = 'flex';
+        // Force reflow for animation
+        bar.offsetHeight;
+        bar.style.opacity = '1';
+        bar.style.transform = 'translateY(0)';
+        
+        // Only show sub-bar if it has content
+        const hasSubNav = subBar && subBar.innerHTML.trim() !== '';
+        if (subBar && hasSubNav) {
+            subBar.style.display = 'flex';
+            subBar.offsetHeight;
+            subBar.style.opacity = '1';
+            subBar.style.transform = 'translateY(0)';
+        }
+    } else {
+        bar.style.opacity = '0';
+        bar.style.transform = 'translateY(-10px)';
+        if (subBar) {
+            subBar.style.opacity = '0';
+            subBar.style.transform = 'translateY(-10px)';
+        }
+        
+        setTimeout(() => {
+            if (!menuSystemVisible) {
+                bar.style.display = 'none';
+                if (subBar) subBar.style.display = 'none';
+            }
+        }, 250);
     }
     
     updateLayoutOffsets();
     
-    mwv_trace('DOM-UI', 'TOGGLE-MENU', { isVisible: menuSystemVisible, hasSubNav });
+    // Update logo color/style if needed
+    const logo = document.getElementById('dict-master-toggle');
+    if (logo) {
+        logo.style.color = menuSystemVisible ? 'var(--accent-color)' : 'var(--text-primary)';
+    }
+
+    mwv_trace('DOM-UI', 'TOGGLE-MENU', { isVisible: menuSystemVisible });
     localStorage.setItem('mwv_menu_system_visible', menuSystemVisible);
 }
 
@@ -372,14 +397,16 @@ function updateLayoutOffsets() {
     const container = document.getElementById('main-split-container');
     if (!container) return;
 
-    const mainVisible = bar && bar.style.display !== 'none';
-    const subVisible = subBar && subBar.style.display !== 'none';
+    const mainVisible = bar && (bar.style.display !== 'none' && bar.style.opacity !== '0');
+    const subVisible = subBar && (subBar.style.display !== 'none' && subBar.style.opacity !== '0');
     
-    // Dynamic calculation: (40px main + 32px sub)
-    const headerHeight = (mainVisible ? 40 : 0) + (subVisible ? 32 : 0);
+    // Row 1 (Master Header) is ALWAYS 40px now
+    // Row 2 (Menu) is 36px
+    // Row 3 (Sub-Nav) is 32px
+    const headerHeight = 40 + (mainVisible ? 36 : 0) + (subVisible ? 32 : 0);
     
     container.style.marginTop = `${headerHeight}px`;
-    container.style.height = `calc(100vh - ${75 + headerHeight}px)`;
+    container.style.height = `calc(100vh - ${75 + headerHeight}px)`; // Offset for footer
 }
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
@@ -443,12 +470,16 @@ function switchMainCategory(category, btn) {
     traceUiNav('NAV-CATEGORY', category);
 
     // Update active state in header/sidebar
-    document.querySelectorAll('.tab-btn, .nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-pill, .nav-item').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     else {
-        const headerBtn = document.querySelector(`.tab-btn[onclick*="'${category}'"]`);
+        const headerBtn = document.querySelector(`.nav-pill[onclick*="'${category}'"]`);
         if (headerBtn) headerBtn.classList.add('active');
     }
+    
+    // Update status indicator
+    const label = document.getElementById('current-category-label');
+    if (label) label.innerText = category.toUpperCase();
 
     // Default tab mapping for categories
     const categoryDefaults = {
@@ -463,7 +494,9 @@ function switchMainCategory(category, btn) {
         'edit': 'edit',
         'reporting': 'reporting',
         'debug': 'debug',
-        'tests': 'tests'
+        'tests': 'tests',
+        'file': 'file',
+        'parser': 'parser'
     };
 
     if (categoryDefaults[category]) {
@@ -522,6 +555,16 @@ function updateGlobalSubNav(category) {
         'logbuch': [
             { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
             { id: 'docs', label: 'Documentation', action: "switchLogbookSubView('docs')" }
+        ],
+        'parser': [
+            { id: 'general', label: 'General Settings', action: "switchParserView('general')" },
+            { id: 'chain', label: 'Processing Chain', action: "switchParserView('chain')" },
+            { id: 'regex', label: 'Regex Debugger', action: "switchParserView('regex')" }
+        ],
+        'file': [
+            { id: 'local', label: 'Local Files', action: "switchFileSubView('local')" },
+            { id: 'network', label: 'Network Shares', action: "switchFileSubView('network')" },
+            { id: 'mounted', label: 'Mounted Drives', action: "switchFileSubView('mounted')" }
         ]
     };
 
@@ -542,7 +585,14 @@ function updateGlobalSubNav(category) {
     `).join('');
 
     // Automatically show if the main menu system is active
-    container.style.display = menuSystemVisible ? 'flex' : 'none';
+    if (menuSystemVisible) {
+        container.style.display = 'flex';
+        container.offsetHeight;
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    } else {
+        container.style.display = 'none';
+    }
     updateLayoutOffsets();
 
     // Set initial active state based on category default
@@ -617,6 +667,27 @@ function switchLogbookSubView(viewId) {
         if (viewId === 'docs' && typeof window.scrollLogbookToDocs === 'function') {
             window.scrollLogbookToDocs();
         }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchFileSubView(viewId) {
+    switchTab('file', null, () => {
+        // Handle specific logic for Browser sub-views (Local, Network, etc.)
+        if (typeof fbNavigate === 'function') {
+            const paths = { 'local': './media', 'network': '/mnt', 'mounted': '/media' };
+            fbNavigate(paths[viewId] || './media');
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchParserView(viewId) {
+    switchTab('parser', null, () => {
+        // Parser logic from legacy tools panel
+        document.querySelectorAll('.parser-view').forEach(el => el.style.display = 'none');
+        const target = document.getElementById('parser-' + viewId + '-view');
+        if (target) target.style.display = 'block';
         updateSubNavActiveState(viewId);
     });
 }

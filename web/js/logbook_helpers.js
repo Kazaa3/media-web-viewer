@@ -229,6 +229,27 @@ function renderLogbuchList(entries) {
 }
 
 /**
+ * Entry point for the Logbook tab initialization.
+ */
+async function loadLogbuchTab() {
+    if (typeof appendUiTrace === 'function') appendUiTrace("[Logbook] Initializing Logbuch tab...");
+    try {
+        const entries = await eel.get_logbook_entries()();
+        currentLogbuchEntries = entries || [];
+        renderLogbuchList(currentLogbuchEntries);
+        
+        // Load first entry if none selected
+        if (currentLogbuchEntries.length > 0) {
+            const first = currentLogbuchEntries[0];
+            loadLogbuchContent(first.name, first.filename);
+        }
+    } catch (e) {
+        console.error("[loadLogbuchTab] Error:", e);
+        if (typeof appendUiTrace === 'function') appendUiTrace("[Logbook] Error loading entries: " + e, "DB-ERROR");
+    }
+}
+
+/**
  * Loads and renders the content of a specific logbook entry.
  */
 async function loadLogbuchContent(name, filename) {
