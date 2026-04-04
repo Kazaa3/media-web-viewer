@@ -321,7 +321,30 @@ function finishSwitchTab(tabId, targetId, btn) {
 /**
  * Toggles the top-level program menu bar.
  */
+/**
+ * Toggle the left settings sidebar inside the Tools/Options panel.
+ * No-op when the sidebar element doesn't exist (other tabs).
+ */
+function toggleOptionsSidebar() {
+    const sidebar = document.getElementById('parser-left-settings');
+    if (!sidebar) return; // Only active in old tools panel layout
+
+    const isHidden = sidebar.style.display === 'none';
+    sidebar.style.display = isHidden ? '' : 'none';
+
+    // Also hide/show the splitter
+    const splitter = document.getElementById('parser-tab-splitter');
+    if (splitter) splitter.style.display = isHidden ? '' : 'none';
+
+    // Toggle button highlight
+    const btn = document.getElementById('btn-sidebar-toggle');
+    if (btn) btn.style.opacity = isHidden ? '0.7' : '1';
+    
+    localStorage.setItem('mwv_options_sidebar_visible', isHidden ? 'true' : 'false');
+}
+
 function toggleMenuBar() {
+
     const bar = document.getElementById('program-menu-bar');
     const subBar = document.getElementById('sub-nav-container');
     if (!bar) return;
