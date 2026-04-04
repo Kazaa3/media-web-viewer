@@ -9,7 +9,8 @@
                 <button id="opt-subtab-general"      class="sub-tab-btn active options-subtab" onclick="switchOptionsView('general')">Allgemein</button>
                 <button id="opt-subtab-appearance"   class="sub-tab-btn options-subtab" onclick="switchOptionsView('appearance')">Darstellung</button>
                 <button id="opt-subtab-indexing"     class="sub-tab-btn options-subtab" onclick="switchOptionsView('indexing')">Indexierung</button>
-                <button id="opt-subtab-transcoding"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('transcoding')">Streaming</button>
+                <button id="opt-subtab-parser"       class="sub-tab-btn options-subtab" onclick="switchOptionsView('parser')">Parser Chain</button>
+                <button id="opt-subtab-transcoding"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('transcoding')">Transcoding</button>
                 <button id="opt-subtab-debug"        class="sub-tab-btn options-subtab" onclick="switchOptionsView('debug')">Debug &amp; Flags</button>
                 <button id="opt-subtab-environment"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('environment')">Umgebung</button>
             </div>
@@ -139,6 +140,64 @@
                                 ↺ Prüfen &amp; Neustarten (Port 8345)
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Parser Chain -->
+            <div id="options-parser-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+                <div class="glass-card" style="padding: 30px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Parser Chain Orchestrator</h3>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Konfiguriere die aktiven Metadaten-Provider für den System-Scanner.</p>
+                    <div id="opt-parser-chain-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                
+                <div class="glass-card" style="padding: 30px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Mutagen & FFmpeg Tags</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">AlbumArtist bevorzugen</span>
+                            <label class="switch sm"><input type="checkbox" id="opt-mutagen-albumartist" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Deep Media Analysis</span>
+                            <label class="switch sm"><input type="checkbox" id="opt-ffmpeg-deep" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Transcoding -->
+            <div id="options-transcoding-view" class="options-view" style="display: none; flex-direction: column; gap: 30px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+                    <div class="glass-card" style="padding: 30px; border-top: 4px solid #e67e22;">
+                        <h3 style="margin: 0 0 15px 0; color: #e67e22; font-weight: 800;">HandBrake Pipeline</h3>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">HARDWARE ACCELERATION</label>
+                            <select id="hb-encoder" class="action-btn" style="width: 100%; padding: 10px 18px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="x264">Software CPU (x264)</option>
+                                <option value="qsv">Intel QuickSync (QSV)</option>
+                                <option value="nvenc">NVIDIA Core (NVENC)</option>
+                                <option value="vaapi">Linux Native (VAAPI)</option>
+                            </select>
+                        </div>
+                        <button onclick="triggerHBTranscode()" class="tab-btn active" style="background: #e67e22; width: 100%; justify-content: center;">Start Production Encode</button>
+                    </div>
+
+                    <div class="glass-card" style="padding: 30px; border-top: 4px solid #3498db;">
+                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-weight: 800;">WebM / VP9 Engine</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Optimiert für ultra-geringe Bandbreite und maximale Kompatibilität.</p>
+                        <button onclick="triggerWebMTranscode()" class="tab-btn active" style="background: #3498db; width: 100%; justify-content: center;">Convert to WebM</button>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">External Stream Relay</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <input id="vlc-stream-url" type="text" placeholder="https://external.stream/playlist.m3u8" class="action-btn" style="flex: 1; border-radius: var(--radius-pill); background: var(--bg-secondary); padding: 10px 18px; font-family: monospace; font-size: 12px;">
+                        <button onclick="playVLCStream()" class="tab-btn active" style="background: #8e44ad; padding: 10px 25px;">▶ Relay</button>
                     </div>
                 </div>
             </div>

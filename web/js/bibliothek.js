@@ -401,10 +401,25 @@ function renderDetailedView() {
     const body = document.getElementById('details-table-body');
     if (!header || !body) return;
 
+    const typeFilter = document.getElementById('gallery-type-filter')?.value || 'all';
+    
+    // Sort and Filter Logic
+    let filteredItems = [...coverflowItems];
+    
+    if (typeFilter !== 'all') {
+        filteredItems = filteredItems.filter(item => {
+            const ext = (item.path || '').split('.').pop().toLowerCase();
+            if (typeFilter === 'audio') return ['mp3', 'flac', 'm4a', 'wav', 'ogg'].includes(ext);
+            if (typeFilter === 'video') return ['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext);
+            if (typeFilter === 'iso') return ext === 'iso' || item.category === 'ISO';
+            return true;
+        });
+    }
+
     const cols = ['Name', 'Category', 'Type', 'Path'];
     header.innerHTML = cols.map(c => `<th>${c}</th>`).join('');
 
-    const html = coverflowItems.map((item, idx) => `
+    const html = filteredItems.map((item, idx) => `
         <tr onclick="playMediaObject(coverflowItems[${idx}])">
             <td>${item.name || '---'}</td>
             <td>${item.category || '---'}</td>

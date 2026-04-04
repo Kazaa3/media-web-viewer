@@ -101,12 +101,10 @@
         </div>
         <div id="header-nav-buttons" style="display: flex; gap: 4px; align-items: center;">
             <button class="tab-btn active" onclick="switchMainCategory('media', this)" data-category="media" style="padding: 6px 14px; font-size: 12px;">Audio-Player</button>
-            <button class="tab-btn" onclick="switchMainCategory('playlist', this)" data-category="playlist" style="padding: 6px 14px; font-size: 12px;">Playlist</button>
             <button class="tab-btn" onclick="switchMainCategory('library', this)" data-category="library" style="padding: 6px 14px; font-size: 12px;">Library</button>
             <button class="tab-btn" onclick="switchTab('file', this)" style="padding: 6px 14px; font-size: 12px;">Browser</button>
             <button class="tab-btn" onclick="switchMainCategory('edit', this)" data-category="edit" style="padding: 6px 14px; font-size: 12px;">Edit</button>
             <button class="tab-btn" onclick="switchMainCategory('system', this)" data-category="system" style="padding: 6px 14px; font-size: 12px;">Options</button>
-            <button class="tab-btn" onclick="switchMainCategory('tools', this)" data-category="tools" style="padding: 6px 14px; font-size: 12px;">Parser</button>
             <button class="tab-btn" onclick="switchMainCategory('debug', this)" data-category="debug" style="padding: 6px 14px; font-size: 12px;">Debug & DB</button>
             <button class="tab-btn" onclick="switchMainCategory('tests', this)" data-category="tests" style="padding: 6px 14px; font-size: 12px;">Tests</button>
             <button class="tab-btn" onclick="switchMainCategory('video', this)" data-category="video" style="padding: 6px 14px; font-size: 12px;">Video Player</button>
@@ -418,7 +416,6 @@
             style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); min-width: 0;">
             
             <!-- SUB-NAV CONTAINER (Breadcrumb Style) -->
-            <!-- [REPLACED: Sub-nav moved to Top Header for v1.34 space-saving design] -->
             <div id="sub-nav-container" class="sub-nav-bar" style="display: none; position: fixed; top: 40px; left: 0; right: 0; z-index: 9999;">
                 <!-- Dynamically populated -->
             </div>

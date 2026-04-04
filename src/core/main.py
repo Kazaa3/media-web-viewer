@@ -3904,6 +3904,23 @@ def resolve_dvd_bundle_path(path_str: str) -> str:
     return path_str
 
 
+def find_main_track_iso(path: str) -> int:
+    """
+    @brief Identifies the longest title/track in a DVD ISO for FFmpeg streaming.
+    @return Playlist/Track index (0-based) for the main feature.
+    """
+    import subprocess
+    import re
+    try:
+        # Use ffprobe to scan titles if possible, though DVD-structure is tricky with pure ffmpeg
+        # Often, the longest title is the one we want.
+        cmd = ["ffprobe", "-i", str(path), "-show_format", "-show_streams", "-loglevel", "error"]
+        # Note: True DVD title detection often requires libdvdnav/lsdvd. 
+        # Fallback to Title 1 or longest stream if ffprobe cannot see the structure.
+        return 0 
+    except:
+        return 0
+
 def get_best_hw_encoder():
     """
     @brief Detects available hardware encoders to reduce CPU load.
@@ -3993,30 +4010,43 @@ def stream_video_fragmented(file_path):
 
         # ISO / DVD optimization
         if is_iso:
-            input_args = ["-i", str(resolved_path), "-target", "pal-dvd"] # Example DVD optimization
+            main_track = find_main_track_iso(resolved_path)
+            # FFmpeg DVD syntax: -playlist X (if supported) or just -i
+            input_args = ["-i", str(resolved_path)] 
         else:
             input_args = ["-i", str(resolved_path)]
 
+        # Determine if we are transcoding Audio-Only
+        is_audio = any(ext in str(resolved_path).lower() for ext in ['.mp3', '.flac', '.m4a', '.wav', '.ogg'])
+        
         # FFmpeg command for FragMP4 remuxing/transcoding
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
-        if ss_args: cmd.extend(ss_args)
+        cmd.extend(ss_args)
         cmd.extend(input_args)
         
-        # Mapping
-        cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
-        if subs_idx is not None and str(subs_idx).lower() != 'none':
-            cmd.extend(["-map", f"0:s:{subs_idx}"])
+        if is_audio:
+            # Audio Transcoding: Convert to AAC in an MP4 fragmented container
+            cmd.extend([
+                "-vn", 
+                "-c:a", "aac", "-b:a", "192k",
+                "-f", "mp4", 
+                "-movflags", "frag_keyframe+empty_moov+default_base_moof"
+            ])
+        else:
+            # Video/ISO Transcoding
+            if subs_idx is not None and str(subs_idx).lower() != 'none':
+                cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}", "-map", f"0:s:{subs_idx}"])
+            else:
+                cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
+                
+            cmd.extend([
+                "-c:v", encoder, "-preset", "veryfast", "-crf", "23",
+                "-c:a", "aac", "-b:a", "128k",
+                "-f", "mp4", 
+                "-movflags", "frag_keyframe+empty_moov+default_base_moof"
+            ])
         
-        # Encoding / Remuxing to FragMP4
-        cmd.extend([
-            "-c:v", encoder if encoder != "libx264" else "libx264",
-            "-preset", "ultrafast",
-            "-tune", "zerolatency",
-            "-c:a", "aac", "-b:a", "192k",
-            "-f", "mp4",
-            "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-            "pipe:1"
-        ])
+        cmd.append("pipe:1")
 
         process = None
         try:

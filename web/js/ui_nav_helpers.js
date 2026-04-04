@@ -345,7 +345,6 @@ function toggleOptionsSidebar() {
 }
 
 function toggleMenuBar() {
-
     const bar = document.getElementById('program-menu-bar');
     const subBar = document.getElementById('sub-nav-container');
     if (!bar) return;
@@ -353,21 +352,23 @@ function toggleMenuBar() {
     const isVisible = !bar.classList.contains('visible');
     bar.classList.toggle('visible', isVisible);
     
+    // Total header height logic for v1.34 (40px main + 32px sub = 72px)
+    const headerHeight = isVisible ? (subBar && subBar.style.display !== 'none' ? 72 : 40) : 0;
+    
     if (subBar) {
         subBar.classList.toggle('visible', isVisible);
-        subBar.style.display = isVisible ? 'flex' : 'none';
+        // Position subBar directly under the main bar
         subBar.style.top = '40px'; 
     }
     
-    // Offset the main content area (Fixed ID mapping for TWO ROWS: 40 + 32 = 72px)
-    const content = document.getElementById('main-split-container');
-    if (content) {
-        content.style.marginTop = isVisible ? '72px' : '0px';
-        content.style.height = isVisible ? 'calc(100vh - 147px)' : 'calc(100vh - 75px)';
+    // Offset the main content area to prevent overlap ("abgehackt" fix)
+    const container = document.getElementById('main-split-container');
+    if (container) {
+        container.style.marginTop = `${headerHeight}px`;
+        container.style.height = headerHeight > 0 ? `calc(100vh - ${75 + headerHeight}px)` : 'calc(100vh - 75px)';
     }
     
     localStorage.setItem('mwv_menu_bar_visible', isVisible);
-    console.log(`UI: Menu Bar toggled. Visible: ${isVisible} (Two-Row Mode)`);
 }
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
@@ -474,30 +475,28 @@ function updateGlobalSubNav(category) {
         'media': [
             { id: 'warteschlange', label: 'Queue', action: "switchMediaSubView('warteschlange')" },
             { id: 'mediengalerie', label: 'Mediengalerie', action: "switchMediaSubView('mediengalerie')" },
+            { id: 'playlist', label: 'Playlist Manager', action: "switchMediaSubView('playlist')" },
             { id: 'visualizer', label: 'Visualizer', action: "switchMediaSubView('visualizer')" },
             { id: 'video-cinema', label: 'Video Cinema', action: "switchMediaSubView('video')" }
-        ],
-        'playlist': [
-            { id: 'manager', label: 'Playlist Manager', action: "switchTab('playlist')" },
-            { id: 'recent', label: 'Recently Played', action: "console.log('Not implemented')" }
         ],
         'reporting': [
             { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
             { id: 'database', label: 'Database', action: "switchReportingSubView('database')" },
             { id: 'video-health', label: 'Video Health', action: "switchReportingSubView('video-health')" },
-            { id: 'audio-health', label: 'Audio Health', action: "switchReportingSubView('audio-health')" },
-            { id: 'performance', label: 'Performance', action: "switchReportingSubView('performance')" }
+            { id: 'audio-health', label: 'Audio Health', action: "switchReportingSubView('audio-health')" }
         ],
         'tests': [
             { id: 'health', label: 'System Health', action: "switchDiagnosticsSubView('health')" },
             { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsSubView('video-health')" },
             { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsSubView('debug-db')" },
-            { id: 'latency', label: 'Latency', action: "switchDiagnosticsSubView('latency')" }
+            { id: 'latency', label: 'Latency Profile', action: "switchDiagnosticsSubView('latency')" }
         ],
         'system': [
-            { id: 'environment', label: 'Environment', action: "switchOptionsView('environment')" },
-            { id: 'playback', label: 'Playback', action: "switchOptionsView('playback')" },
-            { id: 'advanced', label: 'Advanced', action: "switchOptionsView('advanced')" }
+            { id: 'general', label: 'Settings', action: "switchOptionsView('general')" },
+            { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" },
+            { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
+            { id: 'appearance', label: 'Appearance', action: "switchOptionsView('appearance')" },
+            { id: 'environment', label: 'Environment', action: "switchOptionsView('environment')" }
         ],
         'edit': [
             { id: 'tags', label: 'Metadata Tags', action: "switchEditSubView('tags')" },
@@ -508,10 +507,6 @@ function updateGlobalSubNav(category) {
             { id: 'visual', label: 'Mediathek', action: "switchLibrarySubView('visual')" },
             { id: 'browse', label: 'Dateibrowser', action: "switchLibrarySubView('browse')" },
             { id: 'inventory', label: 'Inventar & DB', action: "switchLibrarySubView('inventory')" }
-        ],
-        'tools': [
-            { id: 'parser', label: 'Parser Chain', action: "switchToolsSubView('parser')" },
-            { id: 'transcoding', label: 'Transcoding', action: "switchToolsSubView('transcoding')" }
         ],
         'logbuch': [
             { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
