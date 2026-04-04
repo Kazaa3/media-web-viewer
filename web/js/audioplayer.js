@@ -445,36 +445,71 @@ function renderPlaylist() {
     activeList.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'legacy-track-item';
+        div.draggable = true;
         if (index === playlistIndex) div.classList.add('active');
 
         const tags = item.tags || {};
         const titleDisplay = tags.title || item.name || 'Unknown Title';
         const artistDisplay = tags.artist || 'Unknown Artist';
-        const albumDisplay = tags.album || 'Unknown Album';
         
-        const subStr = `${tags.year || ''} • ${tags.genre || ''} • Track ${tags.track || '01'} • ${tags.album || ''}`;
-
         div.innerHTML = `
-            <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${titleDisplay}</div>
-                <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'No Album'}</span></div>
-                <div style="font-size: 10px; opacity: 0.5; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${tags.year || '2026'} • ${tags.genre || 'General'} • Track ${tags.track || '01'}</div>
-            </div>
-            <div class="item-actions" style="display: none; gap: 4px; align-items: center;">
-                <button onclick="event.stopPropagation(); removeItem(${index})" style="background:transparent; border:none; padding: 6px; color: var(--text-secondary); cursor:pointer; opacity: 0.6;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                </button>
+            <div style="display: flex; align-items: center; width: 100%;">
+                <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                    <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${titleDisplay}</div>
+                    <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'No Album'}</span></div>
+                </div>
+                <div class="item-actions" style="display: flex; gap: 4px; align-items: center; opacity: 0; transition: opacity 0.2s;">
+                    <button onclick="event.stopPropagation(); moveItemUp(${index})" title="Nach oben" style="background:transparent; border:none; padding: 6px; color: var(--text-secondary); cursor:pointer;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); moveItemDown(${index})" title="Nach unten" style="background:transparent; border:none; padding: 6px; color: var(--text-secondary); cursor:pointer;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <button onclick="event.stopPropagation(); removeItem(${index})" title="Entfernen" style="background:transparent; border:none; padding: 6px; color: #ff5252; cursor:pointer;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                </div>
             </div>
         `;
 
-        div.onmouseenter = () => { div.querySelector('.item-actions').style.display = 'flex'; };
-        div.onmouseleave = () => { div.querySelector('.item-actions').style.display = 'none'; };
+        div.onmouseenter = () => { div.querySelector('.item-actions').style.opacity = '1'; };
+        div.onmouseleave = () => { div.querySelector('.item-actions').style.opacity = '0'; };
 
         div.onclick = () => {
             playlistIndex = index;
             playAudio(item, 0);
             renderPlaylist();
+        };
+
+        // Internal Sortable DnD
+        div.ondragstart = (e) => {
+            e.dataTransfer.setData("text/plain", JSON.stringify({ index: index, type: 'reorder' }));
+            div.style.opacity = '0.4';
+        };
+        div.ondragend = () => { div.style.opacity = '1'; };
+        
+        div.ondragover = (e) => {
+            e.preventDefault();
+            div.style.borderTop = '2px solid var(--accent-color)';
+        };
+        div.ondragleave = () => {
+            div.style.borderTop = '1px solid var(--border-color)';
+        };
+        div.ondrop = (e) => {
+            e.preventDefault();
+            div.style.borderTop = '1px solid var(--border-color)';
+            try {
+                const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+                if (data && data.type === 'reorder') {
+                    const fromIndex = data.index;
+                    const toIndex = index;
+                    if (fromIndex === toIndex) return;
+                    const movedItem = currentPlaylist.splice(fromIndex, 1)[0];
+                    currentPlaylist.splice(toIndex, 0, movedItem);
+                    renderPlaylist();
+                }
+            } catch(err) {}
         };
         
         if (typeof showContextMenu === 'function') {
