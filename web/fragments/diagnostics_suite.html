@@ -51,21 +51,29 @@
 
         <!-- VIEW: Debug DB (Restored v1.34 Layout) -->
         <div id="diagnostics-debug-db-view" class="diagnostics-view" style="display: none; height: calc(100% - 20px); overflow: hidden;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%; padding: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; height: 100%; padding: 20px;">
                 
-                <!-- LEFT COLUMN: DB Stats & Dict -->
-                <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+                <!-- LEFT COLUMN: DB Stats & Flags -->
+                <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0; overflow-y: auto;">
                     
                     <!-- Item DB (Übersicht) -->
                     <div class="glass-card" style="padding: 20px; flex: 0 0 auto;">
                         <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Item DB (Übersicht)</h3>
-                        <div id="debug-db-overview-content" style="min-height: 100px;">
+                        <div id="debug-db-overview-content" style="min-height: 80px;">
                             <!-- Injected via renderDebugDatabase -->
                         </div>
                     </div>
 
+                    <!-- Debug Flags (Integrated) -->
+                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto; background: rgba(255, 82, 82, 0.02); border: 1px solid rgba(255, 82, 82, 0.1);">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: #b71c1c; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">System Debug Flags</h3>
+                        <div id="modal-debug-flags" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                            <!-- Dynamically loaded via toggleDebugMenu logic -->
+                        </div>
+                    </div>
+
                     <!-- Python Dict (Details) -->
-                    <div class="glass-card" style="padding: 20px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                    <div class="glass-card" style="padding: 20px; flex: 1; display: flex; flex-direction: column; min-height: 300px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Python Dict (Details)</h3>
                             <select id="debug-dict-select" class="tab-btn" onchange="renderDebugDatabase()" style="padding: 4px 10px; font-size: 11px;">
@@ -74,34 +82,28 @@
                                 <option value="stats">Engine Stats</option>
                             </select>
                         </div>
-                        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Dies zeigt das Item-Dictionary im Python-Backend an, bevor es an die Datenbank und das Frontend gesendet wird.</p>
                         <div style="flex: 1; background: #000; border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column;">
-                            <pre id="debug-items-json" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a9b7c6; overflow: auto; flex: 1;">Waiting for probe...</pre>
+                            <pre id="debug-items-json" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a0a0a0; overflow: auto; flex: 1;">Waiting for probe...</pre>
                         </div>
-                    </div>
-
-                    <div style="color: var(--text-secondary); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; flex: 0 0 auto;">
-                        Backend Process ID: <span id="debug-python-pid" style="color: var(--accent-color);">--</span>
                     </div>
                 </div>
 
                 <!-- RIGHT COLUMN: Console / Logs -->
                 <div class="glass-card" style="display: flex; flex-direction: column; padding: 20px; min-width: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Konsole / Logs</h3>
+                        <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Live Terminal / Console</h3>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <select id="debug-log-level" class="tab-btn" style="padding: 4px 10px; font-size: 11px;">
-                                <option value="DEBUG">DEBUG</option>
-                                <option value="INFO" selected>INFO</option>
-                                <option value="WARN">WARN</option>
-                                <option value="ERROR">ERROR</option>
-                            </select>
+                            <button onclick="refreshDebugLogs()" class="tab-btn active" style="padding: 4px 12px; font-size: 11px;">Force Sync</button>
                             <button onclick="clearDebugConsole()" class="tab-btn" style="padding: 4px 12px; font-size: 11px; opacity: 0.8;">Leeren</button>
                         </div>
                     </div>
 
-                    <div id="debug-console-output" style="flex: 1; background: #000; border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 11px; overflow-y: scroll; white-space: pre-wrap; line-height: 1.4;">
-                        <!-- Real-time logs appear here -->
+                    <div id="debug-console-output" style="flex: 1; background: #000; border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 11px; overflow-y: scroll; white-space: pre-wrap; line-height: 1.4; color: #00ff41;">
+                        <!-- Real-time logs from get_debug_logs() appear here -->
+                    </div>
+                    
+                    <div style="color: var(--text-secondary); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 15px;">
+                        Backend PID: <span id="debug-python-pid" style="color: var(--accent-color);">--</span>
                     </div>
                 </div>
 

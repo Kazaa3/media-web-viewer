@@ -140,6 +140,24 @@ window.clearDebugConsole = function() {
     if (consoleEl) consoleEl.innerHTML = '';
 };
 
+/**
+ * Force-syncs the entire log history from the backend.
+ */
+window.refreshDebugLogs = async function() {
+    const consoleEl = document.getElementById('debug-console-output');
+    if (!consoleEl) return;
+    
+    try {
+        if (typeof eel !== 'undefined' && eel.get_debug_console) {
+            const logs = await eel.get_debug_console()();
+            consoleEl.innerText = logs; // Entire history as string
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+    } catch (err) {
+        console.error("refreshDebugLogs Error:", err);
+    }
+}
+
 // --- SYSTEM HEALTH DIAGNOSTICS ---
 
 /**

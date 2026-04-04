@@ -916,3 +916,55 @@ function renderAudiobookDetails(item) {
         chapterList.appendChild(trackDiv);
     });
 }
+/**
+ * Updates the 'Detailed Mode' diagnostic sidebar with technical metadata and parser times.
+ */
+function updateDetailedDiagnostics() {
+    const sidebar = document.getElementById('player-detailed-sidebar');
+    if (!sidebar || !sidebar.classList.contains('active')) return;
+
+    // Get current item from global state (assumed available as currentMetadata/currentItem)
+    const item = (typeof currentMetadata !== 'undefined') ? currentMetadata : (typeof currentItem !== 'undefined') ? currentItem : null;
+    if (!item) return;
+
+    // 1. Media Info Header
+    const primaryEl = document.getElementById('diag-media-primary');
+    if (primaryEl) {
+        primaryEl.innerHTML = `
+            <div style="font-weight: 800; color: var(--accent-color); margin-bottom: 4px;">${item.name || 'Kein Titel'}</div>
+            <div style="font-size: 10px; opacity: 0.7;">${item.path || '-'}</div>
+        `;
+    }
+
+    // 2. Parser Times (JSON-based mapping)
+    const metricsEl = document.getElementById('diag-parser-metrics');
+    if (metricsEl && item.parser_times) {
+        const pt = item.parser_times;
+        metricsEl.innerHTML = `
+            <div style="display: flex; justify-content: space-between;"><span>filename:</span> <span style="color: var(--accent-color)">${pt.filename || '0.0ms'}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>container:</span> <span style="color: var(--accent-color)">${pt.container || '0.0ms'}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>mutagen:</span> <span style="color: var(--accent-color)">${pt.mutagen || '0.0ms'}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>pymediainfo:</span> <span style="color: var(--accent-color)">${pt.pymediainfo || '0.0ms'}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>ffprobe:</span> <span style="color: var(--accent-color)">${pt.ffprobe || '0.0ms'}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>ffmpeg:</span> <span style="color: var(--accent-color)">${pt.ffmpeg || '0.0ms'}</span></div>
+        `;
+    }
+
+    // 3. Transcoding / Pipeline Status
+    const transcodeEl = document.getElementById('diag-transcode-status');
+    if (transcodeEl) {
+        const isTranscoded = item.is_transcoded || (item.path && (item.path.endsWith('.flac') || item.path.endsWith('.wav')));
+        transcodeEl.innerHTML = isTranscoded 
+            ? `<span style="color: #ff9800; font-weight: 800;">Realtime FLAC -> Browser/MSE</span>`
+            : `<span style="color: #4caf50; font-weight: 800;">Direct Stream (Native)</span>`;
+    }
+}
+
+// Hook into playback start
+if (typeof playAudio === 'function') {
+    const originalPlayAudio = playAudio;
+    playAudio = function(item, startTime) {
+        originalPlayAudio(item, startTime);
+        setTimeout(updateDetailedDiagnostics, 200); // Small delay to ensure item is loaded
+    };
+}

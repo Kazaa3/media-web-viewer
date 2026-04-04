@@ -127,11 +127,12 @@ function switchTab(tabId, btn, callback) {
         'item': { containerId: 'indexed-sqlite-media-repository-panel', path: 'fragments/item_inventory.html' },
         'edit': { containerId: 'metadata-writer-crud-panel', path: 'fragments/metadata_editor.html' },
         'video': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
-        'vlc': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
         'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
         'options': { containerId: 'options-panel-container', path: 'fragments/options_panel.html' },
+        'system': { containerId: 'options-panel-container', path: 'fragments/options_panel.html' },
         'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbook_panel.html' },
         'player': { containerId: 'state-orchestrated-active-queue-list-container', path: 'fragments/player_queue.html' },
+        'media': { containerId: 'state-orchestrated-active-queue-list-container', path: 'fragments/player_queue.html' },
         'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' }
     };
 
@@ -145,11 +146,11 @@ function switchTab(tabId, btn, callback) {
         'file': 'filesystem-crawler-directory-panel',
         'edit': 'metadata-writer-crud-panel',
         'options': 'options-panel-container',
+        'system': 'options-panel-container',
         'logbuch': 'logbook-tab-container',
         'tools': 'tools-panel-container',
         'playlist': 'json-serialized-sequence-buffer-panel',
         'video': 'multiplexed-media-player-orchestrator-panel',
-        'vlc': 'multiplexed-media-player-orchestrator-panel',
         'debug': 'diagnostics-suite-container',
         'tests': 'diagnostics-suite-container',
         'diagnostics': 'diagnostics-suite-container',
@@ -331,26 +332,21 @@ function toggleOptionsSidebar() {
     // Toggle button highlight
     const btn = document.getElementById('btn-sidebar-toggle');
     if (btn) btn.style.opacity = isHidden ? '0.7' : '1';
-    
+
     localStorage.setItem('mwv_options_sidebar_visible', isHidden ? 'true' : 'false');
 }
 
 function toggleMenuBar(forceState = null) {
-    const bar = document.getElementById('program-menu-bar');
+    const header = document.getElementById('master-persistent-header');
     const subBar = document.getElementById('sub-nav-container');
-    if (!bar) return;
-    
-    // Unified state: if forceState is provided use it, otherwise toggle
+    if (!header) return;
+
     menuSystemVisible = (forceState !== null) ? forceState : !menuSystemVisible;
-    
+
     if (menuSystemVisible) {
-        bar.style.display = 'flex';
-        // Force reflow for animation
-        bar.offsetHeight;
-        bar.style.opacity = '1';
-        bar.style.transform = 'translateY(0)';
-        
-        // Only show sub-bar if it has content
+        header.style.transform = 'translateY(0)';
+        header.style.opacity = '1';
+
         const hasSubNav = subBar && subBar.innerHTML.trim() !== '';
         if (subBar && hasSubNav) {
             subBar.style.display = 'flex';
@@ -359,24 +355,25 @@ function toggleMenuBar(forceState = null) {
             subBar.style.transform = 'translateY(0)';
         }
     } else {
-        bar.style.opacity = '0';
-        bar.style.transform = 'translateY(-10px)';
+        // Toggle: Header slides up but stays slightly accessible if needed, 
+        // or we rely on ALT key. 
+        header.style.transform = 'translateY(-40px)';
+        header.style.opacity = '0';
         if (subBar) {
             subBar.style.opacity = '0';
-            subBar.style.transform = 'translateY(-10px)';
+            subBar.style.transform = 'translateY(-40px)';
         }
-        
+
         setTimeout(() => {
-            if (!menuSystemVisible) {
-                bar.style.display = 'none';
-                if (subBar) subBar.style.display = 'none';
+            if (!menuSystemVisible && subBar) {
+                subBar.style.display = 'none';
             }
         }, 250);
     }
-    
+
     updateLayoutOffsets();
-    
-    // Update logo color/style if needed
+
+    // Update logo color/style
     const logo = document.getElementById('dict-master-toggle');
     if (logo) {
         logo.style.color = menuSystemVisible ? 'var(--accent-color)' : 'var(--text-primary)';
@@ -391,24 +388,22 @@ function toggleMenuBar(forceState = null) {
  * Ensures vertical alignment is maintained when header bars are toggled.
  */
 function updateLayoutOffsets() {
-    const bar = document.getElementById('program-menu-bar');
+    const header = document.getElementById('master-persistent-header');
     const subBar = document.getElementById('sub-nav-container');
     const container = document.getElementById('main-split-container');
     if (!container) return;
 
-    const mainVisible = bar && (bar.style.display !== 'none' && bar.style.opacity !== '0');
+    const mainVisible = menuSystemVisible;
     const subVisible = subBar && (subBar.style.display !== 'none' && subBar.style.opacity !== '0');
-    
-    // Row 1 (Master Header) is ALWAYS 40px now
-    // Row 2 (Menu) is 36px
-    // Row 3 (Sub-Nav) is 32px
-    const headerHeight = 40 + (mainVisible ? 36 : 0) + (subVisible ? 32 : 0);
-    
-    // Dynamically position Row 2 (Sub-Nav) if Row 1 is hidden
+
+    // Row 0 (Master Header) = 40px
+    // Row 1 (Sub-Nav) = 32px
+    const headerHeight = (mainVisible ? 40 : 0) + (subVisible ? 32 : 0);
+
     if (subBar) {
-        subBar.style.top = `${40 + (mainVisible ? 36 : 0)}px`;
+        subBar.style.top = `${mainVisible ? 40 : 0}px`;
     }
-    
+
     container.style.marginTop = `${headerHeight}px`;
     container.style.height = `calc(100vh - ${75 + headerHeight}px)`; // Offset for footer
 }
@@ -427,20 +422,20 @@ document.addEventListener('keydown', (e) => {
  */
 function switchPlayerView(viewId) {
     console.log(`[NAV] Switching player view to: ${viewId}`);
-    
+
     // Hide all views
     document.querySelectorAll('.player-view-container').forEach(el => {
         el.style.display = 'none';
         el.classList.remove('active');
     });
-    
+
     // Show target view
     const target = document.getElementById(`player-view-${viewId}`);
     if (target) {
         target.style.display = 'flex';
         target.classList.add('active');
     }
-    
+
     // Update sub-nav buttons
     document.querySelectorAll('.player-sub-nav-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -455,7 +450,7 @@ function switchPlayerView(viewId) {
 document.addEventListener('DOMContentLoaded', () => {
     const savedMenuState = localStorage.getItem('mwv_menu_system_visible') === 'true';
     if (savedMenuState) toggleMenuBar(true);
-    
+
     // Ensure library items are synced to player queue on startup
     setTimeout(() => {
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
@@ -481,7 +476,7 @@ function switchMainCategory(category, btn) {
         const headerBtn = document.querySelector(`.menu-item-btn[onclick*="'${category}'"]`);
         if (headerBtn) headerBtn.classList.add('active');
     }
-    
+
     // Update status indicator
     const label = document.getElementById('current-category-label');
     if (label) label.innerText = category.toUpperCase();
@@ -541,24 +536,32 @@ function updateGlobalSubNav(category) {
             { id: 'latency', label: 'Latency Profile', action: "switchDiagnosticsSubView('latency')" }
         ],
         'system': [
-            { id: 'general', label: 'Settings', action: "switchOptionsView('general')" },
-            { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" },
-            { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
-            { id: 'appearance', label: 'Appearance', action: "switchOptionsView('appearance')" },
-            { id: 'environment', label: 'Environment', action: "switchOptionsView('environment')" }
+            { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
+            { id: 'env', label: 'Umgebung', action: "switchOptionsView('env')" },
+            { id: 'pkgs', label: 'Pakete', action: "switchOptionsView('pkgs')" },
+            { id: 'requirements', label: 'Requirements', action: "switchOptionsView('requirements')" },
+            { id: 'browser', label: 'Browser', action: "switchOptionsView('browser')" },
+            { id: 'frontend', label: 'Frontend', action: "switchOptionsView('frontend')" },
+            { id: 'backend', label: 'Backend', action: "switchOptionsView('backend')" },
+            { id: 'scripts', label: 'Helper Scripts', action: "switchOptionsView('scripts')" },
+            { id: 'danger', label: 'Gefahrenzone', action: "switchOptionsView('danger')" }
         ],
-        'edit': [
-            { id: 'tags', label: 'Metadata Tags', action: "switchEditSubView('tags')" },
-            { id: 'artwork', label: 'Artwork Lab', action: "switchEditSubView('artwork')" },
-            { id: 'ffprobe', label: 'Media Analysis', action: "switchEditSubView('ffprobe')" }
+        'tools': [
+            { id: 'transcoding', label: 'Transcoding', action: "switchToolsView('transcoding')" },
+            { id: 'processing', label: 'Processing', action: "switchToolsView('processing')" },
+            { id: 'batch', label: 'Batch Ops', action: "switchToolsView('batch')" },
+            { id: 'repair', label: 'DB Repair', action: "switchToolsView('repair')" }
         ],
-        'library': [
-            { id: 'visual', label: 'Mediathek', action: "switchLibrarySubView('visual')" },
-            { id: 'browse', label: 'Dateibrowser', action: "switchLibrarySubView('browse')" },
-            { id: 'inventory', label: 'Inventar & DB', action: "switchLibrarySubView('inventory')" }
+        'parser': [
+            { id: 'general', label: 'Konfiguration', action: "switchParserView('general')" },
+            { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" },
+            { id: 'extraction', label: 'Extraktion', action: "switchParserView('extraction')" },
+            { id: 'validation', label: 'Validierung', action: "switchParserView('validation')" }
         ],
         'logbuch': [
             { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
+            { id: 'events', label: 'Events (Live)', action: "switchLogbookSubView('events')" },
+            { id: 'features', label: 'Features Status', action: "switchLogbookSubView('features')" },
             { id: 'docs', label: 'Documentation', action: "switchLogbookSubView('docs')" }
         ],
         'parser': [
@@ -600,7 +603,7 @@ function updateGlobalSubNav(category) {
         container.style.display = 'none';
         container.style.opacity = '0';
     }
-    
+
     // Ensure Row 1 is also visible if sub-nav is requested
     const mainBar = document.getElementById('program-menu-bar');
     if (menuSystemVisible && mainBar && mainBar.style.display === 'none') {
@@ -692,8 +695,29 @@ function switchFileSubView(viewId) {
             const paths = { 'local': './media', 'network': '/mnt', 'mounted': '/media' };
             fbNavigate(paths[viewId] || './media');
         }
-        updateSubNavActiveState(viewId);
+        updateSubNavActiveState(viewId);/**
+ * Toggles sub-views within the Logbook category.
+ */
+window.switchLogbookSubView = function(viewId) {
+    if (typeof mwv_trace === 'function') mwv_trace('SUBVIEW-LOG', viewId);
+    
+    // Toggle active state for pills
+    document.querySelectorAll('#sub-nav-container .sub-pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `global-sub-nav-${viewId}`);
     });
+
+    const journalContainer = document.getElementById('localized-markdown-documentation-journal-panel');
+    const eventsContainer = document.getElementById('logbook-fragment');
+    
+    if (viewId === 'journal' || viewId === 'docs') {
+        if (journalContainer) journalContainer.style.display = 'flex';
+        if (eventsContainer) eventsContainer.style.display = 'none';
+        if (typeof loadLogbuchTab === 'function') loadLogbuchTab(0);
+    } else if (viewId === 'events') {
+        if (journalContainer) journalContainer.style.display = 'none';
+        if (eventsContainer) eventsContainer.style.display = 'flex';
+        if (typeof filterLogUI === 'function') filterLogUI();
+    }
 }
 
 function switchParserView(viewId) {
@@ -719,17 +743,9 @@ function updateSubNavActiveState(activeId) {
 }
 
 /**
- * Switches between sub-tabs in the Options panel.
+ * Switches between sub-views in the Options (System) category.
  */
 function switchOptionsView(viewId) {
-    mwv_trace('DOM-UI', 'SWITCH-OPTIONS-VIEW', { viewId });
-    document.querySelectorAll('.options-view').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.options-nav-tabs .options-subtab, #options-settings-pane .options-subtab, .options-subtab').forEach(el => {
-        if (el.getAttribute('onclick') && (el.getAttribute('onclick').includes('switchOptionsView') || el.id && (el.id.startsWith('opt-subtab-') || el.id.startsWith('options-subtab-')))) {
-            el.classList.remove('active');
-        }
-    });
-
     const target = document.getElementById('options-' + viewId + '-view');
     if (target) {
         target.style.display = 'block';
@@ -1045,12 +1061,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (savedMenuState !== null) {
         menuSystemVisible = (savedMenuState === 'true');
     }
-    
+
     // Apply initial visibility
     if (typeof toggleMenuBar === 'function') {
         toggleMenuBar(menuSystemVisible);
     }
-    
+
     // Sync sidebar
     const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
     if (savedSidebar !== null) {

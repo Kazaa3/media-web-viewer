@@ -67,15 +67,16 @@
             <div id="logbuch-scroll-container" style="flex: 1; overflow-y: auto; padding: 0 60px 100px 60px; scroll-behavior: smooth;">
                 <div id="logbuch-tab-content" style="line-height: 1.8; color: var(--text-primary); font-size: 1.1em; max-width: 850px; margin: 0 auto; word-wrap: break-word; font-family: 'Inter', sans-serif;">
                     
-                    <!-- Welcome Placeholder -->
-                    <div style="text-align: center; padding: 160px 40px; opacity: 1;">
-                        <div class="glass-blur" style="width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 40px auto; display: flex; align-items: center; justify-content: center; background: rgba(var(--accent-color-rgb), 0.05); border: 1px solid var(--border-color);">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                        </div>
-                        <h3 style="margin: 0 0 12px 0; font-weight: 900; font-size: 24px; letter-spacing: -0.5px; color: var(--text-primary);" data-i18n="logbook_welcome">Deep-Dark Journal</h3>
-                        <p style="font-size: 14px; color: var(--text-secondary); font-weight: 500; max-width: 320px; margin: 0 auto;" data-i18n="logbook_select_entry">Wähle eine Dokumentation oder einen Journal-Eintrag aus der Seitenleiste.</p>
-                    </div>
+                </div>
+            </div>
 
+            <!-- VIEW: Features Status (Integrated v1.34) -->
+            <div id="logbuch-features-view" style="display: none; padding: 40px; overflow-y: auto; height: 100%;">
+                <div class="glass-card" style="max-width: 900px; margin: 0 auto; padding: 40px; background: rgba(0, 122, 255, 0.02); border: 1px solid rgba(0, 122, 255, 0.1);">
+                    <h2 style="margin: 0 0 20px 0; font-weight: 900; font-size: 2em; letter-spacing: -1px; color: var(--text-primary);">Projekt-Status & Features</h2>
+                    <div id="feature-list-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Dynamically loaded via toggleFeatureStatus/refreshFeatures logic -->
+                    </div>
                 </div>
             </div>
             

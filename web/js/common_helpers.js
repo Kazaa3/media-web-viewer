@@ -126,20 +126,29 @@ function readText(id, fallback = '') {
 }
 
 /**
- * Updates a progress bar or text.
+ * Updates the global application progress bar (Ladebalken).
+ * v1.34 Master: Linked to top-fixed bar above sub-navigation.
  */
 function update_progress(data) {
+    const container = document.getElementById('app-progress-bar-container');
+    const bar = document.getElementById('app-progress-bar');
+    const text = document.getElementById('app-progress-text');
+    
+    if (!container || !bar) return;
+
     if (typeof data === 'string') {
-        safeText('status-info', data);
+        if (text) text.innerText = data;
         return;
     }
+
     if (data.progress !== undefined) {
-        const bar = document.getElementById('progress-bar-inner');
-        if (bar) bar.style.width = data.progress + '%';
-        safeText('progress-percent', data.progress + '%');
-    }
-    if (data.status) {
-        safeText('status-info', data.status);
+        const p = Math.max(0, Math.min(100, Number(data.progress) || 0));
+        bar.style.width = p + '%';
+        if (text) text.innerText = `${data.status || 'Verarbeite...'} (${p}%)`;
+        
+        // Auto-show/hide based on activity
+        container.style.display = (p > 0 && p < 100) ? 'block' : 'none';
+        if (text) text.style.display = (p > 0 && p < 100) ? 'block' : 'none';
     }
 }
 

@@ -59,33 +59,42 @@ body {
 }
 
 /* --- Progress Bar --- */
+/* --- v1.34 Master Progress Bar (Ladebalken) --- */
 #app-progress-bar-container {
     position: fixed;
-    top: 0;
+    top: 40px; /* Directly under Row 0 */
     left: 0;
     width: 100%;
-    height: 2px;
-    background: transparent;
-    z-index: 10000;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.05);
+    z-index: 10002;
     display: none;
+    overflow: hidden;
 }
 
 #app-progress-bar {
     height: 100%;
-    background: var(--accent-color);
+    background: linear-gradient(90deg, var(--accent-color), #00c6ff);
     width: 0%;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.4);
 }
 
 #app-progress-text {
     position: fixed;
-    top: 8px;
+    top: 45px;
     right: 20px;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-secondary);
-    z-index: 10001;
+    z-index: 10003;
     display: none;
-    font-weight: 600;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
 }
 
 /* --- Layout Structure --- */
@@ -189,37 +198,54 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* --- Modern Menu Items (v1.34 Classic Restoration) --- */
+/* --- Modern Menu Items (v1.34 Classic Tab Restoration) --- */
 .menu-item-btn {
-    background: transparent;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #495057;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.1s ease;
     white-space: nowrap;
     display: flex;
     align-items: center;
     gap: 6px;
-    height: 28px;
+    height: 26px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .menu-item-btn:hover {
-    background: rgba(0, 122, 255, 0.1);
+    background: #fff;
+    border-color: var(--accent-color);
     color: var(--accent-color);
 }
 
 .menu-item-btn.active {
-    background: var(--accent-color);
-    color: #fff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background: #fff;
+    border: 1.5px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 800;
+    box-shadow: 0 2px 4px rgba(0, 122, 255, 0.1);
+}
+
+[data-theme="dark"] .menu-item-btn {
+    background: #1c1c1e;
+    border-color: #38383a;
+    color: #e5e5e7;
 }
 
 [data-theme="dark"] .menu-item-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: #2c2c2e;
+    border-color: var(--accent-color);
+}
+
+[data-theme="dark"] .menu-item-btn.active {
+    background: #2c2c2e;
+    border-color: var(--accent-color);
+    color: #fff;
 }
 
 /* --- Glassmorphism Card --- */
@@ -263,14 +289,102 @@ body {
     box-shadow: var(--shadow-medium);
 }
 
-/* --- Scrollbars --- */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+/* ==========================================================================
+   V1.34 MASTER LAYOUT SYSTEM (TAB-SPLIT & DIAGNOSTIC SIDEBAR)
+   ========================================================================== */
+
+.tab-split-layout {
+    display: none !important; /* Hide by default to prevent bleed */
+    flex-direction: row !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    background: var(--bg-primary);
 }
 
-::-webkit-scrollbar-track {
-    background: transparent;
+.tab-split-layout.active {
+    display: flex !important; /* Only show when active */
+}
+
+.diagnostic-sidebar {
+    width: 280px;
+    height: 100%;
+    background: rgba(var(--bg-secondary-rgb), 0.5); /* Use glassmorphic backdrop for technical layer */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid var(--border-color);
+    padding: 25px;
+    display: none; /* Hidden by default unless class 'active' is present */
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    z-index: 10;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.diagnostic-sidebar.active {
+    display: flex;
+}
+
+.diagnostic-header {
+    margin-bottom: 25px;
+}
+
+.diagnostic-section-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+}
+
+.diagnostic-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-top: 15px;
+    margin-bottom: 4px;
+}
+
+.diagnostic-value {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--accent-color);
+    line-height: 1.5;
+    background: rgba(var(--accent-color-rgb), 0.05);
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(var(--accent-color-rgb), 0.1);
+}
+
+.content-deck-fill {
+    flex: 1;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Loading fragment utility */
+.loading-fragment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: var(--text-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.4; }
 }
 
 ::-webkit-scrollbar-thumb {
