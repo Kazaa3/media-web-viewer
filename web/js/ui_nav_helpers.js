@@ -159,9 +159,10 @@ function switchTab(tabId, btn, callback) {
     const targetId = tabMap[tabId] || tabId;
     const target = document.getElementById(targetId);
 
-    if (typeof mwv_trace === 'function') {
-        mwv_trace('NAV', 'SWITCH-TAB', { tabId, targetId: target ? target.id : 'unknown' });
-    }
+    // [DEBUG-TRUNCATED v1.34]
+    // if (typeof mwv_trace === 'function') {
+    //     mwv_trace('NAV', 'SWITCH-TAB', { tabId, targetId: target ? target.id : 'unknown' });
+    // }
 
     // Handle Fragment Loading
     if (fragmentMap[tabId]) {
@@ -211,9 +212,9 @@ function finishSwitchTab(tabId, targetId, btn) {
             if (typeof switchLibrarySubTab === 'function') switchLibrarySubTab(tabId);
         }
 
-        if (typeof mwv_trace === 'function') {
-            mwv_trace('NAV-TAB', tabId, { targetId });
-        }
+        // if (typeof mwv_trace === 'function') {
+        //     mwv_trace('NAV-TAB', tabId, { targetId });
+        // }
 
         if (isFlex) {
             panel.style.flex = '1';
@@ -489,6 +490,7 @@ function updateGlobalSubNav(category) {
         ],
         'tests': [
             { id: 'health', label: 'System Health', action: "switchDiagnosticsSubView('health')" },
+            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsSubView('video-health')" },
             { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsSubView('debug-db')" },
             { id: 'latency', label: 'Latency', action: "switchDiagnosticsSubView('latency')" }
         ],

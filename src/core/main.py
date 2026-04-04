@@ -617,6 +617,63 @@ def rtt_item_test(data):
 
 
 @eel.expose
+def run_video_transcode_diagnostic(file_path=None):
+    """
+    Executes a real-time probe of the video transcoding/remuxing pipelines.
+    Returns results compatible with the Diagnostics Suite UI.
+    """
+    from src.core import db
+    import requests
+    
+    # 1. Target selection
+    target_path = file_path
+    if not target_path:
+        items = db.get_library()
+        if items:
+            target_path = items[0]['path']
+        else:
+            return {"status": "error", "error": "No media found in library to test."}
+    
+    log.info(f"[Diagnostic] Testing video pipeline for: {target_path}")
+    results = []
+    
+    # Endpoints to test
+    base_url = "http://localhost:8345"
+    encoded_path = requests.utils.quote(target_path)
+    endpoints = [
+        {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
+        {"name": "Transcode (Safe)", "url": f"{base_url}/stream/via/transcode/{encoded_path}"}
+    ]
+    
+    for ep in endpoints:
+        ep_result = {"name": ep['name'], "status": "unknown", "details": ""}
+        try:
+            r = requests.get(ep['url'], stream=True, timeout=15)
+            if r.status_code == 200:
+                # Read 512KB to check for atoms
+                chunk = next(r.iter_content(chunk_size=512*1024), b'')
+                atoms = [b'ftyp', b'moof', b'mdat', b'moov']
+                found = [a.decode() for a in atoms if a in chunk[:4096]]
+                
+                if found:
+                    ep_result["status"] = "success"
+                    ep_result["details"] = f"Valid MP4 atoms found: {', '.join(found)}"
+                else:
+                    ep_result["status"] = "failed"
+                    ep_result["details"] = "No valid MP4 atoms in start of stream."
+            else:
+                ep_result["status"] = "failed"
+                ep_result["details"] = f"HTTP Error {r.status_code}"
+            r.close()
+        except Exception as e:
+            ep_result["status"] = "error"
+            ep_result["details"] = str(e)
+        results.append(ep_result)
+        
+    return {"status": "complete", "results": results, "target": target_path}
+
+
+@eel.expose
 def rtt_stress_ping(index, total):
     """Rapid-fire ping for stress testing."""
     # Minimize logging for stress test to avoid I/O bottleneck
