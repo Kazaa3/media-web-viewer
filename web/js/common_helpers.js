@@ -172,12 +172,23 @@ function showContextMenu(e, item) {
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
 
+    const isVideo = isVideoItem(item);
+    
     const options = [
-        { label: 'Abspielen', icon: '▶️', action: () => playMediaObject(item) },
-        { label: 'Warteschlange', icon: '➕', action: () => addToQueue(item) },
-        { label: 'Metadaten Editieren', icon: '📝', action: () => openEditForm(item) },
-        { label: 'Im Dateisystem öffnen', icon: '📁', action: () => { if (typeof eel !== "undefined") eel.open_in_explorer(item.path)(); } }
+        { label: isVideo ? 'Im Video Player abspielen' : 'Abspielen', icon: '▶️', action: () => playMediaObject(item) },
+        { label: 'Zur Queue hinzufügen', icon: '➕', action: () => addToQueue(item) }
     ];
+
+    if (isVideo) {
+        options.push({ label: 'Video analysieren (FFprobe)', icon: '🔍', action: () => { if (typeof eel !== "undefined") eel.analyze_media_item(item.path)(); } });
+    }
+
+    options.push({ label: 'Metadaten Editieren', icon: '📝', action: () => {
+        if (typeof switchTab === 'function') switchTab('edit');
+        setTimeout(() => { if (typeof openEditForm === 'function') openEditForm(item); }, 200);
+    }});
+    
+    options.push({ label: 'Im Dateisystem öffnen', icon: '📁', action: () => { if (typeof eel !== "undefined") eel.open_in_explorer(item.path)(); } });
 
     options.forEach(opt => {
         const itemDiv = document.createElement('div');

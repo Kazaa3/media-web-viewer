@@ -3898,33 +3898,8 @@ def serve_media_raw(file_path):
     )
 
 
-@eel.btl.route('/media/<file_path:path>')
-def serve_media(file_path):
-    """
-    @brief Serves local media files via proxy to bypass Same-Origin-Policy.
-    """
-    import bottle
-    from urllib.parse import unquote
-    
-    # URL handle spaces and special chars
-    decoded_path = unquote(file_path)
-    # Use existing resolve_media_path to handle library-relative requests correctly
-    resolved_path = resolve_media_path(decoded_path)
-    
-    if not os.path.exists(resolved_path):
-        return bottle.HTTPError(404, f"File not found: {resolved_path}")
-        
-    # MIME detection and serving
-    ext = os.path.splitext(resolved_path)[1].lower()
-    mimetype = 'audio/mpeg' if ext == '.mp3' else 'video/mp4' if ext == '.mp4' else None
-    
-    log.info(f"[MEDIA-PROXY] Serving: {resolved_path}")
-    return bottle.static_file(
-        os.path.basename(resolved_path),
-        root=os.path.dirname(resolved_path),
-        mimetype=mimetype,
-        download=False
-    )
+# [REMOVED v1.34] Redundant serve_media route moved to web/app_bottle.py 
+# to support centralized on-the-fly transcoding and better mimetype handling.
 
 @eel.btl.route('/stream/via/transcode/<file_path:path>')
 def stream_video_fragmented(file_path):
@@ -3960,7 +3935,60 @@ def stream_video_fragmented(file_path):
         is_iso = str(resolved_path).lower().endswith('.iso')
 
         # ISO / DVD optimization
-        input_args = []
+        if is_iso:
+            input_args = ["-i", str(resolved_path), "-target", "pal-dvd"] # Example DVD optimization
+        else:
+            input_args = ["-i", str(resolved_path)]
+
+        # FFmpeg command for FragMP4 remuxing/transcoding
+        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
+        if ss_args: cmd.extend(ss_args)
+        cmd.extend(input_args)
+        
+        # Mapping
+        cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
+        if subs_idx is not None and str(subs_idx).lower() != 'none':
+            cmd.extend(["-map", f"0:s:{subs_idx}"])
+        
+        # Encoding / Remuxing to FragMP4
+        cmd.extend([
+            "-c:v", encoder if encoder != "libx264" else "libx264",
+            "-preset", "ultrafast",
+            "-tune", "zerolatency",
+            "-c:a", "aac", "-b:a", "192k",
+            "-f", "mp4",
+            "-movflags", "frag_keyframe+empty_moov+default_base_moof",
+            "pipe:1"
+        ])
+
+        process = None
+        try:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024)
+            # Log stderr in background
+            def log_stderr(p):
+                for line in p.stderr:
+                    log.error(f"[FFmpeg-Stream] {line.decode().strip()}")
+            import threading
+            threading.Thread(target=log_stderr, args=(process,), daemon=True).start()
+
+            while True:
+                chunk = process.stdout.read(512 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        except Exception as e:
+            log.error(f"[stream] Generator error: {e}")
+        finally:
+            if process:
+                process.terminate()
+                try: process.wait(timeout=1)
+                except: process.kill()
+
+    # Determine Correct Content-Type for MSE/fMP4
+    bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
+    return ffmpeg_stream()
+
+@eel.expose
 def delete_file(file_path):
     """Deletes high-performance JSON/text files from data/ cache."""
     try:
@@ -4016,7 +4044,24 @@ def vlc_hls_live_proxy(filename):
         })
     except Exception:
         return bottle.HTTPResponse(status=500)
+def log_process_stderr(process, name):
+    """
+    @brief Helper to stream process stderr to the master log in the background.
+    """
+    if not process or not process.stderr:
+        return
+    def log_thread():
+        for line in process.stderr:
+            try:
+                log.info(f" [{name}] {line.decode().strip()}")
+            except:
+                pass
+    import threading
+    threading.Thread(target=log_thread, daemon=True).start()
 
+def is_mkvtoolnix_available():
+    """Checks if mkvmerge is available in PATH."""
+    return shutil.which("mkvmerge") is not None
 
 @eel.btl.route('/video-remux-stream/<item_id:path>')
 def video_remux_stream(item_id):

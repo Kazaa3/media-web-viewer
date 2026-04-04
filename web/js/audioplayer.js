@@ -82,6 +82,7 @@ function formatTime(seconds) {
  */
 function playAudio(item, startTime = 0) {
     const pipeline = document.getElementById('native-html5-audio-pipeline-element');
+    const ext = item.path ? item.path.slice(((item.path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase() : "";
     if (!pipeline) return;
 
     const proxyUrl = "/media/" + encodeURIComponent(item.path);
@@ -102,22 +103,42 @@ function playAudio(item, startTime = 0) {
         if (typeof showToast === 'function') showToast(`Playback Error: ${e.message}`, 'error');
     });
     
-    if (typeof eel !== "undefined" && typeof eel.log_gui_event === 'function') {
-        eel.log_gui_event("PLAYBACK", "START", { name: item.name, path: item.path })();
+    // Sync All UI Metadata Elements (v1.34 Global Sync)
+    const title = item.tags?.title || item.name || 'Unknown Title';
+    const artist = item.tags?.artist || item.artist || item.author || 'Unknown Artist';
+    const album = item.tags?.album || 'Unknown Album';
+    const artworkUrl = `/cover/${encodeURIComponent(item.path || item.name)}`;
+
+    // 1. Text Sync
+    document.querySelectorAll('.synced-title').forEach(el => el.innerText = title);
+    document.querySelectorAll('.synced-artist').forEach(el => el.innerText = artist);
+    document.querySelectorAll('.synced-album').forEach(el => el.innerText = album);
+    
+    // 2. Artwork Sync
+    document.querySelectorAll('.synced-artwork').forEach(el => {
+        el.src = artworkUrl;
+        el.onerror = () => { el.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
+    });
+
+    // 3. Tech Specs Sync (Codec, Bitrate, etc.)
+    const codec = item.codec || (ext ? ext.slice(1).toUpperCase() : '-');
+    document.querySelectorAll('.synced-specs span').forEach(el => {
+        if (el.id.includes('codec')) el.innerText = codec;
+        if (el.id.includes('bitrate')) el.innerText = item.bitrate || '-';
+        if (el.id.includes('samplerate')) el.innerText = item.samplerate || '-';
+        if (el.id.includes('bitdepth')) el.innerText = item.bitdepth || '-';
+    });
+
+    // 4. Chapter Sidebar (Restore Audiobook Chapters if applicable)
+    if (item.category === 'Audiobook' || item.category === 'Hörbuch' || item.category === 'Album') {
+        if (typeof renderAudiobookDetails === 'function') renderAudiobookDetails(item);
+    } else {
+        const chapterList = document.getElementById('player-chapters-list');
+        if (chapterList) chapterList.innerHTML = '';
     }
 
-    if (typeof updateMediaSidebar === 'function') updateMediaSidebar(item, item.path);
-    
-    // Sync Footer Metadata (v1.34 Status Bar Sync)
-    const titleEl = document.getElementById('footer-status-title');
-    const artistEl = document.getElementById('footer-status-artist');
-    const artworkEl = document.getElementById('footer-artwork-raster-buffer');
-    
-    if (titleEl) titleEl.innerText = item.tags?.title || item.name || 'Unknown Title';
-    if (artistEl) artistEl.innerText = item.tags?.artist || 'Unknown Artist';
-    if (artworkEl) {
-        artworkEl.src = `/cover/${encodeURIComponent(item.name)}`;
-        artworkEl.onerror = () => { artworkEl.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; };
+    if (typeof eel !== "undefined" && typeof eel.log_gui_event === 'function') {
+        eel.log_gui_event("PLAYBACK", "START", { name: item.name, path: item.path })();
     }
 }
 
@@ -788,3 +809,81 @@ window.bootstrapMockQueue = function() {
 }
 
 // [v1.34 REMOVED: Automatic timeout relocated to Quick Sign-off Test script]
+
+/**
+ * Premium Sidebar: Chapters/Tracks Renderer (v1.34)
+ * Populates the player-chapters-list with tracks from the same album or parent directory.
+ */
+function renderAudiobookDetails(item) {
+    const chapterList = document.getElementById('player-chapters-list');
+    if (!chapterList) return;
+
+    chapterList.innerHTML = '<div style="font-size: 11px; color: var(--text-secondary); opacity: 0.5;">Suche Kapitel...</div>';
+
+    // 1. Determine "same context" (Album name or Parent Directory)
+    const albumName = item.tags?.album || item.album;
+    const parentDir = item.path ? item.path.substring(0, item.path.lastIndexOf('/')) : null;
+
+    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
+        chapterList.innerHTML = '<div style="font-size: 11px; color: var(--text-secondary);">Mediathek nicht geladen.</div>';
+        return;
+    }
+
+    // 2. Filter tracks
+    let tracks = allLibraryItems.filter(i => {
+        if (albumName && i.tags?.album === albumName) return true;
+        if (parentDir && i.path && i.path.startsWith(parentDir)) return true;
+        return false;
+    });
+
+    // Sort by track number or filename
+    tracks.sort((a, b) => {
+        const ta = parseInt(a.tags?.track || 0);
+        const tb = parseInt(b.tags?.track || 0);
+        if (ta && tb) return ta - tb;
+        return a.name.localeCompare(b.name);
+    });
+
+    // 3. Render
+    chapterList.innerHTML = '';
+    
+    if (tracks.length === 0) {
+        chapterList.innerHTML = '<div style="font-size: 11px; color: var(--text-secondary);">Keine weiteren Kapitel gefunden.</div>';
+        return;
+    }
+
+    tracks.forEach(track => {
+        const isActive = track.path === item.path;
+        const durationStr = track.duration ? formatTime(track.duration) : '--:--';
+        
+        const trackDiv = document.createElement('div');
+        trackDiv.className = `chapter-item ${isActive ? 'active' : ''}`;
+        trackDiv.style = `
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 8px 12px; border-radius: 8px; cursor: pointer; 
+            background: ${isActive ? 'var(--accent-color)' : 'rgba(0,0,0,0.03)'}; 
+            color: ${isActive ? 'white' : 'var(--text-primary)'}; 
+            font-size: 12px; font-weight: ${isActive ? '700' : '500'};
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        `;
+        
+        trackDiv.innerHTML = `
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 10px;">
+                ${track.tags?.track ? track.tags.track + '. ' : ''}${track.tags?.title || track.name}
+            </span>
+            <span style="font-size: 10px; opacity: 0.7;">${durationStr}</span>
+        `;
+        
+        trackDiv.onclick = (e) => {
+            e.stopPropagation();
+            if (typeof playAudio === 'function') playAudio(track);
+        };
+
+        // Hover effect via JS
+        trackDiv.onmouseover = () => { if(!isActive) trackDiv.style.background = 'rgba(0,122,255,0.1)'; };
+        trackDiv.onmouseout = () => { if(!isActive) trackDiv.style.background = 'rgba(0,0,0,0.03)'; };
+
+        chapterList.appendChild(trackDiv);
+    });
+}

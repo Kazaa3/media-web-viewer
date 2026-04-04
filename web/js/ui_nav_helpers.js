@@ -441,6 +441,7 @@ function switchMainCategory(category, btn) {
     const categoryDefaults = {
         'media': 'player',
         'library': 'library',
+        'playlist': 'playlist',
         'video': 'video',
         'tools': 'tools',
         'logbuch': 'logbuch',
@@ -470,10 +471,14 @@ function updateGlobalSubNav(category) {
     // Sub-nav configuration for each category
     const subNavMap = {
         'media': [
-            { id: 'warteschlange', label: 'Warteschlange', action: "switchMediaSubView('warteschlange')" },
+            { id: 'warteschlange', label: 'Queue', action: "switchMediaSubView('warteschlange')" },
             { id: 'mediengalerie', label: 'Mediengalerie', action: "switchMediaSubView('mediengalerie')" },
             { id: 'visualizer', label: 'Visualizer', action: "switchMediaSubView('visualizer')" },
             { id: 'video-cinema', label: 'Video Cinema', action: "switchMediaSubView('video')" }
+        ],
+        'playlist': [
+            { id: 'manager', label: 'Playlist Manager', action: "switchTab('playlist')" },
+            { id: 'recent', label: 'Recently Played', action: "console.log('Not implemented')" }
         ],
         'reporting': [
             { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
