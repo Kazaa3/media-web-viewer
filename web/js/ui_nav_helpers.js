@@ -159,14 +159,10 @@ function switchTab(tabId, btn, callback) {
     const targetId = tabMap[tabId] || tabId;
     const target = document.getElementById(targetId);
 
-    // [DEBUG-TRUNCATED v1.34]
-    // if (typeof mwv_trace === 'function') {
-    //     mwv_trace('NAV', 'SWITCH-TAB', { tabId, targetId: target ? target.id : 'unknown' });
-    // }
-
     // Handle Fragment Loading
     if (fragmentMap[tabId]) {
         const frag = fragmentMap[tabId];
+        mwv_trace('DOM-NAV', 'FRAGMENT-LOAD', { tabId, path: frag.path });
         FragmentLoader.load(frag.containerId, frag.path, () => {
             // Once fragment is loaded, recursive call to show the actual panel
             finishSwitchTab(tabId, targetId, btn);
@@ -211,10 +207,6 @@ function finishSwitchTab(tabId, targetId, btn) {
         if (['grid', 'details', 'album'].includes(tabId)) {
             if (typeof switchLibrarySubTab === 'function') switchLibrarySubTab(tabId);
         }
-
-        // if (typeof mwv_trace === 'function') {
-        //     mwv_trace('NAV-TAB', tabId, { targetId });
-        // }
 
         if (isFlex) {
             panel.style.flex = '1';
@@ -349,23 +341,30 @@ function toggleMenuBar() {
     const subBar = document.getElementById('sub-nav-container');
     if (!bar) return;
     
+    // Unified state: if either is shown, we toggle both
     const isVisible = !bar.classList.contains('visible');
-    bar.classList.toggle('visible', isVisible);
     
-    // Total header height logic for v1.34 (40px main + 32px sub = 72px)
-    const headerHeight = isVisible ? (subBar && subBar.style.display !== 'none' ? 72 : 40) : 0;
+    bar.classList.toggle('visible', isVisible);
+    bar.style.display = isVisible ? 'flex' : 'none';
     
     if (subBar) {
         subBar.classList.toggle('visible', isVisible);
-        // Position subBar directly under the main bar
+        subBar.style.display = (isVisible && subBar.innerHTML.trim() !== '') ? 'flex' : 'none';
         subBar.style.top = '40px'; 
     }
+    
+    // Calculate total header height (40px main + 32px sub = 72px)
+    const hasSubNav = subBar && subBar.style.display !== 'none';
+    const headerHeight = isVisible ? (hasSubNav ? 72 : 40) : 0;
+    
+    mwv_trace('DOM-UI', 'TOGGLE-MENU', { isVisible, headerHeight, hasSubNav });
     
     // Offset the main content area to prevent overlap ("abgehackt" fix)
     const container = document.getElementById('main-split-container');
     if (container) {
         container.style.marginTop = `${headerHeight}px`;
-        container.style.height = headerHeight > 0 ? `calc(100vh - ${75 + headerHeight}px)` : 'calc(100vh - 75px)';
+        // Recalculate height to account for footer (75px) and header
+        container.style.height = `calc(100vh - ${75 + headerHeight}px)`;
     }
     
     localStorage.setItem('mwv_menu_bar_visible', isVisible);
@@ -623,7 +622,7 @@ function updateSubNavActiveState(activeId) {
  * Switches between sub-tabs in the Options panel.
  */
 function switchOptionsView(viewId) {
-    traceUiNav('SUBTAB-OPTIONS', viewId);
+    mwv_trace('DOM-UI', 'SWITCH-OPTIONS-VIEW', { viewId });
     document.querySelectorAll('.options-view').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.options-nav-tabs .options-subtab, #options-settings-pane .options-subtab, .options-subtab').forEach(el => {
         if (el.getAttribute('onclick') && (el.getAttribute('onclick').includes('switchOptionsView') || el.id && (el.id.startsWith('opt-subtab-') || el.id.startsWith('options-subtab-')))) {

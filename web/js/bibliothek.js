@@ -24,8 +24,8 @@ async function loadLibrary(retryCount = 0) {
     try {
         const library = await getLibrary();
         allLibraryItems = library.media || [];
-        const msg = `[Library] Phase 2: Received ${allLibraryItems.length} items from backend.`;
-        console.log(msg);
+        const msg = `[Library] Received ${allLibraryItems.length} items from backend.`;
+        mwv_trace('DATA-LIB', 'LOAD-COMPLETE', { count: allLibraryItems.length });
         if (typeof appendUiTrace === 'function') appendUiTrace(msg, "DB-SUCCESS");
 
         // Mock filter (uses safe double-() pattern for Eel)
@@ -50,7 +50,7 @@ async function loadLibrary(retryCount = 0) {
         // Auto-scan only if DB is completely empty (no real items at all)
         if (realItems.length === 0 && !hasAutoScanned) {
             const msgEmpty = "[Library] Discovery: No real media in DB. Starting auto-scan of './media'...";
-            console.warn(msgEmpty);
+            mwv_trace('DOM-UI', 'AUTO-SCAN-TRIGGER');
             if (typeof appendUiTrace === 'function') appendUiTrace(msgEmpty, "WARN");
             hasAutoScanned = true;
             if (typeof scan === 'function') {
@@ -75,7 +75,7 @@ async function loadLibrary(retryCount = 0) {
         document.dispatchEvent(new CustomEvent('mwv_library_ready', { detail: { count: allLibraryItems.length } }));
 
     } catch (e) {
-        console.error("[Library] loadLibrary error:", e);
+        mwv_trace('DATA-LIB', 'ERROR', { message: e.message, retry: retryCount });
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] ERROR: ${e.message}`, "DB-ERROR");
         if (retryCount < 3) {
             setTimeout(() => loadLibrary(retryCount + 1), 2000);
@@ -100,7 +100,7 @@ async function renderLibrary() {
 
     // Local filter stage
     coverflowItems = allLibraryItems;
-    console.debug(`[Library] renderLibrary starting with ${coverflowItems.length} items. Filter: ${libraryFilter}, Search: ${librarySearch}`);
+    mwv_trace('DOM-UI', 'RENDER-LIBRARY', { count: coverflowItems.length, filter: libraryFilter, search: librarySearch });
 
     // Search
     if (librarySearch) {

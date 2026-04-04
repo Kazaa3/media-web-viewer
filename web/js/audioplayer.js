@@ -87,7 +87,7 @@ function playAudio(item, startTime = 0) {
 
     const proxyUrl = "/media/" + encodeURIComponent(item.path);
     const logMsg = `[Audio] Attempting to play: ${item.name} | Path: ${item.path} | Proxy: ${proxyUrl}`;
-    console.log(logMsg);
+    mwv_trace('PLAYER-EVENT', 'PLAYBACK-START', { name: item.name, path: item.path, proxy: proxyUrl });
     if (typeof appendUiTrace === 'function') appendUiTrace(logMsg);
     
     pipeline.src = proxyUrl;
@@ -99,7 +99,7 @@ function playAudio(item, startTime = 0) {
     pipeline.play().then(() => {
         setupVisualizer(pipeline);
     }).catch(e => {
-        console.error('Audio playback failed:', e);
+        mwv_trace('PLAYER-EVENT', 'PLAYBACK-FAIL', { message: e.message, name: item.name });
         if (typeof showToast === 'function') showToast(`Playback Error: ${e.message}`, 'error');
     });
     

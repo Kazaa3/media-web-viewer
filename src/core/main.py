@@ -18,16 +18,26 @@ APP_START_TIME = time.time()
 MAIN_FILE = Path(__file__).resolve()
 PROJECT_ROOT = MAIN_FILE.parent.parent.parent
 
+# --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
+class BootstrapLogger:
+    def info(self, m): print(f"STDOUT: {m}", flush=True)
+    def error(self, m): print(f"STDOUT: [ERROR] {m}", flush=True)
+    def warning(self, m): print(f"STDOUT: [WARN] {m}", flush=True)
+    def critical(self, m): print(f"STDOUT: [CRITICAL] {m}", flush=True)
+    def debug(self, m): pass
+
+log = BootstrapLogger()
+
 def log_self_diagnostics():
-    """Prints critical environment information if a mismatch is detected."""
-    print(f"--- [ENV DIAGNOSTICS] ---", flush=True)
-    print(f"Python: {sys.version}", flush=True)
-    print(f"Executable: {sys.executable}", flush=True)
-    print(f"Prefix: {sys.prefix}", flush=True)
-    print(f"Project Root: {PROJECT_ROOT}", flush=True)
-    print(f"Working Dir: {os.getcwd()}", flush=True)
-    print(f"Boot Tracking: Active", flush=True)
-    print(f"-------------------------", flush=True)
+    """Logs critical environment information if a mismatch is detected."""
+    log.info("--- [ENV DIAGNOSTICS] ---")
+    log.info(f"Python: {sys.version}")
+    log.info(f"Executable: {sys.executable}")
+    log.info(f"Prefix: {sys.prefix}")
+    log.info(f"Project Root: {PROJECT_ROOT}")
+    log.info(f"Working Dir: {os.getcwd()}")
+    log.info(f"Boot Tracking: Active")
+    log.info("-------------------------")
 
 def ensure_stable_environment():
     """Ensures we are running in the correct .venv (unified) and Python 3.10.x."""
@@ -63,7 +73,7 @@ def ensure_stable_environment():
     target_exe = os.path.abspath(str(venv_python))
 
     if venv_python.exists() and current_exe != target_exe:
-        print(f"STDOUT: [Guard] Switching Environment to {selected_venv.name}: -> {venv_python}", flush=True)
+        log.info(f"[Guard] Switching Environment to {selected_venv.name}: -> {venv_python}")
         os.environ["MWV_AUTO_REEXEC"] = "1"
         try:
             os.execv(target_exe, [target_exe, str(MAIN_FILE)] + sys.argv[1:])
@@ -99,16 +109,15 @@ try:
     import bottle
     import eel
     from eel import chrome
-    print("STDOUT: [Bootstrap] Eel loaded successfully")
+    log.info("[Bootstrap] Eel loaded successfully")
 except ImportError as e:
-    print(f"STDOUT: [ERROR] Required module missing: {e}", flush=True)
+    log.error(f"[Bootstrap] Required module missing: {e}")
     log_self_diagnostics()
     sys.exit(1)
 
 @eel.expose
 def shutdown_backend():
-    print("STDOUT: [BACKEND] Received shutdown signal.")
-    log.info("[BACKEND] Remote shutdown initiated.")
+    log.warning("[BACKEND] Received shutdown signal.")
     sys.exit(0)
 
 @eel.expose
@@ -131,7 +140,7 @@ def kill_stale_and_restart():
     import time
     
     current_pid = os.getpid()
-    print(f"STDOUT: [RESTART] Initiating kill-and-restart. Current PID: {current_pid}")
+    log.info(f"[RESTART] Initiating kill-and-restart. Current PID: {current_pid}")
     
     killed_count = 0
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
@@ -143,17 +152,17 @@ def kill_stale_and_restart():
             cmd_str = " ".join(cmdline)
             
             if "python" in (proc.info.get('name') or "").lower() and "src/core/main.py" in cmd_str:
-                print(f"STDOUT: [RESTART] Terminating stale instance PID {proc.info['pid']}")
+                log.info(f"[RESTART] Terminating stale instance PID {proc.info['pid']}")
                 proc.terminate()
                 killed_count += 1
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
-
+    
     if killed_count > 0:
-        print(f"STDOUT: [RESTART] Killed {killed_count} stale processes. Waiting for resources to free...")
+        log.info(f"[RESTART] Killed {killed_count} stale processes. Waiting for resources to free...")
         time.sleep(2)
         
-    print("STDOUT: [RESTART] Re-executing current instance...")
+    log.info("[RESTART] Re-executing current instance...")
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 # 1. Immediate Path Calculation
@@ -177,15 +186,15 @@ except ImportError:
         def __init__(self, msg, total=100): self.msg = msg
         def __enter__(self): return self
         def __exit__(self, *a): pass
-        def update(self, *a): print(f"STDOUT: [Progress] {self.msg} ({a[0]}%)", flush=True)
+        def update(self, *a): log.info(f"[Progress] {self.msg} ({a[0]}%)")
 
 # 3. Early Monkey Patching
 try:
     from gevent import monkey
     monkey.patch_all()
-    print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
+    log.info("[Bootstrap] gevent monkey-patching successful")
 except ImportError:
-    print("STDOUT: [Bootstrap] gevent not found, continuing without patching", flush=True)
+    log.info("[Bootstrap] gevent not found, continuing without patching")
 
 
 
@@ -204,7 +213,7 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
         is_debug = "--debug" in sys.argv
         log_level = logging.DEBUG if is_debug else logging.INFO
         logger.setup_logging(debug_mode=is_debug, level=log_level, session_id=SESSION_ID)
-        print(f"STDOUT: [System] Log initialized (Level: {'DEBUG' if is_debug else 'INFO'})", flush=True)
+        log.info(f"[System] Log initialized (Level: {'DEBUG' if is_debug else 'INFO'})")
 
     initialize_startup_logging()
     log = get_logger("main")
@@ -217,7 +226,7 @@ CHECKPOINTS = []
 def log_checkpoint(msg: str):
     elapsed = time.time() - STARTUP_TIME
     CHECKPOINTS.append((msg, elapsed))
-    print(f"STDOUT: [Checkpoint] {elapsed:6.3f}s | {msg}", flush=True)
+    log.info(f"[Checkpoint] {elapsed:6.3f}s | {msg}")
 
 # --- Application Initialization Sequence ---
 with StatusBar("Loading Core Components", total=100) as sb:
@@ -227,7 +236,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(10, "Initializing Eel Assets")
     web_dir = str(PROJECT_ROOT / "web")
     if not os.path.exists(web_dir):
-        print(f"CRITICAL: Web dir not found at {web_dir}", flush=True)
+        log.critical(f"Web dir not found at {web_dir}")
         sys.exit(1)
     eel.init(web_dir)
     sb.update(25, "Eel Assets Ready")
@@ -253,8 +262,8 @@ with StatusBar("Loading Core Components", total=100) as sb:
         all_media = db.get_all_media()
         log.info(f"[Startup-Trace] DB Initialized: {len(all_media)} records found.")
     except Exception as e:
-        print(f"CRITICAL: Resource load failure: {e}", flush=True)
-        import traceback; traceback.print_exc()
+        log.critical(f"Resource load failure: {e}")
+        log.error(traceback.format_exc())
         sys.exit(1)
 
     sb.update(90, "Setting UI State")
@@ -274,9 +283,7 @@ def report_spawn():
 @eel.expose
 def log_gui_event(category, action, details=""):
     """Receives and logs traces from the frontend GUI."""
-    msg = f"STDOUT: [GUI-TRACE] [{category}] {action} | {details}"
-    print(msg, flush=True)
-    logging.info(msg)
+    log.info(f"[GUI-TRACE] [{category}] {action} | {details}")
 
 @eel.expose
 def report_items_spawned(count, source="frontend"):
@@ -289,7 +296,6 @@ def report_items_spawned(count, source="frontend"):
     else:
         msg = f"[DOM-TEST] [EMPTY] No items in DOM (Source: {source})."
     
-    print(f"STDOUT: {msg}", flush=True)
     log.info(msg)
     return {"status": "counts_logged", "timestamp": time.time()}
 
@@ -300,7 +306,6 @@ def report_playback_state(is_playing, item_name, current_time):
     Used for automated verification of playability.
     """
     msg = f"[DOM-TEST] [PLAYBACK] {'Playing' if is_playing else 'Stopped'} | Item: {item_name} | Pos: {current_time:.1f}s"
-    print(f"STDOUT: {msg}", flush=True)
     log.info(msg)
     return {"status": "playback_logged"}
 
@@ -310,10 +315,10 @@ def run_app_audit_detached(session_port):
     the Playwright audit script in debug mode.
     """
     def audit_trigger():
-        print(f"STDOUT: [System-Audit] Waiting for UI synchronization on port {session_port}...", flush=True)
+        log.info(f"[System-Audit] Waiting for UI synchronization on port {session_port}...")
         spawn_event.wait()
         time.sleep(8) # Allow UI to settle (v1.34 has glassmorphic transitions)
-        print(f"STDOUT: [System-Audit] Launching Playwright UI Audit (scripts/app_audit_playwright.py)...", flush=True)
+        log.info(f"[System-Audit] Launching Playwright UI Audit (scripts/app_audit_playwright.py)...")
         
         audit_script = PROJECT_ROOT / "scripts" / "app_audit_playwright.py"
         try:
@@ -324,15 +329,15 @@ def run_app_audit_detached(session_port):
             for line in process.stdout:
                 line_clean = line.strip()
                 if line_clean:
-                    print(f"STDOUT: [System-Audit] {line_clean}", flush=True)
+                    log.info(f"[System-Audit] {line_clean}")
                 
             process.wait()
             if process.returncode == 0:
-                print(f"STDOUT: [System-Audit] Audit SUCCESS. Report: scripts/audit_reports/audit_report.md", flush=True)
+                log.info(f"[System-Audit] Audit SUCCESS. Report: scripts/audit_reports/audit_report.md")
             else:
-                print(f"STDOUT: [System-Audit] Audit completed with status {process.returncode}", flush=True)
+                log.info(f"[System-Audit] Audit completed with status {process.returncode}")
         except Exception as e:
-            print(f"STDOUT: [System-Audit] Audit execution error: {e}", flush=True)
+            log.error(f"[System-Audit] Audit execution error: {e}")
 
     threading.Thread(target=audit_trigger, daemon=True).start()
 
@@ -365,14 +370,14 @@ def start_app():
         # We specify the port and block=False to allow the watchdog to run.
         # mode='chrome' is the preferred isolated environment.
         eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
-        print("STDOUT: [Eel] Server started. Monitoring for frontend synchronization...", flush=True)
+        log.info("[Eel] Server started. Monitoring for frontend synchronization...")
         
         # --- Automated Probe Trigger ---
         if "--probe" in sys.argv:
             def probe_trigger():
                 spawn_event.wait()
                 time.sleep(5) # Wait for UI to settle
-                print("STDOUT: [Eel] Triggering automated frontend probe (@eel.run_frontend_probe)", flush=True)
+                log.info("[Eel] Triggering automated frontend probe (@eel.run_frontend_probe)")
                 eel.run_frontend_probe()()
             threading.Thread(target=probe_trigger, daemon=True).start()
 
@@ -401,7 +406,7 @@ def start_app():
             
             if now - last_alive >= 5:
                 elapsed = int(now - start_wait)
-                print(f"STDOUT: [Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...", flush=True)
+                log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
                 last_alive = now
             time.sleep(0.5)
                 
