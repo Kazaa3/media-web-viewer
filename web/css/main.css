@@ -189,18 +189,37 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.sub-tab-btn.active,
-.options-subtab.active {
-    background: var(--bg-secondary);
-    color: var(--accent-color);
-    font-weight: 700;
-    box-shadow: var(--shadow-soft);
+/* --- Modern Menu Items (v1.34 Classic Restoration) --- */
+.menu-item-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
 }
 
-[data-theme="dark"] .sub-tab-btn.active,
-[data-theme="dark"] .options-subtab.active {
-    background: var(--bg-secondary);
+.menu-item-btn:hover {
+    background: rgba(0, 122, 255, 0.1);
     color: var(--accent-color);
+}
+
+.menu-item-btn.active {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] .menu-item-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* --- Glassmorphism Card --- */

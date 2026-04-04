@@ -11,6 +11,7 @@ let currentMainCategory = 'media';
 window.__mwv_ui_nav_loaded = true;
 
 let sidebarVisible = false; // Default to closed for Classic v1.34 Restoration
+let menuSystemVisible = true; // Default to open for UI discovery
 
 /**
  * Toggles the main sidebar visibility.
@@ -162,7 +163,6 @@ function switchTab(tabId, btn, callback) {
     // Handle Fragment Loading
     if (fragmentMap[tabId]) {
         const frag = fragmentMap[tabId];
-        mwv_trace('DOM-NAV', 'FRAGMENT-LOAD', { tabId, path: frag.path });
         FragmentLoader.load(frag.containerId, frag.path, () => {
             // Once fragment is loaded, recursive call to show the actual panel
             finishSwitchTab(tabId, targetId, btn);
@@ -190,7 +190,6 @@ function switchTab(tabId, btn, callback) {
  */
 
 // --- Global UI State ---
-let menuSystemVisible = false;
 function finishSwitchTab(tabId, targetId, btn) {
     document.querySelectorAll('.tab-content').forEach(el => {
         el.style.display = 'none';
@@ -405,6 +404,11 @@ function updateLayoutOffsets() {
     // Row 3 (Sub-Nav) is 32px
     const headerHeight = 40 + (mainVisible ? 36 : 0) + (subVisible ? 32 : 0);
     
+    // Dynamically position Row 2 (Sub-Nav) if Row 1 is hidden
+    if (subBar) {
+        subBar.style.top = `${40 + (mainVisible ? 36 : 0)}px`;
+    }
+    
     container.style.marginTop = `${headerHeight}px`;
     container.style.height = `calc(100vh - ${75 + headerHeight}px)`; // Offset for footer
 }
@@ -468,12 +472,13 @@ function switchMainCategory(category, btn) {
     localStorage.setItem('mwv_active_category', category);
 
     traceUiNav('NAV-CATEGORY', category);
+    mwv_trace('DOM-UI', 'NAV-CATEGORY', category);
 
     // Update active state in header/sidebar
-    document.querySelectorAll('.nav-pill, .nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.menu-item-btn, .nav-item').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     else {
-        const headerBtn = document.querySelector(`.nav-pill[onclick*="'${category}'"]`);
+        const headerBtn = document.querySelector(`.menu-item-btn[onclick*="'${category}'"]`);
         if (headerBtn) headerBtn.classList.add('active');
     }
     
@@ -587,12 +592,21 @@ function updateGlobalSubNav(category) {
     // Automatically show if the main menu system is active
     if (menuSystemVisible) {
         container.style.display = 'flex';
+        // Force reflow for opacity transition
         container.offsetHeight;
         container.style.opacity = '1';
         container.style.transform = 'translateY(0)';
     } else {
         container.style.display = 'none';
+        container.style.opacity = '0';
     }
+    
+    // Ensure Row 1 is also visible if sub-nav is requested
+    const mainBar = document.getElementById('program-menu-bar');
+    if (menuSystemVisible && mainBar && mainBar.style.display === 'none') {
+        toggleMenuBar(true);
+    }
+
     updateLayoutOffsets();
 
     // Set initial active state based on category default
@@ -1021,3 +1035,28 @@ function toggleImpressum() {
 // Window listeners for menu dismissal
 window.addEventListener('click', () => hideContextMenu());
 window.addEventListener('scroll', () => hideContextMenu(), true);
+
+/**
+ * Global UI Initialization for v1.34 Navigation
+ */
+window.addEventListener('DOMContentLoaded', () => {
+    // Restore state from localStorage
+    const savedMenuState = localStorage.getItem('mwv_menu_system_visible');
+    if (savedMenuState !== null) {
+        menuSystemVisible = (savedMenuState === 'true');
+    }
+    
+    // Apply initial visibility
+    if (typeof toggleMenuBar === 'function') {
+        toggleMenuBar(menuSystemVisible);
+    }
+    
+    // Sync sidebar
+    const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
+    if (savedSidebar !== null) {
+        sidebarVisible = (savedSidebar === 'true');
+        if (typeof applySidebarState === 'function') {
+            applySidebarState();
+        }
+    }
+});
