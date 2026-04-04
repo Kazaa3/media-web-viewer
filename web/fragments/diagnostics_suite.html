@@ -30,17 +30,17 @@
                 <!-- Connectivity -->
                 <div class="glass-card" style="padding: 24px; border-top: 4px solid #3498db;">
                     <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">Konnektivität</h3>
-                    <div id="diag-conn-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                    <div id="diag-conn-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; color: var(--text-secondary);">Bereit für Scan...</div>
                 </div>
                 <!-- Media Pipeline -->
                 <div class="glass-card" style="padding: 24px; border-top: 4px solid #9b59b6;">
                     <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">Media Pipeline</h3>
-                    <div id="diag-playback-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                    <div id="diag-playback-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; color: var(--text-secondary);">Bereit für Scan...</div>
                 </div>
                 <!-- Filesystem & DB -->
                 <div class="glass-card" style="padding: 24px; border-top: 4px solid #e67e22;">
                     <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">Filesystem & DB</h3>
-                    <div id="diag-fs-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                    <div id="diag-fs-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; color: var(--text-secondary);">Bereit für Scan...</div>
                 </div>
             </div>
 
@@ -165,6 +165,11 @@
         
         if (viewId === 'debug-db' && typeof renderDebugDatabase === 'function') {
             renderDebugDatabase();
+        } else if (viewId === 'health' && typeof runAllTestsUI === 'function') {
+            const list = document.getElementById('diag-conn-list');
+            if (list && list.innerText.includes('Bereit')) {
+                runAllTestsUI();
+            }
         }
     }
 

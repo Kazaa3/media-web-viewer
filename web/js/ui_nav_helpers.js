@@ -190,7 +190,7 @@ function switchTab(tabId, btn, callback) {
  */
 
 // --- Global UI State ---
-let menuBarVisible = false;
+let menuSystemVisible = false;
 function finishSwitchTab(tabId, targetId, btn) {
     document.querySelectorAll('.tab-content').forEach(el => {
         el.style.display = 'none';
@@ -336,38 +336,50 @@ function toggleOptionsSidebar() {
     localStorage.setItem('mwv_options_sidebar_visible', isHidden ? 'true' : 'false');
 }
 
-function toggleMenuBar() {
+function toggleMenuBar(forceState = null) {
     const bar = document.getElementById('program-menu-bar');
     const subBar = document.getElementById('sub-nav-container');
     if (!bar) return;
     
-    // Unified state: if either is shown, we toggle both
-    const isVisible = !bar.classList.contains('visible');
+    // Unified state: if forceState is provided use it, otherwise toggle
+    menuSystemVisible = (forceState !== null) ? forceState : !menuSystemVisible;
     
-    bar.classList.toggle('visible', isVisible);
-    bar.style.display = isVisible ? 'flex' : 'none';
+    bar.classList.toggle('visible', menuSystemVisible);
+    bar.style.display = menuSystemVisible ? 'flex' : 'none';
     
+    // Sync sub-navigation visibility if entries exist
+    const hasSubNav = subBar && subBar.innerHTML.trim() !== '';
     if (subBar) {
-        subBar.classList.toggle('visible', isVisible);
-        subBar.style.display = (isVisible && subBar.innerHTML.trim() !== '') ? 'flex' : 'none';
+        const subNavVisible = menuSystemVisible && hasSubNav;
+        subBar.classList.toggle('visible', subNavVisible);
+        subBar.style.display = subNavVisible ? 'flex' : 'none';
         subBar.style.top = '40px'; 
     }
     
-    // Calculate total header height (40px main + 32px sub = 72px)
-    const hasSubNav = subBar && subBar.style.display !== 'none';
-    const headerHeight = isVisible ? (hasSubNav ? 72 : 40) : 0;
+    updateLayoutOffsets();
     
-    mwv_trace('DOM-UI', 'TOGGLE-MENU', { isVisible, headerHeight, hasSubNav });
-    
-    // Offset the main content area to prevent overlap ("abgehackt" fix)
+    mwv_trace('DOM-UI', 'TOGGLE-MENU', { isVisible: menuSystemVisible, hasSubNav });
+    localStorage.setItem('mwv_menu_system_visible', menuSystemVisible);
+}
+
+/**
+ * Recalculates and applies layout offsets for the main content area.
+ * Ensures vertical alignment is maintained when header bars are toggled.
+ */
+function updateLayoutOffsets() {
+    const bar = document.getElementById('program-menu-bar');
+    const subBar = document.getElementById('sub-nav-container');
     const container = document.getElementById('main-split-container');
-    if (container) {
-        container.style.marginTop = `${headerHeight}px`;
-        // Recalculate height to account for footer (75px) and header
-        container.style.height = `calc(100vh - ${75 + headerHeight}px)`;
-    }
+    if (!container) return;
+
+    const mainVisible = bar && bar.style.display !== 'none';
+    const subVisible = subBar && subBar.style.display !== 'none';
     
-    localStorage.setItem('mwv_menu_bar_visible', isVisible);
+    // Dynamic calculation: (40px main + 32px sub)
+    const headerHeight = (mainVisible ? 40 : 0) + (subVisible ? 32 : 0);
+    
+    container.style.marginTop = `${headerHeight}px`;
+    container.style.height = `calc(100vh - ${75 + headerHeight}px)`;
 }
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
@@ -410,8 +422,8 @@ function switchPlayerView(viewId) {
 
 // Restore menu state on load
 document.addEventListener('DOMContentLoaded', () => {
-    const savedMenuState = localStorage.getItem('mwv_menu_bar_visible') === 'true';
-    if (savedMenuState) toggleMenuBar();
+    const savedMenuState = localStorage.getItem('mwv_menu_system_visible') === 'true';
+    if (savedMenuState) toggleMenuBar(true);
     
     // Ensure library items are synced to player queue on startup
     setTimeout(() => {
@@ -516,6 +528,7 @@ function updateGlobalSubNav(category) {
     const entries = subNavMap[category];
     if (!entries) {
         container.style.display = 'none';
+        updateLayoutOffsets();
         return;
     }
 
@@ -528,7 +541,9 @@ function updateGlobalSubNav(category) {
         </button>
     `).join('');
 
-    container.style.display = 'flex';
+    // Automatically show if the main menu system is active
+    container.style.display = menuSystemVisible ? 'flex' : 'none';
+    updateLayoutOffsets();
 
     // Set initial active state based on category default
     const activeTab = localStorage.getItem('mwv_active_tab');

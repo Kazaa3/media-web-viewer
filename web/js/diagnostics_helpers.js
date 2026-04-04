@@ -140,6 +140,160 @@ window.clearDebugConsole = function() {
     if (consoleEl) consoleEl.innerHTML = '';
 };
 
+// --- SYSTEM HEALTH DIAGNOSTICS ---
+
+/**
+ * Run all automated tests for the System Health view.
+ */
+window.runAllTestsUI = async function() {
+    clearDiagnosticsUI();
+    const btn = document.getElementById('diag-main-action-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('loading');
+    }
+
+    try {
+        await Promise.all([
+            checkConnectivity(),
+            checkMediaPipeline(),
+            checkDatabaseHealth()
+        ]);
+        if (typeof showToast === 'function') showToast("Diagnose-Scan abgeschlossen.", "success");
+    } catch (e) {
+        console.error("runAllTestsUI Error:", e);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('loading');
+        }
+    }
+};
+
+window.clearDiagnosticsUI = function() {
+    ['diag-conn-list', 'diag-playback-list', 'diag-fs-list'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
+    const resultsPane = document.getElementById('diagnostics-results-pane');
+    if (resultsPane) {
+        resultsPane.innerHTML = '';
+        resultsPane.style.display = 'none';
+    }
+};
+
+async function checkConnectivity() {
+    const list = document.getElementById('diag-conn-list');
+    if (!list) return;
+
+    addDiagItem(list, 'Eel Backend', 'pending');
+    addDiagItem(list, 'HTTP Server', 'pending');
+
+    // 1. Eel Ping
+    try {
+        if (typeof eel !== 'undefined' && eel.api_ping) {
+            await eel.api_ping(Date.now(), 0)();
+            updateDiagItem(list, 'Eel Backend', 'success', 'Verbunden (WebSocket OK)');
+        } else {
+            updateDiagItem(list, 'Eel Backend', 'error', 'Eel nicht definiert');
+        }
+    } catch (e) {
+        updateDiagItem(list, 'Eel Backend', 'error', e.message);
+    }
+
+    // 2. Bottle Ping
+    try {
+        const start = performance.now();
+        const res = await fetch('/health', { cache: 'no-store' });
+        const lat = (performance.now() - start).toFixed(1);
+        if (res.ok) {
+            updateDiagItem(list, 'HTTP Server', 'success', `Aktiv (${lat}ms)`);
+        } else {
+            updateDiagItem(list, 'HTTP Server', 'error', `HTTP ${res.status}`);
+        }
+    } catch (e) {
+        updateDiagItem(list, 'HTTP Server', 'error', 'Offline / Connection Refused');
+    }
+}
+
+async function checkMediaPipeline() {
+    const list = document.getElementById('diag-playback-list');
+    if (!list) return;
+
+    addDiagItem(list, 'Video.js Engine', 'pending');
+    addDiagItem(list, 'Audio Pipeline', 'pending');
+
+    // 1. Video.js check
+    if (typeof videojs !== 'undefined') {
+        updateDiagItem(list, 'Video.js Engine', 'success', 'Version ' + (videojs.VERSION || '8.x'));
+    } else {
+        updateDiagItem(list, 'Video.js Engine', 'error', 'Nicht geladen (CDN fail?)');
+    }
+
+    // 2. Audio Pipeline
+    const audio = document.getElementById('native-html5-audio-pipeline-element');
+    if (audio) {
+        const state = audio.readyState > 0 ? 'Bereit' : 'Initialisiert';
+        updateDiagItem(list, 'Audio Pipeline', 'success', state);
+    } else {
+        updateDiagItem(list, 'Audio Pipeline', 'error', 'DOM Element fehlt');
+    }
+}
+
+async function checkDatabaseHealth() {
+    const list = document.getElementById('diag-fs-list');
+    if (!list) return;
+
+    addDiagItem(list, 'SQLite Storage', 'pending');
+    addDiagItem(list, 'Item Map Cache', 'pending');
+
+    try {
+        if (typeof eel !== 'undefined' && eel.get_debug_stats) {
+            const stats = await eel.get_debug_stats()();
+            updateDiagItem(list, 'SQLite Storage', 'success', `${stats.total_items || 0} Objekte indiziert`);
+            updateDiagItem(list, 'Item Map Cache', 'success', stats.pid ? `Backend PID: ${stats.pid}` : 'Aktiv');
+        } else {
+            updateDiagItem(list, 'SQLite Storage', 'warn', 'Eel Backend antwortet nicht');
+        }
+    } catch (e) {
+        updateDiagItem(list, 'SQLite Storage', 'error', e.message);
+    }
+}
+
+/**
+ * UI Helpers for list items
+ */
+function addDiagItem(list, name, status) {
+    const item = document.createElement('div');
+    item.className = 'diag-item';
+    item.dataset.name = name;
+    item.style.display = 'flex';
+    item.style.justifyContent = 'space-between';
+    item.style.fontSize = '12px';
+    item.style.padding = '4px 0';
+    item.innerHTML = `
+        <span style="color: var(--text-secondary);">${name}</span>
+        <span class="status-val" style="font-weight: 700; color: #777;">${status}...</span>
+    `;
+    list.appendChild(item);
+}
+
+function updateDiagItem(list, name, status, details) {
+    const items = list.querySelectorAll('.diag-item');
+    let target = null;
+    items.forEach(i => { if (i.dataset.name === name) target = i; });
+    
+    if (target) {
+        const statusEl = target.querySelector('.status-val');
+        if (statusEl) {
+            statusEl.innerText = details || status.toUpperCase();
+            if (status === 'success') statusEl.style.color = '#2ecc71';
+            else if (status === 'error') statusEl.style.color = '#e74c3c';
+            else if (status === 'warn') statusEl.style.color = '#f1c40f';
+        }
+    }
+}
+
 // --- TAB RENDERING: TOOLS ---
 window.renderToolsDashboard = function() {
     const container = document.getElementById('tools-dashboard-panel');
