@@ -1,79 +1,135 @@
-<!-- ===================== PLAYER QUEUE (v1.34) ===================== -->
-<div id="player-tab-split-container" style="display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-primary);">
-    
-    <!-- LEFT COLUMN: Active Queue (Sidebar) -->
-    <div id="player-left-sidebar" class="sidebar" style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border-color); background: var(--bg-sidebar);">
-        
-        <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-            <h3 style="margin: 0; font-size: 1.1em; font-weight: 800; color: var(--text-primary);" data-i18n="nav_queue">Warteschlange</h3>
-            <span id="queue-item-count" style="background: var(--accent-color); color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">0 Items</span>
-        </div>
+<!-- ===================== PLAYER QUEUE (v1.34 Duo View) ===================== -->
+<div style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+    <!-- Sub-Navigation for Player Views -->
+    <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+        <button class="tab-btn player-sub-nav-btn" data-target="warteschlange" onclick="switchPlayerView('warteschlange')">Warteschlange</button>
+        <button class="tab-btn player-sub-nav-btn active" data-target="mediengalerie" onclick="switchPlayerView('mediengalerie')">Mediengalerie</button>
+        <button class="tab-btn player-sub-nav-btn" data-target="visualizer" onclick="switchPlayerView('visualizer')">Visualizer</button>
+    </div>
 
-        <div id="player-queue-pane" style="flex: 1; overflow-y: auto; padding: 0;">
-            <div id="active-queue-list-render-target" style="display: flex; flex-direction: column; gap: 0;">
-                <!-- Queue items will be injected here via audioplayer.js -->
+    <!-- MAIN PLAYER VIEWS CONTAINER -->
+    <div id="player-tab-split-container" style="flex: 1; display: flex; overflow: hidden; position: relative; background: var(--bg-primary);">
+        
+        <!-- VIEW 1: Warteschlange (Queue - Artwork Left, Queue Right) -->
+        <div id="player-view-warteschlange" class="player-view-container" style="display: none;">
+        
+        <!-- LEFT SIDE: The Deck -->
+        <div id="player-deck-column">
+            <!-- Artwork Card -->
+            <div class="glass-card" style="width: 340px; height: 340px; padding: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 15px 45px rgba(0,0,0,0.12); margin-bottom: 25px; border: 1px solid rgba(0,0,0,0.05);">
+                <img id="big-player-artwork-warteschlange" class="synced-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+
+            <!-- Metadata Stack -->
+            <div style="width: 100%; text-align: left; padding: 0 10px;">
+                <h2 id="big-player-title-warteschlange" class="synced-title" style="margin: 0; font-size: 1.8em; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; line-height: 1.2;">Media Library</h2>
+                <h3 id="big-player-artist-warteschlange" class="synced-artist" style="margin: 8px 0 15px 0; font-size: 1.1em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">Ready for playback</h3>
+
+                <!-- Tech Box (Legacy Grey Row) -->
+                <div id="legacy-tech-box-row" class="legacy-meta-row synced-specs">
+                    <span id="spec-codec-warteschlange">-</span> | 
+                    <span id="spec-bitdepth-warteschlange">-</span> | 
+                    <span id="spec-samplerate-warteschlange">-</span> | 
+                    <span id="spec-bitrate-warteschlange">-</span>
+                </div>
+                
+                <!-- Metadata Subtitles -->
+                <div id="player-meta-subtitles-warteschlange" style="margin-top: 20px; font-size: 13px; color: var(--text-secondary); font-weight: 500; line-height: 1.8;">
+                    <div id="spec-album-line-warteschlange" style="font-weight: 700; color: var(--text-primary);">Album Name</div>
+                    <div id="spec-track-details-warteschlange">Year • Genre • Track 01</div>
+                </div>
+
+                <!-- File Path (Restored) -->
+                <div id="player-file-path-warteschlange" style="margin-top: 25px; font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: monospace; word-break: break-all; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+                    /path/to/current/media/file.m4a
+                </div>
             </div>
         </div>
 
-        <div style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 8px; background: var(--bg-sidebar);">
-            <button onclick="clearQueue()" class="tab-btn" style="flex: 1; justify-content: center; font-size: 12px; color: #ff5252; border-color: rgba(255, 82, 82, 0.2);">Liste leeren</button>
-            <button onclick="shuffleQueue()" class="tab-btn" style="flex: 1; justify-content: center; font-size: 12px;">Mischen</button>
+        <!-- RIGHT SIDE: The Playlist/Queue -->
+        <div id="player-playlist-column">
+            <div style="padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h3 style="margin: 0; font-weight: 800; font-size: 1.2em; letter-spacing: -0.3px;">Warteschlange</h3>
+                    <span id="queue-item-count-warteschlange" class="synced-count" style="background: var(--accent-color); color: white; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2);">0 Titel</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="clearQueue()" class="tab-btn sm" style="padding: 6px 14px; font-size: 11px; font-weight: 700;">Liste leeren</button>
+                    <button onclick="shuffleQueue()" class="tab-btn sm" style="padding: 6px 14px; font-size: 11px; font-weight: 700;">Mischen</button>
+                </div>
+            </div>
+            
+            <div id="active-queue-list-render-target-warteschlange" class="synced-queue-target" style="padding: 20px 0;">
+                <!-- High-fidelity white cards injected here -->
+            </div>
         </div>
     </div>
 
-    <!-- Splitter -->
-    <div class="splitter-v" id="player-analytics-splitter"></div>
-
-    <!-- RIGHT COLUMN: Active Item Details (Main content) -->
-    <div id="video-queue-pane" style="flex: 1; display:flex; flex-direction:column; overflow: hidden; background: var(--bg-primary); position: relative;">
-        
-        <!-- Top Control Area (Now Playing & Toggle) -->
-        <div style="padding: 20px 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <h2 style="margin: 0; font-size: 1.1em; font-weight: 800; color: var(--text-primary);">Player Dashboard</h2>
-                <div class="options-nav-tabs" style="display: flex; gap: 4px;">
-                    <button id="player-view-btn-nowplaying" class="sub-tab-btn active" onclick="switchPlayerMainView('now-playing')">Now Playing</button>
-                    <button id="player-view-btn-browse" class="sub-tab-btn" onclick="switchPlayerMainView('browse')">Full Library</button>
-                </div>
+    <!-- VIEW 3: Mediengalerie (v1.33 Restoration - Direct Item Access) -->
+    <div id="player-view-mediengalerie" class="player-view-container active">
+        <!-- LEFT SIDE: Big Deck (Synched) -->
+        <div id="player-deck-column">
+            <div class="glass-card" style="width: 340px; height: 340px; padding: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 15px 45px rgba(0,0,0,0.12); margin-bottom: 25px; border: 1px solid rgba(0,0,0,0.05);">
+                <img id="big-player-artwork-mediengalerie" class="synced-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-            <div id="player-search-bar" style="display: none; width: 300px;">
-                <input type="text" id="player-library-search" placeholder="Search indexed media..." 
-                    oninput="handlePlayerLibrarySearch(this.value)"
-                    style="width: 100%; padding: 8px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 12px; outline: none;">
-            </div>
-        </div>
-
-        <div id="player-main-content-viewport" style="flex: 1; position: relative; overflow: hidden;">
-            <!-- View: Now Playing -->
-            <div id="player-view-now-playing" class="player-sub-view active" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%); transition: opacity 0.3s ease;">
-                <!-- Artwork Card -->
-                <div id="big-player-artwork-container" class="glass-card" style="width: 420px; height: 420px; margin-bottom: 30px; padding: 0; overflow: hidden; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-                    <img id="big-player-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                <!-- Metadata Info -->
-                <div id="big-player-info" style="max-width: 800px;">
-                    <h2 id="big-player-title" style="margin: 0; font-size: 2.2em; font-weight: 900; color: var(--text-primary); letter-spacing: -1px; line-height: 1.1;" data-i18n="player_select_song">Wählt ein Lied aus</h2>
-                    <h3 id="big-player-artist" style="margin: 10px 0 20px 0; font-size: 1.25em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">Warteschlange leer</h3>
-                </div>
-                <!-- Tech Details -->
-                <div id="big-player-metadata-grid" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <div id="big-bitrate-display" class="track-codec">-</div>
-                    <div id="big-samplerate-display" class="track-codec">-</div>
-                </div>
-            </div>
-
-            <!-- View: Library Browser (GRID) -->
-            <div id="player-view-browse" class="player-sub-view" style="display: none; height: 100%; overflow-y: auto; padding: 30px; background: var(--bg-primary);">
-                <div id="player-library-grid" class="media-grid">
-                    <!-- Populated via audioplayer.js -->
+            <div style="width: 100%; text-align: left; padding: 0 10px;">
+                <h2 id="big-player-title-mediengalerie" class="synced-title" style="margin: 0; font-size: 1.8em; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; line-height: 1.2;">Media Library</h2>
+                <h3 id="big-player-artist-mediengalerie" class="synced-artist" style="margin: 8px 0 15px 0; font-size: 1.1em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">Ready for playback</h3>
+                <div class="legacy-meta-row synced-specs">
+                    <span id="spec-codec-mediengalerie">-</span> | <span id="spec-bitdepth-mediengalerie">-</span> | <span id="spec-samplerate-mediengalerie">-</span>
                 </div>
             </div>
         </div>
 
-        <!-- Overlay status -->
-        <div id="player-stats-overlay" style="position: absolute; top: 30px; right: 30px; pointer-events: none;">
-            <!-- optional diagnostics -->
+        <!-- RIGHT SIDE: Direct Item List -->
+        <div id="player-playlist-column">
+            <div style="padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h3 style="margin: 0; font-weight: 800; font-size: 1.2em; letter-spacing: -0.3px;">Mediengalerie</h3>
+                    <span id="gallery-item-count" class="synced-count" style="background: var(--accent-color); color: white; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;">0 Items</span>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="gallery-source-select" onchange="setGallerySource(this.value)" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <option value="media">Root Dir (./media)</option>
+                        <option value="library">Library (Database)</option>
+                        <option value="custom">Optional Path...</option>
+                    </select>
+                    <button id="gallery-sync-btn" onclick="refreshLibrary()" class="tab-btn sm" style="padding: 8px 10px; border-radius: 8px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="player-gallery-render-target" style="padding: 15px 0; overflow-y: auto; flex: 1;">
+                <!-- Full index items injected here directly -->
+            </div>
         </div>
     </div>
+
+    <!-- VIEW 2: Modern Visualizer (Centered Artwork + Background Bars) -->
+    <div id="player-view-visualizer" class="player-view-container">
+        
+        <!-- Large Centered Artwork -->
+        <div class="glass-card" style="width: 480px; height: 480px; margin-bottom: 40px; padding: 0; overflow: hidden; border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); z-index: 10;">
+            <img id="big-player-artwork-visualizer" class="synced-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+
+        <!-- Float Metadata -->
+        <div style="text-align: center; z-index: 10; max-width: 800px;">
+            <h2 id="big-player-title-visualizer" class="synced-title" style="margin: 0; font-size: 2.8em; font-weight: 900; color: var(--text-primary); letter-spacing: -1.5px; line-height: 1.1;">Media Library</h2>
+            <h3 id="big-player-artist-visualizer" class="synced-artist" style="margin: 15px 0 25px 0; font-size: 1.4em; font-weight: 500; color: var(--text-secondary); opacity: 0.7;">Ready for playback</h3>
+            
+            <div class="tech-spec-row synced-specs" style="justify-content: center;">
+                <span id="spec-codec-visualizer" class="tech-spec-badge">-</span>
+                <span id="spec-bitrate-visualizer" class="tech-spec-badge">-</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Universal Visualizer Canvas (Background) -->
+    <canvas id="audio-visualizer-canvas" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 300px; opacity: 0.3; pointer-events: none; z-index: 1;"></canvas>
+
+</div>
 </div>
 <!-- ===================== PLAYER QUEUE END ===================== -->

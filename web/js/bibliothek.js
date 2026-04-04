@@ -13,45 +13,72 @@ let libraryFilter = 'all';
 let libraryGenre = 'all';
 let libraryYear = 'all';
 let librarySearch = '';
+let hasAutoScanned = false; // Prevent infinite scan loops
 // let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
 /**
  * Boots the library by fetching data from the DB.
  */
 async function loadLibrary(retryCount = 0) {
-    if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Loading data (Attempt ${retryCount + 1})...`);
+    if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend (attempt ${retryCount + 1})...`, "DB-INFO");
     try {
         const library = await getLibrary();
         allLibraryItems = library.media || [];
-        const msg = `[Library] Received ${allLibraryItems.length} items from backend.`;
+        const msg = `[Library] Phase 2: Received ${allLibraryItems.length} items from backend.`;
         console.log(msg);
-        if (typeof appendUiTrace === 'function') appendUiTrace(msg);
-        
-        const mockEnabled = typeof eel !== 'undefined' ? await eel.get_mock_data_enabled() : false;
+        if (typeof appendUiTrace === 'function') appendUiTrace(msg, "DB-SUCCESS");
+
+        // Mock filter (uses safe double-() pattern for Eel)
+        let mockEnabled = false;
+        try {
+            if (typeof eel !== 'undefined' && typeof eel.get_mock_data_enabled === 'function') {
+                mockEnabled = await eel.get_mock_data_enabled()();
+            }
+        } catch(e) { /* safe: default to false */ }
+
+        let realItems = allLibraryItems.filter(i => !i.is_mock);
+        let mockItems = allLibraryItems.filter(i => i.is_mock);
+
+        if (typeof appendUiTrace === 'function') {
+            appendUiTrace(`[Library] Phase 2b: ${realItems.length} real, ${mockItems.length} mock items.`, "SUCCESS");
+        }
+
         if (!mockEnabled) {
-            const before = allLibraryItems.length;
-            allLibraryItems = allLibraryItems.filter(i => !i.is_mock);
-            if (before !== allLibraryItems.length) {
-                if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Filtered out ${before - allLibraryItems.length} mock items.`);
+            allLibraryItems = realItems;
+        }
+
+        // Auto-scan only if DB is completely empty (no real items at all)
+        if (realItems.length === 0 && !hasAutoScanned) {
+            const msgEmpty = "[Library] Discovery: No real media in DB. Starting auto-scan of './media'...";
+            console.warn(msgEmpty);
+            if (typeof appendUiTrace === 'function') appendUiTrace(msgEmpty, "WARN");
+            hasAutoScanned = true;
+            if (typeof scan === 'function') {
+                scan('./media', true);
+                return; // scan() will call refreshLibrary() after completion
             }
         }
 
-        if (allLibraryItems.length === 0) {
-            if (typeof appendUiTrace === 'function') appendUiTrace("[Library] [WARNING] Library is EMPTY after filtering.");
+        // Phase 3: Render Library tab
+        if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 3: Rendering ${allLibraryItems.length} items...`, "UI-INFO");
+        if (typeof renderLibrary === 'function') renderLibrary();
+
+        // Phase 4: Sync Audio Player Gallery (Mediengalerie)
+        if (typeof renderItemGallery === 'function') {
+            if (typeof appendUiTrace === 'function') appendUiTrace("[Library] Phase 4: Syncing Mediengalerie...", "UI-INFO");
+            renderItemGallery();
         }
 
-        console.info(`[Library] Rendering ${allLibraryItems.length} items.`);
-        if (typeof renderLibrary === 'function') renderLibrary();
-        
-        // Sync Audio Player Queue (v1.34 Auto-Populate)
-        if (typeof syncQueueWithLibrary === 'function') {
-            syncQueueWithLibrary();
-        }
+        // Phase 5: Sync Queue
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+
+        document.dispatchEvent(new CustomEvent('mwv_library_ready', { detail: { count: allLibraryItems.length } }));
+
     } catch (e) {
-        console.error("[Library] Load error in loadLibrary:", e);
-        // Only retry if it's potentially a temporary startup issue
-        if (retryCount < 3 && !e.message.includes('eel is not defined')) {
-            setTimeout(() => loadLibrary(retryCount + 1), 1500);
+        console.error("[Library] loadLibrary error:", e);
+        if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] ERROR: ${e.message}`, "DB-ERROR");
+        if (retryCount < 3) {
+            setTimeout(() => loadLibrary(retryCount + 1), 2000);
         }
     }
 }
@@ -139,6 +166,7 @@ function renderGridView() {
     const container = document.getElementById('grid-container');
     if (!container) return;
 
+    container.innerHTML = '';
     const html = coverflowItems.map((item, idx) => {
         const artwork = `/cover/${encodeURIComponent(item.name)}`;
         const title = item.tags && item.tags.title ? item.tags.title : (item.name || 'Unknown');
@@ -178,7 +206,7 @@ function renderDatabaseView() {
     const stats = document.getElementById('lib-db-stats');
     if (!body) return;
 
-    if (stats) stats.innerText = `${coverflowItems.length} Objekte in der Ansicht`;
+    if (stats) stats.innerText = `${coverflowItems.length} Medien in der Ansicht`;
 
     const html = coverflowItems.map((item, idx) => {
         const artist = item.tags && item.tags.artist ? item.tags.artist : '-';
@@ -284,6 +312,47 @@ function updateSubCategoryFilterOptions(media) {
     } else {
         subFilterSelect.value = 'all';
         librarySubFilter = 'all';
+    }
+}
+
+/**
+ * Switching library domains (Visual vs Browse vs Inventory).
+ */
+function switchLibraryDomain(domain) {
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('NAV-LIB', 'SWITCH-DOMAIN', { domain });
+    }
+    console.log(`[Library] Switching domain to: ${domain}`);
+    
+    document.querySelectorAll('.lib-domain-content').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    });
+
+    const target = document.getElementById(`lib-domain-${domain}`);
+    if (target) {
+        target.style.display = 'flex';
+        target.classList.add('active');
+    }
+
+    // Update buttons
+    document.querySelectorAll('.sub-nav-bar .sub-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `lib-domain-btn-${domain}`);
+    });
+
+    // Lazy load fragments if needed
+    if (domain === 'browse') {
+        if (typeof FragmentLoader !== 'undefined') {
+            FragmentLoader.load('lib-browse-mount-point', 'fragments/filesystem_browser.html', () => {
+                if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/');
+            });
+        }
+    } else if (domain === 'inventory') {
+        if (typeof FragmentLoader !== 'undefined') {
+            FragmentLoader.load('lib-inventory-mount-point', 'fragments/item_inventory.html', () => {
+                if (typeof loadEditItems === 'function') loadEditItems();
+            });
+        }
     }
 }
 

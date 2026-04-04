@@ -264,13 +264,13 @@ def get_default_scan_dir() -> Path:
     return (Path(__file__).resolve().parent.parent.parent / "media").resolve()
 
 
-# Central Parser Configuration
-# This avoids circular imports with main.py
 PARSER_CONFIG: dict[str, Any] = {
     "start_page": "player",
     "enable_mock_data": False,
+    "debug_console_active": False,
+    "auto_scan": True,
+    "hide_mocks": True,
     "app_mode": "High-Performance", # Choices: High-Performance, Low-Bandwidth
-    "bandwidth_limit": 20, # MB/s
     "playback_mode": "chrome_native", # Default: chrome_native, ffmpeg, cvlc, mkvmerge, direct
     "vlc_embedded": True,
     "parser_mode": "lightweight",  # Choices: lightweight, full, ultimate

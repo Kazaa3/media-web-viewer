@@ -355,6 +355,7 @@ def get_all_media():
     @details Ruft alle Medien-Items aus der Datenbank ab.
     @return List of media dictionaries / Liste von Medien-Dictionaries.
     """
+    print(f"STDOUT: [DB] [get_all_media] Querying table... PID: {os.getpid()}", flush=True)
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     conn.row_factory = sqlite3.Row

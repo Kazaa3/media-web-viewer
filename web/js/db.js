@@ -9,6 +9,20 @@
  */
 async function getLibrary() {
     if (typeof eel === 'undefined') return { media: [] };
+    
+    // Wait for eel.get_library to be exposed (up to 5s)
+    let attempts = 0;
+    while (typeof eel.get_library !== 'function' && attempts < 10) {
+        console.warn(`[DB] get_library: Eel not ready yet (Attempt ${attempts+1}/10)...`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+    }
+
+    if (typeof eel.get_library !== 'function') {
+        console.error("[DB] get_library: Eel exposure failed or timed out.");
+        return { media: [] };
+    }
+
     try {
         return await eel.get_library()();
     } catch (e) {

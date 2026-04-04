@@ -8,7 +8,11 @@ dict - Desktop Media Player and Library Manager v1.34
 
 import os
 import sys
+import time
 from pathlib import Path
+
+# Record boot time as early as possible
+APP_START_TIME = time.time()
 
 # 1. Immediate Path Calculation
 MAIN_FILE = Path(__file__).resolve()
@@ -22,6 +26,7 @@ def log_self_diagnostics():
     print(f"Prefix: {sys.prefix}", flush=True)
     print(f"Project Root: {PROJECT_ROOT}", flush=True)
     print(f"Working Dir: {os.getcwd()}", flush=True)
+    print(f"Boot Tracking: Active", flush=True)
     print(f"-------------------------", flush=True)
 
 def ensure_stable_environment():
@@ -92,10 +97,64 @@ try:
     import psutil
     import requests
     import bottle
+    import eel
+    from eel import chrome
+    print("STDOUT: [Bootstrap] Eel loaded successfully")
 except ImportError as e:
+    print(f"STDOUT: [ERROR] Required module missing: {e}", flush=True)
     log_self_diagnostics()
-    sys.stderr.write(f"\nCRITICAL: Missing dependency in stable environment: {e}\n")
     sys.exit(1)
+
+@eel.expose
+def shutdown_backend():
+    print("STDOUT: [BACKEND] Received shutdown signal.")
+    log.info("[BACKEND] Remote shutdown initiated.")
+    sys.exit(0)
+
+@eel.expose
+def get_startup_info():
+    """Returns the time the backend took to boot and total duration up to this call."""
+    import time
+    boot_duration = time.time() - getattr(sys.modules[__name__], 'APP_START_TIME', time.time())
+    return {
+        "boot_duration_sec": round(boot_duration, 2),
+        "pid": os.getpid()
+    }
+
+@eel.expose
+def kill_stale_and_restart():
+    """
+    Kills all instances of main.py except the current one, then restarts the current instance.
+    This resolves issues where phantom python processes hold DB locks or consume port 8345.
+    """
+    import psutil
+    import time
+    
+    current_pid = os.getpid()
+    print(f"STDOUT: [RESTART] Initiating kill-and-restart. Current PID: {current_pid}")
+    
+    killed_count = 0
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            if proc.info['pid'] == current_pid:
+                continue
+            
+            cmdline = proc.info.get('cmdline') or []
+            cmd_str = " ".join(cmdline)
+            
+            if "python" in (proc.info.get('name') or "").lower() and "src/core/main.py" in cmd_str:
+                print(f"STDOUT: [RESTART] Terminating stale instance PID {proc.info['pid']}")
+                proc.terminate()
+                killed_count += 1
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+
+    if killed_count > 0:
+        print(f"STDOUT: [RESTART] Killed {killed_count} stale processes. Waiting for resources to free...")
+        time.sleep(2)
+        
+    print("STDOUT: [RESTART] Re-executing current instance...")
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 # 1. Immediate Path Calculation
 MAIN_FILE = Path(__file__).resolve()
@@ -127,6 +186,8 @@ try:
     print("STDOUT: [Bootstrap] gevent monkey-patching successful", flush=True)
 except ImportError:
     print("STDOUT: [Bootstrap] gevent not found, continuing without patching", flush=True)
+
+
 
 with StatusBar("Initializing Application Environment", total=100) as sb:
     sb.update(40, "Environment Stabilized")
@@ -186,6 +247,11 @@ with StatusBar("Loading Core Components", total=100) as sb:
             ffprobe_suite, ffprobe_quality_score
         )
         sb.update(80, "Core modules loaded")
+        
+        # Initial DB Status Trace
+        db.init_db()  # Ensure DB is ready
+        all_media = db.get_all_media()
+        log.info(f"[Startup-Trace] DB Initialized: {len(all_media)} records found.")
     except Exception as e:
         print(f"CRITICAL: Resource load failure: {e}", flush=True)
         import traceback; traceback.print_exc()
@@ -205,7 +271,12 @@ spawn_event = threading.Event()
 def report_spawn():
     if not spawn_event.is_set():
         spawn_event.set()
-        print("STDOUT: [Sync] Frontend spawned confirmed via @eel.expose", flush=True)
+@eel.expose
+def log_gui_event(category, action, details=""):
+    """Receives and logs traces from the frontend GUI."""
+    msg = f"STDOUT: [GUI-TRACE] [{category}] {action} | {details}"
+    print(msg, flush=True)
+    logging.info(msg)
 
 @eel.expose
 def report_items_spawned(count, source="frontend"):
@@ -232,6 +303,38 @@ def report_playback_state(is_playing, item_name, current_time):
     print(f"STDOUT: {msg}", flush=True)
     log.info(msg)
     return {"status": "playback_logged"}
+
+def run_app_audit_detached(session_port):
+    """
+    Background thread that waits for the Eel UI to be ready and then launches 
+    the Playwright audit script in debug mode.
+    """
+    def audit_trigger():
+        print(f"STDOUT: [System-Audit] Waiting for UI synchronization on port {session_port}...", flush=True)
+        spawn_event.wait()
+        time.sleep(8) # Allow UI to settle (v1.34 has glassmorphic transitions)
+        print(f"STDOUT: [System-Audit] Launching Playwright UI Audit (scripts/app_audit_playwright.py)...", flush=True)
+        
+        audit_script = PROJECT_ROOT / "scripts" / "app_audit_playwright.py"
+        try:
+            # We use the current python executable to ensure same venv
+            cmd = [sys.executable, str(audit_script), "--url", f"http://localhost:{session_port}/app.html"]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=str(PROJECT_ROOT))
+            
+            for line in process.stdout:
+                line_clean = line.strip()
+                if line_clean:
+                    print(f"STDOUT: [System-Audit] {line_clean}", flush=True)
+                
+            process.wait()
+            if process.returncode == 0:
+                print(f"STDOUT: [System-Audit] Audit SUCCESS. Report: scripts/audit_reports/audit_report.md", flush=True)
+            else:
+                print(f"STDOUT: [System-Audit] Audit completed with status {process.returncode}", flush=True)
+        except Exception as e:
+            print(f"STDOUT: [System-Audit] Audit execution error: {e}", flush=True)
+
+    threading.Thread(target=audit_trigger, daemon=True).start()
 
 @eel.expose
 def trigger_factory_reset():
@@ -272,6 +375,10 @@ def start_app():
                 print("STDOUT: [Eel] Triggering automated frontend probe (@eel.run_frontend_probe)", flush=True)
                 eel.run_frontend_probe()()
             threading.Thread(target=probe_trigger, daemon=True).start()
+
+        # --- Debug Audit Trigger (v1.34) ---
+        if "--debug" in sys.argv:
+            run_app_audit_detached(port)
 
         # --- Hang Detection / Watchdog ---
         timeout = 60
@@ -2931,80 +3038,74 @@ def get_library() -> Dict[str, Any]:
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
     with stall_watchdog("Media Library Fetch", threshold=5.0):
+        print(f"STDOUT: [BACKEND] [get_library] Fetching items... PID: {os.getpid()}", flush=True)
         log.info(f"[BACKEND] [get_library] Fetching... (PID: {os.getpid()})")
         progress_update("Library: Fetching Rows", 20)
         all_media = db.get_all_media()
-        log.info(f"[BACKEND] [get_library] Found {len(all_media) if all_media else 0} total items in DB.")
+        count_total = len(all_media)
+        log.info(f"[BACKEND] [get_library] DB returned {count_total} total items.")
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"[DB] get_library: {count_total} items in DB.", "DB")
+        
         progress_update("Library: Filtering Categories", 50)
+
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
-    # If explicitly None OR empty list, default to everything (Legacy behavior or first run)
     if not displayed_cats:
-        displayed_cats = [
-            "audio",
-            "video",
-            "images",
-            "documents",
-            "ebooks",
-            "abbild",
-            "spiel",
-            "beigabe",
-            "supplements",
-            "games"]
+        displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"]
 
-    # We map internal categories to the setting keys
-    # logical_type: 'Audio', 'Video', 'Bilder', 'Dokument', 'E-Book', 'Abbild'
+    # ── Category map: setting-key → actual DB category strings ──────────────
+    # IMPORTANT: these must match what the parser stores in the `category` column
     cat_map = {
-        "audio": [
-            "Audio",
-            "Album",
-            "Hörbuch",
-            "Klassik",
-            "Compilation",
-            "Single",
-            "Podcast",
-            "Radio"],
-        "video": [
-            "Video",
-            "Film",
-            "Serie"],
-        "images": ["Bilder"],
-        "documents": ["Dokument"],
-        "ebooks": ["E-Book"],
-        "abbild": [
-            "Abbild",
-            "ISO/Image",
-            "Disk Image",
-            "PAL DVD",
-            "NTSC DVD",
-            "Blu-ray",
-            "PAL DVD (Abbild)",
-            "NTSC DVD (Abbild)",
-            "DVD (Abbild)",
-            "Blu-ray (Abbild)",
-            "Audio-CD (Abbild)",
-            "CD-ROM (Abbild)",
-            "Disk-Abbild"],
-        "spiel": [
-            "PC Spiel",
-            "PC Spiel (Index)",
-            "Digitales Spiel (Steam)",
-            "Spiel"],
-        "beigabe": [
-            "Supplement",
-            "Beigabe",
-            "Software"]}
+        "audio":     ["Audio", "Album", "Klassik", "Hörbuch", "Hörspiel", "Podcast", "Musik",
+                      "Compilation", "Single", "Radio"],
+        "video":     ["Video", "Film", "Serie", "TV"],
+        "images":    ["Bilder", "Grafik", "Bild", "Foto"],
+        "documents": ["Dokument", "PDF", "Text"],
+        "ebooks":    ["E-Book", "Ebook"],
+        "abbild":    ["Abbild", "Disk-Abbild", "DVD (Abbild)", "Blu-ray (Abbild)",
+                      "CD-ROM (Abbild)", "Audio-CD (Abbild)", "ISO"],
+        "spiel":     ["Spiel", "PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)",
+                      "Konsolenspiel", "Software", "Index"],
+        "beigabe":   ["Beigabe", "Supplement", "Bonus", "Extra"],
+    }
 
-    allowed_internal_cats = []
-    for cat in displayed_cats:
-        allowed_internal_cats.extend([c.lower() for c in cat_map.get(cat.lower(), [])])
+    allowed_internal_cats = set()
+    for dc in displayed_cats:
+        for cat in cat_map.get(dc.lower(), []):
+            allowed_internal_cats.add(cat.lower())
 
-    # Case-insensitive category check to match German/Capitalized DB entries
-    filtered_media = [item for item in all_media if str(item.get('category', '')).lower() in allowed_internal_cats]
+    print(f"STDOUT: [get_library] Allowed cats ({len(allowed_internal_cats)}): {sorted(allowed_internal_cats)}", flush=True)
+    if getattr(eel, 'append_debug_log', None):
+        eel.append_debug_log(f"[Filter] Allowed categories: {sorted(allowed_internal_cats)}", "DB-INFO")
 
+    filtered_media = []
+    skip_log = []
+    for item in all_media:
+        cat = str(item.get('category', '')).lower()
+        if cat in allowed_internal_cats:
+            filtered_media.append(item)
+        else:
+            skip_log.append(f"{item['name'][:30]} ({cat})")
+
+    # ── Safety fallback: never return empty if DB has data ───────────────────
     if not filtered_media and all_media:
-        log.warning(f"[API] get_library: ALL {len(all_media)} ITEMS FILTERED OUT! Allowed groups: {allowed_internal_cats}")
+        skipped_sample = skip_log[:5]
+        warn_msg = (f"[get_library] ALL {len(all_media)} ITEMS FILTERED OUT! "
+                    f"Allowed: {sorted(allowed_internal_cats)} | "
+                    f"Skipped sample: {skipped_sample}")
+        log.warning(warn_msg)
+        print(f"STDOUT: {warn_msg}", flush=True)
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"[WARN] All items filtered out! Returning all {len(all_media)} unfiltered.", "DB-ERROR")
+        filtered_media = all_media  # Return everything so the GUI is never blank
+    else:
+        if skip_log and getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"[Filter] Skipped {len(skip_log)} items (e.g. Ordner). First: {skip_log[:3]}", "DB-WARN")
 
-    log.info(f"[API] get_library returning {len(filtered_media)} items (Filter: {displayed_cats})")
+    print(f"STDOUT: [get_library] Returning {len(filtered_media)} / {len(all_media)} items to frontend.", flush=True)
+    if getattr(eel, 'append_debug_log', None):
+        eel.append_debug_log(f"[DB] Sending {len(filtered_media)} items to GUI.", "DB-SUCCESS")
+
     return sanitize_json_utf8({"media": filtered_media})
 
 
@@ -3336,17 +3437,15 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
     start_time = time.time()
-    log.info(f" [Scan-Trace] Media Scan started at {time.strftime('%H:%M:%S', time.localtime(start_time))}")
-
-    if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
-        try:
-            eel.set_db_status(True)
-        except Exception:
-            pass
+    # Emit start to GUI
+    if getattr(eel, 'append_debug_log', None):
+        eel.append_debug_log(f"[DB-SCAN] Media Scan started at {time.strftime('%H:%M:%S', time.localtime())}", "DB")
 
     # DB optional leeren
     if clear_db:
         db.clear_media()
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log("[DB-SCAN] Database cleared for full re-index.", "DB-WARN")
 
     # Determine which directories to scan
     scan_roots = []
@@ -3363,8 +3462,13 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                 debug_log(f" [Scan] Skipping non-existent directory: {d}")
 
     log.info(f" [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
+    if getattr(eel, 'append_debug_log', None):
+        eel.append_debug_log(f"[DB-SCAN] Roots: {[str(r) for r in scan_roots]}", "DB-INFO")
+
     if not scan_roots:
         log.warning(" [Scan] No valid scan roots found!")
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log("[DB-SCAN] CRITICAL: No valid scan roots found!", "DB-ERROR")
 
     count_indexed: int = 0
     try:
@@ -3378,7 +3482,8 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         else:
             parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
 
-        log.info(f" [Scan] Parser Mode: {parser_mode}")
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"[DB-SCAN] Mode: {parser_mode}", "DB-INFO")
 
         # Get existing media from DB for caching
         existing_media = {m['path']: m for m in db.get_all_media()}
@@ -3803,8 +3908,8 @@ def serve_media(file_path):
     
     # URL handle spaces and special chars
     decoded_path = unquote(file_path)
-    # Use existing resolve_media_path if it exists, else use absolute path
-    resolved_path = os.path.abspath(decoded_path)
+    # Use existing resolve_media_path to handle library-relative requests correctly
+    resolved_path = resolve_media_path(decoded_path)
     
     if not os.path.exists(resolved_path):
         return bottle.HTTPError(404, f"File not found: {resolved_path}")

@@ -37,3 +37,84 @@ Warten auf User-Feedback zu Schriftart und Theme. Umsetzung nach Freigabe.
 ---
 
 **Siehe PR:** https://github.com/Kazaa3/media-web-viewer/pull/4
+
+## Project Execution: Audio Analyzer and iPad OS Overhaul
+
+### Date
+1 April 2026
+
+### Execution Status
+- [x] Phase 1: Core Design System
+  - [x] Update web/css/main.css with iPad OS variables and glassmorphism.
+  - [x] Audit existing styles for consistency.
+- [x] Phase 2: Global Shell Refactor
+  - [x] Redesign web/app.html to a sidebar-based layout.
+  - [x] Modernize the floating footer and media controller.
+  - [x] Update web/js/ui_nav_helpers.js for the new navigation flow.
+- [ ] Phase 3: Audio Player and Minimalist Analyzer
+  - [x] Update web/fragments/player_queue.html with visualizer canvas.
+  - [x] Implement AudioContext and AnalyserNode in web/js/audioplayer.js.
+  - [/] Refactor renderPlaylist for modern, rounded list items (in progress).
+  - [ ] Implement multiple visualizer styles (Bars, Circles, Wave).
+- [ ] Phase 4: Video Player and Orchestrator Integration
+  - [ ] Move Orchestrator controls from app.html/tools_panel.html to web/fragments/video_player.html.
+  - [ ] Update web/js/video.js to refresh orchestrator state in the new UI.
+- [ ] Phase 5: Options and Sidebar Persistence
+  - [ ] Add Default Sidebar State setting in Options panel.
+  - [ ] Add Visualizer Style setting in Options/Player.
+  - [ ] Implement local storage persistence for these settings.
+- [ ] Phase 6: Verification and Polish
+
+### Next Steps
+1. Complete renderPlaylist refactor in web/js/audioplayer.js.
+2. Implement visualizer styles with setting-based switching.
+3. Integrate orchestrator UI in web/fragments/video_player.html and wire web/js/video.js.
+4. Add options and local storage persistence.
+5. Run final verification and polish pass.
+
+## Implementation Plan: Logbook Restoration and v1.34 Standardization
+
+### Date
+1 April 2026
+
+### User Review Required
+IMPORTANT
+
+- Sidebar Integration: The Logbook is accessible via the Management section of the new iPad OS sidebar.
+- Design Language: The Logbook interface is converted to a deep-dark, glassmorphic style aligned with the v1.34 overhaul.
+- Version Rollback: System version labels are standardized to v1.34.
+
+### Proposed Changes
+
+#### Core Shell and Branding
+- [MODIFY] app.html
+  - Standardize version strings from v1.35 to v1.34.
+  - Update main titles:
+    - Short: Media Viewer
+    - Long: Desktop Media Player and Library Manager
+  - Ensure the Logbook sidebar entry is correctly linked.
+- [MODIFY] options_panel.html
+  - Update version badge to v1.34 Core.
+
+#### Logbook (Journal) Module
+- [MODIFY] logbook_panel.html
+  - Refactor styles to CSS variables (--bg-primary, --border-color) instead of hardcoded hex colors.
+  - Apply .glass-card and .glass-blur to sidebar and viewer panes.
+  - Standardize typography: Inter for UI and JetBrains Mono for metadata/code blocks.
+  - Modernize Sync and New Entry buttons with premium silhouettes and hover states.
+- [MODIFY] logbook_helpers.js
+  - Update renderLogbuchList() to generate modernized list items with glassy backgrounds and hover animations.
+  - Standardize status icons using the v1.34 SVG icon library.
+
+#### Navigation Logic
+- [MODIFY] ui_nav_helpers.js
+  - Ensure switchMainCategory(logbuch) triggers fragment loading and displays logbook-tab-container.
+
+### Open Question
+- Should the Logbook sidebar item move to the top Media section instead of Management? (Current plan keeps it in Management/Governance.)
+
+### Verification Plan (Manual)
+- Header/Footer Audit: Confirm version displays as v1.34 in all visible locations.
+- Sidebar Navigation: Click Logbuch and verify fragment loading is smooth.
+- Rendering Check: Select a log entry and verify markdown renders correctly in dark theme.
+- Editor Check: Click Neuer Eintrag and verify editor modal opens and functions.

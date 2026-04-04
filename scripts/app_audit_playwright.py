@@ -23,32 +23,34 @@ except ImportError:
     print("Please install it using: pip install playwright && playwright install chromium")
     sys.exit(1)
 
-def run_audit(headless=True):
-    print(f"🚀 Starting Automated App Audit (Headless: {headless})...")
-    
-    # 1. Start managed session
-    managed_session_py = SCRIPTS_DIR / "managed_session.py"
-    process = subprocess.Popen(
-        [sys.executable, "-u", str(managed_session_py), "--silent"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        cwd=str(PROJECT_ROOT)
-    )
-    
-    # Read the JSON metadata from STDOUT
-    # managed_session outputs single line JSON in --silent mode
-    metadata_line = process.stdout.readline()
-    try:
-        session_data = json.loads(metadata_line)
-        if session_data["status"] != "ready":
-            raise Exception(f"Session failed to reach ready state: {session_data}")
-        url = session_data["url"]
-        print(f"✅ Managed session started at {url}")
-    except Exception as e:
-        print(f"❌ Failed to parse session metadata: {e}")
-        process.kill()
-        return
+def run_audit(url=None, headless=True):
+    if url:
+        print(f"🚀 Connecting to Live Session at {url} (Headless: {headless})...")
+        process = None
+    else:
+        print(f"🚀 Starting Automated App Audit (Headless: {headless})...")
+        # 1. Start managed session
+        managed_session_py = SCRIPTS_DIR / "managed_session.py"
+        process = subprocess.Popen(
+            [sys.executable, "-u", str(managed_session_py), "--silent"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            cwd=str(PROJECT_ROOT)
+        )
+        
+        # Read the JSON metadata from STDOUT
+        metadata_line = process.stdout.readline()
+        try:
+            session_data = json.loads(metadata_line)
+            if session_data["status"] != "ready":
+                raise Exception(f"Session failed to reach ready state: {session_data}")
+            url = session_data["url"]
+            print(f"✅ Managed session started at {url}")
+        except Exception as e:
+            print(f"❌ Failed to parse session metadata: {e}")
+            process.kill()
+            return
 
     audit_results = []
     
@@ -106,15 +108,13 @@ def run_audit(headless=True):
             time.sleep(3) # Initial boot time
             
             tabs_to_audit = [
-                ('player', 'state-orchestrated-active-queue-list-container'),
-                ('library', 'coverflow-library-panel'),
-                ('video', 'multiplexed-media-player-orchestrator-panel'),
-                ('debug', 'telemetry-inspector-tab-pane'),
-                ('tests', 'quality-assurance-regression-suite-panel'),
-                ('logbuch', 'localized-markdown-documentation-journal-panel'),
-                ('reporting', 'reporting-dashboard-panel'),
-                ('options', 'system-configuration-persistence-panel'),
-                ('tools', 'tools-tab')
+                ('player', 'player-tab-split-container'),
+                ('library', 'lib-split-container'),
+                ('video', 'player-main-content-pane'),
+                ('debug', 'diagnostics-suite-fragment'),
+                ('tests', 'diagnostics-health-view'),
+                ('logbuch', 'logbook-fragment'),
+                ('reporting', 'reporting-main-split-container')
             ]
             
             for tab, panel_id in tabs_to_audit:
@@ -122,7 +122,8 @@ def run_audit(headless=True):
                 
         finally:
             browser.close()
-            process.terminate()
+            if process:
+                process.terminate()
 
     # 3. Generate Report
     generate_report(audit_results)
@@ -166,5 +167,10 @@ def generate_report(results):
     print(f"\n📄 Audit complete. Report generated at: {report_path}")
 
 if __name__ == "__main__":
-    is_headed = "--headed" in sys.argv
-    run_audit(headless=not is_headed)
+    import argparse
+    parser = argparse.ArgumentParser(description="MWV App Audit (Playwright)")
+    parser.add_argument("--url", help="Connect to an existing URL instead of starting a new session")
+    parser.add_argument("--headed", action="store_true", help="Run browser in headed mode")
+    args = parser.parse_args()
+    
+    run_audit(url=args.url, headless=not args.headed)

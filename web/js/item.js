@@ -30,7 +30,7 @@ async function loadEditItems() {
         // Update both inventory-count and total-library-count if they exist
         const count = library.media.length;
         const countEls = document.querySelectorAll('#inventory-count, #total-library-count');
-        countEls.forEach(el => el.innerText = `${count} Entries found`);
+        countEls.forEach(el => el.innerText = `${count} Titel gefunden`);
         
         renderEditList(library.media);
     }

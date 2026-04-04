@@ -15,11 +15,13 @@ function closeLogbookEditor() {
 
 function getLogbookStatusIcon(status) {
     const normalized = (status || 'ACTIVE').toUpperCase();
-    if (normalized === 'COMPLETED') return '<span class="icon-check" style="background-color: #2a7; width: 18px; height: 18px;"></span>';
-    if (normalized === 'PLAN') return '<span class="icon-plan" style="background-color: #2980b9; width: 18px; height: 18px;"></span>';
-    if (normalized === 'DOCS') return '<span class="icon-doc" style="background-color: #8e44ad; width: 18px; height: 18px;"></span>';
-    if (normalized === 'BUG') return '<span class="icon-bug" style="background-color: #c0392b; width: 18px; height: 18px;"></span>';
-    return '<span class="icon-dot" style="background-color: #27ae60; width: 18px; height: 18px;"></span>';
+    let color = 'var(--accent-color)';
+    if (normalized === 'COMPLETED') color = '#2ecc71';
+    if (normalized === 'PLAN') color = '#3498db';
+    if (normalized === 'DOCS') color = '#9b59b6';
+    if (normalized === 'BUG') color = '#e74c3c';
+    
+    return `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${color}; box-shadow: 0 0 8px ${color}88;"></span>`;
 }
 
 function extractLogbookMeta(markdown) {
@@ -175,33 +177,36 @@ function renderLogbuchList(entries) {
     const fragment = document.createDocumentFragment();
     filteredEntries.forEach(entry => {
         const btn = document.createElement('div');
-        btn.style.cssText = 'padding: 10px 12px; background: #f5f5f5; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; position: relative; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent;';
+        btn.className = 'nav-item';
+        btn.style.cssText = 'padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; background: transparent;';
         
         const nameWrap = document.createElement('div');
-        nameWrap.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;';
+        nameWrap.style.cssText = 'display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden;';
 
         if (entry.pinned) {
             const pin = document.createElement('span');
-            pin.innerHTML = '<svg width="12" height="12"><use href="#icon-generic"></use></svg>';
+            pin.style.color = 'var(--accent-color)';
+            pin.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v2a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 10z"/><path d="M3 14v2a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16v-2"/><polyline points="7.5 10.5 12 13 16.5 10.5"/></svg>';
             nameWrap.appendChild(pin);
         }
 
         const nameEl = document.createElement('span');
         nameEl.innerText = entry.name;
-        nameEl.style.cssText = 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;';
+        nameEl.style.cssText = 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 13px; color: var(--text-primary);';
         nameWrap.appendChild(nameEl);
         btn.appendChild(nameWrap);
 
         const statusWrap = document.createElement('div');
-        statusWrap.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-left: 10px;';
+        statusWrap.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-left: 10px;';
 
         const iconEl = document.createElement('span');
         iconEl.innerHTML = getLogbookStatusIcon(entry.status || 'ACTIVE');
         statusWrap.appendChild(iconEl);
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '<svg width="12" height="12"><use href="#icon-delete"></use></svg>';
-        deleteBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.3; transition: opacity 0.2s;';
+        deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+        deleteBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 6px; opacity: 0; transition: opacity 0.2s; color: #ff5252;';
+        deleteBtn.className = 'delete-action';
         deleteBtn.onclick = (e) => {
             e.stopPropagation();
             const msg = (typeof t === 'function' ? t('logbook_delete_confirm') : 'Löschen?').replace('{name}', entry.name);
@@ -210,7 +215,14 @@ function renderLogbuchList(entries) {
         statusWrap.appendChild(deleteBtn);
         btn.appendChild(statusWrap);
 
-        btn.onclick = () => loadLogbuchContent(entry.name, entry.filename);
+        btn.onmouseover = () => { deleteBtn.style.opacity = '1'; btn.style.background = 'rgba(255,255,255,0.05)'; };
+        btn.onmouseout = () => { deleteBtn.style.opacity = '0'; btn.style.background = 'transparent'; };
+
+        btn.onclick = () => {
+            document.querySelectorAll('#logbuch-entry-sidebar-items .nav-item').forEach(i => i.classList.remove('active'));
+            btn.classList.add('active');
+            loadLogbuchContent(entry.name, entry.filename);
+        };
         fragment.appendChild(btn);
     });
     list.appendChild(fragment);
@@ -260,11 +272,11 @@ async function loadLogbuchContent(name, filename) {
 
         // Add edit button
         const footer = document.createElement('div');
-        footer.style.cssText = 'margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end;';
+        footer.style.cssText = 'margin-top: 60px; padding-top: 30px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;';
         const editBtn = document.createElement('button');
-        editBtn.innerText = (typeof t === 'function' ? t('edit_btn_edit', 'Bearbeiten') : 'Bearbeiten');
+        editBtn.innerHTML = (typeof t === 'function' ? t('edit_btn_edit', 'Bearbeiten') : 'Bearbeiten');
         editBtn.className = 'tab-btn active';
-        editBtn.style.cssText = 'padding: 8px 20px; background: #2a7; color: white; border-radius: 6px; cursor: pointer;';
+        editBtn.style.cssText = 'padding: 10px 24px; background: var(--bg-secondary); color: var(--text-primary); border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--border-color);';
         editBtn.onclick = () => openLogbookEditor(name, filename, markdown);
         footer.appendChild(editBtn);
         if (contentEl) contentEl.appendChild(footer);

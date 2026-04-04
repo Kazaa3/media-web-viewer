@@ -83,34 +83,70 @@ window.StatsOverlay = (function() {
     }
 
     async function updateStats() {
-        if (!isVisible || !overlay) return;
+        if (!overlay && !document.getElementById('video-analyzer-panel')) return;
         
-        const player = videojs('native-html5-video-resource-node');
+        let player = null;
+        try {
+            player = videojs('native-html5-video-resource-node');
+        } catch(e) {}
         if (!player) return;
 
-        // Frontend Stats from Video.js
+        // Frontend Stats
         const tech = player.tech({ IWillNotUseThisInPlugins: true });
         let dropped = 0;
-        if (tech && tech.el() && tech.el().getVideoPlaybackQuality) {
-            dropped = tech.el().getVideoPlaybackQuality().droppedVideoFrames;
+        let fps = 0;
+        let buffer = 0;
+        
+        if (tech && tech.el()) {
+            const el = tech.el();
+            if (el.getVideoPlaybackQuality) dropped = el.getVideoPlaybackQuality().droppedVideoFrames;
+            
+            // Calculate buffer
+            if (el.buffered && el.buffered.length > 0) {
+                buffer = (el.buffered.end(el.buffered.length - 1) - el.currentTime()).toFixed(1);
+            }
         }
 
-        document.getElementById('stat-protocol').innerText = window.currentPlaybackProtocol || 'Auto-Route';
-        document.getElementById('stat-resolution').innerText = `${player.videoWidth()}x${player.videoHeight()}`;
-        document.getElementById('stat-dropped').innerText = dropped;
+        // Update Overlay (if visible)
+        if (isVisible && overlay) {
+            document.getElementById('stat-protocol').innerText = window.currentPlaybackProtocol || 'Auto-Route';
+            document.getElementById('stat-resolution').innerText = `${player.videoWidth()}x${player.videoHeight()}`;
+            document.getElementById('stat-dropped').innerText = dropped;
+        }
+
+        // Update Integrated Analyzer (Cinema Engine Tab)
+        const analyzer = document.getElementById('video-analyzer-panel');
+        if (analyzer) {
+            safeText('metric-buffer', buffer + 's');
+            // Mocking FPS/Bitrate from player if not available from backend
+            safeText('metric-fps', (window._vjs_fps || 24).toFixed(1));
+        }
         
         // Backend Stats via Eel
         try {
             const stats = await eel.get_playback_stats()();
             if (stats) {
-                document.getElementById('stat-codec').innerText = stats.codec || '-';
-                document.getElementById('stat-bitrate').innerText = stats.bitrate || '-';
-                document.getElementById('stat-gpu').innerText = stats.gpu_info || 'Software';
-                document.getElementById('stat-rtt').innerText = `${stats.rtt_ms || '-'}ms`;
+                if (isVisible && overlay) {
+                    document.getElementById('stat-codec').innerText = stats.codec || '-';
+                    document.getElementById('stat-bitrate').innerText = stats.bitrate || '-';
+                    document.getElementById('stat-gpu').innerText = stats.gpu_info || 'Software';
+                    document.getElementById('stat-rtt').innerText = `${stats.rtt_ms || '-'}ms`;
+                }
+
+                if (analyzer) {
+                    safeText('metric-bitrate', stats.bitrate || '0');
+                    if (stats.fps) safeText('metric-fps', stats.fps.toFixed(1));
+                    safeText('metric-hw', stats.gpu_info ? 'ACTIVE' : 'OFF');
+                }
             }
         } catch (e) {
             console.warn("[Stats] Backend heartbeat failed:", e);
         }
+    }
+
+    function safeText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
     }
 
     return {

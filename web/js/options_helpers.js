@@ -138,7 +138,10 @@ function saveParserChainUI() {
         "parser_chain": newChain,
         "parser_mode": newMode,
         "indexed_categories": indexedCats,
-        "minimal_player_view": (typeof mwv_config !== 'undefined' ? mwv_config.minimal_player_view : false)
+        "minimal_player_view": (typeof mwv_config !== 'undefined' ? mwv_config.minimal_player_view : false),
+        "auto_scan": document.getElementById('config-auto-scan')?.checked || false,
+        "debug_console_active": document.getElementById('config-debug-console')?.checked || false,
+        "hide_mocks": document.getElementById('config-hide-mocks')?.checked || false
     };
 
     if (typeof eel !== 'undefined' && typeof eel.update_parser_config === 'function') {
@@ -193,3 +196,40 @@ function updateParserModeButtons() {
         el.style.color = 'white';
     }
 }
+
+/**
+ * Loads the current UI preferences into the Options panel.
+ */
+function loadOptionsUI() {
+    // Sidebar default
+    const sidebarDefault = localStorage.getItem('mwv_sidebar_default_open') !== 'false';
+    const sidebarToggle = document.getElementById('toggle-sidebar-default');
+    if (sidebarToggle) sidebarToggle.checked = sidebarDefault;
+
+    // Visualizer style
+    const vizStyle = localStorage.getItem('mwv_visualizer_style') || 'bars';
+    const vizSelect = document.getElementById('visualizer-style-select');
+    if (vizSelect) vizSelect.value = vizStyle;
+
+    // System & Debug (from global config proxy if available)
+    if (typeof PARSER_CONFIG !== 'undefined') {
+        safeCheck('config-auto-scan', PARSER_CONFIG.auto_scan);
+        safeCheck('config-debug-console', PARSER_CONFIG.debug_console_active);
+        safeCheck('config-hide-mocks', PARSER_CONFIG.hide_mocks);
+    }
+}
+
+/**
+ * Helper to safely check a checkbox by id.
+ */
+function safeCheck(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+}
+
+// Hook into fragment loading or switchTab to initialize options
+const originalSwitchOptionsView = window.switchOptionsView;
+window.switchOptionsView = function(viewId) {
+    if (typeof originalSwitchOptionsView === 'function') originalSwitchOptionsView(viewId);
+    loadOptionsUI();
+};

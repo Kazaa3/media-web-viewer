@@ -4,14 +4,6 @@
     <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; gap: 15px; align-items: center;">
             <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);">Tools & Core Components</h2>
-            <div class="options-nav-tabs" style="display: flex; gap: 4px;">
-                <button class="sub-tab-btn active" onclick="switchToolsView('parser')" id="tools-subtab-parser">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Parser Chain
-                </button>
-                <button class="sub-tab-btn" onclick="switchToolsView('transcoding')" id="tools-subtab-transcoding">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Transcoding High-Level
-                </button>
-            </div>
         </div>
         <button onclick="scan(null, true)" class="tab-btn active" style="box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);" data-i18n="btn_scan_media">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Scan Media
@@ -38,6 +30,42 @@
                         <div>
                             <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;" data-i18n="parser_mode_label">Effizienz-Modus</div>
                             <div id="parser-mode-status" style="font-size: 11px; color: var(--accent-color); margin-top: 2px; font-weight: 800; text-transform: uppercase;">Leichtgewicht</div>
+                        </div>
+                    </div>
+
+                    <h3 style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 15px 0; letter-spacing: 1px; font-weight: 700;">System & Diagnose</h3>
+                    <div class="glass-card" style="padding: 18px; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 12px; font-weight: 700; color: var(--text-primary);">Automatischer Scan</div>
+                            <label class="switch sm">
+                                <input type="checkbox" id="config-auto-scan" onchange="saveParserChainUI()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 12px; font-weight: 700; color: var(--text-primary);">Debug-Konsole (DOM)</div>
+                            <label class="switch sm">
+                                <input type="checkbox" id="config-debug-console" onchange="saveParserChainUI()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                         <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 12px; font-weight: 700; color: var(--text-primary);">Mocks ausblenden</div>
+                            <label class="switch sm">
+                                <input type="checkbox" id="config-hide-mocks" onchange="saveParserChainUI()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <!-- NEW RESTART BUTTON -->
+                        <div style="margin-top: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                            <button onclick="if(confirm('Möchtest du alte Applikations-Instanzen beenden und neu starten? Dies trennt die aktuelle Sitzung kurzzeitig.')) { if(typeof eel !== 'undefined') eel.kill_stale_and_restart(); }" 
+                                    style="width: 100%; background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); color: #e74c3c; padding: 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: all 0.2s;"
+                                    onmouseover="this.style.background='rgba(231, 76, 60, 0.2)'"
+                                    onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'">
+                                ↺ Prüfen & Neustarten
+                            </button>
+                            <div style="font-size: 9px; color: var(--text-secondary); margin-top: 8px; opacity: 0.7;">Killt blockierende Hintergrund-Instanzen (Port 8345)</div>
                         </div>
                     </div>
 

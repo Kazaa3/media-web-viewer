@@ -73,6 +73,11 @@ function appendUiTrace(message) {
         debugOutput.scrollTop = debugOutput.scrollHeight;
     }
 
+    // Restore real-time Debug Console (v1.34)
+    if (typeof appendDebugLog === 'function') {
+        appendDebugLog(logLine);
+    }
+
     const resultsContainer = document.getElementById('test-results-container');
     const testOutput = document.getElementById('test-output');
     if (resultsContainer && testOutput && resultsContainer.style.display !== 'none') {

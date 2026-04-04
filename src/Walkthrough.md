@@ -47,4 +47,90 @@ Nach erfolgreicher Umsetzung der Modularisierung und Einführung eines modernen 
 
 ---
 
+## 7. Final Polish (dict v1.34)
+- **Header-Controls konsolidiert**: Der Hamburger-Button wurde aus dem Floating-Bereich in den Top-Header verlegt (neben Theme-Toggle), sodass Systemaktionen zentral und ergonomisch erreichbar sind.
+- **Auto-Scan beim Erststart**: Wenn die Bibliothek beim Start leer ist, wird automatisch ein Initial-Scan von `/media` ausgelöst, damit Titel direkt in Queue und Player verfügbar sind.
+- **Terminologie standardisiert**:
+	- "Items" wurde vollständig ersetzt.
+	- "Titel" für Player, Queue und Playlists.
+	- "Medien / Mediathek" für Zähler und Verwaltungsansichten.
+- **Bedienhinweis**: Das Programmmenü kann per `Alt` oder über den neuen Header-Menübutton geöffnet werden.
+
+### Manuelle Schnellprüfung
+- Header: Menübutton und Theme-Toggle sichtbar und bedienbar.
+- Erststart mit leerer Bibliothek: Auto-Scan startet ohne zusätzliche Nutzeraktion.
+- Queue/Player: Medien sind nach Scan sichtbar und direkt abspielbar.
+- UI-Wording: Keine sichtbaren "Items"-Labels mehr vorhanden.
+
+---
+
+## 8. Navigation Restoration & Cross-Stack Logging
+- **Sidebar-Restoration abgeschlossen**: `Edit`, `Reporting`, `Debug & DB` und `Testing` sind wieder als primäre Bereiche in der Sidebar erreichbar.
+- **Library-Domain-Navigation eingeführt**: Der Bereich `Library` fungiert nun als Container für:
+	- `Mediathek`
+	- `Dateibrowser`
+	- `Inventar`
+- **Sub-Tab-Bug behoben**: Shorthand-Aufrufe wie `File` werden nicht mehr durch die Standardansicht `Visual` überschrieben.
+- **Cross-Stack-Logging aktiviert**:
+	- Backend: `log_gui_event` nimmt Frontend-Traces entgegen.
+	- Frontend: `mwv_trace` protokolliert Navigation und Zustandswechsel.
+	- DOM/Playwright: Browser-Konsole wird in die Testausgabe gespiegelt.
+- **Verifiziert**: Sidebar-Kategorien sind erreichbar, Library-Domains schalten korrekt, Logging ist für Diagnosepfade verfügbar.
+
+### Verifikation
+- Server-Logs bestätigen Frontend-Navigation und Domain-Wechsel.
+- Automatisierte Browser-Verifikation bestätigt Erreichbarkeit der Sidebar-Ziele.
+- Library-Subnavigation wechselt stabil zwischen `Mediathek`, `Dateibrowser` und `Inventar`.
+
+---
+
 **Siehe PR:** https://github.com/Kazaa3/media-web-viewer/pull/4
+
+---
+
+## 9. Walkthrough – Menu Entry Restoration (v1.34)
+- **Fehlende Menüeinträge wiederhergestellt**: `Reporting` und `System Test` sind wieder über die togglebare Programm-Menüleiste erreichbar.
+- **Top-Menü erweitert**: Das per `Alt` einblendbare Menü spiegelt jetzt alle primären Sidebar-Kategorien:
+	- `Editor`
+	- `Core Tools`
+	- `Reporting`
+	- `System Test`
+- **Dynamische globale Sub-Navigation**: Unterhalb des Headers wurde eine sekundäre, horizontale Breadcrumb-/Pill-Leiste ergänzt. Sie füllt sich abhängig von der aktiven Hauptkategorie automatisch mit passenden Einträgen.
+
+### Sub-Navigation nach Kategorie
+- **Reporting**:
+	- `Dashboard`
+	- `DB Stats`
+	- `Video Health`
+	- `Parser Hub`
+- **Tests**:
+	- `System Health`
+	- `Debug DB`
+	- `Latency Profile`
+- **Media**:
+	- `Audio Player`
+	- `Library Browser`
+	- `Playlists`
+- **Edit**:
+	- `Metadata Tags`
+	- `Artwork Lab`
+	- `Media Analysis`
+
+### UI- und UX-Verfeinerung
+- **Glassmorphic Pills**: Die neue Sub-Navigation übernimmt dieselbe hochwertige Designsprache wie Header, Sidebar und Footer.
+- **Aktive Zustandsanzeige**: Der aktive Sub-Navigationseintrag wird automatisch hervorgehoben und synchronisiert sich mit View-Wechseln.
+- **Schnellerer Zugriff auf tiefe Module**: Versteckte Unterbereiche müssen nicht mehr über Scrollen oder indirekte Routen gesucht werden.
+
+### Verifikation
+- `Alt` drücken und prüfen, dass das obere Programmmenü sichtbar wird.
+- `Reporting` oder `System Test` auswählen und bestätigen, dass die oberen Sub-Navigations-Pills erscheinen.
+- Zwischen den Sub-Modulen wechseln und prüfen, dass die aktive Markierung korrekt mitspringt.
+- Auch bei `Editor` und `Tools` prüfen, dass die neue Top-Sub-Navigation konsistent befüllt wird.
+
+### Technische Zuordnung
+- Shell/Struktur: `app.html`
+- Routing/Navigationslogik: `ui_nav_helpers.js`
+- Styling/Glassmorphism/Active State: `main.css`
+
+**Tipp:**
+Die neue globale Sub-Navigation macht tiefere Bereiche wie `Parser Hub`, `Debug DB` oder `Artwork Lab` direkt aus dem aktiven Kontext erreichbar.

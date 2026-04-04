@@ -1,25 +1,7 @@
 <!-- ===================== REPORTING DASHBOARD (v1.34) ===================== -->
 <div id="reporting-main-split-container" style="display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg-primary); border-radius: var(--radius-card);">
     
-    <!-- Sub-Navigation Header -->
-    <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; gap: 15px; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);" data-i18n="reporting_title">Analytics & Intelligence</h2>
-            <div class="options-nav-tabs" style="display: flex; gap: 4px;">
-                <button class="sub-tab-btn active reporting-subtab" data-view="dashboard" onclick="switchReportingView('dashboard')" data-i18n="report_tab_dashboard">Dashboard</button>
-                <button class="sub-tab-btn reporting-subtab" data-view="database" onclick="switchReportingView('database')" data-i18n="report_tab_database">DB Stats</button>
-                <button class="sub-tab-btn reporting-subtab" data-view="video-streaming" onclick="switchReportingView('video-streaming')" data-i18n="report_tab_video">Video Health</button>
-                <button class="sub-tab-btn reporting-subtab" data-view="audio-streaming" onclick="switchReportingView('audio-streaming')" data-i18n="report_tab_audio">Audio Health</button>
-                <button class="sub-tab-btn reporting-subtab" data-view="parser" onclick="switchReportingView('parser')" data-i18n="report_tab_parser">Performance</button>
-            </div>
-        </div>
-        <button onclick="updateAnalyticsDashboard()" class="tab-btn active" style="background: var(--accent-color); border: none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 
-            <span style="font-weight: 700;">Refresh Metrics</span>
-        </button>
-    </div>
-
-    <!-- Main Content Viewport -->
+    <!-- Main Content Viewport (Centralized v1.34) -->
     <div id="reporting-viewport" style="flex: 1; overflow-y: auto; padding: 40px; background: radial-gradient(circle at top right, var(--bg-secondary) 0%, var(--bg-primary) 60%);">
         
         <!-- Dashboard View -->

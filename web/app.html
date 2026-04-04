@@ -11,7 +11,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="ai-readiness" content="verified" data-ai-id="root-manifest">
-    <title data-i18n="app_title">dict - Media Web Viewer</title>
+    <title data-i18n="app_title">dict: Desktop Media Player and Library Manager</title>
 
     <!-- External Assets (CDNs & Vendors) -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
@@ -33,6 +33,7 @@
     <script src="js/system_helpers.js"></script>
     <script src="js/ui_nav_helpers.js"></script>
     <script src="js/trace_helpers.js"></script>
+    <script src="js/db.js"></script>
     <script src="js/video.js"></script>
     <script src="js/audioplayer.js"></script>
     <script src="js/browse.js"></script>
@@ -79,6 +80,12 @@
             if (typeof initTranslations === 'function') initTranslations();
             if (typeof initAllSplitters === 'function') initAllSplitters();
             
+            // Populate initial sub-navigation entries
+            if (typeof updateGlobalSubNav === 'function') {
+                const initialCategory = localStorage.getItem('mwv_active_category') || 'media';
+                updateGlobalSubNav(initialCategory);
+            }
+            
             console.log("DOM: Application Ready.");
         });
     </script>
@@ -86,72 +93,35 @@
 
 
 <body class="media-orchestrator-shell-environment">
-    <!-- Program Menu Bar (Toggleable ALT Menu) -->
-    <div id="program-menu-bar">
-        <div style="display: flex; gap: 4px; align-items: center;">
-            <div class="menu-item-group" onclick="showMainCategory('media')">Media</div>
-            <div class="menu-item-group" onclick="showMainCategory('video')">Video</div>
-            <div class="menu-item-group" onclick="showMainCategory('management')">Management</div>
-            <div class="menu-item-group" onclick="showMainCategory('governance')">System</div>
-            <div class="menu-item-group" onclick="showMainCategory('diagnostics')">Diagnostics</div>
-            <div style="width: 1px; height: 16px; background: var(--border-color); margin: 0 8px;"></div>
-            <div class="menu-item-group" onclick="toggleImpressum()">About</div>
+    <!-- Program Menu Bar (Toggleable Classic v1.34) -->
+    <div id="program-menu-bar" style="display: none; position: fixed; top: 0; left: 0; right: 0; height: 40px; background: var(--glass-bg); backdrop-filter: blur(25px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 15px; font-size: 12px; font-weight: 600; color: var(--text-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; gap: 18px; margin-right: 20px;">
+            <h1 style="margin: 0; font-size: 1.2em; font-weight: 900; letter-spacing: -0.8px; color: var(--text-primary); text-transform: lowercase; cursor: pointer;" onclick="toggleMenuBar()">dict</h1>
+        </div>
+        <div id="header-nav-buttons" style="display: flex; gap: 4px; align-items: center;">
+            <button class="tab-btn active" onclick="switchMainCategory('media', this)" data-category="media" style="padding: 6px 14px; font-size: 12px;">Player</button>
+            <button class="tab-btn" onclick="switchMainCategory('library', this)" data-category="library" style="padding: 6px 14px; font-size: 12px;">Library</button>
+            <button class="tab-btn" onclick="switchTab('file', this)" style="padding: 6px 14px; font-size: 12px;">Browser</button>
+            <button class="tab-btn" onclick="switchMainCategory('edit', this)" data-category="edit" style="padding: 6px 14px; font-size: 12px;">Edit</button>
+            <button class="tab-btn" onclick="switchMainCategory('system', this)" data-category="system" style="padding: 6px 14px; font-size: 12px;">Options</button>
+            <button class="tab-btn" onclick="switchMainCategory('tools', this)" data-category="tools" style="padding: 6px 14px; font-size: 12px;">Parser</button>
+            <button class="tab-btn" onclick="switchMainCategory('debug', this)" data-category="debug" style="padding: 6px 14px; font-size: 12px;">Debug & DB</button>
+            <button class="tab-btn" onclick="switchMainCategory('tests', this)" data-category="tests" style="padding: 6px 14px; font-size: 12px;">Tests</button>
+            <button class="tab-btn" onclick="switchMainCategory('video', this)" data-category="video" style="padding: 6px 14px; font-size: 12px;">Video Player</button>
         </div>
         <div style="flex: 1;"></div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <span style="color: var(--text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Alt to Toggle</span>
-            <button onclick="toggleMenuBar()" style="background:none; border:none; color: var(--text-secondary); cursor:pointer; font-size: 18px; line-height: 1;">&times;</button>
+        <div style="display: flex; gap: 12px; align-items: center; opacity: 0.6;">
+            <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-secondary); font-weight: 700;">Alt for Menu</span>
         </div>
     </div>
+
+    <div id="sub-nav-container" class="sub-nav-bar" style="display: none; position: fixed; top: 40px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 9999; align-items: center; padding: 0 15px; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none;">
+        <!-- Dynamically populated -->
+    </div>
     
-    <!-- Menu Toggle FAB (Floating Action Button) - Keeps ALT menu accessible for mobile/touch -->
-    <button id="menu-toggle-fab" onclick="toggleMenuBar()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
+    <!-- [REMOVED: Menu Toggle FAB moved to Header for v1.34 UI Consistency] -->
 
-    <!-- Main Header (v1.34 Modern App Style) -->
-    <header class="header-container">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="width: 40px; height: 40px; background: var(--accent-color); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-            <div>
-                <h1 style="margin: 0; font-size: 1.1em; font-weight: 800; letter-spacing: -0.5px;">Media Viewer <span style="color: var(--accent-color); font-weight: 400; font-size: 0.8em; opacity: 0.8;">v1.34</span></h1>
-                <div style="font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Universal Media Orchestrator</div>
-            </div>
-        </div>
-
-        <nav class="main-tabs">
-            <button class="tab-btn active" id="media-orchestrator-tab-trigger" onclick="switchMainCategory('media', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Player
-            </button>
-            <button class="tab-btn" onclick="switchMainCategory('library', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Library
-            </button>
-            <button class="tab-btn" onclick="switchMainCategory('video', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Video
-            </button>
-            <button class="tab-btn" onclick="switchMainCategory('tools', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Tools
-            </button>
-            <button class="tab-btn" onclick="switchMainCategory('logbuch', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Logbuch
-            </button>
-            <button class="tab-btn" onclick="switchMainCategory('system', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> System
-            </button>
-            <button class="tab-btn" onclick="switchMainCategory('diagnostics', this)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Diagnostics
-            </button>
-        </nav>
-
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
-                <svg id="theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="18.36" x2="5.64" y2="16.92"/><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"/></svg>
-                <svg id="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            </button>
-        </div>
-    </header>
+    <!-- (Header spacer removed for dynamic menu) -->
 
     <div id=app-progress-bar-container><div id=app-progress-bar></div></div>
     <div id=app-progress-text>Ready</div>
@@ -362,35 +332,80 @@
     <!-- (isUnsupportedMediaError moved to js/ui_nav_helpers.js) -->
 
 
-    <main class="layout-main layout-container" id="main-split-container" style="flex: 1; height: calc(100% - 60px);">
-        <!-- SIDEBAR START (Restored) -->
+    <main class="layout-main layout-container" id="main-split-container" style="flex: 1; height: calc(100vh - 75px); margin-top: 0; transition: margin-top 0.3s ease, height 0.3s ease;">
+        <!-- SIDEBAR START (iPad OS Style Navigation) -->
         <div id="main-sidebar" class="sidebar">
-            <h3
-                style="margin-top: 0; font-size: 11px; text-transform: uppercase; color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px; width: 100%; text-align: left; letter-spacing: 1px; font-weight: 800;">
-                <svg width="14" height="14" style="vertical-align: middle; margin-right: 8px;">
-                    <use href="#icon-info"></use>
-                </svg> <span data-i18n="sb_status">Status</span>
-            </h3>
-
-            <img id="sidebar-artwork-raster-buffer" class="sidebar-cover"
-                src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                style="opacity: 0.5; margin-bottom: 15px;">
-
-            <div id="sidebar-info-container" style="width: 100%; text-align: left;">
-                <div id="sidebar-metadata-primary-string-renderer" class="sidebar-title" data-i18n="sb_no_song"
-                    style="font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">Kein Lied gewählt</div>
-                <div id="sidebar-metadata-secondary-string-renderer" class="sidebar-artist"
-                    style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 15px;">-</div>
-
-                <div id="sidebar-metadata-extended-attribute-grid"
-                    style="font-size: 0.85em; color: #888; margin-bottom: 10px; white-space: pre-wrap;"></div>
-                <div id="sidebar-status-tag-visualizer-sidebar" class="sidebar-badge"
-                    style="display: none; margin-bottom: 10px;"></div>
-
-                <div id="sidebar-performance-container" style="margin-top: 10px;"></div>
+            <div class="nav-section">
+                <h3 class="nav-title">Media</h3>
+                <div class="nav-list">
+                    <button class="nav-item active" onclick="switchMainCategory('media', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <span>Music Player</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('library', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        <span>Library Browser</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('video', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        <span>Video Cinema</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- MediaInfo shortcut removed -->
+            <div class="nav-section" style="margin-top: 30px;">
+                <h3 class="nav-title">Management</h3>
+                <div class="nav-list">
+                    <button class="nav-item" onclick="switchMainCategory('edit', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <span>Editor</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('reporting', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        <span>Reporting</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('tools', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.83 0L14.7 6.3z"/><path d="m3.13 15.65 1.45-6.6a2 2 0 0 1 2-1.55h1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H6.42l-1.45 6.6a1 1 0 0 1-1.84-.55z"/></svg>
+                        <span>Core Tools</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('logbuch', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        <span>System Logs</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-section" style="margin-top: 30px;">
+                <h3 class="nav-title">System</h3>
+                <div class="nav-list">
+                    <button class="nav-item" onclick="switchMainCategory('system', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        <span>Environment</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('debug', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 8-2.81 2.81A5.937 5.937 0 0 0 16.06 9H13V4h-2v5H7.94a5.937 5.937 0 0 0-1.13 1.81L4 8l-1.41 1.41l2.58 2.58c-.11.33-.17.66-.17 1.01H3v2h2c0 .35.06.68.17 1.01l-2.58 2.58L4 20l2.81-2.81c.33.66.78 1.27 1.33 1.81L7.94 19H11v5h2v-5h3.06c.41 0 .8-.08 1.13-.19L20 21.59L21.41 20.18L18.83 17.59c.11-.33.17-.66.17-1.01h2v-2h-2c0-.35-.06-.68-.17-1.01l2.58-2.58L20 8zM15 16H9v-2h6v2z"/></svg>
+                        <span>Debug & DB</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('tests', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.73 13.31C15.52 12.24 16 10.93 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.17 0 2.27-.31 3.22-.85L18.29 20.73 19.71 19.31l-4.98-6zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <span>Testing Tabs</span>
+                    </button>
+                    <button class="nav-item" onclick="switchMainCategory('diagnostics', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>Diagnostics</span>
+                    </button>
+                </div>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <!-- Current Track Preview (In Sidebar) -->
+            <div id="sidebar-now-playing" class="glass-card" style="padding: 15px; margin-top: 20px; display: none;">
+                <img id="sidebar-artwork-raster-buffer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" 
+                     style="width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; margin-bottom: 12px; box-shadow: var(--shadow-soft);">
+                <div id="sidebar-metadata-primary-string-renderer" style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">Kein Titel</div>
+                <div id="sidebar-metadata-secondary-string-renderer" style="font-size: 11px; color: var(--text-secondary); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+            </div>
         </div>
         <!-- SIDEBAR END -->
         <!-- Main Splitter -->
@@ -401,7 +416,8 @@
             style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); min-width: 0;">
             
             <!-- SUB-NAV CONTAINER (Breadcrumb Style) -->
-            <div id="sub-nav-container" class="sub-nav-bar" style="display: none;">
+            <!-- [REPLACED: Sub-nav moved to Top Header for v1.34 space-saving design] -->
+            <div id="sub-nav-container" class="sub-nav-bar" style="display: none; position: fixed; top: 40px; left: 0; right: 0; z-index: 9999;">
                 <!-- Dynamically populated -->
             </div>
 
@@ -478,13 +494,12 @@
 
     <!-- TAB: Logbuch -->
     <div id="logbook-tab-container" class="tab-content" style="display: none; height: 100%; flex-direction: column;">
-        <div class="loading-fragment">Lade Logbuch...</div>
+            <div class="loading-fragment">Lade Logbuch...</div>
     </div>
     <!-- TAB: Logbuch END -->
 
 
-    </div> <!-- closes main-content-area (3715) -->
-    </main> <!-- closes main-split-container (3682) -->
+    </main> <!-- closes main-split-container -->
 
 
     <!-- Universal Media Controller (v1.34 Integrated) -->
@@ -547,65 +562,70 @@
     <!-- Modals & Overlays Container (Loaded via FragmentLoader) -->
     <div id="modals-placeholder"></div>
 
-    <!-- Premium Floating Footer & Universal Media Controller (v1.34 Integrated) -->
-    <div class="layout-footer-wrapper" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: auto; max-width: 95vw;">
-        <footer class="glass-card" style="padding: 6px 12px 6px 15px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: flex-start; gap: 20px; box-shadow: var(--shadow-medium); min-height: 60px;">
+    <!-- RESTORED Classic Footer System (Fixed Horizontal v1.34) -->
+    <footer id="unified-player-footer" style="position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 10000; display: flex; align-items: center; padding: 0 20px; gap: 30px; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);">
+        
+        <!-- Now Playing Node -->
+        <div style="display: flex; align-items: center; gap: 15px; width: 300px; flex-shrink: 0;">
+            <img id="footer-artwork-raster-buffer" class="synced-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                 style="width: 50px; height: 50px; border-radius: 6px; box-shadow: var(--shadow-soft);">
+            <div style="flex: 1; overflow: hidden; line-height: 1.3;">
+                <div id="footer-status-title" class="synced-title" style="font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">Media Library</div>
+                <div id="footer-status-artist" class="synced-artist" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Ready for playback</div>
+            </div>
+        </div>
+
+        <!-- Central Controller Area (Progress & Controls) -->
+        <div style="flex: 1; display:flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="player-time-current" style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px; text-align: right;">0:00</span>
+                <input type="range" id="global-seek-slider" min="0" max="100" value="0" style="flex: 1; accent-color: var(--accent-color);">
+                <span id="player-time-total" style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px;">0:00</span>
+            </div>
+            <div id="player-warning-message" style="font-size: 10px; color: var(--text-secondary); text-align: center; opacity: 0.8; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <span>v1.34 | <span id="sync-status" style="color: #2ecc71;">● Synchronized</span></span>
+                <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
+                <div id="footer-admin-cluster" class="admin-controls" style="display: flex; gap: 10px;">
+                    <button id="btn-scan" onclick="scan(null, true)" style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Scan</button>
+                    <button id="btn-sync" onclick="refreshLibrary()" style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Sync</button>
+                    <button id="btn-logs" onclick="toggleDebugConsole()" style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
+                    <button id="btn-reset" onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()" style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Reset DB</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Pipeline & Theme -->
+        <div style="display: flex; align-items: center; gap: 15px; width: 340px; flex-shrink: 0; padding-left: 20px; justify-content: flex-end;">
+            <audio id="native-html5-audio-pipeline-element" controls style="height: 34px; width: 180px;"></audio>
             
-            <!-- App Identity & Status -->
-            <div style="display: flex; align-items: center; gap: 12px; border-right: 1px solid var(--border-color); padding-right: 15px;">
-                <div onclick="toggleDebugMenu()" class="status-indicator active" style="cursor: pointer;" title="System Status: Online"></div>
-                <div style="line-height: 1.1;">
-                    <div style="font-size: 9px; font-weight: 800; color: var(--text-primary); letter-spacing: 0.5px;">DICT CORE</div>
-                    <div id="footer-version" style="font-size: 8px; font-weight: 600; color: var(--text-secondary); opacity: 0.7;">V1.34 PREMIUM</div>
-                </div>
-            </div>
+            <div style="height: 15px; width: 1px; background: var(--border-color); opacity: 0.5;"></div>
+            
+            <button id="btn-theme" class="theme-toggle" onclick="toggleTheme()" style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg id="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="18.36" x2="5.64" y2="16.92"/><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"/></svg>
+            </button>
 
-            <!-- Media Artwork & Strings -->
-            <div style="display: flex; align-items: center; gap: 12px; min-width: 180px; max-width: 280px;">
-                <img id="footer-artwork-raster-buffer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                     style="width: 38px; height: 38px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); object-fit: cover;">
-                <div style="flex: 1; overflow: hidden; line-height: 1.2;">
-                    <div id="footer-status-title" style="font-weight: 800; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">Wählt ein Lied aus</div>
-                    <div id="footer-status-artist" style="font-size: 0.8em; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8;">-</div>
-                </div>
-            </div>
+            <button onclick="toggleMenuBar()" class="tab-btn sm" style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+    </footer>
 
-            <!-- Media Playback Engine (Seeker) -->
-            <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    <button onclick="playPrev()" class="sub-tab-btn" style="padding: 6px; min-width: 32px;" title="Zurück">
-                        <svg width="14" height="14"><use href="#icon-prev"></use></svg>
-                    </button>
-                    <button onclick="playNext()" class="sub-tab-btn" style="padding: 6px; min-width: 32px;" title="Weiter">
-                        <svg width="14" height="14"><use href="#icon-next"></use></svg>
-                    </button>
-                    <button id="btn-shuffle" onclick="toggleShuffle()" class="sub-tab-btn" style="padding: 6px; min-width: 32px;" title="Mischen">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></svg>
-                    </button>
-                </div>
-                
-                <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); padding: 4px 15px; border-radius: var(--radius-pill); border: 1px solid var(--glass-border);">
-                   <audio id="native-html5-audio-pipeline-element" controls style="height: 32px; width: 320px; filter: invert(1) brightness(2) contrast(0.5);"></audio>
-                </div>
+    <!-- ===================== DEBUG CONSOLE OVERLAY (v1.34) ===================== -->
+    <div id="debug-trace-overlay" style="display: none; position: fixed; bottom: 80px; right: 20px; width: 450px; height: 350px; background: rgba(13, 17, 23, 0.96); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 9999; flex-direction: column; overflow: hidden; backdrop-filter: blur(20px); font-family: 'JetBrains Mono', 'Fira Code', monospace;">
+        <div style="padding: 10px 15px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; box-shadow: 0 0 8px #2ecc71;"></div>
+                <span style="color: #ecf0f1; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">System Trace Log</span>
             </div>
-
-            <!-- Action Controls -->
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <button id="footer-scan-btn" onclick="scan(null, true)" class="premium-pill" style="padding: 8px 18px;" title="Bibliothek scannen">
-                    <svg><use href="#icon-test"></use></svg> SCAN
-                </button>
-                <button id="footer-reset-btn" onclick="resetAppData()" class="premium-pill danger" style="padding: 8px 18px;" title="App Zurücksetzen">
-                    <svg><use href="#icon-delete"></use></svg> RESET
-                </button>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="clearUiTrace()" style="background: transparent; border: none; color: #95a5a6; font-size: 9px; cursor: pointer; text-transform: uppercase; font-weight: 700;">Clear</button>
+                <button onclick="toggleDebugConsole()" style="background: transparent; border: none; color: #e74c3c; font-size: 12px; cursor: pointer;">✕</button>
             </div>
-
-            <!-- Meta Links -->
-            <div style="display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--border-color); padding-left: 15px;">
-                <a href="#" onclick="toggleImpressum(); return false;" 
-                   style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px;" 
-                   class="hover-accent">Impressum</a>
-            </div>
-        </footer>
+        </div>
+        <div id="debug-trace-content" style="flex: 1; overflow-y: auto; padding: 12px; font-size: 10px; line-height: 1.6; color: #bdc3c7;">
+            <!-- Real-time logs injected here -->
+            <div style="color: #9b59b6;">[System] Console Initialized. Monitoring pipeline...</div>
+        </div>
     </div>
     <script src="js/coverflow_controller.js"></script>
     <script src="js/video_test_suite.js"></script>

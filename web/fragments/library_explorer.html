@@ -57,8 +57,9 @@
         <!-- MAIN CONTENT: Results -->
         <div id="lib-main-content-pane" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); position: relative;">
             
-            <!-- Result Content Wrapper -->
-            <div id="lib-results-container" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+            <div id="lib-domain-visual" class="lib-domain-content active" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <!-- Result Content Wrapper (Mediathek) -->
+                <div id="lib-results-container" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
                 
                 <!-- Video Streaming View -->
                 <div id="lib-view-streaming" class="library-sub-content" style="padding: 24px; overflow-y: auto;">
@@ -129,6 +130,20 @@
                 <!-- Following View -->
                 <div id="lib-view-following" class="library-sub-content" style="display: none; padding: 30px; overflow-y: auto;">
                     <div id="following-grid-container" class="media-grid"></div>
+                </div>
+            </div>
+
+            <!-- Domain: Browse (File) -->
+            <div id="lib-domain-browse" class="lib-domain-content" style="display: none; flex: 1; overflow: hidden;">
+                <div id="lib-browse-mount-point" style="height: 100%; width: 100%;">
+                     <div class="loading-fragment">Lade Dateibrowser...</div>
+                </div>
+            </div>
+
+            <!-- Domain: Inventory (Item) -->
+            <div id="lib-domain-inventory" class="lib-domain-content" style="display: none; flex: 1; overflow: hidden;">
+                <div id="lib-inventory-mount-point" style="height: 100%; width: 100%;">
+                     <div class="loading-fragment">Lade Inventory...</div>
                 </div>
             </div>
         </div>

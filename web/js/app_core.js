@@ -161,6 +161,22 @@ window.addEventListener('DOMContentLoaded', async () => {
         console.log("UI: Setting default category and tab...");
         if (typeof switchMainCategory === 'function') switchMainCategory('media');
         
+        // Apply persisted sidebar state
+        if (typeof applySidebarState === 'function') applySidebarState();
+        
+        // Start stats polling for integrated analyzer
+        if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
+            setInterval(() => {
+                if (typeof window.StatsOverlay.updateStats === 'function') {
+                    // Only poll if tab is active or overlay is visible
+                    const activeTab = localStorage.getItem('mwv_active_tab');
+                    if (activeTab === 'video' || window.StatsOverlay.isVisible) {
+                        window.StatsOverlay.updateStats();
+                    }
+                }
+            }, 2000);
+        }
+        
         // Ensure switchTab is called after a tiny delay to allow other modules to settle
         setTimeout(() => {
             if (typeof switchTab === 'function') {
@@ -171,11 +187,33 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
         }, 100);
         
-        // 2. Initialize Library & Inventory
+        // 2. Initialize Library & Inventory (Prioritized for Video/Audio Sync)
+        document.addEventListener('mwv_library_ready', () => {
+            console.log("Data: Library ready, syncing specialized components...");
+            if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        });
+
         setTimeout(async () => {
             console.log("Data: Triggering library and edit-item loads...");
             if (typeof loadLibrary === 'function') await loadLibrary();
             if (typeof loadEditItems === 'function') await loadEditItems();
+        }, 150);
+
+        // 3. Fetch and Display Startup Time
+        setTimeout(async () => {
+            if (typeof eel !== 'undefined' && typeof eel.get_startup_info === 'function') {
+                try {
+                    const info = await eel.get_startup_info()();
+                    const statusSpan = document.getElementById('sync-status');
+                    if (statusSpan && info) {
+                         const timeSpan = document.createElement('span');
+                         timeSpan.style.color = 'var(--text-secondary)';
+                         timeSpan.style.marginLeft = '5px';
+                         timeSpan.innerText = `(Boot: ${info.boot_duration_sec}s | PID: ${info.pid})`;
+                         statusSpan.parentNode.insertBefore(timeSpan, statusSpan);
+                    }
+                } catch(e) { console.warn("Failed to get startup info:", e); }
+            }
         }, 300);
 
     } catch (e) {
@@ -216,17 +254,17 @@ if (typeof eel !== 'undefined') {
 function run_frontend_probe() {
     console.log("[DOM-PROBE] Starting automated UI check...");
     
-    // 1. Check for rendered items
+    // 1. Check for rendered media
     const playlistItems = document.querySelectorAll('.implementation-encapsulated-state-buffer-node');
     const queueItems = document.querySelectorAll('#player-queue-pane .implementation-encapsulated-state-buffer-node');
-    const itemCount = Math.max(playlistItems.length, queueItems.length);
+    const mediaCount = Math.max(playlistItems.length, queueItems.length);
     
     if (typeof eel !== 'undefined' && typeof eel.report_items_spawned === 'function') {
-        eel.report_items_spawned(itemCount, "probe")();
+        eel.report_items_spawned(mediaCount, "probe")();
     }
 
-    // 2. Playback Check (If items exist)
-    if (itemCount > 0) {
+    // 2. Playback Check (If media exists)
+    if (mediaCount > 0) {
         const firstItemNode = playlistItems[0] || queueItems[0];
         console.log("[DOM-PROBE] Attempting to trigger playback on first item...");
         if (firstItemNode) firstItemNode.click();

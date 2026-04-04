@@ -8,6 +8,56 @@ let librarySubTab = 'coverflow';
 let librarySubFilter = 'all';
 let currentMainCategory = 'media';
 
+window.__mwv_ui_nav_loaded = true;
+
+let sidebarVisible = false; // Default to closed for Classic v1.34 Restoration
+
+/**
+ * Toggles the main sidebar visibility.
+ */
+function toggleSidebar() {
+    const sidebar = document.getElementById('main-sidebar');
+    const splitter = document.getElementById('main-splitter');
+    if (!sidebar) return;
+
+    sidebarVisible = !sidebarVisible;
+    applySidebarState();
+
+    // Persist only if user explicitly toggles it? 
+    // Or just store it. Let's store it.
+    localStorage.setItem('mwv_sidebar_visible', sidebarVisible);
+
+    console.log(`UI: Sidebar toggled. Visible: ${sidebarVisible}`);
+}
+
+/**
+ * Applies the current sidebarVisible state to the DOM.
+ */
+function applySidebarState() {
+    const sidebar = document.getElementById('main-sidebar');
+    const splitter = document.getElementById('main-splitter');
+    if (!sidebar) return;
+
+    sidebar.style.width = sidebarVisible ? '300px' : '0px';
+    sidebar.style.minWidth = sidebarVisible ? '200px' : '0px';
+    sidebar.style.opacity = sidebarVisible ? '1' : '0';
+    sidebar.style.pointerEvents = sidebarVisible ? 'all' : 'none';
+
+    if (splitter) splitter.style.display = sidebarVisible ? 'block' : 'none';
+
+    // Update toggle button state if it exists
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    if (toggleBtn) toggleBtn.classList.toggle('active', sidebarVisible);
+}
+
+/**
+ * Updates the default sidebar preference from Options.
+ */
+function updateSidebarDefault(enabled) {
+    localStorage.setItem('mwv_sidebar_default_open', enabled);
+    if (typeof showToast === 'function') showToast(`Default Sidebar: ${enabled ? 'Open' : 'Closed'}`, 'info');
+}
+
 /**
  * Initialize all application splitters.
  */
@@ -43,13 +93,13 @@ function traceUiNav(category, target, details = {}) {
     const detailStr = (typeof details === 'string') ? details : JSON.stringify(details);
     const logMsg = `[JS-NAV] [${category}] ${target} ${detailStr !== '{}' ? detailStr : ''}`;
     console.log(logMsg);
-    
+
     try {
         if (typeof eel !== 'undefined' && eel.log_ui_event) {
             eel.log_ui_event(category, target, detailStr)();
         }
-    } catch (e) {}
-    
+    } catch (e) { }
+
     if (typeof appendUiTrace === 'function') {
         appendUiTrace(logMsg);
     }
@@ -58,15 +108,15 @@ function traceUiNav(category, target, details = {}) {
 /**
  * Switches between main application tabs.
  */
-function switchTab(tabId, btn) {
-    let librarySubTab = localStorage.getItem('mwv_active_tab') || 'player';
+function switchTab(tabId, btn, callback) {
     const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
-    traceUiNav('TAB', tabId, {from: previousTab});
-    
+    traceUiNav('TAB', tabId, { from: previousTab });
+
     // Define fragment mapping
     const fragmentMap = {
         'debug': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
         'tests': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
+        'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
         'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
         'file': { containerId: 'filesystem-crawler-directory-panel', path: 'fragments/filesystem_browser.html' },
         'library': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
@@ -79,7 +129,7 @@ function switchTab(tabId, btn) {
         'vlc': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
         'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
         'options': { containerId: 'options-panel-container', path: 'fragments/options_panel.html' },
-        'logbuch': { containerId: 'logbook-panel-container', path: 'fragments/logbuch_panel.html' },
+        'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbook_panel.html' },
         'player': { containerId: 'state-orchestrated-active-queue-list-container', path: 'fragments/player_queue.html' },
         'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' }
     };
@@ -94,14 +144,24 @@ function switchTab(tabId, btn) {
         'file': 'filesystem-crawler-directory-panel',
         'edit': 'metadata-writer-crud-panel',
         'options': 'options-panel-container',
-        'logbuch': 'logbook-panel-container',
+        'logbuch': 'logbook-tab-container',
         'tools': 'tools-panel-container',
         'playlist': 'json-serialized-sequence-buffer-panel',
         'video': 'multiplexed-media-player-orchestrator-panel',
-        'vlc': 'multiplexed-media-player-orchestrator-panel'
+        'vlc': 'multiplexed-media-player-orchestrator-panel',
+        'debug': 'diagnostics-suite-container',
+        'tests': 'diagnostics-suite-container',
+        'diagnostics': 'diagnostics-suite-container',
+        'reporting': 'reporting-dashboard-container',
+        'tools': 'tools-panel-container'
     };
 
     const targetId = tabMap[tabId] || tabId;
+    const target = document.getElementById(targetId);
+
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('NAV', 'SWITCH-TAB', { tabId, targetId: target ? target.id : 'unknown' });
+    }
 
     // Handle Fragment Loading
     if (fragmentMap[tabId]) {
@@ -109,6 +169,7 @@ function switchTab(tabId, btn) {
         FragmentLoader.load(frag.containerId, frag.path, () => {
             // Once fragment is loaded, recursive call to show the actual panel
             finishSwitchTab(tabId, targetId, btn);
+            if (typeof callback === 'function') callback();
         });
         // Show the container immediately (it might have a loader)
         const container = document.getElementById(frag.containerId);
@@ -122,6 +183,7 @@ function switchTab(tabId, btn) {
         }
     } else {
         finishSwitchTab(tabId, targetId, btn);
+        if (typeof callback === 'function') callback();
     }
 }
 
@@ -137,18 +199,18 @@ function finishSwitchTab(tabId, targetId, btn) {
         el.style.display = 'none';
         el.classList.remove('active');
     });
-    
+
     const panel = document.getElementById(targetId);
     if (panel) {
         panel.classList.add('active');
         const isFlex = ['player', 'library', 'grid', 'details', 'album', 'item', 'file', 'edit', 'options', 'parser', 'debug', 'tests', 'reporting', 'logbuch', 'playlist', 'vlc', 'video', 'tools'].includes(tabId);
         panel.style.display = isFlex ? 'flex' : 'block';
-        
+
         // Library Sub-Tab Shorthands
         if (['grid', 'details', 'album'].includes(tabId)) {
             if (typeof switchLibrarySubTab === 'function') switchLibrarySubTab(tabId);
         }
-        
+
         if (typeof mwv_trace === 'function') {
             mwv_trace('NAV-TAB', tabId, { targetId });
         }
@@ -160,28 +222,49 @@ function finishSwitchTab(tabId, targetId, btn) {
             panel.style.minWidth = '0';
         }
 
+        // Library Domain Handling
+        if (tabId === 'library' && typeof switchLibraryDomain === 'function') {
+            // Only default to visual if no other domain is active
+            const currentDomain = document.querySelector('.lib-domain-content.active');
+            if (!currentDomain) switchLibraryDomain('visual');
+        }
+        if (tabId === 'file' && typeof switchLibraryDomain === 'function') {
+            switchTab('library');
+            // switchTab will call finishSwitchTab('library') again, 
+            // so we need to make sure we don't loop or get overwritten.
+            // The check above 'if(!currentDomain)' handles this.
+            setTimeout(() => switchLibraryDomain('browse'), 50);
+            return;
+        }
+        if (tabId === 'item' && typeof switchLibraryDomain === 'function') {
+            switchTab('library');
+            setTimeout(() => switchLibraryDomain('inventory'), 50);
+            return;
+        }
+
         // --- Global Sidebar Management ---
         const sidebar = document.getElementById('main-sidebar');
         const splitter = document.getElementById('main-splitter');
         if (sidebar && splitter) {
-            const sidebarVisibleTabs = ['player', 'video', 'vlc', 'playlist'];
+            const sidebarVisibleTabs = ['player', 'video', 'vlc', 'playlist', 'edit', 'reporting', 'debug', 'tests', 'diagnostics', 'library', 'tools', 'logbuch', 'system'];
             const shouldShow = sidebarVisibleTabs.includes(tabId);
             sidebar.style.display = shouldShow ? 'flex' : 'none';
             splitter.style.display = shouldShow ? 'block' : 'none';
         }
     }
 
-    // Update button states
-    document.querySelectorAll('.tab-btn, .nav-btn, .tab-link, .sub-tab-btn').forEach(b => b.classList.remove('active'));
-    
+    // Update button states (Sidebar & Header)
+    document.querySelectorAll('.tab-btn, .nav-btn, .nav-item, .sub-tab-btn').forEach(b => b.classList.remove('active'));
+
     if (btn) {
         btn.classList.add('active');
     } else {
-        const subNavBtn = document.querySelector(`#sub-nav-container .sub-tab-btn[onclick*="'${tabId}'"]`);
-        if (subNavBtn) {
-            subNavBtn.classList.add('active');
+        // Fallback: Find button by ID or onclick content
+        const sidebarBtn = document.querySelector(`.nav-item[onclick*="'${tabId}'"]`);
+        if (sidebarBtn) {
+            sidebarBtn.classList.add('active');
         } else {
-            const fallbackBtn = document.querySelector(`.nav-btn[onclick*="${tabId}"], .tab-btn[onclick*="${tabId}"], .tab-link[data-tab="${tabId}"]`);
+            const fallbackBtn = document.querySelector(`.nav-btn[onclick*="${tabId}"], .tab-btn[onclick*="${tabId}"], .sub-tab-btn[onclick*="${tabId}"]`);
             if (fallbackBtn) fallbackBtn.classList.add('active');
         }
     }
@@ -192,9 +275,9 @@ function finishSwitchTab(tabId, targetId, btn) {
     const initActions = {
         'player': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
         'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
-        'library': () => { 
+        'library': () => {
             if (typeof renderPlaylist === 'function') renderPlaylist();
-            if (typeof renderLibrary === 'function') renderLibrary(); 
+            if (typeof renderLibrary === 'function') renderLibrary();
         },
         'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
         'vlc': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
@@ -203,17 +286,31 @@ function finishSwitchTab(tabId, targetId, btn) {
         'edit': () => { if (typeof initEdit === 'function') initEdit(); },
         'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
         'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
-        'options': () => { 
+        'options': () => {
             if (typeof loadDebugFlags === 'function') loadDebugFlags();
             if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
         },
-        'debug': () => { if (typeof renderDebugDatabase === 'function') renderDebugDatabase(); },
+        'debug': () => {
+            if (typeof switchDiagnosticsView === 'function') {
+                switchDiagnosticsView('debug-db');
+            } else if (typeof renderDebugDatabase === 'function') {
+                renderDebugDatabase();
+            }
+        },
         'flags': () => { if (typeof loadDebugFlags === 'function') loadDebugFlags(); },
         'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
         'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
-        'tests': () => { if (typeof switchTestView === 'function') switchTestView('base'); }
+        'tests': () => {
+            if (typeof switchDiagnosticsView === 'function') {
+                switchDiagnosticsView('health');
+            }
+        },
+        'diagnostics': () => {
+            if (typeof switchDiagnosticsView === 'function') {
+                switchDiagnosticsView('debug-db');
+            }
+        }
     };
-
     if (initActions[tabId]) {
         requestAnimationFrame(() => {
             initActions[tabId]();
@@ -222,85 +319,279 @@ function finishSwitchTab(tabId, targetId, btn) {
 }
 
 /**
+ * Toggles the top-level program menu bar.
+ */
+function toggleMenuBar() {
+    const bar = document.getElementById('program-menu-bar');
+    const subBar = document.getElementById('sub-nav-container');
+    if (!bar) return;
+    
+    const isVisible = !bar.classList.contains('visible');
+    bar.classList.toggle('visible', isVisible);
+    
+    if (subBar) {
+        subBar.classList.toggle('visible', isVisible);
+        subBar.style.display = isVisible ? 'flex' : 'none';
+        subBar.style.top = '40px'; 
+    }
+    
+    // Offset the main content area (Fixed ID mapping for TWO ROWS: 40 + 32 = 72px)
+    const content = document.getElementById('main-split-container');
+    if (content) {
+        content.style.marginTop = isVisible ? '72px' : '0px';
+        content.style.height = isVisible ? 'calc(100vh - 147px)' : 'calc(100vh - 75px)';
+    }
+    
+    localStorage.setItem('mwv_menu_bar_visible', isVisible);
+    console.log(`UI: Menu Bar toggled. Visible: ${isVisible} (Two-Row Mode)`);
+}
+
+// --- Keyboard Shortcuts & Global Early Initialization ---
+document.addEventListener('keydown', (e) => {
+    // Alt key toggles the modern menu bar
+    if (e.altKey && !e.shiftKey && !e.ctrlKey) {
+        e.preventDefault();
+        toggleMenuBar();
+    }
+});
+
+/**
+ * Switch Audio Player Sub-Views (Warteschlange, Mediengalerie, Visualizer)
+ */
+function switchPlayerView(viewId) {
+    console.log(`[NAV] Switching player view to: ${viewId}`);
+    
+    // Hide all views
+    document.querySelectorAll('.player-view-container').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    });
+    
+    // Show target view
+    const target = document.getElementById(`player-view-${viewId}`);
+    if (target) {
+        target.style.display = 'flex';
+        target.classList.add('active');
+    }
+    
+    // Update sub-nav buttons
+    document.querySelectorAll('.player-sub-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.target === viewId) btn.classList.add('active');
+    });
+
+    // Save preference
+    localStorage.setItem('mwv_player_sub_view', viewId);
+}
+
+// Restore menu state on load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedMenuState = localStorage.getItem('mwv_menu_bar_visible') === 'true';
+    if (savedMenuState) toggleMenuBar();
+    
+    // Ensure library items are synced to player queue on startup
+    setTimeout(() => {
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+    }, 1500);
+});
+
+/**
  * Switch top-level category and populate sub-navigation.
  */
 function switchMainCategory(category, btn) {
+    console.log(`UI: Main category changed to ${category}`);
+    if (typeof traceUiNav === 'function') traceUiNav('CATEGORY-SWITCH', category);
     currentMainCategory = category;
-    
-    // Log the category change
-    if (typeof mwv_trace === 'function') {
-        mwv_trace('NAV-CATEGORY', category);
-    }
-    
-    document.querySelectorAll('#main-nav-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    localStorage.setItem('mwv_active_category', category);
+
+    traceUiNav('NAV-CATEGORY', category);
+
+    // Update active state in header/sidebar
+    document.querySelectorAll('.tab-btn, .nav-item').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    else {
+        const headerBtn = document.querySelector(`.tab-btn[onclick*="'${category}'"]`);
+        if (headerBtn) headerBtn.classList.add('active');
+    }
 
-    const subNav = document.getElementById('sub-nav-container');
-    if (!subNav) return;
+    // Default tab mapping for categories
+    const categoryDefaults = {
+        'media': 'player',
+        'library': 'library',
+        'video': 'video',
+        'tools': 'tools',
+        'logbuch': 'logbuch',
+        'system': 'options',
+        'diagnostics': 'debug',
+        'edit': 'edit',
+        'reporting': 'reporting',
+        'debug': 'debug',
+        'tests': 'tests'
+    };
 
-    subNav.style.display = 'flex';
-    subNav.innerHTML = ''; // Clear existing
+    if (categoryDefaults[category]) {
+        switchTab(categoryDefaults[category], btn);
+    }
 
-    const subTabs = {
+    // Dynamically populate sub-navigation header pills
+    updateGlobalSubNav(category);
+}
+
+/**
+ * Updates the global sub-navigation bar with contextual entries.
+ */
+function updateGlobalSubNav(category) {
+    const container = document.getElementById('sub-nav-container');
+    if (!container) return;
+
+    // Sub-nav configuration for each category
+    const subNavMap = {
         'media': [
-            { id: 'player', label: 'Warteschlange', icon: '#icon-audio' },
-            { id: 'playlist', label: 'Playlist Manager', icon: '#icon-playlist' }
+            { id: 'warteschlange', label: 'Warteschlange', action: "switchMediaSubView('warteschlange')" },
+            { id: 'mediengalerie', label: 'Mediengalerie', action: "switchMediaSubView('mediengalerie')" },
+            { id: 'visualizer', label: 'Visualizer', action: "switchMediaSubView('visualizer')" },
+            { id: 'video-cinema', label: 'Video Cinema', action: "switchMediaSubView('video')" }
         ],
-        'library': [
-            { id: 'library', label: 'Coverflow', icon: '#icon-sparkles' },
-            { id: 'grid', label: 'Grid', icon: '#icon-stats' },
-            { id: 'details', label: 'Details', icon: '#icon-stats' },
-            { id: 'item', label: 'Datenbank', icon: '#icon-stats' },
-            { id: 'file', label: 'Pfadbrowser', icon: '#icon-folder' }
+        'reporting': [
+            { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
+            { id: 'database', label: 'Database', action: "switchReportingSubView('database')" },
+            { id: 'video-health', label: 'Video Health', action: "switchReportingSubView('video-health')" },
+            { id: 'audio-health', label: 'Audio Health', action: "switchReportingSubView('audio-health')" },
+            { id: 'performance', label: 'Performance', action: "switchReportingSubView('performance')" }
         ],
-        'video': [
-            { id: 'video', label: 'Video Player', icon: '#icon-video' },
-            { id: 'vlc', label: 'VLC Proxy', icon: '#icon-video' }
-        ],
-        'tools': [
-            { id: 'parser', label: 'Parser Config', icon: '#icon-settings' },
-            { id: 'tools', label: 'Advanced Tools', icon: '#icon-settings' }
+        'tests': [
+            { id: 'health', label: 'System Health', action: "switchDiagnosticsSubView('health')" },
+            { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsSubView('debug-db')" },
+            { id: 'latency', label: 'Latency', action: "switchDiagnosticsSubView('latency')" }
         ],
         'system': [
-            { id: 'options', label: 'Optionen', icon: '#icon-options' },
-            { id: 'debug', label: 'Debug DB', icon: '#icon-debug' },
-            { id: 'flags', label: 'Flags', icon: '#icon-settings' }
+            { id: 'environment', label: 'Environment', action: "switchOptionsView('environment')" },
+            { id: 'playback', label: 'Playback', action: "switchOptionsView('playback')" },
+            { id: 'advanced', label: 'Advanced', action: "switchOptionsView('advanced')" }
         ],
-        'diagnostics': [
-            { id: 'tests', label: 'Legacy Tests', icon: '#icon-test' },
-            { id: 'reporting', label: 'Analytics', icon: '#icon-stats' },
-            { id: 'logbuch', label: 'System Log', icon: '#icon-edit' }
+        'edit': [
+            { id: 'tags', label: 'Metadata Tags', action: "switchEditSubView('tags')" },
+            { id: 'artwork', label: 'Artwork Lab', action: "switchEditSubView('artwork')" },
+            { id: 'ffprobe', label: 'Media Analysis', action: "switchEditSubView('ffprobe')" }
+        ],
+        'library': [
+            { id: 'visual', label: 'Mediathek', action: "switchLibrarySubView('visual')" },
+            { id: 'browse', label: 'Dateibrowser', action: "switchLibrarySubView('browse')" },
+            { id: 'inventory', label: 'Inventar & DB', action: "switchLibrarySubView('inventory')" }
+        ],
+        'tools': [
+            { id: 'parser', label: 'Parser Chain', action: "switchToolsSubView('parser')" },
+            { id: 'transcoding', label: 'Transcoding', action: "switchToolsSubView('transcoding')" }
+        ],
+        'logbuch': [
+            { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
+            { id: 'docs', label: 'Documentation', action: "switchLogbookSubView('docs')" }
         ]
     };
 
-    const tabs = subTabs[category] || [];
-    tabs.forEach(tab => {
-        const button = document.createElement('button');
-        button.className = 'sub-tab-btn';
-        button.innerHTML = `
-            <svg width="14" height="14"><use href="${tab.icon}"></use></svg>
-            <span>${tab.label}</span>
-        `;
-        button.onclick = (e) => switchTab(tab.id, button);
-        subNav.appendChild(button);
-    });
-
-    // Automatically switch to the first tab of the category if not already on one of them
-    const activeTab = localStorage.getItem('mwv_active_tab');
-    const isAlreadyInCategory = tabs.some(t => t.id === activeTab);
-    
-    if (!isAlreadyInCategory && tabs.length > 0) {
-        switchTab(tabs[0].id, subNav.firstChild);
-    } else if (isAlreadyInCategory) {
-        // Just activate the button in sub-nav
-        const searchStr = `'${activeTab}'`;
-        for(let child of subNav.children) {
-            if (child.onclick.toString().includes(searchStr)) {
-                child.classList.add('active');
-                break;
-            }
-        }
+    const entries = subNavMap[category];
+    if (!entries) {
+        container.style.display = 'none';
+        return;
     }
+
+    // Populate the container
+    container.innerHTML = entries.map(item => `
+        <button id="global-sub-nav-${item.id}" 
+                class="sub-pill-btn" 
+                onclick="${item.action}; updateSubNavActiveState('${item.id}')">
+            ${item.label}
+        </button>
+    `).join('');
+
+    container.style.display = 'flex';
+
+    // Set initial active state based on category default
+    const activeTab = localStorage.getItem('mwv_active_tab');
+    updateSubNavActiveState(activeTab);
+}
+
+function switchMediaSubView(tabId) {
+    if (tabId === 'audioplayer' || tabId === 'visualizer' || tabId === 'warteschlange' || tabId === 'mediengalerie') {
+        switchTab('player', null, () => {
+            if (typeof switchPlayerMainView === 'function') {
+                switchPlayerMainView(tabId);
+            }
+            updateSubNavActiveState(tabId);
+        });
+    } else {
+        switchTab(tabId);
+        updateSubNavActiveState(tabId === 'video' ? 'video-cinema' : tabId);
+    }
+}
+
+function switchReportingSubView(viewId) {
+    switchTab('reporting', null, () => {
+        if (typeof switchReportingView === 'function') {
+            switchReportingView(viewId);
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchDiagnosticsSubView(viewId) {
+    // Both 'debug' and 'tests' load diagnostics_suite.html
+    const masterTab = (viewId === 'debug-db' || viewId === 'debug' || viewId === 'health' || viewId === 'latency') ? 'debug' : 'tests';
+    switchTab(masterTab, null, () => {
+        if (typeof switchDiagnosticsView === 'function') {
+            switchDiagnosticsView(viewId);
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchEditSubView(viewId) {
+    switchTab('edit', null, () => {
+        if (typeof switchEditView === 'function') {
+            switchEditView(viewId);
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchLibrarySubView(viewId) {
+    switchTab('library', null, () => {
+        if (typeof switchLibraryDomain === 'function') {
+            switchLibraryDomain(viewId);
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchToolsSubView(viewId) {
+    switchTab('tools', null, () => {
+        if (typeof switchToolsView === 'function') {
+            switchToolsView(viewId);
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+function switchLogbookSubView(viewId) {
+    switchTab('logbuch', null, () => {
+        // High-level scroll or sub-view switching for Logbook
+        if (viewId === 'docs' && typeof window.scrollLogbookToDocs === 'function') {
+            window.scrollLogbookToDocs();
+        }
+        updateSubNavActiveState(viewId);
+    });
+}
+
+/**
+ * Updates the active class on sub-nav pill buttons.
+ */
+function updateSubNavActiveState(activeId) {
+    document.querySelectorAll('.sub-pill-btn').forEach(btn => {
+        const matches = btn.id === `global-sub-nav-${activeId}`
+            || btn.id.endsWith(`-${activeId}`)
+            || (activeId === 'video' && btn.id.endsWith('-video-cinema'));
+        btn.classList.toggle('active', matches);
+    });
 }
 
 /**
@@ -453,7 +744,7 @@ function update_progress(data) {
     const bar = document.getElementById('app-progress-bar');
     const container = document.getElementById('app-progress-bar-container');
     const text = document.getElementById('app-progress-text');
-    
+
     if (container) container.style.display = 'block';
     if (text) {
         text.style.display = 'block';
@@ -485,11 +776,18 @@ function isUnsupportedMediaError(reason) {
     return msg.includes('not supported') || msg.includes('format') || msg.includes('missing');
 }
 
+/**
+ * Toggles the top program menu bar.
+ */
 function toggleMenuBar() {
     const bar = document.getElementById('program-menu-bar');
     if (!bar) return;
     menuBarVisible = !menuBarVisible;
     bar.style.display = menuBarVisible ? 'flex' : 'none';
+
+    // Add margin to header if bar is visible to prevent overlap
+    const header = document.querySelector('.header-container');
+    if (header) header.style.marginTop = menuBarVisible ? '32px' : '0';
 }
 
 /**
@@ -525,6 +823,8 @@ function hideContextMenu() {
 async function handleContextMenuAction(mode) {
     if (!contextMenuItem) return;
     const item = contextMenuItem;
+
+    // Hide context menu on switch
     hideContextMenu();
 
     if (mode === 'resume') {

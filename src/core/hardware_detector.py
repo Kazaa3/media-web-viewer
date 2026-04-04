@@ -6,8 +6,14 @@ import platform
 import glob
 from pathlib import Path
 from typing import Any, Dict, List
+import socket
 from src.core.logger import get_logger
 log = get_logger("hardware_detector")
+
+def is_port_in_use(port: int, host: str = "localhost") -> bool:
+    """Check if a specific TCP port is currently in use."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex((host, port)) == 0
 
 def is_ssd(device_name: str) -> bool:
     """Check if a device is an SSD (non-rotational)."""
