@@ -58,7 +58,7 @@ function switchOptionsSubTab(tabId) {
 
 // ─── Dynamic UI builders ───────────────────────────────────────────────────────
 function buildParserChainUI(chain, slowParsers) {
-    const container = document.getElementById('opt-parser-chain-list');
+    const container = document.getElementById('parser-chain-grid-options');
     if (!container) return;
     container.innerHTML = '';
     ALL_PARSERS.forEach(p => {
@@ -89,17 +89,17 @@ function buildCategoryGrid(containerId, selectedCats) {
     ALL_CATEGORIES.forEach(cat => {
         const isChecked = (selectedCats || []).includes(cat);
         const div = document.createElement('div');
-        div.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--bg-secondary); border-radius:8px;';
+        div.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--bg-secondary); border-radius:8px; cursor:pointer;';
         div.innerHTML = `
             <label class="switch sm"><input type="checkbox" id="${containerId}-${cat}" ${isChecked ? 'checked' : ''} onchange="saveAllOptions()"><span class="slider"></span></label>
-            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${labels[cat] || cat}</div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-primary);">${labels[cat] || cat}</div>
         `;
         container.appendChild(div);
     });
 }
 
 function buildDebugFlagsUI(flags) {
-    const container = document.getElementById('opt-debug-flags');
+    const container = document.getElementById('debug-flags-container');
     if (!container) return;
     container.innerHTML = '';
     ALL_DEBUG_FLAGS.forEach(flag => {
@@ -115,15 +115,15 @@ function buildDebugFlagsUI(flags) {
 }
 
 function buildFeatureFlagsUI(flags) {
-    const container = document.getElementById('opt-feature-flags');
+    const container = document.getElementById('options-feature-flags');
     if (!container) return;
     container.innerHTML = '';
     ALL_FEATURE_FLAGS.forEach(f => {
         const isOn = flags && flags[f.key];
         const div = document.createElement('div');
-        div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--bg-secondary); border-radius:8px;';
+        div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--bg-secondary); border-radius:8px;';
         div.innerHTML = `
-            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${f.label}</div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-primary);">${f.label}</div>
             <label class="switch sm"><input type="checkbox" id="feat-${f.key}" ${isOn ? 'checked' : ''} onchange="saveAllOptions()"><span class="slider"></span></label>
         `;
         container.appendChild(div);
@@ -161,14 +161,17 @@ async function loadAllOptions() {
         } catch(e) {}
 
         // ── Tab 1: General
-        const startSel = document.getElementById('opt-start-page');
+        const startSel = document.getElementById('start-page-select');
         if (startSel) startSel.value = cfg.start_page || 'player';
-        safeCheck('opt-auto-scan',      cfg.auto_scan);
-        safeCheck('opt-debug-console',  cfg.debug_console_active);
-        safeCheck('opt-hide-mocks',     cfg.hide_mocks);
+        safeCheck('config-auto-scan',      cfg.auto_scan);
+        safeCheck('config-debug-console',  cfg.debug_console_active);
+        safeCheck('config-hide-mocks',     cfg.hide_mocks);
+        safeCheck('config-fast-scan',      cfg.fast_scan_enabled);
+        safeCheck('config-debug-scan',     cfg.debug_scan);
+        safeCheck('config-debug-parser',   cfg.debug_parser);
 
-        const libDir  = document.getElementById('opt-library-dir');
-        const browDir = document.getElementById('opt-browse-dir');
+        const libDir  = document.getElementById('config-library-dir');
+        const browDir = document.getElementById('config-browse-dir');
         if (libDir)  libDir.value  = cfg.library_dir  || '';
         if (browDir) browDir.value = cfg.browse_default_dir || '';
 
@@ -177,39 +180,30 @@ async function loadAllOptions() {
         // App mode
         updateAppModeButtons(cfg.app_mode);
 
-        // ── Tab 2: Parser
+        // ── Parser mode
         buildParserChainUI(cfg.parser_chain || [], slowParsers);
         updateParserModeButtons(cfg.parser_mode);
-        safeCheck('opt-fast-scan',            cfg.fast_scan_enabled);
-        safeCheck('opt-mutagen-albumartist',   cfg.mutagen_prefer_albumartist);
-        safeCheck('opt-mutagen-lyrics',        cfg.mutagen_extract_lyrics);
-        safeCheck('opt-ffmpeg-deep',           cfg.ffmpeg_deep_analysis);
-        safeCheck('opt-ffmpeg-thumbs',         cfg.ffmpeg_extract_thumbnails);
+        safeCheck('config-mutagen-albumartist',  cfg.mutagen_prefer_albumartist);
+        safeCheck('config-mutagen-lyrics',       cfg.mutagen_extract_lyrics);
+        safeCheck('config-ffmpeg-deep',          cfg.ffmpeg_deep_analysis);
+        safeCheck('config-ffmpeg-thumbs',        cfg.ffmpeg_extract_thumbnails);
 
-        // ── Tab 3: Player
-        const pbMode  = document.getElementById('opt-playback-mode');
-        const vPbMode = document.getElementById('opt-video-playback-mode');
+        // ── Player
+        const pbMode  = document.getElementById('config-playback-mode');
         if (pbMode)  pbMode.value  = cfg.playback_mode  || 'chrome_native';
-        if (vPbMode) vPbMode.value = cfg.video_playback_mode || 'chrome_native';
-        safeCheck('opt-vlc-embedded', cfg.vlc_embedded);
+        safeCheck('config-vlc-embedded', cfg.vlc_embedded);
 
-        // ── Tab 4: Filter
-        buildCategoryGrid('opt-indexed-cats',   cfg.indexed_categories   || ALL_CATEGORIES);
-        buildCategoryGrid('opt-displayed-cats', cfg.displayed_categories || ALL_CATEGORIES);
+        // ── Filter
+        buildCategoryGrid('indexed-cats-grid',   cfg.indexed_categories   || ALL_CATEGORIES);
+        buildCategoryGrid('displayed-cats-grid', cfg.displayed_categories || ALL_CATEGORIES);
 
-        // ── Tab 5: Debug
+        // ── Debug
         updateLogLevelButtons(cfg.log_level || 'INFO');
         buildFeatureFlagsUI(cfg.feature_flags || {});
         buildDebugFlagsUI(cfg.debug_flags || {});
-        safeCheck('opt-debug-scan',   cfg.debug_scan);
-        safeCheck('opt-debug-parser', cfg.debug_parser);
 
-        // ── Tab 6: Startup
+        // ── Startup
         await loadStartupConfig();
-
-        // Restore last active sub-tab
-        const lastTab = localStorage.getItem('mwv_options_sub_tab') || 'opt-general';
-        switchOptionsSubTab(lastTab);
 
         console.log('[Options] Config loaded successfully.');
     } catch(e) {
@@ -226,8 +220,8 @@ async function saveAllOptions() {
             .map(p => p.id);
 
         // Collect category filters
-        const indexedCats   = ALL_CATEGORIES.filter(c => document.getElementById(`opt-indexed-cats-${c}`)?.checked);
-        const displayedCats = ALL_CATEGORIES.filter(c => document.getElementById(`opt-displayed-cats-${c}`)?.checked);
+        const indexedCats   = ALL_CATEGORIES.filter(c => document.getElementById(`indexed-cats-grid-${c}`)?.checked);
+        const displayedCats = ALL_CATEGORIES.filter(c => document.getElementById(`displayed-cats-grid-${c}`)?.checked);
 
         // Collect debug flags
         const debugFlags = {};
@@ -242,22 +236,21 @@ async function saveAllOptions() {
         });
 
         const cfg = {
-            start_page:              document.getElementById('opt-start-page')?.value || 'player',
-            auto_scan:               !!document.getElementById('opt-auto-scan')?.checked,
-            debug_console_active:    !!document.getElementById('opt-debug-console')?.checked,
-            hide_mocks:              !!document.getElementById('opt-hide-mocks')?.checked,
-            library_dir:             document.getElementById('opt-library-dir')?.value || '',
-            browse_default_dir:      document.getElementById('opt-browse-dir')?.value || '',
-            fast_scan_enabled:       !!document.getElementById('opt-fast-scan')?.checked,
-            mutagen_prefer_albumartist: !!document.getElementById('opt-mutagen-albumartist')?.checked,
-            mutagen_extract_lyrics:  !!document.getElementById('opt-mutagen-lyrics')?.checked,
-            ffmpeg_deep_analysis:    !!document.getElementById('opt-ffmpeg-deep')?.checked,
-            ffmpeg_extract_thumbnails: !!document.getElementById('opt-ffmpeg-thumbs')?.checked,
-            playback_mode:           document.getElementById('opt-playback-mode')?.value || 'chrome_native',
-            video_playback_mode:     document.getElementById('opt-video-playback-mode')?.value || 'chrome_native',
-            vlc_embedded:            !!document.getElementById('opt-vlc-embedded')?.checked,
-            debug_scan:              !!document.getElementById('opt-debug-scan')?.checked,
-            debug_parser:            !!document.getElementById('opt-debug-parser')?.checked,
+            start_page:              document.getElementById('start-page-select')?.value || 'player',
+            auto_scan:               !!document.getElementById('config-auto-scan')?.checked,
+            debug_console_active:    !!document.getElementById('config-debug-console')?.checked,
+            hide_mocks:              !!document.getElementById('config-hide-mocks')?.checked,
+            fast_scan_enabled:       !!document.getElementById('config-fast-scan')?.checked,
+            debug_scan:              !!document.getElementById('config-debug-scan')?.checked,
+            debug_parser:            !!document.getElementById('config-debug-parser')?.checked,
+            library_dir:             document.getElementById('config-library-dir')?.value || '',
+            browse_default_dir:      document.getElementById('config-browse-dir')?.value || '',
+            mutagen_prefer_albumartist: !!document.getElementById('config-mutagen-albumartist')?.checked,
+            mutagen_extract_lyrics:  !!document.getElementById('config-mutagen-lyrics')?.checked,
+            ffmpeg_deep_analysis:    !!document.getElementById('config-ffmpeg-deep')?.checked,
+            ffmpeg_extract_thumbnails: !!document.getElementById('config-ffmpeg-thumbs')?.checked,
+            playback_mode:           document.getElementById('config-playback-mode')?.value || 'chrome_native',
+            vlc_embedded:            !!document.getElementById('config-vlc-embedded')?.checked,
             parser_chain:            chain,
             indexed_categories:      indexedCats,
             displayed_categories:    displayedCats,
@@ -313,6 +306,8 @@ function setAllDebugFlags(value) {
     });
     saveAllOptions();
 }
+// Legacy alias used in options_panel.html
+const setAllFlags = setAllDebugFlags;
 
 // ─── UI state updaters ────────────────────────────────────────────────────────
 function updateAppModeButtons(mode) {
@@ -474,7 +469,7 @@ function readValue(id, fallback) {
 const _origSwitchTab = window.switchTab;
 window.switchTab = function(tabId) {
     if (typeof _origSwitchTab === 'function') _origSwitchTab(tabId);
-    if (tabId === 'tools') {
+    if (tabId === 'options' || tabId === 'tools') {
         setTimeout(loadAllOptions, 100);
     }
 };
