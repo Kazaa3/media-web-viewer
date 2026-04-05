@@ -272,9 +272,11 @@ function renderVideoQueue() {
     const emptyDiv = document.getElementById('player-playlist-empty');
     if (emptyDiv) emptyDiv.style.display = 'none';
 
-    currentPlaylist.forEach((item, index) => {
-        if (!isVideoItem(item)) return;
+    const videoItems = currentPlaylist.filter(i => isVideoItem(i));
+    const countEl = document.getElementById('cinema-queue-item-count');
+    if (countEl) countEl.innerText = videoItems.length;
 
+    videoItems.forEach((item, index) => {
         let div = document.createElement('div');
         div.className = 'implementation-encapsulated-state-buffer-node';
         if (typeof currentVideoItem !== 'undefined' && currentVideoItem && currentVideoItem.path === item.path) {
@@ -282,9 +284,13 @@ function renderVideoQueue() {
         }
 
         let tags = item.tags || {};
+        // v1.35.64: Prepend Stage Label [S#] if present
+        const stagePrefix = item.stage ? `[${item.stage}] ` : '';
+        const titleDisplay = stagePrefix + (tags.title || item.name);
+        
         div.innerHTML = `
             <div style="flex: 1;">
-                <strong style="display:block; font-size: 0.9em; color: var(--text-color);">${tags.title || item.name}</strong>
+                <strong style="display:block; font-size: 0.9em; color: var(--text-color);">${titleDisplay}</strong>
                 <span style="font-size: 0.8em; color: #888;">${item.path.split('/').pop()}</span>
             </div>
             <div style="display: flex; gap: 5px;">
@@ -295,7 +301,7 @@ function renderVideoQueue() {
         `;
 
         div.onclick = () => {
-            if (typeof play === 'function') play(item, item.path);
+            if (typeof playVideo === 'function') playVideo(item, item.path);
             renderVideoQueue();
         };
 

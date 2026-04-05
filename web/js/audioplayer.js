@@ -398,7 +398,11 @@ async function playNext() {
         else { playlistIndex = list.length - 1; return; }
     }
     const item = list[playlistIndex];
-    if (typeof playAudio === 'function') playAudio(item, 0);
+    if (typeof playMediaObject === 'function') {
+        playMediaObject(item);
+    } else if (typeof playAudio === 'function') {
+        playAudio(item, 0);
+    }
 }
 
 async function playPrev() {
@@ -411,7 +415,11 @@ async function playPrev() {
         else playlistIndex = 0;
     }
     const item = list[playlistIndex];
-    if (typeof playAudio === 'function') playAudio(item, 0);
+    if (typeof playMediaObject === 'function') {
+        playMediaObject(item);
+    } else if (typeof playAudio === 'function') {
+        playAudio(item, 0);
+    }
 }
 
 /**

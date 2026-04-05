@@ -346,9 +346,13 @@ function isVideoItem(item) {
 
     // 2. Check Extension
     const path = item.path || item.relpath || "";
-    const videoExtensions = ['.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m2ts', '.vob', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv'];
-    const ext = path.toLowerCase().slice(((path.lastIndexOf(".") - 1) >>> 0) + 2);
-    if (ext && videoExtensions.includes("." + ext)) return true;
+    const videoExtensions = [
+        '.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m2ts', '.vob', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv',
+        '.mp4_pass', '.mp4_transcoded', '.mkv.mp4_pass' // v1.35.64 Diagnostic formats
+    ];
+    const extMatch = path.match(/\.([a-z0-9_]+)$/);
+    const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
+    if (ext && videoExtensions.includes(ext)) return true;
 
     return false;
 }
