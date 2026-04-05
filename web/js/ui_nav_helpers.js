@@ -505,6 +505,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedMenuState = localStorage.getItem('mwv_menu_system_visible') === 'true';
     if (savedMenuState) toggleMenuBar(true);
 
+    // Load static UI fragments (v1.35.65)
+    if (typeof FragmentLoader !== 'undefined') {
+        FragmentLoader.load('svg-icons-placeholder', 'fragments/svg_icons.html');
+        FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
+        FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
+    }
+
     // Ensure library items are synced to player queue on startup
     setTimeout(() => {
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
