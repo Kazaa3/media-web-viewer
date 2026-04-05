@@ -17,14 +17,20 @@
  */
 function mwv_trace(category, action, details = {}) {
     const timestamp = new Date().toLocaleTimeString();
-    const detailsStr = typeof details === 'string' ? details : JSON.stringify(details);
-    
-    // Log to Browser Console
-    console.log(`[GWV-TRACE] [${category}] ${action} | ${detailsStr}`);
-    
+    let detailsStr = '';
+    if (typeof details === 'string') {
+        detailsStr = details;
+    } else if (details && typeof details === 'object' && Object.keys(details).length > 0) {
+        detailsStr = JSON.stringify(details);
+    }
+    // Log to Browser Console (compact if no details)
+    if (detailsStr) {
+        console.log(`[GWV-TRACE] [${category}] ${action} | ${detailsStr}`);
+    } else {
+        console.log(`[GWV-TRACE] [${category}] ${action}`);
+    }
     // Log to DOM Console
-    appendUiTrace(`[${timestamp}] [${category}] ${action}: ${detailsStr}`, category);
-
+    appendUiTrace(`[${timestamp}] [${category}] ${action}${detailsStr ? ': ' + detailsStr : ''}`, category);
     if (typeof eel !== 'undefined' && typeof eel.log_ui_event === 'function') {
         eel.log_ui_event(category, action, detailsStr)();
     }

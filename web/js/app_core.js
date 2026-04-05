@@ -1,3 +1,5 @@
+console.log(">>> [JS-LOAD] app_core.js initialized.");
+if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'JS-LOAD', { file: 'app_core.js', ts: Date.now() });
 // --- Boot Watchdog & Progress Audit (v1.35) ---
 let __mwv_boot_watchdog_timer = null;
 let __mwv_boot_watchdog_ticks = 0;
@@ -7,16 +9,26 @@ function startBootWatchdog() {
     __mwv_boot_watchdog_status = 'STARTED';
     __mwv_boot_watchdog_ticks = 0;
     __mwv_boot_watchdog_timer = setInterval(() => {
-        __mwv_boot_watchdog_ticks++;
-        let phase = 'WAIT';
-        if (document.readyState === 'complete') phase = 'DOM-READY';
-        if (window.__mwv_ui_nav_loaded) phase = 'INIT-START';
-        if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) phase = 'DATA-READY';
-        if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: (allLibraryItems ? allLibraryItems.length : 0) });
-        if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > 6) {
-            if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
-            clearInterval(__mwv_boot_watchdog_timer);
-            __mwv_boot_watchdog_status = 'DONE';
+        try {
+            __mwv_boot_watchdog_ticks++;
+            let phase = 'WAIT';
+            if (document.readyState === 'complete') phase = 'DOM-READY';
+            if (window.__mwv_ui_nav_loaded) phase = 'INIT-START';
+            
+            // Safe access using typeof (v1.35.1 Hardened)
+            const hasLib = (typeof allLibraryItems !== 'undefined');
+            const libCount = hasLib ? allLibraryItems.length : 0;
+            if (hasLib && libCount > 0) phase = 'DATA-READY';
+            
+            if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: libCount });
+            
+            if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > 12) { // Allow more time for slow handshakes
+                if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
+                clearInterval(__mwv_boot_watchdog_timer);
+                __mwv_boot_watchdog_status = 'DONE';
+            }
+        } catch (e) {
+            console.error("[Watchdog] Diagnostic Crash:", e);
         }
     }, 500);
 }

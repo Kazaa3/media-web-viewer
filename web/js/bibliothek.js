@@ -1,3 +1,5 @@
+console.log(">>> [JS-LOAD] bibliothek.js initialized.");
+window.allLibraryItems = allLibraryItems;
 /**
  * bibliothek.js
  * Unified Library management module.
@@ -20,6 +22,7 @@ let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
  * Boots the library by fetching data from the DB.
  */
 async function loadLibrary(retryCount = 0) {
+        window.__mwv_lib_loaded = true;
     if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-LOAD-START');
     console.log('[DATA-LIB] STAGE-LOAD-START: loadLibrary() called.');
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
