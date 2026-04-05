@@ -90,6 +90,12 @@ const GUIIntegrity = {
         if (bootEl) bootEl.innerText = `${bootTime}ms`;
         if (dbEl) dbEl.innerText = dbCount;
         if (uiEl) uiEl.innerText = uiCount;
+
+        // v1.35.66: Dynamic version sync for HUD title
+        const titleEl = document.querySelector(`#${this.hudId} div span:first-child`);
+        if (titleEl && window.MWV_VERSION) {
+            titleEl.innerText = `MWV DATA-HUD (${window.MWV_VERSION})`;
+        }
         
         if (scanEl) {
             const isScanning = window.__mwv_is_scanning === true;

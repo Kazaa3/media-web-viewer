@@ -780,8 +780,8 @@ function syncQueueWithLibrary() {
         console.info(`[Productive] Syncing ${filtered.length} Real Library items.`);
     }
     
-    if (audioItems.length > 0) {
-        currentPlaylist = [...audioItems];
+    if (filtered.length > 0) {
+        currentPlaylist = [...filtered];
         if (playlistIndex === -1) playlistIndex = 0;
         
         // --- V1.35 Recovery Auto-Play ---

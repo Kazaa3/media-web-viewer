@@ -768,7 +768,7 @@ def initialize_debug_flags(args=None):
 
 
 # --- Global Constants & State ---
-VERSION = "1.34"
+VERSION = "1.35.66"
 
 
 # Nach Logging-Setup: PIDs loggen fr Konsole. deswegen kein eel.expose
@@ -1831,15 +1831,18 @@ def nuclear_restart():
     import subprocess
     from pathlib import Path
     
-    script_path = Path("/home/xc/#Coding/gui_media_web_viewer/scripts/reboot_mwv.sh")
+    # Use absolute path for script
+    script_path = (PROJECT_ROOT / "scripts" / "reboot_mwv.sh").resolve()
     log.warning(f"[REBOOT] NUCLEAR RESTART TRIGGERED. PID: {os.getpid()}")
     
     try:
         if script_path.exists():
             # Use start_new_session=True to detach from this process tree
             subprocess.Popen(["bash", str(script_path)], start_new_session=True)
-            log.info("[REBOOT] Detached reboot script spawned. Exiting current process.")
-            # Standard cleanup to close Eel then exit
+            log.info("[REBOOT] Detached reboot script spawned. Waiting before exit...")
+            # Handshake delay to allow script to claim session
+            import time
+            time.sleep(0.5)
             os._exit(0)
         else:
             return {"status": "error", "message": "Reboot script not found."}
