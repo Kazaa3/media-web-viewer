@@ -687,7 +687,7 @@ function readValue(id, fallback) {
 const _origSwitchTab = window.switchTab;
 window.switchTab = function(tabId) {
     if (typeof _origSwitchTab === 'function') _origSwitchTab(tabId);
-    if (tabId === 'options' || tabId === 'tools') {
+    if (tabId === 'options' || tabId === 'tools' || tabId === 'parser') {
         setTimeout(() => {
             loadAllOptions();
             const verEl = document.getElementById('options-version');
@@ -697,3 +697,18 @@ window.switchTab = function(tabId) {
         }, 100);
     }
 };
+
+// ─── Fresh Refresh Stability (v1.35.68 Repair) ──────────────────────────────────
+function initParserHydration() {
+    const activeTab = localStorage.getItem('mwv_active_tab');
+    if (activeTab === 'parser' || activeTab === 'options') {
+        console.log(`[Parser] Active tab '${activeTab}' detected on refresh. Hydrating settings...`);
+        setTimeout(loadAllOptions, 250); // Delay to ensure fragment mount
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initParserHydration);
+} else {
+    initParserHydration();
+}

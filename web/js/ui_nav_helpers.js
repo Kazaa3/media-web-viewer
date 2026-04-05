@@ -7,9 +7,9 @@
 window.mwv_init_actions = {
     'player': () => {
         const runInit = () => {
-             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-             if (typeof renderPlaylist === 'function') renderPlaylist();
-             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+            if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+            if (typeof renderPlaylist === 'function') renderPlaylist();
+            if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
         };
 
         // Atomic Init: Wait for library if empty (v1.35 Hardened)
@@ -17,7 +17,7 @@ window.mwv_init_actions = {
             if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-NAV', 'WAIT-FOR-LIB');
             document.addEventListener('mwv_library_ready', runInit, { once: true });
         } else {
-             runInit();
+            runInit();
         }
     },
     'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
@@ -217,10 +217,10 @@ function switchTab(tabId, btn, callback, force = false) {
     if (fragmentMap[tabId]) {
         const frag = fragmentMap[tabId];
         const container = document.getElementById(frag.containerId);
-        
+
         // Guard: If fragment is already loaded (has children and not just a loading message)
         const isAlreadyLoaded = container && container.children.length > 0 && !container.querySelector('.loading-fragment');
-        
+
         if (isAlreadyLoaded && !force) {
             console.log(`[NAV] Skipping redundant fragment load for: ${tabId}`);
             isNavigating = false; // Release lock before finishing
@@ -476,7 +476,7 @@ document.addEventListener('keydown', (e) => {
  */
 function switchPlayerView(viewId) {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-RELAY', 'PLAYER-VIEW', { viewId });
-    
+
     // Hide all views
     document.querySelectorAll('.player-view-container').forEach(el => {
         el.style.display = 'none';
@@ -488,7 +488,7 @@ function switchPlayerView(viewId) {
     if (target) {
         target.style.display = 'flex';
         target.classList.add('active');
-        
+
         // Sync with sub-nav buttons
         document.querySelectorAll('.player-sub-nav-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -501,7 +501,7 @@ function switchPlayerView(viewId) {
         if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') renderPlaylist();
         if (viewId === 'visualizer' && typeof initVisualizer === 'function') initVisualizer();
         if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') refreshSavedPlaylists();
-        
+
         if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-RELAY', 'SUCCESS', { viewId });
     } else {
         if (typeof log_js_error === 'function') log_js_error(new Error(`View Target Missing: ${viewId}`), 'NAV-RELAY');
@@ -599,9 +599,12 @@ function updateGlobalSubNav(category) {
         'library': [
             { id: 'visual', label: 'Mediathek', action: "switchLibraryDomain('visual')" },
             { id: 'browse', label: 'Dateibrowser', action: "switchLibraryDomain('browse')" },
-            { id: 'inventory', label: 'Inventar & DB', action: "switchLibraryDomain('inventory')" },
-            { id: 'playlist', label: 'Playlist Manager', action: "switchMainCategory('media'); setTimeout(() => switchPlayerView('playlist'), 100);" },
-            { id: 'video-cinema', label: 'Video Cinema', action: "switchMainCategory('media'); setTimeout(() => switchTab('video'), 100);" }
+            { id: 'inventory', label: 'Inventar', action: "switchLibraryDomain('inventory')" },
+            { id: 'cinema', label: 'Cinema', action: "switchLibrarySubTab('cinema')" },
+            { id: 'films', label: 'Filme', action: "switchLibrarySubTab('films')" },
+            { id: 'series', label: 'Serien', action: "switchLibrarySubTab('series')" },
+            { id: 'albums', label: 'Alben', action: "switchLibrarySubTab('albums')" },
+            { id: 'audiobooks', label: 'Hörbuch', action: "switchLibrarySubTab('audiobooks')" }
         ],
         'file': [
             { id: 'local', label: 'Lokale Platten', action: "fbNavigate('/')" },

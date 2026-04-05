@@ -1,105 +1,158 @@
-    <div id="lib-split-container" style="display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-primary);">
-        <!-- LEFT SIDEBAR: Filters & Categories -->
-        <div id="lib-sidebar-left" class="sidebar">
-            
-            <!-- Top Sub-Tabs (Views) -->
-            <div id="lib-nav-views-container" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px;">
-                <h4 style="margin: 0 0 10px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; font-weight: 700;" data-i18n="sb_views">Ansichten</h4>
-                <button id="lib-tab-btn-coverflow" class="sub-tab-btn active" onclick="switchLibrarySubTab('coverflow')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 12h18"/></svg> Coverflow</button>
-                <button id="lib-tab-btn-grid" class="sub-tab-btn" onclick="switchLibrarySubTab('grid')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Grid</button>
-                <button id="lib-tab-btn-details" class="sub-tab-btn" onclick="switchLibrarySubTab('details')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Details</button>
-                <button id="lib-tab-btn-streaming" class="sub-tab-btn" onclick="switchLibrarySubTab('streaming')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Streaming</button>
-                <div style="height: 1px; background: var(--border-color); margin: 10px 5px;"></div>
-                <button id="lib-tab-btn-films" class="sub-tab-btn" onclick="switchLibrarySubTab('films')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10l5-6 5 6"/><circle cx="12" cy="15" r="2"/></svg> Filme</button>
-                <button id="lib-tab-btn-series" class="sub-tab-btn" onclick="switchLibrarySubTab('series')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2l2 5"/><path d="M7 2l-2 5"/></svg> Serien</button>
-                <button id="lib-tab-btn-albums" class="sub-tab-btn" onclick="switchLibrarySubTab('albums')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Alben</button>
-                <button id="lib-tab-btn-audiobooks" class="sub-tab-btn" onclick="switchLibrarySubTab('audiobooks')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Hörbuch</button>
-            </div>
+<div id="lib-split-container"
+    style="display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-primary);">
+    <!-- LEFT SIDEBAR: Filters & Categories -->
+    <div id="lib-sidebar-left" class="sidebar">
 
-            <!-- Category Filters -->
-            <div id="lib-nav-container" style="display: flex; flex-direction: column; gap: 8px;">
-                <h4 style="margin: 0 0 10px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; font-weight: 700;" data-i18n="filter_title">Kategorien</h4>
-                
-                <div style="padding: 0 10px 15px 10px;">
-                    <input type="text" id="library-search-input" placeholder="Suchen..."
-                        oninput="handleLibrarySearch(this.value)"
-                        style="width: 100%; padding: 10px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; transition: border-color 0.2s;">
-                </div>
-
-                <div class="filter-group" style="display: flex; flex-direction: column; gap: 4px;">
-                    <button class="options-subtab active" data-cat="all" onclick="setLibraryFilter('all')" data-i18n="filter_all">Alle</button>
-                    <button class="options-subtab" data-cat="audio" onclick="setLibraryFilter('all')" data-i18n="filter_audio">Audio</button>
-                    <button class="options-subtab" data-cat="video" onclick="setLibraryFilter('all')" data-i18n="filter_video">Video</button>
-                    <button class="options-subtab" data-cat="film" onclick="setLibraryFilter('all')" data-i18n="cat_film">Film</button>
-                    <button class="options-subtab" data-cat="serie" onclick="setLibraryFilter('all')" data-i18n="cat_serie">Serie</button>
-                    <button class="options-subtab" data-cat="album" onclick="setLibraryFilter('all')" data-i18n="cat_album">Album</button>
-                </div>
-                
-                <div style="height: 1px; background: var(--border-color); margin: 15px 10px;"></div>
-                
-                <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 10px;">
-                    <select id="library-genre-filter" class="tab-btn" onchange="setLibraryGenreFilter(this.value)" style="width: 100%; padding: 8px 12px; font-size: 12px;">
-                        <option value="all">Alle Genres</option>
-                    </select>
-                    <select id="library-year-filter" class="tab-btn" onchange="setLibraryYearFilter(this.value)" style="width: 100%; padding: 8px 12px; font-size: 12px;">
-                        <option value="all">Alle Jahre</option>
-                    </select>
-                </div>
-            </div>
+        <!-- Top Sub-Tabs (Views) -->
+        <div id="lib-nav-views-container" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 10px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; font-weight: 700;"
+                data-i18n="sb_views">Ansichten</h4>
+            <button id="lib-tab-btn-coverflow" class="sub-tab-btn active" onclick="switchLibrarySubTab('coverflow')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M7 3v18M17 3v18M3 12h18" />
+                </svg> Coverflow</button>
+            <button id="lib-tab-btn-grid" class="sub-tab-btn" onclick="switchLibrarySubTab('grid')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg> Grid</button>
+            <button id="lib-tab-btn-details" class="sub-tab-btn" onclick="switchLibrarySubTab('details')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg> Details</button>
+            <button id="lib-tab-btn-streaming" class="sub-tab-btn" onclick="switchLibrarySubTab('streaming')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                </svg> Streaming</button>
+            <div style="height: 1px; background: var(--border-color); margin: 10px 5px;"></div>
+            <button id="lib-tab-btn-films" class="sub-tab-btn" onclick="switchLibrarySubTab('films')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="10" width="18" height="12" rx="2" />
+                    <path d="M7 10l5-6 5 6" />
+                    <circle cx="12" cy="15" r="2" />
+                </svg> Filme</button>
+            <button id="lib-tab-btn-series" class="sub-tab-btn" onclick="switchLibrarySubTab('series')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="15" rx="2" />
+                    <path d="M17 2l2 5" />
+                    <path d="M7 2l-2 5" />
+                </svg> Serien</button>
+            <button id="lib-tab-btn-albums" class="sub-tab-btn" onclick="switchLibrarySubTab('albums')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg> Alben</button>
+            <button id="lib-tab-btn-audiobooks" class="sub-tab-btn" onclick="switchLibrarySubTab('audiobooks')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg> Hörbuch</button>
         </div>
 
-        <!-- Splitter -->
-        <div id="lib-splitter" class="splitter-v"></div>
+        <!-- Category Filters -->
+        <div id="lib-nav-container" style="display: flex; flex-direction: column; gap: 8px;">
+            <h4 style="margin: 0 0 10px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px; font-weight: 700;"
+                data-i18n="filter_title">Kategorien</h4>
 
-        <!-- MAIN CONTENT: Results -->
-        <div id="lib-main-content-pane" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); position: relative;">
-            
-            <div id="lib-domain-visual" class="lib-domain-content active" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-                <!-- Result Content Wrapper (Mediathek) -->
-                <div id="lib-results-container" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
-                
+            <div style="padding: 0 10px 15px 10px;">
+                <input type="text" id="library-search-input" placeholder="Suchen..."
+                    oninput="handleLibrarySearch(this.value)"
+                    style="width: 100%; padding: 10px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; transition: border-color 0.2s;">
+            </div>
+
+            <div class="filter-group" style="display: flex; flex-direction: column; gap: 4px;">
+                <button class="options-subtab active" data-cat="all" onclick="setLibraryFilter('all')"
+                    data-i18n="filter_all">Alle</button>
+                <button class="options-subtab" data-cat="audio" onclick="setLibraryFilter('all')"
+                    data-i18n="filter_audio">Audio</button>
+                <button class="options-subtab" data-cat="video" onclick="setLibraryFilter('all')"
+                    data-i18n="filter_video">Video</button>
+                <button class="options-subtab" data-cat="film" onclick="setLibraryFilter('all')"
+                    data-i18n="cat_film">Film</button>
+                <button class="options-subtab" data-cat="serie" onclick="setLibraryFilter('all')"
+                    data-i18n="cat_serie">Serie</button>
+                <button class="options-subtab" data-cat="album" onclick="setLibraryFilter('all')"
+                    data-i18n="cat_album">Album</button>
+            </div>
+
+            <div style="height: 1px; background: var(--border-color); margin: 15px 10px;"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 10px;">
+                <select id="library-genre-filter" class="tab-btn" onchange="setLibraryGenreFilter(this.value)"
+                    style="width: 100%; padding: 8px 12px; font-size: 12px;">
+                    <option value="all">Alle Genres</option>
+                </select>
+                <select id="library-year-filter" class="tab-btn" onchange="setLibraryYearFilter(this.value)"
+                    style="width: 100%; padding: 8px 12px; font-size: 12px;">
+                    <option value="all">Alle Jahre</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Splitter -->
+    <div id="lib-splitter" class="splitter-v"></div>
+
+    <!-- MAIN CONTENT: Results -->
+    <div id="lib-main-content-pane"
+        style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); position: relative;">
+
+        <div id="lib-domain-visual" class="lib-domain-content active"
+            style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <!-- Result Content Wrapper (Mediathek) -->
+            <div id="lib-results-container" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+
                 <!-- Video Streaming View -->
                 <div id="lib-view-streaming" class="library-sub-content" style="padding: 24px; overflow-y: auto;">
                     <div id="streaming-grid-container" class="streaming-grid"></div>
                 </div>
 
                 <!-- Coverflow View -->
-                <div id="lib-view-coverflow" class="library-sub-content active" style="flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);">
+                <div id="lib-view-coverflow" class="library-sub-content active"
+                    style="flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);">
                     <div id="coverflow-container" class="coverflow-wrap">
                         <div id="coverflow-track" class="coverflow-track"></div>
                     </div>
                 </div>
 
                 <!-- Grid View -->
-                <div id="lib-view-grid" class="library-sub-content" style="display: none; padding: 30px; overflow-y: auto;">
+                <div id="lib-view-grid" class="library-sub-content"
+                    style="display: none; padding: 30px; overflow-y: auto;">
                     <div id="grid-container" class="media-grid"></div>
                 </div>
 
                 <!-- Details Table View -->
-                <div id="lib-view-details" class="library-sub-content" style="display: none; padding: 24px; overflow-y: auto;">
+                <div id="lib-view-details" class="library-sub-content"
+                    style="display: none; padding: 24px; overflow-y: auto;">
                     <div class="glass-card" style="padding: 0; overflow: hidden;">
                         <table id="details-table" class="details-table" style="width: 100%; border-collapse: collapse;">
-                            <thead><tr id="details-table-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);"></tr></thead>
+                            <thead>
+                                <tr id="details-table-header"
+                                    style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                                </tr>
+                            </thead>
                             <tbody id="details-table-body"></tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- Album View -->
-                <div id="lib-view-album" class="library-sub-content" style="display: none; padding: 30px; overflow-y: auto;">
+                <div id="lib-view-album" class="library-sub-content"
+                    style="display: none; padding: 30px; overflow-y: auto;">
                     <div id="album-grid-container" class="media-grid"></div>
                 </div>
 
                 <!-- Following View -->
-                <div id="lib-view-following" class="library-sub-content" style="display: none; padding: 30px; overflow-y: auto;">
+                <div id="lib-view-following" class="library-sub-content"
+                    style="display: none; padding: 30px; overflow-y: auto;">
                     <div id="following-grid-container" class="media-grid"></div>
                 </div>
             </div>
@@ -107,92 +160,92 @@
             <!-- Domain: Browse (File) -->
             <div id="lib-domain-browse" class="lib-domain-content" style="display: none; flex: 1; overflow: hidden;">
                 <div id="lib-browse-mount-point" style="height: 100%; width: 100%;">
-                     <div class="loading-fragment">Lade Dateibrowser...</div>
+                    <div class="loading-fragment">Lade Dateibrowser...</div>
                 </div>
             </div>
 
             <!-- Domain: Inventory (Item) -->
             <div id="lib-domain-inventory" class="lib-domain-content" style="display: none; flex: 1; overflow: hidden;">
                 <div id="lib-inventory-mount-point" style="height: 100%; width: 100%;">
-                     <div class="loading-fragment">Lade Inventory...</div>
+                    <div class="loading-fragment">Lade Inventory...</div>
                 </div>
             </div>
         </div>
-        </div>
     </div>
+</div>
 
-    <script>
-        /**
-         * Switch Library Domains (Visual, Browse, Inventory)
-         */
-        function switchLibraryDomain(domainId) {
-            if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LIB-DOMAIN', domainId);
-            
-            document.querySelectorAll('.lib-domain-content').forEach(el => el.style.display = 'none');
-            const target = document.getElementById('lib-domain-' + domainId);
-            if (target) {
-                target.style.display = 'flex';
-                // Trigger domain-specific refresh
-                if (domainId === 'visual') {
-                    if (typeof renderLibrary === 'function') renderLibrary();
-                } else if (domainId === 'browse' && typeof fbNavigate === 'function') {
-                    fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/');
-                } else if (domainId === 'inventory' && typeof refreshLibrary === 'function') {
-                    refreshLibrary();
-                }
+<script>
+    /**
+     * Switch Library Domains (Visual, Browse, Inventory)
+     */
+    function switchLibraryDomain(domainId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LIB-DOMAIN', domainId);
+
+        document.querySelectorAll('.lib-domain-content').forEach(el => el.style.display = 'none');
+        const target = document.getElementById('lib-domain-' + domainId);
+        if (target) {
+            target.style.display = 'flex';
+            // Trigger domain-specific refresh
+            if (domainId === 'visual') {
+                if (typeof renderLibrary === 'function') renderLibrary();
+            } else if (domainId === 'browse' && typeof fbNavigate === 'function') {
+                fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/');
+            } else if (domainId === 'inventory' && typeof refreshLibrary === 'function') {
+                refreshLibrary();
             }
         }
+    }
 
-        /**
-         * Switch Library Sub-Tabs (Coverflow, Grid, Details, etc.)
-         */
-        function switchLibrarySubTab(viewId) {
-            if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LIB-VIEW', viewId);
-            
-            document.querySelectorAll('.library-sub-content').forEach(el => {
-                el.style.display = 'none';
-                el.classList.remove('active');
-            });
-            document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
-            
-            const target = document.getElementById('lib-view-' + viewId);
-            if (target) {
-                target.style.display = (viewId === 'coverflow') ? 'flex' : 'block';
-                target.classList.add('active');
-                
-                const btn = document.getElementById('lib-tab-btn-' + viewId);
-                document.getElementById('lib-results-container').style.display = 'block';
-                
-                // --- V1.35.68 Fragment Injection ---
-                const fragmentViewId = viewId === 'films' ? 'film_view.html' : 
-                                     viewId === 'series' ? 'serie_view.html' :
-                                     viewId === 'albums' ? 'album_view.html' :
-                                     viewId === 'audiobooks' ? 'audiobook_view.html' : null;
-                
-                if (fragmentViewId && typeof FragmentLoader !== 'undefined') {
-                    // Inject specialized high-fidelity view into results pane
-                    FragmentLoader.load('lib-results-container', 'fragments/' + fragmentViewId, () => {
-                        console.log(`[Library] Loaded specialized fragment: ${fragmentViewId}`);
-                        // Hydrate specialized view
-                        if (viewId === 'films' && typeof initFilmsView === 'function') initFilmsView();
-                        else if (viewId === 'series' && typeof initSeriesView === 'function') initSeriesView();
-                        else if (viewId === 'albums' && typeof initAlbumsView === 'function') initAlbumsView();
-                        else if (viewId === 'audiobooks' && typeof initAudiobooksView === 'function') initAudiobooksView();
-                    });
-                } else {
-                    if (typeof renderLibrary === 'function') renderLibrary();
-                }
-                
-                if (btn) btn.classList.add('active');
-                
-                // Trigger view-specific render
-                if (viewId === 'database' && typeof renderDatabaseView === 'function') renderDatabaseView();
+    /**
+     * Switch Library Sub-Tabs (Coverflow, Grid, Details, etc.)
+     */
+    function switchLibrarySubTab(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LIB-VIEW', viewId);
+
+        document.querySelectorAll('.library-sub-content').forEach(el => {
+            el.style.display = 'none';
+            el.classList.remove('active');
+        });
+        document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
+
+        const target = document.getElementById('lib-view-' + viewId);
+        if (target) {
+            target.style.display = (viewId === 'coverflow') ? 'flex' : 'block';
+            target.classList.add('active');
+
+            const btn = document.getElementById('lib-tab-btn-' + viewId);
+            document.getElementById('lib-results-container').style.display = 'block';
+
+            // --- V1.35.68 Fragment Injection ---
+            const fragmentViewId = viewId === 'films' ? 'film_view.html' :
+                viewId === 'series' ? 'serie_view.html' :
+                    viewId === 'albums' ? 'album_view.html' :
+                        viewId === 'audiobooks' ? 'audiobook_view.html' : null;
+
+            if (fragmentViewId && typeof FragmentLoader !== 'undefined') {
+                // Inject specialized high-fidelity view into results pane
+                FragmentLoader.load('lib-results-container', 'fragments/' + fragmentViewId, () => {
+                    console.log(`[Library] Loaded specialized fragment: ${fragmentViewId}`);
+                    // Hydrate specialized view
+                    if (viewId === 'films' && typeof initFilmsView === 'function') initFilmsView();
+                    else if (viewId === 'series' && typeof initSeriesView === 'function') initSeriesView();
+                    else if (viewId === 'albums' && typeof initAlbumsView === 'function') initAlbumsView();
+                    else if (viewId === 'audiobooks' && typeof initAudiobooksView === 'function') initAudiobooksView();
+                });
+            } else {
+                if (typeof renderLibrary === 'function') renderLibrary();
             }
-        }
 
-        // Default to coverflow if nothing active
-        setTimeout(() => {
-            const active = document.querySelector('.library-sub-content.active');
-            if (!active) switchLibrarySubTab('coverflow');
-        }, 100);
-    </script>
+            if (btn) btn.classList.add('active');
+
+            // Trigger view-specific render
+            if (viewId === 'database' && typeof renderDatabaseView === 'function') renderDatabaseView();
+        }
+    }
+
+    // Default to coverflow if nothing active
+    setTimeout(() => {
+        const active = document.querySelector('.library-sub-content.active');
+        if (!active) switchLibrarySubTab('coverflow');
+    }, 100);
+</script>
