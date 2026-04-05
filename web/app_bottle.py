@@ -74,14 +74,8 @@ def health_check():
 def serve_media(filepath):
     """
     @brief Serves media files with optional on-the-fly transcoding.
-    @details Liefert Mediendateien aus, optional mit Live-Transkodierung (ALAC→FLAC, WMA→OGG).
-             Uses FFmpeg for transcoding with optimized parameters:
-             - ALAC → FLAC: lossless, compression_level=5
-             - WMA → Opus: lossy, VBR, 128k bitrate
-             Transcoded files are cached in ~/.cache/MediaWebViewer/transcoded/
-    @param filepath Relative path or filename / Pfad oder Dateiname.
-    @return Static file or transcoding stream / Statische Datei oder Transkodierungs-Stream.
     """
+    filepath = unquote(filepath)
     mime_type, _ = mimetypes.guess_type(filepath)
     ext = filepath.lower()
 

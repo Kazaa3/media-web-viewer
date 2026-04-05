@@ -11,7 +11,7 @@ const StageReal = {
         {
             id: 'diag-real-1',
             name: '01 - Einfach & Leicht.mp3',
-            path: 'media/01 - Einfach & Leicht.mp3',
+            path: 'test_files/01 - Einfach & Leicht.mp3',
             title: '[REAL-PLAY] 01 - Einfach & Leicht.mp3',
             artist: 'MWV Asset Verification',
             category: 'Audio',
