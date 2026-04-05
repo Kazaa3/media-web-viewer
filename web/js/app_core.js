@@ -199,24 +199,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         // 0. Load UI Fragments in Parallel (v1.35.21 Expanded)
         let fragmentsNeeded = 6;
         let fragmentsLoaded = 0;
-        const onFragmentDone = () => {
+        const onFragmentDone = (name) => {
             fragmentsLoaded++;
+            console.log(`Orchestrator: Fragment '${name}' ready at T+${Date.now() - bootStartTime}ms (${fragmentsLoaded}/${fragmentsNeeded})`);
             if (fragmentsLoaded === fragmentsNeeded) {
-                console.log("Orchestrator: All fragments ready. Finalizing boot...");
+                console.log("Orchestrator: All fragments ready. Finalizing boot sequence...");
                 mwv_finalize_boot();
             }
         };
 
+        const bootStartTime = Date.now();
         if (typeof FragmentLoader?.load === 'function') {
             // Core UI Viewports
-            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', onFragmentDone);
-            FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', onFragmentDone);
-            FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', onFragmentDone);
-            FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', onFragmentDone);
+            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals'));
+            FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => onFragmentDone('player'));
+            FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => onFragmentDone('library'));
+            FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => onFragmentDone('editor'));
             
             // Shared Components
-            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', onFragmentDone);
-            FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', onFragmentDone);
+            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
+            FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
         } else {
             console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
             mwv_finalize_boot(); 
