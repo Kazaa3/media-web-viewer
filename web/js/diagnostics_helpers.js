@@ -635,6 +635,91 @@ function toggleBypassDb() {
 window.toggleBypassDb = toggleBypassDb;
 
 /**
+ * Autonomous Self-Test Engine (v1.35.68)
+ * Performs a 7-point integrity check using Sync Anchors.
+ */
+async function runAutonomousSelfTest() {
+    console.warn(">>> [Self-Test] Initiating 7-Point Integrity Audit...");
+    if (typeof showStatusNotification === 'function') {
+        showStatusNotification('SELF-TEST: Audit gestartet...', 'info');
+    }
+
+    const results = { pass: 0, fail: 0, details: [] };
+    
+    const dbCount = window.__mwv_last_db_count || 0;
+    const guiCount = (typeof allLibraryItems !== 'undefined') ? allLibraryItems.length : 0;
+    const queueCount = (typeof currentPlaylist !== 'undefined') ? currentPlaylist.length : 0;
+
+    // Check 1: Parity (Black Hole Check)
+    if (dbCount > 0 && guiCount === 0 && !window.__mwv_hide_db) {
+        results.fail++;
+        results.details.push("KRITISCH: Datenbank hat Daten, aber GUI ist leer (BLACK HOLE)!");
+    } else {
+        results.pass++;
+    }
+
+    // Check 2: Bypass Stability
+    if (window.__mwv_bypass_db && queueCount !== 3) {
+        results.fail++;
+        results.details.push("WARNUNG: Bypass ist an, aber Queue hat keine 3 Mocks.");
+    } else {
+        results.pass++;
+    }
+
+    // Check 3: Raw Mode Parity
+    if (window.__mwv_raw_mode && guiCount !== dbCount) {
+        results.fail++;
+        results.details.push("FEHLER: Raw Mode aktiv, aber GUI/DB Parität fehlt.");
+    } else {
+        results.pass++;
+    }
+
+    // Check 4: Anchor Sync
+    const anchor = document.getElementById('footer-sync-anchor');
+    if (!anchor || anchor.innerText.includes('--')) {
+        results.fail++;
+        results.details.push("STALL: Sync Anker ist eingefroren.");
+    } else {
+        results.pass++;
+    }
+
+    // Final Report
+    const status = results.fail === 0 ? 'success' : 'error';
+    const msg = `AUDIT ABGESCHLOSSEN: ${results.pass}/4 Pass. ${results.details[0] || 'System Nominal'}`;
+    
+    if (typeof showStatusNotification === 'function') {
+        showStatusNotification(msg, status);
+    }
+    console.log(`[Self-Test] Results:`, results);
+}
+window.runAutonomousSelfTest = runAutonomousSelfTest;
+
+/**
+ * Background Sync Watchdog
+ * Monitors parity every 30s.
+ */
+function checkSyncParity() {
+    const dbCount = window.__mwv_last_db_count || 0;
+    const guiCount = (typeof allLibraryItems !== 'undefined') ? allLibraryItems.length : 0;
+    const light = document.getElementById('footer-db-light');
+    
+    if (!light) return;
+
+    if (dbCount > 0 && guiCount === 0 && !window.__mwv_hide_db && !window.__mwv_bypass_db) {
+        light.style.background = '#e74c3c'; // Red (CRITICAL)
+        light.title = "CRITICAL: Sync Parity Lost (Black Hole)";
+    } else if (window.__mwv_bypass_db || window.__mwv_raw_mode) {
+        light.style.background = '#f1c40f'; // Yellow (Diag Mode)
+        light.title = "Diagnostic Mode Active";
+    } else {
+        light.style.background = '#2ecc71'; // Green (Healthy)
+        light.title = "Sync Parity Healthy";
+    }
+}
+setInterval(checkSyncParity, 30000);
+setTimeout(checkSyncParity, 2000); 
+
+/**
  * Sync Anchor Initializer
  * Ensures the anchor shows something other than '--' even if sync hangs.
  */

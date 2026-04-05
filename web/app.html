@@ -773,6 +773,7 @@
                             BYPS
                         </button>
                         <button onclick="if(typeof runDomAudit === 'function') runDomAudit(); if(typeof showStatusNotification === 'function') showStatusNotification('7-Point Health Audit INITIATED', 'info');" title="7-Point DOM Health Audit" style="background:transparent; border:none; color:var(--accent-color); font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">AUDIT</button>
+                        <button onclick="if(typeof runAutonomousSelfTest === 'function') runAutonomousSelfTest()" title="Autonomous Anchor Self-Test" style="background:transparent; border:none; color: #3498db; font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">TEST</button>
                         <button onclick="if(typeof probeDataFlow === 'function') probeDataFlow()" title="Deep Data Flow Probe" style="background:transparent; border:none; color: #2ecc71; font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">PROBE</button>
                     </div>
 
