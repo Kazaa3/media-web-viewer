@@ -18,7 +18,12 @@ pkill -9 -f "src/core/main.py" || true
 # (Catching any stray gevent/eel workers)
 ps -ef | grep "python" | grep "gui_media_web_viewer" | awk '{print $2}' | xargs kill -9 2>/dev/null || true
 
-# 4. Wait for OS to release port
+# 4. KILL TRANSCODER ZOMBIES (FFmpeg / FFplay)
+echo "[Cleanup] Cleaning up transcoding/verifier zombies..."
+pkill -9 -f "ffplay" || true
+pkill -9 -f "ffmpeg" || true
+
+# 5. Wait for OS to release port
 sleep 1
 echo "[Cleanup] Port status:"
 lsof -i :8345 || echo "[Cleanup] Port 8345 is now FREE."
