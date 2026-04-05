@@ -1,12 +1,12 @@
 /**
- * version.js (v1.35.61)
+ * version.js (v1.35.62)
  * Central version and performance monitoring.
- * Milestone: Diagnostic Baseline & Filtered Queue (29 Items).
+ * Milestone: Context Menu & Logic Integrity (29 Items).
  */
 
-window.MWV_VERSION = 'v1.35.61';
+window.MWV_VERSION = 'v1.35.62';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'Baseline-Hydrated-Filter-Active';
+window.MWV_STABILITY = 'Logic-Complete-Menu-Active';
 
 // Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {

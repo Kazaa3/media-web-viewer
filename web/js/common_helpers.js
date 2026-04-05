@@ -156,19 +156,20 @@ function update_progress(data) {
  * Global Context Menu Controller
  */
 function showContextMenu(e, item) {
-    e.preventDefault();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
     const menu = document.getElementById('context-menu');
     if (!menu) return;
 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Context-Menu] Opening for: ${item.name}`);
-
-    // Log context menu opening
-    if (typeof mwv_trace === 'function') {
-        mwv_trace('UI-INPUT', 'CONTEXT-MENU-OPEN', { itemName: item.name });
-    }
+    console.info(`>>> [Context-Menu] showContextMenu triggered for: ${item.name}`);
 
     menu.innerHTML = '';
     menu.style.display = 'block';
+    menu.style.zIndex = '100002'; // v1.35.62: Ensure visibility above fragments
     
     // Position menu at cursor
     let x = e.pageX;

@@ -571,7 +571,9 @@ function renderPlaylist() {
         };
         
         if (typeof showContextMenu === 'function') {
-            div.oncontextmenu = (e) => showContextMenu(e, item);
+            div.addEventListener('contextmenu', (e) => {
+                showContextMenu(e, item);
+            });
         }
         
         list.appendChild(div);
@@ -699,8 +701,10 @@ function syncQueueWithLibrary() {
     }
     
     console.log(`[Audio] Syncing queue with ${allLibraryItems.length} items...`);
-        // Filter-immune: Always include mock items
+        // Filter-immune: Always include mock items. v1.35.62: Allow ALL if Diagnostic is active.
+        const isDiag = (typeof RecoveryManager !== 'undefined' && RecoveryManager.isActive);
         const audioItems = allLibraryItems.filter(i =>
+            isDiag || // Bypass for diagnostics
             i.is_mock === true ||
             i.category === 'Audio' ||
             i.category === 'Album' ||
