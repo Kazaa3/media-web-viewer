@@ -30,6 +30,7 @@ async function loadLibrary(retryCount = 0) {
         const totalDbCount = library.db_count || incomingCount;
         
         window.__mwv_last_db_count = totalDbCount;
+        if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount);
         console.warn(`>>> [Handshake] Backend returned media array (Count: ${incomingCount}, DB Total: ${totalDbCount}).`);
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Received ${incomingCount} items. DB Status: ${totalDbCount} records.`, "SUCCESS");
         
@@ -195,6 +196,9 @@ async function renderLibrary() {
         'database': renderDatabaseView
     };
     if (views[currentView]) views[currentView]();
+    
+    // Update the sync anchor with the final rendered count
+    if (typeof updateSyncAnchor === 'function') updateSyncAnchor(undefined, coverflowItems.length);
 }
 
 /**

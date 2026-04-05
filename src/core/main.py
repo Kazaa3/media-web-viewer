@@ -3281,7 +3281,7 @@ def get_library() -> Dict[str, Any]:
         "images":    ["Bilder", "Grafik", "Bild", "Foto", "multimedia"],
         "documents": ["Dokument", "PDF", "Text"],
         "ebooks":    ["E-Book", "Ebook"],
-        "abbild":    ["Abbild", "Disk-Abbild", "ISO"],
+        "abbild":    ["Abbild", "Disk-Abbild", "ISO", "PAL DVD", "NTSC DVD", "Blu-ray", "3D", "4K" ,"HD-DVD", "WMV-HD"],
         "multimedia": ["multimedia", "Bilder", "Video", "Film"] # Explicit catch-all
     }
 

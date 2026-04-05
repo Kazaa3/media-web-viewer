@@ -517,3 +517,34 @@ window.showStatusNotification = function(msg, type = 'info') {
         setTimeout(() => pill.remove(), 500);
     }, 3000);
 };
+/**
+ * Sync Anchor Orchestrator (v1.35.68 Recovery) 
+ * Updates the global footer anchor [DB: X | GUI: X] to identify data drops.
+ */
+function updateSyncAnchor(dbCount, guiCount) {
+    const el = document.getElementById('footer-sync-anchor');
+    const light = document.getElementById('sync-status');
+    if (!el) return;
+
+    // Use current state if not provided
+    const finalDb = (dbCount !== undefined) ? dbCount : (window.__mwv_last_db_count || 0);
+    const finalGui = (guiCount !== undefined) ? guiCount : (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0);
+
+    el.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
+
+    // Visual Cue: Yellow if 0 items in GUI but items in DB
+    if (finalGui === 0 && finalDb > 0) {
+        el.style.color = '#f1c40f'; // Warning
+        el.style.background = 'rgba(241, 196, 15, 0.1)';
+        el.style.borderColor = 'rgba(241, 196, 15, 0.2)';
+        if (light) light.style.color = '#f1c40f';
+    } else if (finalGui > 0) {
+        el.style.color = '#2ecc71'; // Healthy
+        el.style.background = 'rgba(46, 204, 113, 0.1)';
+        el.style.borderColor = 'rgba(46, 204, 113, 0.2)';
+        if (light) light.style.color = '#2ecc71';
+    }
+}
+
+// Expose to window
+window.updateSyncAnchor = updateSyncAnchor;
