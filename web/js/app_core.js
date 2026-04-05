@@ -196,8 +196,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
-        // 0. Load UI Fragments in Parallel
-        let fragmentsNeeded = 4;
+        // 0. Load UI Fragments in Parallel (v1.35.21 Expanded)
+        let fragmentsNeeded = 6;
         let fragmentsLoaded = 0;
         const onFragmentDone = () => {
             fragmentsLoaded++;
@@ -208,39 +208,49 @@ window.addEventListener('DOMContentLoaded', async () => {
         };
 
         if (typeof FragmentLoader?.load === 'function') {
-            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {
-                console.log("DOM: Modals fragment initialized.");
-                if (typeof initTranslations === 'function') initTranslations();
-                onFragmentDone();
-            });
+            // Core UI Viewports
+            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', onFragmentDone);
+            FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', onFragmentDone);
+            FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', onFragmentDone);
+            FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', onFragmentDone);
             
-            FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
-                console.log("DOM: Player fragment initialized.");
-                if (typeof mwv_init_actions?.player === 'function') mwv_init_actions.player();
-                onFragmentDone();
-            });
-
-            FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => {
-                console.log("DOM: Library fragment initialized.");
-                onFragmentDone();
-            });
-
-            FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => {
-                console.log("DOM: Editor fragment initialized.");
-                onFragmentDone();
-            });
+            // Shared Components
+            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', onFragmentDone);
+            FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', onFragmentDone);
         } else {
             console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
-            mwv_finalize_boot(); // Fallback
+            mwv_finalize_boot(); 
         }
 
         async function mwv_finalize_boot() {
-            // 1. Default Start Screen
-            console.log("UI: Setting default category and tab...");
-            if (typeof switchMainCategory === 'function') switchMainCategory('media');
+            console.log("Orchestrator: Finalizing boot sequence...");
+
+            // 1. Backend Handshake (Critical for Watchdog)
+            if (typeof eel !== "undefined" && typeof eel.report_spawn === 'function') {
+                eel.report_spawn()(() => console.log("DOM: Backend sync complete."));
+            }
+
+            // 2. Initialize Shared Helpers
+            if (typeof initDomWatchdog === 'function') initDomWatchdog();
+            if (typeof initTranslations === 'function') initTranslations();
+            if (typeof initAllSplitters === 'function') initAllSplitters();
             
             // Apply persisted sidebar state
             if (typeof applySidebarState === 'function') applySidebarState();
+
+            // 3. UI Start State
+            console.log("UI: Setting default category and tab...");
+            if (typeof switchMainCategory === 'function') switchMainCategory('media');
+            
+            if (typeof switchTab === 'function') {
+                console.log("UI: Switching to 'player' tab.");
+                switchTab('player');
+            }
+
+            // 4. Data Sync
+            console.log("Data: Triggering library sync...");
+            if (typeof loadLibrary === 'function') await loadLibrary();
+            if (typeof loadEditItems === 'function') await loadEditItems();
             
             // Start stats polling
             if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
@@ -253,17 +263,6 @@ window.addEventListener('DOMContentLoaded', async () => {
                     }
                 }, 2000);
             }
-
-            // Trigger Tab Switch
-            if (typeof switchTab === 'function') {
-                console.log("UI: Switching to 'player' tab.");
-                switchTab('player');
-            }
-
-            // Sync Data
-            console.log("Data: Triggering library sync...");
-            if (typeof loadLibrary === 'function') await loadLibrary();
-            if (typeof loadEditItems === 'function') await loadEditItems();
         }
 
         // 3. Fetch and Display Startup Time
