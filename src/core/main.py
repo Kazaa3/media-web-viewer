@@ -3107,10 +3107,20 @@ def get_library() -> Dict[str, Any]:
         all_media = db.get_all_media()
         count_total = len(all_media)
         
+        # --- V1.35.46: RAW SQL AUDIT ---
+        import sqlite3
+        raw_count = -1
+        try:
+            temp_conn = sqlite3.connect(os.path.join("data", "database.db"))
+            raw_count = temp_conn.execute("SELECT count(*) FROM media").fetchone()[0]
+            temp_conn.close()
+        except Exception as e:
+            log.error(f"[DB-AUDIT] Raw count failed: {e}")
+
         # --- V1.35.45: DB-SNAPSHOT Audit ---
         db_path = os.path.join("data", "database.db")
         db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
-        snap_msg = f"[DB-SNAPSHOT] File: {db_path} | Size: {db_size} bytes | Raw Rows: {count_total}"
+        snap_msg = f"[DB-SNAPSHOT] File: {db_path} | Size: {db_size} bytes | Raw Rows: {raw_count} | Wrapper Rows: {count_total}"
         log.info(snap_msg)
         print(f"STDOUT: {snap_msg}", flush=True)
         if getattr(eel, 'append_debug_log', None):
@@ -3528,11 +3538,17 @@ def api_scan_isbn(isbn: str):
 def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
-    @details Scannt rekursiv einen Ordner und indexiert Audiodateien. Optionaler Reset der DB.
-    @param dir_path Optional path to scan / Optionaler Pfad zum Scannen.
-    @param clear_db If True, clears the database before scanning / Falls True, leert die Datenbank vor dem Scan.
-    @return Dictionary with media list and scan stats / Dictionary mit Medien-Liste und Statistiken.
     """
+    if getattr(eel, 'js_set_scanning_status', None):
+        eel.js_set_scanning_status(True)
+    
+    try:
+        _scan_media_execution(dir_path, clear_db)
+    finally:
+        if getattr(eel, 'js_set_scanning_status', None):
+            eel.js_set_scanning_status(False)
+
+def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     start_time = time.time()
     # Emit start to GUI
     if getattr(eel, 'append_debug_log', None):

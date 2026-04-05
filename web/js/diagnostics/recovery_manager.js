@@ -84,6 +84,18 @@ const RecoveryManager = {
     }
 };
 
+/**
+ * Eel Bridge for Scanning Status
+ * @param {boolean} status 
+ */
+if (typeof eel !== 'undefined') {
+    eel.expose(js_set_scanning_status);
+    function js_set_scanning_status(status) {
+        console.log(">>> [MANAGER] Global Scan Status Update:", status);
+        window.__mwv_is_scanning = status;
+    }
+}
+
 // Backward Compatibility for legacy calls
 window.Diagnostics = {
     isActive: RecoveryManager.isActive,

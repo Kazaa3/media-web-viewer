@@ -1,7 +1,7 @@
 /**
- * gui_integrity.js (v1.35.45)
+ * gui_integrity.js (v1.35.46)
  * Handles visual verification and UI lockdown.
- * Restores Boot Time and Real Data metrics.
+ * Restores Boot Time and Scan Status.
  */
 
 const GUIIntegrity = {
@@ -52,6 +52,7 @@ const GUIIntegrity = {
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>BOOT TIME:</span> <span id="hud-boot-time">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>BACKEND DB:</span> <span id="hud-db-count">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>FRONTEND ITEMS:</span> <span id="hud-ui-count">...</span></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>SCAN STATUS:</span> <span id="hud-scan-status" style="color: #666;">IDLE</span></div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px solid #003300; margin-top: 8px; padding-top: 5px;"><span>SYSTEM STATUS:</span> <span id="hud-status" style="color: white;">SYNCING</span></div>
             </div>
         `;
@@ -66,11 +67,20 @@ const GUIIntegrity = {
         const bootEl = document.getElementById('hud-boot-time');
         const dbEl = document.getElementById('hud-db-count');
         const uiEl = document.getElementById('hud-ui-count');
+        const scanEl = document.getElementById('hud-scan-status');
         const statusEl = document.getElementById('hud-status');
         
         if (bootEl) bootEl.innerText = `${bootTime}ms`;
         if (dbEl) dbEl.innerText = dbCount;
         if (uiEl) uiEl.innerText = uiCount;
+        
+        if (scanEl) {
+            const isScanning = window.__mwv_is_scanning === true;
+            scanEl.innerText = isScanning ? "INDEXING..." : "IDLE";
+            scanEl.style.color = isScanning ? "#00ff00" : "#666";
+            if (isScanning) scanEl.style.textShadow = "0 0 5px #00ff00";
+            else scanEl.style.textShadow = "none";
+        }
         
         if (statusEl) {
             if (dbCount > 0 && uiCount === 0) {
