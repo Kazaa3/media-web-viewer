@@ -6,7 +6,7 @@
 const Diagnostics = {
     isActive: localStorage.getItem('mwv_diagnostic_mode') === 'true',
     isNuclear: localStorage.getItem('mwv_nuclear_mode') === 'true',
-    
+
     init() {
         console.log(">>> [DIAGNOSTICS] Suite initialized. Active:", this.isActive);
         if (this.isActive) {
@@ -14,10 +14,10 @@ const Diagnostics = {
             this.startMutationWatch();
             this.injectHeader();
         }
-        
+
         // Sync UI Buttons
         this.syncUI();
-        
+
         // Auto-Hydration Fail-safe (2.5s after boot)
         setTimeout(() => this.checkAndHydrate(), 2500);
     },
@@ -25,7 +25,7 @@ const Diagnostics = {
     syncUI() {
         const diagBtn = document.getElementById('diag-toggle-btn');
         if (diagBtn) diagBtn.innerText = this.isActive ? 'ON' : 'OFF';
-        
+
         const nuclearBtn = document.querySelector('button[onclick*="nuclear_mode"]');
         if (nuclearBtn) nuclearBtn.innerText = this.isNuclear ? 'ON' : 'OFF';
     },
@@ -101,38 +101,56 @@ const Diagnostics = {
 
     hydrate() {
         console.log(">>> [DIAGNOSTICS] Atomic Hydration (Real Tracks) starting...");
-        
+
         const realMockTracks = [
             {
-                id: 'diag-track-1',
-                name: 'sample_audio.mp3',
-                filename: 'sample_audio.mp3',
-                path: 'media/sample_audio.mp3',
-                title: 'System Diagnostic Track (MP3)',
-                artist: 'MWV Discovery',
+                id: 'diag-stage-1',
+                name: 'sample_audio_missing.mp3',
+                filename: 'sample_audio_missing.mp3',
+                path: 'media/sample_audio_missing.mp3',
+                title: '[STAGE 1] Missing File Test',
+                artist: 'MWV Discovery (Simulation)',
                 album: 'MWV Recovery Suite',
-                tags: {
-                    title: 'System Diagnostic Track (MP3)',
-                    artist: 'MWV Discovery',
-                    album: 'MWV Recovery Suite'
-                },
+                tags: { title: '[STAGE 1] Missing File Test', artist: 'MWV Discovery (Simulation)', album: 'MWV Recovery Suite' },
+                category: 'Audio',
+                is_diag: true,
+                is_mock: true
+            },
+            {
+                id: 'diag-stage-2',
+                name: 'test_track_missing.m4a',
+                filename: 'test_track_missing.m4a',
+                path: 'media/test_track_missing.m4a',
+                title: '[STAGE 2] Missing File Test',
+                artist: 'MWV Discovery (Simulation)',
+                album: 'MWV Recovery Suite',
+                tags: { title: '[STAGE 2] Missing File Test', artist: 'MWV Discovery (Simulation)', album: 'MWV Recovery Suite' },
+                category: 'Audio',
+                is_diag: true,
+                is_mock: true
+            },
+            {
+                id: 'diag-stage-3',
+                name: '01 - Einfach & Leicht.mp3',
+                filename: '01 - Einfach & Leicht.mp3',
+                path: 'media/01 - Einfach & Leicht.mp3',
+                title: '[STAGE 3] Real File - Happy Path',
+                artist: 'MWV Discovery (Real Asset)',
+                album: 'MWV Recovery Suite',
+                tags: { title: '[STAGE 3] Real File - Happy Path', artist: 'MWV Discovery (Real Asset)', album: 'MWV Recovery Suite' },
                 category: 'Audio',
                 is_diag: true,
                 is_mock: false
             },
             {
-                id: 'diag-track-2',
-                name: 'test_track_01.m4a',
-                filename: 'test_track_01.m4a',
-                path: 'media/test_track_01.m4a',
-                title: 'System Diagnostic Track (M4A)',
-                artist: 'MWV Discovery',
+                id: 'diag-stage-4',
+                name: 'Coldplay - Viva La Vida.opus',
+                filename: 'Coldplay - Viva La Vida.opus',
+                path: 'media/Coldplay - Viva La Vida.opus',
+                title: '[STAGE 4] Real File - Happy Path',
+                artist: 'MWV Discovery (Real Asset)',
                 album: 'MWV Recovery Suite',
-                tags: {
-                    title: 'System Diagnostic Track (M4A)',
-                    artist: 'MWV Discovery',
-                    album: 'MWV Recovery Suite'
-                },
+                tags: { title: '[STAGE 4] Real File - Happy Path', artist: 'MWV Discovery (Real Asset)', album: 'MWV Recovery Suite' },
                 category: 'Audio',
                 is_diag: true,
                 is_mock: false
@@ -141,7 +159,7 @@ const Diagnostics = {
 
         // Hydrate Library
         window.allLibraryItems = realMockTracks;
-        
+
         // Hydrate Player Queue (CRITICAL FIX)
         if (typeof window.currentPlaylist !== 'undefined') {
             window.currentPlaylist = [...realMockTracks];
@@ -150,7 +168,7 @@ const Diagnostics = {
         // Trigger UI Renders
         if (typeof renderLibrary === 'function') renderLibrary();
         if (typeof renderPlaylist === 'function') renderPlaylist();
-        
+
         if (typeof showToast === 'function') showToast("System Hydrated with Real Source Files", "success");
     }
 };
