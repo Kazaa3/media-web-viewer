@@ -1,12 +1,12 @@
 /**
- * version.js (v1.35.53)
+ * version.js (v1.35.55)
  * Central version and performance monitoring.
- * Milestone: Format Expansion (M4B, AAC, M4A).
+ * Milestone: Nuclear Restart & Script Overhaul.
  */
 
-window.MWV_VERSION = 'v1.35.53';
+window.MWV_VERSION = 'v1.35.55';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'Format-Expansion';
+window.MWV_STABILITY = 'Nuclear-Reboot-Ready';
 
 // Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {

@@ -1,6 +1,6 @@
 /**
- * gui_integrity.js (v1.35.51)
- * Handles visual verification and UI relocation.
+ * gui_integrity.js (v1.35.55)
+ * Handles visual verification, UI relocation, and Nuclear Control.
  */
 
 const GUIIntegrity = {
@@ -47,17 +47,28 @@ const GUIIntegrity = {
     injectHUD() {
         if (document.getElementById(this.hudId)) return;
         const hud = `
-            <div id="${this.hudId}" style="position: fixed; bottom: 85px; left: 20px; z-index: 10005; background: rgba(0,0,0,0.85); color: #00ff00; padding: 15px; border-radius: 8px; border: 1px solid #00ff00; font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 240px; pointer-events: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #003300; padding-bottom: 5px; color: white;">MWV DATA-HUD (${window.MWV_VERSION || 'v1.35.x'})</div>
+            <div id="${this.hudId}" style="position: fixed; bottom: 85px; left: 20px; z-index: 10005; background: rgba(0,0,0,0.85); color: #00ff00; padding: 15px; border-radius: 8px; border: 1px solid #00ff00; font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 240px; pointer-events: all; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #003300; padding-bottom: 5px; color: white; display: flex; justify-content: space-between;">
+                    <span>MWV DATA-HUD (${window.MWV_VERSION || 'v1.35.55'})</span>
+                    <span id="hud-pid-label" style="color: #666; font-size: 9px;">PID: ...</span>
+                </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>BOOT TIME:</span> <span id="hud-boot-time">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>BACKEND DB:</span> <span id="hud-db-count">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>FRONTEND ITEMS:</span> <span id="hud-ui-count">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>SCAN STATUS:</span> <span id="hud-scan-status" style="color: #666;">IDLE</span></div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px solid #003300; margin-top: 8px; padding-top: 5px;"><span>SYSTEM STATUS:</span> <span id="hud-status" style="color: white;">SYNCING</span></div>
-                <div style="margin-top: 10px;">
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
                     <button onclick="GUIIntegrity.verifyWithFFplay()" 
                             style="width: 100%; padding: 5px; background: rgba(0,255,0,0.1); border: 1px solid #00ff00; color: #00ff00; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
                         VERIFY WITH FFPLAY
+                    </button>
+                    <button onclick="RecoveryManager.toggleHideMocks()" 
+                            style="width: 100%; padding: 5px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; color: #3498db; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
+                        TOGGLE MOCK FILTRATION
+                    </button>
+                    <button onclick="RecoveryManager.nuclearRestart()" 
+                            style="width: 100%; padding: 5px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; color: #e74c3c; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
+                        NUCLEAR RESTART BACKEND
                     </button>
                 </div>
             </div>

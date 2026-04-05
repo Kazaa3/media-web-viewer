@@ -182,8 +182,11 @@ def serve_media(filepath):
     elif ext.endswith('.mkv'):
         mime_type = 'video/x-matroska'
     elif ext.endswith('.wav'):
-        mime_type = 'audio/wav' # Native wav for wav24
+        mime_type = 'audio/wav'
+    elif ext.endswith('.m4b'):
+        mime_type = 'audio/mp4'
     
+    _log(f"Serving media: {filepath} -> Resolved to: {full_path} (Mime: {mime_type})")
     return bottle.static_file(full_path.name, root=str(full_path.parent), mimetype=mime_type)
 
 

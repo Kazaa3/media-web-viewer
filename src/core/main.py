@@ -1821,6 +1821,31 @@ def _get_requirements_status():
     status["missing_count"] = len(missing)
     return status
 
+@eel.expose
+def nuclear_restart():
+    """
+    @brief Nuclear Restart: Kills the current backend and reboots via script.
+    @details Spawns a detached process to cleanup and restart.
+    """
+    import os
+    import subprocess
+    from pathlib import Path
+    
+    script_path = Path("/home/xc/#Coding/gui_media_web_viewer/scripts/reboot_mwv.sh")
+    log.warning(f"[REBOOT] NUCLEAR RESTART TRIGGERED. PID: {os.getpid()}")
+    
+    try:
+        if script_path.exists():
+            # Use start_new_session=True to detach from this process tree
+            subprocess.Popen(["bash", str(script_path)], start_new_session=True)
+            log.info("[REBOOT] Detached reboot script spawned. Exiting current process.")
+            # Standard cleanup to close Eel then exit
+            os._exit(0)
+        else:
+            return {"status": "error", "message": "Reboot script not found."}
+    except Exception as e:
+        log.error(f"[REBOOT] Spawn failed: {e}")
+        return {"status": "error", "message": str(e)}
 
 @eel.expose
 def get_environment_info(force_refresh=False):
