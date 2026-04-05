@@ -546,10 +546,16 @@ function renderPlaylist() {
     }
 
     const countEls = document.querySelectorAll('.synced-count');
-    countEls.forEach(el => el.innerText = `${filteredItems.length} Titel`);
+    countEls.forEach(el => {
+        el.innerText = `${filteredItems.length} Titel`;
+        el.style.opacity = filteredItems.length === 0 ? '0.3' : '1';
+    });
     
-    const countEl = document.getElementById('queue-item-count');
-    if (countEl) countEl.innerText = `${filteredItems.length} Titel`;
+    // Explicit ID-based counts for legacy compat
+    ['queue-item-count', 'queue-item-count-warteschlange', 'queue-item-count-legacy'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = `${filteredItems.length} Titel`;
+    });
 
     containers.forEach(list => {
         list.innerHTML = ''; // Clear existing
@@ -582,39 +588,35 @@ function renderPlaylist() {
             </div>
         `;
 
-        // --- BLACK HOLE RECOVERY UI (v1.35.68 Player Side) ---
-        if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
-            const dbTotal = (typeof window.__mwv_last_db_count !== 'undefined') ? window.__mwv_last_db_count : allLibraryItems.length;
+        if (typeof window.allLibraryItems !== 'undefined' && window.allLibraryItems.length > 0) {
+            const dbTotal = (typeof window.__mwv_last_db_count !== 'undefined') ? window.__mwv_last_db_count : window.allLibraryItems.length;
             noMediaHtml = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(231, 76, 60, 0.05); border: 2px dashed rgba(231, 76, 60, 0.2); border-radius: 12px; margin: 20px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
-                    <div style="font-weight: 800; color: #e74c3c; margin-bottom: 10px; font-size: 1.1em;">BLACK HOLE IM PLAYER</div>
-                    <p style="font-size: 0.9em; color: var(--text-secondary); max-width: 250px; margin: 0 auto 20px auto;">
-                        Die Mediathek enthält ${dbTotal} Titel, aber die Warteschlange ist leer.
+                <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(0, 122, 255, 0.05); border: 2px dashed var(--accent-color); border-radius: 12px; margin: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--accent-color));">🌀</div>
+                    <div style="font-weight: 800; color: var(--accent-color); margin-bottom: 10px; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">Queue Black Hole</div>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); max-width: 250px; margin: 0 auto 20px auto; line-height: 1.6;">
+                        Deine Mediathek enthält <strong>${dbTotal} Titel</strong>, aber die Warteschlange ist durch Filter blockiert oder nicht synchronisiert.
                     </p>
-                    <button onclick="resetAllFilters()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">RESET ALL FILTERS</button>
+                    <button onclick="resetAllFilters()" class="tab-btn active" style="padding: 12px 30px; font-weight: 800;">SYNC & RESET FILTERS</button>
                 </div>
             `;
         }
 
         list.innerHTML = noMediaHtml;
-        return;
-    }
+    } else {
+        activeList.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'legacy-track-item';
+            div.draggable = true;
+            if (index === playlistIndex) div.classList.add('active');
 
-    activeList.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'legacy-track-item';
-        div.draggable = true;
-        if (index === playlistIndex) div.classList.add('active');
-
-        const tags = item.tags || {};
-        // v1.35.63: Prepend Stage Label [S#] if present
-        const stagePrefix = item.stage ? `[${item.stage}] ` : '';
-        const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Recovery Item');
-        const artistDisplay = item.artist || tags.artist || 'MWV Recovery';
-        
-        div.innerHTML = `
-            <div style="display: flex; align-items: center; width: 100%;">
+            const tags = item.tags || {};
+            const stagePrefix = item.stage ? `[${item.stage}] ` : '';
+            const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Recovery Item');
+            const artistDisplay = item.artist || tags.artist || 'MWV Recovery';
+            
+            div.innerHTML = `
+                <div style="display: flex; align-items: center; width: 100%;">
                 <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
                     <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${titleDisplay}</div>
@@ -684,8 +686,24 @@ function renderPlaylist() {
         }
         
         list.appendChild(div);
+        });
+    }
     });
-});
+}
+
+function resetAllFilters() {
+    console.warn(">>> [Recovery] resetAllFilters triggered.");
+    window.activeQueueFilter = 'all';
+    window.__mwv_raw_mode = false;
+    
+    // Default the UI select if it exists
+    const filterSelect = document.getElementById('queue-type-filter');
+    if (filterSelect) filterSelect.value = 'all';
+    
+    if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+    if (typeof renderPlaylist === 'function') renderPlaylist();
+    
+    if (typeof showToast === 'function') showToast("Alle Filter zurückgesetzt & Sync erzwungen.", "success");
 }
 
 function moveItemUp(index) {
@@ -814,32 +832,38 @@ function syncQueueWithLibrary() {
     // v1.35.68 Sync Audit
     const audit = { audio: 0, video: 0, dropped: 0, total: allLibraryItems.length };
 
-    // v1.35.65: Toggle between Real DB and Diagnostic Suite
-    if (isDiagnosticMode && !isRealDbMode) {
-        // Recovery Mode: Filter for Stage Items (S1-S15)
-        filtered = allLibraryItems.filter(item => {
-            const isStage = !!item.stage;
-            const isRecovery = item.tags && item.tags.comment && item.tags.comment.includes('RECOVERY');
-            return isStage || isRecovery;
-        });
-        console.info(`[Recovery] Syncing ${filtered.length} Diagnostic Stages.`);
-    } else {
-        // Productive Mode: Filter by category (Default: Audio for Player tab)
-        filtered = allLibraryItems.filter(item => {
-            const isReal = !item.stage;
-            const video = isVideoItem(item);
-            
-            // --- BRAIN FIX (v1.35.68): Force include in RAW mode or if not video ---
-            const isAudioCandidate = !video || isRaw;
-            const keep = isRaw || (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
-            
-            if (keep) audit.audio++; else audit.dropped++;
-            return keep;
-        });
+    // v1.35.68 Unified Sync Strategy
+    // We prioritize real media but don't drop them if Diagnostic Mode is on.
+    filtered = allLibraryItems.filter(item => {
+        const isStage = !!item.stage;
+        const isReal = !isStage;
+        const video = isVideoItem(item);
+        const isRaw = window.__mwv_raw_mode === true;
         
-        const countMsg = isRaw ? `FORCED RAW SYNC: ${audit.audio} Items` : `Sync Audit: ${audit.audio} Audio, ${audit.dropped} Dropped`;
-        console.info(`[Productive] ${countMsg} (Raw Toggle: ${isRaw})`);
+        // Diagnostic Mode Logic: Keep Stages but don't exclude Real unless specified
+        if (isDiagnosticMode && !isRealDbMode) {
+            const isRecovery = item.tags && item.tags.comment && item.tags.comment.includes('RECOVERY');
+            if (isStage || isRecovery) return true;
+            // Fallback: If it's a real item and NOT video, keep it in the pool!
+            return isReal && !video;
+        }
+
+        // Productive Mode Logic
+        const isAudioCandidate = !video || isRaw;
+        const keep = isRaw || (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
+        
+        if (keep) audit.audio++; else audit.dropped++;
+        return keep;
+    });
+
+    // --- EMERGENCY RESCUE: If library is NOT empty but filtered IS, force fallback! ---
+    if (filtered.length === 0 && allLibraryItems.length > 0 && !isDiagnosticMode) {
+        console.error("[Recovery] Sync Black Hole detected. Forcing raw fallback.");
+        filtered = allLibraryItems.filter(i => !isVideoItem(i));
     }
+    
+    const countMsg = isRaw ? `FORCED RAW SYNC: ${filtered.length} Items` : `Sync Audit: ${filtered.length} Items found. (Diagnostic: ${isDiagnosticMode})`;
+    console.info(`[Sync] ${countMsg}`);
     
     if (filtered.length > 0 || isRaw) {
         currentPlaylist = [...filtered];

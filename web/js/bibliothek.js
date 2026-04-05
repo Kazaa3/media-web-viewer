@@ -38,8 +38,7 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Received ${incomingCount} items. DB Status: ${totalDbCount} records.`, "SUCCESS");
         
         allLibraryItems = library.media || [];
-        
-        if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'BACKEND-RAW', { count: allLibraryItems.length });
+        window.allLibraryItems = allLibraryItems; // Ensure global sync
         
         // --- V1.35.43 Recovery: Modular Sync Handshake ---
         if (typeof RecoveryManager !== 'undefined') {
