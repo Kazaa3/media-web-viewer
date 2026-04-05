@@ -202,23 +202,31 @@ function switchTab(tabId, btn, callback, force = false) {
     const targetId = mapping.shell;
     const target = document.getElementById(targetId);
 
-    // Handle Fragment Loading
+    // Handle Fragment Loading (v1.35.28 Conditional Guard)
     if (fragmentMap[tabId]) {
         const frag = fragmentMap[tabId];
-        FragmentLoader.load(frag.containerId, frag.path, () => {
-            // Once fragment is loaded, recursive call to show the actual panel
+        const container = document.getElementById(frag.containerId);
+        
+        // Guard: If fragment is already loaded (has children and not just a loading message)
+        const isAlreadyLoaded = container && container.children.length > 0 && !container.querySelector('.loading-fragment');
+        
+        if (isAlreadyLoaded && !force) {
+            console.log(`[NAV] Skipping redundant fragment load for: ${tabId}`);
             finishSwitchTab(tabId, targetId, btn);
             if (typeof callback === 'function') callback();
-        });
-        // Show the container immediately (it might have a loader)
-        const container = document.getElementById(frag.containerId);
-        if (container) {
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.style.display = 'none';
-                el.classList.remove('active');
+        } else {
+            FragmentLoader.load(frag.containerId, frag.path, () => {
+                finishSwitchTab(tabId, targetId, btn);
+                if (typeof callback === 'function') callback();
             });
-            container.style.display = 'flex';
-            container.classList.add('active');
+            if (container) {
+                document.querySelectorAll('.tab-content').forEach(el => {
+                    el.style.display = 'none';
+                    el.classList.remove('active');
+                });
+                container.style.display = 'flex';
+                container.classList.add('active');
+            }
         }
     } else {
         finishSwitchTab(tabId, targetId, btn);
