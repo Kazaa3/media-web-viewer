@@ -235,6 +235,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
     
     sb.update(10, "Initializing Eel Assets")
     web_dir = str(PROJECT_ROOT / "web")
+    log.info(f"\n[DIAGNOSTIC] !!! EEL WEB DIRECTORY: {os.path.abspath(web_dir)} !!!\n")
     if not os.path.exists(web_dir):
         log.critical(f"Web dir not found at {web_dir}")
         sys.exit(1)
