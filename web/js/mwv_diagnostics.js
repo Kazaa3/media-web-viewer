@@ -1,66 +1,5 @@
-    toggleBorders() {
-        document.body.classList.toggle('diagnostic-borders');
-        document.querySelectorAll('.tab-content, .legacy-track-item, .media-player-viewport').forEach(el => {
-            el.style.outline = document.body.classList.contains('diagnostic-borders') ? '2px solid lime' : '';
-        });
-    },
-    toggleHeader() {
-        const header = document.getElementById('master-persistent-header');
-        if (header) header.style.display = (header.style.display === 'none') ? '' : 'none';
-    },
-    hydrate() {
-        if (!window.allLibraryItems) return;
-        const realTrack = {
-            id: 'sample-audio',
-            name: 'Sample Audio',
-            artist: 'Test Artist',
-            album: 'Diagnostics',
-            path: 'media/sample_audio.mp3',
-            category: 'Audio',
-            is_mock: false,
-            tags: { title: 'Sample Audio', artist: 'Test Artist' }
-        };
-        if (!window.allLibraryItems.find(i => i.path === realTrack.path)) {
-            window.allLibraryItems.push(realTrack);
-        }
-        if (window.currentPlaylist && !window.currentPlaylist.find(i => i.path === realTrack.path)) {
-            window.currentPlaylist.push(realTrack);
-        }
-        if (typeof renderPlaylist === 'function') renderPlaylist();
-        if (typeof renderLibrary === 'function') renderLibrary();
-    },
-    lockPlayerVisibility() {
-        const player = document.getElementById('player-tab');
-        if (!player) return;
-        const observer = new MutationObserver(() => {
-            if (player.style.display === 'none') {
-                player.style.display = 'flex';
-            }
-        });
-        observer.observe(player, { attributes: true, attributeFilter: ['style'] });
-    },
-    autoSyncQueue() {
-        setInterval(() => {
-            if (window.currentPlaylist && window.currentPlaylist.length === 0 && window.allLibraryItems && window.allLibraryItems.length > 0) {
-                window.currentPlaylist.push(...window.allLibraryItems);
-                if (typeof renderPlaylist === 'function') renderPlaylist();
-            }
-        }, 5000);
-    },
-// Show diagnostic toolbar and enable auto features on load
-window.addEventListener('DOMContentLoaded', () => {
-    const toolbar = document.getElementById('diagnostic-toolbar');
-    if (toolbar) toolbar.style.display = 'block';
-    Diagnostics.lockPlayerVisibility();
-    Diagnostics.autoSyncQueue();
-});
-
-// Optional: Add lime border style
-const diagStyle = document.createElement('style');
-diagStyle.innerHTML = `.diagnostic-borders .tab-content, .diagnostic-borders .legacy-track-item, .diagnostic-borders .media-player-viewport { outline: 2px solid lime !important; }`;
-document.head.appendChild(diagStyle);
 /**
- * MWV Diagnostic Suite (v1.35.33)
+ * MWV Diagnostic Suite (v1.35.34)
  * Formalized recovery and visibility toolset.
  */
 
@@ -79,8 +18,8 @@ const Diagnostics = {
         // Sync UI Buttons
         this.syncUI();
         
-        // Auto-Hydration Fail-safe (5s after boot)
-        setTimeout(() => this.checkAndHydrate(), 5000);
+        // Auto-Hydration Fail-safe (2.5s after boot)
+        setTimeout(() => this.checkAndHydrate(), 2500);
     },
 
     syncUI() {
@@ -126,7 +65,7 @@ const Diagnostics = {
         const msg = this.isNuclear ? "DIAGNOSTIC MODE: NUCLEAR" : "DIAGNOSTIC MODE: ACTIVE";
         document.body.insertAdjacentHTML('afterbegin', `
             <div id="recovery-test-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 10010; background: rgba(255,0,0,0.9); color: white; padding: 5px 20px; font-weight: bold; font-family: monospace; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <span>${msg} (v1.35.33)</span>
+                <span>${msg} (v1.35.34)</span>
                 <div>
                    <button onclick="Diagnostics.hydrate()" style="background: white; border: none; padding: 2px 10px; cursor: pointer; color: black; font-weight: bold; margin-right: 10px;">FORCE HYDRATION</button>
                    <button onclick="Diagnostics.toggle()" style="background: black; color: white; border: none; padding: 2px 10px; cursor: pointer;">DISABLE</button>
@@ -155,7 +94,7 @@ const Diagnostics = {
     checkAndHydrate() {
         const libCount = (window.allLibraryItems || []).length;
         if (libCount === 0 || (libCount === 1 && window.allLibraryItems[0].is_mock)) {
-            console.warn(">>> [DIAGNOSTICS] Library empty after 5s. Triggering Auto-Hydration...");
+            console.warn(">>> [DIAGNOSTICS] Library empty after 2.5s. Triggering Auto-Hydration...");
             this.hydrate();
         }
     },

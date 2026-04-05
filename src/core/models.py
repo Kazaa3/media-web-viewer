@@ -105,6 +105,20 @@ class MediaItem:
         else:
             # unknown shape — leave defaults
             pass
+
+        # --- v1.35.35 Recovery: Metadata Fallbacks ---
+        if not self.tags:
+            self.tags = {}
+        
+        # Ensure critical tags exist for the UI
+        if not self.tags.get('title'):
+            # Use filename without extension as fallback title
+            self.tags['title'] = self.path.stem if not self.is_directory else self.path.name
+        if not self.tags.get('artist'):
+            self.tags['artist'] = 'Unknown Artist'
+        if not self.tags.get('album'):
+            self.tags['album'] = 'No Album'
+
         self.category = self.get_category()
 
         # Logical separation: type, format, content
@@ -456,12 +470,15 @@ class MediaItem:
             'is_playable': self.is_playable,
             'is_directory': self.is_directory,
             'art_path': self.art_path,
-            'artwork': self.art_path, # Alias for frontend
+            'artwork': self.art_path or '/cover/undefined', # Fallback for UI
             'has_artwork': self.has_artwork,
             'is_transcoded': is_transcoded,
             'transcoded_format': transcoded_format,
             'is_chrome_native': chrome_native,
             'year': filtered_tags.get('year', ''),
+            'title': filtered_tags.get('title', self.name), # Flatten for easier JS access
+            'artist': filtered_tags.get('artist', 'Unknown Artist'), # Flatten for JS
+            'album': filtered_tags.get('album', 'No Album'), # Flatten for JS
             'film_title': filtered_tags.get('title', self.name),
             'media_type': self.media_type,
             'subtype': self.subtype,

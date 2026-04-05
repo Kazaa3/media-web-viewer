@@ -3106,9 +3106,19 @@ def get_library() -> Dict[str, Any]:
         progress_update("Library: Fetching Rows", 20)
         all_media = db.get_all_media()
         count_total = len(all_media)
+        
+        # --- V1.35.35 Recovery: Robust Auto-Scan ---
+        if count_total == 0:
+            log.warning("[RECOVERY] Library empty on boot. Triggering auto-scan of ./media...")
+            try:
+                # Trigger non-blocking scan
+                import threading
+                # Use False to avoid clearing DB on auto-scan (unless we really want to force it)
+                threading.Thread(target=scan_media, args=('./media', False), name="AutoScanThread").start()
+            except Exception as e:
+                log.error(f"[RECOVERY] Auto-scan trigger failed: {e}")
+
         log.info(f"[BACKEND] [get_library] DB returned {count_total} total items.")
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"[DB] get_library: {count_total} items in DB.", "DB")
         
         progress_update("Library: Filtering Categories", 50)
 
@@ -3559,8 +3569,14 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
         if getattr(eel, 'append_debug_log', None):
             eel.append_debug_log(f"[DB-SCAN] Mode: {parser_mode}", "DB-INFO")
 
-        # Get existing media from DB for caching
-        existing_media = {m['path']: m for m in db.get_all_media()}
+        # Get existing media from DB for caching (v1.35.35 Path Normalization)
+        existing_media = {}
+        for m in db.get_all_media():
+            try:
+                p_str = str(Path(m['path']).resolve())
+                existing_media[p_str] = m
+            except:
+                existing_media[m['path']] = m
         log.info(f" [Scan] Cached items in DB: {len(existing_media)}")
 
         # Determine which categories are enabled
@@ -3649,8 +3665,9 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
                             continue
 
                         try:
-                            # 1. Check if already in DB
-                            if str(f) in existing_media:
+                            # 1. Check if already in DB (v1.35.35 Resolved Lookup)
+                            f_resolved = str(f.resolve())
+                            if f_resolved in existing_media:
                                 count_indexed += 1
                                 continue
 
