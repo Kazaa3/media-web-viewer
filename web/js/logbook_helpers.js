@@ -414,4 +414,63 @@ async function openLogbook(featureName, source = 'logbuch', filename = null) {
     }
 }
 
+/**
+ * LOGBOOK EDITOR: Activation (v1.35.68)
+ */
+async function openLogbookEditor(name = null) {
+    const modal = document.getElementById('logbuch-editor-modal');
+    if (!modal) return;
+
+    // Reset fields
+    document.getElementById('logbuch-editor-name').value = name || '';
+    document.getElementById('logbuch-editor-category').value = '';
+    document.getElementById('logbuch-editor-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('logbuch-editor-title-de').value = '';
+    document.getElementById('logbuch-editor-content').value = '';
+
+    if (name) {
+        try {
+            const raw = await eel.get_logbook_entry(name, 'project')();
+            // Basic parsing of frontmatter-like content if found
+            document.getElementById('logbuch-editor-content').value = raw;
+            // Extract title or category if needed
+        } catch (e) { console.error('Failed to load entry for editing:', e); }
+    }
+
+    modal.style.display = 'block';
+}
+
+function closeLogbookEditor() {
+    const modal = document.getElementById('logbuch-editor-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function saveLogbookEntry() {
+    const name = document.getElementById('logbuch-editor-name').value.trim();
+    const content = document.getElementById('logbuch-editor-content').value;
+    
+    if (!name) {
+        if (typeof showToast === 'function') showToast('Bitte einen Namen angeben!', 'error');
+        return;
+    }
+
+    try {
+        if (typeof showToast === 'function') showToast('Speichere Eintrag...', 'info');
+        const res = await eel.save_logbook_entry(name, content)();
+        
+        if (res && res.status === 'success') {
+            if (typeof showToast === 'function') showToast('Logbucheintrag gespeichert ✓', 'success');
+            closeLogbookEditor();
+            // Refresh list
+            if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
+        } else {
+            console.error('Save failed:', res);
+            if (typeof showToast === 'function') showToast('Fehler beim Speichern', 'error');
+        }
+    } catch (e) {
+        console.error('Save error:', e);
+        if (typeof showToast === 'function') showToast('Systemfehler beim Speichern', 'error');
+    }
+}
+
 

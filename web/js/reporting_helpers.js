@@ -19,7 +19,7 @@ function switchReportingView(view) {
         'audio-streaming': document.getElementById('reporting-audio-streaming-view'),
         'parser': document.getElementById('reporting-parser-view'),
         'model-analysis': document.getElementById('reporting-model-analysis-view'),
-        'routing-suite': document.getElementById('reporting-routing-suite-view')
+        'routing': document.getElementById('reporting-routing-suite-view')
     };
 
     for (const [key, el] of Object.entries(views)) {
@@ -47,13 +47,14 @@ function updateDashboardHwInfo(hw) {
     try {
         if (hw) {
             if (typeof safeText === 'function') {
-                safeText('report-engine-status', `Bottle / Gevent / Python ${hw.python_version || '3.14.2'}`);
-                safeText('report-gpu-status', hw.gpu_type || 'Generic');
+                safeText('report-engine-status', `/ Bottle / WSGI`); // Static for v1.34 High-Fid
+                safeText('report-runtime-status', `Aktiv (Gevent / Greenlet)`);
+                safeText('report-os-platform', `${hw.os || 'Linux'} / x86_64`);
+                
+                // Keep mapping for legacy cards
                 safeText('dash-hw-disk', hw.disk_type || '-');
                 safeText('dash-hw-pcie', hw.pcie_gen || '-');
                 safeText('dash-hw-gpu', hw.gpu_type || '-');
-                const acc = (hw.encoders || []).join(', ').toUpperCase();
-                safeText('dash-hw-accel', acc || 'Software (CPU)');
             }
         }
     } catch (e) {

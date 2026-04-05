@@ -59,10 +59,13 @@
             <!-- Sidebar: Navigation -->
             <div id="logbuch-sidebar" style="width: 280px; border-right: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; flex-direction: column; overflow: hidden;">
                 <div style="padding: 24px; border-bottom: 1px solid var(--border-color); background: var(--bg-primary);">
-                    <h3 style="margin: 0 0 16px 0; font-weight: 900; color: var(--text-primary); font-size: 1.25em; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                        Logbook
-                    </h3>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.25em; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            Logbook
+                        </h3>
+                        <button onclick="openLogbookEditor()" class="tab-btn sm" style="padding: 4px 8px; font-size: 10px; background: var(--accent-color); color: white; border: none;">+ NEU</button>
+                    </div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <select id="logbuch-category-filter" onchange="renderLogbuchList(currentLogbuchEntries)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 12px; font-weight: 700;">
                             <option value="Alle">All Categories</option>
@@ -84,7 +87,10 @@
 
             <!-- Main Content Area (v1.3.2 Restored Aesthetic) -->
             <div id="logbuch-content-main" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #ffffff;">
-                <div id="logbuch-viewer-header" style="padding: 40px 60px 20px 60px; border-bottom: 2px solid #f0f0f0; display: none; background: #ffffff;">
+                <div id="logbuch-viewer-header" style="padding: 40px 60px 20px 60px; border-bottom: 2px solid #f0f0f0; display: none; background: #ffffff; position: relative;">
+                    <div style="position: absolute; top: 40px; right: 60px; display: flex; gap: 10px;">
+                        <button id="logbuch-edit-btn" onclick="openLogbookEditor(currentLogbuchEntryName)" class="tab-btn sm" style="background: #f5f5f5; color: #333; border: 1px solid #ddd;">EDIT</button>
+                    </div>
                     <h1 id="logbuch-tab-title" style="margin: 0; font-size: 2.8em; font-weight: 900; color: #111111; letter-spacing: -2px; line-height: 1.1;">Full Logbook</h1>
                     <div id="logbuch-entry-meta" style="margin-top: 20px; display: flex; gap: 12px; font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 0.8px;">
                         <!-- Category/Status pills injected here -->
