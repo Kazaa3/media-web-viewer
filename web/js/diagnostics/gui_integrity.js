@@ -1,7 +1,6 @@
 /**
- * gui_integrity.js (v1.35.50)
- * Handles visual verification and UI lockdown.
- * Restores Boot Time, Scan Status, and FFplay Verifier.
+ * gui_integrity.js (v1.35.51)
+ * Handles visual verification and UI relocation.
  */
 
 const GUIIntegrity = {

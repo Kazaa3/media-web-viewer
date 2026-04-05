@@ -1191,7 +1191,7 @@ def get_imprint_info():
     }
 
 
-@eel.expose@eel.expose
+@eel.expose
 def run_ffplay(url: str):
     """
     @brief Opens a local FFplay window to verify a stream URL.
