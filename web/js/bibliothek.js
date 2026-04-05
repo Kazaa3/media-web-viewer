@@ -14,7 +14,7 @@ let libraryGenre = 'all';
 let libraryYear = 'all';
 let librarySearch = '';
 let hasAutoScanned = false; // Prevent infinite scan loops
-// let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
 /**
  * Boots the library by fetching data from the DB.
@@ -63,11 +63,7 @@ async function loadLibrary(retryCount = 0) {
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 3: Rendering ${allLibraryItems.length} items...`, "UI-INFO");
         if (typeof renderLibrary === 'function') renderLibrary();
 
-        // Phase 4: Sync Audio Player Gallery (Mediengalerie)
-        if (typeof renderItemGallery === 'function') {
-            if (typeof appendUiTrace === 'function') appendUiTrace("[Library] Phase 4: Syncing Mediengalerie...", "UI-INFO");
-            renderItemGallery();
-        }
+        // Phase 4: Sync specialized components (Legacy Gallery Sync removed)
 
         // Phase 5: Sync Queue
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
@@ -154,13 +150,14 @@ async function renderLibrary() {
     }
 
     // Switch view rendering
+    const currentView = librarySubTab || 'coverflow';
     const views = {
         'coverflow': updateCoverflowDisplay,
         'grid': renderGridView,
         'details': renderDetailedView,
         'database': renderDatabaseView
     };
-    if (views[librarySubTab]) views[librarySubTab]();
+    if (views[currentView]) views[currentView]();
 }
 
 /**

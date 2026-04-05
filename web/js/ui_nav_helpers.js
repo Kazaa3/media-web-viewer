@@ -198,6 +198,10 @@ function switchTab(tabId, btn, callback, force = false) {
 
 // --- Global UI State ---
 function finishSwitchTab(tabId, targetId, btn) {
+    // --- Safety Release (v1.35 Hardening) ---
+    isNavigating = false;
+    document.body.style.cursor = 'default';
+
     document.querySelectorAll('.tab-content').forEach(el => {
         el.style.display = 'none';
         el.classList.remove('active');
@@ -283,7 +287,6 @@ function finishSwitchTab(tabId, targetId, btn) {
     const initActions = {
         'player': () => {
             if (typeof renderPlaylist === 'function') renderPlaylist();
-            if (typeof renderItemGallery === 'function') renderItemGallery();
             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
         },
         'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
@@ -551,7 +554,7 @@ function updateGlobalSubNav(category) {
     // We only populate if the category specifically requires a global override.
     const subNavMap = {
         'media': [
-            { id: 'queue', label: 'Queue', action: "switchPlayerView('warteschlange')" },
+            { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
             { id: 'mediengalerie', label: 'Mediengalerie', action: "switchPlayerView('mediengalerie')" },
             { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
             { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" },

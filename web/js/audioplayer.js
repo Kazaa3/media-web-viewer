@@ -279,8 +279,8 @@ function updateMediaSidebar(item, path) {
         const artistStr = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : (tags.artist || 'Unknown Artist');
         safeText('sidebar-metadata-secondary-string-renderer', artistStr);
         
-        // Sync Legacy, Visualizer, Queue, and Gallery Views
-        ['legacy', 'visualizer', 'warteschlange', 'mediengalerie'].forEach(view => {
+        // Sync Legacy, Visualizer, and Queue Views
+        ['legacy', 'visualizer', 'warteschlange'].forEach(view => {
             safeText(`big-player-title-${view}`, tags.title || item.name);
             safeText(`big-player-artist-${view}`, tags.artist || 'Unknown Artist');
             
@@ -306,8 +306,7 @@ function updateMediaSidebar(item, path) {
         'parser-mediainfo-artwork', 
         'footer-artwork-raster-buffer', 
         'big-player-artwork-visualizer',
-        'big-player-artwork-warteschlange',
-        'big-player-artwork-mediengalerie'
+        'big-player-artwork-warteschlange'
     ];
     
     artworkIds.forEach(id => {
@@ -576,25 +575,9 @@ function switchPlayerMainView(viewId) {
         setTimeout(() => target.classList.add('active'), 10);
     }
 
-    if (viewId === 'mediengalerie') renderItemGallery();
     if (viewId === 'warteschlange') renderPlaylist();
 }
 
-let gallerySource = 'library';
-function setGallerySource(source) {
-    gallerySource = source;
-    if (source === 'custom') {
-        if (typeof eel !== 'undefined' && eel.pick_directory) {
-            eel.pick_directory()((res) => {
-                if (res) {
-                    if (typeof scan === 'function') scan(res, true);
-                }
-            });
-        }
-    } else {
-        renderItemGallery();
-    }
-}
 
 function handlePlayerLibrarySearch(val) {
     playerLibrarySearch = val;
@@ -604,86 +587,6 @@ function handlePlayerLibrarySearch(val) {
 /**
  * Renders the full indexed library inside the player tab (v1.33 style Restoration).
  */
-window.renderItemGallery = function() {
-    const container = document.getElementById('player-gallery-render-target');
-    if (!container) {
-        console.warn("[Gallery] Gallery container 'player-gallery-render-target' not found in DOM.");
-        if (typeof appendUiTrace === 'function') appendUiTrace("[Gallery] CRITICAL: Container missing!", "DB-ERROR");
-        return;
-    }
-
-    if (typeof appendUiTrace === 'function') {
-        appendUiTrace(`[Gallery] renderItemGallery() called. allLibraryItems=${typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 'undefined'}`, "UI-INFO");
-    }
-
-    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        container.innerHTML = `
-            <div style="padding: 60px; text-align: center; color: var(--text-secondary);">
-                <div style="font-size: 48px; opacity: 0.2; margin-bottom: 20px;">📂</div>
-                <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Galerie ist leer</div>
-                <p style="font-size: 11px; margin-bottom: 20px;">Keine indizierten Elemente gefunden.</p>
-                <button onclick="scan('./media', true)" class="tab-btn sm" style="padding: 8px 20px;">Media Scan starten</button>
-            </div>
-        `;
-        return;
-    }
-
-    // ── Broadened categories: allow all by default ──
-    let items = allLibraryItems;
-
-    if (typeof appendUiTrace === 'function') {
-        appendUiTrace(`[Gallery] After audio filter: ${items.length} / ${allLibraryItems.length} items.`, "UI-INFO");
-    }
-
-    // Source Filtering
-    if (gallerySource === 'media') {
-        items = items.filter(i => (i.path || '').includes('/media/'));
-    }
-
-    const countEl = document.getElementById('gallery-item-count');
-    if (countEl) countEl.innerText = `${items.length} Lieder`;
-
-    container.innerHTML = '';
-    
-    if (items.length === 0) {
-        container.innerHTML = '<div style="padding: 40px; text-align: center; opacity: 0.5;">Keine Lieder in dieser Quelle gefunden.</div>';
-        return;
-    }
-
-    items.forEach((item, idx) => {
-        const div = document.createElement('div');
-        div.className = 'legacy-track-item';
-        
-        const tags = item.tags || {};
-        const titleDisplay = tags.title || item.name || 'Unknown Title';
-        const artistDisplay = tags.artist || 'Unknown Artist';
-        
-        div.innerHTML = `
-            <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">
-            <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                <div class="legacy-track-title" style="font-weight: 700; font-size: 12px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${titleDisplay}</div>
-                <div class="legacy-track-meta" style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'No Album'}</span></div>
-            </div>
-            <button onclick="event.stopPropagation(); addToQueue(${idx})" class="item-action-pill" style="opacity: 0; transition: opacity 0.2s;">+</button>
-        `;
-
-        div.onmouseenter = () => { div.querySelector('.item-action-pill').style.opacity = '1'; };
-        div.onmouseleave = () => { div.querySelector('.item-action-pill').style.opacity = '0'; };
-
-        div.onclick = () => {
-            playAudio(item, 0);
-        };
-        
-        container.appendChild(div);
-    });
-
-    if (typeof appendUiTrace === 'function') {
-        appendUiTrace(`[Gallery] ✓ ${items.length} items appended to DOM!`, "SUCCESS");
-    }
-    if (typeof eel !== 'undefined' && eel.report_items_spawned) {
-        eel.report_items_spawned(items.length, 'mediengalerie');
-    }
-}
 
 function addToQueue(idx) {
     if (typeof allLibraryItems !== 'undefined' && allLibraryItems[idx]) {
