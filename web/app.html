@@ -1,3 +1,4 @@
+    <script src="js/mwv_diagnostics.js?v=1352"></script>
 <!DOCTYPE html>
 <!-- 
   [AI-READINESS: STRUCTURAL METADATA]
@@ -75,6 +76,13 @@
 
 
 <body class="media-orchestrator-shell-environment">
+        <!-- Diagnostic Toolbar (hidden by default, toggled by diagnostics) -->
+        <div id="diagnostic-toolbar" style="display:none;position:fixed;top:42px;left:0;right:0;z-index:10002;background:limegreen;color:black;padding:4px 12px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <span>Diagnostics Active</span>
+            <button onclick="if(window.Diagnostics) Diagnostics.toggleBorders()" style="margin-left:12px;">Toggle Borders</button>
+            <button onclick="if(window.Diagnostics) Diagnostics.toggleHeader()" style="margin-left:6px;">Toggle Header</button>
+            <button onclick="if(window.Diagnostics) Diagnostics.hydrate()" style="margin-left:6px;">Hydrate Audio</button>
+        </div>
     <!-- Master Persistent Header (Always Available v1.34) -->
     <header id="master-persistent-header"
         style="position: fixed; top: 0; left: 0; right: 0; height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); user-select: none;">
@@ -385,6 +393,7 @@
                     <button class="nav-item" onclick="switchOptionsView('general')">Allgemein</button>
                     <button class="nav-item" onclick="switchOptionsView('appearance')">Darstellung</button>
                     <button class="nav-item" onclick="switchOptionsView('indexing')">Indexierung</button>
+                    <button class="nav-item" onclick="switchOptionsView('recovery')" style="color: #00ff00; border: 1px solid #00ff0033; margin-top: 20px;">Recovery & Debug</button>
                 </div>
 
                 <!-- Options Viewport -->
@@ -437,6 +446,24 @@
                             löschen</button>
                         <p style="font-size: 11px; opacity: 0.6; margin-top: 10px;">Vorsicht: Alle Indexdaten werden
                             unwiderruflich gelöscht.</p>
+                    </div>
+
+                    <!-- Recovery Sub-View -->
+                    <div id="options-view-recovery" class="options-sub-view" style="display: none;">
+                        <h3 class="diagnostic-section-title" style="color: #00ff00;">v1.35 Diagnostic Suite</h3>
+                        <div class="glass-card" style="border: 1px solid #00ff0033;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span>Diagnostic Mode</span>
+                                <button onclick="Diagnostics.toggle()" id="diag-toggle-btn" class="tab-btn sm" style="width: 80px;">OFF</button>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span>Nuclear Visibility Lock</span>
+                                <button onclick="Diagnostics.isNuclear = !Diagnostics.isNuclear; localStorage.setItem('mwv_nuclear_mode', Diagnostics.isNuclear); location.reload();" class="tab-btn sm" style="width: 80px;">OFF</button>
+                            </div>
+                            <hr style="opacity: 0.1; margin: 20px 0;">
+                            <button onclick="Diagnostics.hydrate()" style="width: 100%; background: #00ff00; color: #000; font-weight: 900; padding: 12px; border-radius: 8px; border: none; cursor: pointer;">FORCE ATOMIC HYDRATION</button>
+                            <p style="font-size: 11px; margin-top: 10px; opacity: 0.7;">Initializes Library and Queue with verified system tracks for testing.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -758,10 +785,10 @@
         </div>
     </footer>
 
-    <script src="js/coverflow_controller.js?v=1.35.21"></script>
-    <script src="js/video_test_suite.js?v=1.35.21"></script>
-    <script src="js/stats-overlay.js?v=1.35.21"></script>
-    <script src="js/test_injection.js?v=1.35.21"></script>
+    <script src="js/coverflow_controller.js?v=1.35.33"></script>
+    <script src="js/video_test_suite.js?v=1.35.33"></script>
+    <script src="js/stats-overlay.js?v=1.35.33"></script>
+    <script src="js/mwv_diagnostics.js?v=1.35.33"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
     
     <!-- Externally loaded SVG icons and context menu (v1.34) -->

@@ -4,10 +4,16 @@
  */
 
 // --- Audio State ---
+let currentPlaylist = []; // Global Queue
 let playlistIndex = -1;
 let isShuffle = false;
 let isRepeat = 'off'; // 'off', 'all', 'one'
 let shuffledPlaylist = [];
+
+// Expose to window for Diagnostics (v1.35.33)
+window.currentPlaylist = currentPlaylist;
+window.playlistIndex = playlistIndex;
+
 let audioContext = null;
 let analyser = null;
 let dataArray = null;
