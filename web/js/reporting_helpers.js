@@ -1,4 +1,17 @@
 /**
+ * Safety Utilities for Reporting (v1.35.68 Repair)
+ */
+function safeHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+}
+
+function safeText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+}
+
+/**
  * reporting_helpers.js - Modularized reporting and analytics logic
  * Extracted from app.html and ui_nav_helpers.js
  */
@@ -140,13 +153,20 @@ function renderReportingTable(history) {
  * Main entry point for updating the reporting dashboard
  */
 async function updateAnalyticsDashboard() {
-    if (typeof eel === 'undefined') return;
+    console.log('[Reporting] Triggering Dashboard Refresh...');
+    if (typeof eel === 'undefined') {
+        console.warn('[Reporting] EEL not available for hydration.');
+        return;
+    }
     
     try {
         const history = await eel.get_test_history()();
         if (history && history.length > 0) {
             renderCharts(history);
             renderReportingTable(history);
+        } else {
+            console.info('[Reporting] No test history found.');
+            safeHtml('report-summary-table', '<div style="opacity:0.5; padding:20px;">Keine Test-Historie verfügbar.</div>');
         }
         
         const hw = await eel.get_hardware_info()();
@@ -156,10 +176,17 @@ async function updateAnalyticsDashboard() {
     }
 }
 
-// Initial call if on reporting tab
-document.addEventListener('DOMContentLoaded', () => {
-    const activeTab = localStorage.getItem('mwv_active_tab');
-    if (activeTab === 'reporting') {
-        updateAnalyticsDashboard();
+// Initial call for "Fresh Refresh" stability (v1.35.68)
+function initReportingHydration() {
+    const activeTab = localStorage.getItem('mwv_active_tab') || 'media';
+    if (activeTab === 'reporting' || activeTab === 'reports') {
+        console.log('[Reporting] Active tab detected on refresh. Hydrating...');
+        setTimeout(updateAnalyticsDashboard, 200); // Small delay to ensure fragment is mounted
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReportingHydration);
+} else {
+    initReportingHydration();
+}

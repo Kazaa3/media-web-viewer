@@ -64,16 +64,26 @@ function buildParserChainUI(chain, slowParsers) {
     ALL_PARSERS.forEach(p => {
         const isSlow = p.slow || (slowParsers || []).includes(p.id);
         const isEnabled = (chain || []).includes(p.id);
-        const div = document.createElement('div');
-        div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--bg-secondary); border-radius:8px;';
-        div.innerHTML = `
-            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">
-                ${isSlow ? '<span style="color:#e67e22;">●</span> ' : ''}${p.label}
-                ${isSlow ? '<span style="font-size:9px; color:var(--text-secondary); font-weight:400;">(langsam)</span>' : ''}
+        const btn = document.createElement('div');
+        btn.className = 'parser-item-btn';
+        btn.setAttribute('data-parser', p.id);
+        btn.onclick = (e) => {
+            if (e.target.tagName !== 'INPUT') selectParserDetail(p.id);
+        };
+        
+        btn.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:12px; font-weight:800;">
+                    ${isSlow ? '<span style="color:#e67e22; margin-right:4px;">●</span>' : ''}
+                    ${p.label}
+                </div>
             </div>
-            <label class="switch sm"><input type="checkbox" id="parser-${p.id}" ${isEnabled ? 'checked' : ''} onchange="saveAllOptions()"><span class="slider"></span></label>
+            <label class="switch sm" onclick="event.stopPropagation()">
+                <input type="checkbox" id="parser-${p.id}" ${isEnabled ? 'checked' : ''} onchange="saveAllOptions()">
+                <span class="slider"></span>
+            </label>
         `;
-        container.appendChild(div);
+        container.appendChild(btn);
     });
 }
 
@@ -183,6 +193,12 @@ async function loadAllOptions() {
         // ── Parser mode
         buildParserChainUI(cfg.parser_chain || [], slowParsers);
         updateParserModeButtons(cfg.parser_mode);
+        safeCheck('config-parser-intensity',     cfg.parser_intensity);
+        if (cfg.parser_intensity) {
+             const lbl = document.getElementById('parser-intensity-label');
+             if (lbl) { lbl.innerText = 'Ultimate-Modus'; lbl.style.color = '#f1c40f'; }
+        }
+        
         safeCheck('config-mutagen-albumartist',  cfg.mutagen_prefer_albumartist);
         safeCheck('config-mutagen-lyrics',       cfg.mutagen_extract_lyrics);
         safeCheck('config-ffmpeg-deep',          cfg.ffmpeg_deep_analysis);
@@ -271,6 +287,8 @@ async function saveAllOptions() {
             playback_mode:           document.getElementById('config-playback-mode')?.value || 'chrome_native',
             vlc_embedded:            !!document.getElementById('config-vlc-embedded')?.checked,
             parser_chain:            chain,
+            parser_mode:             window._currentParserMode || 'full',
+            parser_intensity:        !!document.getElementById('config-parser-intensity')?.checked,
             indexed_categories:      indexedCats,
             displayed_categories:    displayedCats,
             debug_flags:             debugFlags,
@@ -303,11 +321,102 @@ function setAppMode(mode) {
 
 function setParserMode(mode) {
     updateParserModeButtons(mode);
-    // Store in a hidden field for saveAllOptions to pick up
     window._currentParserMode = mode;
+    
+    // Update intensity toggle if applicable
+    const intensityToggle = document.getElementById('config-parser-intensity');
+    if (intensityToggle) {
+        intensityToggle.checked = (mode === 'ultimate' || mode === 'full');
+        const label = document.getElementById('parser-intensity-label');
+        if (label) label.innerText = (mode === 'ultimate') ? 'Ultimate-Modus' : 'Effizienz-Modus';
+    }
+
     if (typeof eel !== 'undefined' && typeof eel.update_parser_config === 'function') {
         eel.update_parser_config({ parser_mode: mode })();
     }
+}
+
+/**
+ * Parser Panel Logic (v1.35.68)
+ */
+function toggleParserIntensity(enabled) {
+    const mode = enabled ? 'ultimate' : 'lightweight';
+    const label = document.getElementById('parser-intensity-label');
+    if (label) {
+        label.innerText = enabled ? 'Ultimate-Modus' : 'Effizienz-Modus';
+        label.style.color = enabled ? '#f1c40f' : '#2ecc71';
+    }
+    
+    // Auto-enable/disable deep flags
+    safeCheck('config-mutagen-lyrics', enabled);
+    safeCheck('config-ffmpeg-thumbs', enabled);
+    
+    setParserMode(mode);
+    if (typeof showToast === 'function') {
+        showToast(`Parser Intensität: ${enabled ? 'ULTIMATE' : 'EFFICIENCY'}`, 'info');
+    }
+}
+
+function selectParserDetail(id) {
+    console.log(`[Parser] Selecting detail for: ${id}`);
+    
+    // Update Sidebar Selection UI
+    document.querySelectorAll('.parser-item-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-parser') === id);
+    });
+
+    const title = document.getElementById('parser-detail-title');
+    const desc = document.getElementById('parser-detail-desc');
+    const opts = document.getElementById('parser-detail-options');
+    if (!title || !desc || !opts) return;
+
+    const parser = ALL_PARSERS.find(p => p.id === id) || { label: id, id: id };
+    title.innerText = `Konfiguration: ${parser.label}`;
+    
+    let detailHtml = '';
+    if (id === 'filename') {
+        desc.innerText = 'Extrahiert Informationen direkt aus dem Pfad und Dateinamen. Ideal für standardisierte Benennungen.';
+        detailHtml = `
+            <div class="glass-card sm">
+                <div style="font-size:11px; margin-bottom:5px; opacity:0.6;">RegEx Pattern</div>
+                <input type="text" value="S(?<season>\\d+)E(?<episode>\\d+)" style="width:100%; background:transparent; border:1px solid var(--border-color); color:var(--text-primary); font-family:monospace; font-size:12px; padding:5px;">
+            </div>
+        `;
+    } else if (id === 'mutagen') {
+        desc.innerText = 'Leistungsstarker Tag-Extraktor für Audio-Formate. Unterstützt ID3v2, Vorbis, FLAC und MP4.';
+        detailHtml = `
+            <div style="grid-column:1/-1; display:flex; flex-direction:column; gap:10px;">
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:13px;">Deep Cover Flow Extraction</span>
+                    <input type="checkbox" checked onchange="saveAllOptions()">
+                </label>
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:13px;">Fallback encoding (Latin-1)</span>
+                    <input type="checkbox" onchange="saveAllOptions()">
+                </label>
+            </div>
+        `;
+    } else {
+        desc.innerText = `Detaillierte Analyse-Einstellungen für den ${parser.label} Parser sind für diesen Dateityp aktiv.`;
+        detailHtml = `<div style="opacity:0.4; font-size:11px;">Keine spezifischen Parameter verfügbar.</div>`;
+    }
+    
+    opts.innerHTML = detailHtml;
+}
+
+function resetParserChain() {
+    const defaults = ['filename', 'container', 'mutagen', 'ffprobe'];
+    ALL_PARSERS.forEach(p => {
+        const el = document.getElementById(`parser-${p.id}`);
+        if (el) el.checked = defaults.includes(p.id);
+    });
+    if (typeof showToast === 'function') showToast('Parser Kette zurückgesetzt', 'info');
+    saveAllOptions();
+}
+
+function clearParserLogs() {
+    const term = document.getElementById('parser-log-terminal');
+    if (term) term.innerHTML = '<div style="opacity:0.4;">[System] Tracer cleared. Awaiting parse events...</div>';
 }
 
 function setLogLevel(level) {
