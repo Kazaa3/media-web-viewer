@@ -643,7 +643,7 @@ function updateGlobalSubNav(category) {
         'logbuch': [
             { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
             { id: 'events', label: 'Events (Live)', action: "switchLogbookSubView('events')" },
-            { id: 'docs', label: 'Documentation', action: "switchLogbookSubView('docs')" }
+            { id: 'project', label: 'Project Logbook', action: "switchLogbookSubView('project')" }
         ],
         'reporting': [
             { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
@@ -753,15 +753,7 @@ function switchToolsSubView(viewId) {
     });
 }
 
-function switchLogbookSubView(viewId) {
-    switchTab('logbuch', null, () => {
-        // High-level scroll or sub-view switching for Logbook
-        if (viewId === 'docs' && typeof window.scrollLogbookToDocs === 'function') {
-            window.scrollLogbookToDocs();
-        }
-        updateSubNavActiveState(viewId);
-    });
-}
+// Logbook sub-view logic moved to logbook_helpers.js (v1.35.68 Consolidation)
 
 function switchFileSubView(viewId) {
     switchTab('file', null, () => {
@@ -777,27 +769,7 @@ function switchFileSubView(viewId) {
 /**
  * Toggles sub-views within the Logbook category.
  */
-window.switchLogbookSubView = function (viewId) {
-    if (typeof mwv_trace === 'function') mwv_trace('SUBVIEW-LOG', viewId);
-
-    // Toggle active state for pills
-    document.querySelectorAll('#sub-nav-container .sub-pill-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.id === `global-sub-nav-${viewId}`);
-    });
-
-    const journalContainer = document.getElementById('localized-markdown-documentation-journal-panel');
-    const eventsContainer = document.getElementById('logbook-fragment');
-
-    if (viewId === 'journal' || viewId === 'docs') {
-        if (journalContainer) journalContainer.style.display = 'flex';
-        if (eventsContainer) eventsContainer.style.display = 'none';
-        if (typeof loadLogbuchTab === 'function') loadLogbuchTab(0);
-    } else if (viewId === 'events') {
-        if (journalContainer) journalContainer.style.display = 'none';
-        if (eventsContainer) eventsContainer.style.display = 'flex';
-        if (typeof filterLogUI === 'function') filterLogUI();
-    }
-}
+// Redundant window.switchLogbookSubView removed to resolve conflict with logbook_helpers.js
 
 function switchParserView(viewId) {
     switchTab('parser', null, () => {

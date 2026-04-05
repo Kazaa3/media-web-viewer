@@ -13,6 +13,28 @@ function closeLogbookEditor() {
     currentLogbookEditFilename = null;
 }
 
+/**
+ * Switch Logbook Views (v1.35.68)
+ */
+window.switchLogbookSubView = function(viewId) {
+    if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LOG', viewId);
+    
+    document.querySelectorAll('.log-view').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('#logbook-fragment .tab-btn').forEach(el => el.classList.remove('active'));
+    
+    const target = document.getElementById('log-view-' + viewId);
+    if (target) {
+        target.style.display = 'flex';
+        const btn = document.getElementById('log-subtab-' + viewId);
+        if (btn) btn.classList.add('active');
+    }
+
+    // Initialize logic per view
+    if (viewId === 'project') {
+        if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
+    }
+}
+
 function getLogbookStatusIcon(status) {
     const normalized = (status || 'ACTIVE').toUpperCase();
     let color = 'var(--accent-color)';
@@ -156,13 +178,21 @@ function renderLogbuchList(entries) {
     if (!list) return;
     list.innerHTML = '';
 
+    // Extract categories for filter if it's the first render
+    if (categoryFilter && categoryFilter.options.length <= 1) {
+        const cats = [...new Set(entries.map(e => e.category || 'Misc'))].sort();
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            categoryFilter.appendChild(opt);
+        });
+    }
+
     // Filter entries
     const filteredEntries = entries.filter(e => {
         const cat = e.category || 'Misc';
-        const catKey = `cat_${cat.toLowerCase()}`;
-        const localizedCat = (typeof t === 'function' && t(catKey) !== catKey) ? t(catKey) : cat;
-
-        if (selectedCategory !== 'Alle' && localizedCat !== selectedCategory) return false;
+        if (selectedCategory !== 'Alle' && cat !== selectedCategory) return false;
         if (selectedStatus !== 'ALL' && (e.status || 'ACTIVE').toUpperCase() !== selectedStatus) return false;
         return true;
     });
@@ -178,49 +208,34 @@ function renderLogbuchList(entries) {
     filteredEntries.forEach(entry => {
         const btn = document.createElement('div');
         btn.className = 'nav-item';
-        btn.style.cssText = 'padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; background: transparent;';
+        btn.style.cssText = 'padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; background: transparent;';
         
         const nameWrap = document.createElement('div');
-        nameWrap.style.cssText = 'display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden;';
+        nameWrap.style.cssText = 'display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;';
 
-        if (entry.pinned) {
-            const pin = document.createElement('span');
-            pin.style.color = 'var(--accent-color)';
-            pin.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v2a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 10z"/><path d="M3 14v2a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16v-2"/><polyline points="7.5 10.5 12 13 16.5 10.5"/></svg>';
-            nameWrap.appendChild(pin);
-        }
+        const statusIcon = getLogbookStatusIcon(entry.status || 'ACTIVE');
+        const iconContainer = document.createElement('span');
+        iconContainer.innerHTML = statusIcon;
+        nameWrap.appendChild(iconContainer);
 
         const nameEl = document.createElement('span');
-        nameEl.innerText = entry.name;
-        nameEl.style.cssText = 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 13px; color: var(--text-primary);';
+        nameEl.innerText = entry.name.replace('.md', '');
+        nameEl.style.cssText = 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 12px; color: var(--text-primary);';
         nameWrap.appendChild(nameEl);
         btn.appendChild(nameWrap);
 
-        const statusWrap = document.createElement('div');
-        statusWrap.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-left: 10px;';
-
-        const iconEl = document.createElement('span');
-        iconEl.innerHTML = getLogbookStatusIcon(entry.status || 'ACTIVE');
-        statusWrap.appendChild(iconEl);
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
-        deleteBtn.style.cssText = 'background: none; border: none; cursor: pointer; padding: 6px; opacity: 0; transition: opacity 0.2s; color: #ff5252;';
-        deleteBtn.className = 'delete-action';
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            const msg = (typeof t === 'function' ? t('logbook_delete_confirm') : 'Löschen?').replace('{name}', entry.name);
-            if (confirm(msg)) deleteLogbookEntry(entry.filename);
-        };
-        statusWrap.appendChild(deleteBtn);
-        btn.appendChild(statusWrap);
-
-        btn.onmouseover = () => { deleteBtn.style.opacity = '1'; btn.style.background = 'rgba(255,255,255,0.05)'; };
-        btn.onmouseout = () => { deleteBtn.style.opacity = '0'; btn.style.background = 'transparent'; };
+        btn.onmouseover = () => { btn.style.background = 'rgba(255,255,255,0.05)'; };
+        btn.onmouseout = () => { if (!btn.classList.contains('active')) btn.style.background = 'transparent'; };
 
         btn.onclick = () => {
-            document.querySelectorAll('#logbuch-entry-sidebar-items .nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('#logbuch-entry-sidebar-items .nav-item').forEach(i => {
+                i.classList.remove('active');
+                i.style.background = 'transparent';
+                i.style.borderColor = 'transparent';
+            });
             btn.classList.add('active');
+            btn.style.background = 'rgba(255,255,255,0.1)';
+            btn.style.borderColor = 'var(--accent-color)';
             loadLogbuchContent(entry.name, entry.filename);
         };
         fragment.appendChild(btn);
@@ -232,7 +247,7 @@ function renderLogbuchList(entries) {
  * Entry point for the Logbook tab initialization.
  */
 async function loadLogbuchTab() {
-    if (typeof appendUiTrace === 'function') appendUiTrace("[Logbook] Initializing Logbuch tab...");
+    console.log("[Logbook] Initializing Project Logbook...");
     try {
         const entries = await eel.get_logbook_entries()();
         currentLogbuchEntries = entries || [];
@@ -245,7 +260,6 @@ async function loadLogbuchTab() {
         }
     } catch (e) {
         console.error("[loadLogbuchTab] Error:", e);
-        if (typeof appendUiTrace === 'function') appendUiTrace("[Logbook] Error loading entries: " + e, "DB-ERROR");
     }
 }
 
