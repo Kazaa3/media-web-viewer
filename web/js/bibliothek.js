@@ -1,12 +1,5 @@
-console.log(">>> [JS-LOAD] bibliothek.js initialized.");
-window.allLibraryItems = allLibraryItems;
-/**
- * bibliothek.js
- * Unified Library management module.
- * Logic for Coverflow, Grid, Details, and Database views.
- */
 
-// State
+// --- Hoisted Global State (v1.35.3 Fix) ---
 let allLibraryItems = [];
 let coverflowItems = [];
 let coverflowIndex = 0;
@@ -17,6 +10,9 @@ let libraryYear = 'all';
 let librarySearch = '';
 let hasAutoScanned = false; // Prevent infinite scan loops
 let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
+
+window.allLibraryItems = allLibraryItems;
+console.log(">>> [JS-LOAD] bibliothek.js initialized.");
 
 /**
  * Boots the library by fetching data from the DB.
