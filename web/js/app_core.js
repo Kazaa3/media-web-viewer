@@ -196,14 +196,27 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
-        // 0. Load Modals Fragment
+        // 0. Load UI Fragments in Parallel
         if (typeof FragmentLoader?.load === 'function') {
             FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {
                 console.log("DOM: Modals fragment initialized.");
                 if (typeof initTranslations === 'function') initTranslations();
             });
+            
+            FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
+                console.log("DOM: Player fragment initialized.");
+                if (typeof mwv_init_actions?.player === 'function') mwv_init_actions.player();
+            });
+
+            FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => {
+                console.log("DOM: Library fragment initialized.");
+            });
+
+            FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => {
+                console.log("DOM: Editor fragment initialized.");
+            });
         } else {
-            console.warn("DOM: FragmentLoader not found, modals might not load.");
+            console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
         }
 
         // 1. Default Start Screen
