@@ -66,14 +66,11 @@ function initAllSplitters() {
     console.log("UI: Initializing splitters.");
     if (typeof initSplitter === 'function') {
         const splitters = [
-            ['edit-splitter', 'edit-sidebar-left', 'edit-split-container', 'vertical', 'left'],
-            ['lib-splitter', 'lib-sidebar-left', 'lib-split-container', 'vertical', 'left'],
-            ['main-splitter', 'main-sidebar', 'main-split-container', 'vertical', 'left'],
-            ['parser-tab-splitter', 'parser-left-settings', 'parser-tab-split-container', 'vertical', 'left'],
-            ['debug-splitter', 'debug-settings-pane', 'debug-flag-persistence-panel', 'vertical', 'right'],
-            ['logbuch-splitter', 'logbuch-sidebar', 'logbuch-split-container', 'vertical', 'right'],
-            ['player-analytics-splitter', 'video-queue-pane', 'player-tab-split-container', 'vertical', 'right'],
-            ['browser-tab-splitter', 'browser-left-sidebar', 'filesystem-crawler-directory-panel', 'vertical', 'left']
+            ['main-splitter', 'main-sidebar', 'main-content-area', 'vertical', 'left'],
+            ['player-analytics-splitter', 'player-detailed-sidebar', 'player-main-viewport', 'vertical', 'left'],
+            ['browser-tab-splitter', 'browser-left-sidebar', 'browser-main-viewport', 'vertical', 'left'],
+            ['debug-splitter', 'debug-settings-pane', 'debug-main-viewport', 'vertical', 'right'],
+            ['parser-tab-splitter', 'parser-left-settings', 'parser-main-viewport', 'vertical', 'left']
         ];
 
         splitters.forEach(params => {
@@ -115,58 +112,40 @@ function switchTab(tabId, btn, callback) {
 
     // Define fragment mapping (Targets the internal V1.34 Master viewports)
     const fragmentMap = {
-        'debug': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
-        'tests': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
-        'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
-        'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
-        'file': { containerId: 'filesystem-crawler-directory-panel', path: 'fragments/filesystem_browser.html' },
-        'library': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
-        'grid': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
-        'details': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
-        'album': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
-        'item': { containerId: 'indexed-sqlite-media-repository-panel', path: 'fragments/item_inventory.html' },
-        'edit': { containerId: 'edit-main-viewport', path: 'fragments/metadata_editor.html' },
-        'video': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
-        'tools': { containerId: 'tools-main-viewport', path: 'fragments/tools_panel.html' },
-        'options': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
-        'system': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
-        'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbook_panel.html' },
         'player': { containerId: 'player-main-viewport', path: 'fragments/player_queue.html' },
         'media': { containerId: 'player-main-viewport', path: 'fragments/player_queue.html' },
-        'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' },
-        'file': { containerId: 'browser-main-viewport', path: 'fragments/file_browser_panel.html' },
-        'vlc': { containerId: 'video-main-viewport', path: 'fragments/multiplexed_media_player.html' },
-        'video': { containerId: 'video-main-viewport', path: 'fragments/multiplexed_media_player.html' },
+        'library': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
+        'file': { containerId: 'browser-main-viewport', path: 'fragments/filesystem_browser.html' },
+        'edit': { containerId: 'edit-main-viewport', path: 'fragments/metadata_editor.html' },
         'options': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
-        'parser': { containerId: 'parser-main-viewport', path: 'fragments/parser_config.html' },
-        'debug': { containerId: 'debug-main-viewport', path: 'fragments/debug_db_panel.html' },
-        'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' }
+        'parser': { containerId: 'parser-main-viewport', path: 'fragments/options_panel.html' },
+        'debug': { containerId: 'debug-main-viewport', path: 'fragments/diagnostics_suite.html' },
+        'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
+        'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbuch_panel.html' },
+        'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
+        'tests': { containerId: 'tests-panel-container', path: 'fragments/diagnostics_suite.html' },
+        'video': { containerId: 'video-main-viewport', path: 'fragments/video_player.html' },
+        'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' }
     };
 
     const tabMap = {
-        'player': 'state-orchestrated-active-queue-list-container',
-        'library': 'coverflow-library-panel',
-        'grid': 'coverflow-library-panel',
-        'details': 'coverflow-library-panel',
-        'album': 'coverflow-library-panel',
-        'item': 'indexed-sqlite-media-repository-panel',
-        'file': 'filesystem-crawler-directory-panel',
-        'edit': 'metadata-writer-crud-panel',
-        'options': 'options-panel-container',
-        'system': 'options-panel-container',
-        'logbuch': 'logbook-tab-container',
-        'tools': 'tools-panel-container',
-        'playlist': 'json-serialized-sequence-buffer-panel',
-        'video': 'multiplexed-media-player-orchestrator-panel',
-        'debug': 'diagnostics-suite-container',
-        'tests': 'diagnostics-suite-container',
-        'diagnostics': 'diagnostics-suite-container',
-        'reporting': 'reporting-dashboard-container',
-        'tools': 'tools-panel-container',
-        'parser': 'parser-panel-container'
+        'player': { shell: 'state-orchestrated-active-queue-list-container', viewport: 'player-main-viewport' },
+        'library': { shell: 'coverflow-library-panel', viewport: 'library-main-viewport' },
+        'file': { shell: 'filesystem-crawler-directory-panel', viewport: 'browser-main-viewport' },
+        'edit': { shell: 'metadata-writer-crud-panel', viewport: 'edit-main-viewport' },
+        'options': { shell: 'options-panel-container', viewport: 'options-main-viewport' },
+        'parser': { shell: 'parser-panel-container', viewport: 'parser-main-viewport' },
+        'debug': { shell: 'debug-db-panel-container', viewport: 'debug-main-viewport' },
+        'tests': { shell: 'tests-panel-container', viewport: 'tests-panel-container' },
+        'tools': { shell: 'tools-panel-container', viewport: 'tools-panel-container' },
+        'logbuch': { shell: 'logbook-tab-container', viewport: 'logbook-tab-container' },
+        'diagnostics': { shell: 'diagnostics-suite-container', viewport: 'diagnostics-suite-container' },
+        'video': { shell: 'multiplexed-media-player-orchestrator-panel', viewport: 'video-main-viewport' },
+        'playlist': { shell: 'json-serialized-sequence-buffer-panel', viewport: 'json-serialized-sequence-buffer-panel' }
     };
 
-    const targetId = tabMap[tabId] || tabId;
+    const mapping = tabMap[tabId] || { shell: tabId, viewport: tabId };
+    const targetId = mapping.shell;
     const target = document.getElementById(targetId);
 
     // Handle Fragment Loading
@@ -247,7 +226,7 @@ function finishSwitchTab(tabId, targetId, btn) {
         const sidebar = document.getElementById('main-sidebar');
         const splitter = document.getElementById('main-splitter');
         if (sidebar && splitter) {
-            const sidebarVisibleTabs = ['player', 'video', 'vlc', 'playlist', 'edit', 'reporting', 'debug', 'tests', 'diagnostics', 'library', 'tools', 'logbuch', 'system'];
+            const sidebarVisibleTabs = ['player', 'video', 'playlist', 'edit', 'debug', 'tests', 'diagnostics', 'library', 'tools', 'logbuch', 'options', 'parser'];
             const shouldShow = sidebarVisibleTabs.includes(tabId);
             sidebar.style.display = shouldShow ? 'flex' : 'none';
             splitter.style.display = shouldShow ? 'block' : 'none';
@@ -522,19 +501,23 @@ function switchMainCategory(category, btn) {
 
 /**
  * Updates the global sub-navigation bar with contextual entries.
+ * (V1.34 Master: Most sub-navigation is now in the Tab's Internal Sidebar, 
+ * but we keep this for cross-fragment shortcuts).
  */
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
 
-    // Sub-nav configuration for each category
+    // Clear previous
+    container.innerHTML = '';
+    
+    // V1.34 Master: Top-bar pills are now legacy. 
+    // We only populate if the category specifically requires a global override.
     const subNavMap = {
-        'media': [
-            { id: 'warteschlange', label: 'Queue', action: "switchMediaSubView('warteschlange')" },
-            { id: 'mediengalerie', label: 'Mediengalerie', action: "switchMediaSubView('mediengalerie')" },
-            { id: 'playlist', label: 'Playlist Manager', action: "switchMediaSubView('playlist')" },
-            { id: 'visualizer', label: 'Visualizer', action: "switchMediaSubView('visualizer')" },
-            { id: 'video-cinema', label: 'Video Cinema', action: "switchMediaSubView('video')" }
+        'player': [
+            { id: 'warteschlange', label: 'Warteschlange', action: "switchPlayerView('warteschlange')" },
+            { id: 'mediengalerie', label: 'Galerie', action: "switchPlayerView('mediengalerie')" },
+            { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
         ],
         'reporting': [
             { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
@@ -543,56 +526,36 @@ function updateGlobalSubNav(category) {
             { id: 'audio-health', label: 'Audio Health', action: "switchReportingSubView('audio-health')" }
         ],
         'tests': [
-            { id: 'health', label: 'System Health', action: "switchDiagnosticsSubView('health')" },
-            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsSubView('video-health')" },
-            { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsSubView('debug-db')" },
-            { id: 'latency', label: 'Latency Profile', action: "switchDiagnosticsSubView('latency')" }
+            { id: 'health', label: 'System Health', action: "switchDiagnosticsView('health')" },
+            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
+            { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsView('debug-db')" },
+            { id: 'latency', label: 'Latency Profile', action: "switchDiagnosticsView('latency')" }
         ],
-        'system': [
+        'options': [
             { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
-            { id: 'env', label: 'Umgebung', action: "switchOptionsView('env')" },
-            { id: 'pkgs', label: 'Pakete', action: "switchOptionsView('pkgs')" },
-            { id: 'requirements', label: 'Requirements', action: "switchOptionsView('requirements')" },
-            { id: 'browser', label: 'Browser', action: "switchOptionsView('browser')" },
-            { id: 'frontend', label: 'Frontend', action: "switchOptionsView('frontend')" },
-            { id: 'backend', label: 'Backend', action: "switchOptionsView('backend')" },
-            { id: 'scripts', label: 'Helper Scripts', action: "switchOptionsView('scripts')" },
-            { id: 'danger', label: 'Gefahrenzone', action: "switchOptionsView('danger')" }
+            { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
+            { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" }
         ],
         'tools': [
             { id: 'transcoding', label: 'Transcoding', action: "switchToolsView('transcoding')" },
             { id: 'processing', label: 'Processing', action: "switchToolsView('processing')" },
-            { id: 'batch', label: 'Batch Ops', action: "switchToolsView('batch')" },
             { id: 'repair', label: 'DB Repair', action: "switchToolsView('repair')" }
         ],
         'parser': [
             { id: 'general', label: 'Konfiguration', action: "switchParserView('general')" },
-            { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" },
-            { id: 'extraction', label: 'Extraktion', action: "switchParserView('extraction')" },
-            { id: 'validation', label: 'Validierung', action: "switchParserView('validation')" }
+            { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" }
         ],
         'logbuch': [
             { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
             { id: 'events', label: 'Events (Live)', action: "switchLogbookSubView('events')" },
-            { id: 'features', label: 'Features Status', action: "switchLogbookSubView('features')" },
             { id: 'docs', label: 'Documentation', action: "switchLogbookSubView('docs')" }
-        ],
-        'parser': [
-            { id: 'general', label: 'General Settings', action: "switchParserView('general')" },
-            { id: 'chain', label: 'Processing Chain', action: "switchParserView('chain')" },
-            { id: 'regex', label: 'Regex Debugger', action: "switchParserView('regex')" }
-        ],
-        'file': [
-            { id: 'local', label: 'Local Files', action: "switchFileSubView('local')" },
-            { id: 'network', label: 'Network Shares', action: "switchFileSubView('network')" },
-            { id: 'mounted', label: 'Mounted Drives', action: "switchFileSubView('mounted')" }
         ]
     };
 
     const entries = subNavMap[category];
     if (!entries) {
         container.style.display = 'none';
-        updateLayoutOffsets();
+        if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
         return;
     }
 
