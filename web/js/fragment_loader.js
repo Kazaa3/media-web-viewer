@@ -5,6 +5,7 @@
 
 const FragmentLoader = {
     cache: new Map(),
+    pendingLoads: new Map(), // Track in-flight requests (targetId -> Promise)
 
     /**
      * Loads an external HTML fragment into a container.
@@ -13,6 +14,26 @@ const FragmentLoader = {
      * @param {Function} callback - Optional callback after loading.
      */
     async load(targetId, fragmentPath, callback) {
+        // --- v1.35 In-Flight Guard ---
+        const pendingKey = `${targetId}:${fragmentPath}`;
+        if (this.pendingLoads.has(pendingKey)) {
+            console.debug(`[FL] Awaiting in-flight load: ${pendingKey}`);
+            const result = await this.pendingLoads.get(pendingKey);
+            if (callback) callback();
+            return result;
+        }
+
+        const loadPromise = this._executeLoad(targetId, fragmentPath, callback);
+        this.pendingLoads.set(pendingKey, loadPromise);
+
+        try {
+            return await loadPromise;
+        } finally {
+            this.pendingLoads.delete(pendingKey);
+        }
+    },
+
+    async _executeLoad(targetId, fragmentPath, callback) {
         const container = document.getElementById(targetId);
         if (!container) {
             console.error(`[FragmentLoader] Container #${targetId} not found.`);
@@ -40,6 +61,7 @@ const FragmentLoader = {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 html = await response.text();
                 this.cache.set(fragmentPath, html);
+                if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-1', { path: fragmentPath, status: 'fetched' });
                 console.info(`[FL] STAGE 1: HTML Received (${fragmentPath})`);
             }
 
@@ -49,11 +71,13 @@ const FragmentLoader = {
 
             container.innerHTML = html;
             container.dataset.loaded = 'true';
+            if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-2', { path: fragmentPath, targetId });
             console.info(`[FL] STAGE 2: DOM Injection Complete (#${targetId})`);
 
             // --- V1.34 Master: Manual Script Extraction & Execution ---
             const scripts = container.querySelectorAll('script');
             if (scripts.length > 0) {
+                if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-3', { path: fragmentPath, count: scripts.length });
                 console.info(`[FL] STAGE 3: Processing ${scripts.length} internal scripts...`);
             }
             scripts.forEach(oldScript => {
@@ -85,6 +109,7 @@ const FragmentLoader = {
             }
 
             if (callback) callback();
+            if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-4', { path: fragmentPath, status: 'ready' });
             console.info(`[FL] STAGE 4: Final READY (${fragmentPath})`);
             
             // Dispatch a custom event for module-specific listeners
@@ -104,6 +129,14 @@ const FragmentLoader = {
      */
     error(targetId, fragmentPath, err) {
         console.error(`[FragmentLoader] Failed to load ${fragmentPath}:`, err);
+        if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'ERROR', { path: fragmentPath, error: err.message || err });
+        
+        // --- v1.35 Safety: Release Global Navigation Lock ---
+        if (typeof isNavigating !== 'undefined') {
+            isNavigating = false;
+            document.body.style.cursor = 'default';
+        }
+
         const msg = `
             <div class="error-panel" style="padding: 40px; text-align: center; color: var(--text-primary); background: rgba(255, 0, 0, 0.05); border-radius: 12px; border: 1px dashed rgba(255, 0, 0, 0.3); margin: 20px; backdrop-filter: blur(10px);">
                 <div style="font-size: 2.5rem; margin-bottom: 15px;">⚠️</div>

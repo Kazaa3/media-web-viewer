@@ -11,6 +11,8 @@ let currentMainCategory = 'media';
 window.__mwv_ui_nav_loaded = true;
 
 let sidebarVisible = false; // Default to closed for Classic v1.34 Restoration
+let isNavigating = false;   // Global lock for tab switching
+let navTimeout = null;      // Safety timer for lock release
 let menuSystemVisible = true; // Default to open for UI discovery
 
 /**
@@ -106,7 +108,26 @@ function traceUiNav(category, target, details = {}) {
 /**
  * Switches between main application tabs.
  */
-function switchTab(tabId, btn, callback) {
+function switchTab(tabId, btn, callback, force = false) {
+    if (isNavigating && !force) {
+        console.warn(`[NAV] Navigation locked. Ignoring request for: ${tabId}`);
+        return;
+    }
+
+    isNavigating = true;
+    document.body.style.cursor = 'wait';
+
+    // --- v1.35 Safety: Navigation Timeout Guard ---
+    if (navTimeout) clearTimeout(navTimeout);
+    navTimeout = setTimeout(() => {
+        if (isNavigating) {
+            console.warn(`[NAV] Navigation TIMEOUT for: ${tabId}. Force releasing lock.`);
+            if (typeof mwv_trace === 'function') mwv_trace('NAV', 'TIMEOUT', { tabId });
+            isNavigating = false;
+            document.body.style.cursor = 'default';
+        }
+    }, 5000);
+
     const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
     traceUiNav('TAB', tabId, { from: previousTab });
 
@@ -308,6 +329,13 @@ function finishSwitchTab(tabId, targetId, btn) {
             initActions[tabId]();
         });
     }
+
+    if (navTimeout) {
+        clearTimeout(navTimeout);
+        navTimeout = null;
+    }
+    isNavigating = false;
+    document.body.style.cursor = 'default';
     console.info(`[NAV] Tab Switch SUCCESS: ${tabId}`);
 }
 
@@ -603,7 +631,7 @@ function updateGlobalSubNav(category) {
     container.innerHTML = entries.map(item => `
         <button id="global-sub-nav-${item.id}" 
                 class="sub-pill-btn" 
-                onclick="${item.action}; updateSubNavActiveState('${item.id}')">
+                onclick="event.stopPropagation(); ${item.action}; updateSubNavActiveState('${item.id}')">
             ${item.label}
         </button>
     `).join('');

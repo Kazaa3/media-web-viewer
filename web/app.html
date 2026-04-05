@@ -118,27 +118,27 @@
             <!-- Primary Navigation (Main Categories - Persistent Row 0) -->
             <div id="header-nav-buttons"
                 style="display: flex; gap: 6px; align-items: center; margin-left: 10px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
-                <button class="menu-item-btn active" onclick="switchMainCategory('media', this)"
+                <button id="nav-btn-player" class="menu-item-btn active" onclick="switchMainCategory('media', this)"
                     data-category="media">Player</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('library', this)"
+                <button id="nav-btn-library" class="menu-item-btn" onclick="switchMainCategory('library', this)"
                     data-category="library">Bibliothek</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('file', this)"
+                <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
                     data-category="file">Browser</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('edit', this)"
+                <button id="nav-btn-edit" class="menu-item-btn" onclick="switchMainCategory('edit', this)"
                     data-category="edit">Edit</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('system', this)"
+                <button id="nav-btn-options" class="menu-item-btn" onclick="switchMainCategory('system', this)"
                     data-category="system">Optionen</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('parser', this)"
+                <button id="nav-btn-parser" class="menu-item-btn" onclick="switchMainCategory('parser', this)"
                     data-category="parser">Parser</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('debug', this)" data-category="debug">Debug &
+                <button id="nav-btn-debug" class="menu-item-btn" onclick="switchMainCategory('debug', this)" data-category="debug">Debug &
                     DB</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('tests', this)"
+                <button id="nav-btn-tests" class="menu-item-btn" onclick="switchMainCategory('tests', this)"
                     data-category="tests">Tests</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('tools', this)"
+                <button id="nav-btn-tools" class="menu-item-btn" onclick="switchMainCategory('tools', this)"
                     data-category="tools">Tools</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
+                <button id="nav-btn-logbuch" class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
                     data-category="logbuch">Logbuch</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('video', this)" data-category="video">Video</button>
+                <button id="nav-btn-video" class="menu-item-btn" onclick="switchMainCategory('video', this)" data-category="video">Video</button>
             </div>
         </div>
 
@@ -161,7 +161,7 @@
     </header>
 
     <!-- Secondary Navigation Bar (Contextual Pills - Toggleable v1.34 Row 1) -->
-    <div id="sub-nav-container" class="sub-nav-bar"
+    <div id="sub-nav-container" class="sub-nav-bar" onclick="event.stopPropagation()"
         style="display: none; position: fixed; top: 40px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none; transition: all 0.2s ease; opacity: 0; transform: translateY(-10px);">
         <!-- Dynamically populated via updateGlobalSubNav -->
     </div>
