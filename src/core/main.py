@@ -1301,11 +1301,6 @@ def get_debug_stats():
     }
 
 @eel.expose
-def get_environment_info():
-    """Returns detailed OS and environment diagnostics for the UI."""
-    return get_environment_info_dict()
-
-@eel.expose
 def get_format_utils_exts():
     """Exposes current extension mappings from format_utils.py."""
     from src.parsers import format_utils
