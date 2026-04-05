@@ -40,165 +40,127 @@ function append_test_output(message) {
 
 /**
  * Loads available test suites from the backend and renders them.
+ * v1.35.68 Refined: Python only, folder-based dropdown.
  */
 async function loadTestSuites(retryCount) {
     retryCount = retryCount || 0;
     const container = document.getElementById('test-suites-container');
-    const scriptsList = document.getElementById('test-scripts-list');
-    const routingList = document.getElementById('routing-test-scripts-list');
+    const folderSelect = document.getElementById('test-folder-select');
     if (!container) return;
 
     if (retryCount === 0) {
-        const loadingHtml = `<div style="color: #999; font-style: italic;" data-i18n="test_loading">${typeof t === 'function' ? t('test_loading', 'Suites werden geladen...') : 'Suites werden geladen...'}</div>`;
-        if (container) container.innerHTML = loadingHtml;
-        if (scriptsList) scriptsList.innerHTML = loadingHtml;
-        if (routingList) routingList.innerHTML = loadingHtml;
+        container.innerHTML = `<div style="color: #999; font-style: italic;">Tests werden geladen...</div>`;
     }
 
     try {
         const res = await eel.get_test_suites()();
-        let suites = res || [];
+        // Filter: ONLY .py files (as requested)
+        let suites = (res || []).filter(s => s.id.endsWith('.py'));
 
-        // Append the GUI Test as a fake suite
-        suites.push({
-            id: 'gui_test_fake',
-            name: 'GUI Tests (Selenium)',
-            folder: '',
-            isGuiTest: true,
-            metadata: {
-                category: "E2E Test",
-                inputs: "Browser Interactions",
-                outputs: "DOM State",
-                files: "App HTML",
-                comment: typeof t === 'function' ? t('test_gui_comment', 'Interaktive E2E Tests im Browser.') : 'Interaktive E2E Tests im Browser.'
-            }
-        });
-
-        if (container) container.innerHTML = '';
-        if (scriptsList) scriptsList.innerHTML = '';
-        if (routingList) routingList.innerHTML = '';
-
-        // Group by folder
-        const groups = {};
-        suites.forEach(suite => {
-            let folder = suite.folder || 'Root';
-            if (folder.toLowerCase().startsWith('ui')) folder = 'UI/' + folder.slice(2).replace(/^\/+/, '');
-            if (!groups[folder]) groups[folder] = [];
-            groups[folder].push(suite);
-        });
-
-        // Sort folders
-        const sortedFolders = Object.keys(groups).sort((a, b) => {
-            const isAUI = a.toLowerCase().startsWith('ui');
-            const isBUI = b.toLowerCase().startsWith('ui');
-            if (isAUI && !isBUI) return -1;
-            if (!isAUI && isBUI) return 1;
-            if (a === 'Root') return 1;
-            if (b === 'Root') return -1;
-            return a.localeCompare(b);
-        });
-
-        const fragContainer = document.createDocumentFragment();
-        const fragScripts = document.createDocumentFragment();
-        const fragRouting = document.createDocumentFragment();
-
-        sortedFolders.forEach(folder => {
-            const folderSuites = groups[folder].sort((a, b) => a.name.localeCompare(b.name));
-            if (folderSuites.length === 0) return;
-
-            const folderLabel = folder === 'Root' ? (typeof t === 'function' ? t('test_suites_root', 'Core Utilities & Tests') : 'Core Utilities & Tests') : folder;
-            const isUI = folder.toLowerCase().startsWith('ui');
-            const headerStyle = `grid-column: 1/-1; width: 100%; padding: 15px 5px 5px 5px; font-weight: bold; font-size: 1.1em; color: var(--text-primary); border-bottom: 2px solid var(--border-color); margin-top: 20px; display: flex; align-items: center; gap: 8px; background: ${isUI ? 'rgba(52, 152, 219, 0.1)' : 'var(--glass-bg)'}; backdrop-filter: blur(5px); position: sticky; top: 0; z-index: 100;`;
-            header.style.cssText = headerStyle;
-            header.innerHTML = `<span>${folder === 'Root' ? '<svg width="12" height="12"><use href="#icon-folder"></use></svg>' : (isUI ? '<svg width="12" height="12"><use href="#icon-tv"></use></svg>️' : '<svg width="12" height="12"><use href="#icon-folder"></use></svg>')}</span> ${folderLabel}`;
-
-            fragContainer.appendChild(header.cloneNode(true));
-            fragScripts.appendChild(header.cloneNode(true));
-            if (folder.toLowerCase().includes('routing')) fragRouting.appendChild(header.cloneNode(true));
-
-            folderSuites.forEach(suite => {
-                const card = createTestCard(suite);
-                fragContainer.appendChild(card.cloneNode(true));
-                fragScripts.appendChild(card.cloneNode(true));
-                if (folder.toLowerCase().includes('routing')) fragRouting.appendChild(card.cloneNode(true));
+        // Populate Folder Dropdown if empty or refresh
+        if (folderSelect && (folderSelect.options.length <= 1 || retryCount === 0)) {
+            const currentVal = folderSelect.value;
+            folderSelect.innerHTML = '<option value="all">-- All Folders --</option>';
+            const folders = [...new Set(suites.map(s => s.folder || 'root'))].sort();
+            folders.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = f;
+                if (f === currentVal) opt.selected = true;
+                folderSelect.appendChild(opt);
             });
+        }
+
+        const activeFolder = folderSelect ? folderSelect.value : 'all';
+        const filteredSuites = activeFolder === 'all' 
+            ? suites 
+            : suites.filter(s => (s.folder || 'root') === activeFolder);
+
+        container.innerHTML = '';
+        if (filteredSuites.length === 0) {
+            container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Keine Tests in diesem Ordner gefunden.</div>';
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+        filteredSuites.forEach(suite => {
+            const card = createTestCard(suite);
+            frag.appendChild(card);
         });
-
-        if (container) container.appendChild(fragContainer);
-        if (scriptsList) scriptsList.appendChild(fragScripts);
-        if (routingList) routingList.appendChild(fragRouting);
-
-        if (typeof syncVersionInfo === 'function') syncVersionInfo();
+        container.appendChild(frag);
 
     } catch (e) {
         console.error('[loadTestSuites] Error:', e);
-        const errorHtml = `<div style="color: #c33; padding: 20px;">${typeof t === 'function' ? t('test_error_loading', 'Fehler beim Laden der Tests: ') : 'Fehler beim Laden der Tests: '}${e}</div>`;
-        if (container) container.innerHTML = errorHtml;
+        container.innerHTML = `<div style="color: #c33; padding: 20px;">Fehler beim Laden der Tests: ${e}</div>`;
     }
 }
 
+/**
+ * v1.3.2 Style Test Card (Restoration)
+ */
 function createTestCard(suite) {
     const card = document.createElement('div');
-    card.className = 'glass-card';
-    card.style.cssText = 'padding: 20px; display: flex; flex-direction: column; position: relative; transition: transform 0.2s, box-shadow 0.2s;';
+    card.style.cssText = 'background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.2s;';
     
+    // Left highlight bar based on category
+    const isIntegration = (suite.metadata.category || "").toLowerCase().includes('integration');
+    card.style.borderLeft = isIntegration ? '5px solid #1565c0' : '5px solid #e0e0e0';
+
+    const m = suite.metadata || {};
+    const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${m.category}</span>` : '';
+
     const isInteractiveBrowserTest = (suiteId) => {
         const name = String(suiteId || '').toLowerCase();
         const patterns = ['test_route', 'test_network', 'run_app', 'pyautogui', 'selenium', 'gui_test'];
         return patterns.some(pattern => name.includes(pattern));
     };
-
-    let checkboxHtml = '';
-    if (suite.isGuiTest) {
-        checkboxHtml = `<input type="checkbox" id="test-gui" style="width: 20px; height: 20px; cursor: pointer;">`;
-    } else {
-        const checkedAttr = isInteractiveBrowserTest(suite.id) ? '' : 'checked';
-        checkboxHtml = `<input type="checkbox" class="test-suite-checkbox" value="${suite.id}" ${checkedAttr} style="width: 20px; height: 20px; cursor: pointer;">`;
-    }
-
-    const m = suite.metadata || {};
-    const categoryHtml = m.category && m.category !== '-' ? `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold;">${m.category}</span>` : '';
+    const checkedAttr = isInteractiveBrowserTest(suite.id) ? '' : 'checked';
 
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                ${checkboxHtml}
-                <h3 style="margin: 0; font-size: 1.1em; color: var(--text-primary);">${suite.name}</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" class="test-suite-checkbox" value="${suite.id}" ${checkedAttr} style="width: 18px; height: 18px; cursor: pointer;">
+                <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 800;">${suite.name.replace('.py', '')}</h3>
             </div>
-            <div class="test-card-actions" style="display: flex; align-items: center; gap: 8px;">
+            <div class="test-card-actions" style="display: flex; align-items: center; gap: 10px;">
+                <!-- Buttons injected below -->
                 ${categoryHtml}
             </div>
         </div>
-        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 15px;">
-            <strong style="color: var(--text-primary);">${typeof t === 'function' ? t('test_meta_inputs') : 'Inputs'}:</strong> <span>${m.inputs || '-'}</span>
-            <strong style="color: var(--text-primary);">${typeof t === 'function' ? t('test_meta_outputs') : 'Outputs'}:</strong> <span>${m.outputs || '-'}</span>
-            <strong style="color: var(--text-primary);">${typeof t === 'function' ? t('test_meta_files') : 'Files'}:</strong> <span style="font-family: monospace; background: var(--bg-secondary); color: var(--accent-color); padding: 2px 4px; border-radius: 3px;">${m.files || '-'}</span>
+        
+        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 8px; font-size: 12px; line-height: 1.4; color: #555; margin-bottom: 15px;">
+            <strong>Inputs:</strong> <span style="color: #333;">${m.inputs || '-'}</span>
+            <strong>Outputs:</strong> <span style="color: #333;">${m.outputs || '-'}</span>
+            <strong>Test Files:</strong> <span style="font-family: monospace; color: var(--accent-color);">${m.files || '-'}</span>
         </div>
-        <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid var(--border-color); font-size: 0.85em; color: var(--text-secondary); font-style: italic; opacity: 0.8;">
-            ${m.comment || '-'}
+
+        <div style="margin-top: auto; padding-top: 12px; border-top: 1px solid #eee; font-size: 11px; color: #777; font-style: italic;">
+            ${m.comment || 'Kein Kommentar vorhanden.'}
         </div>
     `;
 
-    if (!suite.isGuiTest) {
-        const editBtn = document.createElement('button');
-        editBtn.innerText = typeof t === 'function' ? t('test_btn_edit') : 'Edit';
-        editBtn.style.cssText = 'border: none; background: var(--bg-secondary); color: var(--text-primary); border-radius: 6px; padding: 4px 12px; font-size: 0.85em; cursor: pointer; transition: all 0.2s;';
-        editBtn.onclick = (e) => { e.stopPropagation(); openTestEditModal(suite); };
-        
-        const delBtn = document.createElement('button');
-        delBtn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-        delBtn.style.cssText = 'border: none; background: transparent; color: #ff5252; border-radius: 4px; padding: 4px 6px; cursor: pointer; opacity: 0.6; transition: all 0.2s;';
-        delBtn.onclick = (e) => {
-            e.stopPropagation();
-            if (confirm(typeof t === 'function' ? t('confirm_delete') : 'Delete?')) deleteTest(suite.id);
-        };
-        
-        const actionsArea = card.querySelector('.test-card-actions');
-        if (actionsArea) {
-            actionsArea.prepend(editBtn);
-            actionsArea.appendChild(delBtn);
-        }
-    }
+    // Action Buttons (Edit/Trash) in top right
+    const actionsArea = card.querySelector('.test-card-actions');
+    
+    // Edit Button (Icon)
+    const editBtn = document.createElement('button');
+    editBtn.innerHTML = '✎';
+    editBtn.style.cssText = 'border: none; background: transparent; color: #777; cursor: pointer; padding: 4px; font-size: 14px;';
+    editBtn.title = 'Test bearbeiten';
+    editBtn.onclick = (e) => { e.stopPropagation(); openTestEditModal(suite); };
+    
+    // Delete Button (Icon)
+    const delBtn = document.createElement('button');
+    delBtn.innerHTML = '🗑';
+    delBtn.style.cssText = 'border: none; background: transparent; color: #ff5252; cursor: pointer; padding: 4px; font-size: 14px; opacity: 0.7;';
+    delBtn.title = 'Test löschen';
+    delBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Test "${suite.name}" wirklich löschen?`)) deleteTest(suite.id);
+    };
+
+    actionsArea.prepend(delBtn);
+    actionsArea.prepend(editBtn);
 
     return card;
 }

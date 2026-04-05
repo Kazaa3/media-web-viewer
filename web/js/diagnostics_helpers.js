@@ -86,7 +86,8 @@ function syntaxHighlightJSON(json) {
 }
 
 /**
- * Modern Database Overview Renderer
+ * Modern Database Overview Renderer (v1.35.68 Refined)
+ * Restores the Category Breakdown requested by user.
  */
 function renderDatabaseOverview() {
     const container = document.getElementById('debug-db-overview-content');
@@ -102,31 +103,40 @@ function renderDatabaseOverview() {
         cats[c] = (cats[c] || 0) + 1;
     });
 
-    let html = `
-        <div class="glass-card" style="padding: 15px; background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.2); text-align: center;">
-            <div style="font-size: 24px; font-weight: 800; color: #3498db;">${dbCount}</div>
-            <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">Total Items</div>
+    let catListHtml = Object.entries(cats).map(([cat, count]) => 
+        `<li>${cat}: ${count}</li>`
+    ).join('');
+
+    container.innerHTML = `
+        <div style="display: flex; gap: 40px; align-items: flex-start;">
+            <div>
+                <h4 style="margin: 0 0 5px 0; font-size: 1.4em; color: var(--text-primary);">Entries: ${dbCount}</h4>
+                <div style="font-size: 11px; opacity: 0.7; color: #2ecc71;">DB Health: Synchronized</div>
+            </div>
+            <div>
+                <h4 style="margin: 0 0 8px 0; font-size: 1.1em; color: var(--text-primary);">Categories:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                    ${catListHtml || '<li>Keine Daten</li>'}
+                </ul>
+            </div>
         </div>
     `;
-
-    Object.entries(cats).forEach(([cat, count]) => {
-        html += `
-            <div class="glass-card" style="padding: 15px; text-align: center; border: 1px solid var(--border-color);">
-                <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">${count}</div>
-                <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">${cat}</div>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
 }
 
 window.renderDebugDatabase = async function() {
-    console.log("[DebugDB] Querying current state...");
+    console.log("[DebugDB] Querying Overview state...");
     const select = document.getElementById('debug-dict-select');
     const display = document.getElementById('debug-items-json');
-    if (!display) return;
+    
+    // 1. Update the Summary Card (with Categories)
+    renderDatabaseOverview();
 
+    // 2. Ensure Flags are rendered (Inline Restoration)
+    if (typeof toggleDebugMenu === 'function') {
+        toggleDebugMenu(true);
+    }
+
+    if (!display) return;
     const type = select ? select.value : 'library';
     let data = {};
 
@@ -141,30 +151,27 @@ window.renderDebugDatabase = async function() {
         data = { error: err.message };
     }
 
-    // Apply VS Code Highlighting
+    // 3. Apply VS Code Highlighting
     display.innerHTML = syntaxHighlightJSON(data);
 };
 
-// --- Sub-Tab Hijack to include new views (v1.35.68) ---
-// This ensures the new Database and Flags tabs work correctly in the modal
+// --- Sub-Tab Hijack Restoration (v1.35.68) ---
+// This ensures 'Overview' and 'Tests' work correctly with existing logic
 setTimeout(() => {
-    if (typeof window.switchDiagnosticsView === 'function' && !window.__mwv_diag_hijacked) {
+    if (typeof window.switchDiagnosticsView === 'function') {
         const originalSwitchDiagnosticsView = window.switchDiagnosticsView;
         window.switchDiagnosticsView = function(viewId) {
+            // Mapping for restored logic
+            if (viewId === 'debug-db') {
+                 if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
+            } else if (viewId === 'tests') {
+                 if (typeof loadTestSuites === 'function') loadTestSuites();
+            }
+            
             if (typeof originalSwitchDiagnosticsView === 'function') {
                 originalSwitchDiagnosticsView(viewId);
             }
-            
-            // Custom Handlers for New Views
-            if (viewId === 'database') {
-                if (typeof renderDatabaseOverview === 'function') renderDatabaseOverview();
-            } else if (viewId === 'flags') {
-                if (typeof toggleDebugMenu === 'function') toggleDebugMenu(true);
-            } else if (viewId === 'debug-db') {
-                if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
-            }
         };
-        window.__mwv_diag_hijacked = true;
     }
 }, 500);
 
