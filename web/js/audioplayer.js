@@ -345,6 +345,8 @@ function updateMediaSidebar(item, path) {
         safeText('sidebar-metadata-secondary-string-renderer', artistStr);
         
         // Sync Legacy, Visualizer, and Queue Views
+        const isDiag = localStorage.getItem('mwv_diagnostic_mode') === 'true';
+        
         ['legacy', 'visualizer', 'warteschlange'].forEach(view => {
             safeText(`big-player-title-${view}`, tags.title || item.name);
             safeText(`big-player-artist-${view}`, tags.artist || 'Unknown Artist');
@@ -359,9 +361,26 @@ function updateMediaSidebar(item, path) {
                 
                 const trackStr = `${tags.year || '2026'} • ${tags.genre || 'General'} • Track ${tags.track ? tags.track.toString().padStart(2, '0') : '01'}`;
                 safeText(`spec-track-details-${view}`, trackStr);
-                safeText(`player-file-path-${view}`, path || item.path || 'Unknown Path');
+                
+                // Sync New Premium Fields
+                safeText('spec-year-badge', tags.year || '2026');
+                safeText('spec-genre-badge', tags.genre || 'General');
+                safeText('spec-size-warteschlange', item.size_human || item.size || '-');
+                safeText('spec-disc-warteschlange', tags.disc ? `Disc ${tags.disc}` : '1');
+                safeText('player-extended-comment', tags.comment || 'Kein Kommentar vorhanden.');
+
+                // Diagnostic Visibility
+                const pathEl = document.getElementById(`player-file-path-${view}`);
+                if (pathEl) {
+                    pathEl.innerText = path || item.path || 'Unknown Path';
+                    pathEl.style.display = isDiag ? 'block' : 'none';
+                }
             }
         });
+        
+        // Global Diagnostic Overlays
+        const diagOverlays = document.querySelectorAll('.player-technical-diagnostic-overlay');
+        diagOverlays.forEach(el => el.style.display = isDiag ? 'block' : 'none');
     }
 
 
@@ -387,6 +406,12 @@ function updateMediaSidebar(item, path) {
     const byLabel = (typeof t === 'function' ? t('player_status_by') : ' by ') || ' by ';
     if (typeof safeHtml === 'function') {
         safeHtml('active-orchestration-status-message-renderer', `${playingLabel} &nbsp; <strong>${tags.title || item.name}</strong> &nbsp; ${byLabel} &nbsp; ${tags.artist || 'Unknown'}`);
+    }
+
+    // Sync Lyrics (v1.35 Premium)
+    const lyricsContainer = document.getElementById('player-lyrics-content');
+    if (lyricsContainer) {
+        lyricsContainer.innerText = tags.lyrics || item.lyrics || 'Keine Lyrics für diesen Titel gefunden.';
     }
 }
 
@@ -968,32 +993,25 @@ function renderAudiobookDetails(item) {
         
         const trackDiv = document.createElement('div');
         trackDiv.className = `chapter-item ${isActive ? 'active' : ''}`;
-        trackDiv.style = `
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 12px; border-radius: 8px; cursor: pointer; 
-            background: ${isActive ? 'var(--accent-color)' : 'rgba(0,0,0,0.03)'}; 
-            color: ${isActive ? 'white' : 'var(--text-primary)'}; 
-            font-size: 12px; font-weight: ${isActive ? '700' : '500'};
-            transition: all 0.2s;
-            margin-bottom: 4px;
-        `;
+        trackDiv.onclick = () => {
+             if (typeof playMediaObject === 'function') playMediaObject(track);
+             else playAudio(track, 0);
+        };
         
         trackDiv.innerHTML = `
-            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 10px;">
-                ${track.tags?.track ? track.tags.track + '. ' : ''}${track.tags?.title || track.name}
-            </span>
-            <span style="font-size: 10px; opacity: 0.7;">${durationStr}</span>
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <div class="chapter-index" style="opacity: 0.5; font-size: 10px; font-weight: 800; min-width: 18px;">
+                    ${track.tags?.track ? track.tags.track.toString().padStart(2, '0') : '•'}
+                </div>
+                <div class="chapter-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px;">
+                    ${track.tags?.title || track.name}
+                </div>
+            </div>
+            <div class="chapter-duration" style="opacity: 0.5; font-size: 10px; margin-left: 8px;">
+                ${durationStr}
+            </div>
         `;
         
-        trackDiv.onclick = (e) => {
-            e.stopPropagation();
-            if (typeof playAudio === 'function') playAudio(track);
-        };
-
-        // Hover effect via JS
-        trackDiv.onmouseover = () => { if(!isActive) trackDiv.style.background = 'rgba(0,122,255,0.1)'; };
-        trackDiv.onmouseout = () => { if(!isActive) trackDiv.style.background = 'rgba(0,0,0,0.03)'; };
-
         chapterList.appendChild(trackDiv);
     });
 }

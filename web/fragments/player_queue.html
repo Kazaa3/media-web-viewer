@@ -7,6 +7,8 @@
             onclick="switchPlayerInternalView('warteschlange')">Queue</button>
         <button id="player-subtab-playlist" class="tab-btn player-sub-nav-btn" data-target="playlist"
             onclick="switchPlayerInternalView('playlist')">Playlist Manager</button>
+        <button id="player-subtab-lyrics" class="tab-btn player-sub-nav-btn" data-target="lyrics"
+            onclick="switchPlayerInternalView('lyrics')">Lyrics</button>
         <button class="tab-btn player-sub-nav-btn" data-target="visualizer"
             onclick="switchPlayerInternalView('visualizer')">Visualizer</button>
     </div>
@@ -136,6 +138,15 @@
                 <div class="tech-spec-row synced-specs" style="justify-content: center;">
                     <span id="spec-codec-visualizer" class="tech-spec-badge">-</span>
                     <span id="spec-bitrate-visualizer" class="tech-spec-badge">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Lyrics (v1.35 Premium) -->
+        <div id="player-view-lyrics" class="player-view-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px; overflow-y: auto;">
+            <div class="glass-card" style="max-width: 600px; width: 100%; min-height: 400px; padding: 40px; text-align: center; line-height: 1.8; font-size: 1.2em; color: var(--text-primary);">
+                <div id="player-lyrics-content" style="white-space: pre-wrap; font-weight: 500;">
+                    Keine Lyrics für diesen Titel gefunden.
                 </div>
             </div>
         </div>
