@@ -1,0 +1,191 @@
+<!-- ===================== METADATA EDITOR (v1.34) ===================== -->
+<div style="display: flex; flex-direction: column; height: 100%; border-radius: var(--radius-card); overflow: hidden;">
+    
+    <div style="padding: 24px 30px; background: var(--bg-primary);">
+        <h2 style="margin: 0 0 4px 0; font-size: 1.5em; font-weight: 800; color: var(--text-primary);" data-i18n="edit_title">Metadaten Editor</h2>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.95em; font-weight: 500;" data-i18n="edit_subtitle">Passe Tags und Namen deiner Medien direkt in der Datenbank an.</p>
+    </div>
+
+    <div id="edit-split-container" style="display: flex; flex: 1; min-height: 0; border-top: 1px solid var(--border-color); overflow: hidden;">
+
+        <!-- LEFT: Library List Sidebar -->
+        <div id="edit-sidebar-left" class="sidebar" style="width: 320px; flex-shrink: 0; background: var(--bg-sidebar); border-right: 1px solid var(--border-color);">
+            <div style="padding: 16px;">
+                <input type="text" id="edit-search" placeholder="Search library..."
+                    style="width: 100%; padding: 10px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; transition: border-color 0.2s;"
+                    data-i18n="[placeholder]edit_search_library_placeholder">
+            </div>
+            <div id="edit-items-list" style="flex: 1; overflow-y: auto; padding: 10px;">
+                <!-- Items injected here -->
+            </div>
+        </div>
+
+        <!-- Splitter -->
+        <div id="edit-splitter" class="splitter-v"></div>
+
+        <!-- RIGHT: Wrapper for Editor / Placeholder -->
+        <div id="edit-main-content-pane" style="flex: 1; display: flex; flex-direction: column; min-width: 300px; background: var(--bg-primary); overflow: hidden;">
+
+            <!-- Sub-Navigation (Pills) -->
+            <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <button id="edit-subtab-metadata" class="sub-tab-btn active" onclick="switchEditView('metadata')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Metadaten
+                </button>
+                <button id="edit-subtab-mediainfo" class="sub-tab-btn" onclick="switchEditView('mediainfo')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> MediaInfo
+                </button>
+                <button id="edit-subtab-ffprobe" class="sub-tab-btn" onclick="switchEditView('ffprobe')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> FFprobe
+                </button>
+                <button id="edit-subtab-ffmpeg" class="sub-tab-btn" onclick="switchEditView('ffmpeg')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> FFmpeg
+                </button>
+            </div>
+
+            <div id="edit-view-content" style="flex: 1; overflow-y: auto; padding: 30px; background: radial-gradient(circle at top right, var(--bg-secondary) 0%, var(--bg-primary) 60%);">
+                
+                <!-- VIEW: Metadata Context -->
+                <div id="edit-metadata-view" class="edit-view" style="display: block;">
+                    
+                    <!-- Cover & Identity Card -->
+                    <div class="glass-card" style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px; border-radius: var(--radius-card);">
+                        <img id="edit-cover" src="" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';"
+                            style="width: 140px; height: 140px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-soft);">
+                        <div style="flex: 1; overflow: hidden;">
+                            <h3 id="edit-form-title" style="margin: 0 0 4px 0; color: var(--text-primary); font-size: 1.4em;" data-i18n="edit_form_title">Datei bearbeiten</h3>
+                            <div id="edit-filename-display" style="font-family: monospace; font-size: 13px; color: var(--text-secondary); word-break: break-all; margin-bottom: 12px; opacity: 0.8;"></div>
+                            <button onclick="renameMedia()" class="tab-btn" style="padding: 6px 14px; font-size: 12px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Rename
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ISBN Auto-Fix Sleek Bar -->
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius-card); margin-bottom: 30px; display: flex; align-items: center; gap: 20px;">
+                        <div style="background: #f39c12; color: white; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 800; font-size: 14px; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">ISBN/EAN Meta-Engine</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Details & Cover automatisch vervollständigen.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; background: var(--bg-primary); padding: 5px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); box-shadow: var(--shadow-soft);">
+                            <input type="text" id="isbn-scanner-input" placeholder="ISBN Eintragen..." style="padding: 8px 16px; border: none; background: transparent; outline: none; font-size: 13px; width: 180px; font-family: monospace; color: var(--text-primary);">
+                            <button onclick="triggerIsbnScan()" class="tab-btn active" style="background: #f39c12; border: none; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);">Scan</button>
+                        </div>
+                    </div>
+
+                    <!-- Tags Form Area -->
+                    <div id="edit-dynamic-tags-container" class="glass-card" style="padding: 24px; border-radius: var(--radius-card);">
+                        <div id="edit-dynamic-tags" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <!-- Tag inputs dynamically injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div style="margin-top: 30px; display: flex; gap: 12px; padding: 24px 0; border-top: 1px solid var(--border-color);">
+                        <button onclick="saveTags()" class="tab-btn active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save to Database</button>
+                        <button onclick="saveToFileUI()" class="tab-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Save to File</button>
+                        <button onclick="resetEditForm()" class="tab-btn">Cancel</button>
+                        <div style="flex: 1;"></div>
+                        <button onclick="deleteMediaFromEdit()" class="tab-btn" style="color: #ff5252; border-color: rgba(255, 82, 82, 0.2);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete</button>
+                    </div>
+                </div>
+
+                <!-- VIEW: MediaInfo (Consolidated) -->
+                <div id="edit-mediainfo-view" class="edit-view" style="display: none;">
+                    <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: var(--radius-card);">
+                        <div style="padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 20px;">
+                            <img id="parser-mediainfo-artwork" style="width: 160px; height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-soft);">
+                            <div>
+                                <div id="parser-mediainfo-primary" style="font-size: 1.8em; font-weight: 900; color: var(--text-primary); letter-spacing: -1px;">-</div>
+                                <div id="parser-mediainfo-secondary" style="font-size: 1.1em; color: var(--text-secondary); opacity: 0.8; margin-bottom: 15px;">-</div>
+                                <div id="parser-mediainfo-status-badge" style="display: inline-block;"></div>
+                            </div>
+                        </div>
+                        <div id="parser-mediainfo-extended-grid" style="padding: 24px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; overflow-x: auto;"></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: FFprobe (Terminal Style) -->
+                <div id="edit-ffprobe-view" class="edit-view" style="display: none;">
+                    <div class="glass-card" style="background: #0f0f0f; border: 1px solid #333; height: 100%; display: flex; flex-direction: column; border-radius: var(--radius-card);">
+                        <div style="padding: 12px 20px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #888; font-weight: bold; text-transform: uppercase;">FFprobe Analytics Output</span>
+                            <div style="display: flex; gap: 6px;">
+                                <div style="width:10px; height:10px; border-radius:50%; background:#ff5f56;"></div>
+                                <div style="width:10px; height:10px; border-radius:50%; background:#ffbd2e;"></div>
+                                <div style="width:10px; height:10px; border-radius:50%; background:#27c93f;"></div>
+                            </div>
+                        </div>
+                        <div id="edit-ffprobe-content" style="flex: 1; padding: 20px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 13px; color: #00ff41; line-height: 1.5; overflow-y: auto; white-space: pre-wrap;">Analysis pending...</div>
+                    </div>
+                </div>
+
+                <!-- VIEW: FFmpeg (Status) -->
+                <div id="edit-ffmpeg-view" class="edit-view" style="display: none;">
+                    <div class="glass-card" style="border-radius: var(--radius-card);">
+                        <h4 style="margin: 0 0 15px 0; color: var(--text-primary);">FFmpeg Stream Status</h4>
+                        <div id="edit-ffmpeg-content" style="font-family: monospace; font-size: 13px; background: var(--bg-secondary); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-secondary); line-height: 1.6; overflow-y: auto;">
+                            Warte auf Status-Stream...
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Switch Metadata Editor Views (v1.34 Master)
+     */
+    function switchEditView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-EDIT', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.edit-view').forEach(el => {
+            el.style.display = 'none';
+            el.classList.remove('active');
+        });
+        
+        // Deactivate all sub-tab buttons
+        document.querySelectorAll('.sub-tab-btn').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Map short IDs to actual IDs
+        const map = {
+            'tags': 'edit-metadata-view',
+            'metadata': 'edit-metadata-view',
+            'mediainfo': 'edit-mediainfo-view',
+            'ffprobe': 'edit-ffprobe-view',
+            'ffmpeg': 'edit-ffmpeg-view',
+            'artwork': 'edit-metadata-view',
+            'analysis': 'edit-ffprobe-view'
+        };
+
+        const targetId = map[viewId] || ('edit-' + viewId + '-view');
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.style.display = 'block';
+            target.classList.add('active');
+            
+            // Sync with sub-nav buttons
+            const btn = document.getElementById('edit-subtab-' + viewId);
+            if (btn) btn.classList.add('active');
+        }
+
+        // Auto-trigger analysis if entering ffprobe
+        if (viewId === 'ffprobe' || viewId === 'analysis') {
+            if (typeof triggerFfprobeAnalysis === 'function') triggerFfprobeAnalysis();
+        }
+    }
+
+    // Default to metadata on load
+    setTimeout(() => {
+        const active = document.querySelector('.edit-view.active');
+        if (!active) switchEditView('metadata');
+    }, 100);
+</script>

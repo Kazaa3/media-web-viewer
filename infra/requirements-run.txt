@@ -1,0 +1,3 @@
+# Media Web Viewer - Main Dependencies
+# This file is for developer execution in the project folder.
+-r requirements-core.txt

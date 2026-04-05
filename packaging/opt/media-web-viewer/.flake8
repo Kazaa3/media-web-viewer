@@ -1,8 +1,0 @@
-[flake8]
-max-line-length = 120
-exclude = .git,__pycache__,.venv,dist,build,Screens,media-web-viewer_*,docs,packaging
-ignore = E203, W503
-per-file-ignores =
-    main.py: E402
-    parsers/*.py: E402
-    web/*.py: E402

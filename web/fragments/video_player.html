@@ -1,0 +1,193 @@
+<!-- ===================== VIDEO PLAYER (v1.34) ===================== -->
+<div id="player-tab-split-container" style="display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-primary); border-radius: var(--radius-card);">
+    
+    <!-- LEFT COLUMN: Player and Controls -->
+    <div id="player-main-content-pane" style="flex: 1; display:flex; flex-direction:column; overflow-y: auto; padding: 30px; background: radial-gradient(circle at top right, var(--bg-secondary) 0%, var(--bg-primary) 60%);">
+
+        <!-- HEADER & ENGINE SELECTOR -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h2 style="margin:0; color: var(--text-primary); font-size: 1.5em; font-weight: 900; letter-spacing: -1px; display: flex; align-items: center; gap: 12px;" data-i18n="video_tab_title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+                    <span>Cinema Engine</span>
+                </h2>
+                <div id="player-route-badge" style="background: var(--accent-hover); color: white; padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase;">Awaiting Stream</div>
+            </div>
+
+            <!-- ENGINE SELECTOR PILLS -->
+            <div class="options-nav-tabs" style="display: flex; gap: 4px; border: 1px solid var(--border-color); padding: 4px; border-radius: var(--radius-pill); background: var(--bg-sidebar);">
+                <button class="sub-tab-btn" data-engine="auto" onclick="selectEngine('auto',this)" title="Smart Auto-Routing">Auto</button>
+                <button class="sub-tab-btn active" data-engine="chrome" onclick="selectEngine('chrome',this)" title="Chrome Native/Video.js">Native</button>
+                <button class="sub-tab-btn" data-engine="vlc" onclick="selectEngine('vlc',this)" title="VLC HLS Embedded">VLC HLS</button>
+                <button class="sub-tab-btn" data-engine="mtx" onclick="selectEngine('mtx',this)" title="MediaMTX Streaming">MTX</button>
+                <button class="sub-tab-btn" data-engine="pyplayer" onclick="selectEngine('pyplayer',this)" title="PyPlayer">PyVid</button>
+                <button class="sub-tab-btn" data-engine="mpv" onclick="selectEngine('mpv',this)" title="MPV Native Player">MPV</button>
+            </div>
+        </div>
+
+        <!-- ROUTING & QUALITY INFO BAR -->
+        <div id="player-routing-status-bar" class="glass-card" style="margin-bottom: 24px; padding: 16px 24px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Recommended Engine</span>
+                    <span id="player-recommend-badge" style="font-size: 13px; font-weight: 900; color: var(--accent-color);">DETECTION ACTIVE</span>
+                </div>
+                <div style="width: 1px; height: 32px; background: var(--border-color);"></div>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Stream Quality</span>
+                    <span id="player-score-badge" style="font-size: 13px; font-weight: 900; color: var(--text-primary);">-- / 100</span>
+                </div>
+            </div>
+            <div id="player-codec-tags" style="display: flex; gap: 10px;">
+                <!-- Tags injected dynamically -->
+            </div>
+        </div>
+
+        <!-- ENGINE SUB-MODE PANELS (Consolidated Orchestrator) -->
+        <div id="engine-submode-container" class="glass-card" style="margin-bottom: 24px; padding: 20px; border-radius: 16px; min-height: 120px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">Multiplexed Mode Selection</div>
+            
+            <!-- Chrome Native Sub-Modes -->
+            <div id="submode-chrome" class="submode-panel" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn active" data-mode="chrome_direct" onclick="selectSubMode('chrome_direct',this,'chrome')">Native Direct</button>
+                    <button class="action-btn" data-mode="chrome_remux" onclick="selectSubMode('chrome_remux',this,'chrome')">Remux (MKV)</button>
+                    <button class="action-btn" data-mode="chrome_fragmp4" onclick="selectSubMode('chrome_fragmp4',this,'chrome')">fMP4 Transcode</button>
+                    <button class="action-btn" data-mode="chrome_hls" onclick="selectSubMode('chrome_hls',this,'chrome')">HLS Proxy</button>
+                </div>
+                <div id="chrome-info-strip" style="font-size: 12px; color: var(--text-secondary); font-weight: 500; font-style: italic;">Select a mode for engine-specific optimization.</div>
+            </div>
+            
+            <!-- VLC Proxy Sub-Modes (Hidden by default) -->
+            <div id="submode-vlc" class="submode-panel" style="display: none; flex-direction: column; gap: 15px;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn" data-mode="vlc_embedded" onclick="selectSubMode('vlc_embedded',this,'vlc')">VLC HLS Ingress</button>
+                    <button class="action-btn" data-mode="vlc_browser" onclick="selectSubMode('vlc_browser',this,'vlc')">Standalone Remote</button>
+                </div>
+                <div id="vlc-info-strip" style="font-size: 12px; color: var(--text-secondary); font-weight: 500; font-style: italic;">VLC Engine enables legacy format support.</div>
+            </div>
+        </div>
+
+        <!-- VIDEO PERFORMANCE ANALYZER (v1.35) -->
+        <div id="video-analyzer-panel" class="glass-card" style="margin-bottom: 24px; padding: 20px; border-radius: 16px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,122,255,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px;">Engine Performance Analyzer</div>
+                <div id="analyzer-refresh-badge" style="font-size: 9px; color: var(--text-secondary); opacity: 0.5;">LIVE TELEMETRY</div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                <div style="text-align: center;">
+                    <div id="metric-bitrate" style="font-size: 20px; font-weight: 900; color: var(--text-primary);">--</div>
+                    <div style="font-size: 9px; font-weight: 700; color: var(--text-secondary);">BITRATE (kbps)</div>
+                </div>
+                <div style="text-align: center;">
+                    <div id="metric-fps" style="font-size: 20px; font-weight: 900; color: var(--text-primary);">--</div>
+                    <div style="font-size: 9px; font-weight: 700; color: var(--text-secondary);">FRAMES / SEC</div>
+                </div>
+                <div style="text-align: center;">
+                    <div id="metric-buffer" style="font-size: 20px; font-weight: 900; color: #2ecc71;">--s</div>
+                    <div style="font-size: 9px; font-weight: 700; color: var(--text-secondary);">BUFFER HEALTH</div>
+                </div>
+                <div style="text-align: center;">
+                    <div id="metric-hw" style="font-size: 20px; font-weight: 900; color: var(--accent-color);">ACTIVE</div>
+                    <div style="font-size: 9px; font-weight: 700; color: var(--text-secondary);">HW ACCEL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN PLAYER AREA -->
+        <div id="video-player-container-root-wrapper" class="glass-card" style="width: 100%; aspect-ratio: 16/9; margin-bottom: 32px; position: relative; background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6); border: 1px solid var(--border-color);">
+            <video id="native-html5-video-resource-node" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" style="width: 100%; height: 100%; object-fit: contain;"></video>
+            <canvas id="mpv-canvas" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: none; background: #000;"></canvas>
+            
+            <!-- Idle State Overlay -->
+            <div id="idle-state-media-icon-symbol" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 10; pointer-events: none;">
+                <div class="glass-blur" style="padding: 40px; border-radius: 50%; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="1.5"><rect x="2" y="3" width="20" height="15" rx="3" ry="3"/><polyline points="10 8 14 10.5 10 13 10 8"/></svg>
+                </div>
+                <span style="color: var(--text-primary); font-weight: 800; margin-top: 30px; font-size: 18px; letter-spacing: -0.5px;" data-i18n="video_placeholder">Cinema Engine Ready</span>
+                <span style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">Select a title from the Cinema Queue</span>
+            </div>
+        </div>
+
+        <!-- ADVANCED PLAYER CONTROLS (Pill-Style Floating Bar) -->
+        <div id="advanced-player-controls" class="glass-card" style="margin-bottom: 30px; display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-radius: var(--radius-pill); backdrop-filter: blur(25px); position: sticky; bottom: 0; z-index: 100;">
+            
+            <div style="display: flex; gap: 6px;">
+                <button id="btn-stop" onclick="stopVideo()" class="tab-btn" style="color: #ff5252; background: rgba(255, 82, 82, 0.1); border: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+                <button id="btn-shuffle-video" onclick="toggleShuffle()" class="tab-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg></button>
+                <button id="btn-repeat-video" onclick="toggleRepeat()" class="tab-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 1l4 5-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg></button>
+            </div>
+
+            <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></div>
+
+            <button id="btn-seek-back" onclick="seekVideo(-10)" class="tab-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+            
+            <!-- Seek Slider & Time -->
+            <div style="flex: 1; display: flex; align-items: center; gap: 15px; padding: 0 10px;">
+                <span id="video-current-time" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 800; color: var(--text-primary); width: 50px;">00:00</span>
+                <input type="range" id="video-seek-slider" min="0" max="100" value="0" style="flex: 1; accent-color: var(--accent-color);">
+                <span id="video-duration" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 800; color: var(--text-secondary); width: 50px;">00:00</span>
+            </div>
+
+            <button id="btn-seek-forward" onclick="seekVideo(10)" class="tab-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+
+            <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></div>
+
+            <div style="display: flex; gap: 6px;">
+                <button id="btn-speed" onclick="toggleSpeed()" class="tab-btn" title="Playback Speed">1.0x</button>
+                <button id="btn-subtitle-toggle" onclick="toggleSubtitleCenter()" class="tab-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+                <button id="btn-pip" onclick="togglePip()" class="tab-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><path d="M15 11h5v4h-5z"/></svg></button>
+            </div>
+        </div>
+
+        <!-- SUBTITLE CONTROL CENTER -->
+        <div id="subtitle-control-center" class="glass-card" style="padding: 24px; border-radius: var(--radius-card); display: none; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 1.1em; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Subtitle Management
+            </h3>
+            <div id="subtitle-track-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <!-- Dynamically populated -->
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="pickExternalSubtitle()" class="tab-btn active" style="font-weight: 700;">Load External</button>
+                    <button onclick="triggerBatchExtract()" class="tab-btn">Batch Extract</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; background: var(--bg-secondary); padding: 4px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-color);">
+                    <span style="font-size: 11px; font-weight: 800; color: var(--text-secondary);">SYNC</span>
+                    <button onclick="adjustGlobalSubtitleTiming(-0.5)" class="tab-btn" style="background: transparent; border: none; padding: 2px 8px;">-500ms</button>
+                    <button onclick="adjustGlobalSubtitleTiming(0.5)" class="tab-btn" style="background: transparent; border: none; padding: 2px 8px;">+500ms</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Splitter -->
+    <div id="player-analytics-splitter" class="splitter-v"></div>
+
+    <!-- RIGHT COLUMN: Queue and Playlist -->
+    <div id="video-queue-pane" class="sidebar" style="width: 320px; flex-shrink: 0; background: var(--bg-sidebar); border-left: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;">
+        <div style="padding: 24px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; align-items: center; justify-content: space-between;">
+            <h3 style="margin: 0; font-size: 1.1em; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--text-primary);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Cinema Queue
+            </h3>
+            <div id="playlist-count" style="font-size: 11px; font-weight: 700; color: var(--accent-color);">0</div>
+        </div>
+        
+        <div id="player-playlist-container" style="flex: 1; overflow-y: auto; padding: 15px;">
+            <div id="player-playlist-empty" style="text-align: center; color: var(--text-secondary); padding: 60px 20px; font-style: italic; font-size: 13px; font-weight: 500;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity: 0.2; margin-bottom: 15px;"><rect x="2" y="3" width="20" height="15" rx="2" ry="2"/><polyline points="10 8 14 10.5 10 13 10 8"/></svg><br>
+                Cinema Queue is currently empty
+            </div>
+            <ul id="player-playlist-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamically populated via playlist.js -->
+            </ul>
+        </div>
+        
+        <div style="padding: 20px; border-top: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; gap: 10px;">
+            <button onclick="clearPlaylist()" class="tab-btn" style="flex: 1; justify-content: center; font-weight: 700;">Leeren</button>
+            <button onclick="shufflePlaylist()" class="tab-btn" style="flex: 1; justify-content: center; font-weight: 700;">Mischen</button>
+        </div>
+    </div>
+</div>

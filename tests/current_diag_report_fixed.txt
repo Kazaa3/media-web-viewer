@@ -1,0 +1,475 @@
+/home/xc/#Coding/gui_media_web_viewer/.venv_core/lib/python3.14/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.3) or chardet (7.1.0)/charset_normalizer (3.4.6) doesn't match a supported version!
+  warnings.warn(
+STDOUT: [StatusTool] StatusBar integrated
+/home/xc/#Coding/gui_media_web_viewer/src/core/main.py:49: MonkeyPatchWarning: Monkey-patching ssl after ssl has already been imported may lead to errors, including RecursionError on Python 3.6. It may also silently lead to incorrect behaviour on Python 3.7. Please monkey-patch earlier. See https://github.com/gevent/gevent/issues/1016. Modules that had direct imports (NOT patched): ['urllib3.util (/home/xc/#Coding/gui_media_web_viewer/.venv_core/lib/python3.14/site-packages/urllib3/util/__init__.py)', 'urllib3.util.ssl_ (/home/xc/#Coding/gui_media_web_viewer/.venv_core/lib/python3.14/site-packages/urllib3/util/ssl_.py)']. 
+  monkey.patch_all()
+STDOUT: [Bootstrap] gevent monkey-patching successful
+Initializing Application Environment: |----------------------------------------|   0% Initializing Application Environment: |████------------------------------------|  10% Checking EnvironmentInitializing Application Environment: |████████████████------------------------|  40% Environment StabilizedInitializing Application Environment: |████████████████████████----------------|  60% Logger Initializing01:55:06 [INFO] [root] Logging system initialized.
+STDOUT: [System] Log initialized (Level: INFO)
+Initializing Application Environment: |████████████████████████████████████████| 100% Core Ready
+Loading Core Components: |----------------------------------------|   0% Loading Core Components: |----------------------------------------|   0% Importing EelLoading Core Components: |████------------------------------------|  10% Initializing Eel AssetsLoading Core Components: |██████████------------------------------|  25% Eel Assets ReadyLoading Core Components: |████████████----------------------------|  30% Loading Core SRC ModulesLoading Core Components: |████████████████████████████████--------|  80% Core modules loadedLoading Core Components: |████████████████████████████████████----|  90% Setting UI StateLoading Core Components: |████████████████████████████████████████| 100% Initial State OK
+STDOUT: Locking /home/xc/#Coding/gui_media_web_viewer/logs/mwv.lock...
+01:55:07 [INFO] [app.main] [System] Session Initialized: 2275853_1774745707 on port 8345
+01:55:07 [INFO] [root] Logging system initialized.
+01:55:07 [INFO] [app.main] [System] Main PID: 2275853
+01:55:07 [INFO] [app.main] [System] Testbed PID: nicht aktiv
+01:55:07 [INFO] [app.main] [System] Selenium PID: nicht aktiv
+01:55:07 [INFO] [app.main] 
+01:55:07 [INFO] [app.main] [Startup] Application started - Environment Information
+01:55:07 [INFO] [app.main] 
+01:55:07 [INFO] [app.main]   Environment Type: Virtual Environment (venv)
+01:55:07 [INFO] [app.main]   Environment Name: .venv_core
+01:55:07 [INFO] [app.main]   Environment Path: /home/xc/#Coding/gui_media_web_viewer/.venv_core
+01:55:07 [INFO] [app.main]   Python Version: 3.14.0
+01:55:07 [INFO] [app.main]   Python Executable: /home/xc/#Coding/gui_media_web_viewer/.venv_core/bin/python
+01:55:07 [INFO] [app.main] 
+01:55:07 [INFO] [app.main] [Startup] main.py loading...
+01:55:07 [INFO] [app.db] Checking database integrity at /home/xc/#Coding/gui_media_web_viewer/data/database.db...
+01:55:07 [DEBU] [app.db] Database initialization/migration complete.
+01:55:08 [INFO] [app.ffprobe_analyzer] [Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: /m/corrupt.dat
+01:55:08 [WARN] [app.mode_router] Routing fallback to direct_play due to analysis error: ffprobe failed
+01:55:08 [INFO] [app.transcoder] Starting transcode: HandBrakeCLI -i in_1.mkv -o out_1.mp4 -e qsv_h264 --preset fast --aencoder copy --subtitle scan --native-language ger --native-dub --markers
+01:55:08 [INFO] [app.transcoder] 🚀 [HandBrake] Encoding: 100.0 %
+01:55:08 [INFO] [app.transcoder] Starting transcode: HandBrakeCLI -i in_0.mkv -o out_0.mp4 -e qsv_h264 --preset fast --aencoder copy --subtitle scan --native-language ger --native-dub --markers
+01:55:08 [INFO] [app.transcoder] 🚀 [HandBrake] Encoding: 100.0 %
+01:55:08 [INFO] [app.transcoder] Starting transcode: HandBrakeCLI -i in_3.mkv -o out_3.mp4 -e qsv_h264 --preset fast --aencoder copy --subtitle scan --native-language ger --native-dub --markers
+01:55:08 [INFO] [app.transcoder] 🚀 [HandBrake] Encoding: 100.0 %
+01:55:08 [INFO] [app.transcoder] Starting transcode: HandBrakeCLI -i in_2.mkv -o out_2.mp4 -e qsv_h264 --preset fast --aencoder copy --subtitle scan --native-language ger --native-dub --markers
+01:55:08 [INFO] [app.transcoder] 🚀 [HandBrake] Encoding: 100.0 %
+01:55:08 [INFO] [app.transcoder] Starting transcode: HandBrakeCLI -i in_4.mkv -o out_4.mp4 -e qsv_h264 --preset fast --aencoder copy --subtitle scan --native-language ger --native-dub --markers
+01:55:08 [INFO] [app.transcoder] 🚀 [HandBrake] Encoding: 100.0 %
+01:55:08 [INFO] [app.ffprobe_analyzer] [Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: /tmp/mock_4k_atmos.mkv
+01:55:08 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for t.m4a (Audio)
+01:55:08 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for t.mp3 (Audio)
+01:55:08 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for test.m4b (Audio)
+01:55:08 [INFO] [app.ffprobe_analyzer] [Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: /tmp/complex.mkv
+01:55:09 [INFO] [app.streams.hls_stream] [HLS] Starting test_hls using h264_qsv -> /tmp/hls/master.m3u8 (Audio:0, Subs:None, SS:120)
+01:55:09 [INFO] [app.streams.mse_stream] [MSE] Starting stream test_mse (Seek: 60s, Audio: 0) using h264_qsv
+01:55:09 [INFO] [app.streams.mse_stream] [MSE] Stream test_mse terminated.
+01:55:10 [INFO] [app.streams.mse_stream] [MSE] Starting stream sid_1 (Seek: 0s, Audio: 0) using h264_qsv
+01:55:10 [INFO] [app.streams.mse_stream] [MSE] Stream sid_1 terminated.
+01:55:10 [INFO] [app.streams.mse_stream] [MSE] Starting stream sid_1 (Seek: 0s, Audio: 0) using h264_qsv
+01:55:10 [INFO] [app.streams.mse_stream] [MSE] Stream sid_1 terminated.
+01:55:10 [INFO] [app.streams.hls_stream] [HLS] Starting hw_test using h264_qsv -> /tmp/hls/master.m3u8 (Audio:0, Subs:None, SS:0)
+01:55:10 [ERRO] [app.streams.vlc_bridge] [VLC] File not found: /t.mkv
+01:55:10 [INFO] [app.streams.hls_stream] [HLS] Starting math_test using h264_qsv -> /tmp/hls/master.m3u8 (Audio:0, Subs:None, SS:3661.55)
+ffmpeg version 5.1.8-0+deb12u1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 --enable-gpl --disable-stripping --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sdl2 --disable-sndio --enable-libjxl --enable-pocketsphinx --enable-librsvg --enable-libmfx --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, lavfi, from 'color=c=blue:s=100x100':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: rawvideo (I420 / 0x30323449), yuv420p, 100x100 [SAR 1:1 DAR 1:1], 25 tbr, 25 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (rawvideo (native) -> mjpeg (native))
+Press [q] to stop, [?] for help
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e3222600] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e3236040] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e3249cc0] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e325ce40] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e326f640] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e32824c0] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e32952c0] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e32a8440] deprecated pixel format used, make sure you did set range correctly
+[swscaler @ 0x5639e3213d40] [swscaler @ 0x5639e32bb2c0] deprecated pixel format used, make sure you did set range correctly
+Output #0, image2, to '/tmp/diag_cover.jpg':
+  Metadata:
+    encoder         : Lavf59.27.100
+  Stream #0:0: Video: mjpeg, yuvj420p(pc, progressive), 100x100 [SAR 1:1 DAR 1:1], q=2-31, 200 kb/s, 25 fps, 25 tbn
+    Metadata:
+      encoder         : Lavc59.37.100 mjpeg
+    Side data:
+      cpb: bitrate max/min/avg: 0/0/200000 buffer size: 0 vbv_delay: N/A
+[image2 @ 0x5639e3201b40] The specified filename '/tmp/diag_cover.jpg' does not contain an image sequence pattern or a pattern is invalid.
+[image2 @ 0x5639e3201b40] Use a pattern such as %03d for an image sequence or use the -update option (with -frames:v 1 if needed) to write a single image.
+frame=    1 fps=0.0 q=1.6 size=N/A time=00:00:00.04 bitrate=N/A speed=N/A    frame=    1 fps=0.0 q=1.6 Lsize=N/A time=00:00:00.04 bitrate=N/A speed=7.77x    
+video:0kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: unknown
+01:55:10 [DEBU] [app.parser] 🎵 [Audio-Branch] Starting extraction for 'diag_art.mp3'
+01:55:10 [INFO] [root] [Parser-Trace] Starte Parsing für 'diag_art.mp3' (Mode: full, Category: audio)
+01:55:10 [INFO] [root] [Parser-Trace] 🚀 Full Mode aktiviert für 'diag_art.mp3' – sammle ALLE Tags!
+01:55:10 [DEBU] [app.parser] DEBUG: PARSER_CONFIG['parser_chain']: ['filename', 'container', 'mutagen', 'pymediainfo', 'ffprobe', 'ffmpeg', 'pycdlib', 'tinytag', 'eyed3', 'music_tag', 'isoparser', 'ebml', 'mkvparse', 'enzyme', 'pymkv']
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'container' for 'diag_art.mp3'
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'pycdlib' for 'diag_art.mp3'
+01:55:10 [ERRO] [app.parser] 📦 Parser tinytag failed due to missing dependency for 'diag_art.mp3': No module named 'tinytag'
+01:55:10 [ERRO] [app.parser] 📦 Parser eyed3 failed due to missing dependency for 'diag_art.mp3': No module named 'eyed3'
+01:55:10 [ERRO] [app.parser] 📦 Parser music_tag failed due to missing dependency for 'diag_art.mp3': No module named 'music_tag'
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'isoparser' for 'diag_art.mp3'
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'ebml' for 'diag_art.mp3'
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'mkvparse' for 'diag_art.mp3'
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'enzyme' for 'diag_art.mp3'
+01:55:10 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'pymkv' for 'diag_art.mp3'
+01:55:10 [INFO] [root] [Parser-Trace] Metadata extraction complete for diag_art.mp3 in 0.156s.
+01:55:10 [INFO] [root] [Parser-Trace] ⏱️ Detailed Timings: filename: 0.001s, pymediainfo: 0.014s, ffprobe: 0.070s, ffmpeg: 0.068s
+01:55:10 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for diag_art.mp3 (Audio)
+01:55:10 [DEBU] [app.artwork] 🔍 [Artwork] Searching local art for diag_art.mp3
+01:55:10 [DEBU] [app.artwork] 🔍 [Artwork] Checking 287 candidates in /tmp
+01:55:10 [DEBU] [app.artwork] 🖼️ [Artwork] Final success for diag_art.mp3: True
+01:55:10 [DEBU] [app.artwork] 🖼️ [Artwork] Cache file 325d976a5ad1363e550646cd4598c119.jpg exists: True, size: 298
+01:55:10 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for diag_art.mp3 (Audio)
+01:55:13 [DEBU] [root] [network] HTTP Request: GET http://localhost:39025/ping
+01:55:13 [DEBU] [root] [network] HTTP Request: GET http://localhost:39025/diag-static
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Selenium Manager binary found at: /home/xc/#Coding/gui_media_web_viewer/.venv_core/lib/python3.14/site-packages/selenium/webdriver/common/linux/selenium-manager
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Executing process: /home/xc/#Coding/gui_media_web_viewer/.venv_core/lib/python3.14/site-packages/selenium/webdriver/common/linux/selenium-manager --browser chrome --debug --language-binding python --output json
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] chromedriver not found in PATH
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] chrome detected at /usr/bin/google-chrome
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Running command: /usr/bin/google-chrome --version
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Output: "Google Chrome 146.0.7680.164 "
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Detected browser: chrome 146.0.7680.164
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Required driver: chromedriver 146.0.7680.165
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] chromedriver 146.0.7680.165 already in the cache
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Driver path: /home/xc/.cache/selenium/chromedriver/linux64/146.0.7680.165/chromedriver
+01:55:14 [DEBU] [selenium.webdriver.common.selenium_manager] Browser path: /usr/bin/google-chrome
+01:55:14 [DEBU] [selenium.webdriver.common.service] Started executable: `/home/xc/.cache/selenium/chromedriver/linux64/146.0.7680.165/chromedriver` in a child process with pid: 2276088 using 0 to output -3
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] POST http://localhost:58513/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': <PageLoadStrategy.normal: 'normal'>, 'browserVersion': None, 'goog:chromeOptions': {'extensions': [], 'binary': '/usr/bin/google-chrome', 'args': ['--headless', '--no-sandbox', '--disable-dev-shm-usage']}}}}
+01:55:14 [DEBU] [urllib3.connectionpool] Starting new HTTP connection (1): localhost:58513
+01:55:14 [DEBU] [urllib3.connectionpool] http://localhost:58513 "POST /session HTTP/1.1" 200 0
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Remote response: status=200 | data={"value":{"capabilities":{"acceptInsecureCerts":false,"browserName":"chrome","browserVersion":"146.0.7680.164","chrome":{"chromedriverVersion":"146.0.7680.165 (4b989da09e15a7dc0de0785cb5ff232aadae3f0f-refs/branch-heads/7680@{#2932})","userDataDir":"/tmp/org.chromium.Chromium.scoped_dir.9xjWTb"},"fedcm:accounts":true,"goog:chromeOptions":{"debuggerAddress":"localhost:37371"},"goog:processID":2276094,"networkConnectionEnabled":false,"pageLoadStrategy":"normal","platformName":"linux","proxy":{},"setWindowRect":true,"strictFileInteractability":false,"timeouts":{"implicit":0,"pageLoad":300000,"script":30000},"unhandledPromptBehavior":"dismiss and notify","webauthn:extension:credBlob":true,"webauthn:extension:largeBlob":true,"webauthn:extension:minPinLength":true,"webauthn:extension:prf":true,"webauthn:virtualAuthenticators":true},"sessionId":"df88e13f156d4729eb31f3f965d33909"}} | headers=HTTPHeaderDict({'Content-Length': '885', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Finished Request
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] POST http://localhost:58513/session/df88e13f156d4729eb31f3f965d33909/url {'url': 'data:text/html,<html><body><h1>MWV-DIAG</h1></body></html>'}
+01:55:14 [DEBU] [urllib3.connectionpool] http://localhost:58513 "POST /session/df88e13f156d4729eb31f3f965d33909/url HTTP/1.1" 200 0
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Finished Request
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] GET http://localhost:58513/session/df88e13f156d4729eb31f3f965d33909/source {}
+01:55:14 [DEBU] [urllib3.connectionpool] http://localhost:58513 "GET /session/df88e13f156d4729eb31f3f965d33909/source HTTP/1.1" 200 0
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Remote response: status=200 | data={"value":"\u003Chtml>\u003Chead>\u003C/head>\u003Cbody>\u003Ch1>MWV-DIAG\u003C/h1>\u003C/body>\u003C/html>"} | headers=HTTPHeaderDict({'Content-Length': '108', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Finished Request
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] DELETE http://localhost:58513/session/df88e13f156d4729eb31f3f965d33909 {}
+01:55:14 [DEBU] [urllib3.connectionpool] http://localhost:58513 "DELETE /session/df88e13f156d4729eb31f3f965d33909 HTTP/1.1" 200 0
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+01:55:14 [DEBU] [selenium.webdriver.remote.remote_connection] Finished Request
+01:55:14 [INFO] [app.main] [Cast] Starting Spotify Bridge (Librespot)...
+01:55:14 [INFO] [app.main] [VLC Export] 2 Tracks nach test_export.m3u exportiert
+01:55:14 [INFO] [app.ffprobe_analyzer] [Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: test_direct_play.mp4
+01:55:14 [WARN] [app.mode_router] Routing fallback to direct_play due to analysis error: ffprobe failed
+01:55:14 [INFO] [app.ffprobe_analyzer] [Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: test_dvd.iso
+01:55:15 [WARN] [app.mode_router] Routing fallback to direct_play due to analysis error: ffprobe failed
+01:55:15 [INFO] [app.ffprobe_analyzer] [Analyzer] [UNIT_TESTING] Simulating extraction for non-existent path: /tmp/diag_dummy.mp4
+01:55:15 [DEBU] [app.parser] 🎵 [Audio-Branch] Starting extraction for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [INFO] [root] [Parser-Trace] Starte Parsing für 'Beethoven - Symphony No. 9.mp3' (Mode: full, Category: audio)
+01:55:15 [INFO] [root] [Parser-Trace] 🚀 Full Mode aktiviert für 'Beethoven - Symphony No. 9.mp3' – sammle ALLE Tags!
+01:55:15 [DEBU] [app.parser] DEBUG: PARSER_CONFIG['parser_chain']: ['filename', 'container', 'mutagen', 'pymediainfo', 'ffprobe', 'ffmpeg', 'pycdlib', 'tinytag', 'eyed3', 'music_tag', 'isoparser', 'ebml', 'mkvparse', 'enzyme', 'pymkv']
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'container' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'pycdlib' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [ERRO] [app.parser] 📦 Parser tinytag failed due to missing dependency for 'Beethoven - Symphony No. 9.mp3': No module named 'tinytag'
+01:55:15 [ERRO] [app.parser] 📦 Parser eyed3 failed due to missing dependency for 'Beethoven - Symphony No. 9.mp3': No module named 'eyed3'
+01:55:15 [ERRO] [app.parser] 📦 Parser music_tag failed due to missing dependency for 'Beethoven - Symphony No. 9.mp3': No module named 'music_tag'
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'isoparser' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'ebml' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'mkvparse' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'enzyme' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'pymkv' for 'Beethoven - Symphony No. 9.mp3'
+01:55:15 [INFO] [root] [Parser-Trace] Metadata extraction complete for Beethoven - Symphony No. 9.mp3 in 0.151s.
+01:55:15 [INFO] [root] [Parser-Trace] ⏱️ Detailed Timings: ffprobe: 0.076s, ffmpeg: 0.073s
+01:55:15 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for Beethoven - Symphony No. 9.mp3 (Audio)
+01:55:15 [DEBU] [app.parser] 🎬 [Multimedia-Branch] Starting extraction for 'episode1.mkv'
+01:55:15 [INFO] [root] [Parser-Trace] Starte Parsing für 'episode1.mkv' (Mode: full, Category: multimedia)
+01:55:15 [INFO] [root] [Parser-Trace] 🚀 Full Mode aktiviert für 'episode1.mkv' – sammle ALLE Tags!
+01:55:15 [DEBU] [app.parser] DEBUG: PARSER_CONFIG['parser_chain']: ['filename', 'container', 'mutagen', 'pymediainfo', 'ffprobe', 'ffmpeg', 'pycdlib', 'tinytag', 'eyed3', 'music_tag', 'isoparser', 'ebml', 'mkvparse', 'enzyme', 'pymkv']
+01:55:15 [WARN] [app.parser] Container parser failed for episode1.mkv: TV_Shows/Season 1/episode1.mkv
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'mutagen' for 'episode1.mkv'
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'pycdlib' for 'episode1.mkv': magic  mismatch at 32769
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'tinytag' for 'episode1.mkv'
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'eyed3' for 'episode1.mkv'
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'music_tag' for 'episode1.mkv'
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'isoparser' for 'episode1.mkv': magic  mismatch at 32769
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'ebml' for 'episode1.mkv': magic  mismatch at 0
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'mkvparse' for 'episode1.mkv': magic  mismatch at 0
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'enzyme' for 'episode1.mkv': magic  mismatch at 0
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'pymkv' for 'episode1.mkv': magic  mismatch at 0
+01:55:15 [INFO] [root] [Parser-Trace] Metadata extraction complete for episode1.mkv in 0.159s.
+01:55:15 [INFO] [root] [Parser-Trace] ⏱️ Detailed Timings: ffprobe: 0.076s, ffmpeg: 0.081s
+01:55:15 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for episode1.mkv (Video)
+01:55:15 [DEBU] [app.parser] 🎬 [Multimedia-Branch] Starting extraction for 'VIDEO_TS.IFO'
+01:55:15 [INFO] [root] [Parser-Trace] Starte Parsing für 'VIDEO_TS.IFO' (Mode: full, Category: multimedia)
+01:55:15 [INFO] [root] [Parser-Trace] 🚀 Full Mode aktiviert für 'VIDEO_TS.IFO' – sammle ALLE Tags!
+01:55:15 [DEBU] [app.parser] DEBUG: PARSER_CONFIG['parser_chain']: ['filename', 'container', 'mutagen', 'pymediainfo', 'ffprobe', 'ffmpeg', 'pycdlib', 'tinytag', 'eyed3', 'music_tag', 'isoparser', 'ebml', 'mkvparse', 'enzyme', 'pymkv']
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'mutagen' for 'VIDEO_TS.IFO'
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'pycdlib' for 'VIDEO_TS.IFO': magic  mismatch at 32769
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'tinytag' for 'VIDEO_TS.IFO'
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'eyed3' for 'VIDEO_TS.IFO'
+01:55:15 [DEBU] [app.parser] 🔇 [Multimedia-Branch] Skipping audio parser 'music_tag' for 'VIDEO_TS.IFO'
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'isoparser' for 'VIDEO_TS.IFO': magic  mismatch at 32769
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'ebml' for 'VIDEO_TS.IFO': magic  mismatch at 0
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'mkvparse' for 'VIDEO_TS.IFO': magic  mismatch at 0
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'enzyme' for 'VIDEO_TS.IFO': magic  mismatch at 0
+01:55:15 [DEBU] [app.parser] 🔍 [Magic-Check] Skipping 'pymkv' for 'VIDEO_TS.IFO': magic  mismatch at 0
+01:55:15 [INFO] [root] [Parser-Trace] Metadata extraction complete for VIDEO_TS.IFO in 0.168s.
+01:55:15 [INFO] [root] [Parser-Trace] ⏱️ Detailed Timings: ffprobe: 0.076s, ffmpeg: 0.092s
+01:55:15 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for VIDEO_TS.IFO (Unbekannt)
+01:55:15 [DEBU] [app.parser] 🎵 [Audio-Branch] Starting extraction for 'MyAudiobook.m4b'
+01:55:15 [INFO] [root] [Parser-Trace] Starte Parsing für 'MyAudiobook.m4b' (Mode: full, Category: audio)
+01:55:15 [INFO] [root] [Parser-Trace] 🚀 Full Mode aktiviert für 'MyAudiobook.m4b' – sammle ALLE Tags!
+01:55:15 [DEBU] [app.parser] DEBUG: PARSER_CONFIG['parser_chain']: ['filename', 'container', 'mutagen', 'pymediainfo', 'ffprobe', 'ffmpeg', 'pycdlib', 'tinytag', 'eyed3', 'music_tag', 'isoparser', 'ebml', 'mkvparse', 'enzyme', 'pymkv']
+01:55:15 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'container' for 'MyAudiobook.m4b'
+01:55:16 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'pycdlib' for 'MyAudiobook.m4b'
+01:55:16 [ERRO] [app.parser] 📦 Parser tinytag failed due to missing dependency for 'MyAudiobook.m4b': No module named 'tinytag'
+01:55:16 [ERRO] [app.parser] 📦 Parser eyed3 failed due to missing dependency for 'MyAudiobook.m4b': No module named 'eyed3'
+01:55:16 [ERRO] [app.parser] 📦 Parser music_tag failed due to missing dependency for 'MyAudiobook.m4b': No module named 'music_tag'
+01:55:16 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'isoparser' for 'MyAudiobook.m4b'
+01:55:16 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'ebml' for 'MyAudiobook.m4b'
+01:55:16 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'mkvparse' for 'MyAudiobook.m4b'
+01:55:16 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'enzyme' for 'MyAudiobook.m4b'
+01:55:16 [DEBU] [app.parser] 🔇 [Audio-Branch] Skipping multimedia parser 'pymkv' for 'MyAudiobook.m4b'
+01:55:16 [INFO] [root] [Parser-Trace] Metadata extraction complete for MyAudiobook.m4b in 0.154s.
+01:55:16 [INFO] [root] [Parser-Trace] ⏱️ Detailed Timings: ffprobe: 0.073s, ffmpeg: 0.079s
+01:55:16 [DEBU] [app.artwork] 🖼️ [Artwork] Extracting for MyAudiobook.m4b (Audio)
+01:55:16 [INFO] [app.test_integrity] Integrity check running.
+============================================================
+ULTIMATE MEDIA WEB VIEWER - MASTER DIAGNOSTIC RUNNER
+============================================================
+
+🚀 Starting Ultimate ...
+  [Ultimate-L01] Dict Integrity: ✅ PASS | Dictionary structure verified.
+  [Ultimate-L00] level_2_db_persistence: ❌ FAIL | Unhandled Exception: table media has no column named mock_stage
+  [Ultimate-L03] Mode Router: ✅ PASS | Smart routing logic verified (Mode: mse).
+  [Ultimate-L04] HTML Integrity: ✅ PASS | Core DOM elements verified in app.html.
+  [Ultimate-L05] JS Bridge Detection: ✅ PASS | Eel/JS diagnostic logic verified.
+  [Ultimate-L00] level_6_filtered_api: ❌ FAIL | Unhandled Exception: table media has no column named mock_stage
+  [Ultimate-L07] Real Media: ✅ PASS | Verified 3 files successfully.
+  [Ultimate-L08] Visual Logic: ✅ PASS | Playlist visual state logic verified in source.
+  [Ultimate-L09] AI System Doctor: ✅ PASS | Environment health check complete.
+  [Ultimate-L10] Selenium E2E: ⏭️ SKIP | Selenium logic omitted in core diagnostic runner.
+  [Ultimate-L11] Frontend Assets: ✅ PASS | Web directory structure verified.
+  [Ultimate-L12] Category Mapping: ✅ PASS | Universal object category mapping verified.
+  [Ultimate-L13] Session Integrity: ✅ PASS | SID: 2275853_1774745707
+  [Ultimate-L14] Process Cleanup: ✅ PASS | Found 0 ffmpeg processes.
+  [Ultimate-L15] WebSocket Load: ✅ PASS | Backend concurrent connection capability verified.
+  [Ultimate-L16] Session Bypass: ✅ PASS | Session lock bypass logic verified.
+  [Ultimate-L17] GUI Sync: ✅ PASS | Multi-client state synchronization logic verified.
+  [Ultimate-L00] level_18_dynamic_lifecycle: ❌ FAIL | Unhandled Exception: table media has no column named mock_stage
+  [Ultimate-L19] Filtering: ✅ PASS | Advanced server-side search/filter logic OK.
+  [Ultimate-L20] Mock Injection: ✅ PASS | Bulk mock data persistence verified.
+  [Ultimate-L21] UI Structural Integrity: ✅ PASS | HTML structure verified.
+  [Ultimate-L22] JS Safety Audit: ✅ PASS | Potential unguarded access points scanned.
+  [Ultimate-L23] Python Syntax Audit: ✅ PASS | All source files parsed successfully.
+  [Ultimate-L24] I18N Coverage: ✅ PASS | Bilingual coverage scan complete.
+  [Ultimate-L00] level_25_performance: ❌ FAIL | Unhandled Exception: table media has no column named mock_stage
+  [Ultimate-L26] Type Integrity: ✅ PASS | API type safety verified.
+  [Ultimate-L27] DB Concurrency: ❌ FAIL | Inserted 10 items concurrently. Errors: 10
+  [Ultimate-L28] Corrupt Media Logic: ❌ FAIL | Fallback to direct mode: False
+  [Ultimate-L29] Transcoding Stress: ✅ PASS | Concurrency (5 jobs) verified. Done: True
+
+🚀 Starting Items ...
+  [Items-L01] Atomic Mock: ✅ PASS | Basic Item structure verified.
+  [Items-L02] FFprobe Simulator: ✅ PASS | Extracted 4K=4K Atmos=True
+  [Items-L03] Cat Map Audit: ✅ PASS | Universal category mapping verified.
+  [Items-L04] Extension Matrix: ✅ PASS | Format/Extension matrix verified.
+  [Items-L05] Routing Matrix: ✅ PASS | Router format matrix verified.
+  [Items-L06] Symlink Safety: ✅ PASS | Recursive symlink loops prevented.
+  [Items-L07] Deep Nesting: ✅ PASS | 10+ level folder depth handled.
+  [Items-L08] Transcode Logic: ✅ PASS | ALAC -> FLAC trigger verified.
+  [Items-L09] Duration H:M:S: ✅ PASS | Format: 1:01:01
+  [Items-L10] Item Type Mapping: ✅ PASS | Cat: Hörbuch
+  [Items-L11] Multi-Track Probe: ✅ PASS | Tracks: A=2 S=2
+
+🚀 Starting UI ...
+  [UI-L01] DOM Integrity: ✅ PASS | HTML/JS structure balanced.
+  [UI-L02] Resource Check: ✅ PASS | Static assets (CSS/JS) verified.
+  [UI-L03] Theme Logic: ⚠️ WARN | CSS Variable tokens detected.
+  [UI-L11] Tab Coverage: ✅ PASS | Verified 15 unique tab targets. Missing: []
+  [UI-L12] Modal Coverage: ✅ PASS | Verified 0 unique modal triggers. Missing: []
+  [UI-L13] Toast System: ✅ PASS | Toast notification system presence verified.
+
+🚀 Starting Env ...
+  [Env-L01] Binary Check: ⚠️ WARN | Missing: ['mpv', 'swyh-rs']
+  [Env-L02] Python Packages: ✅ PASS | All 9 core dependencies found.
+  [Env-L03] Deployment Assets: ✅ PASS | Reorganized structure: True. Archives: True.
+  [Env-L04] Legacy Build Integrity: ✅ PASS | Found 2 valid legacy build artifacts (>100MB).
+  [Env-L05] Test Artifacts: ✅ PASS | Found 7 test media files.
+  [Env-L06] Python Version: ✅ PASS | Running on Python 3.14.0
+
+🚀 Starting Database ...
+  [Database-L01] Schema Version: ✅ PASS | Database schema initialized.
+  [Database-L02] Media Count: ✅ PASS | Found 0 items in library.
+  [Database-L03] Migration Consistency: ✅ PASS | No pending migrations detected.
+  [Database-L04] Transaction Rollback: ✅ PASS | ACID compliance verified for bulk inserts.
+
+🚀 Starting Player ...
+  [Player-L01] Seeking Injection: ✅ PASS | HLS SS Injection: True, MSE SS Injection: True
+  [Player-L02] Session Lifecycle: ❌ FAIL | Previous process terminated on restart.
+  [Player-L03] HW Acceleration: ❌ FAIL | nvenc_h264 found in encoder mapping.
+  [Player-L04] VLC Bridge Logic: ❌ FAIL | VLC sout transcode command generated.
+  [Player-L05] Seeking Precision: ✅ PASS | Float precision verified for 3661.55s offset.
+
+🚀 Starting Integrity ...
+  [Integrity-L01] Live MKV Parse: ✅ PASS | Extracted bitrate: 137155 bps
+  [Integrity-L02] Mutagen ID3 Sync: ❌ FAIL | Error: an ID3 tag already exists
+  [Integrity-L03] Artwork Extraction: ✅ PASS | Extracted artwork to: /home/xc/.cache/gui_media_web_viewer/art/325d976a5ad1363e550646cd4598c119.jpg
+  [Integrity-L04] Registry Audit: ✅ PASS | Verified 69 extensions across 6 categories.
+  [Integrity-L05] Categorization Logic: ❌ FAIL | Mismatches: ['disc.iso->Disk-Abbild']
+
+🚀 Starting Network ...
+  [Network-L01] Server Ping: ✅ PASS | Received: pong
+  [Network-L02] Static Serving: ✅ PASS | Served content: live_content
+
+🚀 Starting Quality ...
+  [Quality-L01] Eel API Alignment: ❌ FAIL | Mismatches: {'smart_route', 'trigger_mp4tag_faststart'}
+  [Quality-L02] HTML Sanity: ⚠️ WARN | Div Balance: 847 open vs 850 close.
+  [Quality-L03] Tab Audit: ⚠️ WARN | Missing Tab IDs: ['tests', 'edit', 'options', 'reporting', 'debug', 'library', 'item', 'video', 'flags', 'vlc', 'file', 'player', 'logbuch']
+  [Quality-L04] Subprocess Safety: ✅ PASS | Tracking: True, Cleanup: True
+  [Quality-L05] Linting Readiness: ✅ PASS | Found configs: ['pyproject.toml', '.flake8']
+  [Quality-L06] Type Safety: ✅ PASS | Type hints detected in 2/3 sampled core files.
+
+🚀 Starting Automation ...
+  [Automation-L01] Desktop Metrics: ❌ FAIL | Error: No module named 'pyautogui'
+  [Automation-L02] Interaction Smoke: ❌ FAIL | Automation blocked: No module named 'pyautogui'
+  [Automation-L03] Structural Audit: ⚠️ WARN | Final Stack Depth: DIV=-4, BRACE=2
+  [Automation-L04] Leakage Audit: ✅ PASS | No obvious code leakage detected.
+  [Automation-L05] Selenium Ready: ⏭️ SKIP | Chrome: /usr/bin/google-chrome, Driver: None
+  [Automation-L06] Selenium Smoke: ✅ PASS | Handshake and page load successful.
+
+🚀 Starting Casting ...
+  [Casting-L01] Binary Audit: ⚠️ WARN | librespot: MISSING | swyh-rs: MISSING
+  [Casting-L02] PyChromecast Ready: ❌ FAIL | Missing dependency: No module named 'pychromecast'
+  [Casting-L03] Discovery Smoke: ⚠️ WARN | Discovery failed: No module named 'pychromecast'
+  [Casting-L04] Spotify Bridge: ✅ PASS | Spotify Bridge active
+  [Casting-L05] swyh-rs Toggle: ❌ FAIL | Transitions: None -> None
+  [Casting-L06] API Alignment: ✅ PASS | All casting endpoints exposed.
+
+🚀 Starting Audioplayer ...
+  [Audioplayer-L01] State Sync: ✅ PASS | Global Index: -1, API Index: -1
+  [Audioplayer-L02] Volume Bridge: ⏭️ SKIP | No active VLC player instance for volume audit.
+  [Audioplayer-L03] Transition Logic: ✅ PASS | Prev@Start: start, Next@End: end
+  [Audioplayer-L04] VLC Bridge: ✅ PASS | python-vlc available
+  [Audioplayer-L05] API Alignment: ✅ PASS | All player endpoints exposed.
+
+🚀 Starting Playlist ...
+  [Playlist-L01] M3U Export: ✅ PASS | File: test_export.m3u, Valid: True
+  [Playlist-L02] Queue Reorder: ✅ PASS | Order: ['B', 'A']
+  [Playlist-L03] Queue Maintenance: ✅ PASS | Count: 2, Index: -1
+  [Playlist-L04] Persistence Smoke: ✅ PASS | Status: ok
+  [Playlist-L05] API Alignment: ✅ PASS | All playlist endpoints exposed.
+
+🚀 Starting Logbuch ...
+  [Logbuch-L01] Directory Discovery: ✅ PASS | Path: /home/xc/#Coding/gui_media_web_viewer/logbuch, Exists: True
+  [Logbuch-L02] Metadata Extraction: ❌ FAIL | Status: None
+  [Logbuch-L03] Status Normalization: ✅ PASS | Logic verified via Level 2.
+  [Logbuch-L04] Entry Lookup: ✅ PASS | Retrieved expected content.
+  [Logbuch-L05] API Alignment: ✅ PASS | All logbook endpoints exposed.
+
+🚀 Starting Reporting ...
+  [Reporting-L01] Object Integrity: ✅ PASS | ReportTab instantiated and managed.
+  [Reporting-L02] Benchmark Persistence: ✅ PASS | Saved: {'codec': 'h264', 'fps': 60}, Retrieved: {'codec': 'h264', 'fps': 60}
+  [Reporting-L03] Connectivity Structure: ✅ PASS | Report format alignment verified.
+  [Reporting-L04] Media Matrix Aggregation: ✅ PASS | Aggregation logic responsive.
+  [Reporting-L05] API Alignment: ✅ PASS | All reporting endpoints exposed.
+  [Reporting-L06] Media Routing Verification: ✅ PASS | Smart routing logic consistency confirmed.
+
+🚀 Starting UI Integrity ...
+  [UI Integrity-L01] Structural Balance: ⚠️ WARN | DIVs: 847/850, Braces: 2068/2067
+  [UI Integrity-L02] CSS Token Audit: ⚠️ WARN | Missing variables: ['--bg-main', '--accent-color', '--text-main', '--sidebar-width'], Missing tokens: ['#151515', '#2a7770']
+  [UI Integrity-L03] Critical Selectors: ✅ PASS | Critical UI anchors found.
+  [UI Integrity-L04] Backend Leakage: ✅ PASS | No obvious backend leakage found.
+  [UI Integrity-L05] Responsive Sanity: ✅ PASS | Found 1 media queries.
+  [UI Integrity-L06] JS Syntax: ✅ PASS | No obvious nested quote syntax errors found in app.html.
+  [UI Integrity-L07] SVG Icons: ✅ PASS | SVG icon references are clean.
+  [UI Integrity-L08] OnError Bridge: ✅ PASS | Real-time JS error bridge found.
+  [UI Integrity-L09] Tab Navigation: ✅ PASS | Verified 47 tab IDs and 13 target panels.
+  [UI Integrity-L10] Debug & DB View: ✅ PASS | Debug & Database view structure verified.
+  [UI Integrity-L11] Management Stability: ❌ FAIL | Missing: ['regex-provider-chain-orchestrator-panel']
+  [UI Integrity-L12] Mock System: ✅ PASS | Mock toggle and logic verified.
+
+🚀 Starting Parser ...
+  [Parser-L01] Tool Readiness: ✅ PASS | ffprobe and mkvmerge are ready.
+  [Parser-L02] FFprobe JSON Integrity: ✅ PASS | Analyzer returned dict.
+  [Parser-L03] Metadata Extraction: ✅ PASS | Extraction logic imported.
+  [Parser-L04] MKVMerge Handshake: ✅ PASS | Parser file: True
+  [Parser-L05] M3U8 Awareness: ✅ PASS | Playlist logic alignment verified.
+  [Parser-L06] Category Keywords: ⚠️ WARN | Detected 3/4 categories correctly.
+
+🚀 Starting Edit ...
+  [Edit-L01] Tag Extraction: ✅ PASS | Mutagen imported and functional.
+  [Edit-L02] Save Logic: ✅ PASS | save_tags_to_file exists in main.
+  [Edit-L03] Rename Safety: ✅ PASS | Database alignment for renaming verified.
+  [Edit-L04] Artwork Hash: ✅ PASS | Artwork cache refresh logic verified.
+  [Edit-L05] API Alignment: ⚠️ WARN | Missing exports: ['update_metadata_entry']
+
+🚀 Starting Sidebar ...
+  [Sidebar-L01] Property Storage: ✅ PASS | Sidebar state property found in main.
+  [Sidebar-L02] Toggle Logic: ⚠️ WARN | toggle_sidebar not found.
+  [Sidebar-L03] Sync Integrity: ✅ PASS | Sidebar sync logic alignment verified.
+  [Sidebar-L04] Splitter Persistence: ✅ PASS | Sidebar width persistence verified.
+  [Sidebar-L05] API Alignment: ⚠️ WARN | Missing exports: ['toggle_sidebar']
+
+🚀 Starting Config ...
+  [Config-L01] JSON Integrity: ✅ PASS | Config is valid JSON.
+  [Config-L02] Standard View: ✅ PASS | Audio view is 'standard'.
+  [Config-L03] Deployment Profiles: ✅ PASS | Environment is 'dev'. Profile keys valid.
+  [Config-L04] Schema Validation: ✅ PASS | All required keys found.
+  [Config-L05] Override Precedence: ✅ PASS | Environment override logic verified.
+  [Config-L06] API Persistence: ✅ PASS | Config save logic found in main.
+  [Config-L07] Reset Safety: ✅ PASS | reset_config found.
+  [Config-L08] Eel Alignment: ✅ PASS | All endpoints exposed.
+  [Config-L09] Startup Handshake: ✅ PASS | Initial config handshake valid.
+
+🚀 Starting Routing ...
+  [Routing-L01] Smart Route Dry-Run: ✅ PASS | H.264 MP4 routed to direct_play.
+  [Routing-L02] Fallback Chain: ✅ PASS | 4K MKV HEVC routed to hls_fmp4.
+  [Routing-L03] VLC Bridge Trigger: ❌ FAIL | ISO routed to hls_fmp4.
+  [Routing-L04] MSE Preference: ✅ PASS | VP9 WebM routed to mse.
+  [Routing-L05] API Exposure: ✅ PASS | smart_route exposed to frontend.
+
+🚀 Starting Scripts ...
+  [Scripts-L01] Directory Audit: ✅ PASS | Found 24 script files.
+  [Scripts-L02] Syntax Check: ✅ PASS | All critical scripts have valid syntax.
+  [Scripts-L03] Shebang Validation: ✅ PASS | All shell scripts have shebangs.
+  [Scripts-L04] Execution Sanity: ✅ PASS | Helper script execution verified.
+  [Scripts-L05] Permissions Audit: ⚠️ WARN | Not Executable: install_offline.sh, verify_venv.sh
+
+🚀 Starting I18n ...
+  [I18n-L01] JSON Integrity: ✅ PASS | Valid JSON with 589 DE/EN keys.
+  [I18n-L02] Key Parity: ✅ PASS | Parity verified for 589 keys.
+  [I18n-L03] Required Keys: ✅ PASS | All critical keys found.
+  [I18n-L04] Reference Audit: ✅ PASS | 24 potentially unused keys in sample.
+  [I18n-L05] Deep Scan HTML: ⚠️ WARN | Found 374 hardcoded text snippets.
+  [I18n-L06] JS String Audit: ⚠️ WARN | Hardcoded German strings found in JS.
+  [I18n-L07] Cardinality Check: ✅ PASS | UI Internationalization Cardinality verified.
+
+🚀 Starting Optimization & AI-Readiness Shell ...
+  [Optimization & AI-Readiness Shell-L01] Unicode vs SVG Audit (UI Only): ✅ PASS | Checked 0 files (Excluded Logging). Found 0 violations.
+  [Optimization & AI-Readiness Shell-L02] HTML I18n Coverage: ✅ PASS | Scanned 0 HTML files. 0 files with potential coverage gaps.
+  [Optimization & AI-Readiness Shell-L03] AI Complexity Audit: ⚠️ WARN | AI Comment Density: 0/0 (0.0%).
+
+🚀 Starting Complexity Reduction Suite ...
+  [Complexity Reduction Suite-L01] File Length Audit: ✅ PASS | Checked 0 files. Found 0 oversized files.
+  [Complexity Reduction Suite-L02] JS Function Complexity: ✅ PASS | Found 0 potentially oversized functions in JS.
+  [Complexity Reduction Suite-L03] Global Scope Audit: ✅ PASS | Found 0 files with potential global pollution.
+
+🚀 Starting Project Style Audit Suite ...
+  [Project Style Audit Suite-L00] level_1_component_style_audit: ❌ FAIL | Unhandled Exception: [Errno 2] No such file or directory: 'web/app.html'
+  [Project Style Audit Suite-L00] level_2_glassmorphism_consistency: ❌ FAIL | Unhandled Exception: [Errno 2] No such file or directory: 'web/app.html'
+  [Project Style Audit Suite-L00] level_3_ai_anchor_audit: ❌ FAIL | Unhandled Exception: [Errno 2] No such file or directory: 'web/app.html'
+
+🚀 Starting Subtitle Processing Suite ...
+  [Subtitle Processing Suite-L01] Subtitle Extraction Engine: ✅ PASS | FFmpeg detected and ready for extraction.
+  [Subtitle Processing Suite-L02] Subtitle Timing Engine: ✅ PASS | Available timing engines: pysubs2
+  [Subtitle Processing Suite-L03] Cache Integrity: ✅ PASS | Cache directory not yet initialized.
+
+🚀 Starting Toolchain ...
+  [Toolchain-L01] MKVToolNix: ✅ PASS | All tools found. mkvmerge v95.0 ('Goodbye Stranger') 64-bit
+  [Toolchain-L02] HandBrakeCLI: ✅ PASS | Found: HandBrake 1.6.1
+  [Toolchain-L03] FFplay: ✅ PASS | Found: ffplay version 5.1.8-0+deb12u1 Copyright (c) 2003-2025 the FFmpeg developers
+  [Toolchain-L04] SWYH-RS: ⚠️ WARN | swyh-rs-cli not found. Audio streaming might be limited.
+  [Toolchain-L05] GPU Acceleration: ⚠️ WARN | No GPU acceleration detected via HandBrake CLI help.
+  [Toolchain-L10] Integrity System: ✅ PASS | DB Verified (0 items), Logger active.
+
+🚀 Starting Advanced Player & Toolchain ...
+  [Advanced Player & Toolchain-L01] Mode Routing: ✅ PASS | Verified 10 modes in router.
+  [Advanced Player & Toolchain-L02] SWYH Bridge: ✅ PASS | SWYH-RS bridge and state tracker found.
+  [Advanced Player & Toolchain-L03] Batch Extract API: ✅ PASS | MKV batch extraction API confirmed.
+  [Advanced Player & Toolchain-L05] HandBrake Batch: ✅ PASS | Batch task queuing confirmed.
+  [Advanced Player & Toolchain-L06] Player Binaries: ⚠️ WARN | Missing player binaries: ['mpv']
+  [Advanced Player & Toolchain-L07] System Tools: ⚠️ WARN | Missing specialized tools: ['swyh-rs-cli']
+  [Advanced Player & Toolchain-L08] UI Runtime Players: ✅ PASS | Chrome Native, Video.js, MPV-WASM, and PyPlayer routes verified.
+  [Advanced Player & Toolchain-L09] Library Presence: ❌ FAIL | Missing libraries: ['enzyme', 'pymkv', 'ffmpeg-python']
+
+============================================================
+MASTER DIAGNOSTIC COMPLETE
+============================================================

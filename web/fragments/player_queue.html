@@ -1,0 +1,263 @@
+<!-- ===================== PLAYER QUEUE (v1.34 Duo View) ===================== -->
+<div style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+    <!-- Sub-Navigation for Player Views -->
+    <div class="sub-nav-bar"
+        style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+        <button id="player-subtab-queue" class="tab-btn player-sub-nav-btn active" data-target="warteschlange"
+            onclick="switchPlayerInternalView('warteschlange')">Queue</button>
+        <button id="player-subtab-playlist" class="tab-btn player-sub-nav-btn" data-target="playlist"
+            onclick="switchPlayerInternalView('playlist')">Playlist Manager</button>
+        <button class="tab-btn player-sub-nav-btn" data-target="visualizer"
+            onclick="switchPlayerInternalView('visualizer')">Visualizer</button>
+    </div>
+
+    <!-- MAIN PLAYER VIEWS CONTAINER -->
+    <div id="player-tab-split-container"
+        style="flex: 1; display: flex; overflow: hidden; position: relative; background: var(--bg-primary);">
+
+        <!-- VIEW 1: Queue (Queue - Artwork Left, Queue Right) -->
+        <div id="player-view-warteschlange" class="player-view-container active" style="display: flex;">
+
+            <!-- LEFT SIDE: The Deck / Premium Sidebar -->
+            <div id="player-deck-column">
+                <!-- Artwork Card -->
+                <div class="glass-card"
+                    style="width: 340px; height: 340px; padding: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 15px 45px rgba(0,0,0,0.12); margin-bottom: 25px; border: 1px solid rgba(0,0,0,0.05);">
+                    <img id="big-player-artwork-warteschlange" class="synced-artwork"
+                        src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+
+                <!-- Metadata Stack -->
+                <div style="width: 100%; text-align: left; padding: 0 10px;">
+                    <h2 id="big-player-title-warteschlange" class="synced-title"
+                        style="margin: 0; font-size: 1.8em; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; line-height: 1.2;">
+                        Media Library</h2>
+                    <h3 id="big-player-artist-warteschlange" class="synced-artist"
+                        style="margin: 8px 0 15px 0; font-size: 1.1em; font-weight: 500; color: var(--text-secondary); opacity: 0.8;">
+                        Ready for playback</h3>
+
+                    <!-- Tech Box (Legacy Grey Row) -->
+                    <div id="legacy-tech-box-row" class="legacy-meta-row synced-specs">
+                        <span id="spec-codec-warteschlange">-</span> |
+                        <span id="spec-bitdepth-warteschlange">-</span> |
+                        <span id="spec-samplerate-warteschlange">-</span> |
+                        <span id="spec-bitrate-warteschlange">-</span>
+                    </div>
+
+                    <!-- Metadata Subtitles -->
+                    <div id="player-meta-subtitles-warteschlange"
+                        style="margin-top: 20px; font-size: 13px; color: var(--text-secondary); font-weight: 500; line-height: 1.8;">
+                        <div id="spec-album-line-warteschlange" style="font-weight: 700; color: var(--text-primary);">
+                            Album Name</div>
+                        <div id="spec-track-details-warteschlange">Year • Genre • Track 01</div>
+                    </div>
+
+                    <!-- File Path (Restored) -->
+                    <div id="player-file-path-warteschlange"
+                        style="margin-top: 25px; font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: monospace; word-break: break-all; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+                        /path/to/current/media/file.m4a
+                    </div>
+
+                    <!-- Premium Sidebar: Chapters/Tracks (v1.34) -->
+                    <div id="player-chapters-container"
+                        style="margin-top: 30px; border-top: 2px solid var(--accent-color); padding-top: 20px;">
+                        <h4
+                            style="margin: 0 0 15px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-color); font-weight: 800;">
+                            Tracks / Kapitel</h4>
+                        <div id="player-chapters-list"
+                            style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Tracks injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE: The Playlist/Queue -->
+            <div id="player-playlist-column">
+                <div
+                    style="padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h3 style="margin: 0; font-weight: 800; font-size: 1.2em; letter-spacing: -0.3px;">Queue</h3>
+                        <span id="queue-item-count-warteschlange" class="synced-count"
+                            style="background: var(--accent-color); color: white; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2);">0
+                            Titel</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="queue-type-filter" onchange="if(typeof changeQueueFilter === 'function') changeQueueFilter(this.value)" 
+                            style="padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; outline: none; transition: border-color 0.2s;">
+                            <option value="all">Alle Medien</option>
+                            <option value="audio">Nur Audio</option>
+                            <option value="video">Nur Video</option>
+                            <option value="iso">Nur ISO/Abbilder</option>
+                            <option value="transcoded">Nur Transcoded</option>
+                        </select>
+
+                        <!-- v1.35.65: Diagnostic Control Suite -->
+                        <div class="diag-control-suite" style="display: flex; align-items: center; gap: 8px; margin-left: 4px; border-left: 1px solid var(--border-color); padding-left: 8px;">
+                            <div class="diag-toggle-btn" id="diag-lib-toggle" onclick="toggleDiagLibMode()" title="Toggle Real DB / Diagnostic Suite" style="font-size: 9px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <span id="diag-lib-label" style="font-weight:800;">DIAG</span>
+                                <div style="width: 20px; height: 10px; background: var(--border-color); border-radius: 5px; position: relative;">
+                                    <div id="diag-lib-dot" style="width: 8px; height: 8px; background: var(--accent-color); border-radius: 50%; position: absolute; left: 11px; top: 1px; transition: all 0.2s;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="diag-toggle-btn" id="diag-native-toggle" onclick="toggleForceNative()" title="Force Native Video Engine" style="font-size: 9px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <span id="diag-native-label" style="font-weight:800;">NATV</span>
+                                <div style="width: 20px; height: 10px; background: var(--border-color); border-radius: 5px; position: relative;">
+                                    <div id="diag-native-dot" style="width: 8px; height: 8px; background: #888; border-radius: 50%; position: absolute; left: 1px; top: 1px; transition: all 0.2s;"></div>
+                                </div>
+                            </div>
+
+                            <button onclick="runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; font-size:8px; padding:2px 4px; cursor:pointer; font-weight:800;">AUDIT</button>
+                        </div>
+                        <button onclick="clearQueue()" class="tab-btn sm"
+                            style="padding: 6px 14px; font-size: 11px; font-weight: 700;">Liste leeren</button>
+                        <button onclick="shuffleQueue()" class="tab-btn sm"
+                            style="padding: 6px 14px; font-size: 11px; font-weight: 700;">Mischen</button>
+                    </div>
+                </div>
+
+                <div id="active-queue-list-render-target-warteschlange" class="synced-queue-target"
+                    style="padding: 20px 0;">
+                    <!-- High-fidelity white cards injected here -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- VIEW 2: Modern Visualizer (Centered Artwork + Background Bars) -->
+        <div id="player-view-visualizer" class="player-view-container">
+
+            <!-- Large Centered Artwork -->
+            <div class="glass-card"
+                style="width: 480px; height: 480px; margin-bottom: 40px; padding: 0; overflow: hidden; border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.3); z-index: 10;">
+                <img id="big-player-artwork-visualizer" class="synced-artwork"
+                    src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                    style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+
+            <!-- Float Metadata -->
+            <div style="text-align: center; z-index: 10; max-width: 800px;">
+                <h2 id="big-player-title-visualizer" class="synced-title"
+                    style="margin: 0; font-size: 2.8em; font-weight: 900; color: var(--text-primary); letter-spacing: -1.5px; line-height: 1.1;">
+                    Media Library</h2>
+                <h3 id="big-player-artist-visualizer" class="synced-artist"
+                    style="margin: 15px 0 25px 0; font-size: 1.4em; font-weight: 500; color: var(--text-secondary); opacity: 0.7;">
+                    Ready for playback</h3>
+
+                <div class="tech-spec-row synced-specs" style="justify-content: center;">
+                    <span id="spec-codec-visualizer" class="tech-spec-badge">-</span>
+                    <span id="spec-bitrate-visualizer" class="tech-spec-badge">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: Playlist Manager (v1.34 Integrated) -->
+        <div id="player-view-playlist" class="player-view-container" style="display: none; flex-direction: row; flex: 1; overflow: hidden;">
+            <!-- Left Column: Playlist Selection (Sidebar) -->
+            <div id="playlist-management-sidebar" class="sidebar" style="width: 320px; flex-shrink: 0; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column;">
+                <div style="padding: 24px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; align-items: center; justify-content: space-between;">
+                    <h3 style="margin: 0; font-size: 1.1em; font-weight: 800; color: var(--text-primary);" data-i18n="nav_playlist">Gespeicherte Listen</h3>
+                    <button onclick="createNewPlaylistPrompt()" class="tab-btn active" title="Neue Playlist erstellen" style="padding: 4px 12px; font-size: 14px; border: none;">+</button>
+                </div>
+                
+                <div id="sidebar-playlist-item-list-container" class="scrolling-view" style="flex: 1; overflow-y: auto; padding: 12px;">
+                    <!-- List of saved playlists injected here -->
+                </div>
+            </div>
+
+            <!-- Right Column: Active Playlist Content -->
+            <div id="playlist-active-content-view" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary);">
+                <div id="playlist-active-renderer-header" style="padding: 30px 40px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: radial-gradient(circle at top right, var(--bg-secondary) 0%, var(--bg-primary) 60%);">
+                    <div>
+                        <h2 id="playlist-active-instance-title" style="margin: 0; font-size: 1.8em; font-weight: 900; color: var(--text-primary); letter-spacing: -1px;">Keine Playlist gewählt</h2>
+                        <div id="playlist-active-instance-meta" style="color: var(--text-secondary); font-size: 0.9em; margin-top: 8px; font-weight: 600; opacity: 0.7;">0 Titel • 0:00:00 Gesamtlaufzeit</div>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="playCurrentActivePlaylist()" class="tab-btn active" style="padding: 12px 24px; font-weight: 800;">Abspielen</button>
+                        <button onclick="exportPlaylistToLocalDisk()" class="tab-btn" style="padding: 12px 20px; font-weight: 700;">Export</button>
+                        <button onclick="deleteActivePlaylistPermanently()" class="tab-btn" style="padding: 12px 20px; font-weight: 700; color: #ff5252; border-color: rgba(255, 82, 82, 0.2);">Löschen</button>
+                    </div>
+                </div>
+
+                <div id="playlist-item-render-pane" class="scrolling-view" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-primary);">
+                    <div id="playlist-content-render-target" style="display: flex; flex-direction: column; width: 100%; gap: 4px;">
+                        <!-- Items injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /**
+     * Switch Player Sub-Views (v1.34 Master)
+     */
+    /**
+     * Switch Player Sub-Views (v1.35 Recovery)
+     */
+    function switchPlayerInternalView(viewId) {
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'SWITCH-START', { viewId });
+        
+        try {
+            // Hide all views
+            document.querySelectorAll('.player-view-container').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
+            
+            // Deactivate all sub-nav buttons
+            document.querySelectorAll('.player-sub-nav-btn').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show target view
+            const target = document.getElementById('player-view-' + viewId);
+            if (target) {
+                target.style.display = 'flex';
+                target.classList.add('active');
+                
+                // Sync with sub-nav buttons
+                const btn = document.querySelector(`.player-sub-nav-btn[onclick*="'${viewId}'"]`);
+                if (btn) btn.classList.add('active');
+                
+                if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'SWITCH-SYNC', { viewId, targetFound: true });
+            } else {
+                if (typeof log_js_error === 'function') log_js_error(new Error(`Target view NOT found: ${viewId}`), 'PLAYER-NAV');
+            }
+
+            // Trigger view-specific data refresh
+            if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') {
+                renderPlaylist();
+            } else if (viewId === 'visualizer' && typeof initVisualizer === 'function') {
+                initVisualizer();
+            } else if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') {
+                refreshSavedPlaylists();
+            }
+            
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'SWITCH-COMPLETE', { viewId });
+
+        } catch (err) {
+            if (typeof log_js_error === 'function') log_js_error(err, 'PLAYER-VIEW-SWITCH');
+        }
+    }
+
+    // Default to Queue on first load if nothing active
+    setTimeout(() => {
+        try {
+            const active = document.querySelector('.player-view-container.active');
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'BOOT-CHECK', { hasActive: !!active });
+            
+            if (!active) {
+                console.info("[PLAYER] No active view detected, forcing 'warteschlange'...");
+                switchPlayerInternalView('warteschlange');
+            }
+        } catch (err) {
+            if (typeof log_js_error === 'function') log_js_error(err, 'PLAYER-BOOT-TIMEOUT');
+        }
+    }, 250);
+</script>
+<!-- ===================== PLAYER QUEUE END ===================== -->

@@ -1,0 +1,36 @@
+<!-- ===================== CUSTOM CONTEXT MENU (v1.34 Integrated) ===================== -->
+<div id="context-menu" class="custom-context-menu glassmorphic-panel" style="display: none; position: fixed; z-index: 100002; width: 240px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-card); box-shadow: var(--shadow-medium); backdrop-filter: blur(20px); overflow: hidden; padding: 6px; pointer-events: auto;">
+    <div id="ctx-video-section">
+        <div class="context-menu-header" style="padding: 8px 12px; font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video Wiedergabe
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('auto')" title="Premium UI mit Video.js" style="padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.2s; display: flex; align-items: center; gap: 10px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            Video.js (Standard)
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')" title="FFmpeg fMP4 zu MSE" style="padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.2s; display: flex; align-items: center; gap: 10px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 17l6-6-6-6M12 19h8"/></svg>
+            FFmpeg fMP4 zu MSE
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" title="FFmpeg fMP4 zu HLS Remuxing" style="padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.2s; display: flex; align-items: center; gap: 10px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            FFmpeg HLS (Remux)
+        </div>
+    </div>
+
+    <div class="context-menu-divider" style="height: 1px; background: var(--border-color); margin: 6px 0;"></div>
+
+    <div id="ctx-external-section">
+        <div class="context-menu-header" style="padding: 8px 12px; font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+            Externe Player
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')" style="padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.2s; display: flex; align-items: center; gap: 10px;">
+            <span style="width: 12px; text-align: center;">V</span> VLC Player (System)
+        </div>
+        <div class="context-menu-item" onclick="handleContextMenuAction('mpv')" style="padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.2s; display: flex; align-items: center; gap: 10px;">
+            <span style="width: 12px; text-align: center;">M</span> MPV Player
+        </div>
+    </div>
+</div>

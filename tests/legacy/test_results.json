@@ -1,0 +1,43 @@
+[
+  {
+    "timestamp": 1742054400,
+    "passes": 12,
+    "fails": 1,
+    "duration": 4.5,
+    "summary": "12/13 Tests Passed"
+  },
+  {
+    "timestamp": 1742058000,
+    "passes": 15,
+    "fails": 0,
+    "duration": 5.2,
+    "summary": "All 15 Tests Passed"
+  },
+  {
+    "timestamp": 1742061600,
+    "passes": 22,
+    "fails": 2,
+    "duration": 8.1,
+    "summary": "22/24 Tests Passed"
+  },
+  {
+    "timestamp": 1774196863.1735137,
+    "duration": 0.6508598327636719,
+    "passes": 0,
+    "fails": 0,
+    "summary": "0 passed, 0 failed",
+    "files": [
+      "routing/test_perf_latency.py"
+    ]
+  },
+  {
+    "timestamp": 1774197958.9964252,
+    "duration": 0.44446873664855957,
+    "passes": 0,
+    "fails": 0,
+    "summary": "0 passed, 0 failed",
+    "files": [
+      "routing/test_perf_latency.py"
+    ]
+  }
+]

@@ -1,0 +1,462 @@
+<!-- ===================== OPTIONS PANEL (v1.34 — Full Config) ===================== -->
+<div style="display: flex; flex-direction: column; height: 100%; border-radius: var(--radius-card); overflow: hidden; background: var(--bg-primary);">
+    
+    <!-- Top Header & Navigation -->
+    <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <h2 id="options-main-header" style="margin: 0 15px 0 0; font-size: 1.2em; font-weight: 800; color: var(--text-primary);" data-i18n="options_title">Optionen</h2>
+            <div class="options-nav-tabs" style="display: flex; gap: 4px;">
+                <button id="opt-subtab-general"      class="sub-tab-btn active options-subtab" onclick="switchOptionsView('general')">Allgemein</button>
+                <button id="opt-subtab-appearance"   class="sub-tab-btn options-subtab" onclick="switchOptionsView('appearance')">Darstellung</button>
+                <button id="opt-subtab-indexing"     class="sub-tab-btn options-subtab" onclick="switchOptionsView('indexing')">Indexierung</button>
+                <button id="opt-subtab-parser"       class="sub-tab-btn options-subtab" onclick="switchOptionsView('parser')">Parser Chain</button>
+                <button id="opt-subtab-transcoding"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('transcoding')">Transcoding</button>
+                <button id="opt-subtab-debug"        class="sub-tab-btn options-subtab" onclick="switchOptionsView('debug')">Debug &amp; Flags</button>
+                <button id="opt-subtab-environment"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('environment')">Umgebung</button>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="saveAllOptions()" class="tab-btn active" style="padding: 6px 14px; font-size: 12px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Speichern
+            </button>
+            <div id="options-last-save" style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;"></div>
+        </div>
+    </div>
+
+    <!-- Split Layout Wrapper -->
+    <div id="options-split-container" style="display: flex; flex: 1; height: 100%; overflow: hidden;">
+        
+        <!-- Sidebar (Left) — kept from v1.33 -->
+        <div id="options-sidebar-left" class="sidebar" style="width: 260px; flex-shrink: 0; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; gap: 30px;">
+            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; font-weight: 500;" data-i18n="options_sidebar_desc">Systemkonfiguration und Feinabstimmung der Media Engine.</div>
+
+            <div>
+                <h4 style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 12px 0; letter-spacing: 1px; font-weight: 700;">Leistungsmodus</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="setAppModeUI('High-Performance')" id="mode-perf-sidebar" class="tab-btn" style="justify-content: center;">High Performance</button>
+                    <button onclick="setAppModeUI('Low-Bandwidth')"    id="mode-bw-sidebar"   class="tab-btn" style="justify-content: center;">Low Bandwidth</button>
+                </div>
+            </div>
+
+            <div>
+                <h4 style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 12px 0; letter-spacing: 1px; font-weight: 700;">Parser-Modus</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="setParserMode('lightweight')" id="pm-light" class="tab-btn active" style="justify-content: center; font-size: 12px;">⚡ Lightweight</button>
+                    <button onclick="setParserMode('full')"        id="pm-full"  class="tab-btn" style="justify-content: center; font-size: 12px;">🔬 Full</button>
+                    <button onclick="setParserMode('ultimate')"    id="pm-ult"   class="tab-btn" style="justify-content: center; font-size: 12px;">🔥 Ultimate</button>
+                </div>
+            </div>
+
+            <div id="options-system-status" class="glass-card" style="margin-top: auto; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Engine Status</div>
+                <div id="options-status-badge" style="display: inline-block; padding: 4px 12px; background: var(--accent-hover); color: white; border-radius: 12px; font-size: 11px; font-weight: 700;">Bereit</div>
+                <div id="options-engine-ver" style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-weight: 600; opacity: 0.7;">v1.34 Core</div>
+            </div>
+        </div>
+
+        <!-- Splitter -->
+        <div id="options-splitter" class="splitter-v"></div>
+
+        <!-- Main Content Area -->
+        <div id="options-main-content-pane" style="flex: 1; overflow-y: auto; padding: 40px; background: var(--bg-primary);">
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- VIEW: Allgemein                                     -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="options-general-view" class="options-view" style="display: flex; flex-direction: column; gap: 24px;">
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Allgemeine Einstellungen</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);" data-i18n="options_language">Sprache / Language</label>
+                            <select id="language-select" onchange="changeLanguage(this.value)" class="action-btn" style="width: 100%; padding: 10px 18px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="de">Deutsch</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);" data-i18n="options_start_page">Start-Tab</label>
+                            <select id="start-page-select" onchange="updateStartPage(this.value)" class="action-btn" style="width: 100%; padding: 10px 18px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="player">🎵 Player</option>
+                                <option value="library">📚 Bibliothek</option>
+                                <option value="file">📂 Dateibrowser</option>
+                                <option value="options">⚙ Optionen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;" data-i18n="opt_path_config">Standardpfade</h3>
+                    <div style="display: flex; flex-direction: column; gap: 18px;">
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);">Medienbibliothek (library_dir)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="config-library-dir" class="action-btn" style="flex: 1; border-radius: var(--radius-pill); background: var(--bg-secondary); padding: 10px 18px; font-family: monospace; font-size: 12px;" onchange="updateLibraryDirUI(this.value)" placeholder="/home/user/media">
+                                <button onclick="pickDir('config-library-dir')" class="tab-btn" style="padding: 8px 14px;">📂</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);">Browser-Startpfad (browse_default_dir)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="config-browse-dir" class="action-btn" style="flex: 1; border-radius: var(--radius-pill); background: var(--bg-secondary); padding: 10px 18px; font-family: monospace; font-size: 12px;" onchange="updateBrowseDirUI(this.value)" placeholder="/home/user">
+                                <button onclick="pickDir('config-browse-dir')" class="tab-btn" style="padding: 8px 14px;">📂</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);">Zusätzliche Scan-Verzeichnisse</label>
+                            <div id="scan-dirs-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="addScanDirUI()" class="tab-btn active" style="font-size: 12px;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Ordner hinzufügen
+                                </button>
+                                <button onclick="addDefaultScanDirUI()" class="tab-btn" style="font-size: 12px;">Defaults</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">System</h3>
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Automatischer Scan beim Start</div>
+                            <label class="switch sm"><input type="checkbox" id="config-auto-scan" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Fast-Scan (ohne tiefe Metadaten)</div>
+                            <label class="switch sm"><input type="checkbox" id="config-fast-scan" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Mock-Daten ausblenden</div>
+                            <label class="switch sm"><input type="checkbox" id="config-hide-mocks" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="if(confirm('Möchtest du alte Instanzen beenden?')) { eel.kill_stale_and_restart(); }"
+                                    style="width: 100%; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;"
+                                    onmouseover="this.style.background='rgba(231,76,60,0.18)'" onmouseout="this.style.background='rgba(231,76,60,0.08)'">
+                                ↺ Prüfen &amp; Neustarten (Port 8345)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Parser Chain -->
+            <div id="options-parser-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+                <div class="glass-card" style="padding: 30px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Parser Chain Orchestrator</h3>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Konfiguriere die aktiven Metadaten-Provider für den System-Scanner.</p>
+                    <div id="opt-parser-chain-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                
+                <div class="glass-card" style="padding: 30px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Mutagen & FFmpeg Tags</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">AlbumArtist bevorzugen</span>
+                            <label class="switch sm"><input type="checkbox" id="opt-mutagen-albumartist" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Deep Media Analysis</span>
+                            <label class="switch sm"><input type="checkbox" id="opt-ffmpeg-deep" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Transcoding -->
+            <div id="options-transcoding-view" class="options-view" style="display: none; flex-direction: column; gap: 30px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+                    <div class="glass-card" style="padding: 30px; border-top: 4px solid #e67e22;">
+                        <h3 style="margin: 0 0 15px 0; color: #e67e22; font-weight: 800;">HandBrake Pipeline</h3>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">HARDWARE ACCELERATION</label>
+                            <select id="hb-encoder" class="action-btn" style="width: 100%; padding: 10px 18px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="x264">Software CPU (x264)</option>
+                                <option value="qsv">Intel QuickSync (QSV)</option>
+                                <option value="nvenc">NVIDIA Core (NVENC)</option>
+                                <option value="vaapi">Linux Native (VAAPI)</option>
+                            </select>
+                        </div>
+                        <button onclick="triggerHBTranscode()" class="tab-btn active" style="background: #e67e22; width: 100%; justify-content: center;">Start Production Encode</button>
+                    </div>
+
+                    <div class="glass-card" style="padding: 30px; border-top: 4px solid #3498db;">
+                        <h3 style="margin: 0 0 15px 0; color: #3498db; font-weight: 800;">WebM / VP9 Engine</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Optimiert für ultra-geringe Bandbreite und maximale Kompatibilität.</p>
+                        <button onclick="triggerWebMTranscode()" class="tab-btn active" style="background: #3498db; width: 100%; justify-content: center;">Convert to WebM</button>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">External Stream Relay</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <input id="vlc-stream-url" type="text" placeholder="https://external.stream/playlist.m3u8" class="action-btn" style="flex: 1; border-radius: var(--radius-pill); background: var(--bg-secondary); padding: 10px 18px; font-family: monospace; font-size: 12px;">
+                        <button onclick="playVLCStream()" class="tab-btn active" style="background: #8e44ad; padding: 10px 25px;">▶ Relay</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- VIEW: Darstellung                                   -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="options-appearance-view" class="options-view" style="display: none; flex-direction: column; gap: 16px;">
+                <h3 style="margin-bottom: 5px; font-weight: 800;" data-i18n="options_appearance">Interface-Optionen</h3>
+
+                <div class="glass-card" style="display: flex; align-items: center; gap: 20px; padding: 24px;">
+                    <label class="switch"><input type="checkbox" id="toggle-minimal-player" onchange="updateMinimalPlayerMode(this.checked)"><span class="slider"></span></label>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800; color: var(--text-primary);">Minimal-Modus</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 500;">Maximiert den Workspace durch Ausblenden sekundärer Navigationselemente.</div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="display: flex; align-items: center; gap: 20px; padding: 24px;">
+                    <label class="switch"><input type="checkbox" id="toggle-parser-times" checked onchange="toggleParserTimes(this.checked)"><span class="slider"></span></label>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800; color: var(--text-primary);" data-i18n="options_show_parser_times">Diagnostik-Metriken</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 500;" data-i18n="options_show_parser_times_desc">Echtzeit-Performance-Monitoring in der Sidebar anzeigen.</div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="display: flex; align-items: center; gap: 20px; padding: 24px;">
+                    <label class="switch"><input type="checkbox" id="toggle-sidebar-default" checked onchange="updateSidebarDefault(this.checked)"><span class="slider"></span></label>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800; color: var(--text-primary);">Sidebar standardmäßig offen</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 500;">Legt fest, ob die Hauptnavigation beim Start eingeblendet wird.</div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="display: flex; align-items: center; gap: 20px; padding: 24px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800; color: var(--text-primary);">Audio Visualizer Style</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 500;">Design der Frequenz-Visualisierung.</div>
+                    </div>
+                    <select id="visualizer-style-select" onchange="setVisualizerStyle(this.value)" class="action-btn" style="width: 140px; padding: 8px 16px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                        <option value="bars">Bars (Modern)</option>
+                        <option value="circle">Circle (Orbital)</option>
+                        <option value="wave">Wave (Oscilloscope)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- VIEW: Indexierung                                   -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="options-indexing-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 8px 0; font-weight: 800;" data-i18n="options_indexed_types">Indizierte Kategorien</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;">Was der Scanner erfassen soll</p>
+                    <div id="indexed-cats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;"></div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 8px 0; font-weight: 800;">Angezeigte Kategorien</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;">Was in der GUI sichtbar ist (Display-Filter)</p>
+                    <div id="displayed-cats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;"></div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 8px 0; font-weight: 800;">Parser-Kette</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 6px; font-weight: 500;">Welche Parser aktiv sind. <span style="color: #e67e22;">●</span> = langsam (ISO/MKV)</p>
+                    <div id="parser-chain-grid-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px;"></div>
+                    <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Mutagen: AlbumArtist bevorzugen</div>
+                            <label class="switch sm"><input type="checkbox" id="config-mutagen-albumartist" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Mutagen: Lyrics extrahieren</div>
+                            <label class="switch sm"><input type="checkbox" id="config-mutagen-lyrics" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">FFmpeg: Deep Analysis</div>
+                            <label class="switch sm"><input type="checkbox" id="config-ffmpeg-deep" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">FFmpeg: Thumbnails</div>
+                            <label class="switch sm"><input type="checkbox" id="config-ffmpeg-thumbs" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- VIEW: Streaming (Playback)                          -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="options-transcoding-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 10px 0; font-weight: 800;" data-i18n="options_playback_mode">Audio-Player</h3>
+                    <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 16px;">
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);">Playback-Modus</label>
+                            <select id="config-playback-mode" onchange="updatePlaybackModeUI(this.value)" class="action-btn" style="width: 100%; border-radius: var(--radius-pill); background: var(--bg-secondary); padding: 12px 20px;">
+                                <option value="chrome_native">Internal MSE (Chrome Native)</option>
+                                <option value="ffmpeg">FFmpeg Live-Transcoder</option>
+                                <option value="cvlc">VLC CLI (cvlc)</option>
+                                <option value="mkvmerge">MKVMerge</option>
+                                <option value="direct">Direct Play (Pass-through)</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">VLC Embedded</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">VLC als eingebetteten Player nutzen</div>
+                            </div>
+                            <label class="switch sm"><input type="checkbox" id="config-vlc-embedded" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+                        <div id="config-bandwidth-container">
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 13px; color: var(--text-secondary);" data-i18n="options_bandwidth_limit">Bandbreiten-Limit (MB/s)</label>
+                            <input type="range" id="config-bandwidth-limit" value="20" min="1" max="100" style="width: 100%;" onchange="updateBandwidthLimitUI(this.value)">
+                            <div id="limit-display" style="text-align: right; font-size: 11px; font-weight: 800; color: var(--accent-color); margin-top: 4px;">20.0 MB/s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 20px 0; font-weight: 800;" data-i18n="options_hardware_info">System-Ressourcen</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px; background: var(--bg-secondary); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                            <span style="font-weight: 600; font-size: 13px; color: var(--text-secondary);">Massenspeicher:</span>
+                            <span id="hardware-disk-type" style="font-weight: 800; color: var(--accent-color); font-size: 13px;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                            <span style="font-weight: 600; font-size: 13px; color: var(--text-secondary);">Pipeline Bus:</span>
+                            <span id="hardware-pcie-gen" style="font-weight: 800; color: var(--text-primary); font-size: 13px;">-</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-weight: 600; font-size: 13px; color: var(--text-secondary);">GPU Encoders:</span>
+                            <span id="hardware-gpu-type" style="font-weight: 800; color: var(--text-primary); font-size: 13px;">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- VIEW: Debug & Flags                                 -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="options-debug-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 6px 0; font-weight: 800;" data-i18n="options_general_debug">Log-Level</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 18px; font-weight: 500;">Backend-Log-Verbosität</p>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="setLogLevel('DEBUG')"   id="ll-debug"   class="tab-btn" style="flex:1; justify-content:center; font-size:12px;">🔍 DEBUG</button>
+                        <button onclick="setLogLevel('INFO')"    id="ll-info"    class="tab-btn active" style="flex:1; justify-content:center; font-size:12px;">ℹ️ INFO</button>
+                        <button onclick="setLogLevel('WARNING')" id="ll-warning" class="tab-btn" style="flex:1; justify-content:center; font-size:12px;">⚠️ WARN</button>
+                        <button onclick="setLogLevel('ERROR')"   id="ll-error"   class="tab-btn" style="flex:1; justify-content:center; font-size:12px;">🔴 ERROR</button>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 6px 0; font-weight: 800;">Feature Flags</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 18px; font-weight: 500;">Experimentelle Funktionen</p>
+                    <div id="options-feature-flags" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 6px 0; font-weight: 800;" data-i18n="options_general_debug">Debug-Flags</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 6px; font-weight: 500;" data-i18n="options_debug_desc">Im Options-Reiter können die Flags für das Logging gesetzt werden.</p>
+                    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                        <button onclick="setAllFlags(true)"  class="tab-btn active" style="background: var(--accent-color); border: none;">Alle Ein</button>
+                        <button onclick="setAllFlags(false)" class="tab-btn">Alle Aus</button>
+                    </div>
+                    <div id="debug-flags-container" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;"></div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug Scan</div>
+                        <label class="switch sm"><input type="checkbox" id="config-debug-scan" onchange="saveAllOptions()"><span class="slider"></span></label>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug Parser</div>
+                        <label class="switch sm"><input type="checkbox" id="config-debug-parser" onchange="saveAllOptions()"><span class="slider"></span></label>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug-Konsole (DOM Overlay)</div>
+                        <label class="switch sm"><input type="checkbox" id="config-debug-console" onchange="saveAllOptions()"><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,82,82,0.05); border: 1px solid rgba(255,82,82,0.2); padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 8px 0; font-weight: 800; color: #ff5252;" data-i18n="options_danger_zone">Gefahrenzone (Reset)</h3>
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                        <button onclick="resetBackend()" class="tab-btn" style="color: #ff5252; border-color: rgba(255,82,82,0.2);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            Backend Reset
+                        </button>
+                        <button onclick="clearDatabase()" class="tab-btn" style="background: #ff5252; color: white; border: none;">Factory Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════ -->
+            <!-- VIEW: Umgebung (Environment)                        -->
+            <!-- ══════════════════════════════════════════════════ -->
+            <div id="options-environment-view" class="options-view" style="display: none;">
+                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: var(--radius-card);">
+                    <div style="padding: 24px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary);">
+                        <h3 style="margin: 0; font-weight: 800; font-size: 1.2em;">Python Environment</h3>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">System-Architektur &amp; Backend-Abhängigkeiten</div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <tbody id="env-details-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /options-main-content-pane -->
+    </div><!-- /options-split-container -->
+</div>
+
+<script>
+    /**
+     * Switch Options Sub-Views (v1.34 Master)
+     */
+    function switchOptionsView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-OPTIONS', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.options-view').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Deactivate all sub-tab buttons
+        document.querySelectorAll('.sub-tab-btn.options-subtab').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Show target view
+        const target = document.getElementById('options-' + viewId + '-view');
+        if (target) {
+            target.style.display = (viewId === 'environment') ? 'block' : 'flex';
+            
+            // Sync with sub-nav buttons
+            const btn = document.getElementById(`opt-subtab-${viewId}`);
+            if (btn) btn.classList.add('active');
+        }
+
+        // Sidebar Sync (Targeting the v1.34 Shell buttons in app.html)
+        document.querySelectorAll('#options-panel-container .nav-item').forEach(el => {
+            el.classList.remove('active');
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${viewId}'`)) {
+                el.classList.add('active');
+            }
+        });
+        
+        // Auto-load logic
+        if (viewId === 'environment' && typeof loadEnvironmentInfo === 'function') {
+            loadEnvironmentInfo();
+        }
+    }
+</script>
