@@ -1,12 +1,12 @@
 /**
- * version.js (v1.35.55)
+ * version.js (v1.35.56)
  * Central version and performance monitoring.
- * Milestone: Nuclear Restart & Script Overhaul.
+ * Milestone: Audio Transcoding Baseline (ALAC, WMA).
  */
 
-window.MWV_VERSION = 'v1.35.55';
+window.MWV_VERSION = 'v1.35.56';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'Nuclear-Reboot-Ready';
+window.MWV_STABILITY = 'Audio-Transcoding-Baseline';
 
 // Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {
