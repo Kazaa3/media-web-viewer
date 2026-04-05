@@ -351,7 +351,11 @@ function updateMediaSidebar(item, path) {
             safeText(`big-player-title-${view}`, tags.title || item.name);
             safeText(`big-player-artist-${view}`, tags.artist || 'Unknown Artist');
             
-            safeText(`spec-codec-${view}`, tags.codec || (item.path ? item.path.split('.').pop().toUpperCase() : 'MP3'));
+            // Core Tech Specs
+            const fileExt = item.path ? item.path.split('.').pop().toUpperCase() : '-';
+            safeText(`spec-filetype-${view}`, item.category || 'Audio');
+            safeText(`spec-container-${view}`, tags.container || fileExt);
+            safeText(`spec-codec-${view}`, tags.codec || fileExt);
             safeText(`spec-bitrate-${view}`, tags.bitrate || '-');
             
             if (view === 'legacy' || view === 'warteschlange') {
