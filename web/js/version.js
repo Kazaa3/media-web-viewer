@@ -1,12 +1,12 @@
 /**
- * version.js (v1.35.51)
+ * version.js (v1.35.53)
  * Central version and performance monitoring.
- * Hotfix: Relocated Diagnostic Bar to Bottom-Right.
+ * Milestone: Format Expansion (M4B, AAC, M4A).
  */
 
-window.MWV_VERSION = 'v1.35.51';
+window.MWV_VERSION = 'v1.35.53';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'UI-Relocate-Hotfix';
+window.MWV_STABILITY = 'Format-Expansion';
 
 // Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {
