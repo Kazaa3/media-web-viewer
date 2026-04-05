@@ -3169,7 +3169,18 @@ def get_library() -> Dict[str, Any]:
     if getattr(eel, 'append_debug_log', None):
         eel.append_debug_log(f"[DB] Sending {len(filtered_media)} items to GUI.", "DB-SUCCESS")
 
-    return sanitize_json_utf8({"media": filtered_media})
+
+    # Safe return wrapper (v1.35.17 Hardened)
+    try:
+        final_lib = {"media": filtered_media}
+        if 'sanitize_json_utf8' in globals() or 'sanitize_json_utf8' in locals():
+            return sanitize_json_utf8(final_lib)
+        else:
+            log.warning("[API] sanitize_json_utf8 missing! Returning raw dict.")
+            return final_lib
+    except Exception as e:
+        log.error(f"[API] Error in get_library return: {e}")
+        return {"media": filtered_media if filtered_media else []}
 
 
 @eel.expose
@@ -8211,6 +8222,22 @@ def trigger_ffmpeg_stream(*args, **kwargs):
 def analyze_media_item(*args, **kwargs):
     return {"status": "ok"}
 
+
+
+
+# --- UTF-8 Sanitization Helper (v1.35 Restoration) ---
+def sanitize_json_utf8(obj):
+    """Recursively converts all string values in an object to clean UTF-8."""
+    if isinstance(obj, str):
+        try:
+            return obj.encode('utf-8', errors='ignore').decode('utf-8')
+        except:
+            return obj
+    elif isinstance(obj, dict):
+        return {k: sanitize_json_utf8(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_json_utf8(i) for i in obj]
+    return obj
 
 
 if __name__ == "__main__":

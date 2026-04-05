@@ -11,9 +11,9 @@ async function getLibrary() {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('DB-EEL', 'CALL-START');
     if (typeof eel === 'undefined') return { media: [] };
 
-    // Wait for eel.get_library to be exposed (up to 2s)
+    // Wait for eel.get_library to be exposed (up to 10s)
     let attempts = 0;
-    const maxAttempts = 4; // 4 x 500ms = 2s
+    const maxAttempts = 20; // 20 x 500ms = 10s
     while (typeof eel.get_library !== 'function' && attempts < maxAttempts) {
         console.warn(`[DB] get_library: Eel not ready yet (Attempt ${attempts+1}/${maxAttempts})...`);
         await new Promise(resolve => setTimeout(resolve, 500));
