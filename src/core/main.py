@@ -3,7 +3,7 @@ import sys, os; sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(
 # -*- coding: utf-8 -*-
 """
 main.py - Business Logic & Application Entry Point
-dict - Desktop Media Player and Library Manager v1.34
+dict - Desktop Media Player and Library Manager v1.35.68
 """
 
 import os
@@ -726,6 +726,67 @@ def confirm_receipt(event_name):
     return {"status": "log_noted"}
 
 
+@eel.expose
+def set_log_level(level):
+    """
+    Dynamically updates the application log level and persists it.
+    """
+    import logging
+    valid_levels = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL
+    }
+    
+    if level in valid_levels:
+        new_lvl = valid_levels[level]
+        logging.getLogger().setLevel(new_lvl)
+        
+        # Update all active handlers
+        for handler in logging.getLogger().handlers:
+            handler.setLevel(new_lvl)
+            
+        # Persist to config
+        PARSER_CONFIG["log_level"] = level
+        save_parser_config()
+        
+        log.warning(f"[System] Log level changed to {level} and persisted.")
+        return {"status": "success", "level": level}
+    
+    return {"status": "error", "message": f"Invalid level: {level}"}
+
+
+@eel.expose
+def run_direct_scan():
+    """
+    Triggers a full re-index from the Diagnostic Hub.
+    """
+    log.warning("[Diagnostic] Manual DIRECT SCAN triggered from Hub. Clearing DB...")
+    try:
+        _scan_media_execution(clear_db=True)
+        stats = db.get_db_stats()
+        return {"status": "success", "items_found": stats.get('total_items', 0)}
+    except Exception as e:
+        log.error(f"[Diagnostic] Direct Scan failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def sync_library_atomic():
+    """
+    Forces a fresh read of the entire library from SQLite and pushes to UI.
+    """
+    log.info("[Diagnostic] ATOMIC SYNC triggered from Hub.")
+    try:
+        items = db.get_all_media()
+        return {"status": "success", "count": len(items), "items": items}
+    except Exception as e:
+        log.error(f"[Diagnostic] Atomic Sync failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
@@ -768,7 +829,7 @@ def initialize_debug_flags(args=None):
 
 
 # --- Global Constants & State ---
-VERSION = "1.34"
+VERSION = "1.35.68"
 
 
 # Nach Logging-Setup: PIDs loggen fr Konsole. deswegen kein eel.expose
@@ -1172,7 +1233,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.34"  # Fallback
+    VERSION = "1.35.68"  # Fallback
 # --- Imprint/Impressum API ---
 
 
@@ -1226,7 +1287,7 @@ def get_debug_stats():
     total = 0
     categories = {}
     try:
-        items = db.get_library()
+        items = db.get_all_media()
         total = len(items)
         for i in items:
             cat = i.get('category', 'Unknown')
@@ -1240,12 +1301,30 @@ def get_debug_stats():
     }
 
 @eel.expose
+def get_environment_info():
+    """Returns detailed OS and environment diagnostics for the UI."""
+    return get_environment_info_dict()
+
+@eel.expose
+def get_format_utils_exts():
+    """Exposes current extension mappings from format_utils.py."""
+    from src.parsers import format_utils
+    return {
+        "audio": list(format_utils.AUDIO_EXTENSIONS),
+        "video": list(format_utils.VIDEO_EXTENSIONS),
+        "images": list(format_utils.IMAGE_EXTENSIONS),
+        "docs": list(format_utils.DOCUMENT_EXTENSIONS),
+        "ebooks": list(format_utils.EBOOK_EXTENSIONS),
+        "disks": list(format_utils.DISK_IMAGE_EXTENSIONS)
+    }
+
+@eel.expose
 def get_debug_dict(source="library"):
     """Returns raw backend data for the Universal JSON Explorer."""
     import os
     from src.core import db
     if source == "library":
-        return db.get_library()
+        return db.get_all_media()
     elif source == "config":
         return {k: str(v) for k, v in os.environ.items() if "MWV" in k or "PATH" in k}
     elif source == "state":
@@ -2589,25 +2668,7 @@ def reset_backend():
         return {"status": "error", "message": str(e)}
 
 
-@eel.expose
-def set_log_level(level_name: str):
-    """
-    @brief Sets the global log level.
-    @param level_name One of DEBUG, INFO, WARNING, ERROR, CRITICAL.
-    """
-    # Log the action BEFORE changing the level so it's always captured at current level
-    log.info(f"[System] Manually setting Log-Level to {level_name.upper()}")
-
-    level = getattr(logging, level_name.upper(), logging.INFO)
-    logging.getLogger().setLevel(level)
-    # Update handlers as well to be sure
-    for handler in logging.getLogger().handlers:
-        handler.setLevel(level)
-
-    # Update config for persistence
-    PARSER_CONFIG["log_level"] = level_name.upper()
-    save_parser_config()
-    return True
+# Consolidation Note: set_log_level moved to top-level section for Hub consistency.
 
 # initialize_debug_flags was moved to top-level for earlier capture
 
@@ -3615,7 +3676,6 @@ def api_scan_isbn(isbn: str):
         "amazon_cover": f"https://images-na.ssl-images-amazon.com/images/P/{cleaned}.01._SCLZZZZZZZ_.jpg",
         "media_type": "container",
         "subtype": "unknown",
-        "error": "No metadata found, but here is a potential cover link."
     }
 
 
@@ -3635,6 +3695,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
 
 def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     start_time = time.time()
+    
     # Emit start to GUI
     if getattr(eel, 'append_debug_log', None):
         eel.append_debug_log(f"[DB-SCAN] Media Scan started at {time.strftime('%H:%M:%S', time.localtime())}", "DB")
@@ -3657,7 +3718,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
             if p.exists():
                 scan_roots.append(p)
             else:
-                debug_log(f" [Scan] Skipping non-existent directory: {d}")
+                log.warning(f" [Scan] Skipping non-existent directory: {d}")
 
     log.info(f" [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
     if getattr(eel, 'append_debug_log', None):
@@ -3667,159 +3728,164 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         log.warning(" [Scan] No valid scan roots found!")
         if getattr(eel, 'append_debug_log', None):
             eel.append_debug_log("[DB-SCAN] CRITICAL: No valid scan roots found!", "DB-ERROR")
+        return {"status": "error", "message": "No valid scan roots found."}
 
     count_indexed: int = 0
+    total_traversed: int = 0
+    MAX_SCAN_DEPTH = 12
+    MAX_TOTAL_FILES = 50000
+
     try:
-        from src.parsers.format_utils import IMAGE_EXTENSIONS, DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS
+        from src.parsers.format_utils import (
+            AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, IMAGE_EXTENSIONS, 
+            DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
+            DSD_EXTENSIONS, HDDVD_EXTENSIONS
+        )
 
         # Determine if we should use lightweight mode based on path or config
         is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
-        if is_network:
-            log.info(" [Scan] Network mount detected. Enabling automatic lightweight mode.")
-            parser_mode = "lightweight"
-        else:
-            parser_mode = PARSER_CONFIG.get("parser_mode", "lightweight")
+        parser_mode = "lightweight" if is_network else PARSER_CONFIG.get("parser_mode", "lightweight")
 
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"[DB-SCAN] Mode: {parser_mode}", "DB-INFO")
-
-        # Get existing media from DB for caching (v1.35.35 Path Normalization)
-        existing_media = {}
-        for m in db.get_all_media():
-            try:
-                p_str = str(Path(m['path']).resolve())
-                existing_media[p_str] = m
-            except:
-                existing_media[m['path']] = m
-        log.info(f" [Scan] Cached items in DB: {len(existing_media)}")
-
-        # Determine which categories are enabled
+        # Get existing media from DB for caching
+        existing_media = {str(Path(m['path']).resolve()): m for m in db.get_all_media() if m.get('path')}
+        
+        # 1. Determine which categories are enabled
         indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-        log.info(f" [Scan] Enabled categories: {indexed_cats}")
-
-        all_exts: set[str] = set()
-        if "audio" in indexed_cats:
+        all_exts = set()
+        
+        # Comprehensive Category Mapping
+        if any(c in indexed_cats for c in ["audio", "music"]): 
             all_exts |= AUDIO_EXTENSIONS
-        if "video" in indexed_cats:
+            all_exts |= DSD_EXTENSIONS
+        if any(c in indexed_cats for c in ["video", "movie", "tv"]): 
             all_exts |= VIDEO_EXTENSIONS
-        if "images" in indexed_cats:
-            all_exts |= IMAGE_EXTENSIONS
-        if "documents" in indexed_cats:
-            all_exts |= DOCUMENT_EXTENSIONS
-        if "ebooks" in indexed_cats:
-            all_exts |= EBOOK_EXTENSIONS
-        if "abbild" in indexed_cats:
-            all_exts |= DISK_IMAGE_EXTENSIONS
+            all_exts |= HDDVD_EXTENSIONS
+        if "images" in indexed_cats: all_exts |= IMAGE_EXTENSIONS
+        if any(c in indexed_cats for c in ["documents", "docs"]): all_exts |= DOCUMENT_EXTENSIONS
+        if "ebooks" in indexed_cats: all_exts |= EBOOK_EXTENSIONS
+        if any(c in indexed_cats for c in ["abbild", "disc_image", "iso"]): all_exts |= DISK_IMAGE_EXTENSIONS
+        if any(c in indexed_cats for c in ["spiel", "games", "software"]):
+            # Games can be ISOs or specific folders, but we scan for common game extensions if any
+            all_exts |= {'.exe', '.lnk', '.sh', '.bin'} | DISK_IMAGE_EXTENSIONS
+        if any(c in indexed_cats for c in ["beigabe", "supplements", "bonus"]):
+            all_exts |= AUDIO_EXTENSIONS | VIDEO_EXTENSIONS | DOCUMENT_EXTENSIONS | IMAGE_EXTENSIONS
 
-        ext_list = list(all_exts)
-        if not ext_list:
-            log.warning(" [Scan] WARNING: No extensions enabled for scanning. Check 'indexed_categories' in config.")
-        log.info(f" [Scan] Supported extensions ({len(all_exts)}): {ext_list[:10]}...")
+        # RECOVERY: Ensure normalized sets are used
+        all_exts = {e.lower() for e in all_exts}
+        ext_list = sorted(list(all_exts))
+        
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"[DB-SCAN] Mode: {parser_mode} | Categories: {len(indexed_cats)}", "DB-INFO")
+            eel.append_debug_log(f"[DB-SCAN] Active Extensions ({len(all_exts)}): {', '.join(ext_list[:15])}...", "DB-INFO")
 
-        # Reset counters
-        count_indexed: int = 0
+        if not all_exts:
+            error_msg = "CRITICAL: No extensions enabled scanning! Check category config."
+            log.error(f" [Scan] {error_msg}")
+            if getattr(eel, 'append_debug_log', None):
+                eel.append_debug_log(error_msg, "DB-ERROR")
+            return {"status": "error", "message": "No extensions enabled."}
+
         for scan_root in scan_roots:
             log.info(f" [Scan] Starting scan of: {scan_root}")
-
-            # Hierarchical grouping: Folder-to-Object mapping
             folder_id_map: dict[Path, int] = {}
-            # Folders to skip for file pass if they are "Black Box" media folders (DVD/BD/ISO)
             skip_subpaths: set[Path] = set()
 
-            # First pass: Identify "Media Objects" (Folders like Albums, Series, DVDs)
-            for d in scan_root.rglob('*'):
-                if d.is_dir():
-                    # 1. Specialized Media Folders (DVD/BD)
-                    is_blackbox = (d / 'VIDEO_TS').exists() or (d / 'BDMV').exists()
+            # Pass 1: Identify Media Objects (Albums, DVD Folders)
+            for root, dirs, files in os.walk(str(scan_root), followlinks=False):
+                total_traversed += (len(files) + len(dirs))
+                if total_traversed > MAX_TOTAL_FILES:
+                    if getattr(eel, 'append_debug_log', None):
+                        eel.append_debug_log(f"LIMIT REACHED: Stopped at {MAX_TOTAL_FILES} items.", "DB-WARN")
+                    break
+                
+                rel_path = Path(root).relative_to(scan_root)
+                if len(rel_path.parts) > MAX_SCAN_DEPTH: continue
+                
+                d = Path(root)
+                if d == scan_root: continue
 
-                    if not is_blackbox:
-                        # Smarter DVD Bundle detection
-                        isos = list(d.glob('*.iso'))
+                # Specialized Detection
+                is_blackbox = (d / 'VIDEO_TS').exists() or (d / 'BDMV').exists()
+                if not is_blackbox:
+                    try:
+                        isos = [f for f in files if f.lower().endswith('.iso')]
                         if len(isos) == 1 and re.search(r'\(\d{4}\)', d.name):
                             is_blackbox = True
+                    except Exception: pass
 
-                    # 2. General Objects (folder with multiple media files, e.g. Album)
-                    is_general_object = False
-                    if not is_blackbox:
-                        media_files = [f for f in d.glob('*') if f.is_file() and f.suffix.lower() in all_exts]
-                        if len(media_files) > 1:
-                            is_general_object = True
+                is_general_object = False
+                if not is_blackbox:
+                    m_count = sum(1 for f in files if Path(f).suffix.lower() in all_exts)
+                    if m_count > 1: is_general_object = True
 
-                    if is_blackbox or is_general_object:
-                        logger.debug("scan", f" [Scan] Detected Object: {d.name}")
-                        try:
-                            item = MediaItem(d.name, d)
-                            item_dict = item.to_dict()
-                            obj_id = db.insert_media(item_dict)
-                            if obj_id:
-                                folder_id_map[d] = obj_id
-                                count_indexed += 1  # type: ignore
-                                if is_blackbox:
-                                    skip_subpaths.add(d)
-                                logger.debug("scan", f" [Scan] Indexed Object: {d.name} (ID: {obj_id}, Category: {item_dict.get('category')})")
-                        except Exception as e:
-                            log.error(f" [Scan] Fehler bei Object-Ordner {d.name}: {e}")
+                if is_blackbox or is_general_object:
+                    try:
+                        item = MediaItem(d.name, d)
+                        item_dict = item.to_dict()
+                        obj_id = db.insert_media(item_dict)
+                        if obj_id:
+                            folder_id_map[d] = obj_id
+                            count_indexed += 1
+                            if is_blackbox: skip_subpaths.add(d)
+                            if getattr(eel, 'append_debug_log', None):
+                                eel.append_debug_log(f"Detected: {d.name} ({item_dict.get('category')})", "DB-INFO")
+                    except Exception as e:
+                        log.error(f" [Scan] Obj Error {d.name}: {e}")
 
-            # Second pass: Files (Items)
-            for f in scan_root.rglob('*'):
-                if f.is_file():
-                    # Skip if parent is a blackbox media folder (files inside DVD/BD are not indexed individually)
+            # Pass 2: Individual Files
+            for root, dirs, files in os.walk(str(scan_root), followlinks=False):
+                rel_path = Path(root).relative_to(scan_root)
+                if len(rel_path.parts) > MAX_SCAN_DEPTH: continue
+
+                for filename in files:
+                    f = Path(root) / filename
+                    ext = f.suffix.lower()
+                    if ext not in all_exts: continue
+                    
+                    if '.cache' in f.parts: continue
+                    if any(x in f.name.lower() for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'metadata']):
+                        continue
+
                     if any(f.is_relative_to(p) for p in skip_subpaths):
                         continue
 
-                    ext = f.suffix.lower()
-                    if ext in all_exts:
-                        # Skip transcoding cache
-                        if '.cache' in f.parts:
-                            continue
-
-                        # Blacklist
-                        name_lower = f.name.lower()
-                        if any(x in name_lower for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'al_cave']):
-                            continue
-
-                        try:
-                            # 1. Check if already in DB (v1.35.35 Resolved Lookup)
-                            f_resolved = str(f.resolve())
-                            if f_resolved in existing_media:
-                                count_indexed += 1
-                                continue
-
-                            # 2. Extract metadata & Link to Object
-                            # Check for parent object
-                            parent_id = folder_id_map.get(f.parent)
-
-                            item = MediaItem(f.name, f)
-                            item_dict = item.to_dict()
-
-                            # Inject parent_id if found
-                            if parent_id:
-                                item_dict['parent_id'] = parent_id
-
-                            db.insert_media(item_dict)
-                            logger.debug("scan", f" [Scan] Indexed Item: {f.name} (Parent: {parent_id})")
+                    try:
+                        f_res = str(f.resolve())
+                        if f_res in existing_media:
                             count_indexed += 1
-                        except Exception as e:
-                            log.error(f" [Scan] Fehler bei {f.name}: {e}")
                             continue
+
+                        parent_id = folder_id_map.get(f.parent)
+                        item = MediaItem(f.name, f)
+                        item_dict = item.to_dict()
+                        if parent_id: item_dict['parent_id'] = parent_id
+
+                        db.insert_media(item_dict)
+                        count_indexed += 1
+                        if getattr(eel, 'append_debug_log', None):
+                            eel.append_debug_log(f"Indexed: {f.name}", "DB-SUCCESS")
+                    except Exception as e:
+                        log.error(f" [Scan] File Error {f.name}: {e}")
 
         elapsed = time.time() - start_time
-        scanned_target = ", ".join(str(p)
-                                   for p in scan_roots) if scan_roots else "none"
-        log.info(
-            f"[Scan-Trace] Scan of {scanned_target} took {elapsed:.2f} seconds.")
-        log.info(
-            f"[Scan-Trace] Scan complete. Processed {count_indexed} items in {elapsed:.2f} seconds.")
+        log.info(f"[Scan-Trace] Scan complete: {count_indexed} items in {elapsed:.2f}s")
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"[DB-SCAN] FINISHED: {count_indexed} items in {elapsed:.2f}s", "DB-INFO")
 
-        # Liefere gescannten Stand direkt aus der DB zurck
         return {
+            "status": "ok",
             "media": db.get_all_media(),
             "stats": {"count": count_indexed, "time_seconds": elapsed}
         }
+    except Exception as e:
+        log.error(f"[Scan-Trace] CRITICAL FAILURE: {e}")
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(f"CRITICAL ERROR: {str(e)}", "DB-ERROR")
+        return {"status": "error", "message": str(e)}
     finally:
         if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
             try:
-                eel.set_db_status(False)
+                eel.set_db_status("Ready")
             except Exception:
                 pass
 

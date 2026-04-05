@@ -1,5 +1,5 @@
-console.log(">>> [RECOVERY] Injecting test header (v1.35.32 - HYDRATION)...");
-document.body.insertAdjacentHTML('afterbegin', '<h1 id="recovery-test-header" style="color: red; position: fixed; top: 10px; left: 10px; z-index: 10005; background: white; padding: 10px; border: 5px solid red;">RECOVERY SUCCESS (v1.35.32)</h1>');
+console.log(`>>> [RECOVERY] Injecting test header (${window.MWV_VERSION || 'v...'} - HYDRATION)...`);
+document.body.insertAdjacentHTML('afterbegin', `<h1 id="recovery-test-header" style="color: red; position: fixed; top: 10px; left: 10px; z-index: 10005; background: white; padding: 10px; border: 5px solid red;">RECOVERY SUCCESS (${window.MWV_VERSION || 'v...'})</h1>`);
 
 // Visibility Atomic Option
 const nuclearStyle = document.createElement('style');
@@ -67,6 +67,6 @@ setTimeout(mwv_force_hydration, 2500);
 setTimeout(() => {
     const queueTarget = document.getElementById('active-queue-list-render-target-warteschlange');
     if (queueTarget) {
-        queueTarget.insertAdjacentHTML('afterbegin', '<div id="atomic-signal" style="background: yellow; color: black; padding: 20px; font-weight: 900; text-align: center; border: 5px dashed black; font-size: 18px; margin-bottom: 10px;">RECOVERY SIGNAL (v1.35.32): HYDRATION ACTIVE</div>');
+        queueTarget.insertAdjacentHTML('afterbegin', `<div id="atomic-signal" style="background: yellow; color: black; padding: 20px; font-weight: 900; text-align: center; border: 5px dashed black; font-size: 18px; margin-bottom: 10px;">RECOVERY SIGNAL (${window.MWV_VERSION || 'v...'}): HYDRATION ACTIVE</div>`);
     }
 }, 3000);

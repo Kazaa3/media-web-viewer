@@ -23,7 +23,7 @@ async function loadEnvironmentInfo() {
         tbody.innerHTML = '';
 
         const data = [
-            { label: 'Programm-Version', value: res.version || 'v1.34', icon: '#icon-info' },
+            { label: 'Programm-Version', value: res.version || window.MWV_VERSION || '-', icon: '#icon-info' },
             { label: 'Python Version', value: env.python_version || '-', icon: '#icon-generic' },
             { label: 'Venv Status', value: env.env_name || 'System', icon: '#icon-settings' },
             { label: 'Platform', value: env.platform || '-', icon: '#icon-generic' },

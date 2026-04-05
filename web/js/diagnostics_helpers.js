@@ -59,6 +59,9 @@ window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
 };
 
 // --- TAB RENDERING: DEBUG DATABASE ---
+// --- TAB RENDERING: DEBUG DATABASE ---
+window.debugLogBuffer = []; // Store logs for filtering
+
 window.renderDebugDatabase = async function() {
     const statsEl = document.getElementById('debug-db-overview-content');
     const dictEl = document.getElementById('debug-items-json');
@@ -71,7 +74,6 @@ window.renderDebugDatabase = async function() {
         if (typeof eel !== 'undefined' && eel.get_debug_stats) {
             const stats = await eel.get_debug_stats()();
             if (statsEl) {
-                // Restore the "Item DB (Übersicht)" style from screenshot
                 let categoryHtml = '';
                 if (stats.categories) {
                     categoryHtml = Object.entries(stats.categories).map(([k, v]) => `<li>${k}: ${v}</li>`).join('');
@@ -87,7 +89,7 @@ window.renderDebugDatabase = async function() {
                         </div>
                         <div style="min-width: 150px;">
                             <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Categories:</h4>
-                            <!-- Additional info can go here -->
+                            <div style="font-size: 11px; opacity: 0.7;">DB Health: Synchronized</div>
                         </div>
                     </div>
                 `;
@@ -96,7 +98,17 @@ window.renderDebugDatabase = async function() {
             if (pidEl) pidEl.innerText = stats.pid || '--';
 
             const dictType = document.getElementById('debug-dict-select')?.value || 'library';
-            const dictData = await eel.get_debug_dict(dictType)();
+            let dictData = null;
+
+            // Handle different probe types
+            if (dictType === 'env' && eel.get_environment_info) {
+                dictData = await eel.get_environment_info()();
+            } else if (dictType === 'formats' && eel.get_format_utils_exts) {
+                dictData = await eel.get_format_utils_exts()();
+            } else if (eel.get_debug_dict) {
+                dictData = await eel.get_debug_dict(dictType)();
+            }
+
             if (dictEl) dictEl.innerText = JSON.stringify(dictData, null, 2);
         }
     } catch (err) {
@@ -108,50 +120,55 @@ window.renderDebugDatabase = async function() {
 /**
  * Real-time Console Log Stream for Debug Tab
  */
-window.debugLogEntries = [];
 window.appendDebugLog = function(msg) {
+    // Add to buffer
+    window.debugLogBuffer.push(msg);
+    if (window.debugLogBuffer.length > 1000) window.debugLogBuffer.shift();
+    
+    // Only update UI if we are in the Debug tab to save performance
     const consoleEl = document.getElementById('debug-console-output');
+    if (consoleEl && consoleEl.offsetParent !== null) {
+        updateLogFilters();
+    }
+};
+
+window.updateLogFilters = function() {
+    const consoleEl = document.getElementById('debug-console-output');
+    const levelFilter = document.getElementById('debug-log-level-filter')?.value || 'ALL';
+    const searchFilter = document.getElementById('debug-log-search')?.value.toLowerCase() || '';
+    const counterEl = document.getElementById('debug-log-counter');
+    
     if (!consoleEl) return;
 
-    const entry = document.createElement('div');
-    entry.style.marginBottom = '2px';
-    
-    // Simple color coding based on level
-    if (msg.includes('[INFO]')) entry.style.color = '#00ff41';
-    else if (msg.includes('[WARN]')) entry.style.color = '#ffcc00';
-    else if (msg.includes('[ERROR]')) entry.style.color = '#ff5252';
-    else if (msg.includes('[DEBUG]')) entry.style.color = '#00bcff';
-    else entry.style.color = '#dcdccc';
+    const filtered = window.debugLogBuffer.filter(msg => {
+        const matchesLevel = (levelFilter === 'ALL') || (msg.includes(`[${levelFilter}]`));
+        const matchesSearch = !searchFilter || msg.toLowerCase().includes(searchFilter);
+        return matchesLevel && matchesSearch;
+    });
 
-    entry.innerText = msg;
-    consoleEl.appendChild(entry);
-    
-    // Auto-scroll to bottom
+    // Render filtered logs
+    consoleEl.innerText = filtered.join('\n');
     consoleEl.scrollTop = consoleEl.scrollHeight;
     
-    // Limit buffer
-    if (consoleEl.children.length > 500) {
-        consoleEl.removeChild(consoleEl.firstChild);
+    if (counterEl) {
+        counterEl.innerText = `Visible: ${filtered.length} / ${window.debugLogBuffer.length}`;
     }
 };
 
 window.clearDebugConsole = function() {
-    const consoleEl = document.getElementById('debug-console-output');
-    if (consoleEl) consoleEl.innerHTML = '';
+    window.debugLogBuffer = [];
+    updateLogFilters();
 };
 
 /**
  * Force-syncs the entire log history from the backend.
  */
 window.refreshDebugLogs = async function() {
-    const consoleEl = document.getElementById('debug-console-output');
-    if (!consoleEl) return;
-    
     try {
         if (typeof eel !== 'undefined' && eel.get_debug_console) {
             const logs = await eel.get_debug_console()();
-            consoleEl.innerText = logs; // Entire history as string
-            consoleEl.scrollTop = consoleEl.scrollHeight;
+            window.debugLogBuffer = logs.split('\n');
+            updateLogFilters();
         }
     } catch (err) {
         console.error("refreshDebugLogs Error:", err);

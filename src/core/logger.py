@@ -1,5 +1,5 @@
-# logger.py - Centralized logging system for dict.
-#dict - Desktop Media Player and Library Manager v1.34
+#dict - Desktop Media Player and Library Manager v1.35.68
+# # logger.py - Centralized logging system for dict.
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 

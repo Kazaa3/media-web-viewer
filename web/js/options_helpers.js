@@ -312,10 +312,100 @@ function setParserMode(mode) {
 
 function setLogLevel(level) {
     updateLogLevelButtons(level);
-    if (typeof eel !== 'undefined' && typeof eel.update_parser_config === 'function') {
-        eel.update_parser_config({ log_level: level })();
+    if (typeof eel !== 'undefined') {
+        if (typeof eel.update_parser_config === 'function') {
+            eel.update_parser_config({ log_level: level })();
+        }
+        if (typeof eel.set_log_level === 'function') {
+            eel.set_log_level(level)();
+        }
     }
     if (typeof showToast === 'function') showToast(`Log-Level: ${level}`, 'info');
+}
+
+/**
+ * Diagnostic Hub Handlers (v1.35.68)
+ */
+async function triggerDirectScan() {
+    if (typeof eel === 'undefined' || typeof eel.run_direct_scan !== 'function') {
+        alert('Eel/Backend not available.');
+        return;
+    }
+    if (typeof showToast === 'function') showToast('Scanner gestartet (Deep Hydration)...', 'info');
+    try {
+        const res = await eel.run_direct_scan()();
+        if (res && res.status === 'success') {
+            if (typeof showToast === 'function') showToast(`Deep Hydration vollständig! ${res.items_found || 0} Items indiziert.`, 'success');
+            if (typeof renderLibrary === 'function') renderLibrary();
+        }
+    } catch(e) {
+        console.error('[Diagnostic] Scan failed:', e);
+    }
+}
+
+async function triggerDeepSync() {
+    if (typeof eel === 'undefined' || typeof eel.sync_library_atomic !== 'function') {
+        // Fallback to simple hydration if atomic is missing
+        if (typeof force_rehydration === 'function') {
+            force_rehydration();
+            return;
+        }
+        alert('Deep Sync currently unavailable.');
+        return;
+    }
+    if (typeof showToast === 'function') showToast('Atomic Sync wird ausgeführt...', 'info');
+    try {
+        const res = await eel.sync_library_atomic()();
+        if (res && res.status === 'success') {
+            if (typeof showToast === 'function') showToast('Atomic Sync erfolgreich ✓', 'success');
+            if (typeof renderLibrary === 'function') renderLibrary();
+        }
+    } catch(e) { console.error('[Diagnostic] Atomic Sync failed:', e); }
+}
+
+/**
+ * Real-time Diagnostic Log Terminal (v1.35.68)
+ * Receives granular logs from the backend and scrolls into view.
+ */
+if (typeof eel !== 'undefined') {
+    eel.expose(append_debug_log);
+}
+
+function append_debug_log(msg, category = 'INFO') {
+    // 1. Broadcast to advanced Diagnostic Suite buffer (v1.35.68)
+    if (typeof window.appendDebugLog === 'function') {
+        const timestamp = new Date().toLocaleTimeString();
+        window.appendDebugLog(`${timestamp} [${category}] ${msg}`);
+    }
+
+    // 2. Render locally in Options Terminal
+    const term = document.getElementById('diagnostic-log-terminal');
+    if (!term) return;
+
+    if (term.children.length > 500) term.innerHTML = ''; // Cap scrollback
+    
+    const timeStr = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    line.style.marginBottom = '2px';
+    
+    let color = '#0f0';
+    if (category.includes('WARN')) color = '#ff9800';
+    if (category.includes('ERROR')) color = '#f44336';
+    if (category.includes('DB')) color = '#2196f3';
+    
+    line.innerHTML = `
+        <span style="color: #666; font-size: 9px;">[${timeStr}]</span> 
+        <span style="color: ${color}; font-weight: 700;">[${category}]</span> 
+        ${msg}
+    `;
+    
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight; // Auto-scroll
+}
+
+function clearDiagnosticLog() {
+    const term = document.getElementById('diagnostic-log-terminal');
+    if (term) term.innerHTML = '<div style="opacity: 0.5;">[System] Log cleared. Awaiting new scan...</div>';
 }
 
 function setAllDebugFlags(value) {
@@ -489,6 +579,12 @@ const _origSwitchTab = window.switchTab;
 window.switchTab = function(tabId) {
     if (typeof _origSwitchTab === 'function') _origSwitchTab(tabId);
     if (tabId === 'options' || tabId === 'tools') {
-        setTimeout(loadAllOptions, 100);
+        setTimeout(() => {
+            loadAllOptions();
+            const verEl = document.getElementById('options-version');
+            if (verEl && window.MWV_VERSION) {
+                verEl.innerText = window.MWV_VERSION;
+            }
+        }, 100);
     }
 };

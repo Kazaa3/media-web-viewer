@@ -1017,3 +1017,43 @@ if (typeof playAudio === 'function') {
         setTimeout(updateDetailedDiagnostics, 200); // Small delay to ensure item is loaded
     };
 }
+
+/**
+ * Atomic Hydration Watcher (v1.35.68)
+ * Ensures the player queue remains synchronized with the backend library.
+ * Periodically checks for "zombie" items and triggers hydration if the queue is empty.
+ */
+function startAtomicHydrationWatcher() {
+    console.info(">>> [Diagnostic] Starting Atomic Hydration Watcher...");
+    setInterval(() => {
+        try {
+            // 1. Hydration Check: If queue is empty but library has items, sync up.
+            if (currentPlaylist.length === 0 && typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
+                console.warn("[Watcher] Queue is empty. Triggering automatic hydration...");
+                syncQueueWithLibrary();
+            }
+
+            // 2. Health Check: Remove items with undefined/null paths (Zombies)
+            const initialCount = currentPlaylist.length;
+            currentPlaylist = currentPlaylist.filter(item => item && (item.path || item.id) && item.path !== 'undefined');
+            
+            if (currentPlaylist.length !== initialCount) {
+                console.error(`[Watcher] Purged ${initialCount - currentPlaylist.length} zombie items from queue.`);
+                renderPlaylist();
+            }
+
+            // 3. UI Status Sync (Optional extension for Diagnostic Hub)
+            const hubStatus = document.getElementById('hub-sync-status');
+            if (hubStatus) {
+                hubStatus.innerText = `Synced (${currentPlaylist.length} items)`;
+            }
+        } catch (e) {
+            console.error("[Watcher] Hydration failure:", e);
+        }
+    }, 30000); // 30s heartbeat
+}
+
+// Start on load
+document.addEventListener('DOMContentLoaded', () => {
+    startAtomicHydrationWatcher();
+});

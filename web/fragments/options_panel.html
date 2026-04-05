@@ -372,10 +372,19 @@
                 </div>
 
                 <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card); border-left: 4px solid var(--accent-color);">
-                    <h3 style="margin: 0 0 6px 0; font-weight: 800; color: var(--accent-color);">v1.35.68 High-Fidelity Diagnostics</h3>
-                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;">Experimental Pro-Grade Auditing & Logic Bypasses</p>
+                    <h3 style="margin: 0 0 6px 0; font-weight: 800; color: var(--accent-color);">Centralized Diagnostic Hub</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;"><span id="options-version">v...</span> Pro-Grade Auditing & Logic Bypasses</p>
                     
                     <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Master Sync & Scan -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <button onclick="triggerDirectScan()" class="tab-btn active" style="background: var(--accent-color); justify-content: center; font-size: 12px; font-weight: 800;">
+                                📡 DIRECT SCAN (Deep Hydration)
+                            </button>
+                            <button onclick="triggerDeepSync()" class="tab-btn" style="justify-content: center; font-size: 12px; font-weight: 800; border-color: var(--accent-color); color: var(--accent-color);">
+                                🔄 ATOMIC SYNC
+                            </button>
+                        </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
                             <div>
                                 <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Diagnostic Library Mode</div>
@@ -398,6 +407,28 @@
                                 <div style="font-size: 11px; color: var(--text-secondary);">Real-time viewport & structural integrity monitoring</div>
                             </div>
                             <label class="switch sm"><input type="checkbox" id="config-dom-auditor" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+
+                        <!-- Diagnostic Terminal -->
+                        <div style="margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Live Scan Activity</div>
+                                <button onclick="clearDiagnosticLog()" class="tab-btn sm" style="font-size: 10px; padding: 2px 8px; border-radius: 4px;">Clear</button>
+                            </div>
+                            <div id="diagnostic-log-terminal" style="
+                                height: 200px; 
+                                background: #000; 
+                                color: #0f0; 
+                                font-family: 'JetBrains Mono', 'Courier New', monospace; 
+                                font-size: 11px; 
+                                padding: 12px; 
+                                border-radius: 8px; 
+                                overflow-y: auto; 
+                                border: 1px solid rgba(255,255,255,0.1);
+                                line-height: 1.5;
+                            ">
+                                <div style="opacity: 0.5;">[System] Awaiting scan command...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
