@@ -12,7 +12,9 @@ let hasAutoScanned = false; // Prevent infinite scan loops
 let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
 window.allLibraryItems = allLibraryItems;
+console.log(">>> [Eel-Status] Bridge found:", (typeof eel !== 'undefined'));
 console.log(">>> [JS-LOAD] bibliothek.js initialized.");
+if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-INIT');
 
 /**
  * Boots the library by fetching data from the DB.
