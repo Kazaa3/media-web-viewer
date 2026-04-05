@@ -21,6 +21,55 @@ let dataArray = null;
 let visualizerAnimationId = null;
 let visualizerStyle = localStorage.getItem('mwv_visualizer_style') || 'bars'; // 'bars', 'circle', 'wave'
 
+/**
+ * Diagnostic Control Handlers (v1.35.65)
+ */
+function toggleDiagLibMode() {
+    const isReal = localStorage.getItem('mwv_real_db_mode') === 'true';
+    localStorage.setItem('mwv_real_db_mode', !isReal);
+    
+    // Update local UI
+    const label = document.getElementById('diag-lib-label');
+    const dot = document.getElementById('diag-lib-dot');
+    if (label) label.innerText = !isReal ? 'REAL' : 'DIAG';
+    if (dot) dot.style.left = !isReal ? '1px' : '11px';
+    if (dot) dot.style.background = !isReal ? '#888' : 'var(--accent-color)';
+
+    console.info(">>> [Recovery] Library mode switched to:", !isReal ? 'Real DB' : 'Diagnostics');
+    if (typeof showToast === 'function') showToast(`Library: ${!isReal ? 'Real DB' : 'Diagnostics'}`, 1500);
+    
+    if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+}
+
+function toggleForceNative() {
+    const isForced = localStorage.getItem('mwv_force_native') === 'true';
+    localStorage.setItem('mwv_force_native', !isForced);
+    
+    const label = document.getElementById('diag-native-label');
+    const dot = document.getElementById('diag-native-dot');
+    if (label) label.style.color = !isForced ? 'var(--accent-color)' : 'var(--text-secondary)';
+    if (dot) dot.style.left = !isForced ? '11px' : '1px';
+    if (dot) dot.style.background = !isForced ? 'var(--accent-color)' : '#888';
+
+    console.warn(">>> [Video] Force Native Mode:", !isForced ? 'ON' : 'OFF');
+    if (typeof showToast === 'function') showToast(`Native Force: ${!isForced ? 'ON' : 'OFF'}`, 1500);
+}
+
+// Ensure UI sync on load
+document.addEventListener('DOMContentLoaded', () => {
+    const isReal = localStorage.getItem('mwv_real_db_mode') === 'true';
+    const label = document.getElementById('diag-lib-label');
+    const dot = document.getElementById('diag-lib-dot');
+    if (label) label.innerText = isReal ? 'REAL' : 'DIAG';
+    if (dot) dot.style.left = isReal ? '1px' : '11px';
+    
+    const isForced = localStorage.getItem('mwv_force_native') === 'true';
+    const nLabel = document.getElementById('diag-native-label');
+    const nDot = document.getElementById('diag-native-dot');
+    if (nLabel && isForced) nLabel.style.color = 'var(--accent-color)';
+    if (nDot && isForced) nDot.style.left = '11px';
+});
+
 // --- Playback Controllers ---
 
 /**
@@ -702,28 +751,34 @@ function addAndPlayNow(el, item) {
  * Synchronizes the player queue with the current library state.
  */
 function syncQueueWithLibrary() {
-    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'SYNC-START', { libCount: (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0) });
+    const isDiagnosticMode = localStorage.getItem('mwv_diagnostic_mode') === 'true';
+    const isRealDbMode = localStorage.getItem('mwv_real_db_mode') === 'true';
     
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        if (typeof appendUiTrace === 'function') appendUiTrace("[Audio] Sync: Library Empty.", "WARN");
+        console.warn("[Recovery] No library items found for sync.");
         return;
     }
+
+    let filtered;
     
-    console.log(`[Audio] Syncing queue with ${allLibraryItems.length} items...`);
-        // Filter-immune: Always include mock items. v1.35.62: Allow ALL if Diagnostic is active.
-        const isDiag = (typeof RecoveryManager !== 'undefined' && RecoveryManager.isActive);
-        const audioItems = allLibraryItems.filter(i =>
-            isDiag || // Bypass for diagnostics
-            i.is_mock === true ||
-            i.category === 'Audio' ||
-            i.category === 'Album' ||
-            i.category === 'Hörbuch' ||
-            i.category === 'Klassik' ||
-            i.category === 'Podcast' ||
-            i.category === 'Compilation' ||
-            i.category === 'Single' ||
-            i.category === 'Radio'
-        );
+    // v1.35.65: Toggle between Real DB and Diagnostic Suite
+    if (isDiagnosticMode && !isRealDbMode) {
+        // Recovery Mode: Filter for Stage Items (S1-S15)
+        filtered = allLibraryItems.filter(item => {
+            const isStage = !!item.stage;
+            const isRecovery = item.tags && item.tags.comment && item.tags.comment.includes('RECOVERY');
+            return isStage || isRecovery;
+        });
+        console.info(`[Recovery] Syncing ${filtered.length} Diagnostic Stages.`);
+    } else {
+        // Productive Mode: Filter by category (Default: Audio for Player tab)
+        filtered = allLibraryItems.filter(item => {
+            const isRealAsset = !item.stage; // Exclude diagnostics in Real mode
+            const isAudio = !isVideoItem(item);
+            return (isRealAsset && isAudio) || (item.is_mock && !item.stage);
+        });
+        console.info(`[Productive] Syncing ${filtered.length} Real Library items.`);
+    }
     
     if (audioItems.length > 0) {
         currentPlaylist = [...audioItems];

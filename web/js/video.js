@@ -124,6 +124,16 @@ async function playVideo(item, path, startTime = 0) {
     setTimeout(() => { window._locking_video_playback = false; }, 1000);
 
     const relpath = item.relpath || item.path || path;
+    
+    // v1.35.65: Force Native Bypass (Direct Stream without Analysis)
+    const isForcedNative = localStorage.getItem('mwv_force_native') === 'true';
+    if (isForcedNative) {
+        console.warn("[Video-Bypass] Force Native active. Skipping analysis for:", relpath);
+        const directUrl = path.startsWith('http') ? path : `/video/stream?path=${encodeURIComponent(relpath)}`;
+        startEmbeddedVideo(item, directUrl, startTime, 'video/mp4', 0);
+        return;
+    }
+
     if (typeof showToast === 'function') {
         showToast(`<svg width="12" height="12"><use href="#icon-search"></use></svg> Analysiere Media-Routing...`, 1500);
     }

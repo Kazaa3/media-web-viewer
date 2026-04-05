@@ -99,7 +99,7 @@ function playMediaObject(item) {
     
     const isVideo = isVideoItem(item);
     if (isVideo) {
-        console.info("[Play-Routing] Video detected, switching to Video Player tab:", item.path);
+        console.info("[Play-Routing] Video detected, forcing switch to Video Player tab:", item.path);
         if (typeof switchTab === 'function') {
             switchTab('video', null, () => {
                  if (typeof playVideo === 'function') {
@@ -107,7 +107,7 @@ function playMediaObject(item) {
                  } else {
                      console.warn("[Play-Routing] Video fragment loaded, but playVideo() not found.");
                  }
-            }, false);
+            }, true); // v1.35.65 Force Jump
         }
     } else {
         console.info("[Play-Routing] Audio detected, switching to Audio Player tab:", item.path);
@@ -117,7 +117,7 @@ function playMediaObject(item) {
                 if (typeof playAudio === 'function') {
                     playAudio(item);
                 }
-            }, false);
+            }, true); // v1.35.65 Force Jump
         }
     }
 }

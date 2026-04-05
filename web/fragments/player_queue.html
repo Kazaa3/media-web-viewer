@@ -92,6 +92,25 @@
                             <option value="iso">Nur ISO/Abbilder</option>
                             <option value="transcoded">Nur Transcoded</option>
                         </select>
+
+                        <!-- v1.35.65: Diagnostic Control Suite -->
+                        <div class="diag-control-suite" style="display: flex; align-items: center; gap: 8px; margin-left: 4px; border-left: 1px solid var(--border-color); padding-left: 8px;">
+                            <div class="diag-toggle-btn" id="diag-lib-toggle" onclick="toggleDiagLibMode()" title="Toggle Real DB / Diagnostic Suite" style="font-size: 9px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <span id="diag-lib-label" style="font-weight:800;">DIAG</span>
+                                <div style="width: 20px; height: 10px; background: var(--border-color); border-radius: 5px; position: relative;">
+                                    <div id="diag-lib-dot" style="width: 8px; height: 8px; background: var(--accent-color); border-radius: 50%; position: absolute; left: 11px; top: 1px; transition: all 0.2s;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="diag-toggle-btn" id="diag-native-toggle" onclick="toggleForceNative()" title="Force Native Video Engine" style="font-size: 9px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <span id="diag-native-label" style="font-weight:800;">NATV</span>
+                                <div style="width: 20px; height: 10px; background: var(--border-color); border-radius: 5px; position: relative;">
+                                    <div id="diag-native-dot" style="width: 8px; height: 8px; background: #888; border-radius: 50%; position: absolute; left: 1px; top: 1px; transition: all 0.2s;"></div>
+                                </div>
+                            </div>
+
+                            <button onclick="runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; font-size:8px; padding:2px 4px; cursor:pointer; font-weight:800;">AUDIT</button>
+                        </div>
                         <button onclick="clearQueue()" class="tab-btn sm"
                             style="padding: 6px 14px; font-size: 11px; font-weight: 700;">Liste leeren</button>
                         <button onclick="shuffleQueue()" class="tab-btn sm"

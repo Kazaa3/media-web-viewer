@@ -146,8 +146,12 @@ function traceUiNav(category, target, details = {}) {
 function switchTab(tabId, btn, callback, force = false) {
     if (isNavigating && !force) {
         console.warn(`[NAV] Navigation locked. Ignoring request for: ${tabId}`);
+        if (typeof mwv_trace === 'function') mwv_trace('NAV', 'LOCKED-SKIP', { tabId });
         return;
     }
+
+    // Force release if requested
+    if (force) isNavigating = false;
 
     isNavigating = true;
     document.body.style.cursor = 'wait';
@@ -164,7 +168,7 @@ function switchTab(tabId, btn, callback, force = false) {
     }, 5000);
 
     const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
-    traceUiNav('TAB', tabId, { from: previousTab });
+    traceUiNav('TAB', tabId, { from: previousTab, forced: force });
 
     // Define fragment mapping (Targets the internal V1.34 Master viewports)
     const fragmentMap = {
@@ -200,7 +204,6 @@ function switchTab(tabId, btn, callback, force = false) {
 
     const mapping = tabMap[tabId] || { shell: tabId, viewport: tabId };
     const targetId = mapping.shell;
-    const target = document.getElementById(targetId);
 
     // Handle Fragment Loading (v1.35.28 Conditional Guard)
     if (fragmentMap[tabId]) {
@@ -212,10 +215,13 @@ function switchTab(tabId, btn, callback, force = false) {
         
         if (isAlreadyLoaded && !force) {
             console.log(`[NAV] Skipping redundant fragment load for: ${tabId}`);
+            isNavigating = false; // Release lock before finishing
             finishSwitchTab(tabId, targetId, btn);
             if (typeof callback === 'function') callback();
         } else {
+            console.info(`[NAV] Loading fragment: ${frag.path} -> ${frag.containerId}`);
             FragmentLoader.load(frag.containerId, frag.path, () => {
+                isNavigating = false; // Release lock before finishing
                 finishSwitchTab(tabId, targetId, btn);
                 if (typeof callback === 'function') callback();
             });
@@ -229,6 +235,7 @@ function switchTab(tabId, btn, callback, force = false) {
             }
         }
     } else {
+        isNavigating = false; // Release lock
         finishSwitchTab(tabId, targetId, btn);
         if (typeof callback === 'function') callback();
     }
