@@ -493,11 +493,7 @@
                     <button class="nav-item" onclick="switchDiagnosticsView('tests')">Skript-Tests</button>
                     <button class="nav-item" onclick="switchDiagnosticsView('video-health')">Video Health</button>
                     <button class="nav-item" onclick="switchDiagnosticsView('health')">System-Check</button>
-                    <h3 class="diagnostic-section-title" style="margin-top: 30px;">System-Stats</h3>
-                    <div class="glass-card">
-                        <div class="diagnostic-label">DB Status</div>
-                        <div id="diag-db-status" class="diagnostic-value">Verbunden</div>
-                    </div>
+
                 </div>
                 <!-- Debug Viewport (FRAGMENT TARGET) -->
                 <div id="debug-main-viewport" class="content-deck-fill">
@@ -724,8 +720,13 @@
                         style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Scan</button>
                     <button id="btn-sync" onclick="refreshLibrary()"
                         style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Sync</button>
-                    <button id="btn-logs" onclick="switchDiagnosticsSubView('debug-db')"
+                    <button id="btn-logs" onclick="if(typeof showConsolePopup === 'function') showConsolePopup();"
                         style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
+                    <!-- DB Status Light -->
+                    <div style="display: flex; align-items: center; gap: 6px; margin: 0 4px;" title="Database Status">
+                        <span id="footer-db-light" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f1c40f; box-shadow: 0 0 5px #f1c40f;"></span>
+                        <span id="footer-db-text" style="color: var(--text-secondary); font-size: 10px; font-weight: 700; text-transform: uppercase;">Prüfet...</span>
+                    </div>
                     <button id="btn-reset"
                         onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
                         style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Reset

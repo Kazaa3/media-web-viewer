@@ -341,3 +341,85 @@ setTimeout(() => {
         eel.report_spawn()(() => console.log("Diagnostics: Startup sync complete."));
     }
 }, 5000);
+
+// ==========================================
+// DB FOOTER STATUS LIGHT & KONSOLE POPUP
+// ==========================================
+
+setInterval(() => {
+    const light = document.getElementById('footer-db-light');
+    const text = document.getElementById('footer-db-text');
+    if (!light || !text) return;
+
+    const dbItems = window.__mwv_last_db_count || 0;
+    const uiItems = (window.allLibraryItems || []).length;
+    
+    if (dbItems > 0 && uiItems > 0) {
+        light.style.backgroundColor = '#2ecc71';
+        light.style.boxShadow = '0 0 5px #2ecc71';
+        text.innerText = 'Synced';
+        text.style.color = '#2ecc71';
+    } else if (dbItems > 0 && uiItems === 0) {
+        light.style.backgroundColor = '#f1c40f'; // Yellow
+        light.style.boxShadow = '0 0 5px #f1c40f';
+        text.innerText = 'Nicht Gemigriert';
+        text.style.color = '#f1c40f';
+    } else {
+        light.style.backgroundColor = '#e74c3c'; // Red
+        light.style.boxShadow = '0 0 5px #e74c3c';
+        text.innerText = 'DB Leer';
+        text.style.color = '#e74c3c';
+    }
+}, 1000);
+
+window.showConsolePopup = async function() {
+    console.log("[Konsole] Requesting konsole payload...");
+    const oldModal = document.getElementById('konsole-modal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'konsole-modal';
+    modal.style.cssText = `
+        position: fixed; top: 10vh; left: 10vw; width: 80vw; height: 80vh;
+        background: rgba(10, 10, 12, 0.95); border-radius: 12px; border: 1px solid var(--border-color);
+        z-index: 10000; box-shadow: 0 20px 50px rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+        display: flex; flex-direction: column; overflow: hidden;
+    `;
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'padding: 15px 20px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);';
+    header.innerHTML = `
+        <h2 style="margin: 0; color: #fff; font-size: 1.2em; display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            System Konsole
+        </h2>
+        <button onclick="document.getElementById('konsole-modal').remove()" style="background: transparent; border: none; color: #fff; cursor: pointer; opacity: 0.7; font-size: 18px;">&times;</button>
+    `;
+    
+    let logsCtn = null;
+
+    if (window.MWV_VERSION) {
+        logsCtn = document.getElementById('diagnostic-log-terminal');
+    }
+
+    const pre = document.createElement('pre');
+    pre.id = 'konsole-logs-content';
+    pre.style.cssText = 'padding: 20px; margin: 0; flex: 1; overflow: auto; color: #a0a0a0; font-family: "JetBrains Mono", monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.4;';
+    pre.innerText = "Lade Konsole...";
+    
+    modal.appendChild(header);
+    modal.appendChild(pre);
+    document.body.appendChild(modal);
+
+    try {
+        if (typeof eel !== 'undefined' && eel.get_konsole) {
+            const res = await eel.get_konsole()();
+            pre.innerText = res.logs || "Keine Logs vorhanden.";
+            pre.scrollTop = pre.scrollHeight;
+        } else {
+            pre.innerText = "Error: eel.get_konsole not found.";
+        }
+    } catch(e) {
+        pre.innerText = "Error loading konsole: " + e.message;
+    }
+};
