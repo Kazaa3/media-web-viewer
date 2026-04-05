@@ -293,7 +293,7 @@
             <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout"
                 style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
                 <!-- Detailed Mode Sidebar (Left-aligned as per v1.34) -->
-                <div id="player-detailed-sidebar" class="diagnostic-sidebar active">
+                <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none;">
                     <div class="diagnostic-header">
                         <div class="diagnostic-section-title">MEDIA DETAILS</div>
                         <div id="diag-media-primary" class="diagnostic-value">-</div>
@@ -724,26 +724,26 @@
                         style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
 
                     <!-- Advanced Toggles (Restored exact functions) -->
-                    <button class="diag-toggle-btn" onclick="if(typeof toggleDiagLibMode === 'function') toggleDiagLibMode()" title="Toggle Real DB / Diagnostic Suite" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px;">
-                        <span id="footer-diag-label">DIAG</span>
-                    </button>
-                    
-                    <button class="diag-toggle-btn" onclick="if(typeof toggleForceNative === 'function') toggleForceNative()" title="Force Native Video Engine" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px;">
-                        <span id="footer-natv-label">NATV</span>
-                    </button>
-
-                    <button onclick="if(typeof runDomAudit === 'function') runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; font-size:9px; padding:2px 6px; cursor:pointer; font-weight:800;">AUDIT</button>
-
-                    <div style="width: 1px; height: 12px; background: var(--border-color); margin: 0 4px;"></div>
+                    <div style="display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                        <button class="diag-toggle-btn" onclick="if(typeof toggleDiagLibMode === 'function') toggleDiagLibMode()" title="Toggle Real DB / Diagnostic Suite" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px;">
+                            <span id="footer-diag-label">DIAG</span>
+                        </button>
+                        <button class="diag-toggle-btn" onclick="if(typeof toggleForceNative === 'function') toggleForceNative()" title="Force Native Video Engine" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px;">
+                            <span id="footer-natv-label">NATV</span>
+                        </button>
+                        <button onclick="if(typeof runDomAudit === 'function') runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; font-size:9px; padding:2px 6px; cursor:pointer; font-weight:800;">AUDIT</button>
+                    </div>
 
                     <!-- DB Status Light & Buttons -->
-                    <button id="btn-db-status" style="background: transparent; border: none; font-size: 10px; font-weight: 700; color: var(--text-secondary); cursor: pointer; text-transform: uppercase;">DB</button>
-                    <div style="display: flex; align-items: center; gap: 4px;" title="Database Status">
-                        <span id="footer-db-light" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f1c40f; box-shadow: 0 0 5px #f1c40f;"></span>
+                    <div style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                        <div style="display: flex; align-items: center; gap: 6px;" title="Database Status">
+                            <span style="font-size: 10px; font-weight: 800; color: var(--text-secondary);">DB</span>
+                            <span id="footer-db-light" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f1c40f; box-shadow: 0 0 5px #f1c40f;"></span>
+                        </div>
+                        <button id="btn-reset"
+                            onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
+                            style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">RESET</button>
                     </div>
-                    <button id="btn-reset"
-                        onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
-                        style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Reset</button>
                 </div>
             </div>
         </div>

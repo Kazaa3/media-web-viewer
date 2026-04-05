@@ -13,6 +13,7 @@
                 <button id="opt-subtab-transcoding"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('transcoding')">Transcoding</button>
                 <button id="opt-subtab-debug"        class="sub-tab-btn options-subtab" onclick="switchOptionsView('debug')">Debug &amp; Flags</button>
                 <button id="opt-subtab-environment"  class="sub-tab-btn options-subtab" onclick="switchOptionsView('environment')">Umgebung</button>
+                <button id="opt-subtab-helpers"      class="sub-tab-btn options-subtab" onclick="switchOptionsView('helpers')">Hilfsskripte</button>
             </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
@@ -385,29 +386,7 @@
                                 🔄 ATOMIC SYNC
                             </button>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div>
-                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Diagnostic Library Mode</div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">Switches between Real Database and 29-item Test Baseline</div>
-                            </div>
-                            <label class="switch sm"><input type="checkbox" id="config-diagnostic-mode" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
-
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div>
-                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Force Native Playback (NatV)</div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">Bypasses backend transcoding for direct browser playback</div>
-                            </div>
-                            <label class="switch sm"><input type="checkbox" id="config-force-native" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
-
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div>
-                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">DOM Health Auditor HUD</div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">Real-time viewport & structural integrity monitoring</div>
-                            </div>
-                            <label class="switch sm"><input type="checkbox" id="config-dom-auditor" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
+                        <!-- Toggles migrated to new Helper JS Tab -->
 
                         <!-- Diagnostic Terminal -->
                         <div style="margin-top: 10px;">
