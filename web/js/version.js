@@ -1,19 +1,16 @@
 /**
- * version.js (v1.35.48)
+ * version.js (v1.35.51)
  * Central version and performance monitoring.
- * Nuclear Diagnostic Override (Ensures tools are visible).
+ * Hotfix: Relocated Diagnostic Bar to Bottom-Right.
  */
 
-window.MWV_VERSION = 'v1.35.48';
+window.MWV_VERSION = 'v1.35.51';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'Hydration-Harden';
+window.MWV_STABILITY = 'UI-Relocate-Hotfix';
 
-// Forced Diagnostic Enable (v1.35.48)
-// Ensures the Red Header and Green HUD appear for the user.
+// Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {
-    console.log(">>> [SYSTEM] Enabling Nuclear Diagnostic Mode (v1.35.48)");
     localStorage.setItem('mwv_diagnostic_mode', 'true');
 }
 
 console.log(`>>> [SYSTEM] MWV Frontend version initialized: ${window.MWV_VERSION}`);
-console.log(`>>> [SYSTEM] Boot-Timer started.`);

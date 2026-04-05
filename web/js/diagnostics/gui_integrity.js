@@ -107,11 +107,29 @@ const GUIIntegrity = {
         const msg = RecoveryManager.isNuclear ? "NUCLEAR" : "ACTIVE";
         const version = window.MWV_VERSION || 'v1.35.x';
         document.body.insertAdjacentHTML('afterbegin', `
-            <div id="recovery-test-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 10010; background: rgba(255,0,0,0.9); color: white; padding: 5px 20px; font-weight: bold; font-family: monospace; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div id="recovery-test-header" style="
+                position: fixed; 
+                bottom: 74px; 
+                right: 20px; 
+                z-index: 10010; 
+                background: rgba(231, 76, 60, 0.9); 
+                color: white; 
+                padding: 5px 15px; 
+                font-weight: bold; 
+                font-family: monospace; 
+                font-size: 11px; 
+                display: flex; 
+                gap: 15px; 
+                align-items: center;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.2);
+            ">
                 <span>DIAGNOSTIC MODE: ${msg} (${version})</span>
-                <div>
-                   <button onclick="RecoveryManager.hydrateAll()" style="background: white; border: none; padding: 2px 10px; cursor: pointer; color: black; font-weight: bold; margin-right: 10px;">FORCE HYDRATION</button>
-                   <button onclick="RecoveryManager.toggle()" style="background: black; color: white; border: none; padding: 2px 10px; cursor: pointer;">DISABLE</button>
+                <div style="display: flex; gap: 8px;">
+                   <button onclick="RecoveryManager.hydrateAll()" style="background: white; border: none; padding: 2px 8px; cursor: pointer; color: black; font-weight: bold; font-size: 10px; border-radius: 4px;">FORCE HYDRATION</button>
+                   <button onclick="RecoveryManager.toggle()" style="background: black; color: white; border: none; padding: 2px 8px; cursor: pointer; font-size: 10px; border-radius: 4px;">DISABLE</button>
                 </div>
             </div>
         `);
