@@ -111,76 +111,64 @@ async function renderLibrary() {
         return;
     }
 
-    // Local filter stage
-    coverflowItems = allLibraryItems;
-    console.log(`[Library] Rendering ${coverflowItems.length} items (Filter: ${libraryFilter})...`);
-    mwv_trace('DOM-UI', 'RENDER-LIBRARY', { count: coverflowItems.length, filter: libraryFilter, search: librarySearch });
-
-    // Search
-    if (librarySearch) {
-        const q = librarySearch.toLowerCase();
-        coverflowItems = coverflowItems.filter(i => 
-            (i.name || '').toLowerCase().includes(q) || 
-            (i.tags && i.tags.title && i.tags.title.toLowerCase().includes(q))
-        );
-    }
-
-    // Genre
-    if (libraryGenre !== 'all') {
-        coverflowItems = coverflowItems.filter(i => i.tags && i.tags.genre === libraryGenre);
-    }
-
-    // Year
-    if (libraryYear !== 'all') {
-        coverflowItems = coverflowItems.filter(i => i.tags && i.tags.year === libraryYear);
-    }
-
-    // --- Filter logic Trace (Black Hole Analysis) ---
-    console.warn(`[FE-AUDIT] Starting Render for ${allLibraryItems.length} items. Filter: ${libraryFilter}, Search: "${librarySearch}"`);
+    // --- PHASE 1: FILTERING (v1.35.68 Hardened) ---
+    console.warn(`[FE-AUDIT] Starting Render for ${allLibraryItems.length} items. MainCat: ${libraryFilter}, SubCat: ${librarySubFilter}, Search: "${librarySearch}"`);
     
-    coverflowItems = [...allLibraryItems];
+    // Start with all items
+    let projectedItems = [...allLibraryItems];
 
+    // 1. HIDB (Diagnostic Hide) - Should usually be OFF
+    if (window.__mwv_hide_db) {
+        projectedItems = projectedItems.filter(i => i.is_mock);
+        console.log(`[FE-AUDIT] HIDB active - showing only mock items.`);
+    }
+
+    // 2. Main Category Filter
     if (libraryFilter !== 'all') {
-        const allowedTypes = CATEGORY_MAP[libraryFilter] || [];
-        const prevCount = coverflowItems.length;
-        coverflowItems = coverflowItems.filter(i => {
+        const allowedTypes = (typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP[libraryFilter] : []) || [];
+        projectedItems = projectedItems.filter(i => {
+            if (i.is_mock) return true; // Keep mocks during diagnostics
             const cat = String(i.category || 'all').toLowerCase();
-            // Handle cross-mapping for multimedia/Bilder
+            // Special handling for images
             if (libraryFilter === 'images' && (cat === 'multimedia' || cat === 'bilder')) return true;
             return allowedTypes.some(at => at.toLowerCase() === cat);
         });
-        console.log(`[FE-AUDIT] Filtered by "${libraryFilter}": ${prevCount} -> ${coverflowItems.length} items.`);
     }
 
-    if (librarySearch) {
-        const prevCount = coverflowItems.length;
-        coverflowItems = coverflowItems.filter(i => (i.name || '').toLowerCase().includes(librarySearch.toLowerCase()));
-        console.log(`[FE-AUDIT] Filtered by Search: ${prevCount} -> ${coverflowItems.length} items.`);
-    }
-
-    // --- Sub-Filter (v1.35.68 Trace) ---
+    // 3. Sub-Category Filter
     if (typeof librarySubFilter !== 'undefined' && librarySubFilter !== 'all') {
-        const prevCount = coverflowItems.length;
-        coverflowItems = coverflowItems.filter(i => (i.category || '').toLowerCase() === librarySubFilter.toLowerCase());
-        console.log(`[FE-AUDIT] Filtered by Sub-Filter "${librarySubFilter}": ${prevCount} -> ${coverflowItems.length} items.`);
+        projectedItems = projectedItems.filter(i => i.is_mock || (i.category || '').toLowerCase() === librarySubFilter.toLowerCase());
     }
 
-    updateFilterOptions(coverflowItems);
+    // 4. Genre & Year
+    if (libraryGenre !== 'all') {
+        projectedItems = projectedItems.filter(i => i.is_mock || (i.tags && i.tags.genre === libraryGenre));
+    }
+    if (libraryYear !== 'all') {
+        projectedItems = projectedItems.filter(i => i.is_mock || (i.tags && i.tags.year === libraryYear));
+    }
 
-    // --- Recovery Bypass: Unconditionally include Mock items (v1.35) ---
-    if (allLibraryItems.some(i => i.is_mock)) {
-        coverflowItems = allLibraryItems.filter(i => 
+    // 5. Search (Final Pass)
+    if (librarySearch) {
+        const q = librarySearch.toLowerCase();
+        projectedItems = projectedItems.filter(i => 
             i.is_mock || 
-            ( (librarySearch ? (i.name||'').toLowerCase().includes(librarySearch.toLowerCase()) : true) &&
-              (libraryGenre !== 'all' ? (i.tags && i.tags.genre === libraryGenre) : true) )
+            (i.name || '').toLowerCase().includes(q) || 
+            (i.tags && i.tags.title && i.tags.title.toLowerCase().includes(q)) ||
+            (i.path || '').toLowerCase().includes(q)
         );
     }
 
-    // --- Hide DB Diagnostic (v1.35.68 Recovery) ---
-    if (window.__mwv_hide_db) {
-        const prevCount = coverflowItems.length;
-        coverflowItems = coverflowItems.filter(i => i.is_mock);
-        console.log(`[FE-AUDIT] Filtered by HIDB: ON | ${prevCount} -> ${coverflowItems.length} items.`);
+    coverflowItems = projectedItems;
+    console.log(`[FE-AUDIT] Final Projection: ${coverflowItems.length} items.`);
+
+    if (typeof mwv_trace_render === 'function') {
+        mwv_trace_render('LIBRARY-UI', 'STAGE-PROJECTED', { 
+            raw: allLibraryItems.length, 
+            projected: coverflowItems.length,
+            filter: libraryFilter,
+            sub: librarySubFilter
+        });
     }
 
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'STAGE-PROJECTED', { raw: allLibraryItems.length, projected: coverflowItems.length });
