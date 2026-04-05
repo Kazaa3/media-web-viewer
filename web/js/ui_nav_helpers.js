@@ -124,8 +124,7 @@ function switchTab(tabId, btn, callback) {
         'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbuch_panel.html' },
         'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
         'tests': { containerId: 'tests-panel-container', path: 'fragments/diagnostics_suite.html' },
-        'video': { containerId: 'video-main-viewport', path: 'fragments/video_player.html' },
-        'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' }
+        'video': { containerId: 'video-main-viewport', path: 'fragments/video_player.html' }
     };
 
     const tabMap = {
@@ -140,8 +139,7 @@ function switchTab(tabId, btn, callback) {
         'tools': { shell: 'tools-panel-container', viewport: 'tools-panel-container' },
         'logbuch': { shell: 'logbook-tab-container', viewport: 'logbook-tab-container' },
         'diagnostics': { shell: 'diagnostics-suite-container', viewport: 'diagnostics-suite-container' },
-        'video': { shell: 'multiplexed-media-player-orchestrator-panel', viewport: 'video-main-viewport' },
-        'playlist': { shell: 'json-serialized-sequence-buffer-panel', viewport: 'json-serialized-sequence-buffer-panel' }
+        'video': { shell: 'multiplexed-media-player-orchestrator-panel', viewport: 'video-main-viewport' }
     };
 
     const mapping = tabMap[tabId] || { shell: tabId, viewport: tabId };
@@ -253,8 +251,8 @@ function finishSwitchTab(tabId, targetId, btn) {
 
     // Context-specific actions
     const initActions = {
-        'player': () => { 
-            if (typeof renderPlaylist === 'function') renderPlaylist(); 
+        'player': () => {
+            if (typeof renderPlaylist === 'function') renderPlaylist();
             if (typeof renderItemGallery === 'function') renderItemGallery();
             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
         },
@@ -510,14 +508,14 @@ function updateGlobalSubNav(category) {
 
     // Clear previous
     container.innerHTML = '';
-    
+
     // V1.34 Master: Top-bar pills are now legacy. 
     // We only populate if the category specifically requires a global override.
     const subNavMap = {
         'media': [
-            { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
+            { id: 'queue', label: 'Queue', action: "switchPlayerView('warteschlange')" },
             { id: 'mediengalerie', label: 'Mediengalerie', action: "switchPlayerView('mediengalerie')" },
-            { id: 'playlist', label: 'Playlist Manager', action: "switchTab('playlist')" },
+            { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
             { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" },
             { id: 'video-cinema', label: 'Video Cinema', action: "switchTab('video')" }
         ],
@@ -706,9 +704,9 @@ function switchFileSubView(viewId) {
 /**
  * Toggles sub-views within the Logbook category.
  */
-window.switchLogbookSubView = function(viewId) {
+window.switchLogbookSubView = function (viewId) {
     if (typeof mwv_trace === 'function') mwv_trace('SUBVIEW-LOG', viewId);
-    
+
     // Toggle active state for pills
     document.querySelectorAll('#sub-nav-container .sub-pill-btn').forEach(btn => {
         btn.classList.toggle('active', btn.id === `global-sub-nav-${viewId}`);
@@ -716,7 +714,7 @@ window.switchLogbookSubView = function(viewId) {
 
     const journalContainer = document.getElementById('localized-markdown-documentation-journal-panel');
     const eventsContainer = document.getElementById('logbook-fragment');
-    
+
     if (viewId === 'journal' || viewId === 'docs') {
         if (journalContainer) journalContainer.style.display = 'flex';
         if (eventsContainer) eventsContainer.style.display = 'none';
