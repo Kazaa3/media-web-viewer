@@ -371,18 +371,34 @@
                     <div id="debug-flags-container" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;"></div>
                 </div>
 
-                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                        <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug Scan</div>
-                        <label class="switch sm"><input type="checkbox" id="config-debug-scan" onchange="saveAllOptions()"><span class="slider"></span></label>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                        <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug Parser</div>
-                        <label class="switch sm"><input type="checkbox" id="config-debug-parser" onchange="saveAllOptions()"><span class="slider"></span></label>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug-Konsole (DOM Overlay)</div>
-                        <label class="switch sm"><input type="checkbox" id="config-debug-console" onchange="saveAllOptions()"><span class="slider"></span></label>
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card); border-left: 4px solid var(--accent-color);">
+                    <h3 style="margin: 0 0 6px 0; font-weight: 800; color: var(--accent-color);">v1.35.68 High-Fidelity Diagnostics</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;">Experimental Pro-Grade Auditing & Logic Bypasses</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Diagnostic Library Mode</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Switches between Real Database and 29-item Test Baseline</div>
+                            </div>
+                            <label class="switch sm"><input type="checkbox" id="config-diagnostic-mode" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Force Native Playback (NatV)</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Bypasses backend transcoding for direct browser playback</div>
+                            </div>
+                            <label class="switch sm"><input type="checkbox" id="config-force-native" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">DOM Health Auditor HUD</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Real-time viewport & structural integrity monitoring</div>
+                            </div>
+                            <label class="switch sm"><input type="checkbox" id="config-dom-auditor" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
                     </div>
                 </div>
 

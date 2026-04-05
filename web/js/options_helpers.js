@@ -202,6 +202,11 @@ async function loadAllOptions() {
         buildFeatureFlagsUI(cfg.feature_flags || {});
         buildDebugFlagsUI(cfg.debug_flags || {});
 
+        // ── v1.35.68 High-Fidelity (localStorage based)
+        safeCheck('config-diagnostic-mode', localStorage.getItem('mwv_diagnostic_mode') === 'true');
+        safeCheck('config-force-native',     localStorage.getItem('mwv_force_native') === 'true');
+        safeCheck('config-dom-auditor',      localStorage.getItem('mwv_dom_auditor_visible') !== 'false'); // Default TRUE
+
         // ── Startup
         await loadStartupConfig();
 
@@ -214,6 +219,20 @@ async function loadAllOptions() {
 // ─── Save all options to backend ───────────────────────────────────────────────
 async function saveAllOptions() {
     try {
+        // Collect v1.35.68 High-Fidelity
+        const diagMode = !!document.getElementById('config-diagnostic-mode')?.checked;
+        const native   = !!document.getElementById('config-force-native')?.checked;
+        const auditor  = !!document.getElementById('config-dom-auditor')?.checked;
+
+        localStorage.setItem('mwv_diagnostic_mode', diagMode);
+        localStorage.setItem('mwv_force_native', native);
+        localStorage.setItem('mwv_dom_auditor_visible', auditor);
+
+        // Notify managers if present
+        if (typeof RecoveryManager !== 'undefined') RecoveryManager.checkAndHydrate();
+        const hud = document.getElementById('dom-auditor-hud');
+        if (hud) hud.style.display = auditor ? 'block' : 'none';
+
         // Collect parser chain
         const chain = ALL_PARSERS
             .filter(p => document.getElementById(`parser-${p.id}`)?.checked)
