@@ -107,7 +107,9 @@ def serve_media(filepath):
         '.ogg_transcoded': 'ogg',
         '.mp3_transcoded': 'mp3',
         '.aac_transcoded': 'aac',
-        '.opus_transcoded': 'opus'
+        '.opus_transcoded': 'opus',
+        '.mp4_transcoded': 'mp4',
+        '.mp4_pass': 'mp4_pass'
     }
     
     for suffix, fmt in suffixes.items():
@@ -143,12 +145,14 @@ def serve_media(filepath):
         # FFmpeg configuration matrix
         matrix = {
             'mp3': (['audio/mpeg'], ['-c:a', 'libmp3lame', '-q:a', '2', '-f', 'mp3']),
-            'ogg': (['audio/ogg'], ['-c:a', 'libvorbis', '-q:a', '4', '-f', 'ogg']), # Standard Vorbis for ogg
+            'ogg': (['audio/ogg'], ['-c:a', 'libvorbis', '-q:a', '4', '-f', 'ogg']),
             'opus': (['audio/ogg'], ['-c:a', 'libopus', '-b:a', '128k', '-vbr', 'on', '-f', 'ogg']),
             'aac': (['audio/aac'], ['-c:a', 'aac', '-b:a', '128k', '-f', 'adts']),
-            'flac': (['audio/flac'], ['-c:a', 'flac', '-compression_level', '5', '-f', 'flac'])
+            'flac': (['audio/flac'], ['-c:a', 'flac', '-compression_level', '5', '-f', 'flac']),
+            'mp4': (['video/mp4'], ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28', '-c:a', 'aac', '-b:a', '128k', '-movflags', 'faststart', '-f', 'mp4']),
+            'mp4_pass': (['video/mp4'], ['-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-movflags', 'faststart', '-f', 'mp4'])
         }
-        
+
         serve_mime_list, ffmpeg_args = matrix.get(str(transcode_format), (['audio/mpeg'], ['-f', 'mp3']))
         serve_mime = serve_mime_list[0]
 
@@ -156,12 +160,15 @@ def serve_media(filepath):
             _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
             start_time = __import__('time').time()
             try:
-                # Optimized ffmpeg command: -vn (no video), -map 0:a (first audio stream)
+                # Optimized ffmpeg: -map 0 (all streams) for video, or -map 0:a:0 for audio
+                is_video = transcode_format in ['mp4', 'mp4_pass']
+                map_args = ['-map', '0'] if is_video else ['-vn', '-map', '0:a:0']
+
                 subprocess.run(
-                    ['ffmpeg', '-y', '-v', 'quiet', '-i', str(full_path), '-vn', '-map', '0:a:0'] + ffmpeg_args + [str(tmp_path)],
-                    check=True, timeout=30
+                    ['ffmpeg', '-y', '-v', 'quiet', '-i', str(full_path)] + map_args + ffmpeg_args + [str(tmp_path)],
+                    check=True, timeout=120 if is_video else 30
                 )
-                
+
                 if tmp_path.exists() and tmp_path.stat().st_size > 0:
                     latency = __import__('time').time() - start_time
                     tmp_path.replace(cache_path)
