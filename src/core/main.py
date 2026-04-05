@@ -3283,16 +3283,17 @@ def get_library() -> Dict[str, Any]:
         progress_update("Library: Filtering Categories", 50)
 
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
+    displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
-        displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe"]
+        displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "multimedia"]
 
     # ── Category map: setting-key → actual DB category strings ──────────────
     # IMPORTANT: these must match what the parser stores in the `category` column
     cat_map = {
         "audio":     ["Audio", "Album", "Klassik", "Hörbuch", "Hörspiel", "Podcast", "Musik",
                       "Compilation", "Single", "Radio"],
-        "video":     ["Video", "Film", "Serie", "TV"],
-        "images":    ["Bilder", "Grafik", "Bild", "Foto"],
+        "video":     ["Video", "Film", "Serie", "TV", "Multimedia"],
+        "images":    ["Bilder", "Grafik", "Bild", "Foto", "multimedia"],
         "documents": ["Dokument", "PDF", "Text"],
         "ebooks":    ["E-Book", "Ebook"],
         "abbild":    ["Abbild", "Disk-Abbild", "DVD (Abbild)", "Blu-ray (Abbild)",
