@@ -3180,9 +3180,13 @@ def get_library() -> Dict[str, Any]:
         eel.append_debug_log(f"[DB] Sending {len(filtered_media)} items to GUI.", "DB-SUCCESS")
 
 
-    # Safe return wrapper (v1.35.17 Hardened)
+    # Safe return wrapper (v1.35.40 Sync Visibility)
     try:
-        final_lib = {"media": filtered_media}
+        final_lib = {
+            "media": filtered_media,
+            "db_count": count_total,
+            "status": "ready"
+        }
         if 'sanitize_json_utf8' in globals() or 'sanitize_json_utf8' in locals():
             return sanitize_json_utf8(final_lib)
         else:

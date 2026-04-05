@@ -36,6 +36,10 @@ function startBootWatchdog() {
 window.addEventListener('DOMContentLoaded', () => {
     try {
         startBootWatchdog();
+        // Initialize Diagnostic Suite if available
+        if (window.Diagnostics && typeof window.Diagnostics.init === 'function') {
+            window.Diagnostics.init();
+        }
     } catch (e) {
         if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'FAIL', { error: e.message });
         console.error('BOOT-WATCHDOG error:', e);

@@ -26,7 +26,13 @@ async function loadLibrary(retryCount = 0) {
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
         const library = await getLibrary();
-        console.warn(`>>> [Handshake] Backend returned media array (type: ${typeof library.media}).`);
+        const incomingCount = (library.media || []).length;
+        const totalDbCount = library.db_count || incomingCount;
+        
+        window.__mwv_last_db_count = totalDbCount;
+        console.warn(`>>> [Handshake] Backend returned media array (Count: ${incomingCount}, DB Total: ${totalDbCount}).`);
+        if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Received ${incomingCount} items. DB Status: ${totalDbCount} records.`, "SUCCESS");
+        
         allLibraryItems = library.media || [];
         
         if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'BACKEND-RAW', { count: allLibraryItems.length });
