@@ -40,15 +40,22 @@ const FragmentLoader = {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 html = await response.text();
                 this.cache.set(fragmentPath, html);
+                console.info(`[FL] STAGE 1: HTML Received (${fragmentPath})`);
+            }
+
+            if (!html || html.trim() === '') {
+                throw new Error("Fragment content is empty or whitespace only.");
             }
 
             container.innerHTML = html;
             container.dataset.loaded = 'true';
+            console.info(`[FL] STAGE 2: DOM Injection Complete (#${targetId})`);
 
             // --- V1.34 Master: Manual Script Extraction & Execution ---
-            // innerHTML does not execute scripts by default. We must manually 
-            // trigger them to enable sub-tab switching and fragment logic.
             const scripts = container.querySelectorAll('script');
+            if (scripts.length > 0) {
+                console.info(`[FL] STAGE 3: Processing ${scripts.length} internal scripts...`);
+            }
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
                 
@@ -78,6 +85,7 @@ const FragmentLoader = {
             }
 
             if (callback) callback();
+            console.info(`[FL] STAGE 4: Final READY (${fragmentPath})`);
             
             // Dispatch a custom event for module-specific listeners
             const event = new CustomEvent('fragmentLoaded', { 

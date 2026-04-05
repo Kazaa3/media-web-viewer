@@ -4,13 +4,13 @@
     <div class="sub-nav-bar"
         style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
         <button class="tab-btn player-sub-nav-btn" data-target="warteschlange"
-            onclick="switchPlayerView('warteschlange')">Queue</button>
+            onclick="switchPlayerInternalView('warteschlange')">Queue</button>
         <button class="tab-btn player-sub-nav-btn active" data-target="mediengalerie"
-            onclick="switchPlayerView('mediengalerie')">Mediengalerie</button>
+            onclick="switchPlayerInternalView('mediengalerie')">Mediengalerie</button>
         <button id="player-subtab-playlist" class="tab-btn player-sub-nav-btn" data-target="playlist"
-            onclick="switchPlayerView('playlist')">Playlist Manager</button>
+            onclick="switchPlayerInternalView('playlist')">Playlist Manager</button>
         <button class="tab-btn player-sub-nav-btn" data-target="visualizer"
-            onclick="switchPlayerView('visualizer')">Visualizer</button>
+            onclick="switchPlayerInternalView('visualizer')">Visualizer</button>
     </div>
 
     <!-- MAIN PLAYER VIEWS CONTAINER -->
@@ -235,7 +235,7 @@
     /**
      * Switch Player Sub-Views (v1.34 Master)
      */
-    function switchPlayerView(viewId) {
+    function switchPlayerInternalView(viewId) {
         if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-PLAYER', viewId);
         
         // Hide all views
@@ -275,7 +275,7 @@
     // Default to Mediengalerie on first load if nothing active
     setTimeout(() => {
         const active = document.querySelector('.player-view-container.active');
-        if (!active) switchPlayerView('mediengalerie');
+        if (!active) switchPlayerInternalView('mediengalerie');
     }, 100);
 </script>
 <!-- ===================== PLAYER QUEUE END ===================== -->

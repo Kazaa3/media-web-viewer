@@ -308,6 +308,7 @@ function finishSwitchTab(tabId, targetId, btn) {
             initActions[tabId]();
         });
     }
+    console.info(`[NAV] Tab Switch SUCCESS: ${tabId}`);
 }
 
 /**
