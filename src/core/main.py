@@ -768,7 +768,7 @@ def initialize_debug_flags(args=None):
 
 
 # --- Global Constants & State ---
-VERSION = "1.35.66"
+VERSION = "1.34"
 
 
 # Nach Logging-Setup: PIDs loggen fr Konsole. deswegen kein eel.expose
@@ -1218,6 +1218,51 @@ def get_version():
     """Returns the application version."""
     return VERSION
 
+@eel.expose
+def get_debug_stats():
+    """Returns runtime statistics for the diagnostic suite."""
+    import os
+    from src.core import db
+    total = 0
+    categories = {}
+    try:
+        items = db.get_library()
+        total = len(items)
+        for i in items:
+            cat = i.get('category', 'Unknown')
+            categories[cat] = categories.get(cat, 0) + 1
+    except: pass
+    return {
+        "pid": os.getpid(),
+        "total_items": total,
+        "categories": categories,
+        "version": VERSION
+    }
+
+@eel.expose
+def get_debug_dict(source="library"):
+    """Returns raw backend data for the Universal JSON Explorer."""
+    import os
+    from src.core import db
+    if source == "library":
+        return db.get_library()
+    elif source == "config":
+        return {k: str(v) for k, v in os.environ.items() if "MWV" in k or "PATH" in k}
+    elif source == "state":
+        return {"version": VERSION, "pid": os.getpid(), "root": str(PROJECT_ROOT)}
+    return {"error": "Unknown source"}
+
+@eel.expose
+def get_debug_console():
+    """Returns the tail of the app.log file for the Live Terminal."""
+    try:
+        log_file = PROJECT_ROOT / "app.log"
+        if log_file.exists():
+            lines = log_file.read_text(encoding='utf-8').splitlines()
+            return "\n".join(lines[-500:])
+        return "Log file not found."
+    except Exception as e:
+        return f"Error reading logs: {e}"
 
 @eel.expose
 def get_app_name():
@@ -1831,18 +1876,15 @@ def nuclear_restart():
     import subprocess
     from pathlib import Path
     
-    # Use absolute path for script
-    script_path = (PROJECT_ROOT / "scripts" / "reboot_mwv.sh").resolve()
+    script_path = Path("/home/xc/#Coding/gui_media_web_viewer/scripts/reboot_mwv.sh")
     log.warning(f"[REBOOT] NUCLEAR RESTART TRIGGERED. PID: {os.getpid()}")
     
     try:
         if script_path.exists():
             # Use start_new_session=True to detach from this process tree
             subprocess.Popen(["bash", str(script_path)], start_new_session=True)
-            log.info("[REBOOT] Detached reboot script spawned. Waiting before exit...")
-            # Handshake delay to allow script to claim session
-            import time
-            time.sleep(0.5)
+            log.info("[REBOOT] Detached reboot script spawned. Exiting current process.")
+            # Standard cleanup to close Eel then exit
             os._exit(0)
         else:
             return {"status": "error", "message": "Reboot script not found."}
