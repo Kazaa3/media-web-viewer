@@ -20,9 +20,12 @@ let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
  * Boots the library by fetching data from the DB.
  */
 async function loadLibrary(retryCount = 0) {
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-LOAD-START');
+    console.log('[DATA-LIB] STAGE-LOAD-START: loadLibrary() called.');
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
         const library = await getLibrary();
+        console.warn(`>>> [Handshake] Backend returned media array (type: ${typeof library.media}).`);
         allLibraryItems = library.media || [];
         
         if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'BACKEND-RAW', { count: allLibraryItems.length });
@@ -136,14 +139,27 @@ async function renderLibrary() {
 
     updateFilterOptions(coverflowItems);
 
+    // --- Recovery Bypass: Unconditionally include Mock items (v1.35) ---
+    if (allLibraryItems.some(i => i.is_mock)) {
+        coverflowItems = allLibraryItems.filter(i => 
+            i.is_mock || 
+            ( (librarySearch ? (i.name||'').toLowerCase().includes(librarySearch.toLowerCase()) : true) &&
+              (libraryGenre !== 'all' ? (i.tags && i.tags.genre === libraryGenre) : true) )
+        );
+    }
+
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'STAGE-PROJECTED', { raw: allLibraryItems.length, projected: coverflowItems.length });
+    
     if (coverflowItems.length === 0) {
         const noMediaHtml = `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`;
         if (typeof safeHtml === 'function') {
             safeHtml('coverflow-track', noMediaHtml);
             safeHtml('grid-container', noMediaHtml);
         } else {
-            document.getElementById('coverflow-track').innerHTML = noMediaHtml;
-            document.getElementById('grid-container').innerHTML = noMediaHtml;
+            const t1 = document.getElementById('coverflow-track');
+            const t2 = document.getElementById('grid-container');
+            if (t1) t1.innerHTML = noMediaHtml;
+            if (t2) t2.innerHTML = noMediaHtml;
         }
         return;
     }

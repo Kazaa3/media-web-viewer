@@ -1,3 +1,38 @@
+// --- Boot Watchdog & Progress Audit (v1.35) ---
+let __mwv_boot_watchdog_timer = null;
+let __mwv_boot_watchdog_ticks = 0;
+let __mwv_boot_watchdog_status = 'INIT';
+function startBootWatchdog() {
+    if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'START', { ts: Date.now() });
+    __mwv_boot_watchdog_status = 'STARTED';
+    __mwv_boot_watchdog_ticks = 0;
+    __mwv_boot_watchdog_timer = setInterval(() => {
+        __mwv_boot_watchdog_ticks++;
+        let phase = 'WAIT';
+        if (document.readyState === 'complete') phase = 'DOM-READY';
+        if (window.__mwv_ui_nav_loaded) phase = 'INIT-START';
+        if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) phase = 'DATA-READY';
+        if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: (allLibraryItems ? allLibraryItems.length : 0) });
+        if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > 6) {
+            if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
+            clearInterval(__mwv_boot_watchdog_timer);
+            __mwv_boot_watchdog_status = 'DONE';
+        }
+    }, 500);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    try {
+        startBootWatchdog();
+    } catch (e) {
+        if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'FAIL', { error: e.message });
+        console.error('BOOT-WATCHDOG error:', e);
+    }
+});
+
+window.addEventListener('error', function (e) {
+    if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'EXCEPTION', { message: e.message, stack: e.error && e.error.stack });
+});
 /**
  * Media Viewer Core Orchestrator
  * Central entry point for cross-module coordination and global event handling.
@@ -144,9 +179,11 @@ document.addEventListener('keydown', async (e) => {
  * Application Boot Notification
  */
 window.addEventListener('DOMContentLoaded', async () => {
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'DOM-READY');
     console.log("Core Orchestrator: System checks passing. Initializing UI fragments...");
     
     try {
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
         // 0. Load Modals Fragment
         if (typeof FragmentLoader?.load === 'function') {
             FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {

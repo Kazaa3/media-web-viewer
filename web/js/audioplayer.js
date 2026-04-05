@@ -664,16 +664,18 @@ function syncQueueWithLibrary() {
     }
     
     console.log(`[Audio] Syncing queue with ${allLibraryItems.length} items...`);
-    const audioItems = allLibraryItems.filter(i => 
-        i.category === 'Audio' || 
-        i.category === 'Album' || 
-        i.category === 'Hörbuch' ||
-        i.category === 'Klassik' ||
-        i.category === 'Podcast' ||
-        i.category === 'Compilation' ||
-        i.category === 'Single' ||
-        i.category === 'Radio'
-    );
+        // Filter-immune: Always include mock items
+        const audioItems = allLibraryItems.filter(i =>
+            i.is_mock === true ||
+            i.category === 'Audio' ||
+            i.category === 'Album' ||
+            i.category === 'Hörbuch' ||
+            i.category === 'Klassik' ||
+            i.category === 'Podcast' ||
+            i.category === 'Compilation' ||
+            i.category === 'Single' ||
+            i.category === 'Radio'
+        );
     
     if (audioItems.length > 0) {
         currentPlaylist = [...audioItems];

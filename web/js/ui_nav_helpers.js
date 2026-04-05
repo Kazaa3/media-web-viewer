@@ -6,9 +6,19 @@
 // Global Navigation Actions Registry (v1.35)
 window.mwv_init_actions = {
     'player': () => {
-        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-        if (typeof renderPlaylist === 'function') renderPlaylist();
-        if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+        const runInit = () => {
+             if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+             if (typeof renderPlaylist === 'function') renderPlaylist();
+             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+        };
+
+        // Atomic Init: Wait for library if empty (v1.35 Hardened)
+        if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-NAV', 'WAIT-FOR-LIB');
+            document.addEventListener('mwv_library_ready', runInit, { once: true });
+        } else {
+             runInit();
+        }
     },
     'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
     'library': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
