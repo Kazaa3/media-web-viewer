@@ -537,7 +537,7 @@ function renderPlaylist() {
 
         const activeList = filteredItems;
     if (activeList.length === 0) {
-        list.innerHTML = `
+        let noMediaHtml = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 60px; background: var(--bg-primary);">
                 <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.3; filter: grayscale(1);">🎵</div>
                 <h3 style="margin: 0 0 12px 0; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">Warteschlange leer</h3>
@@ -549,6 +549,23 @@ function renderPlaylist() {
                 </button>
             </div>
         `;
+
+        // --- BLACK HOLE RECOVERY UI (v1.35.68 Player Side) ---
+        if (typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
+            const dbTotal = (typeof window.__mwv_last_db_count !== 'undefined') ? window.__mwv_last_db_count : allLibraryItems.length;
+            noMediaHtml = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(231, 76, 60, 0.05); border: 2px dashed rgba(231, 76, 60, 0.2); border-radius: 12px; margin: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                    <div style="font-weight: 800; color: #e74c3c; margin-bottom: 10px; font-size: 1.1em;">BLACK HOLE IM PLAYER</div>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); max-width: 250px; margin: 0 auto 20px auto;">
+                        Die Mediathek enthält ${dbTotal} Titel, aber die Warteschlange ist leer.
+                    </p>
+                    <button onclick="resetAllFilters()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">RESET ALL FILTERS</button>
+                </div>
+            `;
+        }
+
+        list.innerHTML = noMediaHtml;
         return;
     }
 

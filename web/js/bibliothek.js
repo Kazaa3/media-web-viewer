@@ -23,6 +23,7 @@ async function loadLibrary(retryCount = 0) {
         window.__mwv_lib_loaded = true;
     if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-LOAD-START');
     console.log('[DATA-LIB] STAGE-LOAD-START: loadLibrary() called.');
+    if (typeof updateSyncAnchor === 'function') updateSyncAnchor('...', '...'); 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
         const library = await getLibrary();
@@ -30,6 +31,8 @@ async function loadLibrary(retryCount = 0) {
         const totalDbCount = library.db_count || incomingCount;
         
         window.__mwv_last_db_count = totalDbCount;
+        window.__mwv_debug_library = library; // Global for manual trace
+        
         if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount);
         console.warn(`>>> [Handshake] Backend returned media array (Count: ${incomingCount}, DB Total: ${totalDbCount}).`);
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Received ${incomingCount} items. DB Status: ${totalDbCount} records.`, "SUCCESS");
@@ -72,6 +75,8 @@ async function loadLibrary(retryCount = 0) {
         document.dispatchEvent(new CustomEvent('mwv_library_ready', { detail: { count: allLibraryItems.length } }));
 
     } catch (e) {
+        console.error("[DATA-LIB] CRITICAL LOAD ERROR:", e);
+        if (typeof updateSyncAnchor === 'function') updateSyncAnchor('ERR', '!');
         if (typeof log_js_error === 'function') log_js_error(e, 'DATA-LIB-LOAD');
         if (retryCount < 3) {
             setTimeout(() => loadLibrary(retryCount + 1), 2000);

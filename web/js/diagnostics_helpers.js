@@ -563,3 +563,63 @@ function toggleHideDb() {
 
 // Expose to window
 window.toggleHideDb = toggleHideDb;
+
+/**
+ * Diagnostic: Notify Change (Nice Pop-up for buttons)
+ */
+function notifyDiagnosticChange(btnId, label, state) {
+    const msg = `${label}: ${state ? 'AKTIVIERT' : 'DEAKTIVIERT'}`;
+    if (typeof showStatusNotification === 'function') {
+        showStatusNotification(msg, state ? 'success' : 'info');
+    }
+}
+window.notifyDiagnosticChange = notifyDiagnosticChange;
+
+/**
+ * Sync Anchor Initializer
+ * Ensures the anchor shows something other than '--' even if sync hangs.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof updateSyncAnchor === 'function') {
+            updateSyncAnchor(window.__mwv_last_db_count || 0, (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0));
+        }
+    }, 1000);
+});
+/**
+ * Deep Data Flow Probe (v1.35.68 Recovery)
+ * Bypasses all JS logic to check what the backend is REALLY sending.
+ */
+async function probeDataFlow() {
+    if (typeof showStatusNotification === 'function') {
+        showStatusNotification('PROBE: Ping an Backend gesendet...', 'info');
+    }
+    
+    try {
+        const result = await getLibrary();
+        const rawCount = (result.media || []).length;
+        const dbCount = result.db_count || 0;
+        
+        const msg = `PROBE ERGEBNIS: Backend liefert ${rawCount} Items (DB Total: ${dbCount})`;
+        console.warn(`>>> [PROBE] ${msg}`, result);
+        
+        if (typeof showStatusNotification === 'function') {
+            showStatusNotification(msg, rawCount > 0 ? 'success' : 'error');
+        }
+        
+        // Update anchor immediately
+        if (typeof updateSyncAnchor === 'function') {
+            updateSyncAnchor(dbCount, rawCount);
+        }
+        
+        if (rawCount === 0 && dbCount > 0) {
+            alert("KRITISCH: Backend meldet DB voll, sendet aber 0 Items!\nPrüfe main.py Kategorie-Filter.");
+        }
+    } catch (e) {
+        console.error("[PROBE] Fehler:", e);
+        if (typeof showStatusNotification === 'function') {
+            showStatusNotification(`PROBE FEHLGESCHLAGEN: ${e.message}`, 'error');
+        }
+    }
+}
+window.probeDataFlow = probeDataFlow;
