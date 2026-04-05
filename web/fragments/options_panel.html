@@ -134,6 +134,10 @@
                             <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Mock-Daten ausblenden</div>
                             <label class="switch sm"><input type="checkbox" id="config-hide-mocks" onchange="saveAllOptions()"><span class="slider"></span></label>
                         </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--bg-secondary); border-radius: 10px;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">Debug-Modus (Verbose)</div>
+                            <label class="switch sm"><input type="checkbox" id="config-debug-verbose" onchange="saveAllOptions()"><span class="slider"></span></label>
+                        </div>
                         <div style="margin-top: 10px;">
                             <button onclick="if(confirm('Möchtest du alte Instanzen beenden?')) { eel.kill_stale_and_restart(); }"
                                     style="width: 100%; background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase;"
@@ -438,6 +442,42 @@
                             <!-- Populated dynamically via JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- VIEW: Hilfsskripte (Helper JS & Diagnostics) -->
+            <div id="options-helpers-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Skripte & Diagnostics</h3>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Zentrale Ausführung von Systemprüfungen und Helper JS Funktionen.</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <button onclick="if(typeof toggleDiagLibMode === 'function') toggleDiagLibMode()" class="tab-btn" style="justify-content: flex-start; padding: 14px; font-weight: 700;">
+                            <span style="display:inline-block; width: 30px; text-align:center;">🧪</span> Aktiviere Stage Tests (Diagnostic Library Mode)
+                        </button>
+                        <button onclick="if(typeof toggleForceNative === 'function') toggleForceNative()" class="tab-btn" style="justify-content: flex-start; padding: 14px; font-weight: 700;">
+                            <span style="display:inline-block; width: 30px; text-align:center;">🚀</span> Force Native Playback (Bypass Backend)
+                        </button>
+                        <button onclick="if(typeof runDomAudit === 'function') runDomAudit()" class="tab-btn" style="justify-content: flex-start; padding: 14px; font-weight: 700; color: var(--accent-color); border-color: rgba(0, 122, 255, 0.2);">
+                            <span style="display:inline-block; width: 30px; text-align:center;">🖥️</span> 7-Point DOM Health Audit
+                        </button>
+                        <button onclick="if(typeof showConsolePopup === 'function') showConsolePopup()" class="tab-btn" style="justify-content: flex-start; padding: 14px; font-weight: 700; color: #f1c40f; border-color: rgba(241, 196, 15, 0.2);">
+                            <span style="display:inline-block; width: 30px; text-align:center;">📋</span> System Konsole (Logs einblenden)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Manuelle Stage Injections</h3>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Injiziert gezielte Helper JS Stage Scripts in den Recovery Manager zur Prüfung der Pipeline.</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <button onclick="if(typeof RecoveryManager !== 'undefined' && typeof StagePositive !== 'undefined') RecoveryManager.registerStage(StagePositive); else alert('Stage-Datei nicht geladen!');" class="tab-btn" style="padding: 14px; border-color: rgba(46,204,113,0.3); color: #2ecc71; font-weight: 700; display:flex; justify-content:center;">
+                            ✅ Lade Stage Positive (Healthy)
+                        </button>
+                        <button onclick="if(typeof RecoveryManager !== 'undefined' && typeof StageNegative !== 'undefined') RecoveryManager.registerStage(StageNegative); else alert('Stage-Datei nicht geladen!');" class="tab-btn" style="padding: 14px; border-color: rgba(231,76,60,0.3); color: #e74c3c; font-weight: 700; display:flex; justify-content:center;">
+                            ❌ Lade Stage Negative (Bricks)
+                        </button>
+                    </div>
                 </div>
             </div>
 

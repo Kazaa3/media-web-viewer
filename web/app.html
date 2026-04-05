@@ -710,15 +710,16 @@
                     style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px;">0:00</span>
             </div>
             <div id="player-warning-message"
-                style="font-size: 10px; color: var(--text-secondary); text-align: center; opacity: 0.8; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                style="font-size: 10px; color: var(--text-secondary); text-align: center; opacity: 0.8; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px; position: relative;">
+                <div id="footer-status-pills" style="position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; pointer-events: none;"></div>
                 <span id="mwv-footer-version">v...</span> | <span id="sync-status" style="color: #2ecc71;">● Synchronized</span></span>
                 <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
                 <div id="footer-admin-cluster" class="admin-controls" style="display: flex; gap: 10px;">
-                    <button id="btn-flags" onclick="if(typeof showConsolePopup === 'function') showConsolePopup()"
+                    <button id="btn-flags" onclick="if(typeof showFlagsModal === 'function') showFlagsModal()"
                         style="background: transparent; border: none; color: #e91e63; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: color 0.2s;">Flags</button>
-                    <button id="btn-scan" onclick="(() => { const orig = this.innerText; this.innerText = 'Scanning...'; this.style.color = '#f1c40f'; scan(null, true); setTimeout(() => { this.innerText = orig; this.style.color = 'var(--accent-color)'; }, 1500); })()"
+                    <button id="btn-scan" onclick="(() => { const orig = this.innerText; this.innerText = 'Scanning...'; this.style.color = '#f1c40f'; scan(null, true); if(typeof showStatusNotification === 'function') showStatusNotification('Scan Initiated', 'info'); setTimeout(() => { this.innerText = orig; this.style.color = 'var(--accent-color)'; }, 1500); })()"
                         style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: color 0.2s;">Scan</button>
-                    <button id="btn-sync" onclick="(() => { const orig = this.innerText; this.innerText = 'Syncing...'; this.style.color = '#f1c40f'; refreshLibrary(); setTimeout(() => { this.innerText = orig; this.style.color = 'var(--accent-color)'; }, 1500); })()"
+                    <button id="btn-sync" onclick="(() => { const orig = this.innerText; this.innerText = 'Syncing...'; this.style.color = '#f1c40f'; refreshLibrary(); if(typeof showStatusNotification === 'function') showStatusNotification('Library Sync Started', 'info'); setTimeout(() => { this.innerText = orig; this.style.color = 'var(--accent-color)'; }, 1500); })()"
                         style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: color 0.2s;">Sync</button>
                     <button id="btn-logs" onclick="if(typeof showConsolePopup === 'function') showConsolePopup();"
                         style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>

@@ -423,3 +423,97 @@ window.showConsolePopup = async function() {
         pre.innerText = "Error loading konsole: " + e.message;
     }
 };
+
+/**
+ * showFlagsModal() - Displays a interactive modal for backend debug flags.
+ * Allows individual toggle and master ON/OFF controls.
+ */
+window.showFlagsModal = async function() {
+    console.log("[Flags] Fetching current debug flags...");
+    const oldModal = document.getElementById('flags-modal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'flags-modal';
+    modal.style.cssText = `
+        position: fixed; top: 15vh; left: 25vw; width: 50vw; max-height: 70vh;
+        background: rgba(15, 15, 20, 0.98); border-radius: 16px; border: 1px solid var(--border-color);
+        z-index: 10001; box-shadow: 0 40px 100px rgba(0,0,0,0.9); backdrop-filter: blur(20px);
+        display: flex; flex-direction: column; overflow: hidden;
+    `;
+
+    const header = document.createElement('div');
+    header.style.cssText = 'padding: 20px 25px; background: rgba(233, 30, 99, 0.1); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(233, 30, 99, 0.2);';
+    header.innerHTML = `
+        <h2 style="margin: 0; color: #e91e63; font-size: 1.3em; font-weight: 800; display: flex; align-items: center; gap: 12px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            Debug Flags Orchestrator
+        </h2>
+        <button onclick="document.getElementById('flags-modal').remove()" style="background: transparent; border: none; color: #fff; cursor: pointer; opacity: 0.6; font-size: 22px;">&times;</button>
+    `;
+
+    const content = document.createElement('div');
+    content.style.cssText = 'padding: 25px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;';
+
+    const masterControls = document.createElement('div');
+    masterControls.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);';
+    masterControls.innerHTML = `
+        <button onclick="eel.set_all_debug_flags(true)(); showFlagsModal(); showStatusNotification('All Flags ENABLED', 'warn');" class="tab-btn active" style="background: #2ecc71; border: none; flex: 1; justify-content: center; font-size:11px; font-weight:800;">ENABLE ALL</button>
+        <button onclick="eel.set_all_debug_flags(false)(); showFlagsModal(); showStatusNotification('All Flags DISABLED', 'info');" class="tab-btn" style="background: #e74c3c; border: none; flex: 1; justify-content: center; font-size:11px; font-weight:800; color:white;">DISABLE ALL</button>
+    `;
+
+    modal.appendChild(header);
+    content.appendChild(masterControls);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    try {
+        if (typeof eel !== 'undefined' && eel.get_debug_flags) {
+            const flags = await eel.get_debug_flags()();
+            Object.entries(flags).forEach(([key, val]) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);';
+                row.innerHTML = `
+                    <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">${key.replace(/_/g, ' ')}</span>
+                    <label class="switch sm" style="transform: scale(0.9);">
+                        <input type="checkbox" ${val ? 'checked' : ''} onchange="eel.set_debug_flag('${key}', this.checked)(); showStatusNotification('Flag ${key} updated', 'info');">
+                        <span class="slider"></span>
+                    </label>
+                `;
+                content.appendChild(row);
+            });
+        }
+    } catch(e) {
+        content.innerHTML += `<div style="color: #ff5252; padding: 20px; font-weight: 700;">Error: ${e.message}</div>`;
+    }
+};
+
+/**
+ * showStatusNotification(msg, type) - Shows a brief notification pill in the footer.
+ */
+window.showStatusNotification = function(msg, type = 'info') {
+    const anchor = document.getElementById('footer-status-pills');
+    if (!anchor) return;
+
+    const pill = document.createElement('div');
+    pill.style.cssText = `
+        padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.5px; animation: slideUp 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3); white-space: nowrap;
+    `;
+
+    if (type === 'success') { pill.style.background = '#2ecc71'; pill.style.color = '#fff'; }
+    else if (type === 'warn') { pill.style.background = '#f1c40f'; pill.style.color = '#000'; }
+    else if (type === 'error') { pill.style.background = '#e74c3c'; pill.style.color = '#fff'; }
+    else { pill.style.background = 'var(--accent-color)'; pill.style.color = '#fff'; }
+
+    pill.innerText = msg;
+    anchor.appendChild(pill);
+
+    setTimeout(() => {
+        pill.style.opacity = '0';
+        pill.style.transform = 'translateY(10px)';
+        pill.style.transition = 'all 0.5s ease-in';
+        setTimeout(() => pill.remove(), 500);
+    }, 3000);
+};
