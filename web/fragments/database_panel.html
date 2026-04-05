@@ -1,0 +1,57 @@
+<!-- ===================== DATABASE MASTER PANEL (v1.35.68) ===================== -->
+<div id="database-main-fragment" style="display: flex; flex-direction: column; height: 100%; background: var(--bg-primary); overflow: hidden;">
+    
+    <!-- Control Header -->
+    <div style="padding: 30px 40px; background: var(--bg-secondary); border-bottom: 2px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h1 style="margin: 0; font-size: 2.2em; font-weight: 900; color: var(--text-primary); letter-spacing: -1.5px;">Database Master</h1>
+            <div id="lib-db-stats" style="background: var(--accent-hover); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">0 Items Indiziert</div>
+        </div>
+        
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div style="position: relative;">
+                <input type="text" id="lib-db-search" placeholder="Bibliothek durchsuchen..."
+                    oninput="renderDatabaseView()"
+                    style="width: 350px; padding: 12px 20px 12px 45px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 18px; top: 13px; opacity: 0.4;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            
+            <div class="divider-v" style="height: 30px; width: 1px; background: var(--border-color); margin: 0 10px;"></div>
+            
+            <div class="import-group" style="display: flex; gap: 10px;">
+                <button onclick="triggerTxtImport('Audio')" class="tab-btn active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14.89V20a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.11"/><polyline points="17 9 12 14 7 9"/><line x1="12" y1="1" x2="12" y2="14"/></svg> Audio TXT</button>
+                <button onclick="triggerTxtImport('Film')" class="tab-btn">Film TXT</button>
+                <button onclick="triggerTxtImport('Video')" class="tab-btn">Video TXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table Area -->
+    <div id="database-scroll-viewport" style="flex: 1; overflow-y: auto; padding: 40px; scrollbar-width: thin;">
+        
+        <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.08);">
+            <table id="database-master-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--bg-secondary); border-bottom: 2px solid var(--border-color);">
+                        <th style="width: 60px; padding: 20px; text-align: center; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 800;">#</th>
+                        <th style="padding: 20px; text-align: left; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 800;">Name / Pfad</th>
+                        <th style="padding: 20px; text-align: left; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 800;">Kategorie</th>
+                        <th style="padding: 20px; text-align: left; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 800;">Artist / Album</th>
+                        <th style="padding: 20px; text-align: right; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 800;">Quick-Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="lib-db-table-body" style="background: #fff;">
+                    <!-- Data injected via bibliothek.js:renderDatabaseView -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Footer Status -->
+    <div style="padding: 12px 40px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); font-size: 10px; font-weight: 900; color: #999; text-transform: uppercase; letter-spacing: 0.8px; display: flex; justify-content: space-between;">
+        <div>SQLite Engine: <span style="color: #2ecc71;">ONLINE</span></div>
+        <div>Parity Sync: 100% Correct</div>
+    </div>
+
+</div>

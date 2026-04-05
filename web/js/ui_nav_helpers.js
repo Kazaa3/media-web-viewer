@@ -31,6 +31,7 @@ window.mwv_init_actions = {
         if (typeof switchOptionsView === 'function') switchOptionsView('general');
         if (typeof loadDebugFlags === 'function') loadDebugFlags();
     },
+    'database': () => { if (typeof renderDatabaseView === 'function') renderDatabaseView(); },
     'debug': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); },
     'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
     'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
@@ -178,6 +179,7 @@ function switchTab(tabId, btn, callback, force = false) {
         'file': { containerId: 'browser-main-viewport', path: 'fragments/filesystem_browser.html' },
         'edit': { containerId: 'edit-main-viewport', path: 'fragments/metadata_editor.html' },
         'options': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
+        'database': { containerId: 'database-main-viewport', path: 'fragments/database_panel.html' },
         'parser': { containerId: 'parser-main-viewport', path: 'fragments/parser_panel.html' },
         'debug': { containerId: 'debug-main-viewport', path: 'fragments/diagnostics_suite.html' },
         'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
@@ -194,6 +196,7 @@ function switchTab(tabId, btn, callback, force = false) {
         'file': { shell: 'filesystem-crawler-directory-panel', viewport: 'browser-main-viewport' },
         'edit': { shell: 'metadata-writer-crud-panel', viewport: 'edit-main-viewport' },
         'options': { shell: 'options-panel-container', viewport: 'options-main-viewport' },
+        'database': { shell: 'database-panel-container', viewport: 'database-main-viewport' },
         'parser': { shell: 'parser-panel-container', viewport: 'parser-main-viewport' },
         'debug': { shell: 'debug-db-panel-container', viewport: 'debug-main-viewport' },
         'tests': { shell: 'tests-panel-container', viewport: 'tests-panel-container' },

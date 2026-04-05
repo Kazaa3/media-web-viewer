@@ -91,6 +91,8 @@
                     data-category="media">Player</button>
                 <button id="nav-btn-library" class="menu-item-btn" onclick="switchMainCategory('library', this)"
                     data-category="library">Bibliothek</button>
+                <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)"
+                    data-category="database">Database</button>
                 <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
                     data-category="file">Browser</button>
                 <button id="nav-btn-edit" class="menu-item-btn" onclick="switchMainCategory('edit', this)"
@@ -513,6 +515,14 @@
                     <div class="glass-card">Check Clear</div>
                     <div class="glass-card">Check Db</div>
                     <div class="glass-card">Check Dict</div>
+                </div>
+            </div>
+
+            <!-- TAB: Database Explorer (v1.35.68 Standalone) -->
+            <div id="database-panel-container" class="tab-content"
+                style="display: none; height: 100%; width: 100%;">
+                <div id="database-main-viewport" class="content-deck-fill">
+                    <div class="loading-fragment">Lade Datenbank-Master...</div>
                 </div>
             </div>
 
