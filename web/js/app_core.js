@@ -14,14 +14,14 @@ function startBootWatchdog() {
             let phase = 'WAIT';
             if (document.readyState === 'complete') phase = 'DOM-READY';
             if (window.__mwv_ui_nav_loaded) phase = 'INIT-START';
-            
+
             // Safe access using typeof (v1.35.1 Hardened)
             const hasLib = (typeof allLibraryItems !== 'undefined');
             const libCount = hasLib ? allLibraryItems.length : 0;
             if (hasLib && libCount > 0) phase = 'DATA-READY';
-            
+
             if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: libCount });
-            
+
             if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > 12) { // Allow more time for slow handshakes
                 if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
                 clearInterval(__mwv_boot_watchdog_timer);
@@ -69,9 +69,9 @@ let vjsPlayer = null; // Defined as a shared global in Orchestrator
 function play(item, path, startTime = 0) {
     if (!item) return;
     console.info(">>> [Orchestrator] Routing playback for:", item.name);
-    
+
     currentVideoItem = item;
-    
+
     // Decipher if it's a video file
     if (isVideoItem(item)) {
         if (typeof playVideo === 'function') {
@@ -117,7 +117,7 @@ function playMediaObject(item) {
  */
 function addToQueue(item) {
     if (!currentPlaylist) currentPlaylist = [];
-    
+
     // Avoid duplicates in the active queue if desired
     if (!currentPlaylist.find(i => i.path === item.path)) {
         currentPlaylist.push(item);
@@ -174,7 +174,7 @@ document.addEventListener('keydown', async (e) => {
         case 'ArrowLeft': vlcKey = 'key-left'; break;
         case 'ArrowRight': vlcKey = 'key-right'; break;
         case 'Enter': vlcKey = 'key-enter'; break;
-        case 'Escape': vlcKey = 'key-nav-activate'; break; 
+        case 'Escape': vlcKey = 'key-nav-activate'; break;
         case 'm': case 'M': vlcKey = 'key-disc-menu'; break;
     }
 
@@ -197,7 +197,7 @@ document.addEventListener('keydown', async (e) => {
 window.addEventListener('DOMContentLoaded', async () => {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'DOM-READY');
     console.log("Core Orchestrator: System checks passing. Initializing UI fragments...");
-    
+
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
         // 0. Load UI Fragments in Parallel (v1.35.21 Expanded)
@@ -219,13 +219,13 @@ window.addEventListener('DOMContentLoaded', async () => {
             FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => onFragmentDone('player'));
             FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => onFragmentDone('library'));
             FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => onFragmentDone('editor'));
-            
+
             // Shared Components
             FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
             FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
         } else {
             console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
-            mwv_finalize_boot(); 
+            mwv_finalize_boot();
         }
 
         async function mwv_finalize_boot() {
@@ -240,14 +240,14 @@ window.addEventListener('DOMContentLoaded', async () => {
             if (typeof initDomWatchdog === 'function') initDomWatchdog();
             if (typeof initTranslations === 'function') initTranslations();
             if (typeof initAllSplitters === 'function') initAllSplitters();
-            
+
             // Apply persisted sidebar state
             if (typeof applySidebarState === 'function') applySidebarState();
 
             // 3. UI Start State
             console.log("UI: Setting default category and tab...");
             if (typeof switchMainCategory === 'function') switchMainCategory('media');
-            
+
             if (typeof switchTab === 'function') {
                 console.log("UI: Switching to 'player' tab.");
                 switchTab('player');
@@ -257,7 +257,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             console.log("Data: Triggering library sync...");
             if (typeof loadLibrary === 'function') await loadLibrary();
             if (typeof loadEditItems === 'function') await loadEditItems();
-            
+
             // Start stats polling
             if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
                 setInterval(() => {
@@ -278,13 +278,13 @@ window.addEventListener('DOMContentLoaded', async () => {
                     const info = await eel.get_startup_info()();
                     const statusSpan = document.getElementById('sync-status');
                     if (statusSpan && info) {
-                         const timeSpan = document.createElement('span');
-                         timeSpan.style.color = 'var(--text-secondary)';
-                         timeSpan.style.marginLeft = '5px';
-                         timeSpan.innerText = `(Boot: ${info.boot_duration_sec}s | PID: ${info.pid})`;
-                         statusSpan.parentNode.insertBefore(timeSpan, statusSpan);
+                        const timeSpan = document.createElement('span');
+                        timeSpan.style.color = 'var(--text-secondary)';
+                        timeSpan.style.marginLeft = '5px';
+                        timeSpan.innerText = `(Boot: ${info.boot_duration_sec}s | PID: ${info.pid})`;
+                        statusSpan.parentNode.insertBefore(timeSpan, statusSpan);
                     }
-                } catch(e) { console.warn("Failed to get startup info:", e); }
+                } catch (e) { console.warn("Failed to get startup info:", e); }
             }
         }, 300);
 
@@ -325,12 +325,12 @@ if (typeof eel !== 'undefined') {
 
 function run_frontend_probe() {
     console.log("[DOM-PROBE] Starting automated UI check...");
-    
+
     // 1. Check for rendered media
     const playlistItems = document.querySelectorAll('.implementation-encapsulated-state-buffer-node');
     const queueItems = document.querySelectorAll('#player-queue-pane .implementation-encapsulated-state-buffer-node');
     const mediaCount = Math.max(playlistItems.length, queueItems.length);
-    
+
     if (typeof eel !== 'undefined' && typeof eel.report_items_spawned === 'function') {
         eel.report_items_spawned(mediaCount, "probe")();
     }
@@ -340,7 +340,7 @@ function run_frontend_probe() {
         const firstItemNode = playlistItems[0] || queueItems[0];
         console.log("[DOM-PROBE] Attempting to trigger playback on first item...");
         if (firstItemNode) firstItemNode.click();
-        
+
         // Wait a bit for playback to start, then report state
         setTimeout(() => {
             const pipeline = document.getElementById('native-html5-audio-pipeline-element');

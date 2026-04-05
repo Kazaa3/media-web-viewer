@@ -1,12 +1,12 @@
 /**
- * version.js (v1.35.59)
+ * version.js (v1.35.60)
  * Central version and performance monitoring.
- * Milestone: Precision Video Cinema (Native, HD-Pass, Legacy, ISO).
+ * Milestone: Universal Interaction Polish (Menu Fixes & Routing).
  */
 
-window.MWV_VERSION = 'v1.35.59';
+window.MWV_VERSION = 'v1.35.60';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'Cinema-Precision-Baseline';
+window.MWV_STABILITY = 'Interaction-Complete-Baseline';
 
 // Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {

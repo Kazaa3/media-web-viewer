@@ -183,9 +183,24 @@ function showContextMenu(e, item) {
 
     const isVideo = isVideoItem(item);
     
+    const mediaType = getMediaTypeString(item);
+    
+    // Media Title Header
+    const titleHeader = document.createElement('div');
+    titleHeader.className = 'context-menu-header';
+    titleHeader.innerHTML = `
+        <div style="font-weight: 800; font-size: 11px; color: var(--accent-color); margin-bottom: 4px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;">
+            ${mediaType}
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+            ${item.name || 'Unknown Item'}
+        </div>
+    `;
+    menu.appendChild(titleHeader);
+
     const options = [
-        { label: isVideo ? 'Im Video Player abspielen' : 'Abspielen', icon: '▶️', action: () => playMediaObject(item) },
-        { label: 'Zur Queue hinzufügen', icon: '➕', action: () => addToQueue(item) }
+        { label: isVideo ? 'Im Video Player abspielen' : 'Abspielen', icon: '▶️', action: () => { if (typeof playMediaObject === 'function') playMediaObject(item); } },
+        { label: 'Zur Queue hinzufügen', icon: '➕', action: () => { if (typeof addToQueue === 'function') addToQueue(item); } }
     ];
 
     if (isVideo) {
@@ -203,11 +218,12 @@ function showContextMenu(e, item) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'context-menu-item';
         itemDiv.innerHTML = `<span style="margin-right:10px;">${opt.icon}</span> ${opt.label}`;
-        itemDiv.onclick = () => {
+        itemDiv.onclick = (event) => {
+            event.stopPropagation();
             opt.action();
             hideContextMenu();
         };
-        menu.appendChild(opt.forEach ? opt : itemDiv);
+        menu.appendChild(itemDiv);
     });
 
     // Close on click elsewhere
@@ -330,6 +346,26 @@ function isVideoItem(item) {
     if (ext && videoExtensions.includes("." + ext)) return true;
 
     return false;
+}
+
+/**
+ * Robust Media Type Diagnostic String (v1.35.60)
+ * Returns requested types: audio, audio transcoded, video native, video transcoded hd.
+ */
+function getMediaTypeString(item) {
+    if (!item) return 'Unknown';
+    const isVideo = isVideoItem(item);
+    const path = (item.path || item.name || '').toLowerCase();
+    
+    if (isVideo) {
+        if (path.includes('.iso') || path.includes('.mp4_transcoded')) return 'video transcoded hd';
+        if (path.includes('.mp4_pass')) return 'video native (remux)';
+        if (path.endsWith('.mp4')) return 'video native';
+        return 'video transcoded hd'; // Default for MKV, etc.
+    } else {
+        if (path.includes('_transcoded')) return 'audio transcoded';
+        return 'audio';
+    }
 }
 
 /**

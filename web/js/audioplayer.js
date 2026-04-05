@@ -517,7 +517,11 @@ function renderPlaylist() {
 
         div.onclick = () => {
             playlistIndex = index;
-            playAudio(item, 0);
+            if (typeof playMediaObject === 'function') {
+                playMediaObject(item);
+            } else {
+                playAudio(item, 0);
+            }
             renderPlaylist();
         };
 
