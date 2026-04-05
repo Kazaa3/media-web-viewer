@@ -1,11 +1,12 @@
 /**
- * version.js (v1.35.44)
- * Central version management for the MWV frontend.
- * This is the ONLY place where the version number should be updated.
+ * version.js (v1.35.45)
+ * Central version and performance monitoring.
+ * Tracks boot-time from the very first script load.
  */
 
-window.MWV_VERSION = 'v1.35.44';
-window.MWV_BUILD_DATE = '2026-04-05';
-window.MWV_STABILITY = 'Stable-Transcode';
+window.MWV_VERSION = 'v1.35.45';
+window.MWV_BOOT_START = performance.now();
+window.MWV_STABILITY = 'Data-Audit Mode';
 
 console.log(`>>> [SYSTEM] MWV Frontend version initialized: ${window.MWV_VERSION}`);
+console.log(`>>> [SYSTEM] Boot-Timer started.`);

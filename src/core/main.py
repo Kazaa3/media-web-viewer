@@ -3107,6 +3107,15 @@ def get_library() -> Dict[str, Any]:
         all_media = db.get_all_media()
         count_total = len(all_media)
         
+        # --- V1.35.45: DB-SNAPSHOT Audit ---
+        db_path = os.path.join("data", "database.db")
+        db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+        snap_msg = f"[DB-SNAPSHOT] File: {db_path} | Size: {db_size} bytes | Raw Rows: {count_total}"
+        log.info(snap_msg)
+        print(f"STDOUT: {snap_msg}", flush=True)
+        if getattr(eel, 'append_debug_log', None):
+            eel.append_debug_log(snap_msg, "DB-INFO")
+        
         # --- V1.35.35 Recovery: Robust Auto-Scan ---
         if count_total == 0:
             log.warning("[RECOVERY] Library empty on boot. Triggering auto-scan of ./media...")

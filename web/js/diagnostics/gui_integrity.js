@@ -1,6 +1,7 @@
 /**
- * gui_integrity.js (v1.35.42)
+ * gui_integrity.js (v1.35.45)
  * Handles visual verification and UI lockdown.
+ * Restores Boot Time and Real Data metrics.
  */
 
 const GUIIntegrity = {
@@ -46,8 +47,9 @@ const GUIIntegrity = {
     injectHUD() {
         if (document.getElementById(this.hudId)) return;
         const hud = `
-            <div id="${this.hudId}" style="position: fixed; bottom: 85px; left: 20px; z-index: 10005; background: rgba(0,0,0,0.85); color: #00ff00; padding: 15px; border-radius: 8px; border: 1px solid #00ff00; font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 220px; pointer-events: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #003300; padding-bottom: 5px; color: white;">MWV DATA-HUD</div>
+            <div id="${this.hudId}" style="position: fixed; bottom: 85px; left: 20px; z-index: 10005; background: rgba(0,0,0,0.85); color: #00ff00; padding: 15px; border-radius: 8px; border: 1px solid #00ff00; font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 240px; pointer-events: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #003300; padding-bottom: 5px; color: white;">MWV DATA-HUD (${window.MWV_VERSION || 'v1.35.x'})</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>BOOT TIME:</span> <span id="hud-boot-time">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>BACKEND DB:</span> <span id="hud-db-count">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>FRONTEND ITEMS:</span> <span id="hud-ui-count">...</span></div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px solid #003300; margin-top: 8px; padding-top: 5px;"><span>SYSTEM STATUS:</span> <span id="hud-status" style="color: white;">SYNCING</span></div>
@@ -59,11 +61,14 @@ const GUIIntegrity = {
     updateHUD() {
         const dbCount = window.__mwv_last_db_count || 0;
         const uiCount = (window.allLibraryItems || []).length;
+        const bootTime = (performance.now() - (window.MWV_BOOT_START || 0)).toFixed(0);
         
+        const bootEl = document.getElementById('hud-boot-time');
         const dbEl = document.getElementById('hud-db-count');
         const uiEl = document.getElementById('hud-ui-count');
         const statusEl = document.getElementById('hud-status');
         
+        if (bootEl) bootEl.innerText = `${bootTime}ms`;
         if (dbEl) dbEl.innerText = dbCount;
         if (uiEl) uiEl.innerText = uiCount;
         
@@ -84,9 +89,10 @@ const GUIIntegrity = {
     injectHeader() {
         if (document.getElementById('recovery-test-header')) return;
         const msg = RecoveryManager.isNuclear ? "NUCLEAR" : "ACTIVE";
+        const version = window.MWV_VERSION || 'v1.35.x';
         document.body.insertAdjacentHTML('afterbegin', `
             <div id="recovery-test-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 10010; background: rgba(255,0,0,0.9); color: white; padding: 5px 20px; font-weight: bold; font-family: monospace; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <span>DIAGNOSTIC MODE: ${msg} (v1.35.42)</span>
+                <span>DIAGNOSTIC MODE: ${msg} (${version})</span>
                 <div>
                    <button onclick="RecoveryManager.hydrateAll()" style="background: white; border: none; padding: 2px 10px; cursor: pointer; color: black; font-weight: bold; margin-right: 10px;">FORCE HYDRATION</button>
                    <button onclick="RecoveryManager.toggle()" style="background: black; color: white; border: none; padding: 2px 10px; cursor: pointer;">DISABLE</button>
