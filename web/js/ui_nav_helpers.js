@@ -220,14 +220,23 @@ function finishSwitchTab(tabId, targetId, btn) {
             return;
         }
 
-        // --- Global Sidebar Management ---
+        // --- Global Sidebar Management (v1.35 Hardening) ---
+        const sidebarVisibleTabs = ['player', 'video', 'playlist', 'edit', 'debug', 'tests', 'diagnostics', 'library', 'tools', 'logbuch', 'options', 'parser'];
+        const shouldShow = sidebarVisibleTabs.includes(tabId);
         const sidebar = document.getElementById('main-sidebar');
         const splitter = document.getElementById('main-splitter');
+
         if (sidebar && splitter) {
-            const sidebarVisibleTabs = ['player', 'video', 'playlist', 'edit', 'debug', 'tests', 'diagnostics', 'library', 'tools', 'logbuch', 'options', 'parser'];
-            const shouldShow = sidebarVisibleTabs.includes(tabId);
             sidebar.style.display = shouldShow ? 'flex' : 'none';
             splitter.style.display = shouldShow ? 'block' : 'none';
+
+            // Special Case: Auto-expand sidebar for content-rich navigation tabs
+            if (['library', 'file', 'debug'].includes(tabId)) {
+                if (typeof toggleSidebar === 'function' && !sidebarVisible) {
+                    sidebarVisible = true;
+                    applySidebarState();
+                }
+            }
         }
     }
 
@@ -522,11 +531,15 @@ function updateGlobalSubNav(category) {
         'library': [
             { id: 'visual', label: 'Mediathek', action: "switchLibraryDomain('visual')" },
             { id: 'browse', label: 'Dateibrowser', action: "switchLibraryDomain('browse')" },
-            { id: 'inventory', label: 'Inventar & DB', action: "switchLibraryDomain('inventory')" }
+            { id: 'inventory', label: 'Inventar & DB', action: "switchLibraryDomain('inventory')" },
+            { id: 'playlist', label: 'Playlist Manager', action: "switchMainCategory('media'); setTimeout(() => switchPlayerView('playlist'), 100);" },
+            { id: 'video-cinema', label: 'Video Cinema', action: "switchMainCategory('media'); setTimeout(() => switchTab('video'), 100);" }
         ],
         'file': [
             { id: 'local', label: 'Lokale Platten', action: "fbNavigate('/')" },
-            { id: 'media', label: 'Media Folder', action: "fbNavigate('./media')" }
+            { id: 'media', label: 'Media Folder', action: "fbNavigate('./media')" },
+            { id: 'playlist', label: 'Playlist Manager', action: "switchMainCategory('media'); setTimeout(() => switchPlayerView('playlist'), 100);" },
+            { id: 'video-cinema', label: 'Video Cinema', action: "switchMainCategory('media'); setTimeout(() => switchTab('video'), 100);" }
         ],
         'edit': [
             { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },

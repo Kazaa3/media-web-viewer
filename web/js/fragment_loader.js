@@ -19,6 +19,10 @@ const FragmentLoader = {
             return;
         }
 
+        // --- v1.35 Path Sanitization ---
+        // Ensure fragment paths are correctly relative to the web root.
+        if (fragmentPath.startsWith('/')) fragmentPath = fragmentPath.substring(1);
+
         // Return if already loaded (unless we want to force reload)
         if (container.dataset.loaded === 'true') {
             if (callback) callback();
@@ -82,8 +86,30 @@ const FragmentLoader = {
             document.dispatchEvent(event);
 
         } catch (error) {
-            console.error(`[FragmentLoader] Failed to load ${fragmentPath}:`, error);
-            container.innerHTML = `<div class="error-panel">Failed to load module: ${error.message}</div>`;
+            this.error(targetId, fragmentPath, error);
+        }
+    },
+
+    /**
+     * Error Feedback (v1.35)
+     * Provides visual feedback in the viewport if a fragment cannot be reached.
+     */
+    error(targetId, fragmentPath, err) {
+        console.error(`[FragmentLoader] Failed to load ${fragmentPath}:`, err);
+        const msg = `
+            <div class="error-panel" style="padding: 40px; text-align: center; color: var(--text-primary); background: rgba(255, 0, 0, 0.05); border-radius: 12px; border: 1px dashed rgba(255, 0, 0, 0.3); margin: 20px; backdrop-filter: blur(10px);">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">⚠️</div>
+                <h2 style="margin-bottom: 10px; color: var(--accent-color, #e74c3c);">Fragment Load Failure</h2>
+                <p>The UI module at <code>${fragmentPath}</code> could not be rendered.</p>
+                <p style="opacity: 0.7; font-size: 0.9rem; margin-top: 15px;">Reason: ${err.message || err}</p>
+                <button class="nav-btn active" style="margin-top: 20px; padding: 10px 20px; border-radius: 20px;" onclick="location.reload()">Retry Application Reload</button>
+            </div>`;
+        
+        if (typeof safeHtml === 'function') {
+            safeHtml(targetId, msg);
+        } else {
+            const container = document.getElementById(targetId);
+            if (container) container.innerHTML = msg;
         }
     }
 };

@@ -96,10 +96,14 @@ async function refreshLibrary() {
  */
 async function renderLibrary() {
     const track = document.getElementById('coverflow-track');
-    if (!track) return;
+    if (!track) {
+        console.warn("[Library] Render aborted: #coverflow-track missing.");
+        return;
+    }
 
     // Local filter stage
     coverflowItems = allLibraryItems;
+    console.log(`[Library] Rendering ${coverflowItems.length} items (Filter: ${libraryFilter})...`);
     mwv_trace('DOM-UI', 'RENDER-LIBRARY', { count: coverflowItems.length, filter: libraryFilter, search: librarySearch });
 
     // Search
