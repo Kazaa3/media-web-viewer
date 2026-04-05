@@ -1,7 +1,6 @@
 /**
- * gui_integrity.js (v1.35.46)
+ * gui_integrity.js (v1.35.48)
  * Handles visual verification and UI lockdown.
- * Restores Boot Time and Scan Status.
  */
 
 const GUIIntegrity = {
@@ -15,6 +14,7 @@ const GUIIntegrity = {
         this.startMutationWatch();
         this.injectHUD();
         this.injectHeader();
+        this.syncFooter();
         
         // Start live sync monitor
         setInterval(() => this.updateHUD(), 1000);
@@ -123,6 +123,15 @@ const GUIIntegrity = {
             });
         });
         observer.observe(document.body, { attributes: true, subtree: true });
+    },
+
+    syncFooter() {
+        const el = document.getElementById('mwv-footer-version');
+        if (el && window.MWV_VERSION) {
+            el.innerText = window.MWV_VERSION;
+            el.style.color = "#00ff00";
+            el.style.fontWeight = "bold";
+        }
     }
 };
 

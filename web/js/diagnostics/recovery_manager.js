@@ -1,7 +1,6 @@
 /**
- * recovery_manager.js (v1.35.42)
+ * recovery_manager.js (v1.35.48)
  * The control file for the MWV Diagnostic & Recovery Engine.
- * Manages Stage registration and orchestrates data hydration.
  */
 
 const RecoveryManager = {
@@ -13,8 +12,8 @@ const RecoveryManager = {
         console.log(">>> [MANAGER] Recovery Engine starting (Active:", this.isActive, ")");
         if (!this.isActive) return;
 
-        // Auto-Hydration Fail-safe (2.5s after boot)
-        setTimeout(() => this.checkAndHydrate(), 2500);
+        // Auto-Hydration Fail-safe (1s after boot - v1.35.48)
+        setTimeout(() => this.checkAndHydrate(), 1000);
     },
 
     /**
@@ -68,9 +67,11 @@ const RecoveryManager = {
             window.currentPlaylist = [...merged];
         }
 
-        // Trigger UI Refresh
+        // Trigger UI Refresh (v1.35.48)
         if (typeof renderLibrary === 'function') renderLibrary();
         if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof window.renderQueue === 'function') window.renderQueue();
+        if (typeof window.updateQueueDisplay === 'function') window.updateQueueDisplay();
 
         if (typeof showToast === 'function') {
              showToast(`Handled Recovery: ${this.stages.length} Stages Hydrated`, "success");
