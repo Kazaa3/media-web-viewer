@@ -88,12 +88,21 @@ function formatTime(seconds) {
  */
 function playAudio(item, startTime = 0) {
     const pipeline = document.getElementById('native-html5-audio-pipeline-element');
-    const ext = item.path ? item.path.slice(((item.path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase() : "";
-    if (!pipeline) return;
+    if (!pipeline || !item) return;
 
-    const proxyUrl = "/media/" + encodeURIComponent(item.path);
-    const logMsg = `[Audio] Attempting to play: ${item.name} | Path: ${item.path} | Proxy: ${proxyUrl}`;
-    mwv_trace('PLAYER-EVENT', 'PLAYBACK-START', { name: item.name, path: item.path, proxy: proxyUrl });
+    // v1.35.35: Robust Path Handling
+    const rawPath = item.path || item.name;
+    if (!rawPath || rawPath === 'undefined') {
+        mwv_trace('PLAYER-EVENT', 'PLAYBACK-CRITICAL', { message: "Item path is undefined", item: item });
+        if (typeof showToast === 'function') showToast("Playback Impossible: File path is missing.", "error");
+        return;
+    }
+
+    const ext = rawPath.slice(((rawPath.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+    const proxyUrl = "/media/" + encodeURIComponent(rawPath);
+    const logMsg = `[Audio] Attempting to play: ${item.name || 'Unknown'} | Path: ${rawPath} | Proxy: ${proxyUrl}`;
+    
+    mwv_trace('PLAYER-EVENT', 'PLAYBACK-START', { name: item.name, path: rawPath, proxy: proxyUrl });
     if (typeof appendUiTrace === 'function') appendUiTrace(logMsg);
     
     pipeline.src = proxyUrl;
@@ -478,8 +487,9 @@ function renderPlaylist() {
         if (index === playlistIndex) div.classList.add('active');
 
         const tags = item.tags || {};
-        const titleDisplay = tags.title || item.name || 'Unknown Title';
-        const artistDisplay = tags.artist || 'Unknown Artist';
+        // v1.35.36: Multilayer Metadata Lookup
+        const titleDisplay = item.title || tags.title || item.name || item.id || 'System Recovery Item';
+        const artistDisplay = item.artist || tags.artist || 'MWV Recovery';
         
         div.innerHTML = `
             <div style="display: flex; align-items: center; width: 100%;">

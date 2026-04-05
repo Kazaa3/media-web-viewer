@@ -105,21 +105,37 @@ const Diagnostics = {
         const realMockTracks = [
             {
                 id: 'diag-track-1',
+                name: 'sample_audio.mp3',
                 filename: 'sample_audio.mp3',
                 path: 'media/sample_audio.mp3',
                 title: 'System Diagnostic Track (MP3)',
                 artist: 'MWV Discovery',
+                album: 'MWV Recovery Suite',
+                tags: {
+                    title: 'System Diagnostic Track (MP3)',
+                    artist: 'MWV Discovery',
+                    album: 'MWV Recovery Suite'
+                },
                 category: 'Audio',
-                is_diag: true
+                is_diag: true,
+                is_mock: false
             },
             {
                 id: 'diag-track-2',
+                name: 'test_track_01.m4a',
                 filename: 'test_track_01.m4a',
                 path: 'media/test_track_01.m4a',
                 title: 'System Diagnostic Track (M4A)',
                 artist: 'MWV Discovery',
+                album: 'MWV Recovery Suite',
+                tags: {
+                    title: 'System Diagnostic Track (M4A)',
+                    artist: 'MWV Discovery',
+                    album: 'MWV Recovery Suite'
+                },
                 category: 'Audio',
-                is_diag: true
+                is_diag: true,
+                is_mock: false
             }
         ];
 
