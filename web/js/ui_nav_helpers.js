@@ -601,16 +601,19 @@ function updateGlobalSubNav(category) {
             { id: 'browse', label: 'Dateibrowser', action: "switchLibraryDomain('browse')" },
             { id: 'inventory', label: 'Inventar', action: "switchLibraryDomain('inventory')" },
             { id: 'cinema', label: 'Cinema', action: "switchLibrarySubTab('cinema')" },
-            { id: 'films', label: 'Filme', action: "switchLibrarySubTab('films')" },
-            { id: 'series', label: 'Serien', action: "switchLibrarySubTab('series')" },
-            { id: 'albums', label: 'Alben', action: "switchLibrarySubTab('albums')" },
-            { id: 'audiobooks', label: 'Hörbuch', action: "switchLibrarySubTab('audiobooks')" }
+            { id: 'lib-tab-btn-cinema',     label: 'Cinema',     action: "switchLibrarySubTab('cinema')" },
+            { id: 'lib-tab-btn-films',      label: 'Filme',      action: "switchLibrarySubTab('films')" },
+            { id: 'lib-tab-btn-series',     label: 'Serien',     action: "switchLibrarySubTab('series')" },
+            { id: 'lib-tab-btn-albums',     label: 'Alben',      action: "switchLibrarySubTab('albums')" },
+            { id: 'lib-tab-btn-audiobooks', label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
         ],
         'file': [
             { id: 'local', label: 'Lokale Platten', action: "fbNavigate('/')" },
             { id: 'media', label: 'Media Folder', action: "fbNavigate('./media')" },
-            { id: 'playlist', label: 'Playlist Manager', action: "switchMainCategory('media'); setTimeout(() => switchPlayerView('playlist'), 100);" },
-            { id: 'video-cinema', label: 'Video Cinema', action: "switchMainCategory('media'); setTimeout(() => switchTab('video'), 100);" }
+            { id: 'fb-films', label: 'Filme', action: "switchLibrarySubTab('films')" },
+            { id: 'fb-series', label: 'Serien', action: "switchLibrarySubTab('series')" },
+            { id: 'fb-albums', label: 'Alben', action: "switchLibrarySubTab('albums')" },
+            { id: 'fb-audiobooks', label: 'Hörbuch', action: "switchLibrarySubTab('audiobooks')" }
         ],
         'edit': [
             { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },

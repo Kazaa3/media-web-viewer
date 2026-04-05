@@ -6,7 +6,7 @@ This logic is used throughout the Media Web Viewer to identify audio items and m
 ---
 
 ## Audio & Mock Detection Logic
-The following JavaScript snippet is used to determine if an item is an audio type or a mock:
+The following JavaScript snippet was used to determine if an item is an audio type or a mock:
 
 ```javascript
     i.is_mock === true ||
