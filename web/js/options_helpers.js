@@ -32,6 +32,12 @@ async function loadAllOptions() {
         const activeSubView = document.querySelector('.sub-tab-btn.options-subtab.active')?.id?.replace('opt-subtab-', '');
         if (activeSubView === 'environment') loadEnvironmentInfo();
         if (activeSubView === 'helpers')     loadStartupConfig();
+        if (activeSubView === 'parser') {
+            // Hydrate intensity
+            if (config.intensity !== undefined) safeCheck('config-parser-intensity', config.intensity === 'full');
+            // Hydrate chain
+            if (typeof buildParserChainUI === 'function') buildParserChainUI(config.parser_chain || [], config.slow_parsers || []);
+        }
 
     } catch (e) {
         console.error('[Options] loadAllOptions failed:', e);
@@ -691,8 +697,42 @@ function setAllDebugFlags(value) {
     });
     saveAllOptions();
 }
-// Legacy alias used in options_panel.html
-const setAllFlags = setAllDebugFlags;
+// Expose to window
+window.resetAllFilters = resetAllFilters;
+
+/**
+ * Specialized View Initializers (Proxy to internal fragment controllers)
+ * This ensures the UI doesn't crash during async fragment loading.
+ */
+function initFilmsView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-FILMS');
+    libraryFilter = 'film'; 
+    renderLibrary(); 
+}
+
+function initSeriesView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-SERIES');
+    libraryFilter = 'serie'; 
+    renderLibrary(); 
+}
+
+function initAlbumsView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-ALBUMS');
+    libraryFilter = 'album'; 
+    renderLibrary(); 
+}
+
+function initAudiobooksView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-AUDIOBOOKS');
+    libraryFilter = 'audiobook'; 
+    renderLibrary(); 
+}
+
+// Global Exports
+window.initFilmsView = initFilmsView;
+window.initSeriesView = initSeriesView;
+window.initAlbumsView = initAlbumsView;
+window.initAudiobooksView = initAudiobooksView;
 
 // ─── UI state updaters ────────────────────────────────────────────────────────
 function updateAppModeButtons(mode) {

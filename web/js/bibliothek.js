@@ -538,3 +538,44 @@ function resetAllFilters() {
 
 // Expose to window
 window.resetAllFilters = resetAllFilters;
+
+/**
+ * Specialized View Initializers (v1.35.68 Standard)
+ * These ensure categorized data flows correctly when a fragment is loaded.
+ */
+function initFilmsView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-FILMS');
+    libraryFilter = 'film'; 
+    renderLibrary(); 
+}
+
+function initSeriesView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-SERIES');
+    libraryFilter = 'serie'; 
+    renderLibrary(); 
+}
+
+function initAlbumsView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-ALBUMS');
+    libraryFilter = 'album'; 
+    renderLibrary(); 
+}
+
+function initAudiobooksView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-AUDIOBOOKS');
+    libraryFilter = 'audiobook'; 
+    renderLibrary(); 
+}
+
+function initCinemaView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-CINEMA');
+    libraryFilter = 'video'; 
+    renderLibrary(); 
+}
+
+// Global Exports for fragment callbacks
+window.initFilmsView = initFilmsView;
+window.initSeriesView = initSeriesView;
+window.initAlbumsView = initAlbumsView;
+window.initAudiobooksView = initAudiobooksView;
+window.initCinemaView = initCinemaView;
