@@ -283,54 +283,38 @@ function finishSwitchTab(tabId, targetId, btn) {
 
     localStorage.setItem('mwv_active_tab', tabId);
 
-    // Context-specific actions
-    const initActions = {
-        'player': () => {
-            if (typeof renderPlaylist === 'function') renderPlaylist();
-            if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-        },
-        'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
-        'library': () => {
-            if (typeof renderPlaylist === 'function') renderPlaylist();
-            if (typeof renderLibrary === 'function') renderLibrary();
-        },
-        'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
-        'vlc': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
-        'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
-        'item': () => { if (typeof refreshLibrary === 'function') refreshLibrary(); },
-        'edit': () => { if (typeof initEdit === 'function') initEdit(); },
-        'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
-        'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
-        'options': () => {
-            if (typeof switchOptionsView === 'function') switchOptionsView('general');
-            if (typeof loadDebugFlags === 'function') loadDebugFlags();
-            if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
-        },
-        'debug': () => {
-            if (typeof switchDiagnosticsView === 'function') {
-                switchDiagnosticsView('debug-db');
-            } else if (typeof renderDebugDatabase === 'function') {
-                renderDebugDatabase();
-            }
-        },
-        'flags': () => { if (typeof loadDebugFlags === 'function') loadDebugFlags(); },
-        'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
-        'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
-        'tests': () => {
-            if (typeof switchDiagnosticsView === 'function') {
-                switchDiagnosticsView('health');
-            }
-        },
-        'diagnostics': () => {
-            if (typeof switchDiagnosticsView === 'function') {
-                switchDiagnosticsView('debug-db');
-            }
-        }
-    };
-    if (initActions[tabId]) {
-        requestAnimationFrame(() => {
+    // Context-specific actions (V1.35 Hardened)
+    try {
+        const initActions = {
+            'player': () => {
+                if (typeof renderPlaylist === 'function') renderPlaylist();
+                if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+                if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+            },
+            'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
+            'library': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
+            'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
+            'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
+            'edit': () => { if (typeof initEdit === 'function') initEdit(); },
+            'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
+            'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
+            'options': () => {
+                if (typeof switchOptionsView === 'function') switchOptionsView('general');
+                if (typeof loadDebugFlags === 'function') loadDebugFlags();
+            },
+            'debug': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); }
+        };
+
+        if (initActions[tabId]) {
+            if (typeof mwv_trace === 'function') mwv_trace('NAV-INIT', tabId, { status: 'executing' });
             initActions[tabId]();
-        });
+        }
+    } catch (err) {
+        if (typeof log_js_error === 'function') log_js_error(err, `INIT-ACTION:${tabId}`);
+    }
+
+    if (initActions[tabId]) {
+        initActions[tabId]();
     }
 
     if (navTimeout) {
@@ -555,10 +539,8 @@ function updateGlobalSubNav(category) {
     const subNavMap = {
         'media': [
             { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
-            { id: 'mediengalerie', label: 'Mediengalerie', action: "switchPlayerView('mediengalerie')" },
             { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
-            { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" },
-            { id: 'video-cinema', label: 'Video Cinema', action: "switchTab('video')" }
+            { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
         ],
         'library': [
             { id: 'visual', label: 'Mediathek', action: "switchLibraryDomain('visual')" },

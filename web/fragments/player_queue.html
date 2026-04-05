@@ -169,45 +169,68 @@
     /**
      * Switch Player Sub-Views (v1.34 Master)
      */
+    /**
+     * Switch Player Sub-Views (v1.35 Recovery)
+     */
     function switchPlayerInternalView(viewId) {
-        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-PLAYER', viewId);
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'SWITCH-START', { viewId });
         
-        // Hide all views
-        document.querySelectorAll('.player-view-container').forEach(el => {
-            el.style.display = 'none';
-            el.classList.remove('active');
-        });
-        
-        // Deactivate all sub-nav buttons
-        document.querySelectorAll('.player-sub-nav-btn').forEach(el => {
-            el.classList.remove('active');
-        });
-
-        // Show target view
-        const target = document.getElementById('player-view-' + viewId);
-        if (target) {
-            target.style.display = 'flex';
-            target.classList.add('active');
+        try {
+            // Hide all views
+            document.querySelectorAll('.player-view-container').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
             
-            // Sync with sub-nav buttons
-            const btn = document.querySelector(`.player-sub-nav-btn[onclick*="'${viewId}'"]`);
-            if (btn) btn.classList.add('active');
-        }
+            // Deactivate all sub-nav buttons
+            document.querySelectorAll('.player-sub-nav-btn').forEach(el => {
+                el.classList.remove('active');
+            });
 
-        // Trigger view-specific data refresh
-        if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') {
-            renderPlaylist();
-        } else if (viewId === 'visualizer' && typeof initVisualizer === 'function') {
-            initVisualizer();
-        } else if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') {
-            refreshSavedPlaylists();
+            // Show target view
+            const target = document.getElementById('player-view-' + viewId);
+            if (target) {
+                target.style.display = 'flex';
+                target.classList.add('active');
+                
+                // Sync with sub-nav buttons
+                const btn = document.querySelector(`.player-sub-nav-btn[onclick*="'${viewId}'"]`);
+                if (btn) btn.classList.add('active');
+                
+                if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'SWITCH-SYNC', { viewId, targetFound: true });
+            } else {
+                if (typeof log_js_error === 'function') log_js_error(new Error(`Target view NOT found: ${viewId}`), 'PLAYER-NAV');
+            }
+
+            // Trigger view-specific data refresh
+            if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') {
+                renderPlaylist();
+            } else if (viewId === 'visualizer' && typeof initVisualizer === 'function') {
+                initVisualizer();
+            } else if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') {
+                refreshSavedPlaylists();
+            }
+            
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'SWITCH-COMPLETE', { viewId });
+
+        } catch (err) {
+            if (typeof log_js_error === 'function') log_js_error(err, 'PLAYER-VIEW-SWITCH');
         }
     }
 
     // Default to Queue on first load if nothing active
     setTimeout(() => {
-        const active = document.querySelector('.player-view-container.active');
-        if (!active) switchPlayerInternalView('warteschlange');
-    }, 100);
+        try {
+            const active = document.querySelector('.player-view-container.active');
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-FRAGMENT', 'BOOT-CHECK', { hasActive: !!active });
+            
+            if (!active) {
+                console.info("[PLAYER] No active view detected, forcing 'warteschlange'...");
+                switchPlayerInternalView('warteschlange');
+            }
+        } catch (err) {
+            if (typeof log_js_error === 'function') log_js_error(err, 'PLAYER-BOOT-TIMEOUT');
+        }
+    }, 250);
 </script>
 <!-- ===================== PLAYER QUEUE END ===================== -->

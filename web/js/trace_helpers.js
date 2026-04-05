@@ -113,3 +113,30 @@ document.addEventListener('contextmenu', (e) => {
 
 // Export for use in other modules if needed (optional)
 window.mwv_trace = mwv_trace;
+
+/**
+ * Advanced Render Trace (v1.35)
+ * Specialized logging for multi-stage DOM rendering.
+ */
+function mwv_trace_render(component, stage, metadata = {}) {
+    const msg = `[UI-RENDER] [${component}] ${stage} | ${JSON.stringify(metadata)}`;
+    console.info(msg);
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('DOM-UI', stage, metadata);
+    }
+}
+
+/**
+ * Fragment Script Execution Guard (v1.35)
+ * Call this from within fragments to report initialization success/failure.
+ */
+function log_js_error(error, context) {
+    const msg = `[JS-ERROR] [${context}] ${error.message || error}`;
+    console.error(msg);
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('JS-ERROR', context, { message: error.message || error, stack: error.stack });
+    }
+}
+
+window.log_js_error = log_js_error;
+window.mwv_trace_render = mwv_trace_render;
