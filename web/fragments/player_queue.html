@@ -83,7 +83,15 @@
                             style="background: var(--accent-color); color: white; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2);">0
                             Titel</span>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="queue-type-filter" onchange="if(typeof changeQueueFilter === 'function') changeQueueFilter(this.value)" 
+                            style="padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; outline: none; transition: border-color 0.2s;">
+                            <option value="all">Alle Medien</option>
+                            <option value="audio">Nur Audio</option>
+                            <option value="video">Nur Video</option>
+                            <option value="iso">Nur ISO/Abbilder</option>
+                            <option value="transcoded">Nur Transcoded</option>
+                        </select>
                         <button onclick="clearQueue()" class="tab-btn sm"
                             style="padding: 6px 14px; font-size: 11px; font-weight: 700;">Liste leeren</button>
                         <button onclick="shuffleQueue()" class="tab-btn sm"

@@ -1,12 +1,12 @@
 /**
- * version.js (v1.35.60)
+ * version.js (v1.35.61)
  * Central version and performance monitoring.
- * Milestone: Universal Interaction Polish (Menu Fixes & Routing).
+ * Milestone: Diagnostic Baseline & Filtered Queue (29 Items).
  */
 
-window.MWV_VERSION = 'v1.35.60';
+window.MWV_VERSION = 'v1.35.61';
 window.MWV_BOOT_START = performance.now();
-window.MWV_STABILITY = 'Interaction-Complete-Baseline';
+window.MWV_STABILITY = 'Baseline-Hydrated-Filter-Active';
 
 // Forced Diagnostic Enable
 if (localStorage.getItem('mwv_diagnostic_mode') !== 'true') {

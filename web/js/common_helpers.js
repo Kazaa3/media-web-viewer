@@ -336,7 +336,11 @@ function showToast(message, duration = 3000) {
 function isVideoItem(item) {
     if (!item) return false;
     // 1. Check Category
-    const videoCategories = ['Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons', 'Movie', 'TV Show'];
+        const videoCategories = [
+            'Film', 'Serie', 'ISO/Image', 'Video', 'Musikvideos', 'Animes', 'Cartoons', 'Movie', 'TV Show',
+            'Movies', 'TV Shows', 'Animation', 'Animations', 'Documentary', 'Dokumentation', 'Concert',
+            'Konzerte', 'Sports', 'Sport', 'Clips', 'Shorts', 'Trailers'
+        ];
     if (item.category && videoCategories.includes(item.category)) return true;
 
     // 2. Check Extension

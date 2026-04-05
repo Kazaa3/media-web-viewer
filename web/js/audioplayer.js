@@ -9,6 +9,7 @@ let playlistIndex = -1;
 let isShuffle = false;
 let isRepeat = 'off'; // 'off', 'all', 'one'
 let shuffledPlaylist = [];
+window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 
 // Expose to window for Diagnostics (v1.35.33)
 window.currentPlaylist = currentPlaylist;
@@ -414,17 +415,20 @@ async function playPrev() {
 }
 
 /**
+ * Updates the active filter for the diagnostic queue and re-renders.
+ */
+function changeQueueFilter(filter) {
+    console.info(">>> [Queue] Changing filter to:", filter);
+    window.activeQueueFilter = filter;
+    renderPlaylist();
+    if (typeof showToast === 'function') showToast(`Filter: ${filter.toUpperCase()}`, 1500);
+}
+
+/**
  * Renders the global playlist in the Playlist tab.
  */
 function renderPlaylist() {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'RENDER-START', { count: currentPlaylist.length });
-    // Instrumentation: Log playlist items
-    if (typeof mwv_trace_render === 'function') {
-        mwv_trace_render('PLAYER-QUEUE', 'ITEMS', {
-            items: currentPlaylist.map(i => i.name || i.id || '[unnamed]'),
-            count: currentPlaylist.length
-        });
-    }
     
     const containers = [
         document.getElementById('playlist-content-render-target'),
@@ -433,19 +437,30 @@ function renderPlaylist() {
         document.getElementById('active-queue-list-render-target-warteschlange')
     ].filter(Boolean);
 
+    if (containers.length === 0) return;
+
+    // 1. Apply active filter (v1.35.61)
+    let filteredItems = [...(isShuffle ? shuffledPlaylist : currentPlaylist)];
+    if (window.activeQueueFilter !== 'all') {
+        filteredItems = filteredItems.filter(item => {
+            const isVideo = isVideoItem(item);
+            const path = (item.path || item.name || "").toLowerCase();
+            const isTranscoded = path.includes('_transcoded') || path.includes('.mp4_transcoded');
+            const isIso = path.includes('.iso');
+
+            if (window.activeQueueFilter === 'audio') return !isVideo;
+            if (window.activeQueueFilter === 'video') return isVideo && !isIso;
+            if (window.activeQueueFilter === 'iso') return isIso;
+            if (window.activeQueueFilter === 'transcoded') return isTranscoded;
+            return true;
+        });
+    }
+
     const countEls = document.querySelectorAll('.synced-count');
-    countEls.forEach(el => el.innerText = `${currentPlaylist.length} Titel`);
+    countEls.forEach(el => el.innerText = `${filteredItems.length} Titel`);
     
     const countEl = document.getElementById('queue-item-count');
-    if (countEl) countEl.innerText = `${currentPlaylist.length} Titel`;
-    
-    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'CONTAINERS', { count: containers.length });
-    console.log(`[Audio] Rendering playlist on ${containers.length} containers. Items: ${currentPlaylist.length}`);
-    if (containers.length === 0) {
-        // If the player fragment was just loaded, the container might be there but the script ran too fast.
-        // We rely on the FragmentLoader callback to re-trigger this.
-        return;
-    }
+    if (countEl) countEl.innerText = `${filteredItems.length} Titel`;
 
     containers.forEach(list => {
         list.innerHTML = ''; // Clear existing
@@ -463,7 +478,7 @@ function renderPlaylist() {
         }
     };
 
-    const activeList = isShuffle ? shuffledPlaylist : currentPlaylist;
+        const activeList = filteredItems;
     if (activeList.length === 0) {
         list.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 60px; background: var(--bg-primary);">
