@@ -436,8 +436,8 @@ document.addEventListener('keydown', (e) => {
  * Switch Audio Player Sub-Views (Warteschlange, Mediengalerie, Visualizer)
  */
 function switchPlayerView(viewId) {
-    console.log(`[NAV] Switching player view to: ${viewId}`);
-
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-RELAY', 'PLAYER-VIEW', { viewId });
+    
     // Hide all views
     document.querySelectorAll('.player-view-container').forEach(el => {
         el.style.display = 'none';
@@ -449,16 +449,24 @@ function switchPlayerView(viewId) {
     if (target) {
         target.style.display = 'flex';
         target.classList.add('active');
+        
+        // Sync with sub-nav buttons
+        document.querySelectorAll('.player-sub-nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.target === viewId || (btn.getAttribute('onclick') || '').includes(viewId)) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Trigger logic based on view
+        if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') renderPlaylist();
+        if (viewId === 'visualizer' && typeof initVisualizer === 'function') initVisualizer();
+        if (viewId === 'playlist' && typeof refreshSavedPlaylists === 'function') refreshSavedPlaylists();
+        
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-RELAY', 'SUCCESS', { viewId });
+    } else {
+        if (typeof log_js_error === 'function') log_js_error(new Error(`View Target Missing: ${viewId}`), 'NAV-RELAY');
     }
-
-    // Update sub-nav buttons
-    document.querySelectorAll('.player-sub-nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.target === viewId) btn.classList.add('active');
-    });
-
-    // Save preference
-    localStorage.setItem('mwv_player_sub_view', viewId);
 }
 
 // Restore menu state on load
