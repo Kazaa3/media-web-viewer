@@ -3,6 +3,173 @@
  * Manages all PARSER_CONFIG settings exposed in the Tools sub-tabs.
  */
 
+/**
+ * Comprehensive Options Hydration (v1.35.68 Standard)
+ */
+async function loadAllOptions() {
+    if (typeof mwv_trace === 'function') mwv_trace('FLOW', 'LOAD-OPTIONS-START');
+    
+    try {
+        const config = await eel.get_parser_config()();
+        if (!config) return;
+
+        // General
+        safeCheck('config-auto-scan', config.auto_scan);
+        safeCheck('config-fast-scan', config.fast_scan);
+        safeCheck('config-hide-mocks', config.hide_mocks);
+        safeCheck('config-debug-verbose', config.debug_verbose);
+        safeValue('config-library-dir', config.library_dir);
+        safeValue('config-browse-dir', config.browse_default_dir);
+
+        // Feature Flags & Logging
+        if (typeof loadFeatureFlags === 'function') loadFeatureFlags();
+        if (typeof syncLogLevelUI === 'function')   syncLogLevelUI();
+
+        // Sub-sections
+        buildExtraDirsUI(config.additional_library_dirs || []);
+        
+        // Load sections if active
+        const activeSubView = document.querySelector('.sub-tab-btn.options-subtab.active')?.id?.replace('opt-subtab-', '');
+        if (activeSubView === 'environment') loadEnvironmentInfo();
+        if (activeSubView === 'helpers')     loadStartupConfig();
+
+    } catch (e) {
+        console.error('[Options] loadAllOptions failed:', e);
+    }
+}
+
+/**
+ * Environment & System Specs Hydration (SCR-003/006/007 Parity)
+ */
+async function loadEnvironmentInfo() {
+    const container = document.getElementById('options-environment-view');
+    if (!container || container.style.display === 'none') return;
+
+    try {
+        const info = await eel.get_sys_overview()();
+        if (!info) return;
+
+        // 1. System Specs
+        safeInnerText('env-val-mediainfo', info.mediainfo || 'N/A');
+        safeInnerText('env-val-ffmpeg',    info.ffmpeg || 'N/A');
+        safeInnerText('env-val-python',    `${info.python_version} (${info.python_path})`);
+
+        // 2. Core Packages Grid
+        buildPackagesUI(info.core_packages || []);
+
+        // 3. Requirements Status
+        updateRequirementsStatus(info.requirements || {});
+
+        // 4. Multi-Venv Matrix
+        buildVenvGrid(info.venvs || []);
+        buildVenvTree(info.venvs || []);
+
+    } catch (e) {
+        console.error('[Options] loadEnvironmentInfo failed:', e);
+    }
+}
+
+function buildPackagesUI(packages) {
+    const grid = document.getElementById('env-core-packages-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    packages.forEach(pkg => {
+        const badge = document.createElement('div');
+        badge.className = 'diagnostic-value';
+        badge.style.display = 'flex';
+        badge.style.justifyContent = 'space-between';
+        badge.innerHTML = `<span style="color:var(--text-secondary)">${pkg.name}</span> <span style="font-weight:800">${pkg.version}</span>`;
+        grid.appendChild(badge);
+    });
+}
+
+function updateRequirementsStatus(req) {
+    const title = document.getElementById('req-status-title');
+    const list  = document.getElementById('req-missing-list');
+    const btn   = document.getElementById('btn-install-reqs');
+    
+    if (title) title.innerText = `requirements.txt Status (${req.installed}/${req.total})`;
+    
+    if (req.missing && req.missing.length > 0) {
+        list.innerHTML = '❌ Fehlend: ' + req.missing.join(', ');
+        if (btn) btn.style.display = 'flex';
+    } else {
+        list.innerHTML = '✅ Alle Abhängigkeiten erfüllt.';
+        if (btn) btn.style.display = 'none';
+    }
+}
+
+function buildVenvGrid(venvs) {
+    const grid = document.getElementById('env-workspace-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    venvs.forEach(venv => {
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.style.padding = '15px';
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.borderLeft = venv.active ? '4px solid #f1c40f' : '1px solid var(--border-color)';
+        
+        card.innerHTML = `
+            <div>
+                <div style="font-weight:800; font-size:13px;">${venv.active ? '⭐ ' : ''}${venv.name} <span style="opacity:0.5; font-weight:500">(${venv.version})</span></div>
+                <div style="font-size:10px; color:var(--text-secondary); margin-top:2px; font-family:monospace;">${venv.path}</div>
+            </div>
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--accent-color); background:rgba(10,132,255,0.1); padding:2px 8px; border-radius:4px;">
+                ${venv.role || 'VAPP'}
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function buildVenvTree(venvs) {
+    const tree = document.getElementById('env-tree-view');
+    if (!tree) return;
+    tree.innerHTML = venvs.map(v => `<div>└── ${v.name} (${v.version}) <span style="opacity:0.4">${v.path}</span></div>`).join('');
+}
+
+async function installMissingPackages() {
+    const term = document.getElementById('pip-terminal-container');
+    const out  = document.getElementById('pip-terminal-output');
+    if (term) term.style.display = 'block';
+    if (out) out.innerHTML = '<div style="color:#aaa">Initializing installer...</div>';
+
+    try {
+        // Fetch missing packages first
+        const info = await eel.get_sys_overview()();
+        const missing = info.requirements?.missing || [];
+        
+        if (missing.length === 0) {
+            out.innerHTML += '<div>✅ Nothing to install.</div>';
+            return;
+        }
+
+        out.innerHTML += `<div>🚀 Starting installation for: ${missing.join(', ')}</div>`;
+        const result = await eel.pip_install_packages(missing)();
+        
+        if (result.status === 'ok') {
+            out.innerHTML += `<div style="color:#4caf50; margin-top:10px;">SUCCESS: ${result.message}</div>`;
+            out.innerHTML += `<pre style="font-size:10px; opacity:0.8;">${result.output}</pre>`;
+            loadEnvironmentInfo(); // Refresh
+        } else {
+            out.innerHTML += `<div style="color:#f44336; margin-top:10px;">ERROR: ${result.message}</div>`;
+            if (result.error) out.innerHTML += `<pre style="color:#ff8a80; font-size:10px;">${result.error}</pre>`;
+        }
+    } catch (e) {
+        out.innerHTML += `<div style="color:#f44336">Critical Failure: ${e.message}</div>`;
+    }
+}
+
+function safeInnerText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+}
+
 // ─── Knwn constants ───────────────────────────────────────────────────────────
 const ALL_CATEGORIES = [
     'audio', 'video', 'images', 'documents', 'ebooks',

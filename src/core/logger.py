@@ -245,6 +245,20 @@ def get_logger(name: str):
     return logging.getLogger(f"app.{name}")
 
 
+# --- Convenience Wrappers (SCR-004 fix) ---
+def info(msg: str):
+    logging.info(msg)
+
+def error(msg: str):
+    logging.error(msg)
+
+def warning(msg: str):
+    logging.warning(msg)
+
+def exception(msg: str):
+    logging.exception(msg)
+
+
 def debug(component: str, message: str):
     """
     Log a message if the corresponding DEBUG_FLAGS component is active.

@@ -431,17 +431,75 @@
             <!-- ══════════════════════════════════════════════════ -->
             <!-- VIEW: Umgebung (Environment)                        -->
             <!-- ══════════════════════════════════════════════════ -->
-            <div id="options-environment-view" class="options-view" style="display: none;">
-                <div class="glass-card" style="padding: 0; overflow: hidden; border-radius: var(--radius-card);">
-                    <div style="padding: 24px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary);">
-                        <h3 style="margin: 0; font-weight: 800; font-size: 1.2em;">Python Environment</h3>
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">System-Architektur &amp; Backend-Abhängigkeiten</div>
+            <div id="options-environment-view" class="options-view" style="display: none; flex-direction: column; gap: 24px;">
+                
+                <!-- Row 1: System Info & Specs -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card); border-left: 4px solid var(--accent-color);">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.1em; font-weight: 800;" data-i18n="env_sys_overview">System Overview</h3>
+                        <div id="env-sys-specs" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Populated via JS: MediaInfo, MediaPlayer, Python, etc. -->
+                            <div class="diagnostic-label">MediaInfo:</div> <div class="diagnostic-value" id="env-val-mediainfo">checking...</div>
+                            <div class="diagnostic-label">FFmpeg:</div>   <div class="diagnostic-value" id="env-val-ffmpeg">checking...</div>
+                            <div class="diagnostic-label">Python:</div>   <div class="diagnostic-value" id="env-val-python">checking...</div>
+                        </div>
                     </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                        <tbody id="env-details-table-body">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                    </table>
+                    
+                    <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card);">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.1em; font-weight: 800;" data-i18n="env_core_pkgs">Core Packages</h3>
+                        <div id="env-core-packages-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <!-- Populated via JS: Bottle, Eel, m3u8, etc. -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Requirements Status -->
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="margin: 0; font-weight: 800;" id="req-status-title">requirements.txt Status</h3>
+                            <div id="req-status-subtitle" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">Backend Dependency Audit</div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="checkRequirements()" class="tab-btn sm" style="font-size: 11px;">Jetzt neu prüfen</button>
+                            <button onclick="installMissingPackages()" id="btn-install-reqs" class="tab-btn sm active" style="background: #2ecc71; border: none; font-size: 11px;">
+                                📦 Fehlende Pakete Installieren (Interactive)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Terminal for PIP -->
+                    <div id="pip-terminal-container" style="display: none; margin-bottom: 20px;">
+                        <div style="background: #1e1e1e; color: #d4d4d4; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 15px; border-radius: 8px; border: 1px solid #333; max-height: 200px; overflow-y: auto;">
+                            <div style="color: #6a9955; margin-bottom: 8px;">> pip install requirements.txt ...</div>
+                            <div id="pip-terminal-output"></div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.05); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 10px;">Gefundene Pakete:</div>
+                        <div id="req-missing-list" style="color: #e74c3c; font-weight: 700; font-size: 12px;"></div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Workspace Environments -->
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
+                    <h3 style="margin: 0 0 15px 0; font-weight: 800;" data-i18n="env_workspace_matrix">Vorhandene Umgebungen</h3>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 25px;">
+                        <i>Dieses Projekt nutzt ein Multi-Virtual-Environment-Konzept zur strikten Trennung von Laufzeit-, Build- und Test-Abhängigkeiten.</i>
+                    </p>
+                    
+                    <div id="env-workspace-grid" style="display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Injected via JS (SCR-006 parity) -->
+                    </div>
+
+                    <!-- VS Code-like Tree View (v1.35.68 Aesthetic - SCR-007) -->
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Workspace Explorer (v1.35 Core venvs)</div>
+                        <div id="env-tree-view" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary); background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px;">
+                            <!-- Tree contents via buildVenvTree() -->
+                        </div>
+                    </div>
                 </div>
             </div>
 

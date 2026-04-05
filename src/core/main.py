@@ -24,7 +24,8 @@ class BootstrapLogger:
     def error(self, m): print(f"STDOUT: [ERROR] {m}", flush=True)
     def warning(self, m): print(f"STDOUT: [WARN] {m}", flush=True)
     def critical(self, m): print(f"STDOUT: [CRITICAL] {m}", flush=True)
-    def debug(self, m): pass
+    def debug(self, m): print(f"STDOUT: [DEBUG] {m}", flush=True)
+    def exception(self, m): print(f"STDOUT: [EXCEPTION] {m}", flush=True)
 
 log = BootstrapLogger()
 
@@ -615,11 +616,11 @@ def log_js_error(error_data):
 def rtt_item_test(data):
     """Echoes complex media-item-like data back for RTT and integrity testing."""
     log.info(f"[RTT] Item Test received: {type(data).__name__}")
-    return sanitize_json_utf8({
+    return {
         "status": "success",
         "timestamp": time.time(),
         "item_echo": data
-    })
+    }
 
 
 @eel.expose
@@ -1191,7 +1192,7 @@ def handle_click(event_type: str, payload: dict):
     payload: dict with additional data (e.g. {"id": 42})
     """
     try:
-        _logger.info(
+        log.info(
             "click event received",
             extra={
                 "event": event_type,
@@ -1967,12 +1968,11 @@ def nuclear_restart():
         return {"status": "error", "message": str(e)}
 
 @eel.expose
-def get_environment_info(force_refresh=False):
+def get_sys_overview(force_refresh=False):
     """
-    @brief Returns comprehensive information about the Python environment.
-    @details Gibt detaillierte Informationen ber die Python-Umgebung zurck,
-             inklusive aktuelle Umgebung, System Python Installationen, und Conda Umgebungen.
-    @return Dictionary with environment details / Dictionary mit Umgebungsdetails.
+    @brief Returns comprehensive information about the Python and System environment.
+    @details Provides detailed metrics for MediaInfo, FFmpeg, Python Venvs, and Requirements.
+    @return Dictionary with high-fidelity system metrics for the Environment Hub.
     """
     import platform
     import subprocess
@@ -2525,93 +2525,40 @@ def get_environment_info(force_refresh=False):
         }
 
     # Discovery logic
-    # Discover available environments (cached/fast)
     conda_envs = _get_conda_environments()
     system_pythons = _get_system_pythons()
     installed_packages, installed_packages_source = _get_installed_packages()
-    if not installed_packages:
-        installed_packages = _get_packages_fallback()
-        installed_packages_source = "importlib_or_pkg_resources"
     local_venvs = _find_local_venvs()
     mediainfo_status = _get_mediainfo_status()
     tools_status = _get_runtime_tools_status()
     requirements_status = _get_requirements_status()
 
-    # ===== Build Response =====
+    # Core Packages Transformation (Filtering for Dashboard)
+    CORE_KEYS = ["bottle", "eel", "gevent", "m3u8", "mutagen", "pymediainfo", "vlc", "psutil"]
+    core_packages = []
+    for pkg in installed_packages:
+        if pkg.get("name", "").lower() in CORE_KEYS:
+            core_packages.append(pkg)
+
+    # ===== Build Response (v1.35.68 Unified Schema) =====
     result = {
-        # Current Environment (Primary)
+        # Identifiers
         "python_version": platform.python_version(),
-        "python_executable": sys.executable,
-        "python_prefix": sys.prefix,
-        "python_base_prefix": sys.base_prefix,
-        "in_venv": in_venv,
-        "venv_path": venv_path or venv_env,
-        "in_conda": in_conda,
-        "conda_env_name": conda_env_name,
-        "conda_prefix": conda_prefix,
-        "has_conda_context": bool(conda_env_name or conda_prefix),
-        "env_type": env_type,
-        "env_path": env_path,
-        "env_name": env_name,
-        "platform": platform.platform(),
-        "platform_system": platform.system(),
-        "platform_release": platform.release(),
-        "pid": os.getpid(),
-        "browser_pid": BROWSER_PID if BROWSER_PID is not None else 0,
-        "testbed_pid": find_venv_pid('.venv_testbed'),
-        "selenium_pid": find_venv_pid('.venv_selenium'),
-        "version": VERSION,
-
-        # Current Environment (Detailed)
-        "current_environment": current_env,
-
-        # Alternative Environments (Discovery Results)
-        "available_conda_environments": conda_envs,
-        "available_system_pythons": system_pythons,
-        "local_venvs": local_venvs,
-        "multi_venv_concept": "Dieses Projekt nutzt ein Multi-Virtual-Environment-Konzept zur strikten Trennung von Laufzeit-, Build- und Test-Abhngigkeiten.",
-
-        # Installed Packages
-        "installed_packages": installed_packages,
-        "package_count": len(installed_packages),
-        "installed_packages_source": installed_packages_source,
-        "mediainfo_status": mediainfo_status,
-        "tools_status": tools_status,
-        "requirements_status": requirements_status,
-
-        # Recommendations
-        "recommended_environment": {
-            "name": "venv_core",
-            "type": "venv",
-            "python_version": "3.14.2",
-            "reason": "Eigene venv fr main.py empfohlen"
-        },
-        "default_scan_dir": SCAN_MEDIA_DIR,
-        "browse_default_dir": BROWSER_DEFAULT_DIR,
-        "parser_config": PARSER_CONFIG
+        "python_path": sys.executable,
+        "mediainfo": mediainfo_status.get("mediainfo_cli_version") or mediainfo_status.get("pymediainfo_version") or "N/A",
+        "ffmpeg": tools_status.get("ffmpeg_cli_version") or "N/A",
+        
+        # Lists & Matrices
+        "core_packages": core_packages,
+        "venvs": local_venvs,
+        "conda": conda_envs,
+        "requirements": {
+            "installed": requirements_status.get("installed_count", 0),
+            "total": requirements_status.get("total", 0),
+            "missing": requirements_status.get("missing", [])
+        }
     }
-
-    # UI Trace Logging - capture what frontend receives
-    try:
-        trace_log_path = Path(__file__).parent / "logs" / \
-            "ui_trace_environment_info.log"
-        trace_log_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(trace_log_path, "a", encoding="utf-8") as f:
-            f.write(f"\n{'=' * 80}\n")
-            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] get_environment_info() called\n")
-            f.write(f"force_refresh: {force_refresh}\n")
-            f.write(f"package_count: {len(installed_packages)}\n")
-            f.write(f"installed_packages_source: {installed_packages_source}\n")
-            f.write(f"requirements_status: {requirements_status}\n")
-            f.write(f"first_3_packages: {installed_packages[:3] if installed_packages else 'EMPTY'}\n")
-            f.write(f"env_type: {result.get('env_type')}\n")
-            f.write(f"python_executable: {result.get('python_executable')}\n")
-
-        # Also print to console for immediate visibility
-        log.debug(f" UI-TRACE: get_environment_info() packages={len(installed_packages)}, source={installed_packages_source}, req={requirements_status}")
-    except Exception as e:
-        log.error(f"  UI-TRACE logging failed: {e}")
-
+    
     _ENV_INFO_CACHE["data"] = result
     _ENV_INFO_CACHE["ts"] = time.time()
     return result
