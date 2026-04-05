@@ -597,10 +597,6 @@ function updateGlobalSubNav(category) {
             { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
         ],
         'library': [
-            { id: 'visual', label: 'Mediathek', action: "switchLibraryDomain('visual')" },
-            { id: 'browse', label: 'Dateibrowser', action: "switchLibraryDomain('browse')" },
-            { id: 'inventory', label: 'Inventar', action: "switchLibraryDomain('inventory')" },
-            { id: 'cinema', label: 'Cinema', action: "switchLibrarySubTab('cinema')" },
             { id: 'lib-tab-btn-cinema',     label: 'Cinema',     action: "switchLibrarySubTab('cinema')" },
             { id: 'lib-tab-btn-films',      label: 'Filme',      action: "switchLibrarySubTab('films')" },
             { id: 'lib-tab-btn-series',     label: 'Serien',     action: "switchLibrarySubTab('series')" },
@@ -608,12 +604,10 @@ function updateGlobalSubNav(category) {
             { id: 'lib-tab-btn-audiobooks', label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
         ],
         'file': [
-            { id: 'local', label: 'Lokale Platten', action: "fbNavigate('/')" },
-            { id: 'media', label: 'Media Folder', action: "fbNavigate('./media')" },
-            { id: 'fb-films', label: 'Filme', action: "switchLibrarySubTab('films')" },
-            { id: 'fb-series', label: 'Serien', action: "switchLibrarySubTab('series')" },
-            { id: 'fb-albums', label: 'Alben', action: "switchLibrarySubTab('albums')" },
-            { id: 'fb-audiobooks', label: 'Hörbuch', action: "switchLibrarySubTab('audiobooks')" }
+            { id: 'fb-films',       label: 'Filme',      action: "switchLibrarySubTab('films')" },
+            { id: 'fb-series',      label: 'Serien',     action: "switchLibrarySubTab('series')" },
+            { id: 'fb-albums',      label: 'Alben',      action: "switchLibrarySubTab('albums')" },
+            { id: 'fb-audiobooks',  label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
         ],
         'edit': [
             { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },

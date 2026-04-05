@@ -1,18 +1,17 @@
-<!-- ===================== PARSER CONFIGURATION PANEL (v1.35.68) ===================== -->
-<div id="parser-main-split-container" style="display: flex; height: 100%; overflow: hidden; background: var(--bg-primary);">
+<div id="parser-main-split-container" style="display: flex; height: 100%; overflow: hidden; background: var(--bg-primary); color: var(--text-primary);">
     
     <!-- Left Sidebar: Chain & Core Config -->
     <div class="tab-internal-sidebar" style="width: 380px; height: 100%; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--bg-secondary); padding: 30px;">
         
         <div style="margin-bottom: 40px;">
-            <h2 style="font-weight: 900; letter-spacing: -1px; margin-bottom: 25px; color: var(--text-primary);">Parser Architektur</h2>
+            <h2 style="font-weight: 900; letter-spacing: -1px; margin-bottom: 25px; color: var(--text-primary);" data-i18n="parser_arch">Parser Architektur</h2>
             
-            <div class="glass-card" style="margin-bottom: 30px; border-left: 4px solid #2ecc71;">
-                <h3 class="diagnostic-section-title" style="margin-top: 0; font-size: 13px; color: var(--text-secondary);">Kern-Intensität</h3>
+            <div class="glass-card" style="margin-bottom: 30px; border-left: 4px solid var(--accent-color);">
+                <h3 class="diagnostic-section-title" style="margin-top: 0; font-size: 13px; color: var(--text-secondary);" data-i18n="core_intensity">Kern-Intensität</h3>
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px;">
                     <div>
-                        <div id="parser-intensity-label" style="font-weight: 800; font-size: 15px; color: #2ecc71;">Effizienz-Modus</div>
-                        <div style="font-size: 11px; opacity: 0.6;">(Schneller Scan, Basis-Tags)</div>
+                        <div id="parser-intensity-label" style="font-weight: 800; font-size: 15px; color: var(--accent-color);" data-i18n="parser_mode_light">Effizienz-Modus</div>
+                        <div style="font-size: 11px; opacity: 0.6;" data-i18n="parser_mode_desc_light">(Schneller Scan, Basis-Tags)</div>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="config-parser-intensity" checked onchange="toggleParserIntensity(this.checked)">
@@ -109,4 +108,16 @@
             color: #fff;
         }
     </style>
+    <script>
+        // Proactive hydration for v1.35.68
+        (function() {
+            if (typeof applyTranslations === 'function') applyTranslations(window.currentLanguage || 'de');
+            if (typeof loadAllOptions === 'function') loadAllOptions();
+            
+            // Force Dark Theme consistency
+            if (localStorage.getItem('mwv_theme') === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
 </div>
