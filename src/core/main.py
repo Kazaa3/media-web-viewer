@@ -3238,69 +3238,51 @@ def get_db_info():
 def get_library() -> Dict[str, Any]:
     """
     @brief Returns all media items from the database without re-scanning.
-    @details Gibt alle Medien aus der Datenbank zurck ohne neu zu scannen.
+    @details Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen.
     @return Dict with list of media items / Dokument mit Medien-Liste.
     """
     with stall_watchdog("Media Library Fetch", threshold=5.0):
         print(f"STDOUT: [BACKEND] [get_library] Fetching items... PID: {os.getpid()}", flush=True)
         log.info(f"[BACKEND] [get_library] Fetching... (PID: {os.getpid()})")
         progress_update("Library: Fetching Rows", 20)
+        
+        # Core DB Fetch
         all_media = db.get_all_media()
         count_total = len(all_media)
         
-        # --- V1.35.46: RAW SQL AUDIT ---
-        import sqlite3
-        raw_count = -1
+    # --- V1.35.45: DB-SNAPSHOT Audit ---
+    db_path = os.path.join("data", "database.db")
+    db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+    snap_msg = f"[DB-SNAPSHOT] File: {db_path} | Size: {db_size} bytes | Wrapper Rows: {count_total}"
+    log.info(snap_msg)
+    print(f"STDOUT: {snap_msg}", flush=True)
+    
+    # Fire-and-forget for Eel logs (avoid stalling if no browser is connected)
+    if getattr(eel, 'append_debug_log', None) and getattr(eel, '_websocket', None):
+        eel.append_debug_log(snap_msg, "DB-INFO")
+    
+    # --- V1.35.35 Recovery: Robust Auto-Scan ---
+    if count_total == 0:
+        log.warning("[RECOVERY] Library empty on boot. Triggering auto-scan of ./media...")
         try:
-            temp_conn = sqlite3.connect(os.path.join("data", "database.db"))
-            raw_count = temp_conn.execute("SELECT count(*) FROM media").fetchone()[0]
-            temp_conn.close()
+            import threading
+            threading.Thread(target=scan_media, args=('./media', False), name="AutoScanThread").start()
         except Exception as e:
-            log.error(f"[DB-AUDIT] Raw count failed: {e}")
+            log.error(f"[RECOVERY] Auto-scan trigger failed: {e}")
 
-        # --- V1.35.45: DB-SNAPSHOT Audit ---
-        db_path = os.path.join("data", "database.db")
-        db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
-        snap_msg = f"[DB-SNAPSHOT] File: {db_path} | Size: {db_size} bytes | Raw Rows: {raw_count} | Wrapper Rows: {count_total}"
-        log.info(snap_msg)
-        print(f"STDOUT: {snap_msg}", flush=True)
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(snap_msg, "DB-INFO")
-        
-        # --- V1.35.35 Recovery: Robust Auto-Scan ---
-        if count_total == 0:
-            log.warning("[RECOVERY] Library empty on boot. Triggering auto-scan of ./media...")
-            try:
-                # Trigger non-blocking scan
-                import threading
-                # Use False to avoid clearing DB on auto-scan (unless we really want to force it)
-                threading.Thread(target=scan_media, args=('./media', False), name="AutoScanThread").start()
-            except Exception as e:
-                log.error(f"[RECOVERY] Auto-scan trigger failed: {e}")
-
-        log.info(f"[BACKEND] [get_library] DB returned {count_total} total items.")
-        
-        progress_update("Library: Filtering Categories", 50)
-
-    displayed_cats = PARSER_CONFIG.get("displayed_categories")
+    # --- CATEGORY MAPPING & FILTERING (Black Hole Check) ---
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
         displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "multimedia"]
 
-    # ── Category map: setting-key → actual DB category strings ──────────────
-    # IMPORTANT: these must match what the parser stores in the `category` column
     cat_map = {
-        "audio":     ["Audio", "Album", "Klassik", "Hörbuch", "Hörspiel", "Podcast", "Musik",
-                      "Compilation", "Single", "Radio"],
+        "audio":     ["Audio", "Album", "Klassik", "Hörbuch", "Hörspiel", "Podcast", "Musik"],
         "video":     ["Video", "Film", "Serie", "TV", "Multimedia"],
         "images":    ["Bilder", "Grafik", "Bild", "Foto", "multimedia"],
         "documents": ["Dokument", "PDF", "Text"],
         "ebooks":    ["E-Book", "Ebook"],
-        "abbild":    ["Abbild", "Disk-Abbild", "DVD (Abbild)", "Blu-ray (Abbild)",
-                      "CD-ROM (Abbild)", "Audio-CD (Abbild)", "ISO"],
-        "spiel":     ["Spiel", "PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)",
-                      "Konsolenspiel", "Software", "Index"],
-        "beigabe":   ["Beigabe", "Supplement", "Bonus", "Extra"],
+        "abbild":    ["Abbild", "Disk-Abbild", "ISO"],
+        "multimedia": ["multimedia", "Bilder", "Video", "Film"] # Explicit catch-all
     }
 
     allowed_internal_cats = set()
@@ -3308,54 +3290,28 @@ def get_library() -> Dict[str, Any]:
         for cat in cat_map.get(dc.lower(), []):
             allowed_internal_cats.add(cat.lower())
 
-    print(f"STDOUT: [get_library] Allowed cats ({len(allowed_internal_cats)}): {sorted(allowed_internal_cats)}", flush=True)
-    if getattr(eel, 'append_debug_log', None):
-        eel.append_debug_log(f"[Filter] Allowed categories: {sorted(allowed_internal_cats)}", "DB-INFO")
-
     filtered_media = []
     skip_log = []
     for item in all_media:
-        cat = str(item.get('category', '')).lower()
+        cat = str(item.get('category', 'Unbekannt')).lower()
         if cat in allowed_internal_cats:
             filtered_media.append(item)
         else:
-            skip_log.append(f"{item['name'][:30]} ({cat})")
+            skip_log.append(f"{item.get('name', '---')} ({cat})")
 
-    # ── Safety fallback: never return empty if DB has data ───────────────────
-    if not filtered_media and all_media:
-        skipped_sample = skip_log[:5]
-        warn_msg = (f"[get_library] ALL {len(all_media)} ITEMS FILTERED OUT! "
-                    f"Allowed: {sorted(allowed_internal_cats)} | "
-                    f"Skipped sample: {skipped_sample}")
-        log.warning(warn_msg)
-        print(f"STDOUT: {warn_msg}", flush=True)
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"[WARN] All items filtered out! Returning all {len(all_media)} unfiltered.", "DB-ERROR")
-        filtered_media = all_media  # Return everything so the GUI is never blank
-    else:
-        if skip_log and getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"[Filter] Skipped {len(skip_log)} items (e.g. Ordner). First: {skip_log[:3]}", "DB-WARN")
+    # Final Audit before return
+    audit_len = len(filtered_media)
+    log.info(f"[BD-AUDIT] Filtered {audit_len}/{count_total} items. Skipped: {len(skip_log)}")
+    if audit_len == 0 and count_total > 0:
+        log.warning(f"[BD-AUDIT] BLACK HOLE DETECTED: Returning all {count_total} unfiltered rows.")
+        filtered_media = all_media
 
-    print(f"STDOUT: [get_library] Returning {len(filtered_media)} / {len(all_media)} items to frontend.", flush=True)
-    if getattr(eel, 'append_debug_log', None):
-        eel.append_debug_log(f"[DB] Sending {len(filtered_media)} items to GUI.", "DB-SUCCESS")
-
-
-    # Safe return wrapper (v1.35.40 Sync Visibility)
-    try:
-        final_lib = {
-            "media": filtered_media,
-            "db_count": count_total,
-            "status": "ready"
-        }
-        if 'sanitize_json_utf8' in globals() or 'sanitize_json_utf8' in locals():
-            return sanitize_json_utf8(final_lib)
-        else:
-            log.warning("[API] sanitize_json_utf8 missing! Returning raw dict.")
-            return final_lib
-    except Exception as e:
-        log.error(f"[API] Error in get_library return: {e}")
-        return {"media": filtered_media if filtered_media else []}
+    return {
+        "media": filtered_media,
+        "db_count": count_total,
+        "status": "ready",
+        "timestamp": time.time()
+    }
 
 
 @eel.expose

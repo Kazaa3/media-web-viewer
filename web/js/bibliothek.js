@@ -129,18 +129,34 @@ async function renderLibrary() {
         coverflowItems = coverflowItems.filter(i => i.tags && i.tags.year === libraryYear);
     }
 
-    // Main Category Filter
+    // --- Filter logic Trace (Black Hole Analysis) ---
+    console.warn(`[FE-AUDIT] Starting Render for ${allLibraryItems.length} items. Filter: ${libraryFilter}, Search: "${librarySearch}"`);
+    
+    coverflowItems = [...allLibraryItems];
+
     if (libraryFilter !== 'all') {
         const allowedTypes = CATEGORY_MAP[libraryFilter] || [];
-        coverflowItems = coverflowItems.filter(i => allowedTypes.includes(i.category));
+        const prevCount = coverflowItems.length;
+        coverflowItems = coverflowItems.filter(i => {
+            const cat = String(i.category || 'all').toLowerCase();
+            // Handle cross-mapping for multimedia/Bilder
+            if (libraryFilter === 'images' && (cat === 'multimedia' || cat === 'bilder')) return true;
+            return allowedTypes.some(at => at.toLowerCase() === cat);
+        });
+        console.log(`[FE-AUDIT] Filtered by "${libraryFilter}": ${prevCount} -> ${coverflowItems.length} items.`);
     }
 
-    // Update sub-category dropdown based on current set
-    updateSubCategoryFilterOptions(coverflowItems);
+    if (librarySearch) {
+        const prevCount = coverflowItems.length;
+        coverflowItems = coverflowItems.filter(i => (i.name || '').toLowerCase().includes(librarySearch.toLowerCase()));
+        console.log(`[FE-AUDIT] Filtered by Search: ${prevCount} -> ${coverflowItems.length} items.`);
+    }
 
-    // Sub-Filter
-    if (librarySubFilter !== 'all') {
+    // --- Sub-Filter (v1.35.68 Trace) ---
+    if (typeof librarySubFilter !== 'undefined' && librarySubFilter !== 'all') {
+        const prevCount = coverflowItems.length;
         coverflowItems = coverflowItems.filter(i => (i.category || '').toLowerCase() === librarySubFilter.toLowerCase());
+        console.log(`[FE-AUDIT] Filtered by Sub-Filter "${librarySubFilter}": ${prevCount} -> ${coverflowItems.length} items.`);
     }
 
     updateFilterOptions(coverflowItems);
@@ -464,3 +480,38 @@ async function scan(targetDir = null, clearDb = true) {
         }
     }
 }
+/**
+ * Reset All Filters (v1.35.68 Recovery)
+ * Clears all local storage and UI filter states to show all 541+ items.
+ */
+function resetAllFilters() {
+    console.warn("[RECOVERY] Resetting all frontend filters to clear the 'Black Hole'...");
+    
+    // Clear State
+    libraryFilter = 'all';
+    libraryGenre = 'all';
+    libraryYear = 'all';
+    librarySearch = '';
+    if (typeof librarySubFilter !== 'undefined') librarySubFilter = 'all';
+    
+    // Reset UI Elements
+    safeValue('queue-type-filter', 'all');
+    safeValue('library-search-input', '');
+    safeValue('genre-filter', 'all');
+    safeValue('year-filter', 'all');
+    
+    // Clear Persistent Storage (if used)
+    localStorage.removeItem('mwv_library_filter');
+    localStorage.removeItem('mwv_library_genre');
+    localStorage.removeItem('mwv_library_search');
+    
+    if (typeof showStatusNotification === 'function') {
+        showStatusNotification('Alle Filter zurückgesetzt', 'success');
+    }
+    
+    // Re-render
+    renderLibrary();
+}
+
+// Expose to window
+window.resetAllFilters = resetAllFilters;

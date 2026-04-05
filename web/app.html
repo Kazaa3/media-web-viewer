@@ -726,6 +726,8 @@
                     <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
                     <button id="btn-refresh-ui" onclick="location.reload()"
                         style="background: transparent; border: none; color: var(--text-secondary); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; opacity: 0.6;">↻ Ansicht laden</button>
+                    <button id="btn-reset-filters" onclick="if(typeof resetAllFilters === 'function') resetAllFilters()"
+                        style="background: transparent; border: none; color: #3498db; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; border-left: 1px solid var(--border-color); padding-left: 10px;">Reset Filters</button>
 
                     <!-- Advanced Toggles (Restored exact functions) -->
                     <div style="display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
