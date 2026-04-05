@@ -56,18 +56,36 @@ def log_request():
     logger.debug("network", f"HTTP Request: {bottle.request.method} {bottle.request.url}")
 
 
-@bottle.route('/health')
-def health_check():
+@bottle.route('/diag/pulse/<freq:int>.mp3')
+def diag_pulse(freq):
     """
-    @brief Lightweight health endpoint for HTTP latency diagnostics.
-    @details Sehr leichter Endpunkt zur Messung der Bottle/HTTP-Latenz.
-    @return Status dictionary / Status-Dictionary.
+    @brief Nuclear Diagnostic: Generates a sine-wave MP3 on-the-fly via FFmpeg.
+    @details Proves the backend-to-frontend stream pipeline without needing physical files.
+    @param freq Frequency in Hz (e.g., 440).
+    @return Audio stream.
     """
-    return {
-        "status": "ok",
-        "service": "media-web-viewer",
-        "timestamp": int(__import__('time').time() * 1000),
-    }
+    _log(f"DIAG-PULSE REQUESTED: {freq}Hz")
+    bottle.response.content_type = "audio/mpeg"
+    
+    cmd = [
+        'ffmpeg', '-y', '-hide_banner', '-loglevel', 'error',
+        '-f', 'lavfi', '-i', f'sine=frequency={freq}:duration=30',
+        '-f', 'mp3', 'pipe:1'
+    ]
+    
+    def generate():
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            while True:
+                chunk = proc.stdout.read(4096)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            proc.kill()
+            proc.wait()
+
+    return generate()
 
 
 @bottle.route('/media/<filepath:path>')

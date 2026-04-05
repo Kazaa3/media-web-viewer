@@ -1191,7 +1191,22 @@ def get_imprint_info():
     }
 
 
-@eel.expose
+@eel.expose@eel.expose
+def run_ffplay(url: str):
+    """
+    @brief Opens a local FFplay window to verify a stream URL.
+    @param url The URL to stream (e.g. http://localhost:8345/media/file.mp3)
+    """
+    import subprocess
+    log.info(f"[DIAG-FFPLAY] Launching native verifier for: {url}")
+    try:
+        # -nodisp: no video window if only audio, -autoexit: close when done
+        subprocess.Popen(['ffplay', '-nodisp', '-autoexit', url])
+        return {"status": "success", "message": "FFplay launched."}
+    except Exception as e:
+        log.error(f"[DIAG-FFPLAY] Launch failed: {e}")
+        return {"status": "error", "message": str(e)}
+
 def test_media_route(path: str):
     """Debug endpoint to test mode_router logic from UI."""
     from src.core.mode_router import smart_route

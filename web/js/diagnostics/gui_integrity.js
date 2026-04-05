@@ -1,6 +1,7 @@
 /**
- * gui_integrity.js (v1.35.48)
+ * gui_integrity.js (v1.35.50)
  * Handles visual verification and UI lockdown.
+ * Restores Boot Time, Scan Status, and FFplay Verifier.
  */
 
 const GUIIntegrity = {
@@ -54,6 +55,12 @@ const GUIIntegrity = {
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>FRONTEND ITEMS:</span> <span id="hud-ui-count">...</span></div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>SCAN STATUS:</span> <span id="hud-scan-status" style="color: #666;">IDLE</span></div>
                 <div style="display: flex; justify-content: space-between; border-top: 1px solid #003300; margin-top: 8px; padding-top: 5px;"><span>SYSTEM STATUS:</span> <span id="hud-status" style="color: white;">SYNCING</span></div>
+                <div style="margin-top: 10px;">
+                    <button onclick="GUIIntegrity.verifyWithFFplay()" 
+                            style="width: 100%; padding: 5px; background: rgba(0,255,0,0.1); border: 1px solid #00ff00; color: #00ff00; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;">
+                        VERIFY WITH FFPLAY
+                    </button>
+                </div>
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', hud);
@@ -131,6 +138,29 @@ const GUIIntegrity = {
             el.innerText = window.MWV_VERSION;
             el.style.color = "#00ff00";
             el.style.fontWeight = "bold";
+        }
+    },
+
+    verifyWithFFplay() {
+        const pipeline = document.getElementById('native-html5-audio-pipeline-element');
+        if (!pipeline || !pipeline.src) {
+             alert("Nothing playing (no source found in pipeline).");
+             return;
+        }
+
+        const url = pipeline.src;
+        console.log(">>> [INTEGRITY] Requesting native FFplay for:", url);
+        if (typeof eel !== 'undefined' && typeof eel.run_ffplay === 'function') {
+            eel.run_ffplay(url)((res) => {
+                console.log("[INTEGRITY] FFplay Response:", res);
+                if (res.status === 'success') {
+                    if (typeof showToast === 'function') showToast("FFplay Launched", "success");
+                } else {
+                    alert("FFplay Error: " + res.message);
+                }
+            });
+        } else {
+            alert("Eel run_ffplay not exposed.");
         }
     }
 };
