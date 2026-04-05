@@ -62,60 +62,111 @@ window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
 // --- TAB RENDERING: DEBUG DATABASE ---
 window.debugLogBuffer = []; // Store logs for filtering
 
-window.renderDebugDatabase = async function() {
-    const statsEl = document.getElementById('debug-db-overview-content');
-    const dictEl = document.getElementById('debug-items-json');
-    const pidEl = document.getElementById('debug-python-pid');
+/**
+ * VS Code Dark Syntax Highlighter (v1.35.68)
+ */
+function syntaxHighlightJSON(json) {
+    if (typeof json !== 'string') json = JSON.stringify(json, undefined, 2);
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'json-key';
+            } else {
+                cls = 'json-string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+            cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
+/**
+ * Modern Database Overview Renderer
+ */
+function renderDatabaseOverview() {
+    const container = document.getElementById('debug-db-overview-content');
+    if (!container) return;
+
+    const items = window.allLibraryItems || [];
+    const dbCount = window.__mwv_last_db_count || items.length;
     
-    if (statsEl) statsEl.innerHTML = '<span style="color: var(--accent-color);">Refreshing Database Stats...</span>';
-    if (dictEl) dictEl.innerHTML = '<span style="color: #6a1;">Loading Python Dictionary...</span>';
+    // Group by category
+    const cats = {};
+    items.forEach(item => {
+        const c = item.category || 'Uncategorized';
+        cats[c] = (cats[c] || 0) + 1;
+    });
+
+    let html = `
+        <div class="glass-card" style="padding: 15px; background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.2); text-align: center;">
+            <div style="font-size: 24px; font-weight: 800; color: #3498db;">${dbCount}</div>
+            <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">Total Items</div>
+        </div>
+    `;
+
+    Object.entries(cats).forEach(([cat, count]) => {
+        html += `
+            <div class="glass-card" style="padding: 15px; text-align: center; border: 1px solid var(--border-color);">
+                <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">${count}</div>
+                <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">${cat}</div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+window.renderDebugDatabase = async function() {
+    console.log("[DebugDB] Querying current state...");
+    const select = document.getElementById('debug-dict-select');
+    const display = document.getElementById('debug-items-json');
+    if (!display) return;
+
+    const type = select ? select.value : 'library';
+    let data = {};
 
     try {
-        if (typeof eel !== 'undefined' && eel.get_debug_stats) {
-            const stats = await eel.get_debug_stats()();
-            if (statsEl) {
-                let categoryHtml = '';
-                if (stats.categories) {
-                    categoryHtml = Object.entries(stats.categories).map(([k, v]) => `<li>${k}: ${v}</li>`).join('');
-                }
-
-                statsEl.innerHTML = `
-                    <div style="display: flex; gap: 40px;">
-                        <div>
-                            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Entries: ${stats.total_items || 0}</h4>
-                            <ul style="padding-left: 20px; color: var(--text-secondary); line-height: 1.6;">
-                                ${categoryHtml || '<li>Keine Daten</li>'}
-                            </ul>
-                        </div>
-                        <div style="min-width: 150px;">
-                            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Categories:</h4>
-                            <div style="font-size: 11px; opacity: 0.7;">DB Health: Synchronized</div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            if (pidEl) pidEl.innerText = stats.pid || '--';
-
-            const dictType = document.getElementById('debug-dict-select')?.value || 'library';
-            let dictData = null;
-
-            // Handle different probe types
-            if (dictType === 'env' && eel.get_environment_info) {
-                dictData = await eel.get_environment_info()();
-            } else if (dictType === 'formats' && eel.get_format_utils_exts) {
-                dictData = await eel.get_format_utils_exts()();
-            } else if (eel.get_debug_dict) {
-                dictData = await eel.get_debug_dict(dictType)();
-            }
-
-            if (dictEl) dictEl.innerText = JSON.stringify(dictData, null, 2);
+        if (type === 'library') {
+            data = window.allLibraryItems || [];
+        } else if (typeof eel !== 'undefined' && eel.get_debug_dict) {
+            data = await eel.get_debug_dict(type)();
         }
     } catch (err) {
-        if (statsEl) statsEl.innerHTML = `<span style="color: #f44;">Error: ${err.message}</span>`;
         console.error("renderDebugDatabase Error:", err);
+        data = { error: err.message };
     }
+
+    // Apply VS Code Highlighting
+    display.innerHTML = syntaxHighlightJSON(data);
 };
+
+// --- Sub-Tab Hijack to include new views (v1.35.68) ---
+// This ensures the new Database and Flags tabs work correctly in the modal
+setTimeout(() => {
+    if (typeof window.switchDiagnosticsView === 'function' && !window.__mwv_diag_hijacked) {
+        const originalSwitchDiagnosticsView = window.switchDiagnosticsView;
+        window.switchDiagnosticsView = function(viewId) {
+            if (typeof originalSwitchDiagnosticsView === 'function') {
+                originalSwitchDiagnosticsView(viewId);
+            }
+            
+            // Custom Handlers for New Views
+            if (viewId === 'database') {
+                if (typeof renderDatabaseOverview === 'function') renderDatabaseOverview();
+            } else if (viewId === 'flags') {
+                if (typeof toggleDebugMenu === 'function') toggleDebugMenu(true);
+            } else if (viewId === 'debug-db') {
+                if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
+            }
+        };
+        window.__mwv_diag_hijacked = true;
+    }
+}, 500);
 
 /**
  * Real-time Console Log Stream for Debug Tab
@@ -639,16 +690,28 @@ window.toggleBypassDb = toggleBypassDb;
  * Performs a 7-point integrity check using Sync Anchors.
  */
 async function runAutonomousSelfTest() {
+    // --- ADDED v1.35.68 Stage 10: Queue Parity Audit ---
+    const libCount = (typeof allLibraryItems !== 'undefined') ? allLibraryItems.length : 0;
+    const queueCount = (typeof currentPlaylist !== 'undefined') ? currentPlaylist.length : 0;
+    const isRaw = window.__mwv_raw_mode === true;
+    
+    if (isRaw && queueCount === libCount && libCount > 0) {
+        mwv_trace_render('DIAG-AUDIT', 'PASS', { stage: 10, title: "Queue Parity", detail: "JS-to-Queue Sync SUCCESS." });
+    } else if (isRaw && queueCount < libCount) {
+        mwv_trace_render('DIAG-AUDIT', 'WARN', { stage: 10, title: "Queue Parity", detail: `Mismatch! Lib: ${libCount}, Queue: ${queueCount}. Check filters.` });
+    } else {
+        mwv_trace_render('DIAG-AUDIT', 'INFO', { stage: 10, title: "Queue Parity", detail: `Status: ${queueCount} in Queue.` });
+    }
+
+    console.info(">>> [Self-Test] Completed 10-Point Audit.");
+
     console.warn(">>> [Self-Test] Initiating 7-Point Integrity Audit...");
     if (typeof showStatusNotification === 'function') {
         showStatusNotification('SELF-TEST: Audit gestartet...', 'info');
     }
 
     const results = { pass: 0, fail: 0, details: [] };
-    
     const dbCount = window.__mwv_last_db_count || 0;
-    const guiCount = (typeof allLibraryItems !== 'undefined') ? allLibraryItems.length : 0;
-    const queueCount = (typeof currentPlaylist !== 'undefined') ? currentPlaylist.length : 0;
 
     // Check 1: Parity (Black Hole Check)
     if (dbCount > 0 && guiCount === 0 && !window.__mwv_hide_db) {

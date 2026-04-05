@@ -497,8 +497,11 @@ function renderPlaylist() {
     if (containers.length === 0) return;
 
     // 1. Apply active filter (v1.35.61)
+    let isRaw = window.__mwv_raw_mode === true;
     let filteredItems = [...(isShuffle ? shuffledPlaylist : currentPlaylist)];
-    if (window.activeQueueFilter !== 'all') {
+
+    // v1.35.68: Bypass UI Filter in RAW mode to prevent '0 items' black hole
+    if (window.activeQueueFilter !== 'all' && !isRaw) {
         filteredItems = filteredItems.filter(item => {
             const isVideo = isVideoItem(item);
             const path = (item.path || item.name || "").toLowerCase();
@@ -797,14 +800,16 @@ function syncQueueWithLibrary() {
             const isReal = !item.stage;
             const video = isVideoItem(item);
             
-            // --- BRAIN FIX: Allow raw data and non-video items ---
+            // --- BRAIN FIX (v1.35.68): Force include in RAW mode or if not video ---
             const isAudioCandidate = !video || isRaw;
-            const keep = (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
+            const keep = isRaw || (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
             
             if (keep) audit.audio++; else audit.dropped++;
             return keep;
         });
-        console.info(`[Productive] Sync Audit: ${audit.audio} Audio-Candidates, ${audit.dropped} Dropped. (Raw Mode: ${isRaw})`);
+        
+        const countMsg = isRaw ? `FORCED RAW SYNC: ${audit.audio} Items` : `Sync Audit: ${audit.audio} Audio, ${audit.dropped} Dropped`;
+        console.info(`[Productive] ${countMsg} (Raw Toggle: ${isRaw})`);
     }
     
     if (filtered.length > 0 || isRaw) {

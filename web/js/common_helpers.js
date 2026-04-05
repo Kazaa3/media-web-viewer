@@ -350,8 +350,16 @@ function isVideoItem(item) {
         '.mp4', '.mkv', '.iso', '.webm', '.avi', '.mov', '.ts', '.m2ts', '.vob', '.m4v', '.mpg', '.mpeg', '.flv', '.wmv',
         '.mp4_pass', '.mp4_transcoded', '.mkv.mp4_pass' // v1.35.64 Diagnostic formats
     ];
+    const audioExtensions = ['.mp3', '.m4a', '.wav', '.flac', '.ogg'];
+    
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
+    
+    // Explicit Audio Override (v1.35.68 Stability)
+    if (ext && audioExtensions.includes(ext)) {
+        return false; 
+    }
+    
     if (ext && videoExtensions.includes(ext)) return true;
 
     return false;

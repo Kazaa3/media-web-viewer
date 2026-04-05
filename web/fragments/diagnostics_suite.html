@@ -6,8 +6,10 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);" data-i18n="nav_diagnostics">Diagnose-Suite</h2>
             <div class="options-nav-tabs" style="display: flex; gap: 4px;">
-                <button class="sub-tab-btn diagnostics-subtab" data-view="health" onclick="switchDiagnosticsView('health')">Systen-Health</button>
-                <button class="sub-tab-btn diagnostics-subtab" data-view="debug-db" onclick="switchDiagnosticsView('debug-db')">Debug DB</button>
+                <button class="sub-tab-btn diagnostics-subtab" data-view="health" onclick="switchDiagnosticsView('health')">System-Health</button>
+                <button class="sub-tab-btn diagnostics-subtab" data-view="database" onclick="switchDiagnosticsView('database')">Database</button>
+                <button class="sub-tab-btn diagnostics-subtab" data-view="flags" onclick="switchDiagnosticsView('flags')">Flags</button>
+                <button class="sub-tab-btn diagnostics-subtab" data-view="debug-db" onclick="switchDiagnosticsView('debug-db')">JSON-Debug</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="latency" onclick="switchDiagnosticsView('latency')">Latency</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="video-health" onclick="switchDiagnosticsView('video-health')">Video Health</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="tests" onclick="switchDiagnosticsView('tests')">Legacy Tests</button>
@@ -47,35 +49,38 @@
 
             <!-- Terminal Results Overlay -->
             <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; display: none; line-height: 1.5;"></div>
+        </di        <!-- VIEW: Database Overview (v1.35.68 New) -->
+        <div id="diagnostics-database-view" class="diagnostics-view" style="display: none; padding: 30px;">
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="glass-card" style="padding: 24px; border-top: 4px solid var(--accent-color);">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); font-weight: 800;">Item DB Summary</h3>
+                    <div id="debug-db-overview-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <!-- Injected via renderDatabaseOverview -->
+                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Lade Datenbank-Zahlen...</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- VIEW: Debug DB (Restored v1.34 Layout) -->
+        <!-- VIEW: System Flags (v1.35.68 New) -->
+        <div id="diagnostics-flags-view" class="diagnostics-view" style="display: none; padding: 30px;">
+            <div class="glass-card" style="padding: 30px; border-top: 4px solid #b71c1c; background: rgba(183, 28, 28, 0.02);">
+                <h3 style="margin: 0 0 20px 0; font-weight: 900; color: #b71c1c; font-size: 1.3em; text-transform: uppercase;">System Debug Orchestrator</h3>
+                <div id="modal-debug-flags" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <!-- Dynamically loaded via toggleDebugMenu logic -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: JSON Debug (Repurposed Debug DB) -->
         <div id="diagnostics-debug-db-view" class="diagnostics-view" style="display: none; height: calc(100% - 20px); overflow: hidden;">
             <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; height: 100%; padding: 20px;">
                 
-                <!-- LEFT COLUMN: DB Stats & Flags -->
-                <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0; overflow-y: auto;">
-                    
-                    <!-- Item DB (Übersicht) -->
-                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto;">
-                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Item DB (Übersicht)</h3>
-                        <div id="debug-db-overview-content" style="min-height: 80px;">
-                            <!-- Injected via renderDebugDatabase -->
-                        </div>
-                    </div>
-
-                    <!-- Debug Flags (Integrated) -->
-                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto; background: rgba(255, 82, 82, 0.02); border: 1px solid rgba(255, 82, 82, 0.1);">
-                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: #b71c1c; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">System Debug Flags</h3>
-                        <div id="modal-debug-flags" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
-                            <!-- Dynamically loaded via toggleDebugMenu logic -->
-                        </div>
-                    </div>
-
-                    <!-- Python Dict (Details) -->
-                    <div class="glass-card" style="padding: 20px; flex: 1; display: flex; flex-direction: column; min-height: 300px;">
+                <!-- LEFT COLUMN: JSON Data Explorer -->
+                <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+                    <div class="glass-card" style="padding: 20px; flex: 1; display: flex; flex-direction: column; min-height: 400px; border-top: 4px solid #34495e;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Python Dict (Details)</h3>
+                            <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em;">Python Dict (Details)</h3>
                             <select id="debug-dict-select" class="tab-btn" onchange="renderDebugDatabase()" style="padding: 4px 10px; font-size: 11px;">
                                 <option value="library">Library (Live Items)</option>
                                 <option value="config">Active Config Cache</option>
@@ -84,13 +89,21 @@
                                 <option value="formats">Format-Mappings (Exts)</option>
                             </select>
                         </div>
-                        <div style="flex: 1; background: #000; border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column;">
-                            <pre id="debug-items-json" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a0a0a0; overflow: auto; flex: 1;">Waiting for probe...</pre>
+                        <div style="flex: 1; background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; overflow: hidden; display: flex; flex-direction: column; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+                            <style>
+                                .json-key { color: #9cdcfe; font-weight: 700; }
+                                .json-string { color: #ce9178; }
+                                .json-number { color: #b5cea8; }
+                                .json-boolean { color: #569cd6; font-weight: 800; }
+                                .json-null { color: #569cd6; font-style: italic; }
+                            </style>
+                            <pre id="debug-items-json" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #d4d4d4; overflow: auto; flex: 1; line-height: 1.5;">Waiting for probe...</pre>
                         </div>
                     </div>
                 </div>
 
                 <!-- RIGHT COLUMN: Console / Logs -->
+s -->
                 <div class="glass-card" style="display: flex; flex-direction: column; padding: 20px; min-width: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Live Terminal / Console</h3>
