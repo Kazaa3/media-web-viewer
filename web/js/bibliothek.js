@@ -20,59 +20,49 @@ let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
  * Boots the library by fetching data from the DB.
  */
 async function loadLibrary(retryCount = 0) {
-    if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend (attempt ${retryCount + 1})...`, "DB-INFO");
+    if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
         const library = await getLibrary();
         allLibraryItems = library.media || [];
-        const msg = `[Library] Received ${allLibraryItems.length} items from backend.`;
-        mwv_trace('DATA-LIB', 'LOAD-COMPLETE', { count: allLibraryItems.length });
-        if (typeof appendUiTrace === 'function') appendUiTrace(msg, "DB-SUCCESS");
-
-        // Mock filter (uses safe double-() pattern for Eel)
-        let mockEnabled = false;
-        try {
-            if (typeof eel !== 'undefined' && typeof eel.get_mock_data_enabled === 'function') {
-                mockEnabled = await eel.get_mock_data_enabled()();
-            }
-        } catch(e) { /* safe: default to false */ }
-
-        let realItems = allLibraryItems.filter(i => !i.is_mock);
-        let mockItems = allLibraryItems.filter(i => i.is_mock);
-
-        if (typeof appendUiTrace === 'function') {
-            appendUiTrace(`[Library] Phase 2b: ${realItems.length} real, ${mockItems.length} mock items.`, "SUCCESS");
-        }
-
-        if (!mockEnabled) {
-            allLibraryItems = realItems;
-        }
-
-        // Auto-scan only if DB is completely empty (no real items at all)
-        if (realItems.length === 0 && !hasAutoScanned) {
-            const msgEmpty = "[Library] Discovery: No real media in DB. Starting auto-scan of './media'...";
-            mwv_trace('DOM-UI', 'AUTO-SCAN-TRIGGER');
-            if (typeof appendUiTrace === 'function') appendUiTrace(msgEmpty, "WARN");
-            hasAutoScanned = true;
-            if (typeof scan === 'function') {
-                scan('./media', true);
-                return; // scan() will call refreshLibrary() after completion
+        
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'BACKEND-RAW', { count: allLibraryItems.length });
+        
+        // --- V1.35 Recovery: Force Mock Item if Empty ---
+        const realItems = allLibraryItems.filter(i => !i.is_mock);
+        if (realItems.length === 0) {
+            const mockFallback = {
+                id: 'mock-item-recovery',
+                name: '[MOCK] System Test Audio',
+                artist: 'Media Viewer Core',
+                album: 'Recovery Module',
+                path: 'media/test_mock_item.mp3',
+                category: 'Audio',
+                is_mock: true,
+                tags: { title: 'Recovery Success', artist: 'Antigravity Diagnostic' }
+            };
+            allLibraryItems = [mockFallback];
+            if (typeof appendUiTrace === 'function') appendUiTrace("[Recovery] Injected diagnostic mock item.", "WARN");
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-MOCK', { item: mockFallback.name });
+            // Auto-scan only if not done yet
+            if (!hasAutoScanned) {
+                hasAutoScanned = true;
+                if (typeof scan === 'function') scan('./media', true);
             }
         }
 
-        // Phase 3: Render Library tab
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 3: Rendering ${allLibraryItems.length} items...`, "UI-INFO");
+        // --- Phase 2: Metadata & UI Refresh ---
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-BROADCAST', { count: allLibraryItems.length });
+        
+        // Ensure main UI rendering
         if (typeof renderLibrary === 'function') renderLibrary();
-
-        // Phase 4: Sync specialized components (Legacy Gallery Sync removed)
-
-        // Phase 5: Sync Queue
+        
+        // Ensure Queue synchronization (Playback Chain Start)
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
 
         document.dispatchEvent(new CustomEvent('mwv_library_ready', { detail: { count: allLibraryItems.length } }));
 
     } catch (e) {
-        mwv_trace('DATA-LIB', 'ERROR', { message: e.message, retry: retryCount });
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] ERROR: ${e.message}`, "DB-ERROR");
+        if (typeof log_js_error === 'function') log_js_error(e, 'DATA-LIB-LOAD');
         if (retryCount < 3) {
             setTimeout(() => loadLibrary(retryCount + 1), 2000);
         }
@@ -91,9 +81,18 @@ async function refreshLibrary() {
  * The main UI update entry point for the Library tab.
  */
 async function renderLibrary() {
+        // Instrumentation: Log item counts
+        if (typeof mwv_trace_render === 'function') {
+            mwv_trace_render('LIBRARY', 'RENDER', {
+                raw: allLibraryItems.length,
+                filtered: coverflowItems.length
+            });
+        }
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'RENDER-START', { count: allLibraryItems.length });
+    
     const track = document.getElementById('coverflow-track');
     if (!track) {
-        console.warn("[Library] Render aborted: #coverflow-track missing.");
+        if (typeof log_js_error === 'function') log_js_error(new Error("#coverflow-track missing"), 'LIBRARY-RENDER');
         return;
     }
 

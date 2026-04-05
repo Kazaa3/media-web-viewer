@@ -402,6 +402,15 @@ async function playPrev() {
  * Renders the global playlist in the Playlist tab.
  */
 function renderPlaylist() {
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'RENDER-START', { count: currentPlaylist.length });
+    // Instrumentation: Log playlist items
+    if (typeof mwv_trace_render === 'function') {
+        mwv_trace_render('PLAYER-QUEUE', 'ITEMS', {
+            items: currentPlaylist.map(i => i.name || i.id || '[unnamed]'),
+            count: currentPlaylist.length
+        });
+    }
+    
     const containers = [
         document.getElementById('playlist-content-render-target'),
         document.getElementById('active-queue-list-render-target'),
@@ -414,7 +423,8 @@ function renderPlaylist() {
     
     const countEl = document.getElementById('queue-item-count');
     if (countEl) countEl.innerText = `${currentPlaylist.length} Titel`;
-
+    
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'CONTAINERS', { count: containers.length });
     console.log(`[Audio] Rendering playlist on ${containers.length} containers. Items: ${currentPlaylist.length}`);
     if (containers.length === 0) {
         // If the player fragment was just loaded, the container might be there but the script ran too fast.
@@ -646,12 +656,10 @@ function addAndPlayNow(el, item) {
  * Synchronizes the player queue with the current library state.
  */
 function syncQueueWithLibrary() {
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-QUEUE', 'SYNC-START', { libCount: (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0) });
+    
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        console.warn("[Audio] syncQueueWithLibrary: No library items found to sync.");
-        const container = document.getElementById('active-queue-list-render-target-warteschlange');
-        if (container && container.innerHTML.trim() === '') {
-            renderPlaylist(); // Show the 'Queue empty' UI
-        }
+        if (typeof appendUiTrace === 'function') appendUiTrace("[Audio] Sync: Library Empty.", "WARN");
         return;
     }
     
@@ -670,6 +678,21 @@ function syncQueueWithLibrary() {
     if (audioItems.length > 0) {
         currentPlaylist = [...audioItems];
         if (playlistIndex === -1) playlistIndex = 0;
+        
+        // --- V1.35 Recovery Auto-Play ---
+        const firstItem = currentPlaylist[0];
+        if (firstItem && firstItem.is_mock) {
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-RECOVERY', 'AUTO-PLAY-TRIGGER', { name: firstItem.name });
+            
+            // Check if pipeline is idle
+            const pipeline = document.getElementById('native-html5-audio-pipeline-element');
+            if (pipeline && (pipeline.paused || pipeline.ended || !pipeline.src)) {
+                if (typeof playAudio === 'function') {
+                   setTimeout(() => playAudio(firstItem), 500);
+                }
+            }
+        }
+
         if (typeof renderPlaylist === 'function') renderPlaylist();
         if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
     }

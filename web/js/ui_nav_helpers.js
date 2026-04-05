@@ -3,6 +3,31 @@
  * Extracted from app.html to improve modularity and maintainability.
  */
 
+// Global Navigation Actions Registry (v1.35)
+window.mwv_init_actions = {
+    'player': () => {
+        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        if (typeof renderPlaylist === 'function') renderPlaylist();
+        if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+    },
+    'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
+    'library': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
+    'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
+    'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
+    'edit': () => { if (typeof initEdit === 'function') initEdit(); },
+    'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
+    'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
+    'options': () => {
+        if (typeof switchOptionsView === 'function') switchOptionsView('general');
+        if (typeof loadDebugFlags === 'function') loadDebugFlags();
+    },
+    'debug': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); },
+    'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
+    'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
+    'tests': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('health'); },
+    'diagnostics': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); }
+};
+
 // Global state variables
 let librarySubTab = 'coverflow';
 let librarySubFilter = 'all';
@@ -283,38 +308,19 @@ function finishSwitchTab(tabId, targetId, btn) {
 
     localStorage.setItem('mwv_active_tab', tabId);
 
-    // Context-specific actions (V1.35 Hardened)
+    // Context-specific actions (V1.35 Hardened Registry)
     try {
-        const initActions = {
-            'player': () => {
-                if (typeof renderPlaylist === 'function') renderPlaylist();
-                if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-                if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
-            },
-            'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
-            'library': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
-            'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
-            'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
-            'edit': () => { if (typeof initEdit === 'function') initEdit(); },
-            'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
-            'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
-            'options': () => {
-                if (typeof switchOptionsView === 'function') switchOptionsView('general');
-                if (typeof loadDebugFlags === 'function') loadDebugFlags();
-            },
-            'debug': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); }
-        };
-
-        if (initActions[tabId]) {
-            if (typeof mwv_trace === 'function') mwv_trace('NAV-INIT', tabId, { status: 'executing' });
-            initActions[tabId]();
+        const tabInit = window.mwv_init_actions[tabId];
+        if (tabInit) {
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-INIT', 'EXECUTE', { tabId });
+            tabInit();
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-INIT', 'SUCCESS', { tabId });
+        } else {
+            if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-INIT', 'NO-ACTION', { tabId });
         }
     } catch (err) {
         if (typeof log_js_error === 'function') log_js_error(err, `INIT-ACTION:${tabId}`);
-    }
-
-    if (initActions[tabId]) {
-        initActions[tabId]();
+        if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-INIT', 'FAIL', { tabId, error: err.message });
     }
 
     if (navTimeout) {
