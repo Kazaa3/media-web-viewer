@@ -13,8 +13,15 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Details</button>
                 <button id="lib-tab-btn-streaming" class="sub-tab-btn" onclick="switchLibrarySubTab('streaming')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Streaming</button>
-                <button id="lib-tab-btn-album" class="sub-tab-btn" onclick="switchLibrarySubTab('album')">
+                <div style="height: 1px; background: var(--border-color); margin: 10px 5px;"></div>
+                <button id="lib-tab-btn-films" class="sub-tab-btn" onclick="switchLibrarySubTab('films')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10l5-6 5 6"/><circle cx="12" cy="15" r="2"/></svg> Filme</button>
+                <button id="lib-tab-btn-series" class="sub-tab-btn" onclick="switchLibrarySubTab('series')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2l2 5"/><path d="M7 2l-2 5"/></svg> Serien</button>
+                <button id="lib-tab-btn-albums" class="sub-tab-btn" onclick="switchLibrarySubTab('albums')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Alben</button>
+                <button id="lib-tab-btn-audiobooks" class="sub-tab-btn" onclick="switchLibrarySubTab('audiobooks')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Hörbuch</button>
             </div>
 
             <!-- Category Filters -->
@@ -154,10 +161,31 @@
                 target.classList.add('active');
                 
                 const btn = document.getElementById('lib-tab-btn-' + viewId);
+                document.getElementById('lib-results-container').style.display = 'block';
+                
+                // --- V1.35.68 Fragment Injection ---
+                const fragmentViewId = viewId === 'films' ? 'film_view.html' : 
+                                     viewId === 'series' ? 'serie_view.html' :
+                                     viewId === 'albums' ? 'album_view.html' :
+                                     viewId === 'audiobooks' ? 'audiobook_view.html' : null;
+                
+                if (fragmentViewId && typeof FragmentLoader !== 'undefined') {
+                    // Inject specialized high-fidelity view into results pane
+                    FragmentLoader.load('lib-results-container', 'fragments/' + fragmentViewId, () => {
+                        console.log(`[Library] Loaded specialized fragment: ${fragmentViewId}`);
+                        // Hydrate specialized view
+                        if (viewId === 'films' && typeof initFilmsView === 'function') initFilmsView();
+                        else if (viewId === 'series' && typeof initSeriesView === 'function') initSeriesView();
+                        else if (viewId === 'albums' && typeof initAlbumsView === 'function') initAlbumsView();
+                        else if (viewId === 'audiobooks' && typeof initAudiobooksView === 'function') initAudiobooksView();
+                    });
+                } else {
+                    if (typeof renderLibrary === 'function') renderLibrary();
+                }
+                
                 if (btn) btn.classList.add('active');
                 
                 // Trigger view-specific render
-                if (typeof renderLibrary === 'function') renderLibrary();
                 if (viewId === 'database' && typeof renderDatabaseView === 'function') renderDatabaseView();
             }
         }

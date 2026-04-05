@@ -96,15 +96,6 @@
                 <div class="divider-v" style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
                 <button id="nav-btn-cinema" class="menu-item-btn" onclick="switchMainCategory('cinema', this)"
                     data-category="cinema" style="color: #f1c40f;">Cinema</button>
-                <button id="nav-btn-films" class="menu-item-btn" onclick="switchMainCategory('films', this)"
-                    data-category="films">Filme</button>
-                <button id="nav-btn-series" class="menu-item-btn" onclick="switchMainCategory('series', this)"
-                    data-category="series">Serien</button>
-                <button id="nav-btn-albums" class="menu-item-btn" onclick="switchMainCategory('albums', this)"
-                    data-category="albums">Alben</button>
-                <button id="nav-btn-audiobooks" class="menu-item-btn" onclick="switchMainCategory('audiobooks', this)"
-                    data-category="audiobooks">Hörbuch</button>
-                <div class="divider-v" style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
                 <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
                     data-category="file">Browser</button>
                 <button id="nav-btn-edit" class="menu-item-btn" onclick="switchMainCategory('edit', this)"
@@ -120,7 +111,7 @@
                 <button id="nav-btn-tools" class="menu-item-btn" onclick="switchMainCategory('tools', this)"
                     data-category="tools">Tools</button>
                 <button id="nav-btn-reporting" class="menu-item-btn" onclick="switchMainCategory('reporting', this)"
-                    data-category="reporting" style="border-radius: 6px; border: 1px solid #2ecc7133; color: #2ecc71;">Report</button>
+                    data-category="reporting">Report</button>
                 <button id="nav-btn-logbuch" class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
                     data-category="logbuch">Logbuch</button>
                 <button id="nav-btn-video" class="menu-item-btn" onclick="switchMainCategory('video', this)" data-category="video">Video</button>
@@ -534,34 +525,6 @@
             <div id="cinema-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
                 <div id="cinema-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Cinema-Grid...</div>
-                </div>
-            </div>
-
-            <!-- TAB: Filme (Object-based) -->
-            <div id="films-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
-                <div id="films-main-viewport" class="content-deck-fill">
-                    <div class="loading-fragment">Lade Filme-Kollektion...</div>
-                </div>
-            </div>
-
-            <!-- TAB: Serien (Season handlers) -->
-            <div id="series-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
-                <div id="series-main-viewport" class="content-deck-fill">
-                    <div class="loading-fragment">Lade Serien-Engine...</div>
-                </div>
-            </div>
-
-            <!-- TAB: Alben (Track groups) -->
-            <div id="albums-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
-                <div id="albums-main-viewport" class="content-deck-fill">
-                    <div class="loading-fragment">Lade Album-Liste...</div>
-                </div>
-            </div>
-
-            <!-- TAB: Hörbuch (m4b chapters) -->
-            <div id="audiobooks-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
-                <div id="audiobooks-main-viewport" class="content-deck-fill">
-                    <div class="loading-fragment">Lade Hörbuch-Katalog...</div>
                 </div>
             </div>
 
