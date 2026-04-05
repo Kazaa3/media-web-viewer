@@ -96,18 +96,28 @@ function play(item, path, startTime = 0) {
  */
 function playMediaObject(item) {
     if (!item) return;
-    if (isVideoItem(item)) {
+    
+    const isVideo = isVideoItem(item);
+    if (isVideo) {
         console.info("[Play-Routing] Video detected, switching to Video Player tab:", item.path);
         if (typeof switchTab === 'function') {
-            switchTab('video', document.getElementById('media-orchestrator-tab-trigger'));
+            switchTab('video', null, () => {
+                 if (typeof playVideo === 'function') {
+                     playVideo(item, item.path);
+                 } else {
+                     console.warn("[Play-Routing] Video fragment loaded, but playVideo() not found.");
+                 }
+            }, false);
         }
-        setTimeout(() => {
-            if (typeof playVideo === 'function') playVideo(item, item.path);
-        }, 100);
     } else {
+        console.info("[Play-Routing] Audio detected, switching to Audio Player tab:", item.path);
         addToQueue(item);
         if (typeof switchTab === 'function') {
-            switchTab('player', document.getElementById('active-queue-tab-trigger'));
+            switchTab('player', null, () => {
+                if (typeof playAudio === 'function') {
+                    playAudio(item);
+                }
+            }, false);
         }
     }
 }

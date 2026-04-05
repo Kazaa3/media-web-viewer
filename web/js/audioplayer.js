@@ -502,8 +502,9 @@ function renderPlaylist() {
         if (index === playlistIndex) div.classList.add('active');
 
         const tags = item.tags || {};
-        // v1.35.36: Multilayer Metadata Lookup
-        const titleDisplay = item.title || tags.title || item.name || item.id || 'System Recovery Item';
+        // v1.35.63: Prepend Stage Label [S#] if present
+        const stagePrefix = item.stage ? `[${item.stage}] ` : '';
+        const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Recovery Item');
         const artistDisplay = item.artist || tags.artist || 'MWV Recovery';
         
         div.innerHTML = `
