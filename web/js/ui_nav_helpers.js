@@ -514,41 +514,69 @@ function updateGlobalSubNav(category) {
     // V1.34 Master: Top-bar pills are now legacy. 
     // We only populate if the category specifically requires a global override.
     const subNavMap = {
-        'player': [
-            { id: 'warteschlange', label: 'Warteschlange', action: "switchPlayerView('warteschlange')" },
-            { id: 'mediengalerie', label: 'Galerie', action: "switchPlayerView('mediengalerie')" },
-            { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
+        'media': [
+            { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
+            { id: 'mediengalerie', label: 'Mediengalerie', action: "switchPlayerView('mediengalerie')" },
+            { id: 'playlist', label: 'Playlist Manager', action: "switchTab('playlist')" },
+            { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" },
+            { id: 'video-cinema', label: 'Video Cinema', action: "switchTab('video')" }
         ],
-        'reporting': [
-            { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
-            { id: 'database', label: 'Database', action: "switchReportingSubView('database')" },
-            { id: 'video-health', label: 'Video Health', action: "switchReportingSubView('video-health')" },
-            { id: 'audio-health', label: 'Audio Health', action: "switchReportingSubView('audio-health')" }
+        'library': [
+            { id: 'visual', label: 'Mediathek', action: "switchLibraryDomain('visual')" },
+            { id: 'browse', label: 'Dateibrowser', action: "switchLibraryDomain('browse')" },
+            { id: 'inventory', label: 'Inventar & DB', action: "switchLibraryDomain('inventory')" }
         ],
-        'tests': [
-            { id: 'health', label: 'System Health', action: "switchDiagnosticsView('health')" },
-            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
-            { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsView('debug-db')" },
-            { id: 'latency', label: 'Latency Profile', action: "switchDiagnosticsView('latency')" }
+        'file': [
+            { id: 'local', label: 'Lokale Platten', action: "fbNavigate('/')" },
+            { id: 'media', label: 'Media Folder', action: "fbNavigate('./media')" }
+        ],
+        'edit': [
+            { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },
+            { id: 'artwork', label: 'Artwork Lab', action: "switchEditView('artwork')" },
+            { id: 'analysis', label: 'Analyse', action: "switchEditView('analysis')" }
+        ],
+        'system': [
+            { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
+            { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
+            { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" },
+            { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
+            { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" }
         ],
         'options': [
             { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
             { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
-            { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" }
+            { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" },
+            { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
+            { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" }
+        ],
+        'parser': [
+            { id: 'config', label: 'Konfiguration', action: "switchParserView('config')" },
+            { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" }
+        ],
+        'debug': [
+            { id: 'overview', label: 'Übersicht', action: "switchDiagnosticsView('debug-db')" },
+            { id: 'tests', label: 'Skript-Tests', action: "switchDiagnosticsView('tests')" },
+            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
+            { id: 'health', label: 'System-Check', action: "switchDiagnosticsView('health')" }
+        ],
+        'tests': [
+            { id: 'health', label: 'System Health', action: "switchDiagnosticsView('health')" },
+            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
+            { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsView('debug-db')" }
         ],
         'tools': [
             { id: 'transcoding', label: 'Transcoding', action: "switchToolsView('transcoding')" },
             { id: 'processing', label: 'Processing', action: "switchToolsView('processing')" },
             { id: 'repair', label: 'DB Repair', action: "switchToolsView('repair')" }
         ],
-        'parser': [
-            { id: 'general', label: 'Konfiguration', action: "switchParserView('general')" },
-            { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" }
-        ],
         'logbuch': [
             { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
             { id: 'events', label: 'Events (Live)', action: "switchLogbookSubView('events')" },
             { id: 'docs', label: 'Documentation', action: "switchLogbookSubView('docs')" }
+        ],
+        'reporting': [
+            { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
+            { id: 'database', label: 'Database', action: "switchReportingSubView('database')" }
         ]
     };
 

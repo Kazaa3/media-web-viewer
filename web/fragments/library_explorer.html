@@ -147,4 +147,60 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
+
+    <script>
+        /**
+         * Switch Library Domains (Visual, Browse, Inventory)
+         */
+        function switchLibraryDomain(domainId) {
+            if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LIB-DOMAIN', domainId);
+            
+            document.querySelectorAll('.lib-domain-content').forEach(el => el.style.display = 'none');
+            const target = document.getElementById('lib-domain-' + domainId);
+            if (target) {
+                target.style.display = 'flex';
+                // Trigger domain-specific refresh
+                if (domainId === 'visual') {
+                    if (typeof renderLibrary === 'function') renderLibrary();
+                } else if (domainId === 'browse' && typeof fbNavigate === 'function') {
+                    fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/');
+                } else if (domainId === 'inventory' && typeof refreshLibrary === 'function') {
+                    refreshLibrary();
+                }
+            }
+        }
+
+        /**
+         * Switch Library Sub-Tabs (Coverflow, Grid, Details, etc.)
+         */
+        function switchLibrarySubTab(viewId) {
+            if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LIB-VIEW', viewId);
+            
+            document.querySelectorAll('.library-sub-content').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.sub-tab-btn').forEach(el => el.classList.remove('active'));
+            
+            const target = document.getElementById('lib-view-' + viewId);
+            if (target) {
+                target.style.display = (viewId === 'coverflow') ? 'flex' : 'block';
+                target.classList.add('active');
+                
+                const btn = document.getElementById('lib-tab-btn-' + viewId);
+                if (btn) btn.classList.add('active');
+                
+                // Trigger view-specific render
+                if (typeof renderLibrary === 'function') renderLibrary();
+                if (viewId === 'database' && typeof renderDatabaseView === 'function') renderDatabaseView();
+            }
+        }
+
+        // Default to coverflow if nothing active
+        setTimeout(() => {
+            const active = document.querySelector('.library-sub-content.active');
+            if (!active) switchLibrarySubTab('coverflow');
+        }, 100);
+    </script>

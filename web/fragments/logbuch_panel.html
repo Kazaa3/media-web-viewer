@@ -13,25 +13,42 @@
         </div>
     </div>
 
-    <!-- Filter & Search Bar (Pill Form) -->
-    <div style="padding: 20px 30px; background: var(--bg-primary); display: flex; gap: 15px; align-items: center;">
-        <div style="flex: 1; position: relative;">
-            <input type="text" id="log-search-input" placeholder="Search event history..." 
-                oninput="filterLogUI()"
-                style="width: 100%; padding: 10px 20px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; outline: none;">
-        </div>
-        <select id="log-level-filter" onchange="filterLogUI()" class="action-btn" style="padding: 8px 16px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); min-width: 140px;">
-            <option value="all">Alle Kritikalitäten</option>
-            <option value="INFO">Information</option>
-            <option value="WARN">Warnungen</option>
-            <option value="ERROR">Kritische Fehler</option>
-            <option value="DEBUG">System Debug</option>
-        </select>
+    <!-- Sub-Navigation (Pills) -->
+    <div class="sub-nav-bar" style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;">
+        <button id="log-subtab-journal" class="tab-btn active" onclick="switchLogbookSubView('journal')">Journal</button>
+        <button id="log-subtab-events" class="tab-btn" onclick="switchLogbookSubView('events')">System Events</button>
     </div>
 
-    <!-- Log List Area (Terminal Style Console) -->
-    <div id="log-content-area" style="flex: 1; margin: 0 30px 20px 30px; overflow-y: auto; background: #000; border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: inset 0 2px 20px rgba(0,0,0,0.6);">
-        <pre id="log-entry-list" style="margin: 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11.5px; line-height: 1.5; color: #dcdccc; white-space: pre-wrap; word-break: break-all;"></pre>
+    <!-- VIEW: Journal -->
+    <div id="log-view-journal" class="log-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        <!-- Filter & Search Bar (Pill Form) -->
+        <div style="padding: 20px 30px; background: var(--bg-primary); display: flex; gap: 15px; align-items: center;">
+            <div style="flex: 1; position: relative;">
+                <input type="text" id="log-search-input" placeholder="Search event history..." 
+                    oninput="filterLogUI()"
+                    style="width: 100%; padding: 10px 20px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; outline: none;">
+            </div>
+            <select id="log-level-filter" onchange="filterLogUI()" class="action-btn" style="padding: 8px 16px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); min-width: 140px;">
+                <option value="all">Alle Kritikalitäten</option>
+                <option value="INFO">Information</option>
+                <option value="WARN">Warnungen</option>
+                <option value="ERROR">Kritische Fehler</option>
+                <option value="DEBUG">System Debug</option>
+            </select>
+        </div>
+
+        <!-- Log List Area (Terminal Style Console) -->
+        <div id="log-content-area" style="flex: 1; margin: 0 30px 20px 30px; overflow-y: auto; background: #000; border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: inset 0 2px 20px rgba(0,0,0,0.6);">
+            <pre id="log-entry-list" style="margin: 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11.5px; line-height: 1.5; color: #dcdccc; white-space: pre-wrap; word-break: break-all;"></pre>
+        </div>
+    </div>
+
+    <!-- VIEW: Events (Live Console Overlay) -->
+    <div id="log-view-events" class="log-view" style="display: none; flex: 1; padding: 30px; background: #050505;">
+        <div class="glass-card" style="height: 100%; border: 1px solid #333; background: #000; padding: 20px; font-family: monospace; color: #0f0; overflow-y: auto;">
+            <div style="color: #666; margin-bottom: 20px; font-size: 11px; text-transform: uppercase;">Real-Time Socket Stream...</div>
+            <div id="live-event-stream">Connecting to mwv_trace pipeline...</div>
+        </div>
     </div>
 
     <!-- Stats Footer -->
@@ -42,5 +59,25 @@
         </div>
         <div>Last Update: <span id="log-last-update" style="font-family: monospace;">--:--:--</span></div>
     </div>
+</div>
+
+<script>
+    /**
+     * Switch Logbook Views (v1.34 Master)
+     */
+    function switchLogbookSubView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LOG', viewId);
+        
+        document.querySelectorAll('.log-view').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#logbook-fragment .tab-btn').forEach(el => el.classList.remove('active'));
+        
+        const target = document.getElementById('log-view-' + viewId);
+        if (target) {
+            target.style.display = 'flex';
+            const btn = document.getElementById('log-subtab-' + viewId);
+            if (btn) btn.classList.add('active');
+        }
+    }
+</script>
 </div>
 <!-- ===================== LOGBOOK PANEL END ===================== -->

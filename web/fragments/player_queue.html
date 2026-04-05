@@ -199,4 +199,50 @@
 
     </div>
 </div>
+
+<script>
+    /**
+     * Switch Player Sub-Views (v1.34 Master)
+     */
+    function switchPlayerView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-PLAYER', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.player-view-container').forEach(el => {
+            el.style.display = 'none';
+            el.classList.remove('active');
+        });
+        
+        // Deactivate all sub-nav buttons
+        document.querySelectorAll('.player-sub-nav-btn').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Show target view
+        const target = document.getElementById('player-view-' + viewId);
+        if (target) {
+            target.style.display = 'flex';
+            target.classList.add('active');
+            
+            // Sync with sub-nav buttons
+            const btn = document.querySelector(`.player-sub-nav-btn[onclick*="'${viewId}'"]`);
+            if (btn) btn.classList.add('active');
+        }
+
+        // Trigger view-specific data refresh
+        if (viewId === 'mediengalerie' && typeof renderItemGallery === 'function') {
+            renderItemGallery();
+        } else if (viewId === 'warteschlange' && typeof renderPlaylist === 'function') {
+            renderPlaylist();
+        } else if (viewId === 'visualizer' && typeof initVisualizer === 'function') {
+            initVisualizer();
+        }
+    }
+
+    // Default to Mediengalerie on first load if nothing active
+    setTimeout(() => {
+        const active = document.querySelector('.player-view-container.active');
+        if (!active) switchPlayerView('mediengalerie');
+    }, 100);
+</script>
 <!-- ===================== PLAYER QUEUE END ===================== -->

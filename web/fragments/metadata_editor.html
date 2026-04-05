@@ -136,3 +136,56 @@
         </div>
     </div>
 </div>
+
+<script>
+    /**
+     * Switch Metadata Editor Views (v1.34 Master)
+     */
+    function switchEditView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-EDIT', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.edit-view').forEach(el => {
+            el.style.display = 'none';
+            el.classList.remove('active');
+        });
+        
+        // Deactivate all sub-tab buttons
+        document.querySelectorAll('.sub-tab-btn').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Map short IDs to actual IDs
+        const map = {
+            'tags': 'edit-metadata-view',
+            'metadata': 'edit-metadata-view',
+            'mediainfo': 'edit-mediainfo-view',
+            'ffprobe': 'edit-ffprobe-view',
+            'ffmpeg': 'edit-ffmpeg-view',
+            'artwork': 'edit-metadata-view',
+            'analysis': 'edit-ffprobe-view'
+        };
+
+        const targetId = map[viewId] || ('edit-' + viewId + '-view');
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.style.display = 'block';
+            target.classList.add('active');
+            
+            // Sync with sub-nav buttons
+            const btn = document.getElementById('edit-subtab-' + viewId);
+            if (btn) btn.classList.add('active');
+        }
+
+        // Auto-trigger analysis if entering ffprobe
+        if (viewId === 'ffprobe' || viewId === 'analysis') {
+            if (typeof triggerFfprobeAnalysis === 'function') triggerFfprobeAnalysis();
+        }
+    }
+
+    // Default to metadata on load
+    setTimeout(() => {
+        const active = document.querySelector('.edit-view.active');
+        if (!active) switchEditView('metadata');
+    }, 100);
+</script>
