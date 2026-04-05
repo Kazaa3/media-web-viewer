@@ -197,69 +197,74 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
         // 0. Load UI Fragments in Parallel
+        let fragmentsNeeded = 4;
+        let fragmentsLoaded = 0;
+        const onFragmentDone = () => {
+            fragmentsLoaded++;
+            if (fragmentsLoaded === fragmentsNeeded) {
+                console.log("Orchestrator: All fragments ready. Finalizing boot...");
+                mwv_finalize_boot();
+            }
+        };
+
         if (typeof FragmentLoader?.load === 'function') {
             FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => {
                 console.log("DOM: Modals fragment initialized.");
                 if (typeof initTranslations === 'function') initTranslations();
+                onFragmentDone();
             });
             
             FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
                 console.log("DOM: Player fragment initialized.");
                 if (typeof mwv_init_actions?.player === 'function') mwv_init_actions.player();
+                onFragmentDone();
             });
 
             FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => {
                 console.log("DOM: Library fragment initialized.");
+                onFragmentDone();
             });
 
             FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => {
                 console.log("DOM: Editor fragment initialized.");
+                onFragmentDone();
             });
         } else {
             console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
+            mwv_finalize_boot(); // Fallback
         }
 
-        // 1. Default Start Screen
-        console.log("UI: Setting default category and tab...");
-        if (typeof switchMainCategory === 'function') switchMainCategory('media');
-        
-        // Apply persisted sidebar state
-        if (typeof applySidebarState === 'function') applySidebarState();
-        
-        // Start stats polling for integrated analyzer
-        if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
-            setInterval(() => {
-                if (typeof window.StatsOverlay.updateStats === 'function') {
-                    // Only poll if tab is active or overlay is visible
-                    const activeTab = localStorage.getItem('mwv_active_tab');
-                    if (activeTab === 'video' || window.StatsOverlay.isVisible) {
-                        window.StatsOverlay.updateStats();
+        async function mwv_finalize_boot() {
+            // 1. Default Start Screen
+            console.log("UI: Setting default category and tab...");
+            if (typeof switchMainCategory === 'function') switchMainCategory('media');
+            
+            // Apply persisted sidebar state
+            if (typeof applySidebarState === 'function') applySidebarState();
+            
+            // Start stats polling
+            if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
+                setInterval(() => {
+                    if (typeof window.StatsOverlay.updateStats === 'function') {
+                        const activeTab = localStorage.getItem('mwv_active_tab');
+                        if (activeTab === 'video' || window.StatsOverlay.isVisible) {
+                            window.StatsOverlay.updateStats();
+                        }
                     }
-                }
-            }, 2000);
-        }
-        
-        // Ensure switchTab is called after a tiny delay to allow other modules to settle
-        setTimeout(() => {
+                }, 2000);
+            }
+
+            // Trigger Tab Switch
             if (typeof switchTab === 'function') {
                 console.log("UI: Switching to 'player' tab.");
                 switchTab('player');
-            } else {
-                console.error("UI: switchTab function missing during boot!");
             }
-        }, 100);
-        
-        // 2. Initialize Library & Inventory (Prioritized for Video/Audio Sync)
-        document.addEventListener('mwv_library_ready', () => {
-            console.log("Data: Library ready, syncing specialized components...");
-            if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-        });
 
-        setTimeout(async () => {
-            console.log("Data: Triggering library and edit-item loads...");
+            // Sync Data
+            console.log("Data: Triggering library sync...");
             if (typeof loadLibrary === 'function') await loadLibrary();
             if (typeof loadEditItems === 'function') await loadEditItems();
-        }, 150);
+        }
 
         // 3. Fetch and Display Startup Time
         setTimeout(async () => {
