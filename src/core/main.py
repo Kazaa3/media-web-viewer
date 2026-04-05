@@ -3295,11 +3295,19 @@ def get_library(force_raw: bool = False) -> Dict[str, Any]:
     """
     @brief Main entry point for fetching the media library.
     """
+    # Explicitly ensure we use the global/package db module (v1.35.68)
+    from src.core import db
+    
     all_media = []
     count_total = 0
     try:
         all_media = db.get_all_media()
         count_total = len(all_media)
+        
+        # Diagnostic Log: Confirming the path and count for the 'Black Hole' audit
+        path_info = getattr(db, 'DB_FILENAME', 'Unknown')
+        log.info(f"[BD-AUDIT] get_library: Path={path_info} | Raw Count={count_total}")
+        
     except Exception as e:
         log.error(f"[BD-AUDIT] DB Access Error: {e}")
         return {"media": [], "db_count": 0, "status": "error", "error": str(e)}
