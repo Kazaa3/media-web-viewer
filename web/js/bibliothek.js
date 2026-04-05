@@ -37,27 +37,26 @@ async function loadLibrary(retryCount = 0) {
         
         if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'BACKEND-RAW', { count: allLibraryItems.length });
         
-        // --- V1.35 Recovery: Force Mock Item if Empty ---
-        const realItems = allLibraryItems.filter(i => !i.is_mock);
-        if (realItems.length === 0) {
-            const mockFallback = {
-                id: 'mock-item-recovery',
-                name: '[MOCK] System Test Audio',
-                artist: 'Media Viewer Core',
-                album: 'Recovery Module',
-                path: 'media/test_mock_item.mp3',
-                category: 'Audio',
-                is_mock: true,
-                tags: { title: 'Recovery Success', artist: 'Antigravity Diagnostic' }
-            };
-            allLibraryItems = [mockFallback];
-            if (typeof appendUiTrace === 'function') appendUiTrace("[Recovery] Injected diagnostic mock item.", "WARN");
-            if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-MOCK', { item: mockFallback.name });
-            // Auto-scan only if not done yet
-            if (!hasAutoScanned) {
-                hasAutoScanned = true;
-                if (typeof scan === 'function') scan('./media', true);
+        // --- V1.35.43 Recovery: Modular Sync Handshake ---
+        if (typeof RecoveryManager !== 'undefined') {
+            RecoveryManager.checkAndHydrate();
+        } else {
+            // Minimal fallback if manager is missing
+            const realItems = allLibraryItems.filter(i => !i.is_mock);
+            if (realItems.length === 0) {
+                allLibraryItems = [{
+                    id: 'fallback-emergency',
+                    name: '[ERROR] RecoveryManager Missing',
+                    category: 'Audio',
+                    is_mock: true
+                }];
             }
+        }
+        
+        // Auto-scan only if not done yet
+        if (!hasAutoScanned && allLibraryItems.filter(i => !i.is_mock).length === 0) {
+            hasAutoScanned = true;
+            if (typeof scan === 'function') scan('./media', true);
         }
 
         // --- Phase 2: Metadata & UI Refresh ---
