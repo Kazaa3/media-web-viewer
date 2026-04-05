@@ -749,6 +749,14 @@
                             style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
                             NATV
                         </button>
+                        <button class="diag-toggle-btn" 
+                            onclick="if(typeof toggleHideDb === 'function') toggleHideDb(); this.innerText = window.__mwv_hide_db ? '[HIDB: ON]' : '[HIDB: OFF]';" 
+                            onmouseenter="this.dataset.orig = this.innerText; this.innerText = window.__mwv_hide_db ? '[HIDB: ON]' : '[HIDB: OFF]';" 
+                            onmouseleave="this.innerText = this.dataset.orig || 'HIDB';"
+                            title="Hide Real DB Items (Mocks Only)" 
+                            style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
+                            HIDB
+                        </button>
                         <button onclick="if(typeof runDomAudit === 'function') runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:none; color:var(--accent-color); font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">AUDIT</button>
                     </div>
 

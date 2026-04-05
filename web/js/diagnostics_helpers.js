@@ -548,3 +548,18 @@ function updateSyncAnchor(dbCount, guiCount) {
 
 // Expose to window
 window.updateSyncAnchor = updateSyncAnchor;
+
+/**
+ * Diagnostic: Hide DB Toggle (v1.35.68 Recovery)
+ */
+window.__mwv_hide_db = false;
+function toggleHideDb() {
+    window.__mwv_hide_db = !window.__mwv_hide_db;
+    const msg = `[DIAG] Hide DB Items: ${window.__mwv_hide_db ? 'ON' : 'OFF'}`;
+    console.warn(msg);
+    if (typeof showStatusNotification === 'function') showStatusNotification(msg, 'info');
+    if (typeof renderLibrary === 'function') renderLibrary();
+}
+
+// Expose to window
+window.toggleHideDb = toggleHideDb;

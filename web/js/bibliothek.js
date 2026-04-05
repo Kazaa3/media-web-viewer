@@ -171,10 +171,36 @@ async function renderLibrary() {
         );
     }
 
+    // --- Hide DB Diagnostic (v1.35.68 Recovery) ---
+    if (window.__mwv_hide_db) {
+        const prevCount = coverflowItems.length;
+        coverflowItems = coverflowItems.filter(i => i.is_mock);
+        console.log(`[FE-AUDIT] Filtered by HIDB: ON | ${prevCount} -> ${coverflowItems.length} items.`);
+    }
+
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'STAGE-PROJECTED', { raw: allLibraryItems.length, projected: coverflowItems.length });
     
     if (coverflowItems.length === 0) {
-        const noMediaHtml = `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`;
+        let noMediaHtml = `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`;
+        
+        // --- BLACK HOLE RECOVERY UI (v1.35.68) ---
+        if (allLibraryItems.length > 0) {
+            const dbCount = allLibraryItems.filter(i => !i.is_mock).length;
+            noMediaHtml = `
+                <div style="padding: 100px; color: var(--text-primary); text-align: center; width: 100%; background: rgba(231, 76, 60, 0.05); border: 2px dashed rgba(231, 76, 60, 0.2); border-radius: 12px; margin: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 15px;">🔍 Black Hole erkannt</div>
+                    <div style="font-weight: 700; color: #e74c3c; margin-bottom: 10px;">${dbCount} Medien in der DB gefunden, aber 0 in der Anzeige!</div>
+                    <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 20px;">
+                        Deine Medien werden durch aktive Filter (Kategorie, Suche oder HIDB-Toggle) blockiert.
+                    </p>
+                    <button onclick="resetAllFilters()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: transform 0.2s;">JETZT FILTER ZURÜCKSETZEN</button>
+                    <div style="margin-top: 15px; font-size: 11px; color: var(--text-secondary); opacity: 0.6;">
+                        Tipp: Prüfe den Sync-Anker [DB: ${window.__mwv_last_db_count} | GUI: 0] im Footer.
+                    </div>
+                </div>
+            `;
+        }
+        
         if (typeof safeHtml === 'function') {
             safeHtml('coverflow-track', noMediaHtml);
             safeHtml('grid-container', noMediaHtml);
