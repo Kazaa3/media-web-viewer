@@ -113,27 +113,34 @@ function switchTab(tabId, btn, callback) {
     const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
     traceUiNav('TAB', tabId, { from: previousTab });
 
-    // Define fragment mapping
+    // Define fragment mapping (Targets the internal V1.34 Master viewports)
     const fragmentMap = {
         'debug': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
         'tests': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
         'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
         'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
         'file': { containerId: 'filesystem-crawler-directory-panel', path: 'fragments/filesystem_browser.html' },
-        'library': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
-        'grid': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
-        'details': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
-        'album': { containerId: 'coverflow-library-panel', path: 'fragments/library_explorer.html' },
+        'library': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
+        'grid': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
+        'details': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
+        'album': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
         'item': { containerId: 'indexed-sqlite-media-repository-panel', path: 'fragments/item_inventory.html' },
-        'edit': { containerId: 'metadata-writer-crud-panel', path: 'fragments/metadata_editor.html' },
+        'edit': { containerId: 'edit-main-viewport', path: 'fragments/metadata_editor.html' },
         'video': { containerId: 'multiplexed-media-player-orchestrator-panel', path: 'fragments/video_player.html' },
-        'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
-        'options': { containerId: 'options-panel-container', path: 'fragments/options_panel.html' },
-        'system': { containerId: 'options-panel-container', path: 'fragments/options_panel.html' },
+        'tools': { containerId: 'tools-main-viewport', path: 'fragments/tools_panel.html' },
+        'options': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
+        'system': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
         'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbook_panel.html' },
-        'player': { containerId: 'state-orchestrated-active-queue-list-container', path: 'fragments/player_queue.html' },
-        'media': { containerId: 'state-orchestrated-active-queue-list-container', path: 'fragments/player_queue.html' },
-        'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' }
+        'player': { containerId: 'player-main-viewport', path: 'fragments/player_queue.html' },
+        'media': { containerId: 'player-main-viewport', path: 'fragments/player_queue.html' },
+        'playlist': { containerId: 'json-serialized-sequence-buffer-panel', path: 'fragments/playlist_manager.html' },
+        'file': { containerId: 'browser-main-viewport', path: 'fragments/file_browser_panel.html' },
+        'vlc': { containerId: 'video-main-viewport', path: 'fragments/multiplexed_media_player.html' },
+        'video': { containerId: 'video-main-viewport', path: 'fragments/multiplexed_media_player.html' },
+        'options': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
+        'parser': { containerId: 'parser-main-viewport', path: 'fragments/parser_config.html' },
+        'debug': { containerId: 'debug-main-viewport', path: 'fragments/debug_db_panel.html' },
+        'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' }
     };
 
     const tabMap = {
@@ -155,7 +162,8 @@ function switchTab(tabId, btn, callback) {
         'tests': 'diagnostics-suite-container',
         'diagnostics': 'diagnostics-suite-container',
         'reporting': 'reporting-dashboard-container',
-        'tools': 'tools-panel-container'
+        'tools': 'tools-panel-container',
+        'parser': 'parser-panel-container'
     };
 
     const targetId = tabMap[tabId] || tabId;
@@ -266,7 +274,11 @@ function finishSwitchTab(tabId, targetId, btn) {
 
     // Context-specific actions
     const initActions = {
-        'player': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
+        'player': () => { 
+            if (typeof renderPlaylist === 'function') renderPlaylist(); 
+            if (typeof renderItemGallery === 'function') renderItemGallery();
+            if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        },
         'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
         'library': () => {
             if (typeof renderPlaylist === 'function') renderPlaylist();
@@ -280,6 +292,7 @@ function finishSwitchTab(tabId, targetId, btn) {
         'parser': () => { if (typeof loadParserConfig === 'function') loadParserConfig(); },
         'tools': () => { if (typeof renderToolsDashboard === 'function') renderToolsDashboard(); },
         'options': () => {
+            if (typeof switchOptionsView === 'function') switchOptionsView('general');
             if (typeof loadDebugFlags === 'function') loadDebugFlags();
             if (typeof loadEnvironmentInfo === 'function') loadEnvironmentInfo();
         },
@@ -695,7 +708,11 @@ function switchFileSubView(viewId) {
             const paths = { 'local': './media', 'network': '/mnt', 'mounted': '/media' };
             fbNavigate(paths[viewId] || './media');
         }
-        updateSubNavActiveState(viewId);/**
+        updateSubNavActiveState(viewId);
+    });
+}
+
+/**
  * Toggles sub-views within the Logbook category.
  */
 window.switchLogbookSubView = function(viewId) {

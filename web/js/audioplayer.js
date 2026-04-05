@@ -180,6 +180,15 @@ function drawVisualizer() {
     cancelAnimationFrame(visualizerAnimationId);
     
     function animate() {
+        if (!analyser) {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(128, 128, 128, 0.2)';
+            ctx.font = '700 14px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Warte auf Audio-Stream...', width / 2, height / 2);
+            return;
+        }
+
         visualizerAnimationId = requestAnimationFrame(animate);
         
         if (visualizerStyle === 'wave') {
@@ -270,22 +279,22 @@ function updateMediaSidebar(item, path) {
         const artistStr = tags.albumartist && tags.albumartist !== tags.artist ? tags.artist + " (Album: " + tags.albumartist + ")" : (tags.artist || 'Unknown Artist');
         safeText('sidebar-metadata-secondary-string-renderer', artistStr);
         
-        // Sync Legacy & Visualizer Views
-        ['legacy', 'visualizer'].forEach(view => {
+        // Sync Legacy, Visualizer, Queue, and Gallery Views
+        ['legacy', 'visualizer', 'warteschlange', 'mediengalerie'].forEach(view => {
             safeText(`big-player-title-${view}`, tags.title || item.name);
             safeText(`big-player-artist-${view}`, tags.artist || 'Unknown Artist');
             
-            safeText(`spec-codec-${view}`, tags.codec || 'MP3');
-            safeText(`spec-bitrate-${view}`, tags.bitrate || '320 kbps');
+            safeText(`spec-codec-${view}`, tags.codec || (item.path ? item.path.split('.').pop().toUpperCase() : 'MP3'));
+            safeText(`spec-bitrate-${view}`, tags.bitrate || '-');
             
-            if (view === 'legacy') {
-                safeText('spec-bitdepth-legacy', tags.bitdepth ? tags.bitdepth + ' Bit' : '16 Bit');
-                safeText('spec-samplerate-legacy', tags.samplerate || '44.1 kHz');
-                safeText('spec-album-line-legacy', tags.album || 'No Album');
+            if (view === 'legacy' || view === 'warteschlange') {
+                safeText(`spec-bitdepth-${view}`, tags.bitdepth ? tags.bitdepth + ' Bit' : '16 Bit');
+                safeText(`spec-samplerate-${view}`, tags.samplerate || '44.1 kHz');
+                safeText(`spec-album-line-${view}`, tags.album || 'No Album');
                 
                 const trackStr = `${tags.year || '2026'} • ${tags.genre || 'General'} • Track ${tags.track ? tags.track.toString().padStart(2, '0') : '01'}`;
-                safeText('spec-track-details-legacy', trackStr);
-                safeText('player-file-path-legacy', path || item.path || 'Unknown Path');
+                safeText(`spec-track-details-${view}`, trackStr);
+                safeText(`player-file-path-${view}`, path || item.path || 'Unknown Path');
             }
         });
     }
@@ -296,8 +305,9 @@ function updateMediaSidebar(item, path) {
         'sidebar-artwork-raster-buffer', 
         'parser-mediainfo-artwork', 
         'footer-artwork-raster-buffer', 
-        'big-player-artwork-legacy', 
-        'big-player-artwork-visualizer'
+        'big-player-artwork-visualizer',
+        'big-player-artwork-warteschlange',
+        'big-player-artwork-mediengalerie'
     ];
     
     artworkIds.forEach(id => {
@@ -407,7 +417,11 @@ function renderPlaylist() {
     if (countEl) countEl.innerText = `${currentPlaylist.length} Titel`;
 
     console.log(`[Audio] Rendering playlist on ${containers.length} containers. Items: ${currentPlaylist.length}`);
-    if (containers.length === 0) return;
+    if (containers.length === 0) {
+        // If the player fragment was just loaded, the container might be there but the script ran too fast.
+        // We rely on the FragmentLoader callback to re-trigger this.
+        return;
+    }
 
     containers.forEach(list => {
         list.innerHTML = ''; // Clear existing
@@ -566,7 +580,7 @@ function switchPlayerMainView(viewId) {
     if (viewId === 'warteschlange') renderPlaylist();
 }
 
-let gallerySource = 'media';
+let gallerySource = 'library';
 function setGallerySource(source) {
     gallerySource = source;
     if (source === 'custom') {
@@ -731,6 +745,10 @@ function addAndPlayNow(el, item) {
 function syncQueueWithLibrary() {
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
         console.warn("[Audio] syncQueueWithLibrary: No library items found to sync.");
+        const container = document.getElementById('active-queue-list-render-target-warteschlange');
+        if (container && container.innerHTML.trim() === '') {
+            renderPlaylist(); // Show the 'Queue empty' UI
+        }
         return;
     }
     

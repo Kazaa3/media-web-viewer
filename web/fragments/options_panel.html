@@ -418,3 +418,45 @@
         </div><!-- /options-main-content-pane -->
     </div><!-- /options-split-container -->
 </div>
+
+<script>
+    /**
+     * Switch Options Sub-Views (v1.34 Master)
+     */
+    function switchOptionsView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-OPTIONS', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.options-view').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Deactivate all sub-tab buttons
+        document.querySelectorAll('.sub-tab-btn.options-subtab').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Show target view
+        const target = document.getElementById('options-' + viewId + '-view');
+        if (target) {
+            target.style.display = (viewId === 'environment') ? 'block' : 'flex';
+            
+            // Sync with sub-nav buttons
+            const btn = document.getElementById(`opt-subtab-${viewId}`);
+            if (btn) btn.classList.add('active');
+        }
+
+        // Sidebar Sync (Targeting the v1.34 Shell buttons in app.html)
+        document.querySelectorAll('#options-panel-container .nav-item').forEach(el => {
+            el.classList.remove('active');
+            if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${viewId}'`)) {
+                el.classList.add('active');
+            }
+        });
+        
+        // Auto-load logic
+        if (viewId === 'environment' && typeof loadEnvironmentInfo === 'function') {
+            loadEnvironmentInfo();
+        }
+    }
+</script>

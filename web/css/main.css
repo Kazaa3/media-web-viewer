@@ -1316,35 +1316,9 @@ body {
     margin-top: 15px;
 }
 
-/* Specific player restoration layout */
-#player-tab-split-container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
+/* End of Layout Rules */
 
-#player-deck-column {
-    width: 420px;
-    flex-shrink: 0;
-    padding: 30px 40px;
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: radial-gradient(circle at top left, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-}
-
-#player-playlist-column {
-    flex: 1;
-    overflow-y: auto;
-    background: #fdfdfd;
-    padding: 0;
-}
-
-[data-theme="dark"] #player-playlist-column {
-    background: var(--bg-primary);
-}
+/* End of Multi-View Rules */
 
 /* Multi-View Toggles */
 .player-view-container {

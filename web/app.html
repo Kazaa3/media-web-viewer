@@ -22,7 +22,7 @@
 
     <!-- Core Styles -->
     <link rel="stylesheet" href="css/main.css">
-    
+
     <!-- System & Backend Integration (Load Early) -->
     <script src="/eel.js"></script>
     <!-- Modular Application Helpers -->
@@ -43,7 +43,7 @@
     <script src="js/item.js"></script>
     <script src="js/options_helpers.js"></script>
     <script src="js/app_core.js"></script>
-    
+
     <style>
         .theme-toggle {
             background: none;
@@ -56,8 +56,14 @@
             justify-content: center;
             transition: background 0.2s;
         }
-        .theme-toggle:hover { background: rgba(0,0,0,0.05); }
-        [data-theme="dark"] .theme-toggle:hover { background: rgba(255,255,255,0.1); }
+
+        .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
     </style>
 
     <script>
@@ -80,7 +86,7 @@
             // 3. Initialize Shared Components
             if (typeof initTranslations === 'function') initTranslations();
             if (typeof initAllSplitters === 'function') initAllSplitters();
-            
+
             // Populate initial sub-navigation entries
             if (typeof updateGlobalSubNav === 'function') {
                 const initialCategory = localStorage.getItem('mwv_active_category') || 'media';
@@ -92,7 +98,7 @@
                 FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html');
                 FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
             }
-            
+
             console.log("DOM: Application Ready.");
         });
     </script>
@@ -101,47 +107,74 @@
 
 <body class="media-orchestrator-shell-environment">
     <!-- Master Persistent Header (Always Available v1.34) -->
-    <header id="master-persistent-header" style="position: fixed; top: 0; left: 0; right: 0; height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); user-select: none;">
+    <header id="master-persistent-header"
+        style="position: fixed; top: 0; left: 0; right: 0; height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); user-select: none;">
         <div style="display: flex; align-items: center; gap: 20px;">
-            <div id="dict-master-toggle" onclick="toggleMenuBar()" style="font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -0.5px; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">dict</div>
-            
+            <div id="dict-master-toggle" onclick="toggleMenuBar()"
+                style="font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -0.5px; transition: transform 0.2s;"
+                onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">dict
+            </div>
+
             <!-- Primary Navigation (Main Categories - Persistent Row 0) -->
-            <div id="header-nav-buttons" style="display: flex; gap: 6px; align-items: center; margin-left: 10px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
-                <button class="menu-item-btn active" onclick="switchMainCategory('media', this)" data-category="media">Player</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('library', this)" data-category="library">Bibliothek</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('file', this)" data-category="file">Browser</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('edit', this)" data-category="edit">Edit</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('system', this)" data-category="system">Optionen</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('parser', this)" data-category="parser">Parser</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('debug', this)" data-category="debug">Debug & DB</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('tests', this)" data-category="tests">Tests</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('tools', this)" data-category="tools">Tools</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('logbuch', this)" data-category="logbuch">Logbuch</button>
-                <button class="menu-item-btn" onclick="switchMainCategory('video', this)" data-category="video" style="border: 1.5px solid #2ecc71; font-weight: 800;">Video Player</button>
+            <div id="header-nav-buttons"
+                style="display: flex; gap: 6px; align-items: center; margin-left: 10px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
+                <button class="menu-item-btn active" onclick="switchMainCategory('media', this)"
+                    data-category="media">Player</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('library', this)"
+                    data-category="library">Bibliothek</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('file', this)"
+                    data-category="file">Browser</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('edit', this)"
+                    data-category="edit">Edit</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('system', this)"
+                    data-category="system">Optionen</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('parser', this)"
+                    data-category="parser">Parser</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('debug', this)" data-category="debug">Debug &
+                    DB</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('tests', this)"
+                    data-category="tests">Tests</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('tools', this)"
+                    data-category="tools">Tools</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
+                    data-category="logbuch">Logbuch</button>
+                <button class="menu-item-btn" onclick="switchMainCategory('video', this)" data-category="video"
+                    style="border: 1.5px solid #2ecc71; font-weight: 800;">Video Player</button>
             </div>
         </div>
 
         <!-- System Controls (Right) -->
         <div style="display: flex; gap: 8px; align-items: center;">
-            
+
             <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
-            
-            <button onclick="if(typeof resetDatabase === 'function') resetDatabase()" title="Reset DB" class="tab-btn" style="padding: 6px; border-radius: 6px; background: transparent; color: #ff5252;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
-            <button onclick="window.close()" title="Exit App" class="tab-btn" style="padding: 6px; border-radius: 6px; background: transparent;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg></button>
+
+            <button onclick="if(typeof resetDatabase === 'function') resetDatabase()" title="Reset DB" class="tab-btn"
+                style="padding: 6px; border-radius: 6px; background: transparent; color: #ff5252;"><svg width="14"
+                    height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg></button>
+            <button onclick="window.close()" title="Exit App" class="tab-btn"
+                style="padding: 6px; border-radius: 6px; background: transparent;"><svg width="14" height="14"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
+                </svg></button>
         </div>
     </header>
 
     <!-- Secondary Navigation Bar (Contextual Pills - Toggleable v1.34 Row 1) -->
-    <div id="sub-nav-container" class="sub-nav-bar" style="display: none; position: fixed; top: 40px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none; transition: all 0.2s ease; opacity: 0; transform: translateY(-10px);">
+    <div id="sub-nav-container" class="sub-nav-bar"
+        style="display: none; position: fixed; top: 40px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none; transition: all 0.2s ease; opacity: 0; transform: translateY(-10px);">
         <!-- Dynamically populated via updateGlobalSubNav -->
     </div>
-    
-    <div id=app-progress-bar-container><div id=app-progress-bar></div></div>
+
+    <div id=app-progress-bar-container>
+        <div id=app-progress-bar></div>
+    </div>
     <div id=app-progress-text>Ready</div>
-    
+
     <!-- Context Menu Placeholder (Loaded dynamically) -->
     <div id="context-menu-placeholder"></div>
-    
+
     <!-- 
       [AI-READINESS: SHARED UI SYMBOLS]
       DESC: Centralized SVG library for consistent icon rendering, replacing legacy Unicode.
@@ -150,22 +183,37 @@
     <!-- (isUnsupportedMediaError moved to js/ui_nav_helpers.js) -->
 
 
-    <main class="layout-main layout-container" id="main-split-container" style="flex: 1; height: calc(100vh - 75px); margin-top: 0; transition: margin-top 0.3s ease, height 0.3s ease;">
+    <main class="layout-main layout-container" id="main-split-container"
+        style="flex: 1; height: calc(100vh - 75px); margin-top: 0; transition: margin-top 0.3s ease, height 0.3s ease;">
         <!-- SIDEBAR START (iPad OS Style Navigation) -->
         <div id="main-sidebar" class="sidebar">
             <div class="nav-section">
                 <h3 class="nav-title">Media</h3>
                 <div class="nav-list">
                     <button class="nav-item active" onclick="switchMainCategory('media', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                        </svg>
                         <span>Music Player</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('library', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <line x1="3" y1="9" x2="21" y2="9" />
+                            <line x1="9" y1="21" x2="9" y2="9" />
+                        </svg>
                         <span>Library Browser</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('video', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="23 7 16 12 23 17 23 7" />
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                        </svg>
                         <span>Video Cinema</span>
                     </button>
                 </div>
@@ -175,19 +223,38 @@
                 <h3 class="nav-title">Management</h3>
                 <div class="nav-list">
                     <button class="nav-item" onclick="switchMainCategory('edit', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
                         <span>Editor</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('reporting', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
                         <span>Reporting</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('tools', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.83 0L14.7 6.3z"/><path d="m3.13 15.65 1.45-6.6a2 2 0 0 1 2-1.55h1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H6.42l-1.45 6.6a1 1 0 0 1-1.84-.55z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.83 0L14.7 6.3z" />
+                            <path
+                                d="m3.13 15.65 1.45-6.6a2 2 0 0 1 2-1.55h1a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H6.42l-1.45 6.6a1 1 0 0 1-1.84-.55z" />
+                        </svg>
                         <span>Core Tools</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('logbuch', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        </svg>
                         <span>System Logs</span>
                     </button>
                 </div>
@@ -197,19 +264,35 @@
                 <h3 class="nav-title">System</h3>
                 <div class="nav-list">
                     <button class="nav-item" onclick="switchMainCategory('system', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
                         <span>Environment</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('debug', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 8-2.81 2.81A5.937 5.937 0 0 0 16.06 9H13V4h-2v5H7.94a5.937 5.937 0 0 0-1.13 1.81L4 8l-1.41 1.41l2.58 2.58c-.11.33-.17.66-.17 1.01H3v2h2c0 .35.06.68.17 1.01l-2.58 2.58L4 20l2.81-2.81c.33.66.78 1.27 1.33 1.81L7.94 19H11v5h2v-5h3.06c.41 0 .8-.08 1.13-.19L20 21.59L21.41 20.18L18.83 17.59c.11-.33.17-.66.17-1.01h2v-2h-2c0-.35-.06-.68-.17-1.01l2.58-2.58L20 8zM15 16H9v-2h6v2z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="m20 8-2.81 2.81A5.937 5.937 0 0 0 16.06 9H13V4h-2v5H7.94a5.937 5.937 0 0 0-1.13 1.81L4 8l-1.41 1.41l2.58 2.58c-.11.33-.17.66-.17 1.01H3v2h2c0 .35.06.68.17 1.01l-2.58 2.58L4 20l2.81-2.81c.33.66.78 1.27 1.33 1.81L7.94 19H11v5h2v-5h3.06c.41 0 .8-.08 1.13-.19L20 21.59L21.41 20.18L18.83 17.59c.11-.33.17-.66.17-1.01h2v-2h-2c0-.35-.06-.68-.17-1.01l2.58-2.58L20 8zM15 16H9v-2h6v2z" />
+                        </svg>
                         <span>Debug & DB</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('tests', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.73 13.31C15.52 12.24 16 10.93 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.17 0 2.27-.31 3.22-.85L18.29 20.73 19.71 19.31l-4.98-6zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M14.73 13.31C15.52 12.24 16 10.93 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.17 0 2.27-.31 3.22-.85L18.29 20.73 19.71 19.31l-4.98-6zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                        </svg>
                         <span>Testing Tabs</span>
                     </button>
                     <button class="nav-item" onclick="switchMainCategory('diagnostics', this)">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
                         <span>Diagnostics</span>
                     </button>
                 </div>
@@ -219,10 +302,14 @@
 
             <!-- Current Track Preview (In Sidebar) -->
             <div id="sidebar-now-playing" class="glass-card" style="padding: 15px; margin-top: 20px; display: none;">
-                <img id="sidebar-artwork-raster-buffer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" 
-                     style="width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; margin-bottom: 12px; box-shadow: var(--shadow-soft);">
-                <div id="sidebar-metadata-primary-string-renderer" style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">Kein Titel</div>
-                <div id="sidebar-metadata-secondary-string-renderer" style="font-size: 11px; color: var(--text-secondary); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+                <img id="sidebar-artwork-raster-buffer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                    style="width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; margin-bottom: 12px; box-shadow: var(--shadow-soft);">
+                <div id="sidebar-metadata-primary-string-renderer"
+                    style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">
+                    Kein Titel</div>
+                <div id="sidebar-metadata-secondary-string-renderer"
+                    style="font-size: 11px; color: var(--text-secondary); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    -</div>
             </div>
         </div>
         <!-- SIDEBAR END -->
@@ -232,45 +319,66 @@
         <!-- Main Right Content Area -->
         <div id="main-content-area"
             style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); min-width: 0;">
-            
+
             <!-- Main Active Queue list (Centered in Dashboard) -->
             <!-- TAB: Player (Audio) START -->
-            <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout" style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
+            <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout"
+                style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
                 <!-- Detailed Mode Sidebar (Left-aligned as per v1.34) -->
-                <div id="player-detailed-sidebar" class="diagnostic-sidebar">
+                <div id="player-detailed-sidebar" class="diagnostic-sidebar active">
                     <div class="diagnostic-header">
                         <div class="diagnostic-section-title">MEDIA DETAILS</div>
                         <div id="diag-media-primary" class="diagnostic-value">-</div>
-                        
+
                         <div class="diagnostic-label">Parser Times</div>
                         <div id="diag-parser-metrics" class="diagnostic-value">Keine Daten</div>
-                        
+
                         <div class="diagnostic-label">Transcoding</div>
                         <div id="diag-transcode-status" class="diagnostic-value">Native Stream</div>
                     </div>
                 </div>
-                
-                <!-- Main Player Deck / Playlist -->
-                <div class="content-deck-fill" id="player-main-viewport">
+
+                <!-- Main Player Deck Viewport (FRAGMENT TARGET) -->
+                <div id="player-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Player...</div>
                 </div>
             </div>
             <!-- TAB: Player (Audio) END -->
 
             <!-- TAB: Filesystem START -->
-            <div id="filesystem-crawler-directory-panel" class="tab-content" style="display: none; height: 100%; width: 100%;">
-                <div class="loading-fragment">Lade Dateibrowser...</div>
+            <div id="filesystem-crawler-directory-panel" class="tab-content tab-split-layout"
+                style="display: none; height: 100%; width: 100%;">
+                <!-- Browser Internal Sidebar -->
+                <div class="tab-internal-sidebar">
+                    <h3 class="diagnostic-section-title">Browser-Optionen</h3>
+                    <button class="nav-item active" onclick="fbNavigate('/')">Root Directory</button>
+                    <button class="nav-item" onclick="fbNavigate('./media')">Media Folder</button>
+                    <h3 class="diagnostic-section-title" style="margin-top: 30px;">Tuning</h3>
+                    <div class="glass-card">
+                        <div class="diagnostic-label">Recursive Depth</div>
+                        <input type="range" min="1" max="10" value="5" class="diagnostic-slider">
+                    </div>
+                </div>
+                <!-- Browser Viewport (FRAGMENT TARGET) -->
+                <div id="browser-main-viewport" class="content-deck-fill">
+                    <div class="loading-fragment">Lade Dateibrowser...</div>
+                </div>
             </div>
             <!-- TAB: Filesystem END -->
 
             <!-- TAB: Library START -->
-            <div id="coverflow-library-panel" class="tab-content" style="display: none; padding: 0; overflow: hidden; height: 100%; width: 100%;">
-                <div class="loading-fragment">Lade Bibliothek...</div>
+            <div id="coverflow-library-panel" class="tab-content"
+                style="display: none; padding: 0; overflow: hidden; height: 100%; width: 100%;">
+                <!-- Library Viewport (FRAGMENT TARGET) -->
+                <div id="library-main-viewport" class="content-deck-fill">
+                    <div class="loading-fragment">Lade Bibliothek...</div>
+                </div>
             </div>
             <!-- TAB: Library END -->
 
             <!-- TAB: Item (Inventory) START -->
-            <div id="indexed-sqlite-media-repository-panel" class="tab-content" style="display: none; height: 100%; width: 100%;">
+            <div id="indexed-sqlite-media-repository-panel" class="tab-content"
+                style="display: none; height: 100%; width: 100%;">
                 <div class="loading-fragment">Lade Inventory...</div>
             </div>
             <!-- TAB: Item (Inventory) END -->
@@ -278,7 +386,8 @@
 
 
             <!-- TAB: Playlist START -->
-            <div id="json-serialized-sequence-buffer-panel" class="tab-content" style="display: none; height: 100%; width: 100%;">
+            <div id="json-serialized-sequence-buffer-panel" class="tab-content"
+                style="display: none; height: 100%; width: 100%;">
                 <div class="loading-fragment">Lade Playlist...</div>
             </div>
             <!-- TAB: Playlist END -->
@@ -287,186 +396,280 @@
 
             <!-- TAB: Edit START -->
             <div id="metadata-writer-crud-panel" class="tab-content" style="display: none; height: 100%; width: 100%;">
-                <div class="loading-fragment">Lade Editor...</div>
+                <!-- Editor Viewport (FRAGMENT TARGET) -->
+                <div id="edit-main-viewport" class="content-deck-fill">
+                    <div class="loading-fragment">Lade Editor...</div>
+                </div>
             </div>
             <!-- TAB: Edit END -->
 
 
-    <!-- TAB: Options START -->
-    <div id="options-panel-container" class="tab-content tab-split-layout" style="display: none; height: 100%; flex-direction: row;">
-        <!-- Options Internal Sidebar -->
-        <div class="tab-internal-sidebar">
-            <h3 class="diagnostic-section-title">Leistungsmodus</h3>
-            <button class="nav-item active" style="margin-bottom: 8px;">High Performance</button>
-            <button class="nav-item">Low Bandwidth</button>
-            
-            <h3 class="diagnostic-section-title" style="margin-top: 30px;">Parser-Modus</h3>
-            <button class="nav-item active" style="margin-bottom: 8px;">Lightweight</button>
-            <button class="nav-item">Full</button>
-            <button class="nav-item">Ultimate</button>
-        </div>
-        
-        <!-- Options Viewport -->
-        <div class="tab-main-viewport" id="options-main-viewport" style="padding: 24px; background: var(--bg-primary);">
-            <div id="options-view-general" class="options-sub-view" style="display: block;">
-                <!-- Language Settings Placeholder -->
-                <div class="glass-card">
-                    <h3 class="diagnostic-section-title">Sprache / Language</h3>
-                    <select id="language-selector" onchange="eel.set_language(this.value)" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
-                        <option value="de">Deutsch</option>
-                        <option value="en">English</option>
-                    </select>
+            <!-- TAB: Options START -->
+            <div id="options-panel-container" class="tab-content tab-split-layout"
+                style="display: none; height: 100%; flex-direction: row;">
+                <!-- Options Internal Sidebar -->
+                <div class="tab-internal-sidebar">
+                    <h3 class="diagnostic-section-title">Leistungsmodus</h3>
+                    <button class="nav-item active" style="margin-bottom: 8px;" onclick="setAppModeUI('High-Performance')">High Performance</button>
+                    <button class="nav-item" onclick="setAppModeUI('Low-Bandwidth')">Low Bandwidth</button>
+
+                    <h3 class="diagnostic-section-title" style="margin-top: 30px;">Konfiguration</h3>
+                    <button class="nav-item" onclick="switchOptionsView('general')">Allgemein</button>
+                    <button class="nav-item" onclick="switchOptionsView('appearance')">Darstellung</button>
+                    <button class="nav-item" onclick="switchOptionsView('indexing')">Indexierung</button>
                 </div>
-            </div>
-            
-            <div id="options-view-env" class="options-sub-view" style="display: none;">
-                <div class="loading-fragment">Lade Umgebungsdaten...</div>
-            </div>
-            
-            <div id="options-view-pkgs" class="options-sub-view" style="display: none;">
-                <div class="loading-fragment">Lade PIP-Pakete...</div>
-            </div>
-            
-            <div id="options-view-requirements" class="options-sub-view" style="display: none;">
-                <h3 class="diagnostic-section-title">Requirements Status</h3>
-                <div id="requirements-status-checker" class="glass-card">Laden...</div>
-                <button onclick="eel.install_missing_packages()()" style="margin-top: 15px; background: var(--accent-color); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 800;">Fehlende Pakete nachinstallieren</button>
-            </div>
 
-            <div id="options-view-browser" class="options-sub-view" style="display: none;"><div class="loading-fragment">Lade Browser-Tuning...</div></div>
-            <div id="options-view-frontend" class="options-sub-view" style="display: none;"><div class="loading-fragment">Lade Frontend-Sync...</div></div>
-            <div id="options-view-backend" class="options-sub-view" style="display: none;"><div class="loading-fragment">Lade Backend-Config...</div></div>
-            <div id="options-view-scripts" class="options-sub-view" style="display: none;"><div class="loading-fragment">Lade Helper Scripts...</div></div>
-            <div id="options-view-danger" class="options-sub-view" style="display: none;">
-                <h3 class="diagnostic-section-title">Gefahrenzone</h3>
-                <button onclick="eel.reset_database()()" style="background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 800;">Datenbank löschen</button>
-                <p style="font-size: 11px; opacity: 0.6; margin-top: 10px;">Vorsicht: Alle Indexdaten werden unwiderruflich gelöscht.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB: Tools START -->
-    <div id="tools-panel-container" class="tab-content" style="display: none; height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary);">
-        <div id="tools-view-transcoding" class="tools-sub-view" style="display: block;">
-            <h3 class="diagnostic-section-title">Transcoding Pipeline</h3>
-            <div class="glass-card">
-                <div class="diagnostic-label">Engine Mode</div>
-                <div class="diagnostic-value">FFmpeg MSE (Fragmented MP4)</div>
-                <p style="font-size: 11px; opacity: 0.7;">Transcoding-Einstellungen wurden nach 'Tools' verschoben.</p>
-            </div>
-        </div>
-        <div id="tools-view-processing" class="tools-sub-view" style="display: none;"><div class="loading-fragment">Lade Processing...</div></div>
-        <div id="tools-view-batch" class="tools-sub-view" style="display: none;"><div class="loading-fragment">Lade Batch Ops...</div></div>
-        <div id="tools-view-repair" class="tools-sub-view" style="display: none;"><div class="loading-fragment">Lade DB Repair...</div></div>
-    </div>
-
-    <!-- TAB: Tests START -->
-    <div id="tests-panel-container" class="tab-content" style="display: none; height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary);">
-        <h3 class="diagnostic-section-title">Unit Tests & Verifizierung</h3>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-            <div class="glass-card">Benchmark: Parsers</div>
-            <div class="glass-card">Check Clear</div>
-            <div class="glass-card">Check Db</div>
-            <div class="glass-card">Check Dict</div>
-        </div>
-    </div>
-
-    <!-- TAB: Parser Configuration START -->
-    <div id="parser-panel-container" class="tab-content tab-split-layout" style="display: none; height: 100%; flex-direction: row; padding: 0; background: var(--bg-primary);">
-        
-        <!-- Left: Static Config Column -->
-        <div class="tab-internal-sidebar" style="width: 350px;">
-            <h2 style="font-weight: 900; letter-spacing: -0.5px; margin-bottom: 20px;">Parser Konfiguration</h2>
-            
-            <div class="glass-card" style="margin-bottom: 24px;">
-                <h3 class="diagnostic-section-title" style="margin-top: 0;">Kern-Einstellungen</h3>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                    <div>
-                        <div style="font-weight: 700; font-size: 13px;">Parser-Intensität</div>
-                        <div style="font-size: 11px; color: #2ecc71; font-weight: 600;">Effizienz-Modus (Schnell)</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked onchange="toggleParserIntensity(this.checked)">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                <p style="font-size: 11px; opacity: 0.6;">Bestimmt die Tiefe der Metadaten-Extraktion.</p>
-            </div>
-
-            <div class="glass-card">
-                <h3 class="diagnostic-section-title" style="margin-top: 0;">Parser-Architektur</h3>
-                <p style="font-size: 11px; opacity: 0.6; margin-bottom: 20px;">Sortiere die Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach Bedarf.</p>
-                
-                <div id="parser-chain-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="glass-card" style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                            <span style="font-size: 13px; font-weight: 600;">Dateiname</span>
+                <!-- Options Viewport -->
+                <div class="tab-main-viewport" id="options-main-viewport"
+                    style="padding: 24px; background: var(--bg-primary);">
+                    <div id="options-view-general" class="options-sub-view" style="display: block;">
+                        <!-- Language Settings Placeholder -->
+                        <div class="glass-card">
+                            <h3 class="diagnostic-section-title">Sprache / Language</h3>
+                            <select id="language-selector" onchange="eel.set_language(this.value)"
+                                style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="de">Deutsch</option>
+                                <option value="en">English</option>
+                            </select>
                         </div>
-                        <label class="switch" style="scale: 0.8;">
-                            <input type="checkbox" checked>
-                            <span class="slider round"></span>
-                        </label>
                     </div>
-                    <div class="glass-card" style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                            <span style="font-size: 13px; font-weight: 600;">Container-Struktur</span>
-                        </div>
-                        <label class="switch" style="scale: 0.8;">
-                            <input type="checkbox" checked>
-                            <span class="slider round"></span>
-                        </label>
+
+                    <div id="options-view-env" class="options-sub-view" style="display: none;">
+                        <div class="loading-fragment">Lade Umgebungsdaten...</div>
                     </div>
-                    <div class="glass-card" style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                            <span style="font-size: 13px; font-weight: 600;">Mutagen (Schnell)</span>
-                        </div>
-                        <label class="switch" style="scale: 0.8;">
-                            <input type="checkbox" checked>
-                            <span class="slider round"></span>
-                        </label>
+
+                    <div id="options-view-pkgs" class="options-sub-view" style="display: none;">
+                        <div class="loading-fragment">Lade PIP-Pakete...</div>
+                    </div>
+
+                    <div id="options-view-requirements" class="options-sub-view" style="display: none;">
+                        <h3 class="diagnostic-section-title">Requirements Status</h3>
+                        <div id="requirements-status-checker" class="glass-card">Laden...</div>
+                        <button onclick="eel.install_missing_packages()()"
+                            style="margin-top: 15px; background: var(--accent-color); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 800;">Fehlende
+                            Pakete nachinstallieren</button>
+                    </div>
+
+                    <div id="options-view-browser" class="options-sub-view" style="display: none;">
+                        <div class="loading-fragment">Lade Browser-Tuning...</div>
+                    </div>
+                    <div id="options-view-frontend" class="options-sub-view" style="display: none;">
+                        <div class="loading-fragment">Lade Frontend-Sync...</div>
+                    </div>
+                    <div id="options-view-backend" class="options-sub-view" style="display: none;">
+                        <div class="loading-fragment">Lade Backend-Config...</div>
+                    </div>
+                    <div id="options-view-scripts" class="options-sub-view" style="display: none;">
+                        <div class="loading-fragment">Lade Helper Scripts...</div>
+                    </div>
+                    <div id="options-view-danger" class="options-sub-view" style="display: none;">
+                        <h3 class="diagnostic-section-title">Gefahrenzone</h3>
+                        <button onclick="eel.reset_database()()"
+                            style="background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 800;">Datenbank
+                            löschen</button>
+                        <p style="font-size: 11px; opacity: 0.6; margin-top: 10px;">Vorsicht: Alle Indexdaten werden
+                            unwiderruflich gelöscht.</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Right: Dynamic Detail Column -->
-        <div class="tab-main-viewport" style="padding: 40px; background: rgba(255,255,255,0.02);">
-            <div class="glass-card" style="max-width: 800px;">
-                <h2 style="font-weight: 900; letter-spacing: -0.5px; margin-bottom: 20px;">Parser-Optionen</h2>
-                <p style="color: var(--text-secondary); opacity: 0.5; font-style: italic;">Wähle einen Parser links aus, um seine Einstellungen zu sehen.</p>
+            <!-- TAB: Tools START -->
+            <div id="tools-panel-container" class="tab-content"
+                style="display: none; height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary);">
+                <div id="tools-view-transcoding" class="tools-sub-view" style="display: block;">
+                    <h3 class="diagnostic-section-title">Transcoding Pipeline</h3>
+                    <div class="glass-card">
+                        <div class="diagnostic-label">Engine Mode</div>
+                        <div class="diagnostic-value">FFmpeg MSE (Fragmented MP4)</div>
+                        <p style="font-size: 11px; opacity: 0.7;">Transcoding-Einstellungen wurden nach 'Tools'
+                            verschoben.</p>
+                    </div>
+                </div>
+                <div id="tools-view-processing" class="tools-sub-view" style="display: none;">
+                    <div class="loading-fragment">Lade Processing...</div>
+                </div>
+                <div id="tools-view-batch" class="tools-sub-view" style="display: none;">
+                    <div class="loading-fragment">Lade Batch Ops...</div>
+                </div>
+                <div id="tools-view-repair" class="tools-sub-view" style="display: none;">
+                    <div class="loading-fragment">Lade DB Repair...</div>
+                </div>
             </div>
-        </div>
-    </div>
+
+            <!-- TAB: Debug START -->
+            <div id="debug-db-panel-container" class="tab-content tab-split-layout"
+                style="display: none; height: 100%; width: 100%;">
+                <!-- Debug Internal Sidebar -->
+                <div class="tab-internal-sidebar">
+                    <h3 class="diagnostic-section-title">Datenbank-Aktionen</h3>
+                    <button class="nav-item active" onclick="switchDiagnosticsView('debug-db')">Übersicht</button>
+                    <button class="nav-item" onclick="switchDiagnosticsView('tests')">Skript-Tests</button>
+                    <button class="nav-item" onclick="switchDiagnosticsView('video-health')">Video Health</button>
+                    <button class="nav-item" onclick="switchDiagnosticsView('health')">System-Check</button>
+                    <h3 class="diagnostic-section-title" style="margin-top: 30px;">System-Stats</h3>
+                    <div class="glass-card">
+                        <div class="diagnostic-label">DB Status</div>
+                        <div id="diag-db-status" class="diagnostic-value">Verbunden</div>
+                    </div>
+                </div>
+                <!-- Debug Viewport (FRAGMENT TARGET) -->
+                <div id="debug-main-viewport" class="content-deck-fill">
+                    <div class="loading-fragment">Lade Debug & DB Panel...</div>
+                </div>
+            </div>
+            <!-- TAB: Debug END -->
+
+            <!-- TAB: Tests START -->
+            <div id="tests-panel-container" class="tab-content"
+                style="display: none; height: 100%; flex-direction: column; padding: 24px; background: var(--bg-primary);">
+                <h3 class="diagnostic-section-title">Unit Tests & Verifizierung</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <div class="glass-card">Benchmark: Parsers</div>
+                    <div class="glass-card">Check Clear</div>
+                    <div class="glass-card">Check Db</div>
+                    <div class="glass-card">Check Dict</div>
+                </div>
+            </div>
+
+            <!-- TAB: Parser Configuration START -->
+            <div id="parser-panel-container" class="tab-content tab-split-layout"
+                style="display: none; height: 100%; flex-direction: row; padding: 0; background: var(--bg-primary);">
+
+                <!-- Left: Static Config Column -->
+                <div class="tab-internal-sidebar" style="width: 350px;">
+                    <h2 style="font-weight: 900; letter-spacing: -0.5px; margin-bottom: 20px;">Parser Konfiguration</h2>
+
+                    <div class="glass-card" style="margin-bottom: 24px;">
+                        <h3 class="diagnostic-section-title" style="margin-top: 0;">Kern-Einstellungen</h3>
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 13px;">Parser-Intensität</div>
+                                <div style="font-size: 11px; color: #2ecc71; font-weight: 600;">Effizienz-Modus
+                                    (Schnell)</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked onchange="toggleParserIntensity(this.checked)">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 11px; opacity: 0.6;">Bestimmt die Tiefe der Metadaten-Extraktion.</p>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 class="diagnostic-section-title" style="margin-top: 0;">Parser-Architektur</h3>
+                        <p style="font-size: 11px; opacity: 0.6; margin-bottom: 20px;">Sortiere die
+                            Ausführungsreihenfolge der Metadaten-Parser. Aktiviere/Deaktiviere Parser nach Bedarf.</p>
+
+                        <div id="parser-chain-list" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div class="glass-card"
+                                style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="3" y1="12" x2="21" y2="12" />
+                                        <line x1="3" y1="6" x2="21" y2="6" />
+                                        <line x1="3" y1="18" x2="21" y2="18" />
+                                    </svg>
+                                    <span style="font-size: 13px; font-weight: 600;">Dateiname</span>
+                                </div>
+                                <label class="switch" style="scale: 0.8;">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="glass-card"
+                                style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="3" y1="12" x2="21" y2="12" />
+                                        <line x1="3" y1="6" x2="21" y2="6" />
+                                        <line x1="3" y1="18" x2="21" y2="18" />
+                                    </svg>
+                                    <span style="font-size: 13px; font-weight: 600;">Container-Struktur</span>
+                                </div>
+                                <label class="switch" style="scale: 0.8;">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="glass-card"
+                                style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="3" y1="12" x2="21" y2="12" />
+                                        <line x1="3" y1="6" x2="21" y2="6" />
+                                        <line x1="3" y1="18" x2="21" y2="18" />
+                                    </svg>
+                                    <span style="font-size: 13px; font-weight: 600;">Mutagen (Schnell)</span>
+                                </div>
+                                <label class="switch" style="scale: 0.8;">
+                                    <input type="checkbox" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Dynamic Detail Column (FRAGMENT TARGET) -->
+                <div id="parser-main-viewport" class="tab-main-viewport" style="padding: 40px; background: rgba(255,255,255,0.02);">
+                    <div class="glass-card" style="max-width: 800px;">
+                        <h2 style="font-weight: 900; letter-spacing: -0.5px; margin-bottom: 20px;">Parser-Optionen</h2>
+                        <p style="color: var(--text-secondary); opacity: 0.5; font-style: italic;">Wähle einen Parser
+                            links aus, um seine Einstellungen zu sehen.</p>
+                    </div>
+                </div>
+            </div>
 
 
-    <!-- ===================== DIAGNOSTICS FRAGMENT PLACEHOLDER ===================== -->
-    <div id="diagnostics-suite-container" class="tab-content" style="display: none; height: 100%; flex-direction: column;">
-        <!-- Loaded via FragmentLoader (fragments/diagnostics_suite.html) -->
-        <div class="loading-fragment">Lade Diagnose-Suite...</div>
-    </div>
+            <!-- ===================== DIAGNOSTICS FRAGMENT PLACEHOLDER ===================== -->
+            <div id="diagnostics-suite-container" class="tab-content"
+                style="display: none; height: 100%; flex-direction: column;">
+                <!-- Loaded via FragmentLoader (fragments/diagnostics_suite.html) -->
+                <div class="loading-fragment">Lade Diagnose-Suite...</div>
+            </div>
 
 
-    <!-- Video Player Fragment -->
-    <div id="multiplexed-media-player-orchestrator-panel" class="tab-content" style="display: none; height: 100%; width: 100%;">
-        <div class="loading-fragment">Lade Video...</div>
-    </div>
+            <!-- Video Player Fragment -->
+            <div id="multiplexed-media-player-orchestrator-panel" class="tab-content tab-split-layout"
+                style="display: none; height: 100%; width: 100%;">
+                <!-- Video Technical Sidebar -->
+                <div class="tab-internal-sidebar">
+                    <h3 class="diagnostic-section-title">Video-Stream</h3>
+                    <div class="glass-card" style="margin-bottom: 20px;">
+                        <div class="diagnostic-label">Codec</div>
+                        <div id="vlc-diag-codec" class="diagnostic-value">H.264 / AVC</div>
+                        <div class="diagnostic-label">Pipeline</div>
+                        <div id="vlc-diag-pipeline" class="diagnostic-value">MSE / FragMP4</div>
+                    </div>
+                    <button class="nav-item active">Cinema Mode</button>
+                    <button class="nav-item" onclick="switchVideoView('details')">Details</button>
+                </div>
+                <!-- Video Viewport (FRAGMENT TARGET) -->
+                <div id="video-main-viewport" class="content-deck-fill">
+                    <div class="loading-fragment">Lade Video...</div>
+                </div>
+            </div>
 
-    <!-- Reporting Dashboard Fragment -->
-    <div id="reporting-dashboard-container" class="tab-content" style="display: none; height: 100%; flex-direction: column;">
-        <div class="loading-fragment">Lade Reporting Dashboard...</div>
-    </div>
-    <div id="tools-panel-container" class="tab-content" style="display: none; height: 100%; flex-direction: column;">
-        <div class="loading-fragment">Lade Tools...</div>
-    </div>
+            <!-- Reporting Dashboard Fragment -->
+            <div id="reporting-dashboard-container" class="tab-content"
+                style="display: none; height: 100%; flex-direction: column;">
+                <div class="loading-fragment">Lade Reporting Dashboard...</div>
+            </div>
+            <div id="tools-panel-container" class="tab-content"
+                style="display: none; height: 100%; flex-direction: column;">
+                <div class="loading-fragment">Lade Tools...</div>
+            </div>
 
-    <!-- TAB: Logbuch -->
-    <div id="logbook-tab-container" class="tab-content" style="display: none; height: 100%; flex-direction: column;">
-            <div class="loading-fragment">Lade Logbuch...</div>
-    </div>
-    <!-- TAB: Logbuch END -->
+            <!-- TAB: Logbuch -->
+            <div id="logbook-tab-container" class="tab-content"
+                style="display: none; height: 100%; flex-direction: column;">
+                <div class="loading-fragment">Lade Logbuch...</div>
+            </div>
+            <!-- TAB: Logbuch END -->
 
 
     </main> <!-- closes main-split-container -->
@@ -486,7 +689,7 @@
                 <!-- Dynamically via i18n -->
             </div>
             <div class="modal-footer">
-                    <button onclick="toggleImpressum()" class="tab-btn" data-i18n="common_close">Schließen</button>
+                <button onclick="toggleImpressum()" class="tab-btn" data-i18n="common_close">Schließen</button>
             </div>
         </div>
     </div>
@@ -495,55 +698,94 @@
     <div id="modals-placeholder" style="display: none;"></div>
 
     <!-- RESTORED Classic Footer System (Fixed Horizontal v1.34) -->
-    <footer id="unified-player-footer" style="position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 10000; display: flex; align-items: center; padding: 0 20px; gap: 30px; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);">
-        
+    <footer id="unified-player-footer"
+        style="position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); z-index: 10000; display: flex; align-items: center; padding: 0 20px; gap: 30px; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);">
+
         <!-- Now Playing Node -->
         <div style="display: flex; align-items: center; gap: 15px; width: 300px; flex-shrink: 0;">
-            <img id="footer-artwork-raster-buffer" class="synced-artwork" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                 style="width: 50px; height: 50px; border-radius: 6px; box-shadow: var(--shadow-soft);">
+            <img id="footer-artwork-raster-buffer" class="synced-artwork"
+                src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                style="width: 50px; height: 50px; border-radius: 6px; box-shadow: var(--shadow-soft);">
             <div style="flex: 1; overflow: hidden; line-height: 1.3;">
-                <div id="footer-status-title" class="synced-title" style="font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">Media Library</div>
-                <div id="footer-status-artist" class="synced-artist" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Ready for playback</div>
+                <div id="footer-status-title" class="synced-title"
+                    style="font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);">
+                    Media Library</div>
+                <div id="footer-status-artist" class="synced-artist"
+                    style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    Ready for playback</div>
             </div>
         </div>
 
         <!-- Central Controller Area (Progress & Controls) -->
         <div style="flex: 1; display:flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <span id="player-time-current" style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px; text-align: right;">0:00</span>
-                <input type="range" id="global-seek-slider" min="0" max="100" value="0" style="flex: 1; accent-color: var(--accent-color);">
-                <span id="player-time-total" style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px;">0:00</span>
+                <span id="player-time-current"
+                    style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px; text-align: right;">0:00</span>
+                <input type="range" id="global-seek-slider" min="0" max="100" value="0"
+                    style="flex: 1; accent-color: var(--accent-color);">
+                <span id="player-time-total"
+                    style="font-family: monospace; font-size: 12px; font-weight: 700; width: 45px;">0:00</span>
             </div>
-            <div id="player-warning-message" style="font-size: 10px; color: var(--text-secondary); text-align: center; opacity: 0.8; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px;">
+            <div id="player-warning-message"
+                style="font-size: 10px; color: var(--text-secondary); text-align: center; opacity: 0.8; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px;">
                 <span>v1.34 | <span id="sync-status" style="color: #2ecc71;">● Synchronized</span></span>
                 <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
                 <div id="footer-admin-cluster" class="admin-controls" style="display: flex; gap: 10px;">
-                    <button id="btn-flags" onclick="if(typeof toggleDebugFlags === 'function') toggleDebugFlags()" style="background: transparent; border: none; color: #e91e63; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Flags</button>
-                    <button id="btn-scan" onclick="scan(null, true)" style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Scan</button>
-                    <button id="btn-sync" onclick="refreshLibrary()" style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Sync</button>
-                    <button id="btn-logs" onclick="switchDiagnosticsSubView('debug-db')" style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
-                    <button id="btn-reset" onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()" style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Reset DB</button>
+                    <button id="btn-flags" onclick="if(typeof toggleDebugFlags === 'function') toggleDebugFlags()"
+                        style="background: transparent; border: none; color: #e91e63; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Flags</button>
+                    <button id="btn-scan" onclick="scan(null, true)"
+                        style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Scan</button>
+                    <button id="btn-sync" onclick="refreshLibrary()"
+                        style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Sync</button>
+                    <button id="btn-logs" onclick="switchDiagnosticsSubView('debug-db')"
+                        style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
+                    <button id="btn-reset"
+                        onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
+                        style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Reset
+                        DB</button>
                 </div>
             </div>
         </div>
 
         <!-- Right Side: Pipeline & Theme -->
-        <div style="display: flex; align-items: center; gap: 15px; width: 340px; flex-shrink: 0; padding-left: 20px; justify-content: flex-end;">
+        <div
+            style="display: flex; align-items: center; gap: 15px; width: 340px; flex-shrink: 0; padding-left: 20px; justify-content: flex-end;">
             <audio id="native-html5-audio-pipeline-element" controls style="height: 34px; width: 180px;"></audio>
-            
+
             <div style="height: 15px; width: 1px; background: var(--border-color); opacity: 0.5;"></div>
-            
-            <button id="btn-theme" class="theme-toggle" onclick="toggleTheme()" style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg id="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="18.36" x2="5.64" y2="16.92"/><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"/></svg>
+
+            <button id="btn-theme" class="theme-toggle" onclick="toggleTheme()"
+                style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg id="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="18.36" x2="5.64" y2="16.92" />
+                    <line x1="18.36" y1="4.22" x2="19.78" y2="5.64" />
+                </svg>
             </button>
 
             <!-- Sidebar Toggle (only functional in Tools tab) -->
-            <button id="btn-sidebar-toggle" onclick="toggleOptionsSidebar()" title="Linke Sidebar ein/ausblenden" style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            <button id="btn-sidebar-toggle" onclick="toggleOptionsSidebar()" title="Linke Sidebar ein/ausblenden"
+                style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="9" y1="3" x2="9" y2="21" />
+                </svg>
             </button>
 
-            <button onclick="toggleMenuBar()" class="tab-btn sm" style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <button onclick="toggleMenuBar()" class="tab-btn sm"
+                style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
             </button>
         </div>
     </footer>
@@ -552,6 +794,10 @@
     <script src="js/video_test_suite.js"></script>
     <script src="js/stats-overlay.js"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
+    
+    <!-- Externally loaded SVG icons and context menu (v1.34) -->
+    <div id="svg-icons-placeholder" style="display: none;"></div>
+    <div id="context-menu-placeholder"></div>
 </body>
 
 </html>

@@ -41,6 +41,28 @@ const FragmentLoader = {
             container.innerHTML = html;
             container.dataset.loaded = 'true';
 
+            // --- V1.34 Master: Manual Script Extraction & Execution ---
+            // innerHTML does not execute scripts by default. We must manually 
+            // trigger them to enable sub-tab switching and fragment logic.
+            const scripts = container.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                
+                // Copy all attributes (src, async, defer, type, etc.)
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+
+                // Copy internal content if not a src-based script
+                if (oldScript.textContent) {
+                    newScript.textContent = oldScript.textContent;
+                }
+
+                // Append and immediately remove to clean up DOM (execution still happens)
+                document.head.appendChild(newScript);
+                document.head.removeChild(newScript);
+            });
+
             // Trigger translations for the new content
             if (typeof initTranslations === 'function') {
                 initTranslations();
