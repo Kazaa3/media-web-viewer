@@ -40,7 +40,7 @@ function append_test_output(message) {
 
 /**
  * Loads available test suites from the backend and renders them.
- * v1.35.68 Refined: Python only, folder-based dropdown.
+ * v1.35.68 Final: Python only + Autonomous GUI Auditor (Virtual).
  */
 async function loadTestSuites(retryCount) {
     retryCount = retryCount || 0;
@@ -49,7 +49,7 @@ async function loadTestSuites(retryCount) {
     if (!container) return;
 
     if (retryCount === 0) {
-        container.innerHTML = `<div style="color: #999; font-style: italic;">Tests werden geladen...</div>`;
+        container.innerHTML = `<div style="color: var(--text-secondary); font-style: italic; padding: 20px;">Tests werden geladen...</div>`;
     }
 
     try {
@@ -57,9 +57,24 @@ async function loadTestSuites(retryCount) {
         // Filter: ONLY .py files (as requested)
         let suites = (res || []).filter(s => s.id.endsWith('.py'));
 
-        // Populate Folder Dropdown if empty or refresh
+        // Inject Virtual "Autonomous GUI Auditor" (Selenium-free)
+        const virtualAuditor = {
+            id: 'gui_auditor_virtual',
+            name: 'GUI Auditor (Autonomous)',
+            folder: 'System',
+            metadata: {
+                category: 'INTEGRITY-AUDIT',
+                inputs: 'DOM Snapshot, Session State',
+                outputs: '10-Point Health Report',
+                files: 'diagnostics_helpers.js',
+                comment: 'Automatisierte Integritätsprüfung aller UI-Komponenten ohne Selenium/Playwright.'
+            }
+        };
+        suites.unshift(virtualAuditor);
+
+        // Populate Folder Dropdown
         if (folderSelect && (folderSelect.options.length <= 1 || retryCount === 0)) {
-            const currentVal = folderSelect.value;
+            const currentVal = folderSelect.value || 'all';
             folderSelect.innerHTML = '<option value="all">-- All Folders --</option>';
             const folders = [...new Set(suites.map(s => s.folder || 'root'))].sort();
             folders.forEach(f => {
@@ -78,7 +93,7 @@ async function loadTestSuites(retryCount) {
 
         container.innerHTML = '';
         if (filteredSuites.length === 0) {
-            container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Keine Tests in diesem Ordner gefunden.</div>';
+            container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Keine Tests gefunden.</div>';
             return;
         }
 
@@ -91,7 +106,7 @@ async function loadTestSuites(retryCount) {
 
     } catch (e) {
         console.error('[loadTestSuites] Error:', e);
-        container.innerHTML = `<div style="color: #c33; padding: 20px;">Fehler beim Laden der Tests: ${e}</div>`;
+        container.innerHTML = `<div style="color: #ff5252; padding: 20px;">Fehler beim Laden: ${e}</div>`;
     }
 }
 
@@ -170,75 +185,76 @@ async function runSelectedTests() {
 
     const checkboxes = document.querySelectorAll('.test-suite-checkbox:checked');
     const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
-    const guiTest = document.getElementById('test-gui') && document.getElementById('test-gui').checked;
     const runBtn = document.getElementById('run-selected-tests-btn');
     
+    if (selectedFiles.length === 0) {
+        if (typeof showStatusNotification === 'function') showStatusNotification('Bitte mindestens einen Test auswählen.', 'warn');
+        return;
+    }
+
     isTestRunInProgress = true;
     if (runBtn) {
         runBtn.disabled = true;
-        runBtn.style.opacity = '0.65';
-        runBtn.style.cursor = 'wait';
+        runBtn.style.opacity = '0.6';
     }
 
     const resultsContainer = document.getElementById('test-results-container');
     const outputArea = document.getElementById('test-output');
     const summaryBadge = document.getElementById('test-run-summary');
 
-    if (!outputArea || !summaryBadge) return;
-
     if (resultsContainer) {
-        resultsContainer.style.display = 'block';
+        resultsContainer.style.display = 'flex';
         resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    __testOutputBuffer = '';
-    appendTestOutputChunk(`${typeof t === 'function' ? t('test_run_starting') : 'Starting test run...'}\n`);
-    summaryBadge.style.display = 'none';
+    if (outputArea) outputArea.textContent = '';
+    if (summaryBadge) summaryBadge.style.display = 'none';
 
-    let totalPasses = 0;
-    let totalFails = 0;
+    appendTestOutputChunk(`[RUN] Test-Lauf gestartet um ${new Date().toLocaleTimeString()}...\n`);
 
     try {
-        if (selectedFiles.length > 0) {
-            const result = await eel.run_tests(selectedFiles)();
+        // Handle Virtual GUI Auditor separately
+        if (selectedFiles.includes('gui_auditor_virtual')) {
+            appendTestOutputChunk(`\n[SELF-TEST] Starte Autonomous GUI Auditor (10-Point Audit)...\n`);
+            if (typeof window.runAutonomousSelfTest === 'function') {
+                await window.runAutonomousSelfTest();
+                appendTestOutputChunk(`[SELF-TEST] Audit abgeschlossen. Ergebnisse in der Console und Status-Leiste detailiert einsehbar.\n`);
+            } else {
+                appendTestOutputChunk(`[ERROR] runAutonomousSelfTest nicht gefunden!\n`);
+            }
+        }
+
+        // Filter out virtual IDs before sending to backend
+        const pythonTests = selectedFiles.filter(id => id !== 'gui_auditor_virtual');
+
+        if (pythonTests.length > 0) {
+            appendTestOutputChunk(`\n[BACKEND] Sende ${pythonTests.length} Python-Tests an Engine...\n`);
+            const result = await eel.run_tests(pythonTests)();
+            
             if (result.error) {
-                appendTestOutputChunk(`${typeof t === 'function' ? t('test_run_error') : 'Error: '}${result.error}\n`);
+                appendTestOutputChunk(`[ERROR] ${result.error}\n`);
             } else {
-                appendTestOutputChunk(`\n[Python Tests - Exit Code: ${result.exit_code}]\n`);
-                if (result.passes !== undefined) totalPasses += result.passes;
-                if (result.fails !== undefined) totalFails += result.fails;
+                appendTestOutputChunk(`\n[RESULTS] Python Exit Code: ${result.exit_code}\n`);
+                appendTestOutputChunk(`Pass: ${result.passes || 0} | Fail: ${result.fails || 0}\n`);
+                
+                if (summaryBadge) {
+                    summaryBadge.style.display = 'inline-block';
+                    summaryBadge.textContent = `${result.passes || 0} Pass, ${result.fails || 0} Fail`;
+                    summaryBadge.style.background = (result.fails || 0) > 0 ? 'rgba(255, 82, 82, 0.2)' : 'rgba(46, 204, 113, 0.2)';
+                    summaryBadge.style.color = (result.fails || 0) > 0 ? '#ff5252' : '#2ecc71';
+                }
             }
         }
 
-        if (guiTest) {
-            try {
-                const guiRes = await eel.run_gui_tests()();
-                appendTestOutputChunk(`\n\n[GUI-Tests] ${guiRes.message}`);
-            } catch (e) {
-                appendTestOutputChunk(`\n\n[GUI-Tests] Error: ${e}`);
-            }
-        }
+        appendTestOutputChunk(`\n[FINISH] Alle ausgewählten Aufgaben beendet.\n`);
 
-        if (selectedFiles.length > 0) {
-            summaryBadge.style.display = 'inline-block';
-            if (totalFails > 0) {
-                summaryBadge.textContent = `${totalFails} Failed, ${totalPasses} Passed`;
-                summaryBadge.style.background = 'rgba(255, 82, 82, 0.15)';
-                summaryBadge.style.color = '#ff5252';
-            } else {
-                summaryBadge.textContent = `Alle ${totalPasses} Tests Passed`;
-                summaryBadge.style.background = 'rgba(46, 204, 113, 0.15)';
-                summaryBadge.style.color = '#2ecc71';
-            }
-        }
     } catch (e) {
-        appendTestOutputChunk(`System Error: ${e}\n`);
+        appendTestOutputChunk(`\n[SYSTEM ERROR] ${e}\n`);
     } finally {
         isTestRunInProgress = false;
         if (runBtn) {
             runBtn.disabled = false;
             runBtn.style.opacity = '1';
-            runBtn.style.cursor = 'pointer';
         }
     }
 }

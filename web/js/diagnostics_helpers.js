@@ -89,12 +89,18 @@ function syntaxHighlightJSON(json) {
  * Modern Database Overview Renderer (v1.35.68 Refined)
  * Restores the Category Breakdown requested by user.
  */
+/**
+ * Modern Database Overview Renderer (v1.35.68 Final Consolidation)
+ * Restores the Category Breakdown requested by user.
+ */
 function renderDatabaseOverview() {
     const container = document.getElementById('debug-db-overview-content');
     if (!container) return;
 
+    // Use live items or last known db count
     const items = window.allLibraryItems || [];
-    const dbCount = window.__mwv_last_db_count || items.length;
+    const dbTotal = window.__mwv_last_db_count || 0;
+    const guiTotal = items.length;
     
     // Group by category
     const cats = {};
@@ -104,19 +110,19 @@ function renderDatabaseOverview() {
     });
 
     let catListHtml = Object.entries(cats).map(([cat, count]) => 
-        `<li>${cat}: ${count}</li>`
+        `<li><span style="color: var(--text-primary); font-weight: 700;">${cat}:</span> ${count}</li>`
     ).join('');
 
     container.innerHTML = `
-        <div style="display: flex; gap: 40px; align-items: flex-start;">
-            <div>
-                <h4 style="margin: 0 0 5px 0; font-size: 1.4em; color: var(--text-primary);">Entries: ${dbCount}</h4>
-                <div style="font-size: 11px; opacity: 0.7; color: #2ecc71;">DB Health: Synchronized</div>
+        <div style="display: flex; gap: 60px; align-items: flex-start;">
+            <div style="flex: 0 0 auto;">
+                <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">Database Stats</div>
+                <h4 style="margin: 0; font-size: 1.8em; color: var(--text-primary); font-weight: 900; letter-spacing: -1px;">Items: ${dbTotal}</h4>
             </div>
-            <div>
-                <h4 style="margin: 0 0 8px 0; font-size: 1.1em; color: var(--text-primary);">Categories:</h4>
-                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
-                    ${catListHtml || '<li>Keine Daten</li>'}
+            <div style="flex: 1;">
+                <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">Category Breakdown (GUI)</div>
+                <ul style="margin: 0; padding-left: 15px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; list-style: square;">
+                    ${catListHtml || '<li>Warte auf Daten-Sync...</li>'}
                 </ul>
             </div>
         </div>
@@ -131,10 +137,7 @@ window.renderDebugDatabase = async function() {
     // 1. Update the Summary Card (with Categories)
     renderDatabaseOverview();
 
-    // 2. Ensure Flags are rendered (Inline Restoration)
-    if (typeof toggleDebugMenu === 'function') {
-        toggleDebugMenu(true);
-    }
+    // 2. Flags are now in their own tab, so we don't render them here anymore.
 
     if (!display) return;
     const type = select ? select.value : 'library';
@@ -148,24 +151,27 @@ window.renderDebugDatabase = async function() {
         }
     } catch (err) {
         console.error("renderDebugDatabase Error:", err);
-        data = { error: err.message };
+        data = { error: err.message || "Failed to fetch source." };
     }
 
     // 3. Apply VS Code Highlighting
     display.innerHTML = syntaxHighlightJSON(data);
 };
 
-// --- Sub-Tab Hijack Restoration (v1.35.68) ---
-// This ensures 'Overview' and 'Tests' work correctly with existing logic
+// --- Sub-Tab Hijack Restoration (v1.35.68 Final) ---
 setTimeout(() => {
     if (typeof window.switchDiagnosticsView === 'function') {
         const originalSwitchDiagnosticsView = window.switchDiagnosticsView;
         window.switchDiagnosticsView = function(viewId) {
-            // Mapping for restored logic
+            console.log("[switchDiagnosticsView] Navigation to:", viewId);
+            
+            // Re-map internal logic for partitioned tabs
             if (viewId === 'debug-db') {
                  if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
             } else if (viewId === 'tests') {
                  if (typeof loadTestSuites === 'function') loadTestSuites();
+            } else if (viewId === 'flags') {
+                 if (typeof toggleDebugMenu === 'function') toggleDebugMenu(true);
             }
             
             if (typeof originalSwitchDiagnosticsView === 'function') {

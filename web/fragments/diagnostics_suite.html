@@ -8,6 +8,7 @@
             <div class="options-nav-tabs" style="display: flex; gap: 4px;">
                 <button class="sub-tab-btn diagnostics-subtab" data-view="debug-db" onclick="switchDiagnosticsView('debug-db')">Overview</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="tests" onclick="switchDiagnosticsView('tests')">Tests</button>
+                <button class="sub-tab-btn diagnostics-subtab" data-view="flags" onclick="switchDiagnosticsView('flags')">Flags</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="health" onclick="switchDiagnosticsView('health')">System-Health</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="latency" onclick="switchDiagnosticsView('latency')">Latency</button>
                 <button class="sub-tab-btn diagnostics-subtab" data-view="video-health" onclick="switchDiagnosticsView('video-health')">Video Health</button>
@@ -26,7 +27,7 @@
     <div id="diagnostics-viewport" style="flex: 1; overflow-y: auto; background: var(--bg-primary);">
         
         <!-- VIEW: System Health -->
-        <div id="diagnostics-health-view" class="diagnostics-view" style="display: block; padding: 30px;">
+        <div id="diagnostics-health-view" class="diagnostics-view" style="display: none; padding: 30px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
                 <!-- Connectivity -->
                 <div class="glass-card" style="padding: 24px; border-top: 4px solid #3498db;">
@@ -47,11 +48,13 @@
 
             <!-- Terminal Results Overlay -->
             <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; display: none; line-height: 1.5;"></div>
-                <!-- VIEW: Overview (All-in-One 2-Column) -->
+        </div>
+
+        <!-- VIEW: Overview -->
         <div id="diagnostics-debug-db-view" class="diagnostics-view" style="display: block; height: calc(100% - 10px); overflow: hidden;">
             <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; height: 100%; padding: 20px;">
                 
-                <!-- LEFT COLUMN: Stats, Flags & JSON -->
+                <!-- LEFT COLUMN: DB Stats & JSON Data -->
                 <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0; overflow-y: auto;">
                     
                     <!-- Item DB (Übersicht) -->
@@ -59,15 +62,7 @@
                         <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em;">Item DB (Übersicht)</h3>
                         <div id="debug-db-overview-content" style="min-height: 80px;">
                             <!-- Injected via renderDebugDatabase -->
-                            <div style="color: var(--text-secondary); font-size: 12px;">Betrete Sync-Zustand...</div>
-                        </div>
-                    </div>
-
-                    <!-- System Debug Flags (Inline Restoration) -->
-                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto; background: rgba(255, 82, 82, 0.02); border: 1px solid rgba(255, 82, 82, 0.1);">
-                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: #b71c1c; font-size: 1.1em; text-transform: uppercase;">System Debug Flags</h3>
-                        <div id="modal-debug-flags" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
-                            <!-- Dynamically loaded via toggleDebugMenu logic -->
+                            <div style="color: var(--text-secondary); font-size: 11px;">Betrete Sync-Zustand...</div>
                         </div>
                     </div>
 
@@ -105,30 +100,26 @@
                             <button onclick="clearDebugConsole()" class="tab-btn" style="padding: 4px 12px; font-size: 11px; opacity: 0.8;">Leeren</button>
                         </div>
                     </div>
-
-                    <!-- Log Filter Bar -->
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                        <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">Filter:</div>
-                        <select id="debug-log-level-filter" onchange="updateLogFilters()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); font-size: 10px; padding: 2px 6px; border-radius: 4px; outline: none;">
-                            <option value="ALL">ALL LEVELS</option>
-                            <option value="DEBUG">DEBUG ONLY</option>
-                            <option value="INFO">INFO ONLY</option>
-                            <option value="WARN">WARN ONLY</option>
-                            <option value="ERROR">ERROR ONLY</option>
-                        </select>
-                        <input type="text" id="debug-log-search" placeholder="Suche in Logs..." oninput="updateLogFilters()" style="flex: 1; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); font-size: 10px; padding: 3px 8px; border-radius: 4px; outline: none;">
-                        <div id="debug-log-counter" style="font-size: 9px; color: var(--text-secondary); font-family: monospace;">Visible: --</div>
-                    </div>
-
                     <div id="debug-console-output" style="flex: 1; background: #000; border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 11px; overflow-y: scroll; white-space: pre-wrap; line-height: 1.4; color: #00ff41;">
                         <!-- Real-time logs appear here -->
                     </div>
                 </div>
             </div>
         </div>
-iv>
+
+        <!-- VIEW: Flags (Dedicated Restoration) -->
+        <div id="diagnostics-flags-view" class="diagnostics-view" style="display: none; padding: 40px;">
+            <div class="glass-card" style="padding: 30px; border-top: 4px solid #b71c1c; background: rgba(183, 28, 28, 0.01);">
+                <h3 style="margin: 0 0 25px 0; font-weight: 900; color: #b71c1c; font-size: 1.3em; text-transform: uppercase;">System Debug Orchestrator</h3>
+                <div id="modal-debug-flags" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                    <!-- Dynamically loaded via toggleDebugMenu logic -->
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Initialisiere Debug-Flags...</div>
+                </div>
+            </div>
+        </div>
 
         <!-- VIEW: Latency -->
+y -->
         <div id="diagnostics-latency-view" class="diagnostics-view" style="display: none; padding: 40px;">
             <div class="glass-card" style="padding: 40px; text-align: center;">
                 <h3 style="font-weight: 800; color: var(--text-primary);">Network & IPC Latency Profile</h3>
