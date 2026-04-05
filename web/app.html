@@ -714,24 +714,34 @@
                 <span id="mwv-footer-version">v...</span> | <span id="sync-status" style="color: #2ecc71;">● Synchronized</span></span>
                 <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
                 <div id="footer-admin-cluster" class="admin-controls" style="display: flex; gap: 10px;">
-                    <button id="btn-flags" onclick="if(typeof toggleDebugFlags === 'function') toggleDebugFlags()"
-                        style="background: transparent; border: none; color: #e91e63; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Flags</button>
-                    <button id="btn-scan" onclick="scan(null, true)"
-                        style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Scan</button>
-                    <button id="btn-sync" onclick="refreshLibrary()"
-                        style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Sync</button>
+                    <button id="btn-flags" onclick="if(typeof showConsolePopup === 'function') showConsolePopup()"
+                        style="background: transparent; border: none; color: #e91e63; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: color 0.2s;">Flags</button>
+                    <button id="btn-scan" onclick="(() => { const orig = this.innerText; this.innerText = 'Scanning...'; this.style.color = '#f1c40f'; scan(null, true); setTimeout(() => { this.innerText = orig; this.style.color = 'var(--accent-color)'; }, 1500); })()"
+                        style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: color 0.2s;">Scan</button>
+                    <button id="btn-sync" onclick="(() => { const orig = this.innerText; this.innerText = 'Syncing...'; this.style.color = '#f1c40f'; refreshLibrary(); setTimeout(() => { this.innerText = orig; this.style.color = 'var(--accent-color)'; }, 1500); })()"
+                        style="background: transparent; border: none; color: var(--accent-color); font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: color 0.2s;">Sync</button>
                     <button id="btn-logs" onclick="if(typeof showConsolePopup === 'function') showConsolePopup();"
                         style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
 
                     <!-- Advanced Toggles (Restored exact functions) -->
                     <div style="display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-                        <button class="diag-toggle-btn" onclick="if(typeof toggleDiagLibMode === 'function') toggleDiagLibMode()" title="Toggle Real DB / Diagnostic Suite" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px;">
-                            <span id="footer-diag-label">DIAG</span>
+                        <button class="diag-toggle-btn" 
+                            onclick="if(typeof toggleDiagLibMode === 'function') toggleDiagLibMode(); this.innerText = (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear) ? '[DIAG: ON]' : '[DIAG: OFF]';" 
+                            onmouseenter="this.dataset.orig = this.innerText; this.innerText = (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear) ? '[DIAG: ON]' : '[DIAG: OFF]';" 
+                            onmouseleave="this.innerText = this.dataset.orig || 'DIAG';"
+                            title="Toggle Real DB / Diagnostic Suite" 
+                            style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
+                            DIAG
                         </button>
-                        <button class="diag-toggle-btn" onclick="if(typeof toggleForceNative === 'function') toggleForceNative()" title="Force Native Video Engine" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px;">
-                            <span id="footer-natv-label">NATV</span>
+                        <button class="diag-toggle-btn" 
+                            onclick="if(typeof toggleForceNative === 'function') toggleForceNative(); this.innerText = window.__mwv_force_native ? '[NATV: ON]' : '[NATV: OFF]';" 
+                            onmouseenter="this.dataset.orig = this.innerText; this.innerText = window.__mwv_force_native ? '[NATV: ON]' : '[NATV: OFF]';" 
+                            onmouseleave="this.innerText = this.dataset.orig || 'NATV';"
+                            title="Force Native Video Engine" 
+                            style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
+                            NATV
                         </button>
-                        <button onclick="if(typeof runDomAudit === 'function') runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:1px solid var(--accent-color); color:var(--accent-color); border-radius:4px; font-size:9px; padding:2px 6px; cursor:pointer; font-weight:800;">AUDIT</button>
+                        <button onclick="if(typeof runDomAudit === 'function') runDomAudit()" title="7-Point DOM Health Audit" style="background:transparent; border:none; color:var(--accent-color); font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">AUDIT</button>
                     </div>
 
                     <!-- DB Status Light & Buttons -->
