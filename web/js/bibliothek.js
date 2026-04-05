@@ -19,14 +19,14 @@ if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-
 /**
  * Boots the library by fetching data from the DB.
  */
-async function loadLibrary(retryCount = 0) {
+async function loadLibrary(retryCount = 0, forceRaw = false) {
         window.__mwv_lib_loaded = true;
     if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-LOAD-START');
-    console.log('[DATA-LIB] STAGE-LOAD-START: loadLibrary() called.');
+    console.log(`[DATA-LIB] STAGE-LOAD-START: loadLibrary(forceRaw=${forceRaw}) called.`);
     if (typeof updateSyncAnchor === 'function') updateSyncAnchor('...', '...'); 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
-        const library = await getLibrary();
+        const library = await eel.get_library(forceRaw)();
         const incomingCount = (library.media || []).length;
         const totalDbCount = library.db_count || incomingCount;
         

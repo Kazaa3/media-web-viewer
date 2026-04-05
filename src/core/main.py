@@ -3234,55 +3234,28 @@ def get_db_info():
         return None
 
 
-@eel.expose
-def get_library() -> Dict[str, Any]:
-    """
-    @brief Returns all media items from the database without re-scanning.
-    @details Gibt alle Medien aus der Datenbank zurück ohne neu zu scannen.
-    @return Dict with list of media items / Dokument mit Medien-Liste.
-    """
-    with stall_watchdog("Media Library Fetch", threshold=5.0):
-        print(f"STDOUT: [BACKEND] [get_library] Fetching items... PID: {os.getpid()}", flush=True)
-        log.info(f"[BACKEND] [get_library] Fetching... (PID: {os.getpid()})")
-        progress_update("Library: Fetching Rows", 20)
-        
-        # Core DB Fetch
-        all_media = db.get_all_media()
-        count_total = len(all_media)
-        
-    # --- V1.35.45: DB-SNAPSHOT Audit ---
-    db_path = os.path.join("data", "database.db")
-    db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
-    snap_msg = f"[DB-SNAPSHOT] File: {db_path} | Size: {db_size} bytes | Wrapper Rows: {count_total}"
-    log.info(snap_msg)
-    print(f"STDOUT: {snap_msg}", flush=True)
-    
-    # Fire-and-forget for Eel logs (avoid stalling if no browser is connected)
-    if getattr(eel, 'append_debug_log', None) and getattr(eel, '_websocket', None):
-        eel.append_debug_log(snap_msg, "DB-INFO")
-    
-    # --- V1.35.35 Recovery: Robust Auto-Scan ---
-    if count_total == 0:
-        log.warning("[RECOVERY] Library empty on boot. Triggering auto-scan of ./media...")
-        try:
-            import threading
-            threading.Thread(target=scan_media, args=('./media', False), name="AutoScanThread").start()
-        except Exception as e:
-            log.error(f"[RECOVERY] Auto-scan trigger failed: {e}")
 
-    # --- CATEGORY MAPPING & FILTERING (Black Hole Check) ---
+def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, search: str = "", genre: str = "all", year: str = "all") -> List[Dict]:
+    """
+    @brief Unified category mapping and filtering (v1.35.68 Recovery).
+    """
+    if force_raw and not search and genre == "all" and year == "all":
+        log.info("[BD-AUDIT] RAW MODE: Bypassing all category filters.")
+        return all_media
+
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
-        displayed_cats = ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "multimedia"]
+        displayed_cats = ["audio", "video", "images", "multimedia", "abbild"]
 
+    # --- Unified CTA Map (v1.35.68) ---
     cat_map = {
-        "audio":     ["Audio", "Album", "Klassik", "Hörbuch", "Hörspiel", "Podcast", "Musik"],
-        "video":     ["Video", "Film", "Serie", "TV", "Multimedia"],
-        "images":    ["Bilder", "Grafik", "Bild", "Foto", "multimedia"],
-        "documents": ["Dokument", "PDF", "Text"],
-        "ebooks":    ["E-Book", "Ebook"],
-        "abbild":    ["Abbild", "Disk-Abbild", "ISO", "PAL DVD", "NTSC DVD", "Blu-ray", "3D", "4K" ,"HD-DVD", "WMV-HD"],
-        "multimedia": ["multimedia", "Bilder", "Video", "Film"] # Explicit catch-all
+        "audio":      ["audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", "musik"],
+        "video":      ["video", "film", "serie", "tv", "multimedia"],
+        "images":     ["bilder", "grafik", "bild", "foto", "multimedia"],
+        "documents":  ["dokument", "pdf", "text"],
+        "ebooks":     ["e-book", "ebook"],
+        "abbild":     ["abbild", "disk-abbild", "iso", "pal dvd", "ntsc dvd", "blu-ray", "3d", "4k", "hd-dvd", "wmv-hd"],
+        "multimedia": ["multimedia", "bilder", "video", "film"]
     }
 
     allowed_internal_cats = set()
@@ -3290,46 +3263,16 @@ def get_library() -> Dict[str, Any]:
         for cat in cat_map.get(dc.lower(), []):
             allowed_internal_cats.add(cat.lower())
 
-    filtered_media = []
-    skip_log = []
-    for item in all_media:
-        cat = str(item.get('category', 'Unbekannt')).lower()
-        if cat in allowed_internal_cats:
-            filtered_media.append(item)
-        else:
-            skip_log.append(f"{item.get('name', '---')} ({cat})")
-
-    # Final Audit before return
-    audit_len = len(filtered_media)
-    log.info(f"[BD-AUDIT] Filtered {audit_len}/{count_total} items. Skipped: {len(skip_log)}")
-    if audit_len == 0 and count_total > 0:
-        log.warning(f"[BD-AUDIT] BLACK HOLE DETECTED: Returning all {count_total} unfiltered rows.")
-        filtered_media = all_media
-
-    return {
-        "media": filtered_media,
-        "db_count": count_total,
-        "status": "ready",
-        "timestamp": time.time()
-    }
-
-
-@eel.expose
-def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name") -> Dict[str, Any]:
-    """
-    @brief Advanced filtering for the media library.
-    """
-    all_media = db.get_all_media()
-    displayed_cats = PARSER_CONFIG.get("displayed_categories", ["audio", "video"])
-    # (Mapping logic same as get_library)
-
     filtered = []
     for item in all_media:
-        # 1. Category check
-        # ... logic ...
+        # 1. Category check (Skip if force_raw)
+        if not force_raw:
+            cat = str(item.get('category', 'Unbekannt')).lower()
+            if cat not in allowed_internal_cats:
+                continue
 
         # 2. Search check
-        if search and search.lower() not in item['name'].lower():
+        if search and search.lower() not in str(item.get('name', '')).lower():
             continue
 
         # 3. Genre check
@@ -3344,13 +3287,63 @@ def get_library_filtered(search: str = "", genre: str = "all", year: str = "all"
 
         filtered.append(item)
 
-    # 5. Sorting
+    return filtered
+
+
+@eel.expose
+def get_library(force_raw: bool = False) -> Dict[str, Any]:
+    """
+    @brief Main entry point for fetching the media library.
+    """
+    all_media = []
+    count_total = 0
+    try:
+        all_media = db.get_all_media()
+        count_total = len(all_media)
+    except Exception as e:
+        log.error(f"[BD-AUDIT] DB Access Error: {e}")
+        return {"media": [], "db_count": 0, "status": "error", "error": str(e)}
+
+    # --- CATEGORY MAPPING & FILTERING ---
+    filtered_media = _apply_library_filters(all_media, force_raw=force_raw)
+
+    # Final Audit (The Black Hole Trap)
+    audit_len = len(filtered_media)
+    log.info(f"[BD-AUDIT] Filtered {audit_len}/{count_total} items. force_raw={force_raw}")
+    
+    if audit_len == 0 and count_total > 0 and not force_raw:
+        log.warning(f"[BD-AUDIT] BLACK HOLE DETECTED. Returning all rows.")
+        filtered_media = all_media
+
+    return {
+        "media": filtered_media,
+        "db_count": count_total,
+        "status": "ready",
+        "timestamp": time.time()
+    }
+
+
+@eel.expose
+def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name", force_raw: bool = False) -> Dict[str, Any]:
+    """
+    @brief Advanced filtering for the media library.
+    """
+    all_media = db.get_all_media()
+    filtered = _apply_library_filters(all_media, force_raw=force_raw, search=search, genre=genre, year=year)
+
+    # Sorting
     if sort_by == "year":
         filtered.sort(key=lambda x: str(x.get('tags', {}).get('year', '9999')), reverse=True)
+    elif sort_by == "artist":
+        filtered.sort(key=lambda x: str(x.get('tags', {}).get('artist', 'z')).lower())
     else:
-        filtered.sort(key=lambda x: x['name'].lower())
+        filtered.sort(key=lambda x: str(x.get('name', 'z')).lower())
 
-    return sanitize_json_utf8({"media": filtered})
+    return {
+        "media": filtered,
+        "db_count": len(all_media),
+        "status": "ready"
+    }
 
 
 @eel.expose

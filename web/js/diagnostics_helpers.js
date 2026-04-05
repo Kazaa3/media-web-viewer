@@ -565,15 +565,74 @@ function toggleHideDb() {
 window.toggleHideDb = toggleHideDb;
 
 /**
- * Diagnostic: Notify Change (Nice Pop-up for buttons)
+ * Diagnostic: Notify Change (v1.35.68 Overhaul)
+ * Provides explicit, non-abbreviated labels for all diagnostic controls.
  */
-function notifyDiagnosticChange(btnId, label, state) {
-    const msg = `${label}: ${state ? 'AKTIVIERT' : 'DEAKTIVIERT'}`;
+function notifyDiagnosticChange(btnId, type, state) {
+    let label = type;
+    let desc = "";
+
+    switch(type) {
+        case 'DIAG': 
+            label = "Nuclear Recovery Mode"; 
+            desc = " (S1-S15 Stages)"; 
+            break;
+        case 'NATV': 
+            label = "Native HTML5 Engine"; 
+            desc = " (Kein Transcoding)"; 
+            break;
+        case 'HIDB': 
+            label = "Hide Real DB Items"; 
+            desc = " (Mock Flow Test)"; 
+            break;
+        case 'RAW':  
+            label = "Rohdaten-Modus";    
+            desc = " (Kein Cat-Mapping)"; 
+            break;
+        case 'BYPS': 
+            label = "DB-Bypass";         
+            desc = " (Nur Test-Mocks)"; 
+            break;
+    }
+
+    const msg = `${label}${desc}: ${state ? 'AKTIVIERT' : 'DEAKTIVIERT'}`;
     if (typeof showStatusNotification === 'function') {
         showStatusNotification(msg, state ? 'success' : 'info');
     }
 }
 window.notifyDiagnosticChange = notifyDiagnosticChange;
+
+/**
+ * Diagnostic: Raw Mode Toggle
+ * Forces backend to return items without category mapping.
+ */
+window.__mwv_raw_mode = false;
+async function toggleRawMode() {
+    window.__mwv_raw_mode = !window.__mwv_raw_mode;
+    notifyDiagnosticChange(null, 'RAW', window.__mwv_raw_mode);
+    if (typeof loadLibrary === 'function') {
+        // Pass force_raw = true to the loader
+        loadLibrary(0, window.__mwv_raw_mode);
+    }
+}
+window.toggleRawMode = toggleRawMode;
+
+/**
+ * Diagnostic: DB Bypass Toggle
+ * Ignores all library data and uses Pure Mocks.
+ */
+window.__mwv_bypass_db = false;
+function toggleBypassDb() {
+    window.__mwv_bypass_db = !window.__mwv_bypass_db;
+    notifyDiagnosticChange(null, 'BYPS', window.__mwv_bypass_db);
+    
+    if (window.__mwv_bypass_db) {
+        if (typeof bootstrapMockQueue === 'function') bootstrapMockQueue();
+    } else {
+        if (typeof loadLibrary === 'function') loadLibrary();
+    }
+}
+window.toggleBypassDb = toggleBypassDb;
 
 /**
  * Sync Anchor Initializer

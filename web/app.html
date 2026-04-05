@@ -756,6 +756,22 @@
                             style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
                             HIDB
                         </button>
+                        <button class="diag-toggle-btn" 
+                            onclick="if(typeof toggleRawMode === 'function') toggleRawMode(); this.innerText = window.__mwv_raw_mode ? '[RAW: ON]' : '[RAW: OFF]';" 
+                            onmouseenter="this.dataset.orig = this.innerText; this.innerText = window.__mwv_raw_mode ? '[RAW: ON]' : '[RAW: OFF]';" 
+                            onmouseleave="this.innerText = this.dataset.orig || 'RAW';"
+                            title="Raw Mode (Bypass Category Filters)" 
+                            style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
+                            RAW
+                        </button>
+                        <button class="diag-toggle-btn" 
+                            onclick="if(typeof toggleBypassDb === 'function') toggleBypassDb(); this.innerText = window.__mwv_bypass_db ? '[BYPS: ON]' : '[BYPS: OFF]';" 
+                            onmouseenter="this.dataset.orig = this.innerText; this.innerText = window.__mwv_bypass_db ? '[BYPS: ON]' : '[BYPS: OFF]';" 
+                            onmouseleave="this.innerText = this.dataset.orig || 'BYPS';"
+                            title="Bypass DB (Force Pure Mocks)" 
+                            style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:4px; min-width:35px; transition: color 0.2s;">
+                            BYPS
+                        </button>
                         <button onclick="if(typeof runDomAudit === 'function') runDomAudit(); if(typeof showStatusNotification === 'function') showStatusNotification('7-Point Health Audit INITIATED', 'info');" title="7-Point DOM Health Audit" style="background:transparent; border:none; color:var(--accent-color); font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">AUDIT</button>
                         <button onclick="if(typeof probeDataFlow === 'function') probeDataFlow()" title="Deep Data Flow Probe" style="background:transparent; border:none; color: #2ecc71; font-size:9px; font-weight:800; cursor:pointer; padding:2px 4px;">PROBE</button>
                     </div>

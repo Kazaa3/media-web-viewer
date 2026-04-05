@@ -777,7 +777,11 @@ function syncQueueWithLibrary() {
     }
 
     let filtered;
+    const isRaw = window.__mwv_raw_mode === true;
     
+    // v1.35.68 Sync Audit
+    const audit = { audio: 0, video: 0, dropped: 0, total: allLibraryItems.length };
+
     // v1.35.65: Toggle between Real DB and Diagnostic Suite
     if (isDiagnosticMode && !isRealDbMode) {
         // Recovery Mode: Filter for Stage Items (S1-S15)
@@ -790,14 +794,20 @@ function syncQueueWithLibrary() {
     } else {
         // Productive Mode: Filter by category (Default: Audio for Player tab)
         filtered = allLibraryItems.filter(item => {
-            const isRealAsset = !item.stage; // Exclude diagnostics in Real mode
-            const isAudio = !isVideoItem(item);
-            return (isRealAsset && isAudio) || (item.is_mock && !item.stage);
+            const isReal = !item.stage;
+            const video = isVideoItem(item);
+            
+            // --- BRAIN FIX: Allow raw data and non-video items ---
+            const isAudioCandidate = !video || isRaw;
+            const keep = (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
+            
+            if (keep) audit.audio++; else audit.dropped++;
+            return keep;
         });
-        console.info(`[Productive] Syncing ${filtered.length} Real Library items.`);
+        console.info(`[Productive] Sync Audit: ${audit.audio} Audio-Candidates, ${audit.dropped} Dropped. (Raw Mode: ${isRaw})`);
     }
     
-    if (filtered.length > 0) {
+    if (filtered.length > 0 || isRaw) {
         currentPlaylist = [...filtered];
         if (playlistIndex === -1) playlistIndex = 0;
         
