@@ -1,5 +1,5 @@
-console.log(">>> [RECOVERY] Injecting test header (v1.35.23 - ATOMIC)...");
-document.body.insertAdjacentHTML('afterbegin', '<h1 id="recovery-test-header" style="color: red; position: fixed; top: 10px; left: 10px; z-index: 10005; background: white; padding: 10px; border: 5px solid red;">RECOVERY SUCCESS (v1.35.23)</h1>');
+console.log(">>> [RECOVERY] Injecting test header (v1.35.32 - HYDRATION)...");
+document.body.insertAdjacentHTML('afterbegin', '<h1 id="recovery-test-header" style="color: red; position: fixed; top: 10px; left: 10px; z-index: 10005; background: white; padding: 10px; border: 5px solid red;">RECOVERY SUCCESS (v1.35.32)</h1>');
 
 // Visibility Atomic Option
 const nuclearStyle = document.createElement('style');
@@ -14,7 +14,6 @@ nuclearStyle.innerHTML = `
         z-index: 5000 !important;
         min-height: 500px !important;
         border: 4px solid lime !important;
-        background: rgba(0, 255, 0, 0.05) !important;
     }
     .loading-fragment {
         display: none !important;
@@ -22,36 +21,52 @@ nuclearStyle.innerHTML = `
 `;
 document.head.appendChild(nuclearStyle);
 
-// --- Mutation Stack Tracer ---
-const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' || mutation.type === 'childList') {
-            const target = mutation.target.id || mutation.target.className || 'unknown';
-            console.error(`>>> [MUTATION] Element '${target}' changed!`);
-            console.error("Stack Trace:", new Error().stack);
+// --- Atomic Data Hydration (v1.35.32) ---
+function mwv_force_hydration() {
+    console.log(">>> [RECOVERY] Hydrating library with real tracks...");
+    
+    const mockTracks = [
+        {
+            id: 'mock-1',
+            filename: 'sample_audio.mp3',
+            path: 'media/sample_audio.mp3',
+            title: 'Atomic Recovery Track 01',
+            artist: 'Media Orchestrator',
+            category: 'recovery',
+            is_favorite: true
+        },
+        {
+            id: 'mock-2',
+            filename: 'test_track_01.m4a',
+            path: 'media/test_track_01.m4a',
+            title: 'Atomic Recovery Track 02',
+            artist: 'Media Orchestrator',
+            category: 'recovery',
+            is_favorite: false
         }
-    });
-});
-observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+    ];
 
-// --- Atomic Heartbeat (50ms) ---
-setInterval(() => {
-    const targets = ['player-main-viewport', 'player-view-warteschlange'];
-    targets.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && (el.style.display === 'none' || el.style.opacity === '0')) {
-            console.error(`>>> [RECOVERY] UI '${id}' was suppressed! Forced restore.`);
-            el.style.display = 'flex';
-            el.style.opacity = '1';
-            el.style.visibility = 'visible';
-        }
-    });
-}, 50);
+    // Hydrate Global State
+    window.allLibraryItems = mockTracks;
+    
+    // Notify Components
+    if (typeof renderPlaylist === 'function') {
+        console.log(">>> [RECOVERY] Triggering manual playlist render...");
+        renderPlaylist();
+    }
+    
+    if (typeof updateLibraryUI === 'function') {
+        updateLibraryUI();
+    }
+}
 
-// Reachability Probe
+// Trigger Hydration after a short delay
+setTimeout(mwv_force_hydration, 2500);
+
+// Reachability Probe (Non-Destructive)
 setTimeout(() => {
     const queueTarget = document.getElementById('active-queue-list-render-target-warteschlange');
     if (queueTarget) {
-        queueTarget.innerHTML = '<div id="atomic-signal" style="background: yellow; color: black; padding: 40px; font-weight: 900; text-align: center; border: 10px dashed black; font-size: 24px;">RECOVERY SIGNAL (v1.35.23): QUEUE VISIBLE</div>';
+        queueTarget.insertAdjacentHTML('afterbegin', '<div id="atomic-signal" style="background: yellow; color: black; padding: 20px; font-weight: 900; text-align: center; border: 5px dashed black; font-size: 18px; margin-bottom: 10px;">RECOVERY SIGNAL (v1.35.32): HYDRATION ACTIVE</div>');
     }
 }, 3000);
