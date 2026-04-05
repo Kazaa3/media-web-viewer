@@ -780,21 +780,16 @@
     <script src="js/coverflow_controller.js?v=1.35.33"></script>
     <script src="js/video_test_suite.js?v=1.35.33"></script>
     <script src="js/stats-overlay.js?v=1.35.33"></script>
-    <script src="js/mwv_diagnostics.js?v=1.35.33"></script>
+    <!-- Modular Recovery Diagnostics (v1.35.42) -->
+    <script src="js/diagnostics/recovery_manager.js?v=1.35.42"></script>
+    <script src="js/diagnostics/gui_integrity.js?v=1.35.42"></script>
+    <script src="js/diagnostics/stages/stage_negative.js?v=1.35.42"></script>
+    <script src="js/diagnostics/stages/stage_positive.js?v=1.35.42"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
     
     <!-- Externally loaded SVG icons and context menu (v1.34) -->
     <div id="svg-icons-placeholder" style="display: none;"></div>
     <div id="context-menu-placeholder"></div>
-
-    <!-- Diagnostic Toolbar (hidden by default, toggled by mwv_diagnostics.js) -->
-    <div id="diagnostic-toolbar" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 10002; background: rgba(50,50,50,0.95); color: #bfff00; font-family: monospace; font-size: 14px; padding: 6px 18px; border-top: 2px solid #bfff00; box-shadow: 0 -2px 12px #0008; pointer-events: auto;">
-        <span id="diagnostic-toolbar-status">Diagnostics loaded</span>
-        <button onclick="window.Diagnostics && Diagnostics.toggleBorders && Diagnostics.toggleBorders()" style="margin-left: 18px; background: #222; color: #bfff00; border: 1px solid #bfff00; border-radius: 4px; padding: 2px 10px; cursor: pointer;">Toggle Borders</button>
-        <button onclick="window.Diagnostics && Diagnostics.toggleHeader && Diagnostics.toggleHeader()" style="margin-left: 8px; background: #222; color: #bfff00; border: 1px solid #bfff00; border-radius: 4px; padding: 2px 10px; cursor: pointer;">Toggle Header</button>
-        <button onclick="window.Diagnostics && Diagnostics.hydrate && Diagnostics.hydrate()" style="margin-left: 8px; background: #222; color: #bfff00; border: 1px solid #bfff00; border-radius: 4px; padding: 2px 10px; cursor: pointer;">Hydrate Playlist</button>
-        <button onclick="window.Diagnostics && Diagnostics.showToolbar && Diagnostics.showToolbar(false)" style="margin-left: 8px; background: #222; color: #bfff00; border: 1px solid #bfff00; border-radius: 4px; padding: 2px 10px; cursor: pointer;">Hide Toolbar</button>
-    </div>
 </body>
 
 </html>
