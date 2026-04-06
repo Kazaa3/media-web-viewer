@@ -855,6 +855,60 @@ def sync_library_atomic():
         return {"status": "error", "message": str(e)}
 
 
+@eel.expose
+def check_database_resilience():
+    """
+    Performs forensic library resilience audit:
+    1. SQLite Integrity check
+    2. File-System Parity Scan (Ghost Item Detection)
+    """
+    from src.core import db
+    import os
+    import sqlite3
+
+    results = {
+        "status": "ok",
+        "timestamp": time.time(),
+        "sqlite_health": "unknown",
+        "fs_parity": {
+            "total_items": 0,
+            "ghost_items": [],
+            "ghost_count": 0
+        }
+    }
+
+    # 1. SQLite Pragma
+    try:
+        conn = sqlite3.connect(db.DB_FILENAME)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA integrity_check")
+        health = cursor.fetchone()[0]
+        results["sqlite_health"] = health
+        conn.close()
+    except Exception as e:
+        results["sqlite_health"] = f"Error: {str(e)}"
+
+    # 2. FS Parity
+    try:
+        items = db.get_library()
+        results["fs_parity"]["total_items"] = len(items)
+        for item in items:
+            p = item.get('path')
+            if p and not os.path.exists(p):
+                results["fs_parity"]["ghost_items"].append({
+                    "id": item.get('id'),
+                    "name": item.get('name'),
+                    "path": p
+                })
+        results["fs_parity"]["ghost_count"] = len(results["fs_parity"]["ghost_items"])
+    except Exception as e:
+        results["status"] = "error"
+        results["error"] = str(e)
+
+    log.info(f"[Forensic] DB Resilience Audit complete. Ghosts: {results['fs_parity']['ghost_count']}")
+    return results
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 

@@ -26,6 +26,7 @@ function initDiagnosticsSidebar() {
     };
 
     sentinelPulse('SYSTEM', 'Diagnostics Overlay Core Loaded.');
+    loadSentinelHistory(); // Re-hydrate forensic trace
 }
 
 /**
@@ -54,7 +55,9 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'item-track': 'diag-pane-item-track',
         'sentinel': 'diag-pane-sentinel',
         'debug-db': 'diag-pane-debug-db',
-        'logs': 'diag-pane-logs'
+        'logs': 'diag-pane-logs',
+        'video-health': 'diag-pane-video-health',
+        'recovery': 'diag-pane-db-resilience'
     };
 
     if (paneIds[viewId]) {
@@ -141,25 +144,172 @@ async function performItemJourneyAudit() {
 }
 
 /**
- * SENTINEL: Live Trace Engine
+ * DEEP FFmpeg PIPELINE PROBE (v1.37.13)
  */
-function sentinelPulse(tag, message) {
+async function runVideoForensicAudit() {
+    const results = document.getElementById('diag-video-forensic-results');
+    if (!results) return;
+
+    sentinelPulse('AUDIT', 'Triggering Deep FFmpeg Pipeline Probe...');
+    results.innerHTML = '<div style="font-size:10px; opacity:0.6; padding:10px;">Analysiere FFmpeg-Pipeline & Remuxer...</div>';
+
+    try {
+        const audit = await eel.run_video_transcode_diagnostic()();
+        if (audit.status === 'error') {
+            results.innerHTML = `<div style="color:#e74c3c; font-size:11px; padding:10px;">${audit.error}</div>`;
+            return;
+        }
+
+        results.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="color:#2ecc71; font-weight:900;">PIPELINE: OK</div>
+                <div style="font-size:10px; opacity:0.8; word-break:break-all;">Probe für: ${audit.path || 'Unknown'}</div>
+                <div style="margin-top:5px; display:flex; flex-direction:column; gap:4px;">
+                ${(audit.results || []).map(r => `
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:6px; border-radius:4px; font-size:10px; opacity:0.8;">
+                        ${r.name}: <span style="color:#fff; font-weight:800;">${r.status.toUpperCase()}</span>
+                    </div>
+                `).join('')}
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        results.innerHTML = `<div style="color:#e74c3c; font-size:10px;">FFmpeg-Probe fehlgeschlagen: ${e.message}</div>`;
+    }
+}
+
+/**
+ * DATABASE RESILIENCE AUDIT (v1.37.13)
+ */
+async function runDatabaseResilienceAudit() {
+    const results = document.getElementById('diag-db-resilience-results');
+    if (!results) return;
+
+    sentinelPulse('AUDIT', 'Executing SQLite PRAGMA Integrity Scan...');
+    results.innerHTML = '<div style="font-size:10px; opacity:0.6; padding:10px;">Prüfe SQLite-Index & Integrity...</div>';
+
+    try {
+        const res = await eel.check_database_resilience()();
+        results.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="color:#2ecc71; font-weight:800;">SQL HEALTH: ${res.sqlite_health.toUpperCase()}</div>
+                <div style="font-size:10px; opacity:0.8;">Gesamte Library: <span style="color:#fff;">${res.fs_parity.total_items} Items</span></div>
+                <div style="font-size:10px; opacity:0.8; color:${res.fs_parity.ghost_count > 0 ? '#f1c40f' : '#2ecc71'}">GHOST ITEMS: ${res.fs_parity.ghost_count}</div>
+            </div>
+        `;
+    } catch (e) {
+        results.innerHTML = `<div style="color:#e74c3c; font-size:10px;">Integritäts-Audit fehlgeschlagen: ${e.message}</div>`;
+    }
+}
+
+async function runFSParityAudit() {
+    const results = document.getElementById('diag-db-resilience-results');
+    if (!results) return;
+
+    sentinelPulse('AUDIT', 'Scanning for Ghost References (FS Parity)...');
+    results.innerHTML = '<div style="font-size:10px; opacity:0.6; padding:10px;">Scanne Dateisystem-Parität...</div>';
+
+    try {
+        const res = await eel.check_database_resilience()();
+        if (res.fs_parity.ghost_count === 0) {
+            results.innerHTML = `<div style="color:#2ecc71; font-weight:800; font-size:11px; padding:10px;">100% PARITY OK. Alle DB-Einträge auf Disk vorhanden.</div>`;
+            return;
+        }
+
+        results.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="color:#f1c40f; font-weight:900;">${res.fs_parity.ghost_count} GHOSTS DETECTED</div>
+                <div style="max-height:200px; overflow-y:auto; background:rgba(0,0,0,0.4); border-radius:6px; padding:8px; display:flex; flex-direction:column; gap:8px;">
+                    ${res.fs_parity.ghost_items.map(i => `
+                        <div style="font-size:9px;">
+                            <div style="font-weight:900; color:#ff3366;">${i.name}</div>
+                            <div style="opacity:0.4; word-break:break-all;">${i.path}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="font-size:8px; opacity:0.4; margin-top:5px; text-align:center;">Manuelle Bereinigung empfohlen.</div>
+            </div>
+        `;
+    } catch (e) {
+        results.innerHTML = `<div style="color:#e74c3c; font-size:10px;">FS-Parity Scan fehlgeschlagen: ${e.message}</div>`;
+    }
+}
+
+/**
+ * SENTINEL: Live Trace Engine (Forensic Upgrade v1.37.12)
+ */
+function sentinelPulse(tag, message, skipStorage = false) {
     const container = document.getElementById('sentinel-log-container');
     if (!container) return;
 
+    const entryData = {
+        ts: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        tag: tag,
+        msg: message
+    };
+
+    // 1. Storage Persistence
+    if (!skipStorage) {
+        const history = JSON.parse(localStorage.getItem('mwv_sentinel_trace') || '[]');
+        history.push(entryData);
+        if (history.length > SENTINEL_MAX_ENTRIES) history.shift();
+        localStorage.setItem('mwv_sentinel_trace', JSON.stringify(history));
+    }
+
+    // 2. DOM Rendering
+    renderSentinelEntry(entryData, container);
+}
+
+function renderSentinelEntry(data, container) {
     const entry = document.createElement('div');
     entry.style.cssText = 'border-bottom:1px solid rgba(0,255,204,0.05); padding:3px 0; display:flex; gap:8px; align-items:flex-start;';
     
-    const ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     entry.innerHTML = `
-        <span style="opacity:0.3; flex-shrink:0;">[${ts}]</span> 
-        <span style="font-weight:900; color:#00ffcc; flex-shrink:0; min-width:40px;">${tag}</span> 
-        <span style="opacity:0.8; word-break:break-all;">${message}</span>
+        <span style="opacity:0.3; flex-shrink:0;">[${data.ts}]</span> 
+        <span style="font-weight:900; color:#00ffcc; flex-shrink:0; min-width:40px;">${data.tag}</span> 
+        <span style="opacity:0.8; word-break:break-all;">${data.msg}</span>
     `;
 
     container.appendChild(entry);
     container.scrollTop = container.scrollHeight;
     while (container.childNodes.length > SENTINEL_MAX_ENTRIES) container.removeChild(container.firstChild);
+}
+
+function loadSentinelHistory() {
+    const container = document.getElementById('sentinel-log-container');
+    if (!container) return;
+    
+    container.innerHTML = ''; // Clear for re-hydration
+    const history = JSON.parse(localStorage.getItem('mwv_sentinel_trace') || '[]');
+    history.forEach(entry => renderSentinelEntry(entry, container));
+    
+    sentinelPulse('SENTINEL', `History recovered: ${history.length} entries.`, true);
+}
+
+function downloadSentinelTrace() {
+    const history = JSON.parse(localStorage.getItem('mwv_sentinel_trace') || '[]');
+    if (!history.length) return alert('No trace data to export.');
+
+    const content = history.map(e => `[${e.ts}] ${e.tag.padEnd(10)} | ${e.msg}`).join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mwv_sentinel_trace_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    sentinelPulse('SYSTEM', 'Trace log exported successfully.', true);
+}
+
+function clearSentinelLog() {
+    localStorage.removeItem('mwv_sentinel_trace');
+    const container = document.getElementById('sentinel-log-container');
+    if (container) container.innerHTML = '';
+    sentinelPulse('SYSTEM', 'Trace log cleared by user.', false);
 }
 
 /**
@@ -178,3 +328,8 @@ window.toggleDiagnosticsFlag = toggleDiagnosticsFlag;
 window.sentinelPulse = sentinelPulse;
 window.performItemJourneyAudit = performItemJourneyAudit;
 window.initDiagnosticsSidebar = initDiagnosticsSidebar;
+window.downloadSentinelTrace = downloadSentinelTrace;
+window.clearSentinelLog = clearSentinelLog;
+window.runVideoForensicAudit = runVideoForensicAudit;
+window.runDatabaseResilienceAudit = runDatabaseResilienceAudit;
+window.runFSParityAudit = runFSParityAudit;

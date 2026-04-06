@@ -43,6 +43,13 @@
         </div>
 
         <div id="diag-pane-sentinel" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 4px;">
+                <span style="font-size: 9px; font-weight: 900; color: #00ffcc; opacity: 0.6; letter-spacing: 0.5px;">SENTINEL LIVE-TRACE</span>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="downloadSentinelTrace()" style="background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); color: #00ffcc; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Download Trace as .txt">EXPORT</button>
+                    <button onclick="clearSentinelLog()" style="background: rgba(255,51,102,0.05); border: 1px solid rgba(255,51,102,0.1); color: #ff3366; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;">CLEAR</button>
+                </div>
+            </div>
             <div id="sentinel-log-container" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.1); border-radius: 8px; height: 350px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; color: #00ffcc; line-height: 1.4; scroll-behavior: smooth;"></div>
         </div>
 
@@ -61,6 +68,31 @@
                 <button onclick="refreshDebugLogs()" style="font-size: 8px; background: none; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; padding: 2px 6px;">Sync</button>
             </div>
             <div id="debug-console-output" style="background: #000; color: #00ff41; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; border-radius: 8px; height: 400px; overflow-y: auto; border: 1px solid #222;"></div>
+        </div>
+
+        <!-- NEW: Video Health Forensic Pane (v1.37.13) -->
+        <div id="diag-pane-video-health" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 9px; font-weight: 900; opacity: 0.5;">FFMPEG PIPELINE</span>
+                <button onclick="runVideoForensicAudit()" style="background: #007aff; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">PROBE PIPELINE</button>
+            </div>
+            <div id="diag-video-forensic-results" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 11px;">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Bereit fr FFmpeg-Audit...</div>
+            </div>
+        </div>
+
+        <!-- NEW: Database Resilience Pane (v1.37.13) -->
+        <div id="diag-pane-db-resilience" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 9px; font-weight: 900; opacity: 0.5;">DB RESILIENCE</span>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="runDatabaseResilienceAudit()" style="background: #2ecc71; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">PRAGMA</button>
+                    <button onclick="runFSParityAudit()" style="background: #f1c40f; color: black; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">GHOST CHECK</button>
+                </div>
+            </div>
+            <div id="diag-db-resilience-results" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 11px;">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Integritäts-Scan...</div>
+            </div>
         </div>
 
         <div id="diag-pane-legacy" class="diag-pane" style="display: none;">
