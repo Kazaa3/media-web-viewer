@@ -930,6 +930,47 @@ def prune_ghost_items(item_ids):
         return {"status": "error", "message": str(e)}
 
 
+@eel.expose
+def kill_stalled_ffmpeg_streams():
+    """
+    Forensic Pipeline Recovery: Purges all FFmpeg/mkvmerge processes associated with the project path (v1.37.18).
+    """
+    import psutil
+    import os
+    
+    project_fragment = "gui_media_web_viewer"
+    killed_count = 0
+    terminated_pids = []
+
+    try:
+        current_proc = psutil.Process()
+        ancestor_pids = {p.pid for p in current_proc.parents()}
+        ancestor_pids.add(os.getpid())
+
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                pid = proc.info['pid']
+                if pid in ancestor_pids: continue
+                
+                name = (proc.info.get('name') or "").lower()
+                cmdline = proc.info.get('cmdline') or []
+                cmd_str = " ".join(cmdline).lower()
+
+                # Targeted match for media processes in this project
+                if ("ffmpeg" in name or "mkvmerge" in name) and project_fragment in cmd_str:
+                    log.info(f"[Forensic-Kill] Purging process {pid} ({name})")
+                    proc.kill() # Force kill for immediate recovery
+                    killed_count += 1
+                    terminated_pids.append(pid)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        return {"status": "success", "count": killed_count, "pids": terminated_pids}
+    except Exception as e:
+        log.error(f"[Forensic-Kill] Error during pipeline recovery: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 

@@ -346,6 +346,36 @@ async function triggerGhostPruning(ghostIds) {
     }
 }
 
+async function triggerPipelineRecovery() {
+    const status = document.getElementById('diag-video-recovery-status');
+    if (!status) return;
+
+    if (!confirm("PIPELINE RECOVERY: Purge all active FFmpeg/mkvmerge streams? This will stop current playback.")) return;
+
+    sentinelPulse('RECOVER', "Executing Pipeline Purge (FFmpeg/MKVMerge)...");
+    status.innerHTML = '<div style="font-size:9px; color:#f1c40f; text-align:center;">Purging Stalled Streams...</div>';
+
+    try {
+        const res = await eel.kill_stalled_ffmpeg_streams()();
+        if (res.status === 'success') {
+            sentinelPulse('SUCCESS', `Tactical Purge Complete: Removed ${res.count} processes.`);
+            status.innerHTML = `<div style="font-size:9px; color:#2ecc71; text-align:center;">RECOVERY SUCCESS: ${res.count} Processes Purged.</div>`;
+            
+            // Highlight specific PIDs in the results if needed, or just refresh
+            setTimeout(() => {
+                status.innerHTML = '';
+                runVideoForensicAudit();
+            }, 3000);
+        } else {
+            sentinelPulse('ERROR', `Purge Failed: ${res.message}`);
+            status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Purge Failed: ${res.message}</div>`;
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Pipeline Bridge Fault: ${e.message}`);
+        status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Bridge Fault: ${e.message}</div>`;
+    }
+}
+
 /**
  * SENTINEL: Live Trace Engine (Forensic Upgrade v1.37.16)
  */
