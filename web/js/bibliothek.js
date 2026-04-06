@@ -191,24 +191,63 @@ async function renderLibrary() {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'STAGE-PROJECTED', { raw: allLibraryItems.length, projected: coverflowItems.length });
     
     if (coverflowItems.length === 0) {
-        let noMediaHtml = `<div style="padding: 100px; color: #999; text-align: center; width: 100%;" data-i18n="lib_no_media_warning">Keine Medien gefunden</div>`;
+        let noMediaHtml = "";
         
-        // --- BLACK HOLE RECOVERY UI (v1.35.68) ---
-        if (allLibraryItems.length > 0) {
-            const dbCount = allLibraryItems.filter(i => !i.is_mock).length;
+        if (allLibraryItems.length === 0) {
+            // --- TIER A: TOTAL BLACK HOLE (v1.37.28) ---
             noMediaHtml = `
-                <div style="padding: 100px; color: var(--text-primary); text-align: center; width: 100%; background: rgba(231, 76, 60, 0.05); border: 2px dashed rgba(231, 76, 60, 0.2); border-radius: 12px; margin: 20px;">
-                    <div style="font-size: 24px; margin-bottom: 15px;">🔍 Black Hole erkannt</div>
-                    <div style="font-weight: 700; color: #e74c3c; margin-bottom: 10px;">${dbCount} Medien in der DB gefunden, aber 0 in der Anzeige!</div>
-                    <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 20px;">
-                        Deine Medien werden durch aktive Filter (Kategorie, Suche oder HIDB-Toggle) blockiert.
+                <div style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 800px; margin: 40px auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                    <div style="font-size: 32px; margin-bottom: 20px;">🛡️ Hydration Guard</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #ff3366; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Forensic Error: empty_index_detected</div>
+                    <p style="color: var(--text-secondary); opacity: 0.8; margin-bottom: 30px; line-height: 1.6;">
+                        Deine Medien-Datenbank ist aktuell vollständig leer. <br>
+                        Verwende die folgenden taktischen Werkzeuge, um dein System zu rehydrieren.
                     </p>
-                    <button onclick="resetAllFilters()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: transform 0.2s;">JETZT FILTER ZURÜCKSETZEN</button>
-                    <div style="margin-top: 15px; font-size: 11px; color: var(--text-secondary); opacity: 0.6;">
-                        Tipp: Prüfe den Sync-Anker [DB: ${window.__mwv_last_db_count} | GUI: 0] im Footer.
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                        <button onclick="if(window.triggerMasterScan) window.triggerMasterScan()" style="padding: 15px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <span style="font-size: 18px;">📂</span>
+                            <span style="font-size: 11px;">DIRECT SCAN</span>
+                        </button>
+                        <button onclick="if(window.triggerMasterSync) window.triggerMasterSync()" style="padding: 15px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <span style="font-size: 18px;">🔄</span>
+                            <span style="font-size: 11px;">ATOMIC SYNC</span>
+                        </button>
+                        <button onclick="if(window.triggerNuclearRecovery) window.triggerNuclearRecovery()" style="padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <span style="font-size: 18px;">☢️</span>
+                            <span style="font-size: 11px;">NUCLEAR RECOVERY</span>
+                        </button>
+                    </div>
+
+                    <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.5; font-family: 'JetBrains Mono', monospace; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                        MWV_WORKSTATION_VERSION_1.37.28 | STATUS: STANDBY
                     </div>
                 </div>
             `;
+            if (typeof sentinelPulse === 'function') sentinelPulse('ERROR', 'Total Black Hole Detected: Library is empty.');
+        } else {
+            // --- TIER B: FILTERED BLACK HOLE (v1.37.28) ---
+            const dbCount = allLibraryItems.filter(i => !i.is_mock).length;
+            noMediaHtml = `
+                <div style="padding: 60px; color: var(--text-primary); text-align: center; width: 100%; max-width: 800px; margin: 40px auto; background: rgba(52, 152, 219, 0.05); border: 1px solid rgba(52, 152, 219, 0.2); border-radius: 16px;">
+                    <div style="font-size: 28px; margin-bottom: 20px;">🔍 Filter-Blockade erkannt</div>
+                    <div style="font-weight: 800; color: #3498db; font-size: 18px; margin-bottom: 10px;">${dbCount} Medien in der DB, aber 0 in der Anzeige!</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 25px; line-height: 1.6;">
+                        Deine Suche, Kategorie-Filter oder der HIDB-Status verhindern die Anzeige deiner Medien.
+                    </p>
+                    <button onclick="resetAllFilters()" style="padding: 15px 40px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 14px; letter-spacing: 1px;">JETZT FILTER ZURÜCKSETZEN</button>
+                    
+                    <div style="margin-top: 25px; display: flex; justify-content: center; gap: 15px;">
+                        <div style="background: rgba(0,0,0,0.2); padding: 8px 15px; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+                            <span style="opacity: 0.5;">DB_TOTAL:</span> ${window.__mwv_last_db_count}
+                        </div>
+                        <div style="background: rgba(0,0,0,0.2); padding: 8px 15px; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace;">
+                            <span style="opacity: 0.5;">VIEWPORT:</span> 0
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (typeof sentinelPulse === 'function') sentinelPulse('WARNING', `Filtered Black Hole: ${dbCount} hidden items.`);
         }
         
         if (typeof safeHtml === 'function') {
