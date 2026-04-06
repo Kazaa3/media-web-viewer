@@ -298,16 +298,54 @@
             <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout"
                 style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
                 <!-- Detailed Mode Sidebar (Left-aligned as per v1.34) -->
-                <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none;">
-                    <div class="diagnostic-header">
-                        <div class="diagnostic-section-title">MEDIA DETAILS</div>
-                        <div id="diag-media-primary" class="diagnostic-value">-</div>
+                <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none; position: relative;">
+                    <!-- Vertical Reiter Bar (Tabs) -->
+                    <div class="side-reiter-bar">
+                        <div id="reiter-details" class="side-reiter active" onclick="switchSidebarView('details')"><span>Details</span></div>
+                        <div id="reiter-diagnostics" class="side-reiter" onclick="switchSidebarView('diagnostics')"><span>Diag</span></div>
+                    </div>
 
-                        <div class="diagnostic-label">Parser Times</div>
-                        <div id="diag-parser-metrics" class="diagnostic-value">Keine Daten</div>
+                    <!-- VIEW: Media Details -->
+                    <div id="sidebar-view-details" class="sidebar-view-content" style="display: block;">
+                        <div class="diagnostic-header">
+                            <div class="diagnostic-section-title">MEDIA DETAILS</div>
+                            <div id="diag-media-primary" class="diagnostic-value">-</div>
+                            <div class="diagnostic-label">Parser Metrics</div>
+                            <div id="diag-parser-metrics" class="diagnostic-value">Keine Daten</div>
+                        </div>
+                    </div>
 
-                        <div class="diagnostic-label">Transcoding</div>
-                        <div id="diag-transcode-status" class="diagnostic-value">Native Stream</div>
+                    <!-- VIEW: Diagnostics (System Toggles relocation) -->
+                    <div id="sidebar-view-diagnostics" class="sidebar-view-content" style="display: none;">
+                        <div class="diagnostic-header">
+                            <div class="diagnostic-section-title">TECHNICAL AUDIT</div>
+                            
+                            <!-- Detailed Parity Anchor (v1.35.99 Relocated) -->
+                            <div id="sb-parity-anchor" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                                [FS: -- | DB: -- | GUI: --]
+                            </div>
+
+                            <!-- Relocated Toggles from Footer -->
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">System Flags</div>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;"
+                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;"
+                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;"
+                                    onclick="if(typeof toggleBypassDb === 'function') { toggleBypassDb(); updateDiagBtnState(this, window.__mwv_bypass_db); }">FORCE MOCK</button>
+                            </div>
+
+                            <div class="diagnostic-label">Logic Audit (Dropped Reasons)</div>
+                            <div id="sb-dropped-reasons-viewport" style="font-size: 10px; color: var(--text-secondary); background: var(--bg-secondary); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 60px;">
+                                No reasons collected...
+                            </div>
+                            
+                            <div class="diagnostic-label">Engine Health</div>
+                            <button class="tab-btn sm" onclick="if(typeof runDomAudit === 'function') runDomAudit();" style="width: 100%; color: var(--accent-color); font-size: 10px;">UTILITY Proben</button>
+                            
+                            <div id="diag-sidebar-mini-logs" style="margin-top: 20px; font-size: 9px; font-family: monospace; opacity: 0.7; max-height: 100px; overflow: hidden;">Waiting for events...</div>
+                        </div>
                     </div>
                 </div>
 
@@ -716,7 +754,7 @@
                     <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
             </button>
-            <button onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.toggle('active'); sb.style.display = sb.classList.contains('active') ? 'block' : 'none'; }"
+            <button onclick="const sbDetails = document.getElementById('player-detailed-sidebar'); if(sbDetails) { sbDetails.classList.toggle('active'); sbDetails.style.display = sbDetails.classList.contains('active') ? 'block' : 'none'; if(sbDetails.classList.contains('active')) switchSidebarView('details'); }"
                 class="tab-btn sm" title="Toggle Media Details"
                 style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -724,7 +762,7 @@
                     <line x1="9" y1="3" x2="9" y2="21"/>
                 </svg>
             </button>
-            <button id="footer-btn-diagnostics" onclick="if(typeof switchMainCategory === 'function') switchMainCategory('diagnostics', this); if(typeof sidebarVisible !== 'undefined' && !sidebarVisible) toggleSidebar();"
+            <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.add('active'); sbDiag.style.display = 'block'; switchSidebarView('diagnostics'); }"
                 class="tab-btn sm" title="Open Diagnostics Sidebar"
                 style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(231, 76, 60, 0.05); color: #e74c3c;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

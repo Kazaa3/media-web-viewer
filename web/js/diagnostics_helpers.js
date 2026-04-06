@@ -582,51 +582,53 @@ window.showStatusNotification = function(msg, type = 'info') {
     }, 3000);
 };
 /**
- * Sync Anchor Orchestrator (v1.35.97 Overhaul) 
- * Updates the global footer anchor [FS: -- | DB: -- | GUI: --] to identify data drops.
+ * Sync Anchor Orchestrator (v1.35.99 Unified technical layer)
+ * Updates both the minimal footer (total count) and the detailed sidebar (full parity).
  */
-function updateSyncAnchor(dbCount, guiCount, fsSize) {
-    const el = document.getElementById('footer-sync-anchor');
+function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
+    const footerAnchor = document.getElementById('footer-sync-anchor');
+    const sidebarAnchor = document.getElementById('sb-parity-anchor');
     const light = document.getElementById('sync-status');
-    if (!el) return;
-
+    
     // Persist counts for redundant updates
     if (dbCount !== undefined) window.__mwv_last_db_count = dbCount;
     if (guiCount !== undefined) window.__mwv_last_gui_count = guiCount;
-    if (fsSize !== undefined) window.__mwv_last_fs_size = fsSize;
+    if (fsSize !== null) window.__mwv_last_fs_size = fsSize;
 
     const finalDb = window.__mwv_last_db_count || 0;
     const finalGui = (guiCount !== undefined) ? guiCount : (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0);
     const finalFsSize = window.__mwv_last_fs_size || 0;
 
-    // Formatting FS size
-    let fsDisplay = "--";
+    // Formatting filesystem size for the detailed sidebar
+    let sizeStr = "--";
     if (finalFsSize > 0) {
-        fsDisplay = finalFsSize > 1024 * 1024 
-            ? (finalFsSize / (1024 * 1024)).toFixed(1) + "MB" 
-            : (finalFsSize / 1024).toFixed(0) + "KB";
+        if (finalFsSize > 1024 * 1024) sizeStr = (finalFsSize / (1024 * 1024)).toFixed(1) + "MB";
+        else if (finalFsSize > 1024) sizeStr = (finalFsSize / 1024).toFixed(1) + "KB";
+        else sizeStr = finalFsSize + "B";
     } else if (finalFsSize === 0 && finalDb > 0) {
-        fsDisplay = "0B!"; // Critical: DB exists in memory but file is empty
+        sizeStr = "0B!"; // Critical
     }
 
-    el.innerText = `[FS: ${fsDisplay} | DB: ${finalDb} | GUI: ${finalGui}]`;
+    const fullParity = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
 
-    // Visual Cue logic
-    if (finalFsSize === 0 && finalDb > 0) {
-        el.style.color = '#ff5252'; // Critical Error
-        el.style.background = 'rgba(255, 82, 82, 0.1)';
-        el.style.borderColor = 'rgba(255, 82, 82, 0.3)';
-    } else if (finalGui === 0 && finalDb > 0) {
-        el.style.color = '#f1c40f'; // Filter Drop Warning
-        el.style.background = 'rgba(241, 196, 15, 0.1)';
-        el.style.borderColor = 'rgba(241, 196, 15, 0.2)';
-    } else {
-        el.style.color = '#2ecc71'; // Healthy
-        el.style.background = 'rgba(46, 204, 113, 0.1)';
-        el.style.borderColor = 'rgba(46, 204, 113, 0.2)';
+    // 1. Footer: Smoothed out, only DB count
+    if (footerAnchor) {
+        footerAnchor.innerText = `DB: ${finalDb}`;
+        footerAnchor.style.color = (parseInt(finalDb) === 0) ? '#e74c3c' : 'var(--text-primary)';
     }
-    
-    if (light) light.style.color = (finalGui > 0) ? '#2ecc71' : '#f1c40f';
+
+    // 2. Sidebar: High-resolution parity audit
+    if (sidebarAnchor) {
+        sidebarAnchor.innerText = fullParity;
+        const isParityError = (parseInt(finalDb) !== parseInt(finalGui));
+        sidebarAnchor.style.borderColor = isParityError ? 'rgba(231, 76, 60, 0.5)' : 'var(--border-color)';
+        sidebarAnchor.style.color = isParityError ? '#e74c3c' : 'var(--accent-color)';
+    }
+
+    if (light) {
+        light.style.background = (finalGui > 0) ? '#2ecc71' : (finalDb > 0 ? '#f1c40f' : '#95a5a6');
+        light.style.boxShadow = (finalGui > 0) ? '0 0 10px rgba(46, 204, 113, 0.4)' : 'none';
+    }
 }
 
 // Expose to window
@@ -861,18 +863,41 @@ async function auditSwitchStage(stage) {
     if (typeof loadLibrary === 'function') {
         await loadLibrary();
         
-        // After load, check the audit metadata for Stage 2 & 3 specifically
+        // After load, check the audit metadata for Stage 2 & 3 specifically (v1.35.99)
         const lib = window.__mwv_debug_library || {};
         const audit = lib.audit || {};
         const fs = audit.fs || {};
         
-        // Update Footer with triple-granularity
+        // Update both Footer (DB Count) and Sidebar (Full Parity)
         if (typeof updateSyncAnchor === 'function') {
-            updateSyncAnchor(audit.raw_count, lib.media ? lib.media.length : 0, fs.size);
+            updateSyncAnchor(lib.db_count || 0, lib.media ? lib.media.length : 0, fs.size);
+        }
+
+        // Logic Audit Visualization (0-Item Fix Visibility)
+        const reasonsViewport = document.getElementById('sb-dropped-reasons-viewport');
+        if (reasonsViewport) {
+            const la = audit.logic_audit || {};
+            const dr = la.dropped_reasons || {};
+            
+            if (Object.keys(dr).length > 0 && la.dropped_total > 0) {
+                let html = `<div style="color: #e74c3c; font-weight: 800; margin-bottom: 5px;">DROPPED: ${la.dropped_total} Items</div>`;
+                for (const [reason, count] of Object.entries(dr)) {
+                    if (count > 0) {
+                        html += `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 2px 0;">
+                                    <span>${reason.replace('_mismatch', '')}</span>
+                                    <span style="font-weight: 800;">${count}</span>
+                                 </div>`;
+                    }
+                }
+                reasonsViewport.innerHTML = html;
+            } else {
+                reasonsViewport.innerHTML = `<div style="color: #2ecc71;">PASS: All ${lib.db_count || 0} items kept.</div>`;
+            }
         }
 
         if (fs.exists !== undefined) {
             const fsMsg = `[FS-AUDIT] Path: ${audit.path} | Exists: ${fs.exists} | Size: ${fs.size} bytes | PID: ${audit.pid}`;
+// ... Log it ...
             console.warn(fsMsg);
             if (fs.size === 0) console.error("[FS-AUDIT] CRITICAL: DB FILE IS EMPTY (0 bytes)!");
             if (fs.size === -1) console.error("[FS-AUDIT] CRITICAL: DB FILE NOT FOUND!");

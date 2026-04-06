@@ -113,12 +113,32 @@ def audit_category_chain(item: Dict) -> str:
     return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: NO MATCH -> DROPPED"
 
 def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
-    """Returns the flattened list of internal labels for the requested categories."""
+    """
+    @brief Returns the flattened list of internal labels for the requested categories (v1.35.99 Fix).
+    Supports category aliasing (e.g., 'video' -> 'multimedia').
+    """
     allowed = set()
+    category_aliases = {
+        "video": "multimedia",
+        "movies": "multimedia",
+        "music": "audio",
+        "audio": "audio",
+        "pictures": "pictures",
+        "documents": "documents",
+        "docs": "documents",
+        "disk_images": "disk_images",
+        "multimedia": "multimedia"
+    }
+
     for dc in displayed_cats:
-        labels = MASTER_CAT_MAP.get(dc.lower(), [])
+        raw_dc = dc.lower()
+        canonical = category_aliases.get(raw_dc, raw_dc)
+        labels = MASTER_CAT_MAP.get(canonical, [])
+        # Also always include the canonical name itself
+        allowed.add(canonical)
         for label in labels:
             allowed.add(label.lower())
+            
     return list(allowed)
 
 # --- PLAYBACK & COMPATIBILITY REGISTRY (v1.35.77 Consolidated) ---

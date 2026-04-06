@@ -527,6 +527,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * Technical Sidebar Orchestrator (v1.35.98)
+ * Switches between 'Details' and 'Diagnostics' views within the player-detailed-sidebar.
+ */
+function switchSidebarView(viewId) {
+    console.log(`[UI-NAV] Switching Sidebar View to ${viewId}`);
+    
+    // Toggle View Visibility
+    document.querySelectorAll('.sidebar-view-content').forEach(el => {
+        el.style.display = (el.id === `sidebar-view-${viewId}`) ? 'block' : 'none';
+    });
+
+    // Toggle Reiter (Tab) Active state
+    document.querySelectorAll('.side-reiter').forEach(el => {
+        el.classList.toggle('active', el.id === `reiter-${viewId}`);
+    });
+    
+    // If switching to diagnostics, ensure sync button states are refreshed
+    if (viewId === 'diagnostics' && typeof syncDiagBtnStates === 'function') {
+        syncDiagBtnStates();
+    }
+}
+
+window.switchSidebarView = switchSidebarView;
+window.switchMainCategory = switchMainCategory;
+
+/**
  * Switch top-level category and populate sub-navigation.
  */
 function switchMainCategory(category, btn) {

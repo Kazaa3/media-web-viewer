@@ -3246,13 +3246,14 @@ def get_db_info():
 
 
 
-def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, search: str = "", genre: str = "all", year: str = "all") -> List[Dict]:
+def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, search: str = "", genre: str = "all", year: str = "all") -> Tuple[List[Dict], Dict[str, Any]]:
     """
-    @brief Unified category mapping and filtering (v1.35.68 Recovery).
+    @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
+    @return Tuple of (filtered_list, audit_metadata)
     """
     if force_raw and not search and genre == "all" and year == "all":
         log.info("[BD-AUDIT] RAW MODE: Bypassing all category filters.")
-        return all_media
+        return all_media, {"status": "raw_bypass", "dropped_total": 0}
 
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
@@ -3262,46 +3263,57 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
     filtered = []
     
-    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.96)
-    dropped_counts = {"category": 0, "search": 0, "genre": 0, "year": 0}
+    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.99)
+    # Track why items are dropped specifically
+    dropped_reasons = {
+        "category_mismatch": 0,
+        "search_mismatch": 0,
+        "genre_mismatch": 0,
+        "year_mismatch": 0,
+        "extension_unknown": 0
+    }
     
     for item in all_media:
         # 1. Category check (Skip if force_raw)
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
             if cat not in allowed_internal_cats:
-                dropped_counts["category"] += 1
-                if dropped_counts["category"] <= 10: # Only log first 10 to avoid noise
-                    log.debug(f"[BD-AUDIT] Dropped Item '{item.get('name')}' by Category: '{cat}' not in {allowed_internal_cats}")
+                dropped_reasons["category_mismatch"] += 1
+                if dropped_reasons["category_mismatch"] <= 5: 
+                    log.debug(f"[BD-AUDIT] Dropped '{item.get('name')}' - Category '{cat}' not in {allowed_internal_cats}")
                 continue
 
         # 2. Search check
         if search and search.lower() not in str(item.get('name', '')).lower():
-            dropped_counts["search"] += 1
+            dropped_reasons["search_mismatch"] += 1
             continue
 
         # 3. Genre check
         item_genre = item.get('tags', {}).get('genre', '').lower()
         if genre != "all" and genre.lower() not in item_genre:
-            dropped_counts["genre"] += 1
+            dropped_reasons["genre_mismatch"] += 1
             continue
 
         # 4. Year check
         item_year = str(item.get('tags', {}).get('year', ''))
         if year != "all" and year != item_year:
-            dropped_counts["year"] += 1
+            dropped_reasons["year_mismatch"] += 1
             continue
-
-        # Automated Debugging Chain (v1.35.68)
-        if not force_raw and PARSER_CONFIG.get("debug_scan", False):
-            log.debug(audit_category_chain(item))
 
         filtered.append(item)
 
-    if not force_raw:
-        log.info(f"[BD-AUDIT] Filter Pass Summary: Kept={len(filtered)} | Dropped={dropped_counts}")
+    audit_meta = {
+        "status": "filtered",
+        "kept": len(filtered),
+        "dropped_total": sum(dropped_reasons.values()),
+        "dropped_reasons": dropped_reasons,
+        "allowed_cats": allowed_internal_cats
+    }
 
-    return filtered
+    if not force_raw:
+        log.info(f"[BD-AUDIT] Filter Pass Summary: {audit_meta}")
+
+    return filtered, audit_meta
 
 
 @eel.expose
@@ -3340,12 +3352,18 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             {"name": "Stage 1 Mock (Doc)", "category": "docs", "path": "/mock3.md", "tags": {"genre": "test"}}
         ]
         # Allow testing filters on mocks
-        filtered_mocks = _apply_library_filters(mocks, force_raw=False)
+        filtered_mocks, mock_audit = _apply_library_filters(mocks, force_raw=False)
         return {
             "media": filtered_mocks,
             "db_count": 3,
             "status": "mock",
-            "audit": {"stage": 1, "pid": pid, "path": "MEMORY_MOCK", "fs": fs_audit}
+            "audit": {
+                "stage": 1, 
+                "pid": pid, 
+                "path": "MEMORY_MOCK", 
+                "fs": fs_audit,
+                "dropped_reasons": mock_audit.get("dropped_reasons", {})
+            }
         }
 
     all_media = []
@@ -3367,8 +3385,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             "audit": {"stage": 2, "pid": pid, "path": db_path, "fs": fs_audit}
         }
 
-    # --- STAGE 3: FILTERED (v1.35.96 Normalization Test) ---
-    filtered_media = _apply_library_filters(all_media, force_raw=False)
+    # --- STAGE 3: FILTERED (v1.35.99 Final Audit) ---
+    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=False)
     audit_len = len(filtered_media)
     log.info(f"[BD-AUDIT] STAGE 3: Filtered {audit_len}/{count_total} items.")
 
@@ -3382,7 +3400,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             "path": db_path,
             "raw_count": count_total,
             "filtered_count": audit_len,
-            "fs": fs_audit
+            "fs": fs_audit,
+            "logic_audit": logic_audit
         }
     }
 
@@ -3393,7 +3412,7 @@ def get_library_filtered(search: str = "", genre: str = "all", year: str = "all"
     @brief Advanced filtering for the media library.
     """
     all_media = db.get_all_media()
-    filtered = _apply_library_filters(all_media, force_raw=force_raw, search=search, genre=genre, year=year)
+    filtered, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, search=search, genre=genre, year=year)
 
     # Sorting
     if sort_by == "year":
