@@ -1,0 +1,8 @@
+# Media Web Viewer - Full / Ultimate Bundle (Core + Test + Dev + Build)
+# Install this to get the complete environment in one step.
+
+-r requirements-core.txt
+-r requirements-test.txt
+-r requirements-dev.txt
+-r requirements-build.txt
+-r requirements-selenium.txt

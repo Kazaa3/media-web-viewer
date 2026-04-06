@@ -668,29 +668,39 @@ window.notifyDiagnosticChange = notifyDiagnosticChange;
 
 /**
  * Diagnostic: Raw Mode Toggle
- * Forces backend to return items without category mapping.
  */
-window.__mwv_raw_mode = false;
 async function toggleRawMode() {
-    window.__mwv_raw_mode = !window.__mwv_raw_mode;
-    notifyDiagnosticChange(null, 'RAW', window.__mwv_raw_mode);
+    const newState = !window.CONFIG.raw_mode;
+    window.CONFIG.raw_mode = newState;
+    window.__mwv_raw_mode = newState; // Keep legacy compat
+    
+    notifyDiagnosticChange(null, 'RAW', newState);
+    
+    if (typeof eel !== 'undefined' && eel.set_global_config) {
+        eel.set_global_config('raw_mode', newState)();
+    }
+    
     if (typeof loadLibrary === 'function') {
-        // Pass force_raw = true to the loader
-        loadLibrary(0, window.__mwv_raw_mode);
+        loadLibrary(0, newState);
     }
 }
 window.toggleRawMode = toggleRawMode;
 
 /**
  * Diagnostic: DB Bypass Toggle
- * Ignores all library data and uses Pure Mocks.
  */
-window.__mwv_bypass_db = false;
 function toggleBypassDb() {
-    window.__mwv_bypass_db = !window.__mwv_bypass_db;
-    notifyDiagnosticChange(null, 'BYPS', window.__mwv_bypass_db);
+    const newState = !window.CONFIG.bypass_db;
+    window.CONFIG.bypass_db = newState;
+    window.__mwv_bypass_db = newState; // Keep legacy compat
     
-    if (window.__mwv_bypass_db) {
+    notifyDiagnosticChange(null, 'BYPS', newState);
+    
+    if (typeof eel !== 'undefined' && eel.set_global_config) {
+        eel.set_global_config('bypass_db', newState)();
+    }
+    
+    if (newState) {
         if (typeof bootstrapMockQueue === 'function') bootstrapMockQueue();
     } else {
         if (typeof loadLibrary === 'function') loadLibrary();

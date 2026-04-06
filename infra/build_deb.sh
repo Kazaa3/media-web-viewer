@@ -4,10 +4,14 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-PACKAGE_NAME="media-web-viewer"
-# Version aus zentraler Datei lesen
-VERSION=$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")
-ARCH="amd64"
+
+# Centralized Metadata Injection (v1.35.68)
+echo "==> Fetching build metadata from build_config.py..."
+export PYTHONPATH=$PYTHONPATH:.
+eval $(python3 src/core/build_config.py)
+PACKAGE_NAME="$PACKAGE"
+# VERSION and ARCH are also set by the eval call
+
 DEB_NAME="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
 STAGING="$SCRIPT_DIR/packaging"
 BUILD_DIR="$ROOT_DIR/build"

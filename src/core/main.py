@@ -251,6 +251,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
         from src.core import db
         from src.core.db import DB_FILENAME
         from src.core.category_master import MASTER_CAT_MAP, TECH_MARKERS, audit_category_chain, get_allowed_internal_cats
+        from src.core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
         from src.core import hardware_detector
         from src.parsers import tag_writer
         from src.parsers.format_utils import (
@@ -360,7 +361,7 @@ def start_app():
     eel_mode = 'chrome'
     if "--ng" in sys.argv: 
         eel_mode = False
-    elif "--n" in sys.argv: 
+    elif "--n" in sys.argv or GLOBAL_CONFIG.get("connectionless"): 
         eel_mode = None
     
     # Ensure isolation for automated sessions or user preference
@@ -438,8 +439,23 @@ def ensure_singleton():
 # SESSION_ID stable and already logged
 from src.core.db import get_active_db_path
 session_port = int(os.environ.get("MWV_PORT", 8345))
-log.info(f"[System] Session Initialized: {SESSION_ID} on port {session_port}")
+# 4. Bandwidth Optimization (v1.35.68)
+if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
+    log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
+    GLOBAL_CONFIG["ffmpeg_deep_analysis"] = False
+    GLOBAL_CONFIG["fast_scan"] = True
+
+# 4. Environment & Session Diagnostics (v1.35.68)
+from src.core.config_master import _DOTENV_LOADED
+env_type = "Conda" if os.environ.get("CONDA_PREFIX") else "Venv" if os.environ.get("VIRTUAL_ENV") else "System"
+log.info(f"[System] Booting from {env_type} (Dotenv Loaded: {_DOTENV_LOADED})")
+log.info(f"[System] Session: {SESSION_ID} | PID: {os.getpid()} | Port: {session_port}")
 log.info(f"[System] Active Database: {get_active_db_path()}")
+
+if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
+    log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
+    GLOBAL_CONFIG["ffmpeg_deep_analysis"] = False
+    GLOBAL_CONFIG["fast_scan"] = True
 
 
 @eel.expose
@@ -3227,6 +3243,16 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
     return filtered
 
+
+@eel.expose
+def get_global_config():
+    """Returns the central configuration registry."""
+    return GLOBAL_CONFIG
+
+@eel.expose
+def set_global_config(key: str, value: Any):
+    """Updates a global configuration value."""
+    return set_config_value(key, value)
 
 @eel.expose
 def get_category_master():

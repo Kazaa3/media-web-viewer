@@ -1,4 +1,5 @@
 # Media Web Viewer - Core Runtime Dependencies
+python-dotenv>=1.0.0
 eel>=0.18.2
 bottle>=0.13.0
 bottle-websocket>=0.2.9

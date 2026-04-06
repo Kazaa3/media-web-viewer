@@ -6,7 +6,7 @@ import json
 import subprocess
 import shutil
 from src.core import logger
-from src.core.config_master import GLOBAL_CONFIG
+from src.core.config_master import GLOBAL_CONFIG, SLOW_PARSERS
 
 # Get specialized logger for format_utils
 log = logger.get_logger("format_utils")
@@ -268,100 +268,7 @@ def get_default_scan_dir() -> Path:
 # Use Centralized Config (v1.35.68)
 PARSER_CONFIG = GLOBAL_CONFIG
 
-    "debug_scan": True,
-    "debug_parser": True,
-    "debug_flags": {
-        "system": False,
-        "ui": False,
-        "lib": False,
-        "browser": False,
-        "edit": False,
-        "options": False,
-        "start": False,
-        "parser": False,
-        "scan": False,
-        "player": False,
-        "db": False,
-        "tests": False,
-        "api": False,
-        "web": False,
-        "i18n": False,
-        "websocket": False,
-        "performance": False,
-        "metadata": False,
-        "transcode": False,
-        "file_ops": False,
-        "network": False
-    },
-    "additional_library_dirs": [],
-    "language": "en",
-    "mutagen_prefer_albumartist": True,
-    "mutagen_extract_lyrics": False,
-    "pymediainfo_full_scan": False,
-    "ffmpeg_deep_analysis": False,
-    "ffmpeg_extract_thumbnails": True,
-    "enable_isoparser_parser": False, # Disabled by default (slow)
-    "enable_pycdlib_parser": False,   # Disabled by default (slow)
-    "enable_ebml_parser": False,     # Disabled by default (slow)
-    "enable_mkvparse_parser": False,  # Disabled by default (slow)
-    "enable_enzyme_parser": False,    # Disabled by default (slow)
-    "enable_pymkv_parser": False,     # Disabled by default (slow)
-    "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "supplements", "games"],
-    "displayed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "supplements", "games"],
-    "feature_flags": {
-        "experimental_transcoding": False,
-        "verbose_parsing": False,
-        "show_test_tab": True,
-        "analyse_mode": False,
-        "write_mode": False
-    },
-
-    "browser_choice": "auto",  # auto, google-chrome, chromium, chrome, chromium-browser
-    "browser_flags": [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-gpu",
-        "--window-size=1550,800",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--disable-extensions",
-        "--remote-debugging-port=9222"
-    ],
-    "env_vars": {
-        "EEL_MODE": "production",
-        "PYTHONPATH": "."
-    },
-
-    "log_level": "INFO",
-    "api_timeout": 10,
-    "env": "production",
-    "parser_settings": {
-        "mkvmerge": {
-            "cli_flags": "",
-            "timeout": 10
-        },
-        "ffprobe": {
-            "cli_flags": "",
-            "timeout": 10
-        },
-        "ffmpeg": {
-            "deep_analysis": False,
-            "timeout": 30
-        },
-        "vlc": {
-            "timeout": 5
-        },
-        "mutagen": {
-            "prefer_albumartist": True
-        },
-        "mkvinfo": {
-            "timeout": 10
-        }
-    }
-}
-
-# Parser which are known to be slow on certain files (ISO, MKV etc)
-SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
+# SLOW_PARSERS now imported from config_master (Centralized Config v1.35.68)
 
 
 def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:

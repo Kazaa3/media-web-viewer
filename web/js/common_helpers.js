@@ -5,29 +5,41 @@
 
 let CATEGORY_MAP = {};
 let TECH_MAP = {};
+let CONFIG = {}; // Centralized Flag & Env registry
 
 /**
- * Syncs the central category map and technical markers from the backend.
+ * Syncs all core registries from the backend (Cat-Master, Tech-Markers, Global-Config).
  */
-async function syncCategoryMaster() {
+async function syncCoreRegistry() {
     if (typeof eel !== 'undefined' && typeof eel.get_category_master === 'function') {
         try {
-            const master = await eel.get_category_master()();
-            const tech = await eel.get_tech_markers()();
+            // Parallel fetch for speed
+            const [master, tech, config] = await Promise.all([
+                eel.get_category_master()(),
+                eel.get_tech_markers()(),
+                eel.get_global_config()()
+            ]);
             
             if (master) {
-                console.info("[Sync] Category Master Map Loaded:", master);
+                console.info("[Sync] Category Master Loaded:", master);
                 CATEGORY_MAP = master;
             }
             if (tech) {
-                console.info("[Sync] Tech Markers Map Loaded:", tech);
+                console.info("[Sync] Tech Markers Loaded:", tech);
                 TECH_MAP = tech;
             }
+            if (config) {
+                console.info("[Sync] Global Config Loaded:", config);
+                window.CONFIG = config; 
+                // Compatibility for legacy flags
+                window.__mwv_raw_mode = config.raw_mode || false;
+                window.__mwv_bypass_db = config.bypass_db || false;
+            }
             
-            // Re-render UI components that depend on categories
+            // Re-render UI components that depend on categories or config
             if (typeof renderPlaylist === 'function') renderPlaylist();
         } catch (e) {
-            console.warn("[Sync] Master sync failed:", e);
+            console.warn("[Sync] Core Registry sync failed:", e);
         }
     }
 }
@@ -35,7 +47,7 @@ async function syncCategoryMaster() {
 // Global initialization hook
 document.addEventListener('DOMContentLoaded', () => {
     // Wait a bit for Eel to initialize
-    setTimeout(syncCategoryMaster, 500);
+    setTimeout(syncCoreRegistry, 500);
 });
 
 /**

@@ -254,13 +254,21 @@ window.addEventListener('DOMContentLoaded', async () => {
             // Apply persisted sidebar state
             if (typeof applySidebarState === 'function') applySidebarState();
 
-            // 3. UI Start State
-            console.log("UI: Setting default category and tab...");
-            if (typeof switchMainCategory === 'function') switchMainCategory('media');
+            // 3. UI Start State (v1.35.68 Config-Driven)
+            const startBranch = window.CONFIG?.active_branch || 'audio';
+            const startTab = window.CONFIG?.start_tab || 'player';
+            
+            console.log(`UI: Booting into ${startBranch} branch at tab: ${startTab}`);
+            
+            // Map branch to main category if needed (default to 'media' for player/video)
+            const startCategory = (startTab === 'library') ? 'library' : 
+                                 (startTab === 'database') ? 'database' : 
+                                 (startTab === 'edit') ? 'edit' : 'media';
+
+            if (typeof switchMainCategory === 'function') switchMainCategory(startCategory);
 
             if (typeof switchTab === 'function') {
-                console.log("UI: Switching to 'player' tab.");
-                switchTab('player');
+                switchTab(startTab);
             }
 
             // 4. Data Sync
