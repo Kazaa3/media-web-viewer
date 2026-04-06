@@ -936,6 +936,10 @@ function syncQueueWithLibrary() {
     const countMsg = isRaw ? `FORCED RAW SYNC: ${filtered.length} Items` : `Sync Audit: ${filtered.length} Items found. (Diagnostic: ${isDiagnosticMode})`;
     console.info(`[Sync] ${countMsg}`);
     
+    if (filtered.length > 0 || isRaw) {
+        currentPlaylist = [...filtered];
+        if (playlistIndex === -1) playlistIndex = 0;
+        
         if (typeof renderPlaylist === 'function') renderPlaylist();
         if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
     }
