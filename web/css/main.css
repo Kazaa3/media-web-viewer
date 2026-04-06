@@ -343,9 +343,10 @@ body {
     background: rgba(12, 16, 24, 0.68);
     backdrop-filter: blur(26px) saturate(155%);
     -webkit-backdrop-filter: blur(26px) saturate(155%);
-    transform: translateX(-24px);
+    transform: translateX(calc(-100% - 48px));
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
     display: flex !important;
     transition: transform 0.3s ease, opacity 0.3s ease;
     z-index: 10005;
@@ -355,6 +356,7 @@ body {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
+    visibility: visible;
 }
 
 .diagnostic-sidebar.active {
@@ -477,6 +479,37 @@ body {
     background: rgba(255,255,255,0.04);
 }
 
+.diag-hud-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.diag-hud-card {
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    cursor: default;
+}
+
+.diag-inline-stat {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.diag-caption {
+    display: block;
+    margin-top: 2px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.62);
+    line-height: 1.4;
+}
+
 .diag-status-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -535,6 +568,42 @@ body {
     font-size: 10px;
     line-height: 1.5;
     color: rgba(255,255,255,0.62);
+}
+
+.diag-action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.diag-action-btn {
+    min-height: 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-snappy);
+}
+
+.diag-action-btn:hover {
+    background: rgba(var(--accent-color-rgb), 0.18);
+    border-color: rgba(var(--accent-color-rgb), 0.32);
+}
+
+.diag-observability-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.diag-observability-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.03);
 }
 
 .diagnostic-header {
@@ -1062,6 +1131,38 @@ body {
 
 .footer-tool-btn.active {
     color: var(--accent-color);
+}
+
+.footer-theme-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.footer-overlay-toggle {
+    position: relative;
+}
+
+.footer-overlay-toggle::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(46, 204, 113, 0.9);
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.8);
+    opacity: 0.35;
+    transition: opacity 0.2s ease;
+}
+
+.footer-overlay-toggle.active::after {
+    opacity: 1;
 }
 
 /* --- Program Menu Bar (Modern v1.34 Toggleable) --- */
