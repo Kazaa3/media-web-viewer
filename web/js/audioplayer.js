@@ -615,7 +615,10 @@ function renderPlaylist() {
             </div>
         `;
 
-        if (typeof window.allLibraryItems !== 'undefined' && window.allLibraryItems.length > 0) {
+        // Use global state export (v1.35.68 Stabilization)
+    let dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
+                  ? window.__mwv_all_library_items.length 
+                  : (window.__mwv_last_db_count || 0);
             const dbTotal = (typeof window.__mwv_last_db_count !== 'undefined') ? window.__mwv_last_db_count : window.allLibraryItems.length;
             noMediaHtml = `
                 <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(0, 122, 255, 0.05); border: 2px dashed var(--accent-color); border-radius: 12px; margin: 20px;">

@@ -1,6 +1,7 @@
-
 // --- Hoisted Global State (v1.35.3 Fix) ---
-let allLibraryItems = [];
+// Global state export for cross-module HUD and queue consistency (v1.35.68)
+window.__mwv_all_library_items = [];
+let libraryStateLoaded = false;
 let coverflowItems = [];
 let coverflowIndex = 0;
 let libraryFilter = 'all';
@@ -47,7 +48,8 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount, fsSize);
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Stage ${audit.stage || 0} complete. Received ${incomingCount} items.`, "SUCCESS");
         
-        allLibraryItems = library.media || [];
+        window.__mwv_all_library_items = library.media || [];
+        console.warn(`[FE-FORENSIC] Received ${window.__mwv_all_library_items.length} items from backend.`);
         window.allLibraryItems = allLibraryItems; // Ensure global sync
         
         // --- V1.35.43 Recovery: Modular Sync Handshake ---
@@ -126,13 +128,13 @@ async function renderLibrary() {
     // --- PHASE 1: FILTERING (v1.35.68 Hardened) ---
     console.warn(`[FE-AUDIT] Starting Render for ${allLibraryItems.length} items. MainCat: ${libraryFilter}, SubCat: ${librarySubFilter}, Search: "${librarySearch}"`);
     
-    // Start with all items
-    let projectedItems = [...allLibraryItems];
+    // Start with all items (using global state export v1.35.68)
+    let projectedItems = [...(window.__mwv_all_library_items || [])];
     
-    // [DIAGNOSTIC] Aggressive Audit (v1.35.68)
-    console.warn(`[FE-AUDIT] STAGE 0: Initial Count: ${allLibraryItems.length}`);
-    if (allLibraryItems.length > 0) {
-        console.debug("[FE-AUDIT] Sample Item:", allLibraryItems[0]);
+    // [FE-FORENSIC] Aggressive Audit (v1.35.68)
+    const initialRaw = projectedItems.length;
+    if (initialRaw === 0) {
+        console.error("[FE-FORENSIC] Library Memory is EMPTY. Stage Load Fault?");
     }
 
     // 1. Hydration Mode Filter (Mock/Real/Both) - v1.35.68
