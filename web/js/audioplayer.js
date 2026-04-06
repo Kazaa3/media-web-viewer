@@ -615,19 +615,14 @@ function renderPlaylist() {
             </div>
         `;
 
-        // Use global state export (v1.35.68 Stabilization)
-    let dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
-                  ? window.__mwv_all_library_items.length 
-                  : (window.__mwv_last_db_count || 0);
-            const dbTotal = (typeof window.__mwv_last_db_count !== 'undefined') ? window.__mwv_last_db_count : window.allLibraryItems.length;
             noMediaHtml = `
                 <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(0, 122, 255, 0.05); border: 2px dashed var(--accent-color); border-radius: 12px; margin: 20px;">
                     <div style="font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--accent-color));">🌀</div>
                     <div style="font-weight: 800; color: var(--accent-color); margin-bottom: 10px; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">Queue Black Hole</div>
                     <p style="font-size: 0.9em; color: var(--text-secondary); max-width: 250px; margin: 0 auto 20px auto; line-height: 1.6;">
-                        Deine Mediathek enthält <strong>${dbTotal} Titel</strong>, aber die Warteschlange ist durch Filter blockiert oder nicht synchronisiert.
+                        Deine Mediathek enthält Titel, aber die Warteschlange ist durch Filter blockiert oder nicht synchronisiert.
                     </p>
-                    <button onclick="resetAllFilters()" class="tab-btn active" style="padding: 12px 30px; font-weight: 800;">SYNC & RESET FILTERS</button>
+                    <button onclick="if(typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary()" class="tab-btn active" style="padding: 12px 30px; font-weight: 800;">SYNC & RESET FILTERS</button>
                 </div>
             `;
         }
@@ -718,7 +713,6 @@ function renderPlaylist() {
         list.appendChild(div);
         });
     }
-    });
 }
 
 function resetAllFilters() {
@@ -948,7 +942,9 @@ function syncQueueWithLibrary() {
         
         // --- v1.35.68: Synchronize technical anchors ---
         if (typeof updateSyncAnchor === 'function') {
-            const dbCount = allLibraryItems.length;
+            const dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
+                            ? window.__mwv_all_library_items.length 
+                            : (window.__mwv_last_db_count || 0);
             const guiCount = filtered.length;
             updateSyncAnchor(dbCount, guiCount);
         }
