@@ -33,11 +33,11 @@ window.mwv_init_actions = {
     },
     'database': () => { if (typeof renderDatabaseView === 'function') renderDatabaseView(); },
     'cinema': () => { if (typeof initCinemaView === 'function') initCinemaView(); },
-    'debug': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); },
+    'debug': () => { toggleDiagnosticsSidebar(true); switchDiagnosticsSidebarTab('debug-db'); },
     'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
     'logbuch': () => { if (typeof loadLogbuchTab === 'function') loadLogbuchTab(); },
-    'tests': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('health'); },
-    'diagnostics': () => { if (typeof switchDiagnosticsView === 'function') switchDiagnosticsView('debug-db'); }
+    'tests': () => { toggleDiagnosticsSidebar(true); switchDiagnosticsSidebarTab('sentinel'); },
+    'diagnostics': () => { toggleDiagnosticsSidebar(true); }
 };
 
 // Global state variables
@@ -53,23 +53,14 @@ let navTimeout = null;      // Safety timer for lock release
 let menuSystemVisible = true; // Default to open for UI discovery
 let diagnosticsSidebarVisible = false;
 
+// Global Diagnostics Orchestration (v1.37.10 Modular)
 const DIAGNOSTICS_SIDEBAR_STORAGE_KEY = 'mwv_diag_overlay_visible';
 const DIAGNOSTICS_VIEW_STORAGE_KEY = 'mwv_active_diag_view';
 
-function resolveDiagnosticsReiterId(viewId) {
-    if (!viewId || viewId === 'debug' || viewId === 'debug-db') return 'reiter-overview';
-    return `reiter-${viewId}`;
-}
-
-function syncGlobalDiagnosticsNav(viewId = 'debug-db') {
-    const normalizedViewId = (viewId === 'debug') ? 'debug-db' : viewId;
-    const activeReiterId = resolveDiagnosticsReiterId(normalizedViewId);
-
-    document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => {
-        el.classList.toggle('active', el.id === activeReiterId);
-    });
-
-    localStorage.setItem(DIAGNOSTICS_VIEW_STORAGE_KEY, normalizedViewId);
+function syncGlobalDiagnosticsNav(viewId) {
+    if (typeof window.switchDiagnosticsSidebarTab === 'function') {
+        window.switchDiagnosticsSidebarTab(viewId);
+    }
 }
 
 function applyDiagnosticsSidebarState(isVisible) {
@@ -113,33 +104,29 @@ function applyDiagnosticsSidebarState(isVisible) {
  * Toggles the global diagnostics overlay sidebar.
  */
 function toggleDiagnosticsSidebar(forceState = null) {
+    const sb = document.getElementById('global-diagnostics-sidebar');
     const nextState = (typeof forceState === 'boolean') ? forceState : !diagnosticsSidebarVisible;
+
+    if (!sb && nextState) {
+        console.info("[UI-NAV] Loading Modular Diagnostics Overlay...");
+        if (typeof FragmentLoader !== 'undefined') {
+            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => {
+                if (typeof initDiagnosticsSidebar === 'function') initDiagnosticsSidebar();
+                applyDiagnosticsSidebarState(true);
+            });
+        }
+        return true;
+    }
+
     const isActive = applyDiagnosticsSidebarState(nextState);
-
-    if (typeof traceUiNav === 'function') {
-        traceUiNav('DIAG-OVERLAY', isActive ? 'OPEN' : 'CLOSE');
-    }
-
-    if (isActive) {
-        syncGlobalDiagnosticsNav(localStorage.getItem(DIAGNOSTICS_VIEW_STORAGE_KEY) || 'debug-db');
-        if (typeof syncDiagBtnStates === 'function') syncDiagBtnStates();
-    }
-
+    if (typeof traceUiNav === 'function') traceUiNav('DIAG-OVERLAY', isActive ? 'OPEN' : 'CLOSE');
     return isActive;
 }
 
-function toggleDiagnosticsOverlay(forceState = null) {
-    return toggleDiagnosticsSidebar(forceState);
-}
-
 function switchDiagnosticsSidebarTab(viewId, btn) {
-    applyDiagnosticsSidebarState(true);
-    syncGlobalDiagnosticsNav(viewId);
-    switchDiagnosticsSubView(viewId);
-
-    if (btn) {
-        document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => el.classList.remove('active'));
-        btn.classList.add('active');
+    if (!diagnosticsSidebarVisible) applyDiagnosticsSidebarState(true);
+    if (typeof window.switchDiagnosticsSidebarTab === 'function') {
+        window.switchDiagnosticsSidebarTab(viewId, btn);
     }
 }
 
