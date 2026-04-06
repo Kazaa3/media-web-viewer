@@ -52,6 +52,9 @@ class DatabaseHandler:
     def get_media_by_name(self, name):
         return get_media_by_name(name)
 
+    def delete_media_by_id(self, item_id):
+        return delete_media_by_id(item_id)
+
     def update_item_metadata(self, item_path, updates):
         # Placeholder for existing function if it exists or needs to be routed
         return True
@@ -653,6 +656,19 @@ def rename_media(old_name, new_name):
         return False
     finally:
         conn.close()
+
+
+def delete_media_by_id(item_id):
+    """
+    @brief Deletes a media item from the database by ID (v1.37.17).
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM media WHERE id = ?", (item_id,))
+    conn.commit()
+    conn.close()
+    return True
 
 
 def delete_media(name):

@@ -909,6 +909,27 @@ def check_database_resilience():
     return results
 
 
+@eel.expose
+def prune_ghost_items(item_ids):
+    """
+    Safely prunes ghost items from the database after a resilience audit (v1.37.17).
+    """
+    from src.core import db
+    if not item_ids or not isinstance(item_ids, list):
+        return {"status": "error", "message": "Invalid ID list provided."}
+
+    log.info(f"[Forensic] Beginning Atomic Pruning of {len(item_ids)} ghost items...")
+    pruned_count = 0
+    try:
+        for itm_id in item_ids:
+            if db.delete_media_by_id(itm_id):
+                pruned_count += 1
+        return {"status": "success", "count": pruned_count}
+    except Exception as e:
+        log.error(f"[Forensic] Pruning Bridge Error: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 

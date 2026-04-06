@@ -293,6 +293,8 @@ async function runFSParityAudit() {
             return;
         }
 
+        const ghostIds = res.fs_parity.ghost_items.map(i => i.id);
+
         results.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <div style="color:#f1c40f; font-weight:900;">${res.fs_parity.ghost_count} GHOSTS DETECTED</div>
@@ -304,11 +306,43 @@ async function runFSParityAudit() {
                         </div>
                     `).join('')}
                 </div>
-                <div style="font-size:8px; opacity:0.4; margin-top:5px; text-align:center;">Manuelle Bereinigung empfohlen.</div>
+                <button onclick='triggerGhostPruning(${JSON.stringify(ghostIds)})' 
+                    style="margin-top:10px; background:#e74c3c; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; font-weight:900; cursor:pointer;"
+                    title="Safe Bulk-Deletion of verified dead references">
+                    PRUNE ALL ${res.fs_parity.ghost_count} GHOSTS
+                </button>
             </div>
         `;
     } catch (e) {
         results.innerHTML = `<div style="color:#e74c3c; font-size:10px;">FS-Parity Scan fehlgeschlagen: ${e.message}</div>`;
+    }
+}
+
+async function triggerGhostPruning(ghostIds) {
+    const status = document.getElementById('diag-db-prune-status');
+    if (!status || !ghostIds || ghostIds.length === 0) return;
+
+    if (!confirm(`FORENSIC CLEANUP: Prune ${ghostIds.length} verified dead references from SQLite? This cannot be undone.`)) return;
+
+    sentinelPulse('PRUNE', `Executing Atomic Bulk Deletion for ${ghostIds.length} IDs...`);
+    status.innerHTML = '<div style="font-size:9px; color:#f1c40f; text-align:center;">Pruning Ghost References...</div>';
+
+    try {
+        const res = await eel.prune_ghost_items(ghostIds)();
+        if (res.status === 'success') {
+            sentinelPulse('SUCCESS', `Pruning Complete: Removed ${res.count} records.`);
+            status.innerHTML = `<div style="font-size:9px; color:#2ecc71; text-align:center;">SUCCESS: ${res.count} Records Pruned.</div>`;
+            setTimeout(() => {
+                status.innerHTML = '';
+                runFSParityAudit(); // Refresh the list
+            }, 2000);
+        } else {
+            sentinelPulse('ERROR', `Pruning Failed: ${res.message}`);
+            status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Cleanup Failed: ${res.message}</div>`;
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Pruning Bridge Fault: ${e.message}`);
+        status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Bridge Fault: ${e.message}</div>`;
     }
 }
 
