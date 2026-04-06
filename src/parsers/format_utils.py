@@ -163,8 +163,12 @@ def load_parser_config() -> None:
                 # Persistence: Save the migrated config back to disk to ensure 
                 # all new defaults (categories, flags) are permanent.
                 save_parser_config()
-        except Exception as e:
-            log.error(f"Error loading config: {e}")
+        except (json.JSONDecodeError, Exception) as e:
+            log.warning(f"Configuration file at {CONFIG_FILE} is malformed or missing. Restoring SSOT defaults. Error: {e}")
+            # Restore from SSOT defaults without clearing the shared reference
+            for key, value in GLOBAL_CONFIG.items():
+                PARSER_CONFIG[key] = value
+            save_parser_config()
     else:
         # Ensure directory exists but wait to save until needed
         os.makedirs(CONFIG_FILE.parent, exist_ok=True)
@@ -379,19 +383,10 @@ def format_bitdepth(
         return ""
 
 
-@eel.expose
-def get_streaming_capability_matrix() -> dict:
-    """
-    Returns the centralized streaming capability matrix (v1.35.68).
-    """
-    from src.core.config_master import GLOBAL_CONFIG
-    return GLOBAL_CONFIG.get("streaming_capabilities", {})
 
-
-@eel.expose
-def get_installed_packages() -> dict:
+def get_installed_packages_local() -> dict:
     """
-    Returns the discovered PIP package registry (v1.35.68).
+    Internal helper for discovered PIP package registry.
     """
     from src.core.config_master import GLOBAL_CONFIG
     return GLOBAL_CONFIG.get("installed_packages", {})

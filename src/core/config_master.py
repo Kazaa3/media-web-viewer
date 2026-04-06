@@ -30,6 +30,7 @@ except ImportError:
 # --- PROJECT PATH CALCULATION ---
 MAIN_FILE = Path(__file__).resolve()
 PROJECT_ROOT = MAIN_FILE.parent.parent.parent
+APP_DATA_DIR = str(PROJECT_ROOT) # Standardizing on Project Root as primary data hub
 
 # Load local environment overrides if available
 if _DOTENV_LOADED:
@@ -142,17 +143,88 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
         "session_log": str(PROJECT_ROOT / "logs" / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
         "log_level": os.environ.get("MWV_LOG_LEVEL", "INFO"),
-        "max_size_mb": 10,
+        "max_size_mb": int(os.environ.get("MWV_LOG_MAX_SIZE", 10)),
+        "backup_count": int(os.environ.get("MWV_LOG_BACKUPS", 3)),
+        "debug_force": os.environ.get("MWV_DEBUG_FORCE") == "1",
+        "log_datefmt": "%H:%M:%S",
+        "debug_max_size_mb": 10,
+        "debug_backup_count": 1,
+        "watchdog_threshold": 2.0,
+        "watchdog_timeout": 60, # Startup watchdog timeout (s)
+        "venv_mapping": {
+            ".venv_run": "core",
+            ".venv_core": "core",
+            ".venv_dev": "dev",
+            ".venv": "full",
+            ".venv_test": "test",
+            ".venv_selenium": "selenium",
+            ".venv_build": "build"
+        },
         "max_buffer_size": 10000        # For UI Log Buffer
     },
     
-    # --- PERFORMANCE & STREAMING (v1.35.68 Centralized) ---
+    # --- DEBUGGING REGISTRY (v1.35.68 Centralized) ---
+    "debug_flags": {
+        "start": True,
+        "scan": False,
+        "db": False,
+        "ui": False,
+        "remux": False,
+        "transcode": False,
+        "tests": False,
+        "system": False
+    },
+    
+    # --- STREAMING & PIPELINE REGISTRY (v1.35.94 Unified) ---
+    "atom_detection": {
+        "atoms": ["ftyp", "moov", "moof", "mdat"],
+        "header_limit": 4096
+    },
+    
+    "transcoding_profiles": {
+        # VLC HLS Pipeline Profiles (Content-Aware)
+        "vlc_hls_profile_pal": {
+            "vcodec": "h264", "v_bitrate": 2000, "acodec": "aac", "a_bitrate": 128,
+            "channels": 2, "samplerate": 44100, "seglen": 5, "numseg": 10
+        },
+        "vlc_hls_profile_hd": {
+            "vcodec": "h264", "v_bitrate": 4500, "acodec": "aac", "a_bitrate": 192,
+            "channels": 2, "samplerate": 48000, "seglen": 5, "numseg": 10
+        },
+        "hls_fmp4": {
+            "vcodec": "libx264", "preset": "ultrafast", "crf": "28",
+            "hls_time": 4, "hls_list_size": 3, "format": "hls"
+        },
+        # FFmpeg Transcoding Targets (Codec-Specific)
+        "transcode_audio_aac": {
+            "codec": "aac", "bitrate": "192k", "format": "mp4", 
+            "movflags": "frag_keyframe+empty_moov+default_base_moof"
+        },
+        "transcode_audio_opus": {
+            "codec": "libopus", "bitrate": "128k", "format": "webm", "movflags": ""
+        },
+        "transcode_audio_flac": {
+            "codec": "flac", "bitrate": "0", "format": "flac", "movflags": ""
+        },
+        "video_transcode": {
+            "preset": "veryfast", "crf": "23", "a_codec": "aac", "a_bitrate": "128k",
+            "format": "mp4", "movflags": "frag_keyframe+empty_moov+default_base_moof"
+        },
+        "lossless_remux": {
+            "flags": ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"]
+        }
+    },
+    
+    # --- PERFORMANCE & STREAMING (v1.35.94 Centralized) ---
     "perf_settings": {
         "chunk_size": 512 * 1024,        # Standard I/O chunk size
         "buffer_size": 1024 * 1024 * 2,  # 2MB playback buffer
+        "streaming_buffer_size": 1024 * 1024, # 1MB FFmpeg/mkvmerge pipe buffer
+        "mkvmerge_bufsize": 1024 * 1024,
         "transcoder_log_size": 1000,     # Max lines in task buffer
         "max_concurrent_scans": 4,
-        "ffmpeg_threads": 0              # 0 = auto
+        "ffmpeg_threads": 0,              # 0 = auto
+        "task_timeout": 900               # Default timeout for long-running tasks (seconds)
     },
     
     # --- UI & UX SETTINGS (v1.35.68 Centralized) ---
@@ -167,12 +239,22 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
     "test_engine": os.environ.get("MWV_TEST_ENGINE", "chrome-headless"), # playwright, selenium, chrome-headless
     "headless_mode": get_env_bool("MWV_HEADLESS", True),
+    "test_settings": {
+        "pytest_cmd": ["pytest", "-q"],
+        "python_exe": sys.executable
+    },
     
     # Parser & Library
     "auto_scan": get_env_bool("MWV_AUTO_SCAN", True),
     "fast_scan": get_env_bool("MWV_FAST_SCAN", True),
     "parser_mode": os.environ.get("MWV_PARSER_MODE", "lightweight"), # lightweight, full, ultimate
-    "displayed_categories": ["audio", "multimedia", "images", "documents", "ebooks", "abbild"],
+    "displayed_categories": ["audio", "multimedia", "pictures", "documents", "ebooks", "disk_images", "unbekannt"],
+    
+    "scan_settings": {
+        "max_depth": 12,
+        "max_files": 50000,
+        "exclude_patterns": ["node_modules", ".git", "__pycache__", ".venv"]
+    },
     
     # Diagnostic Toggles (v1.35.68 Centered)
     "diag_mode": get_env_bool("MWV_DIAG_MODE", False),
@@ -187,7 +269,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "log_level": os.environ.get("MWV_LOG_LEVEL", "INFO"),
     
     # Legacy Parser Settings (Transferred from format_utils.py)
-    "indexed_categories": ["audio", "video", "images", "documents", "ebooks", "abbild", "spiel", "beigabe", "supplements", "games"],
+    "indexed_categories": ["audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "unbekannt"],
     "parser_chain": [
         "filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", 
         "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", 
@@ -220,6 +302,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "vlc": {"timeout": 5},
         "mutagen": {"prefer_albumartist": True},
         "mkvinfo": {"timeout": 10}
+    },
+
+    # --- PLAYER & ROUTING SETTINGS (v1.35.94 SSOT) ---
+    "player_settings": {
+        "force_native_audio": True,
+        "media_prefixes": ["/media/", "media/"],
+        "video_extensions": [".mp4", ".mkv", ".webm", ".ogg", ".mov", ".avi", ".m4v", ".iso", ".ts", ".m2ts"],
+        "audio_extensions": [".mp3", ".flac", ".m4a", ".wav", ".ogg", ".m4b"],
+        "hardware_encoders_priority": ["nvenc", "vaapi", "qsv"]
     },
     
     # Wait & Sleep Intervals (Centralized v1.35.68)
@@ -265,8 +356,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "data_dir": str(PROJECT_ROOT / "data"),
         "media_dir": str(PROJECT_ROOT / "media"),
         "db_path": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
-        "log_dir": str(PROJECT_ROOT / "logs"),
-        "cache_dir": str(PROJECT_ROOT / "cache"),
+        "db_dir": str(PROJECT_ROOT / ".media-web-viewer"), # Potential shadow location
+        "log_dir": PROJECT_ROOT / "data" / "logbuch",      # Centralized logging registry
+        "benchmark_path": PROJECT_ROOT / "data" / "benchmarks.json",
+        "test_results_path": PROJECT_ROOT / "data" / "test_results.json",
+        "mkv_cache_dir": PROJECT_ROOT / "cache" / "extracted",
+        "media_cache_dir": PROJECT_ROOT / "cache" / "media",
+        "config_dir": str(Path.home() / ".config" / "gui_media_web_viewer"),
         "pyproject_file": str(PROJECT_ROOT / "pyproject.toml"),
         "version_file": str(PROJECT_ROOT / "VERSION"),
         "benchmarks_file": str(PROJECT_ROOT / "benchmarks.json"),
@@ -297,7 +393,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "app_mode": os.environ.get("MWV_APP_MODE", "High-Performance"),
         "playback_mode": os.environ.get("MWV_PLAYBACK_MODE", "hls"),
         "library_dir": str(PROJECT_ROOT / "media"),
-        "displayed_categories": ["audio", "video", "multimedia", "abbild", "iso"],
+        "displayed_categories": ["audio", "video", "multimedia", "pictures", "disk_images", "unbekannt"],
         "debug_scan": get_env_bool("MWV_DEBUG_SCAN", False),
         "parser_settings": {
             "use_fast_isoparser": True,

@@ -22,7 +22,7 @@ log = logger.get_logger("web")
 
 APP_ROOT = Path(__file__).resolve().parent.parent
 MEDIA_DIR = APP_ROOT / "media"
-CACHE_DIR = logger.APP_DATA_DIR / "cache"
+CACHE_DIR = Path(logger.APP_DATA_DIR) / "cache"
 
 
 def _log(msg):

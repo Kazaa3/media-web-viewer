@@ -29,10 +29,10 @@ from typing import Iterable
 
 from src.core.config_master import GLOBAL_CONFIG
 
-DB_DIR = Path(GLOBAL_CONFIG["storage_registry"]["data_dir"])
-DB_FILENAME = GLOBAL_CONFIG["storage_registry"]["db_path"]
+DB_DIR = Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]).resolve()
+DB_FILENAME = str(Path(GLOBAL_CONFIG["storage_registry"]["db_path"]).resolve())
 
-log.info(f"[DB-PATH] Centralized Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
+log.info(f"[DB-PATH] Centralized Absolute Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
 
 _DB_INITIALIZED = False
 
@@ -247,10 +247,12 @@ def init_db():
     try:
         cursor.execute("UPDATE media SET category = 'pictures' WHERE category = 'images'")
         cursor.execute("UPDATE media SET category = 'disk_images' WHERE category = 'iso'")
+        # New v1.35.96: Lowercase all categories to ensure SSOT compatibility
+        cursor.execute("UPDATE media SET category = LOWER(category)")
         conn.commit()
-        log.info("[DB] [MIGRATION-v1.35.75] Successfully renamed categories: images->pictures, iso->disk_images")
+        log.info("[DB] [MIGRATION-v1.35.96] Successfully synchronized category casing (LOWER).")
     except Exception as e:
-        log.warning(f"[DB] [MIGRATION-v1.35.75] Renaming migration skipped or failed: {e}")
+        log.warning(f"[DB] [MIGRATION-v1.35.96] Renaming migration skipped or failed: {e}")
 
     _DB_INITIALIZED = True
     log.debug("Database initialization/migration complete.")

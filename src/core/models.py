@@ -75,7 +75,8 @@ MASTER_CAT_MAP = {
     "spiel": ["spiel", "game", "pc spiel", "digitales spiel", "steam"],
     "beigabe": ["beigabe", "supplement", "software", "additional"],
     "hörspiel": ["hörspiel", "radio drama", "audio drama"],
-    "hörbuch": ["hörbuch", "audiobook", "audio book"]
+    "hörbuch": ["hörbuch", "audiobook", "audio book"],
+    "unbekannt": ["unbekannt", "unknown", "undefiniert"]
 }
 
 TECH_MARKERS = {

@@ -89,12 +89,15 @@ if __name__ == "__main__":
     ensure_stable_environment()
 
 # --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
+import sys
+import os
 import time
-import socket
-import logging
-import platform
 import json
-import base64
+import logging
+import traceback
+import contextlib
+import socket
+import platform
 import re
 import shutil
 import subprocess
@@ -102,6 +105,7 @@ import glob
 import sqlite3
 import ast
 import threading
+from pathlib import Path
 from typing import Dict, Any, List, Optional, cast
 
 # Third-party imports that require the virtual environment
@@ -131,7 +135,8 @@ def get_category_master():
 @eel.expose
 def get_global_config():
     """Returns the full centralized configuration (v1.35.68)."""
-    from src.core.config_master import GLOBAL_CONFIG
+    # 56. Environment Integration (v1.35.68 Centralized)
+    from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT
     return GLOBAL_CONFIG
 
 @eel.expose
@@ -416,8 +421,8 @@ def start_app():
         if "--debug" in sys.argv:
             run_app_audit_detached(port)
 
-        # --- Hang Detection / Watchdog ---
-        timeout = 60
+        # --- Hang Detection / Watchdog (SSOT v1.35.93) ---
+        timeout = GLOBAL_CONFIG.get("watchdog_timeout", 60)
         start_wait = time.time()
         last_alive = start_wait
         
@@ -542,16 +547,24 @@ def get_playback_stats():
         gpu_util = hardware_detector.get_gpu_usage_safe()
         hw = hardware_detector.get_gpu_info()
 
-        # Mocking Atmos/Bitstream for now or hooking into active session
+        # Try to find the most recent active stream
+        active = {}
+        if globals().get("GLOBAL_ACTIVE_STREAMS"):
+            # Sort by timestamp to get the current/last session
+            sorted_sessions = sorted(GLOBAL_ACTIVE_STREAMS.items(), key=lambda x: x[1].get('ts', 0), reverse=True)
+            if sorted_sessions:
+                active = sorted_sessions[0][1]
+
         return {
-            "codec": "H.264 / HEVC",
-            "bitrate": "8.5 Mbps",
+            "codec": active.get("codec", "H.264 / HEVC"),
+            "bitrate": active.get("bitrate", "8.5 Mbps"),
             "gpu_info": f"{hw.get('type', 'Unknown')} ({gpu_util:.1f}%)",
             "gpu_util": gpu_util,
-            "rtt_ms": 12,
-            "audio_engine": "FFmpeg Premium Remux",
-            "atmos": False,
-            "bitstream": False
+            "rtt_ms": active.get("rtt", 12),
+            "audio_engine": active.get("engine", "FFmpeg Premium Remux"),
+            "atmos": active.get("atmos", False),
+            "bitstream": active.get("bitstream", False),
+            "is_active": bool(active)
         }
     except Exception as e:
         log.error(f"[Stats] Error: {e}")
@@ -685,13 +698,15 @@ def run_video_transcode_diagnostic(file_path=None):
     log.info(f"[Diagnostic] Testing video pipeline for: {target_path}")
     results = []
     
-    # Endpoints to test
-    base_url = GLOBAL_CONFIG['network_settings'].get('api_root', f"http://localhost:{GLOBAL_CONFIG['port']}")
+    # Endpoints to test (SSOT v1.35.93)
+    base_url = GLOBAL_CONFIG['network_settings'].get('api_root', f"http://{GLOBAL_CONFIG['network_settings']['host']}:{GLOBAL_CONFIG['network_settings']['port']}")
     encoded_path = requests.utils.quote(target_path)
     endpoints = [
         {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
         {"name": "Transcode (Safe)", "url": f"{base_url}/stream/via/transcode/{encoded_path}"}
     ]
+    
+    atom_cfg = GLOBAL_CONFIG.get("atom_detection", {"atoms": ["ftyp", "moof", "mdat", "moov"], "header_limit": 4096})
     
     for ep in endpoints:
         ep_result = {"name": ep['name'], "status": "unknown", "details": ""}
@@ -700,15 +715,16 @@ def run_video_transcode_diagnostic(file_path=None):
             if r.status_code == 200:
                 # Read 512KB to check for atoms
                 chunk = next(r.iter_content(chunk_size=GLOBAL_CONFIG["perf_settings"]["chunk_size"]), b'')
-                atoms = [b'ftyp', b'moof', b'mdat', b'moov']
-                found = [a.decode() for a in atoms if a in chunk[:4096]]
+                atoms = [a.encode() if isinstance(a, str) else a for a in atom_cfg["atoms"]]
+                limit = atom_cfg["header_limit"]
+                found = [a.decode() if isinstance(a, bytes) else a for a in atoms if a in chunk[:limit]]
                 
                 if found:
                     ep_result["status"] = "success"
                     ep_result["details"] = f"Valid MP4 atoms found: {', '.join(found)}"
                 else:
                     ep_result["status"] = "failed"
-                    ep_result["details"] = "No valid MP4 atoms in start of stream."
+                    ep_result["details"] = f"No valid MP4 atoms in start of stream (checked {limit} bytes)."
             else:
                 ep_result["status"] = "failed"
                 ep_result["details"] = f"HTTP Error {r.status_code}"
@@ -872,6 +888,7 @@ def initialize_debug_flags(args=None):
 
 # --- Global Constants & State ---
 VERSION = "1.35.68"
+GLOBAL_ACTIVE_STREAMS = {}  # Tracks metrics for get_playback_stats
 
 
 # Nach Logging-Setup: PIDs loggen fr Konsole. deswegen kein eel.expose
@@ -3029,7 +3046,7 @@ def debug_log(message: str) -> None:
         pass
 
 
-if DEBUG_FLAGS["start"]:
+if DEBUG_FLAGS.get("start", False):
     debug_log("[Startup] main.py loading...")
 
 # Removed duplicate get_debug_console (correct version is at line 459)
@@ -3234,7 +3251,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
-        displayed_cats = ["audio", "video", "images", "multimedia", "abbild"]
+        displayed_cats = ["audio", "video", "pictures", "multimedia", "disk_images"]
 
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
 
@@ -3270,24 +3287,9 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
 
 @eel.expose
-def get_global_config():
-    """Returns the central configuration registry."""
-    return GLOBAL_CONFIG
-
-@eel.expose
 def set_global_config(key: str, value: Any):
     """Updates a global configuration value."""
     return set_config_value(key, value)
-
-@eel.expose
-def get_category_master():
-    """Returns the unified category master map for the frontend."""
-    return MASTER_CAT_MAP
-
-@eel.expose
-def get_tech_markers():
-    """Returns the technical markers map (e.g., transcoded, iso)."""
-    return TECH_MARKERS
 
 
 @eel.expose
@@ -3379,14 +3381,19 @@ def reset_app_data():
 
     deleted = []
 
-    # Paths to clear:
-    # 1. ~/.media-web-viewer (Database)
-    db_dir = db.DB_DIR
-    # 2. ~/.config/gui_media_web_viewer (Parser Config)
-    # Programmname im config-Pfad fr bessere bersicht ndern
-    config_dir = Path.home() / ".config" / "gui_media_web_viewer"
+    # Paths to clear (SSOT v1.35.94)
+    storage = GLOBAL_CONFIG.get("storage_registry", {})
+    db_loc = storage.get("db_path", db.DB_FILENAME)
+    db_dir = storage.get("db_dir", db.DB_DIR)
+    config_dir = storage.get("config_dir", Path.home() / ".config" / "gui_media_web_viewer")
 
-    for p in [db_dir, config_dir]:
+    targets = [db_dir, config_dir]
+    # Also add the specific DB file if it's not in the dir
+    if db_loc not in [str(db_dir), str(config_dir)]:
+        targets.append(Path(db_loc).parent)
+
+    for p_raw in targets:
+        p = Path(p_raw)
         if p.exists():
             try:
                 if p.is_dir():
@@ -3395,7 +3402,7 @@ def reset_app_data():
                     p.unlink()
                 deleted.append(str(p))
             except Exception as e:
-                debug_log(f"[Error] Reset failed for {p}: {e}")
+                log.error(f"[Reset] Failed for {p}: {e}")
 
     # Remove legacy database files from old locations
     legacy_deleted = db.cleanup_legacy_databases()
@@ -3685,8 +3692,10 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
 
     count_indexed: int = 0
     total_traversed: int = 0
-    MAX_SCAN_DEPTH = 12
-    MAX_TOTAL_FILES = 50000
+    
+    scan_cfg = GLOBAL_CONFIG.get("scan_settings", {})
+    MAX_SCAN_DEPTH = scan_cfg.get("max_depth", 12)
+    MAX_TOTAL_FILES = scan_cfg.get("max_files", 50000)
 
     try:
         from src.parsers.format_utils import (
@@ -3713,15 +3722,19 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         if any(c in indexed_cats for c in ["video", "movie", "tv"]): 
             all_exts |= VIDEO_EXTENSIONS
             all_exts |= HDDVD_EXTENSIONS
-        if "images" in indexed_cats: all_exts |= IMAGE_EXTENSIONS
+        if "images" in indexed_cats or "pictures" in indexed_cats: 
+            all_exts |= IMAGE_EXTENSIONS
         if any(c in indexed_cats for c in ["documents", "docs"]): all_exts |= DOCUMENT_EXTENSIONS
         if "ebooks" in indexed_cats: all_exts |= EBOOK_EXTENSIONS
-        if any(c in indexed_cats for c in ["abbild", "disc_image", "iso"]): all_exts |= DISK_IMAGE_EXTENSIONS
+        if any(c in indexed_cats for c in ["disk_images", "abbild", "disc_image", "iso"]): all_exts |= DISK_IMAGE_EXTENSIONS
         if any(c in indexed_cats for c in ["spiel", "games", "software"]):
             # Games can be ISOs or specific folders, but we scan for common game extensions if any
             all_exts |= {'.exe', '.lnk', '.sh', '.bin'} | DISK_IMAGE_EXTENSIONS
         if any(c in indexed_cats for c in ["beigabe", "supplements", "bonus"]):
             all_exts |= AUDIO_EXTENSIONS | VIDEO_EXTENSIONS | DOCUMENT_EXTENSIONS | IMAGE_EXTENSIONS
+        if "unbekannt" in indexed_cats:
+            # For unknown, we might want a limited set or all? Let's just track it's enabled.
+            pass
 
         # RECOVERY: Ensure normalized sets are used
         all_exts = {e.lower() for e in all_exts}
@@ -3952,7 +3965,9 @@ def play_media(path):
     # If it's a directory, movie, or has a video extension, REJECT it here.
     ext = Path(path).suffix.lower()
     is_dir = os.path.exists(path) and os.path.isdir(path)
-    video_exts = ['.mp4', '.mkv', '.webm', '.ogg', '.mov', '.avi', '.m4v', '.iso', '.ts', '.m2ts']
+    player_cfg = GLOBAL_CONFIG.get("player_settings", {})
+    video_exts = player_cfg.get("video_extensions", [".mp4", ".mkv", ".webm", ".ogg", ".mov", ".avi", ".m4v", ".iso", ".ts", ".m2ts"])
+    
     if ext in video_exts or is_dir:
         log.warning(f"DEBUG: [Player-Trace] play_media REJECTED for video/dir: {path}. Use open_video_smart.")
         return {"status": "error", "message": "Invalid call: Use open_video_smart for Video/Dir"}
@@ -3960,7 +3975,8 @@ def play_media(path):
     mode = PARSER_CONFIG.get("playback_mode", "chrome_native")
 
     # Priority 1: Audio is always Chrome Native if mode is default or requested
-    is_audio = Path(path).suffix.lower() in AUDIO_EXTENSIONS
+    audio_exts = player_cfg.get("audio_extensions", AUDIO_EXTENSIONS)
+    is_audio = ext in audio_exts
     if is_audio:
         # User requested: "for audio always chrome native at the moment."
         return {"status": "play", "path": path, "mode": "chrome_native"}
@@ -4017,10 +4033,11 @@ def resolve_media_path(file_path: str) -> str:
 
     # 2. Strip /media/ prefix if present and handle virtual pathing
     stripped_path = path_decoded
-    if path_decoded.startswith("/media/"):
-        stripped_path = path_decoded[len("/media/"):]
-    elif path_decoded.startswith("media/"):
-        stripped_path = path_decoded[len("media/"):]
+    prefixes = GLOBAL_CONFIG.get("player_settings", {}).get("media_prefixes", ["/media/", "media/"])
+    for prefix in prefixes:
+        if path_decoded.startswith(prefix):
+            stripped_path = path_decoded[len(prefix):]
+            break
 
     # 3. Try to find in DB using the stripped path
     db_path = db.get_media_path(stripped_path)
@@ -4098,17 +4115,12 @@ def get_best_hw_encoder():
         gpu = hardware_detector.get_gpu_info()
         encoders = gpu.get("encoders", [])
 
-        # Priority 1: NVIDIA NVENC
-        if "nvenc" in encoders:
-            return "h264_nvenc"
-
-        # Priority 2: Intel/AMD VAAPI
-        if "vaapi" in encoders:
-            return "h264_vaapi"
-
-        # Priority 3: Intel QSV
-        if "qsv" in encoders:
-            return "h264_qsv"
+        # Centralized Hardware Priority
+        priority = GLOBAL_CONFIG.get("player_settings", {}).get("hardware_encoders_priority", ["nvenc", "vaapi", "qsv"])
+        
+        for p in priority:
+            if p in encoders:
+                return f"h264_{p}"
 
     except Exception as e:
         log.warning(f"[HW Detect] Failed to probe encoders: {e}")
@@ -4172,6 +4184,18 @@ def stream_video_fragmented(file_path):
         encoder = get_best_hw_encoder()
         log.info(f"[stream] Using (Audio:{audio_idx}, Subs:{subs_idx}) via {encoder} for {resolved_path}")
 
+        # Register active stream for stats (SSOT v1.35.94)
+        if "GLOBAL_ACTIVE_STREAMS" in globals():
+            GLOBAL_ACTIVE_STREAMS["mse_transcode"] = {
+                "ts": time.time(),
+                "codec": "H.264 (AVC) / AAC",
+                "bitrate": "Target: 4-8 Mbps",
+                "engine": f"FFmpeg ({encoder})",
+                "rtt": 5, # Low latency for MSE
+                "atmos": False,
+                "bitstream": False
+            }
+
         # Base command for H.264 FragMP4
         ss_args = ["-ss", str(start_time)] if float(start_time) > 0 else []
         is_iso = str(resolved_path).lower().endswith('.iso')
@@ -4185,40 +4209,66 @@ def stream_video_fragmented(file_path):
             input_args = ["-i", str(resolved_path)]
 
         # Determine if we are transcoding Audio-Only
-        is_audio = any(ext in str(resolved_path).lower() for ext in ['.mp3', '.flac', '.m4a', '.wav', '.ogg'])
+        audio_exts = GLOBAL_CONFIG.get("player_settings", {}).get("audio_extensions", [])
+        is_audio = any(ext in str(resolved_path).lower() for ext in audio_exts)
         
         # FFmpeg command for FragMP4 remuxing/transcoding
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         cmd.extend(ss_args)
         cmd.extend(input_args)
         
+        profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
+        
         if is_audio:
-            # Audio Transcoding: Convert to AAC in an MP4 fragmented container
+            # Audio Transcoding Profile Selection (SSOT v1.35.95)
+            # Default to AAC for best browser compatibility, but prepared for Opus/FLAC
+            p_key = "transcode_audio_aac" 
+            if ".opus" in str(resolved_path).lower():
+                p_key = "transcode_audio_opus"
+                
+            profile = profiles.get(p_key, {})
+            codec = profile.get("codec", "aac")
+            bitrate = profile.get("bitrate", "192k")
+            fmt = profile.get("format", "mp4")
+            movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
+            
             cmd.extend([
                 "-vn", 
-                "-c:a", "aac", "-b:a", "192k",
-                "-f", "mp4", 
-                "-movflags", "frag_keyframe+empty_moov+default_base_moof"
+                "-c:a", codec, "-b:a", bitrate,
+                "-f", fmt
             ])
+            if movflags:
+                cmd.extend(["-movflags", movflags])
         else:
-            # Video/ISO Transcoding
+            # Video/ISO Transcoding Profile (SSOT)
+            profile = profiles.get("video_transcode", {})
+            preset = profile.get("preset", "veryfast")
+            crf = profile.get("crf", "23")
+            a_codec = profile.get("a_codec", "aac")
+            a_bitrate = profile.get("a_bitrate", "128k")
+            fmt = profile.get("format", "mp4")
+            movflags = profile.get("movflags", "frag_keyframe+empty_moov+default_base_moof")
+
             if subs_idx is not None and str(subs_idx).lower() != 'none':
                 cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}", "-map", f"0:s:{subs_idx}"])
             else:
                 cmd.extend(["-map", "0:v:0", "-map", f"0:a:{audio_idx}"])
                 
             cmd.extend([
-                "-c:v", encoder, "-preset", "veryfast", "-crf", "23",
-                "-c:a", "aac", "-b:a", "128k",
-                "-f", "mp4", 
-                "-movflags", "frag_keyframe+empty_moov+default_base_moof"
+                "-c:v", encoder, "-preset", preset, "-crf", crf,
+                "-c:a", a_codec, "-b:a", a_bitrate,
+                "-f", fmt, 
+                "-movflags", movflags
             ])
         
         cmd.append("pipe:1")
 
+        perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
+        stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
+
         process = None
         try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024*1024)
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf)
             # Log stderr in background
             def log_stderr(p):
                 for line in p.stderr:
@@ -4350,6 +4400,18 @@ def video_remux_stream(item_id):
 
         log.info(f" [Remux] Starting live Pipe-Kit (Audio:{audio_idx}, Subs:{subs_idx}) for: {file_path}")
 
+        # Register active stream for stats (SSOT v1.35.94)
+        if "GLOBAL_ACTIVE_STREAMS" in globals():
+            GLOBAL_ACTIVE_STREAMS["remux_pipe"] = {
+                "ts": time.time(),
+                "codec": "Lossless Remux (Copy)",
+                "bitrate": "Direct Stream",
+                "engine": "Pipe-Kit (mkvmerge + ffmpeg)",
+                "rtt": 2, # Ultra-low latency for remux
+                "atmos": "mp4-remux" in str(file_path).lower(),
+                "bitstream": True
+            }
+
         mkvmerge_path = shutil.which('mkvmerge') or 'mkvmerge'
         ffmpeg_path = shutil.which('ffmpeg') or 'ffmpeg'
 
@@ -4374,37 +4436,42 @@ def video_remux_stream(item_id):
                 if subs_idx is not None and str(subs_idx).lower() != 'none':
                     map_args += ["-map", f"0:s:{subs_idx}"]
 
+                perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
+                stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
+                mkv_buf = perf_cfg.get("mkvmerge_bufsize", 1024 * 1024)
+
                 if is_mkvtoolnix_available() and float(start_time) == 0 and audio_idx == '0' and not subs_idx:
                     # Lossless remux via mkvmerge for start (best compatibility)
                     mkv_proc = subprocess.Popen(
                         [mkvmerge_path, "-o", "-", str(file_path)],
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024 * 1024
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=mkv_buf
                     )
                     log_process_stderr(mkv_proc, "MKVMerge-Pipe")
 
+                    lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
+                    lossless_flags = lossless_cfg.get("flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
+
                     ffmpeg_cmd = [
-                        ffmpeg_path, "-loglevel", "error", "-i", "pipe:0",
-                        "-c", "copy", "-f", "mp4",
-                        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-                        "-"
-                    ]
+                        ffmpeg_path, "-loglevel", "error", "-i", "pipe:0"
+                    ] + lossless_flags + ["-"]
+
                     ffmpeg_proc = subprocess.Popen(
-                        ffmpeg_cmd, stdin=mkv_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024 * 1024
+                        ffmpeg_cmd, stdin=mkv_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf
                     )
                     log_process_stderr(ffmpeg_proc, "FFmpeg-Frag")
                 else:
                     # Use FFmpeg for seeking/mapping remux (more reliable for mid-stream offsets/tracks)
+                    lossless_cfg = GLOBAL_CONFIG.get("transcoding_profiles", {}).get("lossless_remux", {})
+                    lossless_flags = lossless_cfg.get("flags", ["-c", "copy", "-f", "mp4", "-movflags", "frag_keyframe+empty_moov+default_base_moof"])
+
                     ffmpeg_cmd = [
                         ffmpeg_path, "-loglevel", "error"
                     ] + ss_args + [
                         "-i", str(file_path)
-                    ] + map_args + [
-                        "-c", "copy", "-f", "mp4",
-                        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-                        "-"
-                    ]
+                    ] + map_args + lossless_flags + ["-"]
+
                     ffmpeg_proc = subprocess.Popen(
-                        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1024 * 1024
+                        ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=stream_buf
                     )
                     log_process_stderr(ffmpeg_proc, "FFmpeg-Remux-SS")
 
@@ -4550,12 +4617,27 @@ def start_vlc_guarded(file_path: str, mode: str, prefix: str = "", source: str =
             shutil.rmtree(hls_dir)
         os.makedirs(hls_dir, exist_ok=True)
 
-        index_file = os.path.join(hls_dir, "stream.m3u8")
-        # VLC HLS sout chain
-        # Note: index-url is relative to the playlist file for best compatibility
+        # Content-Aware Profile Selection (SSOT v1.35.95)
+        # Check if we are dealing with PAL DVD/ISO vs. HD content
+        is_dvd = any([
+            str(file_path).lower().endswith('.iso'),
+            os.path.exists(os.path.join(file_path, "VIDEO_TS"))
+        ])
+        
+        profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
+        if is_dvd:
+            p = profiles.get("vlc_hls_profile_pal", {})
+            log.info(f"[VLC-HLS] Applying PAL DVD optimized profile (vb={p.get('v_bitrate')}k)")
+        else:
+            p = profiles.get("vlc_hls_profile_hd", {})
+            log.info(f"[VLC-HLS] Applying HD optimized profile (vb={p.get('v_bitrate')}k)")
+
+        # VLC HLS sout chain (Linked to SSOT)
         sout = (
-            "#transcode{vcodec=h264,vb=3000,acodec=aac,ab=128,channels=2,samplerate=44100}:"
-            "std{access=livehttp{seglen=5,deldone=1,numseg=10,"
+            f"#transcode{{vcodec={p.get('vcodec')},vb={p.get('v_bitrate')},"
+            f"acodec={p.get('acodec')},ab={p.get('a_bitrate')},"
+            f"channels={p.get('channels')},samplerate={p.get('samplerate')}}}:"
+            f"std{{access=livehttp{{seglen={p.get('seglen')},deldone=1,numseg={p.get('numseg')},"
             f"index={index_file},index-url=vlc-hls-segment-########.ts}},"
             f"mux=ts,dst={hls_dir}/vlc-hls-segment-########.ts}}"
         )
@@ -4903,9 +4985,9 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     db_item = db.get_media_by_path(str(file_path))
     category = db_item.get('category', '') if db_item else ''
 
-    if is_dvd or is_disc_img or category in ('Film', 'Abbild'):
+    if is_dvd or is_disc_img or category in ('multimedia', 'disk_images', 'Film', 'Abbild'):
         log.info(
-            f"DEBUG: [Player-Trace] DVD/Film/DiscImg detected in smart router (Category: {category}). Forcing VLC Embedded.")
+            f"DEBUG: [Player-Trace] DVD/Multimedia/DiskImg detected in smart router (Category: {category}). Forcing VLC Embedded.")
         return open_video(file_path, "vlc", "vlc_embedded", source="smart_router_dvd_film")
 
     return open_video(file_path, "auto", mode, source="smart_router_auto")
@@ -6884,7 +6966,7 @@ def read_file(filename, context='logbuch'):
     """
     try:
         if context == 'logbuch':
-            base_path = PROJECT_ROOT / "logbuch"
+            base_path = GLOBAL_CONFIG["storage_registry"]["log_dir"]
         else:
             # For security, only allow logbuch for now
             return None
@@ -7080,7 +7162,7 @@ def run_tests(test_files):
 
         output_lines = []
         start_time = time.time()
-        timeout_seconds = 900
+        timeout_seconds = GLOBAL_CONFIG["perf_settings"].get("task_timeout", 900)
 
         while True:
             if process.stdout is None:
@@ -7138,7 +7220,7 @@ def run_tests(test_files):
 
         # Persist results
         try:
-            results_path = PROJECT_ROOT / "test_results.json"
+            results_path = GLOBAL_CONFIG["storage_registry"]["test_results_path"]
             history = []
             if results_path.exists():
                 try:
@@ -7294,8 +7376,8 @@ def mkv_batch_extract(files, track_type="subtitles"):
     log.info(f"[MKV] Batch extracting {track_type} from {len(files)} files")
     results = []
 
-    # Get cache dir
-    cache_dir = PROJECT_ROOT / "cache" / "extracted"
+    # Get cache dir (Merged SSOT v1.35.96)
+    cache_dir = GLOBAL_CONFIG["storage_registry"]["mkv_cache_dir"]
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     for fpath in files:
@@ -7782,7 +7864,7 @@ def batch_remux_to_mkv(folder_path):
 def save_benchmark_results(results):
     """Saves playback benchmarks for the reporting dashboard."""
     try:
-        bench_file = PROJECT_ROOT / "benchmarks.json"
+        bench_file = GLOBAL_CONFIG["storage_registry"]["benchmark_path"]
         history = []
         if bench_file.exists():
             history = json.loads(bench_file.read_text(encoding='utf-8'))
@@ -7997,12 +8079,12 @@ def get_routing_suite_report():
                 dist['81-100'] += 1
 
             # Determine Recommended Mode
-            ext = item.get('extension', '').lower()
+            from src.core.models import DISK_IMAGE_EXTENSIONS
             is_direct = is_direct_play_capable(path, 'browser')
 
             if is_direct:
                 mode = 'direct'
-            elif ext in ('.iso', '.bin', '.img') or item.get('is_disc'):
+            elif ext in DISK_IMAGE_EXTENSIONS or item.get('is_disc'):
                 mode = 'transcode'
             elif 'mpeg' in str(tags.get('codec', '')).lower() or 'vc1' in str(tags.get('codec', '')).lower():
                 mode = 'transcode'
@@ -8047,64 +8129,8 @@ def get_routing_suite_report():
 
 @eel.expose
 def get_streaming_capability_matrix():
-    return [
-        {
-            "engine": "Chrome Native",
-            "modes": ["Integrated", "Direct"],
-            "formats": ["MP4", "WebM", "OGG"],
-            "codecs": ["H.264", "VP8", "VP9", "AV1"],
-            "features": ["HW Accel", "Low Latency", "Browser Native"],
-            "notes": "Best for web-compatible MP4 files. Zero transcoding required."
-        },
-        {
-            "engine": "MediaMTX (mmts)",
-            "modes": ["HLS", "WebRTC", "RTSP"],
-            "formats": ["MP4", "MKV (via FFmpeg)"],
-            "codecs": ["H.264", "AAC"],
-            "features": ["Multi-device", "Zero client install", "HTTP Streaming"],
-            "notes": "Ideal for streaming to multiple devices over network via FFmpeg remux."
-        },
-        {
-            "engine": "VLC (Universal)",
-            "modes": ["External", "VLC.js"],
-            "formats": ["ISO", "BIN", "IMG", "MKV", "AVI", "DVD", "VIDEO_TS"],
-            "codecs": ["All (H.265, AC3, DTS, etc.)"],
-            "features": ["DVD Menus", "Subtitles", "Post-processing"],
-            "notes": "Universal player for all file types including disc images and legacy formats."
-        },
-        {
-            "engine": "mkvmerge",
-            "modes": ["Remux", "Batch"],
-            "formats": ["MKV (Output)", "All (Input)"],
-            "codecs": ["Container Shift"],
-            "features": ["Sub-track preservation", "Fast remux", "ISO to MKV"],
-            "notes": "Used for converting incompatible containers into streamable MKV/MP4."
-        },
-        {
-            "engine": "ffplay",
-            "modes": ["CLI Preview"],
-            "formats": ["All"],
-            "codecs": ["All (FFmpeg-based)"],
-            "features": ["Low latency", "Raw decoding", "Debug view"],
-            "notes": "Technical fallback for quick local playback verification."
-        },
-        {
-            "engine": "swyh-rs (suw)",
-            "modes": ["Audio HTTP", "DLNA"],
-            "formats": ["WAV", "FLAC", "LPCM"],
-            "codecs": ["Lossless PCM"],
-            "features": ["System Audio Capture", "Network Audio"],
-            "notes": "Specialized for lossless audio streaming to network devices (Stream What You Hear)."
-        },
-        {
-            "engine": "PyPlayer (Integrated)",
-            "modes": ["Direct Python"],
-            "formats": ["All (FFmpeg compatible)"],
-            "codecs": ["All"],
-            "features": ["Zero external dependencies", "Native control"],
-            "notes": "Built-in Python-based media engine for fallback and simple playback."
-        }
-    ]
+    """Returns the centralized streaming capability matrix (v1.35.68)."""
+    return GLOBAL_CONFIG.get("streaming_capabilities", {})
 
 
 @eel.expose
@@ -8123,12 +8149,16 @@ def get_media_compatibility_report():
             ext = item.get('extension', '').lower()
 
             is_chrome = is_chrome_native(ext, codec)
-            is_mtx = ext in ['.mp4', '.mkv', '.avi', '.mov', '.ts']  # FFmpeg can remux these
+            
+            player_cfg = GLOBAL_CONFIG.get("player_settings", {})
+            v_exts = player_cfg.get("video_extensions", [".mp4", ".mkv", ".avi", ".mov", ".ts"])
+            is_mtx = ext in v_exts # FFmpeg can remux these
             is_vlc = True  # VLC plays everything
             is_ffplay = True  # FFmpeg plays everything
 
             # Specialized check for disc images
-            is_disc = ext in ['.iso', '.bin', '.img'] or item.get('category') == 'Abbild'
+            from src.core.models import DISK_IMAGE_EXTENSIONS
+            is_disc = ext in DISK_IMAGE_EXTENSIONS or item.get('category') == 'disk_images'
             if is_disc:
                 is_chrome = False
                 is_mtx = False  # MTX doesn't native stream ISOs usually without complex piping

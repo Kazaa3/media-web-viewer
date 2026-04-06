@@ -166,7 +166,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     """
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
-    from .format_utils import ALL_AUDIO_EXTENSIONS
+    from src.core.models import ALL_AUDIO_EXTENSIONS
     
     if file_type in ALL_AUDIO_EXTENSIONS:
         return extract_metadata_audio(path, filename, mode, **kwargs)
@@ -197,7 +197,7 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
 
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
-    from .format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
+    from src.parsers.format_utils import PARSER_CONFIG, format_bitdepth, format_codec, format_container, format_tagtype
 
     tags: dict[str, Any] = {
         'duration': '', 'bitrate': '', 'samplerate': '', 'bitdepth': '',
@@ -249,7 +249,8 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         if step:
             active_steps.append(step)
 
-    from .format_utils import PARSER_CONFIG, SLOW_PARSERS
+    from src.parsers.format_utils import PARSER_CONFIG
+    from src.core.models import SLOW_PARSERS
 
     error_shortcircuit = False
     

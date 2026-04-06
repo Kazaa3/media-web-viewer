@@ -55,7 +55,7 @@ from pathlib import Path
 from typing import List, Optional, Any
 
 # 56. Environment Integration (v1.35.68 Centralized)
-from src.core.config_master import GLOBAL_CONFIG
+from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, APP_DATA_DIR
 
 REGISTRY = GLOBAL_CONFIG.get("logging_registry", {})
 LOCAL_LOG_DIR = Path(REGISTRY.get("log_root", str(PROJECT_ROOT / "logs")))
@@ -114,21 +114,21 @@ def log_system_diagnostics():
     import eel
     from datetime import datetime
     
-    # Identify environment target (from venv path)
+    # Identify environment target (from venv path) (SSOT v1.35.92)
     venv_path = sys.prefix
     target = "unknown"
-    if ".venv_run" in venv_path or ".venv_core" in venv_path:
-        target = "core"
-    elif ".venv_dev" in venv_path:
-        target = "dev"
-    elif ".venv" == os.path.basename(venv_path):
-        target = "full"
-    elif ".venv_test" in venv_path:
-        target = "test"
-    elif ".venv_selenium" in venv_path:
-        target = "selenium"
-    elif ".venv_build" in venv_path:
-        target = "build"
+    mapping = REGISTRY.get("venv_mapping", {})
+    
+    # Check for direct folder name match (e.g. .venv)
+    folder_name = os.path.basename(venv_path)
+    if folder_name in mapping:
+        target = mapping[folder_name]
+    else:
+        # Fallback to substring matching for robustness
+        for key, val in mapping.items():
+            if key in venv_path:
+                target = val
+                break
 
     logging.debug("--- [SYSTEM DIAGNOSTICS] START ---")
     logging.debug(f"Timestamp: {datetime.utcnow().isoformat()}")
@@ -170,15 +170,15 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
         session_log_path = REGISTRY.get("session_log") or str(LOCAL_LOG_DIR / f"session_{session_id}.log")
         logging.info(f"Session-specific logging enabled: {session_log_path}")
 
-    # Format
-    # In debug mode, we include more technical details (file, line, thread)
-    force_debug = os.environ.get("MWV_DEBUG_FORCE") == "1"
+    # In debug mode, we include more technical details (file, line, thread, function)
+    force_debug = REGISTRY.get("debug_force", False)
     if debug_mode or force_debug:
-        format_str = '%(asctime)s [%(levelname).4s] [%(name)s] [%(threadName)s] [%(filename)s:%(lineno)d] %(message)s'
+        format_str = '%(asctime)s [%(levelname)s] [%(name)s] [%(threadName)s] [%(funcName)s] [%(filename)s:%(lineno)d] %(message)s'
     else:
-        format_str = '%(asctime)s [%(levelname).4s] [%(name)s] %(message)s'
+        format_str = '%(asctime)s [%(levelname)s] [%(name)s] %(message)s'
 
-    formatter = logging.Formatter(format_str, datefmt='%H:%M:%S')
+    date_fmt = REGISTRY.get("log_datefmt", "%H:%M:%S")
+    formatter = logging.Formatter(format_str, datefmt=date_fmt)
 
     # 1. Console Handler
     console_handler = logging.StreamHandler()
@@ -187,8 +187,10 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
 
     # 2. Rotating File Handler (User Data)
     try:
+        max_bytes = REGISTRY.get("max_size_mb", 10) * 1024 * 1024
+        backup_count = REGISTRY.get("backup_count", 3)
         file_handler = logging.handlers.RotatingFileHandler(
-            LOG_FILE, maxBytes=5*1024*1024, backupCount=3, encoding='utf-8'
+            LOG_FILE, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
         )
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
@@ -209,8 +211,10 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
     if debug_mode:
         try:
             DEBUG_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            d_max_bytes = REGISTRY.get("debug_max_size_mb", 10) * 1024 * 1024
+            d_backup_count = REGISTRY.get("debug_backup_count", 1)
             debug_file_handler = logging.handlers.RotatingFileHandler(
-                DEBUG_LOG_FILE, maxBytes=10*1024*1024, backupCount=1, encoding='utf-8'
+                DEBUG_LOG_FILE, maxBytes=d_max_bytes, backupCount=d_backup_count, encoding='utf-8'
             )
             debug_file_handler.setFormatter(formatter)
             root_logger.addHandler(debug_file_handler)
@@ -289,11 +293,13 @@ def progress_update(task: str, percent: int, status: str = "active"):
             pass
 
 @contextlib.contextmanager
-def stall_watchdog(task_name: str, threshold: float = 2.0):
+def stall_watchdog(task_name: str, threshold: float = None):
     """
     Context manager to monitor for stalls in backend functions.
     Logs start, duration, and warnings if threshold is exceeded.
     """
+    if threshold is None:
+        threshold = REGISTRY.get("watchdog_threshold", 2.0)
     start_time = time.time()
     logging.info(f"[WATCHDOG] START: {task_name}")
     progress_update(task_name, 0, "active")
