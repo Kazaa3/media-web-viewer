@@ -40,12 +40,17 @@ def get_env_list(name: str, default: list) -> list:
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 GLOBAL_CONFIG: Dict[str, Any] = {
     # System & Paths
+    # System & Ports
     "port": int(os.environ.get("MWV_PORT", 8345)),
+    "vlc_port": int(os.environ.get("MWV_VLC_PORT", 8080)),
     "debug_mode": get_env_bool("MWV_DEBUG", True),
     "db_filename": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
     
     # UI & Performance
     "start_page": os.environ.get("MWV_START_PAGE", "player"),
+    "window_width": int(os.environ.get("MWV_WIDTH", 1550)),
+    "window_height": int(os.environ.get("MWV_HEIGHT", 800)),
+    "boot_watchdog_max_ticks": int(os.environ.get("MWV_WATCHDOG_TICKS", 12)),
     "app_mode": os.environ.get("MWV_APP_MODE", "High-Performance"),
     "bandwidth_mode": os.environ.get("MWV_BANDWIDTH", "high"), # low, high
     "vlc_embedded": get_env_bool("MWV_VLC_EMBEDDED", True),
@@ -82,7 +87,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     ],
     "mutagen_prefer_albumartist": True,
     "ffmpeg_deep_analysis": False,
-    "browser_flags": ["--no-sandbox", "--disable-gpu", "--window-size=1550,800"],
+    "browser_flags": [
+        "--no-sandbox", 
+        "--disable-gpu", 
+        f"--window-size={int(os.environ.get('MWV_WIDTH', 1550))},{int(os.environ.get('MWV_HEIGHT', 800))}"
+    ],
     
     # Storage & Paths
     "library_dir": os.environ.get("MWV_LIB_DIR", str(PROJECT_ROOT / "media")),
@@ -103,6 +112,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "vlc": {"timeout": 5},
         "mutagen": {"prefer_albumartist": True},
         "mkvinfo": {"timeout": 10}
+    },
+    
+    # Wait & Sleep Intervals (Centralized v1.35.68)
+    "sleep_times": {
+        "ui_settle": float(os.environ.get("MWV_SLEEP_UI_SETTLE", 2.0)),
+        "boot_probe_wait": float(os.environ.get("MWV_SLEEP_BOOT_PROBE", 5.0)),
+        "keepalive": float(os.environ.get("MWV_SLEEP_KEEPALIVE", 1.0)),
+        "watchdog_tick": float(os.environ.get("MWV_SLEEP_WATCHDOG", 0.5)),
+        "retry_delay": float(os.environ.get("MWV_SLEEP_RETRY", 0.5)),
+        "poll_fast": float(os.environ.get("MWV_SLEEP_POLL_FAST", 0.1))
     }
 }
 

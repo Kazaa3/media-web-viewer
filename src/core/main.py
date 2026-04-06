@@ -380,7 +380,7 @@ def start_app():
         if "--probe" in sys.argv:
             def probe_trigger():
                 spawn_event.wait()
-                time.sleep(5) # Wait for UI to settle
+                time.sleep(GLOBAL_CONFIG['sleep_times']['boot_probe_wait']) 
                 log.info("[Eel] Triggering automated frontend probe (@eel.run_frontend_probe)")
                 eel.run_frontend_probe()()
             threading.Thread(target=probe_trigger, daemon=True).start()
@@ -8371,7 +8371,7 @@ if __name__ == "__main__":
     log.info("[Main] Entering keepalive loop.")
     while True:
         try:
-            eel.sleep(1.0)
+            eel.sleep(GLOBAL_CONFIG['sleep_times']['keepalive'])
         except KeyboardInterrupt:
             log.info("[Shutdown] KeyboardInterrupt received. Exiting.")
             sys.exit(0)

@@ -1,8 +1,18 @@
 # Media Web Viewer - Full / Ultimate Bundle (Core + Test + Dev + Build)
-# Install this to get the complete environment in one step.
-
+# v1.35.68 - Consolidated Source of Truth
 -r requirements-core.txt
 -r requirements-test.txt
 -r requirements-dev.txt
 -r requirements-build.txt
 -r requirements-selenium.txt
+# End of Ultimate Bundle
+
+#- `[x]` 3. Build Centralization (`build`, `config`)
+    - `[x]` Create `src/core/build_config.py` (Version, Meta)
+    - `[x]` Refactor `infra/build_deb.sh` to use `build_config.py`
+- `[/]` 4. Startup & Bootstrap Hardening (`startup`, `pids`, `sleep`)
+    - `[x]` Update `run.sh` to check for `python-dotenv`
+    - `[x]` Update `src/core/config_master.py` with `sleep_times`
+    - `[/]` Refactor `main.py` and `app_core.js` to use `sleep_times`
+    - `[x]` Update `main.py` to log environment source and PID status
+- `[ ]` 5. Verification

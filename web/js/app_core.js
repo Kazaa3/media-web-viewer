@@ -8,6 +8,7 @@ function startBootWatchdog() {
     if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'START', { ts: Date.now() });
     __mwv_boot_watchdog_status = 'STARTED';
     __mwv_boot_watchdog_ticks = 0;
+    const tickInterval = window.CONFIG?.sleep_times?.watchdog_tick * 1000 || 500;
     __mwv_boot_watchdog_timer = setInterval(() => {
         try {
             __mwv_boot_watchdog_ticks++;
@@ -22,7 +23,8 @@ function startBootWatchdog() {
 
             if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: libCount });
 
-            if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > 12) { // Allow more time for slow handshakes
+            const maxTicks = window.CONFIG?.boot_watchdog_max_ticks || 12;
+            if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > maxTicks) { 
                 if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
                 clearInterval(__mwv_boot_watchdog_timer);
                 __mwv_boot_watchdog_status = 'DONE';
@@ -30,7 +32,7 @@ function startBootWatchdog() {
         } catch (e) {
             console.error("[Watchdog] Diagnostic Crash:", e);
         }
-    }, 500);
+    }, tickInterval);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
