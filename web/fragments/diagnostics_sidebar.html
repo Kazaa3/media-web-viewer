@@ -43,11 +43,21 @@
                 </div>
             </div>
 
+            <!-- FORENSIC HYDRATION PARITY (v1.37.22) -->
+            <div id="diag-hydration-parity-matrix" style="background:rgba(0,0,0,0.3); border:1px solid rgba(0,255,153,0.1); border-radius:10px; padding:12px; margin-bottom:10px; display:none;">
+                <div style="font-size:9px; font-weight:900; color:#00ff99; margin-bottom:8px; opacity:0.6; letter-spacing:1px; text-align:center;">FOUR-STAGE PARITY MATRIX</div>
+                <div id="parity-matrix-content"></div>
+            </div>
+
             <!-- FORENSIC FLOW AUDITOR -->
             <div id="diag-logic-audit-viewport" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:10px;">
                 <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Hydration-Audit...</div>
             </div>
-            <button onclick="runHydrationAuditProbe()" style="width:100%; height:30px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); color:#fff; font-size:9px; font-weight:900; border-radius:8px; cursor:pointer; opacity:0.6; transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">PROBE HYDRATION FLOW</button>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <button onclick="runHydrationAuditProbe()" style="height:34px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); color:#fff; font-size:9px; font-weight:900; border-radius:8px; cursor:pointer; opacity:0.6; transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">PROBE FLOW</button>
+                <button onclick="runHydrationParityAudit()" style="height:34px; background:rgba(0,255,153,0.05); border:1px solid rgba(0,255,153,0.1); color:#00ff99; font-size:9px; font-weight:900; border-radius:8px; cursor:pointer; opacity:0.6; transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6" title="Execute Deep Pipeline Parity Check">SCAN PARITY</button>
+            </div>
         </div>
 
         <div id="diag-pane-item-track" class="diag-pane" style="display: none;">
@@ -113,6 +123,7 @@
                 .f-filter-btn:hover:not(.active) { background: rgba(255,255,255,0.03); }
             </style>
             <div id="debug-console-output" style="background: #000; color: #00ff41; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; border-radius: 8px; height: 400px; overflow-y: auto; border: 1px solid #222;"></div>
+            <div id="debug-log-counter" style="font-size: 8px; opacity: 0.3; margin-top: 6px; text-align: right; font-family: 'JetBrains Mono', monospace;">Forensic View: 0 / 0</div>
         </div>
 
         <!-- NEW: Video Health Forensic Pane (v1.37.13) -->

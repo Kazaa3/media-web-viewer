@@ -856,6 +856,39 @@ def sync_library_atomic():
 
 
 @eel.expose
+def get_hydration_stats():
+    """
+    Forensic Hydration Sync (v1.37.22): Returns raw counts for DB Index vs Backend Cache.
+    """
+    from src.core import db
+    import sqlite3
+    
+    results = {
+        "db_index": 0,
+        "backend_cache": 0,
+        "status": "ok"
+    }
+    
+    try:
+        # 1. RAW SQLite Count
+        conn = sqlite3.connect(db.DB_FILENAME)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM media")
+        results["db_index"] = cursor.fetchone()[0]
+        conn.close()
+        
+        # 2. Backend Memory Cache Count
+        # We access the module-level library to see what's loaded
+        items = db.get_library()
+        results["backend_cache"] = len(items)
+        
+        return results
+    except Exception as e:
+        log.error(f"[Forensic-HYD] Parity fetch failed: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@eel.expose
 def check_database_resilience():
     """
     Performs forensic library resilience audit:

@@ -655,4 +655,78 @@ window.bridgeToItemJSON = bridgeToItemJSON;
 window.triggerMasterScan = triggerMasterScan;
 window.triggerMasterSync = triggerMasterSync;
 window.triggerNuclearRecovery = triggerNuclearRecovery;
+async function runHydrationParityAudit() {
+    const container = document.getElementById('diag-hydration-parity-matrix');
+    const content = document.getElementById('parity-matrix-content');
+    if (!container || !content) return;
+
+    container.style.display = 'block';
+    content.innerHTML = '<div style="font-size:9px; opacity:0.6; text-align:center; padding:10px;">Querying Full-Stack Parity...</div>';
+    sentinelPulse('AUDIT', 'Executing Four-Stage Hydration Parity Scan...');
+
+    try {
+        // 1. Backend Probe (DB & Cache)
+        const backend = await eel.get_hydration_stats()();
+        
+        // 2. Frontend Memory Probe
+        const frontend_count = (window.allLibraryItems || []).length;
+        
+        // 3. Browser DOM Probe
+        const dom_count = document.querySelectorAll('.grid-item').length;
+
+        const stages = [
+            { id: 'DB', name: 'SQL INDEX', count: backend.db_index || 0, icon: '🗄️' },
+            { id: 'CACHE', name: 'B-CACHE', count: backend.backend_cache || 0, icon: '⚙️' },
+            { id: 'MEM', name: 'FE-MEM', count: frontend_count, icon: '🧠' },
+            { id: 'DOM', name: 'VIEWPORT', count: dom_count, icon: '🖥️' }
+        ];
+
+        let html = '<div style="display:flex; flex-direction:column; gap:4px;">';
+        
+        stages.forEach((s, idx) => {
+            const prevCount = idx > 0 ? stages[idx-1].count : s.count;
+            const isLoss = s.count < prevCount;
+            const statusColor = isLoss ? '#ff3366' : '#00ff99';
+            const diff = s.count - prevCount;
+
+            html += `
+                <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; border:1px solid ${isLoss ? 'rgba(255,51,102,0.2)' : 'rgba(255,255,255,0.05)'};">
+                    <span style="font-size:12px; filter:${isLoss ? 'none' : 'grayscale(1) opacity(0.5)'};">${s.icon}</span>
+                    <div style="flex:1; display:flex; flex-direction:column;">
+                        <span style="font-size:7px; opacity:0.4; font-weight:900; letter-spacing:0.5px;">${s.name}</span>
+                        <span style="font-size:11px; font-weight:900; font-family:'JetBrains Mono', monospace; color:${statusColor};">${s.count} Items</span>
+                    </div>
+                    ${isLoss ? `<span style="font-size:8px; font-weight:900; color:#ff3366; background:rgba(255,51,102,0.1); padding:2px 4px; border-radius:3px;">DROP: ${diff}</span>` : ''}
+                </div>
+            `;
+        });
+
+        html += '</div>';
+
+        // Summary Alert
+        if (dom_count < backend.db_index) {
+            html += `
+                <div style="margin-top:10px; padding:8px; background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.2); border-radius:6px; font-size:9px; color:#e74c3c; line-height:1.3; font-weight:700;">
+                    ⚠️ DISCREPANCY DETECTED: Pipeline loss of ${backend.db_index - dom_count} items. 
+                    Check filters or execution logs.
+                </div>
+            `;
+        } else {
+            html += `
+                <div style="margin-top:10px; padding:8px; background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.2); border-radius:6px; font-size:9px; color:#2ecc71; text-align:center; font-weight:900;">
+                    ✓ DATA PIPELINE 100% PARITY
+                </div>
+            `;
+        }
+
+        content.innerHTML = html;
+        sentinelPulse('SUCCESS', `Parity Audit Complete. DOM: ${dom_count} / DB: ${backend.db_index}`);
+
+    } catch (e) {
+        content.innerHTML = `<div style="color:#ff3366; font-size:10px; padding:10px;">Audit Bridge Fault: ${e.message}</div>`;
+        sentinelPulse('ERROR', `Parity Audit Failed: ${e.message}`);
+    }
+}
+
+window.runHydrationParityAudit = runHydrationParityAudit;
 window.runHydrationAuditProbe = runHydrationAuditProbe;
