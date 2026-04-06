@@ -148,10 +148,13 @@ def get_tech_markers():
 def get_startup_info():
     """Returns the time the backend took to boot and total duration up to this call."""
     import time
-    boot_duration = time.time() - getattr(sys.modules[__name__], 'APP_START_TIME', time.time())
+    boot_duration = time.now() - INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else 0
     return {
         "boot_duration_sec": round(boot_duration, 2),
-        "pid": os.getpid()
+        "pid": os.getpid(),
+        "start_time": INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else time.time(),
+        "env": "diagnostic-lab",
+        "version": "1.35.68-STABLE hardcoded!"
     }
 
 @eel.expose
@@ -2099,7 +2102,7 @@ def get_debug_stats():
         "pid": os.getpid(),
         "total_items": total,
         "categories": categories,
-        "version": VERSION
+        "status": "healthy"
     }
 
 @eel.expose
@@ -4097,26 +4100,7 @@ def get_library_forensics():
         "pid": os.getpid()
     }
 
-@eel.expose
-def get_debug_stats():
-    """Returns essential diagnostic numbers for UI pills."""
-    from src.core import db
-    db_items = db.get_library() or []
-    return {
-        "total_items": len(db_items),
-        "pid": os.getpid(),
-        "status": "healthy"
-    }
 
-@eel.expose
-def get_startup_info():
-    """Returns uptime and env data for 7-point HUD."""
-    return {
-        "pid": os.getpid(),
-        "start_time": INITIAL_START_TIME,
-        "env": "diagnostic-lab",
-        "version": "1.35.68-STABLE"
-    }
 
 
 @eel.expose
