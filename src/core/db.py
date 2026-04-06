@@ -243,6 +243,15 @@ def init_db():
         except Exception as e:
             log.error(f"Migration error for column {col_name}: {e}")
 
+    # Migration: Rename categories to new SSOT standards (v1.35.75)
+    try:
+        cursor.execute("UPDATE media SET category = 'pictures' WHERE category = 'images'")
+        cursor.execute("UPDATE media SET category = 'disk_images' WHERE category = 'iso'")
+        conn.commit()
+        log.info("[DB] [MIGRATION-v1.35.75] Successfully renamed categories: images->pictures, iso->disk_images")
+    except Exception as e:
+        log.warning(f"[DB] [MIGRATION-v1.35.75] Renaming migration skipped or failed: {e}")
+
     _DB_INITIALIZED = True
     log.debug("Database initialization/migration complete.")
 

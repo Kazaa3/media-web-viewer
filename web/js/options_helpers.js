@@ -286,8 +286,8 @@ function safeInnerText(id, val) {
 
 // ─── Knwn constants ───────────────────────────────────────────────────────────
 const ALL_CATEGORIES = [
-    'audio', 'video', 'images', 'documents', 'ebooks',
-    'abbild', 'spiel', 'beigabe', 'supplements', 'games'
+    'audio', 'video', 'pictures', 'documents', 'ebooks',
+    'disk_images', 'spiel', 'beigabe', 'supplements', 'games'
 ];
 
 const ALL_PARSERS = [

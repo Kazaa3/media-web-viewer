@@ -140,7 +140,7 @@ async function renderLibrary() {
             if (i.is_mock) return true; // Keep mocks during diagnostics
             const cat = String(i.category || 'all').toLowerCase();
             // Special handling for images
-            if (libraryFilter === 'images' && (cat === 'multimedia' || cat === 'bilder')) return true;
+            if (libraryFilter === 'pictures' && (cat === 'multimedia' || cat === 'bilder' || cat === 'pictures')) return true;
             return allowedTypes.some(at => at.toLowerCase() === cat);
         });
     }
@@ -482,7 +482,7 @@ function renderDetailedView() {
             const ext = (item.path || '').split('.').pop().toLowerCase();
             if (typeFilter === 'audio') return ['mp3', 'flac', 'm4a', 'wav', 'ogg'].includes(ext);
             if (typeFilter === 'video') return ['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext);
-            if (typeFilter === 'iso') return ext === 'iso' || item.category === 'ISO';
+            if (typeFilter === 'disk_images') return ext === 'iso' || item.category === 'disk_images';
             return true;
         });
     }

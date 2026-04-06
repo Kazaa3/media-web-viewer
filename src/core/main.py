@@ -124,9 +124,9 @@ def shutdown_backend():
 
 @eel.expose
 def get_category_master():
-    """Returns the centralized category mapping (v1.35.68)."""
-    from src.core.config_master import GLOBAL_CONFIG
-    return GLOBAL_CONFIG["category_registry"]["master_map"]
+    """Returns the centralized category mapping (v1.35.76 SSOT)."""
+    from src.core.models import MASTER_CAT_MAP
+    return MASTER_CAT_MAP
 
 @eel.expose
 def get_global_config():
@@ -136,9 +136,9 @@ def get_global_config():
 
 @eel.expose
 def get_tech_markers():
-    """Returns the centralized transcoding tech markers (v1.35.68)."""
-    from src.core.config_master import GLOBAL_CONFIG
-    return GLOBAL_CONFIG.get("transcoding_settings", {})
+    """Returns the centralized transcoding tech markers (v1.35.76 SSOT)."""
+    from src.core.models import TECH_MARKERS
+    return TECH_MARKERS
 
 @eel.expose
 def get_startup_info():
@@ -269,7 +269,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
         from src.core.mode_router import smart_route
         from src.core import db
         from src.core.db import DB_FILENAME
-        from src.core.category_master import MASTER_CAT_MAP, TECH_MARKERS, audit_category_chain, get_allowed_internal_cats
+        from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, audit_category_chain, get_allowed_internal_cats
         from src.core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
         from src.core import hardware_detector
         from src.parsers import tag_writer

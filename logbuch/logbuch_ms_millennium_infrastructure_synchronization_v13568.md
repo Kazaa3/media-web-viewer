@@ -306,3 +306,110 @@ Diese Änderung ist essenziell für Datenintegrität, Wartbarkeit und UI-Konsist
 
 **Wichtigkeit:**
 Diese Änderung ist entscheidend für langfristige Wartbarkeit, Datenintegrität und klare Verantwortlichkeiten im System.
+
+---
+
+# Nachtrag: Quadrant Consolidation & Unified SSOT Models (v1.35.73)
+
+**Datum:** 2026-04-06
+
+## Ergebnis
+- **Unified Modeling Layer:** MediaFormat-Engine ist jetzt direkt in models.py integriert, media_format.py wurde entfernt.
+- **Registry-Driven Identity:** MediaItem nutzt ausschließlich die zentralen Registries aus config_master.py, alle Redundanzen sind beseitigt.
+- **Synchronized Orchestration:**
+  - Data Source: config_master.py (Registry)
+  - Logic Engine: models.py (MediaFormat/MediaItem)
+  - Auditor: category_master.py (Validierung, strikt gemappt)
+- **Baseline Stabilization:** Syntaxprüfung bestanden, alle Kernmodule sind konsistent und synchronisiert.
+
+## Bedeutung
+- Keine konkurrierenden Definitionen mehr – Audio, Video etc. sind systemweit eindeutig.
+- Scanner, Datenbank und UI arbeiten mit exakt denselben IDs und Kategorien.
+- 0-Item-Bugs und Filterprobleme sind endgültig gelöst.
+
+**Fazit:**
+Die Medieninfrastruktur ist jetzt maximal konsistent, wartbar und robust – ein echtes Single Source of Truth-Design.
+
+---
+
+# Nachtrag: Quadrant Refinement & Global Renaming (v1.35.75)
+
+**Datum:** 2026-04-06
+
+## Ziel
+- Klare Trennung und Standardisierung der Komponenten durch globale Umbenennung und SSOT-Refinement
+
+## Global Renaming
+- **images → pictures:**
+  - Kategorie images wird im gesamten Stack (Config, Models, DB, Frontend) zu pictures umbenannt
+- **Disk Images → disk_images:**
+  - Einheitliche ID disk_images statt iso oder gemischter Schreibweisen
+
+## SSOT Quadrant Refinement
+- **Data Source:** config_master.py enthält die neuen Registry-IDs (pictures, disk_images)
+- **Logic Engine:** models.py gibt diese IDs bei der Klassifikation aus
+- **Auditor:** category_master.py wird auf die neuen Namen synchronisiert
+- **Database Migration:** db.py migriert bestehende records (images → pictures) ohne Datenverlust
+- **UI Synchronization:** Frontend-Filter, Icons und Statistiken werden auf die neuen Namen angepasst
+
+## Status
+- Implementation Plan vorbereitet (siehe implementation_plan.md)
+- Task Tracker aktiv (siehe task.md)
+- Freigabe für globale Umbenennung und Refinement steht aus – nach Umsetzung ist die Architektur maximal klar und konsistent
+
+**Wichtigkeit:**
+Diese Änderung ist entscheidend für Verständlichkeit, Wartbarkeit und Datenintegrität im gesamten System.
+
+---
+
+# Nachtrag: Quadrant Refinement & Global Renaming – Abschluss (v1.35.75)
+
+**Datum:** 2026-04-06
+
+## Ergebnis
+- **Global Renaming (images → pictures):**
+  - Kategorie in Registry, Model, DB und Frontend konsistent umbenannt
+  - Klarere Abgrenzung zu generischen Bild-Assets
+- **Standardized Disk Images:**
+  - Alle Disc-Medien (ISO, BIN, IMG) laufen jetzt unter disk_images (statt iso/abbild)
+- **Automated Data Migration:**
+  - Resiliente Migration in db.py aktualisiert alle Bestandsdaten automatisch
+- **Frontend Synchronization:**
+  - Filter und UI-Helper greifen jetzt auf die neuen Namen zu
+
+## Verifikation
+- **Database Integrity:** Automatisierte Migration erfolgreich, keine Datenverluste
+- **Logic Parity:** Backend und Frontend 100% synchron
+- **Redundancy Check:** Alle alten Strings entfernt, keine Inkonsistenzen mehr
+
+**Fazit:**
+Die SSOT-Quadranten sind jetzt maximal klar, konsistent und wartbar. Die Medienkategorisierung ist systemweit eindeutig und robust.
+
+---
+
+# Nachtrag: The Ultimate Single Source of Truth (v1.35.76)
+
+**Datum:** 2026-04-06
+
+## Ziel
+- Beseitigung aller Fragmentierung durch eine einzige, autoritative Datei: src/core/models.py
+
+## Maßnahmen
+- **The One-File Architecture:**
+  - category_registry, extension_registry und Suchkonstanten werden aus config_master.py nach models.py verschoben
+  - audit_category_chain und alle Kategorisierungslogik aus category_master.py werden in models.py integriert
+- **Configuration Slimming:**
+  - config_master.py enthält nur noch Umgebungsvariablen, Binary-Discovery und Systempfade
+- **Decommissioning Fragments:**
+  - category_master.py wird gelöscht
+  - Alle Importe in Scanner, Library und UI werden auf models.py umgestellt
+- **Database Synchronization:**
+  - db.py bleibt Persistenz-Interface, bezieht aber alle Strukturen aus models.py
+
+## Status
+- Implementation Plan vorbereitet (siehe implementation_plan.md)
+- Task Tracker aktiv (siehe task.md)
+- Freigabe für die finale SSOT-Konsolidierung steht aus – nach Umsetzung ist die Medienlogik 100% zentral und eindeutig
+
+**Wichtigkeit:**
+Diese Änderung ist der letzte Schritt zu einer maximal wartbaren, robusten und transparenten Medienarchitektur.

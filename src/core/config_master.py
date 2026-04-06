@@ -365,61 +365,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
     
-    # --- CATEGORY & ROUTING REGISTRY (v1.35.68 Centralized) ---
-    "category_registry": {
-        "master_map": {
-            "audio": [
-                "audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", 
-                "musik", "compilation", "single", "radio", "soundtrack", "playlist", 
-                "music", "song"
-            ],
-            "multimedia": [
-                "multimedia", "video", "film", "serie", "tv", "movie", "tv show", 
-                "musikvideos", "animes", "cartoons", "video object", "animations", 
-                "documentary", "dok", "dokumentation", "concert", "konzerte",
-                "iso", "disk-abbild", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd", 
-                "3d", "4k", "uhd", "ultra hd", "bdmv"
-            ],
-            "images": ["bilder", "grafik", "bild", "foto", "images", "gallery"],
-            "documents": ["dokument", "pdf", "text", "doc", "docx", "txt", "office"],
-            "ebooks": ["e-book", "ebook", "epub", "mobi"],
-            "abbild": [
-                "abbild", "iso/image", "disk image", "pal dvd", "ntsc dvd", "blu-ray", 
-                "disk-abbild", "dvd object", "3d", "4k", "uhd", "bdmv"
-            ],
-            "spiel": ["spiel", "game", "pc spiel", "digitales spiel", "steam"],
-            "beigabe": ["beigabe", "supplement", "software", "additional"],
-            "transcoded": [],
-            "iso": [
-                "abbild", "disk-abbild", "iso", "dvd ntsc", "dvd pal", 
-                "pal dvd", "ntsc dvd", "blu-ray", "3d", "4k", "uhd"
-            ],
-            "hörspiel": ["hörspiel", "radio drama", "audio drama"],
-            "hörbuch": ["hörbuch", "audiobook", "audio book"]
-        },
-        "media_classes": {
-            "audio_native": "audio",
-            "audio_transcoded": "audio_transcoded",
-            "audiobook": "hörbuch",
-            "video_native": "multimedia_native",
-            "video_3d": "multimedia_3d",
-            "video_4k": "multimedia_4k",
-            "video_hd_transcoded": "multimedia_transcoded_hd",
-            "mkv_pal_ntsc_transcoded": "multimedia_mkv_legacy_transcoded"
-        },
-        "tech_markers": {
-            "transcoded": ["_transcoded", ".mp4_transcoded"],
-            "iso": [".iso", ".bin", ".cue", ".nrg"],
-            "mock": ["is_mock"],
-            "stage": ["stage", "recovery", "is_stage"]
-        },
-        "branch_map": {
-            "audio": ["audio"],
-            "multimedia": ["multimedia", "abbild", "video"]
-        }
-    },
-    
-    # --- PLAYBACK & ENGINE REGISTRY (v1.35.68 Centralized) ---
+    # --- PLAYBACK & ENGINE SETISTRY (v1.35.68 Centralized) ---
     "playback_registry": {
         "modes": ["direct", "transcode", "hls", "vlc", "mpv", "shuttle", "spotify", "hls_mp4frag"],
         "default_video_mode": "hls",
@@ -427,22 +373,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "hls_segment_type": "fmp4", # mpegts, fmp4
         "force_native_on": [".mp3", ".mp4", ".m4a", ".wav"],
         "streaming_engines": ["ffmpeg", "vlc", "mediamtx", "swyh-rs", "pyvidplayer2"],
-        "hls_mp4frag_enabled": True
-    },
-    
-    # --- EXTENSION & PARSER REGISTRY (v1.35.68 Centralized) ---
-    "extension_registry": {
-        "audio": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".dts", ".dtshd", ".pcm", ".ra", ".rm"},
-        "video": {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2", ".ogv", ".mts", ".m2ts", ".ts", ".m2t", ".m2v", ".divx", ".xvid", ".vob", ".dat", ".rmvb", ".asf"},
-        "images": {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"},
-        "documents": {".pdf", ".doc", ".docx", ".txt", ".md", ".html", ".htm"},
-        "ebooks": {".epub", ".mobi", ".azw", ".fb2"},
-        "disk_images": {".iso", ".bin", ".img", ".cue", ".nrg", ".mdf", ".toast", ".ccd", ".daa"},
-        "dsd": {".dsf", ".dff", ".dsd"},
-        "hd_dvd": {".evo", ".map", ".bup"},
-        "playlists": {".m3u", ".m3u8"}
-    },
-    "playback_registry": {
+        "hls_mp4frag_enabled": True,
         "playable_keywords": ["dvd", "blu-ray", "vcd", "laserdisc", "sacd", "dsd", "cd-extra", "dvd-audio", "dvd-vr", "video cd", "super vcd", "high-res", "cd-rom", "dvd daten", "blu-ray daten"],
         "playable_exts": [".mp4", ".mkv", ".avi", ".mp3", ".flac", ".wav", ".m4a", ".dsf", ".dff", ".ts", ".alac", ".aiff", ".mpeg", ".mpg", ".mov", ".webm", ".wmv", ".m4v", ".3gp", ".ogv", ".vob", ".m2ts", ".iso", ".bin", ".img"],
         "native_exts": [".mp4", ".mkv", ".webm", ".ogv", ".mp3", ".wav", ".ogg", ".m4a", ".flac"],
@@ -714,8 +645,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 }
 
 
-# Parser constants moved to core for centralization
-SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
+# SLOW_PARSERS and registries moved to src/core/models.py for Ultimate SSOT (v1.35.76)
 
 def set_config_value(key: str, value: Any):
     """Sets a configuration value dynamically at runtime."""
