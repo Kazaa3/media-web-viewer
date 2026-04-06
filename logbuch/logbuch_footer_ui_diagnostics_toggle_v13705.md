@@ -1,3 +1,65 @@
+# Library Hydration & "0-Item" Bug Resolution (v1.37.07)
+
+## Problem Statement
+Persistent "0-item" bug traced to fragmented category-mapping (models.py) and a logic error in main.py preventing RAW mode from bypassing filters when search is active.
+
+## Solution Overview
+Introduce a robust, multi-stage Hydration Pipeline:
+- Centralize all category mappings into a case-insensitive Single Source of Truth (SSOT).
+- Add Multi-Stage Diagnostics for RAW and Bypass modes.
+
+---
+
+## Implementation Plan
+
+### 1. Data Models (SSOT Consolidation)
+- **models.py**
+  - Unify `EXTENSION_REGISTRY` and `MASTER_CAT_MAP` into a `CategoryOrchestrator`.
+  - All category keys/values strictly lowercased.
+  - German/human-readable categories (e.g., Musik, Filme) mapped to internal English keys at runtime.
+  - Update all lookup and aliasing logic to be case-insensitive and comprehensive.
+
+### 2. Backend Filtering & Multi-Stage Hydration
+- **main.py**
+  - Fix RAW mode: `force_raw` now truly bypasses category filters, even with search/genre/year.
+  - Implement multi-stage hydration in `get_library`:
+    - **Stage 0:** DB-RAW (literal SQL rows)
+    - **Stage 1:** SSOT-NORM (normalized categories)
+    - **Stage 2:** CAT-FILTER (filtered by displayed categories)
+    - **Stage 3:** FULL-FILTER (production output: search, genre, year)
+  - Add `[BD-AUDIT]` logs for each stage, showing item counts and drop reasons.
+
+### 3. Frontend Diagnostics & DOM Debugging
+- **js/diagnostics_helpers.js**
+  - Add sidebar toggle for Hydration Stages (RAW, NORM, VIEW).
+  - Implement DOM Integrity Auditor to check for hidden nodes (e.g., via CSS).
+  - Visualize dropped reasons for each stage side-by-side.
+
+---
+
+## Warnings & Behavior Changes
+- **Category SSOT Migration:** All internal category names are now strictly lowercase English. Displayed/alias categories (e.g., Musik, Filme) are mapped at runtime. This avoids mismatches from capitalization or language.
+- **RAW Mode:** Now truly bypasses category filtering, even if a search term is present. Searching in a "0-item" state will show raw DB matches.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Stage-by-stage: Stage 1 count ≥ Stage 2.
+- RAW mode: `get_library(force_raw=True, search="...")` returns all items if search is empty, or only name matches if not, ignoring categories.
+- Casing: Both `audio`, `AUDIO`, and `Musik` in DB hydrate correctly.
+
+### Manual
+- Use Diagnostics Sidebar to toggle stages and confirm HUD shows correct filtered counts.
+- Run DOM Auditor to verify the media grid node count matches expectations.
+
+---
+
+## Open Question
+Should rehydration concepts from the logbuch be moved to `docs/architecture/` for permanence, or remain in the date-stamped logbuch?
+
+_Recommendation: Move finalized concepts to `docs/architecture/` for long-term reference; keep iterative notes in logbuch._
 # Walkthrough: Supercharged Diagnostics Sidebar v1.37.05
 
 ## Overview

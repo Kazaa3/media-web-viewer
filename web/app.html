@@ -64,6 +64,56 @@
         [data-theme="dark"] .theme-toggle:hover {
             background: rgba(255, 255, 255, 0.1);
         }
+
+        /* --- Hydration Chain Visuals (v1.37.07) --- */
+        .hydration-chain {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .hydration-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hydration-stage.active { background: rgba(52, 152, 219, 0.2); border: 1px solid #3498db; }
+        .hydration-stage.warning { background: rgba(241, 196, 15, 0.2); border: 1px solid #f1c40f; }
+        .hydration-stage.critical { background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; animation: diag-pulse 2s infinite; }
+        .hydration-stage.safe { background: rgba(46, 204, 113, 0.1); border: 1px solid #2ecc71; }
+        
+        .stage-label { font-size: 9px; text-transform: uppercase; opacity: 0.7; font-weight: 800; margin-bottom: 4px; color: var(--text-secondary); }
+        .stage-count { font-size: 16px; font-weight: 900; color: var(--text-primary); }
+        .hydration-arrow { font-size: 14px; opacity: 0.3; font-weight: 100; }
+
+        @keyframes diag-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .audit-reasons-panel {
+            background: rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+        }
+        .reasons-list { list-style: none; padding: 0; margin: 10px 0; }
+        .reasons-list li { display: flex; justify-content: space-between; margin-bottom: 4px; opacity: 0.6; }
+        .reasons-list li.has-drops { opacity: 1; color: #e74c3c; }
+        .reason-key { font-family: monospace; }
+        .reason-count { font-weight: 700; }
+        .audit-meta { font-size: 10px; opacity: 0.5; margin-top: 10px; line-height: 1.4; }
     </style>
 
     <!-- Modulo-Core Synchronized Bootstrapper (v1.35.21) -->
@@ -940,8 +990,20 @@
         <div class="footer-icon-cluster">
             <!-- Theme Toggle -->
             <button class="footer-tool-btn" title="Toggle Theme" onclick="toggleTheme()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="5" />
+                <!-- Logic Audit Breakdown (Hydration Chain v1.37.07) -->
+        <div class="diag-section">
+            <div class="diag-section-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                <span>LOGIC AUDIT (HYDRATION CHAIN)</span>
+            </div>
+            <div id="diag-audit-summary" style="padding: 10px 0;">
+                <!-- Populated by diagnostics_helpers.js -->
+                <div class="diag-status-none">Aktualisiere Hydration-Daten...</div>
+            </div>
+        </div>
+       <circle cx="12" cy="12" r="5" />
                     <line x1="12" y1="1" x2="12" y2="3" />
                     <line x1="12" y1="21" x2="12" y2="23" />
                     <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />

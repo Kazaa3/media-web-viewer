@@ -1010,14 +1010,6 @@ async function auditSwitchStage(stage) {
         const fs = audit.fs || {};
         
         // Update both Footer (DB Count) and Sidebar (Full Parity)
-        if (typeof updateSyncAnchor === 'function') {
-            updateSyncAnchor(lib.db_count || 0, lib.media ? lib.media.length : 0, fs.size);
-        }
-
-        // Logic Audit Visualization (v1.37.06 - SSOT)
-        renderLogicAuditSummary(audit.logic_audit || {});
-
-        // Logic Audit Visualization (0-Item Fix Visibility)
         const reasonsViewport = document.getElementById('sb-dropped-reasons-viewport');
         if (reasonsViewport) {
             const la = audit.logic_audit || {};
