@@ -883,7 +883,13 @@ function syncQueueWithLibrary() {
             return isReal && !video;
         }
 
-        // Productive Mode Logic
+        // Productive Mode / v1.35.68 Hybrid Logic
+        const hmode = window.__mwv_hydration_mode || 'real';
+        
+        if (hmode === 'mock') return item.is_mock || !!item.stage;
+        if (hmode === 'real') return !item.is_mock && !item.stage;
+        if (hmode === 'both') return true;
+
         const isAudioCandidate = !video || isRaw;
         const keep = isRaw || (isReal && isAudioCandidate) || (item.is_mock && !item.stage);
         
@@ -930,28 +936,41 @@ function syncQueueWithLibrary() {
     const countMsg = isRaw ? `FORCED RAW SYNC: ${filtered.length} Items` : `Sync Audit: ${filtered.length} Items found. (Diagnostic: ${isDiagnosticMode})`;
     console.info(`[Sync] ${countMsg}`);
     
-    if (filtered.length > 0 || isRaw) {
-        currentPlaylist = [...filtered];
-        if (playlistIndex === -1) playlistIndex = 0;
-        
-        // --- V1.35 Recovery Auto-Play ---
-        const firstItem = currentPlaylist[0];
-        if (firstItem && firstItem.is_mock) {
-            if (typeof mwv_trace_render === 'function') mwv_trace_render('PLAYER-RECOVERY', 'AUTO-PLAY-TRIGGER', { name: firstItem.name });
-            
-            // Check if pipeline is idle
-            const pipeline = document.getElementById('native-html5-audio-pipeline-element');
-            if (pipeline && (pipeline.paused || pipeline.ended || !pipeline.src)) {
-                if (typeof playAudio === 'function') {
-                   setTimeout(() => playAudio(firstItem), 500);
-                }
-            }
-        }
-
         if (typeof renderPlaylist === 'function') renderPlaylist();
         if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
     }
 }
+
+/**
+ * Hydration Master Control (v1.35.68)
+ * Switches between Mock, Real, and Both modes.
+ */
+window.setHydrationMode = function(mode) {
+    console.info(`[Hydration] Switching to mode: ${mode.toUpperCase()}`);
+    window.__mwv_hydration_mode = mode;
+    localStorage.setItem('mwv_hydration_mode', mode);
+    
+    // UI Feedback: Update button states in footer
+    ['M', 'R', 'B'].forEach(id => {
+        const btn = document.getElementById(`hydr-btn-${id}`);
+        if (btn) btn.classList.toggle('active', mode === (id === 'M' ? 'mock' : id === 'R' ? 'real' : 'both'));
+    });
+    
+    // Auto-refresh data
+    if (typeof syncQueueWithLibrary === 'function') {
+        syncQueueWithLibrary();
+    }
+    
+    if (typeof showToast === 'function') {
+        showToast(`Hydration: ${mode.toUpperCase()} aktiv`, "info");
+    }
+}
+
+// v1.35.68 Override initialization
+window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('mwv_hydration_mode') || 'real';
+    setHydrationMode(saved);
+});
 
 // Initialize
 window.addEventListener('DOMContentLoaded', () => {
