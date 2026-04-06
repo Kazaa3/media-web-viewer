@@ -682,7 +682,7 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         footerDbCount.innerText = finalDb;
     }
 
-    // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.02)
+    // 3. HUD LED Logic & 7-Point Hover Metrics (v1.37.16 Pulsar Upgrade)
     const hudFe = document.getElementById('hud-fe');
     const hudBe = document.getElementById('hud-be');
     const hudDb = document.getElementById('hud-db');
@@ -691,48 +691,58 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     const pid = window.__mwv_last_pid || '--';
     const upTime = window.__mwv_last_uptime || '--';
 
+    // Helper: Get high-density trace for tooltip
+    const getModuleTrace = (moduleKey) => {
+        const cache = (window.__sentinel_module_cache && window.__sentinel_module_cache[moduleKey]) || [];
+        if (cache.length === 0) return "No forensic events captured.";
+        return cache.map(line => `> ${line}`).join('\n');
+    };
+
     if (hudFe) {
         const isFeHealthy = (finalGui > 0);
+        const trace = getModuleTrace('FE');
         hudFe.className = `hud-group ${isFeHealthy ? 'active' : 'error'}`;
         hudFe.setAttribute('data-hud-metrics', 
-            `[FRONTEND HUD]\n` +
-            `1. PID: ${pid}\n` +
-            `2. STATUS: ${isFeHealthy ? 'Synchronized' : 'Empty'}\n` +
-            `3. UPTIME: ${upTime}\n` +
-            `4. ERRORS: 0\n` +
-            `5. LAST SYNC: ${lastSync}\n` +
-            `6. LOAD: Normal\n` +
-            `7. ITEMS: ${finalGui} (GUI)`
+            `[FRONTEND FORENSICS]\n` +
+            `PID: ${pid} | UP: ${upTime}\n` +
+            `STATUS: ${isFeHealthy ? 'Synchronized' : 'Empty'}\n` +
+            `ITEMS: ${finalGui} (GUI)\n` +
+            `------------------------\n` +
+            `LAST TRACE EVENTS:\n${trace}`
         );
     }
 
     if (hudBe) {
         const isBeHealthy = (typeof eel !== 'undefined');
+        const trace = getModuleTrace('BE');
         hudBe.className = `hud-group ${isBeHealthy ? 'active' : 'error'}`;
         hudBe.setAttribute('data-hud-metrics', 
-            `[BACKEND HUD]\n` +
-            `1. PID: ${pid}\n` +
-            `2. STATUS: ${isBeHealthy ? 'Socket Alive' : 'Disconnected'}\n` +
-            `3. UPTIME: ${upTime}\n` +
-            `4. ERRORS: 0\n` +
-            `5. LAST SYNC: ${lastSync}\n` +
-            `6. LOAD: Low\n` +
-            `7. SOCKET: Est. (Eel)`
+            `[BACKEND FORENSICS]\n` +
+            `PID: ${pid} | UP: ${upTime}\n` +
+            `STATUS: ${isBeHealthy ? 'Socket Alive' : 'Disconnected'}\n` +
+            `SOCKET: Established (Eel)\n` +
+            `------------------------\n` +
+            `LAST TRACE EVENTS:\n${trace}`
         );
     }
 
     if (hudDb) {
         const isDbHealthy = (finalDb > 0);
-        hudDb.className = `hud-group ${isDbHealthy ? 'active' : 'warning'}`;
+        const dbCache = (window.__sentinel_module_cache && window.__sentinel_module_cache.DB) || [];
+        const isScanning = dbCache.some(l => l.includes('SCAN') || l.includes('SYNC') || l.includes('RECOVER'));
+        
+        const trace = getModuleTrace('DB');
+        let stateClass = isDbHealthy ? 'active' : 'warning';
+        if (isScanning) stateClass = 'scanning';
+        
+        hudDb.className = `hud-group ${stateClass}`;
         hudDb.setAttribute('data-hud-metrics', 
-            `[DATABASE HUD]\n` +
-            `1. PID: ${pid}\n` +
-            `2. STATUS: ${isDbHealthy ? 'SQLite Online' : 'No Data'}\n` +
-            `3. UPTIME: ${upTime}\n` +
-            `4. ERRORS: 0\n` +
-            `5. LAST SYNC: ${lastSync}\n` +
-            `6. LOAD: Optimized\n` +
-            `7. ROWS: ${finalDb} (DB)`
+            `[DATABASE FORENSICS]\n` +
+            `PID: ${pid} | UP: ${upTime}\n` +
+            `STATUS: ${isScanning ? 'Active Scan/Sync' : (isDbHealthy ? 'SQLite Online' : 'No Data')}\n` +
+            `ROWS: ${finalDb} (DB)\n` +
+            `------------------------\n` +
+            `LAST TRACE EVENTS:\n${trace}`
         );
     }
 }

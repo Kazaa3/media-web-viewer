@@ -313,28 +313,45 @@ async function runFSParityAudit() {
 }
 
 /**
- * SENTINEL: Live Trace Engine (Forensic Upgrade v1.37.12)
+ * SENTINEL: Live Trace Engine (Forensic Upgrade v1.37.16)
  */
 function sentinelPulse(tag, message, skipStorage = false) {
     const container = document.getElementById('sentinel-log-container');
-    if (!container) return;
+    
+    // Module Cache Initialization (v1.37.16)
+    if (!window.__sentinel_module_cache) {
+        window.__sentinel_module_cache = { FE: [], BE: [], DB: [] };
+    }
 
-    const entryData = {
-        ts: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        tag: tag,
-        msg: message
-    };
+    const ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const entryData = { ts, tag, msg: message };
 
     // 1. Storage Persistence
     if (!skipStorage) {
         const history = JSON.parse(localStorage.getItem('mwv_sentinel_trace') || '[]');
         history.push(entryData);
-        if (history.length > SENTINEL_MAX_ENTRIES) history.shift();
+        if (history.length > (window.SENTINEL_MAX_ENTRIES || 500)) history.shift();
         localStorage.setItem('mwv_sentinel_trace', JSON.stringify(history));
     }
 
-    // 2. DOM Rendering
-    renderSentinelEntry(entryData, container);
+    // 2. Module Forensic Routing
+    const tagUpper = tag.toUpperCase();
+    let targetModule = null;
+    
+    if (['SQL', 'SCAN', 'SYNC', 'NUCLEAR', 'DB'].some(k => tagUpper.includes(k))) targetModule = 'DB';
+    else if (['API', 'EEL', 'PIPE', 'STALL', 'VID', 'BE'].some(k => tagUpper.includes(k))) targetModule = 'BE';
+    else if (['DOM', 'VIEW', 'GUI', 'THEME', 'FE', 'SYSTEM', 'SUCCESS'].some(k => tagUpper.includes(k))) targetModule = 'FE';
+
+    if (targetModule) {
+        const cache = window.__sentinel_module_cache[targetModule];
+        cache.push(`[${ts}] ${tag}: ${message}`);
+        if (cache.length > 3) cache.shift();
+    }
+
+    // 3. DOM Rendering (vibrant fragment)
+    if (container) {
+        renderSentinelEntry(entryData, container);
+    }
 }
 
 function renderSentinelEntry(data, container) {
