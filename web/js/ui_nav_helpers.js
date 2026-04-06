@@ -874,7 +874,40 @@ function switchReportingSubView(viewId) {
 }
 
 function switchDiagnosticsSubView(viewId) {
-    // Advanced Mapping for Global Sidebar (v1.37.05)
+    // Advanced Mapping for Global Sidebar (v1.37.08 - Hydration & Item Track)
+    if (viewId === 'hydration' || viewId === 'item-track') {
+        applyDiagnosticsSidebarState(true);
+        
+        // Toggle Panes
+        const hydrationPane = document.getElementById('diag-pane-hydration');
+        const itemTrackPane = document.getElementById('diag-pane-item-track');
+        
+        if (hydrationPane) hydrationPane.style.display = (viewId === 'hydration') ? 'block' : 'none';
+        if (itemTrackPane) itemTrackPane.style.display = (viewId === 'item-track') ? 'block' : 'none';
+        
+        // Initialize view
+        if (viewId === 'hydration' && typeof renderLogicAuditSummary === 'function') {
+            renderLogicAuditSummary();
+        }
+        if (viewId === 'item-track' && typeof renderItemTrackTab === 'function') {
+            renderItemTrackTab();
+        }
+        
+        // Update tab buttons (in case called from elsewhere)
+        document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => {
+            el.classList.toggle('active', el.id === 'reiter-' + viewId);
+            if (el.classList.contains('active')) {
+                el.style.background = 'rgba(255,51,102,0.2)';
+                el.style.color = 'white';
+            } else {
+                el.style.background = 'transparent';
+                el.style.color = 'rgba(255,255,255,0.5)';
+            }
+        });
+        
+        return;
+    }
+
     if (viewId === 'logs') {
         syncGlobalDiagnosticsNav(viewId);
         applyDiagnosticsSidebarState(true);

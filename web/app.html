@@ -350,65 +350,6 @@
 
         <!-- GLOBAL DIAGNOSTICS OVERLAY SIDEBAR (v1.37.04) -->
         <div id="global-diagnostics-sidebar" class="diagnostic-sidebar left-overlay" style="display: none;">
-                </button>
-                <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">
-                    <span>Video Health</span>
-                </button>
-                <button id="reiter-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('health', this)">
-                    <span>System-Check (Audit)</span>
-                </button>
-                <button id="reiter-logs" class="side-reiter" onclick="switchDiagnosticsSidebarTab('logs', this)">
-                    <span>Konsole Logs</span>
-                </button>
-                <button id="reiter-latency" class="side-reiter" onclick="switchDiagnosticsSidebarTab('latency', this)">
-                    <span>Latency Profiling</span>
-                </button>
-                <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">
-                    <span>Nuclear Recovery</span>
-                </button>
-            </div>
-
-            <div class="diagnostic-header">
-                <div class="diagnostic-section-title">SYSTEM DIAGNOSTICS</div>
-                <div id="global-diag-status" class="diagnostic-value">Observing...</div>
-            </div>
-
-            <div class="diagnostic-content-scroll" style="margin-top: 20px;">
-                <div class="diagnostic-label">Active Goal</div>
-                <div id="diag-current-task" class="diagnostic-value" style="color: #00ff00;">RECOVER 0-ITEM LIBRARY
-                </div>
-            <div class="diagnostic-sidebar-section" style="margin-top: 24px; border-radius: 14px;">
-                <div class="diagnostic-label">System Flag Toggles</div>
-                <div class="diag-flag-grid">
-                    <button class="diag-flag-btn" id="flag-btn-DIAG" onclick="toggleDiagnosticsFlag('DIAG')">DIAG</button>
-                    <button class="diag-flag-btn" id="flag-btn-NATV" onclick="toggleDiagnosticsFlag('NATV')">NATV</button>
-                    <button class="diag-flag-btn" id="flag-btn-HIDB" onclick="toggleDiagnosticsFlag('HIDB')">HIDB</button>
-                    <button class="diag-flag-btn" id="flag-btn-RAW" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
-                    <button class="diag-flag-btn" id="flag-btn-BYPS" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
-                    <button class="diag-flag-btn" id="flag-btn-TEST" onclick="toggleDiagnosticsFlag('TEST')">TEST</button>
-                </div>
-            </div>
-
-            <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px; border: 1px solid rgba(255, 51, 102, 0.3);">
-                <div class="diagnostic-label" style="color: #ff3366;">Emergency Recovery</div>
-                <div class="diag-action-grid">
-                    <button class="diag-action-btn" style="background: rgba(255, 51, 102, 0.2); border-color: #ff3366; color: #ff3366; font-weight: 800;" 
-                        onclick="if(typeof forceSyncAll === 'function') forceSyncAll();">FORCE SYNC ALL</button>
-                    <button class="diag-action-btn" onclick="refreshLibrary();">MANUAL SYNC</button>
-                    <button class="diag-action-btn" onclick="scan(null, true);">DEEP SCAN</button>
-                    <button class="diag-action-btn" onclick="if(typeof probeDataFlow === 'function') probeDataFlow();">DATA FLOW PROBE</button>
-                </div>
-            </div>
-
-            <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px;">
-                <div class="diagnostic-label">Observability Parity</div>
-                <div class="diag-status-grid">
-                    <div class="diag-status-card">
-                        <div class="diag-caption">Database</div>
-                        <div id="diag-db-count-sidebar" class="diag-status-value">--</div>
-                    </div>
-                    <div class="diag-status-card">
-                        <div class="diag-caption">GUI Items</div>
                         <div id="diag-gui-count-sidebar" class="diag-status-value">--</div>
                     </div>
                 </div>
