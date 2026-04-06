@@ -93,7 +93,8 @@
                     data-category="library">Bibliothek</button>
                 <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)"
                     data-category="database">Database</button>
-                <div class="divider-v" style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
+                <div class="divider-v"
+                    style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
                 <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
                     data-category="file">Browser</button>
                 <button id="nav-btn-edit" class="menu-item-btn" onclick="switchMainCategory('edit', this)"
@@ -102,7 +103,8 @@
                     data-category="system">Optionen</button>
                 <button id="nav-btn-parser" class="menu-item-btn" onclick="switchMainCategory('parser', this)"
                     data-category="parser">Parser</button>
-                <button id="nav-btn-debug" class="menu-item-btn" onclick="switchMainCategory('debug', this)" data-category="debug">Debug &
+                <button id="nav-btn-debug" class="menu-item-btn" onclick="switchMainCategory('debug', this)"
+                    data-category="debug">Debug &
                     DB</button>
                 <button id="nav-btn-tests" class="menu-item-btn" onclick="switchMainCategory('tests', this)"
                     data-category="tests">Tests</button>
@@ -112,7 +114,8 @@
                     data-category="reporting">Report</button>
                 <button id="nav-btn-logbuch" class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
                     data-category="logbuch">Logbuch</button>
-                <button id="nav-btn-video" class="menu-item-btn" onclick="switchMainCategory('video', this)" data-category="video">Video</button>
+                <button id="nav-btn-video" class="menu-item-btn" onclick="switchMainCategory('video', this)"
+                    data-category="video">Video</button>
             </div>
         </div>
 
@@ -301,8 +304,10 @@
                 <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none; position: relative;">
                     <!-- Vertical Reiter Bar (Tabs) -->
                     <div class="side-reiter-bar">
-                        <div id="reiter-details" class="side-reiter active" onclick="switchSidebarView('details')"><span>Details</span></div>
-                        <div id="reiter-diagnostics" class="side-reiter" onclick="switchSidebarView('diagnostics')"><span>Diag</span></div>
+                        <div id="reiter-details" class="side-reiter active" onclick="switchSidebarView('details')">
+                            <span>Details</span></div>
+                        <div id="reiter-diagnostics" class="side-reiter" onclick="switchSidebarView('diagnostics')">
+                            <span>Diag</span></div>
                     </div>
 
                     <!-- VIEW: Media Details -->
@@ -319,23 +324,28 @@
                     <div id="sidebar-view-diagnostics" class="sidebar-view-content" style="display: none;">
                         <div class="diagnostic-header">
                             <div class="diagnostic-section-title">TECHNICAL AUDIT</div>
-                            
+
                             <!-- Detailed Parity Anchor (v1.35.99 Relocated) -->
-                            <div id="sb-parity-anchor" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <div id="sb-parity-anchor"
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
                                 [FS: -- | DB: -- | GUI: --]
                             </div>
 
                             <!-- Relocated Toggles from Footer -->
                             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">System Flags</div>
+                                <div
+                                    style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">
+                                    System Flags</div>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;"
-                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
+                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG
+                                    MODE</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;"
                                     onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;"
                                     onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;"
-                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
+                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW
+                                    BYPASS</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;"
                                     onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-AUDIT" style="font-size: 10px;"
@@ -345,14 +355,19 @@
                             </div>
 
                             <div class="diagnostic-label">Logic Audit (Dropped Reasons)</div>
-                            <div id="sb-dropped-reasons-viewport" style="font-size: 10px; color: var(--text-secondary); background: var(--bg-secondary); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 60px;">
+                            <div id="sb-dropped-reasons-viewport"
+                                style="font-size: 10px; color: var(--text-secondary); background: var(--bg-secondary); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 60px;">
                                 No reasons collected...
                             </div>
-                            
+
                             <div class="diagnostic-label">Engine Health</div>
-                            <button class="tab-btn sm" onclick="if(typeof runDomAudit === 'function') runDomAudit();" style="width: 100%; color: var(--accent-color); font-size: 10px;">UTILITY Proben</button>
-                            
-                            <div id="diag-sidebar-mini-logs" style="margin-top: 20px; font-size: 9px; font-family: monospace; opacity: 0.7; max-height: 100px; overflow: hidden;">Waiting for events...</div>
+                            <button class="tab-btn sm" onclick="if(typeof runDomAudit === 'function') runDomAudit();"
+                                style="width: 100%; color: var(--accent-color); font-size: 10px;">UTILITY
+                                Proben</button>
+
+                            <div id="diag-sidebar-mini-logs"
+                                style="margin-top: 20px; font-size: 9px; font-family: monospace; opacity: 0.7; max-height: 100px; overflow: hidden;">
+                                Waiting for events...</div>
                         </div>
                     </div>
                 </div>
@@ -429,14 +444,16 @@
                 <!-- Options Internal Sidebar -->
                 <div class="tab-internal-sidebar">
                     <h3 class="diagnostic-section-title">Leistungsmodus</h3>
-                    <button class="nav-item active" style="margin-bottom: 8px;" onclick="setAppModeUI('High-Performance')">High Performance</button>
+                    <button class="nav-item active" style="margin-bottom: 8px;"
+                        onclick="setAppModeUI('High-Performance')">High Performance</button>
                     <button class="nav-item" onclick="setAppModeUI('Low-Bandwidth')">Low Bandwidth</button>
 
                     <h3 class="diagnostic-section-title" style="margin-top: 30px;">Konfiguration</h3>
                     <button class="nav-item" onclick="switchOptionsView('general')">Allgemein</button>
                     <button class="nav-item" onclick="switchOptionsView('appearance')">Darstellung</button>
                     <button class="nav-item" onclick="switchOptionsView('indexing')">Indexierung</button>
-                    <button class="nav-item" onclick="switchOptionsView('recovery')" style="color: #00ff00; border: 1px solid #00ff0033; margin-top: 20px;">Recovery & Debug</button>
+                    <button class="nav-item" onclick="switchOptionsView('recovery')"
+                        style="color: #00ff00; border: 1px solid #00ff0033; margin-top: 20px;">Recovery & Debug</button>
                 </div>
 
                 <!-- Options Viewport -->
@@ -495,17 +512,25 @@
                     <div id="options-view-recovery" class="options-sub-view" style="display: none;">
                         <h3 class="diagnostic-section-title" style="color: #00ff00;">v1.35 Diagnostic Suite</h3>
                         <div class="glass-card" style="border: 1px solid #00ff0033;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <span>Diagnostic Mode</span>
-                                <button onclick="Diagnostics.toggle()" id="diag-toggle-btn" class="tab-btn sm" style="width: 80px;">OFF</button>
+                                <button onclick="Diagnostics.toggle()" id="diag-toggle-btn" class="tab-btn sm"
+                                    style="width: 80px;">OFF</button>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <span>Nuclear Visibility Lock</span>
-                                <button onclick="Diagnostics.isNuclear = !Diagnostics.isNuclear; localStorage.setItem('mwv_nuclear_mode', Diagnostics.isNuclear); location.reload();" class="tab-btn sm" style="width: 80px;">OFF</button>
+                                <button
+                                    onclick="Diagnostics.isNuclear = !Diagnostics.isNuclear; localStorage.setItem('mwv_nuclear_mode', Diagnostics.isNuclear); location.reload();"
+                                    class="tab-btn sm" style="width: 80px;">OFF</button>
                             </div>
                             <hr style="opacity: 0.1; margin: 20px 0;">
-                            <button onclick="Diagnostics.hydrate()" style="width: 100%; background: #00ff00; color: #000; font-weight: 900; padding: 12px; border-radius: 8px; border: none; cursor: pointer;">FORCE ATOMIC HYDRATION</button>
-                            <p style="font-size: 11px; margin-top: 10px; opacity: 0.7;">Initializes Library and Queue with verified system tracks for testing.</p>
+                            <button onclick="Diagnostics.hydrate()"
+                                style="width: 100%; background: #00ff00; color: #000; font-weight: 900; padding: 12px; border-radius: 8px; border: none; cursor: pointer;">FORCE
+                                ATOMIC HYDRATION</button>
+                            <p style="font-size: 11px; margin-top: 10px; opacity: 0.7;">Initializes Library and Queue
+                                with verified system tracks for testing.</p>
                         </div>
                     </div>
                 </div>
@@ -573,16 +598,14 @@
             </div>
 
             <!-- TAB: Database Explorer (v1.35.68 Standalone) -->
-            <div id="database-panel-container" class="tab-content"
-                style="display: none; height: 100%; width: 100%;">
+            <div id="database-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
                 <div id="database-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Datenbank-Master...</div>
                 </div>
             </div>
 
             <!-- TAB: Parser Configuration (v1.35.68 Fragment Based) -->
-            <div id="parser-panel-container" class="tab-content"
-                style="display: none; height: 100%; width: 100%;">
+            <div id="parser-panel-container" class="tab-content" style="display: none; height: 100%; width: 100%;">
                 <div id="parser-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Parser-Metriken...</div>
                 </div>
@@ -692,9 +715,13 @@
             </div>
             <div id="player-warning-message"
                 style="font-size: 10px; color: var(--text-secondary); text-align: center; opacity: 0.8; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px; position: relative;">
-                <div id="footer-status-pills" style="position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; pointer-events: none;"></div>
-                <span id="mwv-footer-version">v...</span> | 
-                <span id="footer-sync-anchor" onclick="probeDataFlow()" title="Click to probe data flow" style="cursor:pointer; background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 10px; border: 1px solid rgba(46, 204, 113, 0.2);">[DB: -- | GUI: --]</span> | 
+                <div id="footer-status-pills"
+                    style="position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; pointer-events: none;">
+                </div>
+                <span id="mwv-footer-version">v...</span> |
+                <span id="footer-sync-anchor" onclick="probeDataFlow()" title="Click to probe data flow"
+                    style="cursor:pointer; background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 10px; border: 1px solid rgba(46, 204, 113, 0.2);">[DB:
+                    -- | GUI: --]</span> |
                 <span id="sync-status" style="color: #2ecc71;">● Synchronized</span></span>
                 <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
                 <div id="footer-admin-cluster" class="admin-controls" style="display: flex; gap: 10px;">
@@ -708,18 +735,20 @@
                         style="background: transparent; border: none; color: #f1c40f; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Logs</button>
                 </div>
 
-                    <!-- DB Status Light & Buttons -->
-                    <div style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-                        <div style="display: flex; align-items: center; gap: 6px;" title="Database Status">
-                            <span style="font-size: 10px; font-weight: 800; color: var(--text-secondary);">DB</span>
-                            <span id="footer-db-light" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f1c40f; box-shadow: 0 0 5px #f1c40f;"></span>
-                        </div>
-                        <button id="btn-reset"
-                            onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
-                            style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">RESET</button>
+                <!-- DB Status Light & Buttons -->
+                <div
+                    style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                    <div style="display: flex; align-items: center; gap: 6px;" title="Database Status">
+                        <span style="font-size: 10px; font-weight: 800; color: var(--text-secondary);">DB</span>
+                        <span id="footer-db-light"
+                            style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f1c40f; box-shadow: 0 0 5px #f1c40f;"></span>
                     </div>
+                    <button id="btn-reset"
+                        onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
+                        style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">RESET</button>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- Right Side: Pipeline & Theme -->
@@ -747,7 +776,7 @@
         </div>
     </footer>
 
-    <!-- v1.37.01 High-Density Swiss Army Footer -->
+    <!-- v1.37.02 Professional Swiss Army HUD Footer -->
     <footer class="layout-footer">
         <!-- Slot 1: Far-Left Diagnostic Pill -->
         <div class="footer-diag-pill">
@@ -763,53 +792,97 @@
             db: <span id="footer-db-count">--</span>
         </div>
 
-        <!-- Slot 3: Triple HUD recovery Cluster -->
+        <!-- Slot 3: Swiss HUD recovery Clusters -->
         <div class="footer-hud-cluster">
             <!-- HUD: Frontend (FE) -->
-            <div id="hud-fe" class="hud-group" title="Frontend Layer (DOM / Library)">
+            <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..."
+                title="Frontend Health (Hover for details)">
                 <span class="hud-label">FE</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny" onclick="if(typeof window.location.reload === 'function') window.location.reload();">RESET</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof window.location.reload === 'function') window.location.reload();">RESET</button>
             </div>
 
             <!-- HUD: Backend (BE) -->
-            <div id="hud-be" class="hud-group" title="Backend Layer (Eel / Process)">
+            <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..."
+                title="Backend Health (Hover for details)">
                 <span class="hud-label">BE</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
             </div>
 
             <!-- HUD: Database (DB) -->
-            <div id="hud-db" class="hud-group" title="Database Layer (Connection / Persistence)">
+            <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..."
+                title="Database Health (Hover for details)">
                 <span class="hud-label">DB</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
-                <button class="hud-btn-tiny" onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
             </div>
 
             <!-- Trace Logs Toggle -->
-            <button class="footer-classic-btn yellow" onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();" title="Toggle Trace Logs">LOGS</button>
+            <button class="footer-classic-btn yellow"
+                onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();"
+                title="Toggle Trace Logs">LOGS</button>
         </div>
 
-        <!-- Slot 4: Right Tool Cluster (Classic Icons) -->
+        <!-- Slot 4: Right Tool Cluster (Professional GUI Toggles) -->
         <div class="footer-icon-cluster">
-            <button class="footer-tool-btn" title="Detailed Options">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <!-- Media Details Toggle -->
+            <button class="footer-tool-btn" title="Media Information"
+                onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.add('active'); sb.style.display = 'block'; switchSidebarView('details'); }">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
             </button>
+
             <button class="footer-tool-btn" title="Toggle Theme">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
             </button>
-            <button class="footer-tool-btn" title="Grid Layout">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+
+            <!-- Grid/Library Toggle -->
+            <button class="footer-tool-btn" title="Grid View"
+                onclick="if(typeof switchView === 'function') switchView('library');">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
             </button>
-            <button onclick="toggleMenuBar()" class="footer-tool-btn" style="background: #222; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+
+            <!-- Program Menu Burger -->
+            <button onclick="toggleMenuBar()" class="footer-tool-btn"
+                style="background: #222; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
             </button>
-            <!-- Technical Pulsar (Sidebar Toggle) -->
-            <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.add('active'); sbDiag.style.display = 'block'; if(typeof switchSidebarView === 'function') switchSidebarView('diagnostics'); }"
-                class="footer-tool-btn" style="color: #ff3366;" title="Open Technical Sidebar">
+
+            <!-- Technical Pulsar (Diagnostics Sidebar Toggle) -->
+            <button id="footer-btn-diagnostics"
+                onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.add('active'); sbDiag.style.display = 'block'; switchSidebarView('diagnostics'); }"
+                class="footer-tool-btn" style="color: #ff3366;" title="Technical Diagnostics">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
@@ -835,7 +908,7 @@
     <script src="js/diagnostics/stages/stage_transcode_real.js?v=1.35.68"></script>
     <script src="js/diagnostics/stages/stage_video_universal.js?v=1.35.68"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
-    
+
     <!-- Externally loaded SVG icons and context menu (v1.34) -->
     <div id="svg-icons-placeholder" style="display: none;"></div>
     <div id="context-menu-placeholder"></div>
