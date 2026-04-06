@@ -4145,14 +4145,42 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             
         return {"media": playable, "db_count": len(playable), "status": "mock", "audit": {"stage": 2, "pid": pid}}
 
-    # STAGE 3: REALISTIC MOCKS (Normalized SSOT candidates)
+    # STAGE 3: REALISTIC MOCKS (Classic 3-Item Bypass Set)
     if audit_stage == 3:
-        log.info(f"[BD-AUDIT] STAGE 3: Realistic UI-Mocks. PID: {pid}")
+        log.info(f"[BD-AUDIT] STAGE 3: Returning Classic 3-Item Bypass Set. PID: {pid}")
         realistic = [
-            {"name": "Eel-Test: Shadow Music", "category": "audio", "path": "test.mp3", "duration": 180, "is_mock": True},
-            {"name": "Eel-Test: Phantom Movie", "category": "video", "path": "test.mp4", "duration": 3600, "is_mock": True}
+            {
+                "name": "Anfangsstadium RMX",
+                "artist": "Megaloh",
+                "album": "Auf Ewig Mixtape",
+                "category": "audio",
+                "path": "/mock/megaloh.mp3",
+                "duration": 215,
+                "is_mock": True,
+                "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
+            },
+            {
+                "name": "Einfach & Leicht",
+                "artist": "Benjie",
+                "album": "Schatten & Licht",
+                "category": "audio",
+                "path": "/mock/benjie.mp3",
+                "duration": 198,
+                "is_mock": True,
+                "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
+            },
+            {
+                "name": "Hammerhart (Denyo77 remix)",
+                "artist": "Absolute Beginner feat. D-Flame & Illo 77",
+                "album": "Boombule: Bambule Remixed",
+                "category": "audio",
+                "path": "/mock/beginner.mp3",
+                "duration": 242,
+                "is_mock": True,
+                "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule: Bambule Remixed"}
+            }
         ]
-        return {"media": realistic, "db_count": 2, "status": "mock", "audit": {"stage": 3, "pid": pid}}
+        return {"media": realistic, "db_count": 3, "status": "mock", "audit": {"stage": 3, "pid": pid}}
 
     all_media = []
     count_total = 0

@@ -982,57 +982,24 @@ document.addEventListener('mwv_library_ready', (e) => {
  * Stage 0: Mock Bootstrap Fail-safe (Diagnostic Utility)
  * Ensures the GUI can be verified even without real files.
  */
-window.bootstrapMockQueue = function() {
-    if (currentPlaylist.length > 0) return;
+window.bootstrapMockQueue = async function() {
+    if (currentPlaylist.length > 0 && !window.__mwv_force_reboot) return;
     
-    console.warn("[Audio] [Debug] Bootstrapping mock queue for GUI verification...");
-    const mockItems = [
-        {
-            name: "01 - Anfangsstadium RMX.mp3",
-            category: "Audio",
-            is_mock: true,
-            tags: {
-                title: "Anfangsstadium RMX",
-                artist: "Megaloh",
-                album: "Auf Ewig Mixtape",
-                year: "2013",
-                genre: "Hip-Hop",
-                track: "01"
-            }
-        },
-        {
-            name: "01 - Einfach & Leicht.mp3",
-            category: "Audio",
-            is_mock: true,
-            tags: {
-                title: "Einfach & Leicht",
-                artist: "Benjie",
-                album: "Schatten & Licht",
-                year: "2015",
-                genre: "Dancehall",
-                track: "01"
-            }
-        },
-        {
-            name: "Absolute Beginner - Hammerhart.m4a",
-            category: "Audio",
-            is_mock: true,
-            tags: {
-                title: "Hammerhart (Denyo77 remix)",
-                artist: "Absolute Beginner feat. D-Flame & Illo 77",
-                album: "Boombule: Bambule Remixed",
-                year: "2000",
-                genre: "Deutschrap/Hip-Hop",
-                track: "01"
+    console.warn("[Audio] [Debug] Bootstrapping mock queue from Backend (Stage 3)...");
+    
+    try {
+        const response = await eel.get_library(false, 3)();
+        if (response && response.media) {
+            currentPlaylist = [...response.media];
+            console.info(`[Audio] [Debug] Bootstrapped with ${currentPlaylist.length} mock items from Stage 3.`);
+            
+            if (typeof renderPlaylist === 'function') renderPlaylist();
+            if (typeof appendUiTrace === 'function') {
+                appendUiTrace(`[Debug] Audio Queue Bootstrapped with ${currentPlaylist.length} items.`);
             }
         }
-    ];
-    
-    currentPlaylist = [...mockItems];
-    renderPlaylist();
-    
-    if (typeof appendUiTrace === 'function') {
-        appendUiTrace("[Debug] Audio Queue Bootstrapped with 3 mock items.");
+    } catch (err) {
+        console.error("[Audio] [Debug] Failed to fetch mock stage 3:", err);
     }
 }
 
