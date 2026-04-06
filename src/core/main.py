@@ -359,21 +359,6 @@ def set_hydration_mode(mode: str):
         return True
     return False
 
-@eel.expose
-def set_app_mode(mode: str):
-    """Sets the app performance mode."""
-    GLOBAL_CONFIG['app_mode'] = mode
-    log.info(f"[APP-MODE] Set to: {mode}")
-    return True
-
-@eel.expose
-def get_category_master():
-    """Returns the Master Category Mapping (SSOT) from models."""
-    from src.core.models import MASTER_CAT_MAP
-    log.info("[BD-AUDIT] Handshake: get_category_master requested.")
-    return MASTER_CAT_MAP
-    """Receives and logs traces from the frontend GUI."""
-    log.info(f"[GUI-TRACE] [{category}] {action} | {details}")
 
 @eel.expose
 def report_items_spawned(count, source="frontend"):
@@ -4138,6 +4123,83 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     return filtered, audit_meta
 
 
+
+@eel.expose
+def get_library(audit_stage: int = 0, search: str = "", genre: str = "all", year: str = "all"):
+    """
+    Primary data-retrieval engine (v1.35.68 Master Restoration).
+    Stages: 0=Production, 1=Minimal Mock, 2=FS Only, 3=Hybrid, 4=Raw DB.
+    """
+    pid = os.getpid()
+    db_path = getattr(db, 'DB_PATH', 'UNKNOWN')
+    fs_audit = getattr(db, 'LAST_FS_AUDIT', {})
+    
+    # 0. Initial Mock Override (Stage 1 Handshake)
+    if audit_stage == 1:
+        mock_min = [
+            {"id": "mock-1", "name": "Handshake RMX", "artist": "MWV", "album": "Diagnostic", "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 120, "is_mock": True}
+        ]
+        return {"media": mock_min, "db_count": 1, "status": "mock", "audit": {"stage": 1, "pid": pid}}
+
+    # 1. Fetch from Database (v1.35.68 Stability)
+    all_media = []
+    count_total = 0
+    try:
+        all_media = db.get_all_media()
+        count_total = len(all_media)
+        log.info(f"[BD-AUDIT] STAGE 2: Database Found. PID: {pid} | Count: {count_total}")
+    except Exception as e:
+        log.error(f"[BD-AUDIT] DB ACCESS ERROR: {e}")
+        return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": {"pid": pid}}
+
+    # 2. Stage 4 Early Return (Raw SQL)
+    if audit_stage == 4:
+        return {
+            "media": all_media,
+            "db_count": count_total,
+            "status": "raw",
+            "audit": {"stage": 4, "pid": pid, "path": db_path, "fs": fs_audit}
+        }
+
+    # 3. Apply Filters & Production Logic
+    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=False)
+    
+    # 4. Hybrid Fusion (v1.35.68 Injection)
+    try:
+        realistic_mocks = [
+                {
+                    "id": "mock-1",
+                    "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
+                    "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
+                    "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
+                },
+                {
+                    "id": "mock-2",
+                    "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
+                    "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
+                    "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
+                },
+                {
+                    "id": "mock-3",
+                    "name": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner",
+                    "album": "Boombule", "category": "audio", "path": "/media/mock/beginner.mp3",
+                    "duration": 242, "is_mock": True,
+                    "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule"}
+                }
+        ]
+        
+        final_media = filtered_media + realistic_mocks
+        
+        return {
+            "media": final_media,
+            "db_count": count_total,
+            "status": "synchronized",
+            "audit": {"stage": (audit_stage or 3), "pid": pid, "path": db_path, "fs": fs_audit, "logic": logic_audit}
+        }
+    except Exception as e:
+        log.error(f"[BD-AUDIT] FUSION ERROR: {e}")
+        return {"media": filtered_media, "db_count": count_total, "status": "partial", "error": str(e)}
+
 @eel.expose
 def get_library_forensics():
     """
@@ -4167,9 +4229,6 @@ def get_library_forensics():
         "duplicates": 0,      # TODO: Implement duplicate detection
         "pid": os.getpid()
     }
-
-
-
 
 @eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]:
