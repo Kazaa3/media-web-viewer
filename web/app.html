@@ -97,7 +97,24 @@
                     data-category="library">Bibliothek</button>
                 <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)"
                     data-category="database">Database</button>
-                <div class="divider-v"
+                <div class="divider-v" style="height: 16px; width: 1px; background: var(--border-color); margin: 0 4px;"></div>
+                <button id="header-btn-status" class="menu-item-btn" onclick="toggleTechnicalHUD()" style="color: #00ffcc; font-weight: 900; background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1);" title="Toggle Elite HUD">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    STATUS
+                </button>
+            </div>
+        </div>
+
+        <!-- NEW: Floating Elite Technical HUD (Pills) -->
+        <div id="header-technical-hud" style="position: absolute; top: 45px; right: 20px; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 20px; display: none; gap: 15px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 10005;">
+            <div class="hud-pill-mini">PID: <span id="diag-pid" style="color: #007aff; font-weight: 900;">--</span></div>
+            <span style="opacity: 0.2;">|</span>
+            <div class="hud-pill-mini">BOOT: <span id="diag-boot" style="color: #ff9500; font-weight: 800;">--s</span></div>
+            <span style="opacity: 0.2;">|</span>
+            <div class="hud-pill-mini">UP: <span id="diag-up" style="color: #2ecc71; font-weight: 800;">--</span></div>
+        </div>
                     style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
                 <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
                     data-category="file">Browser</button>
@@ -773,10 +790,27 @@
         </div>
         </div>
 
-        <!-- Right Side: Pipeline & Theme -->
+        <!-- Right Side: Pipeline & HUD HUD Clusters (Merged) -->
         <div
-            style="display: flex; align-items: center; gap: 15px; width: 340px; flex-shrink: 0; padding-left: 20px; justify-content: flex-end;">
-            <audio id="native-html5-audio-pipeline-element" controls style="height: 34px; width: 180px;"></audio>
+            style="display: flex; align-items: center; gap: 15px; width: 440px; flex-shrink: 0; padding-left: 20px; justify-content: flex-end;">
+            
+            <!-- SWISS HUD CLUSTERS (Restored & Integrated) -->
+            <div id="footer-hud-cluster" style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-right: 15px;">
+                <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..." title="Frontend layer (DOM / Library)">
+                    <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">FE</span>
+                    <div class="hud-led"></div>
+                </div>
+                <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..." title="Backend layer (Eel / Process)">
+                    <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">BE</span>
+                    <div class="hud-led"></div>
+                </div>
+                <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..." title="Database layer (SQLite / Connection)">
+                    <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">DB</span>
+                    <div class="hud-led"></div>
+                </div>
+            </div>
+
+            <audio id="native-html5-audio-pipeline-element" controls style="height: 34px; width: 140px;"></audio>
 
             <div style="height: 15px; width: 1px; background: var(--border-color); opacity: 0.5;"></div>
 
@@ -897,8 +931,13 @@
                     <line x1="9" y1="3" x2="9" y2="21" />
                 </svg>
             </button>
+            <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()" title="Toggle Diagnostics Overlay" style="color: #ff3366;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </button>
         </div>
     </footer>
+    
+    <!-- Cleaned up redundant layout-footer -->
 
     <script src="js/version.js?v=1.35.68"></script>
     <script src="js/coverflow_controller.js?v=1.35.68"></script>
@@ -923,6 +962,8 @@
     <div id="svg-icons-placeholder" style="display: none;"></div>
     <div id="context-menu-placeholder"></div>
     <div id="dom-auditor-container"></div>
+    <!-- NEW: Status Notifications Container (Integrated v1.34-1.37 Bridge) -->
+    <div id="status-notification-container"></div>
     <script src="js/diagnostics/dom_auditor.js"></script>
 </body>
 

@@ -172,7 +172,7 @@ function toggleDiagnosticsFlag(flagId) {
     }
 }
 
-window.toggleDiagnosticsSidebar = (s) => (typeof toggleDiagnosticsSidebar !== 'undefined') ? toggleDiagnosticsSidebar(s) : null;
+// Removed redundant window re-definitions causing circular recursion
 window.switchDiagnosticsSidebarTab = switchDiagnosticsSidebarTab;
 window.toggleDiagnosticsFlag = toggleDiagnosticsFlag; 
 window.sentinelPulse = sentinelPulse;

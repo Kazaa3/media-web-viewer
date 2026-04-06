@@ -130,6 +130,25 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
     }
 }
 
+/**
+ * Toggles the new Elite Technical HUD (Floating PID Pills)
+ */
+function toggleTechnicalHUD(forceState = null) {
+    const hud = document.getElementById('header-technical-hud');
+    const btn = document.getElementById('header-btn-status');
+    if (!hud) return;
+
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none');
+    hud.style.display = isVisible ? 'flex' : 'none';
+    
+    if (btn) btn.classList.toggle('active', isVisible);
+    
+    if (isVisible && typeof refreshStartupInfo === 'function') {
+        refreshStartupInfo(); // Immediate refresh on open
+    }
+}
+window.toggleTechnicalHUD = toggleTechnicalHUD;
+
 async function toggleDiagnosticsFlag(flagId) {
     switch (flagId) {
         case 'DIAG':
