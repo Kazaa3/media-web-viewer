@@ -469,12 +469,34 @@ function sentinelPulse(tag, message, skipStorage = false) {
 
     // 3. DOM Rendering (vibrant fragment)
     if (container) {
-        renderSentinelEntry(entryData, container);
+        const entry = renderSentinelEntry(entryData, container);
+        
+        // Live Filter Check (v1.37.23)
+        if (window.__sentinel_search_query) {
+            const query = window.__sentinel_search_query.toLowerCase();
+            const text = (tag + " " + message).toLowerCase();
+            if (!text.includes(query)) entry.style.display = 'none';
+        }
     }
+}
+
+function filterSentinelTrace(query) {
+    window.__sentinel_search_query = query;
+    const container = document.getElementById('sentinel-log-container');
+    if (!container) return;
+
+    const entries = container.querySelectorAll('.sentinel-entry-v137');
+    const lowerQuery = query.toLowerCase();
+
+    entries.forEach(entry => {
+        const text = entry.innerText.toLowerCase();
+        entry.style.display = text.includes(lowerQuery) ? 'flex' : 'none';
+    });
 }
 
 function renderSentinelEntry(data, container) {
     const entry = document.createElement('div');
+    entry.className = 'sentinel-entry-v137'; // Tagged for triage
     entry.style.cssText = 'border-bottom:1px solid rgba(0,255,204,0.05); padding:3px 0; display:flex; gap:8px; align-items:flex-start;';
     
     entry.innerHTML = `
@@ -486,6 +508,8 @@ function renderSentinelEntry(data, container) {
     container.appendChild(entry);
     container.scrollTop = container.scrollHeight;
     while (container.childNodes.length > SENTINEL_MAX_ENTRIES) container.removeChild(container.firstChild);
+
+    return entry;
 }
 
 function loadSentinelHistory() {

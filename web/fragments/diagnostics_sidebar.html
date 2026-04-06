@@ -78,12 +78,16 @@
         </div>
 
         <div id="diag-pane-sentinel" class="diag-pane" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 4px;">
-                <span style="font-size: 9px; font-weight: 900; color: #00ffcc; opacity: 0.6; letter-spacing: 0.5px;">SENTINEL LIVE-TRACE</span>
-                <div style="display: flex; gap: 6px;">
-                    <button onclick="downloadSentinelTrace()" style="background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); color: #00ffcc; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Download Trace as .txt">EXPORT</button>
-                    <button onclick="clearSentinelLog()" style="background: rgba(255,51,102,0.05); border: 1px solid rgba(255,51,102,0.1); color: #ff3366; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;">CLEAR</button>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding: 0 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; font-weight: 900; color: #00ffcc; opacity: 0.6; letter-spacing: 0.5px;">SENTINEL LIVE-TRACE (v1.37.23)</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="downloadSentinelTrace()" style="background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); color: #00ffcc; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Download Trace as .txt">EXPORT</button>
+                        <button onclick="clearSentinelLog()" style="background: rgba(255,51,102,0.05); border: 1px solid rgba(255,51,102,0.1); color: #ff3366; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;">CLEAR</button>
+                    </div>
                 </div>
+                <input type="text" id="sentinel-trace-search" placeholder="Forensic Event Triage (Tag, Message...)" oninput="filterSentinelTrace(this.value)" 
+                    style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.1); color: #00ffcc; font-size: 9px; padding: 6px 10px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; outline: none;">
             </div>
             <div id="sentinel-log-container" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.1); border-radius: 8px; height: 350px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; color: #00ffcc; line-height: 1.4; scroll-behavior: smooth;"></div>
         </div>
