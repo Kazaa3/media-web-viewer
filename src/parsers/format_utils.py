@@ -13,7 +13,7 @@ from src.core.models import (
     AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
     DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
     DSD_EXTENSIONS, HDDVD_EXTENSIONS, PLAYLIST_EXTENSIONS,
-    ALL_AUDIO_EXTENSIONS, ALL_MULTIMEDIA_EXTENSIONS,
+    ALL_AUDIO_EXTENSIONS, ALL_VIDEO_EXTENSIONS,
     NATIVE_EXTENSIONS, NATIVE_CODECS, LOSSY_EXTENSIONS, SLOW_PARSERS
 )
 
@@ -175,6 +175,14 @@ def load_parser_config() -> None:
         save_parser_config()
 
 
+class ConfigJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for Pathlib.Path objects (v1.35.68)"""
+    def default(self, obj):
+        if isinstance(obj, Path):
+            return str(obj)
+        return super().default(obj)
+
+
 def save_parser_config() -> None:
     """
     @brief Saves the current parser configuration to disk.
@@ -190,7 +198,7 @@ def save_parser_config() -> None:
 
         os.makedirs(CONFIG_FILE.parent, exist_ok=True)
         with open(CONFIG_FILE, 'w') as f:
-            json.dump(PARSER_CONFIG, f, indent=4)
+            json.dump(PARSER_CONFIG, f, indent=4, cls=ConfigJSONEncoder)
     except Exception as e:
         log.error(f"Error saving config: {e}")
 

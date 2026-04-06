@@ -26,7 +26,7 @@ from src.core.config_master import GLOBAL_CONFIG
 
 # Parser Categories (Centralized v1.35.68)
 AUDIO_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["audio"])
-MULTIMEDIA_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["multimedia"])
+VIDEO_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["video"])
 UNIVERSAL_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["universal"])
 
 def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
@@ -265,7 +265,7 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
             break
             
         # Category Isolation
-        if is_audio and step_name in MULTIMEDIA_PARSER_IDS:
+        if is_audio and step_name in VIDEO_PARSER_IDS:
              log.debug(f"🔇 [Audio-Branch] Skipping multimedia parser '{step_name}' for '{filename}'")
              continue
         

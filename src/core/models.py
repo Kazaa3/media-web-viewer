@@ -83,7 +83,7 @@ PLAYLIST_EXTENSIONS = MASTER_CAT_MAP["playlists"]["extensions"]
 DSD_EXTENSIONS = {ext for ext in AUDIO_EXTENSIONS if ext in {".dsf", ".dff", ".dsd"}}
 HDDVD_EXTENSIONS = {".evo", ".map", ".bup"} # Subset of disk_images
 ALL_AUDIO_EXTENSIONS = AUDIO_EXTENSIONS 
-ALL_MULTIMEDIA_EXTENSIONS = VIDEO_EXTENSIONS | DISK_IMAGE_EXTENSIONS | HDDVD_EXTENSIONS
+ALL_VIDEO_EXTENSIONS = VIDEO_EXTENSIONS | DISK_IMAGE_EXTENSIONS | HDDVD_EXTENSIONS
 
 TECH_MARKERS = {
     "transcoded": ["_transcoded", ".mp4_transcoded"],

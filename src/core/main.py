@@ -111,7 +111,6 @@ from typing import Dict, Any, List, Optional, cast
 # Third-party imports that require the virtual environment
 try:
     import psutil
-    import requests
     import bottle
     import eel
     from eel import chrome
@@ -213,6 +212,16 @@ except ImportError:
         def __exit__(self, *a): pass
         def update(self, *a): log.info(f"[Progress] {self.msg} ({a[0]}%)")
 
+class Lazy:
+    """Lazy-loading proxy for modules (v1.35.68 Optimization)."""
+    def __init__(self, name): self._name, self._mod = name, None
+    def __getattr__(self, attr):
+        if not self._mod:
+            import importlib
+            self._mod = importlib.import_module(self._name)
+            log.debug(f"🚀 [Lazy-Load] {self._name} accessed via '{attr}'")
+        return getattr(self._mod, attr)
+
 # 3. Early Monkey Patching
 try:
     from gevent import monkey
@@ -221,7 +230,31 @@ try:
 except ImportError:
     log.info("[Bootstrap] gevent not found, continuing without patching")
 
+# Lazy Proxy Module Registry (v1.35.68 - Exact Mappings)
+mode_router = Lazy("src.core.mode_router")
+hardware_detector = Lazy("src.core.hardware_detector")
+remux_utils = Lazy("src.core.remux_utils")
+hls_stream = Lazy("src.core.streams.hls_stream")
+vlc_bridge = Lazy("src.core.streams.vlc_bridge")
+tag_writer = Lazy("src.parsers.tag_writer")
+format_utils = Lazy("src.parsers.format_utils")
 
+# Data Proxies (Redirecting to format_utils)
+class LazyConfigProxy(Lazy):
+    def __getattr__(self, attr):
+        mod = super().__getattr__("__name__") # force load
+        return getattr(self._mod, "PARSER_CONFIG").get(attr) if attr != "get" else getattr(self._mod, "PARSER_CONFIG").get
+    def __getitem__(self, key):
+        if not self._mod: self.__getattr__("get")
+        return self._mod.PARSER_CONFIG[key]
+    def __setitem__(self, key, value):
+        if not self._mod: self.__getattr__("get")
+        self._mod.PARSER_CONFIG[key] = value
+    def update(self, val):
+        if not self._mod: self.__getattr__("get")
+        self._mod.PARSER_CONFIG.update(val)
+
+PARSER_CONFIG = LazyConfigProxy("src.parsers.format_utils")
 
 with StatusBar("Initializing Application Environment", total=100) as sb:
     sb.update(40, "Environment Stabilized")
@@ -267,22 +300,17 @@ with StatusBar("Loading Core Components", total=100) as sb:
     eel.init(web_dir)
     sb.update(25, "Eel Assets Ready")
 
-    sb.update(30, "Loading Core SRC Modules")
+    sb.update(30, "Registering Core SRC Modules")
     try:
-        from src.core.remux_utils import remux_to_mp4_cache, extract_main_from_iso
-        from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
-        from src.core.mode_router import smart_route
         from src.core import db
         from src.core.db import DB_FILENAME
-        from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, audit_category_chain, get_allowed_internal_cats
+        from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_cats
         from src.core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
-        from src.core import hardware_detector
-        from src.parsers import tag_writer
-        from src.parsers.format_utils import (
-            PARSER_CONFIG, load_parser_config, save_parser_config,
-            AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, detect_file_format,
-            ffprobe_suite, ffprobe_quality_score
-        )
+        
+        # Core data initialization (no heavy parsing yet)
+        db.init_db()  
+        
+        sb.update(80, "Core modules registered")
         sb.update(80, "Core modules loaded")
         
         # Initial DB Status Trace
