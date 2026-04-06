@@ -128,6 +128,12 @@ async function renderLibrary() {
     
     // Start with all items
     let projectedItems = [...allLibraryItems];
+    
+    // [DIAGNOSTIC] Aggressive Audit (v1.35.68)
+    console.warn(`[FE-AUDIT] STAGE 0: Initial Count: ${allLibraryItems.length}`);
+    if (allLibraryItems.length > 0) {
+        console.debug("[FE-AUDIT] Sample Item:", allLibraryItems[0]);
+    }
 
     // 1. Hydration Mode Filter (Mock/Real/Both) - v1.35.68
     const hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
