@@ -1,20 +1,26 @@
 /**
- * System & Environment Helpers
+ * System & Environment Helpers (v1.35.68 Centralized)
  */
 let mwv_config = {
     start_page: 'player',
     app_mode: 'High-Performance',
-    parser_mode: 'lightweight',
-    minimal_player_view: false,
-    enable_mock_data: false
+    parser_mode: 'lightweight'
 };
 
 async function loadConfig() {
     try {
+        // v1.35.68: Prioritize Global Config from backend
+        if (window.CONFIG && window.CONFIG.parser_registry) {
+            mwv_config = { ...mwv_config, ...window.CONFIG.parser_registry };
+            console.log('[Sync] System config hydrated from Centralized Registry.');
+            return;
+        }
+        
         const response = await fetch('config.json');
         if (response.ok) {
-            mwv_config = await response.json();
-            console.log('Global config loaded:', mwv_config);
+            const data = await response.json();
+            mwv_config = { ...mwv_config, ...data };
+            console.log('Global config loaded from config.json fallback:', mwv_config);
         }
     } catch (e) {
         console.warn('Failed to load config.json:', e);
@@ -25,13 +31,18 @@ async function checkBackendReachability() {
     const statusText = document.getElementById('rtt-output');
     const container = document.getElementById('rtt-results-container');
     if (container) container.style.display = 'block';
-    if (statusText) statusText.innerText = "[Network] Probing 127.0.0.1 (Eel Port Bind Check)...";
-
+    
+    // v1.35.68: Centralized Network Discovery
+    const host = window.CONFIG?.network_settings?.bind_address || '127.0.0.1';
+    const port = window.location.port || window.CONFIG?.network_settings?.port || '8345';
+    
+    if (statusText) statusText.innerText = `[Network] Probing ${host}:${port} (Eel Port Bind Check)...`;
+    
     try {
         const res = await eel.rtt_ping("localhost_check")();
         if (res && res.status === 'pong') {
             if (statusText) {
-                statusText.innerText = `[SUCCESS] Connection to 127.0.0.1 is active.\nStatus: Stable\nBackend ID: ${res.pid || 'running'}`;
+                statusText.innerText = `[SUCCESS] Connection to ${host}:${port} is active.\nStatus: Stable\nBackend ID: ${res.pid || 'running'}`;
                 statusText.style.color = "#2a7";
             }
         } else {
@@ -39,7 +50,7 @@ async function checkBackendReachability() {
         }
     } catch (err) {
         if (statusText) {
-            statusText.innerText = `[FAILED] 127.0.0.1 refused the connection (ERR_CONNECTION_REFUSED).\nError: ${err.message}\n\nTroubleshooting:\n- Backend process might have crashed.\n- Port ${window.location.port || '8345'} is blocked by firewall.\n- Eel server failed to bind to 127.0.0.1.`;
+            statusText.innerText = `[FAILED] ${host}:${port} refused the connection (ERR_CONNECTION_REFUSED).\nError: ${err.message}\n\nTroubleshooting:\n- Backend process might have crashed.\n- Port ${port} is blocked by firewall.\n- Eel server failed to bind to ${host}.`;
             statusText.style.color = "#f44336";
         }
     }

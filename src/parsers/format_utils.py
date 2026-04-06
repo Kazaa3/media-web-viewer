@@ -730,7 +730,9 @@ def ffprobe_suite(path: Path | str) -> dict[str, Any]:
     """
     Runs ffprobe on the given path and returns a structured analysis object.
     """
-    ffprobe_path = shutil.which("ffprobe") or "ffprobe"
+    # Global/Centralized Binary Orchestration (v1.35.68)
+    from src.core.config_master import GLOBAL_CONFIG
+    ffprobe_path = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
     
     p = Path(path)
     if p.exists() and p.is_dir():

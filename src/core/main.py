@@ -122,6 +122,24 @@ def shutdown_backend():
     sys.exit(0)
 
 @eel.expose
+def get_category_master():
+    """Returns the centralized category mapping (v1.35.68)."""
+    from src.core.config_master import GLOBAL_CONFIG
+    return GLOBAL_CONFIG["category_registry"]["master_map"]
+
+@eel.expose
+def get_global_config():
+    """Returns the full centralized configuration (v1.35.68)."""
+    from src.core.config_master import GLOBAL_CONFIG
+    return GLOBAL_CONFIG
+
+@eel.expose
+def get_tech_markers():
+    """Returns the centralized transcoding tech markers (v1.35.68)."""
+    from src.core.config_master import GLOBAL_CONFIG
+    return GLOBAL_CONFIG.get("transcoding_settings", {})
+
+@eel.expose
 def get_startup_info():
     """Returns the time the backend took to boot and total duration up to this call."""
     import time
@@ -2361,8 +2379,9 @@ def get_sys_overview(force_refresh=False):
         }
 
     def _get_runtime_tools_status():
-        ffmpeg_path = shutil.which("ffmpeg")
-        ffprobe_path = shutil.which("ffprobe")
+        from src.core.config_master import GLOBAL_CONFIG
+        ffmpeg_path = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        ffprobe_path = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
         vlc_cli_path = shutil.which("vlc")
         mkvinfo_path = shutil.which("mkvinfo")
         mkvmerge_path = shutil.which("mkvmerge")
@@ -4058,9 +4077,10 @@ def find_main_track_iso(path: str) -> int:
     import subprocess
     import re
     try:
+        from src.core.config_master import GLOBAL_CONFIG
         # Use ffprobe to scan titles if possible, though DVD-structure is tricky with pure ffmpeg
         # Often, the longest title is the one we want.
-        cmd = ["ffprobe", "-i", str(path), "-show_format", "-show_streams", "-loglevel", "error"]
+        cmd = [GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"), "-i", str(path), "-show_format", "-show_streams", "-loglevel", "error"]
         # Note: True DVD title detection often requires libdvdnav/lsdvd. 
         # Fallback to Title 1 or longest stream if ffprobe cannot see the structure.
         return 0 
@@ -4422,8 +4442,9 @@ def get_video_metadata(file_path: str) -> dict:
     Analyzes a video file using ffprobe and returns codec/container info.
     """
     try:
+        from src.core.config_master import GLOBAL_CONFIG
         cmd = [
-            "ffprobe", "-v", "quiet", "-print_format", "json",
+            GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"), "-v", "quiet", "-print_format", "json",
             "-show_format", "-show_streams", str(file_path)
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)

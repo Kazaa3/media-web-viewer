@@ -99,9 +99,19 @@ def get_binary_version(path: str, flag: str = "-version") -> str:
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 GLOBAL_CONFIG: Dict[str, Any] = {
-    # System & Paths
+    "version": VERSION,
+    "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    
+    # --- NETWORK REGISTRY (v1.35.68 Centralized) ---
+    "network_settings": {
+        "host": APP_HOST,
+        "port": APP_PORT,
+        "bind_address": BIND_ADDR,
+        "api_root": f"http://{BIND_ADDR}:{APP_PORT}"
+    },
+
     # System & Ports
-    "port": int(os.environ.get("MWV_PORT", 8345)),
+    "port": APP_PORT,
     "vlc_port": int(os.environ.get("MWV_VLC_PORT", 8080)),
     "mtx_port": int(os.environ.get("MWV_MTX_PORT", 8888)),
     "debug_mode": get_env_bool("MWV_DEBUG", True),
@@ -205,7 +215,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "mpv": discover_binary("mpv", "mpv"),
         "m3u8": discover_binary("m3u8", "m3u8-tester"),
         "isoinfo": discover_binary("isoinfo", "isoinfo"), # ISO 9660 tool
-        "mediainfo": discover_binary("mediainfo", "mediainfo") # MediaInfo CLI backend
+        "mediainfo": discover_binary("mediainfo", "mediainfo"), # MediaInfo CLI backend
+        "docker": discover_binary("docker", "docker"), # Docker CLI
+        "doxygen": discover_binary("doxygen", "doxygen"), # documentation
+        "graphviz": discover_binary("dot", "dot"), # graphviz
+        "chrome": discover_binary("google-chrome", "google-chrome") # playwright/eel backend
     },
     
     # --- STORAGE REGISTRY (v1.35.68 Centralized) ---
@@ -540,7 +554,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "python": sys.version.split()[0],
         "pip": get_binary_version("pip", "--version").split()[1] if " " in get_binary_version("pip", "--version") else "Unknown",
         "conda": os.environ.get("CONDA_DEFAULT_ENV", "N/A"),
-        "conda_version": get_binary_version("conda", "--version").split()[-1] if "conda" in get_binary_version("conda", "--version").lower() else "N/A"
+        "conda_version": get_binary_version("conda", "--version").split()[-1] if "conda" in get_binary_version("conda", "--version").lower() else "N/A",
+        "docker_version": get_binary_version("docker", "--version").split()[-1] if "docker" in get_binary_version("docker", "--version").lower() else "N/A",
+        # PIP Packages Version Registry
+        "eel": get_binary_version("pip", "show eel").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show eel") else "N/A",
+        "bottle": get_binary_version("pip", "show bottle").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show bottle") else "N/A",
+        "mutagen": get_binary_version("pip", "show mutagen").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show mutagen") else "N/A",
+        "psutil": get_binary_version("pip", "show psutil").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show psutil") else "N/A",
+        "gevent": get_binary_version("pip", "show gevent").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show gevent") else "N/A",
+        "pytest": get_binary_version("pip", "show pytest").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pytest") else "N/A",
+        # Toolchain Versions
+        "doxygen": get_binary_version("doxygen", "--version"),
+        "graphviz": get_binary_version("dot", "-V").split()[-1] if "version" in get_binary_version("dot", "-V").lower() else "N/A",
+        "chrome": get_binary_version("google-chrome", "--version").split()[-1] if "Google Chrome" in get_binary_version("google-chrome", "--version") else "N/A"
     },
     
     # --- TRANSCODING & ENGINE SETTINGS (v1.35.68 Centralized) ---
@@ -555,7 +581,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     },
     
     "mediamtx_settings": {
-        "host": os.environ.get("MWV_MTX_HOST", "localhost"),
+        "host": APP_HOST,
         "hls_port": int(os.environ.get("MWV_MTX_HLS_PORT", 8888)),
         "webrtc_port": int(os.environ.get("MWV_MTX_WEBRTC_PORT", 8889)),
         "rtsp_port": int(os.environ.get("MWV_MTX_RTSP_PORT", 8554))
@@ -575,11 +601,22 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chromecast_name": os.environ.get("MWV_CAST_NAME", "")
     },
     
-    # --- BROWSER DISCOVERY LADDER ---
+    # --- BROWSER DISCOVERY LADDER (Centralized v1.35.68) ---
     "browsers": [
         "google-chrome-stable", "google-chrome", "chrome",
-        "chromium-browser", "chromium", "firefox", "msedge", "brave"
-    ]
+        "google-chrome-unstable", "google-chrome-beta",
+        "chromium-browser", "chromium",
+        "firefox", "firefox-developer-edition", "firefox-esr",
+        "msedge", "msedge-dev", "msedge-beta",
+        "brave-browser", "brave", "opera", "vivaldi"
+    ],
+    
+    # --- HEADLESS & DIALECT REGISTRY ---
+    "headless_tools": {
+        "playwright": get_binary_version("playwright", "--version") if "playwright" in get_binary_version("pip", "list") else "N/A",
+        "puppeteer": "Available" if "puppeteer" in get_binary_version("npm", "list -g") else "N/A",
+        "selenium": "Available" if "selenium" in get_binary_version("pip", "list") else "N/A"
+    }
 }
 
 # Parser constants moved to core for centralization

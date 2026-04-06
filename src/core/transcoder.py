@@ -151,8 +151,10 @@ class TranscoderManager:
         return task_ids
 
     def _build_webm_cmd(self, task: TranscodeTask) -> List[str]:
-        # FFmpeg VP9/WebM command with HW acceleration if available
-        cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", task.input_path]
+        # FFmpeg VP9/WebM command with HW acceleration if available (v1.35.68)
+        from src.core.config_master import GLOBAL_CONFIG
+        ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        cmd = [ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-i", task.input_path]
         
         from src.core import hardware_detector
         gpu_info = hardware_detector.get_gpu_info()
@@ -161,7 +163,7 @@ class TranscoderManager:
         # VP9 HW Encoders (if available via ffmpeg)
         if "nvenc" in encoders:
             # Note: nvenc supports hevc/h264, vp9 support depends on hardware
-            cmd += ["-c:v", "vp9_nvenc"] if "vp9_nvenc" in str(subprocess.run(["ffmpeg", "-encoders"], capture_output=True).stdout) else ["-c:v", "libvpx-vp9"]
+            cmd += ["-c:v", "vp9_nvenc"] if "vp9_nvenc" in str(subprocess.run([ffmpeg_bin, "-encoders"], capture_output=True).stdout) else ["-c:v", "libvpx-vp9"]
         else:
             cmd += ["-c:v", "libvpx-vp9"]
 
@@ -171,9 +173,11 @@ class TranscoderManager:
         return cmd
 
     def _get_duration(self, task: TranscodeTask):
-        """Usee ffprobe to get duration in seconds."""
+        """Use ffprobe to get duration in seconds (v1.35.68)."""
         try:
-            cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", task.input_path]
+            from src.core.config_master import GLOBAL_CONFIG
+            ffprobe_bin = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
+            cmd = [ffprobe_bin, "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", task.input_path]
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 task.duration = float(result.stdout.strip())

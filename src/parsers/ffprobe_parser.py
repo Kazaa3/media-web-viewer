@@ -44,8 +44,9 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
         tags['full_tags'] = {}
 
     try:
+        from src.core.config_master import GLOBAL_CONFIG
         cmd = [
-            "ffprobe",
+            GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"),
             "-v", "quiet",
             "-print_format", "json",
             "-show_format",

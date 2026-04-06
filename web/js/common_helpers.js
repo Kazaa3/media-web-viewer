@@ -13,7 +13,7 @@ let CONFIG = {}; // Centralized Flag & Env registry
 async function syncCoreRegistry() {
     if (typeof eel !== 'undefined' && typeof eel.get_category_master === 'function') {
         try {
-            // Parallel fetch for speed
+            // Parallel fetch for speed (v1.35.68 Centralized)
             const [master, tech, config] = await Promise.all([
                 eel.get_category_master()(),
                 eel.get_tech_markers()(),
@@ -23,6 +23,7 @@ async function syncCoreRegistry() {
             if (master) {
                 console.info("[Sync] Category Master Loaded:", master);
                 CATEGORY_MAP = master;
+                window.CATEGORY_MAP = master;
             }
             if (tech) {
                 console.info("[Sync] Tech Markers Loaded:", tech);
@@ -43,6 +44,13 @@ async function syncCoreRegistry() {
         }
     }
 }
+
+/**
+ * Specialized Sync Wrappers for Module Compatibility (v1.35.68)
+ */
+async function syncCategoryMaster() { await syncCoreRegistry(); }
+async function syncTechMarkers()    { await syncCoreRegistry(); }
+async function syncGlobalConfig()   { await syncCoreRegistry(); }
 
 // Global initialization hook
 document.addEventListener('DOMContentLoaded', () => {
