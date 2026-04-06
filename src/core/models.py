@@ -135,6 +135,15 @@ def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
 
     for dc in displayed_cats:
         raw_dc = dc.lower()
+        
+        # 0. Handle 'all' expansion (v1.35.68 Master Reset)
+        if raw_dc == 'all':
+            for key, config in MASTER_CAT_MAP.items():
+                allowed.add(key)
+                for alias in config.get("aliases", []):
+                    allowed.add(alias.lower())
+            continue
+
         # 1. Resolve to canonical internal ID
         canonical = category_alias_table.get(raw_dc, raw_dc)
         

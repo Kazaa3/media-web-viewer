@@ -260,7 +260,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "auto_scan": get_env_bool("MWV_AUTO_SCAN", True),
     "fast_scan": get_env_bool("MWV_FAST_SCAN", True),
     "parser_mode": os.environ.get("MWV_PARSER_MODE", "lightweight"), # lightweight, full, ultimate
-    "displayed_categories": ["audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "unbekannt"],
+    "displayed_categories": ["all", "audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "unbekannt"],
     "active_branch": os.environ.get("MWV_BRANCH", "video"), # audio, video
     
     "scan_settings": {
@@ -410,7 +410,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "app_mode": os.environ.get("MWV_APP_MODE", "High-Performance"),
         "playback_mode": os.environ.get("MWV_PLAYBACK_MODE", "hls"),
         "library_dir": str(PROJECT_ROOT / "media"),
-        "displayed_categories": ["audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "multimedia", "unbekannt"],
+        "displayed_categories": ["all", "audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "multimedia", "unbekannt"],
         "debug_scan": get_env_bool("MWV_DEBUG_SCAN", False),
         "parser_settings": {
             "use_fast_isoparser": True,
