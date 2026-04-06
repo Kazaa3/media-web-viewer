@@ -3261,9 +3261,10 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
     @return Tuple of (filtered_list, audit_metadata)
     """
+    # RAW BYPASS (v1.37.07) - Truly bypass IF force_raw is true, regardless of search unless explicitly filtered.
     if force_raw and not search and genre == "all" and year == "all":
-        log.info("[BD-AUDIT] RAW MODE: Bypassing all category filters.")
-        return all_media, {"status": "raw_bypass", "dropped_total": 0}
+        log.info("[BD-AUDIT] STAGE 0 (RAW): Bypassing all filters.")
+        return all_media, {"status": "raw_bypass", "dropped_total": 0, "stage": 0}
 
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
@@ -3284,13 +3285,14 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     }
     
     for item in all_media:
-        # 1. Category check (Skip if force_raw)
+        # 1. Category check (Bypass logic v1.37.07)
+        # RAW Mode Level 1 & 2 skip this.
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
             if cat not in allowed_internal_cats:
                 dropped_reasons["category_mismatch"] += 1
-                if dropped_reasons["category_mismatch"] <= 5: 
-                    log.debug(f"[BD-AUDIT] Dropped '{item.get('name')}' - Category '{cat}' not in {allowed_internal_cats}")
+                if dropped_reasons["category_mismatch"] <= 10: 
+                    log.debug(f"[BD-AUDIT] Dropped '{item.get('name')}' - Cat '{cat}' not in {allowed_internal_cats[:5]}...")
                 continue
 
         # 2. Search check
@@ -3395,44 +3397,56 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             "audit": {"stage": 2, "pid": pid, "path": db_path, "fs": fs_audit}
         }
 
-    # --- STAGE 3: FILTERED (v1.35.99 Final Audit) ---
+    # --- STAGE 3: FULL PRODUCTION FILTER (v1.37.07) ---
     filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=False)
-    audit_len = len(filtered_media)
-    log.info(f"[BD-AUDIT] STAGE 3: Filtered {audit_len}/{count_total} items.")
+    
+    # [DIAGNOSTIC] Stage-Injection logic
+    hydration_stage = {
+        0: all_media,              # Raw SQL Rows
+        1: all_media,              # (Future: Normalized SSOT objects)
+        2: _apply_library_filters(all_media, force_raw=True)[0], # Cased but unfiltered by secondary
+        3: filtered_media          # Production
+    }
+    
+    final_media = hydration_stage.get(audit_stage, filtered_media)
+    
+    log.info(f"[BD-AUDIT] Hydration Complete. Stage: {audit_stage} | Out: {len(final_media)}/{count_total}")
 
     return {
-        "media": filtered_media,
+        "media": final_media,
         "db_count": count_total,
-        "status": "filtered",
+        "status": "success" if len(final_media) > 0 else "empty",
         "audit": {
-            "stage": 3,
+            "stage": audit_stage,
             "pid": pid,
             "path": db_path,
-            "raw_count": count_total,
-            "filtered_count": audit_len,
             "fs": fs_audit,
-            "logic_audit": logic_audit
+            "dropped_reasons": logic_audit.get("dropped_reasons", {}),
+            "allowed_cats": logic_audit.get("allowed_cats", [])
         }
     }
 
 
 @eel.expose
-def get_library_audit_summary():
-    """
-    @brief Returns a high-level summary of the filter chain performance.
-    @details Used for the diagnostics sidebar to show why items are dropped.
-    """
+def get_library_audit_summary() -> Dict[str, Any]:
+    """Provides a breakdown of item counts at each stage of hydration (541 -> 527 -> X)."""
     from src.core import db
     all_media = db.get_all_media()
-    raw_count = len(all_media)
-    filtered, audit = _apply_library_filters(all_media, force_raw=False)
+    total = len(all_media)
+    
+    # Calculate Stages explicitly for the audit
+    cat_filtered, cat_audit = _apply_library_filters(all_media, force_raw=True)
+    full_filtered, full_audit = _apply_library_filters(all_media, force_raw=False)
     
     return {
-        "status": "ok",
-        "raw_count": raw_count,
-        "filtered_count": len(filtered),
-        "dropped_reasons": audit.get("dropped_reasons", {}),
-        "allowed_cats": audit.get("allowed_cats", [])
+        "stages": {
+            "0_db_raw": total,
+            "1_ssot_norm": total, # Current SSOT level includes everything if force_raw
+            "2_cat_mapped": len(cat_filtered),
+            "3_production": len(full_filtered)
+        },
+        "dropped_reasons": full_audit.get("dropped_reasons", {}),
+        "allowed_cats": full_audit.get("allowed_cats", [])
     }
 
 

@@ -22,62 +22,61 @@ from src.parsers import media_parser
 from src.core import logger
 from src.core.config_master import GLOBAL_CONFIG
 
-# --- ULTIMATE SSOT REGISTRIES (v1.35.76 Consolidated) ---
+# --- ULTIMATE SSOT REGISTRIES (v1.37.07 Consolidated) ---
 # These registries are the absolute source of truth for all media categorization.
-
-EXTENSION_REGISTRY = {
-    "audio": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".dts", ".dtshd", ".pcm", ".ra", ".rm"},
-    "video": {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2", ".ogv", ".mts", ".m2ts", ".ts", ".m2t", ".m2v", ".divx", ".xvid", ".vob", ".dat", ".rmvb", ".asf"},
-    "pictures": {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"},
-    "documents": {".pdf", ".doc", ".docx", ".txt", ".md", ".html", ".htm"},
-    "ebooks": {".epub", ".mobi", ".azw", ".fb2"},
-    "disk_images": {".iso", ".bin", ".img", ".cue", ".nrg", ".mdf", ".toast", ".ccd", ".daa"},
-    "dsd": {".dsf", ".dff", ".dsd"},
-    "hd_dvd": {".evo", ".map", ".bup"},
-    "playlists": {".m3u", ".m3u8"}
-}
-
-# Standardized SSOT Extension Constants (v1.35.83)
-AUDIO_EXTENSIONS = EXTENSION_REGISTRY["audio"]
-VIDEO_EXTENSIONS = EXTENSION_REGISTRY["video"]
-PICTURE_EXTENSIONS = EXTENSION_REGISTRY["pictures"]
-DOCUMENT_EXTENSIONS = EXTENSION_REGISTRY["documents"]
-EBOOK_EXTENSIONS = EXTENSION_REGISTRY["ebooks"]
-DISK_IMAGE_EXTENSIONS = EXTENSION_REGISTRY["disk_images"]
-DSD_EXTENSIONS = EXTENSION_REGISTRY["dsd"]
-HDDVD_EXTENSIONS = EXTENSION_REGISTRY["hd_dvd"]
-PLAYLIST_EXTENSIONS = EXTENSION_REGISTRY["playlists"]
-
-# Calculated Logic Extensions (v1.35.84 SSOT)
-ALL_AUDIO_EXTENSIONS = AUDIO_EXTENSIONS | DSD_EXTENSIONS
-ALL_MULTIMEDIA_EXTENSIONS = VIDEO_EXTENSIONS | DISK_IMAGE_EXTENSIONS | HDDVD_EXTENSIONS
+# We enforce lowercase English keys internally (audio, multimedia, etc.).
 
 MASTER_CAT_MAP = {
-    "audio": [
-        "audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", 
-        "musik", "compilation", "single", "radio", "soundtrack", "playlist", 
-        "music", "song"
-    ],
-    "multimedia": [
-        "multimedia", "video", "film", "serie", "tv", "movie", "tv show", 
-        "musikvideos", "animes", "cartoons", "video object", "animations", 
-        "documentary", "dok", "dokumentation", "concert", "konzerte",
-        "iso", "disk-abbild", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd", 
-        "3d", "4k", "uhd", "ultra hd", "bdmv"
-    ],
-    "pictures": ["bilder", "grafik", "bild", "foto", "images", "gallery", "pictures", "fotos"],
-    "documents": ["dokument", "pdf", "text", "doc", "docx", "txt", "office"],
-    "ebooks": ["e-book", "ebook", "epub", "mobi"],
-    "disk_images": [
-        "abbild", "disk-abbild", "iso", "dvd ntsc", "dvd pal", 
-        "pal dvd", "ntsc dvd", "blu-ray", "3d", "4k", "uhd"
-    ],
-    "spiel": ["spiel", "game", "pc spiel", "digitales spiel", "steam"],
-    "beigabe": ["beigabe", "supplement", "software", "additional"],
-    "hörspiel": ["hörspiel", "radio drama", "audio drama"],
-    "hörbuch": ["hörbuch", "audiobook", "audio book"],
-    "unbekannt": ["unbekannt", "unknown", "undefiniert"]
+    "audio": {
+        "internal": "audio",
+        "aliases": ["audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", "musik", "music", "song", "soundtrack", "radio"],
+        "extensions": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".dts", ".pcm", ".ra", ".rm", ".dsf", ".dff", ".dsd"}
+    },
+    "multimedia": {
+        "internal": "multimedia",
+        "aliases": ["multimedia", "video", "film", "serie", "tv", "movie", "tv show", "musikvideos", "animes", "cartoons", "documentary", "dok", "dokumentation", "concert", "konzerte", "3d", "4k", "uhd", "ultra hd"],
+        "extensions": {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2", ".ogv", ".mts", ".m2ts", ".ts", ".m2t", ".m2v", ".divx", ".xvid", ".vob", ".dat", ".rmvb", ".asf"}
+    },
+    "pictures": {
+        "internal": "pictures",
+        "aliases": ["bilder", "grafik", "bild", "foto", "images", "gallery", "pictures", "fotos"],
+        "extensions": {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
+    },
+    "documents": {
+        "internal": "documents",
+        "aliases": ["dokument", "pdf", "text", "doc", "docx", "txt", "office", "docs"],
+        "extensions": {".pdf", ".doc", ".docx", ".txt", ".md", ".html", ".htm"}
+    },
+    "ebooks": {
+        "internal": "ebooks",
+        "aliases": ["e-book", "ebook", "epub", "mobi"],
+        "extensions": {".epub", ".mobi", ".azw", ".fb2"}
+    },
+    "disk_images": {
+        "internal": "disk_images",
+        "aliases": ["abbild", "disk-abbild", "iso", "dvd ntsc", "dvd pal", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd", "iso image"],
+        "extensions": {".iso", ".bin", ".img", ".cue", ".nrg", ".mdf", ".toast", ".ccd", ".daa", ".evo", ".map", ".bup"}
+    },
+    "spiel": {
+        "internal": "spiel",
+        "aliases": ["spiel", "game", "pc spiel", "digitales spiel", "steam"],
+        "extensions": {".exe", ".msi"} # Minimal set for mock/recognition
+    },
+    "playlists": {
+        "internal": "playlists",
+        "aliases": ["playlist", "m3u", "m3u8"],
+        "extensions": {".m3u", ".m3u8"}
+    }
 }
+
+# Calculated Logic Extensions (REDUNDANCY CLEANUP v1.37.07)
+AUDIO_EXTENSIONS = MASTER_CAT_MAP["audio"]["extensions"]
+VIDEO_EXTENSIONS = MASTER_CAT_MAP["multimedia"]["extensions"]
+PICTURE_EXTENSIONS = MASTER_CAT_MAP["pictures"]["extensions"]
+DOCUMENT_EXTENSIONS = MASTER_CAT_MAP["documents"]["extensions"]
+EBOOK_EXTENSIONS = MASTER_CAT_MAP["ebooks"]["extensions"]
+DISK_IMAGE_EXTENSIONS = MASTER_CAT_MAP["disk_images"]["extensions"]
+PLAYLIST_EXTENSIONS = MASTER_CAT_MAP["playlists"]["extensions"]
 
 TECH_MARKERS = {
     "transcoded": ["_transcoded", ".mp4_transcoded"],
@@ -96,49 +95,50 @@ SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
 # --- ULTIMATE AUDITING LOGIC (v1.35.76) ---
 
 def audit_category_chain(item: Dict) -> str:
-    """Automated debugging helper for the category chain assignment."""
+    """Automated debugging helper for the category chain assignment (v1.37.07 SSOT)."""
     raw_cat = str(item.get('category', 'Unbekannt')).lower()
     name = item.get('name', 'unknown')
     
-    matched_branch = None
-    for branch, internal_cats in MASTER_CAT_MAP.items():
-        if raw_cat in [ic.lower() for ic in internal_cats] or raw_cat == branch.lower():
-            matched_branch = branch
+    matched_internal = None
+    for internal_key, config in MASTER_CAT_MAP.items():
+        if raw_cat == internal_key or raw_cat in config["aliases"]:
+            matched_internal = internal_key
             break
             
-    if matched_branch:
-        return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: Master={matched_branch} -> OK"
-    elif raw_cat in [b.lower() for b in MASTER_CAT_MAP.keys()]:
-        return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: Direct Master -> OK"
+    if matched_internal:
+        return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: Internal={matched_internal} -> OK"
     return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: NO MATCH -> DROPPED"
 
 def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
     """
-    @brief Returns the flattened list of internal labels for the requested categories (v1.35.99 Fix).
-    Supports category aliasing (e.g., 'video' -> 'multimedia').
+    @brief Returns the flattened list of internal labels for the requested categories (v1.37.07 SSOT).
+    Supports German aliases and cross-mappings.
     """
     allowed = set()
-    category_aliases = {
-        "video": "multimedia",
-        "movies": "multimedia",
-        "music": "audio",
-        "audio": "audio",
-        "pictures": "pictures",
-        "documents": "documents",
-        "docs": "documents",
-        "disk_images": "disk_images",
-        "multimedia": "multimedia"
+    # Explicit User-to-Internal Alias Table
+    category_alias_table = {
+        "musik": "audio", "music": "audio", "audio": "audio", "album": "audio",
+        "video": "multimedia", "film": "multimedia", "movies": "multimedia", "multimedia": "multimedia",
+        "bilder": "pictures", "fotos": "pictures", "pictures": "pictures",
+        "dokumente": "documents", "docs": "documents", "documents": "documents",
+        "disk_images": "disk_images", "isos": "disk_images",
+        "ebooks": "ebooks", "bücher": "ebooks"
     }
 
     for dc in displayed_cats:
         raw_dc = dc.lower()
-        canonical = category_aliases.get(raw_dc, raw_dc)
-        labels = MASTER_CAT_MAP.get(canonical, [])
-        # Also always include the canonical name itself
+        # 1. Resolve to canonical internal ID
+        canonical = category_alias_table.get(raw_dc, raw_dc)
+        
+        # 2. Add the canonical ID itself
         allowed.add(canonical)
-        for label in labels:
-            allowed.add(label.lower())
-            
+        
+        # 3. Add all associated sub-labels (aliases) from the MASTER_CAT_MAP
+        config = MASTER_CAT_MAP.get(canonical)
+        if config:
+            for alias in config["aliases"]:
+                allowed.add(alias.lower())
+                
     return list(allowed)
 
 # --- PLAYBACK & COMPATIBILITY REGISTRY (v1.35.77 Consolidated) ---
