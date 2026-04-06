@@ -482,7 +482,27 @@
                     </div>
                 </div>
 
-                <!-- Row 3: Workspace Environments -->
+                <!-- Row 3: App Mode & Headless Orchestration (v1.35.68 Centralized) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card); border-top: 4px solid var(--accent-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0; font-size: 1.1em; font-weight: 800;">App-Modus & Headless Engine</h3>
+                            <div id="env-app-mode-status" style="font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: rgba(46,204,113,0.1); color: #2ecc71;">ACTIVE</div>
+                        </div>
+                        <div id="env-headless-registry" style="display: flex; flex-direction: column; gap: 10px; font-size: 12px;">
+                            <!-- Populated via window.CONFIG.headless_registry -->
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="padding: 24px; border-radius: var(--radius-card);">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.1em; font-weight: 800;">Browser Discovery (Toolchain)</h3>
+                        <div id="env-browser-ladder" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <!-- Populated via window.CONFIG.browsers -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 4: Workspace Environments -->
                 <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
                     <h3 style="margin: 0 0 15px 0; font-weight: 800;" data-i18n="env_workspace_matrix">Vorhandene Umgebungen</h3>
                     <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 25px;">

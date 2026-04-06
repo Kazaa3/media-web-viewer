@@ -70,6 +70,10 @@ async function loadEnvironmentInfo() {
         buildVenvGrid(info.venvs || []);
         buildVenvTree(info.venvs || []);
 
+        // 5. App Mode & Browser Toolchain (v1.35.68 Centralized)
+        if (typeof buildHeadlessUI === 'function') buildHeadlessUI();
+        if (typeof buildBrowserToolchainUI === 'function') buildBrowserToolchainUI();
+
     } catch (e) {
         console.error('[Options] loadEnvironmentInfo failed:', e);
     }
@@ -135,8 +139,63 @@ function buildVenvGrid(venvs) {
 
 function buildVenvTree(venvs) {
     const tree = document.getElementById('env-tree-view');
-    if (!tree) return;
-    tree.innerHTML = venvs.map(v => `<div>└── ${v.name} (${v.version}) <span style="opacity:0.4">${v.path}</span></div>`).join('');
+    if (tree) tree.innerHTML = venvs.map(v => `<div>└── ${v.name} (${v.version}) <span style="opacity:0.4">${v.path}</span></div>`).join('');
+}
+
+/**
+ * v1.35.68: App Mode & Browser Toolchain Builders
+ */
+function buildHeadlessUI() {
+    const container = document.getElementById('env-headless-registry');
+    if (!container || !window.CONFIG?.headless_registry) return;
+    
+    const reg = window.CONFIG.headless_registry;
+    const status = document.getElementById('env-app-mode-status');
+    if (status) status.style.background = reg.is_headless ? 'rgba(46,204,113,0.1)' : 'rgba(231,76,60,0.1)';
+    if (status) status.style.color = reg.is_headless ? '#2ecc71' : '#e74c3c';
+    if (status) status.innerText = reg.is_headless ? 'HEADLESS' : 'WINDOWED';
+
+    container.innerHTML = `
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">Target URL:</span>
+            <span class="diagnostic-value" style="color:var(--accent-color)">${reg.app_url}</span>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">Window Size:</span>
+            <span class="diagnostic-value">${reg.window_size}</span>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">App Flags:</span>
+            <div style="margin-top:4px; font-family:monospace; font-size:10px; opacity:0.7; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px;">
+                ${reg.app_mode_flags.join('<br>')}
+            </div>
+        </div>
+    `;
+}
+
+function buildBrowserToolchainUI() {
+    const grid = document.getElementById('env-browser-ladder');
+    if (!grid || !window.CONFIG?.browsers) return;
+
+    grid.innerHTML = window.CONFIG.browsers.map(b => `
+        <div class="diagnostic-value" style="display:flex; justify-content:space-between; font-size:11px;">
+            <span style="opacity:0.6">${b}</span>
+            <span style="font-weight:700; color:var(--accent-color)">✓</span>
+        </div>
+    `).join('');
+
+    // Add automation tools if available
+    const tools = window.CONFIG.headless_tools;
+    if (tools) {
+        const container = document.getElementById('env-headless-registry');
+        const toolsHtml = Object.entries(tools).map(([name, ver]) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; opacity:0.8;">
+                <span style="text-transform:capitalize;">${name}</span>
+                <span class="diagnostic-value" style="font-size:10px;">${ver}</span>
+            </div>
+        `).join('');
+        if (container) container.innerHTML += `<div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">${toolsHtml}</div>`;
+    }
 }
 
 async function installMissingPackages() {

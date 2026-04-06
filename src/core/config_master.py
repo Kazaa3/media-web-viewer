@@ -97,7 +97,20 @@ def get_binary_version(path: str, flag: str = "-version") -> str:
         pass
     return "Unknown"
 
+# --- VERSION & METADATA CALCULATION (v1.35.68) ---
+VERSION_FILE = PROJECT_ROOT / "VERSION"
+if VERSION_FILE.exists():
+    VERSION = VERSION_FILE.read_text().strip()
+else:
+    VERSION = "v1.35.68-dev"
+
+# --- NETWORK & HOST CALCULATION ---
+APP_PORT = int(os.environ.get("MWV_PORT", 8345))
+APP_HOST = os.environ.get("MWV_HOST", "localhost")
+BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
+
 # --- GLOBAL CONFIGURATION DICTIONARY ---
+from datetime import datetime
 GLOBAL_CONFIG: Dict[str, Any] = {
     "version": VERSION,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -611,7 +624,18 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "brave-browser", "brave", "opera", "vivaldi"
     ],
     
-    # --- HEADLESS & DIALECT REGISTRY ---
+    # --- HEADLESS & DIALECT REGISTRY (v1.35.68 Centralized) ---
+    "headless_registry": {
+        "chrome_flags": ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+        "firefox_flags": ["-headless"],
+        "app_mode_flags": ["--app={url}", "--window-size={width},{height}", "--no-first-run", "--no-default-browser-check"],
+        "window_size": os.environ.get("MWV_WINDOW_SIZE", "1280,720"),
+        "user_agent": "MediaWebViewer/1.35 (Headless; Linux)",
+        "playwright_path": os.environ.get("PLAYWRIGHT_BROWSERS_PATH", str(PROJECT_ROOT / "bin" / "browsers")),
+        "is_headless": get_env_bool("MWV_HEADLESS", True),
+        "app_url": f"http://{APP_HOST}:{APP_PORT}"
+    },
+    
     "headless_tools": {
         "playwright": get_binary_version("playwright", "--version") if "playwright" in get_binary_version("pip", "list") else "N/A",
         "puppeteer": "Available" if "puppeteer" in get_binary_version("npm", "list -g") else "N/A",
