@@ -129,7 +129,15 @@ async function renderLibrary() {
     // Start with all items
     let projectedItems = [...allLibraryItems];
 
-    // 1. HIDB (Diagnostic Hide) - Should usually be OFF
+    // 1. Hydration Mode Filter (Mock/Real/Both) - v1.35.68
+    const hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
+    projectedItems = projectedItems.filter(i => {
+        if (hmode === 'mock') return i.is_mock === true;
+        if (hmode === 'real') return !i.is_mock;
+        return true; // 'both'
+    });
+
+    // 2. HIDB (Diagnostic Hide) - Should usually be OFF
     if (window.__mwv_hide_db) {
         projectedItems = projectedItems.filter(i => i.is_mock);
         console.log(`[FE-AUDIT] HIDB active - showing only mock items.`);

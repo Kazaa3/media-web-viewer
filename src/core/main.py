@@ -4004,7 +4004,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
-        displayed_cats = ["audio", "video", "pictures", "disk_images", "documents"]
+        displayed_cats = ["all", "audio", "video", "pictures", "disk_images", "documents"]
 
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
 
@@ -4025,7 +4025,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
             
-            # [Refine] 'multimedia' dsoll. raus. -> Map to 'video' (v1.35.68 Final)
+            # [Refine] 'multimedia' soll. raus. -> Map to 'video' (v1.35.68 Final)
             if cat == 'multimedia': 
                 cat = 'video'
                 item['category'] = 'video' # Immediate re-map for UI consistency
@@ -4233,21 +4233,22 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     # Hybrid / Stage 3 Fusion (v1.35.68)
     # Always include mocks for the 'Both' or 'Mock' filters in the UI
     try:
-        mock_stage = 3
-        log.info(f"[BD-AUDIT] Injecting Stage {mock_stage} Mocks for Hybrid View. PID: {pid}")
-        # Re-using the Stage 3 logic internally
+        log.info(f"[BD-AUDIT] Injecting Hybrid Diagnostic Mocks. PID: {pid}")
         realistic_mocks = [
             {
+                "id": "mock-1",
                 "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
                 "category": "audio", "path": "media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
                 "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
             },
             {
+                "id": "mock-2",
                 "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
                 "category": "audio", "path": "media/mock/benjie.mp3", "duration": 198, "is_mock": True,
                 "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
             },
             {
+                "id": "mock-3",
                 "name": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner feat. D-Flame & Illo 77",
                 "album": "Boombule: Bambule Remixed", "category": "audio", "path": "media/mock/beginner.mp3",
                 "duration": 242, "is_mock": True,

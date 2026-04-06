@@ -440,3 +440,32 @@ function getCategoryBadgeHtml(item) {
     if (!catIcon) return '';
     return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5;" title="${item.category}">${catIcon}</div>`;
 }
+/**
+ * Updates the technical sync anchor in the footer (v1.35.68).
+ * Format: [DB: X | GUI: Y]
+ */
+function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
+    const anchor = document.getElementById('footer-sync-anchor');
+    if (!anchor) {
+        console.warn("[Sync-UI] footer-sync-anchor NOT FOUND in DOM.");
+        return;
+    }
+
+    // Capture latest counts if undefined (v1.35.68 Safety)
+    const finalDb = (dbCount !== undefined) ? dbCount : (window.__mwv_last_db_count || '--');
+    const finalGui = (guiCount !== undefined) ? guiCount : '--';
+    
+    anchor.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
+    
+    // Status visual: Green if parity, Amber otherwise
+    if (finalDb === finalGui && finalDb !== '--') {
+        anchor.style.borderColor = 'rgba(46, 204, 113, 0.4)';
+        anchor.style.color = '#2ecc71';
+    } else {
+        anchor.style.borderColor = 'rgba(241, 196, 15, 0.4)';
+        anchor.style.color = '#f1c40f';
+    }
+}
+
+// Global Export
+window.updateSyncAnchor = updateSyncAnchor;

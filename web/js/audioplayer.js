@@ -963,14 +963,21 @@ window.setHydrationMode = function(mode) {
     
     // UI Feedback: Update button states in footer
     ['M', 'R', 'B'].forEach(id => {
-        const btn = document.getElementById(`hydr-btn-${id}`);
-        if (btn) btn.classList.toggle('active', mode === (id === 'M' ? 'mock' : id === 'R' ? 'real' : 'both'));
+        const btnId = `hydr-btn-${id}`;
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            const isActive = (mode === 'mock' && id === 'M') || (mode === 'real' && id === 'R') || (mode === 'both' && id === 'B');
+            btn.style.color = isActive ? '#2ecc71' : 'rgba(255,255,255,0.4)';
+            btn.style.background = isActive ? 'rgba(46, 204, 113, 0.1)' : 'transparent';
+        }
     });
+
+    // --- RE-HYDRATION PIPELINE (v1.35.68) ---
+    // 1. Sync the playback queue
+    if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
     
-    // Auto-refresh data
-    if (typeof syncQueueWithLibrary === 'function') {
-        syncQueueWithLibrary();
-    }
+    // 2. Sync the main Library explorer (if visible)
+    if (typeof renderLibrary === 'function') renderLibrary();
     
     if (typeof showToast === 'function') {
         showToast(`Hydration: ${mode.toUpperCase()} aktiv`, "info");
