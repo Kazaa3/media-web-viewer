@@ -203,6 +203,57 @@ function renderForensicTimelineUI(item, stages, fe_memory, dom_node) {
     `;
 }
 
+async function triggerRawItemProbe(itemId) {
+    const output = document.getElementById('diag-item-raw-output');
+    if (!output) return;
+
+    sentinelPulse('PROBE', `Executing Raw Header Probe for Item ID: ${itemId}`);
+    output.innerHTML = '<div style="font-size:9px; color:#00ff99; opacity:0.6; text-align:center; padding:10px; background:rgba(0,255,153,0.05); border-radius:6px; border:1px solid rgba(0,255,153,0.1);">Executing ffprobe Raw Header Audit...</div>';
+
+    try {
+        const res = await eel.run_raw_media_probe(itemId)();
+        if (res.status === 'success') {
+            sentinelPulse('SUCCESS', `Deep Header Audit Complete for ID: ${itemId}`);
+            
+            // Render high-density JSON with workstation syntax highlighting
+            output.innerHTML = `
+                <div style="background:#000; border:1px solid rgba(0,255,153,0.2); border-radius:8px; padding:10px; max-height:300px; overflow-y:auto; position:relative;">
+                    <div style="position:sticky; top:0; background:#000; font-size:8px; font-weight:900; color:#00ff99; margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid rgba(0,255,153,0.1);">RAW_FFPROBE_PAYLOAD_V137</div>
+                    <pre style="margin:0; font-size:9px; font-family:'JetBrains Mono', monospace; line-height:1.4; color:#d4d4d4;">${syntaxHighlightForensicJSON(res.data)}</pre>
+                </div>
+            `;
+        } else {
+            sentinelPulse('ERROR', `Probe Failed: ${res.message}`);
+            output.innerHTML = `<div style="color:#ff3366; font-size:10px; padding:10px; background:rgba(255,51,102,0.1); border-radius:6px;">Probe Failed: ${res.message}</div>`;
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Probe Bridge Fault: ${e.message}`);
+        output.innerHTML = `<div style="color:#ff3366; font-size:10px; padding:10px;">Bridge Fault: ${e.message}</div>`;
+    }
+}
+
+function syntaxHighlightForensicJSON(json) {
+    if (typeof json !== 'string') {
+        json = JSON.stringify(json, null, 2);
+    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'json-key';
+            } else {
+                cls = 'json-string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+            cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
 /**
  * v1.37.15 TELEPORTATION BRIDGE
  */
