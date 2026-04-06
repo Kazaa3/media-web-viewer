@@ -1,11 +1,16 @@
 // --- Hoisted Global State (v1.35.68 Fix) ---
 // Global state export for cross-module HUD and queue consistency (v1.35.68)
 window.__mwv_all_library_items = [];
+// Alias for internal module consistency (v1.35.68)
+Object.defineProperty(window, 'allLibraryItems', {
+    get: () => window.__mwv_all_library_items,
+    set: (v) => { window.__mwv_all_library_items = v; }
+});
 let libraryStateLoaded = false;
 let coverflowItems = [];
 let coverflowIndex = 0;
 let libraryFilter = 'all';
-// let librarySubFilter = 'all';
+let librarySubFilter = 'all';
 let libraryGenre = 'all';
 let libraryYear = 'all';
 let librarySearch = '';
@@ -27,17 +32,23 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
         // v1.35.68: Synchronize Category Master before requesting library
-        if (typeof syncCategoryMaster === 'function') await syncCategoryMaster();
-
         // --- STAGE 1-3 AUDIT HANDSHAKE (v1.35.96) ---
         const auditStage = window.__mwv_audit_stage || 0;
         let library;
+        
         try {
+            // [v1.35.68-B] Stalling Protection: syncCategoryMaster with 2.5s timeout
+            const syncTimeout = new Promise(resolve => setTimeout(() => resolve('timeout'), 2500));
+            if (typeof syncCategoryMaster === 'function') {
+                const syncResult = await Promise.race([syncCategoryMaster(), syncTimeout]);
+                if (syncResult === 'timeout') console.warn("[DATA-LIB] syncCategoryMaster STALLED. Proceeding with hydration...");
+            }
+
             library = await getLibrary(auditStage); 
         } catch (e) {
             console.error("[FE-BRIDGE-FAULT] CRITICAL: Calling getLibrary failed!", e);
             if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Bridge Fault: ${e.message}`, "ERROR");
-            return; // Halt to prevent further ReferenceErrors
+            return;
         }
         
         const incomingCount = (library.media || []).length;
@@ -132,11 +143,22 @@ async function renderLibrary() {
 
     // --- PHASE 1: FILTERING (v1.35.68 Hardened) ---
     console.warn(`[FE-AUDIT] Starting Render for ${(window.__mwv_all_library_items || []).length} items. MainCat: ${libraryFilter}, SubCat: ${librarySubFilter}, Search: "${librarySearch}"`);
+    if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Rendering ${window.__mwv_all_library_items.length} items (Filter: ${libraryFilter})...`, "INFO");
     
     // Start with all items (using global state export v1.35.68)
     let projectedItems = [...(window.__mwv_all_library_items || [])];
+    const initialCount = projectedItems.length;
     
-    // [FE-FORENSIC] Aggressive Audit (v1.35.68)
+    // [FE-FORENSIC] Filter Stages (Illumination)
+    if (libraryFilter !== 'all') {
+        projectedItems = projectedItems.filter(i => i.category === libraryFilter);
+        console.log(`[FE-AUDIT] Filter Category (${libraryFilter}): ${initialCount} -> ${projectedItems.length}`);
+    }
+    if (librarySearch) {
+        const search = librarySearch.toLowerCase();
+        projectedItems = projectedItems.filter(i => (i.name || '').toLowerCase().includes(search));
+        console.log(`[FE-AUDIT] Filter Search (${search}): ${projectedItems.length}`);
+    }
     const initialRaw = projectedItems.length;
     if (initialRaw === 0) {
         console.error("[FE-FORENSIC] Library Memory is EMPTY. Stage Load Fault?");

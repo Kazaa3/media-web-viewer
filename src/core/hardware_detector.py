@@ -73,6 +73,7 @@ def is_network_mount(path: str) -> bool:
 def get_gpu_info() -> Dict[str, Any]:
     gpu_type = "Unknown"
     is_intel = False
+    encoders = []
     try:
         # Detect encoders first
         res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=2)

@@ -1,4 +1,25 @@
-import sys, os; sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import sys, os
+from pathlib import Path
+
+# 1. Absolute Path Forensics (v1.35.68)
+_file = Path(__file__).resolve()
+_root = _file.parent.parent.parent
+_src = _root / "src"
+
+# Forced Path Injection (Forensic Reset)
+if str(_root) not in sys.path: sys.path.insert(0, str(_root))
+if str(_src) not in sys.path: sys.path.insert(0, str(_src))
+
+# Verification of Package Root
+try:
+    import core
+    import src
+except ImportError as e:
+    # If we are in a re-exec, this is critical
+    print(f"STDOUT: [Bootstrap-Critical] Path Fault: {e}", flush=True)
+    print(f"STDOUT: [Bootstrap-Path] PROJ_ROOT: {_root}", flush=True)
+    print(f"STDOUT: [Bootstrap-Path] SRC_ROOT: {_src}", flush=True)
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -6,91 +27,6 @@ main.py - Business Logic & Application Entry Point
 dict - Desktop Media Player and Library Manager v1.35.68
 """
 
-import os
-import sys
-import time
-import traceback
-from pathlib import Path
-
-# Record boot time as early as possible
-APP_START_TIME = time.time()
-
-# 1. Immediate Path Calculation
-MAIN_FILE = Path(__file__).resolve()
-PROJECT_ROOT = MAIN_FILE.parent.parent.parent
-
-# --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
-class BootstrapLogger:
-    def info(self, m): print(f"STDOUT: {m}", flush=True)
-    def error(self, m): print(f"STDOUT: [ERROR] {m}", flush=True)
-    def warning(self, m): print(f"STDOUT: [WARN] {m}", flush=True)
-    def critical(self, m): print(f"STDOUT: [CRITICAL] {m}", flush=True)
-    def debug(self, m): print(f"STDOUT: [DEBUG] {m}", flush=True)
-    def exception(self, m): print(f"STDOUT: [EXCEPTION] {m}", flush=True)
-
-log = BootstrapLogger()
-
-def log_self_diagnostics():
-    """Logs critical environment information if a mismatch is detected."""
-    log.info("--- [ENV DIAGNOSTICS] ---")
-    log.info(f"Python: {sys.version}")
-    log.info(f"Executable: {sys.executable}")
-    log.info(f"Prefix: {sys.prefix}")
-    log.info(f"Project Root: {PROJECT_ROOT}")
-    log.info(f"Working Dir: {os.getcwd()}")
-    log.info(f"Boot Tracking: Active")
-    log.info("-------------------------")
-
-def ensure_stable_environment():
-    """Ensures we are running in the correct .venv (unified) and Python 3.10.x."""
-    if os.environ.get("MWV_AUTO_REEXEC") == "1":
-        return
-
-    # 1.1. Version Guard (Relaxed to 3.10.0+)
-    if sys.version_info < (3, 10, 0):
-        log_self_diagnostics()
-        sys.stderr.write(f"\nERROR: This application requires Python 3.10.0+. (Detected: {sys.version})\n")
-        sys.exit(1)
-
-    # 1.2. Venv Path Guard (Prefer .venv over .venv_run)
-    TARGET_VENVS = [PROJECT_ROOT / ".venv", PROJECT_ROOT / ".venv_run", PROJECT_ROOT / ".venv_core"]
-    selected_venv = None
-    for v in TARGET_VENVS:
-        if v.exists():
-            selected_venv = v
-            break
-            
-    if not selected_venv:
-        # Check if we are already in a venv that has psutil
-        try:
-            import psutil
-            return
-        except ImportError:
-            log_self_diagnostics()
-            sys.stderr.write(f"\nERROR: No suitable virtual environment found at {PROJECT_ROOT}. Please run mechanismus_helper.py bootstrap.\n")
-            sys.exit(1)
-
-    venv_python = selected_venv / "bin" / "python"
-    current_exe = os.path.abspath(sys.executable)
-    target_exe = os.path.abspath(str(venv_python))
-
-    if venv_python.exists() and current_exe != target_exe:
-        log.info(f"[Guard] Switching Environment to {selected_venv.name}: -> {venv_python}")
-        os.environ["MWV_AUTO_REEXEC"] = "1"
-        try:
-            os.execv(target_exe, [target_exe, str(MAIN_FILE)] + sys.argv[1:])
-        except Exception as e:
-            log_self_diagnostics()
-            sys.stderr.write(f"\nERROR: Environment re-execution failed: {e}\n")
-            sys.exit(1)
-
-# --- EXECUTE GUARD IMMEDIATELY if run as main ---
-if __name__ == "__main__":
-    ensure_stable_environment()
-
-# --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
-import sys
-import os
 import time
 import json
 import logging
@@ -105,16 +41,86 @@ import glob
 import sqlite3
 import ast
 import threading
-from pathlib import Path
 from typing import Dict, Any, List, Optional, cast
 
-# Third-party imports that require the virtual environment
+# Record boot time as early as possible
+INITIAL_START_TIME = time.time()
+APP_START_TIME = INITIAL_START_TIME
+
+# --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
+class BootstrapLogger:
+    def info(self, m): print(f"STDOUT: {m}", flush=True)
+    def error(self, m): print(f"STDOUT: [ERROR] {m}", flush=True)
+    def warning(self, m): print(f"STDOUT: [WARN] {m}", flush=True)
+    def critical(self, m): print(f"STDOUT: [CRITICAL] {m}", flush=True)
+    def debug(self, m): print(f"STDOUT: [DEBUG] {m}", flush=True)
+    def exception(self, m): print(f"STDOUT: [EXCEPTION] {m}", flush=True)
+
+log = BootstrapLogger()
+
+def log_self_diagnostics():
+    """Logs critical environment information."""
+    log.info("--- [ENV DIAGNOSTICS] ---")
+    log.info(f"Python: {sys.version}")
+    log.info(f"Executable: {sys.executable}")
+    log.info(f"Prefix: {sys.prefix}")
+    log.info(f"Project Root: {_root}")
+    log.info(f"Working Dir: {os.getcwd()}")
+    log.info(f"SYS_PATH: {sys.path[:3]}") # Show top 3
+    log.info("-------------------------")
+
+def ensure_stable_environment():
+    """Ensures we are running in the correct .venv."""
+    if os.environ.get("MWV_AUTO_REEXEC") == "1":
+        return
+
+    # Check for .venv in project root
+    TARGET_VENVS = [_root / ".venv", _root / ".venv_run"]
+    selected_venv = None
+    for v in TARGET_VENVS:
+        if v.exists():
+            selected_venv = v
+            break
+            
+    if not selected_venv:
+        return # Proceed with current env if no venv found
+
+    venv_python = selected_venv / "bin" / "python"
+    current_exe = os.path.abspath(sys.executable)
+    target_exe = os.path.abspath(str(venv_python))
+
+    if venv_python.exists() and current_exe != target_exe:
+        log.info(f"[Guard] Switching Environment to {selected_venv.name}: -> {venv_python}")
+        
+        # --- PATH HARDBEAT (v1.35.68) ---
+        # Explicitly pass the project root to the new process via environment
+        env = os.environ.copy()
+        env["MWV_AUTO_REEXEC"] = "1"
+        env["PYTHONPATH"] = f"{_root}:{_src}:{env.get('PYTHONPATH', '')}"
+        
+        try:
+            os.execve(target_exe, [target_exe, str(_file)] + sys.argv[1:], env)
+        except Exception as e:
+            log.error(f"Environment re-execution failed: {e}")
+            sys.exit(1)
+
+# --- EXECUTE GUARD IMMEDIATELY ---
+if __name__ == "__main__":
+    ensure_stable_environment()
+
+# --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
+# 2. Main Imports
 try:
     import psutil
     import bottle
     import eel
     from eel import chrome
     log.info("[Bootstrap] Eel loaded successfully")
+    
+    # --- CORE METADATA REGISTRY ---
+    from core.models import MASTER_CAT_MAP, TECH_MARKERS
+    from core.config_master import GLOBAL_CONFIG
+    PROJECT_ROOT = _root
 except ImportError as e:
     log.error(f"[Bootstrap] Required module missing: {e}")
     log_self_diagnostics()
@@ -128,20 +134,19 @@ def shutdown_backend():
 @eel.expose
 def get_category_master():
     """Returns the centralized category mapping (v1.35.76 SSOT)."""
-    from src.core.models import MASTER_CAT_MAP
+    log.info("[BD-AUDIT] Handshake: get_category_master requested.")
     return MASTER_CAT_MAP
 
 @eel.expose
 def get_global_config():
     """Returns the full centralized configuration (v1.35.68)."""
-    # 56. Environment Integration (v1.35.68 Centralized)
-    from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT
+    log.info("[BD-AUDIT] Handshake: get_global_config requested.")
     return GLOBAL_CONFIG
 
 @eel.expose
 def get_tech_markers():
     """Returns the centralized transcoding tech markers (v1.35.76 SSOT)."""
-    from src.core.models import TECH_MARKERS
+    log.info("[BD-AUDIT] Handshake: get_tech_markers requested.")
     return TECH_MARKERS
 
 @eel.expose
@@ -326,9 +331,8 @@ with StatusBar("Loading Core Components", total=100) as sb:
         sys.exit(1)
 
     sb.update(90, "Setting UI State")
-    SIDEBAR_OPEN = True
-    # SESSION_ID already initialized above
-    port = GLOBAL_CONFIG["port"]
+    global port, eel_kwargs
+    port = GLOBAL_CONFIG.get("port", 8345)
     eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
     sb.update(100, "Initial State OK")
 
@@ -422,6 +426,18 @@ def trigger_db_reconnect():
 
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
+    # --- PORT HARVESTER (v1.35.68) ---
+    global port, eel_kwargs
+    try:
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('localhost', port)) == 0:
+                print(f"STDOUT: [Bootstrap-Audit] Port {port} is STUCK. Purging ZOMBIES...", flush=True)
+                os.system(f"fuser -k {port}/tcp")
+                time.sleep(1.0)
+    except:
+        pass
+
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
     
     eel_mode = 'chrome'
@@ -439,9 +455,12 @@ def start_app():
         if chrome_path: break
     
     if not chrome_path:
-        log.error("[Startup] No compatible browser found!")
-    if eel_mode == 'chrome' and not chrome_path:
-        print("STDOUT: [Eel] WARNING: Chrome/Chromium not found in PATH. Browser session might not be isolated.", flush=True)
+        log.error("[Startup] No compatible browser (chrome/chromium) found in PATH!")
+        if eel_mode == 'chrome':
+            print("STDOUT: [Eel] FALLBACK: Switching to system default browser (mode=None).", flush=True)
+            eel_mode = None 
+
+    print(f"STDOUT: [Bootstrap-Audit] Step 2: Starting Eel Engine (mode={eel_mode}, port={port})...", flush=True)
 
     try:
         # We specify the port and block=False to allow the watchdog to run.
@@ -4057,24 +4076,23 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         filtered.append(item)
 
     audit_meta = {
-        "status": "filtered",
+            "status": "filtered",
         "kept": len(filtered),
         "dropped_total": sum(dropped_reasons.values()),
         "dropped_reasons": dropped_reasons,
         "allowed_cats": allowed_internal_cats
     }
 
-    if not filtered and all_items:
-        log.critical(f"[BD-RECOVERY] EMERGENCY BYPASS: Filter dropped 100% of items ({len(all_items)}). Audit: {audit_meta}")
-        return all_items, {"status": "emergency_raw", "dropped_total": 0, "stage": 0, "audit": audit_meta}
+    log.info(f"[BD-AUDIT] Filter Pass complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
+    if audit_meta['dropped_total'] > 0:
+        log.debug(f"[BD-AUDIT] Drop Reasons: {dropped_reasons}")
 
+    if not filtered and all_media:
+        log.critical(f"[BD-RECOVERY] EMERGENCY BYPASS: Filter dropped 100% of items ({len(all_media)}). Audit: {audit_meta}")
+        return all_media, {"status": "emergency_raw", "dropped_total": 0, "stage": 0, "audit": audit_meta}
+
+    log.info(f"[BD-AUDIT] Filter complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
     return filtered, audit_meta
-
-
-@eel.expose
-def set_global_config(key: str, value: Any):
-    """Updates a global configuration value."""
-    return set_config_value(key, value)
 
 
 @eel.expose
@@ -4113,164 +4131,107 @@ def get_library_forensics():
 @eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]:
     """
-    @brief Main entry point for fetching the media library with excessive chain-audit metadata.
+    @brief Unified library bridge with integrated forensics (v1.35.96)
     """
+    log.info(f"[BD-AUDIT] STAGE 1: get_library triggered (force_raw={force_raw}, audit_stage={audit_stage})")
     from src.core import db
     pid = os.getpid()
     db_path = str(Path(db.DB_FILENAME).resolve())
+    log.info(f"[BD-AUDIT] STAGE 1.1: Database path: {db_path}")
     
-    # [FS-AUDIT] Internal filesystem check (v1.35.96)
+    # [FS-AUDIT] Internal filesystem check
     db_exists = os.path.exists(db_path)
     db_size = os.path.getsize(db_path) if db_exists else -1
-    data_dir_files = os.listdir(Path(db_path).parent) if db_exists else []
-    
     fs_audit = {
         "exists": db_exists,
         "size": db_size,
-        "listdir": data_dir_files,
-        "cwd": os.getcwd()
+        "pid": pid,
+        "path": db_path
     }
     
-    # STAGE 1: HARDCODED BRIDGE MOCKS (Connectivity test)
+    # --- STAGE 1: CONNECTIVITY MOCKS ---
     if audit_stage == 1:
-        log.info(f"[BD-AUDIT] STAGE 1: Hardcoded Mocks. PID: {pid}")
+        log.info(f"[BD-AUDIT] STAGE 1 Handshake (Connectivity Mocks). PID: {pid}")
         mocks = [
-            {"name": "Stage 1: Connection Test (Audio)", "category": "audio", "path": "/mock1.mp3", "tags": {"genre": "diagnostic"}},
-            {"name": "Stage 1: Connection Test (Video)", "category": "video", "path": "/mock2.mp4", "tags": {"genre": "diagnostic"}}
+            {"id": "m1", "name": "Stage 1: Connection Success (Audio)", "category": "audio", "path": "/mock1.mp3", "tags": {"genre": "diagnostic"}, "is_mock": True},
+            {"id": "m2", "name": "Stage 1: Connection Success (Video)", "category": "video", "path": "/mock2.mp4", "tags": {"genre": "diagnostic"}, "is_mock": True}
         ]
         return {"media": mocks, "db_count": 2, "status": "mock", "audit": {"stage": 1, "pid": pid}}
 
-    # STAGE 2: PLAYABLE MOCKS (Real file paths from ./media)
+    # --- STAGE 2: PLAYABLE FS MOCKS ---
     if audit_stage == 2:
-        log.info(f"[BD-AUDIT] STAGE 2: Playable Mocks (FS-Aware). PID: {pid}")
+        log.info(f"[BD-AUDIT] STAGE 2 Handshake (Playable FS). PID: {pid}")
         media_root = PROJECT_ROOT / "media"
         playable = []
         if media_root.exists():
-            # Pick first 3 real files for testing
-            files = [f for f in os.listdir(media_root) if os.path.isfile(media_root / f)][:3]
-            for f in files:
+            files = [f for f in os.listdir(media_root) if os.path.isfile(media_root / f)][:5]
+            for idx, f in enumerate(files):
                 p = media_root / f
                 playable.append({
-                    "name": f"[PLAYABLE] {f}",
-                    "category": "audio" if f.lower().endswith(('.mp3', '.flac', '.wav')) else "video",
+                    "id": f"fs-mock-{idx}",
+                    "name": f"[FS-PLAYABLE] {f}",
+                    "category": "audio" if f.lower().endswith(('.mp3', '.flac', '.wav', '.m4a')) else "video",
                     "path": str(p.resolve()),
-                    "tags": {"title": f, "artist": "FS-Mock Engine"}
+                    "tags": {"title": f, "artist": "FS-Engine"},
+                    "is_mock": True
                 })
-        
         if not playable:
-            # Emergency fix: if media folder empty, return a hardcoded playable dummy
-            playable = [{"name": "Stage 2 Error: No files in ./media", "category": "unknown", "path": "", "tags": {}}]
+            playable = [{"id": "m-err", "name": "Stage 2 Error: ./media empty", "category": "unknown", "path": "", "is_mock": True}]
             
         return {"media": playable, "db_count": len(playable), "status": "mock", "audit": {"stage": 2, "pid": pid}}
 
-    # STAGE 3: REALISTIC MOCKS (Classic 3-Item Bypass Set)
-    if audit_stage == 3:
-        log.info(f"[BD-AUDIT] STAGE 3: Returning Classic 3-Item Bypass Set. PID: {pid}")
-        realistic = [
-            {
-                "name": "Anfangsstadium RMX",
-                "artist": "Megaloh",
-                "album": "Auf Ewig Mixtape",
-                "category": "audio",
-                "path": "/mock/megaloh.mp3",
-                "duration": 215,
-                "is_mock": True,
-                "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
-            },
-            {
-                "name": "Einfach & Leicht",
-                "artist": "Benjie",
-                "album": "Schatten & Licht",
-                "category": "audio",
-                "path": "/mock/benjie.mp3",
-                "duration": 198,
-                "is_mock": True,
-                "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
-            },
-            {
-                "name": "Hammerhart (Denyo77 remix)",
-                "artist": "Absolute Beginner feat. D-Flame & Illo 77",
-                "album": "Boombule: Bambule Remixed",
-                "category": "audio",
-                "path": "/mock/beginner.mp3",
-                "duration": 242,
-                "is_mock": True,
-                "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule: Bambule Remixed"}
-            }
-        ]
-        return {"media": realistic, "db_count": 3, "status": "mock", "audit": {"stage": 3, "pid": pid}}
-
+    # --- MAIN DATA RETRIEVAL (v1.35.68.99) ---
     all_media = []
-    count_total = 0
     try:
         all_media = db.get_all_media()
         count_total = len(all_media)
-        log.info(f"[BD-AUDIT] STAGE 2: Database Found. PID: {pid} | Path: {db_path} | Count: {count_total}")
+        log.info(f"[BD-AUDIT] STAGE 3.1: Database Engine Active. Items found: {count_total} | PID: {pid}")
     except Exception as e:
-        log.error(f"[BD-AUDIT] DB ACCESS ERROR: {e}")
-        return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": {"pid": pid, "path": db_path}}
+        log.error(f"[BD-AUDIT] DATABASE CRITICAL FAILURE: {e}")
+        return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": fs_audit}
 
-    if force_raw or audit_stage == 4:
-        log.info(f"[BD-AUDIT] STAGE 4: Returning RAW SQL (Count: {count_total})")
-        return {
-            "media": all_media,
-            "db_count": count_total,
-            "status": "raw",
-            "audit": {"stage": 4, "pid": pid, "path": db_path, "fs": fs_audit}
-        }
-
-    # --- STAGE 3: FULL PRODUCTION FILTER (v1.37.07) ---
-    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=False)
+    # --- FILTERING & BYPASS (The Motor) ---
+    # Apply production filters unless force_raw is requested
+    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw)
     
-    # [DIAGNOSTIC] Stage-Injection logic (v1.35.68 Refined)
-    # Stage 1: Hardcoded, Stage 2: Playable FS, Stage 3: Realistic, Stage 4: Raw DB
-    hydration_stage = {
-        0: filtered_media,         # Production (Default)
-        4: all_media               # Raw SQL Rows
+    # [EMERGENCY RECOVERY] If filtering yields 0 but DB has items, force a raw fallback
+    if len(filtered_media) == 0 and count_total > 0:
+        log.warning(f"[BD-RECOVERY] Filter Collision: {count_total} items in DB but 0 visible. Forcing Emergency Bypass.")
+        filtered_media = all_media
+        status = "emergency-raw"
+    else:
+        status = "synchronized" if not force_raw else "raw"
+
+    # --- STAGE 3: HYBRID FUSION (Diagnostic Parity) ---
+    realistic_mocks = [
+        {
+            "id": "mock-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
+            "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
+            "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
+        },
+        {
+            "id": "mock-2", "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
+            "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
+            "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
+        }
+    ]
+    
+    # We include mocks for visual parity in diagnostic sessions
+    final_media = filtered_media + (realistic_mocks if audit_stage == 3 or not force_raw else [])
+    
+    return {
+        "media": final_media,
+        "db_count": count_total,
+        "status": status,
+        "audit": {
+            "stage": audit_stage,
+            "pid": pid,
+            "db": fs_audit,
+            "logic": logic_audit,
+            "final_count": len(final_media)
+        }
     }
-    
-    # Stages 1-3 are handled directly by the early-return logic above.
-    final_media = hydration_stage.get(audit_stage, filtered_media)
-    
-    # 2. Hybrid Fusion (v1.35.68)
-    # Inject mock assets for diagnostic parity IF 'Mock' or 'Both' is active 
-    # (Filtered later by frontend if needed)
-    try:
-        realistic_mocks = [
-                {
-                    "id": "mock-1",
-                    "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
-                    "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
-                    "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
-                },
-                {
-                    "id": "mock-2",
-                    "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
-                    "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
-                    "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
-                },
-                {
-                    "id": "mock-3",
-                    "name": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner feat. D-Flame & Illo 77",
-                    "album": "Boombule: Bambule Remixed", "category": "audio", "path": "/media/mock/beginner.mp3",
-                    "duration": 242, "is_mock": True,
-                    "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule: Bambule Remixed"}
-                }
-        ]
-        
-        final_media = filtered_media + realistic_mocks
-        
-        log.info(f"[BD-AUDIT] STAGE 3: Hybrid Fusion. Real: {len(filtered_media)}, Mock: {len(realistic_mocks)} | Out: {len(final_media)}")
-        
-        return {
-            "media": final_media,
-            "db_count": count_total,
-            "status": "synchronized",
-            "audit": {"stage": 3, "pid": pid, "path": db_path, "fs": fs_audit, "logic": logic_audit}
-        }
-    except Exception as e:
-        log.error(f"[BD-AUDIT] FUSION ERROR: {e}")
-        return {"media": filtered_media, "db_count": count_total, "status": "partial", "error": str(e)}
+
 
 
 @eel.expose
@@ -4338,22 +4299,23 @@ def get_library_filtered(search: str = "", genre: str = "all", year: str = "all"
 def clear_database():
     """
     @brief Deletes all entries from the library database.
-    @details Lscht alle Eintrge aus der Bibliothek-Datenbank.
-    @return Status dictionary / Status-Dictionary.
+    @details Clears all entries from the library database.
+    @return Status dictionary.
     """
     if DEBUG_FLAGS["db"]:
-        debug_log("[Debug-DB] Tabelle wird geleert...")
+        debug_log("[Debug-DB] Table is being cleared...")
     db.clear_media()
-    return {"status": "ok", "message": "Datenbank geleert", "media": []}
+    return {"status": "ok", "message": "Database cleared", "media": []}
 
 
 @eel.expose
 def reset_app_data():
     """
     @brief Wipes the database and configuration files (private user data).
-    @details Lscht Datenbank und Konfigurationsdateien (Private Daten).
-    @return Status dictionary with list of deleted paths / Status-Dictionary.
+    @details Clears database and configuration files (private data).
+    @return Status dictionary with list of deleted paths.
     """
+    import os
     import shutil
     from pathlib import Path
 

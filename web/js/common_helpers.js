@@ -12,35 +12,39 @@ let CONFIG = {}; // Centralized Flag & Env registry
  */
 async function syncCoreRegistry() {
     if (typeof eel !== 'undefined' && typeof eel.get_category_master === 'function') {
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
         try {
-            // Parallel fetch for speed (v1.35.68 Centralized)
-            const [master, tech, config] = await Promise.all([
-                eel.get_category_master()(),
-                eel.get_tech_markers()(),
-                eel.get_global_config()()
+            console.info(`[FE-AUDIT] STAGE 1: syncCoreRegistry triggered. Handshake initiated...`);
+            // Parallel fetch with 2s safety timeout (v1.35.68-B)
+            const [master, tech, config] = await Promise.race([
+                Promise.all([
+                    eel.get_category_master()(),
+                    eel.get_tech_markers()(),
+                    eel.get_global_config()()
+                ]),
+                timeout
             ]);
             
             if (master) {
-                console.info("[Sync] Category Master Loaded:", master);
+                console.info("[FE-AUDIT] STAGE 1.1: Category Master received:", Object.keys(master).length, "keys.");
                 CATEGORY_MAP = master;
                 window.CATEGORY_MAP = master;
             }
             if (tech) {
-                console.info("[Sync] Tech Markers Loaded:", tech);
+                console.info("[FE-AUDIT] STAGE 1.2: Tech Markers received:", tech);
                 TECH_MAP = tech;
             }
             if (config) {
-                console.info("[Sync] Global Config Loaded:", config);
+                console.info("[FE-AUDIT] STAGE 1.3: Global Config received:", config);
                 window.CONFIG = config; 
-                // Compatibility for legacy flags
                 window.__mwv_raw_mode = config.raw_mode || false;
                 window.__mwv_bypass_db = config.bypass_db || false;
             }
             
-            // Re-render UI components that depend on categories or config
+            console.info("[FE-AUDIT] STAGE 1 COMPLETE: Forensic Handshake synchronized.");
             if (typeof renderPlaylist === 'function') renderPlaylist();
         } catch (e) {
-            console.warn("[Sync] Core Registry sync failed:", e);
+            console.warn("[FE-AUDIT] STAGE 1 CRITICAL: Forensic Handshake stalling or failed.", e.message);
         }
     }
 }
