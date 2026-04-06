@@ -84,21 +84,11 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
 }
 
 /**
- * ITEM TRACKER: High-Performance Probe
+ * ITEM TRACKER: High-Performance Probe (Legacy JS-based UI removed in v1.37.15)
  */
 function renderItemTrackTab() {
-    const container = document.getElementById('diag-item-track-content');
-    if (!container || container.innerHTML.includes('diag-item-query')) return; // Already rendered
-
-    container.innerHTML = `
-        <div style="display:flex; gap:8px; margin-bottom:15px; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);">
-            <input type="text" id="diag-item-query" placeholder="Teil von Pfad oder Name..." 
-                style="flex:1; background:transparent; border:none; color:white; font-size:11px; outline:none;"
-                onkeypress="if(event.key==='Enter') performItemJourneyAudit()">
-            <button onclick="performItemJourneyAudit()" style="background:#3498db; color:white; border:none; padding:4px 10px; border-radius:4px; font-size:9px; cursor:pointer; font-weight:800;">AUDIT</button>
-        </div>
-        <div id="diag-item-audit-results"></div>
-    `;
+    // Search console is now native in diagnostics_sidebar.html fragment.
+    // This function can now be used for specialized search-history or stats.
 }
 
 async function performItemJourneyAudit() {
@@ -123,24 +113,111 @@ async function performItemJourneyAudit() {
         const fe_normalized = (window.allLibraryItems || []).find(i => i.path === item.path);
         const dom_node = document.querySelector(`.grid-item[title*="${item.name}"]`);
 
-        results.innerHTML = `
-            <div class="journey-v137">
-                <div class="j-step ${stages.db.status === 'ok' ? 'ok' : 'err'}">🗄️ SQL: ${stages.db.status.toUpperCase()}</div>
-                <div class="j-step ${stages.models.log.includes('OK') ? 'ok' : 'err'}">🏷️ SSOT: ${stages.models.log}</div>
-                <div class="j-step ${stages.backend_filter.status === 'ok' ? 'ok' : 'err'}">⚙️ B-FLTR: ${stages.backend_filter.reason}</div>
-                <div class="j-step ${fe_normalized ? 'ok' : 'err'}">🧠 MEM: ${fe_normalized ? 'HYDRATED' : 'MISSING'}</div>
-                <div class="j-step ${dom_node ? 'ok' : 'err'}">🖥️ DOM: ${dom_node ? 'RENDERED' : 'HIDDEN'}</div>
-            </div>
-            <style>
-                .journey-v137 { display: flex; flex-direction: column; gap: 4px; margin-top:5px; }
-                .j-step { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); }
-                .j-step.ok { color: #2ecc71; border-left: 3px solid #2ecc71; background: rgba(46,204,113,0.05); }
-                .j-step.err { color: #e74c3c; border-left: 3px solid #e74c3c; background: rgba(231,76,60,0.05); }
-            </style>
-        `;
+        renderForensicTimelineUI(item, stages, fe_normalized, dom_node);
+
     } catch (e) {
-        results.innerHTML = `<div style="color:#e74c3c; font-size:10px;">Kritischer Audit-Fehler: ${e.message}</div>`;
+        results.innerHTML = `<div style="color:#e74c3c; font-size:10px;">Audit-Fehler: ${e.message}</div>`;
     }
+}
+
+/**
+ * FORENSIC TIMELINE UI (v1.37.15)
+ */
+function renderForensicTimelineUI(item, stages, fe_memory, dom_node) {
+    const results = document.getElementById('diag-item-audit-results');
+    if (!results) return;
+
+    sentinelPulse('TRACE', `Rendering Forensic Timeline for [${item.id}] ${item.name}`);
+
+    results.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <div style="font-size:12px; font-weight:900; color:#fff;">${item.name}</div>
+                <button onclick="bridgeToItemJSON(${item.id})" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#3498db; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:900;">VIEW JSON</button>
+            </div>
+
+            <div class="forensic-timeline-v137">
+                <div class="f-step ${stages.db.status === 'ok' ? 'ok' : 'err'}">
+                    <span class="f-icon">🗄️</span> 
+                    <div class="f-meta">
+                        <span class="f-label">SQL INDEX</span>
+                        <span class="f-status">${stages.db.status.toUpperCase()}</span>
+                    </div>
+                </div>
+                <div class="f-step ${stages.backend_filter.status === 'ok' ? 'ok' : 'err'}">
+                    <span class="f-icon">⚙️</span>
+                    <div class="f-meta">
+                        <span class="f-label">B-FLTR CHAIN</span>
+                        <span class="f-status">${stages.backend_filter.reason}</span>
+                    </div>
+                </div>
+                <div class="f-step ${fe_memory ? 'ok' : 'err'}">
+                    <span class="f-icon">🧠</span>
+                    <div class="f-meta">
+                        <span class="f-label">FRONTEND MEM</span>
+                        <span class="f-status">${fe_memory ? 'HYDRATED' : 'MISSING'}</span>
+                    </div>
+                </div>
+                <div class="f-step ${dom_node ? 'ok' : 'err'}">
+                    <span class="f-icon">🖥️</span>
+                    <div class="f-meta">
+                        <span class="f-label">DOM VIEWPORT</span>
+                        <span class="f-status">${dom_node ? 'RENDERED' : 'HIDDEN'}</span>
+                    </div>
+                </div>
+                <div class="f-step ${item.last_played ? 'active' : 'idle'}">
+                    <span class="f-icon">🎥</span>
+                    <div class="f-meta">
+                        <span class="f-label">PLAYBACK HIST.</span>
+                        <span class="f-status">${item.last_played || 'NEVER PLAYED'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+                .forensic-timeline-v137 { display: flex; flex-direction: column; gap: 8px; border-left: 2px solid rgba(255,255,255,0.05); padding-left: 15px; margin-left: 10px; }
+                .f-step { display: flex; align-items: center; gap: 12px; position: relative; }
+                .f-step:before { content: ""; position: absolute; left: -19px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: #444; }
+                .f-icon { font-size: 14px; filter: grayscale(1); opacity: 0.5; }
+                .f-meta { display: flex; flex-direction: column; flex: 1; }
+                .f-label { font-size: 8px; opacity: 0.4; letter-spacing: 0.5px; text-transform: uppercase; }
+                .f-status { font-size: 10px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+                
+                .f-step.ok .f-icon { filter: grayscale(0); opacity: 1; }
+                .f-step.ok .f-status { color: #2ecc71; }
+                .f-step.ok:before { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+
+                .f-step.err .f-icon { filter: grayscale(0); opacity: 1; }
+                .f-step.err .f-status { color: #ff3366; }
+                .f-step.err:before { background: #ff3366; }
+
+                .f-step.active .f-icon { filter: grayscale(0); opacity: 1; }
+                .f-step.active .f-status { color: #3498db; }
+                .f-step.active:before { background: #3498db; }
+            </style>
+        </div>
+    `;
+}
+
+/**
+ * v1.37.15 TELEPORTATION BRIDGE
+ */
+function bridgeToItemJSON(id) {
+    sentinelPulse('BRIDGE', `Teleporting to JSON DB for Item ID: ${id}`);
+    
+    // 1. Switch Tab
+    switchDiagnosticsSidebarTab('debug-db');
+    
+    // 2. Perform Specialized Search in DB
+    setTimeout(() => {
+        const dbSearch = document.getElementById('debug-items-json');
+        if (dbSearch && window.debug_library_dict) {
+            const itemMatch = window.debug_library_dict.find(i => i.id === id);
+            if (itemMatch) {
+                dbSearch.innerHTML = `<span style="color:#3498db; font-weight:900;">// TELEPORT SUCCESS [ID:${id}]</span>\n` + JSON.stringify(itemMatch, null, 2);
+            }
+        }
+    }, 100);
 }
 
 /**
@@ -438,6 +515,7 @@ window.clearSentinelLog = clearSentinelLog;
 window.runVideoForensicAudit = runVideoForensicAudit;
 window.runDatabaseResilienceAudit = runDatabaseResilienceAudit;
 window.runFSParityAudit = runFSParityAudit;
+window.bridgeToItemJSON = bridgeToItemJSON;
 window.triggerMasterScan = triggerMasterScan;
 window.triggerMasterSync = triggerMasterSync;
 window.triggerNuclearRecovery = triggerNuclearRecovery;

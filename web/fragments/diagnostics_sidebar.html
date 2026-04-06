@@ -51,7 +51,20 @@
         </div>
 
         <div id="diag-pane-item-track" class="diag-pane" style="display: none;">
-            <div id="diag-item-track-content"></div>
+            <!-- Forensic Item Search Console (v1.37.15) -->
+            <div id="diag-item-track-header" style="margin-bottom:15px;">
+                <div style="display:flex; gap:8px; background:rgba(255,255,255,0.05); padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
+                    <input type="text" id="diag-item-query" placeholder="Suchen nach Pfad (z.B. .mp4) oder ID..." 
+                        style="flex:1; background:transparent; border:none; color:white; font-size:11px; outline:none;"
+                        onkeypress="if(event.key==='Enter') performItemJourneyAudit()">
+                    <button onclick="performItemJourneyAudit()" style="background:#007aff; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:9px; cursor:pointer; font-weight:900;">AUDIT</button>
+                </div>
+            </div>
+
+            <!-- FORENSIC TIMELINE VIEWPORT -->
+            <div id="diag-item-audit-results" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:12px; overflow-y:auto; max-height:calc(100vh - 350px);">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Item-Trace...</div>
+            </div>
         </div>
 
         <div id="diag-pane-sentinel" class="diag-pane" style="display: none;">
