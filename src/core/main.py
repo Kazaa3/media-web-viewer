@@ -988,6 +988,72 @@ def get_system_environment():
 
 
 @eel.expose
+def get_storage_forensics():
+    """
+    Storage Forensic Audit: Volume Discovery (v1.37.30).
+    Performs a recursive scan of the media volume for asset distribution and heuristics.
+    """
+    import os
+    from pathlib import Path
+    
+    media_path = PROJECT_ROOT / "media"
+    if not media_path.exists():
+        return {"status": "error", "message": f"Media path not found: {media_path}"}
+    
+    results = {
+        "status": "ok",
+        "total_files": 0,
+        "total_folders": 0,
+        "total_size_bytes": 0,
+        "largest_files": [], # List of {name, size, path}
+        "deepest_level": 0,
+        "deepest_path": "",
+        "broken_paths": []
+    }
+    
+    all_files = []
+    
+    try:
+        for root, dirs, files in os.walk(str(media_path)):
+            results["total_folders"] += 1
+            
+            # Calculate depth relative to media root
+            rel_root = os.path.relpath(root, str(media_path))
+            depth = 0 if rel_root == "." else len(Path(rel_root).parts)
+            if depth > results["deepest_level"]:
+                results["deepest_level"] = depth
+                results["deepest_path"] = rel_root
+                
+            for f in files:
+                results["total_files"] += 1
+                f_path = Path(root) / f
+                try:
+                    f_size = f_path.stat().st_size
+                    results["total_size_bytes"] += f_size
+                    all_files.append({
+                        "name": f,
+                        "size": f_size,
+                        "path": str(f_path.relative_to(PROJECT_ROOT))
+                    })
+                except Exception:
+                    results["broken_paths"].append(str(f_path))
+
+        # Heuristic: Extract Top 10 Largest Assets
+        all_files.sort(key=lambda x: x["size"], reverse=True)
+        results["largest_files"] = all_files[:10]
+        
+        # Format size for readability
+        results["total_size_human"] = f"{results['total_size_bytes'] / (1024**3):.2f} GB"
+        for f in results["largest_files"]:
+            f["size_human"] = f"{f['size'] / (1024**2):.1f} MB" if f['size'] < 1024**3 else f"{f['size'] / (1024**3):.2f} GB"
+
+        return results
+    except Exception as e:
+        log.error(f"[Forensic-STR] Storage Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
 def check_database_resilience():
     """
     Performs forensic library resilience audit:

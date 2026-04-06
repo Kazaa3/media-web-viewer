@@ -32,6 +32,7 @@
         <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">VID</button>
         <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">REC</button>
         <button id="reiter-environment" class="side-reiter" onclick="switchDiagnosticsSidebarTab('environment', this)">ENV</button>
+        <button id="reiter-storage" class="side-reiter" onclick="switchDiagnosticsSidebarTab('storage', this)">STR</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
@@ -199,6 +200,34 @@
 
             <div id="diag-env-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.6;">
                 <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Environmental-Scan...</div>
+            </div>
+        </div>
+
+        <div id="diag-pane-storage" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">VOLUME DISCOVERY</div>
+                <button onclick="runStorageAudit()" style="background: #f39c12; color: black; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT VOLUME</button>
+            </div>
+            
+            <div id="diag-str-telemetry" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between;">
+                    <div style="font-size: 9px; opacity: 0.5;">VOLUME SIZE</div>
+                    <div id="diag-str-total-size" style="font-size: 12px; font-weight: 900; color: #f39c12;">--</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">FILES</div>
+                        <div id="diag-str-files" style="font-size: 12px; font-weight: 900;">--</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">FOLDERS</div>
+                        <div id="diag-str-folders" style="font-size: 12px; font-weight: 900;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diag-str-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.4;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Storage-Scan...</div>
             </div>
         </div>
 
