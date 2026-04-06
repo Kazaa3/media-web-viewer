@@ -252,26 +252,48 @@ window.appendDebugLog = function(msg) {
     }
 };
 
+window.currentForensicLogLevel = 'ALL';
+
+window.setForensicLogLevel = function(level) {
+    window.currentForensicLogLevel = level;
+    sentinelPulse('FILTER', `Switching Session Log View: ${level}`);
+    
+    // Update UI Active States
+    document.querySelectorAll('.f-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `log-filter-${level.toLowerCase().substring(0,3)}`);
+    });
+    
+    updateLogFilters();
+}
+
 window.updateLogFilters = function() {
     const consoleEl = document.getElementById('debug-console-output');
-    const levelFilter = document.getElementById('debug-log-level-filter')?.value || 'ALL';
+    const levelFilter = window.currentForensicLogLevel || 'ALL';
     const searchFilter = document.getElementById('debug-log-search')?.value.toLowerCase() || '';
     const counterEl = document.getElementById('debug-log-counter');
     
     if (!consoleEl) return;
+    if (!window.debugLogBuffer) window.debugLogBuffer = [];
 
     const filtered = window.debugLogBuffer.filter(msg => {
-        const matchesLevel = (levelFilter === 'ALL') || (msg.includes(`[${levelFilter}]`));
+        let matchesLevel = (levelFilter === 'ALL');
+        if (!matchesLevel) {
+            // Precise tag matching for forensic triage
+            const tag = `[${levelFilter}]`;
+            matchesLevel = msg.includes(tag);
+        }
         const matchesSearch = !searchFilter || msg.toLowerCase().includes(searchFilter);
         return matchesLevel && matchesSearch;
     });
 
-    // Render filtered logs
+    // Render filtered logs with high-density spacing
     consoleEl.innerText = filtered.join('\n');
+    
+    // Auto-scroll logic for live forensics
     consoleEl.scrollTop = consoleEl.scrollHeight;
     
     if (counterEl) {
-        counterEl.innerText = `Visible: ${filtered.length} / ${window.debugLogBuffer.length}`;
+        counterEl.innerText = `Forensic View: ${filtered.length} / ${window.debugLogBuffer.length}`;
     }
 };
 

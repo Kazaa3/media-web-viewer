@@ -88,10 +88,30 @@
 
         <!-- NEW: Integrated Log Terminal Pane -->
         <div id="diag-pane-logs" class="diag-pane" style="display: none;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-size: 9px; opacity: 0.5;">LIVE SYSTEM LOGS</span>
-                <button onclick="refreshDebugLogs()" style="font-size: 8px; background: none; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; padding: 2px 6px;">Sync</button>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; font-weight: 900; opacity: 0.5;">LIVE SYSTEM LOGS (v1.37.21)</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="clearDebugConsole()" style="background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.2); color: #e74c3c; font-size: 8px; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-weight: 900;">CLEAR</button>
+                        <button onclick="refreshDebugLogs()" style="background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.2); color: #007aff; font-size: 8px; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-weight: 900;">SYNC</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <div style="display: flex; gap: 2px; background: rgba(255,255,255,0.03); padding: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                        <button onclick="setForensicLogLevel('ALL')" id="log-filter-all" class="f-filter-btn active">ALL</button>
+                        <button onclick="setForensicLogLevel('ERROR')" id="log-filter-err" class="f-filter-btn" style="color: #ff3366;">ERR</button>
+                        <button onclick="setForensicLogLevel('WARNING')" id="log-filter-wrn" class="f-filter-btn" style="color: #f1c40f;">WRN</button>
+                    </div>
+                    <input type="text" id="debug-log-search" placeholder="Forensic Search (PID, Path...)" oninput="updateLogFilters()" 
+                        style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); color: #00ff41; font-size: 9px; padding: 4px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;">
+                </div>
             </div>
+
+            <style>
+                .f-filter-btn { background: none; border: none; font-size: 8px; font-weight: 900; color: #888; padding: 3px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+                .f-filter-btn.active { background: rgba(255,255,255,0.08); color: #fff !important; }
+                .f-filter-btn:hover:not(.active) { background: rgba(255,255,255,0.03); }
+            </style>
             <div id="debug-console-output" style="background: #000; color: #00ff41; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; border-radius: 8px; height: 400px; overflow-y: auto; border: 1px solid #222;"></div>
         </div>
 
