@@ -1,0 +1,122 @@
+<!-- 
+    GLOBAL DIAGNOSTICS OVERLAY SIDEBAR (v1.37.10)
+    Modularized Fragment: web/fragments/diagnostics_sidebar.html
+-->
+<div id="global-diagnostics-sidebar" class="diagnostic-sidebar left-overlay" style="display: block;">
+    <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff3366" stroke-width="2.5">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            <h3 style="margin:0; font-size: 14px; letter-spacing: 1px; color: #ff3366; font-weight: 900;">SYSTEM DIAGNOSTICS</h3>
+        </div>
+        <button class="close-btn" onclick="toggleDiagnosticsSidebar(false)" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; opacity: 0.5;">×</button>
+    </div>
+    
+    <!-- Universal Diagnostic Tabs (v1.37.10) -->
+    <div class="diag-tabs-nav" style="display: flex; flex-wrap: wrap; background: rgba(0,0,0,0.3); margin: 15px; border-radius: 10px; padding: 4px; gap: 4px; border: 1px solid rgba(255,255,255,0.05);">
+        <button id="reiter-hydration" class="side-reiter active" onclick="switchDiagnosticsSidebarTab('hydration', this)">HYDRATION</button>
+        <button id="reiter-item-track" class="side-reiter" onclick="switchDiagnosticsSidebarTab('item-track', this)">ITEM TRACK</button>
+        <button id="reiter-sentinel" class="side-reiter" onclick="switchDiagnosticsSidebarTab('sentinel', this)" style="color: #00ffcc; font-weight: 800;">SENTINEL</button>
+        <button id="reiter-overview" class="side-reiter" onclick="switchDiagnosticsSidebarTab('debug-db', this)">OVERVIEW</button>
+        <button id="reiter-logs" class="side-reiter" onclick="switchDiagnosticsSidebarTab('logs', this)">LOGS</button>
+        <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">VIDEO</button>
+        <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">RECOVERY</button>
+    </div>
+
+    <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
+        
+        <!-- Tab Pane 1: Hydration Chain -->
+        <div id="diag-pane-hydration" class="diag-pane">
+            <div id="diag-audit-summary">
+                <div class="diag-status-none">Aktualisiere Hydration-Daten...</div>
+            </div>
+        </div>
+
+        <!-- Tab Pane 2: Item Tracker -->
+        <div id="diag-pane-item-track" class="diag-pane" style="display: none;">
+            <div id="diag-item-track-content">
+                <!-- Populated by renderItemTrackTab() -->
+                <div class="diag-status-none">Lade Tracker...</div>
+            </div>
+        </div>
+
+        <!-- Tab Pane 3: SENTINEL (Live Log) -->
+        <div id="diag-pane-sentinel" class="diag-pane" style="display: none;">
+            <div class="diag-section">
+                <div class="diag-section-header" style="color: #00ffcc;">📡 SENTINEL LIVE-TRACE</div>
+                <div id="sentinel-log-container" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.1); border-radius: 8px; height: 350px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 10px; color: #00ffcc; line-height: 1.5; scroll-behavior: smooth;">
+                    <div style="opacity: 0.5;">[INIT] Sentinel Pulse Listener active...</div>
+                </div>
+                <button class="footer-classic-btn" onclick="clearSentinelLog()" style="margin-top: 10px; background: rgba(0,255,204,0.05); color: #00ffcc; border: 1px solid rgba(0,255,204,0.2); width: 100%;">Clear Log</button>
+            </div>
+        </div>
+
+        <!-- Placeholder for original components -->
+        <div id="diag-pane-legacy" class="diag-pane" style="display: none;">
+             <div id="diag-legacy-content"></div>
+        </div>
+
+        <!-- Sticky Footer Area inside Sidebar -->
+        <div class="diagnostic-sidebar-section" style="margin-top: 24px; border-radius: 14px; background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+            <div class="diagnostic-label" style="font-size: 10px; text-transform: uppercase; opacity: 0.5; margin-bottom: 10px; letter-spacing: 1px;">System Flag Toggles</div>
+            <div class="diag-flag-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                <button class="diag-flag-btn" id="flag-btn-DIAG" onclick="toggleDiagnosticsFlag('DIAG')">DIAG</button>
+                <button class="diag-flag-btn" id="flag-btn-NATV" onclick="toggleDiagnosticsFlag('NATV')">NATV</button>
+                <button class="diag-flag-btn" id="flag-btn-HIDB" onclick="toggleDiagnosticsFlag('HIDB')">HIDB</button>
+                <button class="diag-flag-btn" id="flag-btn-RAW" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
+                <button class="diag-flag-btn" id="flag-btn-BYPS" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
+                <button class="diag-flag-btn" id="flag-btn-TEST" onclick="toggleDiagnosticsFlag('TEST')">TEST</button>
+            </div>
+        </div>
+
+        <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px; border: 1px solid rgba(255, 51, 102, 0.3); background: rgba(255, 51, 102, 0.05); padding: 15px; margin-bottom: 30px;">
+            <div class="diagnostic-label" style="color: #ff3366; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">Emergency Recovery</div>
+            <div class="diag-action-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button class="diag-action-btn" style="background: rgba(255, 51, 102, 0.2); border: 1px solid #ff3366; color: #ff3366; font-weight: 800; padding: 10px; border-radius: 8px; cursor: pointer; grid-column: span 2;" 
+                    onclick="if(typeof forceSyncAll === 'function') forceSyncAll();">FORCE SYNC ALL</button>
+                <button class="diag-action-btn" onclick="refreshLibrary();">SYNC</button>
+                <button class="diag-action-btn" onclick="scan(null, true);">SCAN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .diagnostic-sidebar.left-overlay {
+        position: fixed; top: 40px; left: 0; bottom: 0; width: 380px; 
+        background: rgba(20, 20, 25, 0.95); backdrop-filter: blur(40px);
+        border-right: 1px solid rgba(255,255,255,0.08); z-index: 11000;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5); border-top: 1px solid rgba(255,255,255,0.05);
+        display: flex; flex-direction: column; animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+    .side-reiter {
+        font-size: 8px; padding: 8px 6px; border: none; border-radius: 6px; 
+        background: transparent; color: rgba(255,255,255,0.5); cursor: pointer; 
+        transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+        min-width: 65px; flex: 1; text-align: center; font-weight: 700;
+    }
+    .side-reiter.active {
+        background: rgba(255,51,102,0.15) !important; color: white !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .diag-pane { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .diag-flag-btn {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+        color: var(--text-secondary); padding: 8px; border-radius: 8px; cursor: pointer;
+        font-size: 9px; font-weight: 800; transition: all 0.2s;
+    }
+    .diag-flag-btn:hover { background: rgba(255,255,255,0.08); }
+    .diag-flag-btn.active { background: #3498db; color: white; border-color: #2980b9; }
+
+    .sentinel-entry {
+        padding: 4px 0; border-bottom: 1px solid rgba(0,255,204,0.05);
+        display: flex; gap: 8px; font-variant-numeric: tabular-objs;
+    }
+    .sentinel-ts { color: rgba(0,255,204,0.4); min-width: 60px; }
+    .sentinel-tag { font-weight: 800; padding: 0 4px; border-radius: 3px; background: rgba(0,255,204,0.1); }
+</style>

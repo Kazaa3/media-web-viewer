@@ -42,6 +42,7 @@
     <script src="js/translations.js?v=1.35.21"></script>
     <script src="js/item.js?v=1.35.21"></script>
     <script src="js/options_helpers.js?v=1.35.21"></script>
+    <script src="js/diagnostics/sidebar_controller.js?v=1.37.10"></script>
     <script src="js/app_core.js?v=1.35.21"></script>
 
     <style>
@@ -65,55 +66,8 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        /* --- Hydration Chain Visuals (v1.37.07) --- */
-        .hydration-chain {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 15px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .hydration-stage {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 60px;
-            padding: 8px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .hydration-stage.active { background: rgba(52, 152, 219, 0.2); border: 1px solid #3498db; }
-        .hydration-stage.warning { background: rgba(241, 196, 15, 0.2); border: 1px solid #f1c40f; }
-        .hydration-stage.critical { background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; animation: diag-pulse 2s infinite; }
-        .hydration-stage.safe { background: rgba(46, 204, 113, 0.1); border: 1px solid #2ecc71; }
-        
-        .stage-label { font-size: 9px; text-transform: uppercase; opacity: 0.7; font-weight: 800; margin-bottom: 4px; color: var(--text-secondary); }
-        .stage-count { font-size: 16px; font-weight: 900; color: var(--text-primary); }
-        .hydration-arrow { font-size: 14px; opacity: 0.3; font-weight: 100; }
-
-        @keyframes diag-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
-
-        .audit-reasons-panel {
-            background: rgba(0,0,0,0.1);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 13px;
-        }
-        .reasons-list { list-style: none; padding: 0; margin: 10px 0; }
-        .reasons-list li { display: flex; justify-content: space-between; margin-bottom: 4px; opacity: 0.6; }
-        .reasons-list li.has-drops { opacity: 1; color: #e74c3c; }
-        .reason-key { font-family: monospace; }
-        .reason-count { font-weight: 700; }
         .audit-meta { font-size: 10px; opacity: 0.5; margin-top: 10px; line-height: 1.4; }
+    </style>
     </style>
 
     <!-- Modulo-Core Synchronized Bootstrapper (v1.35.21) -->
@@ -348,31 +302,8 @@
         </div>
         <!-- SIDEBAR END -->
 
-        <!-- GLOBAL DIAGNOSTICS OVERLAY SIDEBAR (v1.37.04) -->
-        <div id="global-diagnostics-sidebar" class="diagnostic-sidebar left-overlay" style="display: none;">
-                        <div id="diag-gui-count-sidebar" class="diag-status-value">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- New Logic Audit Section (v1.37.06) -->
-            <div id="diag-logic-audit-container" class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px; background: rgba(0,0,0,0.15);">
-                <div class="diagnostic-label">Logic Audit (Filter Pass)</div>
-                <div id="diag-logic-audit-viewport" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-secondary); line-height: 1.4;">
-                    <div style="padding: 10px; text-align: center; opacity: 0.5;">No audit data captured.</div>
-                </div>
-            </div>
-
-                <div class="diag-note" style="margin-top: auto; padding: 10px; opacity: 0.6;">
-                    [DIAG_SYNC] v1.37.05 - Probes active.
-                </div>
-
-                <div class="diagnostic-label">Observability</div>
-                <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.7; font-family: monospace;">
-                    Waiting for parity sync...
-                </div>
-            </div>
-        </div>
+        <!-- FRAGMENT: Global Diagnostics Sidebar Mock Placeholder -->
+        <div id="diagnostics-overlay-container"></div>
         <!-- Main Splitter -->
         <div class="splitter-v" id="main-splitter"></div>
 

@@ -77,20 +77,33 @@ function applyDiagnosticsSidebarState(isVisible) {
     const footerBtn = document.getElementById('footer-btn-diag-overlay');
     const headerBtn = document.getElementById('header-btn-diag-overlay');
     
+    // Check if we need to load the module first
+    if (!sb && isVisible) {
+        console.info("[UI-NAV] Diagnostics Sidebar missing, triggering modular load...");
+        if (typeof FragmentLoader !== 'undefined') {
+            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => {
+                if (typeof initDiagnosticsSidebar === 'function') initDiagnosticsSidebar();
+                applyDiagnosticsSidebarState(true);
+            });
+        }
+        return false; 
+    }
+
     if (!sb) return false;
 
     diagnosticsSidebarVisible = !!isVisible;
-    sb.classList.toggle('active', diagnosticsSidebarVisible);
+    if (diagnosticsSidebarVisible) {
+        sb.style.display = 'flex';
+        // Small delay for animation trigger
+        setTimeout(() => sb.classList.add('active'), 10);
+    } else {
+        sb.classList.remove('active');
+        setTimeout(() => { if (!diagnosticsSidebarVisible) sb.style.display = 'none'; }, 400);
+    }
 
-    // Sync Footer Button
-    if (footerBtn) {
-        footerBtn.classList.toggle('active', diagnosticsSidebarVisible);
-    }
-    
-    // Sync Header Button (v1.37.06)
-    if (headerBtn) {
-        headerBtn.classList.toggle('active', diagnosticsSidebarVisible);
-    }
+    // Sync Buttons
+    if (footerBtn) footerBtn.classList.toggle('active', diagnosticsSidebarVisible);
+    if (headerBtn) headerBtn.classList.toggle('active', diagnosticsSidebarVisible);
 
     localStorage.setItem(DIAGNOSTICS_SIDEBAR_STORAGE_KEY, diagnosticsSidebarVisible);
     return diagnosticsSidebarVisible;
