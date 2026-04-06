@@ -37,7 +37,9 @@ if LOCAL_DATA_DIR.exists():
 else:
     DB_DIR = Path.home() / ".media-web-viewer"
     DB_FILENAME = str(DB_DIR / "media_library.db")
- 
+
+log.info(f"[DB-PATH] Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
+
 _DB_INITIALIZED = False
 
 

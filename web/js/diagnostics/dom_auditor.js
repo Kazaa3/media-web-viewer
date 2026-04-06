@@ -19,7 +19,8 @@ window.runDomAudit = function() {
         { id: 'F-4', label: 'Fragment Load Status', check: () => checkFragmentLoad(['player_queue.html', 'video_player.html']) },
         { id: 'T-5', label: 'Tab Active Collision', check: () => checkTabCollision() },
         { id: 'L-6', label: 'Layout Offsets', check: () => checkLayoutHeight() },
-        { id: 'M-7', label: 'Modal Layering', check: () => checkModalLayering() }
+        { id: 'M-7', label: 'Modal Layering', check: () => checkModalLayering() },
+        { id: 'L-8', label: 'Library Parity Audit', check: () => checkLibrarySync() }
     ];
 
     let healthyCount = 0;
@@ -92,4 +93,17 @@ function checkModalLayering() {
     let visible = 0;
     modals.forEach(m => { if (m.style.display === 'flex') visible++; });
     return visible <= 1 ? { text: 'LAYER-OK', class: 'status-healthy', healthy: true } : { text: 'MODAL-STUCK', class: 'status-warning', healthy: false };
+}
+
+function checkLibrarySync() {
+    const dbCount = window.__mwv_last_db_count || 0;
+    const guiCount = (window.allLibraryItems || []).length;
+    
+    if (dbCount > 0 && guiCount === 0) {
+        return { text: 'BLACK-HOLE', class: 'status-error', healthy: false };
+    }
+    if (dbCount > 0 && guiCount < dbCount) {
+        return { text: `PARTIAL: ${guiCount}/${dbCount}`, class: 'status-warning', healthy: false };
+    }
+    return { text: `SYNC: ${guiCount}`, class: 'status-healthy', healthy: true };
 }

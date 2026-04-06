@@ -529,19 +529,26 @@ function renderPlaylist() {
     let isRaw = window.__mwv_raw_mode === true;
     let filteredItems = [...(isShuffle ? shuffledPlaylist : currentPlaylist)];
 
-    // v1.35.68: Bypass UI Filter in RAW mode to prevent '0 items' black hole
+    // v1.35.68: Use Centralized CATEGORY_MAP and TECH_MAP from backend
     if (window.activeQueueFilter !== 'all' && !isRaw) {
-        filteredItems = filteredItems.filter(item => {
-            const isVideo = isVideoItem(item);
-            const path = (item.path || item.name || "").toLowerCase();
-            const isTranscoded = path.includes('_transcoded') || path.includes('.mp4_transcoded');
-            const isIso = path.includes('.iso');
+        const allowedLabels = CATEGORY_MAP[window.activeQueueFilter] || [];
+        const allowedLower = allowedLabels.map(l => l.toLowerCase());
+        const markers = TECH_MAP[window.activeQueueFilter] || [];
 
-            if (window.activeQueueFilter === 'audio') return !isVideo;
-            if (window.activeQueueFilter === 'video') return isVideo && !isIso;
-            if (window.activeQueueFilter === 'iso') return isIso;
-            if (window.activeQueueFilter === 'transcoded') return isTranscoded;
-            return true;
+        filteredItems = filteredItems.filter(item => {
+            const rawCat = (item.category || "").toLowerCase();
+            const filename = (item.name || "").toLowerCase();
+            
+            // 1. Technical Marker Check (e.g. transcoded, iso, mock, stage)
+            const hasMarker = markers.some(m => {
+                if (m.startsWith('.')) return filename.endsWith(m); // Extension check
+                if (m.startsWith('_')) return filename.includes(m); // Substring check
+                return item[m] === true; // Boolean property check (e.g. is_mock, stage)
+            });
+            if (hasMarker) return true;
+
+            // 2. Regular Category Match
+            return allowedLower.includes(rawCat);
         });
     }
 
@@ -856,10 +863,25 @@ function syncQueueWithLibrary() {
         return keep;
     });
 
+    console.info(`[Sync-Audit] Stage 1: Filtered ${filtered.length}/${allLibraryItems.length} items. (Diag: ${isDiagnosticMode}, RealDB: ${isRealDbMode})`);
+
+    // v1.35.68: Master-audit logging (Automated Chain)
+    if (filtered.length > 0 && filtered.length < 5) {
+        filtered.forEach(item => {
+            const audit = `AUDIT: [${item.name}] DB_CAT: ${item.category} -> MASTER: ${window.activeQueueFilter} -> STATUS: KEEP`;
+            console.info(audit);
+        });
+    }
+
     // --- EMERGENCY RESCUE: If library is NOT empty but filtered IS, force fallback! ---
-    if (filtered.length === 0 && allLibraryItems.length > 0 && !isDiagnosticMode) {
-        console.error("[Recovery] Sync Black Hole detected. Forcing raw fallback.");
-        filtered = allLibraryItems.filter(i => !isVideoItem(i));
+    if (filtered.length === 0 && allLibraryItems.length > 0) {
+        console.warn("[Recovery] Sync Black Hole detected. Forcing raw fallback to all non-video items.");
+        filtered = allLibraryItems.filter(i => {
+            const isVid = isVideoItem(i);
+            // v1.35.68: Also keep 'multimedia' if it's not a video format
+            return !isVid || (i.category && i.category.toLowerCase() === 'multimedia');
+        });
+        console.info(`[Sync-Audit] Stage 2 (Rescue): Now has ${filtered.length} items.`);
     }
     
     const countMsg = isRaw ? `FORCED RAW SYNC: ${filtered.length} Items` : `Sync Audit: ${filtered.length} Items found. (Diagnostic: ${isDiagnosticMode})`;

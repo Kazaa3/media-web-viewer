@@ -3,25 +3,40 @@
  * Extracted from app.html to improve modularity and avoid line-number drift.
  */
 
-const CATEGORY_MAP = {
-    "audio": ["Audio", "Album", "Hörbuch", "Hörspiel", "Klassik", "Compilation", "Single", "Podcast", "Radio", "Soundtrack", "Playlist", "Music", "Musik", "Song"],
-    "video": ["Video", "Film", "Serie", "ISO/Image", "Musikvideos", "Animes", "Cartoons", "Movie", "TV Show"],
-    "film": ["Film", "Film Object"],
-    "serie": ["Serie"],
-    "album": ["Album"],
-    "soundtrack": ["Soundtrack"],
-    "compilation": ["Compilation"],
-    "single": ["Single"],
-    "klassik": ["Klassik"],
-    "playlist": ["Playlist"],
-    "podcast": ["Podcast"],
-    "images": ["Bilder"],
-    "documents": ["Dokument"],
-    "ebooks": ["E-Book"],
-    "abbild": ["Abbild", "ISO/Image", "Disk Image", "PAL DVD", "NTSC DVD", "Blu-ray", "PAL DVD (Abbild)", "NTSC DVD (Abbild)", "DVD (Abbild)", "Blu-ray (Abbild)", "Audio-CD (Abbild)", "CD-ROM (Abbild)", "Disk-Abbild", "DVD Object"],
-    "spiel": ["PC Spiel", "PC Spiel (Index)", "Digitales Spiel (Steam)", "Spiel"],
-    "beigabe": ["Supplement", "Beigabe", "Software"]
-};
+let CATEGORY_MAP = {};
+let TECH_MAP = {};
+
+/**
+ * Syncs the central category map and technical markers from the backend.
+ */
+async function syncCategoryMaster() {
+    if (typeof eel !== 'undefined' && typeof eel.get_category_master === 'function') {
+        try {
+            const master = await eel.get_category_master()();
+            const tech = await eel.get_tech_markers()();
+            
+            if (master) {
+                console.info("[Sync] Category Master Map Loaded:", master);
+                CATEGORY_MAP = master;
+            }
+            if (tech) {
+                console.info("[Sync] Tech Markers Map Loaded:", tech);
+                TECH_MAP = tech;
+            }
+            
+            // Re-render UI components that depend on categories
+            if (typeof renderPlaylist === 'function') renderPlaylist();
+        } catch (e) {
+            console.warn("[Sync] Master sync failed:", e);
+        }
+    }
+}
+
+// Global initialization hook
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait a bit for Eel to initialize
+    setTimeout(syncCategoryMaster, 500);
+});
 
 /**
  * Toggles a modal's visibility.

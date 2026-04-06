@@ -6,6 +6,7 @@ import json
 import subprocess
 import shutil
 from src.core import logger
+from src.core.config_master import GLOBAL_CONFIG
 
 # Get specialized logger for format_utils
 log = logger.get_logger("format_utils")
@@ -264,26 +265,9 @@ def get_default_scan_dir() -> Path:
     return (Path(__file__).resolve().parent.parent.parent / "media").resolve()
 
 
-PARSER_CONFIG: dict[str, Any] = {
-    "start_page": "player",
-    "enable_mock_data": False,
-    "debug_console_active": False,
-    "auto_scan": True,
-    "hide_mocks": True,
-    "app_mode": "High-Performance", # Choices: High-Performance, Low-Bandwidth
-    "playback_mode": "chrome_native", # Default: chrome_native, ffmpeg, cvlc, mkvmerge, direct
-    "vlc_embedded": True,
-    "parser_mode": "lightweight",  # Choices: lightweight, full, ultimate
-    "browse_default_dir": str(Path.home()),
-    "library_dir": str(get_default_scan_dir()),
-    "additional_library_dirs": [],
-    "parser_chain": [
-        "filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", 
-        "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", 
-        "tinytag", "eyed3", "music_tag"
-    ],
-    "parser_mode": "lightweight",
-    "fast_scan_enabled": True,  # New global fast-scan toggle
+# Use Centralized Config (v1.35.68)
+PARSER_CONFIG = GLOBAL_CONFIG
+
     "debug_scan": True,
     "debug_parser": True,
     "debug_flags": {

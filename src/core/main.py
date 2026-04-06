@@ -249,7 +249,8 @@ with StatusBar("Loading Core Components", total=100) as sb:
         from src.core.streams import direct_play, mse_stream, hls_fmp4, vlc_bridge
         from src.core.mode_router import smart_route
         from src.core import db
-        from src.core import transcoder
+        from src.core.db import DB_FILENAME
+        from src.core.category_master import MASTER_CAT_MAP, TECH_MARKERS, audit_category_chain, get_allowed_internal_cats
         from src.core import hardware_detector
         from src.parsers import tag_writer
         from src.parsers.format_utils import (
@@ -3194,21 +3195,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     if not displayed_cats:
         displayed_cats = ["audio", "video", "images", "multimedia", "abbild"]
 
-    # --- Unified CTA Map (v1.35.68) ---
-    cat_map = {
-        "audio":      ["audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", "musik"],
-        "video":      ["video", "film", "serie", "tv", "multimedia"],
-        "images":     ["bilder", "grafik", "bild", "foto", "multimedia"],
-        "documents":  ["dokument", "pdf", "text"],
-        "ebooks":     ["e-book", "ebook"],
-        "abbild":     ["abbild", "disk-abbild", "iso", "pal dvd", "ntsc dvd", "blu-ray", "3d", "4k", "hd-dvd", "wmv-hd"],
-        "multimedia": ["multimedia", "bilder", "video", "film"]
-    }
-
-    allowed_internal_cats = set()
-    for dc in displayed_cats:
-        for cat in cat_map.get(dc.lower(), []):
-            allowed_internal_cats.add(cat.lower())
+    allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
 
     filtered = []
     for item in all_media:
@@ -3232,9 +3219,24 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         if year != "all" and year != item_year:
             continue
 
+        # Automated Debugging Chain (v1.35.68)
+        if not force_raw and PARSER_CONFIG.get("debug_scan", False):
+            log.debug(audit_category_chain(item))
+
         filtered.append(item)
 
     return filtered
+
+
+@eel.expose
+def get_category_master():
+    """Returns the unified category master map for the frontend."""
+    return MASTER_CAT_MAP
+
+@eel.expose
+def get_tech_markers():
+    """Returns the technical markers map (e.g., transcoded, iso)."""
+    return TECH_MARKERS
 
 
 @eel.expose

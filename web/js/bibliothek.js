@@ -26,6 +26,9 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
     if (typeof updateSyncAnchor === 'function') updateSyncAnchor('...', '...'); 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
+        // v1.35.68: Synchronize Category Master before requesting library
+        if (typeof syncCategoryMaster === 'function') await syncCategoryMaster();
+
         const library = await eel.get_library(forceRaw)();
         const incomingCount = (library.media || []).length;
         const totalDbCount = library.db_count || incomingCount;
@@ -69,7 +72,15 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         if (typeof renderLibrary === 'function') renderLibrary();
         
         // Ensure Queue synchronization (Playback Chain Start)
-        if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
+        if (typeof syncQueueWithLibrary === 'function') {
+            syncQueueWithLibrary();
+            
+            // v1.35.68 Detection: Trigger Reset if we still have 0 after sync
+            if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length === 0 && allLibraryItems.length > 0) {
+                console.warn("[DATA-LIB] EMPTY QUEUE DETECTED. Forcing Filter Reset...");
+                if (typeof resetAllFilters === 'function') resetAllFilters();
+            }
+        }
 
         document.dispatchEvent(new CustomEvent('mwv_library_ready', { detail: { count: allLibraryItems.length } }));
 
