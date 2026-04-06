@@ -4052,6 +4052,17 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     }
     
     for item in all_media:
+        # [MOCK-FILTER] v1.35.68 Unified Hydration Logic
+        item_is_mock = bool(item.get('is_mock', 0))
+        h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
+        
+        if h_mode == 'real' and item_is_mock:
+            dropped_reasons["mock_filtered"] = dropped_reasons.get("mock_filtered", 0) + 1
+            continue
+        if h_mode == 'mock' and not item_is_mock:
+            dropped_reasons["real_filtered"] = dropped_reasons.get("real_filtered", 0) + 1
+            continue
+
         # [BYPASS] If All is requested, we keep everything (v1.35.68 Stability)
         if genre == "all" and "all" in displayed_cats:
             filtered.append(item)
@@ -4225,7 +4236,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     # --- FILTERING & BYPASS (The Motor) ---
     # Apply production filters unless force_raw is requested
     filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw)
-    
+
     # --- EMERGENCY RECOVERY ---
     # Trigger ONLY if real filtered_media is 0 but DB has data
     if len(filtered_media) == 0 and count_total > 0:
@@ -4235,23 +4246,33 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     else:
         status = "synchronized" if not force_raw else "raw"
 
-    # --- STAGE 3: HYBRID FUSION (Diagnostic Parity) ---
-    # Add mocks AFTER the recovery check so they don't block the bypass
-    realistic_mocks = [
-        {
-            "id": "mock-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
-            "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
-            "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
-        },
-        {
-            "id": "mock-2", "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
-            "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
-            "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
-        }
-    ]
-    
-    final_media = filtered_media + (realistic_mocks if audit_stage == 3 or not force_raw else [])
-    
+    # --- STAGE 3: HYDRATION MODE LOGIC ---
+    h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
+    # Filter for hydration mode
+    if h_mode == 'real':
+        final_media = [item for item in filtered_media if not bool(item.get('is_mock', 0))]
+    elif h_mode == 'mock':
+        final_media = [item for item in filtered_media if bool(item.get('is_mock', 0))]
+    else:  # both
+        final_media = filtered_media[:]
+
+    # Add hardcoded realistic mocks only in mock/both mode
+    if h_mode in ['mock', 'both']:
+        realistic_mocks = [
+            {
+                "id": "mock-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
+                "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
+                "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
+            },
+            {
+                "id": "mock-2", "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
+                "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
+                "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
+            }
+        ]
+        # Only add the hardcoded mocks if they aren't already in final_media
+        final_media += [m for m in realistic_mocks if m["id"] not in {item.get("id") for item in final_media}]
+
     # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.35.68)
     print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
     if len(final_media) > 0:
