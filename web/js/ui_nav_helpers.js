@@ -862,6 +862,22 @@ function switchReportingSubView(viewId) {
 }
 
 function switchDiagnosticsSubView(viewId) {
+    // Advanced Mapping for Global Sidebar (v1.37.05)
+    if (viewId === 'logs') {
+        syncGlobalDiagnosticsNav(viewId);
+        applyDiagnosticsSidebarState(true);
+        switchMainCategory('logbuch');
+        return;
+    }
+    if (viewId === 'recovery') {
+        syncGlobalDiagnosticsNav(viewId);
+        applyDiagnosticsSidebarState(true);
+        switchTab('options', null, () => {
+             if (typeof switchOptionsView === 'function') switchOptionsView('recovery');
+        });
+        return;
+    }
+
     // Both 'debug' and 'tests' load diagnostics_suite.html
     const masterTab = (viewId === 'debug-db' || viewId === 'debug' || viewId === 'health' || viewId === 'latency' || viewId === 'video-health') ? 'debug' : 'tests';
     switchTab(masterTab, null, () => {

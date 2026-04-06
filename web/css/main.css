@@ -436,6 +436,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 258px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .diagnostic-sidebar-nav .side-reiter {
@@ -468,6 +471,7 @@ body {
     transform: none;
     font-size: 11px;
     letter-spacing: 0.08em;
+    text-align: left;
 }
 
 .diagnostic-sidebar-section {

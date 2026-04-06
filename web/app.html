@@ -292,15 +292,28 @@
 
         <!-- GLOBAL DIAGNOSTICS OVERLAY SIDEBAR (v1.37.04) -->
         <div id="global-diagnostics-sidebar" class="diagnostic-sidebar left-overlay" style="display: none;">
-            <div class="side-reiter-bar left">
-                 <div id="reiter-overview" class="side-reiter active" onclick="switchDiagnosticsSubView('debug-db')">
-                    <span>Übersicht</span></div>
-                <div id="reiter-tests" class="side-reiter" onclick="switchDiagnosticsSubView('tests')">
-                    <span>Skript-Tests</span></div>
-                <div id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSubView('video-health')">
-                    <span>Video Health</span></div>
-                <div id="reiter-health" class="side-reiter" onclick="switchDiagnosticsSubView('health')">
-                    <span>System-Check</span></div>
+            <div class="diagnostic-sidebar-nav" style="margin-top: 20px;">
+                <button id="reiter-overview" class="side-reiter active" onclick="switchDiagnosticsSidebarTab('debug-db', this)">
+                    <span>Übersicht</span>
+                </button>
+                <button id="reiter-tests" class="side-reiter" onclick="switchDiagnosticsSidebarTab('tests', this)">
+                    <span>Tests & Benchmarks</span>
+                </button>
+                <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">
+                    <span>Video Health</span>
+                </button>
+                <button id="reiter-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('health', this)">
+                    <span>System-Check (Audit)</span>
+                </button>
+                <button id="reiter-logs" class="side-reiter" onclick="switchDiagnosticsSidebarTab('logs', this)">
+                    <span>Konsole Logs</span>
+                </button>
+                <button id="reiter-latency" class="side-reiter" onclick="switchDiagnosticsSidebarTab('latency', this)">
+                    <span>Latency Profiling</span>
+                </button>
+                <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">
+                    <span>Nuclear Recovery</span>
+                </button>
             </div>
 
             <div class="diagnostic-header">
@@ -310,8 +323,48 @@
 
             <div class="diagnostic-content-scroll" style="margin-top: 20px;">
                 <div class="diagnostic-label">Active Goal</div>
-                <div id="diag-current-task" class="diagnostic-value" style="color: #00ff00;">RECOVER 0-ITEM LIBRARY</div>
-                
+                <div id="diag-current-task" class="diagnostic-value" style="color: #00ff00;">RECOVER 0-ITEM LIBRARY
+                </div>
+            <div class="diagnostic-sidebar-section" style="margin-top: 24px; border-radius: 14px;">
+                <div class="diagnostic-label">System Flag Toggles</div>
+                <div class="diag-flag-grid">
+                    <button class="diag-flag-btn" id="flag-btn-DIAG" onclick="toggleDiagnosticsFlag('DIAG')">DIAG</button>
+                    <button class="diag-flag-btn" id="flag-btn-NATV" onclick="toggleDiagnosticsFlag('NATV')">NATV</button>
+                    <button class="diag-flag-btn" id="flag-btn-HIDB" onclick="toggleDiagnosticsFlag('HIDB')">HIDB</button>
+                    <button class="diag-flag-btn" id="flag-btn-RAW" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
+                    <button class="diag-flag-btn" id="flag-btn-BYPS" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
+                    <button class="diag-flag-btn" id="flag-btn-TEST" onclick="toggleDiagnosticsFlag('TEST')">TEST</button>
+                </div>
+            </div>
+
+            <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px;">
+                <div class="diagnostic-label">Action Center</div>
+                <div class="diag-action-grid">
+                    <button class="diag-action-btn" onclick="refreshLibrary(); showStatusNotification('Library Sync Triggered', 'info');">MANUAL SYNC</button>
+                    <button class="diag-action-btn" onclick="scan(null, true); showStatusNotification('Full Scan Triggered', 'warn');">DEEP SCAN</button>
+                    <button class="diag-action-btn" onclick="if(typeof probeDataFlow === 'function') probeDataFlow();">DATA FLOW PROBE</button>
+                    <button class="diag-action-btn" onclick="if(typeof clearDebugConsole === 'function') clearDebugConsole();">CLEAR LOGS</button>
+                </div>
+            </div>
+
+            <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px;">
+                <div class="diagnostic-label">Observability Parity</div>
+                <div class="diag-status-grid">
+                    <div class="diag-status-card">
+                        <div class="diag-caption">Database</div>
+                        <div id="diag-db-count-sidebar" class="diag-status-value">--</div>
+                    </div>
+                    <div class="diag-status-card">
+                        <div class="diag-caption">GUI Items</div>
+                        <div id="diag-gui-count-sidebar" class="diag-status-value">--</div>
+                    </div>
+                </div>
+            </div>
+
+                <div class="diag-note" style="margin-top: auto; padding: 10px; opacity: 0.6;">
+                    [DIAG_SYNC] v1.37.05 - Probes active.
+                </div>
+
                 <div class="diagnostic-label">Observability</div>
                 <div style="font-size: 10px; color: var(--text-secondary); opacity: 0.7; font-family: monospace;">
                     Waiting for parity sync...
@@ -334,13 +387,17 @@
                     <!-- Vertical Reiter Bar (Tabs) - v1.37.03 Multi-Tabbed Restoration -->
                     <div class="side-reiter-bar">
                         <div id="reiter-details" class="side-reiter active" onclick="switchSidebarView('details')">
-                            <span>Details</span></div>
+                            <span>Details</span>
+                        </div>
                         <div id="reiter-diagnostics" class="side-reiter" onclick="switchSidebarView('diagnostics')">
-                            <span>Health</span></div>
+                            <span>Health</span>
+                        </div>
                         <div id="reiter-recovery" class="side-reiter" onclick="switchSidebarView('recovery')">
-                            <span>Recovery</span></div>
+                            <span>Recovery</span>
+                        </div>
                         <div id="reiter-tools" class="side-reiter" onclick="switchSidebarView('tools')">
-                            <span>Tools</span></div>
+                            <span>Tools</span>
+                        </div>
                     </div>
 
                     <!-- VIEW: Media Details -->
@@ -359,18 +416,28 @@
                             <div class="diagnostic-section-title">TECHNICAL AUDIT</div>
 
                             <!-- Detailed Parity Anchor -->
-                            <div id="sb-parity-anchor" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <div id="sb-parity-anchor"
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
                                 [FS: -- | DB: -- | GUI: --]
                             </div>
 
                             <!-- Relocated Toggles -->
                             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">System Flags</div>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;" onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;" onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;" onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;" onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;" onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
+                                <div
+                                    style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">
+                                    System Flags</div>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;"
+                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG
+                                    MODE</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;"
+                                    onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;"
+                                    onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;"
+                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW
+                                    BYPASS</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;"
+                                    onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-AUDIT" style="font-size: 10px;"
                                     onclick="if(typeof window.runAuditStage === 'function') { window.runAuditStage(1); }">AUDIT</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-TEST" style="font-size: 10px;"
@@ -819,61 +886,82 @@
             <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..." title="Frontend layer (DOM / Library)">
                 <span class="hud-label">FE</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny" onclick="if(confirm('Refresh GUI?')) { if(typeof window.location.reload === 'function') window.location.reload(); }">RESET</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(confirm('Refresh GUI?')) { if(typeof window.location.reload === 'function') window.location.reload(); }">RESET</button>
             </div>
             <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..." title="Backend layer (Eel / Process)">
                 <span class="hud-label">BE</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
             </div>
-            <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..." title="Database layer (SQLite / Connection)">
+            <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..."
+                title="Database layer (SQLite / Connection)">
                 <span class="hud-label">DB</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
-                <button class="hud-btn-tiny" onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
+                <button class="hud-btn-tiny"
+                    onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
             </div>
-            <button class="footer-classic-btn yellow" onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();" title="Toggle Trace Logs">LOGS</button>
+            <button class="footer-classic-btn yellow"
+                onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();"
+                title="Toggle Trace Logs">LOGS</button>
         </div>
 
         <!-- Slot 4: Right Tool Cluster (Primary Navigation Restoration) -->
         <div class="footer-icon-cluster">
-            <!-- Media Details Toggle -->
-            <button class="footer-tool-btn" title="Media Information" onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.add('active'); sb.style.display = 'block'; switchSidebarView('details'); }">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            </button>
-
-            <!-- Main Sidebar Toggle (Square with vertical line) - RESTORATION -->
-            <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="if(typeof toggleSidebar === 'function') toggleSidebar();">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-            </button>
-            
-            <!-- Diagnostics Sidebar Toggle (v1.37.04 Restoration) -->
-            <button id="footer-btn-diag-overlay" class="footer-tool-btn" title="Toggle Diagnostics Overlay" onclick="toggleDiagnosticsOverlay()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            <!-- Theme Toggle -->
+            <button class="footer-tool-btn" title="Toggle Theme" onclick="toggleTheme()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                 </svg>
             </button>
-            
-            <button class="footer-tool-btn" title="Toggle Theme">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+
+            <!-- More Options (Vertical Dots) -->
+            <button class="footer-tool-btn" title="More Options">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="1" />
+                    <circle cx="12" cy="5" r="1" />
+                    <circle cx="12" cy="19" r="1" />
+                </svg>
             </button>
 
-            <!-- Grid View Toggle -->
-            <button class="footer-tool-btn" title="Grid View" onclick="if(typeof switchView === 'function') switchView('library');">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <!-- Program Menu Burger (Circled) -->
+            <button onclick="toggleMenuBar()" class="footer-tool-btn"
+                style="background: rgba(255,255,255,0.06); padding: 7px; border-radius: 50%; color: #eee; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 0 4px;" 
+                title="Program Menu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
             </button>
 
-            <!-- Program Menu Burger -->
-            <button onclick="toggleMenuBar()" class="footer-tool-btn" style="background: #1a1a1a; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+            <!-- Main Sidebar Toggle (Split View) -->
+            <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="toggleSidebar()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="9" y1="3" x2="9" y2="21" />
+                </svg>
             </button>
 
-            <!-- Technical Pulsar (Diagnostics Sidebar Toggle) -->
-            <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.toggle('active'); sbDiag.style.display = sbDiag.classList.contains('active') ? 'flex' : 'none'; if(typeof switchSidebarView === 'function') switchSidebarView('diagnostics'); }"
-                class="footer-tool-btn" style="color: #ff3366;" title="Technical Diagnostics">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <!-- Diagnostics Sidebar Overlay Toggle (Pulse Icon - FAR RIGHT) -->
+            <button id="footer-btn-diag-overlay" class="footer-tool-btn" title="System Diagnostics"
+                onclick="toggleDiagnosticsSidebar()" style="color: #ff3366;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
             </button>

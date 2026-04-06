@@ -671,6 +671,12 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         sidebarAnchor.style.color = isParityError ? '#e74c3c' : 'var(--accent-color)';
     }
 
+    // 1b. Global Diagnostics Sidebar Sync (v1.37.05)
+    const sbDbCount = document.getElementById('diag-db-count-sidebar');
+    const sbGuiCount = document.getElementById('diag-gui-count-sidebar');
+    if (sbDbCount) sbDbCount.innerText = finalDb;
+    if (sbGuiCount) sbGuiCount.innerText = finalGui;
+
     // 2. Footer: Minimalist DB indicator
     if (footerDbCount) {
         footerDbCount.innerText = finalDb;
@@ -1060,11 +1066,26 @@ function updateDiagBtnState(btn, isActive) {
 
 // Initial state sync for buttons
 function syncDiagBtnStates() {
-    updateDiagBtnState(document.getElementById('diag-btn-DIAG'), (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear));
-    updateDiagBtnState(document.getElementById('diag-btn-HIDB'), window.__mwv_hide_db);
-    updateDiagBtnState(document.getElementById('diag-btn-RAW'), window.__mwv_raw_mode);
-    updateDiagBtnState(document.getElementById('diag-btn-BYPS'), window.__mwv_bypass_db);
-    updateDiagBtnState(document.getElementById('diag-btn-NATV'), window.__mwv_force_native);
+    const flags = {
+        'DIAG': (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear),
+        'HIDB': window.__mwv_hide_db,
+        'RAW': window.__mwv_raw_mode,
+        'BYPS': window.__mwv_bypass_db || window.__mwv_bypass_mode,
+        'NATV': window.__mwv_force_native || window.__mwv_natv_mode,
+        'TEST': false // Placeholder
+    };
+
+    Object.entries(flags).forEach(([key, active]) => {
+        // Sync Player Sidebar Buttons (Classic)
+        updateDiagBtnState(document.getElementById(`sb-diag-btn-${key}`), active);
+        updateDiagBtnState(document.getElementById(`diag-btn-${key}`), active);
+        
+        // Sync Global Overlay Buttons (v1.37.05)
+        const overlayBtn = document.getElementById(`flag-btn-${key}`);
+        if (overlayBtn) {
+            overlayBtn.classList.toggle('active', active);
+        }
+    });
 }
 
 window.auditSwitchStage = auditSwitchStage;
