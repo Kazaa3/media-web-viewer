@@ -933,20 +933,57 @@ def get_active_video_workers():
 
 
 @eel.expose
-def terminate_video_worker(pid):
+def get_system_environment():
     """
-    Surgical Process Termination (v1.37.25).
+    Environment Forensic Audit (v1.37.29).
+    Provides real-time resource telemetry and environmental metadata.
     """
-    import os
-    import signal
+    import psutil
+    import socket
+    import platform
+    import time
+    
     try:
-        pid_int = int(pid)
-        # Surgical Kill (SIGTERM)
-        os.kill(pid_int, signal.SIGTERM)
-        log.info(f"[Forensic-VID] Surgically terminated worker PID: {pid}")
-        return {"status": "ok", "pid": pid}
+        process = psutil.Process()
+        
+        # 1. Resource Telemetry
+        cpu_percent = process.cpu_percent(interval=None) # Non-blocking
+        mem_info = process.memory_info()
+        mem_rss_mb = mem_info.rss / (1024 * 1024)
+        
+        # 2. Uptime calculation
+        uptime = time.time() - APP_START_TIME
+        
+        # 3. Port Health Audit
+        port = 8345
+        port_status = "error"
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                # If we catch an error, it means we can bind, which means it's NOT bound yet.
+                # Since we ARE running, it SHOULD be bound. 
+                # Checking if OUR process has it would be better, but this is a quick check.
+                res = s.connect_ex(('127.0.0.1', port))
+                port_status = "active" if res == 0 else "inactive"
+        except:
+            pass
+
+        return {
+            "status": "ok",
+            "telemetry": {
+                "cpu": f"{cpu_percent:.1f}%",
+                "ram": f"{mem_rss_mb:.1f} MB",
+                "uptime": f"{int(uptime)}s",
+                "port_8345": port_status
+            },
+            "platform": {
+                "python": platform.python_version(),
+                "os": platform.system() + " " + platform.release(),
+                "eel": "0.16.0" # Current Baseline
+            },
+            "pid": os.getpid()
+        }
     except Exception as e:
-        log.error(f"[Forensic-VID] Surgical Termination Failed for PID {pid}: {e}")
+        log.error(f"[Forensic-ENV] Environment Audit Failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
