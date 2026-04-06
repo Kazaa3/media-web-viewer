@@ -93,40 +93,69 @@ function syntaxHighlightJSON(json) {
  * Modern Database Overview Renderer (v1.35.68 Final Consolidation)
  * Restores the Category Breakdown requested by user.
  */
-function renderDatabaseOverview() {
+window.renderDatabaseOverview = async function() {
     const container = document.getElementById('debug-db-overview-content');
     if (!container) return;
 
-    // Use live items or last known db count
-    const items = window.allLibraryItems || [];
-    const dbTotal = window.__mwv_last_db_count || 0;
-    const guiTotal = items.length;
-    
-    // Group by category
-    const cats = {};
-    items.forEach(item => {
-        const c = item.category || 'Uncategorized';
-        cats[c] = (cats[c] || 0) + 1;
-    });
+    container.innerHTML = '<div style="font-size:10px; opacity:0.6; text-align:center; padding:20px;">Querying Forensic Index Audit...</div>';
+    sentinelPulse('AUDIT', 'Executing Library Forensics Scan...');
 
-    let catListHtml = Object.entries(cats).map(([cat, count]) => 
-        `<li><span style="color: var(--text-primary); font-weight: 700;">${cat}:</span> ${count}</li>`
-    ).join('');
+    try {
+        const forensics = await eel.get_library_forensics()();
+        if (forensics.status === 'error') {
+            container.innerHTML = `<div style="color:#ff3366; font-size:10px;">Forensic Error: ${forensics.error}</div>`;
+            return;
+        }
 
-    container.innerHTML = `
-        <div style="display: flex; gap: 60px; align-items: flex-start;">
-            <div style="flex: 0 0 auto;">
-                <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">Database Stats</div>
-                <h4 style="margin: 0; font-size: 1.8em; color: var(--text-primary); font-weight: 900; letter-spacing: -1px;">Items: ${dbTotal}</h4>
+        const cats = Object.entries(forensics.categories).sort((a,b) => b[1] - a[1]);
+        const formats = Object.entries(forensics.formats).sort((a,b) => b[1] - a[1]).slice(0, 8); // Top 8 formats
+
+        const catHtml = cats.map(([cat, count]) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:4px; margin-bottom:2px;">
+                <span style="font-size:10px; font-weight:700; color:var(--text-primary);">${cat.toUpperCase()}</span>
+                <span style="font-size:10px; font-family:'JetBrains Mono', monospace; font-weight:900; color:#00ff99;">${count}</span>
             </div>
-            <div style="flex: 1;">
-                <div style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">Category Breakdown (GUI)</div>
-                <ul style="margin: 0; padding-left: 15px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; list-style: square;">
-                    ${catListHtml || '<li>Warte auf Daten-Sync...</li>'}
-                </ul>
+        `).join('');
+
+        const formatHtml = formats.map(([ext, count]) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; opacity:0.8;">
+                <span style="font-size:9px; font-family:'JetBrains Mono', monospace; color:#3498db;">${ext}</span>
+                <span style="font-size:9px; font-family:'JetBrains Mono', monospace;">${count}</span>
             </div>
-        </div>
-    `;
+        `).join('');
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                <div style="display:flex; gap:20px; align-items:center;">
+                    <div style="flex:1; background:rgba(0,255,153,0.05); border:1px solid rgba(0,255,153,0.1); padding:10px; border-radius:8px; text-align:center;">
+                        <div style="font-size:8px; font-weight:900; opacity:0.4; letter-spacing:1px; margin-bottom:4px;">TOTAL_INDEXED</div>
+                        <div style="font-size:24px; font-weight:900; color:#00ff99; letter-spacing:-1px;">${forensics.total}</div>
+                    </div>
+                    <div style="flex:1; background:rgba(231,76,60,0.05); border:1px solid ${forensics.duplicates > 0 ? 'rgba(231,76,60,0.2)' : 'rgba(255,255,255,0.05)'}; padding:10px; border-radius:8px; text-align:center;">
+                        <div style="font-size:8px; font-weight:900; opacity:0.4; letter-spacing:1px; margin-bottom:4px;">DUPLICATES</div>
+                        <div style="font-size:24px; font-weight:900; color:${forensics.duplicates > 0 ? '#e74c3c' : '#444'}; letter-spacing:-1px;">${forensics.duplicates}</div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:15px;">
+                    <div>
+                        <div style="font-size:9px; font-weight:900; color:#fff; margin-bottom:8px; opacity:0.5; letter-spacing:0.5px;">CATEGORY_DISTRIBUTION</div>
+                        ${catHtml || '<div style="font-size:10px; opacity:0.4;">No categories detected.</div>'}
+                    </div>
+                    <div>
+                        <div style="font-size:9px; font-weight:900; color:#fff; margin-bottom:8px; opacity:0.5; letter-spacing:0.5px;">EXTENSION_AUDIT</div>
+                        <div style="display:flex; flex-direction:column; gap:4px; border-left:2px solid rgba(52,152,219,0.2); padding-left:10px;">
+                            ${formatHtml || '<div style="font-size:10px; opacity:0.4;">N/A</div>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        sentinelPulse('SUCCESS', `Database Audit Complete. Index Total: ${forensics.total}`);
+    } catch (e) {
+        container.innerHTML = `<div style="color:#ff3366; font-size:10px; padding:20px;">Audit Bridge Fault: ${e.message}</div>`;
+        sentinelPulse('ERROR', `Database Audit Failed: ${e.message}`);
+    }
 }
 
 window.renderDebugDatabase = async function() {

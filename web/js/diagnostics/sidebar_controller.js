@@ -752,5 +752,73 @@ async function runHydrationParityAudit() {
     }
 }
 
+async function runVideoWorkerAudit() {
+    const container = document.getElementById('diag-video-worker-viewport');
+    const content = document.getElementById('video-worker-matrix-content');
+    if (!container || !content) return;
+
+    container.style.display = 'block';
+    content.innerHTML = '<div style="font-size:9px; opacity:0.6; text-align:center; padding:10px;">Forensic Process Scan in progress...</div>';
+    sentinelPulse('AUDIT', 'Executing Video Worker Forensic Audit...');
+
+    try {
+        const res = await eel.get_active_video_workers()();
+        if (res.status === 'error') {
+            content.innerHTML = `<div style="color:#ff3366; font-size:9px;">Audit Fault: ${res.message}</div>`;
+            return;
+        }
+
+        const workers = res.workers || [];
+        if (workers.length === 0) {
+            content.innerHTML = '<div style="font-size:9px; opacity:0.4; text-align:center; padding:10px;">No Active Transcoding Workers.</div>';
+            return;
+        }
+
+        let html = '<div style="display:flex; flex-direction:column; gap:4px;">';
+        workers.forEach(w => {
+            const statusColor = w.is_workspace ? '#2ecc71' : '#f1c40f'; // Green for our processes, yellow for others
+            html += `
+                <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px; overflow:hidden;">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <span style="font-size:10px; font-weight:900; color:${statusColor}; font-family:'JetBrains Mono', monospace;">PID: ${w.pid}</span>
+                            <span style="font-size:9px; font-weight:700; color:#fff; opacity:0.8;">[${w.name}]</span>
+                        </div>
+                        <span style="font-size:8px; opacity:0.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${w.command}">${w.command}</span>
+                    </div>
+                    <button onclick="surgicalTerminateWorker('${w.pid}')" style="background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.2); color:#e74c3c; font-size:8px; font-weight:900; padding:4px 8px; border-radius:4px; cursor:pointer;" onmouseover="this.style.background='rgba(231,76,60,0.2)'" onmouseout="this.style.background='rgba(231,76,60,0.1)'">KILL</button>
+                </div>
+            `;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+        sentinelPulse('SUCCESS', `Worker Audit Complete. Found ${workers.length} active workers.`);
+
+    } catch (e) {
+        content.innerHTML = `<div style="color:#ff3366; font-size:9px; padding:10px;">Audit Bridge Fault: ${e.message}</div>`;
+        sentinelPulse('ERROR', `Video Worker Audit Failed: ${e.message}`);
+    }
+}
+
+async function surgicalTerminateWorker(pid) {
+    if (!confirm(`Are you sure you want to SURGICALLY TERMINATE worker PID: ${pid}?`)) return;
+    
+    sentinelPulse('KILL', `Attempting surgical termination of PID: ${pid}`);
+    try {
+        const res = await eel.terminate_video_worker(pid)();
+        if (res.status === 'ok') {
+            sentinelPulse('SUCCESS', `Surgical Kill complete for PID: ${pid}`);
+            runVideoWorkerAudit(); // Refresh the list
+        } else {
+            sentinelPulse('ERROR', `Surgical Kill failed for PID: ${pid}: ${res.message}`);
+            alert(`Surgical Termination Failed: ${res.message}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Surgical Kill Bridge Fault for PID: ${pid}: ${e.message}`);
+    }
+}
+
+window.runVideoWorkerAudit = runVideoWorkerAudit;
+window.surgicalTerminateWorker = surgicalTerminateWorker;
 window.runHydrationParityAudit = runHydrationParityAudit;
 window.runHydrationAuditProbe = runHydrationAuditProbe;

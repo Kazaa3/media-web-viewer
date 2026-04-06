@@ -884,8 +884,70 @@ def get_hydration_stats():
         
         return results
     except Exception as e:
-        log.error(f"[Forensic-HYD] Parity fetch failed: {e}")
+        log.error(f"[Forensic-DBI] Audit failed: {e}")
         return {"status": "error", "error": str(e)}
+
+
+@eel.expose
+def get_active_video_workers():
+    """
+    Video Health: Live Worker Audit (v1.37.25).
+    Identifies active FFmpeg/MKVMerge processes associated with the workspace.
+    """
+    import subprocess
+    import os
+    
+    workers = []
+    try:
+        # We use 'ps' to get process details for the current user
+        # comm= (command name), args= (full command line)
+        output = subprocess.check_output(['ps', '-u', str(os.getlogin()), '-o', 'pid,comm,args'], encoding='utf-8')
+        lines = output.splitlines()[1:] # Skip header
+        
+        cwd = os.getcwd()
+
+        for line in lines:
+            parts = line.strip().split(None, 2)
+            if len(parts) < 3: continue
+            
+            pid, comm, args = parts[0], parts[1], parts[2]
+            
+            # Filter for our key workers
+            comm_lower = comm.lower()
+            if 'ffmpeg' in comm_lower or 'mkvmerge' in comm_lower:
+                # Forensic Check: Is it in our CWD?
+                # This prevents accidentally listing system-level ffmpeg processes not from our app
+                is_workspace = cwd in args
+                
+                workers.append({
+                    "pid": pid,
+                    "name": comm,
+                    "command": args[:100] + "..." if len(args) > 100 else args,
+                    "is_workspace": is_workspace
+                })
+        
+        return {"status": "ok", "workers": workers}
+    except Exception as e:
+        log.error(f"[Forensic-VID] Worker Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def terminate_video_worker(pid):
+    """
+    Surgical Process Termination (v1.37.25).
+    """
+    import os
+    import signal
+    try:
+        pid_int = int(pid)
+        # Surgical Kill (SIGTERM)
+        os.kill(pid_int, signal.SIGTERM)
+        log.info(f"[Forensic-VID] Surgically terminated worker PID: {pid}")
+        return {"status": "ok", "pid": pid}
+    except Exception as e:
+        log.error(f"[Forensic-VID] Surgical Termination Failed for PID {pid}: {e}")
+        return {"status": "error", "message": str(e)}
 
 
 @eel.expose
