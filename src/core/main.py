@@ -1169,6 +1169,62 @@ def kill_stalled_ffmpeg_streams():
         return {"status": "error", "message": str(e)}
 
 
+@eel.expose
+def get_playlist_forensics():
+    """
+    Playlist Forensic Audit: Integrity & Repair (v1.37.32).
+    Audits SQLite playlists for relational orphans and physical asset missingness.
+    """
+    from src.core import db
+    import os
+    
+    try:
+        playlists = db.get_all_playlists()
+        results = {
+            "status": "ok",
+            "count": len(playlists),
+            "playlists": []
+        }
+        
+        for pl in playlists:
+            items = db.get_playlist_items(pl['id'])
+            orphans = db.get_playlist_orphans(pl['id'])
+            
+            pl_audit = {
+                "id": pl['id'],
+                "name": pl['name'],
+                "item_count": len(items),
+                "relational_orphans": len(orphans),
+                "physical_missing": 0,
+                "broken_paths": [],
+                "total_duration_sec": 0,
+                "integrity_score": 100
+            }
+            
+            for item in items:
+                # Check physical existence
+                if item['path'] and not os.path.exists(item['path']):
+                    pl_audit["physical_missing"] += 1
+                    pl_audit["broken_paths"].append(item['path'])
+                
+                # Sum duration if available in metadata tags (from db.get_playlist_items)
+                # Note: get_playlist_items doesn't return full duration_sec yet, 
+                # but we can improve it or just audit existence for now.
+                pass
+
+            # Calculate Integrity Score (Relational + Physical impact)
+            total_issues = pl_audit["relational_orphans"] + pl_audit["physical_missing"]
+            if pl_audit["item_count"] > 0:
+                pl_audit["integrity_score"] = max(0, 100 - (total_issues * 100 // pl_audit["item_count"]))
+            
+            results["playlists"].append(pl_audit)
+            
+        return results
+    except Exception as e:
+        log.error(f"[Forensic-PLY] Playlist Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 

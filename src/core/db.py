@@ -870,3 +870,79 @@ def get_media_by_path(path):
             'duration_sec': row['duration_sec'] or 0
         }
     return None
+
+
+# --- Playlist Management (v1.37.32) ---
+
+def get_all_playlists():
+    """
+    @brief Retrieves all playlist records.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM playlists ORDER BY name")
+    rows = cursor.fetchall()
+    playlists = []
+    for row in rows:
+        playlists.append({
+            'id': row['id'],
+            'name': row['name']
+        })
+    conn.close()
+    return playlists
+
+
+def get_playlist_items(playlist_id):
+    """
+    @brief Retrieves all media items for a specific playlist.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT m.*, pm.position 
+        FROM media m
+        JOIN playlist_media pm ON m.id = pm.media_id
+        WHERE pm.playlist_id = ?
+        ORDER BY pm.position
+    """, (playlist_id,))
+    rows = cursor.fetchall()
+    
+    media_list = []
+    for row in rows:
+        item = {
+            'id': row['id'],
+            'name': row['name'],
+            'path': row['path'],
+            'type': row['type'],
+            'category': row['category'],
+            'position': row['position']
+        }
+        try:
+            item['tags'] = json.loads(row['tags']) if row['tags'] else {}
+        except:
+            item['tags'] = {}
+        media_list.append(item)
+    conn.close()
+    return media_list
+
+
+def get_playlist_orphans(playlist_id):
+    """
+    @brief Finds media_ids in playlist_media that do not exist in the media table.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT pm.media_id, pm.position
+        FROM playlist_media pm
+        LEFT JOIN media m ON pm.media_id = m.id
+        WHERE pm.playlist_id = ? AND m.id IS NULL
+    """, (playlist_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"media_id": r[0], "position": r[1]} for r in rows]
