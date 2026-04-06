@@ -10,7 +10,8 @@ const DIAG_VIEW_INFO = {
     'video-health': { name: 'Active Workers', desc: 'Process Runtime & Surgical Kill Matrix' },
     'recovery': { name: 'Database Resilience', desc: 'Tactical Restoration & Atomic Sync' },
     'environment': { name: 'System Health', desc: 'Resource Telemetry & Platform Audit' },
-    'storage': { name: 'Volume Discovery', desc: 'FS Heuristics & Large Asset Audit' }
+    'storage': { name: 'Volume Discovery', desc: 'FS Heuristics & Large Asset Audit' },
+    'performance': { name: 'GUI Performance', desc: 'DOM Bloat & Rendering Decathlon' }
 };
 
 function initDiagnosticsSidebar() {
@@ -61,7 +62,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'video-health': 'diag-pane-video-health',
         'recovery': 'diag-pane-db-resilience',
         'environment': 'diag-pane-environment',
-        'storage': 'diag-pane-storage'
+        'storage': 'diag-pane-storage',
+        'performance': 'diag-pane-performance'
     };
 
     if (paneIds[viewId]) {
@@ -76,6 +78,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'video-health') runVideoWorkerAudit();
         if (viewId === 'environment') runEnvironmentAudit();
         if (viewId === 'storage') runStorageAudit();
+        if (viewId === 'performance') runPerformanceAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1074,6 +1077,55 @@ async function runStorageAudit() {
     }
 }
 
+/**
+ * GUI PERFORMANCE AUDIT (v1.37.31)
+ */
+function runPerformanceAudit() {
+    const details = document.getElementById('diag-per-details');
+    const latencyEl = document.getElementById('diag-per-latency');
+    const bloatEl = document.getElementById('diag-per-bloat');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Auditing GUI...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing GUI Performance Audit...');
+    
+    setTimeout(() => {
+        const domNodes = document.querySelectorAll('*').length;
+        const renderTime = window.__mwv_last_render_ms || 0;
+        const images = document.querySelectorAll('img').length;
+        
+        if (latencyEl) latencyEl.innerText = `${renderTime.toFixed(1)}ms`;
+        if (bloatEl) bloatEl.innerText = domNodes;
+        
+        // Color mapping for bloat
+        const bloatColor = domNodes > 2000 ? '#e74c3c' : (domNodes > 1000 ? '#f1c40f' : '#2ecc71');
+        if (bloatEl) bloatEl.style.color = bloatColor;
+        
+        if (details) {
+            details.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="opacity:0.5;">ASSET DENSITY</span>
+                    <span style="font-family:monospace;">${images} Active Assets</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="opacity:0.5;">EVENT REGISTRY</span>
+                    <span style="font-family:monospace; opacity:0.8;">~${domNodes * 0.15 | 0} Listeners (Est.)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-top:1px solid rgba(255,255,255,0.05); padding-top:5px; margin-top:5px;">
+                    <span style="opacity:0.5;">RENDER ENGINE</span>
+                    <span style="color:#9b59b6; font-weight:800;">REACTIVE_V1_LITE</span>
+                </div>
+                <div style="margin-top:10px; font-size:8px; line-height:1.4; color:var(--text-secondary); opacity:0.6;">
+                    ${domNodes > 1500 ? '⚠️ High DOM complexity detected. Consider fragment unloading.' : '✅ DOM complexity is within workstation limits.'}
+                </div>
+                <button onclick="renderLibrary()" style="width:100%; margin-top:10px; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:9px; cursor:pointer;">FORCE RE-RENDER AUDIT</button>
+            `;
+        }
+        sentinelPulse('SUCCESS', `Performance Audit Complete. Nodes: ${domNodes}, Latency: ${renderTime.toFixed(1)}ms`);
+    }, 100);
+}
+
+window.runPerformanceAudit = runPerformanceAudit;
 window.runStorageAudit = runStorageAudit;
 window.runEnvironmentAudit = runEnvironmentAudit;
 window.generateForensicSnapshot = generateForensicSnapshot;

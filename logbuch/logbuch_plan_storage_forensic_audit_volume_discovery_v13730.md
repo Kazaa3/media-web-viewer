@@ -1,3 +1,37 @@
+# v1.37.30 Storage Forensic Audit: Volume Discovery (COMPLETED)
+
+## Summary
+This release introduces the Storage Forensic Audit: Volume Discovery, providing deep technical insight into all detected storage volumes and their forensic properties. The feature is now fully implemented and verified.
+
+---
+
+## Implemented Features
+- **Backend:**
+  - Implemented `get_storage_forensics()` in `main.py` to enumerate and analyze storage volumes.
+- **Frontend:**
+  - Added `reiter-storage (STR)` tab to `diagnostics_sidebar.html`.
+  - Added `diag-pane-storage` viewport to `diagnostics_sidebar.html` for detailed storage display.
+  - Implemented `runStorageAudit()` in `sidebar_controller.js` to trigger and display audit results.
+  - Updated tab-switching logic in `sidebar_controller.js` to support STR domain.
+- **Verification:**
+  - Verified large asset discovery and chromatic indicator rendering for storage health.
+
+---
+
+## Verification Plan
+- Confirmed correct enumeration of all storage volumes (including edge cases).
+- Verified UI updates and chromatic indicators for large assets.
+- Manual and automated tests passed for all new logic.
+
+---
+
+## Status
+- **COMPLETED**
+- Feature is now available in the diagnostics sidebar under the STR tab.
+
+---
+
+*Next: See v1.37.31+ for GUI Performance Audit and Decathlon upgrades.*
 # [PLAN] Storage Forensic Audit: Volume Discovery (v1.37.30)
 
 ## Objective

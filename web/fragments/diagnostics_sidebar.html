@@ -33,6 +33,7 @@
         <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">REC</button>
         <button id="reiter-environment" class="side-reiter" onclick="switchDiagnosticsSidebarTab('environment', this)">ENV</button>
         <button id="reiter-storage" class="side-reiter" onclick="switchDiagnosticsSidebarTab('storage', this)">STR</button>
+        <button id="reiter-performance" class="side-reiter" onclick="switchDiagnosticsSidebarTab('performance', this)">PER</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
@@ -228,6 +229,28 @@
 
             <div id="diag-str-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.4;">
                 <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Storage-Scan...</div>
+            </div>
+        </div>
+
+        <div id="diag-pane-performance" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">GUI PERFORMANCE</div>
+                <button onclick="runPerformanceAudit()" style="background: #9b59b6; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT GUI</button>
+            </div>
+            
+            <div id="diag-per-telemetry" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">RENDER TIME</div>
+                    <div id="diag-per-latency" style="font-size: 14px; font-weight: 900; color: #9b59b6;">--</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">DOM BLOAT</div>
+                    <div id="diag-per-bloat" style="font-size: 14px; font-weight: 900; color: #9b59b6;">--</div>
+                </div>
+            </div>
+
+            <div id="diag-per-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.6;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Performance-Scan...</div>
             </div>
         </div>
 

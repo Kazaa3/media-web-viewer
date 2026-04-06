@@ -113,13 +113,8 @@ async function refreshLibrary() {
  * The main UI update entry point for the Library tab.
  */
 async function renderLibrary() {
-        // Instrumentation: Log item counts
-        if (typeof mwv_trace_render === 'function') {
-            mwv_trace_render('LIBRARY', 'RENDER', {
-                raw: allLibraryItems.length,
-                filtered: coverflowItems.length
-            });
-        }
+    const renderStart = performance.now();
+
     if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'RENDER-START', { count: allLibraryItems.length });
     
     const track = document.getElementById('coverflow-track');
@@ -188,8 +183,6 @@ async function renderLibrary() {
         });
     }
 
-    if (typeof mwv_trace_render === 'function') mwv_trace_render('LIBRARY-UI', 'STAGE-PROJECTED', { raw: allLibraryItems.length, projected: coverflowItems.length });
-    
     if (coverflowItems.length === 0) {
         let noMediaHtml = "";
         
@@ -259,6 +252,7 @@ async function renderLibrary() {
             if (t1) t1.innerHTML = noMediaHtml;
             if (t2) t2.innerHTML = noMediaHtml;
         }
+        window.__mwv_last_render_ms = performance.now() - renderStart;
         return;
     }
 
@@ -274,6 +268,8 @@ async function renderLibrary() {
     
     // Update the sync anchor with the final rendered count
     if (typeof updateSyncAnchor === 'function') updateSyncAnchor(undefined, coverflowItems.length);
+    
+    window.__mwv_last_render_ms = performance.now() - renderStart;
 }
 
 /**
