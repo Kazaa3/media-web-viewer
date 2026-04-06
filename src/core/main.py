@@ -8991,7 +8991,6 @@ def get_routing_suite_report():
 
             if not is_direct:
                 incompatible_count = int(incompatible_count) + 1
-”
             list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
             if score >= 80:
                 top_quality_items.append(list_item)

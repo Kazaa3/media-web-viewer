@@ -22,7 +22,8 @@ const DIAG_VIEW_INFO = {
     'process': { name: 'Worker Control', desc: 'Child Process & Zombie Workstation Audit' },
     'driver': { name: 'Hardware Accel', desc: 'GPU & Transcoder Capability Audit' },
     'security': { name: 'Authority Hub', desc: 'UID/GID & Filesystem Permission Audit' },
-    'api': { name: 'Bridge Registry', desc: 'Internal API & Live Documentation Audit' }
+    'api': { name: 'Bridge Registry', desc: 'Internal API & Live Documentation Audit' },
+    'env': { name: 'Software Stack', desc: 'Python, Eel & Dependency Hygiene Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -83,7 +84,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'process': 'diag-pane-process',
         'driver': 'diag-pane-driver',
         'security': 'diag-pane-security',
-        'api': 'diag-pane-api'
+        'api': 'diag-pane-api',
+        'env': 'diag-pane-env'
     };
 
     if (paneIds[viewId]) {
@@ -108,6 +110,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'driver') runHardwareAudit();
         if (viewId === 'security') runSecurityAudit();
         if (viewId === 'api') runApiAudit();
+        if (viewId === 'env') runEnvAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1720,3 +1723,39 @@ async function runApiAudit() {
 }
 
 window.runApiAudit = runApiAudit;
+
+/**
+ * SOFTWARE STACK & DEPENDENCY HYGIENE AUDIT (v1.37.40+)
+ */
+async function runEnvAudit() {
+    const pythonEl = document.getElementById('diag-env-python');
+    const eelEl = document.getElementById('diag-env-eel');
+    const psutilEl = document.getElementById('diag-env-psutil');
+    const ffmpegEl = document.getElementById('diag-env-ffmpeg');
+    const osEl = document.getElementById('diag-env-os');
+    const nodeEl = document.getElementById('diag-env-node');
+    
+    sentinelPulse('AUDIT', 'Scanning Forensic Software Stack...');
+    
+    try {
+        const res = await eel.get_environment_forensics()();
+        if (res.status === 'ok') {
+            const stack = res.stack;
+            if (pythonEl) pythonEl.innerText = stack.python;
+            if (eelEl) eelEl.innerText = stack.eel;
+            if (psutilEl) psutilEl.innerText = stack.psutil;
+            if (ffmpegEl) {
+                ffmpegEl.innerText = stack.ffmpeg;
+                ffmpegEl.style.color = stack.ffmpeg.includes('NOT FOUND') ? '#ff3366' : '#1abc9c';
+            }
+            if (osEl) osEl.innerText = stack.os.toUpperCase();
+            if (nodeEl) nodeEl.innerText = `Hostname: ${stack.node}`;
+            
+            sentinelPulse('SUCCESS', `Software Stack Audit Complete. Python: ${stack.python}, FFmpeg: ${stack.ffmpeg.split(' ')[0]}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Software Stack Audit Failed: ${e.message}`);
+    }
+}
+
+window.runEnvAudit = runEnvAudit;

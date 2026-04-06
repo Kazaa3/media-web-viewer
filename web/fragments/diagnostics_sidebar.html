@@ -32,7 +32,7 @@
         <button id="reiter-logs" class="side-reiter" onclick="switchDiagnosticsSidebarTab('logs', this)">LOG</button>
         <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">VID</button>
         <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">REC</button>
-        <button id="reiter-environment" class="side-reiter" onclick="switchDiagnosticsSidebarTab('environment', this)">ENV</button>
+        <button id="reiter-env" class="side-reiter" onclick="switchDiagnosticsSidebarTab('env', this)">ENV</button>
         <button id="reiter-storage" class="side-reiter" onclick="switchDiagnosticsSidebarTab('storage', this)">STR</button>
         <button id="reiter-performance" class="side-reiter" onclick="switchDiagnosticsSidebarTab('performance', this)">PER</button>
         <button class="side-reiter" id="reiter-ply" onclick="switchDiagnosticsSidebarTab('playlist')">PLY</button>
@@ -42,6 +42,28 @@
         <button class="side-reiter" id="reiter-drv" onclick="switchDiagnosticsSidebarTab('driver')">DRV</button>
         <button class="side-reiter" id="reiter-sec" onclick="switchDiagnosticsSidebarTab('security')">SEC</button>
         <button class="side-reiter" id="reiter-api" onclick="switchDiagnosticsSidebarTab('api')">API</button>
+                <!-- PANE: SOFTWARE STACK & DEPENDENCY AUDIT (ENV) [v1.37.40] -->
+                <div id="diag-pane-env" class="diag-pane" style="display:none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--accent-color); letter-spacing: 2px;">SOFTWARE STACK DASHBOARD</div>
+                        <div style="font-size: 8px; opacity: 0.5;">v1.37.40</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(255,51,102,0.08), rgba(52,152,219,0.08)); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; position: relative; overflow: hidden;">
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Software Stack</div>
+                        <div id="diag-env-os" style="font-size: 12px; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 8px;">-</div>
+                        <div id="diag-env-python" style="font-size: 10px; color: #9cdcfe; margin-bottom: 4px;">Python: -</div>
+                        <div id="diag-env-eel" style="font-size: 10px; color: #ce9178; margin-bottom: 4px;">Eel: -</div>
+                        <div id="diag-env-psutil" style="font-size: 10px; color: #b5cea8; margin-bottom: 4px;">psutil: -</div>
+                        <div id="diag-env-ffmpeg" style="font-size: 10px; color: #ff3366; margin-bottom: 4px;">FFmpeg: -</div>
+                        <div id="diag-env-node" style="font-size: 10px; color: #fff; margin-bottom: 4px;">Node: -</div>
+                    </div>
+                    <button onclick="runEnvAudit()" style="width:100%; height: 35px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(255,51,102,0.2);">
+                        <span>RUN ENV AUDIT</span>
+                        <span id="env-btn-spinner" style="display:none; width:10px; height:10px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation: rotate 1s infinite linear;"></span>
+                    </button>
+                    <div id="diag-env-status" style="font-size: 9px; color: #fff; opacity: 0.7; margin-top: 10px; text-align: center;">Awaiting audit...</div>
+                </div>
+        <button class="side-reiter" id="reiter-env" onclick="switchDiagnosticsSidebarTab('env')">ENV</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
@@ -79,7 +101,7 @@
                 <div class="h-tile" title="LOG"></div><div class="h-tile" title="VID"></div><div class="h-tile" title="AUD"></div><div class="h-tile" title="REC"></div><div class="h-tile" title="LIB"></div>
                 <div class="h-tile" title="DOM"></div><div class="h-tile" title="DB"></div><div class="h-tile" title="SYS"></div><div class="h-tile" title="VOL"></div><div class="h-tile" title="PRF"></div>
                 <div class="h-tile" title="PLY"></div><div class="h-tile" title="STA"></div><div class="h-tile" title="NET"></div><div class="h-tile" title="PRC"></div><div class="h-tile" title="DRV"></div>
-                <div class="h-tile" title="SEC"></div><div class="h-tile" title="API"></div><div class="h-tile" id="h-tile-hlt" title="HLT" style="background:var(--accent-color);"></div>
+                <div class="h-tile" title="SEC"></div><div class="h-tile" title="API"></div><div class="h-tile" title="ENV"></div><div class="h-tile" id="h-tile-hlt" title="HLT" style="background:var(--accent-color);"></div>
             </div>
 
             <button onclick="runGlobalHealthAudit()" style="width:100%; height: 35px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(52,152,219,0.3);">
@@ -509,6 +531,41 @@
             <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Live Documentation Stream</div>
             <div id="diag-api-registry" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; max-height: 300px; overflow-y: auto;">
                 <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Reflecting backend bridges...</div>
+            </div>
+        </div>
+
+        <!-- PANE: SOFTWARE STACK & DEPENDENCY AUDIT (ENV) [v1.37.40] -->
+        <div id="diag-pane-env" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">STACK DASHBOARD</div>
+                <button onclick="runEnvAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT STACK</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid #1abc9c;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 2px;">OS PLATFORM</div>
+                <div id="diag-env-os" style="font-size: 11px; font-weight: 900; color: #fff;">SCANNING...</div>
+                <div id="diag-env-node" style="font-size: 8px; opacity: 0.6; font-family: monospace; margin-top: 2px;">Hostname: --</div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Technical Dependencies</div>
+            <div style="display:grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">PYTHON</div>
+                    <div id="diag-env-python" style="font-size: 9px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">EEL-BRIDGE</div>
+                    <div id="diag-env-eel" style="font-size: 9px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">PSUTIL-CORE</div>
+                    <div id="diag-env-psutil" style="font-size: 9px; font-weight: 900; color: #fff;">-</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Engine Signatures</div>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 8px; line-height: 1.4; font-family: monospace; color: #1abc9c;">
+                <div id="diag-env-ffmpeg">Detecting FFmpeg engine...</div>
             </div>
         </div>
 
