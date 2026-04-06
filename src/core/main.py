@@ -1404,6 +1404,13 @@ def get_global_health_audit():
         if health_report["metrics"]["prc"] == "CLEAN": score += 14
         if health_report["metrics"]["drv"] == "ACCEL_ACTIVE": score += 14
         if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED": score += 14
+        if health_report["metrics"]["api"] == "DOCUMENTED": score += 14
+        
+        # 8. ENV HEALTH (Weighted 14%)
+        # Check if FFmpeg is available
+        import shutil
+        health_report["metrics"]["env"] = "STACK_VERIFIED" if shutil.which("ffmpeg") else "FFMPEG_MISSING"
+        if health_report["metrics"]["env"] == "STACK_VERIFIED": score += 14
         
         # 7. API HEALTH (Weighted 16%)
         # Check if the registry itself is exposed
@@ -1519,6 +1526,43 @@ def get_api_forensics():
         }
     except Exception as e:
         log.error(f"[Forensic-API] API Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def get_environment_forensics():
+    """
+    Forensic Software Stack & Environment Audit (v1.37.40).
+    Maps Python, Eel, and Engine Binaries.
+    """
+    try:
+        import sys
+        import eel
+        import psutil
+        import subprocess
+        import platform
+        
+        ffmpeg_version = "NOT FOUND"
+        try:
+            res = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, timeout=2)
+            ffmpeg_version = res.stdout.split('\n')[0] if res.stdout else "UNKNOWN"
+        except: pass
+            
+        stack_info = {
+            "python": sys.version.split('\n')[0],
+            "eel": eel.__version__,
+            "psutil": psutil.__version__,
+            "ffmpeg": ffmpeg_version,
+            "os": platform.platform(),
+            "node": platform.node()
+        }
+        
+        return {
+            "status": "ok",
+            "stack": stack_info
+        }
+    except Exception as e:
+        log.error(f"[Forensic-ENV] Environment Audit Failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
