@@ -4805,6 +4805,47 @@ def open_with_ffplay(file_path: str):
 
 
 @eel.expose
+def run_raw_media_probe(item_id):
+    """
+    Forensic Item Probe: Extracts complete ffprobe JSON metadata for a specific item (v1.37.20).
+    Supports IDs and literal paths.
+    """
+    import os
+    import json
+    import subprocess
+    from src.core import db
+    from src.core.config_master import GLOBAL_CONFIG
+    
+    path = resolve_media_path(item_id)
+    if not os.path.exists(path):
+        # Try database resolve if path not immediately found (numerical IDs)
+        item = db.get_media_by_id(item_id)
+        if item: path = item['path']
+
+    if not os.path.exists(path):
+        return {"status": "error", "message": "Media path not found."}
+
+    log.info(f"[Forensic-Probe] Executing Deep Header Probe: {path}")
+
+    try:
+        ffprobe_path = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
+        cmd = [
+            ffprobe_path, "-v", "quiet", "-print_format", "json",
+            "-show_format", "-show_streams", str(path)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        
+        if result.returncode != 0:
+            return {"status": "error", "message": f"ffprobe failed: {result.stderr}"}
+            
+        data = json.loads(result.stdout)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        log.error(f"[Forensic-Probe] Bridge Fault: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
 def open_with_vlc(file_path: str):
     """Explicitly open a file with VLC (GUI)."""
     file_path = resolve_media_path(file_path)

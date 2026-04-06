@@ -133,8 +133,12 @@ function renderForensicTimelineUI(item, stages, fe_memory, dom_node) {
         <div style="display:flex; flex-direction:column; gap:8px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                 <div style="font-size:12px; font-weight:900; color:#fff;">${item.name}</div>
-                <button onclick="bridgeToItemJSON(${item.id})" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#3498db; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:900;">VIEW JSON</button>
+                <div style="display:flex; gap:4px;">
+                    <button onclick="triggerRawItemProbe(${item.id})" style="background:rgba(0,255,153,0.05); border:1px solid rgba(0,255,153,0.1); color:#00ff99; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:900;" title="Deep ffprobe Header Audit">RAW</button>
+                    <button onclick="bridgeToItemJSON(${item.id})" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#3498db; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:900;">VIEW JSON</button>
+                </div>
             </div>
+            <div id="diag-item-raw-output" style="margin-bottom:10px;"></div>
 
             <div class="forensic-timeline-v137">
                 <div class="f-step ${stages.db.status === 'ok' ? 'ok' : 'err'}">
