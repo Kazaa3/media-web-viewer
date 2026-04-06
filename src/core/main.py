@@ -1392,32 +1392,26 @@ def get_global_health_audit():
         db_writable = os.access(db.get_active_db_path(), os.W_OK)
         health_report["metrics"]["sec"] = "AUTHORITY_VERIFIED" if db_writable else "PERMISSION_LOCKED"
         
-        # Scoring Logic (17-Layer Awareness)
-        score = 0
-        if health_report["metrics"]["db"] == "SYNC": score += 16
-        if health_report["metrics"]["sys"] == "STABLE": score += 16
-        if health_report["metrics"]["vol"] == "MOUNTED": score += 16
-        if health_report["metrics"]["prc"] == "CLEAN": score += 16
-        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE": score += 16
-        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED": score += 20
-        
-        if health_report["metrics"]["prc"] == "CLEAN": score += 14
-        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE": score += 14
-        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED": score += 14
-        if health_report["metrics"]["api"] == "DOCUMENTED": score += 14
+        # 7. API HEALTH (Weighted 14%)
+        health_report["metrics"]["api"] = "DOCUMENTED"
         
         # 8. ENV HEALTH (Weighted 14%)
-        # Check if FFmpeg is available
         import shutil
         health_report["metrics"]["env"] = "STACK_VERIFIED" if shutil.which("ffmpeg") else "FFMPEG_MISSING"
+        
+        # Scoring Logic (19-Layer Balanced Model)
+        score = 0
+        if health_report["metrics"]["db"] == "SYNC": score += 12
+        if health_report["metrics"]["sys"] == "STABLE": score += 12
+        if health_report["metrics"]["vol"] == "MOUNTED": score += 12
+        if health_report["metrics"]["prc"] == "CLEAN": score += 12
+        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE": score += 12
+        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED": score += 12
+        if health_report["metrics"]["api"] == "DOCUMENTED": score += 14
         if health_report["metrics"]["env"] == "STACK_VERIFIED": score += 14
         
-        # 7. API HEALTH (Weighted 16%)
-        # Check if the registry itself is exposed
-        health_report["metrics"]["api"] = "DOCUMENTED"
-        score += 16
-        
         health_report["readiness_score"] = min(100, score)
+        
         if score >= 95: health_report["level"] = "BATTLE-READY"
         elif score >= 75: health_report["level"] = "STABILIZED"
         elif score >= 50: health_report["level"] = "DEGRADED"
