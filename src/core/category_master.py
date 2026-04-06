@@ -29,13 +29,17 @@ def audit_category_chain(item: Dict) -> str:
     
     matched_branch = None
     for branch, internal_cats in MASTER_CAT_MAP.items():
-        if raw_cat in internal_cats:
+        # Canonical comparison (standardized lowercase IDs)
+        if raw_cat in [ic.lower() for ic in internal_cats] or raw_cat == branch.lower():
             matched_branch = branch
             break
             
     if matched_branch:
         return f"[AUDIT] Item '{item.get('name')}' (DB: {raw_cat}) -> CHAIN: Master={matched_branch} -> STATUS: OK"
     else:
+        # Fallback: check if raw_cat is a known master branch itself
+        if raw_cat in [b.lower() for b in MASTER_CAT_MAP.keys()]:
+            return f"[AUDIT] Item '{item.get('name')}' (DB: {raw_cat}) -> CHAIN: Direct Master Match -> STATUS: OK"
         return f"[AUDIT] Item '{item.get('name')}' (DB: {raw_cat}) -> CHAIN: NO MATCH FOUND -> STATUS: DROPPED"
 
 def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:

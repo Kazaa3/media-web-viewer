@@ -162,3 +162,147 @@ Die Parser-Engine ist jetzt vollständig modular, wartbar und zentral orchestrie
 - Branch Alignment: multimedia (v1.35.68)
 
 Alle Infrastruktur-, Binary- und Parser-Zentralisierungsaufgaben sind erfolgreich abgeschlossen.
+
+---
+
+# Nachtrag: Atomic Parser Configuration Suite (v1.35.70)
+
+**Datum:** 2026-04-06
+
+## Ziel & Umsetzung
+- **Schema-Driven UI:**
+  - Die Options Panel UI generiert sich jetzt dynamisch aus get_settings_schema() jedes Parsers.
+  - Neue Parser werden automatisch mit konfigurierbaren Parametern im UI angezeigt – ohne Frontend-Codeänderung.
+- **Self-Healing Persistence:**
+  - Einstellungen werden direkt in GLOBAL_CONFIG["parser_settings"] gespeichert.
+  - Ungültige Werte werden automatisch auf den Default aus dem Schema zurückgesetzt.
+
+## Technische Änderungen
+- **media_parser.py:**
+  - get_parser_info() liefert jetzt alle 18+ spezialisierten Module inkl. Settings-Schema.
+- **main.py:**
+  - @eel.expose get_parser_registry(): Gibt Parser-Registry für das UI zurück.
+  - @eel.expose update_parser_setting(): Persistiert Parser-Settings in GLOBAL_CONFIG.
+- **options_panel.html:**
+  - Neuer Parameter-Grid-Container für Parser-Konfiguration.
+- **options_helpers.js:**
+  - buildParserConfigurationUI(): Baut UI dynamisch aus Registry/Schemas.
+  - saveParserSetting(): Speichert Änderungen debounced in Echtzeit.
+
+## Verifikation
+- Automatisierter Test: verify_schemas.py prüft alle Module auf gültige JSON-Schemas.
+- UI-Test: Änderung eines Parameters (z.B. "Max Tracks" für EBML) wird korrekt übernommen und gespeichert.
+- Manuell: Einstellungen im UI ändern, Seite neu laden, Persistenz und Wirkung im Scan prüfen.
+
+## Empfehlung
+- "Reset to Defaults" pro Parser für bessere Granularität.
+
+**Fazit:**
+Die Parser-Konfiguration ist jetzt atomar, modular und zukunftssicher. Jede Parser-Option ist UI-gesteuert, validiert und persistent.
+
+---
+
+# Nachtrag: v1.35.70 – Parameter-Rich Dynamic Configuration
+
+**Datum:** 2026-04-06
+
+## Universal Toolchain Integration
+- **VLC & CVLC:** Beide Varianten sind jetzt im zentralen Registry und in der UI sichtbar/konfigurierbar.
+- **Schema-Driven Property Grid:**
+  - Die Options Panel UI generiert für alle 18+ Parser automatisch Eingabefelder gemäß get_settings_schema().
+  - Keine Hardcodierungen mehr – jede neue Parser-Option erscheint sofort im UI.
+- **Real-Time Backend Sync:**
+  - Änderungen an Parser-Parametern werden sofort per Eel-Bridge in GLOBAL_CONFIG gespeichert.
+  - Kein Neustart nötig, alle Einstellungen sind persistent und sofort wirksam.
+- **Stabilität:**
+  - main.py, media_parser.py, config_master.py: Syntaxprüfung bestanden, v1.35.70 als stabiler Baseline verifiziert.
+
+## Visualisierung & Auditing
+- **Options → Parser Chain:**
+  - "Specialized Parameters"-Sektion mit Konfigurationskarten für jedes Tool.
+  - UI zeigt "EXTENDED"-Status und alle aktiven Binaries (FFmpeg, mkvmerge, cvlc etc.) an.
+
+**Fazit:**
+Die Media Parsing Engine ist jetzt vollständig interaktiv, granular konfigurierbar und bietet maximale Transparenz auf Pro-Niveau.
+
+---
+
+# Nachtrag: The Vacuum Conflict (v1.35.71)
+
+**Datum:** 2026-04-06
+
+## Problem
+- MediaFormat.detect_type() gibt gemischte Schreibweisen und deutsche Begriffe zurück (z.B. Audio, Bilder, Hörbuch).
+- Die Category Registry (config_master.py) erwartet strikt kleingeschriebene englische IDs (z.B. audio, video, images).
+- Folge: Items werden im Audit-Durchlauf als "DROP" markiert, da die Zuordnung fehlschlägt (0-Item-Bug).
+
+## Lösung/Plan
+- **Strict Canonical Labeling:**
+  - MediaFormat gibt künftig nur noch strikt kleingeschriebene, englische IDs zurück (audio, video, image, iso).
+- **Audit Resiliency:**
+  - category_master Auditor wird case-insensitive und robust gegen Label-Drift gemacht.
+- **Vacuum Resolution:**
+  - Sicherstellung, dass alle Medien korrekt indexiert und in der UI sichtbar sind.
+
+## Status
+- Implementation Plan vorbereitet (siehe implementation_plan.md)
+- Task Tracker aktiv (siehe task.md)
+- Freigabe für Fix steht aus – nach Umsetzung ist der 0-Item-Bug endgültig gelöst.
+
+**Wichtigkeit:**
+Diese Änderung ist kritisch für Datenintegrität und UI-Parität im gesamten System.
+
+---
+
+# Nachtrag: Unified Media Models (SSOT, v1.35.72)
+
+**Datum:** 2026-04-06
+
+## Ziel
+- Konsolidierung aller Kategorisierungs- und Formatlogik in ein zentrales Modell (Single Source of Truth, SSOT)
+
+## Umsetzung
+- **models.py:**
+  - MediaFormat-Logik (v1.35.71) wird direkt integriert
+  - MediaItem nutzt ausschließlich MediaFormat für Typ/Format-Erkennung
+  - Alle veralteten Methoden (detect_logical_type, get_category etc.) werden entfernt
+- **db.py:**
+  - Persistenzschicht wird auf das neue Modell abgestimmt, sodass Scanner, DB und UI exakt synchron sind
+- **media_format.py:**
+  - Datei wird nach erfolgreicher Migration entfernt (Redundanzabbau)
+
+## Status
+- Implementation Plan vorbereitet (siehe implementation_plan.md)
+- Task Tracker aktiv (siehe task.md)
+- Freigabe für SSOT-Refaktor steht aus – nach Umsetzung ist die Medienmodellierung 100% konsistent und wartbar.
+
+**Wichtigkeit:**
+Diese Änderung ist essenziell für Datenintegrität, Wartbarkeit und UI-Konsistenz im gesamten System.
+
+---
+
+# Nachtrag: The Quadrant Single Source of Truth (v1.35.73)
+
+**Datum:** 2026-04-06
+
+## Ziel
+- Beseitigung der 4-fach-Überlappung durch eine klare Hierarchie und SSOT-Architektur
+
+## Hierarchie der Wahrheit
+- **Data Source:** config_master.py bleibt die absolute Autorität für Kategorien- und Extension-Registry
+- **Logic Engine:** models.py beherbergt MediaFormat und MediaItem als zentrale Logik
+- **Orchestration:** category_master.py importiert alle Mappings direkt aus config_master.py und dient nur noch als Logik-Provider
+- **Deprecated:** media_format.py wird entfernt, Logik ist in models.py integriert
+
+## Umsetzung
+- MediaItem wird refaktoriert, alle redundanten Detection-Methoden entfallen (über 100 Zeilen entfernt)
+- MediaFormat ist die einzige Instanz für Medienidentität
+- db.py wird auf die neue Struktur abgestimmt, sodass Speicherung und Abruf 100% synchron sind
+
+## Status
+- Implementation Plan vorbereitet (siehe implementation_plan.md)
+- Task Tracker aktiv (siehe task.md)
+- Freigabe für Quadrant-Refaktor steht aus – nach Umsetzung ist die Architektur maximal konsistent und wartbar
+
+**Wichtigkeit:**
+Diese Änderung ist entscheidend für langfristige Wartbarkeit, Datenintegrität und klare Verantwortlichkeiten im System.

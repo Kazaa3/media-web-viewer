@@ -267,27 +267,21 @@
                     <div id="displayed-cats-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;"></div>
                 </div>
 
-                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card);">
-                    <h3 style="margin: 0 0 8px 0; font-weight: 800;">Parser-Kette</h3>
-                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 6px; font-weight: 500;">Welche Parser aktiv sind. <span style="color: #e67e22;">●</span> = langsam (ISO/MKV)</p>
-                    <div id="parser-chain-grid-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px;"></div>
-                    <div style="display: flex; gap: 14px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Mutagen: AlbumArtist bevorzugen</div>
-                            <label class="switch sm"><input type="checkbox" id="config-mutagen-albumartist" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Mutagen: Lyrics extrahieren</div>
-                            <label class="switch sm"><input type="checkbox" id="config-mutagen-lyrics" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">FFmpeg: Deep Analysis</div>
-                            <label class="switch sm"><input type="checkbox" id="config-ffmpeg-deep" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; background: var(--bg-secondary); border-radius: 10px;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">FFmpeg: Thumbnails</div>
-                            <label class="switch sm"><input type="checkbox" id="config-ffmpeg-thumbs" onchange="saveAllOptions()"><span class="slider"></span></label>
-                        </div>
+                <div class="glass-card" style="padding: 30px; border-radius: var(--radius-card); border-top: 4px solid #9b59b6;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="margin: 0; font-weight: 800;">Parser-Kette & Toolchain Parameters</h3>
+                        <div style="font-size: 10px; font-weight: 800; background: rgba(155,89,182,0.1); color: #9b59b6; padding: 2px 8px; border-radius: 4px;">EXTENDED v1.35.70</div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500;">Hierarchie und Feinabstimmung der Media-Analyse-Module. <span style="color: #e67e22;">●</span> = Deep Analysis.</p>
+                    
+                    <!-- Drag & Drop Order (v1.35 Core Architecture) -->
+                    <div id="parser-chain-grid-options" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 25px;"></div>
+                    
+                    <!-- Dynamic Toolchain Parameter Grid -->
+                    <div id="parser-config-property-grid" style="display: grid; grid-template-columns: 1fr; gap: 16px; border-top: 1px solid var(--border-color); padding-top: 25px;">
+                        <div style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 15px;">Spezialisierte Parameter:</div>
+                        <!-- Injected via options_helpers.js buildParserRegistryUI() -->
+                        <div id="parser-dynamic-settings-root" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;"></div>
                     </div>
                 </div>
             </div>

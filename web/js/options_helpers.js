@@ -37,6 +37,8 @@ async function loadAllOptions() {
             if (config.intensity !== undefined) safeCheck('config-parser-intensity', config.intensity === 'full');
             // Hydrate chain
             if (typeof buildParserChainUI === 'function') buildParserChainUI(config.parser_chain || [], config.slow_parsers || []);
+            // Hydrate dynamic settings
+            if (typeof buildParserConfigurationUI === 'function') buildParserConfigurationUI(config.parser_settings || {});
         }
 
     } catch (e) {
@@ -304,6 +306,8 @@ const ALL_PARSERS = [
     { id: 'mkvparse',     label: 'MKVparse',      slow: true  },
     { id: 'enzyme',       label: 'Enzyme',        slow: true  },
     { id: 'pymkv',        label: 'PyMKV',         slow: true  },
+    { id: 'vlc',          label: 'VLC Lib',       slow: false },
+    { id: 'cvlc',         label: 'VLC Binary',    slow: false }
 ];
 
 const ALL_DEBUG_FLAGS = [
@@ -364,6 +368,99 @@ function buildParserChainUI(chain, slowParsers) {
         `;
         container.appendChild(btn);
     });
+
+    // Also trigger dynamic settings build if container exists
+    if (document.getElementById('parser-dynamic-settings-root')) {
+        buildParserConfigurationUI();
+    }
+}
+
+/**
+ * Dynamic Parser Parameter Hub (v1.35.70)
+ * Renders a VS Code-style property grid based on parser schemas.
+ */
+async function buildParserConfigurationUI(storedSettings = null) {
+    const root = document.getElementById('parser-dynamic-settings-root');
+    if (!root) return;
+
+    try {
+        const registry = await eel.get_parser_registry()();
+        if (!registry) return;
+
+        root.innerHTML = '';
+        
+        // If storedSettings is null, we might be calling from buildParserChainUI, 
+        // in which case we should try to get it from the global window.CONFIG or similar.
+        const settings = storedSettings || window.CONFIG?.parser_settings || {};
+
+        Object.entries(registry).forEach(([id, info]) => {
+            if (!info.settings_schema || Object.keys(info.settings_schema).length === 0) return;
+
+            const card = document.createElement('div');
+            card.className = 'glass-card';
+            card.style.padding = '15px';
+            card.style.background = 'rgba(255,255,255,0.02)';
+            card.style.border = '1px solid rgba(255,255,255,0.05)';
+            
+            const title = info.capabilities?.name || id;
+            let html = `<div style="font-size:11px; font-weight:800; color:var(--accent-color); text-transform:uppercase; margin-bottom:12px; border-bottom:1px solid rgba(155,89,182,0.2); padding-bottom:5px;">${title}</div>`;
+            
+            Object.entries(info.settings_schema).forEach(([key, schema]) => {
+                const currentVal = (settings[id] && settings[id][key] !== undefined) ? settings[id][key] : (schema.default !== undefined ? schema.default : '');
+                const inputId = `parser-cfg-${id}-${key}`;
+                
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <div style="font-size:12px; font-weight:700; color:var(--text-primary);">${key}</div>
+                            <div style="font-size:10px; color:var(--text-secondary); opacity:0.7;">${schema.description || ''}</div>
+                        </div>
+                        <div style="margin-left:15px;">
+                `;
+
+                if (typeof schema.default === 'boolean' || schema.type === 'boolean') {
+                    html += `
+                        <label class="switch sm">
+                            <input type="checkbox" id="${inputId}" ${currentVal ? 'checked' : ''} onchange="saveParserSetting('${id}', '${key}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    `;
+                } else if (schema.type === 'integer' || typeof schema.default === 'number') {
+                    html += `<input type="number" id="${inputId}" value="${currentVal}" class="action-btn sm" style="width:60px; text-align:center; padding:4px 8px;" onchange="saveParserSetting('${id}', '${key}', this.value)">`;
+                } else {
+                    html += `<input type="text" id="${inputId}" value="${currentVal}" class="action-btn sm" style="width:100px; padding:4px 8px;" onchange="saveParserSetting('${id}', '${key}', this.value)">`;
+                }
+
+                html += `</div></div>`;
+            });
+
+            card.innerHTML = html;
+            root.appendChild(card);
+        });
+
+    } catch (e) {
+        console.error('[Options] buildParserConfigurationUI failed:', e);
+    }
+}
+
+/**
+ * Persists granular parser settings to the backend.
+ */
+let parserSaveTimeout = null;
+async function saveParserSetting(parserId, key, value) {
+    if (typeof mwv_trace === 'function') mwv_trace('CONFIG', `UP-PARSER: ${parserId}.${key}=${value}`);
+    
+    // Immediate local feedback (optional)
+    if (typeof showToast === 'function') {
+        clearTimeout(parserSaveTimeout);
+        parserSaveTimeout = setTimeout(() => showToast(`${parserId} Parameter aktualisiert ✓`, 'success'), 500);
+    }
+
+    try {
+        await eel.update_parser_setting(parserId, key, value)();
+    } catch (e) {
+        console.error(`[Options] saveParserSetting failed for ${parserId}.${key}:`, e);
+    }
 }
 
 function buildCategoryGrid(containerId, selectedCats) {

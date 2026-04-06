@@ -621,7 +621,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "ebml": get_binary_version("pip", "show ebml").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show ebml") else "N/A",
         "mkvparse": get_binary_version("pip", "show mkvparse").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show mkvparse") else "N/A",
         "enzyme": get_binary_version("pip", "show enzyme").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show enzyme") else "N/A",
-        "pymkv": get_binary_version("pip", "show pymkv").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pymkv") else "N/A"
+        "pymkv": get_binary_version("pip", "show pymkv").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pymkv") else "N/A",
+        "vlc": get_binary_version("vlc", "--version").split()[0] if "VLC" in get_binary_version("vlc", "--version") else "N/A",
+        "cvlc": get_binary_version("cvlc", "--version").split()[0] if "VLC" in get_binary_version("cvlc", "--version") else "N/A"
     },
     
     # --- TRANSCODING & ENGINE SETTINGS (v1.35.68 Centralized) ---

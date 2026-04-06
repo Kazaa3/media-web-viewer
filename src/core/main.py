@@ -8401,6 +8401,36 @@ def sanitize_json_utf8(obj):
     return obj
 
 
+@eel.expose
+def get_parser_registry():
+    """Returns all available parsers, their capabilities and settings schemas."""
+    from src.parsers import media_parser
+    return media_parser.get_parser_info()
+
+
+@eel.expose
+def update_parser_setting(parser_id, key, value):
+    """Updates a specific setting for a parser in GLOBAL_CONFIG and persists it."""
+    from src.core.config_master import GLOBAL_CONFIG
+    
+    if "parser_settings" not in GLOBAL_CONFIG:
+        GLOBAL_CONFIG["parser_settings"] = {}
+    if parser_id not in GLOBAL_CONFIG["parser_settings"]:
+        GLOBAL_CONFIG["parser_settings"][parser_id] = {}
+        
+    # Cast value if needed (handle boolean/int from UI)
+    old_val = GLOBAL_CONFIG["parser_settings"][parser_id].get(key)
+    if isinstance(old_val, bool) and not isinstance(value, bool):
+        value = str(value).lower() in ("true", "1", "yes", "on")
+    elif isinstance(old_val, int) and not isinstance(value, int):
+        try: value = int(value)
+        except: pass
+        
+    GLOBAL_CONFIG["parser_settings"][parser_id][key] = value
+    log.info(f"[Config] Updated parser '{parser_id}' setting '{key}' to '{value}'")
+    return True
+
+
 if __name__ == "__main__":
     start_app()
 

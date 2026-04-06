@@ -133,7 +133,15 @@ def get_parser_info() -> dict[str, Any]:
         "vlc": vlc_parser,
         "filename": filename_parser,
         "container": container_parser,
-        "isoparser": isoparser_parser
+        "isoparser": isoparser_parser,
+        "ebml": ebml_parser,
+        "mkvparse": mkvparse_parser,
+        "enzyme": enzyme_parser,
+        "pycdlib": pycdlib_parser,
+        "pymkv": pymkv_parser,
+        "tinytag": tinytag_parser,
+        "eyed3": eyed3_parser,
+        "music_tag": music_tag_parser
     }
     
     info = {}

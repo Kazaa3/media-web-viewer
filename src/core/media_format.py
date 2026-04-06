@@ -27,20 +27,20 @@ class MediaFormat:
     def detect_type(self) -> str:
         ext = self.extension
         if ext == '.iso':
-            return 'ISO/Image'
+            return 'iso'
         if ext in VIDEO_EXTENSIONS:
-            return 'Video'
+            return 'video'
         if ext in AUDIO_EXTENSIONS:
-            return 'Audio'
+            return 'audio'
         if ext == '.m4b' or any(k in str(self.path).lower() for k in ['h\u00f6rbuch', 'hörbuch', 'audiobook']):
-            return 'Hörbuch'
+            return 'audiobook'
         if ext in IMAGE_EXTENSIONS:
-            return 'Bilder'
+            return 'images'
         if ext in EBOOK_EXTENSIONS:
-            return 'E-Book'
+            return 'ebooks'
         if ext in DOCUMENT_EXTENSIONS:
-            return 'Dokument'
-        return 'Unbekannt'
+            return 'documents'
+        return 'unknown'
 
     def detect_format(self) -> str:
         ext = self.extension
