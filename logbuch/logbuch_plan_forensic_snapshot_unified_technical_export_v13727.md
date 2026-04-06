@@ -71,4 +71,12 @@ Implement a professional-grade Workstation Snapshot tool to capture the status o
 
 ---
 
+## Implementation Checklist (COMPLETED)
+- [x] Add [SNAPSHOT] button to diagnostics_sidebar.html header
+- [x] Initialize window.__mwv_rec_actions_history in sidebar_controller.js
+- [x] Update addForensicRecAction to populate history array
+- [x] Implement generateForensicSnapshot() in sidebar_controller.js
+
+---
+
 "Nur ergänzen und nichts entfernen" — Rebuilding the technical heartbeat now. (Continue / "weiter")
