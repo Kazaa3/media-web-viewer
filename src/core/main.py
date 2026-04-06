@@ -153,11 +153,13 @@ def get_tech_markers():
 def get_startup_info():
     """Returns the time the backend took to boot and total duration up to this call."""
     import time
-    boot_duration = time.now() - INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else 0
+    # INITIAL_START_TIME is set at the very top of main.py
+    current_time = time.time()
+    boot_duration = current_time - INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else 0
     return {
         "boot_duration_sec": round(boot_duration, 2),
         "pid": os.getpid(),
-        "start_time": INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else time.time(),
+        "start_time": INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else current_time,
         "env": "diagnostic-lab",
         "version": "1.35.68-STABLE hardcoded!"
     }
@@ -345,6 +347,31 @@ def report_spawn():
         spawn_event.set()
 @eel.expose
 def log_gui_event(category, action, details=""):
+    """General purpose GUI event logging for forensic analysis."""
+    log.info(f"[JS-NAV] [{category}] {action} | {details}")
+
+@eel.expose
+def set_hydration_mode(mode: str):
+    """Sets the hydration mode (mock, real, both) in the global config."""
+    if mode in ['mock', 'real', 'both']:
+        GLOBAL_CONFIG['hydration_mode'] = mode
+        log.info(f"[HYDRATION] Mode set to: {mode}")
+        return True
+    return False
+
+@eel.expose
+def set_app_mode(mode: str):
+    """Sets the app performance mode."""
+    GLOBAL_CONFIG['app_mode'] = mode
+    log.info(f"[APP-MODE] Set to: {mode}")
+    return True
+
+@eel.expose
+def get_category_master():
+    """Returns the Master Category Mapping (SSOT) from models."""
+    from src.core.models import MASTER_CAT_MAP
+    log.info("[BD-AUDIT] Handshake: get_category_master requested.")
+    return MASTER_CAT_MAP
     """Receives and logs traces from the frontend GUI."""
     log.info(f"[GUI-TRACE] [{category}] {action} | {details}")
 
@@ -4040,6 +4067,11 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     }
     
     for item in all_media:
+        # [BYPASS] If All is requested, we keep everything (v1.35.68 Stability)
+        if genre == "all" and "all" in displayed_cats:
+            filtered.append(item)
+            continue
+
         # 1. Category check (Bypass logic v1.37.07)
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()

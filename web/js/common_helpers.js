@@ -471,5 +471,66 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
     }
 }
 
+/**
+ * Application Performance Mode Controller.
+ */
+function setAppModeUI(mode) {
+    if (typeof eel !== 'undefined' && typeof eel.set_app_mode === 'function') {
+        eel.set_app_mode(mode)();
+    }
+    localStorage.setItem('mwv_app_mode', mode);
+    if (typeof showToast === 'function') showToast(`App Mode: ${mode}`, 1500);
+    
+    // Update Sidebar Buttons if they exist
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        if (btn.innerText.includes(mode)) btn.classList.add('active');
+        else if (btn.innerText.includes('Performance') || btn.innerText.includes('Bandwidth')) {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+/**
+ * Hydration Mode Controller (v1.35.68).
+ * Controls whether the UI shows Mock, Real DB, or Both items.
+ * M: Mock | R: Real | B: Both
+ */
+function setHydrationMode(mode) {
+    console.info(`>>> [Hydration] Switching to mode: ${mode}`);
+    window.__mwv_hydration_mode = mode;
+    localStorage.setItem('mwv_hydration_mode', mode);
+    
+    if (typeof eel !== 'undefined' && typeof eel.set_hydration_mode === 'function') {
+        eel.set_hydration_mode(mode)();
+    }
+    
+    // Update HUD LEDs
+    const ledMap = { 'mock': 'hud-btn-M', 'real': 'hud-btn-R', 'both': 'hud-btn-B' };
+    document.querySelectorAll('.hud-btn-tiny').forEach(btn => {
+        btn.style.color = 'rgba(255,255,255,0.4)';
+        btn.style.background = 'transparent';
+    });
+    
+    const activeBtn = document.getElementById(ledMap[mode]);
+    if (activeBtn) {
+        activeBtn.style.color = '#fff';
+        activeBtn.style.background = 'var(--accent-color)';
+    }
+
+    if (typeof showToast === 'function') showToast(`Hydration: ${mode.toUpperCase()}`, 1000);
+    
+    // Trigger Re-hydration
+    if (typeof refreshLibrary === 'function') refreshLibrary();
+    else if (typeof loadLibrary === 'function') loadLibrary();
+}
+
+// Initial UI Sync for Hydration Mode
+document.addEventListener('DOMContentLoaded', () => {
+    const savedMode = localStorage.getItem('mwv_hydration_mode') || 'both';
+    setTimeout(() => setHydrationMode(savedMode), 1000);
+});
+
 // Global Export
 window.updateSyncAnchor = updateSyncAnchor;
+window.setHydrationMode = setHydrationMode;
+window.setAppModeUI = setAppModeUI;
