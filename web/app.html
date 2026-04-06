@@ -350,12 +350,6 @@
 
         <!-- GLOBAL DIAGNOSTICS OVERLAY SIDEBAR (v1.37.04) -->
         <div id="global-diagnostics-sidebar" class="diagnostic-sidebar left-overlay" style="display: none;">
-            <div class="diagnostic-sidebar-nav" style="margin-top: 20px;">
-                <button id="reiter-overview" class="side-reiter active" onclick="switchDiagnosticsSidebarTab('debug-db', this)">
-                    <span>Übersicht</span>
-                </button>
-                <button id="reiter-tests" class="side-reiter" onclick="switchDiagnosticsSidebarTab('tests', this)">
-                    <span>Tests & Benchmarks</span>
                 </button>
                 <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">
                     <span>Video Health</span>
@@ -989,21 +983,10 @@
         <!-- Slot 4: Right Tool Cluster (Primary Navigation Restoration) -->
         <div class="footer-icon-cluster">
             <!-- Theme Toggle -->
+            <!-- Theme Toggle -->
             <button class="footer-tool-btn" title="Toggle Theme" onclick="toggleTheme()">
-                <!-- Logic Audit Breakdown (Hydration Chain v1.37.07) -->
-        <div class="diag-section">
-            <div class="diag-section-header">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-                <span>LOGIC AUDIT (HYDRATION CHAIN)</span>
-            </div>
-            <div id="diag-audit-summary" style="padding: 10px 0;">
-                <!-- Populated by diagnostics_helpers.js -->
-                <div class="diag-status-none">Aktualisiere Hydration-Daten...</div>
-            </div>
-        </div>
-       <circle cx="12" cy="12" r="5" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="5" />
                     <line x1="12" y1="1" x2="12" y2="3" />
                     <line x1="12" y1="21" x2="12" y2="23" />
                     <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />

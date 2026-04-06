@@ -395,10 +395,121 @@ async function checkMediaPipeline() {
     }
 }
 
+/**
+ * ITEM TRACK (JOURNEY / AUDIT) - v1.37.08
+ * Deep-traces a single item from DB to DOM.
+ */
+
+async function renderItemTrackTab() {
+    const container = document.getElementById('diag-item-track-content');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="diag-section">
+            <div class="diag-section-header">🔍 ITEM TRACKER (JOURNEY AUDIT)</div>
+            <div style="display:flex; gap:8px; margin-bottom:15px;">
+                <input type="text" id="diag-item-query" placeholder="Name oder Pfad-Teil..." 
+                    style="flex:1; background:rgba(0,0,0,0.3); border:1px solid #444; color:white; padding:6px; border-radius:4px;">
+                <button class="footer-classic-btn blue" onclick="performItemJourneyAudit()">TRACK</button>
+            </div>
+            <div id="diag-item-audit-results" style="min-height:100px;">
+                <div class="diag-status-none">Gib einen Namen ein, um die Reise zu verfolgen.</div>
+            </div>
+        </div>
+    `;
+}
+
+async function performItemJourneyAudit() {
+    const query = document.getElementById('diag-item-query').value;
+    const results = document.getElementById('diag-item-audit-results');
+    if (!query || !results) return;
+
+    results.innerHTML = '<div class="diag-status-none">Prüfe Backend...</div>';
+
+    try {
+        const audit = await eel.audit_specific_item(query)();
+        if (audit.status === 'not_found') {
+            results.innerHTML = `<div class="diag-status-error">Gegenstand '${query}' nicht in DB gefunden! (Stage 0 Failure)</div>`;
+            return;
+        }
+
+        const item = audit.item;
+        const stages = audit.stages;
+        
+        // --- Frontend Audit (Live) ---
+        const fe_normalized = (window.allLibraryItems || []).find(i => i.path === item.path);
+        const fe_projected = (typeof coverflowItems !== 'undefined' ? coverflowItems : []).find(i => i.path === item.path);
+        const dom_node = document.querySelector(`.grid-item[title*="${item.name}"], .grid-title[title*="${item.name}"]`);
+
+        let html = `
+            <div class="journey-timeline">
+                <div class="journey-step ${stages.db.status === 'ok' ? 'ok' : 'fail'}">
+                    <div class="step-icon">🗄️</div>
+                    <div class="step-info">
+                        <strong>DATABASE</strong>
+                        <div class="step-meta">Gefunden in SQLite</div>
+                    </div>
+                </div>
+                <div class="journey-step ${stages.models.log.includes('OK') ? 'ok' : 'fail'}">
+                    <div class="step-icon">🏷️</div>
+                    <div class="step-info">
+                        <strong>MODELS (SSOT)</strong>
+                        <div class="step-meta">${stages.models.log}</div>
+                    </div>
+                </div>
+                <div class="journey-step ${stages.backend_filter.status === 'ok' ? 'ok' : 'fail'}">
+                    <div class="step-icon">⚙️</div>
+                    <div class="step-info">
+                        <strong>BACKEND FILTER</strong>
+                        <div class="step-meta">${stages.backend_filter.reason === 'passed' ? 'Freigegeben' : 'Dropped: ' + stages.backend_filter.reason}</div>
+                    </div>
+                </div>
+                <div class="journey-step ${fe_normalized ? 'ok' : 'fail'}">
+                    <div class="step-icon">🧠</div>
+                    <div class="step-info">
+                        <strong>FRONTEND MEMORY</strong>
+                        <div class="step-meta">${fe_normalized ? 'Im lokalen RAM' : 'Nicht im Memory'}</div>
+                    </div>
+                </div>
+                <div class="journey-step ${fe_projected ? 'ok' : 'fail'}">
+                    <div class="step-icon">👓</div>
+                    <div class="step-info">
+                        <strong>DISPLAY FILTER</strong>
+                        <div class="step-meta">${fe_projected ? 'Passiert Filter' : 'Durch Ansicht gefiltert'}</div>
+                    </div>
+                </div>
+                <div class="journey-step ${dom_node ? 'ok' : 'fail'}">
+                    <div class="step-icon">🖥️</div>
+                    <div class="step-info">
+                        <strong>LIVE DOM</strong>
+                        <div class="step-meta">${dom_node ? 'Im UI gerendert' : 'Injektion fehlt!'}</div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                .journey-timeline { display: flex; flex-direction: column; gap: 4px; margin-top: 15px; }
+                .journey-step { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); border-left: 4px solid #444; }
+                .journey-step.ok { border-left-color: #2ecc71; background: rgba(46, 204, 113, 0.05); }
+                .journey-step.fail { border-left-color: #e74c3c; background: rgba(231, 76, 60, 0.05); }
+                .step-icon { font-size: 18px; width: 24px; text-align: center; }
+                .step-info { display: flex; flex-direction: column; }
+                .step-info strong { font-size: 11px; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
+                .step-meta { font-size: 12px; color: var(--text-secondary); opacity: 0.8; }
+            </style>
+        `;
+
+        results.innerHTML = html;
+
+    } catch (e) {
+        console.error("[TRACK] Audit failed:", e);
+        results.innerHTML = `<div class="diag-status-error">Audit Fehler: ${e.message}</div>`;
+    }
+}
+
+window.performItemJourneyAudit = performItemJourneyAudit;
+
 async function checkDatabaseHealth() {
     const list = document.getElementById('diag-fs-list');
-    if (!list) return;
-
     addDiagItem(list, 'SQLite Storage', 'pending');
     addDiagItem(list, 'Item Map Cache', 'pending');
 

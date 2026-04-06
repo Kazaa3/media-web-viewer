@@ -8606,6 +8606,58 @@ def update_parser_setting(parser_id, key, value):
     return True
 
 
+@eel.expose
+def audit_specific_item(query: str) -> Dict[str, Any]:
+    """
+    @brief Deep audit of a specific item's journey from DB to GUI (v1.37.08).
+    @param query Name or Part of Path to search for.
+    """
+    from src.core import db
+    from src.core.models import audit_category_chain
+    
+    all_media = db.get_all_media()
+    match = None
+    
+    # 1. DB Stage: Finding the item
+    for item in all_media:
+        if query.lower() in item.get('name', '').lower() or query.lower() in item.get('path', '').lower():
+            match = item
+            break
+            
+    if not match:
+        return {"status": "not_found", "query": query}
+        
+    # 2. Models Stage: Category Detection
+    category_audit = audit_category_chain(match)
+    
+    # 3. Backend Filter Stage:
+    # We run a mock filter pass just for this one item
+    filtered, logic_audit = _apply_library_filters([match], force_raw=False)
+    passed_backend = len(filtered) > 0
+    rejection_reason = "passed" if passed_backend else "dropped"
+    if not passed_backend:
+        # Find why it dropped
+        reasons = logic_audit.get("dropped_reasons", {} or {})
+        for r, count in reasons.items():
+            if count > 0:
+                rejection_reason = r
+                break
+
+    return {
+        "status": "found",
+        "item": match,
+        "stages": {
+            "db": {"status": "ok", "count": 1},
+            "models": {"status": "ok" if "OK" in category_audit else "error", "log": category_audit},
+            "backend_filter": {
+                "status": "ok" if passed_backend else "dropped",
+                "reason": rejection_reason,
+                "allowed_cats": logic_audit.get("allowed_cats", [])
+            }
+        }
+    }
+
+
 if __name__ == "__main__":
     start_app()
 
