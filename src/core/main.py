@@ -3261,25 +3261,35 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
 
     filtered = []
+    
+    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.96)
+    dropped_counts = {"category": 0, "search": 0, "genre": 0, "year": 0}
+    
     for item in all_media:
         # 1. Category check (Skip if force_raw)
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
             if cat not in allowed_internal_cats:
+                dropped_counts["category"] += 1
+                if dropped_counts["category"] <= 10: # Only log first 10 to avoid noise
+                    log.debug(f"[BD-AUDIT] Dropped Item '{item.get('name')}' by Category: '{cat}' not in {allowed_internal_cats}")
                 continue
 
         # 2. Search check
         if search and search.lower() not in str(item.get('name', '')).lower():
+            dropped_counts["search"] += 1
             continue
 
         # 3. Genre check
         item_genre = item.get('tags', {}).get('genre', '').lower()
         if genre != "all" and genre.lower() not in item_genre:
+            dropped_counts["genre"] += 1
             continue
 
         # 4. Year check
         item_year = str(item.get('tags', {}).get('year', ''))
         if year != "all" and year != item_year:
+            dropped_counts["year"] += 1
             continue
 
         # Automated Debugging Chain (v1.35.68)
@@ -3287,6 +3297,9 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
             log.debug(audit_category_chain(item))
 
         filtered.append(item)
+
+    if not force_raw:
+        log.info(f"[BD-AUDIT] Filter Pass Summary: Kept={len(filtered)} | Dropped={dropped_counts}")
 
     return filtered
 
@@ -3298,43 +3311,65 @@ def set_global_config(key: str, value: Any):
 
 
 @eel.expose
-def get_library(force_raw: bool = False) -> Dict[str, Any]:
+def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]:
     """
-    @brief Main entry point for fetching the media library.
+    @brief Main entry point for fetching the media library with excessive chain-audit metadata.
+    @param force_raw Bypass all filters and return 100% of rows.
+    @param audit_stage 1=Mocks, 2=DB-Raw, 3=Filtered (Target)
     """
-    # Explicitly ensure we use the global/package db module (v1.35.68)
     from src.core import db
+    pid = os.getpid()
+    db_path = str(Path(db.DB_FILENAME).resolve())
     
+    # STAGE 1: BRIDGE MOCKS (Eel connectivity test)
+    if audit_stage == 1:
+        log.info(f"[BD-AUDIT] STAGE 1: Returning Mocks. PID: {pid}")
+        return {
+            "media": [
+                {"name": "Stage 1 Mock 1", "category": "audio", "path": "/mock1.mp3"},
+                {"name": "Stage 1 Mock 2", "category": "video", "path": "/mock2.mp4"},
+                {"name": "Stage 1 Mock 3", "category": "multimedia", "path": "/mock3.mkv"}
+            ],
+            "db_count": 3,
+            "status": "mock",
+            "audit": {"stage": 1, "pid": pid, "path": "MEMORY_MOCK"}
+        }
+
     all_media = []
     count_total = 0
     try:
         all_media = db.get_all_media()
         count_total = len(all_media)
-        
-        # Diagnostic Log: Confirming the path and count for the 'Black Hole' audit
-        path_info = getattr(db, 'DB_FILENAME', 'Unknown')
-        log.info(f"[BD-AUDIT] get_library: Path={path_info} | Raw Count={count_total}")
-        
+        log.info(f"[BD-AUDIT] STAGE 2: Database Found. PID: {pid} | Path: {db_path} | Count: {count_total}")
     except Exception as e:
-        log.error(f"[BD-AUDIT] DB Access Error: {e}")
-        return {"media": [], "db_count": 0, "status": "error", "error": str(e)}
+        log.error(f"[BD-AUDIT] DB ACCESS ERROR: {e}")
+        return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": {"pid": pid, "path": db_path}}
 
-    # --- CATEGORY MAPPING & FILTERING ---
-    filtered_media = _apply_library_filters(all_media, force_raw=force_raw)
+    if force_raw or audit_stage == 2:
+        log.info(f"[BD-AUDIT] STAGE 2: Returning RAW rows (Count: {count_total})")
+        return {
+            "media": all_media,
+            "db_count": count_total,
+            "status": "raw",
+            "audit": {"stage": 2, "pid": pid, "path": db_path}
+        }
 
-    # Final Audit (The Black Hole Trap)
+    # --- STAGE 3: FILTERED (v1.35.96 Normalization Test) ---
+    filtered_media = _apply_library_filters(all_media, force_raw=False)
     audit_len = len(filtered_media)
-    log.info(f"[BD-AUDIT] Filtered {audit_len}/{count_total} items. force_raw={force_raw}")
-    
-    if audit_len == 0 and count_total > 0 and not force_raw:
-        log.warning(f"[BD-AUDIT] BLACK HOLE DETECTED. Returning all rows.")
-        filtered_media = all_media
+    log.info(f"[BD-AUDIT] STAGE 3: Filtered {audit_len}/{count_total} items.")
 
     return {
         "media": filtered_media,
         "db_count": count_total,
-        "status": "ready",
-        "timestamp": time.time()
+        "status": "filtered",
+        "audit": {
+            "stage": 3,
+            "pid": pid,
+            "path": db_path,
+            "raw_count": count_total,
+            "filtered_count": audit_len
+        }
     }
 
 

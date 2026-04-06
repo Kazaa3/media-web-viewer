@@ -141,13 +141,17 @@ def init_db():
     """
     Initializes the database and runs migrations if needed.
     """
-    # Always ensure the directory exists, even if _DB_INITIALIZED is true,
-    # to handle cases where the directory was deleted (e.g., Factory Reset)
-    # while the process is running.
+    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.96)
+    db_path_obj = Path(DB_FILENAME)
+    exists = db_path_obj.exists()
+    size = db_path_obj.stat().st_size if exists else -1
+    log.info(f"[BD-AUDIT] init_db starting. PID: {os.getpid()} | Path: {DB_FILENAME} | Exists: {exists} | Size: {size} bytes")
+
+    # Always ensure the directory exists
     DB_DIR.mkdir(parents=True, exist_ok=True)
 
     global _DB_INITIALIZED
-    if _DB_INITIALIZED and Path(DB_FILENAME).exists():
+    if _DB_INITIALIZED and exists:
         return
 
     log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
@@ -373,15 +377,18 @@ def get_all_media():
     @details Ruft alle Medien-Items aus der Datenbank ab.
     @return List of media dictionaries / Liste von Medien-Dictionaries.
     """
-    print(f"STDOUT: [DB] [get_all_media] Querying table... PID: {os.getpid()}", flush=True)
+    # [DIAGNOSTIC] Excessive Chain Audit (v1.35.96)
+    pid = os.getpid()
+    log.info(f"[BD-AUDIT] [get_all_media] Starting query. PID: {pid} | Path: {DB_FILENAME}")
+    
     init_db()
     conn = sqlite3.connect(DB_FILENAME)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    log.info("[DB] [get_all_media] Querying table...")
+    
     cursor.execute("SELECT * FROM media ORDER BY name")
     rows = cursor.fetchall()
-    log.info(f"[DB] [get_all_media] Found {len(rows)} raw rows.")
+    log.info(f"[BD-AUDIT] [get_all_media] Finished query. Found {len(rows)} raw rows.")
 
     media_list = []
     for row in rows:

@@ -29,16 +29,22 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         // v1.35.68: Synchronize Category Master before requesting library
         if (typeof syncCategoryMaster === 'function') await syncCategoryMaster();
 
-        const library = await eel.get_library(forceRaw)();
+        // --- STAGE 1-3 AUDIT HANDSHAKE (v1.35.96) ---
+        const auditStage = window.__mwv_audit_stage || 0;
+        const library = await getLibrary(auditStage); 
+        
         const incomingCount = (library.media || []).length;
         const totalDbCount = library.db_count || incomingCount;
+        const audit = library.audit || {};
+        
+        console.warn(`[BD-AUDIT] Handshake Received. Stage: ${audit.stage || 'N/A'}. Count: ${incomingCount}/${totalDbCount}. PID: ${audit.pid || '?'}`);
+        if (audit.path) console.info(`[BD-AUDIT] Backend Path: ${audit.path}`);
         
         window.__mwv_last_db_count = totalDbCount;
         window.__mwv_debug_library = library; // Global for manual trace
         
         if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount);
-        console.warn(`>>> [Handshake] Backend returned media array (Count: ${incomingCount}, DB Total: ${totalDbCount}).`);
-        if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Received ${incomingCount} items. DB Status: ${totalDbCount} records.`, "SUCCESS");
+        if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Stage ${audit.stage || 0} complete. Received ${incomingCount} items.`, "SUCCESS");
         
         allLibraryItems = library.media || [];
         window.allLibraryItems = allLibraryItems; // Ensure global sync

@@ -7,30 +7,21 @@
 /**
  * Fetches the entire library from the backend.
  */
-async function getLibrary() {
-    if (typeof mwv_trace_render === 'function') mwv_trace_render('DB-EEL', 'CALL-START');
+async function getLibrary(auditStage = 0) {
+    if (typeof mwv_trace_render === 'function') mwv_trace_render('DB-EEL', `CALL-START (Stage: ${auditStage})`);
     if (typeof eel === 'undefined') return { media: [] };
-
-    // Wait for eel.get_library to be exposed (up to 10s)
-    let attempts = 0;
-    const maxAttempts = 20; // 20 x 500ms = 10s
-    while (typeof eel.get_library !== 'function' && attempts < maxAttempts) {
-        console.warn(`[DB] get_library: Eel not ready yet (Attempt ${attempts+1}/${maxAttempts})...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-    }
-
-    if (typeof eel.get_library !== 'function') {
-        if (typeof mwv_trace_render === 'function') mwv_trace_render('DB-EEL', 'TIMEOUT');
-        console.error("[DB] get_library: Eel exposure failed or timed out.");
-        return { media: [] };
-    }
+    
+    // Auto-fallback for stage names
+    const forceRaw = (auditStage === 2);
 
     try {
-        return await eel.get_library()();
+        console.info(`[DB] getLibrary Request: Stage=${auditStage}, ForceRaw=${forceRaw}`);
+        const result = await eel.get_library(forceRaw, auditStage)();
+        console.log(`[DB] getLibrary Response:`, result);
+        return result;
     } catch (e) {
         console.error("[DB] Error fetching library:", e);
-        return { media: [] };
+        return { media: [], status: "error" };
     }
 }
 

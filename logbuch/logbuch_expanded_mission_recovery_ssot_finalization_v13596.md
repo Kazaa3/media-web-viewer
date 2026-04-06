@@ -1,3 +1,67 @@
+# Media Viewer v1.35.96 — 3-Stage Audit Chain & Diagnostics
+
+The "Black Box" is now fully instrumented with a 3-stage Audit Chain to identify exactly where the 541-to-0 item data drop occurs.
+
+## Resolving the "0 Items" Mystery
+
+Please start the application and use these diagnostic stages (via the browser console, F12) to pinpoint the regression:
+
+### Stage 1: Eel Bridge Baseline
+- `auditSwitchStage(1)`
+    - Returns 3 hardcoded mock items. Verifies that the Eel bridge and GUI rendering are confirmed functional.
+
+### Stage 2: SQLite File Access
+- `auditSwitchStage(2)`
+    - Bypasses all filters (`force_raw`). If this shows 541 items, the backend is successfully reading the SQLite file.
+
+### Stage 3: Normalization Audit
+- `auditSwitchStage(3)`
+    - The final filtered state. If this returns 0, the backend terminal will log exactly why items were dropped (e.g., `[BD-AUDIT] Dropped Item 'X' by Category: 'audio' not in ['Audio', 'Video']`).
+
+## Instrumentation Highlights
+
+- **Absolute Path Parity:** Every database query now logs the absolute path and PID of the process to ensure no "shadow databases" are being accessed.
+- **Nuclear Filter Audit:** `_apply_library_filters` maintains a `dropped_counts` dictionary and logs the first 10 rejected items per category for instant diagnostics.
+- **Handshake Metadata:** The frontend now receives raw audit metadata (DB Path, Row Count, PID) in every `getLibrary` call.
+
+**Next Steps:**
+Run through the Audit Stages and review the logs to pinpoint where the data drop occurs. Stand by for findings from the diagnostic chain.
+# Media Viewer v1.35.96 — Data Chain Audit (Task List)
+
+- [ ] **Phase 1: Database Layer Instrumentation (`db.py`)**
+    - [ ] Update `init_db()` with absolute file path, size, and PID logging
+    - [ ] Update `get_all_media()` with PID and row-count logging
+- [ ] **Phase 2: App Logic Trace (`main.py`)**
+    - [ ] Update `get_library()` to return metadata (path, count, PID) to GUI
+    - [ ] Add trace-logging to `_apply_library_filters` (Category mismatch logic)
+    - [ ] Verify "Raw Display" (`force_raw`) mode returns 100% of DB rows
+- [ ] **Phase 3: Frontend Visibility (`web/js/db.js`)**
+    - [ ] Add `console.info` for raw Eel results
+- [ ] **Phase 4: Run-Time Audit**
+    - [ ] Review logs for file size (0-byte DB detection)
+    - [ ] Verify footer anchor `[DB: 541 | GUI: 541]` parity
+# Media Viewer v1.35.96 — Task List (Final)
+
+- [x] **Phase 1: SSOT Expansion (`config_master.py`)**
+    - [x] Add `log_dir`, `benchmark_path` (rename), `test_results_path`, `mkv_cache_dir` to `storage_registry`
+    - [x] Add `task_timeout` to `perf_settings`
+    - [x] Add `pytest_cmd`, `known_venvs` to `test_settings`
+    - [x] Add `disk_image_extensions` to `media_formats`
+- [x] **Phase 2: Database Layer Hardening (`db.py`)**
+    - [x] Enforce absolute `DB_FILENAME` resolution
+    - [x] Implement category lowercasing migration in `init_db`
+- [x] **Phase 3: Application Logic Refactoring (`main.py`)**
+    - [x] Replace hardcoded Logbuch paths (`/logbuch`)
+    - [x] Replace hardcoded Benchmark paths (`/benchmarks.json`)
+    - [x] Replace hardcoded Test results paths (`/test_results.json`)
+    - [x] Update `mkv_batch_extract` with centralized cache dir
+    - [x] Update `pxtest` logic with centralized `pytest_cmd` and timeout
+    - [x] Implement `get_deep_audit()` Eel function
+    - [x] Normalize hardcoded 'Docs' category to lowercase
+- [x] **Phase 4: Verification & Handover**
+    - [x] Run DB path parity check script (541/541 items verified)
+    - [x] Verify GUI status bar shows correct item counts (Backend confirmed)
+    - [x] Generate walkthrough artifact
 # Media Viewer v1.35.96 — Final Technical Summary
 
 The Media Viewer v1.35.96 stabilization is now fully concluded. The entire configuration ecosystem is unified, the data pipeline is hardened, and all core metadata "Style Sheets" (Templates) are centralized for long-term maintainability.

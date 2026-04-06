@@ -818,38 +818,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 /**
  * Deep Data Flow Probe (v1.35.68 Recovery)
- * Bypasses all JS logic to check what the backend is REALLY sending.
  */
 async function probeDataFlow() {
-    if (typeof showStatusNotification === 'function') {
-        showStatusNotification('PROBE: Ping an Backend gesendet...', 'info');
-    }
-    
-    try {
-        const result = await getLibrary();
-        const rawCount = (result.media || []).length;
-        const dbCount = result.db_count || 0;
-        
-        const msg = `PROBE ERGEBNIS: Backend liefert ${rawCount} Items (DB Total: ${dbCount})`;
-        console.warn(`>>> [PROBE] ${msg}`, result);
-        
-        if (typeof showStatusNotification === 'function') {
-            showStatusNotification(msg, rawCount > 0 ? 'success' : 'error');
-        }
-        
-        // Update anchor immediately
-        if (typeof updateSyncAnchor === 'function') {
-            updateSyncAnchor(dbCount, rawCount);
-        }
-        
-        if (rawCount === 0 && dbCount > 0) {
-            alert("KRITISCH: Backend meldet DB voll, sendet aber 0 Items!\nPrüfe main.py Kategorie-Filter.");
-        }
-    } catch (e) {
-        console.error("[PROBE] Fehler:", e);
-        if (typeof showStatusNotification === 'function') {
-            showStatusNotification(`PROBE FEHLGESCHLAGEN: ${e.message}`, 'error');
-        }
-    }
+    // Stage 1 (Mock) is the starting baseline
+    await auditSwitchStage(1);
 }
 window.probeDataFlow = probeDataFlow;
+
+/**
+ * Audit Orchestrator (v1.35.96)
+ * Allows cycling through stages: 1=Mock, 2=Raw, 3=Filtered
+ */
+async function auditSwitchStage(stage) {
+    console.warn(`[BD-AUDIT] Switched to Audit Stage: ${stage}`);
+    window.__mwv_audit_stage = stage;
+    if (typeof showStatusNotification === 'function') {
+        const labels = { 
+            1: "STAGE 1: EEL BRIDGE (MOCKS)", 
+            2: "STAGE 2: SQLite ACCESS (RAW ROWS)", 
+            3: "STAGE 3: NORMALIZATION (FILTERED)" 
+        };
+        showStatusNotification(`AUDIT: ${labels[stage]}`, 'warn');
+    }
+    if (typeof loadLibrary === 'function') await loadLibrary();
+}
+window.auditSwitchStage = auditSwitchStage;
