@@ -625,9 +625,23 @@ function initCinemaView() {
     renderLibrary(); 
 }
 
+function initPicturesView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-PICTURES');
+    libraryFilter = 'pictures'; 
+    renderLibrary(); 
+}
+
+function initDocumentsView() { 
+    if (typeof mwv_trace === 'function') mwv_trace('NAV-LIB', 'INIT-DOCUMENTS');
+    libraryFilter = 'documents'; 
+    renderLibrary(); 
+}
+
 // Global Exports for fragment callbacks
 window.initFilmsView = initFilmsView;
 window.initSeriesView = initSeriesView;
 window.initAlbumsView = initAlbumsView;
 window.initAudiobooksView = initAudiobooksView;
 window.initCinemaView = initCinemaView;
+window.initPicturesView = initPicturesView;
+window.initDocumentsView = initDocumentsView;

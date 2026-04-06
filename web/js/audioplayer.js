@@ -927,8 +927,8 @@ function syncQueueWithLibrary() {
         console.warn("[Recovery] Sync Black Hole detected. Forcing raw fallback to all non-video items.");
         filtered = allLibraryItems.filter(i => {
             const isVid = isVideoItem(i);
-            // v1.35.68: Also keep 'multimedia' if it's not a video format
-            return !isVid || (i.category && i.category.toLowerCase() === 'multimedia');
+            // v1.35.68: Use standardized video detection (multimedia is now video)
+            return !isVid || (i.category && i.category.toLowerCase() === 'video');
         });
         console.info(`[Sync-Audit] Stage 2 (Rescue): Now has ${filtered.length} items.`);
     }
@@ -942,6 +942,13 @@ function syncQueueWithLibrary() {
         
         if (typeof renderPlaylist === 'function') renderPlaylist();
         if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
+        
+        // --- v1.35.68: Synchronize technical anchors ---
+        if (typeof updateSyncAnchor === 'function') {
+            const dbCount = allLibraryItems.length;
+            const guiCount = filtered.length;
+            updateSyncAnchor(dbCount, guiCount);
+        }
     }
 }
 

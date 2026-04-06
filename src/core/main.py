@@ -4004,7 +4004,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
     displayed_cats = PARSER_CONFIG.get("displayed_categories")
     if not displayed_cats:
-        displayed_cats = ["audio", "video", "pictures", "multimedia", "disk_images"]
+        displayed_cats = ["audio", "video", "pictures", "disk_images", "documents"]
 
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
 
@@ -4022,9 +4022,14 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     
     for item in all_media:
         # 1. Category check (Bypass logic v1.37.07)
-        # RAW Mode Level 1 & 2 skip this.
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
+            
+            # [Refine] 'multimedia' dsoll. raus. -> Map to 'video' (v1.35.68 Final)
+            if cat == 'multimedia': 
+                cat = 'video'
+                item['category'] = 'video' # Immediate re-map for UI consistency
+                
             if cat not in allowed_internal_cats:
                 dropped_reasons["category_mismatch"] += 1
                 if dropped_reasons["category_mismatch"] <= 10: 
@@ -4234,17 +4239,17 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
         realistic_mocks = [
             {
                 "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
-                "category": "audio", "path": "/mock/megaloh.mp3", "duration": 215, "is_mock": True,
+                "category": "audio", "path": "media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
                 "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
             },
             {
                 "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
-                "category": "audio", "path": "/mock/benjie.mp3", "duration": 198, "is_mock": True,
+                "category": "audio", "path": "media/mock/benjie.mp3", "duration": 198, "is_mock": True,
                 "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
             },
             {
                 "name": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner feat. D-Flame & Illo 77",
-                "album": "Boombule: Bambule Remixed", "category": "audio", "path": "/mock/beginner.mp3",
+                "album": "Boombule: Bambule Remixed", "category": "audio", "path": "media/mock/beginner.mp3",
                 "duration": 242, "is_mock": True,
                 "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule: Bambule Remixed"}
             }
