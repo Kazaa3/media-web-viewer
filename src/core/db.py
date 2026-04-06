@@ -946,3 +946,20 @@ def get_playlist_orphans(playlist_id):
     rows = cursor.fetchall()
     conn.close()
     return [{"media_id": r[0], "position": r[1]} for r in rows]
+
+
+def prune_playlist_orphans(playlist_id):
+    """
+    @brief Removes playlist_media entries for a specific playlist that do not exist in the media table.
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        DELETE FROM playlist_media 
+        WHERE playlist_id = ? AND media_id NOT IN (SELECT id FROM media)
+    """, (playlist_id,))
+    deleted_count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return deleted_count

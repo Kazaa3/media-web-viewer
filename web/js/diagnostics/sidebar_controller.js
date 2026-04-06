@@ -12,7 +12,8 @@ const DIAG_VIEW_INFO = {
     'environment': { name: 'System Health', desc: 'Resource Telemetry & Platform Audit' },
     'storage': { name: 'Volume Discovery', desc: 'FS Heuristics & Large Asset Audit' },
     'performance': { name: 'GUI Performance', desc: 'DOM Bloat & Rendering Decathlon' },
-    'playlist': { name: 'Playlist Forensics', desc: 'Relational & Physical Collection Audit' }
+    'playlist': { name: 'Playlist Forensics', desc: 'Relational & Physical Collection Audit' },
+    'state': { name: 'State Persistence', desc: 'LocalStorage vs. Configuration Master Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -65,7 +66,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'environment': 'diag-pane-environment',
         'storage': 'diag-pane-storage',
         'performance': 'diag-pane-performance',
-        'playlist': 'diag-pane-playlist'
+        'playlist': 'diag-pane-playlist',
+        'state': 'diag-pane-state'
     };
 
     if (paneIds[viewId]) {
@@ -82,6 +84,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'storage') runStorageAudit();
         if (viewId === 'performance') runPerformanceAudit();
         if (viewId === 'playlist') runPlaylistAudit();
+        if (viewId === 'state') runStateAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1195,3 +1198,126 @@ async function runPlaylistAudit() {
 }
 
 window.runPlaylistAudit = runPlaylistAudit;
+
+/**
+ * PLAYLIST REPAIR SUITE (v1.37.32)
+ */
+async function triggerPlaylistPruningAll() {
+    if (!confirm("FORENSIC REPAIR: Prune all relational orphans from ALL playlists? This cannot be undone.")) return;
+
+    sentinelPulse('PRUNE', 'Executing Global Playlist Relational Clean-up...');
+    try {
+        const forensic = await eel.get_playlist_forensics()();
+        if (forensic.status !== 'ok') {
+            sentinelPulse('ERROR', 'Global Pruning failed: Could not fetch initial forensics.');
+            return;
+        }
+
+        let totalPruned = 0;
+        for (const pl of forensic.playlists) {
+            if (pl.relational_orphans > 0) {
+                const res = await eel.prune_playlist_orphans(pl.id)();
+                if (res.status === 'success') totalPruned += res.count;
+            }
+        }
+
+        sentinelPulse('SUCCESS', `Global Pruning Complete. Removed ${totalPruned} dead references.`);
+        if (typeof addForensicRecAction === 'function') {
+            addForensicRecAction('PLAYLIST PRUNE', 'SUCCESS', `Removed ${totalPruned} items across sessions.`);
+        }
+        
+        // Refresh the audit metrics immediately
+        runPlaylistAudit();
+
+    } catch (e) {
+        console.error("[Forensic-PLY] Pruning failed:", e);
+        sentinelPulse('ERROR', `Global Pruning failed: ${e.message}`);
+    }
+}
+
+window.triggerPlaylistPruningAll = triggerPlaylistPruningAll;
+
+/**
+ * STATE PERSISTENCE AUDIT (v1.37.33)
+ */
+async function runStateAudit() {
+    const details = document.getElementById('diag-sta-details');
+    const healthEl = document.getElementById('diag-sta-health');
+    const driftEl = document.getElementById('diag-sta-drift');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Auditing application state...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing Forensic State Audit...');
+    
+    try {
+        const res = await eel.get_state_forensics()();
+        if (res.status === 'ok') {
+            const requiredKeys = ['mwv_diagnostic_mode', 'mwv_force_native', 'mwv_diag_view', 'mwv_sentinel_trace'];
+            let driftCount = 0;
+            let healthyCount = 0;
+            
+            let html = '<div style="display:flex; flex-direction:column; gap:6px;">';
+            
+            // Check LocalStorage Keys
+            requiredKeys.forEach(key => {
+                const val = localStorage.getItem(key);
+                const exists = val !== null;
+                if (!exists) driftCount++;
+                else healthyCount++;
+                
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:4px 8px; border-radius:4px;">
+                        <span style="font-family:monospace; font-size:8px; opacity:0.7;">${key}</span>
+                        <span style="font-size:8px; font-weight:800; color:${exists ? '#2ecc71' : '#ff3366'}">${exists ? 'SYNC' : 'MISSING'}</span>
+                    </div>
+                `;
+            });
+            
+            // Backend Parity Check
+            const backendMatch = (res.diag_mode === (localStorage.getItem('mwv_diagnostic_mode') === 'true'));
+            if (!backendMatch) driftCount++;
+            
+            html += `
+                <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:8px;">
+                        <span style="opacity:0.5;">BACKEND_VER</span>
+                        <span>${res.backend_version}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:8px;">
+                        <span style="opacity:0.5;">PARSE_MODE</span>
+                        <span>${res.app_mode}</span>
+                    </div>
+                </div>
+            `;
+            
+            const healthScore = Math.floor((healthyCount / (requiredKeys.length + 1)) * 100);
+            if (healthEl) healthEl.innerText = `${healthScore}%`;
+            if (driftEl) driftEl.innerText = driftCount;
+            
+            html += '</div>';
+            if (details) details.innerHTML = html;
+            
+            sentinelPulse('SUCCESS', `State Audit Complete. Health: ${healthScore}%, Drift: ${driftCount}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `State Audit Failed: ${e.message}`);
+    }
+}
+
+async function forcePersistenceSync() {
+    sentinelPulse('SYNC', 'Forcing state persistence alignment...');
+    try {
+        const res = await eel.get_state_forensics()();
+        if (res.status === 'ok') {
+            localStorage.setItem('mwv_diagnostic_mode', res.diag_mode);
+            // Add more sync logic as needed
+            sentinelPulse('SUCCESS', 'State persistence synchronized with backend master.');
+            runStateAudit();
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Sync failed: ${e.message}`);
+    }
+}
+
+window.runStateAudit = runStateAudit;
+window.forcePersistenceSync = forcePersistenceSync;

@@ -1,3 +1,13 @@
+## UI & Controller Integration Finalization
+- Enable the PRUNE ORPHANS and PRUNE ALL ORPHANS buttons in `diagnostics_sidebar.html` for collection restoration.
+- Implement `triggerPlaylistPruning()` and `triggerPlaylistPruningAll()` in `sidebar_controller.js` to bridge UI and backend repair logic.
+- Update `runPlaylistAudit()` in `sidebar_controller.js` to display a professional integrity list for all collections.
+- Ensure all repair/pruning actions are captured by the SENTINEL trace engine for persistent forensic documentation.
+## Repair Suite Finalization
+- Implement `prune_playlist_orphans(playlist_id)` bridge in `main.py` and `db.py` to surgically remove dead references from curated collections.
+- Enable PRUNE ORPHANS button in `diagnostics_sidebar.html` for professional-grade repair tooling.
+- Implement `triggerPlaylistPruning()` in `sidebar_controller.js` to bridge UI and backend repair logic.
+- Ensure all repair/pruning actions are captured by the SENTINEL trace engine for persistent forensic documentation.
 ## Implementation Steps
 - Implement `get_playlist_forensics()` in `main.py`
 - Add reiter-playlist (PLY) to `diagnostics_sidebar.html`

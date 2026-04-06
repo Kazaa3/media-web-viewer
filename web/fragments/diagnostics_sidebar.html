@@ -34,7 +34,8 @@
         <button id="reiter-environment" class="side-reiter" onclick="switchDiagnosticsSidebarTab('environment', this)">ENV</button>
         <button id="reiter-storage" class="side-reiter" onclick="switchDiagnosticsSidebarTab('storage', this)">STR</button>
         <button id="reiter-performance" class="side-reiter" onclick="switchDiagnosticsSidebarTab('performance', this)">PER</button>
-        <button id="reiter-playlist" class="side-reiter" onclick="switchDiagnosticsSidebarTab('playlist', this)">PLY</button>
+        <button class="side-reiter" id="reiter-ply" onclick="switchDiagnosticsSidebarTab('playlist')">PLY</button>
+        <button class="side-reiter" id="reiter-sta" onclick="switchDiagnosticsSidebarTab('state')">STA</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
@@ -278,7 +279,34 @@
             </div>
 
             <div style="margin-top:10px; display:flex; gap:5px;">
-                <button disabled style="flex:1; opacity:0.3; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:not-allowed;">PRUNE ORPHANS</button>
+                <button id="btn-ply-prune-all" onclick="triggerPlaylistPruningAll()" style="flex:1; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Surgical removal of Relational Orphans from all playlists.">PRUNE ALL ORPHANS</button>
+            </div>
+        </div>
+
+        <!-- PANE: STATE PERSISTENCE (STA) [v1.37.33] -->
+        <div id="diag-pane-state" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">STATE & PERSISTENCE</div>
+                <button onclick="runStateAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT STATE</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #2ecc71;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">HEALTH</div>
+                    <div id="diag-sta-health" style="font-size: 14px; font-weight: 900; color: #2ecc71;">--%</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #f1c40f;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">LOCAL DRIFT</div>
+                    <div id="diag-sta-drift" style="font-size: 14px; font-weight: 900; color: #f1c40f;">0</div>
+                </div>
+            </div>
+
+            <div id="diag-sta-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf State-Scan...</div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <button id="btn-sta-sync" onclick="forcePersistenceSync()" style="width:100%; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Aligns Frontend LocalStorage with Backend Config Master.">FORCE PERSISTENCE SYNC</button>
             </div>
         </div>
 

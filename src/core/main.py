@@ -1225,6 +1225,51 @@ def get_playlist_forensics():
         return {"status": "error", "message": str(e)}
 
 
+@eel.expose
+def prune_playlist_orphans(playlist_id):
+    """
+    Surgical Pruning for Playlist Relational Orphans (v1.37.32).
+    """
+    from src.core import db
+    try:
+        count = db.prune_playlist_orphans(playlist_id)
+        log.info(f"[Forensic-PLY] Pruned {count} orphans from playlist {playlist_id}.")
+        return {"status": "success", "count": count}
+    except Exception as e:
+        log.error(f"[Forensic-PLY] Pruning Failed for PL {playlist_id}: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def get_state_forensics():
+    """
+    Forensic State Persistence Audit (v1.37.33).
+    Audits Centralized config vs. expected frontend state keys.
+    """
+    try:
+        from src.core import config_master
+        cfg = config_master.GLOBAL_CONFIG
+        
+        # Aggregating critical backend state for frontend parity check
+        state = {
+            "status": "ok",
+            "backend_version": cfg.get("version"),
+            "debug_mode": cfg.get("debug_mode"),
+            "diag_mode": cfg.get("diag_mode"),
+            "raw_mode": cfg.get("raw_mode"),
+            "bypass_db": cfg.get("bypass_db"),
+            "log_level": cfg.get("log_level"),
+            "app_mode": cfg.get("app_mode"),
+            "theme_master": cfg.get("theme", "dark"),
+            "boot_time": cfg.get("build_date"),
+            "registry_keys": list(cfg.keys())
+        }
+        return state
+    except Exception as e:
+        log.error(f"[Forensic-STA] State Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
@@ -8656,7 +8701,7 @@ def get_routing_suite_report():
 
             if not is_direct:
                 incompatible_count = int(incompatible_count) + 1
-
+”
             list_item = {'name': item.get('name'), 'score': score, 'mode': mode}
             if score >= 80:
                 top_quality_items.append(list_item)
