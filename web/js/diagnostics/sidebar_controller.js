@@ -828,6 +828,8 @@ window.runHydrationAuditProbe = runHydrationAuditProbe;
 /**
  * RECOVERY ACTION LOG (v1.37.26)
  */
+window.__mwv_rec_actions_history = [];
+
 function addForensicRecAction(name, status, details) {
     const viewport = document.getElementById('diag-rec-history-viewport');
     if (!viewport) return;
@@ -840,6 +842,9 @@ function addForensicRecAction(name, status, details) {
     const ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const isSuccess = status === 'SUCCESS';
     const color = isSuccess ? '#2ecc71' : '#e74c3c';
+
+    // Persist to history for Snapshot (v1.37.27)
+    window.__mwv_rec_actions_history.push({ ts, name, status, details });
 
     const entry = document.createElement('div');
     entry.style.cssText = `background:rgba(255,255,255,0.03); border-left:2px solid ${color}; padding:6px 10px; border-radius:4px; font-family:'JetBrains Mono', monospace; display:flex; flex-direction:column; gap:2px;`;
@@ -858,3 +863,82 @@ function addForensicRecAction(name, status, details) {
     viewport.prepend(entry);
     viewport.scrollTop = 0;
 }
+
+/**
+ * UNIFIED FORENSIC SNAPSHOT (v1.37.27)
+ */
+async function generateForensicSnapshot() {
+    sentinelPulse('AUDIT', 'Generating Unified Forensic Snapshot...');
+    
+    try {
+        // Parallel Forensic Fetch
+        const [forensics, hydration, workers] = await Promise.all([
+            eel.get_library_forensics()(),
+            eel.get_hydration_stats()(),
+            eel.get_active_video_workers()()
+        ]);
+
+        const ts = new Date().toLocaleString('de-DE');
+        let report = `MWV FORENSIC SNAPSHOT - ${ts}\n`;
+        report += `==========================================\n\n`;
+
+        // DB Stats
+        report += `[1] DATABASE FORENSICS\n`;
+        report += `------------------------------------------\n`;
+        report += `Total Indexed: ${forensics.total}\n`;
+        report += `Duplicates:    ${forensics.duplicates}\n`;
+        report += `Categories:    ${JSON.stringify(forensics.categories, null, 2)}\n`;
+        report += `Formats:       ${JSON.stringify(forensics.formats, null, 2)}\n\n`;
+
+        // Hydration Parity
+        report += `[2] HYDRATION PARITY AUDIT\n`;
+        report += `------------------------------------------\n`;
+        report += `SQLite Count:  ${hydration.sqlite_count}\n`;
+        report += `Cache Count:   ${hydration.cache_count}\n`;
+        report += `GUI Parity:    ${window.allLibraryItems ? window.allLibraryItems.length : 'N/A'}\n\n`;
+
+        // Active Workers
+        report += `[3] ACTIVE TRANSCODING WORKERS\n`;
+        report += `------------------------------------------\n`;
+        if (workers.workers && workers.workers.length > 0) {
+            workers.workers.forEach(w => {
+                report += `PID: ${w.pid} | Name: ${w.name} | Workspace: ${w.is_workspace}\n`;
+            });
+        } else {
+            report += `No active workers detected.\n`;
+        }
+        report += `\n`;
+
+        // Recovery Actions
+        report += `[4] SESSION RECOVERY HISTORY\n`;
+        report += `------------------------------------------\n`;
+        if (window.__mwv_rec_actions_history.length > 0) {
+            window.__mwv_rec_actions_history.forEach(a => {
+                report += `[${a.ts}] ${a.name} | ${a.status} | ${a.details}\n`;
+            });
+        } else {
+            report += `No forensic actions recorded this session.\n`;
+        }
+
+        report += `\n--- END OF FORENSIC SNAPSHOT ---`;
+
+        // Atomic Download
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mwv_forensic_snapshot_${new Date().getTime()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        sentinelPulse('SUCCESS', 'Unified Forensic Snapshot Generated and Downloaded.');
+    } catch (e) {
+        console.error('Snapshot Error:', e);
+        sentinelPulse('ERROR', `Snapshot Generation Failed: ${e.message}`);
+        alert(`Forensic Snapshot Failed: ${e.message}`);
+    }
+}
+
+window.generateForensicSnapshot = generateForensicSnapshot;
