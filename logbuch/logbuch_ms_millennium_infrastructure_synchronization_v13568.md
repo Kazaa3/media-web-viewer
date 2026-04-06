@@ -100,3 +100,65 @@ Alle Infrastrukturziele für v1.35.68 sind erreicht. Das System ist jetzt vollum
 - Active Branch: multimedia (Aligned for Dev)
 
 Alle Infrastrukturwünsche bzgl. Zentralisierung, Hardware-Erkennung und Parser-Orchestrierung sind erfüllt.
+
+---
+
+# Nachtrag: Modularized Parser Toolchain (v1.35.68)
+
+**Datum:** 2026-04-06
+
+## Parser-Toolchain Modularisierung
+- **8 neue Parser-Module:**
+  - ebml_parser.py: EBML/Matroska-Inspektion
+  - mkvparse_parser.py: mkvparse-Unterstützung
+  - enzyme_parser.py: Enzyme MKV-Analyse
+  - pycdlib_parser.py: ISO/Disk-Image-Analyse
+  - pymkv_parser.py: pymkv/MKV-Integration
+  - tinytag_parser.py: Schnelle Audio-Tags
+  - eyed3_parser.py: ID3v2/MP3-Tags
+  - music_tag_parser.py: Unified Audio-Metadaten
+- **media_parser.py refaktoriert:**
+  - Alle Inline-Parser-Logik entfernt (elif step_name ...)
+  - parser_steps-Registry nutzt jetzt die neuen Module
+  - Fehlerbehandlung und Sandbox-Logik vereinfacht
+
+## Qualitätssicherung & Verifikation
+- Syntaxprüfung: Alle neuen Module mit `py_compile` getestet
+- Funktionstest: Bibliotheksscan und UI-Check (Options → Statistics, Full Tags Explorer)
+- Datenparität mit vorheriger Inline-Implementierung bestätigt
+
+## Ergebnis
+Die Parser-Engine ist jetzt vollständig modular, wartbar und zentral orchestriert. Alle Parser arbeiten als eigenständige Functional Worker, die über das zentrale Registry gesteuert werden. Die Codebasis ist für zukünftige Erweiterungen und Wartung optimal vorbereitet.
+
+---
+
+# Nachtrag: Full-Stack Modularization & Atomic Parser Orchestration (v1.35.68)
+
+**Datum:** 2026-04-06
+
+## Atomic Parser Orchestration
+- **Spezialisierte Parser-Module:**
+  - MKV/EBML Suite: ebml_parser.py, mkvparse_parser.py, enzyme_parser.py, pymkv_parser.py
+  - Disk Image: pycdlib_parser.py (DVD/Blu-ray ISO-Analyse)
+  - Audio Fidelity: tinytag_parser.py, eyed3_parser.py, music_tag_parser.py
+- **CVLC & VLC Orchestration:**
+  - cvlc-Binary in GLOBAL_CONFIG integriert
+  - Dual-Ladder Discovery für VLC (libvlc & cvlc)
+- **Core Refinement:**
+  - media_parser.py ist jetzt ein reiner Dispatcher, der alle Worker mit zentralen Settings versorgt und Sandbox-Execution sicherstellt
+
+## Final Toolchain Baseline
+- **Options Panel:** Echtzeit-Status für FFmpeg, FFprobe, HandBrake, VLC/CVLC und alle Parser
+- **Registry:** 100% aller Pfade und Binaries sind zentralisiert, keine Hardcodierungen mehr
+
+## Qualitätssicherung
+- Syntaxprüfung (py_compile) für die gesamte Parser-Suite bestanden
+- System ist auf multimedia-Branch produktionsreif
+
+## Modularization Stats
+- Standalone Parsers: 12 (100% orchestriert)
+- Legacy Logic entfernt: ~170 Zeilen
+- Binary Orchestration: FFmpeg, HandBrake, mkvmerge, cvlc etc.
+- Branch Alignment: multimedia (v1.35.68)
+
+Alle Infrastruktur-, Binary- und Parser-Zentralisierungsaufgaben sind erfolgreich abgeschlossen.

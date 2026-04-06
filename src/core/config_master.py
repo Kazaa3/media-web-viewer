@@ -11,8 +11,6 @@ import shutil
 import re
 import subprocess
 import eel
-from src.core import logger
-from src.core.config_master import GLOBAL_CONFIG, SLOW_PARSERS
 from pathlib import Path
 from typing import Any, Dict, List
 from importlib.metadata import distributions
