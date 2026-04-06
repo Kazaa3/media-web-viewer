@@ -227,6 +227,32 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "web_config_dev": str(PROJECT_ROOT / "web" / "config.develop.json"),
         "web_config_main": str(PROJECT_ROOT / "web" / "config.main.json"),
         "i18n_file": str(PROJECT_ROOT / "web" / "i18n.json"),
+        "test_dir": str(PROJECT_ROOT / "tests"),
+        "test_data_dir": str(PROJECT_ROOT / "tests" / "data"),
+        "test_engines_dir": str(PROJECT_ROOT / "tests" / "engines"),
+        "test_legacy_dir": str(PROJECT_ROOT / "tests" / "legacy"),
+        "test_reports_dir": str(PROJECT_ROOT / "tests" / "artifacts"),
+        "reference_media": {
+            "video": str(PROJECT_ROOT / "tests" / "data" / "reference" / "video.mp4"),
+            "audio": str(PROJECT_ROOT / "tests" / "data" / "reference" / "audio.mp3"),
+            "iso": str(PROJECT_ROOT / "tests" / "data" / "iso" / "test_disc.iso"),
+            "mkv": str(PROJECT_ROOT / "tests" / "data" / "reference" / "test.mkv")
+        }
+    },
+    
+    # --- PARSER & UI REGISTRY (v1.35.68 Centralized) ---
+    "parser_registry": {
+        "start_page": os.environ.get("MWV_START_PAGE", "player"),
+        "app_mode": os.environ.get("MWV_APP_MODE", "High-Performance"),
+        "playback_mode": os.environ.get("MWV_PLAYBACK_MODE", "hls"),
+        "library_dir": str(PROJECT_ROOT / "media"),
+        "displayed_categories": ["audio", "video", "multimedia", "abbild", "iso"],
+        "debug_scan": get_env_bool("MWV_DEBUG_SCAN", False),
+        "parser_settings": {
+            "use_fast_isoparser": True,
+            "extract_tags": True,
+            "artwork_extraction": True
+        }
     },
     
     # --- SCRIPT & UTILITY REGISTRY (v1.35.68 Centralized) ---
@@ -251,14 +277,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "mock_dvd": str(PROJECT_ROOT / "scripts" / "create_mock_dvd.py")
         }
     },
-        "legacy_db_candidates": [
-            "~/media_library.db",
-            "./media_library.db",
-            "./dist/media_library.db",
-            "../media_library.db"
-        ]
-    },
-    
+    "legacy_db_candidates": [
+        "~/media_library.db",
+        "./media_library.db",
+        "./dist/media_library.db",
+        "../media_library.db"
+    ],
+
     # --- DIAGNOSTIC & METRIC REGISTRY (v1.35.68 Centralized) ---
     "diagnostic_registry": {
         "benchmarks_enabled": get_env_bool("MWV_BENCHMARKS", True),
