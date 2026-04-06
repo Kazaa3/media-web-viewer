@@ -216,8 +216,41 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "db_path": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
         "log_dir": str(PROJECT_ROOT / "logs"),
         "cache_dir": str(PROJECT_ROOT / "cache"),
-        "benchmarks_file": str(PROJECT_ROOT / "data" / "benchmarks.json"),
+        "pyproject_file": str(PROJECT_ROOT / "pyproject.toml"),
+        "version_file": str(PROJECT_ROOT / "VERSION"),
+        "benchmarks_file": str(PROJECT_ROOT / "benchmarks.json"),
         "environment_file": str(PROJECT_ROOT / "infra" / "environment.yml"),
+        "version_sync_file": str(PROJECT_ROOT / "infra" / "VERSION_SYNC.json"),
+        "probe_log": str(PROJECT_ROOT / "probe_results.log"),
+        "audit_log": str(PROJECT_ROOT / "audit_debug.log"),
+        "web_config": str(PROJECT_ROOT / "web" / "config.json"),
+        "web_config_dev": str(PROJECT_ROOT / "web" / "config.develop.json"),
+        "web_config_main": str(PROJECT_ROOT / "web" / "config.main.json"),
+        "i18n_file": str(PROJECT_ROOT / "web" / "i18n.json"),
+    },
+    
+    # --- SCRIPT & UTILITY REGISTRY (v1.35.68 Centralized) ---
+    "script_registry": {
+        "control": {
+            "super_kill": str(PROJECT_ROOT / "scripts" / "super_kill.py"),
+            "reboot": str(PROJECT_ROOT / "scripts" / "reboot_mwv.sh"),
+            "status_bar": str(PROJECT_ROOT / "scripts" / "status_bar_utils.py")
+        },
+        "build": {
+            "update_version": str(PROJECT_ROOT / "scripts" / "update_version.py"),
+            "cleanup": str(PROJECT_ROOT / "scripts" / "cleanup_mwv.sh"),
+            "build_deb": str(PROJECT_ROOT / "scripts" / "fast_build_deb.sh")
+        },
+        "audit": {
+            "dom_audit": str(PROJECT_ROOT / "scripts" / "headless_dom_audit.sh"),
+            "playback_verify": str(PROJECT_ROOT / "scripts" / "verify_playback.py"),
+            "backend_check": str(PROJECT_ROOT / "scripts" / "check_backend_data.py")
+        },
+        "data": {
+            "seed_data": str(PROJECT_ROOT / "scripts" / "seed_test_data.py"),
+            "mock_dvd": str(PROJECT_ROOT / "scripts" / "create_mock_dvd.py")
+        }
+    },
         "legacy_db_candidates": [
             "~/media_library.db",
             "./media_library.db",
