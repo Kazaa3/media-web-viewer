@@ -14,20 +14,12 @@ from . import mkvmerge_parser
 from . import vlc_parser
 from . import isoparser_parser
 import multiprocessing
-import queue
-from src.core import logger
-import logging
+from src.core.config_master import GLOBAL_CONFIG
 
-# Get specialized logger for parser component
-log = logger.get_logger("parser")
-
-MAX_TAG_LEN = 4096  # Max length for any single string tag
-MAX_CHAPTERS = 500  # Max number of chapters to keep
-
-# Parser Categories
-AUDIO_PARSER_IDS = {"mutagen", "tinytag", "eyed3", "music_tag"}
-MULTIMEDIA_PARSER_IDS = {"container", "mkvmerge", "mkvinfo", "vlc", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
-UNIVERSAL_PARSER_IDS = {"filename", "pymediainfo", "ffprobe", "ffmpeg"}
+# Parser Categories (Centralized v1.35.68)
+AUDIO_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["audio"])
+MULTIMEDIA_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["multimedia"])
+UNIVERSAL_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["universal"])
 
 def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
     """
@@ -45,23 +37,9 @@ def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
             
     return tags
 
-# Magic byte signatures for specific formats
-REQUIRED_MAGIC = {
-    # EBML / Matroska (MKV, WebM)
-    "mkvmerge": b"\x1a\x45\xdf\xa3",
-    "mkvinfo":  b"\x1a\x45\xdf\xa3",
-    "mkvparse": b"\x1a\x45\xdf\xa3",
-    "enzyme":   b"\x1a\x45\xdf\xa3",
-    "pymkv":    b"\x1a\x45\xdf\xa3",
-    "ebml":     b"\x1a\x45\xdf\xa3",
-    # ISO 9660 (CD-ROM) - CD001 at offset 32769
-    "pycdlib":   b"CD001",
-    "isoparser": b"CD001",
-    # DSD (Direct Stream Digital)
-    "dsd":       b"DSD ",
-    "dsf":       b"DSD ",
-    "dff":       b"FRM8",
-}
+# Magic byte signatures (Centralized v1.35.68)
+_sig_map = GLOBAL_CONFIG["parser_registry"]["magic_signatures"]
+REQUIRED_MAGIC = {k: bytes.fromhex(v) for k, v in _sig_map.items()}
 
 def get_file_magic(path: Path, length: int = 16, offset: int = 0) -> bytes:
     """
@@ -133,42 +111,8 @@ def run_sandboxed(func, timeout, *args, **kwargs):
         raise e
 
 
-# Mapping which parsers are responsible for which file types (extensions including dot)
-# If a file type is not in this mapping, all parsers in the chain will be attempted (legacy behavior).
-# If a file type IS in this mapping, only the listed parsers will be executed.
-PARSER_MAPPING = {
-    # --- AUDIO ---
-    ".mp3":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "eyed3", "music_tag"],
-    ".flac": ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-    ".m4a":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-    ".m4b":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-    ".ogg":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-    ".wav":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-    ".wma":  ["filename", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "tinytag", "music_tag"],
-    
-    # --- VIDEO ---
-    ".mkv":  ["filename", "container", "mkvmerge", "mkvinfo", "vlc", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "ebml", "mkvparse", "enzyme", "pymkv"],
-    ".mp4":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "enzyme"],
-    ".m4v":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".avi":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".mov":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".webm": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".wmv":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".mpg":  ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".mpeg": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg"],
-    
-    ".iso":    ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".bin":    ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".img":    ["filename", "pycdlib", "isoparser", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".jpg":    ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".jpeg":   ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".png":    ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
-    ".webp":   ["filename", "pymediainfo", "ffprobe", "ffmpeg"],
-    
-    # --- DOCUMENTS & EBOOKS ---
-    ".pdf":    ["filename", "pymediainfo", "ffprobe"],
-    ".epub":   ["filename", "pymediainfo", "ffprobe"],
-}
+# Mapping which parsers are responsible for which file types (Centralized v1.35.68)
+PARSER_MAPPING = GLOBAL_CONFIG["parser_registry"]["extension_map"]
 
 
 def get_parser_info() -> dict[str, Any]:

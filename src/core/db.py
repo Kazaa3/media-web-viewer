@@ -27,18 +27,12 @@ log.info(f"[DB-INIT] Initializing DB module. PID: {os.getpid()}")
 from pathlib import Path
 from typing import Iterable
 
-# Use project-local data/ directory if available, otherwise fallback to home
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-LOCAL_DATA_DIR = PROJECT_ROOT / "data"
+from src.core.config_master import GLOBAL_CONFIG
 
-if LOCAL_DATA_DIR.exists():
-    DB_DIR = LOCAL_DATA_DIR
-    DB_FILENAME = str(DB_DIR / "database.db")
-else:
-    DB_DIR = Path.home() / ".media-web-viewer"
-    DB_FILENAME = str(DB_DIR / "media_library.db")
+DB_DIR = Path(GLOBAL_CONFIG["storage_registry"]["data_dir"])
+DB_FILENAME = GLOBAL_CONFIG["storage_registry"]["db_path"]
 
-log.info(f"[DB-PATH] Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
+log.info(f"[DB-PATH] Centralized Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
 
 _DB_INITIALIZED = False
 
@@ -62,12 +56,17 @@ class DatabaseHandler:
         # Placeholder for existing function if it exists or needs to be routed
         return True
 
+def get_default_scan_dir() -> Path:
+    """
+    Return the project default scan directory (Centralized v1.35.68).
+    """
+    return Path(GLOBAL_CONFIG["storage_registry"]["media_dir"]).resolve()
+
 def get_active_db_path() -> Path:
     """
     Return the active database path used by the application.
     """
     return Path(DB_FILENAME).resolve()
-
 
 def get_legacy_db_candidates(
     *,
@@ -79,7 +78,8 @@ def get_legacy_db_candidates(
     Return known legacy database locations that may contain stale data.
     """
     module_dir = Path(__file__).resolve().parent
-    project = (project_root or module_dir).resolve()
+    # src/core -> root
+    project = (project_root or module_dir.parent.parent).resolve()
     home = (home_dir or Path.home()).resolve()
     current = (cwd or Path.cwd()).resolve()
 
@@ -88,16 +88,17 @@ def get_legacy_db_candidates(
         project / "media_library.db",
         project / "dist" / "media_library.db",
         current / "media_library.db",
-        project.parent / "media_library.db",
+        project.parent / "media_library.db",  # Just in case it's in the workspace root above project
     ]
 
     seen: set[Path] = set()
     unique_candidates: list[Path] = []
     for candidate in candidates:
         candidate_resolved = candidate.resolve()
-        if candidate_resolved not in seen:
-            seen.add(candidate_resolved)
+        if candidate_resolved.exists() and candidate_resolved not in seen:
             unique_candidates.append(candidate_resolved)
+            seen.add(candidate_resolved)
+            
     return unique_candidates
 
 

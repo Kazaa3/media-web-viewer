@@ -273,7 +273,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(90, "Setting UI State")
     SIDEBAR_OPEN = True
     # SESSION_ID already initialized above
-    port = int(os.environ.get("MWV_PORT", 8345))
+    port = GLOBAL_CONFIG["port"]
     eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
     sb.update(100, "Initial State OK")
 
@@ -405,7 +405,6 @@ def start_app():
             now = time.time()
             if now - start_wait > timeout:
                 print(f"\nCRITICAL: [Watchdog] Startup HANG detected (No UI sync after {timeout}s)!", flush=True)
-                print("--- [STARTUP DIAGNOSTICS] ---", flush=True)
                 print(f"Port {port} status: {'In Use' if hardware_detector.is_port_in_use(port) else 'Available (Unexpected)'}", flush=True)
                 print(f"Python: {sys.version.split()[0]}", flush=True)
                 print(f"Eel Mode: {eel_mode}", flush=True)
@@ -419,8 +418,6 @@ def start_app():
                 elapsed = int(now - start_wait)
                 log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
                 last_alive = now
-            time.sleep(0.5)
-                
             time.sleep(0.5)
             
         if spawn_event.is_set():
@@ -445,7 +442,7 @@ def ensure_singleton():
 # --- End of Startup Block ---
 # SESSION_ID stable and already logged
 from src.core.db import get_active_db_path
-session_port = int(os.environ.get("MWV_PORT", 8345))
+session_port = GLOBAL_CONFIG["port"]
 # 4. Bandwidth Optimization (v1.35.68)
 if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
     log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
@@ -669,7 +666,7 @@ def run_video_transcode_diagnostic(file_path=None):
     results = []
     
     # Endpoints to test
-    base_url = "http://localhost:8345"
+    base_url = f"http://localhost:{GLOBAL_CONFIG['port']}"
     encoded_path = requests.utils.quote(target_path)
     endpoints = [
         {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
@@ -4706,7 +4703,7 @@ def open_video(file_path: str, player_type: str = "auto", mode: str = "auto", so
         # pyvidplayer2 / standalone
         if mode == "pyplayer_mpv":
             # Launch mpv if available
-            mpv_path = shutil.which("mpv") or "mpv"
+            mpv_path = GLOBAL_CONFIG["program_paths"]["mpv"]
             try:
                 proc = subprocess.Popen([str(mpv_path), str(file_path)])
                 ACTIVE_SUBPROCESSES.append(proc)
@@ -5802,9 +5799,12 @@ def stream_to_mediamtx(file_path, protocol="hls"):
 
         is_dvd = source_p.suffix.lower() == '.iso' or (source_p.is_dir() and "VIDEO_TS" in os.listdir(source_p))
 
-        # 3. Build FFmpeg command
-        rtsp_target = f"rtsp://localhost:8554/{safe_name}"
-        ffmpeg_cmd = ["ffmpeg", "-re"]
+        mtx_host = GLOBAL_CONFIG["mediamtx_settings"]["host"]
+        rtsp_port = GLOBAL_CONFIG["mediamtx_settings"]["rtsp_port"]
+        rtsp_target = f"rtsp://{mtx_host}:{rtsp_port}/{safe_name}"
+        
+        ffmpeg_bin = GLOBAL_CONFIG["program_paths"]["ffmpeg"]
+        ffmpeg_cmd = [ffmpeg_bin, "-re"]
 
         if is_dvd:
             # DVD Transcode (H.264 + AAC)
@@ -7483,8 +7483,9 @@ def discover_cast_devices():
     """Returns discovered Chromecast and DLNA devices."""
     devices = {"chromecast": [], "dlna": []}
     try:
-        # Placeholder for pychromecast / dlnap discovery
-        # log.info("[Cast] Starting device discovery...")
+        timeout = GLOBAL_CONFIG["casting_settings"]["discovery_timeout"]
+        # Placeholder for pychromecast / dlnap discovery using centralized timeout
+        log.info(f"[Cast] Starting device discovery (timeout: {timeout}s)...")
         pass
     except Exception as e:
         log.error(f"[Cast] Discovery error: {e}")
@@ -7507,9 +7508,10 @@ def open_vlc(filepath):
     log.info(f"[Video] Opening in VLC: {filepath}")
     try:
         if sys.platform == "win32":
-            os.startfile(filepath)  # Or full VLC path
+            os.startfile(filepath)
         else:
-            subprocess.Popen(["vlc", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            vlc_path = GLOBAL_CONFIG["program_paths"]["vlc"]
+            subprocess.Popen([vlc_path, filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -7522,7 +7524,8 @@ def open_ffplay(filepath):
     try:
         # -autoexit: closes window when playback ends
         # -sn: disable subtitles for performance during test
-        subprocess.Popen(["ffplay", "-autoexit", "-sn", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        ffplay_path = GLOBAL_CONFIG["program_paths"]["ffplay"]
+        subprocess.Popen([ffplay_path, "-autoexit", "-sn", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -7570,13 +7573,15 @@ def toggle_swyh_rs(enabled: bool):
                 return {"status": "ok", "message": "Already running"}
 
             # Check if binary exists
-            if not shutil.which("swyh-rs-cli"):
+            swyh_path = GLOBAL_CONFIG["program_paths"]["swyh-rs-cli"]
+            if not shutil.which(swyh_path) and swyh_path == "swyh-rs-cli":
                 return {"status": "error", "message": "swyh-rs-cli not found"}
 
             log.info("[Streaming] Starting swyh-rs-cli bridge...")
             # Example flags: -s (serve), -p (port)
+            fmt = GLOBAL_CONFIG["casting_settings"]["swyh_rs_format"]
             _swyh_rs_process = subprocess.Popen(
-                ["swyh-rs-cli", "-s"],
+                [swyh_path, "-s", "-f", fmt],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
@@ -7599,7 +7604,8 @@ def open_mpv(filepath):
     log.info(f"[Video] Opening in MPV: {filepath}")
     try:
         # --ontop: keep window visible for easy verification
-        subprocess.Popen(["mpv", "--ontop", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        mpv_path = GLOBAL_CONFIG["program_paths"]["mpv"]
+        subprocess.Popen([mpv_path, "--ontop", filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -7735,7 +7741,7 @@ def batch_remux_to_mkv(folder_path):
         return {"status": "error", "error": "Invalid folder"}
 
     count_remuxed = 0
-    mkvmerge_path = shutil.which("mkvmerge") or "mkvmerge"
+    mkvmerge_path = GLOBAL_CONFIG["program_paths"]["mkvmerge"]
 
     for f in path.glob("*"):
         if f.suffix.lower() in [".mp4", ".avi", ".mkv", ".mov", ".ts", ".iso"]:

@@ -230,11 +230,7 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
         return False
         
     # Movie/Audio images are playable
-    playable_keywords = [
-        'dvd', 'blu-ray', 'vcd', 'laserdisc', 'sacd', 'dsd', 'cd-extra', 
-        'dvd-audio', 'dvd-vr', 'video cd', 'super vcd', 'high-res',
-        'cd-rom', 'dvd daten', 'blu-ray daten'
-    ]
+    playable_keywords = GLOBAL_CONFIG["playback_registry"]["playable_keywords"]
     if any(k in label for k in playable_keywords):
         return True
         
@@ -243,12 +239,7 @@ def is_playable(format_label: str, tags: dict[str, Any]) -> bool:
     ext = Path(full_path).suffix.lower() if full_path else ''
     
     # Check against known playable extensions
-    playable_exts = (
-        '.mp4', '.mkv', '.avi', '.mp3', '.flac', '.wav', 
-        '.m4a', '.dsf', '.dff', '.ts', '.alac', '.aiff',
-        '.mpeg', '.mpg', '.mov', '.webm', '.wmv', '.m4v',
-        '.3gp', '.ogv', '.vob', '.m2ts', '.iso', '.bin', '.img'
-    )
+    playable_exts = GLOBAL_CONFIG["playback_registry"]["playable_exts"]
     if ext in playable_exts:
         return True
         
@@ -352,7 +343,7 @@ def load_parser_config() -> None:
                 PARSER_CONFIG.update(loaded)
                 
                 # Migration: Ensure all default parsers are in the chain
-                default_chain = ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"]
+                default_chain = GLOBAL_CONFIG["parser_registry"]["default_chain"]
                 current_chain = PARSER_CONFIG.get("parser_chain", [])
                 if not current_chain:
                     PARSER_CONFIG["parser_chain"] = default_chain
@@ -451,34 +442,15 @@ def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
     return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
 
-# Extension Categories
-AUDIO_EXTENSIONS = {
-    '.mp3', '.flac', '.ogg', '.wav', '.m4a', '.alac', '.opus', '.aac', '.wma', '.m4b', '.aiff',
-    '.ac3', '.mka', '.dts', '.dtshd', '.mka', '.pcm', '.ra', '.rm'
-}
-VIDEO_EXTENSIONS = {
-    '.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.mpg',
-    '.mpeg', '.m4v', '.3gp', '.3g2', '.ogv', '.mts', '.m2ts', '.ts',
-    '.m2t', '.m2v', '.divx', '.xvid', '.vob', '.dat', '.rmvb', '.asf'
-}
-DOCUMENT_EXTENSIONS = {
-    '.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'
-}
-DISK_IMAGE_EXTENSIONS = {
-    '.iso', '.bin', '.img', '.cue', '.nrg', '.mdf', '.toast', '.ccd', '.daa'
-}
-EBOOK_EXTENSIONS = {
-    '.epub', '.mobi', '.azw', '.fb2'
-}
-IMAGE_EXTENSIONS = {
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'
-}
-DSD_EXTENSIONS = {
-    '.dsf', '.dff', '.dsd'
-}
-HDDVD_EXTENSIONS = {
-    '.evo', '.map', '.bup'
-}
+# Extension Categories (Centralized v1.35.68)
+AUDIO_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["audio"]
+VIDEO_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["video"]
+DOCUMENT_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["documents"]
+DISK_IMAGE_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["disk_images"]
+EBOOK_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["ebooks"]
+IMAGE_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["images"]
+DSD_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["dsd"]
+HDDVD_EXTENSIONS = GLOBAL_CONFIG["extension_registry"]["hd_dvd"]
 
 ALL_AUDIO_EXTENSIONS = AUDIO_EXTENSIONS | DSD_EXTENSIONS
 ALL_MULTIMEDIA_EXTENSIONS = VIDEO_EXTENSIONS | DISK_IMAGE_EXTENSIONS | HDDVD_EXTENSIONS
@@ -512,16 +484,8 @@ def format_codec(raw_codec: Any, track_info: Any = None) -> str:
 
     codec = str(raw_codec).lower()
 
-    # Generic mappings for common codecs to match user preference
-    codec_map = {
-        'mpeg audio': 'mp3',
-        'vorbis': 'ogg',
-        'opus': 'opus',
-        'flac': 'flac',
-        'alac': 'alac',
-        'aac': 'aac',
-        'm4a': 'aac'
-    }
+    # Generic mappings for common codecs (Centralized v1.35.68)
+    codec_map = GLOBAL_CONFIG["parser_registry"]["codec_map"]
 
     # PCM specific handling
     if codec == 'pcm' and track_info:
@@ -556,16 +520,8 @@ def format_container(raw_container: Any, file_type: str | None = None) -> str:
             return 'webm'
         return 'mkv'
 
-    container_map = {
-        'matroska': 'mkv',
-        'mov,mp4,m4a,3gp,3g2,mj2': 'mp4',
-        'mpeg-4': 'mp4',
-        'quicktime': 'mp4',
-        'asf': 'wma',
-        'ogg': 'ogg',
-        'flac': 'flac',
-        'mp3': 'mp3'
-    }
+    # Generic mappings for containers (Centralized v1.35.68)
+    container_map = GLOBAL_CONFIG["parser_registry"]["container_map"]
 
     # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
     if container in ('id3', 'wav') and file_type:
@@ -590,15 +546,8 @@ def format_tagtype(raw_tagtype: Any) -> str:
     if tag.startswith("ID3v"):
         return tag
 
-    tag_map = {
-        'ID3': 'ID3',
-        'MP4Tags': 'm4tags',
-        'OggVComment': 'OggVComment',
-        'VCFLACDict': 'VCFLACDict',
-        'ASF': 'asf',
-        'APETag': 'APEv2'
-    }
-
+    # Generic mappings for tag types (Centralized v1.35.68)
+    tag_map = GLOBAL_CONFIG["parser_registry"]["tag_type_map"]
     return tag_map.get(tag, tag)
 
 
@@ -670,6 +619,24 @@ def format_bitdepth(
         return str(bit_depth)
 
 
+@eel.expose
+def get_streaming_capability_matrix() -> dict:
+    """
+    Returns the centralized streaming capability matrix (v1.35.68).
+    """
+    from src.core.config_master import GLOBAL_CONFIG
+    return GLOBAL_CONFIG.get("streaming_capabilities", {})
+
+
+@eel.expose
+def get_installed_packages() -> dict:
+    """
+    Returns the discovered PIP package registry (v1.35.68).
+    """
+    from src.core.config_master import GLOBAL_CONFIG
+    return GLOBAL_CONFIG.get("installed_packages", {})
+
+
 def format_scan_type(scan_type: Any, scan_order: Any = None) -> str:
     """
     @brief Standardizes scan type (Progressive/Interlaced).
@@ -725,7 +692,7 @@ def is_chrome_native(ext: str, codec: str = "") -> bool:
     """
     Returns True if both extension and codec are natively supported by Chrome.
     """
-    native_exts = {'.mp4', '.mkv', '.webm', '.ogv', '.mp3', '.wav', '.ogg', '.m4a', '.flac'}
+    native_exts = GLOBAL_CONFIG["playback_registry"]["native_exts"]
     ext_ok = (ext or "").lower() in native_exts
     
     if not codec:
@@ -733,10 +700,7 @@ def is_chrome_native(ext: str, codec: str = "") -> bool:
         
     c = codec.lower()
     # Common native codecs
-    native_codecs = {
-        'h264', 'avc1', 'vp8', 'vp9', 'av1',  # Video
-        'aac', 'mp4a', 'mp3', 'opus', 'vorbis', 'flac', 'pcm' # Audio
-    }
+    native_codecs = GLOBAL_CONFIG["playback_registry"]["native_codecs"]
     
     codec_ok = any(nc in c for nc in native_codecs)
     return ext_ok and codec_ok

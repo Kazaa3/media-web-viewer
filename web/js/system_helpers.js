@@ -39,7 +39,7 @@ async function checkBackendReachability() {
         }
     } catch (err) {
         if (statusText) {
-            statusText.innerText = `[FAILED] 127.0.0.1 refused the connection (ERR_CONNECTION_REFUSED).\nError: ${err.message}\n\nTroubleshooting:\n- Backend process might have crashed.\n- Port 8345 is blocked by firewall.\n- Eel server failed to bind to 127.0.0.1.`;
+            statusText.innerText = `[FAILED] 127.0.0.1 refused the connection (ERR_CONNECTION_REFUSED).\nError: ${err.message}\n\nTroubleshooting:\n- Backend process might have crashed.\n- Port ${window.location.port || '8345'} is blocked by firewall.\n- Eel server failed to bind to 127.0.0.1.`;
             statusText.style.color = "#f44336";
         }
     }
