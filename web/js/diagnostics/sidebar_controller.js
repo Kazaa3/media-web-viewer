@@ -387,47 +387,41 @@ async function triggerGhostPruning(ghostIds) {
         if (res.status === 'success') {
             sentinelPulse('SUCCESS', `Pruning Complete: Removed ${res.count} records.`);
             status.innerHTML = `<div style="font-size:9px; color:#2ecc71; text-align:center;">SUCCESS: ${res.count} Records Pruned.</div>`;
+            addForensicRecAction('GHOST PRUNE', 'SUCCESS', `Removed ${res.count} items.`);
             setTimeout(() => {
                 status.innerHTML = '';
                 runFSParityAudit(); // Refresh the list
             }, 2000);
         } else {
             sentinelPulse('ERROR', `Pruning Failed: ${res.message}`);
-            status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Cleanup Failed: ${res.message}</div>`;
+            status.innerHTML = `<div style="color:#ff3366; font-size:9px;">Pruning Failed: ${res.message}</div>`;
+            addForensicRecAction('GHOST PRUNE', 'ERROR', res.message);
         }
     } catch (e) {
         sentinelPulse('ERROR', `Pruning Bridge Fault: ${e.message}`);
-        status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Bridge Fault: ${e.message}</div>`;
+        status.innerHTML = `<div style="color:#ff3366; font-size:9px;">Bridge Fault: ${e.message}</div>`;
     }
 }
 
 async function triggerPipelineRecovery() {
     const status = document.getElementById('diag-video-recovery-status');
-    if (!status) return;
-
-    if (!confirm("PIPELINE RECOVERY: Purge all active FFmpeg/mkvmerge streams? This will stop current playback.")) return;
-
+    if (status) status.innerHTML = '<div style="font-size:9px; color:#f1c40f; text-align:center;">Executing Pipeline Purge...</div>';
+    
     sentinelPulse('RECOVER', "Executing Pipeline Purge (FFmpeg/MKVMerge)...");
-    status.innerHTML = '<div style="font-size:9px; color:#f1c40f; text-align:center;">Purging Stalled Streams...</div>';
-
     try {
-        const res = await eel.kill_stalled_ffmpeg_streams()();
-        if (res.status === 'success') {
+        const res = await eel.super_kill_pipeline()();
+        if (res.status === 'ok') {
             sentinelPulse('SUCCESS', `Tactical Purge Complete: Removed ${res.count} processes.`);
-            status.innerHTML = `<div style="font-size:9px; color:#2ecc71; text-align:center;">RECOVERY SUCCESS: ${res.count} Processes Purged.</div>`;
-            
-            // Highlight specific PIDs in the results if needed, or just refresh
-            setTimeout(() => {
-                status.innerHTML = '';
-                runVideoForensicAudit();
-            }, 3000);
+            if (status) status.innerHTML = `<div style="font-size:9px; color:#2ecc71; text-align:center;">SUCCESS: ${res.count} Processes Purged.</div>`;
+            addForensicRecAction('PIPELINE PURGE', 'SUCCESS', `Removed ${res.count} workers.`);
         } else {
             sentinelPulse('ERROR', `Purge Failed: ${res.message}`);
-            status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Purge Failed: ${res.message}</div>`;
+            if (status) status.innerHTML = `<div style="color:#ff3366; font-size:9px;">Purge Failed: ${res.message}</div>`;
+            addForensicRecAction('PIPELINE PURGE', 'ERROR', res.message);
         }
     } catch (e) {
         sentinelPulse('ERROR', `Pipeline Bridge Fault: ${e.message}`);
-        status.innerHTML = `<div style="color:#e74c3c; font-size:9px;">Bridge Fault: ${e.message}</div>`;
+        if (status) status.innerHTML = `<div style="color:#ff3366; font-size:9px;">Bridge Fault: ${e.message}</div>`;
     }
 }
 
@@ -572,10 +566,12 @@ async function triggerMasterScan() {
         const res = await eel.run_direct_scan()();
         if (res.status === 'success') {
             sentinelPulse('SYSTEM', `Scan Complete: Found ${res.items_found} items.`);
+            addForensicRecAction('DIRECT SCAN', 'SUCCESS', `Discovered ${res.items_found} items.`);
             if (typeof renderLibrary === 'function') eel.get_library()((itms) => renderLibrary(itms));
         }
     } catch (e) {
         sentinelPulse('ERROR', `Direct Scan Failed: ${e.message}`);
+        addForensicRecAction('DIRECT SCAN', 'ERROR', e.message);
     }
 }
 
@@ -585,11 +581,13 @@ async function triggerMasterSync() {
         const res = await eel.sync_library_atomic()();
         if (res.status === 'success') {
             sentinelPulse('SYSTEM', `Sync Complete: Hydrated ${res.count} items.`);
+            addForensicRecAction('ATOMIC SYNC', 'SUCCESS', `Hydrated ${res.count} items.`);
             if (typeof renderLibrary === 'function') renderLibrary(res.items);
             runHydrationAuditProbe(); // Auto-refresh audit
         }
     } catch (e) {
         sentinelPulse('ERROR', `Atomic Sync Failed: ${e.message}`);
+        addForensicRecAction('ATOMIC SYNC', 'ERROR', e.message);
     }
 }
 
@@ -597,13 +595,15 @@ async function triggerNuclearRecovery() {
     sentinelPulse('NUCLEAR', 'BYPASSING ALL FILTERS (Core Recovery)...');
     try {
         const result = await eel.force_sync_all()();
-        if (result && result.status === 'raw-recovery') {
+        if (result && result.media) {
             if (typeof renderLibrary === 'function') renderLibrary(result.media);
             sentinelPulse('SUCCESS', `RECOVERED ${result.media.length} items via bypass.`);
+            addForensicRecAction('NUCLEAR RECOVERY', 'SUCCESS', `Recovered ${result.media.length} items.`);
             runHydrationAuditProbe(); 
         }
     } catch (e) {
         sentinelPulse('ERROR', `Nuclear Recovery Failed: ${e.message}`);
+        addForensicRecAction('NUCLEAR RECOVERY', 'ERROR', e.message);
     }
 }
 
@@ -808,9 +808,11 @@ async function surgicalTerminateWorker(pid) {
         const res = await eel.terminate_video_worker(pid)();
         if (res.status === 'ok') {
             sentinelPulse('SUCCESS', `Surgical Kill complete for PID: ${pid}`);
+            addForensicRecAction('SURGICAL KILL', 'SUCCESS', `Terminated PID: ${pid}`);
             runVideoWorkerAudit(); // Refresh the list
         } else {
             sentinelPulse('ERROR', `Surgical Kill failed for PID: ${pid}: ${res.message}`);
+            addForensicRecAction('SURGICAL KILL', 'ERROR', `PID: ${pid} - ${res.message}`);
             alert(`Surgical Termination Failed: ${res.message}`);
         }
     } catch (e) {
@@ -822,3 +824,37 @@ window.runVideoWorkerAudit = runVideoWorkerAudit;
 window.surgicalTerminateWorker = surgicalTerminateWorker;
 window.runHydrationParityAudit = runHydrationParityAudit;
 window.runHydrationAuditProbe = runHydrationAuditProbe;
+
+/**
+ * RECOVERY ACTION LOG (v1.37.26)
+ */
+function addForensicRecAction(name, status, details) {
+    const viewport = document.getElementById('diag-rec-history-viewport');
+    if (!viewport) return;
+
+    // Remove placeholder if it exists
+    if (viewport.innerText.includes('Keine Forensic-Aktionen')) {
+        viewport.innerHTML = '';
+    }
+
+    const ts = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const isSuccess = status === 'SUCCESS';
+    const color = isSuccess ? '#2ecc71' : '#e74c3c';
+
+    const entry = document.createElement('div');
+    entry.style.cssText = `background:rgba(255,255,255,0.03); border-left:2px solid ${color}; padding:6px 10px; border-radius:4px; font-family:'JetBrains Mono', monospace; display:flex; flex-direction:column; gap:2px;`;
+    
+    entry.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:10px; font-weight:900; color:#fff;">${name}</span>
+            <span style="font-size:8px; opacity:0.4;">${ts}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:8px; opacity:0.6; color:${color}; font-weight:900;">${status}</span>
+            <span style="font-size:9px; opacity:0.8; color:#fff;">${details}</span>
+        </div>
+    `;
+
+    viewport.prepend(entry);
+    viewport.scrollTop = 0;
+}

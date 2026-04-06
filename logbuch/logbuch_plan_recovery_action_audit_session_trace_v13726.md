@@ -54,4 +54,14 @@ Upgrade the Recovery (REC) tab with a professional audit trail to track all syst
 
 ---
 
+## Implementation Checklist
+- [ ] Add diag-rec-history-viewport to diagnostics_sidebar.html
+- [ ] Implement addForensicRecAction(name, status, details) in sidebar_controller.js
+- [ ] Hook addForensicRecAction into Master Sync/Scan/Nuclear
+- [ ] Hook addForensicRecAction into Ghost Pruning
+- [ ] Hook addForensicRecAction into Pipeline Recovery/Surgical Kill
+- [ ] Verify UI rendering and chromatic status markers
+
+---
+
 "Nur ergänzen und nichts entfernen" — Rebuilding the technical heartbeat now. (Continue / "weiter")
