@@ -138,9 +138,9 @@ def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
         
         # 0. Handle 'all' expansion (v1.35.68 Master Reset)
         if raw_dc == 'all':
-            for key, config in MASTER_CAT_MAP.items():
+            for key in MASTER_CAT_MAP:
                 allowed.add(key)
-                for alias in config.get("aliases", []):
+                for alias in MASTER_CAT_MAP[key].get("aliases", []):
                     allowed.add(alias.lower())
             continue
 

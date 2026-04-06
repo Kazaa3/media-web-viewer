@@ -4064,8 +4064,9 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         "allowed_cats": allowed_internal_cats
     }
 
-    if not force_raw:
-        log.info(f"[BD-AUDIT] Filter Pass Summary: {audit_meta}")
+    if not filtered and all_items:
+        log.critical(f"[BD-RECOVERY] EMERGENCY BYPASS: Filter dropped 100% of items ({len(all_items)}). Audit: {audit_meta}")
+        return all_items, {"status": "emergency_raw", "dropped_total": 0, "stage": 0, "audit": audit_meta}
 
     return filtered, audit_meta
 

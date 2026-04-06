@@ -1,4 +1,4 @@
-// --- Hoisted Global State (v1.35.3 Fix) ---
+// --- Hoisted Global State (v1.35.68 Fix) ---
 // Global state export for cross-module HUD and queue consistency (v1.35.68)
 window.__mwv_all_library_items = [];
 let libraryStateLoaded = false;
@@ -49,8 +49,7 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Stage ${audit.stage || 0} complete. Received ${incomingCount} items.`, "SUCCESS");
         
         window.__mwv_all_library_items = library.media || [];
-        console.warn(`[FE-FORENSIC] Received ${window.__mwv_all_library_items.length} items from backend.`);
-        window.allLibraryItems = allLibraryItems; // Ensure global sync
+        console.warn(`[FE-AUDIT] STAGE 4 (HYDRATION): Memory filled with ${window.__mwv_all_library_items.length} items.`);
         
         // --- V1.35.43 Recovery: Modular Sync Handshake ---
         if (typeof RecoveryManager !== 'undefined') {
