@@ -11,7 +11,8 @@ const DIAG_VIEW_INFO = {
     'recovery': { name: 'Database Resilience', desc: 'Tactical Restoration & Atomic Sync' },
     'environment': { name: 'System Health', desc: 'Resource Telemetry & Platform Audit' },
     'storage': { name: 'Volume Discovery', desc: 'FS Heuristics & Large Asset Audit' },
-    'performance': { name: 'GUI Performance', desc: 'DOM Bloat & Rendering Decathlon' }
+    'performance': { name: 'GUI Performance', desc: 'DOM Bloat & Rendering Decathlon' },
+    'playlist': { name: 'Playlist Forensics', desc: 'Relational & Physical Collection Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -63,7 +64,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'recovery': 'diag-pane-db-resilience',
         'environment': 'diag-pane-environment',
         'storage': 'diag-pane-storage',
-        'performance': 'diag-pane-performance'
+        'performance': 'diag-pane-performance',
+        'playlist': 'diag-pane-playlist'
     };
 
     if (paneIds[viewId]) {
@@ -79,6 +81,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'environment') runEnvironmentAudit();
         if (viewId === 'storage') runStorageAudit();
         if (viewId === 'performance') runPerformanceAudit();
+        if (viewId === 'playlist') runPlaylistAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1129,3 +1132,66 @@ window.runPerformanceAudit = runPerformanceAudit;
 window.runStorageAudit = runStorageAudit;
 window.runEnvironmentAudit = runEnvironmentAudit;
 window.generateForensicSnapshot = generateForensicSnapshot;
+
+/**
+ * PLAYLIST FORENSIC AUDIT (v1.37.32)
+ */
+async function runPlaylistAudit() {
+    const details = document.getElementById('diag-ply-details');
+    const countEl = document.getElementById('diag-ply-count');
+    const orphansEl = document.getElementById('diag-ply-orphans');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Auditing collections...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing Playlist Forensic Audit...');
+    
+    try {
+        const res = await eel.get_playlist_forensics()();
+        if (res.status === 'ok') {
+            if (countEl) countEl.innerText = res.count;
+            
+            let totalOrphans = 0;
+            res.playlists.forEach(pl => totalOrphans += pl.relational_orphans + pl.physical_missing);
+            if (orphansEl) orphansEl.innerText = totalOrphans;
+            
+            if (details) {
+                let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+                if (res.playlists.length === 0) {
+                    html += '<div style="opacity:0.4; text-align:center; padding:10px;">Keine Playlists in DB gefunden.</div>';
+                }
+
+                res.playlists.forEach(pl => {
+                    const score = pl.integrity_score;
+                    const scoreColor = score > 90 ? '#2ecc71' : (score > 60 ? '#f1c40f' : '#ff3366');
+                    
+                    html += `
+                        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:900; color:#fff; font-size:10px;">${pl.name}</span>
+                                <span style="font-size:9px; font-weight:800; color:${scoreColor}">${score}% INTEGRITY</span>
+                            </div>
+                            <div style="display:flex; gap:10px; font-size:8px; opacity:0.6;">
+                                <span>ITEMS: ${pl.item_count}</span>
+                                <span style="${pl.relational_orphans > 0 ? 'color:#ff3366; font-weight:900;' : ''}">ORPHANS: ${pl.relational_orphans}</span>
+                                <span style="${pl.physical_missing > 0 ? 'color:#ff3366; font-weight:900;' : ''}">MISSING: ${pl.physical_missing}</span>
+                            </div>
+                            ${pl.broken_paths.length > 0 ? `
+                                <div style="margin-top:5px; padding:4px; background:rgba(255,51,102,0.1); border-radius:4px; font-size:7px; color:#ff3366; max-height:40px; overflow:hidden; text-overflow:ellipsis;">
+                                    BROKEN: ${pl.broken_paths[0]}${pl.broken_paths.length > 1 ? ' ...' : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                details.innerHTML = html;
+            }
+            sentinelPulse('SUCCESS', `Playlist Audit Complete. Sets: ${res.count}, Total Orphans: ${totalOrphans}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Playlist Audit Failed: ${e.message}`);
+        if (details) details.innerHTML = `<div style="color:#ff3366; font-size:9px; text-align:center; padding:20px;">Audit Failed: ${e.message}</div>`;
+    }
+}
+
+window.runPlaylistAudit = runPlaylistAudit;

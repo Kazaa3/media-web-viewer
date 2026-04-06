@@ -34,6 +34,7 @@
         <button id="reiter-environment" class="side-reiter" onclick="switchDiagnosticsSidebarTab('environment', this)">ENV</button>
         <button id="reiter-storage" class="side-reiter" onclick="switchDiagnosticsSidebarTab('storage', this)">STR</button>
         <button id="reiter-performance" class="side-reiter" onclick="switchDiagnosticsSidebarTab('performance', this)">PER</button>
+        <button id="reiter-playlist" class="side-reiter" onclick="switchDiagnosticsSidebarTab('playlist', this)">PLY</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
@@ -251,6 +252,33 @@
 
             <div id="diag-per-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.6;">
                 <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Performance-Scan...</div>
+            </div>
+        </div>
+
+        <!-- PANE: PLAYLIST INTEGRITY (PLY) [v1.37.32] -->
+        <div id="diag-pane-playlist" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">PLAYLIST FORENSICS</div>
+                <button onclick="runPlaylistAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT PLY</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #9b59b6;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">SAVED SETS</div>
+                    <div id="diag-ply-count" style="font-size: 14px; font-weight: 900; color: #9b59b6;">0</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #ff3366;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">TOTAL ORPHANS</div>
+                    <div id="diag-ply-orphans" style="font-size: 14px; font-weight: 900; color: #ff3366;">0</div>
+                </div>
+            </div>
+
+            <div id="diag-ply-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Playlist-Scan...</div>
+            </div>
+
+            <div style="margin-top:10px; display:flex; gap:5px;">
+                <button disabled style="flex:1; opacity:0.3; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:not-allowed;">PRUNE ORPHANS</button>
             </div>
         </div>
 
