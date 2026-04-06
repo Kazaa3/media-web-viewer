@@ -254,6 +254,7 @@ def init_db():
     try:
         cursor.execute("UPDATE media SET category = 'pictures' WHERE category = 'images'")
         cursor.execute("UPDATE media SET category = 'disk_images' WHERE category = 'iso'")
+        cursor.execute("UPDATE media SET category = 'video' WHERE category = 'multimedia'")
         cursor.execute("UPDATE media SET category = 'unknown' WHERE category = 'unbekannt' OR category IS NULL OR category = ''")
         # New v1.35.96: Lowercase all categories to ensure SSOT compatibility
         cursor.execute("UPDATE media SET category = LOWER(category)")
@@ -376,6 +377,14 @@ def insert_media(item_dict):
 
 
 def get_all_media():
+    """Alias for library compatibility (v1.35.68)."""
+    return get_all_media_items()
+
+def get_library():
+    """Alias for main.py compatibility (v1.35.68)."""
+    return get_all_media_items()
+
+def get_all_media_items():
     """
     @brief Retrieves all media items from the database.
     @details Ruft alle Medien-Items aus der Datenbank ab.

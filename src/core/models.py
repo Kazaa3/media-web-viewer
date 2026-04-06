@@ -32,8 +32,8 @@ MASTER_CAT_MAP = {
         "aliases": ["audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", "musik", "music", "song", "soundtrack", "radio"],
         "extensions": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".dts", ".pcm", ".ra", ".rm", ".dsf", ".dff", ".dsd"}
     },
-    "multimedia": {
-        "internal": "multimedia",
+    "video": {
+        "internal": "video",
         "aliases": ["multimedia", "video", "film", "serie", "tv", "movie", "tv show", "musikvideos", "animes", "cartoons", "documentary", "dok", "dokumentation", "concert", "konzerte", "3d", "4k", "uhd", "ultra hd"],
         "extensions": {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2", ".ogv", ".mts", ".m2ts", ".ts", ".m2t", ".m2v", ".divx", ".xvid", ".vob", ".dat", ".rmvb", ".asf"}
     },
@@ -71,7 +71,7 @@ MASTER_CAT_MAP = {
 
 # Calculated Logic Extensions (REDUNDANCY CLEANUP v1.37.07)
 AUDIO_EXTENSIONS = MASTER_CAT_MAP["audio"]["extensions"]
-VIDEO_EXTENSIONS = MASTER_CAT_MAP["multimedia"]["extensions"]
+VIDEO_EXTENSIONS = MASTER_CAT_MAP["video"]["extensions"]
 PICTURE_EXTENSIONS = MASTER_CAT_MAP["pictures"]["extensions"]
 DOCUMENT_EXTENSIONS = MASTER_CAT_MAP["documents"]["extensions"]
 EBOOK_EXTENSIONS = MASTER_CAT_MAP["ebooks"]["extensions"]
@@ -94,7 +94,7 @@ TECH_MARKERS = {
 
 BRANCH_MAP = {
     "audio": ["audio"],
-    "multimedia": ["multimedia", "disk_images", "video"]
+    "video": ["video", "disk_images"]
 }
 
 SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
@@ -125,7 +125,7 @@ def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
     # Explicit User-to-Internal Alias Table
     category_alias_table = {
         "musik": "audio", "music": "audio", "audio": "audio", "album": "audio",
-        "video": "multimedia", "film": "multimedia", "movies": "multimedia", "multimedia": "multimedia",
+        "video": "video", "film": "video", "movies": "video", "multimedia": "video",
         "bilder": "pictures", "fotos": "pictures", "pictures": "pictures",
         "dokumente": "documents", "docs": "documents", "documents": "documents",
         "disk_images": "disk_images", "isos": "disk_images",

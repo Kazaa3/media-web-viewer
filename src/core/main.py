@@ -4040,6 +4040,31 @@ def set_global_config(key: str, value: Any):
 
 
 @eel.expose
+def get_library_forensics():
+    """
+    @brief Unified Forensic Bridge for UI Diagnostics (v1.35.68).
+    @details Provides real-time DB vs. FS vs. Filter metrics.
+    """
+    from src.core import db
+    db_items = db.get_library()
+    db_path = str(Path(db.DB_FILENAME).resolve())
+    
+    stats = {}
+    for item in db_items:
+        cat = item.get('category', 'unknown')
+        stats[cat] = stats.get(cat, 0) + 1
+        
+    return {
+        "db_status": "connected",
+        "db_path": db_path,
+        "db_count": len(db_items),
+        "categories": stats,
+        "fs_status": "ok" if os.path.exists(db_path) else "error",
+        "pid": os.getpid()
+    }
+
+
+@eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]:
     """
     @brief Main entry point for fetching the media library with excessive chain-audit metadata.
@@ -4060,28 +4085,46 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
         "cwd": os.getcwd()
     }
     
-    # STAGE 1: BRIDGE MOCKS (Eel connectivity test + Filter Baseline)
+    # STAGE 1: HARDCODED BRIDGE MOCKS (Connectivity test)
     if audit_stage == 1:
-        log.info(f"[BD-AUDIT] STAGE 1: Returning Filtered Mocks. PID: {pid}")
+        log.info(f"[BD-AUDIT] STAGE 1: Hardcoded Mocks. PID: {pid}")
         mocks = [
-            {"name": "Stage 1 Mock (Audio)", "category": "audio", "path": "/mock1.mp3", "tags": {"genre": "test"}},
-            {"name": "Stage 1 Mock (Video)", "category": "video", "path": "/mock2.mp4", "tags": {"genre": "test"}},
-            {"name": "Stage 1 Mock (Doc)", "category": "docs", "path": "/mock3.md", "tags": {"genre": "test"}}
+            {"name": "Stage 1: Connection Test (Audio)", "category": "audio", "path": "/mock1.mp3", "tags": {"genre": "diagnostic"}},
+            {"name": "Stage 1: Connection Test (Video)", "category": "video", "path": "/mock2.mp4", "tags": {"genre": "diagnostic"}}
         ]
-        # Allow testing filters on mocks
-        filtered_mocks, mock_audit = _apply_library_filters(mocks, force_raw=False)
-        return {
-            "media": filtered_mocks,
-            "db_count": 3,
-            "status": "mock",
-            "audit": {
-                "stage": 1, 
-                "pid": pid, 
-                "path": "MEMORY_MOCK", 
-                "fs": fs_audit,
-                "dropped_reasons": mock_audit.get("dropped_reasons", {})
-            }
-        }
+        return {"media": mocks, "db_count": 2, "status": "mock", "audit": {"stage": 1, "pid": pid}}
+
+    # STAGE 2: PLAYABLE MOCKS (Real file paths from ./media)
+    if audit_stage == 2:
+        log.info(f"[BD-AUDIT] STAGE 2: Playable Mocks (FS-Aware). PID: {pid}")
+        media_root = PROJECT_ROOT / "media"
+        playable = []
+        if media_root.exists():
+            # Pick first 3 real files for testing
+            files = [f for f in os.listdir(media_root) if os.path.isfile(media_root / f)][:3]
+            for f in files:
+                p = media_root / f
+                playable.append({
+                    "name": f"[PLAYABLE] {f}",
+                    "category": "audio" if f.lower().endswith(('.mp3', '.flac', '.wav')) else "video",
+                    "path": str(p.resolve()),
+                    "tags": {"title": f, "artist": "FS-Mock Engine"}
+                })
+        
+        if not playable:
+            # Emergency fix: if media folder empty, return a hardcoded playable dummy
+            playable = [{"name": "Stage 2 Error: No files in ./media", "category": "unknown", "path": "", "tags": {}}]
+            
+        return {"media": playable, "db_count": len(playable), "status": "mock", "audit": {"stage": 2, "pid": pid}}
+
+    # STAGE 3: REALISTIC MOCKS (Normalized SSOT candidates)
+    if audit_stage == 3:
+        log.info(f"[BD-AUDIT] STAGE 3: Realistic UI-Mocks. PID: {pid}")
+        realistic = [
+            {"name": "Eel-Test: Shadow Music", "category": "audio", "path": "test.mp3", "duration": 180, "is_mock": True},
+            {"name": "Eel-Test: Phantom Movie", "category": "video", "path": "test.mp4", "duration": 3600, "is_mock": True}
+        ]
+        return {"media": realistic, "db_count": 2, "status": "mock", "audit": {"stage": 3, "pid": pid}}
 
     all_media = []
     count_total = 0
@@ -4093,26 +4136,26 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
         log.error(f"[BD-AUDIT] DB ACCESS ERROR: {e}")
         return {"media": [], "db_count": 0, "status": "error", "error": str(e), "audit": {"pid": pid, "path": db_path}}
 
-    if force_raw or audit_stage == 2:
-        log.info(f"[BD-AUDIT] STAGE 2: Returning RAW rows (Count: {count_total})")
+    if force_raw or audit_stage == 4:
+        log.info(f"[BD-AUDIT] STAGE 4: Returning RAW SQL (Count: {count_total})")
         return {
             "media": all_media,
             "db_count": count_total,
             "status": "raw",
-            "audit": {"stage": 2, "pid": pid, "path": db_path, "fs": fs_audit}
+            "audit": {"stage": 4, "pid": pid, "path": db_path, "fs": fs_audit}
         }
 
     # --- STAGE 3: FULL PRODUCTION FILTER (v1.37.07) ---
     filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=False)
     
-    # [DIAGNOSTIC] Stage-Injection logic
+    # [DIAGNOSTIC] Stage-Injection logic (v1.35.68 Refined)
+    # Stage 1: Hardcoded, Stage 2: Playable FS, Stage 3: Realistic, Stage 4: Raw DB
     hydration_stage = {
-        0: all_media,              # Raw SQL Rows
-        1: all_media,              # (Future: Normalized SSOT objects)
-        2: _apply_library_filters(all_media, force_raw=True)[0], # Cased but unfiltered by secondary
-        3: filtered_media          # Production
+        0: filtered_media,         # Production (Default)
+        4: all_media               # Raw SQL Rows
     }
     
+    # Stages 1-3 are handled directly by the early-return logic above.
     final_media = hydration_stage.get(audit_stage, filtered_media)
     
     log.info(f"[BD-AUDIT] Hydration Complete. Stage: {audit_stage} | Out: {len(final_media)}/{count_total}")

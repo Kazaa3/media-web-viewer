@@ -11,9 +11,29 @@ let isRepeat = 'off'; // 'off', 'all', 'one'
 let shuffledPlaylist = [];
 window.activeQueueFilter = 'all'; // v1.35.61 Filter state
 
-// Expose to window for Diagnostics (v1.35.33)
-window.currentPlaylist = currentPlaylist;
 window.playlistIndex = playlistIndex;
+window.currentPlaylist = currentPlaylist;
+
+/**
+ * Empties the current player queue (v1.35.68).
+ */
+function clearQueue() {
+    console.warn(">>> [Queue] Clearing all items.");
+    currentPlaylist = [];
+    window.currentPlaylist = [];
+    playlistIndex = -1;
+    window.playlistIndex = -1;
+    
+    // Stop playback if something is playing
+    const pipeline = document.getElementById('native-html5-audio-pipeline-element');
+    if (pipeline) {
+        pipeline.pause();
+        pipeline.src = "";
+    }
+    
+    if (typeof renderPlaylist === 'function') renderPlaylist();
+    if (typeof showToast === 'function') showToast("Queue geleert", 1500);
+}
 
 let audioContext = null;
 let analyser = null;
