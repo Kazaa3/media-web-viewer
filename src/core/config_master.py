@@ -115,6 +115,17 @@ APP_PORT = int(os.environ.get("MWV_PORT", 8345))
 APP_HOST = os.environ.get("MWV_HOST", "localhost")
 BIND_ADDR = os.environ.get("MWV_BIND", "127.0.0.1")
 
+# --- DATABASE PATH RESOLUTION (v1.35.96 Dual-Path logic) ---
+DEFAULT_DB_USER = Path.home() / ".media-web-viewer" / "database.db"
+DEFAULT_DB_PROJ = PROJECT_ROOT / "data" / "database.db"
+
+if os.environ.get("MWV_DB"):
+    SELECTED_DB_PATH = Path(os.environ["MWV_DB"])
+elif DEFAULT_DB_USER.exists():
+    SELECTED_DB_PATH = DEFAULT_DB_USER
+else:
+    SELECTED_DB_PATH = DEFAULT_DB_PROJ
+
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 from datetime import datetime
 GLOBAL_CONFIG: Dict[str, Any] = {
@@ -134,7 +145,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "vlc_port": int(os.environ.get("MWV_VLC_PORT", 8080)),
     "mtx_port": int(os.environ.get("MWV_MTX_PORT", 8888)),
     "debug_mode": get_env_bool("MWV_DEBUG", True),
-    "db_filename": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
+    "db_filename": str(SELECTED_DB_PATH),
     "docker_mode": get_env_bool("MWV_DOCKER", False),
     
     # --- LOGGING REGISTRY (v1.35.68 Centralized) ---
@@ -241,7 +252,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "headless_mode": get_env_bool("MWV_HEADLESS", True),
     "test_settings": {
         "pytest_cmd": ["pytest", "-q"],
-        "python_exe": sys.executable
+        "python_exe": sys.executable,
+        "known_venvs": [".venv_testbed", ".venv_dev", "venv"]
     },
     
     # Parser & Library
@@ -309,6 +321,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "force_native_audio": True,
         "media_prefixes": ["/media/", "media/"],
         "video_extensions": [".mp4", ".mkv", ".webm", ".ogg", ".mov", ".avi", ".m4v", ".iso", ".ts", ".m2ts"],
+        "disk_image_extensions": [".iso", ".bin", ".img"],
         "audio_extensions": [".mp3", ".flac", ".m4a", ".wav", ".ogg", ".m4b"],
         "hardware_encoders_priority": ["nvenc", "vaapi", "qsv"]
     },
@@ -355,10 +368,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "project_root": str(PROJECT_ROOT),
         "data_dir": str(PROJECT_ROOT / "data"),
         "media_dir": str(PROJECT_ROOT / "media"),
-        "db_path": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
+        "db_path": str(SELECTED_DB_PATH),
         "db_dir": str(PROJECT_ROOT / ".media-web-viewer"), # Potential shadow location
-        "log_dir": PROJECT_ROOT / "data" / "logbuch",      # Centralized logging registry
-        "benchmark_path": PROJECT_ROOT / "data" / "benchmarks.json",
+        "logbuch_dir": PROJECT_ROOT / "logbuch",            # Logbuch (.md) root subfolder
+        "app_logs_dir": PROJECT_ROOT / "logs",              # System logs root subfolder
+        "benchmarks_dir": PROJECT_ROOT / "data" / "benchmarks",
+        "playback_benchmark_path": PROJECT_ROOT / "data" / "benchmarks" / "playback.json",
+        "system_benchmark_path": PROJECT_ROOT / "data" / "benchmarks" / "system.json",
         "test_results_path": PROJECT_ROOT / "data" / "test_results.json",
         "mkv_cache_dir": PROJECT_ROOT / "cache" / "extracted",
         "media_cache_dir": PROJECT_ROOT / "cache" / "media",
@@ -734,6 +750,36 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "playwright": get_binary_version("playwright", "--version") if "playwright" in get_binary_version("pip", "list") else "N/A",
         "puppeteer": "Available" if "puppeteer" in get_binary_version("npm", "list -g") else "N/A",
         "selenium": "Available" if "selenium" in get_binary_version("pip", "list") else "N/A"
+    },
+    
+    # --- TEMPLATE REGISTRY (v1.35.96 Style Sheets) ---
+    "templates": {
+        "logbook_entry": {
+            "name": "",
+            "filename": "",
+            "title": "",
+            "title_de": "",
+            "title_en": "",
+            "category": "docs",
+            "summary": "",
+            "summary_de": "",
+            "summary_en": "",
+            "status": "docs",
+            "source": "root",
+            "modified_ts": 0.0,
+            "modified_iso": ""
+        },
+        "test_result": {
+            "timestamp": 0.0,
+            "duration": 0.0,
+            "passes": 0,
+            "fails": 0,
+            "summary": "",
+            "files": []
+        },
+        "test_file": {
+            # Placeholder for future test file style sheet. in code but not centralized. look at legacy tests.
+        }
     }
 }
 

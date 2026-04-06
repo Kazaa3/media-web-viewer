@@ -1389,7 +1389,8 @@ def get_debug_dict(source="library"):
 def get_debug_console():
     """Returns the tail of the app.log file for the Live Terminal."""
     try:
-        log_file = PROJECT_ROOT / "app.log"
+        log_dir = GLOBAL_CONFIG["storage_registry"]["app_logs_dir"]
+        log_file = log_dir / "app.log"
         if log_file.exists():
             lines = log_file.read_text(encoding='utf-8').splitlines()
             return "\n".join(lines[-500:])
@@ -1492,7 +1493,9 @@ def get_environment_info_dict():
     testbed_pid = find_venv_pid('.venv_testbed')
     selenium_pid = find_venv_pid('.venv_selenium')
 
-    return {
+    # Use centralized Style Sheet (Template) from v1.35.96 SSOT
+    env_data = GLOBAL_CONFIG["templates"]["environment"].copy()
+    env_data.update({
         "env_type": env_type,
         "env_name": env_name,
         "env_path": env_path,
@@ -1511,7 +1514,8 @@ def get_environment_info_dict():
         "machine": platform.machine(),
         "debug_flags": DEBUG_FLAGS,
         "version": VERSION,
-    }
+    })
+    return env_data
 
 # --- Debug Console API ---
 
@@ -3227,7 +3231,8 @@ def get_db_info():
         conn.close()
 
         # Count logbook entries
-        log_dir = PROJECT_ROOT / "logbuch"
+        log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
+        log_dir.mkdir(parents=True, exist_ok=True)
         log_count = len(list(log_dir.glob("*.md"))) if log_dir.exists() else 0
 
         return {
@@ -3496,7 +3501,12 @@ def get_db_stats():
     @details Gibt Statistiken ber den Inhalt der Datenbank zurck.
     @return Stats dictionary / Statistik-Dictionary.
     """
-    return db.get_db_stats()
+    stats = db.get_db_stats()
+    # Deep Path Diagnostics (v1.35.96 Recovery)
+    stats["active_db"] = str(db.get_active_db_path())
+    stats["db_exists"] = os.path.exists(db.DB_FILENAME)
+    stats["project_root"] = str(PROJECT_ROOT)
+    return stats
 
 
 @eel.expose
@@ -6746,7 +6756,8 @@ def get_logbook_entry(feature_name, source="logbuch"):
         log_file = root_dir / "README.md"
     else:
         # Search recursively in the root logbuch folder
-        log_dir = PROJECT_ROOT / "logbuch"
+        log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
+        log_dir.mkdir(parents=True, exist_ok=True)
         log_file = None
 
         # Check if feature_name already has the full relative path
@@ -6801,7 +6812,7 @@ def list_logbook_entries():
     @details Gibt eine Liste aller Markdown-Dateien im logbuch/ Ordner mit Metadaten zurck.
     @return List of logbook entry objects / Liste von Logbuch-Eintrag-Objekten.
     """
-    log_dir = PROJECT_ROOT / "logbuch"
+    log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
     if not log_dir.exists():
         return []
 
@@ -6966,7 +6977,7 @@ def read_file(filename, context='logbuch'):
     """
     try:
         if context == 'logbuch':
-            base_path = GLOBAL_CONFIG["storage_registry"]["log_dir"]
+            base_path = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
         else:
             # For security, only allow logbuch for now
             return None
@@ -7006,21 +7017,22 @@ def list_feature_modal_items():
         if not path.exists():
             continue
         mtime = path.stat().st_mtime
-        items.append({
+        
+        # Use centralized style sheet (template) from v1.35.96 SSOT
+        entry = GLOBAL_CONFIG["templates"]["logbook_entry"].copy()
+        entry.update({
             "name": filename,
             "filename": filename,
             "title": title,
             "title_de": title,
             "title_en": title,
-            "category": "Docs",
             "summary": summary,
             "summary_de": summary,
             "summary_en": summary,
-            "status": "DOCS",
-            "source": "root",
             "modified_ts": mtime,
             "modified_iso": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mtime)),
         })
+        items.append(entry)
 
     return items
 
@@ -7034,7 +7046,7 @@ def save_logbook_entry(filename, content):
     @param content Markdown content / Markdown-Inhalt.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    log_dir = PROJECT_ROOT / "logbuch"
+    log_dir = GLOBAL_CONFIG["storage_registry"]["logbuch_dir"]
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Sichere den Dateinamen
@@ -7064,7 +7076,7 @@ def delete_logbook_entry(filename):
     @param filename Entry filename / Dateiname des Eintrags.
     @return Status or error dictionary / Status- oder Fehler-Dictionary.
     """
-    log_dir = PROJECT_ROOT / "logbuch"
+    log_dir = GLOBAL_CONFIG["storage_registry"]["log_dir"]
 
     if not filename.endswith('.md'):
         filename = filename + '.md'
@@ -7123,7 +7135,7 @@ def run_tests(test_files):
     test_python = sys.executable
     venv_found = False
 
-    known_venvs = [".venv_testbed", ".venv_dev", "venv"]
+    known_venvs = GLOBAL_CONFIG["test_settings"].get("known_venvs", [".venv_testbed", ".venv_dev", "venv"])
     log.info(f"[Tests] Searching for test environment in {PROJECT_ROOT}...")
 
     for venv_name in known_venvs:
@@ -7150,7 +7162,7 @@ def run_tests(test_files):
     # Stream output lines live to frontend for real-time refresh.
     try:
         process = subprocess.Popen(
-            [test_python, "-m", "pytest", "-q"] + valid_files,
+            [test_python, "-m"] + GLOBAL_CONFIG["test_settings"].get("pytest_cmd", ["pytest", "-q"]) + valid_files,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -7230,7 +7242,9 @@ def run_tests(test_files):
                 except (json.JSONDecodeError, IOError):
                     pass
 
-            history.append({
+            # Use centralized style sheet (template) from v1.35.96 SSOT
+            res_item = GLOBAL_CONFIG["templates"]["test_result"].copy()
+            res_item.update({
                 "timestamp": timestamp,
                 "duration": duration,
                 "passes": passes,
@@ -7238,6 +7252,7 @@ def run_tests(test_files):
                 "summary": summary,
                 "files": test_files
             })
+            history.append(res_item)
             # Keep last 100 runs
             last_100: list[dict] = history[-100:]  # type: ignore
             results_path.write_text(json.dumps(last_100, indent=2), encoding='utf-8')
@@ -7260,7 +7275,7 @@ def run_tests(test_files):
 @eel.expose
 def get_test_results():
     """Returns historical test results for the dashboard."""
-    results_path = PROJECT_ROOT / "test_results.json"
+    results_path = GLOBAL_CONFIG["storage_registry"]["test_results_path"]
     if not results_path.exists():
         return []
     try:
@@ -7640,7 +7655,7 @@ def open_ffplay(filepath):
 def get_playback_benchmarks():
     """Returns stored playback benchmarks."""
     try:
-        path = Path(PROJECT_ROOT) / "benchmarks.json"
+        path = GLOBAL_CONFIG["storage_registry"]["playback_benchmark_path"]
         if path.exists():
             return json.loads(path.read_text())
     except:
@@ -7652,7 +7667,7 @@ def get_playback_benchmarks():
 def save_playback_benchmarks(data):
     """Saves playback benchmarks."""
     try:
-        path = Path(PROJECT_ROOT) / "benchmarks.json"
+        path = GLOBAL_CONFIG["storage_registry"]["playback_benchmark_path"]
         path.write_text(json.dumps(data))
         return True
     except:
@@ -7814,7 +7829,7 @@ class FFmpegTestSuite:
 @eel.expose
 def run_ffmpeg_pipeline_test(relpath):
     """Bridge for the full FFmpeg Pipeline Suite."""
-    lib_dir = PARSER_CONFIG.get("library_dir", str(PROJECT_ROOT / "media"))
+    lib_dir = PARSER_CONFIG.get("library_dir", str(GLOBAL_CONFIG["storage_registry"]["media_dir"]))
     full = Path(lib_dir) / relpath
     if not full.exists():
         return {"status": "error", "message": "File not found"}
@@ -7864,7 +7879,9 @@ def batch_remux_to_mkv(folder_path):
 def save_benchmark_results(results):
     """Saves playback benchmarks for the reporting dashboard."""
     try:
-        bench_file = GLOBAL_CONFIG["storage_registry"]["benchmark_path"]
+        bench_file = GLOBAL_CONFIG["storage_registry"]["system_benchmark_path"]
+        # Ensure benchmarks directory exists (v1.35.96 Safety)
+        bench_file.parent.mkdir(parents=True, exist_ok=True)
         history = []
         if bench_file.exists():
             history = json.loads(bench_file.read_text(encoding='utf-8'))
@@ -7902,11 +7919,12 @@ def get_multimedia_analysis():
             path = item.get('path', '')
             ext = item.get('extension', '').lower()
 
-            # 1. DVD/Film Detection
-            is_dvd_image = ext in ['iso', 'bin', 'img']
+            # 1. DVD/Film Detection (Syncing with SSOT v1.35.96)
+            disk_exts = GLOBAL_CONFIG["media_formats"].get("disk_image_extensions", ['.iso', '.bin', '.img'])
+            is_dvd_image = ext in [e.strip('.') for e in disk_exts]
             is_dvd_folder = 'VIDEO_TS' in path or 'BDMV' in path
 
-            if cat == 'Film' or is_dvd_image or is_dvd_folder:
+            if cat in ['film', 'movie', 'multimedia', 'video'] or is_dvd_image or is_dvd_folder:
                 obj = {
                     'name': item.get('name'),
                     'year': tags.get('year', 'Unknown'),
@@ -8181,7 +8199,7 @@ def get_media_compatibility_report():
 
 # --- Media Routing Test Suite & Cache Logic ---
 
-MEDIA_CACHE = Path(logger.APP_DATA_DIR) / "cache" / "media"
+MEDIA_CACHE = GLOBAL_CONFIG["storage_registry"]["media_cache_dir"]
 
 
 @eel.expose
