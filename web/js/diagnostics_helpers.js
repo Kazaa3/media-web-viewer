@@ -586,9 +586,8 @@ window.showStatusNotification = function(msg, type = 'info') {
  * Updates both the minimal footer (total count) and the detailed sidebar (full parity).
  */
 function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
-    const footerAnchor = document.getElementById('footer-sync-anchor');
     const sidebarAnchor = document.getElementById('sb-parity-anchor');
-    const led = document.getElementById('sync-led');
+    const footerDbCount = document.getElementById('footer-db-count');
     
     // Persist counts for redundant updates
     if (dbCount !== undefined) window.__mwv_last_db_count = dbCount;
@@ -605,60 +604,73 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         if (finalFsSize > 1024 * 1024) sizeStr = (finalFsSize / (1024 * 1024)).toFixed(1) + "MB";
         else if (finalFsSize > 1024) sizeStr = (finalFsSize / 1024).toFixed(1) + "KB";
         else sizeStr = finalFsSize + "B";
-    } else if (finalFsSize === 0 && finalDb > 0) {
-        sizeStr = "0B!"; // Critical
     }
 
-    // 1. Classic Footer Restore: Vertical Parity Box (v1.37.00)
-    const fsEl = document.getElementById('sb-parity-fs');
-    const dbEl = document.getElementById('sb-parity-db');
-    const guiEl = document.getElementById('sb-parity-gui');
-    const statusDot = document.getElementById('classic-status-dot');
+    const fullParity = `[FS: ${sizeStr} | DB: ${finalDb} | GUI: ${finalGui}]`;
 
-    if (fsEl) fsEl.innerText = `FS: ${sizeStr}`;
-    if (dbEl) dbEl.innerText = `DB: ${finalDb}`;
-    if (guiEl) guiEl.innerText = `GUI: ${finalGui}`;
-
-    // 2. Synchronized Status Dot & Color
-    if (statusDot) {
-        const isHealthy = (finalGui > 0 && finalGui === finalDb);
-        const isWarning = (finalDb > 0 && finalGui === 0);
-        
-        const parent = statusDot.parentElement;
-        if (isHealthy) {
-            statusDot.style.background = '#2ecc71';
-            statusDot.style.boxShadow = '0 0 5px #2ecc71';
-            if (parent) parent.style.color = '#2ecc71';
-        } else if (isWarning) {
-            statusDot.style.background = '#f1c40f';
-            statusDot.style.boxShadow = '0 0 5px #f1c40f';
-            if (parent) parent.style.color = '#f1c40f';
-        } else {
-            statusDot.style.background = '#e74c3c';
-            statusDot.style.boxShadow = '0 0 5px #e74c3c';
-            if (parent) parent.style.color = '#e74c3c';
-        }
+    // 1. Sidebar: High-resolution parity audit (v1.37.01)
+    if (sidebarAnchor) {
+        sidebarAnchor.innerText = fullParity;
+        const isParityError = (parseInt(finalDb) !== parseInt(finalGui));
+        sidebarAnchor.style.color = isParityError ? '#e74c3c' : 'var(--accent-color)';
     }
 
-    // 3. Sync LED Pulse (v1.36.00)
-    if (led) {
-        const isHealthy = (finalGui > 0 && finalGui === finalDb);
-        const isWarning = (finalDb > 0 && finalGui === 0);
-        
-        led.classList.remove('active', 'warning', 'error');
-        
-        if (isHealthy) {
-            led.classList.add('active'); // Pulsing Green
-            led.title = "Synchronized: Stored matches Displayed";
-        } else if (isWarning) {
-            led.classList.add('warning'); // Static Yellow
-            led.title = "Warning: Items stored but not displayed (Filter Drop?)";
-        } else if (finalDb === 0) {
-            led.classList.add('error'); // Static Red
-            led.title = "Critical: Database is empty";
-        }
+    // 2. Footer: Minimalist DB indicator
+    if (footerDbCount) {
+        footerDbCount.innerText = finalDb;
+    }
+
+    // 3. HUD LED Logic (FE | BE | DB)
+    const hudFe = document.getElementById('hud-fe');
+    const hudBe = document.getElementById('hud-be');
+    const hudDb = document.getElementById('hud-db');
+
+    if (hudFe) {
+        const isFeHealthy = (finalGui > 0);
+        hudFe.className = `hud-group ${isFeHealthy ? 'active' : 'error'}`;
+    }
+
+    if (hudBe) {
+        const isBeHealthy = (typeof eel !== 'undefined');
+        hudBe.className = `hud-group ${isBeHealthy ? 'active' : 'error'}`;
+    }
+
+    if (hudDb) {
+        const isDbHealthy = (finalDb > 0);
+        hudDb.className = `hud-group ${isDbHealthy ? 'active' : 'warning'}`;
     }
 }
+
+/**
+ * Periodically refreshes backend startup info (PID, Boot, Uptime)
+ * v1.37.01 Restoration
+ */
+window.refreshStartupInfo = function() {
+    if (typeof eel === 'undefined') return;
+    
+    eel.get_startup_info()((data) => {
+        if (!data) return;
+        const pidEl = document.getElementById('diag-pid');
+        const bootEl = document.getElementById('diag-boot');
+        const upEl = document.getElementById('diag-up');
+
+        if (pidEl) pidEl.innerText = data.pid || '--';
+        if (bootEl) bootEl.innerText = `${data.boot_duration_sec}s` || '--s';
+        
+        // Calculate uptime string
+        if (upEl) {
+            const sec = Math.floor(data.boot_duration_sec);
+            const m = Math.floor(sec / 60);
+            const h = Math.floor(m / 60);
+            const upStr = h > 0 ? `${h}h ${m % 60}m` : `${m}m ${sec % 60}s`;
+            upEl.innerText = upStr;
+        }
+    });
+};
+
+// Auto-start polling
+setInterval(window.refreshStartupInfo, 10000);
+setTimeout(window.refreshStartupInfo, 1000);
 
 // Expose to window
 window.updateSyncAnchor = updateSyncAnchor;
