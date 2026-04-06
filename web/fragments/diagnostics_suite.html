@@ -57,6 +57,39 @@
                 <!-- LEFT COLUMN: DB Stats & JSON Data -->
                 <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0; overflow-y: auto;">
                     
+                    <!-- System Diagnostic Toggles (v1.35.97 Relocation) -->
+                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto; border-top: 4px solid #f1c40f;">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;">
+                            System Toggles
+                            <span style="font-size: 9px; opacity: 0.5; font-weight: 400;">v1.35 DEEP AUDIT</span>
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <!-- Data Access Group -->
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Data Access</div>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-DIAG" 
+                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-HIDB" 
+                                    onclick="if(typeof toggleHideDb === 'function') { toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDE DB</button>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-RAW" 
+                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-BYPS" 
+                                    onclick="if(typeof toggleBypassDb === 'function') { toggleBypassDb(); updateDiagBtnState(this, window.__mwv_bypass_db); }">FORCE MOCK</button>
+                            </div>
+                            
+                            <!-- Engine & Audits Group -->
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Audits & Engine</div>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-NATV" 
+                                    onclick="if(typeof toggleForceNative === 'function') { toggleForceNative(); updateDiagBtnState(this, window.__mwv_force_native); }">FORCE NATIVE</button>
+                                <button class="tab-btn sm" onclick="if(typeof runDomAudit === 'function') runDomAudit();" style="color: var(--accent-color);">DOM AUDIT</button>
+                                <button class="tab-btn sm" onclick="if(typeof runAutonomousSelfTest === 'function') runAutonomousSelfTest();" style="color: #3498db;">SELF TEST</button>
+                                <button class="tab-btn sm" onclick="if(typeof probeDataFlow === 'function') probeDataFlow();" style="color: #2ecc71;">DEEP PROBE</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Item DB (Übersicht) -->
                     <div class="glass-card" style="padding: 20px; flex: 0 0 auto; border-top: 4px solid var(--accent-color);">
                         <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em;">Item DB (Übersicht)</h3>

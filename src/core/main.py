@@ -3314,25 +3314,38 @@ def set_global_config(key: str, value: Any):
 def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]:
     """
     @brief Main entry point for fetching the media library with excessive chain-audit metadata.
-    @param force_raw Bypass all filters and return 100% of rows.
-    @param audit_stage 1=Mocks, 2=DB-Raw, 3=Filtered (Target)
     """
     from src.core import db
     pid = os.getpid()
     db_path = str(Path(db.DB_FILENAME).resolve())
     
-    # STAGE 1: BRIDGE MOCKS (Eel connectivity test)
+    # [FS-AUDIT] Internal filesystem check (v1.35.96)
+    db_exists = os.path.exists(db_path)
+    db_size = os.path.getsize(db_path) if db_exists else -1
+    data_dir_files = os.listdir(Path(db_path).parent) if db_exists else []
+    
+    fs_audit = {
+        "exists": db_exists,
+        "size": db_size,
+        "listdir": data_dir_files,
+        "cwd": os.getcwd()
+    }
+    
+    # STAGE 1: BRIDGE MOCKS (Eel connectivity test + Filter Baseline)
     if audit_stage == 1:
-        log.info(f"[BD-AUDIT] STAGE 1: Returning Mocks. PID: {pid}")
+        log.info(f"[BD-AUDIT] STAGE 1: Returning Filtered Mocks. PID: {pid}")
+        mocks = [
+            {"name": "Stage 1 Mock (Audio)", "category": "audio", "path": "/mock1.mp3", "tags": {"genre": "test"}},
+            {"name": "Stage 1 Mock (Video)", "category": "video", "path": "/mock2.mp4", "tags": {"genre": "test"}},
+            {"name": "Stage 1 Mock (Doc)", "category": "docs", "path": "/mock3.md", "tags": {"genre": "test"}}
+        ]
+        # Allow testing filters on mocks
+        filtered_mocks = _apply_library_filters(mocks, force_raw=False)
         return {
-            "media": [
-                {"name": "Stage 1 Mock 1", "category": "audio", "path": "/mock1.mp3"},
-                {"name": "Stage 1 Mock 2", "category": "video", "path": "/mock2.mp4"},
-                {"name": "Stage 1 Mock 3", "category": "multimedia", "path": "/mock3.mkv"}
-            ],
+            "media": filtered_mocks,
             "db_count": 3,
             "status": "mock",
-            "audit": {"stage": 1, "pid": pid, "path": "MEMORY_MOCK"}
+            "audit": {"stage": 1, "pid": pid, "path": "MEMORY_MOCK", "fs": fs_audit}
         }
 
     all_media = []
@@ -3351,7 +3364,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             "media": all_media,
             "db_count": count_total,
             "status": "raw",
-            "audit": {"stage": 2, "pid": pid, "path": db_path}
+            "audit": {"stage": 2, "pid": pid, "path": db_path, "fs": fs_audit}
         }
 
     # --- STAGE 3: FILTERED (v1.35.96 Normalization Test) ---
@@ -3368,7 +3381,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             "pid": pid,
             "path": db_path,
             "raw_count": count_total,
-            "filtered_count": audit_len
+            "filtered_count": audit_len,
+            "fs": fs_audit
         }
     }
 

@@ -582,32 +582,51 @@ window.showStatusNotification = function(msg, type = 'info') {
     }, 3000);
 };
 /**
- * Sync Anchor Orchestrator (v1.35.68 Recovery) 
- * Updates the global footer anchor [DB: X | GUI: X] to identify data drops.
+ * Sync Anchor Orchestrator (v1.35.97 Overhaul) 
+ * Updates the global footer anchor [FS: -- | DB: -- | GUI: --] to identify data drops.
  */
-function updateSyncAnchor(dbCount, guiCount) {
+function updateSyncAnchor(dbCount, guiCount, fsSize) {
     const el = document.getElementById('footer-sync-anchor');
     const light = document.getElementById('sync-status');
     if (!el) return;
 
-    // Use current state if not provided
-    const finalDb = (dbCount !== undefined) ? dbCount : (window.__mwv_last_db_count || 0);
+    // Persist counts for redundant updates
+    if (dbCount !== undefined) window.__mwv_last_db_count = dbCount;
+    if (guiCount !== undefined) window.__mwv_last_gui_count = guiCount;
+    if (fsSize !== undefined) window.__mwv_last_fs_size = fsSize;
+
+    const finalDb = window.__mwv_last_db_count || 0;
     const finalGui = (guiCount !== undefined) ? guiCount : (typeof allLibraryItems !== 'undefined' ? allLibraryItems.length : 0);
+    const finalFsSize = window.__mwv_last_fs_size || 0;
 
-    el.innerText = `[DB: ${finalDb} | GUI: ${finalGui}]`;
+    // Formatting FS size
+    let fsDisplay = "--";
+    if (finalFsSize > 0) {
+        fsDisplay = finalFsSize > 1024 * 1024 
+            ? (finalFsSize / (1024 * 1024)).toFixed(1) + "MB" 
+            : (finalFsSize / 1024).toFixed(0) + "KB";
+    } else if (finalFsSize === 0 && finalDb > 0) {
+        fsDisplay = "0B!"; // Critical: DB exists in memory but file is empty
+    }
 
-    // Visual Cue: Yellow if 0 items in GUI but items in DB
-    if (finalGui === 0 && finalDb > 0) {
-        el.style.color = '#f1c40f'; // Warning
+    el.innerText = `[FS: ${fsDisplay} | DB: ${finalDb} | GUI: ${finalGui}]`;
+
+    // Visual Cue logic
+    if (finalFsSize === 0 && finalDb > 0) {
+        el.style.color = '#ff5252'; // Critical Error
+        el.style.background = 'rgba(255, 82, 82, 0.1)';
+        el.style.borderColor = 'rgba(255, 82, 82, 0.3)';
+    } else if (finalGui === 0 && finalDb > 0) {
+        el.style.color = '#f1c40f'; // Filter Drop Warning
         el.style.background = 'rgba(241, 196, 15, 0.1)';
         el.style.borderColor = 'rgba(241, 196, 15, 0.2)';
-        if (light) light.style.color = '#f1c40f';
-    } else if (finalGui > 0) {
+    } else {
         el.style.color = '#2ecc71'; // Healthy
         el.style.background = 'rgba(46, 204, 113, 0.1)';
         el.style.borderColor = 'rgba(46, 204, 113, 0.2)';
-        if (light) light.style.color = '#2ecc71';
     }
+    
+    if (light) light.style.color = (finalGui > 0) ? '#2ecc71' : '#f1c40f';
 }
 
 // Expose to window
@@ -826,20 +845,75 @@ async function probeDataFlow() {
 window.probeDataFlow = probeDataFlow;
 
 /**
- * Audit Orchestrator (v1.35.96)
+ * Audit Orchestrator (v1.35.97 Overhaul)
  * Allows cycling through stages: 1=Mock, 2=Raw, 3=Filtered
  */
 async function auditSwitchStage(stage) {
-    console.warn(`[BD-AUDIT] Switched to Audit Stage: ${stage}`);
+    console.warn(`[BD-AUDIT] Switching to Stage ${stage}...`);
     window.__mwv_audit_stage = stage;
-    if (typeof showStatusNotification === 'function') {
-        const labels = { 
-            1: "STAGE 1: EEL BRIDGE (MOCKS)", 
-            2: "STAGE 2: SQLite ACCESS (RAW ROWS)", 
-            3: "STAGE 3: NORMALIZATION (FILTERED)" 
-        };
-        showStatusNotification(`AUDIT: ${labels[stage]}`, 'warn');
+    
+    // Auto-Navigation to Diagnostics Tab for visibility (v1.35.97)
+    if (typeof switchMainCategory === 'function') {
+        const diagBtn = document.querySelector('.nav-item[onclick*="diagnostics"]');
+        switchMainCategory('diagnostics', diagBtn);
     }
-    if (typeof loadLibrary === 'function') await loadLibrary();
+    
+    if (typeof loadLibrary === 'function') {
+        await loadLibrary();
+        
+        // After load, check the audit metadata for Stage 2 & 3 specifically
+        const lib = window.__mwv_debug_library || {};
+        const audit = lib.audit || {};
+        const fs = audit.fs || {};
+        
+        // Update Footer with triple-granularity
+        if (typeof updateSyncAnchor === 'function') {
+            updateSyncAnchor(audit.raw_count, lib.media ? lib.media.length : 0, fs.size);
+        }
+
+        if (fs.exists !== undefined) {
+            const fsMsg = `[FS-AUDIT] Path: ${audit.path} | Exists: ${fs.exists} | Size: ${fs.size} bytes | PID: ${audit.pid}`;
+            console.warn(fsMsg);
+            if (fs.size === 0) console.error("[FS-AUDIT] CRITICAL: DB FILE IS EMPTY (0 bytes)!");
+            if (fs.size === -1) console.error("[FS-AUDIT] CRITICAL: DB FILE NOT FOUND!");
+        }
+
+        if (typeof showStatusNotification === 'function') {
+            const labels = { 
+                1: "STAGE 1: MOCKS (GUI TEST)", 
+                2: "STAGE 2: SQLite ACCESS (RAW)", 
+                3: "STAGE 3: NORMALIZATION (FILTERED)" 
+            };
+            showStatusNotification(`AUDIT: ${labels[stage]}`, 'warn');
+        }
+    }
 }
+
+/**
+ * Visual feedback for relocated diagnostic buttons (v1.35.97)
+ */
+function updateDiagBtnState(btn, isActive) {
+    if (!btn) return;
+    btn.style.background = isActive ? 'var(--accent-color)' : 'var(--bg-secondary)';
+    btn.style.color = isActive ? '#fff' : 'var(--text-secondary)';
+    btn.style.borderColor = isActive ? 'var(--accent-color)' : 'var(--border-color)';
+    btn.classList.toggle('active', isActive);
+}
+
+// Initial state sync for buttons
+function syncDiagBtnStates() {
+    updateDiagBtnState(document.getElementById('diag-btn-DIAG'), (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear));
+    updateDiagBtnState(document.getElementById('diag-btn-HIDB'), window.__mwv_hide_db);
+    updateDiagBtnState(document.getElementById('diag-btn-RAW'), window.__mwv_raw_mode);
+    updateDiagBtnState(document.getElementById('diag-btn-BYPS'), window.__mwv_bypass_db);
+    updateDiagBtnState(document.getElementById('diag-btn-NATV'), window.__mwv_force_native);
+}
+
 window.auditSwitchStage = auditSwitchStage;
+window.updateDiagBtnState = updateDiagBtnState;
+window.syncDiagBtnStates = syncDiagBtnStates;
+
+// Sync buttons on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(syncDiagBtnStates, 2000);
+});

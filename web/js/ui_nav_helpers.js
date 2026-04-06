@@ -183,7 +183,7 @@ function switchTab(tabId, btn, callback, force = false) {
         'database': { containerId: 'database-main-viewport', path: 'fragments/database_panel.html' },
         'cinema': { containerId: 'cinema-main-viewport', path: 'fragments/video_view.html' },
         'parser': { containerId: 'parser-main-viewport', path: 'fragments/parser_panel.html' },
-        'debug': { containerId: 'debug-main-viewport', path: 'fragments/diagnostics_suite.html' },
+        'debug': { containerId: 'debug-main-viewport', path: 'fragments/database_panel.html' },
         'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
         'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
         'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbuch_panel.html' },

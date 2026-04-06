@@ -36,14 +36,15 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         const incomingCount = (library.media || []).length;
         const totalDbCount = library.db_count || incomingCount;
         const audit = library.audit || {};
+        const fsSize = (audit.fs || {}).size || 0;
         
         console.warn(`[BD-AUDIT] Handshake Received. Stage: ${audit.stage || 'N/A'}. Count: ${incomingCount}/${totalDbCount}. PID: ${audit.pid || '?'}`);
-        if (audit.path) console.info(`[BD-AUDIT] Backend Path: ${audit.path}`);
+        if (audit.path) console.info(`[BD-AUDIT] Backend Path: ${audit.path} | FS Size: ${fsSize}`);
         
         window.__mwv_last_db_count = totalDbCount;
         window.__mwv_debug_library = library; // Global for manual trace
         
-        if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount);
+        if (typeof updateSyncAnchor === 'function') updateSyncAnchor(totalDbCount, incomingCount, fsSize);
         if (typeof appendUiTrace === 'function') appendUiTrace(`[Sync] Stage ${audit.stage || 0} complete. Received ${incomingCount} items.`, "SUCCESS");
         
         allLibraryItems = library.media || [];

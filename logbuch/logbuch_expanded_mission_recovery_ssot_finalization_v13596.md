@@ -1,3 +1,166 @@
+# Media Viewer v1.35.97 — UI Diagnostic Overhaul: Final Black Box Resolution
+
+The v1.35.97 UI Diagnostic Overhaul is now fully complete. The system is significantly cleaner and ready for the final "Black Box" resolution.
+
+## Completed Infrastructure
+
+- **Triple-Stage Footer:**
+    - Status bar now shows `[FS: {size} | DB: {rows} | GUI: {items}]`.
+    - If FS shows your database size but GUI is 0, the problem is definitively in the filtering logic.
+- **Footer Cleanup & Relocation:**
+    - Footer is de-cluttered. All advanced toggles (DIAG, NATV, RAW, BYPS) and probes (AUDIT, TEST, PROBE) are now in a dedicated System Toggles panel in the Diagnostics sidebar tab.
+- **Navigation Decoupling:**
+    - Header → Debug & DB: Points to a clean Database Master overview for the user.
+    - Sidebar → Diagnostics: Points to the Diagnostic Suite for deep audits.
+- **Audit Flow:**
+    - Activating `auditSwitchStage(n)` in the console now automatically navigates to the Diagnostics sidebar for immediate visibility of trace logs and toggle states.
+
+## Final Audit Step
+
+- Check the new Diagnostics sidebar tab.
+- If the footer shows `DB: 541` and you still see `GUI: 0`, click the `RAW BYPASS` button in the new Diagnostics panel.
+- If items appear with RAW active, the issue is a Category Filter Mismatch in the backend, which can now be precisely targeted.
+
+All changes are detailed in the updated `walkthrough.md`.
+# Media Viewer v1.35.97 — UI Diagnostic Overhaul Complete
+
+The v1.35.97 UI Diagnostic Overhaul is complete. The system is now significantly cleaner and provides high-resolution data on why items might be missing.
+
+## Accomplishments
+
+- **Granular Status Footer:**
+    - Footer now displays a triple-anchor: `[FS: {size} | DB: {rows} | GUI: {items}]`.
+    - If FS is `0B!`, you are definitively pointing at an empty database file.
+    - If DB is 541 but GUI is 0, a filter is rejecting all items.
+- **Footer Cleanup & Relocation:**
+    - Removed the overloaded debug button cluster from the footer.
+    - All advanced toggles (DIAG, NATV, RAW, BYPS, etc.) and probes (AUDIT, TEST, PROBE) have been moved into a dedicated System Toggles panel in the new Diagnostics tab.
+- **Navigation Decoupling:**
+    - Header → Debug & DB: Now loads a clean Database Master overview for users.
+    - Sidebar → Diagnostics: Now loads the full Diagnostic Suite for deep audits.
+- **Audit Orchestration:**
+    - Switching audit stages via `auditSwitchStage(n)` in the console now automatically navigates to the Sidebar Diagnostics tab so you can immediately see the trace logs and toggle states.
+
+## Next Steps for the "Black Box"
+
+- Check the new footer and the Sidebar Diagnostics tab.
+- If FS shows your database size (e.g., 1.2MB), the file is connected.
+- If DB is 541 but GUI is 0, use the Diagnostics → RAW BYPASS toggle in the new sidebar panel. If items appear with RAW active, a Category Filter Mismatch in the `_apply_library_filters` logic is identified.
+
+The `walkthrough.md` has been updated with the new structural changes.
+# Implementation Plan — UI Diagnostic Overhaul (v1.35.97)
+
+The previous "Black Box" audit successfully instrumented the data pipeline, but the GUI is still presenting a confusing mix of user-facing debug tools and developer-facing diagnostics. This plan reorganizes the UI to provide a clean separation and a more granular status footer.
+
+## User Review Required
+
+**IMPORTANT**
+
+- **Granular Footer Structure:**
+    - Move from `[DB: 541 | GUI: 541]` to a triple-stage anchor: `[FS: 1.2MB | DB: 541 | GUI: 541]`.
+    - FS: Size of the SQLite file on disk (0B means a shadow DB).
+    - DB: Raw row count from the backend.
+    - GUI: Final item count rendered in the UI.
+
+**TIP**
+
+- **Sidebar vs Header**
+    - Header → Debug & DB: Repurposed for the User as a simple database overview.
+    - Sidebar → Diagnostics: New dedicated tab for the Deep Audit (Mock stages, FS pathing, filter-drop logs).
+
+## Proposed Changes
+
+### Phase 1: Granular Footer status (`diagnostics_helpers.js`)
+- **[MODIFY] diagnostics_helpers.js**
+    - Update `updateSyncAnchor(dbCount, guiCount, fsSize)`:
+        - Display 3 values in the footer anchor.
+        - If `fsSize` is 0, highlight with a Red/Error state.
+    - Update `loadLibrary` callback to extract `audit.fs.size` and pass it to the anchor.
+
+### Phase 2: Sidebar Diagnostics activation (`ui_nav_helpers.js` & `app.html`)
+- **[MODIFY] app.html**
+    - Ensure the sidebar nav-item for Diagnostics correctly calls `switchMainCategory('diagnostics', this)`.
+- **[MODIFY] ui_nav_helpers.js**
+    - Update `fragmentMap` and `tabMap`:
+        - `diagnostics` → loads `fragments/diagnostics_suite.html` into `diagnostics-suite-container`.
+        - `debug` → loads `fragments/database_panel.html` into `debug-main-viewport`. (User-facing overview).
+
+### Phase 3: Audit Stage Integration (`diagnostics_helpers.js`)
+- **[MODIFY] diagnostics_helpers.js**
+    - Update `auditSwitchStage(n)`:
+        - Automatically switch to the "Diagnostics" sidebar tab when an audit stage is activated, ensuring the user sees the relevant trace logs.
+
+## Open Questions
+
+- **Old Diagnostics Location:** Are there specific legacy panels (e.g., Latency, System Check) you want prominently restored in the new sidebar tab?
+
+## Verification Plan
+
+### Automated Tests
+- `python3 scripts/verify_ui_structure.py` (Verify all fragment containers exist in `app.html`).
+
+### Manual Verification
+- **Check Footer:** Does it show `[FS: ... | DB: ... | GUI: ...]`?
+- **Click Sidebar → Diagnostics:** Does the Diagnostic Suite load?
+- **Click Header → Debug & DB:** Does the clean Database Master load?
+# Media Viewer v1.35.96 — Data Chain Audit (Task List, Updated)
+
+- [ ] **Phase 1: Database Layer Instrumentation (`db.py`)**
+    - [ ] Update `init_db()` with absolute file path, size, and PID logging
+    - [ ] Update `get_all_media()` with PID and row-count logging
+- [ ] **Phase 2: App Logic Trace & Path Audit (`main.py`)**
+    - [ ] Update `get_library()` with FS-Audit (existence, size, listdir)
+    - [ ] Refactor Stage 1 Mocks to support real filtering
+    - [ ] Add trace-logging to `_apply_library_filters` (Category mismatch logic)
+    - [ ] Verify "Raw Display" (`force_raw`) mode returns 100% of DB rows
+- [ ] **Phase 3: Frontend Visibility & Diagnostics (`web/js/db.js`)**
+    - [ ] Add `console.info` for raw Eel results
+    - [ ] Display `fs_audit` data in console after `auditSwitchStage`
+- [ ] **Phase 4: Run-Time Audit**
+    - [ ] Review logs for file size (0-byte DB detection)
+    - [ ] Verify footer anchor `[DB: 541 | GUI: 541]` parity
+    - [ ] Integrate "Stage 1: Mocks" as functional baseline
+# Implementation Plan — Deep Path Audit & Stage 1 Filter Integration
+
+The GUI currently reports 0 items for both Raw (Stage 2) and Filtered (Stage 3) modes, while Stage 1 (Mocks) works. This confirms that the Eel bridge is functional, but the SQLite data pipeline is broken, likely due to a path resolution mismatch or an empty shadow database.
+
+## User Review Required
+
+**IMPORTANT**
+
+- **Mock Filtering Baseline:** Filtering will be implemented for the Stage 1 Mocks, allowing verification that the GUI Filter UI is working correctly even while the "Real DB" connection is fixed.
+
+## Proposed Changes
+
+### Phase 1: Deep Path Audit (`main.py`)
+- **[MODIFY] main.py**
+    - Aggressive Instrumentation:
+        - Update `get_library()` to perform a filesystem check immediately before querying SQLite:
+            - `os.path.exists(db_path)`
+            - `os.path.getsize(db_path)`
+            - `os.listdir(data_dir)` (to see if multiple .db files exist).
+        - Return these findings in a new `fs_audit` field in the Eel response.
+
+### Phase 2: Mock Filter Integration (`main.py`)
+- **[MODIFY] main.py**
+    - Refine Stage 1:
+        - Update the Mock return logic to actually call `_apply_library_filters` on the hardcoded mocks if requested. This makes Stage 1 a "confirmed functional baseline for GUI rendering" where filters are effective.
+
+### Phase 3: GUI Visibility (`web/js/diagnostics_helpers.js`)
+- **[MODIFY] diagnostics_helpers.js**
+    - Update standard diagnostic UI to display the `fs_audit` results (e.g., "DB File Size: 0 bytes" would immediately explain the 0 items).
+
+## Open Questions
+
+**CAUTION**
+
+- **Shadow Database Probability:** If Stage 2 reports 0 items, but CLI reports 541, it is almost certain that the Eel process is opening a different `database.db` (likely an empty one in a different cwd or `~/.media-web-viewer` folder). The absolute path will be exposed in the GUI to confirm this.
+
+## Verification Plan
+
+### Manual Verification
+- Run `auditSwitchStage(1)` → Try filtering for "video". (Verify GUI rendering baseline).
+- Check the Handshake Received log in the console → Look for `fs_audit.size`.
 # Media Viewer v1.35.96 — 3-Stage Audit Chain & Diagnostics
 
 The "Black Box" is now fully instrumented with a 3-stage Audit Chain to identify exactly where the 541-to-0 item data drop occurs.
