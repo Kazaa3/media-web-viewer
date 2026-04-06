@@ -1,3 +1,35 @@
+## User Review Required
+**IMPORTANT**
+
+The SEC audit identifies your application's file permissions and execution authority. It will flag cases where the media library or database is read-only or owned by a different user, which can cause silent failures.
+
+---
+
+## Proposed Changes
+- **Backend Forensics (Security & Sync, main.py):**
+  - Implement `@eel.expose def get_security_forensics()`.
+  - Audits `os.access` (R/W/X) for the media library and SQLite database.
+  - Captures the current Process UID/GID and checks for Sudo/Root authority.
+  - Aggregates "Authority Health" based on the detected security profile.
+- **Update `get_global_health_audit()`:**
+  - Update the readiness score to a 17-layer weighted model.
+  - Include DRV (Hardware) and SEC (Security) in the master health metrics.
+- **Diagnostic UI (Layer 17):**
+  - Add `reiter-sec (SEC)` button to the nav bar in `diagnostics_sidebar.html`.
+  - Implement `diag-pane-security` with metrics for "FILE AUTHORITY", "PROCESS UID", and "SUDO STATUS".
+- **Controller (`sidebar_controller.js`):**
+  - Integrate security domain into the diagnostic switcher.
+  - Implement `runSecurityAudit()`:
+    - Visualizes the detected security mapping.
+    - Provides chromatic warnings for "Locked" or "Root-Owned" assets.
+
+---
+
+## Verification Plan
+- **Automated Tests:**
+  - Trigger the SEC audit and verify that it correctly identifies the current user and write-access to the database.
+- **Manual Verification:**
+  - Verify that the HLT score correctly reflects the addition of the 16th and 17th diagnostic layers.
 # v1.37.38 Security & Forensic Authority Audit (SEC) (PLANNED)
 
 ## Overview
