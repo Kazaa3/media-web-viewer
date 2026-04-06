@@ -3997,7 +3997,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
             if cat not in allowed_internal_cats:
                 dropped_reasons["category_mismatch"] += 1
                 if dropped_reasons["category_mismatch"] <= 10: 
-                    log.debug(f"[BD-AUDIT] Dropped '{item.get('name')}' - Cat '{cat}' not in {allowed_internal_cats[:5]}...")
+                    log.debug(f"[BD-AUDIT] Dropped '{item.get('name')}' - Category '{cat}' not in {allowed_internal_cats}")
                 continue
 
         # 2. Search check
@@ -4857,38 +4857,40 @@ def resolve_media_path(file_path: str) -> str:
     """
     Resolves a file path that might be a URL-encoded string or a relative /media/ path.
     """
-    if not file_path:
-        return ""
-
-    # Decouple from URL encoding
+    # Decouple from URL encoding (Robust v1.35.68)
     path_decoded = unquote(str(file_path))
+    
+    # Pathlib safety: Ensure the path is normalized for the OS
+    p_obj = Path(path_decoded).expanduser()
+    path_normalized = str(p_obj)
 
     # 1. Try direct filesystem check first (some absolute paths might exist)
-    if os.path.exists(path_decoded):
-        return str(Path(path_decoded).resolve())
+    if p_obj.exists():
+        return str(p_obj.resolve())
 
     # 1b. Handle absolute paths where Bottle might have stripped the leading slash
-    if not path_decoded.startswith("/"):
-        p_abs = "/" + path_decoded
-        if os.path.exists(p_abs):
-            return str(Path(p_abs).resolve())
+    if not path_normalized.startswith("/"):
+        p_abs = Path("/" + path_normalized)
+        if p_abs.exists():
+            return str(p_abs.resolve())
 
     # 2. Strip /media/ prefix if present and handle virtual pathing
-    stripped_path = path_decoded
+    stripped_path = path_normalized
     prefixes = GLOBAL_CONFIG.get("player_settings", {}).get("media_prefixes", ["/media/", "media/"])
     for prefix in prefixes:
-        if path_decoded.startswith(prefix):
-            stripped_path = path_decoded[len(prefix):]
+        if path_normalized.startswith(prefix):
+            stripped_path = path_normalized[len(prefix):]
             break
 
     # 3. Try to find in DB using the stripped path
     db_path = db.get_media_path(stripped_path)
-    if db_path and os.path.exists(db_path):
+    if db_path and Path(db_path).exists():
         return db_path
 
     # 4. Try direct filesystem check on stripped path
-    if os.path.exists(stripped_path):
-        return str(Path(stripped_path).resolve())
+    p_stripped = Path(stripped_path)
+    if p_stripped.exists():
+        return str(p_stripped.resolve())
 
     # 5. Try resolving relative to PROJECT_ROOT/media
     media_root = PROJECT_ROOT / "media"

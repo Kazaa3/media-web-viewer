@@ -254,6 +254,7 @@ def init_db():
     try:
         cursor.execute("UPDATE media SET category = 'pictures' WHERE category = 'images'")
         cursor.execute("UPDATE media SET category = 'disk_images' WHERE category = 'iso'")
+        cursor.execute("UPDATE media SET category = 'unknown' WHERE category = 'unbekannt' OR category IS NULL OR category = ''")
         # New v1.35.96: Lowercase all categories to ensure SSOT compatibility
         cursor.execute("UPDATE media SET category = LOWER(category)")
         conn.commit()

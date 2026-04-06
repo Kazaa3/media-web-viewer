@@ -129,7 +129,8 @@ def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
         "bilder": "pictures", "fotos": "pictures", "pictures": "pictures",
         "dokumente": "documents", "docs": "documents", "documents": "documents",
         "disk_images": "disk_images", "isos": "disk_images",
-        "ebooks": "ebooks", "bücher": "ebooks"
+        "ebooks": "ebooks", "bücher": "ebooks",
+        "unknown": "unknown", "unbekannt": "unknown"
     }
 
     for dc in displayed_cats:
