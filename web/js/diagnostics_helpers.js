@@ -1094,6 +1094,14 @@ function syncDiagBtnStates() {
         if (overlayBtn) {
             overlayBtn.classList.toggle('active', active);
         }
+
+        // Sync Footer HUD Buttons (v1.37.06)
+        const footerBtn = document.getElementById(`footer-btn-${key}`);
+        if (footerBtn) {
+            footerBtn.classList.toggle('active', active);
+            footerBtn.style.color = active ? 'var(--accent-color)' : '#eee';
+            footerBtn.style.borderColor = active ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)';
+        }
     });
 }
 

@@ -925,6 +925,12 @@
                 <button class="hud-btn-tiny"
                     onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
             </div>
+            <div id="hud-diag" class="hud-group" title="Diagnostic Toggles (RAW/BYPS)">
+                <span class="hud-label">RX</span>
+                <div class="hud-led"></div>
+                <button id="footer-btn-RAW" class="hud-btn-tiny" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
+                <button id="footer-btn-BYPS" class="hud-btn-tiny" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
+            </div>
             <button class="footer-classic-btn yellow"
                 onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();"
                 title="Toggle Trace Logs">LOGS</button>

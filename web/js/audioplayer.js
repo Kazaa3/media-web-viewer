@@ -830,6 +830,14 @@ function syncQueueWithLibrary() {
     
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
         console.warn("[Recovery] No library items found for sync.");
+        // [BYPS] Handshake (v1.37.06)
+        if (localStorage.getItem('mwv_bypass_db') === 'true' || window.__mwv_bypass_db) {
+            console.info("[BYPS] Bypass active with empty library. Triggering bootstrapMockQueue...");
+            if (typeof bootstrapMockQueue === 'function') {
+                bootstrapMockQueue();
+                return;
+            }
+        }
         return;
     }
 
@@ -864,6 +872,21 @@ function syncQueueWithLibrary() {
     });
 
     console.info(`[Sync-Audit] Stage 1: Filtered ${filtered.length}/${allLibraryItems.length} items. (Diag: ${isDiagnosticMode}, RealDB: ${isRealDbMode})`);
+
+    // [BD-AUDIT] (v1.37.06) - Rejection Report Parity Check
+    if (allLibraryItems.length > 0 && filtered.length === 0) {
+        console.warn(`[BD-AUDIT] CRITICAL: Filtered 0/${allLibraryItems.length} items. Library is populated but Queue is empty!`);
+        // Detailed rejection report (Sample first 5)
+        allLibraryItems.slice(0, 5).forEach(item => {
+            console.groupCollapsed(`[BD-AUDIT] Rejection: ${item.name}`);
+            console.log("Category:", item.category);
+            console.log("Is Video:", typeof isVideoItem === 'function' ? isVideoItem(item) : 'Unknown');
+            console.log("Diagnostic Mode:", isDiagnosticMode);
+            console.groupEnd();
+        });
+    } else if (allLibraryItems.length > 0) {
+        console.info(`[BD-AUDIT] Filtered ${filtered.length}/${allLibraryItems.length}`);
+    }
 
     // v1.35.68: Master-audit logging (Automated Chain)
     if (filtered.length > 0 && filtered.length < 5) {
