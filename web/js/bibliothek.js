@@ -31,7 +31,14 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
 
         // --- STAGE 1-3 AUDIT HANDSHAKE (v1.35.96) ---
         const auditStage = window.__mwv_audit_stage || 0;
-        const library = await getLibrary(auditStage); 
+        let library;
+        try {
+            library = await getLibrary(auditStage); 
+        } catch (e) {
+            console.error("[FE-BRIDGE-FAULT] CRITICAL: Calling getLibrary failed!", e);
+            if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Bridge Fault: ${e.message}`, "ERROR");
+            return; // Halt to prevent further ReferenceErrors
+        }
         
         const incomingCount = (library.media || []).length;
         const totalDbCount = library.db_count || incomingCount;
