@@ -23,8 +23,9 @@
         </div>
     </div>
     
-    <div class="diag-tabs-nav" style="display: flex; flex-wrap: wrap; background: rgba(0,0,0,0.2); margin: 10px 15px; border-radius: 6px; padding: 2px; gap: 2px; border: 1px solid rgba(255,255,255,0.05);">
-        <button id="reiter-hydration" class="side-reiter" onclick="switchDiagnosticsSidebarTab('hydration', this)">HYD</button>
+    <div class="sidebar-reiters" style="padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-wrap: wrap; gap: 5px; position: sticky; top: 0; background: #1a1a1a; z-index: 10;">
+        <button id="reiter-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('health', this)">HLT</button>
+        <button id="reiter-log" class="side-reiter active" onclick="switchDiagnosticsSidebarTab('log', this)">LOG</button>
         <button id="reiter-item-track" class="side-reiter" onclick="switchDiagnosticsSidebarTab('item-track', this)">TRK</button>
         <button id="reiter-sentinel" class="side-reiter" onclick="switchDiagnosticsSidebarTab('sentinel', this)" style="color: #00ffcc;">SNT</button>
         <button id="reiter-debug-db" class="side-reiter" onclick="switchDiagnosticsSidebarTab('debug-db', this)">DB</button>
@@ -36,10 +37,59 @@
         <button id="reiter-performance" class="side-reiter" onclick="switchDiagnosticsSidebarTab('performance', this)">PER</button>
         <button class="side-reiter" id="reiter-ply" onclick="switchDiagnosticsSidebarTab('playlist')">PLY</button>
         <button class="side-reiter" id="reiter-sta" onclick="switchDiagnosticsSidebarTab('state')">STA</button>
+        <button class="side-reiter" id="reiter-net" onclick="switchDiagnosticsSidebarTab('network')">NET</button>
+        <button class="side-reiter" id="reiter-prc" onclick="switchDiagnosticsSidebarTab('process')">PRC</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
         
+        <!-- PANE: GLOBAL HEALTH & READINESS (HLT) [v1.37.36] -->
+        <div id="diag-pane-health" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: var(--accent-color); letter-spacing: 2px;">COMMAND DASHBOARD</div>
+                <div style="font-size: 8px; opacity: 0.5;">v1.37.36</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(52,152,219,0.1), rgba(46,204,113,0.1)); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; position: relative; overflow: hidden;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Technical Readiness</div>
+                <div id="diag-hlt-score" style="font-size: 48px; font-weight: 900; color: #fff; line-height: 1;">--%</div>
+                <div id="diag-hlt-level" style="font-size: 10px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; color: #2ecc71;">CALCULATING...</div>
+                
+                <!-- Sentinel Scan Line Decoration -->
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: rgba(52,152,219,0.5); box-shadow: 0 0 10px rgba(52,152,219,0.8); animation: scanLine 4s infinite linear;"></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div id="diag-hlt-db-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 7px; opacity: 0.4; margin-bottom: 4px;">DB STATE</div>
+                    <div id="diag-hlt-db" style="font-size: 10px; font-weight: 900;">IDLE</div>
+                </div>
+                <div id="diag-hlt-sys-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 7px; opacity: 0.4; margin-bottom: 4px;">SYS LOAD</div>
+                    <div id="diag-hlt-sys" style="font-size: 10px; font-weight: 900;">STABLE</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Forensic Radar</div>
+            <div id="diag-hlt-radar" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 15px;">
+                <!-- 15 Chromatic Tiles -->
+                <div class="h-tile" title="LOG"></div><div class="h-tile" title="VID"></div><div class="h-tile" title="AUD"></div><div class="h-tile" title="REC"></div><div class="h-tile" title="LIB"></div>
+                <div class="h-tile" title="DOM"></div><div class="h-tile" title="DB"></div><div class="h-tile" title="SYS"></div><div class="h-tile" title="VOL"></div><div class="h-tile" title="PRF"></div>
+                <div class="h-tile" title="PLY"></div><div class="h-tile" title="STA"></div><div class="h-tile" title="NET"></div><div class="h-tile" title="PRC"></div><div class="h-tile" id="h-tile-hlt" title="HLT" style="background:var(--accent-color);"></div>
+            </div>
+
+            <button onclick="runGlobalHealthAudit()" style="width:100%; height: 35px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(52,152,219,0.3);">
+                <span>INITIATE MASTER AUDIT</span>
+                <span id="hlt-btn-spinner" style="display:none; width:10px; height:10px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation: rotate 1s infinite linear;"></span>
+            </button>
+
+            <style>
+                @keyframes scanLine { 0% { top: -5%; } 100% { top: 105%; } }
+                .h-tile { width: 14px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
+                .h-tile.active { background: #2ecc71; box-shadow: 0 0 5px rgba(46,204,113,0.5); }
+            </style>
+        </div>
+
         <div id="diag-pane-hydration" class="diag-pane" style="display: none;">
             <!-- MASTER SYNC CONSOLE (v1.37.14) -->
             <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:10px; margin-bottom:15px;">
@@ -307,6 +357,61 @@
 
             <div style="margin-top:10px;">
                 <button id="btn-sta-sync" onclick="forcePersistenceSync()" style="width:100%; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Aligns Frontend LocalStorage with Backend Config Master.">FORCE PERSISTENCE SYNC</button>
+            </div>
+        </div>
+
+        <!-- PANE: NETWORK & RPC LATENCY (NET) [v1.37.34] -->
+        <div id="diag-pane-network" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">BRIDGE PERFORMANCE</div>
+                <button onclick="runNetworkAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT RTT</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #3498db;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">AVG. LATENCY</div>
+                    <div id="diag-net-avg" style="font-size: 14px; font-weight: 900; color: #3498db;">--ms</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #2ecc71;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">RPC QUALITY</div>
+                    <div id="diag-net-quality" style="font-size: 14px; font-weight: 900; color: #2ecc71;">--%</div>
+                </div>
+            </div>
+
+            <div id="diag-net-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Network-Audit...</div>
+            </div>
+
+            <div style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:8px; opacity:0.5; text-transform:uppercase; margin-bottom:5px;">Real-time Throughput</div>
+                <div id="diag-net-throughput" style="height:30px; display:flex; align-items:flex-end; gap:2px;"></div>
+            </div>
+        </div>
+
+        <!-- PANE: PROCESS CONTROL & ZOMBIE AUDIT (PRC) [v1.37.35] -->
+        <div id="diag-pane-process" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">WORKER HIERARCHY</div>
+                <button onclick="runProcessAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT WORKERS</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #e74c3c;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">ACTIVE WORKERS</div>
+                    <div id="diag-prc-active" style="font-size: 14px; font-weight: 900; color: #fff;">0</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #ff3366;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">ZOMBIE DETECTED</div>
+                    <div id="diag-prc-zombies" style="font-size: 14px; font-weight: 900; color: #ff3366;">0</div>
+                </div>
+            </div>
+
+            <div id="diag-prc-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Scanning process tree...</div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <button id="btn-prc-purge" onclick="purgeZombieWorkers()" style="width:100%; background:rgba(255,51,102,0.1); color:#ff3366; border:1px solid rgba(255,51,102,0.2); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Surgical termination of all Zombie processes identified in the hierarchy.">PURGE ZOMBIE WORKERS</button>
             </div>
         </div>
 

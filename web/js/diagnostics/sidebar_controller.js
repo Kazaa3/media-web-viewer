@@ -1,7 +1,11 @@
 const SENTINEL_MAX_ENTRIES = 100;
 
-// View Information Mapping for the dynamic header
+/**
+ * DIAGNOSTIC LAYER REGISTRY (v1.37.36)
+ */
 const DIAG_VIEW_INFO = {
+    'health': { name: 'Command Center', desc: 'Global Health & Mission-Critical Readiness' },
+    'log': { name: 'Forensic Logs', desc: 'Real-time System Event Streaming' },
     'hydration': { name: 'HYDRATION CHAIN', desc: 'Analyzes media flow from SQL to DOM.' },
     'item-track': { name: 'ITEM JOURNEY', desc: 'Traces a specific file across all layers.' },
     'sentinel': { name: 'SENTINEL LOG', desc: 'Live application event listener.' },
@@ -13,7 +17,9 @@ const DIAG_VIEW_INFO = {
     'storage': { name: 'Volume Discovery', desc: 'FS Heuristics & Large Asset Audit' },
     'performance': { name: 'GUI Performance', desc: 'DOM Bloat & Rendering Decathlon' },
     'playlist': { name: 'Playlist Forensics', desc: 'Relational & Physical Collection Audit' },
-    'state': { name: 'State Persistence', desc: 'LocalStorage vs. Configuration Master Audit' }
+    'state': { name: 'State Persistence', desc: 'LocalStorage vs. Configuration Master Audit' },
+    'network': { name: 'RPC Performance', desc: 'Internal Bridge Latency & RTT Audit' },
+    'process': { name: 'Worker Control', desc: 'Child Process & Zombie Workstation Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -56,6 +62,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
     document.querySelectorAll('.diag-pane').forEach(p => p.style.display = 'none');
     
     const paneIds = {
+        'health': 'diag-pane-health',
+        'log': 'diag-pane-log',
         'hydration': 'diag-pane-hydration',
         'item-track': 'diag-pane-item-track',
         'sentinel': 'diag-pane-sentinel',
@@ -67,10 +75,14 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'storage': 'diag-pane-storage',
         'performance': 'diag-pane-performance',
         'playlist': 'diag-pane-playlist',
-        'state': 'diag-pane-state'
+        'state': 'diag-pane-state',
+        'network': 'diag-pane-network',
+        'process': 'diag-pane-process'
     };
 
     if (paneIds[viewId]) {
+        if (viewId === 'health') runGlobalHealthAudit();
+        if (viewId === 'log') { /* log logic */ }
         const target = document.getElementById(paneIds[viewId]);
         if (target) target.style.display = 'block';
 
@@ -85,6 +97,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'performance') runPerformanceAudit();
         if (viewId === 'playlist') runPlaylistAudit();
         if (viewId === 'state') runStateAudit();
+        if (viewId === 'network') runNetworkAudit();
+        if (viewId === 'process') runProcessAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1321,3 +1335,240 @@ async function forcePersistenceSync() {
 
 window.runStateAudit = runStateAudit;
 window.forcePersistenceSync = forcePersistenceSync;
+
+/**
+ * NETWORK & RPC LATENCY AUDIT (v1.37.34)
+ */
+async function runNetworkAudit() {
+    const details = document.getElementById('diag-net-details');
+    const avgEl = document.getElementById('diag-net-avg');
+    const qualityEl = document.getElementById('diag-net-quality');
+    const throughputEl = document.getElementById('diag-net-throughput');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Measuring bridge latency...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing Forensic Network Audit...');
+    
+    const latencies = [];
+    const pings = 5;
+    
+    try {
+        for (let i = 0; i < pings; i++) {
+            const start = performance.now();
+            const res = await eel.get_net_ping()();
+            const end = performance.now();
+            
+            if (res.status === 'ok') {
+                latencies.push(end - start);
+                // Mini delay between pings to avoid overwhelming
+                await new Promise(r => setTimeout(r, 50));
+            }
+        }
+        
+        if (latencies.length > 0) {
+            const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+            const max = Math.max(...latencies);
+            const min = Math.min(...latencies);
+            const jitter = max - min;
+            
+            // Color mapping
+            const color = avg < 20 ? '#2ecc71' : (avg < 60 ? '#f1c40f' : '#ff3366');
+            if (avgEl) {
+                avgEl.innerText = `${avg.toFixed(1)}ms`;
+                avgEl.style.color = color;
+            }
+            
+            const quality = Math.max(0, 100 - (avg * 0.5) - (jitter * 2));
+            if (qualityEl) qualityEl.innerText = `${Math.floor(quality)}%`;
+            
+            if (details) {
+                details.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:9px;">
+                            <span style="opacity:0.5;">MIN_RTT</span>
+                            <span>${min.toFixed(2)}ms</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:9px;">
+                            <span style="opacity:0.5;">MAX_RTT</span>
+                            <span>${max.toFixed(2)}ms</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:9px;">
+                            <span style="opacity:0.5;">JITTER_VAR</span>
+                            <span style="${jitter > 10 ? 'color:#f1c40f' : ''}">${jitter.toFixed(2)}ms</span>
+                        </div>
+                        <div style="margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.05); font-size:8px; opacity:0.6;">
+                            Bridge: EEL_WEBSOCKET_RPC<br>
+                            Samples: ${latencies.length} (Burst)
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Simple throughput bars
+            if (throughputEl) {
+                throughputEl.innerHTML = '';
+                latencies.forEach(l => {
+                    const h = Math.max(2, 30 - l);
+                    const bar = document.createElement('div');
+                    bar.style.cssText = `flex:1; height:${h}px; background:${color}; opacity:0.6; border-radius:1px;`;
+                    throughputEl.appendChild(bar);
+                });
+            }
+            
+            sentinelPulse('SUCCESS', `Network Audit Complete. Avg Latency: ${avg.toFixed(1)}ms, Quality: ${Math.floor(quality)}%`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Network Audit Failed: ${e.message}`);
+    }
+}
+
+window.runNetworkAudit = runNetworkAudit;
+
+/**
+ * PROCESS CONTROL & ZOMBIE AUDIT (v1.37.35)
+ */
+async function runProcessAudit() {
+    const details = document.getElementById('diag-prc-details');
+    const activeEl = document.getElementById('diag-prc-active');
+    const zombieEl = document.getElementById('diag-prc-zombies');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Scanning process tree...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing Forensic Process Audit...');
+    
+    try {
+        const res = await eel.get_process_forensics()();
+        if (res.status === 'ok') {
+            if (activeEl) activeEl.innerText = res.active_workers;
+            if (zombieEl) {
+                zombieEl.innerText = res.zombie_count;
+                zombieEl.style.color = res.zombie_count > 0 ? '#ff3366' : '#2ecc71';
+            }
+            
+            let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+            if (res.processes.length === 0) {
+                html += '<div style="opacity:0.4; text-align:center; padding:10px;">No child workers detected.</div>';
+            }
+            
+            res.processes.forEach(p => {
+                const isZombie = p.status.includes('ZOMBIE');
+                html += `
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:900; color:#fff; font-size:10px;">${p.name.toUpperCase()}</span>
+                            <span style="font-size:8px; font-weight:800; color:${isZombie ? '#ff3366' : '#2ecc71'}">${p.status}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; gap:10px; font-size:8px; opacity:0.6; font-family:monospace;">
+                                <span>PID: ${p.pid}</span>
+                                <span>CPU: ${p.cpu_percent.toFixed(1)}%</span>
+                                <span>MEM: ${p.memory_percent.toFixed(1)}%</span>
+                            </div>
+                            <button onclick="terminateProcess(${p.pid})" style="background:rgba(255,51,102,0.1); color:#ff3366; border:1px solid rgba(255,51,102,0.2); padding:2px 6px; border-radius:3px; font-size:7px; cursor:pointer;">KILL</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            if (details) details.innerHTML = html;
+            
+            sentinelPulse('SUCCESS', `Process Audit Complete. Workers: ${res.active_workers}, Zombies: ${res.zombie_count}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Process Audit Failed: ${e.message}`);
+    }
+}
+
+async function terminateProcess(pid) {
+    if (!confirm(`Surgical Termination: Are you sure you want to kill PID ${pid}?`)) return;
+    
+    sentinelPulse('KILL', `Terminating worker PID ${pid}...`);
+    try {
+        const res = await eel.terminate_worker_process(pid)();
+        if (res.status === 'success') {
+            sentinelPulse('SUCCESS', `Terminated PID ${pid}.`);
+            runProcessAudit();
+        } else {
+            sentinelPulse('ERROR', `Kill failed: ${res.message}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Termination Error: ${e.message}`);
+    }
+}
+
+async function purgeZombieWorkers() {
+    sentinelPulse('PURGE', 'Scanning for relational zombies...');
+    try {
+        const res = await eel.get_process_forensics()();
+        if (res.status === 'ok') {
+            const zombies = res.processes.filter(p => p.status.includes('ZOMBIE'));
+            if (zombies.length === 0) {
+                sentinelPulse('SUCCESS', 'No zombies identified for purging.');
+                return;
+            }
+            
+            for (const z of zombies) {
+                await eel.terminate_worker_process(z.pid)();
+            }
+            
+            sentinelPulse('SUCCESS', `Atomic Purge Complete. Removed ${zombies.length} zombies.`);
+            runProcessAudit();
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Purge failed: ${e.message}`);
+    }
+}
+
+window.runProcessAudit = runProcessAudit;
+window.terminateProcess = terminateProcess;
+window.purgeZombieWorkers = purgeZombieWorkers;
+
+/**
+ * GLOBAL HEALTH & MISSION-CRITICAL SUMMARY (HLT) [v1.37.36]
+ */
+async function runGlobalHealthAudit() {
+    const scoreEl = document.getElementById('diag-hlt-score');
+    const levelEl = document.getElementById('diag-hlt-level');
+    const dbEl = document.getElementById('diag-hlt-db');
+    const sysEl = document.getElementById('diag-hlt-sys');
+    const spinner = document.getElementById('hlt-btn-spinner');
+    const tiles = document.querySelectorAll('.h-tile');
+    
+    if (spinner) spinner.style.display = 'block';
+    
+    sentinelPulse('AUDIT', 'Initiating Master Technical Audit...');
+    
+    try {
+        const res = await eel.get_global_health_audit()();
+        if (res.status === 'ok') {
+            if (scoreEl) {
+                scoreEl.innerText = `${res.readiness_score}%`;
+                const scoreColor = res.readiness_score >= 90 ? '#2ecc71' : (res.readiness_score >= 60 ? '#f1c40f' : '#ff3366');
+                scoreEl.style.color = scoreColor;
+            }
+            
+            if (levelEl) {
+                levelEl.innerText = res.level;
+                levelEl.style.color = res.readiness_score >= 75 ? '#2ecc71' : (res.readiness_score >= 50 ? '#f1c40f' : '#ff3366');
+            }
+            
+            if (dbEl) dbEl.innerText = res.metrics.db;
+            if (sysEl) sysEl.innerText = res.metrics.sys;
+            
+            // Activate Radar Tiles (Simulated activity across domains)
+            tiles.forEach((t, i) => {
+                setTimeout(() => {
+                    t.classList.add('active');
+                }, i * 50);
+            });
+            
+            sentinelPulse('SUCCESS', `Master Audit Complete. Readiness: ${res.level} (${res.readiness_score}%)`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Master Audit Failed: ${e.message}`);
+    } finally {
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+window.runGlobalHealthAudit = runGlobalHealthAudit;

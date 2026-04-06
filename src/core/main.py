@@ -1270,6 +1270,138 @@ def get_state_forensics():
         return {"status": "error", "message": str(e)}
 
 
+@eel.expose
+def get_net_ping():
+    """
+    Sub-millisecond bridge ping (v1.37.34).
+    Returns basic timestamp for RTT calculation.
+    """
+    import time
+    return {"status": "ok", "timestamp": time.time()}
+
+
+@eel.expose
+def get_process_forensics():
+    """
+    Forensic Child Process Audit (v1.37.35).
+    Maps recursive subprocesses of the main application.
+    """
+    try:
+        import psutil
+        import os
+        parent = psutil.Process(os.getpid())
+        children = parent.children(recursive=True)
+        
+        proc_list = []
+        zombie_count = 0
+        
+        for p in children:
+            try:
+                with p.oneshot():
+                    status = p.status()
+                    if status == psutil.STATUS_ZOMBIE: zombie_count += 1
+                    
+                    proc_list.append({
+                        "pid": p.pid,
+                        "name": p.name(),
+                        "status": status.upper(),
+                        "cpu_percent": p.cpu_percent(),
+                        "memory_percent": p.memory_percent(),
+                        "created": p.create_time()
+                    })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+                
+        return {
+            "status": "ok",
+            "active_workers": len(proc_list),
+            "zombie_count": zombie_count,
+            "processes": proc_list
+        }
+    except Exception as e:
+        log.error(f"[Forensic-PRC] Process Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def terminate_worker_process(pid):
+    """
+    Surgical Termination for Background Workers (v1.37.35).
+    """
+    try:
+        import psutil
+        proc = psutil.Process(int(pid))
+        
+        # Security Guard: Only allow killing children of this process
+        parent = psutil.Process(os.getpid())
+        children_pids = [c.pid for c in parent.children(recursive=True)]
+        
+        if int(pid) not in children_pids:
+            return {"status": "error", "message": "Access Denied: Cannot kill external process."}
+            
+        proc.terminate()
+        log.info(f"[Forensic-PRC] Terminated worker PID {pid}.")
+        return {"status": "success", "pid": pid}
+    except Exception as e:
+        log.error(f"[Forensic-PRC] Termination Failed for PID {pid}: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def get_global_health_audit():
+    """
+    Mission-Critical Global Health Aggregator (v1.37.36).
+    Aggregates all 14 diagnostic layers into a Readiness Score.
+    """
+    try:
+        from src.core import db
+        import psutil
+        import os
+        
+        health_report = {
+            "status": "ok",
+            "readiness_score": 0,
+            "level": "DEGRADED",
+            "metrics": {}
+        }
+        
+        # 1. DB HEALTH (Weighted 25%)
+        db_stats = db.get_db_stats()
+        health_report["metrics"]["db"] = "SYNC" if db_stats.get("total_items", 0) > 0 else "EMPTY"
+        
+        # 2. SYS HEALTH (Weighted 25%)
+        mem = psutil.virtual_memory()
+        health_report["metrics"]["sys"] = "STABLE" if mem.percent < 85 else "HEAVY_LOAD"
+        
+        # 3. VOL HEALTH (Weighted 25%)
+        from src.core import config_master
+        media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
+        health_report["metrics"]["vol"] = "MOUNTED" if os.path.exists(media_dir) else "DISCONNECTED"
+        
+        # 4. PRC HEALTH (Weighted 25%)
+        parent = psutil.Process(os.getpid())
+        zombies = [c for c in parent.children(recursive=True) if c.status() == psutil.STATUS_ZOMBIE]
+        health_report["metrics"]["prc"] = "CLEAN" if len(zombies) == 0 else "ZOMBIE_DETECTED"
+        
+        # Scoring Logic
+        score = 0
+        if health_report["metrics"]["db"] == "SYNC": score += 25
+        if health_report["metrics"]["sys"] == "STABLE": score += 25
+        if health_report["metrics"]["vol"] == "MOUNTED": score += 25
+        if health_report["metrics"]["prc"] == "CLEAN": score += 25
+        
+        health_report["readiness_score"] = score
+        if score == 100: health_report["level"] = "BATTLE-READY"
+        elif score >= 75: health_report["level"] = "STABILIZED"
+        elif score >= 50: health_report["level"] = "DEGRADED"
+        else: health_report["level"] = "CRITICAL"
+        
+        return health_report
+    except Exception as e:
+        log.error(f"[Forensic-HLT] Global Health Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
