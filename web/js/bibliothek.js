@@ -12,7 +12,6 @@ let librarySearch = '';
 let hasAutoScanned = false; // Prevent infinite scan loops
 let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
-window.allLibraryItems = allLibraryItems;
 console.log(">>> [Eel-Status] Bridge found:", (typeof eel !== 'undefined'));
 console.log(">>> [JS-LOAD] bibliothek.js initialized.");
 if (typeof mwv_trace_render === 'function') mwv_trace_render('DATA-LIB', 'STAGE-INIT');
@@ -56,9 +55,9 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
             RecoveryManager.checkAndHydrate();
         } else {
             // Minimal fallback if manager is missing
-            const realItems = allLibraryItems.filter(i => !i.is_mock);
+            const realItems = (window.__mwv_all_library_items || []).filter(i => !i.is_mock);
             if (realItems.length === 0) {
-                allLibraryItems = [{
+                window.__mwv_all_library_items = [{
                     id: 'fallback-emergency',
                     name: '[ERROR] RecoveryManager Missing',
                     category: 'Audio',
@@ -125,7 +124,7 @@ async function renderLibrary() {
     }
 
     // --- PHASE 1: FILTERING (v1.35.68 Hardened) ---
-    console.warn(`[FE-AUDIT] Starting Render for ${allLibraryItems.length} items. MainCat: ${libraryFilter}, SubCat: ${librarySubFilter}, Search: "${librarySearch}"`);
+    console.warn(`[FE-AUDIT] Starting Render for ${(window.__mwv_all_library_items || []).length} items. MainCat: ${libraryFilter}, SubCat: ${librarySubFilter}, Search: "${librarySearch}"`);
     
     // Start with all items (using global state export v1.35.68)
     let projectedItems = [...(window.__mwv_all_library_items || [])];

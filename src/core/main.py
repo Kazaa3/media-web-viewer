@@ -4232,50 +4232,45 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     # Stages 1-3 are handled directly by the early-return logic above.
     final_media = hydration_stage.get(audit_stage, filtered_media)
     
-    # Hybrid / Stage 3 Fusion (v1.35.68)
-    # Always include mocks for the 'Both' or 'Mock' filters in the UI
+    # 2. Hybrid Fusion (v1.35.68)
+    # Inject mock assets for diagnostic parity IF 'Mock' or 'Both' is active 
+    # (Filtered later by frontend if needed)
     try:
-        log.info(f"[BD-AUDIT] Injecting Hybrid Diagnostic Mocks. PID: {pid}")
         realistic_mocks = [
-            {
-                "id": "mock-1",
-                "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
-                "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
-                "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
-            },
-            {
-                "id": "mock-2",
-                "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
-                "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
-                "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
-            },
-            {
-                "id": "mock-3",
-                "name": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner feat. D-Flame & Illo 77",
-                "album": "Boombule: Bambule Remixed", "category": "audio", "path": "/media/mock/beginner.mp3",
-                "duration": 242, "is_mock": True,
-                "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule: Bambule Remixed"}
-            }
+                {
+                    "id": "mock-1",
+                    "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
+                    "category": "audio", "path": "/media/mock/megaloh.mp3", "duration": 215, "is_mock": True,
+                    "tags": {"title": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape"}
+                },
+                {
+                    "id": "mock-2",
+                    "name": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht",
+                    "category": "audio", "path": "/media/mock/benjie.mp3", "duration": 198, "is_mock": True,
+                    "tags": {"title": "Einfach & Leicht", "artist": "Benjie", "album": "Schatten & Licht"}
+                },
+                {
+                    "id": "mock-3",
+                    "name": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner feat. D-Flame & Illo 77",
+                    "album": "Boombule: Bambule Remixed", "category": "audio", "path": "/media/mock/beginner.mp3",
+                    "duration": 242, "is_mock": True,
+                    "tags": {"title": "Hammerhart (Denyo77 remix)", "artist": "Absolute Beginner", "album": "Boombule: Bambule Remixed"}
+                }
         ]
-        final_media.extend(realistic_mocks)
-    except Exception as e:
-        log.warning(f"[BD-AUDIT] Failed to inject hybrid mocks: {e}")
-    
-    log.info(f"[BD-AUDIT] Hydration Complete. Stage: {audit_stage} | Out: {len(final_media)}/{count_total}")
-
-    return {
-        "media": final_media,
-        "db_count": count_total,
-        "status": "synchronized",
-        "audit": {
-            "stage": audit_stage,
-            "pid": pid,
-            "path": db_path,
-            "fs": fs_audit,
-            "dropped_reasons": logic_audit.get("dropped_reasons", {}),
-            "allowed_cats": logic_audit.get("allowed_cats", [])
+        
+        final_media = filtered_media + realistic_mocks
+        
+        log.info(f"[BD-AUDIT] STAGE 3: Hybrid Fusion. Real: {len(filtered_media)}, Mock: {len(realistic_mocks)} | Out: {len(final_media)}")
+        
+        return {
+            "media": final_media,
+            "db_count": count_total,
+            "status": "synchronized",
+            "audit": {"stage": 3, "pid": pid, "path": db_path, "fs": fs_audit, "logic": logic_audit}
         }
-    }
+    except Exception as e:
+        log.error(f"[BD-AUDIT] FUSION ERROR: {e}")
+        return {"media": filtered_media, "db_count": count_total, "status": "partial", "error": str(e)}
 
 
 @eel.expose
