@@ -74,15 +74,22 @@ function syncGlobalDiagnosticsNav(viewId = 'debug-db') {
 
 function applyDiagnosticsSidebarState(isVisible) {
     const sb = document.getElementById('global-diagnostics-sidebar');
-    const btn = document.getElementById('footer-btn-diag-overlay');
+    const footerBtn = document.getElementById('footer-btn-diag-overlay');
+    const headerBtn = document.getElementById('header-btn-diag-overlay');
+    
     if (!sb) return false;
 
     diagnosticsSidebarVisible = !!isVisible;
     sb.classList.toggle('active', diagnosticsSidebarVisible);
 
-    if (btn) {
-        btn.classList.toggle('active', diagnosticsSidebarVisible);
-        btn.setAttribute('aria-pressed', diagnosticsSidebarVisible ? 'true' : 'false');
+    // Sync Footer Button
+    if (footerBtn) {
+        footerBtn.classList.toggle('active', diagnosticsSidebarVisible);
+    }
+    
+    // Sync Header Button (v1.37.06)
+    if (headerBtn) {
+        headerBtn.classList.toggle('active', diagnosticsSidebarVisible);
     }
 
     localStorage.setItem(DIAGNOSTICS_SIDEBAR_STORAGE_KEY, diagnosticsSidebarVisible);
