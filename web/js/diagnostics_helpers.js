@@ -798,11 +798,11 @@ function notifyDiagnosticChange(btnId, type, state) {
 
     switch(type) {
         case 'DIAG': 
-            label = "Nuclear Recovery Mode"; 
+            label = "Nuclear Recovery Suite"; 
             desc = " (S1-S15 Stages)"; 
             break;
         case 'NATV': 
-            label = "Native HTML5 Engine"; 
+            label = "Native Player-Engine"; 
             desc = " (Kein Transcoding)"; 
             break;
         case 'HIDB': 
@@ -811,11 +811,11 @@ function notifyDiagnosticChange(btnId, type, state) {
             break;
         case 'RAW':  
             label = "Rohdaten-Modus";    
-            desc = " (Kein Cat-Mapping)"; 
+            desc = " (Kategorie-Filter deaktiviert)"; 
             break;
         case 'BYPS': 
             label = "DB-Bypass";         
-            desc = " (Nur Test-Mocks)"; 
+            desc = " (Test-Mocks aktiv)"; 
             break;
     }
 
@@ -833,6 +833,7 @@ async function toggleRawMode() {
     const newState = !window.CONFIG.raw_mode;
     window.CONFIG.raw_mode = newState;
     window.__mwv_raw_mode = newState; // Keep legacy compat
+    localStorage.setItem('mwv_raw_mode', newState);
     
     notifyDiagnosticChange(null, 'RAW', newState);
     
@@ -853,6 +854,7 @@ function toggleBypassDb() {
     const newState = !window.CONFIG.bypass_db;
     window.CONFIG.bypass_db = newState;
     window.__mwv_bypass_db = newState; // Keep legacy compat
+    localStorage.setItem('mwv_bypass_db', newState);
     
     notifyDiagnosticChange(null, 'BYPS', newState);
     
@@ -1012,6 +1014,9 @@ async function auditSwitchStage(stage) {
             updateSyncAnchor(lib.db_count || 0, lib.media ? lib.media.length : 0, fs.size);
         }
 
+        // Logic Audit Visualization (v1.37.06 - SSOT)
+        renderLogicAuditSummary(audit.logic_audit || {});
+
         // Logic Audit Visualization (0-Item Fix Visibility)
         const reasonsViewport = document.getElementById('sb-dropped-reasons-viewport');
         if (reasonsViewport) {
@@ -1064,16 +1069,20 @@ function updateDiagBtnState(btn, isActive) {
     btn.classList.toggle('active', isActive);
 }
 
-// Initial state sync for buttons
+// Initial state sync for buttons (v1.37.06 Persistence)
 function syncDiagBtnStates() {
     const flags = {
-        'DIAG': (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear),
-        'HIDB': window.__mwv_hide_db,
-        'RAW': window.__mwv_raw_mode,
-        'BYPS': window.__mwv_bypass_db || window.__mwv_bypass_mode,
-        'NATV': window.__mwv_force_native || window.__mwv_natv_mode,
+        'DIAG': (localStorage.getItem('mwv_diagnostic_mode') === 'true' || (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)),
+        'HIDB': (localStorage.getItem('mwv_hide_db') === 'true' || window.__mwv_hide_db),
+        'RAW': (localStorage.getItem('mwv_raw_mode') === 'true' || window.__mwv_raw_mode),
+        'BYPS': (localStorage.getItem('mwv_bypass_db') === 'true' || window.__mwv_bypass_db),
+        'NATV': (localStorage.getItem('mwv_force_native') === 'true' || window.__mwv_natv_mode),
         'TEST': false // Placeholder
     };
+    
+    // Push back into runtime config if missing
+    if (flags.RAW) { window.CONFIG.raw_mode = true; window.__mwv_raw_mode = true; }
+    if (flags.BYPS) { window.CONFIG.bypass_db = true; window.__mwv_bypass_db = true; }
 
     Object.entries(flags).forEach(([key, active]) => {
         // Sync Player Sidebar Buttons (Classic)
@@ -1088,6 +1097,75 @@ function syncDiagBtnStates() {
     });
 }
 
+/**
+ * Visualizes the backend's filter-drop reasons in the diagnostics sidebar.
+ */
+function renderLogicAuditSummary(logicAudit) {
+    const viewport = document.getElementById('diag-logic-audit-viewport');
+    if (!viewport) return;
+
+    const dr = logicAudit.dropped_reasons || {};
+    const total = logicAudit.dropped_total || 0;
+
+    if (total === 0 && logicAudit.kept > 0) {
+        viewport.innerHTML = `<div style="color: #2ecc71; padding: 10px; text-align: center; font-weight: 800;">PASS: All ${logicAudit.kept} items kept.</div>`;
+        return;
+    }
+
+    if (total === 0 && !logicAudit.kept) {
+        viewport.innerHTML = `<div style="padding: 10px; text-align: center; opacity: 0.5;">No active library data to audit.</div>`;
+        return;
+    }
+
+    let html = `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px;">
+                    <div style="color: #ff3366; font-weight: 900; font-size: 11px;">DROPPED: ${total} ITEMS</div>
+                    <div style="font-size: 9px; opacity: 0.7;">Backend filter chain rejected ${total} records.</div>
+                </div>`;
+
+    for (const [reason, count] of Object.entries(dr)) {
+        if (count > 0) {
+            const label = reason.replace('_mismatch', '').toUpperCase();
+            html += `<div style="display: flex; justify-content: space-between; padding: 4px 8px; border-radius: 4px; margin-bottom: 2px; background: rgba(255,51,102,0.05);">
+                        <span style="opacity: 0.8;">${label}</span>
+                        <span style="color: #ff3366; font-weight: 900;">${count}</span>
+                     </div>`;
+        }
+    }
+
+    viewport.innerHTML = html;
+}
+
+/**
+ * Emergency recovery: Bypasses all backend filters to hydrate the library.
+ */
+async function forceSyncAll() {
+    if (typeof showStatusNotification === 'function') {
+        showStatusNotification('Nuclear Recovery: Bypassing Filters...', 'warn');
+    }
+
+    try {
+        const result = await eel.force_sync_all()();
+        if (result && result.status === 'raw-recovery') {
+            // Manually inject into library state
+            if (typeof renderLibrary === 'function') {
+                renderLibrary(result.media);
+            }
+            
+            // Update sidebar counts
+            updateSyncAnchor(result.db_count, result.media.length);
+            
+            if (typeof showStatusNotification === 'function') {
+                showStatusNotification(`RECOVERED: ${result.media.length} items found!`, 'success');
+            }
+            console.log("[RECOVERY] Filter bypass success:", result.media.length, "items.");
+        }
+    } catch (e) {
+        console.error("[RECOVERY] Force Sync Failed:", e);
+    }
+}
+
+window.renderLogicAuditSummary = renderLogicAuditSummary;
+window.forceSyncAll = forceSyncAll;
 window.auditSwitchStage = auditSwitchStage;
 window.updateDiagBtnState = updateDiagBtnState;
 window.syncDiagBtnStates = syncDiagBtnStates;

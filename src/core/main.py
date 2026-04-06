@@ -3417,6 +3417,41 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
 
 
 @eel.expose
+def get_library_audit_summary():
+    """
+    @brief Returns a high-level summary of the filter chain performance.
+    @details Used for the diagnostics sidebar to show why items are dropped.
+    """
+    from src.core import db
+    all_media = db.get_all_media()
+    raw_count = len(all_media)
+    filtered, audit = _apply_library_filters(all_media, force_raw=False)
+    
+    return {
+        "status": "ok",
+        "raw_count": raw_count,
+        "filtered_count": len(filtered),
+        "dropped_reasons": audit.get("dropped_reasons", {}),
+        "allowed_cats": audit.get("allowed_cats", [])
+    }
+
+
+@eel.expose
+def force_sync_all():
+    """
+    @brief Emergency recovery function to bypass all filters and sync EVERYTHING to the UI.
+    """
+    from src.core import db
+    log.warning("[RECOVERY] FORCE SYNC ALL triggered. Bypassing all filters (RAW MODE).")
+    all_media = db.get_all_media()
+    return {
+        "media": all_media,
+        "db_count": len(all_media),
+        "status": "raw-recovery"
+    }
+
+
+@eel.expose
 def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name", force_raw: bool = False) -> Dict[str, Any]:
     """
     @brief Advanced filtering for the media library.

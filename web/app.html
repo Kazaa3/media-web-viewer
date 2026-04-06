@@ -345,13 +345,14 @@
                 </div>
             </div>
 
-            <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px;">
-                <div class="diagnostic-label">Action Center</div>
+            <div class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px; border: 1px solid rgba(255, 51, 102, 0.3);">
+                <div class="diagnostic-label" style="color: #ff3366;">Emergency Recovery</div>
                 <div class="diag-action-grid">
-                    <button class="diag-action-btn" onclick="refreshLibrary(); showStatusNotification('Library Sync Triggered', 'info');">MANUAL SYNC</button>
-                    <button class="diag-action-btn" onclick="scan(null, true); showStatusNotification('Full Scan Triggered', 'warn');">DEEP SCAN</button>
+                    <button class="diag-action-btn" style="background: rgba(255, 51, 102, 0.2); border-color: #ff3366; color: #ff3366; font-weight: 800;" 
+                        onclick="if(typeof forceSyncAll === 'function') forceSyncAll();">FORCE SYNC ALL</button>
+                    <button class="diag-action-btn" onclick="refreshLibrary();">MANUAL SYNC</button>
+                    <button class="diag-action-btn" onclick="scan(null, true);">DEEP SCAN</button>
                     <button class="diag-action-btn" onclick="if(typeof probeDataFlow === 'function') probeDataFlow();">DATA FLOW PROBE</button>
-                    <button class="diag-action-btn" onclick="if(typeof clearDebugConsole === 'function') clearDebugConsole();">CLEAR LOGS</button>
                 </div>
             </div>
 
@@ -366,6 +367,14 @@
                         <div class="diag-caption">GUI Items</div>
                         <div id="diag-gui-count-sidebar" class="diag-status-value">--</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- New Logic Audit Section (v1.37.06) -->
+            <div id="diag-logic-audit-container" class="diagnostic-sidebar-section" style="margin-top: 16px; border-radius: 14px; background: rgba(0,0,0,0.15);">
+                <div class="diagnostic-label">Logic Audit (Filter Pass)</div>
+                <div id="diag-logic-audit-viewport" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-secondary); line-height: 1.4;">
+                    <div style="padding: 10px; text-align: center; opacity: 0.5;">No audit data captured.</div>
                 </div>
             </div>
 

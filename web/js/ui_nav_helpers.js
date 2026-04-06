@@ -139,11 +139,16 @@ async function toggleDiagnosticsFlag(flagId) {
             return;
         case 'NATV':
             if (typeof toggleForceNative === 'function') toggleForceNative();
-            window.__mwv_force_native = localStorage.getItem('mwv_force_native') === 'true';
-            if (typeof notifyDiagnosticChange === 'function') notifyDiagnosticChange(null, 'NATV', window.__mwv_force_native);
+            const natvState = localStorage.getItem('mwv_force_native') === 'true';
+            window.__mwv_force_native = natvState;
+            window.__mwv_natv_mode = natvState;
+            if (typeof notifyDiagnosticChange === 'function') notifyDiagnosticChange(null, 'NATV', natvState);
             break;
         case 'HIDB':
             if (typeof toggleHideDb === 'function') toggleHideDb();
+            const hidbState = localStorage.getItem('mwv_hide_db') === 'true';
+            window.__mwv_hide_db = hidbState;
+            if (typeof notifyDiagnosticChange === 'function') notifyDiagnosticChange(null, 'HIDB', hidbState);
             break;
         case 'RAW':
             if (typeof toggleRawMode === 'function') await toggleRawMode();
