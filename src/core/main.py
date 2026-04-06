@@ -4054,6 +4054,15 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
                 # [DIAGNOSTIC] Aggressive logging for the first 50 drops (v1.35.68)
                 if dropped_reasons["category_mismatch"] <= 50: 
                     log.warning(f"[BD-AUDIT] Dropped '{item.get('name')}' - Category '{cat}' not in {allowed_internal_cats}")
+                
+                # [v1.35.68-C] AUTO-RECOVERY: If it's a known extension but wrong category, fix it!
+                ext = os.path.splitext(str(item.get('path', '')))[1].lower()
+                if ext == '.mp3' or ext == '.flac':
+                    log.info(f"[BD-AUDIT] Auto-restoring '{item.get('name')}' to 'audio' due to extension {ext}")
+                    item['category'] = 'audio'
+                    filtered.append(item)
+                    continue
+                
                 continue
 
         # 2. Search check
@@ -4194,7 +4203,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     # Apply production filters unless force_raw is requested
     filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw)
     
-    # [EMERGENCY RECOVERY] If filtering yields 0 but DB has items, force a raw fallback
+    # --- EMERGENCY RECOVERY ---
+    # Trigger ONLY if real filtered_media is 0 but DB has data
     if len(filtered_media) == 0 and count_total > 0:
         log.warning(f"[BD-RECOVERY] Filter Collision: {count_total} items in DB but 0 visible. Forcing Emergency Bypass.")
         filtered_media = all_media
@@ -4203,6 +4213,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
         status = "synchronized" if not force_raw else "raw"
 
     # --- STAGE 3: HYBRID FUSION (Diagnostic Parity) ---
+    # Add mocks AFTER the recovery check so they don't block the bypass
     realistic_mocks = [
         {
             "id": "mock-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
@@ -4216,7 +4227,6 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
         }
     ]
     
-    # We include mocks for visual parity in diagnostic sessions
     final_media = filtered_media + (realistic_mocks if audit_stage == 3 or not force_raw else [])
     
     return {

@@ -406,6 +406,7 @@ def get_all_media_items():
     media_list = []
     for row in rows:
         media_list.append({
+            'id': row['id'],
             'name': row['name'],
             'path': row['path'],
             'type': row['type'],
