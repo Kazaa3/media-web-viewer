@@ -19,7 +19,8 @@ const DIAG_VIEW_INFO = {
     'playlist': { name: 'Playlist Forensics', desc: 'Relational & Physical Collection Audit' },
     'state': { name: 'State Persistence', desc: 'LocalStorage vs. Configuration Master Audit' },
     'network': { name: 'RPC Performance', desc: 'Internal Bridge Latency & RTT Audit' },
-    'process': { name: 'Worker Control', desc: 'Child Process & Zombie Workstation Audit' }
+    'process': { name: 'Worker Control', desc: 'Child Process & Zombie Workstation Audit' },
+    'driver': { name: 'Hardware Accel', desc: 'GPU & Transcoder Capability Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -77,7 +78,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'playlist': 'diag-pane-playlist',
         'state': 'diag-pane-state',
         'network': 'diag-pane-network',
-        'process': 'diag-pane-process'
+        'process': 'diag-pane-process',
+        'driver': 'diag-pane-driver'
     };
 
     if (paneIds[viewId]) {
@@ -99,6 +101,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'state') runStateAudit();
         if (viewId === 'network') runNetworkAudit();
         if (viewId === 'process') runProcessAudit();
+        if (viewId === 'driver') runHardwareAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1572,3 +1575,63 @@ async function runGlobalHealthAudit() {
 }
 
 window.runGlobalHealthAudit = runGlobalHealthAudit;
+
+/**
+ * UNIFIED DRIVER & HARDWARE AUDIT (v1.37.37)
+ */
+async function runHardwareAudit() {
+    const gpuTypeEl = document.getElementById('diag-drv-gpu-type');
+    const gpuUsageEl = document.getElementById('diag-drv-gpu-usage');
+    const encodersEl = document.getElementById('diag-drv-encoders');
+    const diskTypeEl = document.getElementById('diag-drv-disk-type');
+    const pcieEl = document.getElementById('diag-drv-pcie');
+    const matrixEl = document.getElementById('diag-codec-matrix');
+    
+    sentinelPulse('AUDIT', 'Scanning Hardware Transcoding Hub...');
+    
+    try {
+        const res = await eel.get_hardware_forensics()();
+        if (res.status === 'ok') {
+            const hw = res.hardware;
+            if (gpuTypeEl) gpuTypeEl.innerText = hw.gpu_type.toUpperCase();
+            if (gpuUsageEl) gpuUsageEl.innerText = `${hw.gpu_usage.toFixed(1)}%`;
+            
+            // Render Encoders
+            if (encodersEl) {
+                if (hw.encoders && hw.encoders.length > 0) {
+                    encodersEl.innerHTML = hw.encoders.map(e => `
+                        <span style="font-size: 8px; padding: 2px 8px; background: rgba(241, 196, 15, 0.2); border: 1px solid rgba(241, 196, 15, 0.4); border-radius: 4px; color: #f1c40f; font-weight: 800;">${e.toUpperCase()}</span>
+                    `).join('');
+                } else {
+                    encodersEl.innerHTML = '<span style="font-size: 8px; opacity:0.4;">SOFTWARE ONLY</span>';
+                }
+            }
+            
+            if (diskTypeEl) diskTypeEl.innerText = hw.disk_type;
+            if (pcieEl) pcieEl.innerText = hw.pcie_gen;
+            
+            // Render Codec Matrix
+            if (matrixEl) {
+                const codecs = [
+                    { name: 'H.264', status: hw.encoders.some(e => e.includes('h264') || e.includes('nvenc') || e.includes('vaapi') || e.includes('qsv')) },
+                    { name: 'HEVC', status: hw.encoders.some(e => e.includes('hevc')) },
+                    { name: 'AV1', status: hw.encoders.some(e => e.includes('av1')) },
+                    { name: 'VP9', status: hw.encoders.some(e => e.includes('vp9')) }
+                ];
+                
+                matrixEl.innerHTML = codecs.map(c => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.03); padding:2px 0;">
+                        <span>${c.name}</span>
+                        <span style="color:${c.status ? '#2ecc71' : 'rgba(255,255,255,0.2)'}; font-weight:900;">${c.status ? '✓' : '✗'}</span>
+                    </div>
+                `).join('');
+            }
+            
+            sentinelPulse('SUCCESS', `Hardware Audit Complete. GPU: ${hw.gpu_type}, Encoders: ${hw.encoders.join(',')}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Hardware Audit Failed: ${e.message}`);
+    }
+}
+
+window.runHardwareAudit = runHardwareAudit;
