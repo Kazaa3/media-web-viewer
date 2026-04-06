@@ -71,23 +71,21 @@ function toggleSidebar() {
 }
 
 /**
- * Applies the current sidebarVisible state to the DOM.
+ * Applies the current sidebarVisible state to the DOM (v1.36.00 CSS-driven).
  */
 function applySidebarState() {
     const sidebar = document.getElementById('main-sidebar');
-    const splitter = document.getElementById('main-splitter');
     if (!sidebar) return;
 
-    sidebar.style.width = sidebarVisible ? '300px' : '0px';
-    sidebar.style.minWidth = sidebarVisible ? '200px' : '0px';
-    sidebar.style.opacity = sidebarVisible ? '1' : '0';
-    sidebar.style.pointerEvents = sidebarVisible ? 'all' : 'none';
-
-    if (splitter) splitter.style.display = sidebarVisible ? 'block' : 'none';
+    // Toggle the .collapsed class for robust state management
+    sidebar.classList.toggle('collapsed', !sidebarVisible);
 
     // Update toggle button state if it exists
     const toggleBtn = document.getElementById('sidebar-toggle-btn');
-    if (toggleBtn) toggleBtn.classList.toggle('active', sidebarVisible);
+    if (toggleBtn) {
+        toggleBtn.classList.toggle('active', sidebarVisible);
+        toggleBtn.style.opacity = sidebarVisible ? '1' : '0.6';
+    }
 }
 
 /**

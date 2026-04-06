@@ -379,6 +379,16 @@ def trigger_factory_reset():
     from src.core.db import factory_reset
     return factory_reset()
 
+@eel.expose
+def trigger_db_reconnect():
+    """
+    Exposed wrapper to re-initialize the database connection (v1.36.02).
+    """
+    log.warning("[System] Database Reconnect triggered via Eel.")
+    from src.core.db import init_db
+    init_db()
+    return True
+
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)

@@ -330,10 +330,18 @@
                                 <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">System Flags</div>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;"
                                     onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;"
+                                    onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;"
+                                    onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;"
                                     onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;"
-                                    onclick="if(typeof toggleBypassDb === 'function') { toggleBypassDb(); updateDiagBtnState(this, window.__mwv_bypass_db); }">FORCE MOCK</button>
+                                    onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-AUDIT" style="font-size: 10px;"
+                                    onclick="if(typeof window.runAuditStage === 'function') { window.runAuditStage(1); }">AUDIT</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-TEST" style="font-size: 10px;"
+                                    onclick="if(typeof window.runTestStage === 'function') { window.runTestStage(1); }">TEST</button>
                             </div>
 
                             <div class="diagnostic-label">Logic Audit (Dropped Reasons)</div>
@@ -736,36 +744,70 @@
                     <line x1="18.36" y1="4.22" x2="19.78" y2="5.64" />
                 </svg>
             </button>
-
-            <!-- Sidebar Toggle (only functional in Tools tab) -->
-            <button id="btn-sidebar-toggle" onclick="toggleOptionsSidebar()" title="Linke Sidebar ein/ausblenden"
-                style="background: transparent; border: none; padding: 4px; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <line x1="9" y1="3" x2="9" y2="21" />
-                </svg>
-            </button>
-
-            <button onclick="toggleMenuBar()" class="tab-btn sm" title="Toggle Sidebar/Menu"
-                style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-            </button>
-            <button onclick="const sbDetails = document.getElementById('player-detailed-sidebar'); if(sbDetails) { sbDetails.classList.toggle('active'); sbDetails.style.display = sbDetails.classList.contains('active') ? 'block' : 'none'; if(sbDetails.classList.contains('active')) switchSidebarView('details'); }"
-                class="tab-btn sm" title="Toggle Media Details"
-                style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <!-- v1.37.00 Classic Google Footer Restoration -->
+    <footer class="layout-footer">
+        <!-- Slot 1: Left Branding & Media info -->
+        <div class="footer-left-media">
+            <div class="footer-media-thumb">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="9" y1="3" x2="9" y2="21"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
                 </svg>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <span style="font-weight: 800; color: #eee; font-size: 12px; letter-spacing: -0.3px;">Media Library</span>
+                <span style="font-size: 10px; color: #666;">Ready for playback • v1.37.00</span>
+            </div>
+        </div>
+
+        <!-- Slot 2: Vertical Triple-Anchor Box -->
+        <div id="footer-anchor-box" class="footer-anchor-box" title="Data Parity Monitor [FS | DB | GUI]">
+            <span id="sb-parity-fs">FS: --</span>
+            <span id="sb-parity-db">DB: --</span>
+            <span id="sb-parity-gui">GUI: --</span>
+        </div>
+
+        <!-- Slot 3: Classic Actions (Color-Coded) -->
+        <div class="footer-actions-classic">
+            <div class="footer-status-text">
+                <div id="classic-status-dot" class="status-dot"></div>
+                <span>Synchronized</span>
+            </div>
+
+            <button class="footer-classic-btn flags" onclick="if(typeof window.toggleHideDb === 'function') window.toggleHideDb();" title="Toggle System Flags">FLAGS</button>
+            <button class="footer-classic-btn blue" onclick="if(typeof syncLibrary === 'function') syncLibrary();" title="Quick Scan Local Media">SCAN</button>
+            <button class="footer-classic-btn blue" onclick="if(typeof syncLibrary === 'function') syncLibrary();" title="Force Database Sync">SYNC</button>
+            <button class="footer-classic-btn yellow" onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();" title="Toggle Trace Logs">LOGS</button>
+            
+            <div style="background: #222; padding: 2px 8px; border-radius: 4px; display: flex; align-items: center; gap: 8px; margin-left: 5px;">
+                <span style="font-size: 9px; color: #2ecc71; font-weight: 800;">DB</span>
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 5px #2ecc71;"></div>
+                <button class="footer-classic-btn" style="color: #666; font-size: 9px; padding: 0;" onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
+            </div>
+        </div>
+
+        <!-- Slot 4: Right Tool Cluster -->
+        <div class="footer-icon-cluster">
+            <button class="footer-tool-btn" title="Detailed Options">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
-            <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.add('active'); sbDiag.style.display = 'block'; switchSidebarView('diagnostics'); }"
-                class="tab-btn sm" title="Open Diagnostics Sidebar"
-                style="padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(231, 76, 60, 0.05); color: #e74c3c;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <button class="footer-tool-btn" title="Toggle Theme">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
+            <button class="footer-tool-btn" title="Grid Layout">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+            </button>
+            <button onclick="toggleMenuBar()" class="footer-tool-btn" style="background: #222; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+            </button>
+            <button class="footer-tool-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </button>
+            <!-- Technical Pulsar (Sidebar Toggle) -->
+            <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.add('active'); sbDiag.style.display = 'block'; if(typeof switchSidebarView === 'function') switchSidebarView('diagnostics'); }"
+                class="footer-tool-btn" style="color: #ff3366;" title="Open Technical Sidebar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
             </button>

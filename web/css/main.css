@@ -102,14 +102,10 @@ body {
     display: none !important;
 }
 
-.layout-container {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-}
-
+/* --- v1.36.00 Sidebar Stability --- */
 .sidebar {
-    width: 300px;
+    width: 280px;
+    min-width: 280px;
     background-color: var(--bg-sidebar);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -118,7 +114,17 @@ body {
     flex-direction: column;
     padding: 32px 20px;
     overflow-y: auto;
-    transition: width var(--transition-fluid);
+    transition: all var(--transition-fluid);
+    flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 32px 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    border-right: none !important;
 }
 
 .tab-content {
@@ -667,23 +673,124 @@ body {
     background: var(--bg-primary);
 }
 
-/* --- Fixed Footer --- */
+/* --- v1.37.00 Classic Google Footer Restoration --- */
 .layout-footer {
-    height: 48px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border-color);
-    padding: 0 24px;
+    height: 52px;
+    background: #111;
+    border-top: 1px solid #222;
+    padding: 0 15px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 13px;
+    font-size: 11px;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    color: var(--text-secondary);
+    color: #999;
+}
+
+/* Slot 1: Left Thumbnail + Title */
+.footer-left-media {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    min-width: 250px;
+}
+
+.footer-media-thumb {
+    width: 40px;
+    height: 40px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #222;
+}
+
+/* Slot 2: Vertical Status Box (The Anchor) */
+.footer-anchor-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: rgba(46, 204, 113, 0.05);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    line-height: 1.1;
+    min-width: 45px;
+    color: #2ecc71;
+}
+
+/* Slot 3: Actions Cluster */
+.footer-actions-classic {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 20px;
+    border-left: 1px solid #222;
+    margin-left: 15px;
+}
+
+.footer-classic-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.2px;
+    padding: 4px 6px;
+    transition: opacity 0.2s;
+}
+
+.footer-classic-btn:hover {
+    opacity: 0.8;
+}
+
+.footer-classic-btn.flags { color: #e91e63; }
+.footer-classic-btn.blue { color: #3498db; }
+.footer-classic-btn.yellow { color: #f1c40f; }
+
+.footer-status-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f1c40f; /* Synchronized / Warning Color */
+    font-weight: 700;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 5px currentColor;
+}
+
+/* Slot 4: Right Icon Cluster */
+.footer-icon-cluster {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.footer-tool-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.footer-tool-btn:hover {
+    color: #aaa;
 }
 
 /* --- Program Menu Bar (Modern v1.34 Toggleable) --- */
