@@ -384,6 +384,53 @@ def get_library():
     """Alias for main.py compatibility (v1.35.68)."""
     return get_all_media_items()
 
+def row_to_dict(row):
+    """
+    @brief Unified helper to convert a database row to a standardized media dictionary.
+    """
+    try:
+        tags = json.loads(row['tags']) if row['tags'] else {}
+    except (json.JSONDecodeError, TypeError):
+        tags = {}
+        
+    try:
+        full_tags = json.loads(row['full_tags']) if row['full_tags'] else {}
+    except (json.JSONDecodeError, TypeError):
+        full_tags = {}
+
+    return {
+        'id': row['id'],
+        'name': row['name'],
+        'path': row['path'],
+        'type': row['type'],
+        'duration': row['duration'],
+        'category': row['category'],
+        'extension': row['extension'],
+        'container': row['container'],
+        'tag_type': row['tag_type'],
+        'codec': row['codec'],
+        'art_path': row['art_path'],
+        'has_artwork': bool(row['has_artwork']),
+        'is_transcoded': bool(row['is_transcoded']),
+        'transcoded_format': row['transcoded_format'],
+        'tags': tags,
+        'full_tags': full_tags,
+        'media_type': row['media_type'] if 'media_type' in row.keys() else 'unknown',
+        'subtype': row['subtype'] if 'subtype' in row.keys() else 'unknown',
+        'file_type': row['file_type'] if 'file_type' in row.keys() else 'unknown',
+        'isbn': row['isbn'] if 'isbn' in row.keys() else None,
+        'imdb': row['imdb'] if 'imdb' in row.keys() else None,
+        'tmdb': row['tmdb'] if 'tmdb' in row.keys() else None,
+        'discogs': row['discogs'] if 'discogs' in row.keys() else None,
+        'amazon_cover': row['amazon_cover'] if 'amazon_cover' in row.keys() else None,
+        'parent_id': row['parent_id'] if 'parent_id' in row.keys() else None,
+        'playback_position': (row['playback_position'] or 0) if 'playback_position' in row.keys() else 0,
+        'last_played': row['last_played'] if 'last_played' in row.keys() else None,
+        'duration_sec': (row['duration_sec'] or 0) if 'duration_sec' in row.keys() else 0,
+        'is_mock': bool(row['is_mock']) if 'is_mock' in row.keys() else False,
+        'mock_stage': (row['mock_stage'] or 0) if 'mock_stage' in row.keys() else 0
+    }
+
 def get_all_media_items():
     """
     @brief Retrieves all media items from the database.
@@ -405,38 +452,7 @@ def get_all_media_items():
 
     media_list = []
     for row in rows:
-        media_list.append({
-            'id': row['id'],
-            'name': row['name'],
-            'path': row['path'],
-            'type': row['type'],
-            'duration': row['duration'],
-            'category': row['category'],
-            'extension': row['extension'],
-            'container': row['container'],
-            'tag_type': row['tag_type'],
-            'codec': row['codec'],
-            'art_path': row['art_path'],
-            'has_artwork': bool(row['has_artwork']),
-            'is_transcoded': bool(row['is_transcoded']),
-            'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
-            'media_type': row['media_type'],
-            'subtype': row['subtype'],
-            'file_type': row['file_type'],
-            'isbn': row['isbn'],
-            'imdb': row['imdb'],
-            'tmdb': row['tmdb'],
-            'discogs': row['discogs'],
-            'amazon_cover': row['amazon_cover'],
-            'parent_id': row['parent_id'],
-            'playback_position': row['playback_position'] or 0,
-            'last_played': row['last_played'],
-            'duration_sec': row['duration_sec'] or 0,
-            'is_mock': bool(row['is_mock']) if 'is_mock' in row.keys() else False,
-            'mock_stage': row['mock_stage'] if 'mock_stage' in row.keys() else 0
-        })
+        media_list.append(row_to_dict(row))
     conn.close()
     return media_list
 
