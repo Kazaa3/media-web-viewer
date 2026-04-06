@@ -35,6 +35,8 @@ if str(SCRIPTS_PATH) not in sys.path:
 
 import monitor_utils  # type: ignore
 from status_bar_utils import StatusBar  # type: ignore
+from src.core.build_config import BUILD_GATE_TESTS, BUILD_VERSION
+from src.core.config_master import GLOBAL_CONFIG
 
 
 def print_status(message: str, category: str = "INFO"):
@@ -52,14 +54,7 @@ def print_status(message: str, category: str = "INFO"):
 class BuildSystem:
     """Comprehensive build and test system for Media Web Viewer."""
 
-    BUILD_TEST_GATE = [
-        "tests/integration/performance/test_performance_probes.py",
-        "tests/integration/tech/bottle/test_bottle_health_latency.py",
-        "tests/integration/category/ui/test_installed_packages_ui.py",
-        "tests/integration/basic/env/test_environment_packages_fallback.py",
-        "tests/integration/category/ui/test_ui_session_stability.py",
-        "tests/integration/category/git/test_git_guard.py",
-    ]
+    BUILD_TEST_GATE = BUILD_GATE_TESTS
 
     TEST_TIERS = {
         "unit": "tests/unit/",
@@ -103,13 +98,11 @@ class BuildSystem:
         self.dist_dir = self.root / "dist"
         
         self.branch = self._get_current_branch()
+        self.browsers = GLOBAL_CONFIG.get('browsers', ['chrome', 'firefox'])
 
     def _read_version(self) -> str:
-        """Read version from VERSION file."""
-        version_file = self.root / "VERSION"
-        if not version_file.exists():
-            return "0.0.0"
-        return version_file.read_text().strip()
+        """Read version from centralized build_config."""
+        return BUILD_VERSION
 
     def _print_banner(self, title: str):
         """Print a formatted banner."""
@@ -327,15 +320,8 @@ class BuildSystem:
         return all_passed
 
     def _check_browser_available(self) -> bool:
-        """Check if at least one compatible browser is available."""
-        browsers = [
-            "google-chrome-stable",
-            "google-chrome",
-            "chrome",
-            "chromium-browser",
-            "chromium",
-            "firefox"]
-        return any(shutil.which(b) for b in browsers)
+        """Check if at least one compatible browser is available (Centralized v1.35.68)."""
+        return any(shutil.which(b) for b in GLOBAL_CONFIG["browsers"])
 
     def run_tests(
             self,

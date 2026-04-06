@@ -7,8 +7,9 @@ v1.35.68 - Unified source of truth for backend and frontend settings.
 
 import os
 import sys
+import shutil
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 try:
     from dotenv import load_dotenv
     _DOTENV_LOADED = True
@@ -36,6 +37,10 @@ def get_env_list(name: str, default: list) -> list:
     if val is None:
         return default
     return [item.strip() for item in val.split(",")]
+
+def discover_binary(name: str, fallback: str = "") -> str:
+    """Safely discover a binary path on the current system."""
+    return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 GLOBAL_CONFIG: Dict[str, Any] = {
@@ -122,7 +127,24 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "watchdog_tick": float(os.environ.get("MWV_SLEEP_WATCHDOG", 0.5)),
         "retry_delay": float(os.environ.get("MWV_SLEEP_RETRY", 0.5)),
         "poll_fast": float(os.environ.get("MWV_SLEEP_POLL_FAST", 0.1))
-    }
+    },
+    
+    # --- EXTERNAL BINARY DISCOVERY (Centralized v1.35.68) ---
+    "program_paths": {
+        "vlc": discover_binary("vlc", "vlc"),
+        "cvlc": discover_binary("cvlc", "cvlc"),
+        "ffmpeg": discover_binary("ffmpeg", "ffmpeg"),
+        "ffprobe": discover_binary("ffprobe", "ffprobe"),
+        "ffplay": discover_binary("ffplay", "ffplay"),
+        "mkvmerge": discover_binary("mkvmerge", "mkvmerge"),
+        "mkvinfo": discover_binary("mkvinfo", "mkvinfo")
+    },
+    
+    # --- BROWSER DISCOVERY LADDER ---
+    "browsers": [
+        "google-chrome-stable", "google-chrome", "chrome",
+        "chromium-browser", "chromium", "firefox", "msedge", "brave"
+    ]
 }
 
 # Parser constants moved to core for centralization

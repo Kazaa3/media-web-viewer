@@ -30,6 +30,23 @@ BUILD_DESCRIPTION = "A powerful, premium-grade desktop media browser and player 
 STAGING_SUBDIR = "opt/media-web-viewer"
 BIN_SUBDIR = "usr/bin"
 
+# --- CENTRALIZED TEST ORCHESTRATION ---
+BUILD_GATE_TESTS = [
+    "tests/integration/performance/test_performance_probes.py",
+    "tests/integration/tech/bottle/test_bottle_health_latency.py",
+    "tests/integration/category/ui/test_installed_packages_ui.py",
+    "tests/integration/basic/env/test_environment_packages_fallback.py",
+    "tests/integration/category/ui/test_ui_session_stability.py"
+]
+
+# --- ZERO-LEAK RSYNC EXCLUSIONS ---
+RSYNC_EXCLUDES = [
+    ".git/", ".github/", ".vscode/", ".idea/", ".venv*/", "venv/",
+    "**/__pycache__/", "*.pyc", "build/", "dist/", "infra/packaging/",
+    "media/", "doc*/", "tests/", ".gitignore", "*.spec", "*.deb",
+    ".pytest_cache/", ".mypy_cache/", "reinstall_deb.sh", "data/", "packages/"
+]
+
 def get_build_summary():
     """Returns a dictionary of build metadata."""
     return {
@@ -40,7 +57,13 @@ def get_build_summary():
     }
 
 if __name__ == "__main__":
+    import sys
     # If run directly, print metadata for shell scripts
-    print(f"VERSION={BUILD_VERSION}")
-    print(f"PACKAGE={BUILD_PACKAGE_NAME}")
-    print(f"ARCH={BUILD_ARCH}")
+    if len(sys.argv) > 1 and sys.argv[1] == "--tests":
+        print("\n".join(BUILD_GATE_TESTS))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--excludes":
+        print(" ".join([f"--exclude '{ex}'" for ex in RSYNC_EXCLUDES]))
+    else:
+        print(f"VERSION={BUILD_VERSION}")
+        print(f"PACKAGE={BUILD_PACKAGE_NAME}")
+        print(f"ARCH={BUILD_ARCH}")

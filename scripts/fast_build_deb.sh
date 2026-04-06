@@ -11,6 +11,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📦 [Fast Build] Media Web Viewer v${VERSION} Debian Package"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# 1. Synchronize Version Metadata (v1.35.68)
+echo "🔄 Synchronizing project version metadata..."
+VERSION=$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")
+python3 "$ROOT_DIR/scripts/update_version.py" --new-version "$VERSION"
+
 # Set environment for build_deb.sh
 export SKIP_BUILD_TESTS=1
 

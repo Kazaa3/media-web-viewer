@@ -47,12 +47,10 @@ if [ "$SKIP_BUILD_TESTS" != "1" ]; then
         PYTHON_BIN="python3"
     fi
 
-    "$PYTHON_BIN" -m pytest -q \
-        "$ROOT_DIR/tests/integration/performance/test_performance_probes.py" \
-        "$ROOT_DIR/tests/integration/tech/bottle/test_bottle_health_latency.py" \
-        "$ROOT_DIR/tests/integration/category/ui/test_installed_packages_ui.py" \
-        "$ROOT_DIR/tests/integration/basic/env/test_environment_packages_fallback.py" \
-        "$ROOT_DIR/tests/integration/category/ui/test_ui_session_stability.py"
+    echo "==> Fetching build gate tests from build_config.py..."
+    TEST_FILES=$(python3 src/core/build_config.py --tests)
+    
+    "$PYTHON_BIN" -m pytest -q $TEST_FILES
     echo "==> Build-Test-Gate: OK"
 else
     echo "==> Build-Test-Gate übersprungen (SKIP_BUILD_TESTS=1)"
@@ -72,32 +70,9 @@ STAGED_APP_DEST="$BUILD_ROOT/pkg/opt/$PACKAGE_NAME"
 mkdir -p "$STAGED_APP_DEST"
 
 # Quellcode kopieren (ohne .git, .venv, Tests, Build-Artefakte und Medien)
-echo "==> Sammle Quellcode (Zero-Leak Mode)..."
-rsync -a \
-    --exclude '.git/' \
-    --exclude '.github/' \
-    --exclude '.vscode/' \
-    --exclude '.idea/' \
-    --exclude '.venv*/' \
-    --exclude 'venv/' \
-    --exclude '**/__pycache__/' \
-    --exclude '*.pyc' \
-    --exclude 'build/' \
-    --exclude 'dist/' \
-    --exclude 'infra/packaging/' \
-    --exclude 'media/' \
-    --exclude 'doc*/' \
-    --exclude 'tests/' \
-    --exclude '.gitignore' \
-    --exclude '*.spec' \
-    --exclude '*.deb' \
-    --exclude '.pytest_cache/' \
-    --exclude '.mypy_cache/' \
-    --exclude 'reinstall_deb.sh' \
-    --exclude 'data/' \
-    --exclude 'packages/' \
-    --max-size=50M \
-    "$ROOT_DIR/" "$STAGED_APP_DEST/"
+echo "==> Sammle Quellcode (Zero-Leak Mode / Centralized Excludes)..."
+EXCLUDE_FLAGS=$(python3 src/core/build_config.py --excludes)
+eval rsync -a $EXCLUDE_FLAGS --max-size=50M "$ROOT_DIR/" "$STAGED_APP_DEST/"
 
 # Inject build metadata
 cat <<EOF > "$STAGED_APP_DEST/.build_metadata"

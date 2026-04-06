@@ -1,5 +1,5 @@
 {
-  "version": "1.34",
+  "version": "1.35.68",
   "sync_locations": [
     {
       "file": "src/core/main.py",
@@ -27,20 +27,8 @@
     },
     {
       "file": "infra/packaging/usr/share/applications/media-web-viewer.desktop",
-      "line_pattern": "Name=Media Web Viewer (v${version})",
+      "line_pattern": "Name=dict (v${version})",
       "description": "Linux start menu application name with version",
-      "required": true
-    },
-    {
-      "file": "docs/logbuch/016_Bugs_Features_und_Backlog.md",
-      "line_pattern": "## Aktuelle offene Bugs (Stand v.${version})",
-      "description": "Backlog bugs version (German)",
-      "required": true
-    },
-    {
-      "file": "docs/logbuch/016_Bugs_Features_und_Backlog.md",
-      "line_pattern": "## Current Open Bugs (as of v${version})",
-      "description": "Backlog bugs version (English)",
       "required": true
     },
     {

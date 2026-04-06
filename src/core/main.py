@@ -366,8 +366,15 @@ def start_app():
     
     # Ensure isolation for automated sessions or user preference
     import shutil
-    chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable") or shutil.which("chromium-browser")
-    if not chrome_path and eel_mode == 'chrome':
+    # Browser Discovery (v1.35.68 Centralized)
+    chrome_path = None
+    for b in GLOBAL_CONFIG["browsers"]:
+        chrome_path = shutil.which(b)
+        if chrome_path: break
+    
+    if not chrome_path:
+        log.error("[Startup] No compatible browser found!")
+    if eel_mode == 'chrome' and not chrome_path:
         print("STDOUT: [Eel] WARNING: Chrome/Chromium not found in PATH. Browser session might not be isolated.", flush=True)
 
     try:
@@ -4476,7 +4483,7 @@ def open_with_cvlc(file_path: str):
     """Explicitly open a file with CVLC (command-line VLC)."""
     file_path = resolve_media_path(file_path)
     try:
-        vlc_path = shutil.which("cvlc") or "cvlc"
+        vlc_path = GLOBAL_CONFIG["program_paths"]["cvlc"]
         proc = subprocess.Popen([str(vlc_path), str(file_path)])
         ACTIVE_SUBPROCESSES.append(proc)
         log.info(f" [CVLC] Started for: {file_path}")
