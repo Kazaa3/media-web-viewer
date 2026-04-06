@@ -40,6 +40,7 @@
         <button class="side-reiter" id="reiter-net" onclick="switchDiagnosticsSidebarTab('network')">NET</button>
         <button class="side-reiter" id="reiter-prc" onclick="switchDiagnosticsSidebarTab('process')">PRC</button>
         <button class="side-reiter" id="reiter-drv" onclick="switchDiagnosticsSidebarTab('driver')">DRV</button>
+        <button class="side-reiter" id="reiter-sec" onclick="switchDiagnosticsSidebarTab('security')">SEC</button>
     </div>
 
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
@@ -76,7 +77,8 @@
                 <!-- 15 Chromatic Tiles -->
                 <div class="h-tile" title="LOG"></div><div class="h-tile" title="VID"></div><div class="h-tile" title="AUD"></div><div class="h-tile" title="REC"></div><div class="h-tile" title="LIB"></div>
                 <div class="h-tile" title="DOM"></div><div class="h-tile" title="DB"></div><div class="h-tile" title="SYS"></div><div class="h-tile" title="VOL"></div><div class="h-tile" title="PRF"></div>
-                <div class="h-tile" title="PLY"></div><div class="h-tile" title="STA"></div><div class="h-tile" title="NET"></div><div class="h-tile" title="PRC"></div><div class="h-tile" id="h-tile-hlt" title="HLT" style="background:var(--accent-color);"></div>
+                <div class="h-tile" title="PLY"></div><div class="h-tile" title="STA"></div><div class="h-tile" title="NET"></div><div class="h-tile" title="PRC"></div><div class="h-tile" title="DRV"></div>
+                <div class="h-tile" title="SEC"></div><div class="h-tile" id="h-tile-hlt" title="HLT" style="background:var(--accent-color);"></div>
             </div>
 
             <button onclick="runGlobalHealthAudit()" style="width:100%; height: 35px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(52,152,219,0.3);">
@@ -453,6 +455,41 @@
                 <div id="diag-codec-matrix" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-family: monospace;">
                     <div style="opacity: 0.4;">Scanning encoders...</div>
                 </div>
+            </div>
+        </div>
+
+        <!-- PANE: SECURITY & FORENSIC AUTHORITY (SEC) [v1.37.38] -->
+        <div id="diag-pane-security" class="diag-pane" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">AUTHORITY HUB</div>
+                <button onclick="runSecurityAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT SECURITY</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid #9b59b6;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 2px;">EXECUTION AUTHORITY</div>
+                        <div id="diag-sec-auth" style="font-size: 14px; font-weight: 900; color: #fff;">SCANNING...</div>
+                    </div>
+                </div>
+                <div id="diag-sec-identity" style="font-size: 8px; opacity: 0.6; font-family: monospace;">UID: -- | GID: -- | ROOT: --</div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Filesystem Permissions</div>
+            <div style="display:grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">DATABASE R/W</div>
+                    <div id="diag-sec-db-perm" style="font-size: 10px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">LIBRARY R/W</div>
+                    <div id="diag-sec-lib-perm" style="font-size: 10px; font-weight: 900; color: #fff;">-</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Forensic Environment</div>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 8px; color: rgba(255,255,255,0.6);">
+                <div id="diag-sec-platform">Platform: Detecting...</div>
             </div>
         </div>
 

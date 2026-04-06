@@ -20,7 +20,8 @@ const DIAG_VIEW_INFO = {
     'state': { name: 'State Persistence', desc: 'LocalStorage vs. Configuration Master Audit' },
     'network': { name: 'RPC Performance', desc: 'Internal Bridge Latency & RTT Audit' },
     'process': { name: 'Worker Control', desc: 'Child Process & Zombie Workstation Audit' },
-    'driver': { name: 'Hardware Accel', desc: 'GPU & Transcoder Capability Audit' }
+    'driver': { name: 'Hardware Accel', desc: 'GPU & Transcoder Capability Audit' },
+    'security': { name: 'Authority Hub', desc: 'UID/GID & Filesystem Permission Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -79,7 +80,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'state': 'diag-pane-state',
         'network': 'diag-pane-network',
         'process': 'diag-pane-process',
-        'driver': 'diag-pane-driver'
+        'driver': 'diag-pane-driver',
+        'security': 'diag-pane-security'
     };
 
     if (paneIds[viewId]) {
@@ -102,6 +104,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'network') runNetworkAudit();
         if (viewId === 'process') runProcessAudit();
         if (viewId === 'driver') runHardwareAudit();
+        if (viewId === 'security') runSecurityAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1635,3 +1638,44 @@ async function runHardwareAudit() {
 }
 
 window.runHardwareAudit = runHardwareAudit;
+
+/**
+ * SECURITY & FORENSIC AUTHORITY AUDIT (v1.37.38)
+ */
+async function runSecurityAudit() {
+    const authEl = document.getElementById('diag-sec-auth');
+    const identityEl = document.getElementById('diag-sec-identity');
+    const dbPermEl = document.getElementById('diag-sec-db-perm');
+    const libPermEl = document.getElementById('diag-sec-lib-perm');
+    const platformEl = document.getElementById('diag-sec-platform');
+    
+    sentinelPulse('AUDIT', 'Scanning Forensic Authority Hub...');
+    
+    try {
+        const res = await eel.get_security_forensics()();
+        if (res.status === 'ok') {
+            const sec = res.security;
+            if (authEl) {
+                authEl.innerText = sec.is_root ? 'ROOT / SUDO AUTHORITY' : 'STANDARD USER AUTHORITY';
+                authEl.style.color = sec.is_root ? '#e74c3c' : '#2ecc71';
+            }
+            if (identityEl) identityEl.innerText = `UID: ${sec.uid} | GID: ${sec.gid} | ROOT: ${sec.is_root ? 'YES' : 'NO'}`;
+            
+            if (dbPermEl) {
+                dbPermEl.innerText = sec.db_authority.write ? 'READ/WRITE (OK)' : 'READ-ONLY (LOCKED)';
+                dbPermEl.style.color = sec.db_authority.write ? '#2ecc71' : '#e74c3c';
+            }
+            if (libPermEl) {
+                libPermEl.innerText = sec.library_authority.write ? 'READ/WRITE (OK)' : 'READ-ONLY (LOCKED)';
+                libPermEl.style.color = sec.library_authority.write ? '#2ecc71' : '#e74c3c';
+            }
+            if (platformEl) platformEl.innerText = `Platform: ${sec.platform}`;
+            
+            sentinelPulse('SUCCESS', `Security Audit Complete. Authority: ${sec.is_root ? 'ROOT' : 'USER'}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Security Audit Failed: ${e.message}`);
+    }
+}
+
+window.runSecurityAudit = runSecurityAudit;

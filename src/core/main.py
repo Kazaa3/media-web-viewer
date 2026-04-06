@@ -1378,20 +1378,31 @@ def get_global_health_audit():
         media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
         health_report["metrics"]["vol"] = "MOUNTED" if os.path.exists(media_dir) else "DISCONNECTED"
         
-        # 4. PRC HEALTH (Weighted 25%)
+        # 4. PRC HEALTH (Weighted 16%)
         parent = psutil.Process(os.getpid())
         zombies = [c for c in parent.children(recursive=True) if c.status() == psutil.STATUS_ZOMBIE]
         health_report["metrics"]["prc"] = "CLEAN" if len(zombies) == 0 else "ZOMBIE_DETECTED"
         
-        # Scoring Logic
-        score = 0
-        if health_report["metrics"]["db"] == "SYNC": score += 25
-        if health_report["metrics"]["sys"] == "STABLE": score += 25
-        if health_report["metrics"]["vol"] == "MOUNTED": score += 25
-        if health_report["metrics"]["prc"] == "CLEAN": score += 25
+        # 5. DRV HEALTH (Weighted 16%)
+        from src.core import hardware_detector
+        hw_enc = hardware_detector.get_best_hw_encoder()
+        health_report["metrics"]["drv"] = "ACCEL_ACTIVE" if "h264_" in hw_enc and "libx264" not in hw_enc else "SOFTWARE_ONLY"
         
-        health_report["readiness_score"] = score
-        if score == 100: health_report["level"] = "BATTLE-READY"
+        # 6. SEC HEALTH (Weighted 20%)
+        db_writable = os.access(db.get_active_db_path(), os.W_OK)
+        health_report["metrics"]["sec"] = "AUTHORITY_VERIFIED" if db_writable else "PERMISSION_LOCKED"
+        
+        # Scoring Logic (17-Layer Awareness)
+        score = 0
+        if health_report["metrics"]["db"] == "SYNC": score += 16
+        if health_report["metrics"]["sys"] == "STABLE": score += 16
+        if health_report["metrics"]["vol"] == "MOUNTED": score += 16
+        if health_report["metrics"]["prc"] == "CLEAN": score += 16
+        if health_report["metrics"]["drv"] == "ACCEL_ACTIVE": score += 16
+        if health_report["metrics"]["sec"] == "AUTHORITY_VERIFIED": score += 20
+        
+        health_report["readiness_score"] = min(100, score)
+        if score >= 95: health_report["level"] = "BATTLE-READY"
         elif score >= 75: health_report["level"] = "STABILIZED"
         elif score >= 50: health_report["level"] = "DEGRADED"
         else: health_report["level"] = "CRITICAL"
@@ -1399,6 +1410,45 @@ def get_global_health_audit():
         return health_report
     except Exception as e:
         log.error(f"[Forensic-HLT] Global Health Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@eel.expose
+def get_security_forensics():
+    """
+    Forensic Security & Authority Audit (v1.37.38).
+    Maps UID, GID, and Filesystem Authority.
+    """
+    try:
+        import os
+        import platform
+        from src.core import db, config_master
+        
+        db_path = db.get_active_db_path()
+        media_dir = config_master.GLOBAL_CONFIG["storage_registry"]["media_dir"]
+        
+        security_info = {
+            "uid": os.getuid() if hasattr(os, "getuid") else 0,
+            "gid": os.getgid() if hasattr(os, "getgid") else 0,
+            "is_root": os.getuid() == 0 if hasattr(os, "getuid") else False,
+            "db_authority": {
+                "read": os.access(db_path, os.R_OK),
+                "write": os.access(db_path, os.W_OK),
+                "owner": os.stat(db_path).st_uid if os.path.exists(db_path) else 0
+            },
+            "library_authority": {
+                "read": os.access(media_dir, os.R_OK) if os.path.exists(media_dir) else False,
+                "write": os.access(media_dir, os.W_OK) if os.path.exists(media_dir) else False
+            },
+            "platform": platform.platform()
+        }
+        
+        return {
+            "status": "ok",
+            "security": security_info
+        }
+    except Exception as e:
+        log.error(f"[Forensic-SEC] Security Audit Failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
