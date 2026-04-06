@@ -776,9 +776,9 @@
         </div>
     </footer>
 
-    <!-- v1.37.02 Professional Swiss Army HUD Footer -->
-    <footer class="layout-footer">
-        <!-- Slot 1: Far-Left Diagnostic Pill -->
+    <!-- v1.37.02 Professional Swiss HUD Footer -->
+    <footer class="layout-footer" style="padding: 0 15px; border-top: 1px solid #222;">
+        <!-- Slot 1: Far-Left Diagnostic Pill (Startup & Process) -->
         <div class="footer-diag-pill">
             <span>PID: <span id="diag-pid" class="footer-diag-val">--</span></span>
             <span style="opacity: 0.2;">|</span>
@@ -792,96 +792,59 @@
             db: <span id="footer-db-count">--</span>
         </div>
 
-        <!-- Slot 3: Swiss HUD recovery Clusters -->
+        <!-- Slot 3: Swiss HUD recovery Clusters (FE, BE, DB) -->
         <div class="footer-hud-cluster">
             <!-- HUD: Frontend (FE) -->
-            <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..."
-                title="Frontend Health (Hover for details)">
+            <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..." title="Frontend layer (DOM / Library)">
                 <span class="hud-label">FE</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof window.location.reload === 'function') window.location.reload();">RESET</button>
+                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+                <button class="hud-btn-tiny" onclick="if(confirm('Refresh GUI?')) { if(typeof window.location.reload === 'function') window.location.reload(); }">RESET</button>
             </div>
 
             <!-- HUD: Backend (BE) -->
-            <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..."
-                title="Backend Health (Hover for details)">
+            <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..." title="Backend layer (Eel / Process)">
                 <span class="hud-label">BE</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
+                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
             </div>
 
             <!-- HUD: Database (DB) -->
-            <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..."
-                title="Database Health (Hover for details)">
+            <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..." title="Database layer (SQLite / Connection)">
                 <span class="hud-label">DB</span>
                 <div class="hud-led"></div>
-                <button class="hud-btn-tiny"
-                    onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
-                <button class="hud-btn-tiny"
-                    onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
+                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
+                <button class="hud-btn-tiny" onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
             </div>
 
             <!-- Trace Logs Toggle -->
-            <button class="footer-classic-btn yellow"
-                onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();"
-                title="Toggle Trace Logs">LOGS</button>
+            <button class="footer-classic-btn yellow" onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();" title="Toggle Trace Logs">LOGS</button>
         </div>
 
-        <!-- Slot 4: Right Tool Cluster (Professional GUI Toggles) -->
+        <!-- Slot 4: Right Tool Cluster (GUI Toggles Restoration) -->
         <div class="footer-icon-cluster">
             <!-- Media Details Toggle -->
-            <button class="footer-tool-btn" title="Media Information"
-                onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.add('active'); sb.style.display = 'block'; switchSidebarView('details'); }">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
+            <button class="footer-tool-btn" title="Media Information" onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.add('active'); sb.style.display = 'block'; if(typeof switchSidebarView === 'function') switchSidebarView('details'); }">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             </button>
-
+            
             <button class="footer-tool-btn" title="Toggle Theme">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" />
-                    <line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" />
-                    <line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             </button>
 
-            <!-- Grid/Library Toggle -->
-            <button class="footer-tool-btn" title="Grid View"
-                onclick="if(typeof switchView === 'function') switchView('library');">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                </svg>
+            <!-- Grid View Toggle -->
+            <button class="footer-tool-btn" title="Grid View" onclick="if(typeof switchView === 'function') switchView('library');">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             </button>
 
             <!-- Program Menu Burger -->
-            <button onclick="toggleMenuBar()" class="footer-tool-btn"
-                style="background: #222; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
+            <button onclick="toggleMenuBar()" class="footer-tool-btn" style="background: #222; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
             </button>
 
-            <!-- Technical Pulsar (Diagnostics Sidebar Toggle) -->
-            <button id="footer-btn-diagnostics"
-                onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.add('active'); sbDiag.style.display = 'block'; switchSidebarView('diagnostics'); }"
+            <!-- Technical Pulsar (Diagnostics Sidebar Toggle) - RESTORATION -->
+            <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.toggle('active'); sbDiag.style.display = sbDiag.classList.contains('active') ? 'flex' : 'none'; if(typeof switchSidebarView === 'function') switchSidebarView('diagnostics'); }"
                 class="footer-tool-btn" style="color: #ff3366;" title="Technical Diagnostics">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />

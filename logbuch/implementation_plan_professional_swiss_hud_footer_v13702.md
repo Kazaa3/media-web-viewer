@@ -1,3 +1,21 @@
+# Media Viewer v1.37.02 — Final Technical Configuration Complete
+
+The Professional Swiss HUD & Sidebar Restoration (v1.37.02) is now fully complete, with all requested technical features elegantly integrated and functional.
+
+## Final Technical Configuration
+
+- **Sidebar Toggle (Bottom Right):**
+    - Diagnostics Pulsar button restored to the bottom-right corner of the footer, correctly toggling the visibility of the technical audit layer.
+- **Sidebar Position (Left):**
+    - Technical Diagnostics Sidebar is now positioned on the LEFT side of the screen, providing deep-dive parity audits (`[FS | DB | GUI]`) and recovery tools without obstructing the media view.
+- **High-Density HUD (Footer Center):**
+    - FE, BE, and DB clusters are fully functional with minimalist "schlicht" styling:
+        - **7-Point Hover Metrics:** Hovering over each cluster reveals a high-density popup with PID, Status, Uptime, Errors, Sync Time, Load, and Item Counts.
+        - **Compact Actions:** Each cluster has its own SYNC and KILL/RESET buttons for 1-click recovery of that specific layer.
+- **Process Visibility (Footer Left):**
+    - Persistent display of the PID, BOOT Duration, and UPTIME for the backend process is now available on the far-left diagnostic pill.
+
+The final diagnostic summary and visual documentation are available in the updated `walkthrough.md`. The environment is now fully synchronized and optimized for power-user observability.
 # Media Viewer v1.37.02 — Professional Swiss HUD & Sidebar Restoration Complete
 
 The Professional Swiss HUD & Sidebar Restoration for v1.37.02 is finalized, achieving the extreme technical density and clean aesthetic requested.
