@@ -302,12 +302,16 @@
                 style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
                 <!-- Detailed Mode Sidebar (Left-aligned as per v1.34) -->
                 <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none; position: relative;">
-                    <!-- Vertical Reiter Bar (Tabs) -->
+                    <!-- Vertical Reiter Bar (Tabs) - v1.37.03 Multi-Tabbed Restoration -->
                     <div class="side-reiter-bar">
                         <div id="reiter-details" class="side-reiter active" onclick="switchSidebarView('details')">
                             <span>Details</span></div>
                         <div id="reiter-diagnostics" class="side-reiter" onclick="switchSidebarView('diagnostics')">
-                            <span>Diag</span></div>
+                            <span>Health</span></div>
+                        <div id="reiter-recovery" class="side-reiter" onclick="switchSidebarView('recovery')">
+                            <span>Recovery</span></div>
+                        <div id="reiter-tools" class="side-reiter" onclick="switchSidebarView('tools')">
+                            <span>Tools</span></div>
                     </div>
 
                     <!-- VIEW: Media Details -->
@@ -320,40 +324,29 @@
                         </div>
                     </div>
 
-                    <!-- VIEW: Diagnostics (System Toggles relocation) -->
+                    <!-- VIEW: Health (Technical Audit) -->
                     <div id="sidebar-view-diagnostics" class="sidebar-view-content" style="display: none;">
                         <div class="diagnostic-header">
                             <div class="diagnostic-section-title">TECHNICAL AUDIT</div>
 
-                            <!-- Detailed Parity Anchor (v1.35.99 Relocated) -->
-                            <div id="sb-parity-anchor"
-                                style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <!-- Detailed Parity Anchor -->
+                            <div id="sb-parity-anchor" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
                                 [FS: -- | DB: -- | GUI: --]
                             </div>
 
-                            <!-- Relocated Toggles from Footer -->
+                            <!-- Relocated Toggles -->
                             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                                <div
-                                    style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">
-                                    System Flags</div>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;"
-                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG
-                                    MODE</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;"
-                                    onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;"
-                                    onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;"
-                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW
-                                    BYPASS</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;"
-                                    onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
+                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">System Flags</div>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;" onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;" onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;" onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;" onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
+                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;" onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-AUDIT" style="font-size: 10px;"
                                     onclick="if(typeof window.runAuditStage === 'function') { window.runAuditStage(1); }">AUDIT</button>
                                 <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-TEST" style="font-size: 10px;"
                                     onclick="if(typeof window.runTestStage === 'function') { window.runTestStage(1); }">TEST</button>
                             </div>
-
                             <div class="diagnostic-label">Logic Audit (Dropped Reasons)</div>
                             <div id="sb-dropped-reasons-viewport"
                                 style="font-size: 10px; color: var(--text-secondary); background: var(--bg-secondary); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 60px;">
@@ -776,9 +769,9 @@
         </div>
     </footer>
 
-    <!-- v1.37.02 Professional Swiss HUD Footer -->
+    <!-- v1.37.03 Primary GUI Navigation & Swiss HUD -->
     <footer class="layout-footer" style="padding: 0 15px; border-top: 1px solid #222;">
-        <!-- Slot 1: Far-Left Diagnostic Pill (Startup & Process) -->
+        <!-- Slot 1: Far-Left Diagnostic Pill -->
         <div class="footer-diag-pill">
             <span>PID: <span id="diag-pid" class="footer-diag-val">--</span></span>
             <span style="opacity: 0.2;">|</span>
@@ -794,39 +787,37 @@
 
         <!-- Slot 3: Swiss HUD recovery Clusters (FE, BE, DB) -->
         <div class="footer-hud-cluster">
-            <!-- HUD: Frontend (FE) -->
             <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..." title="Frontend layer (DOM / Library)">
                 <span class="hud-label">FE</span>
                 <div class="hud-led"></div>
                 <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
                 <button class="hud-btn-tiny" onclick="if(confirm('Refresh GUI?')) { if(typeof window.location.reload === 'function') window.location.reload(); }">RESET</button>
             </div>
-
-            <!-- HUD: Backend (BE) -->
             <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..." title="Backend layer (Eel / Process)">
                 <span class="hud-label">BE</span>
                 <div class="hud-led"></div>
                 <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
                 <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
             </div>
-
-            <!-- HUD: Database (DB) -->
             <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..." title="Database layer (SQLite / Connection)">
                 <span class="hud-label">DB</span>
                 <div class="hud-led"></div>
                 <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
                 <button class="hud-btn-tiny" onclick="if(confirm('Nuclear Reset?')) { if(typeof eel !== 'undefined') eel.trigger_factory_reset()(() => window.location.reload()); }">RESET</button>
             </div>
-
-            <!-- Trace Logs Toggle -->
             <button class="footer-classic-btn yellow" onclick="if(typeof toggleLogsDisplay === 'function') toggleLogsDisplay();" title="Toggle Trace Logs">LOGS</button>
         </div>
 
-        <!-- Slot 4: Right Tool Cluster (GUI Toggles Restoration) -->
+        <!-- Slot 4: Right Tool Cluster (Primary Navigation Restoration) -->
         <div class="footer-icon-cluster">
             <!-- Media Details Toggle -->
-            <button class="footer-tool-btn" title="Media Information" onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.add('active'); sb.style.display = 'block'; if(typeof switchSidebarView === 'function') switchSidebarView('details'); }">
+            <button class="footer-tool-btn" title="Media Information" onclick="const sb = document.getElementById('player-detailed-sidebar'); if(sb) { sb.classList.add('active'); sb.style.display = 'block'; switchSidebarView('details'); }">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </button>
+
+            <!-- Main Sidebar Toggle (Square with vertical line) - RESTORATION -->
+            <button class="footer-tool-btn" title="Toggle Main Sidebar" onclick="if(typeof toggleSidebar === 'function') toggleSidebar();">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
             </button>
             
             <button class="footer-tool-btn" title="Toggle Theme">
@@ -839,11 +830,11 @@
             </button>
 
             <!-- Program Menu Burger -->
-            <button onclick="toggleMenuBar()" class="footer-tool-btn" style="background: #222; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
+            <button onclick="toggleMenuBar()" class="footer-tool-btn" style="background: #1a1a1a; padding: 6px; border-radius: 50%; color: #eee;" title="Program Menu">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
             </button>
 
-            <!-- Technical Pulsar (Diagnostics Sidebar Toggle) - RESTORATION -->
+            <!-- Technical Pulsar (Diagnostics Sidebar Toggle) -->
             <button id="footer-btn-diagnostics" onclick="const sbDiag = document.getElementById('player-detailed-sidebar'); if(sbDiag) { sbDiag.classList.toggle('active'); sbDiag.style.display = sbDiag.classList.contains('active') ? 'flex' : 'none'; if(typeof switchSidebarView === 'function') switchSidebarView('diagnostics'); }"
                 class="footer-tool-btn" style="color: #ff3366;" title="Technical Diagnostics">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">

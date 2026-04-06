@@ -159,21 +159,77 @@ window.renderDebugDatabase = async function() {
 };
 
 // --- Sub-Tab Hijack Restoration (v1.35.68 Final) ---
+// --- Unified Sidebar Management (v1.37.03 Restoration) ---
+
+/**
+ * Global Sidebar View Switcher
+ * Manages transitions between Details, Health, Recovery, and Media Tools.
+ */
+window.switchSidebarView = function(viewId) {
+    if (typeof mwv_trace === 'function') mwv_trace('SIDEBAR', 'SWITCH-VIEW', { view: viewId });
+    console.log(`[SIDEBAR] Switching view to: ${viewId}`);
+
+    // 1. Update Reiters (Vertical Tabs)
+    const reiters = document.querySelectorAll('.side-reiter');
+    reiters.forEach(r => {
+        r.classList.toggle('active', r.id === `reiter-${viewId}`);
+    });
+
+    // 2. Update View Panes
+    const views = document.querySelectorAll('.sidebar-view-content');
+    views.forEach(v => {
+        v.style.display = 'none';
+        v.classList.remove('active');
+    });
+
+    const target = document.getElementById(`sidebar-view-${viewId}`);
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
+
+    // 3. Specialized Tab Logic
+    if (viewId === 'recovery') {
+        console.warn("[RECOVERY] Suite active. Use 'CLEAR FILTERS' if 0 items are visible.");
+    }
+    
+    if (viewId === 'diagnostics' || viewId === 'health') {
+        if (typeof updateSyncAnchor === 'function') {
+            updateSyncAnchor(window.__mwv_last_db_count, undefined, undefined); 
+        }
+    }
+
+    // 4. Legacy Bridge (v1.35.68)
+    if (viewId === 'debug-db') {
+        if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
+    } else if (viewId === 'tests') {
+        if (typeof loadTestSuites === 'function') loadTestSuites();
+    }
+};
+
+/**
+ * Diagnostics Initialization (v1.37.02/03)
+ */
+function initDiagnostics() {
+    if (typeof mwv_trace === 'function') mwv_trace('DIAG', 'INIT');
+    console.log("Diagnostics: Initializing 7-point professional HUD logic...");
+    
+    // Start PID/Uptime polling
+    if (typeof refreshStartupInfo === 'function') {
+        refreshStartupInfo();
+        setInterval(refreshStartupInfo, 10000);
+    }
+}
+
+// Ensure init runs on load
+window.addEventListener('DOMContentLoaded', initDiagnostics);
+
+// Legacy Hijack Restoration
 setTimeout(() => {
     if (typeof window.switchDiagnosticsView === 'function') {
         const originalSwitchDiagnosticsView = window.switchDiagnosticsView;
         window.switchDiagnosticsView = function(viewId) {
-            console.log("[switchDiagnosticsView] Navigation to:", viewId);
-            
-            // Re-map internal logic for partitioned tabs
-            if (viewId === 'debug-db') {
-                 if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
-            } else if (viewId === 'tests') {
-                 if (typeof loadTestSuites === 'function') loadTestSuites();
-            } else if (viewId === 'flags') {
-                 if (typeof toggleDebugMenu === 'function') toggleDebugMenu(true);
-            }
-            
+            window.switchSidebarView(viewId);
             if (typeof originalSwitchDiagnosticsView === 'function') {
                 originalSwitchDiagnosticsView(viewId);
             }
