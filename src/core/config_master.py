@@ -10,6 +10,9 @@ import sys
 import shutil
 import re
 import subprocess
+import eel
+from src.core import logger
+from src.core.config_master import GLOBAL_CONFIG, SLOW_PARSERS
 from pathlib import Path
 from typing import Any, Dict, List
 from importlib.metadata import distributions
@@ -54,6 +57,10 @@ def get_env_list(name: str, default: list) -> list:
 
 def discover_binary(name: str, fallback: str = "") -> str:
     """Safely discover a binary path on the current system."""
+    if name == "vlc":
+        return shutil.which("vlc") or shutil.which("cvlc") or "/usr/bin/vlc"
+    if name == "cvlc":
+        return shutil.which("cvlc") or "/usr/bin/cvlc"
     return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
 def get_binary_version(path: str, flag: str = "-version") -> str:
@@ -131,7 +138,26 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "db_filename": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
     "docker_mode": get_env_bool("MWV_DOCKER", False),
     
-    # UI & Performance
+    # --- LOGGING REGISTRY (v1.35.68 Centralized) ---
+    "logging_registry": {
+        "log_root": str(PROJECT_ROOT / "logs"),
+        "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
+        "session_log": str(PROJECT_ROOT / "logs" / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
+        "log_level": os.environ.get("MWV_LOG_LEVEL", "INFO"),
+        "max_size_mb": 10,
+        "max_buffer_size": 10000        # For UI Log Buffer
+    },
+    
+    # --- PERFORMANCE & STREAMING (v1.35.68 Centralized) ---
+    "perf_settings": {
+        "chunk_size": 512 * 1024,        # Standard I/O chunk size
+        "buffer_size": 1024 * 1024 * 2,  # 2MB playback buffer
+        "transcoder_log_size": 1000,     # Max lines in task buffer
+        "max_concurrent_scans": 4,
+        "ffmpeg_threads": 0              # 0 = auto
+    },
+    
+    # --- UI & UX SETTINGS (v1.35.68 Centralized) ---
     "start_page": os.environ.get("MWV_START_PAGE", "player"),
     "window_width": int(os.environ.get("MWV_WIDTH", 1550)),
     "window_height": int(os.environ.get("MWV_HEIGHT", 800)),
@@ -140,8 +166,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "bandwidth_mode": os.environ.get("MWV_BANDWIDTH", "high"), # low, high
     "vlc_embedded": get_env_bool("MWV_VLC_EMBEDDED", True),
     "connectionless": get_env_bool("MWV_CONNECTIONLESS", False), 
-    
-    # Testing & Diagnostics (v1.35.68)
+
     "test_engine": os.environ.get("MWV_TEST_ENGINE", "chrome-headless"), # playwright, selenium, chrome-headless
     "headless_mode": get_env_bool("MWV_HEADLESS", True),
     
@@ -186,14 +211,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "start_tab": os.environ.get("MWV_START_TAB", "player"), 
     "theme": os.environ.get("MWV_THEME", "dark"),
     
-    # Active Branch
-    "active_branch": os.environ.get("MWV_BRANCH", "audio"), # audio, multimedia
+    "active_branch": os.environ.get("MWV_BRANCH", "multimedia"), # audio, multimedia
     
     # Tool & Parser Settings (v1.35.68)
     "parser_settings": {
         "mkvmerge": {"cli_flags": "", "timeout": 10},
         "ffprobe": {"cli_flags": "", "timeout": 10},
         "ffmpeg": {"deep_analysis": False, "timeout": 30},
+        "handbrake": {"cli_flags": "--preset 'Fast 1080p30'", "timeout": 3600},
         "vlc": {"timeout": 5},
         "mutagen": {"prefer_albumartist": True},
         "mkvinfo": {"timeout": 10}
@@ -216,6 +241,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "ffmpeg": discover_binary("ffmpeg", "ffmpeg"),
         "ffprobe": discover_binary("ffprobe", "ffprobe"),
         "ffplay": discover_binary("ffplay", "ffplay"),
+        "handbrake": discover_binary("HandBrakeCLI", "HandBrakeCLI"),
         "mkvmerge": discover_binary("mkvmerge", "mkvmerge"),
         "mkvinfo": discover_binary("mkvinfo", "mkvinfo"),
         "mkvextract": discover_binary("mkvextract", "mkvextract"),
@@ -582,6 +608,24 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chrome": get_binary_version("google-chrome", "--version").split()[-1] if "Google Chrome" in get_binary_version("google-chrome", "--version") else "N/A"
     },
     
+    # --- TRANSCODING TOOLCHAIN (v1.35.68 Centralized) ---
+    "transcoding_toolchain": {
+        "ffmpeg": get_binary_version("ffmpeg"),
+        "ffprobe": get_binary_version("ffprobe"),
+        "handbrake": get_binary_version("HandBrakeCLI", "--version"),
+        "vlc": get_binary_version("vlc", "--version").split()[0] if "VLC" in get_binary_version("vlc", "--version") else "N/A"
+    },
+    
+    # --- PARSING TOOLCHAIN (v1.35.68 Centralized) ---
+    "parsing_toolchain": {
+        "isoparser": get_binary_version("pip", "show isoparser").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show isoparser") else "N/A",
+        "pycdlib": get_binary_version("pip", "show pycdlib").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pycdlib") else "N/A",
+        "ebml": get_binary_version("pip", "show ebml").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show ebml") else "N/A",
+        "mkvparse": get_binary_version("pip", "show mkvparse").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show mkvparse") else "N/A",
+        "enzyme": get_binary_version("pip", "show enzyme").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show enzyme") else "N/A",
+        "pymkv": get_binary_version("pip", "show pymkv").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pymkv") else "N/A"
+    },
+    
     # --- TRANSCODING & ENGINE SETTINGS (v1.35.68 Centralized) ---
     "transcoding_settings": {
         "ffmpeg_preset": os.environ.get("MWV_FFMPEG_PRESET", "veryfast"),
@@ -590,7 +634,33 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "hls_time": int(os.environ.get("MWV_HLS_TIME", 2)),
         "hls_list_size": int(os.environ.get("MWV_HLS_LIST_SIZE", 0)),
         "fmp4_frag_duration": int(os.environ.get("MWV_FMP4_FRAG", 5000)), # ms
-        "hwaccel": os.environ.get("MWV_HWACCEL", "auto")
+        "hwaccel": os.environ.get("MWV_HWACCEL", "auto"),
+        
+        "webm_settings": {
+            "v_codec": "libvpx-vp9",
+            "v_codec_hw": "vp9_nvenc",
+            "crf": "30",
+            "bitrate_v": "0",
+            "a_codec": "libopus",
+            "bitrate_a": "128k",
+            "deadline": "realtime",
+            "row_mt": "1"
+        },
+        
+        "handbrake_settings": {
+            "preset": "fast",
+            "a_encoder": "copy",
+            "subtitle_scan": True,
+            "native_lang": "ger",
+            "native_dub": True,
+            "markers": True,
+            "encoder_map": {
+                "nvenc": "nvenc_h264",
+                "qsv": "qsv_h264",
+                "vaapi": "vaapi_h264",
+                "fallback": "x264"
+            }
+        }
     },
     
     "mediamtx_settings": {
@@ -642,6 +712,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "selenium": "Available" if "selenium" in get_binary_version("pip", "list") else "N/A"
     }
 }
+
 
 # Parser constants moved to core for centralization
 SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}

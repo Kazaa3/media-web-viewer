@@ -2,6 +2,7 @@ import subprocess
 import re
 from pathlib import Path
 from typing import Any
+from src.core.config_master import GLOBAL_CONFIG
 
 
 def get_capabilities() -> dict[str, Any]:
@@ -42,15 +43,14 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
     if filename is None:
         filename = Path(path).name
 
-    if mode == 'full' and 'full_tags' not in tags:
-        tags['full_tags'] = {}
+    # full_tags is already initialized by media_parser for 'full'/'ultimate' modes
 
     if settings is None:
-        from .format_utils import PARSER_CONFIG
-        settings = PARSER_CONFIG.get('parser_settings', {}).get('ffmpeg', {})
+        settings = {}
 
     try:
-        cmd = ["ffmpeg"]
+        ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        cmd = [ffmpeg_bin]
         # Add custom flags if any
         custom_flags = settings.get('cli_flags', '').split()
         if custom_flags:

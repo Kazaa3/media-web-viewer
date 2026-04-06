@@ -5,6 +5,7 @@ import os
 import json
 import subprocess
 import shutil
+import eel
 from src.core import logger
 from src.core.config_master import GLOBAL_CONFIG, SLOW_PARSERS
 

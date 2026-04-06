@@ -40,11 +40,13 @@ def parse(path, file_type, tags, filename=None, mode='lightweight', settings=Non
     @param mode Extraction mode / Extraktionsmodus.
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
-    if mode == 'full' and 'full_tags' not in tags:
-        tags['full_tags'] = {}
+    if mode == 'full':
+        tags['full_tags']['ffprobe_json'] = {} # Placeholder if needed
+
+    if settings is None:
+        settings = {}
 
     try:
-        from src.core.config_master import GLOBAL_CONFIG
         cmd = [
             GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"),
             "-v", "quiet",

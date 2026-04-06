@@ -65,13 +65,9 @@ def parse(
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
     if settings is None:
-        from .format_utils import PARSER_CONFIG
-        settings = PARSER_CONFIG.get('parser_settings', {}).get('mutagen', {})
+        settings = {}
 
     audio_for_info: Any = None
-
-    if mode == 'full' and 'full_tags' not in tags:
-        tags['full_tags'] = {}
 
     try:
         if file_type == '.flac':

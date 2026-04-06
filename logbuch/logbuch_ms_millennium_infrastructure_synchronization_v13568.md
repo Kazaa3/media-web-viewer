@@ -43,3 +43,60 @@ Die Media Viewer-Infrastruktur v1.35.68 ist jetzt ein vollautomatisiertes, daten
 ---
 
 **Meilenstein abgeschlossen: Millennium Infrastructure Synchronization (v1.35.68)**
+
+---
+
+# Nachtrag: Universal Infrastructure Orchestration (v1.35.68)
+
+**Datum:** 2026-04-06
+
+## The Centralized Toolchain
+- **100% Zentralisierung:** Alle Programme, Tools und Netzwerkendpunkte werden jetzt ausschließlich über das zentrale `GLOBAL_CONFIG`-Registry gesteuert. Ein globales Audit hat sämtliche Hardcodierungen entfernt.
+- **Logic Orchestration:** Artwork-Extraktion, Transcoding, Streaming – alle Binaries (ffmpeg, HandBrakeCLI, mkvmerge etc.) werden dynamisch aus dem Registry bezogen.
+- **Dual-Platform Hardware:** Hardware-Detector erkennt und meldet QSV & VAAPI parallel für optimale Intel-Performance.
+- **Deep Parser Integration:** Alle spezialisierten Media-Analyzer (isoparser, ebml, pymkv etc.) sind im Parser Toolchain Registry erfasst und werden im Dashboard überwacht.
+- **Dynamic Network Roots:** Alle Netzwerk- und API-Roots werden dynamisch aus `network_settings` generiert, keine localhost-Hardcodierung mehr.
+
+## Real-time Infrastructure Visibility
+- **Transcoding Toolchain (AV):** Dashboard zeigt Status & Versionen von ffmpeg, ffprobe, HandBrakeCLI.
+- **Media Parser Toolchain:** Überwachung von 6+ spezialisierten Analyzern.
+- **Hardware Encoder Status:** Badges für NVENC, QSV, VAAPI im Environment-Panel.
+
+## Qualitätssicherung
+- Syntaxprüfung und globales Audit bestanden. System ist als stabile, orchestrierte v1.35.68-Release-Basis auf dem multimedia-Branch verifiziert.
+
+## Betroffene Kernmodule
+- src/core/config_master.py      → Branch & Toolchain Registry
+- src/core/transcoder.py         → Automated Transcoding Logic
+- src/core/hardware_detector.py  → Multi-Platform HW Detection
+- web/js/options_helpers.js      → Real-time Dashboard Hydration
+
+Alle Infrastrukturziele für v1.35.68 sind erreicht. Das System ist jetzt vollumfänglich environment-aware, diagnostikbereit und für Multimedia-Entwicklung optimiert.
+
+---
+
+# Nachtrag: Universal Parser & Toolchain Orchestration (v1.35.68)
+
+**Datum:** 2026-04-06
+
+## Universal Parser Centralization
+- **100% Zentralisierung:** Alle spezialisierten Parser (FFmpeg, FFprobe, mkvmerge, Mutagen, VLC, PyMediaInfo) sind jetzt reine "Functional Worker" und erhalten ihre Einstellungen/Binärpfade direkt vom zentralen Orchestrator (`media_parser.py`).
+- **full_tags Orchestration:** Die Verwaltung des high-fidelity Metadata-Containers (full_tags) ist zentralisiert und wird zu Beginn des Parsing-Lifecycles initialisiert. Redundante Checks und Resets entfallen.
+- **Universal Binary Registry:** Alle System-Tool-Aufrufe laufen über `GLOBAL_CONFIG["program_paths"]`. Letzte Hardcodierungen (z.B. im Artwork Extractor) wurden entfernt.
+
+## Extended Diagnostic Dashboard
+- **Transcoding Toolchain (AV):** Echtzeit-Status & Versionen für FFmpeg, FFprobe, HandBrake.
+- **Deep Parser Toolchain:** Überwachung für ISO/MKV/Tagging-Analyzer (isoparser, pymkv etc.).
+- **Intel Dual-Platform Detection:** Hardware-Detector meldet QSV & VAAPI mit dedizierten Badges im UI.
+
+## Qualitätssicherung
+- Syntaxprüfung (py_compile) für die gesamte Parser-Stack bestanden.
+- System ist auf dem multimedia-Branch v1.35.68-konform synchronisiert.
+
+## Infrastruktur-Baseline v1.35.68
+- Parser Entry Point: src/parsers/media_parser.py (Single Source of Truth)
+- Tool Registry: src/core/config_master.py (GLOBAL_CONFIG)
+- Hardware Logic: src/core/hardware_detector.py (QSV + VAAPI)
+- Active Branch: multimedia (Aligned for Dev)
+
+Alle Infrastrukturwünsche bzgl. Zentralisierung, Hardware-Erkennung und Parser-Orchestrierung sind erfüllt.

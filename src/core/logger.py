@@ -31,12 +31,13 @@ def log_frontend_error(error_type: str, message: str, context: dict = None):
     from datetime import datetime
     log_path = LOCAL_LOG_DIR / "frontend_errors.log"
     entry = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "type": error_type,
         "message": message,
         "context": context or {}
     }
     try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except Exception as e:
@@ -53,24 +54,20 @@ import contextlib
 from pathlib import Path
 from typing import List, Optional, Any
 
-# Setup paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-LOCAL_LOG_DIR = PROJECT_ROOT / "logs"
+# 56. Environment Integration (v1.35.68 Centralized)
+from src.core.config_master import GLOBAL_CONFIG
 
-if LOCAL_LOG_DIR.exists() or not (Path.home() / ".media-web-viewer").exists():
+REGISTRY = GLOBAL_CONFIG.get("logging_registry", {})
+LOCAL_LOG_DIR = Path(REGISTRY.get("log_root", str(PROJECT_ROOT / "logs")))
+LOG_FILE = Path(REGISTRY.get("main_log", str(LOCAL_LOG_DIR / "app.log")))
+DEBUG_LOG_FILE = Path(LOCAL_LOG_DIR / "debug.log")
+
+if not LOCAL_LOG_DIR.exists():
     LOCAL_LOG_DIR.mkdir(parents=True, exist_ok=True)
-    APP_DATA_DIR = LOCAL_LOG_DIR
-    LOG_FILE = APP_DATA_DIR / "app.log"
-    DEBUG_LOG_FILE = APP_DATA_DIR / "debug.log"
-else:
-    APP_DATA_DIR = Path.home() / ".media-web-viewer"
-    APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    LOG_FILE = APP_DATA_DIR / "app.log"
-    DEBUG_LOG_FILE = PROJECT_ROOT / "logs" / "debug.log"
 
 # UI Log Buffer (accessible by Eel)
 LOG_BUFFER: List[str] = []
-MAX_BUFFER_SIZE = 10000
+MAX_BUFFER_SIZE = REGISTRY.get("max_buffer_size", 10000)
 
 # Reference to DEBUG_FLAGS from main (initialized during setup)
 _debug_flags = {}
@@ -170,7 +167,7 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
     # Determine session-specific log file
     session_log_path = None
     if session_id:
-        session_log_path = LOCAL_LOG_DIR / f"session_{session_id}.log"
+        session_log_path = REGISTRY.get("session_log") or str(LOCAL_LOG_DIR / f"session_{session_id}.log")
         logging.info(f"Session-specific logging enabled: {session_log_path}")
 
     # Format

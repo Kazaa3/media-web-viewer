@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 
 from src.core.logger import get_logger
+from src.core.config_master import GLOBAL_CONFIG
 log = get_logger("transcoder")
 
 class TranscodeTask:
@@ -68,7 +69,8 @@ class TranscoderManager:
                     
                     # Store in log buffer
                     task.log_buffer.append(line)
-                    if len(task.log_buffer) > 1000: task.log_buffer.pop(0)
+                    max_size = GLOBAL_CONFIG.get("perf_settings", {}).get("transcoder_log_size", 1000)
+                    if len(task.log_buffer) > max_size: task.log_buffer.pop(0)
                     
                     # Log to system logger for UI visibility
                     if task.task_type == "handbrake":
@@ -109,34 +111,36 @@ class TranscoderManager:
 
     def _build_handbrake_cmd(self, task: TranscodeTask) -> List[str]:
         # HandBrakeCLI with GPU support and optimized parameters
-        cmd = ["HandBrakeCLI", "-i", task.input_path, "-o", task.output_path]
+        from src.core.config_master import GLOBAL_CONFIG
+        hb_bin = GLOBAL_CONFIG["program_paths"].get("handbrake", "HandBrakeCLI")
+        settings = GLOBAL_CONFIG.get("transcoding_settings", {}).get("handbrake_settings", {})
+        
+        cmd = [hb_bin, "-i", task.input_path, "-o", task.output_path]
         
         encoder = task.options.get("encoder", "auto")
         if encoder == "auto":
             encoder = self._auto_select_encoder()
             
-        # GPU Encoders
-        if encoder == "nvenc":
-            cmd += ["-e", "nvenc_h264"]
-        elif encoder == "qsv":
-            cmd += ["-e", "qsv_h264"]
-        elif encoder == "vaapi":
-            cmd += ["-e", "vaapi_h264"]
-        else:
-            cmd += ["-e", "x264"]
+        # GPU Encoders (v1.35.68 Centralized)
+        encoder_map = settings.get("encoder_map", {})
+        cmd += ["-e", encoder_map.get(encoder, encoder_map.get("fallback", "x264"))]
 
         # Additional optimizations for batch encoding
-        preset = task.options.get("preset", "fast")
+        preset = task.options.get("preset", settings.get("preset", "fast"))
         cmd += ["--preset", preset]
         
         # Audio Passthrough
-        cmd += ["--aencoder", "copy"]
+        cmd += ["--aencoder", settings.get("a_encoder", "copy")]
         
         # Subtitle Passthrough
-        cmd += ["--subtitle", "scan", "--native-language", "ger", "--native-dub"]
+        if settings.get("subtitle_scan"):
+            cmd += ["--subtitle", "scan", "--native-language", settings.get("native_lang", "ger")]
+            if settings.get("native_dub"):
+                cmd += ["--native-dub"]
         
         # Performance flags
-        cmd += ["--markers"]
+        if settings.get("markers"):
+            cmd += ["--markers"]
         
         return cmd
 
@@ -154,6 +158,8 @@ class TranscoderManager:
         # FFmpeg VP9/WebM command with HW acceleration if available (v1.35.68)
         from src.core.config_master import GLOBAL_CONFIG
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
+        settings = GLOBAL_CONFIG.get("transcoding_settings", {}).get("webm_settings", {})
+        
         cmd = [ffmpeg_bin, "-hide_banner", "-loglevel", "error", "-i", task.input_path]
         
         from src.core import hardware_detector
@@ -161,15 +167,25 @@ class TranscoderManager:
         encoders = gpu_info.get("encoders", [])
         
         # VP9 HW Encoders (if available via ffmpeg)
+        v_codec = settings.get("v_codec", "libvpx-vp9")
+        v_codec_hw = settings.get("v_codec_hw", "vp9_nvenc")
+        
         if "nvenc" in encoders:
             # Note: nvenc supports hevc/h264, vp9 support depends on hardware
-            cmd += ["-c:v", "vp9_nvenc"] if "vp9_nvenc" in str(subprocess.run([ffmpeg_bin, "-encoders"], capture_output=True).stdout) else ["-c:v", "libvpx-vp9"]
-        else:
-            cmd += ["-c:v", "libvpx-vp9"]
-
-        cmd += ["-crf", "30", "-b:v", "0"]
-        cmd += ["-c:a", "libopus", "-b:a", "128k"]
-        cmd += ["-deadline", "realtime", "-row-mt", "1", "-y", task.output_path]
+            # Use subprocess to check runtime availability of the hw encoder
+            try:
+                check_cmd = [ffmpeg_bin, "-encoders"]
+                encoder_list = str(subprocess.run(check_cmd, capture_output=True, text=True).stdout)
+                if v_codec_hw in encoder_list:
+                    v_codec = v_codec_hw
+            except Exception:
+                pass
+        
+        cmd += ["-c:v", v_codec]
+        cmd += ["-crf", settings.get("crf", "30"), "-b:v", settings.get("bitrate_v", "0")]
+        cmd += ["-c:a", settings.get("a_codec", "libopus"), "-b:a", settings.get("bitrate_a", "128k")]
+        cmd += ["-deadline", settings.get("deadline", "realtime"), "-row-mt", settings.get("row_mt", "1")]
+        cmd += ["-y", task.output_path]
         return cmd
 
     def _get_duration(self, task: TranscodeTask):

@@ -42,12 +42,10 @@ def parse(
     @param mode Extraction mode / Extraktionsmodus.
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
-    if mode == 'full' and 'full_tags' not in tags:
-        tags['full_tags'] = {}
+    # full_tags is already initialized by media_parser for 'full'/'ultimate' modes
 
     if settings is None:
-        from .format_utils import PARSER_CONFIG
-        settings = PARSER_CONFIG.get('parser_settings', {}).get('pymediainfo', {})
+        settings = {}
 
     try:
         full_scan = settings.get('full_scan', False)

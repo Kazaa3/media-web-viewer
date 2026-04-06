@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from .format_utils import PARSER_CONFIG
 from src.core import logger
+from src.core.config_master import GLOBAL_CONFIG
 
 log = logger.get_logger("artwork")
 
@@ -138,8 +139,9 @@ class ArtworkExtractor:
         Works well for MKV/MP4 with multiple embedded pictures.
         """
         # 1. Broad stream mapping (picks first attached pic)
+        ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
         return self._run_ffmpeg([
-            "ffmpeg", "-i", str(path),
+            ffmpeg_bin, "-i", str(path),
             "-map", "0:v", "-c:v", "copy", "-vframes", "1",
             "-y", str(out_path)
         ], timeout=5)
@@ -148,8 +150,9 @@ class ArtworkExtractor:
         """
         Create a thumbnail from a video frame.
         """
+        ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
         return self._run_ffmpeg([
-            "ffmpeg", "-i", str(path),
+            ffmpeg_bin, "-i", str(path),
             "-ss", "00:00:07",
             "-vframes", "1",
             "-vf", "scale=w=480:h=480:force_original_aspect_ratio=decrease",

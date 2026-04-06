@@ -71,9 +71,8 @@ def is_network_mount(path: str) -> bool:
     return False
 
 def get_gpu_info() -> Dict[str, Any]:
-    """Detects graphics hardware and available HW codecs."""
-    encoders: List[str] = []
     gpu_type = "Unknown"
+    is_intel = False
     try:
         # Detect encoders first
         res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=2)
@@ -85,15 +84,35 @@ def get_gpu_info() -> Dict[str, Any]:
             if "h264_nvenc" in stdout:
                 encoders.append("nvenc")
         
-        # 2. VAAPI
+        # 2. Check for Intel Devices (VAAPI/QSV)
         if os.path.exists("/dev/dri/renderD128"):
-            if "h264_vaapi" in stdout:
-                if gpu_type == "Unknown": gpu_type = "VAAPI-Generic"
-                encoders.append("vaapi")
+            # Check if it's an Intel iGPU/dGPU
+            pci_info = ""
+            if shutil.which("lspci"):
+                try:
+                    pci_info = subprocess.run(["lspci"], capture_output=True, text=True).stdout.lower()
+                except: pass
+            
+            if "intel" in pci_info or gpu_type == "Unknown":
+                is_intel = "intel" in pci_info
+                if is_intel: gpu_type = "Intel"
+                
+                # Check for QSV
+                if "h264_qsv" in stdout:
+                    encoders.append("qsv")
+                
+                # Check for VAAPI
+                if "h264_vaapi" in stdout:
+                    encoders.append("vaapi")
+                    if gpu_type == "Unknown": gpu_type = "VAAPI-Generic"
         
-        # 3. QSV
-        if "h264_qsv" in stdout:
-            encoders.append("qsv")
+        # Finalize GPU string for display
+        if is_intel and "qsv" in encoders and "vaapi" in encoders:
+            gpu_type = "Intel (QSV+VAAPI)"
+        elif is_intel and "qsv" in encoders:
+            gpu_type = "Intel (QSV)"
+        elif is_intel and "vaapi" in encoders:
+            gpu_type = "Intel (VAAPI)"
 
     except Exception:
         pass

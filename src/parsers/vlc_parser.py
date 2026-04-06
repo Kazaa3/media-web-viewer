@@ -34,8 +34,7 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
     @return Updated tags dictionary / Aktualisiertes Tag-Dictionary.
     """
     if settings is None:
-        from .format_utils import PARSER_CONFIG
-        settings = PARSER_CONFIG.get('parser_settings', {}).get('vlc', {})
+        settings = {}
 
     try:
         instance = vlc.Instance("--no-xlib --quiet")

@@ -9,6 +9,7 @@ dict - Desktop Media Player and Library Manager v1.35.68
 import os
 import sys
 import time
+import traceback
 from pathlib import Path
 
 # Record boot time as early as possible
@@ -345,7 +346,8 @@ def run_app_audit_detached(session_port):
         audit_script = PROJECT_ROOT / "scripts" / "app_audit_playwright.py"
         try:
             # We use the current python executable to ensure same venv
-            cmd = [sys.executable, str(audit_script), "--url", f"http://localhost:{session_port}/app.html"]
+            api_root = GLOBAL_CONFIG["network_settings"].get("api_root", f"http://localhost:{session_port}")
+            cmd = [sys.executable, str(audit_script), "--url", f"{api_root}/app.html"]
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=str(PROJECT_ROOT))
             
             for line in process.stdout:
@@ -684,7 +686,7 @@ def run_video_transcode_diagnostic(file_path=None):
     results = []
     
     # Endpoints to test
-    base_url = f"http://localhost:{GLOBAL_CONFIG['port']}"
+    base_url = GLOBAL_CONFIG['network_settings'].get('api_root', f"http://localhost:{GLOBAL_CONFIG['port']}")
     encoded_path = requests.utils.quote(target_path)
     endpoints = [
         {"name": "Remux (Fast)", "url": f"{base_url}/video-remux-stream/{encoded_path}"},
@@ -697,7 +699,7 @@ def run_video_transcode_diagnostic(file_path=None):
             r = requests.get(ep['url'], stream=True, timeout=15)
             if r.status_code == 200:
                 # Read 512KB to check for atoms
-                chunk = next(r.iter_content(chunk_size=512*1024), b'')
+                chunk = next(r.iter_content(chunk_size=GLOBAL_CONFIG["perf_settings"]["chunk_size"]), b'')
                 atoms = [b'ftyp', b'moof', b'mdat', b'moov']
                 found = [a.decode() for a in atoms if a in chunk[:4096]]
                 

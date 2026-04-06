@@ -37,8 +37,7 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         return tags
 
     if settings is None:
-        from .format_utils import PARSER_CONFIG
-        settings = PARSER_CONFIG.get('parser_settings', {}).get('mkvinfo', {})
+        settings = {}
 
     try:
         # We use -v to get more info if needed, but for basic tags, default output is fine.
@@ -75,9 +74,7 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
 
         # Parse Tracks (Basic check)
         if mode == 'full':
-            if 'full_tags' not in tags:
-                tags['full_tags'] = {}
-            tags['full_tags']['mkvinfo_raw'] = output
+            pass
 
     except subprocess.TimeoutExpired:
         pass

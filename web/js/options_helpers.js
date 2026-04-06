@@ -70,9 +70,11 @@ async function loadEnvironmentInfo() {
         buildVenvGrid(info.venvs || []);
         buildVenvTree(info.venvs || []);
 
-        // 5. App Mode & Browser Toolchain (v1.35.68 Centralized)
+        // 5. App Mode & Toolchains (v1.35.68 Centralized)
         if (typeof buildHeadlessUI === 'function') buildHeadlessUI();
         if (typeof buildBrowserToolchainUI === 'function') buildBrowserToolchainUI();
+        if (typeof buildTranscodingToolchainUI === 'function') buildTranscodingToolchainUI();
+        if (typeof buildParsingToolchainUI === 'function') buildParsingToolchainUI();
 
     } catch (e) {
         console.error('[Options] loadEnvironmentInfo failed:', e);
@@ -178,7 +180,7 @@ function buildBrowserToolchainUI() {
     if (!grid || !window.CONFIG?.browsers) return;
 
     grid.innerHTML = window.CONFIG.browsers.map(b => `
-        <div class="diagnostic-value" style="display:flex; justify-content:space-between; font-size:11px;">
+        <div class="diagnostic-value" style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
             <span style="opacity:0.6">${b}</span>
             <span style="font-weight:700; color:var(--accent-color)">✓</span>
         </div>
@@ -196,6 +198,51 @@ function buildBrowserToolchainUI() {
         `).join('');
         if (container) container.innerHTML += `<div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">${toolsHtml}</div>`;
     }
+}
+
+function buildTranscodingToolchainUI() {
+    const container = document.getElementById('env-transcode-ladder');
+    if (!container || !window.CONFIG?.transcoding_toolchain) return;
+
+    const tools = window.CONFIG.transcoding_toolchain;
+    container.innerHTML = Object.entries(tools).map(([name, ver]) => {
+        const isUnknown = ver === 'Unknown' || ver === 'N/A' || !ver;
+        return `
+            <div class="diagnostic-value" style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                <span style="opacity:0.6; text-transform:capitalize;">${name}</span>
+                <span style="font-weight:700; color:${isUnknown ? '#e74c3c' : 'var(--accent-color)'}">${isUnknown ? '✖' : ver}</span>
+            </div>
+        `;
+    }).join('');
+    
+    // Add Hardware Encoder Info
+    if (encoders.length > 0) {
+        const gpuHtml = `
+            <div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+                <div style="font-size:10px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-bottom:8px;">HW Encoders Detectiert:</div>
+                <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                    ${encoders.map(e => `<span style="background:rgba(46,204,113,0.1); color:#2ecc71; padding:2px 6px; border-radius:3px; font-size:9px; font-weight:800; text-transform:uppercase;">${e}</span>`).join('')}
+                </div>
+            </div>
+        `;
+        container.innerHTML += gpuHtml;
+    }
+}
+
+function buildParsingToolchainUI() {
+    const grid = document.getElementById('env-parser-ladder');
+    if (!grid || !window.CONFIG?.parsing_toolchain) return;
+
+    const tools = window.CONFIG.parsing_toolchain;
+    grid.innerHTML = Object.entries(tools).map(([name, ver]) => {
+        const isUnknown = ver === 'Unknown' || ver === 'N/A' || !ver;
+        return `
+            <div class="diagnostic-value" style="display:flex; justify-content:space-between; font-size:11px; padding: 6px 12px; background:rgba(255,255,255,0.03); border-radius:4px;">
+                <span style="opacity:0.6; text-transform:capitalize;">${name}</span>
+                <span style="font-weight:700; color:${isUnknown ? '#e74c3c' : 'var(--accent-color)'}">${isUnknown ? '✖' : ver}</span>
+            </div>
+        `;
+    }).join('');
 }
 
 async function installMissingPackages() {

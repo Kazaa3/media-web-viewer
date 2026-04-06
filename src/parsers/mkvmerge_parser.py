@@ -2,6 +2,7 @@ import subprocess
 import json
 from pathlib import Path
 from typing import Any
+from src.core.config_master import GLOBAL_CONFIG
 
 
 def get_capabilities() -> dict[str, Any]:
@@ -42,12 +43,12 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
         return tags
 
     if settings is None:
-        from .format_utils import PARSER_CONFIG
-        settings = PARSER_CONFIG.get('parser_settings', {}).get('mkvmerge', {})
+        settings = {}
 
     try:
         # mkvmerge -J provides a nice structured JSON
-        cmd = ["mkvmerge", "-J"]
+        mkvmerge_bin = GLOBAL_CONFIG["program_paths"].get("mkvmerge", "mkvmerge")
+        cmd = [mkvmerge_bin, "-J"]
         
         # Add custom flags if any
         custom_flags = settings.get('cli_flags', '').split()
@@ -86,10 +87,10 @@ def parse(path: Path, file_type: str, tags: dict[str, Any], filename: str = None
 
         # Tracks
         tracks = data.get('tracks', [])
-        if tracks and mode == 'full':
-            if 'full_tags' not in tags:
-                tags['full_tags'] = {}
-            tags['full_tags']['mkvmerge_json'] = data
+        # Track information
+        if mode == 'full':
+            # Basic track stats
+            tags['track_info'] = tracks
 
         # Simple codec/container fallback
         if not tags.get('container') and container.get('type'):

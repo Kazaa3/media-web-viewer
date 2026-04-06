@@ -13,6 +13,14 @@ from . import mkvinfo_parser
 from . import mkvmerge_parser
 from . import vlc_parser
 from . import isoparser_parser
+from . import ebml_parser
+from . import mkvparse_parser
+from . import enzyme_parser
+from . import pycdlib_parser
+from . import pymkv_parser
+from . import tinytag_parser
+from . import eyed3_parser
+from . import music_tag_parser
 import multiprocessing
 from src.core.config_master import GLOBAL_CONFIG
 
@@ -82,10 +90,6 @@ def _sandboxed_worker(func, queue, *args, **kwargs):
     except Exception as e:
         queue.put((False, str(e)))
 
-def run_sandboxed(func, timeout, *args, **kwargs):
-    """
-    @brief Runs a function in a separate process to isolate crashes/hangs.
-    """
 def run_sandboxed(func, timeout, *args, **kwargs):
     """
     @brief Runs a function in a separate process to isolate crashes/hangs.
@@ -196,7 +200,8 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         'name': filename,
         'type': 'directory' if path_obj.is_dir() else 'file' if path_obj.is_file() else 'missing',
     }
-    if mode in ('full', 'ultimate'):
+    # Initialize full_tags for high-fidelity modes (v1.35.68 Centralized)
+    if mode in ('full', 'ultimate') and 'full_tags' not in tags:
         tags['full_tags'] = {}
 
     duration = 0
@@ -207,7 +212,6 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         "parser_chain", ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "isoparser"]))
     log.debug(f"DEBUG: PARSER_CONFIG['parser_chain']: {parser_chain}")
 
-    from . import isoparser_parser
     parser_steps = [
         ("filename", filename_parser.parse),
         ("container", container_parser.parse),
@@ -219,14 +223,14 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         ("vlc", vlc_parser.parse),
         ("ffmpeg", ffmpeg_parser.parse),
         ("isoparser", isoparser_parser.parse),
-        ("ebml", None),
-        ("mkvparse", None),
-        ("enzyme", None),
-        ("pycdlib", None),
-        ("pymkv", None),
-        ("tinytag", None),
-        ("eyed3", None),
-        ("music_tag", None),
+        ("ebml", ebml_parser.parse),
+        ("mkvparse", mkvparse_parser.parse),
+        ("enzyme", enzyme_parser.parse),
+        ("pycdlib", pycdlib_parser.parse),
+        ("pymkv", pymkv_parser.parse),
+        ("tinytag", tinytag_parser.parse),
+        ("eyed3", eyed3_parser.parse),
+        ("music_tag", music_tag_parser.parse),
     ]
 
     MAX_RETRIES = PARSER_CONFIG.get("parser_max_retries", 2)
@@ -443,9 +447,10 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
                 elif step_name == "pymkv":
                     import pymkv
                     import shutil
-                    if not shutil.which("mkvmerge"):
-                         raise FileNotFoundError("mkvmerge binary not found in PATH")
-                    mkv = pymkv.MKVFile(str(path_obj))
+                    mkvmerge_bin = GLOBAL_CONFIG["program_paths"].get("mkvmerge", "mkvmerge")
+                    if not shutil.which(mkvmerge_bin):
+                         raise FileNotFoundError(f"{mkvmerge_bin} binary not found in PATH")
+                    mkv = pymkv.MKVFile(str(path_obj), mkvmerge_path=mkvmerge_bin)
                     current_tags['pymkv_tracks'] = mkv.tracks
                     parser_times[step_name] = time.time() - t0
                     success = True
