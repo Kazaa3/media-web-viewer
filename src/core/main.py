@@ -4051,18 +4051,20 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
                 
             if cat not in allowed_internal_cats:
                 dropped_reasons["category_mismatch"] += 1
-                # [DIAGNOSTIC] Aggressive logging for the first 50 drops (v1.35.68)
-                if dropped_reasons["category_mismatch"] <= 50: 
-                    log.warning(f"[BD-AUDIT] Dropped '{item.get('name')}' - Category '{cat}' not in {allowed_internal_cats}")
-                
                 # [v1.35.68-C] AUTO-RECOVERY: If it's a known extension but wrong category, fix it!
                 ext = os.path.splitext(str(item.get('path', '')))[1].lower()
-                if ext == '.mp3' or ext == '.flac':
-                    log.info(f"[BD-AUDIT] Auto-restoring '{item.get('name')}' to 'audio' due to extension {ext}")
+                if ext in ['.mp3', '.flac', '.wav', '.m4a', '.ogg', '.opus']:
                     item['category'] = 'audio'
                     filtered.append(item)
                     continue
+                elif ext in ['.mp4', '.mkv', '.avi', '.mov', '.webm']:
+                    item['category'] = 'video'
+                    filtered.append(item)
+                    continue
                 
+                # If still unknown, use multimedia as fallback instead of dropping
+                item['category'] = 'multimedia'
+                filtered.append(item)
                 continue
 
         # 2. Search check
@@ -4229,6 +4231,9 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     
     final_media = filtered_media + (realistic_mocks if audit_stage == 3 or not force_raw else [])
     
+    # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.35.68)
+    print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
+
     return {
         "media": final_media,
         "db_count": count_total,

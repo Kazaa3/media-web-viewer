@@ -488,27 +488,7 @@ def get_media_by_name(name):
     conn.close()
 
     if row:
-        return {
-            'id': row['id'],
-            'name': row['name'],
-            'path': row['path'],
-            'type': row['type'],
-            'duration': row['duration'],
-            'category': row['category'],
-            'extension': row['extension'],
-            'container': row['container'],
-            'tag_type': row['tag_type'],
-            'codec': row['codec'],
-            'art_path': row['art_path'],
-            'has_artwork': bool(row['has_artwork']),
-            'is_transcoded': bool(row['is_transcoded']),
-            'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
-            'playback_position': row['playback_position'] or 0,
-            'last_played': row['last_played'],
-            'duration_sec': row['duration_sec'] or 0
-        }
+        return row_to_dict(row)
     return None
 
 
@@ -525,27 +505,7 @@ def get_media_by_id(media_id):
     conn.close()
 
     if row:
-        return {
-            'id': row['id'],
-            'name': row['name'],
-            'path': row['path'],
-            'type': row['type'],
-            'duration': row['duration'],
-            'category': row['category'],
-            'extension': row['extension'],
-            'container': row['container'],
-            'tag_type': row['tag_type'],
-            'codec': row['codec'],
-            'art_path': row['art_path'],
-            'has_artwork': bool(row['has_artwork']),
-            'is_transcoded': bool(row['is_transcoded']),
-            'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
-            'playback_position': row['playback_position'] or 0,
-            'last_played': row['last_played'],
-            'duration_sec': row['duration_sec'] or 0
-        }
+        return row_to_dict(row)
     return None
 
 
@@ -562,27 +522,7 @@ def get_media_by_path(path):
     conn.close()
 
     if row:
-        return {
-            'id': row['id'],
-            'name': row['name'],
-            'path': row['path'],
-            'type': row['type'],
-            'duration': row['duration'],
-            'category': row['category'],
-            'extension': row['extension'],
-            'container': row['container'],
-            'tag_type': row['tag_type'],
-            'codec': row['codec'],
-            'art_path': row['art_path'],
-            'has_artwork': bool(row['has_artwork']),
-            'is_transcoded': bool(row['is_transcoded']),
-            'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
-            'playback_position': row['playback_position'] or 0,
-            'last_played': row['last_played'],
-            'duration_sec': row['duration_sec'] or 0
-        }
+        return row_to_dict(row)
     return None
 
 
@@ -602,27 +542,7 @@ def get_media_by_remote_id(field, value):
     conn.close()
 
     if row:
-        return {
-            'id': row['id'],
-            'name': row['name'],
-            'path': row['path'],
-            'type': row['type'],
-            'duration': row['duration'],
-            'category': row['category'],
-            'extension': row['extension'],
-            'container': row['container'],
-            'tag_type': row['tag_type'],
-            'codec': row['codec'],
-            'art_path': row['art_path'],
-            'has_artwork': bool(row['has_artwork']),
-            'is_transcoded': bool(row['is_transcoded']),
-            'transcoded_format': row['transcoded_format'],
-            'tags': json.loads(row['tags']) if row['tags'] else {},
-            'full_tags': json.loads(row['full_tags']) if row['full_tags'] else {},
-            'playback_position': row['playback_position'] or 0,
-            'last_played': row['last_played'],
-            'duration_sec': row['duration_sec'] or 0
-        }
+        return row_to_dict(row)
     return None
 
 
