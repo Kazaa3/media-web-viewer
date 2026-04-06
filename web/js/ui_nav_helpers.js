@@ -53,6 +53,32 @@ let navTimeout = null;      // Safety timer for lock release
 let menuSystemVisible = true; // Default to open for UI discovery
 
 /**
+ * Toggles the global diagnostics overlay sidebar.
+ */
+function toggleDiagnosticsOverlay() {
+    const sb = document.getElementById('global-diagnostics-sidebar');
+    const btn = document.getElementById('footer-btn-diag-overlay');
+    if (!sb) return;
+
+    const isActive = sb.classList.toggle('active');
+    
+    // Toggle button active state
+    if (btn) {
+        btn.classList.toggle('active', isActive);
+        btn.style.color = isActive ? '#00ff00' : ''; // Highlight when active
+    }
+
+    if (isActive) {
+        if (typeof traceUiNav === 'function') traceUiNav('DIAG-OVERLAY', 'OPEN');
+        if (typeof syncDiagBtnStates === 'function') syncDiagBtnStates();
+    } else {
+        if (typeof traceUiNav === 'function') traceUiNav('DIAG-OVERLAY', 'CLOSE');
+    }
+    
+    localStorage.setItem('mwv_diag_overlay_visible', isActive);
+}
+
+/**
  * Toggles the main sidebar visibility.
  */
 function toggleSidebar() {
@@ -749,12 +775,18 @@ function switchReportingSubView(viewId) {
 
 function switchDiagnosticsSubView(viewId) {
     // Both 'debug' and 'tests' load diagnostics_suite.html
-    const masterTab = (viewId === 'debug-db' || viewId === 'debug' || viewId === 'health' || viewId === 'latency') ? 'debug' : 'tests';
+    const masterTab = (viewId === 'debug-db' || viewId === 'debug' || viewId === 'health' || viewId === 'latency' || viewId === 'video-health') ? 'debug' : 'tests';
     switchTab(masterTab, null, () => {
         if (typeof switchDiagnosticsView === 'function') {
             switchDiagnosticsView(viewId);
         }
         updateSubNavActiveState(viewId);
+
+        // Update Global Sidebar Reiters (v1.37.04 Sync)
+        document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => {
+            const reiterId = (viewId === 'debug-db') ? 'reiter-overview' : `reiter-${viewId}`;
+            el.classList.toggle('active', el.id === reiterId);
+        });
     });
 }
 
