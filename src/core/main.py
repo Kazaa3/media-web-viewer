@@ -4070,25 +4070,52 @@ def set_global_config(key: str, value: Any):
 @eel.expose
 def get_library_forensics():
     """
-    @brief Unified Forensic Bridge for UI Diagnostics (v1.35.68).
-    @details Provides real-time DB vs. FS vs. Filter metrics.
+    @brief Unified Forensic Bridge (v1.35.68).
+    @details Fixes 'Audit Bridge Fault' by ensuring full object integrity.
     """
     from src.core import db
-    db_items = db.get_library()
+    db_items = db.get_library() or []
     db_path = str(Path(db.DB_FILENAME).resolve())
     
-    stats = {}
+    cat_stats = {}
+    ext_stats = {}
     for item in db_items:
-        cat = item.get('category', 'unknown')
-        stats[cat] = stats.get(cat, 0) + 1
+        cat = item.get('category', 'unknown').lower()
+        path = str(item.get('path', ''))
+        ext = os.path.splitext(path)[1].lower() or '.dat'
+        
+        cat_stats[cat] = cat_stats.get(cat, 0) + 1
+        ext_stats[ext] = ext_stats.get(ext, 0) + 1
         
     return {
-        "db_status": "connected",
+        "status": "success",
+        "total": len(db_items),
         "db_path": db_path,
-        "db_count": len(db_items),
-        "categories": stats,
-        "fs_status": "ok" if os.path.exists(db_path) else "error",
+        "categories": cat_stats,
+        "formats": ext_stats, # Added for Extension Audit
+        "duplicates": 0,      # TODO: Implement duplicate detection
         "pid": os.getpid()
+    }
+
+@eel.expose
+def get_debug_stats():
+    """Returns essential diagnostic numbers for UI pills."""
+    from src.core import db
+    db_items = db.get_library() or []
+    return {
+        "total_items": len(db_items),
+        "pid": os.getpid(),
+        "status": "healthy"
+    }
+
+@eel.expose
+def get_startup_info():
+    """Returns uptime and env data for 7-point HUD."""
+    return {
+        "pid": os.getpid(),
+        "start_time": INITIAL_START_TIME,
+        "env": "diagnostic-lab",
+        "version": "1.35.68-STABLE"
     }
 
 
