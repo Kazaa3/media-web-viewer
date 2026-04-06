@@ -6,9 +6,10 @@ const DIAG_VIEW_INFO = {
     'item-track': { name: 'ITEM JOURNEY', desc: 'Traces a specific file across all layers.' },
     'sentinel': { name: 'SENTINEL LOG', desc: 'Live application event listener.' },
     'debug-db': { name: 'DATABASE OVERVIEW', desc: 'Raw SQLite index & Category statistics.' },
-    'logs': { name: 'SYSTEM LOGS', desc: 'Backend console & terminal output stream.' },
-    'video-health': { name: 'VIDEO PIPELINE', desc: 'Transcoding and remuxing status.' },
-    'recovery': { name: 'NUCLEAR RECOVERY', desc: 'Emergency UI and filter resets.' }
+    'logs': { name: 'Forensic Logic', desc: 'Real-time Trace Engineering & Filtering' },
+    'video-health': { name: 'Active Workers', desc: 'Process Runtime & Surgical Kill Matrix' },
+    'recovery': { name: 'Database Resilience', desc: 'Tactical Restoration & Atomic Sync' },
+    'environment': { name: 'System Health', desc: 'Resource Telemetry & Platform Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -57,7 +58,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'debug-db': 'diag-pane-debug-db',
         'logs': 'diag-pane-logs',
         'video-health': 'diag-pane-video-health',
-        'recovery': 'diag-pane-db-resilience'
+        'recovery': 'diag-pane-db-resilience',
+        'environment': 'diag-pane-environment'
     };
 
     if (paneIds[viewId]) {
@@ -69,6 +71,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'item-track') renderItemTrackTab();
         if (viewId === 'debug-db' && typeof renderDebugDatabase === 'function') renderDebugDatabase();
         if (viewId === 'logs' && typeof refreshDebugLogs === 'function') refreshDebugLogs();
+        if (viewId === 'video-health') runVideoWorkerAudit();
+        if (viewId === 'environment') runEnvironmentAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -941,4 +945,64 @@ async function generateForensicSnapshot() {
     }
 }
 
+/**
+ * ENVIRONMENT FORENSIC AUDIT (v1.37.29)
+ */
+async function runEnvironmentAudit() {
+    const details = document.getElementById('diag-env-details');
+    const cpuEl = document.getElementById('diag-env-cpu');
+    const ramEl = document.getElementById('diag-env-ram');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Auditing Environment...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing System Environment Audit...');
+    
+    try {
+        const res = await eel.get_system_environment()();
+        if (res.status === 'ok') {
+            const t = res.telemetry;
+            const p = res.platform;
+            
+            if (cpuEl) cpuEl.innerText = t.cpu;
+            if (ramEl) ramEl.innerText = t.ram;
+            
+            const portColor = t.port_8345 === 'active' ? '#2ecc71' : '#e74c3c';
+            
+            if (details) {
+                details.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="opacity:0.5;">UPTIME</span>
+                        <span style="font-family:monospace;">${t.uptime}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="opacity:0.5;">PORT 8345</span>
+                        <span style="font-family:monospace; color:${portColor}; font-weight:800;">${t.port_8345.toUpperCase()}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-top:1px solid rgba(255,255,255,0.05); padding-top:5px; margin-top:5px;">
+                        <span style="opacity:0.5;">PYTHON</span>
+                        <span>${p.python}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="opacity:0.5;">EEL</span>
+                        <span>${p.eel}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="opacity:0.5;">OS</span>
+                        <span style="font-size:8px;">${p.os}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.05); padding-top:5px; margin-top:5px;">
+                        <span style="opacity:0.5;">PID</span>
+                        <span style="font-family:monospace; color:#f1c40f;">${res.pid}</span>
+                    </div>
+                `;
+            }
+            sentinelPulse('SUCCESS', `Environment Audit Complete. CPU: ${t.cpu}, RAM: ${t.ram}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Env Audit Failed: ${e.message}`);
+        if (details) details.innerHTML = `<div style="color:#e74c3c; font-size:9px; text-align:center; padding:20px;">Audit Failed: ${e.message}</div>`;
+    }
+}
+
+window.runEnvironmentAudit = runEnvironmentAudit;
 window.generateForensicSnapshot = generateForensicSnapshot;
