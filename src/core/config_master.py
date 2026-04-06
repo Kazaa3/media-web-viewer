@@ -56,27 +56,29 @@ def discover_binary(name: str, fallback: str = "") -> str:
     """Safely discover a binary path on the current system."""
     return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
-def get_binary_version(name: str) -> str:
-    """Safely get the version of a binary."""
-    path = discover_binary(name)
-    if not path:
-        return "Not Found"
+def get_binary_version(path: str, flag: str = "-version") -> str:
+    """
+    Attempts to extract the version string from an external binary.
+    """
+    if not path or path == "Unknown": return "N/A"
     try:
-        if name == "vlc":
-            cmd = [path, "--version"]
-        elif name == "mpv":
-            cmd = [path, "--version"]
+        if " " in path:
+            # Handle paths with spaces or arguments
+            cmd = path.split() + [flag]
         else:
-            cmd = [path, "-version"] # standard for ffmpeg, mkvmerge
+            cmd = [path, flag] # use provided flag
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
         combined = (res.stdout or "") + (res.stderr or "")
         
         # Broad patterns for different tools
         patterns = [
-            r"version ([0-9\.\-]+)",      # ffmpeg, ffprobe
-            r"v([0-9\.\-]+)",             # mkvmerge
-            r"VLC version ([0-9\.\-]+)",  # vlc
-            r"([0-9]+\.[0-9]+\.[0-9]+)"   # fallback generic semantic version
+            r"version ([0-9\.\-]+)",           # ffmpeg, ffprobe, ffplay, pip
+            r"v([0-9\.\-]+)",                  # mkvmerge
+            r"VLC version ([0-9\.\-]+)",       # vlc
+            r"mpv ([0-9\.\-]+)",               # mpv
+            r"MediaInfo Command line, ([0-9\.\-]+)", # mediainfo
+            r"isoinfo ([0-9\.\-]+)",            # isoinfo
+            r"([0-9]+\.[0-9]+\.[0-9]+)"        # fallback generic semantic version
         ]
         
         for p in patterns:
@@ -194,12 +196,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "mkvmerge": discover_binary("mkvmerge", "mkvmerge"),
         "mkvinfo": discover_binary("mkvinfo", "mkvinfo"),
         "mkvextract": discover_binary("mkvextract", "mkvextract"),
+        "mkvpropedit": discover_binary("mkvpropedit", "mkvpropedit"),
         "mediamtx": discover_binary("mediamtx", "mediamtx"),
         "swyh-rs-cli": discover_binary("swyh-rs-cli", "swyh-rs-cli"),
-        "spotifyd": discover_binary("spotifyd", "spotifyd"),
-        "spt": discover_binary("spt", "spt"),
+        "spotifyd": discover_binary("spotifyd", "spotifyd"), # Spotify Connect daemon
+        "spt": discover_binary("spt", "spt"),           # Spotify TUI for remote control
         "pyvidplayer2": discover_binary("pyvidplayer2", "pyvidplayer2"),
-        "mpv": discover_binary("mpv", "mpv")
+        "mpv": discover_binary("mpv", "mpv"),
+        "m3u8": discover_binary("m3u8", "m3u8-tester"),
+        "isoinfo": discover_binary("isoinfo", "isoinfo"), # ISO 9660 tool
+        "mediainfo": discover_binary("mediainfo", "mediainfo") # MediaInfo CLI backend
     },
     
     # --- STORAGE REGISTRY (v1.35.68 Centralized) ---
@@ -210,12 +216,44 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "db_path": os.environ.get("MWV_DB", str(PROJECT_ROOT / "data" / "database.db")),
         "log_dir": str(PROJECT_ROOT / "logs"),
         "cache_dir": str(PROJECT_ROOT / "cache"),
+        "benchmarks_file": str(PROJECT_ROOT / "data" / "benchmarks.json"),
+        "environment_file": str(PROJECT_ROOT / "infra" / "environment.yml"),
         "legacy_db_candidates": [
             "~/media_library.db",
             "./media_library.db",
             "./dist/media_library.db",
             "../media_library.db"
         ]
+    },
+    
+    # --- DIAGNOSTIC & METRIC REGISTRY (v1.35.68 Centralized) ---
+    "diagnostic_registry": {
+        "benchmarks_enabled": get_env_bool("MWV_BENCHMARKS", True),
+        "log_level_registry": {
+            "TRACE": 5,
+            "DEBUG": 10,
+            "INFO": 20,
+            "WARNING": 30,
+            "ERROR": 40,
+            "CRITICAL": 50
+        },
+        "quality_score_weights": {
+            "resolution": {
+                "2160": 50,
+                "1080": 40,
+                "720": 30,
+                "default": 10
+            },
+            "hdr": 20,
+            "audio": {
+                "multichannel": 15,
+                "stereo": 5
+            },
+            "extras": {
+                "subs": 5,
+                "chapters": 10
+            }
+        }
     },
     
     # --- CATEGORY & ROUTING REGISTRY (v1.35.68 Centralized) ---
@@ -230,16 +268,35 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 "multimedia", "video", "film", "serie", "tv", "movie", "tv show", 
                 "musikvideos", "animes", "cartoons", "video object", "animations", 
                 "documentary", "dok", "dokumentation", "concert", "konzerte",
-                "iso", "disk-abbild", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd"
+                "iso", "disk-abbild", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd", 
+                "3d", "4k", "uhd", "ultra hd", "bdmv"
             ],
             "images": ["bilder", "grafik", "bild", "foto", "images", "gallery"],
             "documents": ["dokument", "pdf", "text", "doc", "docx", "txt", "office"],
             "ebooks": ["e-book", "ebook", "epub", "mobi"],
-            "abbild": ["abbild", "iso/image", "disk image", "pal dvd", "ntsc dvd", "blu-ray", "disk-abbild", "dvd object"],
+            "abbild": [
+                "abbild", "iso/image", "disk image", "pal dvd", "ntsc dvd", "blu-ray", 
+                "disk-abbild", "dvd object", "3d", "4k", "uhd", "bdmv"
+            ],
             "spiel": ["spiel", "game", "pc spiel", "digitales spiel", "steam"],
             "beigabe": ["beigabe", "supplement", "software", "additional"],
             "transcoded": [],
-            "iso": ["abbild", "disk-abbild", "iso"]
+            "iso": [
+                "abbild", "disk-abbild", "iso", "dvd ntsc", "dvd pal", 
+                "pal dvd", "ntsc dvd", "blu-ray", "3d", "4k", "uhd"
+            ],
+            "hörspiel": ["hörspiel", "radio drama", "audio drama"],
+            "hörbuch": ["hörbuch", "audiobook", "audio book"]
+        },
+        "media_classes": {
+            "audio_native": "audio",
+            "audio_transcoded": "audio_transcoded",
+            "audiobook": "hörbuch",
+            "video_native": "multimedia_native",
+            "video_3d": "multimedia_3d",
+            "video_4k": "multimedia_4k",
+            "video_hd_transcoded": "multimedia_transcoded_hd",
+            "mkv_pal_ntsc_transcoded": "multimedia_mkv_legacy_transcoded"
         },
         "tech_markers": {
             "transcoded": ["_transcoded", ".mp4_transcoded"],
@@ -253,16 +310,28 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
     
+    # --- PLAYBACK & ENGINE REGISTRY (v1.35.68 Centralized) ---
+    "playback_registry": {
+        "modes": ["direct", "transcode", "hls", "vlc", "mpv", "shuttle", "spotify", "hls_mp4frag"],
+        "default_video_mode": "hls",
+        "default_audio_mode": "direct",
+        "hls_segment_type": "fmp4", # mpegts, fmp4
+        "force_native_on": [".mp3", ".mp4", ".m4a", ".wav"],
+        "streaming_engines": ["ffmpeg", "vlc", "mediamtx", "swyh-rs", "pyvidplayer2"],
+        "hls_mp4frag_enabled": True
+    },
+    
     # --- EXTENSION & PARSER REGISTRY (v1.35.68 Centralized) ---
     "extension_registry": {
-        "audio": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".mka", ".dts", ".dtshd", ".pcm", ".ra", ".rm"},
+        "audio": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".dts", ".dtshd", ".pcm", ".ra", ".rm"},
         "video": {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2", ".ogv", ".mts", ".m2ts", ".ts", ".m2t", ".m2v", ".divx", ".xvid", ".vob", ".dat", ".rmvb", ".asf"},
         "images": {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"},
         "documents": {".pdf", ".doc", ".docx", ".txt", ".md", ".html", ".htm"},
         "ebooks": {".epub", ".mobi", ".azw", ".fb2"},
         "disk_images": {".iso", ".bin", ".img", ".cue", ".nrg", ".mdf", ".toast", ".ccd", ".daa"},
         "dsd": {".dsf", ".dff", ".dsd"},
-        "hd_dvd": {".evo", ".map", ".bup"}
+        "hd_dvd": {".evo", ".map", ".bup"},
+        "playlists": {".m3u", ".m3u8"}
     },
     "playback_registry": {
         "playable_keywords": ["dvd", "blu-ray", "vcd", "laserdisc", "sacd", "dsd", "cd-extra", "dvd-audio", "dvd-vr", "video cd", "super vcd", "high-res", "cd-rom", "dvd daten", "blu-ray daten"],
@@ -398,10 +467,22 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "app_versions": {
         "ffmpeg": get_binary_version("ffmpeg"),
         "ffprobe": get_binary_version("ffprobe"),
-        "vlc": get_binary_version("vlc"),
-        "mpv": get_binary_version("mpv"),
+        "ffplay": get_binary_version("ffplay"),
+        "vlc": get_binary_version("vlc", "--version"),
+        "mpv": get_binary_version("mpv", "--version"),
         "mkvmerge": get_binary_version("mkvmerge"),
-        "python": sys.version.split()[0]
+        "m3u8": get_binary_version("m3u8-tester", "--version"),
+        "mediainfo": get_binary_version("mediainfo", "--Version"),
+        "isoinfo": get_binary_version("isoinfo", "--version"),
+        "swyh-rs-cli": get_binary_version("swyh-rs-cli", "--version"),
+        "mediamtx": get_binary_version("mediamtx", "--version"),
+        "spotifyd": get_binary_version("spotifyd", "--version"),
+        "spt": get_binary_version("spt", "--version"),
+        "pyvidplayer2": get_binary_version("pyvidplayer2", "--version"),
+        "python": sys.version.split()[0],
+        "pip": get_binary_version("pip", "--version").split()[1] if " " in get_binary_version("pip", "--version") else "Unknown",
+        "conda": os.environ.get("CONDA_DEFAULT_ENV", "N/A"),
+        "conda_version": get_binary_version("conda", "--version").split()[-1] if "conda" in get_binary_version("conda", "--version").lower() else "N/A"
     },
     
     # --- TRANSCODING & ENGINE SETTINGS (v1.35.68 Centralized) ---

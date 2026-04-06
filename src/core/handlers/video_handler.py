@@ -29,26 +29,27 @@ class VideoHandler(MediaHandler):
         d_sec = analysis.get("duration_sec", 0)
         ext = self.filepath.suffix.lower()
         
-        # 1. MKV/Direct Play Handling
-        if is_direct_play_capable(self.filepath, client):
+        # --- Centralized Media Routing (v1.35.68 Sync) ---
+        is_direct = is_direct_play_capable(self.filepath, client)
+        tags = analysis
+
+        if is_direct:
+            mode = 'direct'
+        elif ext in ('.iso', '.bin', '.img') or self.filepath.is_dir() or analysis.get('is_disc'):
+            mode = 'transcode'
+        elif 'mpeg' in str(tags.get('video_codec', '')).lower() or 'vc1' in str(tags.get('video_codec', '')).lower():
+            mode = 'transcode'
+        elif tags.get('hdr') or analysis.get('hdr_type'):
+            mode = 'vlc'
+        else:
+            mode = 'hls'
+
+        # Response construction
+        if mode == 'direct':
             return {"mode": "direct", "url": f"/direct/{urllib.parse.quote(str(relpath))}", "duration_sec": d_sec}
-            
-        # 2. ISO / DVD
-        if ext == ".iso" or self.filepath.is_dir():
-            if client == 'browser':
-                return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(relpath))}", "duration_sec": d_sec}
-            return {"mode": "vlc", "path": str(self.filepath), "duration_sec": d_sec}
-            
-        # 3. Complex Codec Transcoding
-        if analysis.get("video_codec") in ["mpeg2video", "hevc", "vc1", "wmv3"]:
+        elif mode == 'transcode':
             return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(relpath))}", "duration_sec": d_sec}
-            
-        # 4. MKV Remux Check (Heuristic)
-        if ext == ".mkv" and analysis.get("video_codec") == "h264":
-            remuxed = remux_to_mp4_cache(self.filepath)
-            if remuxed:
-                rel_cache = Path(remuxed).name
-                return {"mode": "direct", "url": f"/cache/{rel_cache}", "duration_sec": d_sec}
-            
-        # 5. Fallback
-        return {"mode": "transcode", "url": f"/transcode/{urllib.parse.quote(str(relpath))}", "duration_sec": d_sec}
+        elif mode == 'vlc':
+            return {"mode": "vlc", "path": str(self.filepath), "duration_sec": d_sec}
+        else:
+            return {"mode": "hls", "url": f"/hls/{urllib.parse.quote(str(relpath))}/index.m3u8", "duration_sec": d_sec}

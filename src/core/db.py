@@ -80,16 +80,20 @@ def get_legacy_db_candidates(
     module_dir = Path(__file__).resolve().parent
     # src/core -> root
     project = (project_root or module_dir.parent.parent).resolve()
-    home = (home_dir or Path.home()).resolve()
-    current = (cwd or Path.cwd()).resolve()
-
-    candidates = [
-        home / "media_library.db",
-        project / "media_library.db",
-        project / "dist" / "media_library.db",
-        current / "media_library.db",
-        project.parent / "media_library.db",  # Just in case it's in the workspace root above project
-    ]
+    
+    # Base candidates from config (Centralized v1.35.68)
+    config_candidates = GLOBAL_CONFIG["storage_registry"]["legacy_db_candidates"]
+    
+    candidates = []
+    for c_str in config_candidates:
+        if c_str.startswith("~/"):
+            candidates.append(Path.home() / c_str[2:])
+        elif c_str.startswith("./"):
+            candidates.append(project / c_str[2:])
+        elif c_str.startswith("../"):
+            candidates.append(project.parent / c_str[3:])
+        else:
+            candidates.append(Path(c_str))
 
     seen: set[Path] = set()
     unique_candidates: list[Path] = []

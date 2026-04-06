@@ -12,16 +12,16 @@ dependencies:
   - vlc
   - pip
   - pip:
-    - eel
-    - bottle
-    - bottle-websocket
-    - mutagen
-    - pymediainfo
-    - gevent
-    - gevent-websocket
-    - psutil
-    - future
-    - chardet
-    - pytest
-    - pytest-cov
-    - doxypy
+      - eel
+      - bottle
+      - bottle-websocket
+      - mutagen
+      - pymediainfo
+      - gevent
+      - gevent-websocket
+      - psutil
+      - future
+      - chardet
+      - pytest
+      - pytest-cov
+      - doxypy

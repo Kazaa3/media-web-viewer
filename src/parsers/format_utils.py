@@ -804,23 +804,26 @@ def ffprobe_quality_score(analysis: dict[str, Any]) -> int:
     score = 0
     h = analysis.get('height', 0)
     
-    # Resolution base
-    if h >= 2160: score += 50  # 4K
-    elif h >= 1080: score += 40 # FHD
-    elif h >= 720: score += 30  # HD
-    else: score += 10           # SD
+    # Resolution base (Centralized v1.35.68)
+    weights = GLOBAL_CONFIG["diagnostic_registry"]["quality_score_weights"]
+    res_w = weights["resolution"]
+    
+    if h >= 2160: score += res_w["2160"]
+    elif h >= 1080: score += res_w["1080"]
+    elif h >= 720: score += res_w["720"]
+    else: score += res_w["default"]
     
     # HDR bonus
     if analysis.get('hdr'):
-        score += 20
+        score += weights["hdr"]
         
     # Audio bonus
     channels = analysis.get('audio_channels', 0)
-    if channels >= 6: score += 15 # 5.1+
-    elif channels >= 2: score += 5 # Stereo
+    if channels >= 6: score += weights["audio"]["multichannel"]
+    elif channels >= 2: score += weights["audio"]["stereo"]
     
     # Extras
-    if analysis.get('subs', 0) > 0: score += 5
-    if analysis.get('chapters', 0) > 0: score += 10
+    if analysis.get('subs', 0) > 0: score += weights["extras"]["subs"]
+    if analysis.get('chapters', 0) > 0: score += weights["extras"]["chapters"]
     
     return min(100, score)
