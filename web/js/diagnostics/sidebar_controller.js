@@ -9,7 +9,8 @@ const DIAG_VIEW_INFO = {
     'logs': { name: 'Forensic Logic', desc: 'Real-time Trace Engineering & Filtering' },
     'video-health': { name: 'Active Workers', desc: 'Process Runtime & Surgical Kill Matrix' },
     'recovery': { name: 'Database Resilience', desc: 'Tactical Restoration & Atomic Sync' },
-    'environment': { name: 'System Health', desc: 'Resource Telemetry & Platform Audit' }
+    'environment': { name: 'System Health', desc: 'Resource Telemetry & Platform Audit' },
+    'storage': { name: 'Volume Discovery', desc: 'FS Heuristics & Large Asset Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -59,7 +60,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'logs': 'diag-pane-logs',
         'video-health': 'diag-pane-video-health',
         'recovery': 'diag-pane-db-resilience',
-        'environment': 'diag-pane-environment'
+        'environment': 'diag-pane-environment',
+        'storage': 'diag-pane-storage'
     };
 
     if (paneIds[viewId]) {
@@ -73,6 +75,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'logs' && typeof refreshDebugLogs === 'function') refreshDebugLogs();
         if (viewId === 'video-health') runVideoWorkerAudit();
         if (viewId === 'environment') runEnvironmentAudit();
+        if (viewId === 'storage') runStorageAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1004,5 +1007,73 @@ async function runEnvironmentAudit() {
     }
 }
 
+/**
+ * STORAGE FORENSIC AUDIT (v1.37.30)
+ */
+async function runStorageAudit() {
+    const details = document.getElementById('diag-str-details');
+    const sizeEl = document.getElementById('diag-str-total-size');
+    const filesEl = document.getElementById('diag-str-files');
+    const foldersEl = document.getElementById('diag-str-folders');
+    
+    if (details) details.innerHTML = '<div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Auditing volume...</div>';
+    
+    sentinelPulse('AUDIT', 'Executing Storage Volume Audit...');
+    
+    try {
+        const res = await eel.get_storage_forensics()();
+        if (res.status === 'ok') {
+            if (sizeEl) sizeEl.innerText = res.total_size_human;
+            if (filesEl) filesEl.innerText = res.total_files;
+            if (foldersEl) foldersEl.innerText = res.total_folders;
+            
+            if (details) {
+                let html = `
+                    <div style="margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
+                        <span style="font-weight:900; color:#f39c12; font-size:9px;">TOP 10 LARGE ASSETS</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                `;
+                
+                res.largest_files.forEach((f, i) => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border-left:2px solid #f39c12; padding:4px 8px; border-radius:4px;">
+                            <div style="display:flex; flex-direction:column; max-width:70%;">
+                                <span style="font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${f.path}">${f.name}</span>
+                                <span style="font-size:7px; opacity:0.4;">${f.path}</span>
+                            </div>
+                            <span style="font-family:monospace; font-size:9px; font-weight:800;">${f.size_human}</span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+                
+                html += `
+                    <div style="margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; border:1px dashed rgba(255,255,255,0.05);">
+                        <div style="font-size:8px; opacity:0.5; margin-bottom:4px;">DEEPEST PATH (Level ${res.deepest_level})</div>
+                        <div style="font-family:monospace; font-size:8px; word-break:break-all; color:#fff;">${res.deepest_path || '/'}</div>
+                    </div>
+                `;
+                
+                if (res.broken_paths.length > 0) {
+                    html += `
+                        <div style="margin-top:10px; color:#e74c3c; font-size:8px;">
+                            ⚠️ Found ${res.broken_paths.length} broken filesystem paths.
+                        </div>
+                    `;
+                }
+                
+                details.innerHTML = html;
+            }
+            sentinelPulse('SUCCESS', `Storage Audit Complete. Volume: ${res.total_size_human}, Files: ${res.total_files}`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Storage Audit Failed: ${e.message}`);
+        if (details) details.innerHTML = `<div style="color:#e74c3c; font-size:9px; text-align:center; padding:20px;">Audit Failed: ${e.message}</div>`;
+    }
+}
+
+window.runStorageAudit = runStorageAudit;
 window.runEnvironmentAudit = runEnvironmentAudit;
 window.generateForensicSnapshot = generateForensicSnapshot;
