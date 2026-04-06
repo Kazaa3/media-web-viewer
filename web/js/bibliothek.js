@@ -67,6 +67,9 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         
         window.__mwv_all_library_items = library.media || [];
         console.warn(`[FE-AUDIT] STAGE 4 (HYDRATION): Memory filled with ${window.__mwv_all_library_items.length} items.`);
+        if (window.__mwv_all_library_items.length > 0) {
+            console.warn(`[FE-AUDIT] Sample Item:`, window.__mwv_all_library_items[0]);
+        }
         
         // --- V1.35.43 Recovery: Modular Sync Handshake ---
         if (typeof RecoveryManager !== 'undefined') {

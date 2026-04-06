@@ -625,7 +625,6 @@ function renderPlaylist() {
                     <button onclick="if(typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary()" class="tab-btn active" style="padding: 12px 30px; font-weight: 800;">SYNC & RESET FILTERS</button>
                 </div>
             `;
-        }
 
         list.innerHTML = noMediaHtml;
     } else {
@@ -713,6 +712,7 @@ function renderPlaylist() {
         list.appendChild(div);
         });
     }
+    }); // v1.35.68 Final closing block
 }
 
 function resetAllFilters() {
@@ -846,7 +846,7 @@ function syncQueueWithLibrary() {
     const isRealDbMode = localStorage.getItem('mwv_real_db_mode') === 'true';
     
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        console.warn("[Recovery] No library items found for sync.");
+        console.warn("[Recovery] No library items found for sync. (window.__mwv_all_library_items size:", window.__mwv_all_library_items ? window.__mwv_all_library_items.length : 'null', ")");
         // [BYPS] Handshake (v1.37.06)
         if (localStorage.getItem('mwv_bypass_db') === 'true' || window.__mwv_bypass_db) {
             console.info("[BYPS] Bypass active with empty library. Triggering bootstrapMockQueue...");
@@ -857,6 +857,7 @@ function syncQueueWithLibrary() {
         }
         return;
     }
+    console.warn(`[FORENSIC-DOM] syncQueueWithLibrary starting with ${allLibraryItems.length} items. Diag:${isDiagnosticMode}, Real:${isRealDbMode}`);
 
     let filtered;
     const isRaw = window.__mwv_raw_mode === true;

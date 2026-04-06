@@ -4112,6 +4112,11 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     }
 
     log.info(f"[BD-AUDIT] Filter Pass complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
+    
+    # [FORENSIC-ID] Sample Trace (v1.35.68)
+    if len(filtered) > 0:
+        print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')} | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
+    
     if audit_meta['dropped_total'] > 0:
         log.debug(f"[BD-AUDIT] Drop Reasons: {dropped_reasons}")
 
@@ -4249,6 +4254,8 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
     
     # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.35.68)
     print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
+    if len(final_media) > 0:
+        print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')} (ID: {final_media[0].get('id')})", flush=True)
 
     return {
         "media": final_media,
