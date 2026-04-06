@@ -1097,43 +1097,8 @@ function syncDiagBtnStates() {
     });
 }
 
-/**
- * Visualizes the backend's filter-drop reasons in the diagnostics sidebar.
- */
-function renderLogicAuditSummary(logicAudit) {
-    const viewport = document.getElementById('diag-logic-audit-viewport');
-    if (!viewport) return;
-
-    const dr = logicAudit.dropped_reasons || {};
-    const total = logicAudit.dropped_total || 0;
-
-    if (total === 0 && logicAudit.kept > 0) {
-        viewport.innerHTML = `<div style="color: #2ecc71; padding: 10px; text-align: center; font-weight: 800;">PASS: All ${logicAudit.kept} items kept.</div>`;
-        return;
-    }
-
-    if (total === 0 && !logicAudit.kept) {
-        viewport.innerHTML = `<div style="padding: 10px; text-align: center; opacity: 0.5;">No active library data to audit.</div>`;
-        return;
-    }
-
-    let html = `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px;">
-                    <div style="color: #ff3366; font-weight: 900; font-size: 11px;">DROPPED: ${total} ITEMS</div>
-                    <div style="font-size: 9px; opacity: 0.7;">Backend filter chain rejected ${total} records.</div>
-                </div>`;
-
-    for (const [reason, count] of Object.entries(dr)) {
-        if (count > 0) {
-            const label = reason.replace('_mismatch', '').toUpperCase();
-            html += `<div style="display: flex; justify-content: space-between; padding: 4px 8px; border-radius: 4px; margin-bottom: 2px; background: rgba(255,51,102,0.05);">
-                        <span style="opacity: 0.8;">${label}</span>
-                        <span style="color: #ff3366; font-weight: 900;">${count}</span>
-                     </div>`;
-        }
-    }
-
-    viewport.innerHTML = html;
-}
+// Modularized into sidebar_controller.js (v1.37.14)
+// function renderLogicAuditSummary(logicAudit) { ... }
 
 /**
  * Emergency recovery: Bypasses all backend filters to hydrate the library.

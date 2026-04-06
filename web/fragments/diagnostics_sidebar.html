@@ -33,9 +33,21 @@
     <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
         
         <div id="diag-pane-hydration" class="diag-pane" style="display: none;">
-            <div id="diag-audit-summary">
-                <div class="diag-status-none">Aktualisiere Hydration-Daten...</div>
+            <!-- MASTER SYNC CONSOLE (v1.37.14) -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:10px; margin-bottom:15px;">
+                <div style="font-size:9px; font-weight:900; opacity:0.4; margin-bottom:10px; letter-spacing:1px; text-align:center;">HYDRATION MASTER CONSOLE</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <button onclick="triggerMasterScan()" style="background:#3498db; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-weight:800;" title="Deep File-System Re-Index">DIRECT SCAN</button>
+                    <button onclick="triggerMasterSync()" style="background:#2ecc71; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-weight:800;" title="SQLite Atomic Sync">ATOMIC SYNC</button>
+                    <button onclick="triggerNuclearRecovery()" style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-weight:800; grid-column:span 2;" title="Bypass Filters (Raw Recovery)">NUCLEAR RECOVERY</button>
+                </div>
             </div>
+
+            <!-- FORENSIC FLOW AUDITOR -->
+            <div id="diag-logic-audit-viewport" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:10px;">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Hydration-Audit...</div>
+            </div>
+            <button onclick="runHydrationAuditProbe()" style="width:100%; height:30px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); color:#fff; font-size:9px; font-weight:900; border-radius:8px; cursor:pointer; opacity:0.6; transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">PROBE HYDRATION FLOW</button>
         </div>
 
         <div id="diag-pane-item-track" class="diag-pane" style="display: none;">

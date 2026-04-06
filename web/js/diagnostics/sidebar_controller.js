@@ -65,7 +65,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (target) target.style.display = 'block';
 
         // Trigger Data Fetchers
-        if (viewId === 'hydration' && typeof renderLogicAuditSummary === 'function') renderLogicAuditSummary();
+        if (viewId === 'hydration') runHydrationAuditProbe();
         if (viewId === 'item-track') renderItemTrackTab();
         if (viewId === 'debug-db' && typeof renderDebugDatabase === 'function') renderDebugDatabase();
         if (viewId === 'logs' && typeof refreshDebugLogs === 'function') refreshDebugLogs();
@@ -326,6 +326,111 @@ function toggleDiagnosticsFlag(flagId) {
 window.switchDiagnosticsSidebarTab = switchDiagnosticsSidebarTab;
 window.toggleDiagnosticsFlag = toggleDiagnosticsFlag; 
 window.sentinelPulse = sentinelPulse;
+/**
+ * HYDRATION MASTER CONSOLE (v1.37.14)
+ */
+async function triggerMasterScan() {
+    sentinelPulse('COMMAND', 'Triggering Deep Direct Scan (Re-Index)...');
+    try {
+        const res = await eel.run_direct_scan()();
+        if (res.status === 'success') {
+            sentinelPulse('SYSTEM', `Scan Complete: Found ${res.items_found} items.`);
+            if (typeof renderLibrary === 'function') eel.get_library()((itms) => renderLibrary(itms));
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Direct Scan Failed: ${e.message}`);
+    }
+}
+
+async function triggerMasterSync() {
+    sentinelPulse('COMMAND', 'Triggering Atomic SQLite Sync...');
+    try {
+        const res = await eel.sync_library_atomic()();
+        if (res.status === 'success') {
+            sentinelPulse('SYSTEM', `Sync Complete: Hydrated ${res.count} items.`);
+            if (typeof renderLibrary === 'function') renderLibrary(res.items);
+            runHydrationAuditProbe(); // Auto-refresh audit
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Atomic Sync Failed: ${e.message}`);
+    }
+}
+
+async function triggerNuclearRecovery() {
+    sentinelPulse('NUCLEAR', 'BYPASSING ALL FILTERS (Core Recovery)...');
+    try {
+        const result = await eel.force_sync_all()();
+        if (result && result.status === 'raw-recovery') {
+            if (typeof renderLibrary === 'function') renderLibrary(result.media);
+            sentinelPulse('SUCCESS', `RECOVERED ${result.media.length} items via bypass.`);
+            runHydrationAuditProbe(); 
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `Nuclear Recovery Failed: ${e.message}`);
+    }
+}
+
+/**
+ * NATIVE FLOW AUDITOR (7-Stage Visualization)
+ */
+async function runHydrationAuditProbe() {
+    const viewport = document.getElementById('diag-logic-audit-viewport');
+    if (!viewport) return;
+
+    viewport.innerHTML = '<div style="font-size:10px; opacity:0.6; text-align:center; padding:15px;">Scanning Backend Flow...</div>';
+    
+    try {
+        let audit = null;
+        if (typeof eel.perform_system_logic_audit === 'function') {
+            audit = await eel.perform_system_logic_audit()();
+        }
+
+        if (!audit) {
+            viewport.innerHTML = '<div style="font-size:10px; opacity:0.4; text-align:center; padding:15px;">Backend Flow Sensor not available.</div>';
+            return;
+        }
+
+        renderNativeHydrationReport(audit, viewport);
+    } catch (e) {
+        viewport.innerHTML = `<div style="color:#e74c3c; font-size:10px;">Audit-Fehler: ${e.message}</div>`;
+    }
+}
+
+function renderNativeHydrationReport(audit, viewport) {
+    const dr = audit.dropped_reasons || {};
+    const total = audit.dropped_total || 0;
+    const kept = audit.kept || 0;
+
+    let html = `
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom:8px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:9px; font-weight:900; color:#2ecc71;">KEPT: ${kept}</span>
+                <span style="font-size:9px; font-weight:900; color:#ff3366;">DROPPED: ${total}</span>
+            </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+    `;
+
+    for (const [reason, count] of Object.entries(dr)) {
+        if (count > 0) {
+            const label = reason.replace('_mismatch', '').toUpperCase();
+            html += `
+                <div style="display:flex; justify-content:space-between; font-size:10px; background:rgba(255,51,102,0.05); padding:4px 8px; border-radius:4px; border:1px solid rgba(255,51,102,0.1);">
+                    <span style="opacity:0.7;">${label}</span>
+                    <span style="color:#ff3366; font-weight:900;">${count}</span>
+                </div>
+            `;
+        }
+    }
+
+    if (total === 0) {
+        html += '<div style="font-size:10px; color:#2ecc71; text-align:center; padding:10px;">100% FILTER PASS OK</div>';
+    }
+
+    html += `</div>`;
+    viewport.innerHTML = html;
+}
+
 window.performItemJourneyAudit = performItemJourneyAudit;
 window.initDiagnosticsSidebar = initDiagnosticsSidebar;
 window.downloadSentinelTrace = downloadSentinelTrace;
@@ -333,3 +438,7 @@ window.clearSentinelLog = clearSentinelLog;
 window.runVideoForensicAudit = runVideoForensicAudit;
 window.runDatabaseResilienceAudit = runDatabaseResilienceAudit;
 window.runFSParityAudit = runFSParityAudit;
+window.triggerMasterScan = triggerMasterScan;
+window.triggerMasterSync = triggerMasterSync;
+window.triggerNuclearRecovery = triggerNuclearRecovery;
+window.runHydrationAuditProbe = runHydrationAuditProbe;
