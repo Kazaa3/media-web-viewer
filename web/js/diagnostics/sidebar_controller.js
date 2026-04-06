@@ -21,7 +21,8 @@ const DIAG_VIEW_INFO = {
     'network': { name: 'RPC Performance', desc: 'Internal Bridge Latency & RTT Audit' },
     'process': { name: 'Worker Control', desc: 'Child Process & Zombie Workstation Audit' },
     'driver': { name: 'Hardware Accel', desc: 'GPU & Transcoder Capability Audit' },
-    'security': { name: 'Authority Hub', desc: 'UID/GID & Filesystem Permission Audit' }
+    'security': { name: 'Authority Hub', desc: 'UID/GID & Filesystem Permission Audit' },
+    'api': { name: 'Bridge Registry', desc: 'Internal API & Live Documentation Audit' }
 };
 
 function initDiagnosticsSidebar() {
@@ -81,7 +82,8 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         'network': 'diag-pane-network',
         'process': 'diag-pane-process',
         'driver': 'diag-pane-driver',
-        'security': 'diag-pane-security'
+        'security': 'diag-pane-security',
+        'api': 'diag-pane-api'
     };
 
     if (paneIds[viewId]) {
@@ -105,6 +107,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
         if (viewId === 'process') runProcessAudit();
         if (viewId === 'driver') runHardwareAudit();
         if (viewId === 'security') runSecurityAudit();
+        if (viewId === 'api') runApiAudit();
 
     } else {
         // Fallback for VID/REC using legacy logic
@@ -1679,3 +1682,41 @@ async function runSecurityAudit() {
 }
 
 window.runSecurityAudit = runSecurityAudit;
+
+/**
+ * INTERNAL API REGISTRY & DOCUMENTATION AUDIT (v1.37.39)
+ */
+async function runApiAudit() {
+    const countEl = document.getElementById('diag-api-count');
+    const registryEl = document.getElementById('diag-api-registry');
+    
+    sentinelPulse('AUDIT', 'Reflecting Backend Bridge Registry...');
+    
+    try {
+        const res = await eel.get_api_forensics()();
+        if (res.status === 'ok') {
+            if (countEl) countEl.innerText = res.total_endpoints;
+            
+            let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+            res.registry.forEach(bridge => {
+                html += `
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:8px; border-radius:6px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="font-weight:900; color:var(--accent-color); font-size:10px;">${bridge.name.toUpperCase()}</span>
+                            <span style="font-size:7px; opacity:0.5; padding:1px 5px; background:rgba(255,255,255,0.05); border-radius:3px;">${bridge.status}</span>
+                        </div>
+                        <div style="font-size:9px; color:rgba(255,255,255,0.7); line-height:1.4;">${bridge.desc}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            if (registryEl) registryEl.innerHTML = html;
+            
+            sentinelPulse('SUCCESS', `API Audit Complete. Mapped ${res.total_endpoints} critical bridges.`);
+        }
+    } catch (e) {
+        sentinelPulse('ERROR', `API Audit Failed: ${e.message}`);
+    }
+}
+
+window.runApiAudit = runApiAudit;
