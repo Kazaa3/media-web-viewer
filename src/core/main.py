@@ -5913,7 +5913,7 @@ def open_video_smart(file_path: str, mode: str = "auto", start_time: float = 0):
     db_item = db.get_media_by_path(str(file_path))
     category = db_item.get('category', '') if db_item else ''
 
-    if is_dvd or is_disc_img or category in ('multimedia', 'disk_images', 'Film', 'Abbild'):
+    if is_dvd or is_disc_img or category in ('video', 'disk_images', 'Film', 'Abbild'):
         log.info(
             f"DEBUG: [Player-Trace] DVD/Multimedia/DiskImg detected in smart router (Category: {category}). Forcing VLC Embedded.")
         return open_video(file_path, "vlc", "vlc_embedded", source="smart_router_dvd_film")
@@ -8842,7 +8842,7 @@ def get_multimedia_analysis():
             is_dvd_image = ext in [e.strip('.') for e in disk_exts]
             is_dvd_folder = 'VIDEO_TS' in path or 'BDMV' in path
 
-            if cat in ['film', 'movie', 'multimedia', 'video'] or is_dvd_image or is_dvd_folder:
+            if cat in ['film', 'movie', 'video'] or is_dvd_image or is_dvd_folder:
                 obj = {
                     'name': item.get('name'),
                     'year': tags.get('year', 'Unknown'),

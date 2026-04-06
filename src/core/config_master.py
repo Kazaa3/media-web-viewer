@@ -260,7 +260,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "auto_scan": get_env_bool("MWV_AUTO_SCAN", True),
     "fast_scan": get_env_bool("MWV_FAST_SCAN", True),
     "parser_mode": os.environ.get("MWV_PARSER_MODE", "lightweight"), # lightweight, full, ultimate
-    "displayed_categories": ["audio", "multimedia", "pictures", "documents", "ebooks", "disk_images", "unbekannt"],
+    "displayed_categories": ["audio", "video", "pictures", "documents", "ebooks", "disk_images", "unbekannt"],
+    "active_branch": os.environ.get("MWV_BRANCH", "video"), # audio, video
     
     "scan_settings": {
         "max_depth": 12,
@@ -492,7 +493,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "default_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
         "categories": {
             "audio": ["mutagen", "tinytag", "eyed3", "music_tag"],
-            "multimedia": ["container", "mkvmerge", "mkvinfo", "vlc", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"],
+            "audio": ["audio"],
+            "video": ["container", "mkvmerge", "mkvinfo", "vlc", "isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"],
             "universal": ["filename", "pymediainfo", "ffprobe", "ffmpeg"]
         },
         "magic_signatures": {
