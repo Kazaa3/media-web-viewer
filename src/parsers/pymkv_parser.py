@@ -1,13 +1,13 @@
-import subprocess
+import shutil
 from pathlib import Path
 from typing import Any
 
 
 def get_capabilities() -> dict[str, Any]:
     return {
-        "name": "MKVParse",
-        "description": "High-performance MKV/Matroska analysis via the mkvparse library.",
-        "supported_tags": ["mkv_elements"],
+        "name": "PyMKV",
+        "description": "Matroska container analysis and manipulation via the 'pymkv' library and mkvmerge.",
+        "supported_tags": ["pymkv_tracks"],
         "supported_codecs": ["mkv", "webm"]
     }
 
@@ -18,7 +18,7 @@ def get_settings_schema() -> dict[str, Any]:
 
 def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | None = None, mode: str = 'lightweight', settings: dict[str, Any] | None = None) -> dict[str, Any]:
     """
-    @brief Extracts MKV metadata using the mkvparse library.
+    @brief Extracts MKV metadata using the pymkv library.
     """
     if file_type not in [".mkv", ".webm"]:
         return tags
@@ -27,9 +27,15 @@ def parse(path_obj: Path, file_type: str, tags: dict[str, Any], filename: str | 
         settings = {}
 
     try:
-        import mkvparse
-        with open(str(path_obj), 'rb') as f:
-            mkvparse.parse(f, lambda elem, data: None)
+        import pymkv
+        from src.core.config_master import GLOBAL_CONFIG
+        
+        mkvmerge_bin = GLOBAL_CONFIG["program_paths"].get("mkvmerge", "mkvmerge")
+        if not shutil.which(mkvmerge_bin):
+            return tags
+            
+        mkv = pymkv.MKVFile(str(path_obj), mkvmerge_path=mkvmerge_bin)
+        tags['pymkv_tracks'] = mkv.tracks
     except ImportError:
         pass
     except Exception:
