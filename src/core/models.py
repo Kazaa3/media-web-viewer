@@ -37,6 +37,21 @@ EXTENSION_REGISTRY = {
     "playlists": {".m3u", ".m3u8"}
 }
 
+# Standardized SSOT Extension Constants (v1.35.83)
+AUDIO_EXTENSIONS = EXTENSION_REGISTRY["audio"]
+VIDEO_EXTENSIONS = EXTENSION_REGISTRY["video"]
+PICTURE_EXTENSIONS = EXTENSION_REGISTRY["pictures"]
+DOCUMENT_EXTENSIONS = EXTENSION_REGISTRY["documents"]
+EBOOK_EXTENSIONS = EXTENSION_REGISTRY["ebooks"]
+DISK_IMAGE_EXTENSIONS = EXTENSION_REGISTRY["disk_images"]
+DSD_EXTENSIONS = EXTENSION_REGISTRY["dsd"]
+HDDVD_EXTENSIONS = EXTENSION_REGISTRY["hd_dvd"]
+PLAYLIST_EXTENSIONS = EXTENSION_REGISTRY["playlists"]
+
+# Calculated Logic Extensions (v1.35.84 SSOT)
+ALL_AUDIO_EXTENSIONS = AUDIO_EXTENSIONS | DSD_EXTENSIONS
+ALL_MULTIMEDIA_EXTENSIONS = VIDEO_EXTENSIONS | DISK_IMAGE_EXTENSIONS | HDDVD_EXTENSIONS
+
 MASTER_CAT_MAP = {
     "audio": [
         "audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", 
@@ -105,6 +120,29 @@ def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
             allowed.add(label.lower())
     return list(allowed)
 
+# --- PLAYBACK & COMPATIBILITY REGISTRY (v1.35.77 Consolidated) ---
+
+PLAYABLE_KEYWORDS = [
+    "dvd", "blu-ray", "vcd", "laserdisc", "sacd", "dsd", "cd-extra", 
+    "dvd-audio", "dvd-vr", "video cd", "super vcd", "high-res", "cd-rom", 
+    "dvd daten", "blu-ray daten"
+]
+
+PLAYABLE_EXTENSIONS = [
+    ".mp4", ".mkv", ".avi", ".mp3", ".flac", ".wav", ".m4a", ".dsf", ".dff", 
+    ".ts", ".alac", ".aiff", ".mpeg", ".mpg", ".mov", ".webm", ".wmv", 
+    ".m4v", ".3gp", ".ogv", ".vob", ".m2ts", ".iso", ".bin", ".img"
+]
+
+NATIVE_EXTENSIONS = [".mp4", ".mkv", ".webm", ".ogv", ".mp3", ".wav", ".ogg", ".m4a", ".flac"]
+
+NATIVE_CODECS = [
+    "h264", "avc1", "vp8", "vp9", "av1", "aac", "mp4a", "mp3", 
+    "opus", "vorbis", "flac", "pcm"
+]
+
+LOSSY_EXTENSIONS = {'.mp3', '.ogg', '.aac', '.m4a', '.m4b', '.wma', '.opus'}
+
 # Get specialized logger for models
 log = logger.get_logger("models")
 
@@ -144,25 +182,105 @@ class MediaFormat:
         return 'unknown'
 
     def detect_format(self) -> str:
-        # Display format (uppercase extension)
-        return self.extension[1:].upper() if self.extension else 'UNKNOWN'
+        """
+        Calculates the specific media format (v1.35.81 Standardized).
+        For disk images, it identifies the specialized optical standard.
+        """
+        ext = self.extension
+        if not ext:
+            return 'UNKNOWN'
+
+        # Special Handling for Disk Images
+        if self.type == 'disk_images':
+            tags = self.tags
+            _tag = lambda k: str(tags.get(k, '') or '').lower()
+            
+            # 1. PC / Digital Games
+            volume_id = _tag('pycdlib_volume_id')
+            title = _tag('title')
+            if 'win32' in volume_id or 'setup' in title or any(k in volume_id for k in ['spiel', 'game', 'software']):
+                return 'PC Spiel'
+
+            # 2. Specialized Optical Standards
+            if _tag('pycdlib_is_dvd_audio') == 'true': return 'DVD Audio'
+            if _tag('pycdlib_is_vcd') == 'true':       return 'Video CD'
+            if _tag('pycdlib_is_svcd') == 'true':      return 'Super VCD'
+            if _tag('pycdlib_is_cdi') == 'true':       return 'CD-i'
+            if _tag('pycdlib_is_cd_extra') == 'true':  return 'CD-Extra'
+            if _tag('pycdlib_is_hvdvd') == 'true' or 'hvdvd' in volume_id: return 'HD DVD'
+
+            # 3. Standard Video Disks
+            if _tag('pycdlib_is_bluray') == 'true' or any(k in volume_id for k in ['blu', 'bd', 'brd']):
+                return 'Blu-ray'
+            if _tag('pycdlib_is_dvd') == 'true' or 'dvd video' in _tag('container') or 'video_ts' in title:
+                return 'DVD Video'
+
+            # 4. Audio Specialized
+            if any(k in volume_id for k in ['sacd', 'dsd']):
+                return 'SACD'
+
+            return 'ISO Image'
+
+        # 5. Specialized Content-aware Labels (v1.35.81)
+        # High-Res / HDR logic moved here from format_utils
+        tags = self.tags
+        _tag = lambda k: str(tags.get(k, '') or '').lower()
+
+        if self.type == 'audio':
+            bits = _tag('audio_bit_depth')
+            sr = _tag('audio_sample_rate')
+            try:
+                b = int(bits) if bits.isdigit() else 16
+                import re
+                s_match = re.search(r'\d+', sr)
+                s = int(s_match.group()) if s_match else 44100
+                if b > 16 or s > 48000:
+                    from src.parsers.format_utils import format_samplerate
+                    return f'High-Res {fmt} ({b}-bit/{format_samplerate(s)})'
+            except (ValueError, AttributeError, ImportError):
+                pass
+
+        if self.type == 'video':
+            hdr = _tag('video_hdr')
+            scan = _tag('video_scan_type')
+            bits = _tag('video_bit_depth')
+            if hdr and hdr != 'none': return f'HDR {hdr.upper()} Video'
+            if 'interlaced' in scan:   return 'Interlaced Video'
+            if '10 bit' in bits or '12 bit' in bits: return f'{bits} Deep Color'
+
+        return fmt
+
+    @property
+    def is_playable(self) -> bool:
+        """
+        Determines if the format is considered playable (v1.35.82 SSOT).
+        Excludes software, indexes, and unknown data formats.
+        """
+        # Exclusion priorities
+        fmt_lower = self.format.lower()
+        if any(k in fmt_lower for k in ['pc spiel', 'digitales spiel', '(index)']):
+            return False
+            
+        # Extension-based whitelist from SSOT
+        return self.extension in PLAYABLE_EXTENSIONS
 
     def detect_content(self) -> str:
+        """
+        Extracts secondary content markers (v1.35.81 Standardized).
+        """
         ext = self.extension
         tags = self.tags
-        volume_id = tags.get('pycdlib_volume_id', '').lower() if tags else ''
-        container = tags.get('container', '').lower() if tags else ''
+        _tag = lambda k: str(tags.get(k, '') or '').lower()
         
-        if ext in self.registry.get("disk_images", {}):
-            if 'pal' in volume_id: return 'PAL DVD'
-            if 'ntsc' in volume_id: return 'NTSC DVD'
-            if 'blu' in volume_id or 'bd' in volume_id: return 'Blu-ray'
-            if 'audio cd' in volume_id or 'cd' in volume_id: return 'Audio CD'
-            return 'ISO Image'
+        # Disk Specific Content
+        if self.type == 'disk_images':
+            standard = _tag('standard')
+            volume_id = _tag('pycdlib_volume_id')
+            if 'pal' in volume_id or 'pal' in standard: return 'Standard: PAL'
+            if 'ntsc' in volume_id or 'ntsc' in standard: return 'Standard: NTSC'
+            if _tag('pycdlib_is_dvd_vr') == 'true': return 'VR Mode'
+            return ''
             
-        if ext in {'.cue', '.bin', '.wav', '.flac'}:
-            if 'audio cd' in volume_id or 'cd' in volume_id:
-                return 'Audio CD'
         return ''
 
     def to_dict(self) -> dict[str, Any]:
@@ -203,10 +321,7 @@ class MediaItem:
         self.extension = self.format_info.extension.lstrip('.').lower()
 
         # 3. Features & Playability
-        from src.parsers.format_utils import is_playable
-        tags_with_path = (self.tags or {}).copy()
-        tags_with_path['path'] = str(self.path)
-        self.is_playable = is_playable(self.file_format, tags_with_path)
+        self.is_playable = self.format_info.is_playable
 
         # Artwork
         self.art_path = self.extract_artwork()

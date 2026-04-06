@@ -373,11 +373,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "hls_segment_type": "fmp4", # mpegts, fmp4
         "force_native_on": [".mp3", ".mp4", ".m4a", ".wav"],
         "streaming_engines": ["ffmpeg", "vlc", "mediamtx", "swyh-rs", "pyvidplayer2"],
-        "hls_mp4frag_enabled": True,
-        "playable_keywords": ["dvd", "blu-ray", "vcd", "laserdisc", "sacd", "dsd", "cd-extra", "dvd-audio", "dvd-vr", "video cd", "super vcd", "high-res", "cd-rom", "dvd daten", "blu-ray daten"],
-        "playable_exts": [".mp4", ".mkv", ".avi", ".mp3", ".flac", ".wav", ".m4a", ".dsf", ".dff", ".ts", ".alac", ".aiff", ".mpeg", ".mpg", ".mov", ".webm", ".wmv", ".m4v", ".3gp", ".ogv", ".vob", ".m2ts", ".iso", ".bin", ".img"],
-        "native_exts": [".mp4", ".mkv", ".webm", ".ogv", ".mp3", ".wav", ".ogg", ".m4a", ".flac"],
-        "native_codecs": ["h264", "avc1", "vp8", "vp9", "av1", "aac", "mp4a", "mp3", "opus", "vorbis", "flac", "pcm"]
+        "hls_mp4frag_enabled": True
+        # playability and native registries moved to src/core/models.py (v1.35.77)
     },
     "parser_registry": {
         "default_chain": ["filename", "container", "mutagen", "pymediainfo", "ffprobe", "ffmpeg", "pycdlib", "isoparser", "ebml", "mkvparse", "enzyme", "pymkv", "tinytag", "eyed3", "music_tag"],
