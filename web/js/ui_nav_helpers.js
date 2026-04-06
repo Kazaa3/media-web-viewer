@@ -51,31 +51,114 @@ let sidebarVisible = false; // Default to closed for Classic v1.34 Restoration
 let isNavigating = false;   // Global lock for tab switching
 let navTimeout = null;      // Safety timer for lock release
 let menuSystemVisible = true; // Default to open for UI discovery
+let diagnosticsSidebarVisible = false;
+
+const DIAGNOSTICS_SIDEBAR_STORAGE_KEY = 'mwv_diag_overlay_visible';
+const DIAGNOSTICS_VIEW_STORAGE_KEY = 'mwv_active_diag_view';
+
+function resolveDiagnosticsReiterId(viewId) {
+    if (!viewId || viewId === 'debug' || viewId === 'debug-db') return 'reiter-overview';
+    return `reiter-${viewId}`;
+}
+
+function syncGlobalDiagnosticsNav(viewId = 'debug-db') {
+    const normalizedViewId = (viewId === 'debug') ? 'debug-db' : viewId;
+    const activeReiterId = resolveDiagnosticsReiterId(normalizedViewId);
+
+    document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => {
+        el.classList.toggle('active', el.id === activeReiterId);
+    });
+
+    localStorage.setItem(DIAGNOSTICS_VIEW_STORAGE_KEY, normalizedViewId);
+}
+
+function applyDiagnosticsSidebarState(isVisible) {
+    const sb = document.getElementById('global-diagnostics-sidebar');
+    const btn = document.getElementById('footer-btn-diag-overlay');
+    if (!sb) return false;
+
+    diagnosticsSidebarVisible = !!isVisible;
+    sb.classList.toggle('active', diagnosticsSidebarVisible);
+
+    if (btn) {
+        btn.classList.toggle('active', diagnosticsSidebarVisible);
+        btn.setAttribute('aria-pressed', diagnosticsSidebarVisible ? 'true' : 'false');
+    }
+
+    localStorage.setItem(DIAGNOSTICS_SIDEBAR_STORAGE_KEY, diagnosticsSidebarVisible);
+    return diagnosticsSidebarVisible;
+}
 
 /**
  * Toggles the global diagnostics overlay sidebar.
  */
-function toggleDiagnosticsOverlay() {
-    const sb = document.getElementById('global-diagnostics-sidebar');
-    const btn = document.getElementById('footer-btn-diag-overlay');
-    if (!sb) return;
+function toggleDiagnosticsSidebar(forceState = null) {
+    const nextState = (typeof forceState === 'boolean') ? forceState : !diagnosticsSidebarVisible;
+    const isActive = applyDiagnosticsSidebarState(nextState);
 
-    const isActive = sb.classList.toggle('active');
-    
-    // Toggle button active state
-    if (btn) {
-        btn.classList.toggle('active', isActive);
-        btn.style.color = isActive ? '#00ff00' : ''; // Highlight when active
+    if (typeof traceUiNav === 'function') {
+        traceUiNav('DIAG-OVERLAY', isActive ? 'OPEN' : 'CLOSE');
     }
 
     if (isActive) {
-        if (typeof traceUiNav === 'function') traceUiNav('DIAG-OVERLAY', 'OPEN');
+        syncGlobalDiagnosticsNav(localStorage.getItem(DIAGNOSTICS_VIEW_STORAGE_KEY) || 'debug-db');
         if (typeof syncDiagBtnStates === 'function') syncDiagBtnStates();
-    } else {
-        if (typeof traceUiNav === 'function') traceUiNav('DIAG-OVERLAY', 'CLOSE');
     }
-    
-    localStorage.setItem('mwv_diag_overlay_visible', isActive);
+
+    return isActive;
+}
+
+function toggleDiagnosticsOverlay(forceState = null) {
+    return toggleDiagnosticsSidebar(forceState);
+}
+
+function switchDiagnosticsSidebarTab(viewId, btn) {
+    applyDiagnosticsSidebarState(true);
+    syncGlobalDiagnosticsNav(viewId);
+    switchDiagnosticsSubView(viewId);
+
+    if (btn) {
+        document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+    }
+}
+
+async function toggleDiagnosticsFlag(flagId) {
+    switch (flagId) {
+        case 'DIAG':
+            if (typeof Diagnostics !== 'undefined' && typeof Diagnostics.toggle === 'function') {
+                Diagnostics.toggle();
+            }
+            return;
+        case 'NATV':
+            if (typeof toggleForceNative === 'function') toggleForceNative();
+            window.__mwv_force_native = localStorage.getItem('mwv_force_native') === 'true';
+            if (typeof notifyDiagnosticChange === 'function') notifyDiagnosticChange(null, 'NATV', window.__mwv_force_native);
+            break;
+        case 'HIDB':
+            if (typeof toggleHideDb === 'function') toggleHideDb();
+            break;
+        case 'RAW':
+            if (typeof toggleRawMode === 'function') await toggleRawMode();
+            break;
+        case 'BYPS':
+            if (typeof toggleBypassDb === 'function') toggleBypassDb();
+            break;
+        case 'AUDIT':
+            applyDiagnosticsSidebarState(true);
+            switchDiagnosticsSubView('health');
+            if (typeof runAutonomousSelfTest === 'function') await runAutonomousSelfTest();
+            break;
+        case 'TEST':
+            applyDiagnosticsSidebarState(true);
+            switchDiagnosticsSubView('tests');
+            if (typeof loadTestSuites === 'function') loadTestSuites();
+            break;
+        default:
+            return;
+    }
+
+    if (typeof syncDiagBtnStates === 'function') syncDiagBtnStates();
 }
 
 /**
@@ -537,6 +620,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedMenuState = localStorage.getItem('mwv_menu_system_visible') === 'true';
     if (savedMenuState) toggleMenuBar(true);
 
+    window.__mwv_force_native = localStorage.getItem('mwv_force_native') === 'true';
+    diagnosticsSidebarVisible = localStorage.getItem(DIAGNOSTICS_SIDEBAR_STORAGE_KEY) === 'true';
+    applyDiagnosticsSidebarState(diagnosticsSidebarVisible);
+    syncGlobalDiagnosticsNav(localStorage.getItem(DIAGNOSTICS_VIEW_STORAGE_KEY) || 'debug-db');
+
     // Load static UI fragments (v1.35.65)
     if (typeof FragmentLoader !== 'undefined') {
         FragmentLoader.load('svg-icons-placeholder', 'fragments/svg_icons.html');
@@ -781,14 +869,16 @@ function switchDiagnosticsSubView(viewId) {
             switchDiagnosticsView(viewId);
         }
         updateSubNavActiveState(viewId);
-
-        // Update Global Sidebar Reiters (v1.37.04 Sync)
-        document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => {
-            const reiterId = (viewId === 'debug-db') ? 'reiter-overview' : `reiter-${viewId}`;
-            el.classList.toggle('active', el.id === reiterId);
-        });
+        syncGlobalDiagnosticsNav(viewId);
     });
 }
+
+window.applyDiagnosticsSidebarState = applyDiagnosticsSidebarState;
+window.toggleDiagnosticsSidebar = toggleDiagnosticsSidebar;
+window.toggleDiagnosticsOverlay = toggleDiagnosticsOverlay;
+window.switchDiagnosticsSidebarTab = switchDiagnosticsSidebarTab;
+window.toggleDiagnosticsFlag = toggleDiagnosticsFlag;
+window.syncGlobalDiagnosticsNav = syncGlobalDiagnosticsNav;
 
 function switchEditSubView(viewId) {
     switchTab('edit', null, () => {
