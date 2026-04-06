@@ -1,3 +1,32 @@
+## User Review Required
+**IMPORTANT**
+
+The HLT layer is the "Command Dashboard" of your workstation. It performs a multi-point audit across all existing layers to calculate your Global Technical Readiness Score.
+
+---
+
+## Proposed Changes
+- **Backend Forensics (Master Audit, main.py):**
+  - Implement `@eel.expose def get_global_health_audit()`.
+  - Queries `db_health`, `sys_telemetry`, `volume_heuristics`, and `process_forensics`.
+  - Calculates a weighted score based on critical failure points.
+  - Determines the "Operational Readiness Level" (BATTLE-READY, STABILIZED, DEGRADED, CRITICAL).
+- **Diagnostic UI (Layer 15):**
+  - Add `reiter-hlt (HLT)` button to the nav bar as the "Master Tab" in `diagnostics_sidebar.html`.
+  - Implement `diag-pane-health` with a high-fidelity "Readiness Display".
+- **Controller (`sidebar_controller.js`):**
+  - Integrate health domain into the diagnostic switcher.
+  - Implement `runGlobalHealthAudit()`:
+    - Aggregates data from multiple domains.
+    - Renders a chromatic health radar for all 15 layers.
+
+---
+
+## Verification Plan
+- **Automated Tests:**
+  - Trigger the HLT audit and verify that it correctly identifies a simulated "Database Stall" or "System Load" from the aggregated telemetry.
+- **Manual Verification:**
+  - Verify that clicking HLT provides a comprehensive summary of all technical aspects without requiring manual inspection of individual tabs.
 ## Milestone: 15-Layer Forensic Suite Complete
 - All 15 diagnostic layers are now active and addressable in the sidebar.
 - Global Health & Command Dashboard (HLT) aggregates all telemetry into a single Operational Readiness Score.

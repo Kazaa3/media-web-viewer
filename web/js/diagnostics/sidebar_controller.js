@@ -82,7 +82,7 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
 
     if (paneIds[viewId]) {
         if (viewId === 'health') runGlobalHealthAudit();
-        if (viewId === 'log') { /* log logic */ }
+        
         const target = document.getElementById(paneIds[viewId]);
         if (target) target.style.display = 'block';
 

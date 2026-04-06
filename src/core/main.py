@@ -1402,6 +1402,29 @@ def get_global_health_audit():
         return {"status": "error", "message": str(e)}
 
 
+@eel.expose
+def get_hardware_forensics():
+    """
+    Forensic Hardware & Driver Audit (v1.37.37).
+    Maps GPU, Codecs, and Storage Bus Heuristics.
+    """
+    try:
+        from src.core import hardware_detector
+        info = hardware_detector.get_hardware_info()
+        
+        # Add real-time usage if possible
+        usage = hardware_detector.get_gpu_usage_safe()
+        info["gpu_usage"] = usage
+        
+        return {
+            "status": "ok",
+            "hardware": info
+        }
+    except Exception as e:
+        log.error(f"[Forensic-DRV] Hardware Audit Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Debug-Optionen (Konsolidiert in PARSER_CONFIG)
 DEBUG_FLAGS = PARSER_CONFIG.get("debug_flags", {})
 
