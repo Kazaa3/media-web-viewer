@@ -69,8 +69,9 @@ if not LOCAL_LOG_DIR.exists():
 LOG_BUFFER: List[str] = []
 MAX_BUFFER_SIZE = REGISTRY.get("max_buffer_size", 10000)
 
-# Reference to DEBUG_FLAGS from main (initialized during setup)
 _debug_flags = {}
+_last_ui_broadcast = 0.0
+UI_BROADCAST_COOLDOWN = 0.02 # Max 50 messages/sec (v1.35.68)
 
 def set_debug_flags(flags: dict):
     """Update internal reference to debug flags."""
@@ -83,11 +84,12 @@ class UIHandler(logging.Handler):
     Custom logging handler to feed the UI log buffer.
     """
     def emit(self, record):
+        global _last_ui_broadcast
         try:
             msg = self.format(record)
             
-            # Avoid recursion if msg already contains UI-Trace tag
-            if "[UI-Trace]" in msg:
+            # Avoid recursion if msg already contains UI-Trace tag (v1.35.68 Hardened)
+            if "[UI-Trace]" in msg or "[BD-AUDIT]" in msg:
                 return
 
             LOG_BUFFER.append(msg)
@@ -96,11 +98,16 @@ class UIHandler(logging.Handler):
             if len(LOG_BUFFER) > MAX_BUFFER_SIZE:
                 LOG_BUFFER.pop(0)
             
-            # Real-time UI tracing if Eel is initialized and has a connection
+            # Real-time UI tracing with Rate Limiting (v1.35.68)
+            now = time.time()
+            if (now - _last_ui_broadcast) < UI_BROADCAST_COOLDOWN:
+                return
+
             import eel
             if hasattr(eel, 'appendUiTrace') and getattr(eel, '_websocket', None):
                 try:
-                    eel.appendUiTrace(msg) # Asynchronous push, don't wait for return
+                    _last_ui_broadcast = now
+                    eel.appendUiTrace(msg) # Asynchronous push
                 except Exception:
                     pass
         except Exception:

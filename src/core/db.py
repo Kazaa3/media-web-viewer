@@ -29,12 +29,17 @@ from typing import Iterable
 
 from src.core.config_master import GLOBAL_CONFIG
 
+
 DB_DIR = Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]).resolve()
 DB_FILENAME = str(Path(GLOBAL_CONFIG["storage_registry"]["db_path"]).resolve())
 
-log.info(f"[DB-PATH] Centralized Absolute Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
-
 _DB_INITIALIZED = False
+_RESETTING = False
+MAX_INIT_RETRIES = 3
+
+# Reduce initial logging to avoid I/O saturation
+if os.environ.get("MWV_DB_VERBOSE", "0") == "1":
+    log.info(f"[DB-PATH] Centralized Absolute Target: {DB_FILENAME} (Exists: {os.path.exists(DB_FILENAME)})")
 
 
 class DatabaseHandler:
@@ -140,15 +145,24 @@ def cleanup_legacy_databases(candidates: Iterable[Path] | None = None) -> list[s
     return deleted
 
 
-def init_db():
+_RECURSION_DEPTH = 0
+MAX_INIT_RETRIES = 2
+
+def init_db(depth: int = 0):
     """
     Initializes the database and runs migrations if needed.
+    @param depth Recursion depth tracking to prevent infinite stalling (v1.35.68).
     """
+    if depth > MAX_INIT_RETRIES:
+        log.critical(f"[DB-STALL] Max recursion depth ({MAX_INIT_RETRIES}) exceeded. Aborting init.")
+        return False
+
     # [DIAGNOSTIC] Excessive Chain Audit (v1.35.96)
     db_path_obj = Path(DB_FILENAME)
     exists = db_path_obj.exists()
     size = db_path_obj.stat().st_size if exists else -1
-    log.info(f"[BD-AUDIT] init_db starting. PID: {os.getpid()} | Path: {DB_FILENAME} | Exists: {exists} | Size: {size} bytes")
+    if depth == 0:
+        log.info(f"[BD-AUDIT] init_db starting. PID: {os.getpid()} | Path: {DB_FILENAME} | Exists: {exists} | Size: {size} bytes")
 
     # Always ensure the directory exists
     DB_DIR.mkdir(parents=True, exist_ok=True)
@@ -157,13 +171,21 @@ def init_db():
     if _DB_INITIALIZED and exists:
         return
 
-    log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
-    try:
-        conn = sqlite3.connect(DB_FILENAME)
-        cursor = conn.cursor()
-    except Exception as e:
-        log.error(f"[DB-CRITICAL] Failed to connect to DB: {e}. Attempting reset...")
-        return factory_reset()
+    if depth == 0:
+        log.info(f"[DB] Checking database integrity at {DB_FILENAME}...")
+    retry_count = 0
+    while retry_count < MAX_INIT_RETRIES:
+        try:
+            conn = sqlite3.connect(DB_FILENAME, timeout=5)
+            cursor = conn.cursor()
+            break
+        except Exception as e:
+            retry_count += 1
+            if retry_count >= MAX_INIT_RETRIES:
+                log.error(f"[DB-CRITICAL] Failed to connect to DB after {retry_count} attempts: {e}.")
+                return False
+            log.warning(f"[DB-RETRY] DB connect failed (attempt {retry_count}): {e}")
+            time.sleep(0.2)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS media (
@@ -271,11 +293,17 @@ def init_db():
     log.info("[DB] Database initialization/migration successful.")
 
 
-def factory_reset():
+def factory_reset(depth: int = 0):
     """
     Deletes the current database file and re-initializes from scratch.
+    @param depth Inherited recursion depth (v1.35.68).
     """
-    log.warning(f"[DB] FACTORY RESET TRIGGERED. Deleting {DB_FILENAME}...")
+    global _RESETTING, _DB_INITIALIZED
+    if _RESETTING:
+        log.critical("[DB-STALL] Recursive factory_reset detected. Aborting to prevent infinite loop.")
+        return False
+    _RESETTING = True
+    log.warning(f"[DB] FACTORY RESET TRIGGERED. Deleting {DB_FILENAME} (Depth: {depth})...")
     db_path = Path(DB_FILENAME)
     if db_path.exists():
         try:
@@ -285,10 +313,11 @@ def factory_reset():
             log.error(f"[DB] Could not delete database file: {e}")
             # Try to just clear tables if file delete fails
             clear_media()
-    
-    global _DB_INITIALIZED
     _DB_INITIALIZED = False
-    init_db()
+    try:
+        init_db(depth=depth)
+    finally:
+        _RESETTING = False
     return True
 
 
