@@ -847,6 +847,17 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "test_file": {
             # Placeholder for future test file style sheet. in code but not centralized. look at legacy tests.
         }
+    },
+
+    # --- UI & NAVIGATION SETISTRY (v1.37 Restoration) ---
+    "ui_settings": {
+        "sidebar_visible": False, # Default to closed for classic restoration
+        "kill_on_startup": True,  # Kill zombie processes on application boot
+        "theme": "dark",
+        "animations_enabled": True,
+        "diagnostics_hud_visible": True,
+        "sub_nav_persistence": True,
+        "classic_v134_restoration": True # Flag for original layout rules
     }
 }
 

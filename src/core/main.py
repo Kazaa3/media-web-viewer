@@ -41,6 +41,8 @@ import glob
 import sqlite3
 import ast
 import threading
+import threading
+from src.core.process_manager import ProcessController
 from typing import Dict, Any, List, Optional, cast, Tuple
 
 # Record boot time as early as possible
@@ -413,17 +415,30 @@ def trigger_db_reconnect():
 
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
-    # --- PORT HARVESTER (v1.35.68) ---
-    global port, eel_kwargs
+    # --- PROCESS LIFECYCLE MANAGEMENT (v1.37 Restoration) ---
+    pc = ProcessController(PROJECT_ROOT, Path(APP_DATA_DIR))
+    if GLOBAL_CONFIG.get("ui_settings", {}).get("kill_on_startup", True):
+        log.info("[Bootstrap] Forcefully cleaning up environment...")
+        pc.kill_stale_instances(os.getpid())
+        time.sleep(0.5)
+    
+    # Singleton Guard
+    if not pc.acquire_lock():
+        owner_pid = pc.get_lock_owner()
+        log.error(f"[Bootstrap] MWV ALREADY RUNNING (PID: {owner_pid}). Aborting.")
+        # Optional: Force kill if flag is very aggressive, but we already killed above or failed.
+        sys.exit(1)
+
+    print(f"STDOUT: [Bootstrap-Audit] Step 1: Port {port} readiness check...", flush=True)
     try:
         import socket
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if s.connect_ex(('localhost', port)) == 0:
                 print(f"STDOUT: [Bootstrap-Audit] Port {port} is STUCK. Purging ZOMBIES...", flush=True)
-                os.system(f"fuser -k {port}/tcp")
+                pc.kill_by_port(port)
                 time.sleep(1.0)
-    except:
-        pass
+    except Exception as e:
+        log.warning(f"[Bootstrap] Port check failed: {e}")
 
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
     

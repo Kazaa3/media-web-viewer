@@ -443,7 +443,7 @@ function finishSwitchTab(tabId, targetId, btn) {
         }
 
         // --- Global Sidebar Management (v1.35 Hardening) ---
-        const sidebarVisibleTabs = ['player', 'video', 'playlist', 'edit', 'debug', 'tests', 'diagnostics', 'library', 'tools', 'logbuch', 'options', 'parser'];
+        const sidebarVisibleTabs = [];
         const shouldShow = sidebarVisibleTabs.includes(tabId);
         const sidebar = document.getElementById('main-sidebar');
         const splitter = document.getElementById('main-splitter');
@@ -529,51 +529,23 @@ function toggleOptionsSidebar() {
     localStorage.setItem('mwv_options_sidebar_visible', isHidden ? 'true' : 'false');
 }
 
-function toggleMenuBar(forceState = null) {
-    const header = document.getElementById('master-persistent-header');
-    const subBar = document.getElementById('sub-nav-container');
-    if (!header) return;
+    header.style.transform = 'translateY(0)';
+    header.style.opacity = '1';
+    header.style.display = 'flex !important';
 
-    menuSystemVisible = (forceState !== null) ? forceState : !menuSystemVisible;
-
-    if (menuSystemVisible) {
-        header.style.transform = 'translateY(0)';
-        header.style.opacity = '1';
-
-        const hasSubNav = subBar && subBar.innerHTML.trim() !== '';
-        if (subBar && hasSubNav) {
-            subBar.style.display = 'flex';
-            subBar.offsetHeight;
-            subBar.style.opacity = '1';
-            subBar.style.transform = 'translateY(0)';
-        }
-    } else {
-        // Toggle: Header slides up but stays slightly accessible if needed, 
-        // or we rely on ALT key. 
-        header.style.transform = 'translateY(-40px)';
-        header.style.opacity = '0';
-        if (subBar) {
-            subBar.style.opacity = '0';
-            subBar.style.transform = 'translateY(-40px)';
-        }
-
-        setTimeout(() => {
-            if (!menuSystemVisible && subBar) {
-                subBar.style.display = 'none';
-            }
-        }, 250);
+    const hasSubNav = subBar && (subBar.innerHTML.trim() !== '' || true); // Force sub-nav check
+    if (subBar) {
+        subBar.style.display = 'flex !important';
+        subBar.style.opacity = '1';
+        subBar.style.transform = 'translateY(0)';
     }
 
-    updateLayoutOffsets();
-
-    // Update logo color/style
-    const logo = document.getElementById('dict-master-toggle');
     if (logo) {
-        logo.style.color = menuSystemVisible ? 'var(--accent-color)' : 'var(--text-primary)';
+        logo.style.color = 'var(--accent-color)';
     }
 
-    mwv_trace('DOM-UI', 'TOGGLE-MENU', { isVisible: menuSystemVisible });
-    localStorage.setItem('mwv_menu_system_visible', menuSystemVisible);
+    menuSystemVisible = true;
+    updateLayoutOffsets();
 }
 
 /**
@@ -1357,8 +1329,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
     const configVisible = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.sidebar_visible : false;
     
-    // Force false on start if requested by user feedback, or use saved if exists
-    sidebarVisible = (savedSidebar === 'true' && configVisible !== false);
+    // Force false on start (v1.37 Restoration - Requested)
+    sidebarVisible = false;
     
     if (typeof applySidebarState === 'function') {
         applySidebarState();
