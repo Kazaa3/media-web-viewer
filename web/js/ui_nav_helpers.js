@@ -592,10 +592,8 @@ async function refreshUIVisibility() {
         pillNav.style.opacity = shouldShowPill ? '1' : '0';
         pillNav.style.pointerEvents = shouldShowPill ? 'auto' : 'none';
         
-        // If visible, ensure it has content
-        if (shouldShowPill && pillNav.innerHTML.trim() === '') {
-            updateGlobalSubNav(category);
-        }
+        // [v1.37.06 Recovery] Force populate on refresh to ensure no empty bars
+        updateGlobalSubNav(category);
     }
 
     // 3. Control ModuleTabNavigator (player-sub-nav-shell)
@@ -802,6 +800,9 @@ function switchMainCategory(category, btn) {
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
+
+    // [v1.37.06] Defensive category fallback
+    category = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
 
     // Clear previous
     container.innerHTML = '';
