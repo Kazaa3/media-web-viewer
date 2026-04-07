@@ -215,16 +215,28 @@ function toggleSidebar() {
  */
 function applySidebarState() {
     const sidebar = document.getElementById('main-sidebar');
+    const splitter = document.getElementById('main-splitter');
     if (!sidebar) return;
 
     // Toggle the .collapsed class for robust state management
     sidebar.classList.toggle('collapsed', !sidebarVisible);
+    
+    // Sync the vertical splitter
+    if (splitter) {
+        splitter.style.display = sidebarVisible ? 'block' : 'none';
+    }
 
     // Update toggle button state if it exists
     const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    const headerToggleBtn = document.getElementById('header-btn-sidebar-toggle');
+    
     if (toggleBtn) {
         toggleBtn.classList.toggle('active', sidebarVisible);
         toggleBtn.style.opacity = sidebarVisible ? '1' : '0.6';
+    }
+    if (headerToggleBtn) {
+        headerToggleBtn.classList.toggle('active', sidebarVisible);
+        headerToggleBtn.style.background = sidebarVisible ? 'rgba(0, 122, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)';
     }
 }
 
@@ -442,24 +454,10 @@ function finishSwitchTab(tabId, targetId, btn) {
             return;
         }
 
-        // --- Global Sidebar Management (v1.35 Hardening) ---
-        const sidebarVisibleTabs = [];
-        const shouldShow = sidebarVisibleTabs.includes(tabId);
-        const sidebar = document.getElementById('main-sidebar');
-        const splitter = document.getElementById('main-splitter');
-
-        if (sidebar && splitter) {
-            sidebar.style.display = shouldShow ? 'flex' : 'none';
-            splitter.style.display = shouldShow ? 'block' : 'none';
-
-            // Special Case: Auto-expand sidebar for content-rich navigation tabs
-            if (['library', 'file', 'debug'].includes(tabId)) {
-                if (typeof toggleSidebar === 'function' && !sidebarVisible) {
-                    sidebarVisible = true;
-                    applySidebarState();
-                }
-            }
-        }
+        // --- Global Sidebar Management (v1.37.06 Refactoring) ---
+        // Sidebar visibility is now globally governed by sidebarVisible state,
+        // no longer forced to display: none per-tab switch.
+        applySidebarState();
     }
 
     // Update button states (Sidebar & Header)
@@ -606,6 +604,16 @@ async function refreshUIVisibility() {
         const shouldShowTab = settings.module_tab_nav;
         tabNav.style.display = shouldShowTab ? 'flex' : 'none';
         tabNav.style.opacity = shouldShowTab ? '1' : '0';
+    }
+
+    // [v1.37.06] Sidebar Sync
+    const sidebar = document.getElementById('main-sidebar');
+    const splitter = document.getElementById('main-splitter');
+    if (sidebar) {
+        sidebar.style.display = 'flex'; // Always flex, visibility handled by .collapsed
+    }
+    if (splitter) {
+        splitter.style.display = 'block';
     }
 
     // 4. Update core layout offsets
@@ -1387,10 +1395,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     const savedCategory = localStorage.getItem('mwv_active_category') || 'media';
     currentMainCategory = savedCategory;
 
-    // 2. Initial Visibility Refresh (SSOT)
-    await refreshUIVisibility();
+    // 2. Initial Visibility Refresh (Immediate Fallback)
+    refreshUIVisibility();
 
-    // 3. Restore Menu System visibility
+    // 3. Wait for Backend sync (v1.37.06 Hardening)
+    if (typeof eel !== 'undefined') {
+        try {
+            await refreshUIVisibility();
+            console.log("[UI-INIT] Backend Sync Complete.");
+        } catch (e) {
+            console.warn("[UI-INIT] Backend not ready yet, using static defaults.");
+        }
+    }
+
+    // 4. Restore Menu System visibility
     const savedMenuState = localStorage.getItem('mwv_menu_system_visible');
     if (savedMenuState !== null) {
         menuSystemVisible = (savedMenuState === 'true');
@@ -1401,13 +1419,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         toggleMenuBar(menuSystemVisible);
     }
 
-    // 4. Reset Sidebar State (Professional Workspace Default: Hidden)
-    const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
-    sidebarVisible = config.sidebar_visible || false;
-    
-    if (typeof applySidebarState === 'function') {
-        applySidebarState();
+    // 5. Reset Sidebar State (Professional Workspace Default: Hidden)
+    const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
+    if (savedSidebar !== null) {
+        sidebarVisible = (savedSidebar === 'true');
+    } else {
+        const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
+        sidebarVisible = config.sidebar_visible || false;
     }
+    
+    applySidebarState();
     
     window.__mwv_ui_nav_loaded = true;
     console.info("[UI-INIT] UI Orchestration Layer Ready.");
