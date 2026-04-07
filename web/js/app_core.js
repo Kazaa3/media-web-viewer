@@ -212,38 +212,53 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
-        // 0. Load UI Fragments in Parallel (v1.35.21 Expanded)
-        let fragmentsNeeded = 7;
+        
+        // --- v1.37.52 Forensic Window Registry ---
+        if (typeof WindowManager !== 'undefined') {
+            // Register Core UI Fragments
+            WM.register('player', { 
+                shellId: 'state-orchestrated-active-queue-list-container', 
+                fragmentId: 'player-main-viewport', 
+                fragmentPath: 'fragments/player_queue.html',
+                onActivate: () => { if (typeof renderPlaylist === 'function') renderPlaylist(); }
+            });
+            WM.register('library', { 
+                shellId: 'coverflow-library-panel', 
+                fragmentId: 'library-main-viewport', 
+                fragmentPath: 'fragments/library_explorer.html',
+                onActivate: () => { if (typeof renderLibrary === 'function') renderLibrary(); }
+            });
+            WM.register('editor', { 
+                shellId: 'metadata-writer-crud-panel', 
+                fragmentId: 'edit-main-viewport', 
+                fragmentPath: 'fragments/metadata_editor.html',
+                onActivate: () => { if (typeof initEdit === 'function') initEdit(); }
+            });
+            WM.register('database', { 
+                shellId: 'database-panel-container', 
+                fragmentId: 'database-main-viewport', 
+                fragmentPath: 'fragments/database_panel.html'
+            });
+        }
+
+        // Shared background fragments (Immediate parallel load)
+        let fragmentsNeeded = 4;
         let fragmentsLoaded = 0;
         const onFragmentDone = (name) => {
             fragmentsLoaded++;
-            
-            // [v1.37.48 Forensic Handshake]
             if (typeof window.auditFragmentHydration === 'function') {
                 window.auditFragmentHydration(name, 'success');
             }
-
-            console.log(`Orchestrator: Fragment '${name}' ready at T+${Date.now() - bootStartTime}ms (${fragmentsLoaded}/${fragmentsNeeded})`);
-            if (fragmentsLoaded === fragmentsNeeded) {
-                console.log("Orchestrator: All fragments ready. Finalizing boot sequence...");
-                mwv_finalize_boot();
-            }
+            if (fragmentsLoaded === fragmentsNeeded) mwv_finalize_boot();
         };
 
         const bootStartTime = Date.now();
         if (typeof FragmentLoader?.load === 'function') {
-            // Core UI Viewports
             FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals-res'));
-            FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => onFragmentDone('player'));
-            FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => onFragmentDone('library'));
-            FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => onFragmentDone('editor'));
-
-            // Shared Components & Forensic Tools
             FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
             FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
-            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('modals'));
+            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('diags'));
         } else {
-            console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
             mwv_finalize_boot();
         }
 
@@ -276,7 +291,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
             if (typeof switchMainCategory === 'function') switchMainCategory(startCategory);
 
-            if (typeof switchTab === 'function') {
+            if (typeof WM !== 'undefined' && typeof WM.activate === 'function') {
+                WM.activate(startTab);
+            } else if (typeof switchTab === 'function') {
                 switchTab(startTab);
             }
 

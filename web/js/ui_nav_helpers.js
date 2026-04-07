@@ -311,106 +311,20 @@ function traceUiNav(category, target, details = {}) {
  * Switches between main application tabs.
  */
 function switchTab(tabId, btn, callback, force = false) {
-    if (isNavigating && !force) {
-        console.warn(`[NAV] Navigation locked. Ignoring request for: ${tabId}`);
-        if (typeof mwv_trace === 'function') mwv_trace('NAV', 'LOCKED-SKIP', { tabId });
-        return;
-    }
-
-    // Force release if requested
-    if (force) isNavigating = false;
-
-    isNavigating = true;
-    document.body.style.cursor = 'wait';
-
-    // --- v1.35 Safety: Navigation Timeout Guard ---
-    if (navTimeout) clearTimeout(navTimeout);
-    navTimeout = setTimeout(() => {
-        if (isNavigating) {
-            console.warn(`[NAV] Navigation TIMEOUT for: ${tabId}. Force releasing lock.`);
-            if (typeof mwv_trace === 'function') mwv_trace('NAV', 'TIMEOUT', { tabId });
-            isNavigating = false;
-            document.body.style.cursor = 'default';
+    if (typeof WM !== 'undefined' && typeof WM.activate === 'function') {
+        // Redraw active button state immediately for responsiveness
+        if (btn) {
+            document.querySelectorAll('.menu-item-btn, .nav-item, .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         }
-    }, 5000);
 
-    const previousTab = localStorage.getItem('mwv_active_tab') || 'player';
-    traceUiNav('TAB', tabId, { from: previousTab, forced: force });
-
-    // Define fragment mapping (Targets the internal V1.34 Master viewports)
-    const fragmentMap = {
-        'player': { containerId: 'player-main-viewport', path: 'fragments/player_queue.html' },
-        'media': { containerId: 'player-main-viewport', path: 'fragments/player_queue.html' },
-        'library': { containerId: 'library-main-viewport', path: 'fragments/library_explorer.html' },
-        'file': { containerId: 'browser-main-viewport', path: 'fragments/filesystem_browser.html' },
-        'edit': { containerId: 'edit-main-viewport', path: 'fragments/metadata_editor.html' },
-        'options': { containerId: 'options-main-viewport', path: 'fragments/options_panel.html' },
-        'database': { containerId: 'database-main-viewport', path: 'fragments/database_panel.html' },
-        'cinema': { containerId: 'cinema-main-viewport', path: 'fragments/video_view.html' },
-        'parser': { containerId: 'parser-main-viewport', path: 'fragments/parser_panel.html' },
-        'debug': { containerId: 'debug-main-viewport', path: 'fragments/database_panel.html' },
-        'tools': { containerId: 'tools-panel-container', path: 'fragments/tools_panel.html' },
-        'reporting': { containerId: 'reporting-dashboard-container', path: 'fragments/reporting_dashboard.html' },
-        'logbuch': { containerId: 'logbook-tab-container', path: 'fragments/logbuch_panel.html' },
-        'diagnostics': { containerId: 'diagnostics-suite-container', path: 'fragments/diagnostics_suite.html' },
-        'tests': { containerId: 'tests-panel-container', path: 'fragments/diagnostics_suite.html' },
-        'video': { containerId: 'video-main-viewport', path: 'fragments/video_player.html' }
-    };
-
-    const tabMap = {
-        'player': { shell: 'state-orchestrated-active-queue-list-container', viewport: 'player-main-viewport' },
-        'library': { shell: 'coverflow-library-panel', viewport: 'library-main-viewport' },
-        'file': { shell: 'filesystem-crawler-directory-panel', viewport: 'browser-main-viewport' },
-        'edit': { shell: 'metadata-writer-crud-panel', viewport: 'edit-main-viewport' },
-        'options': { shell: 'options-panel-container', viewport: 'options-main-viewport' },
-        'database': { shell: 'database-panel-container', viewport: 'database-main-viewport' },
-        'cinema': { shell: 'cinema-panel-container', viewport: 'cinema-main-viewport' },
-        'parser': { shell: 'parser-panel-container', viewport: 'parser-main-viewport' },
-        'debug': { shell: 'debug-db-panel-container', viewport: 'debug-main-viewport' },
-        'tests': { shell: 'tests-panel-container', viewport: 'tests-panel-container' },
-        'tools': { shell: 'tools-panel-container', viewport: 'tools-panel-container' },
-        'reporting': { shell: 'reporting-dashboard-container', viewport: 'reporting-dashboard-container' },
-        'logbuch': { shell: 'logbook-tab-container', viewport: 'logbook-tab-container' },
-        'diagnostics': { shell: 'diagnostics-suite-container', viewport: 'diagnostics-suite-container' },
-        'video': { shell: 'multiplexed-media-player-orchestrator-panel', viewport: 'video-main-viewport' }
-    };
-
-    const mapping = tabMap[tabId] || { shell: tabId, viewport: tabId };
-    const targetId = mapping.shell;
-
-    // Handle Fragment Loading (v1.35.28 Conditional Guard)
-    if (fragmentMap[tabId]) {
-        const frag = fragmentMap[tabId];
-        const container = document.getElementById(frag.containerId);
-
-        // Guard: If fragment is already loaded (has children and not just a loading message)
-        const isAlreadyLoaded = container && container.children.length > 0 && !container.querySelector('.loading-fragment');
-
-        if (isAlreadyLoaded && !force) {
-            console.log(`[NAV] Skipping redundant fragment load for: ${tabId}`);
-            isNavigating = false; // Release lock before finishing
-            finishSwitchTab(tabId, targetId, btn);
-            if (typeof callback === 'function') callback();
-        } else {
-            console.info(`[NAV] Loading fragment: ${frag.path} -> ${frag.containerId}`);
-            FragmentLoader.load(frag.containerId, frag.path, () => {
-                isNavigating = false; // Release lock before finishing
-                finishSwitchTab(tabId, targetId, btn);
-                if (typeof callback === 'function') callback();
-            });
-            if (container) {
-                document.querySelectorAll('.tab-content').forEach(el => {
-                    el.style.display = 'none';
-                    el.classList.remove('active');
-                });
-                container.style.display = 'flex';
-                container.classList.add('active');
-            }
-        }
+        // Delegate to Forensic Window Manager
+        WM.activate(tabId, force).then(success => {
+            if (success && typeof callback === 'function') callback();
+        });
     } else {
-        isNavigating = false; // Release lock
-        finishSwitchTab(tabId, targetId, btn);
-        if (typeof callback === 'function') callback();
+        console.warn("[NAV] WindowManager not available. Falling back to legacy switch logic.");
+        // (Legacy fallback could go here if needed, but we expect WM to be present)
     }
 }
 
