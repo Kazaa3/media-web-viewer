@@ -218,6 +218,7 @@ def init_db(depth: int = 0):
             last_played TEXT,
             duration_sec REAL,
             is_mock BOOLEAN DEFAULT 0,
+            mock_stage INTEGER DEFAULT 0,
             FOREIGN KEY(parent_id) REFERENCES media(id)
         )
     """)
@@ -358,26 +359,24 @@ def insert_media_batch(items: list[dict]):
         for item_dict in items:
             cursor.execute('''
                 INSERT INTO media (
-                    name, path, category, size, duration, bitrate, samplerate, bitdepth, 
-                    codec, has_art, art_path, title, artist, album, year, genre, 
-                    track, totaltracks, disc, totaldiscs, chapters, full_tags, 
-                    media_type, subtype, file_type, isbn, imdb, tmdb, discogs, 
-                    amazon_cover, parent_id, is_mock, mock_stage
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    name, path, type, duration, category, 
+                    is_transcoded, transcoded_format, tags, extension, 
+                    container, tag_type, codec, has_artwork, art_path, 
+                    full_tags, media_type, subtype, file_type, isbn, 
+                    imdb, tmdb, discogs, amazon_cover, parent_id, 
+                    is_mock, mock_stage
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                item_dict.get('name'), str(item_dict.get('path', '')), item_dict.get('category'),
-                item_dict.get('size'), item_dict.get('duration'), item_dict.get('bitrate'),
-                item_dict.get('samplerate'), item_dict.get('bitdepth'), 
-                item_dict.get('codec'), item_dict.get('has_art', 'No'), item_dict.get('art_path'),
-                item_dict.get('title'), item_dict.get('artist'), item_dict.get('album'),
-                item_dict.get('year'), item_dict.get('genre'), item_dict.get('track'),
-                item_dict.get('totaltracks'), item_dict.get('disc'), item_dict.get('totaldiscs'),
-                json.dumps(item_dict.get('chapters', [])),
-                json.dumps(item_dict.get('full_tags', {})),
-                item_dict.get('media_type'), item_dict.get('subtype'),
-                item_dict.get('file_type'), item_dict.get('isbn'),
-                item_dict.get('imdb'), item_dict.get('tmdb'), item_dict.get('discogs'),
-                item_dict.get('amazon_cover'), item_dict.get('parent_id'),
+                item_dict.get('name'), str(item_dict.get('path', '')), item_dict.get('type', 'other'),
+                item_dict.get('duration'), item_dict.get('category', 'Unknown'),
+                item_dict.get('is_transcoded', 0), item_dict.get('transcoded_format'),
+                json.dumps(item_dict.get('tags', {})), item_dict.get('extension'),
+                item_dict.get('container'), item_dict.get('tag_type'), item_dict.get('codec'),
+                item_dict.get('has_artwork', 0), item_dict.get('art_path'),
+                json.dumps(item_dict.get('full_tags', {})), item_dict.get('media_type'),
+                item_dict.get('subtype'), item_dict.get('file_type'),
+                item_dict.get('isbn'), item_dict.get('imdb'), item_dict.get('tmdb'),
+                item_dict.get('discogs'), item_dict.get('amazon_cover'), item_dict.get('parent_id'),
                 item_dict.get('is_mock', 0), item_dict.get('mock_stage', 0)
             ))
         conn.commit()

@@ -4731,7 +4731,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                     collected_items.append({
                         'name': d.name, 'path': str(d), 'category': 'Unknown', 
                         'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
-                        'media_type': 'album' if m_count > 1 else 'other'
+                        'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
                     })
                     count_indexed += 1
 
@@ -4744,9 +4744,9 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                         if str(f.resolve()) in existing_media: continue
                         collected_items.append({
                             'name': f.name, 'path': str(f), 'category': 'Unknown',
-                            'size': f.stat().st_size if f.exists() else 0,
                             'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
-                            'file_type': ext[1:].upper()
+                            'type': 'file', 'file_type': ext[1:].upper(),
+                            'extension': ext
                         })
                         count_indexed += 1
                     except Exception: pass
