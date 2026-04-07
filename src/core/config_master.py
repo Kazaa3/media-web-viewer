@@ -228,17 +228,15 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "max_buffer_size": 10000        # For UI Log Buffer
     },
     
-    # --- DEBUGGING REGISTRY (v1.35.68 Centralized) ---
-    "debug_flags": {
-        "start": True,
-        "scan": False,
-        "db": False,
-        "ui": False,
-        "remux": False,
-        "transcode": False,
-        "tests": False,
-        "system": False
+    # --- UI & NAVIGATION REGISTRY (v1.35.68 Centralized) ---
+    "ui_settings": {
+        "sidebar_visible": False,      # Toggleable vertical sidebar
+        "hud_visible": False,          # Technical Elite HUD
+        "theme": "dark",               # Initial theme
+        "hydration_mode": "B"          # M=Mock, R=Real, B=Both
     },
+    
+    # --- DEBUGGING REGISTRY (v1.35.68 Centralized) ---
     
     # --- STREAMING & PIPELINE REGISTRY (v1.35.94 Unified) ---
     "atom_detection": {

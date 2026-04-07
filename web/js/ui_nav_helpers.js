@@ -244,6 +244,7 @@ function initAllSplitters() {
     if (typeof initSplitter === 'function') {
         const splitters = [
             ['main-splitter', 'main-sidebar', 'main-content-area', 'vertical', 'left'],
+            ['player-queue-splitter', 'player-deck-column', 'player-playlist-column', 'vertical', 'left'],
             ['player-analytics-splitter', 'player-detailed-sidebar', 'player-main-viewport', 'vertical', 'left'],
             ['browser-tab-splitter', 'browser-left-sidebar', 'browser-main-viewport', 'vertical', 'left'],
             ['debug-splitter', 'debug-settings-pane', 'debug-main-viewport', 'vertical', 'right'],
