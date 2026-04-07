@@ -66,6 +66,11 @@ MASTER_CAT_MAP = {
         "internal": "playlists",
         "aliases": ["playlist", "m3u", "m3u8"],
         "extensions": {".m3u", ".m3u8"}
+    },
+    "archives": {
+        "internal": "archives",
+        "aliases": ["archiv", "zip", "rar", "7z", "tar", "compressed", "backup"],
+        "extensions": {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}
     }
 }
 

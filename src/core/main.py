@@ -4681,6 +4681,15 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
         DSD_EXTENSIONS, HDDVD_EXTENSIONS, PARSER_CONFIG, get_default_scan_dir
     )
     
+    # 4. Prepare Extension Filter & Fast-Category-Mapper (v1.35.98)
+    from core.models import MASTER_CAT_MAP
+    ext_to_cat = {}
+    for cat, info in MASTER_CAT_MAP.items():
+        for ext in info.get("extensions", []):
+            ext_to_cat[ext.lower()] = cat
+
+    all_exts = set(ext_to_cat.keys())
+    
     # 2. Fast-Scan Override
     parser_mode = 'lightweight'
     GLOBAL_CONFIG["parser_mode"] = 'lightweight'
@@ -4706,14 +4715,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     # (Already handled by 0. Round 5.6)
     
     # 4. Prepare Extension Filter
-    all_exts = set()
     indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-    
-    if any(c in indexed_cats for c in ["audio", "music"]): all_exts |= AUDIO_EXTENSIONS | DSD_EXTENSIONS
-    if any(c in indexed_cats for c in ["video", "movie", "tv"]): all_exts |= VIDEO_EXTENSIONS | HDDVD_EXTENSIONS
-    if any(c in indexed_cats for c in ["images", "pictures"]): all_exts |= PICTURE_EXTENSIONS
-    if any(c in indexed_cats for c in ["documents", "docs"]): all_exts |= DOCUMENT_EXTENSIONS
-    all_exts = {e.lower() for e in all_exts}
     
     # 5. Batch Collection
     collected_items = []
@@ -4723,7 +4725,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
             log.info(f" [Scan] Starting scan of: {scan_root}")
             for root, dirs, files in os.walk(str(scan_root), followlinks=False):
                 total_traversed += (len(files) + len(dirs))
-                if total_traversed > 50000: break # Safety cap
+                if total_traversed > 50000: break # Safety cap 
                 
                 d = Path(root)
                 if d == scan_root: continue
@@ -4751,8 +4753,9 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                     if ext not in all_exts or '.cache' in f.parts: continue
                     try:
                         if str(f.resolve()) in existing_media: continue
+                        cat = ext_to_cat.get(ext, 'Unknown')
                         collected_items.append({
-                            'name': f.name, 'path': str(f), 'category': 'Unknown',
+                            'name': f.name, 'path': str(f), 'category': cat,
                             'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
                             'type': 'file', 'file_type': ext[1:].upper(),
                             'extension': ext
