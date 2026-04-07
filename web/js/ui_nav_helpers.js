@@ -459,31 +459,40 @@ function toggleOptionsSidebar() {
  * UI Header Management: TOP MENU and SUB-MENU Bar (v1.37 Restoration)
  * These elements provide global control and contextual navigation.
  */
-function toggleMenuBar(forceState = null) {
+function toggleZenMode(forceState = null) {
     const header = document.getElementById('master-persistent-header');
-    const subBar = document.getElementById('sub-nav-container');
-    const logo = document.getElementById('dict-master-toggle');
     if (!header) return;
+    
+    const isNowHidden = forceState !== null ? !forceState : (header.style.display !== 'none');
+    header.style.display = isNowHidden ? 'none' : 'flex';
+    
+    const btn = document.getElementById('header-btn-zen-toggle');
+    if (btn) btn.classList.toggle('active', !isNowHidden);
+    
+    console.log(`[UI-NAV] ZEN_MODE: ${isNowHidden ? 'ACTIVE (Headless)' : 'INACTIVE'}`);
+    refreshViewportLayout();
+}
 
-    // v1.37 Restoration: Force always visible
-    menuSystemVisible = true;
+function toggleSubNav(forceState = null) {
+    const subBar = document.getElementById('sub-nav-container');
+    if (!subBar) return;
+    
+    const isNowHidden = forceState !== null ? !forceState : (subBar.style.display !== 'none');
+    subBar.style.display = isNowHidden ? 'none' : 'flex';
+    
+    const btn = document.getElementById('header-btn-subnav-toggle');
+    if (btn) btn.classList.toggle('active', !isNowHidden);
 
-    header.style.transform = 'translateY(0)';
-    header.style.opacity = '1';
-    header.style.display = 'flex';
+    console.log(`[UI-NAV] SUBNAV_TOGGLE: ${isNowHidden ? 'HIDDEN' : 'VISIBLE'}`);
+    refreshViewportLayout();
+}
 
-    const hasSubNav = subBar && (subBar.innerHTML.trim() !== '' || true); 
-    if (subBar) {
-        subBar.style.display = 'flex';
-        subBar.style.opacity = '1';
-        subBar.style.transform = 'translateY(0)';
-    }
-
-    if (logo) {
-        logo.style.color = 'var(--accent-color)';
-    }
-
-    updateLayoutOffsets();
+/**
+ * Legacy Support: UI Header Management (v1.37 Restoration)
+ */
+function toggleMenuBar(forceState = null) {
+    toggleZenMode(forceState);
+    toggleSubNav(forceState);
 }
 
 /**
@@ -525,53 +534,60 @@ async function refreshUIVisibility() {
         if (shouldShowMaster) {
             console.log(`[UI-NAV] SPAWN: Master Header for ${category}`);
             masterHeader.style.setProperty('display', 'flex', 'important');
-            masterHeader.style.setProperty('opacity', '1', 'important');
-        } else {
-            console.log(`[UI-NAV] UNSPAWN: Hiding Master Header for ${category}`);
-            masterHeader.style.setProperty('display', 'none', 'important');
-        }
+    // 1. Fetch Window Registry (Matrix)
+    const settings = ui_visibility_matrix[category] || { 
+        "master_header": true, "contextual_pill_nav": true, "module_tab_nav": false, 
+        "footer_visible": true, "sidebar_allowed": true, "diagnostics_hud_allowed": true 
+    };
+
+    console.log(`[UI-NAV] ENFORCING FORENSIC-6 for category: ${category}`, settings);
+
+    // 2. Control Master Header
+    const header = document.getElementById('master-persistent-header');
+    if (header) {
+        header.style.display = settings.master_header ? 'flex' : 'none';
     }
 
-    // 2. Control ContextualPillBar (sub-nav-container)
+    // 3. Control Sub-Nav (Contextual Pills)
     const pillNav = document.getElementById('sub-nav-container');
     if (pillNav) {
-        const shouldShowPill = (settings.contextual_pill_nav !== false) && menuSystemVisible;
-        
-        if (shouldShowPill) {
-            console.log(`[UI-NAV] SPAWN: Sub-Nav Bar for ${category}`);
-            pillNav.style.setProperty('display', 'flex', 'important');
-            pillNav.style.setProperty('opacity', '1', 'important');
-            pillNav.style.setProperty('pointer-events', 'auto', 'important');
-            
-            // Population Cycle (Defensive Wrap)
-            try {
-                updateGlobalSubNav(category);
-            } catch (err) {
-                console.warn("[UI-NAV] Sub-Nav population failed:", err);
-            }
+        if (settings.contextual_pill_nav) {
+            pillNav.style.display = 'flex';
+            try { updateGlobalSubNav(category); } catch (e) {}
         } else {
-            console.log(`[UI-NAV] UNSPAWN: Hiding Sub-Nav Bar for ${category}`);
-            pillNav.style.setProperty('display', 'none', 'important');
-            pillNav.innerHTML = ''; 
+            pillNav.style.display = 'none';
         }
     }
 
-    // 4. Recalibrate Viewport Geometry (v1.37.06 Reactive)
-    refreshViewportLayout();
-
-    // 3. Control ModuleTabNavigator (player-sub-nav-shell)
+    // 4. Control Module Tabs
     const tabNav = document.getElementById('player-sub-nav-shell');
     if (tabNav) {
-        const shouldShowTab = settings.module_tab_nav;
-        tabNav.style.display = shouldShowTab ? 'flex' : 'none';
-        tabNav.style.opacity = shouldShowTab ? '1' : '0';
+        tabNav.style.display = settings.module_tab_nav ? 'flex' : 'none';
     }
 
-    // [v1.37.06] Sidebar Sync
-    if (typeof applySidebarState === 'function') applySidebarState();
+    // 5. Control Footer (Media Controller)
+    const footer = document.querySelector('.main-footer');
+    if (footer) {
+        footer.style.display = settings.footer_visible ? 'flex' : 'none';
+    }
 
-    // 4. Update core layout offsets
-    if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
+    // 6. Control Sidebar Allowed State
+    const sidebarBtn = document.getElementById('header-btn-sidebar-toggle');
+    if (sidebarBtn) {
+        sidebarBtn.style.display = settings.sidebar_allowed ? 'flex' : 'none';
+    }
+
+    // 7. Control Diagnostics HUD
+    if (typeof toggleTechnicalHUD === 'function') {
+        // Only set if HUD is allowed; otherwise force-hide
+        if (!settings.diagnostics_hud_allowed) toggleTechnicalHUD(false);
+    }
+
+    // 8. FINAL: Recalibrate Viewport Geometry
+    refreshViewportLayout();
+
+    // 9. Sync Sidebar (Classic v1.34)
+    if (typeof applySidebarState === 'function') applySidebarState();
 }
 window.refreshUIVisibility = refreshUIVisibility;
 
@@ -1442,6 +1458,82 @@ window.auditFragmentHydration = function(name, status, details = '') {
 
     renderHydrationMatrix();
 };
+
+function refreshUIVisibility(category) {
+    if (!category) return;
+
+    // 1. Fetch Window Registry (Matrix)
+    // SSOT: config_master.py -> window.CONFIG.ui_settings.ui_visibility_matrix
+    const matrix = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.ui_visibility_matrix : null;
+    const settings = (matrix && matrix[category]) ? matrix[category] : { 
+        "master_header": true, "contextual_pill_nav": true, "module_tab_nav": false, 
+        "footer_visible": true, "sidebar_allowed": true, "diagnostics_hud_allowed": true,
+        "sidebar_visible": false 
+    };
+
+    console.log(`[UI-NAV] ENFORCING FORENSIC-6 for category: ${category}`, settings);
+
+    // 2. Control Master Header (Top Bar)
+    const header = document.getElementById('master-persistent-header');
+    if (header) {
+        header.style.display = settings.master_header ? 'flex' : 'none';
+        header.style.opacity = settings.master_header ? '1' : '0';
+    }
+
+    // 3. Control Sub-Nav (Contextual Pills)
+    const pillNav = document.getElementById('sub-nav-container');
+    if (pillNav) {
+        if (settings.contextual_pill_nav) {
+            pillNav.style.display = 'flex';
+            pillNav.style.opacity = '1';
+            try { 
+                if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav(category); 
+            } catch (e) {
+                console.warn("[UI-NAV] Sub-Nav update failed:", e);
+            }
+        } else {
+            pillNav.style.display = 'none';
+            pillNav.innerHTML = '';
+        }
+    }
+
+    // 4. Control Module Tabs (Internal)
+    const tabNav = document.getElementById('player-sub-nav-shell');
+    if (tabNav) {
+        tabNav.style.display = settings.module_tab_nav ? 'flex' : 'none';
+    }
+
+    // 5. Control Footer (Media Controller)
+    // Note: CSS class .layout-footer-wrapper or .main-footer
+    const footer = document.querySelector('.layout-footer-wrapper') || document.querySelector('.main-footer');
+    if (footer) {
+        footer.style.display = settings.footer_visible ? 'block' : 'none';
+    }
+
+    // 6. Control Sidebar Allowed State (Button visibility)
+    const sidebarBtn = document.getElementById('header-btn-sidebar-toggle');
+    if (sidebarBtn) {
+        sidebarBtn.style.display = settings.sidebar_allowed ? 'flex' : 'none';
+    }
+
+    // 7. Control Diagnostics HUD
+    if (typeof toggleTechnicalHUD === 'function') {
+        // If HUD not allowed, force hide it
+        if (!settings.diagnostics_hud_allowed) toggleTechnicalHUD(false);
+    }
+
+    // 8. FINAL: Recalibrate Viewport Geometry (Calculate heights/offsets)
+    refreshViewportLayout();
+
+    // 9. Sync Sidebar (Classic v1.34 Logic + Forensic 7 Enforcement)
+    if (typeof applySidebarState === 'function') {
+        // Force the configured default for this category
+        if (typeof settings.sidebar_visible !== 'undefined') {
+             if (typeof toggleSidebar === 'function') toggleSidebar(settings.sidebar_visible);
+        }
+        applySidebarState();
+    }
+}
 
 window.renderHydrationMatrix = function() {
     const matrix = document.getElementById('hydration-fragment-matrix');

@@ -230,33 +230,40 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     
     # --- UI & NAVIGATION REGISTRY (v1.37.52 Centralized) ---
     "ui_settings": {
-        "sidebar_visible": False,            # Default to closed for professional workspace
-        "kill_on_startup": True,             # Kill zombie processes on application boot
-        "pip_installer_timeout": 300,        # [AUTO] Global installation timeout in seconds
-        "theme": "dark",
-        "animations_enabled": True,
-        "diagnostics_hud_visible": True,
-        "sub_nav_persistence": True,
-        "hydration_mode": "B",               # M=Mock, R=Real, B=Both
-        "professional_layout_lock": True,    # [GUI] Enforced Layout Rules (Professional Mode)
-        
-        # --- UI VISIBILITY MATRIX (v1.37.52 Restoration) ---
-        # Controls which bars are rendered per category to prevent menu-clutter.
-        # v1.37.52 Hardening: ensures master_header is visible for crucial navigation.
+        # --- GLOBAL MASTER TOGGLES (Autoritativ) ---
+        "master_header_visible": True,       # GLOBAL: Obere Haupt-Navigationsleiste (Kategorien).
+        "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
+        "module_tabs_visible": True,         # GLOBAL: Interne Modul-Tabs (Detail-Ansichten).
+        "footer_visible": True,              # GLOBAL: Schwebende Media-Steuerung unten.
+        "sidebar_allowed": True,             # GLOBAL: Erlaubt die Sidebar-Nutzung generell.
+        "sidebar_visible": False,            # GLOBAL: Sidebar Start-Zustand (True=Offen).
+        "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
+
+        # --- BEHAVIOR & THEME ---
+        "theme": "dark",                     # Farbschema der Anwendung (Standard: Dark/Glass).
+        "animations_enabled": True,          # Steuert flüssige UI-Übergänge und Micro-Animations.
+        "sub_nav_persistence": True,         # Behält Sub-Menü Zustände beim Kategorie-Wechsel bei.
+        "hydration_mode": "B",               # M=Mock, R=Real, B=Both (Handshake-Modus).
+        "professional_layout_lock": True,    # [GUI] Erzwingt Layout-Regeln für Profi-Workspaces.
+        "kill_on_startup": True,             # Killt Stale-Prozesse beim Booten.
+        "pip_installer_timeout": 300,        # [AUTO] Installations-Timeout in Sekunden.
+
+        # --- UI VISIBILITY MATRIX (v1.37.52 Contextual Logic) ---
+        # Verfeinert die Sichtbarkeit pro Kategorie (falls Global-Toggle auf True ist).
         "ui_visibility_matrix": {
-            "media":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "library":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "database":   { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False },
-            "file":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "edit":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "system":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "parser":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "debug":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "tests":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "tools":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "reporting":  { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "logbuch":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "video":      { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False }
+            "media":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": False },
+            "library":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": True,  "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "database":   { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False, "footer_visible": False, "sidebar_allowed": False, "diagnostics_hud_allowed": True, "sidebar_visible": False },
+            "file":       { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "edit":       { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "system":     { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "parser":     { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "debug":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "tests":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "tools":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "reporting":  { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "logbuch":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "video":      { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True }
         }
     },
     

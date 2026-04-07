@@ -154,6 +154,24 @@
 
             <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
 
+            <!-- Zen Toggle (v1.37.52) -->
+            <button id="header-btn-zen-toggle" title="Toggle Zen Mode (Header)" class="tab-btn" 
+                onclick="if(typeof toggleZenMode === 'function') toggleZenMode()"
+                style="padding: 6px; border-radius: 6px; background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+            </button>
+
+            <!-- Sub-Nav Toggle (v1.37.52) -->
+            <button id="header-btn-subnav-toggle" title="Toggle Contextual Sub-Nav" class="tab-btn" 
+                onclick="if(typeof toggleSubNav === 'function') toggleSubNav()"
+                style="padding: 6px; border-radius: 6px; background: rgba(255, 149, 0, 0.1); color: #ff9500; border: 1px solid rgba(255, 149, 0, 0.2);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+                </svg>
+            </button>
+
             <!-- Sidebar Toggle Button (v1.37.29 Restoration) -->
             <button id="header-btn-sidebar-toggle" title="Toggle Sidebar" class="tab-btn" 
                 onclick="if(typeof toggleSidebar === 'function') toggleSidebar()"
