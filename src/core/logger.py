@@ -106,10 +106,15 @@ class UIHandler(logging.Handler):
                 return
 
             import eel
-            if hasattr(eel, 'appendUiTrace') and getattr(eel, '_websocket', None):
+            # Round 5.5: Skip if no browser is connected to prevent hangs
+            websockets = getattr(eel, '_websockets', [])
+            if not websockets or len(websockets) == 0:
+                return
+
+            if hasattr(eel, 'appendUiTrace'):
                 try:
+                    eel.appendUiTrace(msg)
                     _last_ui_broadcast = now
-                    eel.appendUiTrace(msg) # Asynchronous push
                 except Exception:
                     pass
         except Exception:

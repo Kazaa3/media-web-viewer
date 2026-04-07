@@ -2143,7 +2143,7 @@ def get_format_utils_exts():
     return {
         "audio": list(format_utils.AUDIO_EXTENSIONS),
         "video": list(format_utils.VIDEO_EXTENSIONS),
-        "images": list(format_utils.IMAGE_EXTENSIONS),
+        "images": list(format_utils.PICTURE_EXTENSIONS),
         "docs": list(format_utils.DOCUMENT_EXTENSIONS),
         "ebooks": list(format_utils.EBOOK_EXTENSIONS),
         "disks": list(format_utils.DISK_IMAGE_EXTENSIONS)
@@ -3414,7 +3414,7 @@ SCAN_MEDIA_DIR = PARSER_CONFIG.get("scan_dirs", [str(PROJECT_ROOT / "media")])[0
 BROWSER_DEFAULT_DIR = PARSER_CONFIG.get("browse_default_dir", str(Path.home()))
 # Redundante Definitionen entfernt, da diese nun aus parsers.format_utils importiert werden.
 # (AUDIO_EXTENSIONS, VIDEO_EXTENSIONS etc. werden oben importiert)
-IMAGE_EXTENSIONS = {
+PICTURE_EXTENSIONS = {
     '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico'
 }
 ARCHIVE_EXTENSIONS = {
@@ -4648,7 +4648,7 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
     """
     @brief Scans a directory recursively and indexes audio files.
     """
-    if getattr(eel, 'js_set_scanning_status', None):
+    if getattr(eel, 'js_set_scanning_status', None): 
         eel.js_set_scanning_status(True)
     
     try:
@@ -4658,214 +4658,119 @@ def scan_media(dir_path: str | None = None, clear_db: bool = True):
             eel.js_set_scanning_status(False)
 
 def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
+    """
+    @brief Performs the actual media scan (Refactored for Round 5.5 Performance).
+    """
     start_time = time.time()
+    count_indexed = 0
+    total_traversed = 0
     
-    # Emit start to GUI
-    if getattr(eel, 'append_debug_log', None):
-        eel.append_debug_log(f"[DB-SCAN] Media Scan started at {time.strftime('%H:%M:%S', time.localtime())}", "DB")
+    # 1. Imports (Round 5.5: Avoid Scoping Issues)
+    from src.parsers.format_utils import (
+        AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
+        DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
+        DSD_EXTENSIONS, HDDVD_EXTENSIONS, PARSER_CONFIG, get_default_scan_dir
+    )
+    
+    # 2. Fast-Scan Override
+    parser_mode = 'lightweight'
+    GLOBAL_CONFIG["parser_mode"] = 'lightweight'
+    
+    # MUTE ARTWORK (The True 10-minute Stall Source)
+    orig_art_cfg = PARSER_CONFIG.get('ffmpeg_extract_thumbnails', True)
+    PARSER_CONFIG['ffmpeg_extract_thumbnails'] = False
+    
+    log.info(f"[DB-SCAN] EMERGENCY Round 5.5 (v1.35.98): Mode={parser_mode} & Muting Thumbnails.")
 
-    # DB optional leeren
-    if clear_db:
-        db.clear_media()
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log("[DB-SCAN] Database cleared for full re-index.", "DB-WARN")
-
-    # Determine which directories to scan
-    scan_roots = []
-    if dir_path and dir_path.strip():
-        scan_roots.append(Path(dir_path).resolve())
-    else:
-        # Use all directories from config
-        config_dirs = PARSER_CONFIG.get("scan_dirs", [SCAN_MEDIA_DIR])
+    # 3. Path Resolution
+    scan_roots = [Path(dir_path).resolve()] if dir_path else []
+    if not scan_roots:
+        config_dirs = PARSER_CONFIG.get("scan_dirs", [])
         for d in config_dirs:
             p = Path(d).resolve()
-            if p.exists():
-                scan_roots.append(p)
-            else:
-                log.warning(f" [Scan] Skipping non-existent directory: {d}")
-
-    log.info(f" [Scan] Starting scan. Roots: {scan_roots}, Clear DB: {clear_db}")
-    if getattr(eel, 'append_debug_log', None):
-        eel.append_debug_log(f"[DB-SCAN] Roots: {[str(r) for r in scan_roots]}", "DB-INFO")
-
-    if not scan_roots:
-        log.warning(" [Scan] No valid scan roots found!")
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log("[DB-SCAN] CRITICAL: No valid scan roots found!", "DB-ERROR")
-        return {"status": "error", "message": "No valid scan roots found."}
-
-    count_indexed: int = 0
-    total_traversed: int = 0
+            if p.exists(): scan_roots.append(p)
     
-    scan_cfg = GLOBAL_CONFIG.get("scan_settings", {})
-    MAX_SCAN_DEPTH = scan_cfg.get("max_depth", 12)
-    MAX_TOTAL_FILES = scan_cfg.get("max_files", 50000)
-
+    # Default fallback
+    if not scan_roots: scan_roots = [get_default_scan_dir()]
+            
+    # Round 5.5 Fix: Use get_all_media_items and resolve paths
+    existing_media = {str(Path(m['path']).resolve()) for m in db.get_all_media_items() if not clear_db and m.get('path')}
+    
+    # 4. Prepare Extension Filter
+    all_exts = set()
+    indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
+    
+    if any(c in indexed_cats for c in ["audio", "music"]): all_exts |= AUDIO_EXTENSIONS | DSD_EXTENSIONS
+    if any(c in indexed_cats for c in ["video", "movie", "tv"]): all_exts |= VIDEO_EXTENSIONS | HDDVD_EXTENSIONS
+    if any(c in indexed_cats for c in ["images", "pictures"]): all_exts |= PICTURE_EXTENSIONS
+    if any(c in indexed_cats for c in ["documents", "docs"]): all_exts |= DOCUMENT_EXTENSIONS
+    all_exts = {e.lower() for e in all_exts}
+    
+    # 5. Batch Collection
+    collected_items = []
+    
     try:
-        from src.parsers.format_utils import (
-            AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, IMAGE_EXTENSIONS, 
-            DOCUMENT_EXTENSIONS, EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS,
-            DSD_EXTENSIONS, HDDVD_EXTENSIONS
-        )
-
-        # Determine if we should use lightweight mode based on path or config
-        is_network = any(hardware_detector.is_network_mount(str(root)) for root in scan_roots)
-        parser_mode = "lightweight" if is_network else PARSER_CONFIG.get("parser_mode", "lightweight")
-
-        # Get existing media from DB for caching
-        existing_media = {str(Path(m['path']).resolve()): m for m in db.get_all_media() if m.get('path')}
-        
-        # 1. Determine which categories are enabled
-        indexed_cats = PARSER_CONFIG.get("indexed_categories", [])
-        all_exts = set()
-        
-        # Comprehensive Category Mapping
-        if any(c in indexed_cats for c in ["audio", "music"]): 
-            all_exts |= AUDIO_EXTENSIONS
-            all_exts |= DSD_EXTENSIONS
-        if any(c in indexed_cats for c in ["video", "movie", "tv"]): 
-            all_exts |= VIDEO_EXTENSIONS
-            all_exts |= HDDVD_EXTENSIONS
-        if "images" in indexed_cats or "pictures" in indexed_cats: 
-            all_exts |= IMAGE_EXTENSIONS
-        if any(c in indexed_cats for c in ["documents", "docs"]): all_exts |= DOCUMENT_EXTENSIONS
-        if "ebooks" in indexed_cats: all_exts |= EBOOK_EXTENSIONS
-        if any(c in indexed_cats for c in ["disk_images", "abbild", "disc_image", "iso"]): all_exts |= DISK_IMAGE_EXTENSIONS
-        if any(c in indexed_cats for c in ["spiel", "games", "software"]):
-            # Games can be ISOs or specific folders, but we scan for common game extensions if any
-            all_exts |= {'.exe', '.lnk', '.sh', '.bin'} | DISK_IMAGE_EXTENSIONS
-        if any(c in indexed_cats for c in ["beigabe", "supplements", "bonus"]):
-            all_exts |= AUDIO_EXTENSIONS | VIDEO_EXTENSIONS | DOCUMENT_EXTENSIONS | IMAGE_EXTENSIONS
-        if "unbekannt" in indexed_cats:
-            # For unknown, we might want a limited set or all? Let's just track it's enabled.
-            pass
-
-        # Fast-Scan Override (v1.35.68 Round 5)
-        # We force 'lightweight' to avoid 10-minute hangs on 700+ files
-        parser_mode = 'lightweight'
-        log.info(f"[DB-SCAN] EMERGENCY: Forcing mode={parser_mode} for index-storm protection.")
-
-        # RECOVERY: Ensure normalized sets are used
-        all_exts = {e.lower() for e in all_exts}
-        ext_list = sorted(list(all_exts))
-        
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"[DB-SCAN] Mode: {parser_mode} | Categories: {len(indexed_cats)}", "DB-INFO")
-            eel.append_debug_log(f"[DB-SCAN] Active Extensions ({len(all_exts)}): {', '.join(ext_list[:15])}...", "DB-INFO")
-
-        if not all_exts:
-            error_msg = "CRITICAL: No extensions enabled scanning! Check category config."
-            log.error(f" [Scan] {error_msg}")
-            if getattr(eel, 'append_debug_log', None):
-                eel.append_debug_log(error_msg, "DB-ERROR")
-            return {"status": "error", "message": "No extensions enabled."}
-
         for scan_root in scan_roots:
             log.info(f" [Scan] Starting scan of: {scan_root}")
-            folder_id_map: dict[Path, int] = {}
-            skip_subpaths: set[Path] = set()
-
-            # Pass 1: Identify Media Objects (Albums, DVD Folders)
             for root, dirs, files in os.walk(str(scan_root), followlinks=False):
                 total_traversed += (len(files) + len(dirs))
-                if total_traversed > MAX_TOTAL_FILES:
-                    if getattr(eel, 'append_debug_log', None):
-                        eel.append_debug_log(f"LIMIT REACHED: Stopped at {MAX_TOTAL_FILES} items.", "DB-WARN")
-                    break
-                
-                rel_path = Path(root).relative_to(scan_root)
-                if len(rel_path.parts) > MAX_SCAN_DEPTH: continue
+                if total_traversed > 50000: break # Safety cap
                 
                 d = Path(root)
                 if d == scan_root: continue
+                
+                # Rel-path check
+                try:
+                    rel_path = d.relative_to(scan_root)
+                    if len(rel_path.parts) > 12: continue
+                except Exception: continue
 
-                # Specialized Detection
-                is_blackbox = (d / 'VIDEO_TS').exists() or (d / 'BDMV').exists()
-                if not is_blackbox:
-                    try:
-                        isos = [f for f in files if f.lower().endswith('.iso')]
-                        if len(isos) == 1 and re.search(r'\(\d{4}\)', d.name):
-                            is_blackbox = True
-                    except Exception: pass
+                # A. Folders as Media (Albums)
+                m_count = sum(1 for f in files if Path(f).suffix.lower() in all_exts)
+                if m_count > 0:
+                    collected_items.append({
+                        'name': d.name, 'path': str(d), 'category': 'Unknown', 
+                        'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
+                        'media_type': 'album' if m_count > 1 else 'other'
+                    })
+                    count_indexed += 1
 
-                is_general_object = False
-                if not is_blackbox:
-                    m_count = sum(1 for f in files if Path(f).suffix.lower() in all_exts)
-                    if m_count > 1: is_general_object = True
-
-                if is_blackbox or is_general_object:
-                    try:
-                        # [Fast-Audit] Round 5: Force lightweight mode at constructor level
-                        item = MediaItem(d.name, d, is_mock=False)
-                        item_dict = item.to_dict()
-                        obj_id = db.insert_media(item_dict)
-                        if obj_id:
-                            folder_id_map[d] = obj_id
-                            count_indexed += 1
-                            if is_blackbox: skip_subpaths.add(d)
-                            # Batch UI Updates (v1.35.68)
-                            if count_indexed % 10 == 0 and getattr(eel, 'append_debug_log', None):
-                                eel.append_debug_log(f"Detected: {d.name} ({item_dict.get('category')})", "DB-INFO")
-                    except Exception as e:
-                        log.error(f" [Scan] Obj Error {d.name}: {e}")
-
-            # Pass 2: Individual Files
-            for root, dirs, files in os.walk(str(scan_root), followlinks=False):
-                rel_path = Path(root).relative_to(scan_root)
-                if len(rel_path.parts) > MAX_SCAN_DEPTH: continue
-
+                # B. Files
                 for filename in files:
                     f = Path(root) / filename
                     ext = f.suffix.lower()
-                    if ext not in all_exts: continue
-                    
-                    if '.cache' in f.parts: continue
-                    if any(x in f.name.lower() for x in ['cover art', 'captcha', 'thumb', 'folder', 'albumart', 'metadata']):
-                        continue
-
-                    if any(f.is_relative_to(p) for p in skip_subpaths):
-                        continue
-
+                    if ext not in all_exts or '.cache' in f.parts: continue
                     try:
-                        f_res = str(f.resolve())
-                        if f_res in existing_media:
-                            count_indexed += 1
-                            continue
-
-                        parent_id = folder_id_map.get(f.parent)
-                        item = MediaItem(f.name, f)
-                        item_dict = item.to_dict()
-                        if parent_id: item_dict['parent_id'] = parent_id
-
-                        db.insert_media(item_dict)
+                        if str(f.resolve()) in existing_media: continue
+                        collected_items.append({
+                            'name': f.name, 'path': str(f), 'category': 'Unknown',
+                            'size': f.stat().st_size if f.exists() else 0,
+                            'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
+                            'file_type': ext[1:].upper()
+                        })
                         count_indexed += 1
-                        # Batch UI Updates (v1.35.68)
-                        if count_indexed % 10 == 0 and getattr(eel, 'append_debug_log', None):
-                            eel.append_debug_log(f"Indexed: {f.name} (Total: {count_indexed})", "DB-SUCCESS")
-                    except Exception as e:
-                        log.error(f" [Scan] File Error {f.name}: {e}")
+                    except Exception: pass
+
+        # 6. Atomic Commit
+        if collected_items:
+            log.info(f"[DB-SCAN] Finalizing batch of {len(collected_items)} items...")
+            db.insert_media_batch(collected_items)
 
         elapsed = time.time() - start_time
-        log.info(f"[Scan-Trace] Scan complete: {count_indexed} items in {elapsed:.2f}s")
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"[DB-SCAN] FINISHED: {count_indexed} items in {elapsed:.2f}s", "DB-INFO")
+        log.info(f"[Scan-Trace] Scan complete: {count_indexed} in {elapsed:.2f}s")
+        return {"status": "ok", "count": count_indexed, "time_seconds": elapsed}
 
-        return {
-            "status": "ok",
-            "media": db.get_all_media(),
-            "stats": {"count": count_indexed, "time_seconds": elapsed}
-        }
     except Exception as e:
         log.error(f"[Scan-Trace] CRITICAL FAILURE: {e}")
-        if getattr(eel, 'append_debug_log', None):
-            eel.append_debug_log(f"CRITICAL ERROR: {str(e)}", "DB-ERROR")
         return {"status": "error", "message": str(e)}
     finally:
-        if hasattr(eel, 'set_db_status') and getattr(eel, '_websocket', None):
-            try:
-                eel.set_db_status("Ready")
-            except Exception:
-                pass
+        # Restore artwork setting
+        PARSER_CONFIG['ffmpeg_extract_thumbnails'] = orig_art_cfg
+        # Silent Status Update
+        websockets = getattr(eel, '_websockets', [])
+        if len(websockets) > 0 and hasattr(eel, 'set_db_status'):
+            try: eel.set_db_status("Ready")
+            except Exception: pass
 
 
 @eel.expose
