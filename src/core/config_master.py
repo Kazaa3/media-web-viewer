@@ -228,12 +228,36 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "max_buffer_size": 10000        # For UI Log Buffer
     },
     
-    # --- UI & NAVIGATION REGISTRY (v1.35.68 Centralized) ---
+    # --- UI & NAVIGATION REGISTRY (v1.37.52 Centralized) ---
     "ui_settings": {
-        "sidebar_visible": False,      # Toggleable vertical sidebar
-        "hud_visible": False,          # Technical Elite HUD
-        "theme": "dark",               # Initial theme
-        "hydration_mode": "B"          # M=Mock, R=Real, B=Both
+        "sidebar_visible": False,            # Default to closed for professional workspace
+        "kill_on_startup": True,             # Kill zombie processes on application boot
+        "pip_installer_timeout": 300,        # [AUTO] Global installation timeout in seconds
+        "theme": "dark",
+        "animations_enabled": True,
+        "diagnostics_hud_visible": True,
+        "sub_nav_persistence": True,
+        "hydration_mode": "B",               # M=Mock, R=Real, B=Both
+        "professional_layout_lock": True,    # [GUI] Enforced Layout Rules (Professional Mode)
+        
+        # --- UI VISIBILITY MATRIX (v1.37.52 Restoration) ---
+        # Controls which bars are rendered per category to prevent menu-clutter.
+        # v1.37.52 Hardening: ensures master_header is visible for crucial navigation.
+        "ui_visibility_matrix": {
+            "media":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "library":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "database":   { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False },
+            "file":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "edit":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "system":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "parser":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "debug":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "tests":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "tools":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "reporting":  { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "logbuch":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "video":      { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False }
+        }
     },
     
     # --- DEBUGGING REGISTRY (v1.35.68 Centralized) ---
@@ -849,35 +873,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
 
-    # --- UI & NAVIGATION SETISTRY (v1.37 Restoration) ---
-    "ui_settings": {
-        "sidebar_visible": False,            # Default to closed for professional workspace
-        "kill_on_startup": True,             # Kill zombie processes on application boot
-        "pip_installer_timeout": 300,        # [AUTO] Global installation timeout in seconds
-        "theme": "dark",
-        "animations_enabled": True,
-        "diagnostics_hud_visible": True,
-        "sub_nav_persistence": True,
-        "professional_layout_lock": True,    # [GUI] Enforced Layout Rules (Professional Mode)
-        
-        # --- UI VISIBILITY MATRIX (v1.37.06 Recovery) ---
-        # Controls which bars are rendered per category to prevent menu-clutter.
-        "ui_visibility_matrix": {
-            "media":      { "master_header": False, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "library":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "database":   { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False },
-            "file":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "edit":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "system":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "parser":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "debug":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "tests":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "tools":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "reporting":  { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "logbuch":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
-            "video":      { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False }
-        }
-    }
+    # End of Registry
 }
 
 
