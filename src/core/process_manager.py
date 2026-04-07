@@ -71,12 +71,25 @@ class ProcessController:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
         
-        # Explicit check for port 8345
-        self.kill_by_port(8345)
+        # Explicit check for port 8345 (Deferred to fast method for startup speed)
+        if not current_pid: # Only do full port check if not in a fast startup sequence
+            self.kill_by_port(8345)
         
         if count > 0:
             log.info(f"[Process] Cleaned up {count} stale processes.")
         return count
+
+    def fast_port_kill(self, port: int):
+        """High-speed port cleanup using OS-level commands (v1.38.07)."""
+        import subprocess
+        try:
+            # On Linux, fuser is significantly faster than psutil.net_connections
+            subprocess.run(["fuser", "-k", f"{port}/tcp"], capture_output=True, timeout=1.0)
+            log.info(f"[Process] Fast-Kill: Port {port} purged via fuser.")
+            return True
+        except:
+            # Fallback to psutil
+            return self.kill_by_port(port)
 
     def kill_by_port(self, port: int):
         """Kills any process listening on the specified port."""

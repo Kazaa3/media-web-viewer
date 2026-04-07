@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import sqlite3
 import json
 import os
+import time
 from src.core.logger import get_logger
 log = get_logger("db")
 log.info(f"[DB-INIT] Initializing DB module. PID: {os.getpid()}")
@@ -769,6 +770,19 @@ def get_db_stats():
         'mock_items': mock_items,
         'categories': categories
     }
+
+
+def get_media_count():
+    """
+    @brief Returns the total number of items in the media table (Fast).
+    """
+    init_db()
+    conn = sqlite3.connect(DB_FILENAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM media")
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
 
 
 def update_playback_position(name, position):

@@ -148,6 +148,9 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
     if (viewId === 'config') {
         renderConfigToggles();
     }
+    if (viewId === 'boot') {
+        renderBootTimeline();
+    }
 }
 
 /**
@@ -1886,5 +1889,47 @@ async function updateUIConfigToggle(key, value) {
     }
 }
 
+
+/**
+ * [v1.38.07] Renders the Startup Timeline (Boot Profile).
+ */
+async function renderBootTimeline() {
+    const container = document.getElementById('boot-timeline-container');
+    if (!container) return;
+
+    try {
+        const report = await eel.get_startup_report()();
+        const phases = report.phases || [];
+        
+        if (phases.length === 0) {
+            container.innerHTML = '<div style="font-size: 8px; opacity: 0.4;">NO BOOT DATA AVAILABLE</div>';
+            return;
+        }
+
+        const maxDuration = Math.max(...phases.map(p => p.duration || 0.1));
+        
+        container.innerHTML = phases.map(p => {
+            const width = Math.max(5, (p.duration / maxDuration) * 100);
+            const color = p.duration > 1.0 ? '#ff3366' : (p.duration > 0.3 ? '#ff9500' : '#00ffcc');
+            return `
+                <div style="margin-bottom: 4px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 2px;">
+                        <span>${p.phase}</span>
+                        <span style="font-weight: 800; color: ${color};">${(p.duration * 1000).toFixed(0)}ms</span>
+                    </div>
+                    <div style="height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                        <div style="width: ${width}%; height: 100%; background: ${color}; border-radius: 2px;"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("[UI-BOOT] Failed to render timeline:", e);
+        container.innerHTML = '<div style="color: red; font-size: 8px;">Error loading boot profile</div>';
+    }
+}
+
 window.renderConfigToggles = renderConfigToggles;
 window.updateUIConfigToggle = updateUIConfigToggle;
+window.renderBootTimeline = renderBootTimeline;

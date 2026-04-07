@@ -328,10 +328,9 @@ with StatusBar("Loading Core Components", total=100) as sb:
         sb.update(80, "Core modules registered")
         sb.update(80, "Core modules loaded")
         
-        # Initial DB Status Trace
-        db.init_db()  # Ensure DB is ready
-        all_media = db.get_all_media()
-        log.info(f"[Startup-Trace] DB Initialized: {len(all_media)} records found.")
+        # Fast Data Count (v1.38.07) - Replaces heavy get_all_media() during bootstrap
+        media_count = db.get_media_count()
+        log.info(f"[Startup-Trace] DB Initialized: {media_count} records found.")
         if profiler: profiler.end_phase("Core-Modules-Init")
     except Exception as e:
         log.critical(f"Resource load failure: {e}")
@@ -472,11 +471,12 @@ def start_app():
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
     if GLOBAL_CONFIG.get("ui_settings", {}).get("kill_on_startup", True):
-        log.info("[Bootstrap] Forcefully cleaning up environment...")
+        log.info("[Bootstrap] Performing High-Speed Port Cleanup...")
         if profiler: profiler.start_phase("Process-Cleanup")
-        pc.kill_stale_instances(os.getpid())
+        # Use fast_port_kill instead of full walk if possible
+        pc.fast_port_kill(port)
         if profiler: profiler.end_phase("Process-Cleanup")
-        time.sleep(0.5)
+        # No more arbitrary sleeps here
     
     # Singleton Guard
     if not pc.acquire_lock():
@@ -485,16 +485,17 @@ def start_app():
         # Optional: Force kill if flag is very aggressive, but we already killed above or failed.
         sys.exit(1)
 
-    print(f"STDOUT: [Bootstrap-Audit] Step 1: Port {port} readiness check...", flush=True)
-    try:
-        import socket
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(('localhost', port)) == 0:
-                print(f"STDOUT: [Bootstrap-Audit] Port {port} is STUCK. Purging ZOMBIES...", flush=True)
-                pc.kill_by_port(port)
-                time.sleep(1.0)
-    except Exception as e:
-        log.warning(f"[Bootstrap] Port check failed: {e}")
+    # Port readiness is now handled by fast_port_kill above. 
+    # Only do a safety check if not in low-latency mode.
+    if not GLOBAL_CONFIG.get("fast_startup", True):
+        try:
+            import socket
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(('localhost', port)) == 0:
+                    log.warning(f"[Bootstrap] Port {port} STILL STUCK. Purging ZOMBIES...")
+                    pc.kill_by_port(port)
+        except Exception as e:
+            log.warning(f"[Bootstrap] Port check failed: {e}")
 
     print(f"STDOUT: [Eel] Launching app.html on port {port}...", flush=True)
     
