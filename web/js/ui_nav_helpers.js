@@ -563,10 +563,8 @@ async function refreshUIVisibility() {
     // 2. CONTEXTUAL PILL NAV (Restoration v1.38)
     const pillNav = document.getElementById('contextual-pill-nav');
     if (pillNav) {
-         // Enforcement: Player always gets its pills
          const isPlayer = (category === 'media' || category === 'player');
-         const allowedBySettings = settings.contextual_pill_nav !== false;
-         const shouldShowPills = allowedBySettings || isPlayer;
+         const shouldShowPills = settings.contextual_pill_nav !== false; // [v1.38.08] Standardized to config
          
          if (pillNav.getAttribute('data-manual-hide') === 'true' && !isPlayer) {
              pillNav.style.display = 'none';
@@ -604,9 +602,10 @@ async function refreshUIVisibility() {
         if (settings.diagnostics_hud_allowed === false) toggleTechnicalHUD(false);
     }
 
-    // --- NEW: Audio Player Fragment Control (v1.38.05) ---
+    // --- NEW: Audio Player Fragment Control (v1.38.08 - Sentinel Orchestration) ---
     const audioSidebar = document.getElementById('player-detailed-sidebar');
     if (audioSidebar) {
+        // Detailed Mode Sidebar (The "Deck") - Left split inside the player
         const showAudioSidebar = uiRegistry.sidebar_allowed !== false;
         audioSidebar.style.display = showAudioSidebar ? 'flex' : 'none';
     }
@@ -619,13 +618,25 @@ async function refreshUIVisibility() {
         const queueBtn = document.getElementById('player-subtab-queue');
         if (queueBtn) queueBtn.style.display = showQueue ? 'flex' : 'none';
     }
-    // -----------------------------------------------------
+
+    // --- Splitter Enforcement (v1.38.08) ---
+    const mainSplitter = document.getElementById('main-splitter');
+    if (mainSplitter) {
+        const sidebarIsVisible = (typeof sidebarVisible !== 'undefined' && sidebarVisible) || (uiRegistry.sidebar_allowed && uiRegistry.sidebar_visible);
+        // Force splitter visibility if a side-by-side layout is active
+        mainSplitter.style.display = sidebarIsVisible ? 'block' : 'none';
+        mainSplitter.style.zIndex = '1000';
+    }
+    // ---------------------------------------------------------------------------
 
     // 7. FINAL: Recalibrate Viewport Geometry
     refreshViewportLayout();
 
     // 8. Sync Sidebar State (Ensure it follows sidebarVisible global)
     if (typeof applySidebarState === 'function') applySidebarState();
+
+    // 9. Sentinel Audit (Auto-Fix Black Holes)
+    if (typeof UISentinel !== 'undefined') UISentinel.validate();
 
     console.timeEnd('[PERF] UI-Refresh');
 }
@@ -1924,11 +1935,88 @@ async function renderBootTimeline() {
             `;
         }).join('');
 
+        // [v1.38.08] Populate Sentinel Audit
+        const auditContainer = document.getElementById('sentinel-audit-container');
+        if (auditContainer && window.UISentinel) {
+            const audit = window.UISentinel.getAuditReport();
+            const checks = window.UISentinel.checks;
+            
+            auditContainer.innerHTML = checks.map(c => {
+                const res = audit[c.id] || { exists: false, visible: false };
+                const dotColor = res.exists ? (res.visible ? '#00ffcc' : '#ff9500') : '#ff3366';
+                const statusText = res.exists ? (res.visible ? 'ACTIVE' : 'HIDDEN') : 'MISSING';
+                return `
+                    <div style="display: flex; justify-content: space-between; font-size: 7px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 6px; border-radius: 4px;">
+                        <span style="opacity: 0.7;">${c.label}</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span style="color: ${dotColor}; font-weight: 800;">${statusText}</span>
+                            <div style="width: 4px; height: 4px; border-radius: 50%; background: ${dotColor};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
     } catch (e) {
         console.error("[UI-BOOT] Failed to render timeline:", e);
         container.innerHTML = '<div style="color: red; font-size: 8px;">Error loading boot profile</div>';
     }
 }
+
+
+/**
+ * [v1.38.08] UI Sentinel: System-level monitor for fragment integrity.
+ * Ensures critical elements are never stuck in "Black Hole" or "Missing" states.
+ */
+const UISentinel = {
+    checks: [
+        { id: 'player-sub-nav-shell', label: 'Audio Sub-Menu', critical: true },
+        { id: 'main-splitter', label: 'Layout Splitter', critical: false },
+        { id: 'player-detailed-sidebar', label: 'Premium Sidebar', critical: false },
+        { id: 'state-orchestrated-active-queue-list-container', label: 'Main Player Canvas', critical: true }
+    ],
+
+    audit: {},
+
+    validate: function() {
+        console.log(">>> [Sentinel] Performing Integrity Audit...");
+        this.checks.forEach(check => {
+            const el = document.getElementById(check.id);
+            const exists = !!el;
+            let visible = false;
+            if (exists) {
+                const style = window.getComputedStyle(el);
+                visible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                
+                // --- AUTO-FIX: Force visibility for critical dead-zones ---
+                if (check.critical && !visible && window.__mwv_ui_nav_loaded) {
+                    console.warn(`[Sentinel] CRITICAL FIX: Restoring visibility for ${check.label} (#${check.id})`);
+                    el.style.setProperty('display', 'flex', 'important');
+                    el.style.setProperty('opacity', '1', 'important');
+                }
+            }
+            this.audit[check.id] = { exists, visible };
+        });
+        
+        // Sync results to the BOOT tab if open
+        if (typeof renderBootTimeline === 'function') {
+            const bootPane = document.getElementById('diag-pane-boot');
+            if (bootPane && bootPane.style.display !== 'none') renderBootTimeline();
+        }
+    },
+
+    getAuditReport: function() {
+        return this.audit;
+    }
+};
+
+window.UISentinel = UISentinel;
+
+// Register Sentinel start
+window.addEventListener('load', () => {
+    setTimeout(() => UISentinel.validate(), 500);  // Initial fast check
+    setTimeout(() => UISentinel.validate(), 2000); // Deferred check after background items load
+});
 
 window.renderConfigToggles = renderConfigToggles;
 window.updateUIConfigToggle = updateUIConfigToggle;
