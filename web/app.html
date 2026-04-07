@@ -178,7 +178,7 @@
 
     <!-- [GUI] SUB-MENU BAR: Contextual Navigation Pills (e.g., Queue/Playlist/Lyrics) -->
     <div id="sub-nav-container" class="sub-nav-bar" onclick="event.stopPropagation()"
-        style="display: flex !important; position: fixed; top: 40px; left: 0; right: 0; height: 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none; transition: none; opacity: 1 !important; transform: none !important;">
+        style="display: flex !important; position: fixed; top: var(--active-header-height); left: 0; right: 0; height: var(--sub-nav-height); background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); overflow-x: auto; scrollbar-width: none; transition: none; opacity: 1 !important; transform: none !important;">
         <!-- Dynamically populated via updateGlobalSubNav -->
     </div>
 
@@ -199,7 +199,7 @@
 
 
     <main class="layout-main layout-container" id="main-split-container"
-        style="flex: 1; height: calc(100vh - 75px); margin-top: 0; transition: margin-top 0.3s ease, height 0.3s ease;">
+        style="flex: 1; height: calc(100vh - var(--total-top-offset) - var(--footer-height)); margin-top: var(--total-top-offset); transition: all 0.3s ease;">
         <!-- SIDEBAR START (iPad OS Style Navigation) -->
         <div id="main-sidebar" class="sidebar">
             <div class="nav-section">

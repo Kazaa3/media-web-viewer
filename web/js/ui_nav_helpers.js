@@ -586,39 +586,51 @@ async function refreshUIVisibility() {
     // 1. Control Master Header (master-persistent-header)
     const masterHeader = document.getElementById('master-persistent-header');
     if (masterHeader) {
-        // [v1.37.29 Restoration] Default both to visible unless explicitly masked
         const shouldShowMaster = (settings.master_header !== false) && menuSystemVisible;
         const prevState = masterHeader.style.display;
         
-        // Use !important to override hardcoded HTML or legacy script overrides
-        masterHeader.style.setProperty('display', shouldShowMaster ? 'flex' : 'none', 'important');
-        masterHeader.style.setProperty('opacity', shouldShowMaster ? '1' : '0', 'important');
-        
-        if (prevState !== masterHeader.style.display) {
-            console.log(`[UI-NAV] Master Header visibility updated: ${masterHeader.style.display}`);
-            mwv_trace('DOM-UI', 'MASTER-HEADER-VISIBILITY', { state: masterHeader.style.display });
+        if (shouldShowMaster) {
+            if (prevState === 'none' || prevState === '') {
+                console.log(`[UI-NAV] SPAWN_START: Master Header for ${category}`);
+                masterHeader.style.setProperty('display', 'flex', 'important');
+                masterHeader.style.setProperty('opacity', '1', 'important');
+                console.log(`[UI-NAV] SPAWN_SUCCESS: Master Header active.`);
+            }
+        } else {
+            if (prevState === 'flex') {
+                console.log(`[UI-NAV] UNSPAWN: Hiding Master Header for ${category}`);
+                masterHeader.style.setProperty('display', 'none', 'important');
+            }
         }
     }
 
     // 2. Control ContextualPillBar (sub-nav-container)
     const pillNav = document.getElementById('sub-nav-container');
     if (pillNav) {
-        // [v1.37.29 Restoration] Default both to visible unless explicitly masked
         const shouldShowPill = (settings.contextual_pill_nav !== false) && menuSystemVisible;
         const prevState = pillNav.style.display;
         
-        // Use !important setProperty for sub-nav too
-        pillNav.style.setProperty('display', shouldShowPill ? 'flex' : 'none', 'important');
-        pillNav.style.setProperty('opacity', shouldShowPill ? '1' : '0', 'important');
-        pillNav.style.setProperty('pointer-events', shouldShowPill ? 'auto' : 'none', 'important');
-        
-        if (prevState !== pillNav.style.display) {
-            console.log(`[UI-NAV] Sub-Nav visibility updated: ${pillNav.style.display} for ${category}`);
+        if (shouldShowPill) {
+            if (prevState === 'none' || prevState === '') {
+                console.log(`[UI-NAV] SPAWN_START: Sub-Nav Bar for ${category}`);
+                pillNav.style.setProperty('display', 'flex', 'important');
+                pillNav.style.setProperty('opacity', '1', 'important');
+                pillNav.style.setProperty('pointer-events', 'auto', 'important');
+                console.log(`[UI-NAV] SPAWN_SUCCESS: Sub-Nav Bar active.`);
+            }
+            // Population Cycle (v1.37.06 Recovery)
+            updateGlobalSubNav(category);
+        } else {
+            if (prevState === 'flex') {
+                console.log(`[UI-NAV] UNSPAWN: Hiding Sub-Nav Bar for ${category}`);
+                pillNav.style.setProperty('display', 'none', 'important');
+                pillNav.innerHTML = ''; // Clear items on unspawn
+            }
         }
-        
-        // [v1.37.06 Recovery] Population Cycle
-        updateGlobalSubNav(category);
     }
+
+    // 4. Recalibrate Viewport Geometry (v1.37.06 Reactive)
+    refreshViewportLayout();
 
     // 3. Control ModuleTabNavigator (player-sub-nav-shell)
     const tabNav = document.getElementById('player-sub-nav-shell');
@@ -642,6 +654,33 @@ async function refreshUIVisibility() {
     if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
 }
 window.refreshUIVisibility = refreshUIVisibility;
+
+/**
+ * Dynamically updates CSS variables to adjust viewport height/top based on visible bars.
+ * Ensures the system 'knows' how many pixels are consumed by the 'smalle oben' and 'andere' menus.
+ */
+function refreshViewportLayout() {
+    const root = document.documentElement;
+    const masterHeader = document.getElementById('master-persistent-header');
+    const pillNav = document.getElementById('sub-nav-container');
+    
+    // Check actual visibility (considering opacity/display)
+    const masterVisible = masterHeader && window.getComputedStyle(masterHeader).display !== 'none';
+    const pillVisible = pillNav && window.getComputedStyle(pillNav).display !== 'none';
+    
+    // Calculate heights
+    const hHeight = masterVisible ? 40 : 0;
+    const sHeight = pillVisible ? 32 : 0;
+    
+    console.log(`[UI-NAV] REFRESH_GEOMETRY: H:${hHeight}px, S:${sHeight}px (Total Top: ${hHeight + sHeight}px)`);
+    
+    // Update CSS Variables
+    root.style.setProperty('--active-header-height', hHeight + 'px');
+    root.style.setProperty('--active-sub-nav-height', sHeight + 'px');
+    // Total Top Offset is handled by the CSS calc() automatically if we use variables, 
+    // but we can also set the total explicitly if preferred for stability.
+    // root.style.setProperty('--total-top-offset', (hHeight + sHeight) + 'px');
+}
 
 /**
  * Recalculates and applies layout offsets for the main content area.
@@ -906,19 +945,37 @@ function updateGlobalSubNav(category) {
     const entries = subNavMap[normalizedCategory];
     if (!entries) {
         console.warn(`[UI-NAV] No entry map for ${normalizedCategory}.`);
+        console.log(`[UI-NAV] UNSPAWN: Sub-nav cleared for ${normalizedCategory}.`);
         return;
     }
 
-    // Populate the container
+    // [v1.37.29 Restoration] Track active pill state
+    const activeSubTab = localStorage.getItem('mwv_active_player_view') || 
+                        localStorage.getItem('mwv_active_library_subtab') || 
+                        'warteschlange';
+
+    // Render logic with explicit lifecycle markers
+    const prevContent = container.innerHTML;
     container.innerHTML = entries.map(item => `
-        <button id="global-sub-nav-${item.id}" 
-                class="sub-pill-btn" 
-                onclick="event.stopPropagation(); console.log('[UI-NAV] Clicked sub-item: ${item.id}'); ${item.action}; updateSubNavActiveState('${item.id}')">
+        <button id="sub-nav-pill-${item.id}" 
+                class="sub-pill-btn ${activeSubTab === item.id ? 'active' : ''}" 
+                onclick="${item.action}"
+                title="${item.label}">
             ${item.label}
         </button>
     `).join('');
 
-    console.log(`[UI-NAV] Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
+    if (container.innerHTML !== prevContent) {
+        console.log(`[UI-NAV] STATE_CHANGE: Sub-Nav content updated for ${normalizedCategory}.`);
+        console.log(`[UI-NAV] SPAWN_SUCCESS: Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
+    } else {
+        // Log even if content is identical during refresh pass
+        console.log(`[UI-NAV] REFRESH_SUCCESS: Sub-Nav state verified for ${normalizedCategory}.`);
+    }
+
+    // Recalibrate layout after content changes might have triggered visibility shifts
+    refreshViewportLayout();
+
     mwv_trace('DOM-UI', 'SUB-NAV-SPAWN', { category: normalizedCategory, count: entries.length });
 
     const mainBar = document.getElementById('program-menu-bar');

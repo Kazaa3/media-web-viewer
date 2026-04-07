@@ -1,5 +1,15 @@
 :root {
-    /* --- iPad OS Inspired Design Tokens --- */
+    /* --- Foundation Offsets (v1.37.06 Dynamic System) --- */
+    --header-height: 40px;
+    --sub-nav-height: 32px;
+    --footer-height: 52px;
+    
+    /* Calculated Offsets (Modified by JS) */
+    --active-header-height: 40px;
+    --active-sub-nav-height: 32px;
+    --total-top-offset: calc(var(--active-header-height) + var(--active-sub-nav-height));
+    
+    /* --- Modern Color Palette (v1.34 Master) --- */
     --bg-primary: #f2f2f7;
     --bg-secondary: #ffffff;
     --bg-sidebar: rgba(242, 242, 247, 0.7);
@@ -62,7 +72,7 @@ body {
 /* --- v1.34 Master Progress Bar (Ladebalken) --- */
 #app-progress-bar-container {
     position: fixed;
-    top: 40px; /* Directly under Row 0 */
+    top: var(--active-header-height); /* Dynamic anchor */
     left: 0;
     width: 100%;
     height: 3px;
@@ -314,9 +324,9 @@ body {
 
 .diagnostic-sidebar {
     position: fixed;
-    top: 0;
+    top: var(--active-header-height); /* Dynamic anchor */
     left: 0;
-    bottom: 45px; /* Stay above footer */
+    bottom: var(--footer-height); /* Dynamic anchor */
     width: 320px;
     background: rgba(10, 10, 10, 0.9);
     backdrop-filter: blur(20px);

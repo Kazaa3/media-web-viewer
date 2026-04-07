@@ -863,19 +863,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- UI VISIBILITY MATRIX (v1.37.06 Recovery) ---
         # Controls which bars are rendered per category to prevent menu-clutter.
         "ui_visibility_matrix": {
-            "media":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "library":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "database":   { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False },
-            "file":       { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "edit":       { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "system":     { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "parser":     { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "debug":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "tests":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "tools":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "reporting":  { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "logbuch":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False },
-            "video":      { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False }
+            "media":      { "master_header": False, "contextual_pill_nav": True,  "module_tab_nav": False },
+            "library":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "database":   { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False },
+            "file":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "edit":       { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "system":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "parser":     { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "debug":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "tests":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "tools":      { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "reporting":  { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "logbuch":    { "master_header": True,  "contextual_pill_nav": True,  "module_tab_nav": False },
+            "video":      { "master_header": True,  "contextual_pill_nav": False, "module_tab_nav": False }
         }
     }
 }
