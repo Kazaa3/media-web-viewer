@@ -1324,10 +1324,34 @@ window.addEventListener('click', () => hideContextMenu());
 window.addEventListener('scroll', () => hideContextMenu(), true);
 
 /**
- * Global UI Initialization for v1.34 Navigation
+ * Global UI Initialization for v1.37 Restoration
  */
-window.addEventListener('DOMContentLoaded', () => {
-    // Restore state from localStorage
+window.addEventListener('DOMContentLoaded', async () => {
+    // 1. Fetch Backend UI Registry (Persistent SSOT)
+    let uiSettings = { compact_pill_nav: true, integrated_tab_bar: false, sidebar_visible: false };
+    try {
+        if (typeof eel !== 'undefined' && typeof eel.get_ui_settings === 'function') {
+            uiSettings = await eel.get_ui_settings()();
+            console.log("[UI-INIT] UI Settings Loaded:", uiSettings);
+        }
+    } catch (e) {
+        console.warn("[UI-INIT] Could not fetch UI settings, using defaults.", e);
+    }
+
+    // 2. Apply Navigation Bar Visibility
+    const pillNav = document.getElementById('sub-nav-container');
+    const tabNav = document.getElementById('player-sub-nav-shell');
+
+    if (pillNav) {
+        pillNav.style.display = uiSettings.compact_pill_nav ? 'flex !important' : 'none !important';
+        pillNav.style.opacity = uiSettings.compact_pill_nav ? '1' : '0';
+    }
+    if (tabNav) {
+        tabNav.style.display = uiSettings.integrated_tab_bar ? 'flex !important' : 'none !important';
+        tabNav.style.opacity = uiSettings.integrated_tab_bar ? '1' : '0';
+    }
+
+    // 3. Restore Menu System visibility
     const savedMenuState = localStorage.getItem('mwv_menu_system_visible');
     if (savedMenuState !== null) {
         menuSystemVisible = (savedMenuState === 'true');
@@ -1338,14 +1362,12 @@ window.addEventListener('DOMContentLoaded', () => {
         toggleMenuBar(menuSystemVisible);
     }
 
-    // Sync sidebar (v1.37 Restoration - Default Hidden)
-    const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
-    const configVisible = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.sidebar_visible : false;
-    
-    // Force false on start (v1.37 Restoration - Requested)
-    sidebarVisible = false;
+    // 4. Reset Sidebar State (v1.37 Restoration - Default Hidden)
+    sidebarVisible = uiSettings.sidebar_visible || false;
     
     if (typeof applySidebarState === 'function') {
         applySidebarState();
     }
+    
+    window.__mwv_ui_nav_loaded = true;
 });

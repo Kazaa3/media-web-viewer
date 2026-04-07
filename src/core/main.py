@@ -2498,6 +2498,20 @@ def update_startup_config(config):
 
 
 @eel.expose
+def get_ui_settings():
+    """Returns the current UI registry (v1.37 Restoration)."""
+    return GLOBAL_CONFIG.get("ui_settings", {})
+
+@eel.expose
+def set_ui_setting(key: str, value: Any):
+    """Updates a specific UI setting in the global config."""
+    if "ui_settings" not in GLOBAL_CONFIG:
+        GLOBAL_CONFIG["ui_settings"] = {}
+    GLOBAL_CONFIG["ui_settings"][key] = value
+    log.info(f"[UI-CONFIG] Set {key} = {value}")
+    return {"status": "success"}
+
+@eel.expose
 def reset_config():
     """Resets the configuration to defaults."""
     from src.parsers.format_utils import reset_parser_config

@@ -851,8 +851,10 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
     # --- UI & NAVIGATION SETISTRY (v1.37 Restoration) ---
     "ui_settings": {
-        "sidebar_visible": False, # Default to closed for classic restoration
-        "kill_on_startup": True,  # Kill zombie processes on application boot
+        "sidebar_visible": False,         # Default to closed for classic restoration
+        "kill_on_startup": True,          # Kill zombie processes on application boot
+        "compact_pill_nav": True,         # Small top contextual bar (ACTIVE)
+        "integrated_tab_bar": False,      # Large center module bar (INACTIVE/REDUNDANT)
         "theme": "dark",
         "animations_enabled": True,
         "diagnostics_hud_visible": True,
