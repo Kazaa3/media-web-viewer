@@ -38,8 +38,8 @@ def run_fast_rehydrate():
     
     # 2. Trigger Optimized Scan
     t0 = time.time()
-    # We call the internal execution directly to bypass Eel
-    main._scan_media_execution(dir_path=media_dir, clear_db=False)
+    # Trigger the scan via the internal execution bypass (Atomic Round 5.6)
+    main._scan_media_execution(dir_path=media_dir, clear_db=True)
     t1 = time.time()
     
     # 3. Stats Check

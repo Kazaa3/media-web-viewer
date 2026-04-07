@@ -358,7 +358,7 @@ def insert_media_batch(items: list[dict]):
     try:
         for item_dict in items:
             cursor.execute('''
-                INSERT INTO media (
+                INSERT OR REPLACE INTO media (
                     name, path, type, duration, category, 
                     is_transcoded, transcoded_format, tags, extension, 
                     container, tag_type, codec, has_artwork, art_path, 

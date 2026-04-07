@@ -4665,6 +4665,15 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     count_indexed = 0
     total_traversed = 0
     
+    # 0. Round 5.6 - Emergency DB Purge (v1.35.98)
+    if clear_db:
+        log.warning("[DB-SCAN] Round 5.6: Emergency DB Purge triggered. Clearing existing items.")
+        db.clear_media()
+        # [DIAGNOSTIC] Ensure existing_media is reset
+        existing_media = set()
+    else:
+        existing_media = {str(Path(m['path']).resolve()) for m in db.get_all_media_items() if m.get('path')}
+    
     # 1. Imports (Round 5.5: Avoid Scoping Issues)
     from src.parsers.format_utils import (
         AUDIO_EXTENSIONS, VIDEO_EXTENSIONS, PICTURE_EXTENSIONS,
@@ -4693,8 +4702,8 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     # Default fallback
     if not scan_roots: scan_roots = [get_default_scan_dir()]
             
-    # Round 5.5 Fix: Use get_all_media_items and resolve paths
-    existing_media = {str(Path(m['path']).resolve()) for m in db.get_all_media_items() if not clear_db and m.get('path')}
+    # Path Resolution logic...
+    # (Already handled by 0. Round 5.6)
     
     # 4. Prepare Extension Filter
     all_exts = set()
