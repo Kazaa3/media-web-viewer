@@ -236,6 +236,15 @@ window.addEventListener('DOMContentLoaded', async () => {
                 onActivate: () => { 
                     if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
                     if (typeof renderPlaylist === 'function') renderPlaylist(); 
+                },
+                onHydrate: () => {
+                    // [v1.38.08] Signal hydration to sub-components
+                    if (typeof window.auditFragmentHydration === 'function') {
+                        window.auditFragmentHydration('player-engine', 'success');
+                        window.auditFragmentHydration('player-tabs', 'success');
+                        window.auditFragmentHydration('player-sidebar', 'success');
+                        window.auditFragmentHydration('player-view-lyrics', 'success');
+                    }
                 }
             });
             WM.register('library', { 

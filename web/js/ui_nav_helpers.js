@@ -612,11 +612,21 @@ async function refreshUIVisibility() {
 
     const queueList = document.getElementById('state-orchestrated-active-queue-list-container');
     if (queueList) {
-        const showQueue = uiRegistry.queue_panel_enabled !== false;
-        queueList.style.display = showQueue ? 'flex' : 'none';
-        // Hide the sub-nav button if disabled
+        // [v1.38.09] Hard-wire visibility for media category to prevent "Black Hole"
+        const isPlayer = (category === 'media' || category === 'player');
+        const showQueue = (uiRegistry.queue_panel_enabled !== false) || isPlayer;
+        queueList.style.setProperty('display', showQueue ? 'flex' : 'none', 'important');
+        queueList.style.setProperty('opacity', '1', 'important');
+
+        // Hide/Show sub-nav buttons based on engine flags
         const queueBtn = document.getElementById('player-subtab-queue');
         if (queueBtn) queueBtn.style.display = showQueue ? 'flex' : 'none';
+
+        const lyricsBtn = document.getElementById('player-subtab-lyrics');
+        if (lyricsBtn) {
+            const showLyrics = uiRegistry.lyrics_panel_enabled !== false;
+            lyricsBtn.style.display = showLyrics ? 'flex' : 'none';
+        }
     }
 
     // --- Splitter Enforcement (v1.38.08) ---
@@ -1475,9 +1485,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 const FRAGMENT_HYDRATION_REGISTRY = {
     'modals': { id: 'diagnostics-overlay-container', path: 'fragments/diagnostics_sidebar.html', status: 'pending', time: 0 },
     'modals-res': { id: 'modals-placeholder', path: 'fragments/modals_container.html', status: 'pending', time: 0 },
-    'player': { id: 'player-main-viewport', path: 'fragments/player_queue.html', status: 'pending', time: 0 },
+    'player-tabs': { id: 'player-sub-nav-shell', path: 'app.html (inline)', status: 'pending', time: 0 },
+    'player-engine': { id: 'player-main-viewport', path: 'fragments/player_queue.html', status: 'pending', time: 0 },
+    'player-sidebar': { id: 'player-detailed-sidebar', path: 'app.html (inline)', status: 'pending', time: 0 },
+    'player-view-lyrics': { id: 'player-view-lyrics', path: 'fragments/player_queue.html', status: 'pending', time: 0 },
     'library': { id: 'library-main-viewport', path: 'fragments/library_explorer.html', status: 'pending', time: 0 },
-    'editor': { id: 'edit-main-viewport', path: 'fragments/metadata_editor.html', status: 'pending', time: 0 },
+    'database': { id: 'database-panel-container', path: 'fragments/database_panel.html', status: 'pending', time: 0 },
+    'editor': { id: 'metadata-writer-crud-panel', path: 'fragments/metadata_editor.html', status: 'pending', time: 0 },
     'icons': { id: 'svg-icons-placeholder', path: 'fragments/icons.html', status: 'pending', time: 0 },
     'menus': { id: 'context-menu-placeholder', path: 'fragments/context_menu.html', status: 'pending', time: 0 }
 };
@@ -1970,10 +1984,10 @@ async function renderBootTimeline() {
  */
 const UISentinel = {
     checks: [
-        { id: 'player-sub-nav-shell', label: 'Audio Sub-Menu', critical: true },
+        { id: 'player-sub-nav-shell', label: 'Audio Sub-Menu', critical: true, registryKey: 'player-tabs' },
         { id: 'main-splitter', label: 'Layout Splitter', critical: false },
-        { id: 'player-detailed-sidebar', label: 'Premium Sidebar', critical: false },
-        { id: 'state-orchestrated-active-queue-list-container', label: 'Main Player Canvas', critical: true }
+        { id: 'player-detailed-sidebar', label: 'Premium Sidebar', critical: false, registryKey: 'player-sidebar' },
+        { id: 'player-main-viewport', label: 'Audio Engine Canvas', critical: true, registryKey: 'player-engine' }
     ],
 
     audit: {},
@@ -1996,6 +2010,13 @@ const UISentinel = {
                 }
             }
             this.audit[check.id] = { exists, visible };
+
+            // [v1.38.08] Sync with Hydration Registry for BOOT diagnostics
+            if (exists && visible && check.registryKey) {
+                if (typeof window.auditFragmentHydration === 'function') {
+                    window.auditFragmentHydration(check.registryKey, 'success');
+                }
+            }
         });
         
         // Sync results to the BOOT tab if open

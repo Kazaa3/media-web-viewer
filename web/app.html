@@ -469,7 +469,84 @@
                                 Waiting for events...</div>
                         </div>
                     </div>
+
+                    <!-- VIEW: Recovery (Forensic Restoration) -->
+                    <div id="sidebar-view-recovery" class="sidebar-view-content" style="display: none;">
+                        <div class="diagnostic-header">
+                            <div class="diagnostic-section-title">FORENSIC RECOVERY</div>
+                            <div class="diagnostic-label" style="color: #ff3366;">Nuclear Actions</div>
+                            
+                            <button class="nav-btn active danger" 
+                                onclick="if(confirm('TRIGGER NUCLEAR RESTART?\nThis will terminate the backend process and force a full reload.')) { if(typeof RecoveryManager !== 'undefined') RecoveryManager.nuclearRestart(); }"
+                                style="width: 100%; margin-bottom: 10px; background: rgba(255, 51, 102, 0.1); border: 1px solid #ff3366; color: #ff3366;">
+                                NUCLEAR RESTART
+                            </button>
+
+                            <div class="diagnostic-label">Data Restoration</div>
+                            
+                            <button class="tab-btn sm" 
+                                onclick="if(typeof RecoveryManager !== 'undefined') RecoveryManager.hydrateAll();"
+                                style="width: 100%; margin-bottom: 8px;">
+                                FORCE HYDRATION
+                            </button>
+
+                            <button class="tab-btn sm" 
+                                onclick="if(typeof RecoveryManager !== 'undefined') RecoveryManager.toggleHideMocks();"
+                                style="width: 100%; margin-bottom: 8px;">
+                                TOGGLE MOCKS
+                            </button>
+
+                            <button class="tab-btn sm" 
+                                onclick="if(typeof eel !== 'undefined' && typeof eel._scan_media_execution === 'function') eel._scan_media_execution();"
+                                style="width: 100%;">
+                                RE-SCAN MEDIA
+                            </button>
+
+                            <div class="diagnostic-label">Sync Repair</div>
+                            <div id="recovery-status-msg" style="font-size: 9px; color: var(--text-secondary); opacity: 0.7; height: 40px; overflow-y: auto;">
+                                Ready for recovery operations...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: Tools (Interactive Probes) -->
+                    <div id="sidebar-view-tools" class="sidebar-view-content" style="display: none;">
+                        <div class="diagnostic-header">
+                            <div class="diagnostic-section-title">MEDIA TOOLS</div>
+                            
+                            <div class="diagnostic-label">Performance Probes</div>
+                            <button class="tab-btn sm" 
+                                onclick="if(typeof runLatencyDiagnostics === 'function') runLatencyDiagnostics().then(res => { console.dir(res); alert('Probe Complete! Avg EEL Latency: ' + res.eelRoundtrip.avgMs + 'ms'); });"
+                                style="width: 100%; margin-bottom: 8px;">
+                                LATENCY PROBE
+                            </button>
+
+                            <button class="tab-btn sm" 
+                                onclick="if(typeof runDomAudit === 'function') runDomAudit();"
+                                style="width: 100%; margin-bottom: 8px;">
+                                DOM AUDIT
+                            </button>
+
+                            <div class="diagnostic-label">Orchestration</div>
+                            <button class="tab-btn sm active" 
+                                onclick="if(typeof showFlagsModal === 'function') showFlagsModal();"
+                                style="width: 100%; margin-bottom: 8px;">
+                                FLAGS MODAL
+                            </button>
+
+                            <button class="tab-btn sm" 
+                                onclick="if(typeof showStartupDashboard === 'function') showStartupDashboard();"
+                                style="width: 100%;">
+                                BOOT ANALYTICS
+                            </button>
+
+                            <div id="tools-probes-output" style="margin-top: 20px; font-family: monospace; font-size: 8px; color: var(--accent-color);">
+                                // Select probe...
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
                 <!-- Main Player Deck Viewport (FRAGMENT TARGET) -->
                 <div id="player-main-viewport" class="content-deck-fill">
