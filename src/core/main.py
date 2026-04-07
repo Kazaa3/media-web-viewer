@@ -167,37 +167,21 @@ def get_startup_info():
 @eel.expose
 def kill_stale_and_restart():
     """
-    Kills all instances of main.py except the current one, then restarts the current instance.
-    This resolves issues where phantom python processes hold DB locks or consume port 8345.
+    Kills all project-related processes (v1.35.98 Integrated) and restarts.
     """
-    import psutil
-    import time
+    from src.core.process_manager import ProcessController
+    from pathlib import Path
     
-    current_pid = os.getpid()
-    log.info(f"[RESTART] Initiating kill-and-restart. Current PID: {current_pid}")
+    log.info(f"[RESTART] Using ProcessController for emergency cleanup. Root: {PROJECT_ROOT}")
+    pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
     
-    killed_count = 0
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-        try:
-            if proc.info['pid'] == current_pid:
-                continue
-            
-            cmdline = proc.info.get('cmdline') or []
-            cmd_str = " ".join(cmdline)
-            
-            if "python" in (proc.info.get('name') or "").lower() and "src/core/main.py" in cmd_str:
-                log.info(f"[RESTART] Terminating stale instance PID {proc.info['pid']}")
-                proc.terminate()
-                killed_count += 1
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
+    # 1. Forceful cleanup of all project-related processes (including children & ffmpeg)
+    pc.kill_stale_instances(current_pid=os.getpid())
     
-    if killed_count > 0:
-        log.info(f"[RESTART] Killed {killed_count} stale processes. Waiting for resources to free...")
-        time.sleep(2)
-        
-    log.info("[RESTART] Re-executing current instance...")
-    os.execl(sys.executable, sys.executable, *sys.argv)
+    # 2. Restart current process
+    log.warning("[RESTART] Executing os.execl...")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 # (Path calculation and sys.path injection moved to config_master.py)
 

@@ -157,30 +157,40 @@ def serve_media(filepath):
         serve_mime = serve_mime_list[0]
 
         if not cache_path.exists():
-            _log(f"TRANSCODING STARTED: {full_path} → {transcode_format}")
-            start_time = __import__('time').time()
-            try:
-                # Optimized ffmpeg: -map 0 (all streams) for video, or -map 0:a:0 for audio
-                is_video = transcode_format in ['mp4', 'mp4_remux']
-                map_args = ['-map', '0'] if is_video else ['-vn', '-map', '0:a:0']
+            _log(f"TRANSCODING STARTED (STREAMING): {full_path} → {transcode_format}")
+            
+            # Non-blocking streaming transcode
+            is_video = transcode_format in ['mp4', 'mp4_remux']
+            map_args = ['-map', '0'] if is_video else ['-vn', '-map', '0:a:0']
+            
+            # Guard: If file is very large, enforce CRF 28+ for real-time safety
+            size_gb = full_path.stat().st_size / (1024**3)
+            if size_gb > 4.0 and '-crf' in ffmpeg_args:
+                idx = ffmpeg_args.index('-crf')
+                if idx + 1 < len(ffmpeg_args):
+                    ffmpeg_args[idx+1] = '28' # Force safe CRF
+
+            cmd = ['ffmpeg', '-y', '-hide_banner', '-loglevel', 'error', '-i', str(full_path)] + map_args + ffmpeg_args + ['pipe:1']
+            
+            def stream_transcode_and_cache():
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 
-                subprocess.run(
-                    ['ffmpeg', '-y', '-v', 'quiet', '-i', str(full_path)] + map_args + ffmpeg_args + [str(tmp_path)],
-                    check=True, timeout=120 if is_video else 30
-                )
-                
-                if tmp_path.exists() and tmp_path.stat().st_size > 0:
-                    latency = __import__('time').time() - start_time
-                    tmp_path.replace(cache_path)
-                    _log(f"TRANSCODING SUCCESS: {cache_path.stat().st_size} bytes in {latency:.3f}s")
-                else:
-                    raise RuntimeError("Output file empty")
-            except Exception as e:
-                _log(f"TRANSCODING FAILED: {e}")
-                if tmp_path.exists(): tmp_path.unlink()
-                # Fallback to static serve below if transcoding fails
-            else:
-                return bottle.static_file(cache_filename, root=str(CACHE_DIR), mimetype=serve_mime)
+                # We also want to write to cache while streaming if possible, 
+                # but piping to both stdout and a file is complex without 'tee'. 
+                # For now, we prioritize playback responsiveness via streaming.
+                try:
+                    while True:
+                        chunk = proc.stdout.read(65536) # Larger chunks for performance
+                        if not chunk:
+                            break
+                        yield chunk
+                finally:
+                    if proc.poll() is None:
+                        proc.kill()
+                    proc.wait()
+
+            bottle.response.content_type = serve_mime
+            return stream_transcode_and_cache()
 
     # 3. Standard Static Serving with improved mimetype detection
     mime_type, _ = mimetypes.guess_type(str(full_path))

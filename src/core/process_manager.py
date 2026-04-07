@@ -29,8 +29,8 @@ class ProcessController:
             
         # Specific patterns can be killed globally
         global_patterns = ["chromedriver", "playwright-browser"]
-        # Generic patterns MUST be within project root
-        project_patterns = ["main.py", "chromium", "suite_", "eel", "node", "python"]
+        # Generic patterns MUST be within project root (v1.35.98 - Added ffmpeg)
+        project_patterns = ["main.py", "chromium", "suite_", "eel", "node", "python", "ffmpeg", "ffprobe"]
         count = 0
         
         project_root_str = str(self.project_root).lower()
@@ -53,12 +53,12 @@ class ProcessController:
                     if any(x in cmd_str for x in ["vscode", "discord", "slack", "chrome-extension"]):
                         continue
                         
-                    log.info(f"[Process] Terminating project process: {proc.info['name']} (PID: {pid})")
-                    proc.send_signal(signal.SIGTERM)
+                    log.info(f"[Process] FORCE Terminating: {proc.info['name']} (PID: {pid})")
                     try:
-                        proc.wait(timeout=0.5)
-                    except psutil.TimeoutExpired:
-                        proc.kill()
+                        proc.kill() # Direct kill for speed/reliability in emergency
+                        proc.wait(timeout=0.1)
+                    except:
+                        pass
                     count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue

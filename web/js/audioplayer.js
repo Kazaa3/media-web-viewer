@@ -634,16 +634,22 @@ function renderPlaylist() {
             div.draggable = true;
             if (index === playlistIndex) div.classList.add('active');
 
+            const isAvailable = item.available !== false;
+            if (!isAvailable) div.classList.add('offline');
+
             const tags = item.tags || {};
             const stagePrefix = item.stage ? `[${item.stage}] ` : '';
             const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Recovery Item');
             const artistDisplay = item.artist || tags.artist || 'MWV Recovery';
             
             div.innerHTML = `
-                <div style="display: flex; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; width: 100%; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
                 <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                    <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${titleDisplay}</div>
+                    <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                        ${titleDisplay}
+                        ${!isAvailable ? ' <span style="font-size: 9px; color: #ff5252; font-weight: 900; background: rgba(255,82,82,0.1); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">OFFLINE</span>' : ''}
+                    </div>
                     <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'No Album'}</span></div>
                 </div>
                 <div class="item-actions" style="display: flex; gap: 4px; align-items: center; opacity: 0; transition: opacity 0.2s;">
@@ -664,6 +670,10 @@ function renderPlaylist() {
         div.onmouseleave = () => { div.querySelector('.item-actions').style.opacity = '0'; };
 
         div.onclick = () => {
+            if (!isAvailable) {
+                if (typeof showToast === 'function') showToast("Medium ist offline oder verschoben.", "warn");
+                return;
+            }
             playlistIndex = index;
             if (typeof playMediaObject === 'function') {
                 playMediaObject(item);
