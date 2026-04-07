@@ -2591,7 +2591,7 @@ def pip_install_packages(packages):
             cmd,
             capture_output=True,
             text=True,
-            timeout=300  # 5 minutes timeout for installation
+            timeout=GLOBAL_CONFIG.get("ui_settings", {}).get("pip_installer_timeout", 300)
         )
 
         if result.returncode == 0:

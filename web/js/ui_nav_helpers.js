@@ -579,23 +579,41 @@ async function refreshUIVisibility() {
     }
 
     const matrix = uiRegistry.ui_visibility_matrix || {};
-    const settings = matrix[category] || { contextual_pill_nav: true, module_tab_nav: false };
+    const settings = matrix[category] || { master_header: true, contextual_pill_nav: true, module_tab_nav: false };
 
     console.log(`[UI-NAV] Refreshing visibility for ${category}:`, settings);
+
+    // 1. Control Master Header (master-persistent-header)
+    const masterHeader = document.getElementById('master-persistent-header');
+    if (masterHeader) {
+        // [v1.37.29 Restoration] Default both to visible unless explicitly masked
+        const shouldShowMaster = (settings.master_header !== false) && menuSystemVisible;
+        const prevState = masterHeader.style.display;
+        
+        // Use !important to override hardcoded HTML or legacy script overrides
+        masterHeader.style.setProperty('display', shouldShowMaster ? 'flex' : 'none', 'important');
+        masterHeader.style.setProperty('opacity', shouldShowMaster ? '1' : '0', 'important');
+        
+        if (prevState !== masterHeader.style.display) {
+            console.log(`[UI-NAV] Master Header visibility updated: ${masterHeader.style.display}`);
+            mwv_trace('DOM-UI', 'MASTER-HEADER-VISIBILITY', { state: masterHeader.style.display });
+        }
+    }
 
     // 2. Control ContextualPillBar (sub-nav-container)
     const pillNav = document.getElementById('sub-nav-container');
     if (pillNav) {
-        const shouldShowPill = settings.contextual_pill_nav && menuSystemVisible;
+        // [v1.37.29 Restoration] Default both to visible unless explicitly masked
+        const shouldShowPill = (settings.contextual_pill_nav !== false) && menuSystemVisible;
         const prevState = pillNav.style.display;
         
-        pillNav.style.display = shouldShowPill ? 'flex' : 'none';
-        pillNav.style.opacity = shouldShowPill ? '1' : '0';
-        pillNav.style.pointerEvents = shouldShowPill ? 'auto' : 'none';
+        // Use !important setProperty for sub-nav too
+        pillNav.style.setProperty('display', shouldShowPill ? 'flex' : 'none', 'important');
+        pillNav.style.setProperty('opacity', shouldShowPill ? '1' : '0', 'important');
+        pillNav.style.setProperty('pointer-events', shouldShowPill ? 'auto' : 'none', 'important');
         
         if (prevState !== pillNav.style.display) {
-            console.log(`[UI-NAV] Sub-Nav visibility toggled to ${pillNav.style.display} for ${category}`);
-            mwv_trace('DOM-UI', 'PILL-BAR-VISIBILITY', { state: pillNav.style.display, category });
+            console.log(`[UI-NAV] Sub-Nav visibility updated: ${pillNav.style.display} for ${category}`);
         }
         
         // [v1.37.06 Recovery] Population Cycle
@@ -1387,12 +1405,39 @@ window.addEventListener('scroll', () => hideContextMenu(), true);
  * Global UI Initialization for v1.37 Restoration (Professional Logic)
  */
 window.addEventListener('DOMContentLoaded', async () => {
+    // [v1.37.29 Restoration] Sub-Nav Mutation Guard (Prevents accidental wiping)
+    const pillNav = document.getElementById('sub-nav-container');
+    if (pillNav) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList' && pillNav.innerHTML.trim() === '') {
+                    console.warn("[UI-FIX] Sub-nav cleared unexpectedly! Re-hydrating...");
+                    updateGlobalSubNav(currentMainCategory || 'media');
+                }
+            });
+        });
+        observer.observe(pillNav, { childList: true });
+    }
+
     // 1. Sync Base State
     const savedCategory = localStorage.getItem('mwv_active_category') || 'media';
     currentMainCategory = savedCategory;
 
     // 2. Initial Visibility Refresh (Immediate Fallback)
     refreshUIVisibility();
+    
+    // [v1.37.06] Hard-Force Sub-menu for Player on start
+    if (currentMainCategory === 'media') {
+        console.log("[UI-INIT] Hard-injecting Player sub-menu pills...");
+        updateGlobalSubNav('media');
+        // [v1.37.29 Restoration] Delayed check to ensure fragment loading didn't wipe us
+        setTimeout(() => {
+            if (pillNav && pillNav.innerHTML.trim() === '') {
+                console.warn("[UI-INIT-HOTFIX] Sub-nav detected empty after boot, re-injecting.");
+                updateGlobalSubNav('media');
+            }
+        }, 800);
+    }
 
     // 3. Wait for Backend sync (v1.37.06 Hardening)
     if (typeof eel !== 'undefined') {
