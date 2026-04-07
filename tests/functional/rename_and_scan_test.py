@@ -12,7 +12,10 @@ logging.basicConfig(level=logging.INFO)
 
 try:
     from src.core import db
-    from src.core import main
+    from src.core import main, logger
+
+    # Initialize environment for test
+    logger.setup_logging(debug_mode=True)
 except ImportError as e:
     print(f"[Error] Imports failed: {e}")
     sys.exit(1)

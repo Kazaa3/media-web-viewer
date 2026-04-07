@@ -644,7 +644,7 @@ def check_media_availability():
                 missing += 1
                 log.warning(f"[DB-VERIFY] Path Missing/Renamed: {path_str}")
             else:
-                log.debug(f"[DB-VERIFY] Path OK: {path_str}")
+                log.info(f"[DB-VERIFY] Path OK: {path_str}")
             
             updates.append((1 if exists else 0, row['id']))
             
