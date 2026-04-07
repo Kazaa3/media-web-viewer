@@ -4732,36 +4732,39 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                     break
                 
                 d = Path(root)
-                if d == scan_root: continue
-                
-                # Rel-path check
+                # Depth Check (v1.35.98)
                 try:
                     rel_path = d.relative_to(scan_root)
-                    if len(rel_path.parts) > 12: continue
+                    if len(rel_path.parts) > 12: 
+                        dirs[:] = [] # Stop recursion
+                        continue
                 except Exception: continue
+                
+                # 2. Folders as Media (Albums/DVDs)
+                if d != scan_root:
+                    m_count = sum(1 for f in files if f.lower().endswith(tuple(all_exts)))
+                    if m_count > 0:
+                        # Fast Category mapping
+                        is_audio = any(f.lower().endswith(tuple(AUDIO_EXTENSIONS)) for f in files)
+                        cat = 'audio' if is_audio else 'video'
+                        collected_items.append({
+                            'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,
+                             'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
+                             'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
+                        })
+                        count_indexed += 1
 
-                # A. Folders as Media (Albums)
-                m_count = sum(1 for f in files if Path(f).suffix.lower() in all_exts)
-                if m_count > 0:
-                    # Map folder category (default to audio for albums, or just 'other')
-                    cat = 'audio' if any(f.lower().endswith(('.mp3', '.flac', '.m4a', '.wav')) for f in files) else 'video'
-                    collected_items.append({
-                        'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,
-                         'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
-                         'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
-                    })
-                    count_indexed += 1
-
-                # B. Files
+                # 3. Individual Files (Standard Pass)
                 for filename in files:
-                    f = Path(root) / filename
-                    ext = f.suffix.lower()
-                    if ext not in all_exts or '.cache' in f.parts: continue
+                    ext = "." + filename.rsplit('.', 1)[-1].lower() if '.' in filename else ""
+                    if ext not in all_exts: continue
+                    f_path = os.path.join(root, filename)
+                    if f_path in existing_media: continue
+                    
                     try:
-                        if str(f.resolve()) in existing_media: continue
                         cat = ext_to_cat.get(ext, 'Unknown')
                         collected_items.append({
-                            'name': f.name, 'path': str(f), 'category': cat,
+                            'name': filename, 'path': f_path, 'category': cat,
                             'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
                             'type': 'file', 'file_type': ext[1:].upper(),
                             'extension': ext
