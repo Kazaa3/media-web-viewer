@@ -39,9 +39,9 @@ CONFIG_FILE = Path.home() / '.config' / 'gui_media_web_viewer' / 'parser_config.
 
 def get_default_scan_dir() -> Path:
     """
-    Return the project default scan directory (<project_root>/media).
+    Return the project default scan directory (Centralized v1.35.98).
     """
-    return (Path(__file__).resolve().parent.parent.parent / "media").resolve()
+    return Path(GLOBAL_CONFIG.get("scan_media_dir", str(Path(__file__).resolve().parent.parent.parent / "media")))
 
 
 # Use Centralized Config (v1.35.68)

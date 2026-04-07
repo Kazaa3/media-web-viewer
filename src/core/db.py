@@ -219,6 +219,7 @@ def init_db(depth: int = 0):
             duration_sec REAL,
             is_mock BOOLEAN DEFAULT 0,
             mock_stage INTEGER DEFAULT 0,
+            available BOOLEAN DEFAULT 1,
             FOREIGN KEY(parent_id) REFERENCES media(id)
         )
     """)
@@ -262,7 +263,8 @@ def init_db(depth: int = 0):
         ("last_played", "TEXT"),
         ("duration_sec", "REAL"),
         ("is_mock", "BOOLEAN DEFAULT 0"),
-        ("mock_stage", "INTEGER DEFAULT 0")
+        ("mock_stage", "INTEGER DEFAULT 0"),
+        ("available", "BOOLEAN DEFAULT 1")
     ]
     for col_name, col_type in new_columns:
         try:
@@ -499,7 +501,8 @@ def row_to_dict(row):
         'last_played': row['last_played'] if 'last_played' in row.keys() else None,
         'duration_sec': (row['duration_sec'] or 0) if 'duration_sec' in row.keys() else 0,
         'is_mock': bool(row['is_mock']) if 'is_mock' in row.keys() else False,
-        'mock_stage': (row['mock_stage'] or 0) if 'mock_stage' in row.keys() else 0
+        'mock_stage': (row['mock_stage'] or 0) if 'mock_stage' in row.keys() else 0,
+        'available': bool(row['available']) if 'available' in row.keys() else True
     }
 
 def get_all_media_items():
@@ -615,6 +618,43 @@ def get_media_by_remote_id(field, value):
     if row:
         return row_to_dict(row)
     return None
+
+
+def check_media_availability():
+    """
+    @brief Scans all items in the database and updates their 'available' status.
+    @return (Total Items, Missing Items)
+    """
+    total = 0
+    missing = 0
+    try:
+        conn = sqlite3.connect(DB_FILENAME)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, path FROM media")
+        rows = cursor.fetchall()
+        total = len(rows)
+        
+        updates = []
+        for row in rows:
+            path_str = row['path']
+            exists = os.path.exists(path_str)
+            # [USER-RETRY] Persistent trace for rename forensics
+            if not exists:
+                missing += 1
+                log.warning(f"[DB-VERIFY] Path Missing/Renamed: {path_str}")
+            else:
+                log.debug(f"[DB-VERIFY] Path OK: {path_str}")
+            
+            updates.append((1 if exists else 0, row['id']))
+            
+        cursor.executemany("UPDATE media SET available = ? WHERE id = ?", updates)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        log.error(f"[DB-VERIFY] Error: {e}")
+        
+    return total, missing
 
 
 def update_media_tags(name, tags_dict):

@@ -20,23 +20,14 @@ from pathlib import Path
 from typing import Optional, Any, List, Dict
 from src.parsers import media_parser
 from src.core import logger
-from src.core.config_master import GLOBAL_CONFIG
-
-# --- SSOT: TECHNICAL MEDIA CAPABILITY GROUPS (v1.38.01) ---
-# These constants define the technical handling requirements (Native vs. Transcode).
-# Use uppercase as per architectural standard.
-
-# AUDIO CAPABILITIES
-AUDIO_NATIVE = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac"}
-AUDIO_TRANSCODE = {".wav", ".alac", ".wma", ".aiff", ".dsf", ".dff", ".dsd", ".ac3", ".dts"}
-ALL_AUDIO_EXTENSIONS = AUDIO_NATIVE | AUDIO_TRANSCODE
-
-# VIDEO CAPABILITIES (Pipeline Categorization)
-VIDEO_NATIVE = {".mp4", ".webm", ".ogv"}
-VIDEO_HD_TRANSCODE = {".mkv", ".mov", ".ts", ".m2ts"}
-VIDEO_PAL_TRANSCODE = {".vob", ".mpg", ".mpeg", ".m2v"}
-VIDEO_NTSC_TRANSCODE = {".asf", ".wmv", ".3gp", ".3g2"}
-ALL_VIDEO_EXTENSIONS = VIDEO_NATIVE | VIDEO_HD_TRANSCODE | VIDEO_PAL_TRANSCODE | VIDEO_NTSC_TRANSCODE
+from src.core.config_master import (
+    GLOBAL_CONFIG, AUDIO_NATIVE, AUDIO_TRANSCODE, ALL_AUDIO_EXTENSIONS,
+    AUDIO_EXTENSIONS, VIDEO_EXTENSIONS,
+    VIDEO_NATIVE, VIDEO_HD_TRANSCODE, VIDEO_PAL_TRANSCODE, VIDEO_NTSC_TRANSCODE,
+    ALL_VIDEO_EXTENSIONS, PICTURE_EXTENSIONS, DOCUMENT_EXTENSIONS,
+    EBOOK_EXTENSIONS, DISK_IMAGE_EXTENSIONS, PLAYLIST_EXTENSIONS,
+    ARCHIVE_EXTENSIONS
+)
 
 # --- ULTIMATE SSOT REGISTRIES (v1.37.07 Consolidated) ---
 # These registries are the absolute source of truth for all media categorization.
@@ -62,22 +53,22 @@ MASTER_CAT_MAP = {
     "pictures": {
         "internal": "pictures",
         "aliases": ["bilder", "grafik", "bild", "foto", "images", "gallery", "pictures", "fotos"],
-        "extensions": {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
+        "extensions": PICTURE_EXTENSIONS
     },
     "documents": {
         "internal": "documents",
         "aliases": ["dokument", "pdf", "text", "doc", "docx", "txt", "office", "docs"],
-        "extensions": {".pdf", ".doc", ".docx", ".txt", ".md", ".html", ".htm"}
+        "extensions": DOCUMENT_EXTENSIONS
     },
     "ebooks": {
         "internal": "ebooks",
         "aliases": ["e-book", "ebook", "epub", "mobi"],
-        "extensions": {".epub", ".mobi", ".azw", ".fb2"}
+        "extensions": EBOOK_EXTENSIONS
     },
     "disk_images": {
         "internal": "disk_images",
         "aliases": ["abbild", "disk-abbild", "iso", "dvd ntsc", "dvd pal", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd", "iso image"],
-        "extensions": {".iso", ".bin", ".img", ".cue", ".nrg", ".mdf", ".toast", ".ccd", ".daa", ".evo", ".map", ".bup"}
+        "extensions": DISK_IMAGE_EXTENSIONS
     },
     "spiel": {
         "internal": "spiel",
@@ -87,23 +78,17 @@ MASTER_CAT_MAP = {
     "playlists": {
         "internal": "playlists",
         "aliases": ["playlist", "m3u", "m3u8"],
-        "extensions": {".m3u", ".m3u8"}
+        "extensions": PLAYLIST_EXTENSIONS
     },
     "archives": {
         "internal": "archives",
         "aliases": ["archiv", "zip", "rar", "7z", "tar", "compressed", "backup"],
-        "extensions": {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}
+        "extensions": ARCHIVE_EXTENSIONS
     }
 }
 
 # Calculated Logic Extensions (REDUNDANCY CLEANUP v1.37.07)
-AUDIO_EXTENSIONS = ALL_AUDIO_EXTENSIONS
-VIDEO_EXTENSIONS = ALL_VIDEO_EXTENSIONS
-PICTURE_EXTENSIONS = MASTER_CAT_MAP["pictures"]["extensions"]
-DOCUMENT_EXTENSIONS = MASTER_CAT_MAP["documents"]["extensions"]
-EBOOK_EXTENSIONS = MASTER_CAT_MAP["ebooks"]["extensions"]
-DISK_IMAGE_EXTENSIONS = MASTER_CAT_MAP["disk_images"]["extensions"]
-PLAYLIST_EXTENSIONS = MASTER_CAT_MAP["playlists"]["extensions"]
+# (Constants now imported from config_master.py)
 
 # --- Legacy Compatibility Aliases (v1.37.08) ---
 # Restored for backward compatibility with main.py and format_utils.py
@@ -464,10 +449,11 @@ class MediaItem:
             duration_str = f"{mins}:{secs:02d}"
 
         codec = str(self.tags.get('codec') or '').upper()
-        # Lossless ALAC → transcode to FLAC
-        is_alac = self.type == '.alac' or (self.type in {'.m4a', '.m4b'} and 'ALAC' in codec)
+        suffix = self.path.suffix.lower()
+        # Lossless ALAC → transcode to FLAC (v1.35.98)
+        is_alac = suffix == '.alac' or (suffix in {'.m4a', '.m4b'} and 'ALAC' in codec)
         # Lossy WMA → transcode to OGG (Opus)
-        is_wma = self.type == '.wma'
+        is_wma = suffix == '.wma'
 
         is_transcoded = is_alac or is_wma
         if is_alac:

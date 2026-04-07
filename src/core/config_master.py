@@ -24,11 +24,13 @@ except ImportError:
 # --- SSOT: TECHNICAL MEDIA CAPABILITY GROUPS (v1.38.01) ---
 # These constants define the technical handling requirements (Native vs. Transcode).
 # Use uppercase as per architectural standard.
+# More in: models.py
 
 # AUDIO CAPABILITIES
 AUDIO_NATIVE = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac"}
 AUDIO_TRANSCODE = {".wav", ".alac", ".wma", ".aiff", ".dsf", ".dff", ".dsd", ".ac3", ".dts"}
 ALL_AUDIO_EXTENSIONS = AUDIO_NATIVE | AUDIO_TRANSCODE
+AUDIO_EXTENSIONS = ALL_AUDIO_EXTENSIONS
 
 # VIDEO CAPABILITIES (Pipeline Categorization)
 VIDEO_NATIVE = {".mp4", ".webm", ".ogv"}
@@ -41,6 +43,25 @@ DVD_ISO_TRANSCODE = {".iso", ".img", ".nrg", ".bin", ".cue"}
 BD_ISO_TRANSCODE = {".iso", ".udf"} # Distinguishing BD usually requires probe, but we group here
 
 ALL_VIDEO_EXTENSIONS = VIDEO_NATIVE | VIDEO_HD_TRANSCODE | VIDEO_PAL_TRANSCODE | VIDEO_NTSC_TRANSCODE | DVD_ISO_TRANSCODE | BD_ISO_TRANSCODE
+VIDEO_EXTENSIONS = ALL_VIDEO_EXTENSIONS
+
+# ADDITIONAL CAPABILITIES (v1.35.98 Centralized)
+PICTURE_EXTENSIONS = {
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico'
+}
+ARCHIVE_EXTENSIONS = {
+    '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'
+}
+DOCUMENT_EXTENSIONS = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'}
+EBOOK_EXTENSIONS = {'.epub', '.mobi', '.azw', '.fb2'}
+DISK_IMAGE_EXTENSIONS = {'.iso', '.bin', '.img', '.cue', '.nrg', '.mdf', '.toast', '.ccd', '.daa', '.evo', '.map', '.bup'}
+PLAYLIST_EXTENSIONS = {'.m3u', '.m3u8'}
+
+
+# --- ARCHIVE CAPABILITIES (v1.38.02) ---
+# These constants define the technical handling requirements for archive files.
+# Use uppercase as per architectural standard.
+ARCHIVE_EXTENSIONS = {".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz"}
 
 try:
     from dotenv import load_dotenv
@@ -52,6 +73,18 @@ except ImportError:
 MAIN_FILE = Path(__file__).resolve()
 PROJECT_ROOT = MAIN_FILE.parent.parent.parent
 APP_DATA_DIR = str(PROJECT_ROOT) # Standardizing on Project Root as primary data hub
+
+# Ensure project root and scripts are in sys.path (Centralized v1.35.98)
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+# Path Discovery
+SCAN_MEDIA_DIR = str(PROJECT_ROOT / "media")
+BROWSER_DEFAULT_DIR = str(Path.home())
 
 # Load local environment overrides if available
 if _DOTENV_LOADED:
@@ -213,6 +246,13 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_limit": 4096
     },
     
+    "large_file_settings": {
+        "threshold_gb": 4.0,           # 4GB Safety Cap (FAT32/Stream limit)
+        "warn_only": True,              # Only log warning, don't block
+        "enforce_crf_limit": 28,        # Force CRF 28+ for large files to save CPU
+        "prefer_copy_if_possible": True # Remux instead of transcode for large MP4/MKV
+    },
+    
     "transcoding_profiles": {
         # VLC HLS Pipeline Profiles (Content-Aware)
         "vlc_hls_profile_pal": {
@@ -237,6 +277,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
         "transcode_audio_flac": {
             "codec": "flac", "bitrate": "0", "format": "flac", "movflags": ""
+        },
+        "transcode_audio_wma": {
+            "codec": "libopus", "bitrate": "128k", "format": "webm", "movflags": ""
         },
         "video_transcode": {
             "preset": "veryfast", "crf": "23", "a_codec": "aac", "a_bitrate": "128k",
@@ -283,6 +326,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "parser_mode": os.environ.get("MWV_PARSER_MODE", "lightweight"), # lightweight, full, ultimate
     "displayed_categories": ["all", "audio", "video", "pictures", "documents", "ebooks", "disk_images", "spiel", "beigabe", "supplements", "games", "unbekannt"],
     "active_branch": os.environ.get("MWV_BRANCH", "video"), # audio, video
+    
+    "scan_media_dir": SCAN_MEDIA_DIR,
+    "browser_default_dir": BROWSER_DEFAULT_DIR,
     
     "scan_settings": {
         "max_depth": 12,

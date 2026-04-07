@@ -41,7 +41,7 @@ import glob
 import sqlite3
 import ast
 import threading
-from typing import Dict, Any, List, Optional, cast
+from typing import Dict, Any, List, Optional, cast, Tuple
 
 # Record boot time as early as possible
 INITIAL_START_TIME = time.time()
@@ -161,7 +161,7 @@ def get_startup_info():
         "pid": os.getpid(),
         "start_time": INITIAL_START_TIME if 'INITIAL_START_TIME' in globals() else current_time,
         "env": "diagnostic-lab",
-        "version": "1.35.68-STABLE hardcoded!"
+        "version": GLOBAL_CONFIG.get("version", "Unknown")
     }
 
 @eel.expose
@@ -199,16 +199,7 @@ def kill_stale_and_restart():
     log.info("[RESTART] Re-executing current instance...")
     os.execl(sys.executable, sys.executable, *sys.argv)
 
-# 1. Immediate Path Calculation
-MAIN_FILE = Path(__file__).resolve()
-PROJECT_ROOT = MAIN_FILE.parent.parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-    
-# 2. Integrate Scripts Folder (for Status Bar etc.)
-SCRIPTS_DIR = PROJECT_ROOT / "scripts"
-if str(SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_DIR))
+# (Path calculation and sys.path injection moved to config_master.py)
 
 # Import Status Tool
 try:
@@ -3408,10 +3399,8 @@ def get_sys_overview(force_refresh=False):
 # 1. Ort fr den automatischen Bibliotheks-Scan
 # Standardmig aus PARSER_CONFIG laden (sync)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-SCAN_MEDIA_DIR = PARSER_CONFIG.get("scan_dirs", [str(PROJECT_ROOT / "media")])[0]
-
-# 2. Standard-Pfad beim ersten ffnen des Browsers
-BROWSER_DEFAULT_DIR = PARSER_CONFIG.get("browse_default_dir", str(Path.home()))
+SCAN_MEDIA_DIR = GLOBAL_CONFIG.get("scan_media_dir", str(PROJECT_ROOT / "media"))
+BROWSER_DEFAULT_DIR = GLOBAL_CONFIG.get("browser_default_dir", str(Path.home()))
 # Redundante Definitionen entfernt, da diese nun aus parsers.format_utils importiert werden.
 # (AUDIO_EXTENSIONS, VIDEO_EXTENSIONS etc. werden oben importiert)
 PICTURE_EXTENSIONS = {
@@ -4682,7 +4671,7 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     )
     
     # 4. Prepare Extension Filter & Fast-Category-Mapper (v1.35.98)
-    from core.models import MASTER_CAT_MAP
+    from src.core.models import MASTER_CAT_MAP
     ext_to_cat = {}
     for cat, info in MASTER_CAT_MAP.items():
         for ext in info.get("extensions", []):
@@ -4777,9 +4766,13 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
             log.info(f"[DB-SCAN] Finalizing batch of {len(collected_items)} items...")
             db.insert_media_batch(collected_items)
 
-        elapsed = time.time() - start_time
-        log.info(f"[Scan-Trace] Scan complete: {count_indexed} in {elapsed:.2f}s")
-        return {"status": "ok", "count": count_indexed, "time_seconds": elapsed}
+        # 10. Round 5.6 - Final Sync & Availability Check (v1.35.98)
+        if not clear_db:
+             log.info("[DB-SCAN] Running availability check for incremental sync...")
+             total, missing = db.check_media_availability()
+             log.info(f"[DB-SCAN] Availability check done. Total: {total} | Missing/Renamed: {missing}")
+
+        return {"status": "ok", "count": count_indexed, "time_seconds": time.time() - start_time}
 
     except Exception as e:
         log.error(f"[Scan-Trace] CRITICAL FAILURE: {e}")
@@ -5095,6 +5088,37 @@ def serve_media_raw(file_path):
 # [REMOVED v1.34] Redundant serve_media route moved to web/app_bottle.py 
 # to support centralized on-the-fly transcoding and better mimetype handling.
 
+def apply_large_file_protection(cmd, file_path):
+    """
+    @brief Analyzes file size and applies resource protection policies (v1.35.98).
+    @return (Modified Command, Is Large File)
+    """
+    try:
+        from src.core.config_master import GLOBAL_CONFIG
+        cfg = GLOBAL_CONFIG.get("large_file_settings", {})
+        threshold_bytes = cfg.get("threshold_gb", 4.0) * 1024 * 1024 * 1024
+        file_size = os.path.getsize(file_path)
+        is_large = file_size > threshold_bytes
+        
+        if is_large:
+            log.warning(f"[Protection] Large file detected ({file_size / (1024**3):.2f} GB): {file_path}")
+            
+            # Hook 1: Enforce CRF limit for video to prevent CPU/IO spikes
+            if "-crf" in cmd:
+                idx = cmd.index("-crf")
+                current_crf = int(cmd[idx+1])
+                limit = cfg.get("enforce_crf_limit", 28)
+                if current_crf < limit:
+                    log.info(f"[Protection] Adjusting CRF {current_crf} -> {limit} for resource safety.")
+                    cmd[idx+1] = str(limit)
+            
+            # Hook 2: Future hooks for remux vs transcode can be added here
+            
+        return cmd, is_large
+    except Exception as e:
+        log.error(f"[Protection] Error applying safety policies: {e}")
+        return cmd, False
+
 @eel.btl.route('/stream/via/transcode/<file_path:path>')
 def stream_video_fragmented(file_path):
     """
@@ -5118,6 +5142,21 @@ def stream_video_fragmented(file_path):
 
     if not os.path.exists(resolved_path):
         return bottle.HTTPError(404, "File not found")
+
+    # Pre-calculate stream metadata (v1.35.98 Scope Fix)
+    audio_exts = GLOBAL_CONFIG.get("player_settings", {}).get("audio_extensions", [])
+    low_path = str(resolved_path).lower()
+    is_audio = any(ext in low_path for ext in audio_exts)
+    profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
+    p_key = "transcode_audio_aac" # default
+    
+    if is_audio:
+        if ".opus" in low_path:
+            p_key = "transcode_audio_opus"
+        elif ".alac" in low_path or ".m4a" in low_path:
+            p_key = "transcode_audio_flac"
+        elif ".wma" in low_path:
+            p_key = "transcode_audio_wma"
 
     def ffmpeg_stream():
         # Auto-detect best encoder for performance
@@ -5148,24 +5187,13 @@ def stream_video_fragmented(file_path):
         else:
             input_args = ["-i", str(resolved_path)]
 
-        # Determine if we are transcoding Audio-Only
-        audio_exts = GLOBAL_CONFIG.get("player_settings", {}).get("audio_extensions", [])
-        is_audio = any(ext in str(resolved_path).lower() for ext in audio_exts)
-        
-        # FFmpeg command for FragMP4 remuxing/transcoding
+        # FFmpeg command for FragMP4 remuxing/transcoding (profiles pre-calculated)
         cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error"]
         cmd.extend(ss_args)
         cmd.extend(input_args)
         
-        profiles = GLOBAL_CONFIG.get("transcoding_profiles", {})
-        
         if is_audio:
-            # Audio Transcoding Profile Selection (SSOT v1.35.95)
-            # Default to AAC for best browser compatibility, but prepared for Opus/FLAC
-            p_key = "transcode_audio_aac" 
-            if ".opus" in str(resolved_path).lower():
-                p_key = "transcode_audio_opus"
-                
+            # Audio Transcoding Profile Selection (v1.35.98 Unified)
             profile = profiles.get(p_key, {})
             codec = profile.get("codec", "aac")
             bitrate = profile.get("bitrate", "192k")
@@ -5203,6 +5231,9 @@ def stream_video_fragmented(file_path):
         
         cmd.append("pipe:1")
 
+        # Apply Large File Protection (v1.35.98 Hook)
+        cmd, is_large_file = apply_large_file_protection(cmd, resolved_path)
+
         perf_cfg = GLOBAL_CONFIG.get("perf_settings", {})
         stream_buf = perf_cfg.get("streaming_buffer_size", 1024 * 1024)
 
@@ -5229,8 +5260,17 @@ def stream_video_fragmented(file_path):
                 try: process.wait(timeout=1)
                 except: process.kill()
 
-    # Determine Correct Content-Type for MSE/fMP4
-    bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
+    # Determine Correct Content-Type (v1.35.98 Dynamic)
+    if is_audio:
+        low_path = str(resolved_path).lower()
+        if ".wma" in low_path or ".opus" in low_path:
+            bottle.response.content_type = 'audio/webm'
+        elif ".alac" in low_path or "flac" in str(profiles.get(p_key, {}).get("codec")):
+            bottle.response.content_type = 'audio/flac'
+        else:
+            bottle.response.content_type = 'audio/mp4'
+    else:
+        bottle.response.content_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"'
     return ffmpeg_stream()
 
 @eel.expose
