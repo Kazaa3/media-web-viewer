@@ -601,6 +601,23 @@ async function refreshUIVisibility() {
         if (settings.diagnostics_hud_allowed === false) toggleTechnicalHUD(false);
     }
 
+    // --- NEW: Audio Player Fragment Control (v1.38.05) ---
+    const audioSidebar = document.getElementById('player-detailed-sidebar');
+    if (audioSidebar) {
+        const showAudioSidebar = uiRegistry.sidebar_allowed !== false;
+        audioSidebar.style.display = showAudioSidebar ? 'flex' : 'none';
+    }
+
+    const queueList = document.getElementById('state-orchestrated-active-queue-list-container');
+    if (queueList) {
+        const showQueue = uiRegistry.queue_panel_enabled !== false;
+        queueList.style.display = showQueue ? 'flex' : 'none';
+        // Hide the sub-nav button if disabled
+        const queueBtn = document.getElementById('player-subtab-queue');
+        if (queueBtn) queueBtn.style.display = showQueue ? 'flex' : 'none';
+    }
+    // -----------------------------------------------------
+
     // 7. FINAL: Recalibrate Viewport Geometry
     refreshViewportLayout();
 
