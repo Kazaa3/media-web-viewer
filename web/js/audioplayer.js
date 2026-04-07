@@ -883,9 +883,11 @@ function syncQueueWithLibrary() {
 
         // Productive Mode / v1.35.68 Hybrid Logic
         const hmode = window.__mwv_hydration_mode || 'real';
+        const nameMock = item.name && item.name.startsWith('[MOCK]');
+        const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
         
-        if (hmode === 'mock') return item.is_mock || !!item.stage;
-        if (hmode === 'real') return !item.is_mock && !item.stage;
+        if (hmode === 'mock') return mockFlag || !!item.stage;
+        if (hmode === 'real') return !mockFlag && !item.stage;
         if (hmode === 'both') return true;
 
         const isAudioCandidate = !video || isRaw;

@@ -168,10 +168,13 @@ async function renderLibrary() {
     }
 
     // 1. Hydration Mode Filter (Mock/Real/Both) - v1.35.68
-    const hmode = window.__mwv_hydration_mode || localStorage.getItem('mwv_hydration_mode') || 'both';
-    projectedItems = projectedItems.filter(i => {
-        if (hmode === 'mock') return i.is_mock === true;
-        if (hmode === 'real') return !i.is_mock;
+    projectedItems = projectedItems.filter(item => {
+        const hmode = window.__mwv_hydration_mode || 'real';
+        const nameMock = item.name && item.name.startsWith('[MOCK]');
+        const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
+        
+        if (hmode === 'mock') return mockFlag || !!item.stage;
+        if (hmode === 'real') return !mockFlag && !item.stage;
         return true; // 'both'
     });
 

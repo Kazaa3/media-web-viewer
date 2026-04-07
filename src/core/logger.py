@@ -88,10 +88,10 @@ class UIHandler(logging.Handler):
         try:
             msg = self.format(record)
             
-            # Avoid recursion if msg already contains UI-Trace tag (v1.35.68 Hardened)
             # [Echo Guard] v1.35.68: Do not send logs back that originated from the UI!
-            # This breaks the infinite loop: UI -> Backend -> UI
-            if "[UI-Trace]" in msg or "[BD-AUDIT]" in msg or "[JS-NAV]" in msg or "[UI-INPUT]" in msg:
+            # [Blind-Mute] v1.35.68: Silence heavy render-traces to prevent UI freezing
+            if "[UI-Trace]" in msg or "[BD-AUDIT]" in msg or "[JS-NAV]" in msg or "[UI-INPUT]" in msg \
+               or "[UI-RENDER]" in msg or "[DOM-UI]" in msg:
                 return
 
             LOG_BUFFER.append(msg)
