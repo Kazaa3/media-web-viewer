@@ -116,46 +116,100 @@ def discover_binary(name: str, fallback: str = "") -> str:
         return shutil.which("cvlc") or "/usr/bin/cvlc"
     return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
+# --- VERSION DISCOVERY OPTIMIZATION (v1.35.68) ---
+_VERSION_CACHE = {}
+
 def get_binary_version(path: str, flag: str = "-version") -> str:
     """
     Attempts to extract the version string from an external binary.
+    Uses a cache to speed up repeated lookups.
     """
     if not path or path == "Unknown": return "N/A"
+    
+    cache_key = f"{path}_{flag}"
+    if cache_key in _VERSION_CACHE:
+        return _VERSION_CACHE[cache_key]
+
+    # If we are in synchronous mode (startup), we might want to return 'Discovering...'
+    # For now, we allow the first call to be potentially blocking, 
+    # but the goal is to background them.
     try:
         if " " in path:
-            # Handle paths with spaces or arguments
             cmd = path.split() + [flag]
         else:
-            cmd = [path, flag] # use provided flag
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
+            cmd = [path, flag]
+            
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=1)
         combined = (res.stdout or "") + (res.stderr or "")
         
-        # Broad patterns for different tools
         patterns = [
-            r"version ([0-9\.\-]+)",           # ffmpeg, ffprobe, ffplay, pip
-            r"v([0-9\.\-]+)",                  # mkvmerge
-            r"VLC version ([0-9\.\-]+)",       # vlc
-            r"mpv ([0-9\.\-]+)",               # mpv
-            r"MediaInfo Command line, ([0-9\.\-]+)", # mediainfo
-            r"isoinfo ([0-9\.\-]+)",            # isoinfo
-            r"([0-9]+\.[0-9]+\.[0-9]+)"        # fallback generic semantic version
+            r"version ([0-9\.\-]+)",
+            r"v([0-9\.\-]+)",
+            r"VLC version ([0-9\.\-]+)",
+            r"mpv ([0-9\.\-]+)",
+            r"MediaInfo Command line, ([0-9\.\-]+)",
+            r"isoinfo ([0-9\.\-]+)",
+            r"([0-9]+\.[0-9]+\.[0-9]+)"
         ]
         
+        version = "Unknown"
         for p in patterns:
             match = re.search(p, combined)
-            if match: return match.group(1)
-            
-        # Last resort: take the first non-empty line
-        lines = [l.strip() for l in combined.split("\n") if l.strip()]
-        if lines:
-            # Clean up long lines
-            first = lines[0]
-            if len(first) > 40: first = first[:37] + "..."
-            return first
+            if match:
+                version = match.group(1)
+                break
+        
+        if version == "Unknown" and combined.strip():
+            lines = [l.strip() for l in combined.split("\n") if l.strip()]
+            if lines:
+                version = lines[0][:37] + "..." if len(lines[0]) > 40 else lines[0]
+        
+        _VERSION_CACHE[cache_key] = version
+        return version
             
     except Exception:
-        pass
-    return "Unknown"
+        return "Unknown"
+
+def background_version_discovery(config_dict: dict):
+    """
+    Worker thread that populates the version information in the background.
+    """
+    import threading
+    def worker():
+        try:
+            from src.core.startup_monitor import profiler
+            if profiler: profiler.start_phase("Background-Version-Discovery")
+        except: pass
+        
+        # We look for all 'Unknown' or 'Discovering...' entries in app_versions and populating them
+        targets = [
+            ("ffmpeg", "ffmpeg", "-version"),
+            ("ffprobe", "ffprobe", "-version"),
+            ("ffplay", "ffplay", "-version"),
+            ("vlc", "vlc", "--version"),
+            ("mpv", "mpv", "--version"),
+            ("mkvmerge", "mkvmerge", "-version"),
+            ("m3u8", "m3u8-tester", "--version"),
+            ("mediainfo", "mediainfo", "--Version"),
+            ("isoinfo", "isoinfo", "--version"),
+            ("swyh-rs-cli", "swyh-rs-cli", "--version"),
+            ("mediamtx", "mediamtx", "--version"),
+            ("spotifyd", "spotifyd", "--version"),
+            ("spt", "spt", "--version"),
+            ("pyvidplayer2", "pyvidplayer2", "--version"),
+            ("doxygen", "doxygen", "--version"),
+            ("graphviz", "dot", "-V")
+        ]
+        
+        av = config_dict.get("app_versions", {})
+        for key, binary, flag in targets:
+            av[key] = get_binary_version(binary, flag)
+            
+        try:
+            if profiler: profiler.end_phase("Background-Version-Discovery")
+        except: pass
+
+    threading.Thread(target=worker, daemon=True).start()
 
 # --- VERSION & METADATA CALCULATION (v1.35.68) ---
 VERSION_FILE = PROJECT_ROOT / "VERSION"
@@ -719,37 +773,38 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     # --- HARDWARE & APP DISCOVERY (v1.35.68 Centralized) ---
     "hardware_info": _HW_DETECTOR and hardware_detector.get_hardware_info() or {},
     "installed_packages": get_pip_packages(),
+    # --- VERSION & METADATA CALCULATION (v1.35.68 - Deferred) ---
     "app_versions": {
-        "ffmpeg": get_binary_version("ffmpeg"),
-        "ffprobe": get_binary_version("ffprobe"),
-        "ffplay": get_binary_version("ffplay"),
-        "vlc": get_binary_version("vlc", "--version"),
-        "mpv": get_binary_version("mpv", "--version"),
-        "mkvmerge": get_binary_version("mkvmerge"),
-        "m3u8": get_binary_version("m3u8-tester", "--version"),
-        "mediainfo": get_binary_version("mediainfo", "--Version"),
-        "isoinfo": get_binary_version("isoinfo", "--version"),
-        "swyh-rs-cli": get_binary_version("swyh-rs-cli", "--version"),
-        "mediamtx": get_binary_version("mediamtx", "--version"),
-        "spotifyd": get_binary_version("spotifyd", "--version"),
-        "spt": get_binary_version("spt", "--version"),
-        "pyvidplayer2": get_binary_version("pyvidplayer2", "--version"),
+        "ffmpeg": "Discovering...",
+        "ffprobe": "Discovering...",
+        "ffplay": "Discovering...",
+        "vlc": "Discovering...",
+        "mpv": "Discovering...",
+        "mkvmerge": "Discovering...",
+        "m3u8": "Discovering...",
+        "mediainfo": "Discovering...",
+        "isoinfo": "Discovering...",
+        "swyh-rs-cli": "Discovering...",
+        "mediamtx": "Discovering...",
+        "spotifyd": "Discovering...",
+        "spt": "Discovering...",
+        "pyvidplayer2": "Discovering...",
         "python": sys.version.split()[0],
-        "pip": get_binary_version("pip", "--version").split()[1] if " " in get_binary_version("pip", "--version") else "Unknown",
+        "pip": "Discovering...",
         "conda": os.environ.get("CONDA_DEFAULT_ENV", "N/A"),
-        "conda_version": get_binary_version("conda", "--version").split()[-1] if "conda" in get_binary_version("conda", "--version").lower() else "N/A",
-        "docker_version": get_binary_version("docker", "--version").split()[-1] if "docker" in get_binary_version("docker", "--version").lower() else "N/A",
-        # PIP Packages Version Registry
-        "eel": get_binary_version("pip", "show eel").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show eel") else "N/A",
-        "bottle": get_binary_version("pip", "show bottle").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show bottle") else "N/A",
-        "mutagen": get_binary_version("pip", "show mutagen").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show mutagen") else "N/A",
-        "psutil": get_binary_version("pip", "show psutil").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show psutil") else "N/A",
-        "gevent": get_binary_version("pip", "show gevent").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show gevent") else "N/A",
-        "pytest": get_binary_version("pip", "show pytest").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pytest") else "N/A",
+        "conda_version": "N/A",
+        "docker_version": "N/A",
+        # PIP Packages Version Registry (Deferred)
+        "eel": "N/A",
+        "bottle": "N/A",
+        "mutagen": "N/A",
+        "psutil": "N/A",
+        "gevent": "N/A",
+        "pytest": "N/A",
         # Toolchain Versions
-        "doxygen": get_binary_version("doxygen", "--version"),
-        "graphviz": get_binary_version("dot", "-V").split()[-1] if "version" in get_binary_version("dot", "-V").lower() else "N/A",
-        "chrome": get_binary_version("google-chrome", "--version").split()[-1] if "Google Chrome" in get_binary_version("google-chrome", "--version") else "N/A"
+        "doxygen": "Discovering...",
+        "graphviz": "Discovering...",
+        "chrome": "Discovering..."
     },
     
     # --- TRANSCODING TOOLCHAIN (v1.35.68 Centralized) ---
@@ -907,3 +962,5 @@ def set_config_value(key: str, value: Any):
 def get_config_summary():
     """Returns a summary of the current configuration for display."""
     return GLOBAL_CONFIG
+# --- AUTO-TRIGGER BACKGROUND DISCOVERY ---
+background_version_discovery(GLOBAL_CONFIG)

@@ -44,9 +44,17 @@ import threading
 import threading
 from typing import Dict, Any, List, Optional, cast, Tuple
 
+# --- PERFORMANCE PROFILING ---
 # Record boot time as early as possible
 INITIAL_START_TIME = time.time()
 APP_START_TIME = INITIAL_START_TIME
+
+try:
+    from src.core.startup_monitor import profiler
+    profiler.set_base_time(INITIAL_START_TIME)
+    profiler.start_phase("Bootstrap-Imports")
+except ImportError:
+    profiler = None
 
 # --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
 class BootstrapLogger:
@@ -166,6 +174,19 @@ def get_startup_info():
     }
 
 @eel.expose
+def get_startup_report():
+    """Returns the high-resolution StartupProfiler report (v1.35.68)."""
+    if profiler:
+        return profiler.get_report()
+    return {"status": "error", "message": "Profiler not initialized"}
+
+@eel.expose
+def heartbeat():
+    """Explicit heartbeat for window health monitoring (v1.35.68)."""
+    GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
+    return {"status": "ok", "timestamp": time.time()}
+
+@eel.expose
 def kill_stale_and_restart():
     """
     Kills all project-related processes (v1.35.98 Integrated) and restarts.
@@ -210,9 +231,11 @@ class Lazy:
 
 # 3. Early Monkey Patching
 try:
+    if profiler: profiler.start_phase("Gevent-Patching")
     from gevent import monkey
     monkey.patch_all()
     log.info("[Bootstrap] gevent monkey-patching successful")
+    if profiler: profiler.end_phase("Gevent-Patching")
 except ImportError:
     log.info("[Bootstrap] gevent not found, continuing without patching")
 
@@ -267,10 +290,14 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
 STARTUP_TIME = time.time()
 CHECKPOINTS = []
 
-def log_checkpoint(msg: str):
+def log_checkpoint(msg: str, tag: str = "generic"):
     elapsed = time.time() - STARTUP_TIME
     CHECKPOINTS.append((msg, elapsed))
-    log.info(f"[Checkpoint] {elapsed:6.3f}s | {msg}")
+    if profiler:
+        profiler.log_checkpoint(msg, tag)
+    else:
+        # Fallback to simple logging
+        log.info(f"[Checkpoint] {elapsed:6.3f}s | {msg}")
 
 # --- Application Initialization Sequence ---
 with StatusBar("Loading Core Components", total=100) as sb:
@@ -288,6 +315,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
 
     sb.update(30, "Registering Core SRC Modules")
     try:
+        if profiler: profiler.start_phase("Core-Modules-Init")
         from src.core import db
         from src.core.db import DB_FILENAME
         from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_cats
@@ -303,6 +331,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
         db.init_db()  # Ensure DB is ready
         all_media = db.get_all_media()
         log.info(f"[Startup-Trace] DB Initialized: {len(all_media)} records found.")
+        if profiler: profiler.end_phase("Core-Modules-Init")
     except Exception as e:
         log.critical(f"Resource load failure: {e}")
         log.error(traceback.format_exc())
@@ -313,6 +342,7 @@ with StatusBar("Loading Core Components", total=100) as sb:
     port = GLOBAL_CONFIG.get("port", 8345)
     eel_kwargs = { 'host': 'localhost', 'size': (1280, 800) }
     sb.update(100, "Initial State OK")
+    if profiler: profiler.end_phase("Bootstrap-Imports")
 
 # --- Eel Communication & Lifecycle ---
 spawn_event = threading.Event()
@@ -414,13 +444,16 @@ def trigger_db_reconnect():
 
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
+    if profiler: profiler.start_phase("App-Launch-Setup")
     # --- PROCESS LIFECYCLE MANAGEMENT (v1.37 Restoration) ---
     from src.core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
     if GLOBAL_CONFIG.get("ui_settings", {}).get("kill_on_startup", True):
         log.info("[Bootstrap] Forcefully cleaning up environment...")
+        if profiler: profiler.start_phase("Process-Cleanup")
         pc.kill_stale_instances(os.getpid())
+        if profiler: profiler.end_phase("Process-Cleanup")
         time.sleep(0.5)
     
     # Singleton Guard
@@ -468,8 +501,13 @@ def start_app():
     try:
         # We specify the port and block=False to allow the watchdog to run.
         # mode='chrome' is the preferred isolated environment.
+        if profiler: profiler.start_phase("Eel-Engine-Start")
         eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
+        if profiler: profiler.end_phase("Eel-Engine-Start")
+
+        if profiler: profiler.end_phase("App-Launch-Setup")
+        if profiler: profiler.start_phase("UI-Sync-Wait")
         
         # --- Automated Probe Trigger ---
         if "--probe" in sys.argv:
@@ -510,6 +548,8 @@ def start_app():
             
         if spawn_event.is_set():
             print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
+            if profiler: profiler.end_phase("UI-Sync-Wait")
+            if profiler: profiler.log_checkpoint("Application Ready", tag="success")
             
     except Exception as e:
         print(f"CRITICAL: Eel launch failure: {e}", flush=True)
@@ -697,23 +737,25 @@ def rtt_ping(data):
     """
     @brief Multi-stage RTT Ping for verification.
     @details Logs receipt of specialized data structures.
+    Supports 'heartbeat' mode for window health monitoring.
     """
     size = len(json.dumps(data))
-    log.info(f"[RTT] Ping received ({size} bytes). Data types: {type(data).__name__}")
-
-    # Show transformation as requested
-    if isinstance(data, dict):
-        log.info(f"[RTT] Stage 1 (Dict): {list(data.keys())}")
-        if any(isinstance(v, dict) for v in data.values()):
-            log.info(f"[RTT] Stage 2 (Dict of Dict): Detected")
-        if any(isinstance(v, list) for v in data.values()):
-            log.info(f"[RTT] Stage 3 (List of Dicts): Detected")
+    is_heartbeat = isinstance(data, dict) and data.get("type") == "heartbeat"
+    
+    if is_heartbeat:
+        # Silently log pulse for watchdog health
+        GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
+    else:
+        log.info(f"[RTT] Ping received ({size} bytes). Data types: {type(data).__name__}")
+        if isinstance(data, dict):
+            log.info(f"[RTT] Stage 1 (Dict): {list(data.keys())}")
 
     return sanitize_json_utf8({
         "status": "pong",
         "timestamp": time.time(),
         "received_size": size,
-        "echo": data
+        "echo": data,
+        "is_heartbeat": is_heartbeat
     })
 
 

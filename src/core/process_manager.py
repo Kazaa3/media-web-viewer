@@ -10,6 +10,13 @@ import logging
 # Use a local logger or the app logger if available
 log = logging.getLogger("app.process")
 
+try:
+    from src.core.logger import stall_watchdog
+except ImportError:
+    import contextlib
+    @contextlib.contextmanager
+    def stall_watchdog(name, threshold=2.0): yield
+
 class ProcessController:
     """
     Centralized controller for MWV process lifecycle.
@@ -23,7 +30,8 @@ class ProcessController:
 
     def kill_stale_instances(self, current_pid: int = None):
         """Discovers and terminates only project-related MWV processes."""
-        print("STDOUT: kill_stale_instances() starting...", flush=True)
+        with stall_watchdog("Process-Cleanup-Stale", threshold=3.0):
+            print("STDOUT: kill_stale_instances() starting...", flush=True)
         if current_pid is None:
             current_pid = os.getpid()
             
@@ -72,14 +80,21 @@ class ProcessController:
 
     def kill_by_port(self, port: int):
         """Kills any process listening on the specified port."""
-        for conn in psutil.net_connections(kind='inet'):
-            if conn.laddr.port == port:
-                try:
-                    proc = psutil.Process(conn.pid)
-                    log.info(f"[Process] Port {port} occupied by {proc.name()} (PID: {conn.pid}). Killing...")
-                    proc.kill()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+        with stall_watchdog(f"Kill-Port-{port}", threshold=1.5):
+            # ON LINUX: psutil.net_connections can be slow. 
+            # We try a more targeted approach if psutil is being difficult.
+            try:
+                for conn in psutil.net_connections(kind='inet'):
+                    if conn.laddr.port == port and conn.pid:
+                        try:
+                            proc = psutil.Process(conn.pid)
+                            log.info(f"[Process] Port {port} occupied by {proc.name()} (PID: {conn.pid}). Killing...")
+                            proc.kill()
+                            proc.wait(timeout=0.2)
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            pass
+            except Exception as e:
+                log.warning(f"[Process] psutil.net_connections failed: {e}")
 
     def acquire_lock(self) -> bool:
         """Acquires the file-based singleton lock. Returns True if successful."""
