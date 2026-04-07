@@ -42,7 +42,6 @@ import sqlite3
 import ast
 import threading
 import threading
-from src.core.process_manager import ProcessController
 from typing import Dict, Any, List, Optional, cast, Tuple
 
 # Record boot time as early as possible
@@ -416,7 +415,9 @@ def trigger_db_reconnect():
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     # --- PROCESS LIFECYCLE MANAGEMENT (v1.37 Restoration) ---
-    pc = ProcessController(PROJECT_ROOT, Path(APP_DATA_DIR))
+    from src.core.process_manager import ProcessController
+    app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
+    pc = ProcessController(PROJECT_ROOT, app_data)
     if GLOBAL_CONFIG.get("ui_settings", {}).get("kill_on_startup", True):
         log.info("[Bootstrap] Forcefully cleaning up environment...")
         pc.kill_stale_instances(os.getpid())
