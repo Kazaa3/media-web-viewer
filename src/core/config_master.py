@@ -238,6 +238,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "sidebar_allowed": True,             # GLOBAL: Erlaubt die Sidebar-Nutzung generell.
         "sidebar_visible": False,            # GLOBAL: Sidebar Start-Zustand (True=Offen).
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
+        
+        # --- FUNKTIONALE MODULE (Engine Toggles) ---
+        "audio_engine_enabled": True,       # GLOBAL: Audio-Wiedergabe & Player-Engine.
+        "video_engine_enabled": True,       # GLOBAL: Video-Wiedergabe & Cinema-Engine.
+        "queue_panel_enabled": True,        # GLOBAL: Media-Queue (Abspielliste).
+        "lyrics_panel_enabled": True,       # GLOBAL: Metadaten/Lyrics-Panel.
+        "mini_player_allowed": True,        # GLOBAL: Floating Mini-Player.
+        "global_search_allowed": True,      # GLOBAL: Suchfunktion im Header.
 
         # --- BEHAVIOR & THEME ---
         "theme": "dark",                     # Farbschema der Anwendung (Standard: Dark/Glass).

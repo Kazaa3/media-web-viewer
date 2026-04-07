@@ -1464,12 +1464,31 @@ function refreshUIVisibility(category) {
 
     // 1. Fetch Window Registry (Matrix)
     // SSOT: config_master.py -> window.CONFIG.ui_settings.ui_visibility_matrix
+    const categoryVisible = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.master_header_visible : true;
+    const footerVisibleGlobal = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.footer_visible : true;
+    const audioEngineEnabled = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.audio_engine_enabled : true;
+    const videoEngineEnabled = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.video_engine_enabled : true;
+
     const matrix = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.ui_visibility_matrix : null;
-    const settings = (matrix && matrix[category]) ? matrix[category] : { 
+    const settings = (matrix && matrix[category]) ? Object.assign({}, matrix[category]) : { 
         "master_header": true, "contextual_pill_nav": true, "module_tab_nav": false, 
         "footer_visible": true, "sidebar_allowed": true, "diagnostics_hud_allowed": true,
-        "sidebar_visible": false 
+        "sidebar_visible": false,
+        "diagnostics_hud_visible": true,
+
+        // --- MODULE MASTER TOGGLES (Funktional) ---
+        "audio_engine_enabled": true,
+        "video_engine_enabled": true,
+        "queue_panel_enabled": true,
+        "lyrics_panel_enabled": true,
+        "mini_player_allowed": true
     };
+
+    // --- OVERRIDE WITH GLOBAL MASTERS ---
+    if (!categoryVisible) settings.master_header = false;
+    if (!footerVisibleGlobal) settings.footer_visible = false;
+    if (category === 'media' && !audioEngineEnabled) settings.footer_visible = false; 
+    if (category === 'video' && !videoEngineEnabled) settings.master_header = false; // Example: block video if disabled
 
     console.log(`[UI-NAV] ENFORCING FORENSIC-6 for category: ${category}`, settings);
 
