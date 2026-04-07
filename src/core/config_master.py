@@ -851,15 +851,31 @@ GLOBAL_CONFIG: Dict[str, Any] = {
 
     # --- UI & NAVIGATION SETISTRY (v1.37 Restoration) ---
     "ui_settings": {
-        "sidebar_visible": False,         # Default to closed for classic restoration
-        "kill_on_startup": True,          # Kill zombie processes on application boot
-        "compact_pill_nav": True,         # Small top contextual bar (ACTIVE)
-        "integrated_tab_bar": False,      # Large center module bar (INACTIVE/REDUNDANT)
+        "sidebar_visible": False,            # Default to closed for professional workspace
+        "kill_on_startup": True,             # Kill zombie processes on application boot
         "theme": "dark",
         "animations_enabled": True,
         "diagnostics_hud_visible": True,
         "sub_nav_persistence": True,
-        "classic_v134_restoration": True # Flag for original layout rules
+        "professional_layout_lock": True,    # [GUI] Enforced Layout Rules (Professional Mode)
+        
+        # --- UI VISIBILITY MATRIX (v1.37.06 Recovery) ---
+        # Controls which bars are rendered per category to prevent menu-clutter.
+        "ui_visibility_matrix": {
+            "media":      { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "library":    { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "database":   { "contextual_pill_nav": False, "module_tab_nav": False },
+            "file":       { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "edit":       { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "system":     { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "parser":     { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "debug":      { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "tests":      { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "tools":      { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "reporting":  { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "logbuch":    { "contextual_pill_nav": True,  "module_tab_nav": False },
+            "video":      { "contextual_pill_nav": False, "module_tab_nav": False }
+        }
     }
 }
 

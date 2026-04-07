@@ -561,6 +561,59 @@ function toggleMenuBar(forceState = null) {
 }
 
 /**
+ * Refreshes the visibility of all global UI navigation components
+ * based on the current active category and the UI Visibility Matrix.
+ */
+async function refreshUIVisibility() {
+    const category = currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+    
+    // 1. Ensure we have the latest registry from backend or window.CONFIG
+    let uiRegistry = {};
+    try {
+        if (typeof eel !== 'undefined' && typeof eel.get_ui_settings === 'function') {
+            uiRegistry = await eel.get_ui_settings()();
+        } else if (window.CONFIG && window.CONFIG.ui_settings) {
+            uiRegistry = window.CONFIG.ui_settings;
+        }
+    } catch (e) {
+        console.warn("[UI-NAV] Failed to fetch UI registry for refresh:", e);
+        if (window.CONFIG && window.CONFIG.ui_settings) uiRegistry = window.CONFIG.ui_settings;
+    }
+
+    const matrix = uiRegistry.ui_visibility_matrix || {};
+    const settings = matrix[category] || { contextual_pill_nav: true, module_tab_nav: false };
+
+    console.log(`[UI-NAV] Refreshing visibility for ${category}:`, settings);
+
+    // 2. Control ContextualPillBar (sub-nav-container)
+    const pillNav = document.getElementById('sub-nav-container');
+    if (pillNav) {
+        // Only show if the matrix allows AND the menu system is visible
+        const shouldShowPill = settings.contextual_pill_nav && menuSystemVisible;
+        pillNav.style.display = shouldShowPill ? 'flex' : 'none';
+        pillNav.style.opacity = shouldShowPill ? '1' : '0';
+        pillNav.style.pointerEvents = shouldShowPill ? 'auto' : 'none';
+        
+        // If visible, ensure it has content
+        if (shouldShowPill && pillNav.innerHTML.trim() === '') {
+            updateGlobalSubNav(category);
+        }
+    }
+
+    // 3. Control ModuleTabNavigator (player-sub-nav-shell)
+    const tabNav = document.getElementById('player-sub-nav-shell');
+    if (tabNav) {
+        const shouldShowTab = settings.module_tab_nav;
+        tabNav.style.display = shouldShowTab ? 'flex' : 'none';
+        tabNav.style.opacity = shouldShowTab ? '1' : '0';
+    }
+
+    // 4. Update core layout offsets
+    if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
+}
+window.refreshUIVisibility = refreshUIVisibility;
+
+/**
  * Recalculates and applies layout offsets for the main content area.
  * Ensures vertical alignment is maintained when header bars are toggled.
  */
@@ -728,6 +781,9 @@ function switchMainCategory(category, btn) {
 
     // Dynamically populate sub-navigation header pills
     updateGlobalSubNav(category);
+
+    // [v1.37.06] Centralized Visibility Refresh
+    refreshUIVisibility();
 }
 
 /**
@@ -1324,32 +1380,15 @@ window.addEventListener('click', () => hideContextMenu());
 window.addEventListener('scroll', () => hideContextMenu(), true);
 
 /**
- * Global UI Initialization for v1.37 Restoration
+ * Global UI Initialization for v1.37 Restoration (Professional Logic)
  */
 window.addEventListener('DOMContentLoaded', async () => {
-    // 1. Fetch Backend UI Registry (Persistent SSOT)
-    let uiSettings = { compact_pill_nav: true, integrated_tab_bar: false, sidebar_visible: false };
-    try {
-        if (typeof eel !== 'undefined' && typeof eel.get_ui_settings === 'function') {
-            uiSettings = await eel.get_ui_settings()();
-            console.log("[UI-INIT] UI Settings Loaded:", uiSettings);
-        }
-    } catch (e) {
-        console.warn("[UI-INIT] Could not fetch UI settings, using defaults.", e);
-    }
+    // 1. Sync Base State
+    const savedCategory = localStorage.getItem('mwv_active_category') || 'media';
+    currentMainCategory = savedCategory;
 
-    // 2. Apply Navigation Bar Visibility
-    const pillNav = document.getElementById('sub-nav-container');
-    const tabNav = document.getElementById('player-sub-nav-shell');
-
-    if (pillNav) {
-        pillNav.style.display = uiSettings.compact_pill_nav ? 'flex !important' : 'none !important';
-        pillNav.style.opacity = uiSettings.compact_pill_nav ? '1' : '0';
-    }
-    if (tabNav) {
-        tabNav.style.display = uiSettings.integrated_tab_bar ? 'flex !important' : 'none !important';
-        tabNav.style.opacity = uiSettings.integrated_tab_bar ? '1' : '0';
-    }
+    // 2. Initial Visibility Refresh (SSOT)
+    await refreshUIVisibility();
 
     // 3. Restore Menu System visibility
     const savedMenuState = localStorage.getItem('mwv_menu_system_visible');
@@ -1357,17 +1396,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         menuSystemVisible = (savedMenuState === 'true');
     }
 
-    // Apply initial visibility
+    // Apply initial visibility (Hardened Persistence)
     if (typeof toggleMenuBar === 'function') {
         toggleMenuBar(menuSystemVisible);
     }
 
-    // 4. Reset Sidebar State (v1.37 Restoration - Default Hidden)
-    sidebarVisible = uiSettings.sidebar_visible || false;
+    // 4. Reset Sidebar State (Professional Workspace Default: Hidden)
+    const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
+    sidebarVisible = config.sidebar_visible || false;
     
     if (typeof applySidebarState === 'function') {
         applySidebarState();
     }
     
     window.__mwv_ui_nav_loaded = true;
+    console.info("[UI-INIT] UI Orchestration Layer Ready.");
 });
