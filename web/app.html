@@ -122,7 +122,7 @@
             <div class="hud-pill-mini">PID: <span id="diag-pid" style="color: #007aff; font-weight: 900;">--</span>
             </div>
             <span style="opacity: 0.2;">|</span>
-            <div class="hud-pill-mini">BOOT: <span id="diag-boot" style="color: #ff9500; font-weight: 800;">--s</span>
+            <div class="hud-pill-mini" onclick="if(typeof showStartupDashboard === 'function') showStartupDashboard()" style="cursor: pointer;" title="Show Startup Performance">BOOT: <span id="diag-boot" style="color: #ff9500; font-weight: 800;">--s</span>
             </div>
             <span style="opacity: 0.2;">|</span>
             <div class="hud-pill-mini">UP: <span id="diag-up" style="color: #2ecc71; font-weight: 800;">--</span></div>

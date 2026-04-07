@@ -34,6 +34,19 @@ function startBootWatchdog() {
         }
     }, tickInterval);
 }
+// --- Heartbeat & Health Monitoring (v1.35.68) ---
+let __mwv_heartbeat_timer = null;
+function startHeartbeat() {
+    if (typeof eel === 'undefined') return;
+    console.log("[Health] Starting Heartbeat Service...");
+    __mwv_heartbeat_timer = setInterval(async () => {
+        try {
+            await eel.heartbeat()();
+        } catch (e) {
+            console.warn("[Health] Heartbeat failed (Backend possibly busy/restarting)");
+        }
+    }, 5000); // 5s pulse
+}
 
 window.addEventListener('DOMContentLoaded', () => {
     try {
@@ -316,6 +329,8 @@ window.addEventListener('DOMContentLoaded', async () => {
                     }
                 }, 2000);
             }
+            // 5. Start Services
+            startHeartbeat();
         }
 
         // 3. Fetch and Display Startup Time
@@ -399,3 +414,68 @@ function run_frontend_probe() {
         }, 2000);
     }
 }
+
+/**
+ * [DIAGNOSTICS] Startup Performance Dashboard (v1.35.68)
+ * Visualizes the bootstrap timeline and phase durations.
+ */
+async function showStartupDashboard() {
+    if (typeof eel === 'undefined') return;
+    try {
+        const report = await eel.get_startup_report()();
+        console.table(report.checkpoints);
+        
+        // Create modal overlay if it doesn't exist
+        let modal = document.getElementById('startup-diag-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'startup-diag-modal';
+            modal.className = 'modal-overlay';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-container" style="max-width: 800px; max-height: 80vh; overflow-y: auto; background: #0a0a0f; color: #fff; border: 1px solid #1a1a2f; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+                    <div class="modal-header" style="border-bottom: 1px solid #1a1a2f; padding-bottom: 15px;">
+                        <h2 style="margin:0; font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: #00ffcc;">BOOTSTRAP PERFORMANCE ANALYTICS</h2>
+                        <button onclick="document.getElementById('startup-diag-modal').remove()" style="background:none; border:none; color:#ff3366; font-size:1.5rem; cursor:pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body" id="startup-diag-body" style="padding: 20px 0;">
+                        <div style="font-family: monospace; font-size: 11px; color: #888; margin-bottom: 20px;">
+                            VERSION: ${report.system_info.python} | PLATFORM: ${report.system_info.platform} | PID: ${report.system_info.pid}
+                        </div>
+                        <h3 style="font-size: 0.9rem; color: #aaa; margin-bottom: 15px; border-left: 3px solid #007aff; padding-left: 10px;">TOTAL BOOT: <span style="color: #fff;">${report.total_boot_sec}s</span></h3>
+                        
+                        <div id="startup-timeline" style="display: flex; flex-direction: column; gap: 8px;">
+                            ${Object.entries(report.phases).map(([name, data]) => `
+                                <div style="background: rgba(255,255,255,0.03); border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-weight: 700; color: #eee; font-size: 12px;">${name}</span>
+                                        <span style="font-size: 10px; color: #666;">Start: ${data.start.toFixed(2)}</span>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span style="font-family: 'JetBrains Mono', monospace; color: ${data.duration > 1.0 ? '#ff9500' : '#2ecc71'}; font-weight: 900;">${data.duration ? data.duration.toFixed(3) + 's' : 'Running...'}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <h3 style="font-size: 0.9rem; color: #aaa; margin: 25px 0 15px; border-left: 3px solid #ff3366; padding-left: 10px;">CHECKPOINTS</h3>
+                        <div style="font-family: monospace; font-size: 10px; color: #999; line-height: 1.6; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                            ${report.checkpoints.map(c => `
+                                <div style="display: grid; grid-template-columns: 60px 1fr; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.02); padding: 4px 0;">
+                                    <span style="color: #555;">${c.elapsed.toFixed(3)}s</span>
+                                    <span>${c.msg} <span style="opacity: 0.3; font-size: 8px;">[${c.tag}]</span></span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+    } catch (e) {
+        console.error("Failed to show startup dashboard:", e);
+    }
+}
+
+// Map globally for sidebar access
+window.showStartupDashboard = showStartupDashboard;
