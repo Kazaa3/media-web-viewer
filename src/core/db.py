@@ -392,7 +392,9 @@ def insert_media(item_dict):
         ))
         conn.commit()
         last_id = cursor.lastrowid
-        log.info(f"[DB] [INSERT-SUCCESS] {item_dict['name']} | Type: {item_dict['type']} | ID: {last_id}")
+        if last_id and last_id % 50 == 0:
+            log.info(f"[DB] [INSERT-PROGRESS] Processed {last_id} items...")
+        log.debug(f"[DB] [INSERT-SUCCESS] {item_dict['name']} | Type: {item_dict['type']} | ID: {last_id}")
         conn.close()
         return last_id
     except sqlite3.IntegrityError as e:

@@ -57,6 +57,12 @@ function appendUiTrace(msg, category = 'INFO') {
 
     div.innerText = msg;
     container.appendChild(div);
+
+    // [DOM-Cap] v1.35.68: Limit to 100 divs to prevent DOM-freeze
+    if (container.children.length > 100) {
+        container.removeChild(container.firstChild);
+    }
+    
     container.scrollTop = container.scrollHeight;
 }
 

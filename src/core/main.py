@@ -4797,7 +4797,8 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                             folder_id_map[d] = obj_id
                             count_indexed += 1
                             if is_blackbox: skip_subpaths.add(d)
-                            if getattr(eel, 'append_debug_log', None):
+                            # Batch UI Updates (v1.35.68)
+                            if count_indexed % 10 == 0 and getattr(eel, 'append_debug_log', None):
                                 eel.append_debug_log(f"Detected: {d.name} ({item_dict.get('category')})", "DB-INFO")
                     except Exception as e:
                         log.error(f" [Scan] Obj Error {d.name}: {e}")
@@ -4832,8 +4833,9 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
 
                         db.insert_media(item_dict)
                         count_indexed += 1
-                        if getattr(eel, 'append_debug_log', None):
-                            eel.append_debug_log(f"Indexed: {f.name}", "DB-SUCCESS")
+                        # Batch UI Updates (v1.35.68)
+                        if count_indexed % 10 == 0 and getattr(eel, 'append_debug_log', None):
+                            eel.append_debug_log(f"Indexed: {f.name} (Total: {count_indexed})", "DB-SUCCESS")
                     except Exception as e:
                         log.error(f" [Scan] File Error {f.name}: {e}")
 
