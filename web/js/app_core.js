@@ -220,7 +220,10 @@ window.addEventListener('DOMContentLoaded', async () => {
                 shellId: 'state-orchestrated-active-queue-list-container', 
                 fragmentId: 'player-main-viewport', 
                 fragmentPath: 'fragments/player_queue.html',
-                onActivate: () => { if (typeof renderPlaylist === 'function') renderPlaylist(); }
+                onActivate: () => { 
+                    if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+                    if (typeof renderPlaylist === 'function') renderPlaylist(); 
+                }
             });
             WM.register('library', { 
                 shellId: 'coverflow-library-panel', 

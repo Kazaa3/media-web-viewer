@@ -47,11 +47,11 @@ let currentMainCategory = 'media';
 
 window.__mwv_ui_nav_loaded = true;
 
-let sidebarVisible = false; // Default to closed for Classic v1.34 Restoration
+let sidebarVisible = false; // [v1.37.52] Default to CLOSED for Elite Restoration
+let diagnosticsSidebarVisible = false; 
 let isNavigating = false;   // Global lock for tab switching
 let navTimeout = null;      // Safety timer for lock release
 let menuSystemVisible = true; // Default to open for UI discovery
-let diagnosticsSidebarVisible = false;
 
 // Global Diagnostics Orchestration (v1.37.10 Modular)
 const DIAGNOSTICS_SIDEBAR_STORAGE_KEY = 'mwv_diag_overlay_visible';
@@ -507,7 +507,13 @@ async function refreshUIVisibility() {
     }
 
     const matrix = uiRegistry.ui_visibility_matrix || {};
-    const settings = matrix[category] || { master_header: true, contextual_pill_nav: true, module_tab_nav: false };
+    
+    // [v1.37.52 Hardened Defaults] Ensure Media (Player) always shows its sub-menus
+    const settings = matrix[category] || { 
+        master_header: true, 
+        contextual_pill_nav: true, 
+        module_tab_nav: true 
+    };
 
     console.log(`[UI-NAV] Refreshing visibility for ${category}:`, settings);
 
@@ -562,14 +568,7 @@ async function refreshUIVisibility() {
     }
 
     // [v1.37.06] Sidebar Sync
-    const sidebar = document.getElementById('main-sidebar');
-    const splitter = document.getElementById('main-splitter');
-    if (sidebar) {
-        sidebar.style.display = 'flex'; // Always flex, visibility handled by .collapsed
-    }
-    if (splitter) {
-        splitter.style.display = 'block';
-    }
+    if (typeof applySidebarState === 'function') applySidebarState();
 
     // 4. Update core layout offsets
     if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();

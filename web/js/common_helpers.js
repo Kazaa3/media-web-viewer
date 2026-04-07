@@ -43,8 +43,8 @@ async function syncCoreRegistry() {
                 // Set sidebar default from config (v1.37 Restoration logic)
                 const ui = config.ui_settings || {};
                 if (ui.sidebar_visible !== undefined && localStorage.getItem('mwv_sidebar_visible') === null) {
-                    console.info("[UI-NAV] Initializing Sidebar State from GLOBAL_CONFIG:", ui.sidebar_visible);
-                    window.sidebarVisible = ui.sidebar_visible;
+                    console.info("[UI-NAV] Initializing Sidebar State (Default to CLOSED v1.37):", false);
+                    window.sidebarVisible = false;
                     if (typeof applySidebarState === 'function') setTimeout(applySidebarState, 100);
                 }
             }

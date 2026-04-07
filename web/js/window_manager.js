@@ -72,6 +72,11 @@ const WindowManager = {
                 shell.style.display = 'flex';
                 shell.classList.add('active');
                 
+                // [v1.37.52] Force Global UI Logic Sync
+                const categoryMap = { 'player': 'media', 'library': 'library', 'editor': 'edit', 'database': 'database' };
+                const cat = categoryMap[name] || 'media';
+                if (typeof refreshUIVisibility === 'function') refreshUIVisibility(cat);
+                
                 // Ensure correct geometry for the shell (v1.37.52 Engine)
                 shell.style.height = '100%';
                 shell.style.width = '100%';
