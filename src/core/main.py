@@ -4723,9 +4723,13 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
     try:
         for scan_root in scan_roots:
             log.info(f" [Scan] Starting scan of: {scan_root}")
+            max_files = GLOBAL_CONFIG.get("scan_settings", {}).get("max_files", 50000)
             for root, dirs, files in os.walk(str(scan_root), followlinks=False):
                 total_traversed += (len(files) + len(dirs))
-                if total_traversed > 50000: break # Safety cap 
+                if total_traversed > max_files:
+                    log.warning(f"[DB-SCAN] Safety Cap Triggered ({max_files} items). Stopping traversal.")
+                    dirs[:] = [] # Stop os.walk from recursing further
+                    break
                 
                 d = Path(root)
                 if d == scan_root: continue
@@ -4739,10 +4743,12 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
                 # A. Folders as Media (Albums)
                 m_count = sum(1 for f in files if Path(f).suffix.lower() in all_exts)
                 if m_count > 0:
+                    # Map folder category (default to audio for albums, or just 'other')
+                    cat = 'audio' if any(f.lower().endswith(('.mp3', '.flac', '.m4a', '.wav')) for f in files) else 'video'
                     collected_items.append({
-                        'name': d.name, 'path': str(d), 'category': 'Unknown', 
-                        'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
-                        'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
+                        'name': f"[FOLDER] {d.name}", 'path': str(d), 'category': cat,
+                         'is_mock': 0, 'mock_stage': 0, 'full_tags': {}, 'chapters': [],
+                         'type': 'folder', 'media_type': 'album' if m_count > 1 else 'other'
                     })
                     count_indexed += 1
 
