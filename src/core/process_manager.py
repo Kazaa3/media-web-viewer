@@ -11,7 +11,7 @@ import logging
 log = logging.getLogger("app.process")
 
 try:
-    from src.core.logger import stall_watchdog
+    from core.logger import stall_watchdog
 except ImportError:
     import contextlib
     @contextlib.contextmanager

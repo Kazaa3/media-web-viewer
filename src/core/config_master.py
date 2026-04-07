@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 from importlib.metadata import distributions
 
 try:
-    from src.core import hardware_detector
+    from core import hardware_detector
     _HW_DETECTOR = True
 except ImportError:
     _HW_DETECTOR = False
@@ -45,6 +45,9 @@ BD_ISO_TRANSCODE = {".iso", ".udf"} # Distinguishing BD usually requires probe, 
 ALL_VIDEO_EXTENSIONS = VIDEO_NATIVE | VIDEO_HD_TRANSCODE | VIDEO_PAL_TRANSCODE | VIDEO_NTSC_TRANSCODE | DVD_ISO_TRANSCODE | BD_ISO_TRANSCODE
 VIDEO_EXTENSIONS = ALL_VIDEO_EXTENSIONS
 
+# DISK IMAGE CAPABILITIES (Others)
+DISK_IMAGE_EXTENSIONS = {'.iso', '.bin', '.img', '.cue', '.nrg', '.mdf', '.toast', '.ccd', '.daa', '.evo', '.map', '.bup'}
+
 # ADDITIONAL CAPABILITIES (v1.35.98 Centralized)
 PICTURE_EXTENSIONS = {
     '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico'
@@ -54,7 +57,7 @@ ARCHIVE_EXTENSIONS = {
 }
 DOCUMENT_EXTENSIONS = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html', '.htm'}
 EBOOK_EXTENSIONS = {'.epub', '.mobi', '.azw', '.fb2'}
-DISK_IMAGE_EXTENSIONS = {'.iso', '.bin', '.img', '.cue', '.nrg', '.mdf', '.toast', '.ccd', '.daa', '.evo', '.map', '.bup'}
+
 PLAYLIST_EXTENSIONS = {'.m3u', '.m3u8'}
 
 
@@ -177,7 +180,7 @@ def background_version_discovery(config_dict: dict):
     import threading
     def worker():
         try:
-            from src.core.startup_monitor import profiler
+            from core.startup_monitor import profiler
             if profiler: profiler.start_phase("Background-Version-Discovery")
         except: pass
         

@@ -41,20 +41,12 @@ import glob
 import sqlite3
 import ast
 import threading
-import threading
 from typing import Dict, Any, List, Optional, cast, Tuple
 
 # --- PERFORMANCE PROFILING ---
-# Record boot time as early as possible
 INITIAL_START_TIME = time.time()
 APP_START_TIME = INITIAL_START_TIME
-
-try:
-    from src.core.startup_monitor import profiler
-    profiler.set_base_time(INITIAL_START_TIME)
-    profiler.start_phase("Bootstrap-Imports")
-except ImportError:
-    profiler = None
+profiler = None
 
 # --- BOOTSTRAP LOGGER (Safety for Environment Swaps) ---
 class BootstrapLogger:
@@ -116,6 +108,15 @@ def ensure_stable_environment():
 # --- EXECUTE GUARD IMMEDIATELY ---
 if __name__ == "__main__":
     ensure_stable_environment()
+
+# --- INITIALIZE PROFILER (Post-Guard) ---
+try:
+    from core.startup_monitor import profiler
+    if profiler:
+        profiler.set_base_time(INITIAL_START_TIME)
+        profiler.start_phase("Bootstrap-PostGuard")
+except ImportError:
+    profiler = None
 
 # --- IF WE ARE HERE, THE ENVIRONMENT IS STABLE ---
 # 2. Main Imports
@@ -316,10 +317,10 @@ with StatusBar("Loading Core Components", total=100) as sb:
     sb.update(30, "Registering Core SRC Modules")
     try:
         if profiler: profiler.start_phase("Core-Modules-Init")
-        from src.core import db
-        from src.core.db import DB_FILENAME
-        from src.core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_cats
-        from src.core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
+        from core import db
+        from core.db import DB_FILENAME
+        from core.models import MASTER_CAT_MAP, TECH_MARKERS, get_allowed_internal_cats
+        from core.config_master import GLOBAL_CONFIG, set_config_value, get_config_summary
         
         # Core data initialization (no heavy parsing yet)
         db.init_db()  
@@ -446,7 +447,7 @@ def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     if profiler: profiler.start_phase("App-Launch-Setup")
     # --- PROCESS LIFECYCLE MANAGEMENT (v1.37 Restoration) ---
-    from src.core.process_manager import ProcessController
+    from core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
     if GLOBAL_CONFIG.get("ui_settings", {}).get("kill_on_startup", True):
