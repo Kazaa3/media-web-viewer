@@ -296,6 +296,22 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "sidebar_visible": False,            # GLOBAL: Sidebar Start-Zustand (True=Offen).
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
         
+        # --- GRANULAR UI FRAGMENT FLAGS (v1.38.02) ---
+        "ui_fragments": {
+            "player": True,
+            "library": True,
+            "video": True,
+            "browser": True,
+            "edit": True,
+            "options": True,
+            "parser": True,
+            "debug": True,
+            "tests": True,
+            "tools": True,
+            "reporting": True,
+            "logbuch": True
+        },
+        
         # --- FUNKTIONALE MODULE (Engine Toggles) ---
         "audio_engine_enabled": True,       # GLOBAL: Audio-Wiedergabe & Player-Engine.
         "video_engine_enabled": True,       # GLOBAL: Video-Wiedergabe & Cinema-Engine.
