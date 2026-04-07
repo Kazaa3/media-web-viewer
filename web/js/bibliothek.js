@@ -152,19 +152,15 @@ async function renderLibrary() {
     let projectedItems = [...(window.__mwv_all_library_items || [])];
     const initialCount = projectedItems.length;
     
-    // [FE-FORENSIC] Filter Stages (Illumination)
-    if (libraryFilter !== 'all') {
-        projectedItems = projectedItems.filter(i => i.category === libraryFilter);
-        console.log(`[FE-AUDIT] Filter Category (${libraryFilter}): ${initialCount} -> ${projectedItems.length}`);
-    }
+    // [FE-FORENSIC] Filter Stage 1: Preliminary Cleanup (v1.35.68)
     if (librarySearch) {
         const search = librarySearch.toLowerCase();
         projectedItems = projectedItems.filter(i => (i.name || '').toLowerCase().includes(search));
         console.log(`[FE-AUDIT] Filter Search (${search}): ${projectedItems.length}`);
     }
     const initialRaw = projectedItems.length;
-    if (initialRaw === 0) {
-        console.error("[FE-FORENSIC] Library Memory is EMPTY. Stage Load Fault?");
+    if (initialRaw === 0 && (window.__mwv_all_library_items || []).length > 0) {
+        console.warn("[FE-FORENSIC] Early filter dropped all items. Check search/category sync.");
     }
 
     // 1. Hydration Mode Filter (Mock/Real/Both) - v1.35.68
