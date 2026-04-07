@@ -22,6 +22,22 @@ from src.parsers import media_parser
 from src.core import logger
 from src.core.config_master import GLOBAL_CONFIG
 
+# --- SSOT: TECHNICAL MEDIA CAPABILITY GROUPS (v1.38.01) ---
+# These constants define the technical handling requirements (Native vs. Transcode).
+# Use uppercase as per architectural standard.
+
+# AUDIO CAPABILITIES
+AUDIO_NATIVE = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac"}
+AUDIO_TRANSCODE = {".wav", ".alac", ".wma", ".aiff", ".dsf", ".dff", ".dsd", ".ac3", ".dts"}
+ALL_AUDIO_EXTENSIONS = AUDIO_NATIVE | AUDIO_TRANSCODE
+
+# VIDEO CAPABILITIES (Pipeline Categorization)
+VIDEO_NATIVE = {".mp4", ".webm", ".ogv"}
+VIDEO_HD_TRANSCODE = {".mkv", ".mov", ".ts", ".m2ts"}
+VIDEO_PAL_TRANSCODE = {".vob", ".mpg", ".mpeg", ".m2v"}
+VIDEO_NTSC_TRANSCODE = {".asf", ".wmv", ".3gp", ".3g2"}
+ALL_VIDEO_EXTENSIONS = VIDEO_NATIVE | VIDEO_HD_TRANSCODE | VIDEO_PAL_TRANSCODE | VIDEO_NTSC_TRANSCODE
+
 # --- ULTIMATE SSOT REGISTRIES (v1.37.07 Consolidated) ---
 # These registries are the absolute source of truth for all media categorization.
 # We enforce lowercase English keys internally (audio, multimedia, etc.).
@@ -30,12 +46,18 @@ MASTER_CAT_MAP = {
     "audio": {
         "internal": "audio",
         "aliases": ["audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", "musik", "music", "song", "soundtrack", "radio"],
-        "extensions": {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".alac", ".opus", ".aac", ".wma", ".m4b", ".aiff", ".ac3", ".dts", ".pcm", ".ra", ".rm", ".dsf", ".dff", ".dsd"}
+        "extensions": ALL_AUDIO_EXTENSIONS,
+        "native": AUDIO_NATIVE,
+        "transcode": AUDIO_TRANSCODE
     },
     "video": {
         "internal": "video",
         "aliases": ["multimedia", "video", "film", "serie", "tv", "movie", "tv show", "musikvideos", "animes", "cartoons", "documentary", "dok", "dokumentation", "concert", "konzerte", "3d", "4k", "uhd", "ultra hd"],
-        "extensions": {".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2", ".ogv", ".mts", ".m2ts", ".ts", ".m2t", ".m2v", ".divx", ".xvid", ".vob", ".dat", ".rmvb", ".asf"}
+        "extensions": ALL_VIDEO_EXTENSIONS,
+        "native": VIDEO_NATIVE,
+        "transcode_hd": VIDEO_HD_TRANSCODE,
+        "transcode_pal": VIDEO_PAL_TRANSCODE,
+        "transcode_ntsc": VIDEO_NTSC_TRANSCODE
     },
     "pictures": {
         "internal": "pictures",
@@ -75,8 +97,8 @@ MASTER_CAT_MAP = {
 }
 
 # Calculated Logic Extensions (REDUNDANCY CLEANUP v1.37.07)
-AUDIO_EXTENSIONS = MASTER_CAT_MAP["audio"]["extensions"]
-VIDEO_EXTENSIONS = MASTER_CAT_MAP["video"]["extensions"]
+AUDIO_EXTENSIONS = ALL_AUDIO_EXTENSIONS
+VIDEO_EXTENSIONS = ALL_VIDEO_EXTENSIONS
 PICTURE_EXTENSIONS = MASTER_CAT_MAP["pictures"]["extensions"]
 DOCUMENT_EXTENSIONS = MASTER_CAT_MAP["documents"]["extensions"]
 EBOOK_EXTENSIONS = MASTER_CAT_MAP["ebooks"]["extensions"]
@@ -85,10 +107,9 @@ PLAYLIST_EXTENSIONS = MASTER_CAT_MAP["playlists"]["extensions"]
 
 # --- Legacy Compatibility Aliases (v1.37.08) ---
 # Restored for backward compatibility with main.py and format_utils.py
-DSD_EXTENSIONS = {ext for ext in AUDIO_EXTENSIONS if ext in {".dsf", ".dff", ".dsd"}}
+DSD_EXTENSIONS = AUDIO_TRANSCODE & {".dsf", ".dff", ".dsd"}
 HDDVD_EXTENSIONS = {".evo", ".map", ".bup"} # Subset of disk_images
-ALL_AUDIO_EXTENSIONS = AUDIO_EXTENSIONS 
-ALL_VIDEO_EXTENSIONS = VIDEO_EXTENSIONS | DISK_IMAGE_EXTENSIONS | HDDVD_EXTENSIONS
+# ALL_AUDIO_EXTENSIONS and ALL_VIDEO_EXTENSIONS are already defined above.
 
 TECH_MARKERS = {
     "transcoded": ["_transcoded", ".mp4_transcoded"],
