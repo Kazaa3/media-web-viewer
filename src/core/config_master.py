@@ -21,6 +21,27 @@ try:
 except ImportError:
     _HW_DETECTOR = False
 
+# --- SSOT: TECHNICAL MEDIA CAPABILITY GROUPS (v1.38.01) ---
+# These constants define the technical handling requirements (Native vs. Transcode).
+# Use uppercase as per architectural standard.
+
+# AUDIO CAPABILITIES
+AUDIO_NATIVE = {".mp3", ".m4a", ".aac", ".ogg", ".opus", ".flac"}
+AUDIO_TRANSCODE = {".wav", ".alac", ".wma", ".aiff", ".dsf", ".dff", ".dsd", ".ac3", ".dts"}
+ALL_AUDIO_EXTENSIONS = AUDIO_NATIVE | AUDIO_TRANSCODE
+
+# VIDEO CAPABILITIES (Pipeline Categorization)
+VIDEO_NATIVE = {".mp4", ".webm", ".ogv"}
+VIDEO_HD_TRANSCODE = {".mkv", ".mov", ".ts", ".m2ts"}
+VIDEO_PAL_TRANSCODE = {".vob", ".mpg", ".mpeg", ".m2v"}
+VIDEO_NTSC_TRANSCODE = {".asf", ".wmv", ".3gp", ".3g2"}
+
+# DISK IMAGE CAPABILITIES (ISO/Archives)
+DVD_ISO_TRANSCODE = {".iso", ".img", ".nrg", ".bin", ".cue"}
+BD_ISO_TRANSCODE = {".iso", ".udf"} # Distinguishing BD usually requires probe, but we group here
+
+ALL_VIDEO_EXTENSIONS = VIDEO_NATIVE | VIDEO_HD_TRANSCODE | VIDEO_PAL_TRANSCODE | VIDEO_NTSC_TRANSCODE | DVD_ISO_TRANSCODE | BD_ISO_TRANSCODE
+
 try:
     from dotenv import load_dotenv
     _DOTENV_LOADED = True
@@ -321,9 +342,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "player_settings": {
         "force_native_audio": True,
         "media_prefixes": ["/media/", "media/"],
-        "video_extensions": [".mp4", ".mkv", ".webm", ".ogg", ".mov", ".avi", ".m4v", ".iso", ".ts", ".m2ts"],
+        "video_extensions": list(ALL_VIDEO_EXTENSIONS),
         "disk_image_extensions": [".iso", ".bin", ".img"],
-        "audio_extensions": [".mp3", ".flac", ".m4a", ".wav", ".ogg", ".m4b"],
+        "audio_extensions": list(ALL_AUDIO_EXTENSIONS),
         "hardware_encoders_priority": ["nvenc", "vaapi", "qsv"]
     },
     
