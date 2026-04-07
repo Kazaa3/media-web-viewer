@@ -97,7 +97,7 @@ BRANCH_MAP = {
     "video": ["video", "disk_images"]
 }
 
-SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv"}
+SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv", "pymediainfo", "ffprobe", "ffmpeg"}
 
 # --- ULTIMATE AUDITING LOGIC (v1.35.76) ---
 

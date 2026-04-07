@@ -274,6 +274,10 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
              continue
         is_slow = step_name in SLOW_PARSERS
         fast_scan = PARSER_CONFIG.get("fast_scan_enabled", True)
+        
+        # [Fast-Audit] Round 5: Enforce strict timeouts for lightweight mode
+        step_timeout = 0.2 if mode == 'lightweight' else 2.0 
+        
         if is_slow and mode != 'full' and fast_scan:
             log.debug(f"⏩ [Fast-Scan] Skipping slow parser '{step_name}' for '{filename}'")
             continue

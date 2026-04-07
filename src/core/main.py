@@ -4740,6 +4740,11 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
             # For unknown, we might want a limited set or all? Let's just track it's enabled.
             pass
 
+        # Fast-Scan Override (v1.35.68 Round 5)
+        # We force 'lightweight' to avoid 10-minute hangs on 700+ files
+        parser_mode = 'lightweight'
+        log.info(f"[DB-SCAN] EMERGENCY: Forcing mode={parser_mode} for index-storm protection.")
+
         # RECOVERY: Ensure normalized sets are used
         all_exts = {e.lower() for e in all_exts}
         ext_list = sorted(list(all_exts))
@@ -4790,7 +4795,8 @@ def _scan_media_execution(dir_path: str | None = None, clear_db: bool = True):
 
                 if is_blackbox or is_general_object:
                     try:
-                        item = MediaItem(d.name, d)
+                        # [Fast-Audit] Round 5: Force lightweight mode at constructor level
+                        item = MediaItem(d.name, d, is_mock=False)
                         item_dict = item.to_dict()
                         obj_id = db.insert_media(item_dict)
                         if obj_id:
