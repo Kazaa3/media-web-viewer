@@ -586,13 +586,19 @@ async function refreshUIVisibility() {
     // 2. Control ContextualPillBar (sub-nav-container)
     const pillNav = document.getElementById('sub-nav-container');
     if (pillNav) {
-        // Only show if the matrix allows AND the menu system is visible
         const shouldShowPill = settings.contextual_pill_nav && menuSystemVisible;
+        const prevState = pillNav.style.display;
+        
         pillNav.style.display = shouldShowPill ? 'flex' : 'none';
         pillNav.style.opacity = shouldShowPill ? '1' : '0';
         pillNav.style.pointerEvents = shouldShowPill ? 'auto' : 'none';
         
-        // [v1.37.06 Recovery] Force populate on refresh to ensure no empty bars
+        if (prevState !== pillNav.style.display) {
+            console.log(`[UI-NAV] Sub-Nav visibility toggled to ${pillNav.style.display} for ${category}`);
+            mwv_trace('DOM-UI', 'PILL-BAR-VISIBILITY', { state: pillNav.style.display, category });
+        }
+        
+        // [v1.37.06 Recovery] Population Cycle
         updateGlobalSubNav(category);
     }
 
@@ -801,8 +807,9 @@ function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
 
-    // [v1.37.06] Defensive category fallback
-    category = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+    // [v1.37.06] Forensic category normalization
+    const normalizedCategory = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+    console.log(`[UI-NAV] Population request for category: [${normalizedCategory}] (passed: ${category})`);
 
     // Clear previous
     container.innerHTML = '';
@@ -878,46 +885,34 @@ function updateGlobalSubNav(category) {
         ]
     };
 
-    const entries = subNavMap[category];
+    const entries = subNavMap[normalizedCategory];
     if (!entries) {
-        container.style.display = 'none';
-        if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
+        console.warn(`[UI-NAV] No entry map for ${normalizedCategory}.`);
         return;
     }
 
     // Populate the container
     container.innerHTML = entries.map(item => `
-        <!-- [GUI] SUB-MENU BAR: Contextual Navigation Pills (e.g., Queue/Playlist/Lyrics) -->
         <button id="global-sub-nav-${item.id}" 
                 class="sub-pill-btn" 
-                onclick="event.stopPropagation(); ${item.action}; updateSubNavActiveState('${item.id}')">
+                onclick="event.stopPropagation(); console.log('[UI-NAV] Clicked sub-item: ${item.id}'); ${item.action}; updateSubNavActiveState('${item.id}')">
             ${item.label}
         </button>
     `).join('');
 
-    // Automatically show if the main menu system is active
-    if (menuSystemVisible) {
-        container.style.display = 'flex';
-        // Force reflow for opacity transition
-        container.offsetHeight;
-        container.style.opacity = '1';
-        container.style.transform = 'translateY(0)';
-    } else {
-        container.style.display = 'none';
-        container.style.opacity = '0';
-    }
+    console.log(`[UI-NAV] Successfully spawned ${entries.length} pills for ${normalizedCategory}.`);
+    mwv_trace('DOM-UI', 'SUB-NAV-SPAWN', { category: normalizedCategory, count: entries.length });
 
-    // Ensure Row 1 is also visible if sub-nav is requested
     const mainBar = document.getElementById('program-menu-bar');
     if (menuSystemVisible && mainBar && mainBar.style.display === 'none') {
         toggleMenuBar(true);
     }
 
-    updateLayoutOffsets();
+    if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
 
     // Set initial active state based on category default
     const activeTab = localStorage.getItem('mwv_active_tab');
-    updateSubNavActiveState(activeTab);
+    if (typeof updateSubNavActiveState === 'function') updateSubNavActiveState(activeTab);
 }
 
 function switchMediaSubView(tabId) {
