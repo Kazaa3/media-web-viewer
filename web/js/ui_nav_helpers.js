@@ -1353,12 +1353,14 @@ window.addEventListener('DOMContentLoaded', () => {
         toggleMenuBar(menuSystemVisible);
     }
 
-    // Sync sidebar
+    // Sync sidebar (v1.37 Restoration - Default Hidden)
     const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
-    if (savedSidebar !== null) {
-        sidebarVisible = (savedSidebar === 'true');
-        if (typeof applySidebarState === 'function') {
-            applySidebarState();
-        }
+    const configVisible = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.sidebar_visible : false;
+    
+    // Force false on start if requested by user feedback, or use saved if exists
+    sidebarVisible = (savedSidebar === 'true' && configVisible !== false);
+    
+    if (typeof applySidebarState === 'function') {
+        applySidebarState();
     }
 });

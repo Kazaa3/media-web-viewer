@@ -342,6 +342,20 @@
             <!-- TAB: Player (Audio) START -->
             <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout"
                 style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
+                
+                <!-- NEW: Integrated Player Sub-Nav (v1.37 Restoration - Always Ready) -->
+                <div id="player-sub-nav-shell" class="sub-nav-bar"
+                    style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-shrink: 0;">
+                    <button id="player-subtab-queue" class="tab-btn player-sub-nav-btn active" data-target="warteschlange"
+                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('warteschlange')">Queue</button>
+                    <button id="player-subtab-playlist" class="tab-btn player-sub-nav-btn" data-target="playlist"
+                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('playlist')">Playlist Manager</button>
+                    <button id="player-subtab-lyrics" class="tab-btn player-sub-nav-btn" data-target="lyrics"
+                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('lyrics')">Lyrics</button>
+                    <button class="tab-btn player-sub-nav-btn" data-target="visualizer"
+                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('visualizer')">Visualizer</button>
+                </div>
+
                 <!-- Detailed Mode Sidebar (Left-aligned as per v1.34) -->
                 <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none; position: relative;">
                     <!-- Vertical Reiter Bar (Tabs) - v1.37.03 Multi-Tabbed Restoration -->
