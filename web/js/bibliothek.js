@@ -186,7 +186,9 @@ async function renderLibrary() {
 
     // 2. Main Category Filter
     if (libraryFilter !== 'all') {
-        const allowedTypes = (typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP[libraryFilter] : []) || [];
+        const catInfo = (typeof CATEGORY_MAP !== 'undefined' ? CATEGORY_MAP[libraryFilter] : null);
+        const allowedTypes = catInfo ? (catInfo.aliases || []) : [];
+        
         projectedItems = projectedItems.filter(i => {
             if (i.is_mock) return true; // Keep mocks during diagnostics
             const cat = String(i.category || 'all').toLowerCase();

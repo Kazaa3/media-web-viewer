@@ -551,7 +551,8 @@ function renderPlaylist() {
 
     // v1.35.68: Use Centralized CATEGORY_MAP and TECH_MAP from backend
     if (window.activeQueueFilter !== 'all' && !isRaw) {
-        const allowedLabels = CATEGORY_MAP[window.activeQueueFilter] || [];
+        const catInfo = CATEGORY_MAP[window.activeQueueFilter] || { aliases: [] };
+        const allowedLabels = catInfo.aliases || [];
         const allowedLower = allowedLabels.map(l => l.toLowerCase());
         const markers = TECH_MAP[window.activeQueueFilter] || [];
 
