@@ -70,53 +70,56 @@ def is_network_mount(path: str) -> bool:
         pass
     return False
 
-def get_gpu_info() -> Dict[str, Any]:
+def get_gpu_info(fast_mode: bool = False) -> Dict[str, Any]:
+    """
+    @brief Detects GPU type and available hardware encoders.
+    @param fast_mode If True, skips slow subprocess calls (like ffmpeg -encoders).
+    """
     gpu_type = "Unknown"
     is_intel = False
     encoders = []
-    try:
-        # Detect encoders first
-        res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=2)
-        stdout = res.stdout if res.stdout else ""
-
-        # 1. NVIDIA
-        if shutil.which("nvidia-smi"):
-            gpu_type = "NVIDIA"
-            if "h264_nvenc" in stdout:
-                encoders.append("nvenc")
+    
+    # 1. NVIDIA Check (Fast)
+    if shutil.which("nvidia-smi"):
+        gpu_type = "NVIDIA"
+    
+    # 2. Intel Check (Fast)
+    if os.path.exists("/dev/dri/renderD128"):
+        if gpu_type == "Unknown":
+            gpu_type = "VAAPI-Generic"
         
-        # 2. Check for Intel Devices (VAAPI/QSV)
-        if os.path.exists("/dev/dri/renderD128"):
-            # Check if it's an Intel iGPU/dGPU
-            pci_info = ""
-            if shutil.which("lspci"):
-                try:
-                    pci_info = subprocess.run(["lspci"], capture_output=True, text=True).stdout.lower()
-                except: pass
+        # Check for Intel specifically via lspci
+        if shutil.which("lspci"):
+            try:
+                # Use a very short timeout for lspci
+                pci_info = subprocess.run(["lspci"], capture_output=True, text=True, timeout=0.5).stdout.lower()
+                if "intel" in pci_info:
+                    is_intel = True
+                    gpu_type = "Intel"
+            except: pass
+
+    # 3. Encoder Check (Slow - Skip if fast_mode)
+    if not fast_mode and shutil.which("ffmpeg"):
+        try:
+            res = subprocess.run(["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=1.0)
+            stdout = res.stdout if res.stdout else ""
             
-            if "intel" in pci_info or gpu_type == "Unknown":
-                is_intel = "intel" in pci_info
-                if is_intel: gpu_type = "Intel"
-                
-                # Check for QSV
-                if "h264_qsv" in stdout:
-                    encoders.append("qsv")
-                
-                # Check for VAAPI
-                if "h264_vaapi" in stdout:
-                    encoders.append("vaapi")
-                    if gpu_type == "Unknown": gpu_type = "VAAPI-Generic"
-        
-        # Finalize GPU string for display
-        if is_intel and "qsv" in encoders and "vaapi" in encoders:
-            gpu_type = "Intel (QSV+VAAPI)"
-        elif is_intel and "qsv" in encoders:
-            gpu_type = "Intel (QSV)"
-        elif is_intel and "vaapi" in encoders:
-            gpu_type = "Intel (VAAPI)"
+            if gpu_type == "NVIDIA" and "h264_nvenc" in stdout:
+                encoders.append("nvenc")
+            
+            if "h264_qsv" in stdout:
+                encoders.append("qsv")
+                if is_intel: gpu_type = "Intel (QSV)"
+            
+            if "h264_vaapi" in stdout:
+                encoders.append("vaapi")
+                if is_intel and "qsv" in encoders:
+                    gpu_type = "Intel (QSV+VAAPI)"
+                elif is_intel:
+                    gpu_type = "Intel (VAAPI)"
+        except Exception:
+            pass
 
-    except Exception:
-        pass
     return {"type": gpu_type, "encoders": encoders}
 
 def get_best_hw_encoder() -> str:

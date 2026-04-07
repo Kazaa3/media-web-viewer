@@ -175,16 +175,30 @@ def get_binary_version(path: str, flag: str = "-version") -> str:
 
 def background_version_discovery(config_dict: dict):
     """
-    Worker thread that populates the version information in the background.
+    Worker thread that populates the version information, hardware info, and packages in the background.
     """
     import threading
     def worker():
         try:
             from core.startup_monitor import profiler
-            if profiler: profiler.start_phase("Background-Version-Discovery")
-        except: pass
+            if profiler: profiler.start_phase("Background-Discovery")
+        except: profiler = None
         
-        # We look for all 'Unknown' or 'Discovering...' entries in app_versions and populating them
+        # 1. Hardware Info (Previously synchronous bottleneck)
+        try:
+            if _HW_DETECTOR:
+                # Call with fast_mode=False now that we are in a background thread
+                config_dict["hardware_info"] = hardware_detector.get_hardware_info()
+        except Exception as e:
+            print(f"STDOUT: [Background-Discovery] Hardware detection failed: {e}")
+
+        # 2. Package Info (Previously synchronous bottleneck)
+        try:
+            config_dict["installed_packages"] = get_pip_packages()
+        except Exception as e:
+            print(f"STDOUT: [Background-Discovery] Package discovery failed: {e}")
+
+        # 3. Binary Versions
         targets = [
             ("ffmpeg", "ffmpeg", "-version"),
             ("ffprobe", "ffprobe", "-version"),
@@ -209,7 +223,7 @@ def background_version_discovery(config_dict: dict):
             av[key] = get_binary_version(binary, flag)
             
         try:
-            if profiler: profiler.end_phase("Background-Version-Discovery")
+            if profiler: profiler.end_phase("Background-Discovery")
         except: pass
 
     threading.Thread(target=worker, daemon=True).start()
@@ -258,6 +272,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "debug_mode": get_env_bool("MWV_DEBUG", True),
     "db_filename": str(SELECTED_DB_PATH),
     "docker_mode": get_env_bool("MWV_DOCKER", False),
+    "hardware_info": {"type": "Awaiting discovery...", "encoders": []},
+    "installed_packages": {},
     
     # --- LOGGING REGISTRY (v1.35.68 Centralized) ---
     "logging_registry": {
@@ -788,10 +804,6 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "notes": "Built-in Python-based media engine for fallback and simple playback."
         }
     ],
-    
-    # --- HARDWARE & APP DISCOVERY (v1.35.68 Centralized) ---
-    "hardware_info": _HW_DETECTOR and hardware_detector.get_hardware_info() or {},
-    "installed_packages": get_pip_packages(),
     # --- VERSION & METADATA CALCULATION (v1.35.68 - Deferred) ---
     "app_versions": {
         "ffmpeg": "Discovering...",

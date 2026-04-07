@@ -366,6 +366,27 @@ def set_hydration_mode(mode: str):
         return True
     return False
 
+@eel.expose
+def set_ui_config_value(key: str, value: Any):
+    """
+    Sets a configuration value in GLOBAL_CONFIG (v1.38.05).
+    Special handling for nested ui_fragments and functional modules.
+    """
+    from core.config_master import set_config_value as master_set
+    
+    log.info(f"[CONFIG] UI Request: {key} -> {value}")
+    
+    # Check if it's a nested ui_fragment toggle
+    if key.startswith("ui_fragments."):
+        frag_key = key.split(".")[1]
+        if "ui_settings" in GLOBAL_CONFIG and "ui_fragments" in GLOBAL_CONFIG["ui_settings"]:
+            GLOBAL_CONFIG["ui_settings"]["ui_fragments"][frag_key] = value
+            log.info(f"[CONFIG] Fragment {frag_key} toggled: {value}")
+            return True
+            
+    # Generic set
+    return master_set(key, value)
+
 
 @eel.expose
 def report_items_spawned(count, source="frontend"):

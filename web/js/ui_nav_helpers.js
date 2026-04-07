@@ -145,6 +145,9 @@ function switchDiagnosticsSidebarTab(viewId, btn) {
     if (viewId === 'hydration-audit') {
         renderHydrationMatrix();
     }
+    if (viewId === 'config') {
+        renderConfigToggles();
+    }
 }
 
 /**
@@ -513,6 +516,7 @@ function toggleMenuBar(forceState = null) {
  * based on the current active category and the UI Visibility Matrix.
  */
 async function refreshUIVisibility() {
+    console.time('[PERF] UI-Refresh');
     const category = currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
     
     // 1. Ensure we have the latest registry from backend or window.CONFIG
@@ -536,67 +540,74 @@ async function refreshUIVisibility() {
         contextual_pill_nav: true, 
         module_tab_nav: true 
     };
-
-    console.log(`[UI-NAV] Refreshing visibility for ${category}:`, settings);
+    // [v1.38.02] Granular Fragment Toggling (Override based on Fragment Flags)
+    const fragments = uiRegistry.ui_fragments || {};
+    Object.keys(fragments).forEach(key => {
+        const btn = document.getElementById(`nav-btn-${key}`);
+        if (btn) {
+            btn.style.setProperty('display', fragments[key] ? 'flex' : 'none', 'important');
+        }
+    });
 
     // 1. Control Master Header (master-persistent-header)
     const masterHeader = document.getElementById('master-persistent-header');
     if (masterHeader) {
         const shouldShowMaster = (settings.master_header !== false) && menuSystemVisible;
-        
-        if (shouldShowMaster) {
-            console.log(`[UI-NAV] SPAWN: Master Header for ${category}`);
-            masterHeader.style.setProperty('display', 'flex', 'important');
-    // 2. MASTER HEADER (Forensic-Erzwingung)
-    const header = document.getElementById('master-header');
-    if (header) {
-        // If manual Zen-mode is active, we don't force it back unless category visibility is False
-        if (header.getAttribute('data-manual-zen') === 'true' && settings.master_header) {
-            console.log("[UI-NAV] ZEN-MODE is manually locked. Keeping it hidden.");
-        } else {
-            header.style.display = settings.master_header ? 'flex' : 'none';
-        }
+        masterHeader.style.setProperty('display', shouldShowMaster ? 'flex' : 'none', 'important');
+        masterHeader.style.opacity = shouldShowMaster ? '1' : '0';
     }
 
-    // 3. CONTEXTUAL PILL NAV
+    // 2. CONTEXTUAL PILL NAV (Restoration v1.38)
     const pillNav = document.getElementById('contextual-pill-nav');
     if (pillNav) {
-         if (pillNav.getAttribute('data-manual-hide') === 'true' && settings.contextual_pill_nav) {
-             console.log("[UI-NAV] SUB-NAV is manually hidden. Keeping it hidden.");
+         // Enforcement: Player always gets its pills
+         const isPlayer = (category === 'media' || category === 'player');
+         const allowedBySettings = settings.contextual_pill_nav !== false;
+         const shouldShowPills = allowedBySettings || isPlayer;
+         
+         if (pillNav.getAttribute('data-manual-hide') === 'true' && !isPlayer) {
+             pillNav.style.display = 'none';
          } else {
-             pillNav.style.display = settings.contextual_pill_nav ? 'flex' : 'none';
+             pillNav.style.display = shouldShowPills ? 'flex' : 'none';
+         }
+         
+         // Trigger update if visible
+         if (shouldShowPills && typeof updateGlobalSubNav === 'function') {
+             updateGlobalSubNav(category);
          }
     }
 
-    // 4. Control Module Tabs
+    // 3. Control Module Tabs
     const tabNav = document.getElementById('player-sub-nav-shell');
     if (tabNav) {
         tabNav.style.display = settings.module_tab_nav ? 'flex' : 'none';
     }
 
-    // 5. Control Footer (Media Controller)
-    const footer = document.querySelector('.main-footer');
+    // 4. Control Footer (Media Controller)
+    const footer = document.querySelector('.main-footer') || document.querySelector('.layout-footer-wrapper');
     if (footer) {
-        footer.style.display = settings.footer_visible ? 'flex' : 'none';
+        const showFooter = settings.footer_visible !== false;
+        footer.style.display = showFooter ? 'flex' : 'none';
     }
 
-    // 6. Control Sidebar Allowed State
+    // 5. Control Sidebar Allowed State
     const sidebarBtn = document.getElementById('header-btn-sidebar-toggle');
     if (sidebarBtn) {
         sidebarBtn.style.display = settings.sidebar_allowed ? 'flex' : 'none';
     }
 
-    // 7. Control Diagnostics HUD
+    // 6. Control Diagnostics HUD
     if (typeof toggleTechnicalHUD === 'function') {
-        // Only set if HUD is allowed; otherwise force-hide
-        if (!settings.diagnostics_hud_allowed) toggleTechnicalHUD(false);
+        if (settings.diagnostics_hud_allowed === false) toggleTechnicalHUD(false);
     }
 
-    // 8. FINAL: Recalibrate Viewport Geometry
+    // 7. FINAL: Recalibrate Viewport Geometry
     refreshViewportLayout();
 
-    // 9. Sync Sidebar (Classic v1.34)
+    // 8. Sync Sidebar State (Ensure it follows sidebarVisible global)
     if (typeof applySidebarState === 'function') applySidebarState();
+
+    console.timeEnd('[PERF] UI-Refresh');
 }
 window.refreshUIVisibility = refreshUIVisibility;
 
@@ -1792,3 +1803,71 @@ window.renderHydrationMatrix = function() {
 window.addEventListener('load', () => {
     setTimeout(window.initForensicUI, 500);
 });
+
+/**
+ * [v1.38.05] Renders the Config Master toggles in the Diagnostics Sidebar.
+ */
+async function renderConfigToggles() {
+    const modulesContainer = document.getElementById('config-module-matrix');
+    const fragmentsContainer = document.getElementById('config-fragment-matrix');
+    if (!modulesContainer || !fragmentsContainer) return;
+
+    modulesContainer.innerHTML = '<div style="font-size: 8px; opacity: 0.5;">Loading config...</div>';
+    fragmentsContainer.innerHTML = '';
+
+    try {
+        const config = await eel.get_global_config()();
+        const ui = config.ui_settings || {};
+        const fragments = ui.ui_fragments || {};
+
+        // 1. Functional Modules
+        const moduleKeys = [
+            { key: 'audio_engine_enabled', label: 'Audio Engine' },
+            { key: 'video_engine_enabled', label: 'Video Engine' },
+            { key: 'queue_panel_enabled', label: 'Queue Panel' },
+            { key: 'lyrics_panel_enabled', label: 'Lyrics/Metadata' },
+            { key: 'sidebar_allowed', label: 'Sidebar Global' }
+        ];
+
+        modulesContainer.innerHTML = moduleKeys.map(m => `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                <span style="font-size: 9px; font-weight: 600; color: #ccc;">${m.label}</span>
+                <input type="checkbox" ${ui[m.key] ? 'checked' : ''} onchange="updateUIConfigToggle('ui_settings.${m.key}', this.checked)" style="accent-color: #ff3366; cursor: pointer;">
+            </div>
+        `).join('');
+
+        // 2. UI Fragments
+        fragmentsContainer.innerHTML = Object.keys(fragments).map(key => `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                <span style="font-size: 8px; color: #aaa;">${key.toUpperCase()}</span>
+                <input type="checkbox" ${fragments[key] ? 'checked' : ''} onchange="updateUIConfigToggle('ui_fragments.${key}', this.checked)" style="accent-color: #ff3366; scale: 0.8; cursor: pointer;">
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error("[UI-CONFIG] Failed to render toggles:", e);
+        modulesContainer.innerHTML = '<div style="color: red; font-size: 8px;">Error loading config</div>';
+    }
+}
+
+/**
+ * Updates a configuration value via Eel and refreshes the UI (v1.38.05).
+ */
+async function updateUIConfigToggle(key, value) {
+    console.log(`[UI-CONFIG] Toggling ${key} to ${value}`);
+    try {
+        const success = await eel.set_ui_config_value(key, value)();
+        if (success) {
+            // Hot-reload visibility if it's a UI flag
+            if (key.includes('ui_') || key.includes('visible')) {
+                if (typeof refreshUIVisibility === 'function') refreshUIVisibility();
+            }
+            if (typeof showToast === 'function') showToast(`${key} -> ${value}`, 'success');
+        }
+    } catch (e) {
+        console.error("[UI-CONFIG] Toggle failed:", e);
+    }
+}
+
+window.renderConfigToggles = renderConfigToggles;
+window.updateUIConfigToggle = updateUIConfigToggle;
