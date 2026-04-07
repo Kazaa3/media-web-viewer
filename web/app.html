@@ -67,7 +67,12 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        .audit-meta { font-size: 10px; opacity: 0.5; margin-top: 10px; line-height: 1.4; }
+        .audit-meta {
+            font-size: 10px;
+            opacity: 0.5;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
     </style>
     </style>
 
@@ -98,10 +103,13 @@
                     data-category="library">Bibliothek</button>
                 <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)"
                     data-category="database">Database</button>
-                <div class="divider-v" style="height: 16px; width: 1px; background: var(--border-color); margin: 0 4px;"></div>
-                <button id="header-btn-status" class="menu-item-btn" onclick="toggleTechnicalHUD()" style="color: #00ffcc; font-weight: 900; background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1);" title="Toggle Elite HUD">
+                <div class="divider-v"
+                    style="height: 16px; width: 1px; background: var(--border-color); margin: 0 4px;"></div>
+                <button id="header-btn-status" class="menu-item-btn" onclick="toggleTechnicalHUD()"
+                    style="color: #00ffcc; font-weight: 900; background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1);"
+                    title="Toggle Elite HUD">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                     </svg>
                     STATUS
                 </button>
@@ -109,36 +117,40 @@
         </div>
 
         <!-- NEW: Floating Elite Technical HUD (Pills) -->
-        <div id="header-technical-hud" style="position: absolute; top: 45px; right: 20px; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 20px; display: none; gap: 15px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 10005;">
-            <div class="hud-pill-mini">PID: <span id="diag-pid" style="color: #007aff; font-weight: 900;">--</span></div>
+        <div id="header-technical-hud"
+            style="position: absolute; top: 45px; right: 20px; background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 20px; display: none; gap: 15px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 10005;">
+            <div class="hud-pill-mini">PID: <span id="diag-pid" style="color: #007aff; font-weight: 900;">--</span>
+            </div>
             <span style="opacity: 0.2;">|</span>
-            <div class="hud-pill-mini">BOOT: <span id="diag-boot" style="color: #ff9500; font-weight: 800;">--s</span></div>
+            <div class="hud-pill-mini">BOOT: <span id="diag-boot" style="color: #ff9500; font-weight: 800;">--s</span>
+            </div>
             <span style="opacity: 0.2;">|</span>
             <div class="hud-pill-mini">UP: <span id="diag-up" style="color: #2ecc71; font-weight: 800;">--</span></div>
         </div>
         <div style="display: flex; gap: 6px; align-items: center; margin-right: 15px;">
-            <div class="divider-v" style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
-                <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
-                    data-category="file">Browser</button>
-                <button id="nav-btn-edit" class="menu-item-btn" onclick="switchMainCategory('edit', this)"
-                    data-category="edit">Edit</button>
-                <button id="nav-btn-options" class="menu-item-btn" onclick="switchMainCategory('system', this)"
-                    data-category="system">Optionen</button>
-                <button id="nav-btn-parser" class="menu-item-btn" onclick="switchMainCategory('parser', this)"
-                    data-category="parser">Parser</button>
-                <button id="nav-btn-debug" class="menu-item-btn" onclick="switchMainCategory('debug', this)"
-                    data-category="debug">Debug &
-                    DB</button>
-                <button id="nav-btn-tests" class="menu-item-btn" onclick="switchMainCategory('tests', this)"
-                    data-category="tests">Tests</button>
-                <button id="nav-btn-tools" class="menu-item-btn" onclick="switchMainCategory('tools', this)"
-                    data-category="tools">Tools</button>
-                <button id="nav-btn-reporting" class="menu-item-btn" onclick="switchMainCategory('reporting', this)"
-                    data-category="reporting">Report</button>
-                <button id="nav-btn-logbuch" class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
-                    data-category="logbuch">Logbuch</button>
-                <button id="nav-btn-video" class="menu-item-btn" onclick="switchMainCategory('video', this)"
-                    data-category="video">Video</button>
+            <div class="divider-v" style="height: 20px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 10px;">
+            </div>
+            <button id="nav-btn-browser" class="menu-item-btn" onclick="switchMainCategory('file', this)"
+                data-category="file">Browser</button>
+            <button id="nav-btn-edit" class="menu-item-btn" onclick="switchMainCategory('edit', this)"
+                data-category="edit">Edit</button>
+            <button id="nav-btn-options" class="menu-item-btn" onclick="switchMainCategory('system', this)"
+                data-category="system">Optionen</button>
+            <button id="nav-btn-parser" class="menu-item-btn" onclick="switchMainCategory('parser', this)"
+                data-category="parser">Parser</button>
+            <button id="nav-btn-debug" class="menu-item-btn" onclick="switchMainCategory('debug', this)"
+                data-category="debug">Debug &
+                DB</button>
+            <button id="nav-btn-tests" class="menu-item-btn" onclick="switchMainCategory('tests', this)"
+                data-category="tests">Tests</button>
+            <button id="nav-btn-tools" class="menu-item-btn" onclick="switchMainCategory('tools', this)"
+                data-category="tools">Tools</button>
+            <button id="nav-btn-reporting" class="menu-item-btn" onclick="switchMainCategory('reporting', this)"
+                data-category="reporting">Report</button>
+            <button id="nav-btn-logbuch" class="menu-item-btn" onclick="switchMainCategory('logbuch', this)"
+                data-category="logbuch">Logbuch</button>
+            <button id="nav-btn-video" class="menu-item-btn" onclick="switchMainCategory('video', this)"
+                data-category="video">Video</button>
         </div>
 
         <!-- System Controls (Right) -->
@@ -147,7 +159,8 @@
             <button id="header-btn-diag-overlay" class="tab-btn" title="Toggle System Diagnostics"
                 onclick="toggleDiagnosticsSidebar()"
                 style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); cursor: pointer;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="pulse-icon-header">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    class="pulse-icon-header">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
             </button>
@@ -155,7 +168,7 @@
             <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
 
             <!-- Zen Toggle (v1.37.52) -->
-            <button id="header-btn-zen-toggle" title="Toggle Zen Mode (Header)" class="tab-btn" 
+            <button id="header-btn-zen-toggle" title="Toggle Zen Mode (Header)" class="tab-btn"
                 onclick="if(typeof toggleZenMode === 'function') toggleZenMode()"
                 style="padding: 6px; border-radius: 6px; background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.2);">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -164,16 +177,18 @@
             </button>
 
             <!-- Sub-Nav Toggle (v1.37.52) -->
-            <button id="header-btn-subnav-toggle" title="Toggle Contextual Sub-Nav" class="tab-btn" 
+            <button id="header-btn-subnav-toggle" title="Toggle Contextual Sub-Nav" class="tab-btn"
                 onclick="if(typeof toggleSubNav === 'function') toggleSubNav()"
                 style="padding: 6px; border-radius: 6px; background: rgba(255, 149, 0, 0.1); color: #ff9500; border: 1px solid rgba(255, 149, 0, 0.2);">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+                    <circle cx="12" cy="12" r="1" />
+                    <circle cx="19" cy="12" r="1" />
+                    <circle cx="5" cy="12" r="1" />
                 </svg>
             </button>
 
             <!-- Sidebar Toggle Button (v1.37.29 Restoration) -->
-            <button id="header-btn-sidebar-toggle" title="Toggle Sidebar" class="tab-btn" 
+            <button id="header-btn-sidebar-toggle" title="Toggle Sidebar" class="tab-btn"
                 onclick="if(typeof toggleSidebar === 'function') toggleSidebar()"
                 style="padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.1);">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -361,14 +376,16 @@
             <!-- TAB: Player (Audio) START -->
             <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout"
                 style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
-                
+
                 <!-- NEW: Integrated Player Sub-Nav (v1.37 Restoration - Always Ready) -->
                 <div id="player-sub-nav-shell" class="sub-nav-bar"
                     style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-shrink: 0;">
-                    <button id="player-subtab-queue" class="tab-btn player-sub-nav-btn active" data-target="warteschlange"
+                    <button id="player-subtab-queue" class="tab-btn player-sub-nav-btn active"
+                        data-target="warteschlange"
                         onclick="if(typeof switchPlayerView === 'function') switchPlayerView('warteschlange')">Queue</button>
                     <button id="player-subtab-playlist" class="tab-btn player-sub-nav-btn" data-target="playlist"
-                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('playlist')">Playlist Manager</button>
+                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('playlist')">Playlist
+                        Manager</button>
                     <button id="player-subtab-lyrics" class="tab-btn player-sub-nav-btn" data-target="lyrics"
                         onclick="if(typeof switchPlayerView === 'function') switchPlayerView('lyrics')">Lyrics</button>
                     <button class="tab-btn player-sub-nav-btn" data-target="visualizer"
@@ -410,7 +427,7 @@
 
                             <!-- Detailed Parity Anchor -->
                             <div id="sb-parity-anchor"
-                                style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 6px 10px; border-radius: 4px; border: 1px solid rgba(var(--accent-color-rgb), 0.1); margin-bottom: 20px;">
                                 [FS: -- | DB: -- | GUI: --]
                             </div>
 
@@ -806,6 +823,7 @@
                     -- | GUI: --]</span> |
                 <span id="sync-status" style="color: #2ecc71;">● Synchronized</span></span>
                 <div style="height: 12px; width: 1px; background: var(--border-color);"></div>
+                <!-- Google Style 1 (v1.35.68) -->
                 <div id="footer-admin-cluster" class="admin-controls" style="display: flex; gap: 10px;">
                     <button id="btn-flags" onclick="if(typeof showFlagsModal === 'function') showFlagsModal()"
                         style="background: transparent; border: none; color: #e91e63; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">Flags</button>
@@ -827,35 +845,54 @@
                     </div>
 
                     <!-- Hydration Master Control (v1.35.68) -->
-                    <div id="hud-hydr" style="display: flex; gap: 4px; align-items: center; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);" title="Hydration Mode: M:Mock | R:Real | B:Both">
-                        <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')" style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:9px; font-weight:900; cursor:pointer; padding:2px 4px;">M</button>
-                        <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')" style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:9px; font-weight:900; cursor:pointer; padding:2px 4px;">R</button>
-                        <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')" style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:9px; font-weight:900; cursor:pointer; padding:2px 4px;">B</button>
+                    <div id="hud-hydr"
+                        style="display: flex; gap: 4px; align-items: center; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);"
+                        title="Hydration Mode: M:Mock | R:Real | B:Both">
+                        <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')"
+                            style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:9px; font-weight:900; cursor:pointer; padding:2px 4px;">M</button>
+                        <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')"
+                            style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:9px; font-weight:900; cursor:pointer; padding:2px 4px;">R</button>
+                        <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')"
+                            style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:9px; font-weight:900; cursor:pointer; padding:2px 4px;">B</button>
                     </div>
+                    <!-- Google Style 2 (v1.35.68) -->
+                    <div class="footer-actions-classic"
+                        style="display: flex; gap: 8px; border-left: 1px solid rgba(255,255,255,0.06); padding-left: 12px; margin-left: 8px;">
+                        <button class="footer-classic-btn yellow" id="footer-btn-probe-flow" onclick="toggleProbeFlow()"
+                            title="PROBE DATA FLOW HANDSHAKE (MOCK/REAL)">PROBE</button>
+                        <button class="footer-classic-btn flags" id="footer-btn-reset"
+                            onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
+                            title="INITIALIZE SYSTEM DATABASE">RESET</button>
+                    </div>
+                </div>
 
-                    <button id="btn-reset"
-                        onclick="if(confirm('Initialize Database? Path mapping will be lost.')) eel.init_db()()"
-                        style="background: transparent; border: none; color: #e74c3c; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;">RESET</button>
+                <!-- Right Slot: Stats Only -->
+                <div class="footer-cluster secondary">
+                    <span class="tech-label" style="font-size: 8px; opacity: 0.5;">Items: <span
+                            id="lib-count-label">0</span></span>
                 </div>
             </div>
-        </div>
         </div>
 
         <!-- Right Side: Pipeline & HUD HUD Clusters (Merged) -->
         <div
             style="display: flex; align-items: center; gap: 15px; width: 440px; flex-shrink: 0; padding-left: 20px; justify-content: flex-end;">
-            
+
             <!-- SWISS HUD CLUSTERS (Restored & Integrated) -->
-            <div id="footer-hud-cluster" style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-right: 15px;">
-                <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..." title="Frontend layer (DOM / Library)">
+            <div id="footer-hud-cluster"
+                style="display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-right: 15px;">
+                <div id="hud-fe" class="hud-group" data-hud-metrics="FE: Loading..."
+                    title="Frontend layer (DOM / Library)">
                     <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">FE</span>
                     <div class="hud-led"></div>
                 </div>
-                <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..." title="Backend layer (Eel / Process)">
+                <div id="hud-be" class="hud-group" data-hud-metrics="BE: Loading..."
+                    title="Backend layer (Eel / Process)">
                     <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">BE</span>
                     <div class="hud-led"></div>
                 </div>
-                <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..." title="Database layer (SQLite / Connection)">
+                <div id="hud-db" class="hud-group" data-hud-metrics="DB: Loading..."
+                    title="Database layer (SQLite / Connection)">
                     <span style="font-size: 8px; font-weight: 900; opacity: 0.4;">DB</span>
                     <div class="hud-led"></div>
                 </div>
@@ -884,7 +921,8 @@
     </footer>
 
     <!-- [GUI] AUDIO PLAYER FOOTER: Real-time Diagnostics, Pipe-Stats & Tool Clusters -->
-    <footer class="layout-footer" style="display: flex !important; padding: 0 15px; border-top: 1px solid #222; opacity: 1 !important; transform: none !important;">
+    <footer class="layout-footer"
+        style="display: flex !important; padding: 0 15px; border-top: 1px solid #222; opacity: 1 !important; transform: none !important;">
         <!-- Slot 1: Far-Left Diagnostic Pill -->
         <div class="footer-diag-pill">
             <span>PID: <span id="diag-pid" class="footer-diag-val">--</span></span>
@@ -928,12 +966,16 @@
             </div>
 
             <!-- Hydration Master Control (v1.35.68) -->
-            <div id="hud-hydr" class="hud-group" title="Hydration Mode: 1:Connection | 2:FS-Mock | 3:Realistic | 4:Database">
+            <div id="hud-hydr" class="hud-group"
+                title="Hydration Mode: 1:Connection | 2:FS-Mock | 3:Realistic | 4:Database">
                 <span class="hud-label">HYDR</span>
                 <div class="hud-led"></div>
-                <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')" title="Stage 1-3: Mock Only">M</button>
-                <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')" title="Stage 4: Real Database Only">R</button>
-                <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')" title="Hybrid: Mock + Real">B</button>
+                <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')"
+                    title="Stage 1-3: Mock Only">M</button>
+                <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')"
+                    title="Stage 4: Real Database Only">R</button>
+                <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')"
+                    title="Hybrid: Mock + Real">B</button>
             </div>
             <div id="hud-diag" class="hud-group" title="Diagnostic Toggles (RAW/BYPS)">
                 <span class="hud-label">RX</span>
@@ -975,7 +1017,7 @@
 
             <!-- Program Menu Burger (Circled) -->
             <button onclick="toggleMenuBar()" class="footer-tool-btn"
-                style="background: rgba(255,255,255,0.06); padding: 7px; border-radius: 50%; color: #eee; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 0 4px;" 
+                style="background: rgba(255,255,255,0.06); padding: 7px; border-radius: 50%; color: #eee; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; margin: 0 4px;"
                 title="Program Menu">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="3" y1="12" x2="21" y2="12" />
@@ -991,12 +1033,15 @@
                     <line x1="9" y1="3" x2="9" y2="21" />
                 </svg>
             </button>
-            <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()" title="Toggle Diagnostics Overlay" style="color: #ff3366;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <button id="footer-btn-diag-overlay" class="footer-tool-btn" onclick="toggleDiagnosticsSidebar()"
+                title="Toggle Diagnostics Overlay" style="color: #ff3366;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
             </button>
         </div>
     </footer>
-    
+
     <!-- Cleaned up redundant layout-footer -->
 
     <script src="js/version.js?v=1.35.68"></script>

@@ -459,33 +459,46 @@ function toggleOptionsSidebar() {
  * UI Header Management: TOP MENU and SUB-MENU Bar (v1.37 Restoration)
  * These elements provide global control and contextual navigation.
  */
-function toggleZenMode(forceState = null) {
-    const header = document.getElementById('master-persistent-header');
+window.toggleZenMode = function(forceState = null) {
+    const header = document.getElementById('master-header');
     if (!header) return;
-    
-    const isNowHidden = forceState !== null ? !forceState : (header.style.display !== 'none');
-    header.style.display = isNowHidden ? 'none' : 'flex';
-    
-    const btn = document.getElementById('header-btn-zen-toggle');
-    if (btn) btn.classList.toggle('active', !isNowHidden);
-    
-    console.log(`[UI-NAV] ZEN_MODE: ${isNowHidden ? 'ACTIVE (Headless)' : 'INACTIVE'}`);
-    refreshViewportLayout();
-}
 
-function toggleSubNav(forceState = null) {
-    const subBar = document.getElementById('sub-nav-container');
-    if (!subBar) return;
+    // Use forceState if provided, otherwise toggle
+    const isNowHidden = (forceState !== null) ? forceState : !header.classList.contains('zen-mode-active');
     
-    const isNowHidden = forceState !== null ? !forceState : (subBar.style.display !== 'none');
-    subBar.style.display = isNowHidden ? 'none' : 'flex';
+    if (isNowHidden) {
+        header.classList.add('zen-mode-active');
+        header.style.display = 'none';
+        header.setAttribute('data-manual-zen', 'true');
+    } else {
+        header.classList.remove('zen-mode-active');
+        header.style.display = 'flex';
+        header.removeAttribute('data-manual-zen');
+    }
     
-    const btn = document.getElementById('header-btn-subnav-toggle');
-    if (btn) btn.classList.toggle('active', !isNowHidden);
-
-    console.log(`[UI-NAV] SUBNAV_TOGGLE: ${isNowHidden ? 'HIDDEN' : 'VISIBLE'}`);
+    console.log(`[UI] ZEN MODE: ${isNowHidden ? 'ACTIVE' : 'INACTIVE'}`);
     refreshViewportLayout();
-}
+};
+
+window.toggleSubNav = function(forceState = null) {
+    const pillNav = document.getElementById('contextual-pill-nav');
+    if (!pillNav) return;
+
+    const isNowHidden = (forceState !== null) ? forceState : !pillNav.classList.contains('pill-nav-hidden');
+
+    if (isNowHidden) {
+        pillNav.classList.add('pill-nav-hidden');
+        pillNav.style.display = 'none';
+        pillNav.setAttribute('data-manual-hide', 'true');
+    } else {
+        pillNav.classList.remove('pill-nav-hidden');
+        pillNav.style.display = 'flex';
+        pillNav.removeAttribute('data-manual-hide');
+    }
+    
+    console.log(`[UI] SUB-NAV: ${isNowHidden ? 'HIDDEN' : 'VISIBLE'}`);
+    refreshViewportLayout();
+};
 
 /**
  * Legacy Support: UI Header Management (v1.37 Restoration)
@@ -534,29 +547,25 @@ async function refreshUIVisibility() {
         if (shouldShowMaster) {
             console.log(`[UI-NAV] SPAWN: Master Header for ${category}`);
             masterHeader.style.setProperty('display', 'flex', 'important');
-    // 1. Fetch Window Registry (Matrix)
-    const settings = ui_visibility_matrix[category] || { 
-        "master_header": true, "contextual_pill_nav": true, "module_tab_nav": false, 
-        "footer_visible": true, "sidebar_allowed": true, "diagnostics_hud_allowed": true 
-    };
-
-    console.log(`[UI-NAV] ENFORCING FORENSIC-6 for category: ${category}`, settings);
-
-    // 2. Control Master Header
-    const header = document.getElementById('master-persistent-header');
+    // 2. MASTER HEADER (Forensic-Erzwingung)
+    const header = document.getElementById('master-header');
     if (header) {
-        header.style.display = settings.master_header ? 'flex' : 'none';
+        // If manual Zen-mode is active, we don't force it back unless category visibility is False
+        if (header.getAttribute('data-manual-zen') === 'true' && settings.master_header) {
+            console.log("[UI-NAV] ZEN-MODE is manually locked. Keeping it hidden.");
+        } else {
+            header.style.display = settings.master_header ? 'flex' : 'none';
+        }
     }
 
-    // 3. Control Sub-Nav (Contextual Pills)
-    const pillNav = document.getElementById('sub-nav-container');
+    // 3. CONTEXTUAL PILL NAV
+    const pillNav = document.getElementById('contextual-pill-nav');
     if (pillNav) {
-        if (settings.contextual_pill_nav) {
-            pillNav.style.display = 'flex';
-            try { updateGlobalSubNav(category); } catch (e) {}
-        } else {
-            pillNav.style.display = 'none';
-        }
+         if (pillNav.getAttribute('data-manual-hide') === 'true' && settings.contextual_pill_nav) {
+             console.log("[UI-NAV] SUB-NAV is manually hidden. Keeping it hidden.");
+         } else {
+             pillNav.style.display = settings.contextual_pill_nav ? 'flex' : 'none';
+         }
     }
 
     // 4. Control Module Tabs
@@ -1475,13 +1484,15 @@ function refreshUIVisibility(category) {
         "footer_visible": true, "sidebar_allowed": true, "diagnostics_hud_allowed": true,
         "sidebar_visible": false,
         "diagnostics_hud_visible": true,
-
-        // --- MODULE MASTER TOGGLES (Funktional) ---
         "audio_engine_enabled": true,
         "video_engine_enabled": true,
         "queue_panel_enabled": true,
         "lyrics_panel_enabled": true,
-        "mini_player_allowed": true
+        "mini_player_allowed": true,        // GLOBAL: Floating Mini-Player.
+        "global_search_allowed": true,      // GLOBAL: Suchfunktion im Header.
+        "forensics_enabled": true,          // GLOBAL: Schaltet alle Forensic-Overlays (Audit, DOM-Check) an/aus.
+        "elite_hud_enabled": false,         // GLOBAL: Hochverdichtetes Cyberpunk/Elite-Interface Layout.
+        "probe_data_flow_enabled": true     // GLOBAL: Schalter für Mock-Daten Handshake im Footer (Probe Flow).
     };
 
     // --- OVERRIDE WITH GLOBAL MASTERS ---
@@ -1553,6 +1564,64 @@ function refreshUIVisibility(category) {
         applySidebarState();
     }
 }
+
+window.toggleProbeFlow = function() {
+    if (!window.CONFIG || !window.CONFIG.ui_settings) return;
+    
+    // Toggle the value
+    window.CONFIG.ui_settings.probe_data_flow_enabled = !window.CONFIG.ui_settings.probe_data_flow_enabled;
+    const isActive = window.CONFIG.ui_settings.probe_data_flow_enabled;
+    
+    // Update UI button
+    const btn = document.getElementById('footer-btn-probe-flow');
+    if (btn) {
+        btn.classList.toggle('active', isActive);
+        btn.style.borderColor = isActive ? '#00f2ff' : '';
+        btn.style.color = isActive ? '#00f2ff' : '';
+    }
+
+    console.log(`[FORENSIC] PROBE DATA FLOW: ${isActive ? 'ENABLED (Handshake)' : 'DISABLED (Direct)'}`);
+    
+    // Refresh Audit Panel if open
+    if (typeof refreshForensicAudit === 'function') refreshForensicAudit();
+};
+
+/**
+ * Initializes the Forensic 7++ State on Boot
+ */
+window.initForensicUI = function() {
+    const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
+    
+    // 1. Apply Elite HUD if enabled
+    if (config.elite_hud_enabled) {
+        document.body.classList.add('forensic-elite');
+        console.log("[FORENSIC] ELITE HUD: INITIALIZED");
+    }
+
+    // 2. Apply Global Forensic Lockdown
+    const forensicsAllowed = (typeof config.forensics_enabled !== 'undefined') ? config.forensics_enabled : true;
+    if (!forensicsAllowed) {
+        console.log("[FORENSIC] LOCKDOWN: Hiding technical interfaces.");
+        const techControls = document.getElementById('footer-technical-controls');
+        if (techControls) techControls.style.display = 'none';
+        
+        const pulsarIcon = document.getElementById('footer-pulsar-icon');
+        if (pulsarIcon) pulsarIcon.style.display = 'none';
+    }
+
+    // 3. Initial Sync
+    const probeBtn = document.getElementById('footer-btn-probe-flow');
+    if (probeBtn && config.probe_data_flow_enabled) {
+        probeBtn.classList.add('active');
+        probeBtn.style.borderColor = '#00f2ff';
+        probeBtn.style.color = '#00f2ff';
+    }
+};
+
+// Auto-Init on load
+window.addEventListener('load', () => {
+    setTimeout(window.initForensicUI, 500);
+});
 
 window.renderHydrationMatrix = function() {
     const matrix = document.getElementById('hydration-fragment-matrix');
@@ -1659,4 +1728,67 @@ window.renderHydrationMatrix = function() {
     
     window.__mwv_ui_nav_loaded = true;
     console.info("[UI-INIT] UI Orchestration Layer Ready.");
+});
+
+window.toggleProbeFlow = function() {
+    if (!window.CONFIG || !window.CONFIG.ui_settings) return;
+    
+    // Toggle the value
+    window.CONFIG.ui_settings.probe_data_flow_enabled = !window.CONFIG.ui_settings.probe_data_flow_enabled;
+    const isActive = window.CONFIG.ui_settings.probe_data_flow_enabled;
+    
+    // Update UI button
+    const btn = document.getElementById('footer-btn-probe-flow');
+    if (btn) {
+        btn.classList.toggle('active', isActive);
+        btn.style.borderColor = isActive ? '#00f2ff' : '';
+        btn.style.color = isActive ? '#00f2ff' : '';
+    }
+
+    console.log(`[FORENSIC] PROBE DATA FLOW: ${isActive ? 'ENABLED (Handshake)' : 'DISABLED (Direct)'}`);
+    
+    // Refresh Audit Panel if open
+    if (typeof refreshForensicAudit === 'function') refreshForensicAudit();
+};
+
+/**
+ * Initializes the Forensic 7++ State on Boot
+ */
+window.initForensicUI = function() {
+    const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
+    
+    // 1. Apply Elite HUD if enabled
+    if (config.elite_hud_enabled) {
+        document.body.classList.add('forensic-elite');
+        console.log("[FORENSIC] ELITE HUD: INITIALIZED");
+    }
+
+    // 2. Apply Global Forensic Lockdown
+    const forensicsAllowed = (typeof config.forensics_enabled !== 'undefined') ? config.forensics_enabled : true;
+    if (!forensicsAllowed) {
+        console.log("[FORENSIC] LOCKDOWN: Hiding technical interfaces.");
+        const techControls = document.getElementById('footer-technical-controls');
+        if (techControls) techControls.style.display = 'none';
+        
+        const pulsarIcon = document.getElementById('footer-pulsar-icon');
+        if (pulsarIcon) pulsarIcon.style.display = 'none';
+    }
+
+    // 3. Initial Sync
+    const probeBtn = document.getElementById('footer-btn-probe-flow');
+    if (probeBtn && config.probe_data_flow_enabled) {
+        probeBtn.classList.add('active');
+        probeBtn.style.borderColor = '#00f2ff';
+        probeBtn.style.color = '#00f2ff';
+    }
+};
+
+window.renderHydrationMatrix = function() {
+    console.debug("[HYD-AUDIT] Matrix Refresh triggered.");
+    // UI update logic for hydration cells
+};
+
+// Auto-Init on load
+window.addEventListener('load', () => {
+    setTimeout(window.initForensicUI, 500);
 });
