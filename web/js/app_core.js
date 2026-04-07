@@ -213,10 +213,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
         // 0. Load UI Fragments in Parallel (v1.35.21 Expanded)
-        let fragmentsNeeded = 6;
+        let fragmentsNeeded = 7;
         let fragmentsLoaded = 0;
         const onFragmentDone = (name) => {
             fragmentsLoaded++;
+            
+            // [v1.37.48 Forensic Handshake]
+            if (typeof window.auditFragmentHydration === 'function') {
+                window.auditFragmentHydration(name, 'success');
+            }
+
             console.log(`Orchestrator: Fragment '${name}' ready at T+${Date.now() - bootStartTime}ms (${fragmentsLoaded}/${fragmentsNeeded})`);
             if (fragmentsLoaded === fragmentsNeeded) {
                 console.log("Orchestrator: All fragments ready. Finalizing boot sequence...");
@@ -227,14 +233,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         const bootStartTime = Date.now();
         if (typeof FragmentLoader?.load === 'function') {
             // Core UI Viewports
-            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals'));
+            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals-res'));
             FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => onFragmentDone('player'));
             FragmentLoader.load('library-main-viewport', 'fragments/library_explorer.html', () => onFragmentDone('library'));
             FragmentLoader.load('edit-main-viewport', 'fragments/metadata_editor.html', () => onFragmentDone('editor'));
 
-            // Shared Components
+            // Shared Components & Forensic Tools
             FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
             FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
+            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('modals'));
         } else {
             console.warn("DOM: FragmentLoader not found, UI fragments will not load.");
             mwv_finalize_boot();

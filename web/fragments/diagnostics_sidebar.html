@@ -41,7 +41,8 @@
         <button class="side-reiter" id="reiter-prc" onclick="switchDiagnosticsSidebarTab('process')">PRC</button>
         <button class="side-reiter" id="reiter-drv" onclick="switchDiagnosticsSidebarTab('driver')">DRV</button>
         <button class="side-reiter" id="reiter-sec" onclick="switchDiagnosticsSidebarTab('security')">SEC</button>
-        <button class="side-reiter" id="reiter-api" onclick="switchDiagnosticsSidebarTab('api')">API</button>
+        <button id="reiter-api" class="side-reiter" onclick="switchDiagnosticsSidebarTab('api', this)">API</button>
+        <button id="reiter-hydration-audit" class="side-reiter" onclick="switchDiagnosticsSidebarTab('hydration-audit', this)" style="color: #ff9500;">HYD</button>
                 <!-- PANE: SOFTWARE STACK & DEPENDENCY AUDIT (ENV) [v1.37.40] -->
                 <div id="diag-pane-env" class="diag-pane" style="display:none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
@@ -582,7 +583,40 @@
                 <button class="diag-flag-btn" id="flag-btn-RAW" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
                 <button class="diag-flag-btn" id="flag-btn-BYPS" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
                 <button class="diag-flag-btn" id="flag-btn-TEST" onclick="toggleDiagnosticsFlag('TEST')">TEST</button>
+                <button class="diag-flag-btn" id="flag-btn-HYD" onclick="switchDiagnosticsSidebarTab('hydration-audit', this)" style="border-color: #ff9500; color: #ff9500;">HYDRATION</button>
             </div>
+        </div>
+
+        <!-- NEW: FRAGMENT HYDRATION AUDITOR (HYD) [v1.37.45] -->
+        <div id="diag-pane-hydration-audit" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,149,0,0.2); padding-bottom: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: #ff9500; letter-spacing: 2px;">FRAGMENT HYDRATION AUDIT</div>
+                <div style="font-size: 8px; opacity: 0.5;">v1.37.45</div>
+            </div>
+
+            <div style="background: rgba(255,149,0,0.05); border: 1px solid rgba(255,149,0,0.1); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">Boot-Sequence Timeline</div>
+                <div id="hydration-audit-summary" style="font-size: 11px; font-weight: 900; color: #fff;">
+                    Awaiting System Boot...
+                </div>
+                <div id="hydration-audit-counter" style="font-size: 8px; margin-top: 5px; color: var(--text-secondary);">
+                    Progress: 0 / 0 Ready
+                </div>
+            </div>
+
+            <div id="hydration-fragment-matrix" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                <!-- Dynamically Populated by ui_nav_helpers.js -->
+                <div style="opacity: 0.3; font-size: 9px; text-align: center; padding: 20px;">Initializing Registry...</div>
+            </div>
+
+            <div class="diagnostic-label">Forensic Loading Logs</div>
+            <div id="hydration-audit-logs" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #ff9500; line-height: 1.4;">
+                [SYSTEM] Waiting for first spawn event...
+            </div>
+            
+            <button onclick="if(typeof location !== 'undefined') location.reload()" style="width:100%; height: 35px; background: rgba(255,149,0,0.1); color: #ff9500; border: 1px solid rgba(255,149,0,0.2); border-radius: 6px; font-weight: 900; font-size: 9px; margin-top: 15px; cursor: pointer;">
+                RE-INITIALIZE HYDRATION
+            </button>
         </div>
     </div>
 </div>

@@ -125,8 +125,25 @@ function toggleDiagnosticsSidebar(forceState = null) {
 
 function switchDiagnosticsSidebarTab(viewId, btn) {
     if (!diagnosticsSidebarVisible) applyDiagnosticsSidebarState(true);
-    if (typeof window.switchDiagnosticsSidebarTab === 'function') {
-        window.switchDiagnosticsSidebarTab(viewId, btn);
+    
+    // Explicit Pane Management
+    document.querySelectorAll('.diag-pane').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.side-reiter').forEach(el => el.classList.remove('active'));
+
+    const targetId = `diag-pane-${viewId}`;
+    const target = document.getElementById(targetId);
+    if (target) {
+        target.style.display = 'block';
+        if (btn) btn.classList.add('active');
+        else {
+            const reiter = document.getElementById(`reiter-${viewId}`);
+            if (reiter) reiter.classList.add('active');
+        }
+    }
+
+    // Dynamic Logic
+    if (viewId === 'hydration-audit') {
+        renderHydrationMatrix();
     }
 }
 
@@ -584,20 +601,14 @@ async function refreshUIVisibility() {
     const masterHeader = document.getElementById('master-persistent-header');
     if (masterHeader) {
         const shouldShowMaster = (settings.master_header !== false) && menuSystemVisible;
-        const prevState = masterHeader.style.display;
         
         if (shouldShowMaster) {
-            if (prevState === 'none' || prevState === '') {
-                console.log(`[UI-NAV] SPAWN_START: Master Header for ${category}`);
-                masterHeader.style.setProperty('display', 'flex', 'important');
-                masterHeader.style.setProperty('opacity', '1', 'important');
-                console.log(`[UI-NAV] SPAWN_SUCCESS: Master Header active.`);
-            }
+            console.log(`[UI-NAV] SPAWN: Master Header for ${category}`);
+            masterHeader.style.setProperty('display', 'flex', 'important');
+            masterHeader.style.setProperty('opacity', '1', 'important');
         } else {
-            if (prevState === 'flex') {
-                console.log(`[UI-NAV] UNSPAWN: Hiding Master Header for ${category}`);
-                masterHeader.style.setProperty('display', 'none', 'important');
-            }
+            console.log(`[UI-NAV] UNSPAWN: Hiding Master Header for ${category}`);
+            masterHeader.style.setProperty('display', 'none', 'important');
         }
     }
 
@@ -605,24 +616,23 @@ async function refreshUIVisibility() {
     const pillNav = document.getElementById('sub-nav-container');
     if (pillNav) {
         const shouldShowPill = (settings.contextual_pill_nav !== false) && menuSystemVisible;
-        const prevState = pillNav.style.display;
         
         if (shouldShowPill) {
-            if (prevState === 'none' || prevState === '') {
-                console.log(`[UI-NAV] SPAWN_START: Sub-Nav Bar for ${category}`);
-                pillNav.style.setProperty('display', 'flex', 'important');
-                pillNav.style.setProperty('opacity', '1', 'important');
-                pillNav.style.setProperty('pointer-events', 'auto', 'important');
-                console.log(`[UI-NAV] SPAWN_SUCCESS: Sub-Nav Bar active.`);
+            console.log(`[UI-NAV] SPAWN: Sub-Nav Bar for ${category}`);
+            pillNav.style.setProperty('display', 'flex', 'important');
+            pillNav.style.setProperty('opacity', '1', 'important');
+            pillNav.style.setProperty('pointer-events', 'auto', 'important');
+            
+            // Population Cycle (Defensive Wrap)
+            try {
+                updateGlobalSubNav(category);
+            } catch (err) {
+                console.warn("[UI-NAV] Sub-Nav population failed:", err);
             }
-            // Population Cycle (v1.37.06 Recovery)
-            updateGlobalSubNav(category);
         } else {
-            if (prevState === 'flex') {
-                console.log(`[UI-NAV] UNSPAWN: Hiding Sub-Nav Bar for ${category}`);
-                pillNav.style.setProperty('display', 'none', 'important');
-                pillNav.innerHTML = ''; // Clear items on unspawn
-            }
+            console.log(`[UI-NAV] UNSPAWN: Hiding Sub-Nav Bar for ${category}`);
+            pillNav.style.setProperty('display', 'none', 'important');
+            pillNav.innerHTML = ''; 
         }
     }
 
@@ -684,24 +694,18 @@ function refreshViewportLayout() {
  * Ensures vertical alignment is maintained when header bars are toggled.
  */
 function updateLayoutOffsets() {
-    const header = document.getElementById('master-persistent-header');
+    const isMasterVisible = menuSystemVisible;
     const subBar = document.getElementById('sub-nav-container');
-    const container = document.getElementById('main-split-container');
-    if (!container) return;
+    const isSubVisible = subBar && (subBar.style.display !== 'none' && subBar.style.opacity !== '0');
 
-    const mainVisible = menuSystemVisible;
-    const subVisible = subBar && (subBar.style.display !== 'none' && subBar.style.opacity !== '0');
+    const hHeight = isMasterVisible ? 40 : 0;
+    const sHeight = isSubVisible ? 32 : 0;
 
-    // Row 0 (Master Header) = 40px
-    // Row 1 (Sub-Nav) = 32px
-    const headerHeight = (mainVisible ? 40 : 0) + (subVisible ? 32 : 0);
+    // Apply to CSS Variables for global geometry alignment
+    document.documentElement.style.setProperty('--active-header-height', `${hHeight}px`);
+    document.documentElement.style.setProperty('--active-sub-nav-height', `${sHeight}px`);
 
-    if (subBar) {
-        subBar.style.top = `${mainVisible ? 40 : 0}px`;
-    }
-
-    container.style.marginTop = `${headerHeight}px`;
-    container.style.height = `calc(100vh - ${75 + headerHeight}px)`; // Offset for footer
+    console.log(`[GEO-ENGINE] Geometry Re-Calculated: H:${hHeight}px, S:${sHeight}px. Total Top Offset: ${hHeight + sHeight}px`);
 }
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
@@ -1472,6 +1476,93 @@ window.addEventListener('DOMContentLoaded', async () => {
         });
         observer.observe(pillNav, { childList: true });
     }
+
+// ==========================================
+// FRAGMENT HYDRATION AUDITOR (v1.37.46)
+// ==========================================
+
+const FRAGMENT_HYDRATION_REGISTRY = {
+    'modals': { id: 'diagnostics-overlay-container', path: 'fragments/diagnostics_sidebar.html', status: 'pending', time: 0 },
+    'modals-res': { id: 'modals-placeholder', path: 'fragments/modals_container.html', status: 'pending', time: 0 },
+    'player': { id: 'player-main-viewport', path: 'fragments/player_queue.html', status: 'pending', time: 0 },
+    'library': { id: 'library-main-viewport', path: 'fragments/library_explorer.html', status: 'pending', time: 0 },
+    'editor': { id: 'edit-main-viewport', path: 'fragments/metadata_editor.html', status: 'pending', time: 0 },
+    'icons': { id: 'svg-icons-placeholder', path: 'fragments/icons.html', status: 'pending', time: 0 },
+    'menus': { id: 'context-menu-placeholder', path: 'fragments/context_menu.html', status: 'pending', time: 0 }
+};
+
+window.auditFragmentHydration = function(name, status, details = '') {
+    const entry = FRAGMENT_HYDRATION_REGISTRY[name];
+    if (!entry) {
+        // Dynamic registration for unknown fragments
+        if (status === 'spawn') {
+            FRAGMENT_HYDRATION_REGISTRY[name] = { id: 'unknown', path: details, status: 'loading', time: Date.now() };
+        } else return;
+    }
+
+    const item = FRAGMENT_HYDRATION_REGISTRY[name];
+    item.status = status;
+    if (status === 'success') {
+        item.time = Date.now();
+        console.info(`[HYD-AUDIT] Fragment '${name}' CONFIRMED.`);
+    }
+
+    // Log to Forensic Hub
+    const logEl = document.getElementById('hydration-audit-logs');
+    if (logEl) {
+        const timestamp = new Date().toLocaleTimeString();
+        const msg = `<div style="margin-bottom:2px;"><span style="opacity:0.4;">[${timestamp}]</span> <span style="color:${status === 'success' ? '#2ecc71' : (status === 'error' ? '#ff3366' : '#ff9500')}">${name.toUpperCase()}</span>: ${status.toUpperCase()} ${details}</div>`;
+        logEl.innerHTML = msg + logEl.innerHTML;
+        if (logEl.children.length > 50) logEl.lastElementChild.remove();
+    }
+
+    renderHydrationMatrix();
+};
+
+window.renderHydrationMatrix = function() {
+    const matrix = document.getElementById('hydration-fragment-matrix');
+    const summary = document.getElementById('hydration-audit-summary');
+    const counter = document.getElementById('hydration-audit-counter');
+    if (!matrix) return;
+
+    let successCount = 0;
+    const entries = Object.entries(FRAGMENT_HYDRATION_REGISTRY);
+
+    matrix.innerHTML = entries.map(([name, data]) => {
+        let color = '#444'; // Pending
+        if (data.status === 'loading') color = '#ff9500';
+        if (data.status === 'success') {
+            color = '#2ecc71';
+            successCount++;
+        }
+        if (data.status === 'error') color = '#ff3366';
+
+        return `
+            <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border-left: 3px solid ${color};">
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: ${color}; box-shadow: 0 0 5px ${color};"></div>
+                <div style="flex: 1;">
+                    <div style="font-size: 10px; font-weight: 800; color: #fff;">${name.toUpperCase()}</div>
+                    <div style="font-size: 8px; opacity: 0.5;">${data.path}</div>
+                </div>
+                <div style="font-size: 9px; font-family: 'JetBrains Mono', monospace; color: ${color}; font-weight: 900;">${data.status.toUpperCase()}</div>
+            </div>
+        `;
+    }).join('');
+
+    if (summary) {
+        if (successCount === entries.length) {
+            summary.innerText = "SYSTEM HYDRATED";
+            summary.style.color = "#2ecc71";
+        } else {
+            summary.innerText = "HYDRATION IN PROGRESS...";
+            summary.style.color = "#ff9500";
+        }
+    }
+
+    if (counter) {
+        counter.innerText = `Progress: ${successCount} / ${entries.length} Ready`;
+    }
+};
 
     // 1. Sync Base State
     const savedCategory = localStorage.getItem('mwv_active_category') || 'media';

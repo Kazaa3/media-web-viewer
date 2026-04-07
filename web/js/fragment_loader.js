@@ -51,6 +51,12 @@ const FragmentLoader = {
         }
 
         try {
+            // [v1.37.47 Audit Bridge]
+            const fragName = fragmentPath.split('/').pop().replace('.html', '');
+            if (typeof window.auditFragmentHydration === 'function') {
+                window.auditFragmentHydration(fragName, 'loading', fragmentPath);
+            }
+
             console.log(`[FragmentLoader] Loading fragment: ${fragmentPath}`);
             let html;
 
@@ -71,6 +77,13 @@ const FragmentLoader = {
 
             container.innerHTML = html;
             container.dataset.loaded = 'true';
+            
+            // [v1.37.47 Audit Bridge Success]
+            if (typeof window.auditFragmentHydration === 'function') {
+                const fragName = fragmentPath.split('/').pop().replace('.html', '');
+                window.auditFragmentHydration(fragName, 'success');
+            }
+
             if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-2', { path: fragmentPath, targetId });
             console.info(`[FL] STAGE 2: DOM Injection Complete (#${targetId})`);
 
