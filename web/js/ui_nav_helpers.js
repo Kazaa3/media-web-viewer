@@ -577,29 +577,40 @@ window.refreshUIVisibility = refreshUIVisibility;
 
 /**
  * Dynamically updates CSS variables to adjust viewport height/top based on visible bars.
- * Ensures the system 'knows' how many pixels are consumed by the 'smalle oben' and 'andere' menus.
+ * v1.37.52 Master Engine: Handles 0, 40, 32, or 72px total offset.
  */
 function refreshViewportLayout() {
     const root = document.documentElement;
     const masterHeader = document.getElementById('master-persistent-header');
     const pillNav = document.getElementById('sub-nav-container');
+    const footer = document.querySelector('.layout-footer-wrapper');
     
     // Check actual visibility (considering opacity/display)
-    const masterVisible = masterHeader && window.getComputedStyle(masterHeader).display !== 'none';
-    const pillVisible = pillNav && window.getComputedStyle(pillNav).display !== 'none';
+    const masterVisible = masterHeader && (masterHeader.style.display !== 'none' && window.getComputedStyle(masterHeader).display !== 'none');
+    const pillVisible = pillNav && (pillNav.style.display !== 'none' && window.getComputedStyle(pillNav).display !== 'none');
     
-    // Calculate heights
+    // Calculate heights - v1.34 Core standards
     const hHeight = masterVisible ? 40 : 0;
     const sHeight = pillVisible ? 32 : 0;
+    const totalOffset = hHeight + sHeight;
+    const fHeight = (footer && window.getComputedStyle(footer).display !== 'none') ? 52 : 0;
     
-    console.log(`[UI-NAV] REFRESH_GEOMETRY: H:${hHeight}px, S:${sHeight}px (Total Top: ${hHeight + sHeight}px)`);
+    console.log(`[GEO-ENGINE] OFFSET_UPDATE: Header:${hHeight}px + SubNav:${sHeight}px = ${totalOffset}px. Footer: ${fHeight}px`);
     
-    // Update CSS Variables
+    // Update Global CSS Variables
     root.style.setProperty('--active-header-height', hHeight + 'px');
     root.style.setProperty('--active-sub-nav-height', sHeight + 'px');
-    // Total Top Offset is handled by the CSS calc() automatically if we use variables, 
-    // but we can also set the total explicitly if preferred for stability.
-    // root.style.setProperty('--total-top-offset', (hHeight + sHeight) + 'px');
+    root.style.setProperty('--total-top-offset', totalOffset + 'px');
+    root.style.setProperty('--footer-height', fHeight + 'px');
+
+    // Sidebar Sync
+    const sidebarWidth = (sidebarVisible && typeof sidebarVisible !== 'undefined') ? 250 : 0;
+    root.style.setProperty('--sidebar-width', sidebarWidth + 'px');
+
+    // v1.37.52 Force re-flow on active shells
+    document.querySelectorAll('.tab-content.active').forEach(el => {
+        el.style.marginTop = '0'; // Layout-container handles the margin
+    });
 }
 
 /**

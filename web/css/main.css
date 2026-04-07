@@ -310,8 +310,8 @@ body {
    ========================================================================== */
 
 .tab-split-layout {
-    display: none !important; /* Hide by default to prevent bleed */
-    flex-direction: row !important;
+    display: none !important;
+    flex-direction: column !important; /* v1.37.52 Fix: Use column for internal sub-nav stacking */
     height: 100% !important;
     width: 100% !important;
     overflow: hidden !important;
@@ -319,7 +319,7 @@ body {
 }
 
 .tab-split-layout.active {
-    display: flex !important; /* Only show when active */
+    display: flex !important;
 }
 
 .diagnostic-sidebar {
@@ -1610,12 +1610,30 @@ body {
 
 /* --- Default Sidebar Hide --- */
 /* --- v1.34 Sidebar & Splitter Restoration --- */
-#main-sidebar {
+.sidebar {
+    width: var(--sidebar-width, 0px); /* Controlled by Registry */
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-right: 1px solid var(--border-color);
     display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width var(--transition-fluid);
+    flex-shrink: 0;
+}
+
+#main-sidebar.collapsed {
+    width: 0 !important;
+    border: none !important;
 }
 
 #main-splitter {
     display: block;
+}
+
+#main-splitter.collapsed {
+    display: none !important;
 }
 
 .splitter-v {
