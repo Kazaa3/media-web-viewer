@@ -529,13 +529,26 @@ function toggleOptionsSidebar() {
     localStorage.setItem('mwv_options_sidebar_visible', isHidden ? 'true' : 'false');
 }
 
+/**
+ * UI Header Management: TOP MENU and SUB-MENU Bar (v1.37 Restoration)
+ * These elements provide global control and contextual navigation.
+ */
+function toggleMenuBar(forceState = null) {
+    const header = document.getElementById('master-persistent-header');
+    const subBar = document.getElementById('sub-nav-container');
+    const logo = document.getElementById('dict-master-toggle');
+    if (!header) return;
+
+    // v1.37 Restoration: Force always visible
+    menuSystemVisible = true;
+
     header.style.transform = 'translateY(0)';
     header.style.opacity = '1';
-    header.style.display = 'flex !important';
+    header.style.display = 'flex';
 
-    const hasSubNav = subBar && (subBar.innerHTML.trim() !== '' || true); // Force sub-nav check
+    const hasSubNav = subBar && (subBar.innerHTML.trim() !== '' || true); 
     if (subBar) {
-        subBar.style.display = 'flex !important';
+        subBar.style.display = 'flex';
         subBar.style.opacity = '1';
         subBar.style.transform = 'translateY(0)';
     }
@@ -544,7 +557,6 @@ function toggleOptionsSidebar() {
         logo.style.color = 'var(--accent-color)';
     }
 
-    menuSystemVisible = true;
     updateLayoutOffsets();
 }
 
@@ -810,6 +822,7 @@ function updateGlobalSubNav(category) {
 
     // Populate the container
     container.innerHTML = entries.map(item => `
+        <!-- [GUI] SUB-MENU BAR: Contextual Navigation Pills (e.g., Queue/Playlist/Lyrics) -->
         <button id="global-sub-nav-${item.id}" 
                 class="sub-pill-btn" 
                 onclick="event.stopPropagation(); ${item.action}; updateSubNavActiveState('${item.id}')">
