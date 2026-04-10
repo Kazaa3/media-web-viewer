@@ -52,6 +52,10 @@ window.MWV_UI = (() => {
                 // --- [v1.41.121] Layout Distribution ---
                 if (registry.config.header_left_width) document.documentElement.style.setProperty('--header-left-width', registry.config.header_left_width);
                 if (registry.config.header_right_width) document.documentElement.style.setProperty('--header-right-width', registry.config.header_right_width);
+                
+                // --- [v1.41.123] Sub-Nav Forensic Alignment ---
+                if (registry.config.sub_nav_offset_left) document.documentElement.style.setProperty('--sub-nav-offset-left', registry.config.sub_nav_offset_left);
+                if (registry.config.sub_nav_width) document.documentElement.style.setProperty('--sub-nav-width', registry.config.sub_nav_width);
             }
             
             console.log("[MWV-UI] Config loaded successfully.");

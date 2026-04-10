@@ -316,14 +316,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "ui_settings": {
         # --- GLOBAL MASTER TOGGLES (Autoritativ) ---
         "master_header_visible": True,       # GLOBAL: Obere Haupt-Navigationsleiste (Kategorien).
-        "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
+
         "module_tabs_visible": True,         # GLOBAL: Interne Modul-Tabs (Detail-Ansichten).
         "footer_visible": True,              # GLOBAL: Schwebende Media-Steuerung unten.
         "sidebar_allowed": True,             # GLOBAL: Erlaubt die Sidebar-Nutzung generell.
         "sidebar_visible": False,            # GLOBAL: Sidebar Start-Zustand (True=Offen).
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
         "header_height": 48,                 # GLOBAL: Höhe des Haupt-Headers (px).
-        "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
+
         "module_tab_height": 32,             # GLOBAL: Höhe der Modul-Tab-Leiste (px).
         "footer_height": 48,                 # GLOBAL: Höhe des Footers (px).
         "sidebar_width": 250,                # GLOBAL: Breite der Sidebar (px).
@@ -333,6 +333,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_left_width": "30%",          # GLOBAL: Breite des linken Header-Bereichs (Kategorien).
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
+
+    # Dritte Leiste
+        "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
+        "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
+        "sub_nav_offset_left": "0px",        # GLOBAL: Horizontaler Versatz der Sub-Nav Buttons (px/%).
+        "sub_nav_width": "100%",             # GLOBAL: Breite der Sub-Nav Leiste.
         
         # --- GRANULAR UI FRAGMENT FLAGS (v1.38.02) ---
         "ui_fragments": {

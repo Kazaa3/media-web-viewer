@@ -256,11 +256,21 @@ body.mwv-hide-header .master-header {
     pointer-events: none;
 }
 
-/* --- SUB-NAV (PILL BAR) --- */
+/* --- SUB-NAV BAR (CONTEXTUAL PILLS) --- */
 .sub-nav-bar {
     height: var(--active-sub-nav-height, 35px);
-    overflow: hidden;
-    transition: height var(--transition-fluid), opacity var(--transition-snappy), top var(--transition-fluid);
+    padding-left: var(--sub-nav-offset-left, 15px);
+    width: var(--sub-nav-width, 100%);
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--border-glass);
+    transition: height var(--transition-fluid), opacity var(--transition-snappy), padding-left var(--transition-fluid);
+    z-index: 9999;
 }
 
 body.mwv-hide-subnav .sub-nav-bar {
