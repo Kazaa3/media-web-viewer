@@ -191,7 +191,7 @@
 
     <!-- [GUI] SUB-MENU BAR: Contextual Navigation Pills (e.g., Queue/Playlist/Lyrics) -->
     <div id="sub-nav-container" class="sub-nav-bar forensic-overlay" onclick="event.stopPropagation()"
-        style="position: fixed; top: 40px; left: 0; right: 0; height: 35px; background: rgba(10,10,15,0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); overflow-x: auto; scrollbar-width: none; transition: opacity 0.3s ease;">
+        style="position: fixed; top: var(--active-header-height); left: 0; right: 0; height: var(--active-sub-nav-height); background: rgba(10,10,15,0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); overflow-x: auto; scrollbar-width: none; transition: opacity 0.3s ease;">
         <!-- Dynamically populated via updateGlobalSubNav (Atomic Engine v1.41.111) -->
     </div>
 

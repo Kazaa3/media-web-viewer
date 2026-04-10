@@ -549,6 +549,9 @@ document.addEventListener('keydown', (e) => {
 function switchPlayerView(viewId) {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('NAV-RELAY', 'PLAYER-VIEW', { viewId });
 
+    // [v1.41.117] Persist active view state
+    localStorage.setItem('mwv_active_player_view', viewId);
+
     // Hide all views
     document.querySelectorAll('.player-view-container').forEach(el => {
         el.style.display = 'none';

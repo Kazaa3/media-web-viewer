@@ -1,13 +1,13 @@
 :root {
     /* --- Foundation Offsets (v1.39 Forensic Elite) --- */
-    --header-height: 38px;
-    --sub-nav-height: 30px;
+    --header-height: 48px;
+    --sub-nav-height: 35px;
     --footer-height: 48px;
     
     /* Calculated Offsets (Modified by JS) - v1.41.00 Stability */
-    --active-header-height: 38px;
-    --active-sub-nav-height: 0px; 
-    --total-top-offset: calc(var(--active-header-height, 38px) + var(--active-sub-nav-height, 0px));
+    --active-header-height: 48px;
+    --active-sub-nav-height: 35px; 
+    --total-top-offset: calc(var(--active-header-height, 48px) + var(--active-sub-nav-height, 0px));
     
     /* --- Modern Color Palette (v1.39 Master) --- */
     --bg-primary: #f2f2f7;
