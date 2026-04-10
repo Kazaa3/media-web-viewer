@@ -343,6 +343,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "theme": "dark",                     # Farbschema der Anwendung (Standard: Dark/Glass).
         "animations_enabled": True,          # Steuert flüssige UI-Übergänge und Micro-Animations.
         "sub_nav_persistence": True,         # Behält Sub-Menü Zustände beim Kategorie-Wechsel bei.
+        "force_sub_nav_visible": True,       # [v1.41.00 Master] OVERRIDE: Erzwingt die Anzeige des Untermenüs (Pill-Bar).
         "hydration_mode": "B",               # M=Mock, R=Real, B=Both (Handshake-Modus).
         "professional_layout_lock": True,    # [GUI] Erzwingt Layout-Regeln für Profi-Workspaces.
         "kill_on_startup": False,             # [v1.39] Accelerated Boot: Skip kill stale process cleanup by default.
@@ -366,7 +367,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "tools":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
             "reporting":  { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
             "logbuch":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
-            "video":      { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True }
+            "video":      { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "status":     { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": False }
         }
     },
     

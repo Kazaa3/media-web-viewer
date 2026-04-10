@@ -178,6 +178,9 @@ body.mwv-hide-footer { --footer-height: 0px; }
 #sub-nav-container {
     display: flex !important;
     min-height: 30px !important;
+    background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-primary)) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 body.mwv-hide-subnav #sub-nav-container {

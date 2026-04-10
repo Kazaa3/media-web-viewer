@@ -77,8 +77,10 @@ window.MWV_UI = (() => {
         // 1. Header
         body.classList.toggle('mwv-hide-header', settings.master_header === false);
         
-        // 2. Sub-Nav
-        body.classList.toggle('mwv-hide-subnav', settings.contextual_pill_nav === false);
+        // 2. Sub-Nav (contextual_pill_nav) - v1.41.06 Master Override Sync
+        const forceSubNav = !!(registry.config.force_sub_nav_visible || registry.config.ui_settings?.force_sub_nav_visible);
+        const shouldShowSubNav = forceSubNav || (settings.contextual_pill_nav !== false);
+        body.classList.toggle('mwv-hide-subnav', !shouldShowSubNav);
         
         // 3. Footer
         body.classList.toggle('mwv-hide-footer', settings.footer_visible === false);

@@ -740,6 +740,11 @@ function updateGlobalSubNav(category) {
             { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
             { id: 'health', label: 'System-Check', action: "switchDiagnosticsView('health')" }
         ],
+        'status': [
+            { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
+            { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
+            { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
+        ],
         'tests': [
             { id: 'health', label: 'System Health', action: "switchDiagnosticsView('health')" },
             { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
