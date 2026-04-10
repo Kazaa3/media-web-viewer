@@ -322,6 +322,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "sidebar_allowed": True,             # GLOBAL: Erlaubt die Sidebar-Nutzung generell.
         "sidebar_visible": False,            # GLOBAL: Sidebar Start-Zustand (True=Offen).
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
+        "header_height": 48,                 # GLOBAL: Höhe des Haupt-Headers (px).
+        "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
         
         # --- GRANULAR UI FRAGMENT FLAGS (v1.38.02) ---
         "ui_fragments": {

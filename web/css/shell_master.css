@@ -146,7 +146,8 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
 
 /* --- HEADER (TOP NAV) --- */
 .master-header {
-    height: 48px;
+    height: var(--active-header-height, 48px);
+    overflow: hidden;
     background: var(--bg-glass);
     backdrop-filter: blur(var(--glass-blur));
     border-bottom: 1px solid var(--border-glass);
@@ -155,6 +156,28 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
     justify-content: space-between;
     padding: 0 20px;
     z-index: 1000;
+    transition: height var(--transition-fluid), opacity var(--transition-snappy);
+}
+
+body.mwv-hide-header .master-header {
+    height: 0;
+    opacity: 0;
+    border-bottom: none;
+    pointer-events: none;
+}
+
+/* --- SUB-NAV (PILL BAR) --- */
+.sub-nav-bar {
+    height: var(--active-sub-nav-height, 35px);
+    overflow: hidden;
+    transition: height var(--transition-fluid), opacity var(--transition-snappy), top var(--transition-fluid);
+}
+
+body.mwv-hide-subnav .sub-nav-bar {
+    height: 0;
+    opacity: 0;
+    border-bottom: none;
+    pointer-events: none;
 }
 
 .nav-cluster {

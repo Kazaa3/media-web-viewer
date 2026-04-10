@@ -536,10 +536,24 @@ function updateLayoutOffsets() {
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
 document.addEventListener('keydown', (e) => {
-    // Alt key toggles the modern menu bar
+    // [v1.41.119] Forensic UI Toggles
     if (e.altKey && !e.shiftKey && !e.ctrlKey) {
-        e.preventDefault();
-        toggleMenuBar();
+        const key = e.key.toLowerCase();
+        
+        switch(key) {
+            case 'h': // Alt+H: Toggle Header
+                e.preventDefault();
+                if (window.MWV_UI) window.MWV_UI.toggleHeader();
+                break;
+            case 'n': // Alt+N: Toggle Sub-Nav
+                e.preventDefault();
+                if (window.MWV_UI) window.MWV_UI.toggleSubNav();
+                break;
+            case 'alt': // Simple Alt: Toggle legacy menu logic
+                // Avoid preventing default for just Alt to keep system keys working
+                // toggleMenuBar(); 
+                break;
+        }
     }
 });
 

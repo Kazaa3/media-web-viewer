@@ -10,9 +10,9 @@ window.MWV_UI = (() => {
         sidebarVisible: false
     };
 
-    const CONSTANTS = {
-        HEADER_HEIGHT: 38,
-        SUBNAV_HEIGHT: 30,
+    let CONSTANTS = {
+        HEADER_HEIGHT: 48,
+        SUBNAV_HEIGHT: 35,
         FOOTER_HEIGHT: 48,
         SIDEBAR_WIDTH: 250
     };
@@ -39,6 +39,13 @@ window.MWV_UI = (() => {
             );
 
             registry.config = await Promise.race([fetchConfig(), timeoutPromise]);
+            
+            // --- [v1.41.119] Sync Constants with Config ---
+            if (registry.config) {
+                if (registry.config.header_height) CONSTANTS.HEADER_HEIGHT = parseInt(registry.config.header_height);
+                if (registry.config.sub_nav_height) CONSTANTS.SUBNAV_HEIGHT = parseInt(registry.config.sub_nav_height);
+            }
+            
             console.log("[MWV-UI] Config loaded successfully.");
         } catch (e) {
             console.warn("[MWV-UI] Handshake stalled or failed, falling back to Safe Mode:", e.message);
@@ -116,6 +123,33 @@ window.MWV_UI = (() => {
     }
 
     /**
+     * Toggles the main header visibility.
+     */
+    async function toggleHeader(forceState = null) {
+        const isCurrentlyHidden = document.body.classList.contains('mwv-hide-header');
+        const nextState = (forceState !== null) ? forceState : isCurrentlyHidden; // Toggle means if hidden, show it. Wait.
+        
+        // If hidden, class is present. Toggle class = remove class (show it).
+        document.body.classList.toggle('mwv-hide-header');
+        const hiddenNow = document.body.classList.contains('mwv-hide-header');
+        
+        updateGeometry();
+        await setSetting(`ui_visibility_matrix.${registry.activeCategory}.master_header`, !hiddenNow);
+    }
+
+    /**
+     * Toggles the sub-navigation bar visibility.
+     */
+    async function toggleSubNav(forceState = null) {
+        document.body.classList.toggle('mwv-hide-subnav');
+        const hiddenNow = document.body.classList.contains('mwv-hide-subnav');
+        
+        updateGeometry();
+        // Use the global override if present, else per-category
+        await setSetting('force_sub_nav_visible', !hiddenNow);
+    }
+
+    /**
      * Toggles the main sidebar at runtime and syncs with central flags.
      */
     async function toggleSidebar(forceState = null) {
@@ -186,6 +220,8 @@ window.MWV_UI = (() => {
     return {
         init,
         apply,
+        toggleHeader,
+        toggleSubNav,
         toggleSidebar,
         updateGeometry,
         getConstants: () => ({ ...CONSTANTS }),
