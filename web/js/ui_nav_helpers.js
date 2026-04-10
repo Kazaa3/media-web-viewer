@@ -680,6 +680,50 @@ function switchMainCategory(category, btn) {
  * (V1.34 Master: Most sub-navigation is now in the Tab's Internal Sidebar, 
  * but we keep this for cross-fragment shortcuts).
  */
+const SUB_NAV_REGISTRY = {
+    'media': [
+        { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
+        { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
+        { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
+    ],
+    'library': [
+        { id: 'lib-tab-btn-cinema',     label: 'Cinema',     action: "switchLibrarySubTab('cinema')" },
+        { id: 'lib-tab-btn-films',      label: 'Filme',      action: "switchLibrarySubTab('films')" },
+        { id: 'lib-tab-btn-series',     label: 'Serien',     action: "switchLibrarySubTab('series')" },
+        { id: 'lib-tab-btn-albums',     label: 'Alben',      action: "switchLibrarySubTab('albums')" },
+        { id: 'lib-tab-btn-audiobooks', label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
+    ],
+    'status': [
+        { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
+        { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
+        { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
+    ],
+    'file': [
+        { id: 'fb-films',       label: 'Filme',      action: "switchLibrarySubTab('films')" },
+        { id: 'fb-series',      label: 'Serien',     action: "switchLibrarySubTab('series')" },
+        { id: 'fb-albums',      label: 'Alben',      action: "switchLibrarySubTab('albums')" },
+        { id: 'fb-audiobooks',  label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
+    ],
+    'edit': [
+        { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },
+        { id: 'artwork', label: 'Artwork Lab', action: "switchEditView('artwork')" },
+        { id: 'analysis', label: 'Analyse', action: "switchEditView('analysis')" }
+    ],
+    'system': [
+        { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
+        { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
+        { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" },
+        { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
+        { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" }
+    ],
+    'debug': [
+        { id: 'overview', label: 'Übersicht', action: "switchDiagnosticsView('debug-db')" },
+        { id: 'tests', label: 'Skript-Tests', action: "switchDiagnosticsView('tests')" },
+        { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
+        { id: 'health', label: 'System-Check', action: "switchDiagnosticsView('health')" }
+    ]
+};
+
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
@@ -690,89 +734,8 @@ function updateGlobalSubNav(category) {
     
     console.log(`[UI-NAV] Population request for category: [${normalizedCategory}] (passed: ${category})`);
 
-    // V1.41.12 Atomic Rendering: 
-    // We only clear if we successfully find new entries.
-
-    const subNavMap = {
-        'media': [
-            { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
-            { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
-            { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
-        ],
-        'library': [
-            { id: 'lib-tab-btn-cinema',     label: 'Cinema',     action: "switchLibrarySubTab('cinema')" },
-            { id: 'lib-tab-btn-films',      label: 'Filme',      action: "switchLibrarySubTab('films')" },
-            { id: 'lib-tab-btn-series',     label: 'Serien',     action: "switchLibrarySubTab('series')" },
-            { id: 'lib-tab-btn-albums',     label: 'Alben',      action: "switchLibrarySubTab('albums')" },
-            { id: 'lib-tab-btn-audiobooks', label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
-        ],
-        'status': [
-            { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
-            { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
-            { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
-        ],
-        'file': [
-            { id: 'fb-films',       label: 'Filme',      action: "switchLibrarySubTab('films')" },
-            { id: 'fb-series',      label: 'Serien',     action: "switchLibrarySubTab('series')" },
-            { id: 'fb-albums',      label: 'Alben',      action: "switchLibrarySubTab('albums')" },
-            { id: 'fb-audiobooks',  label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
-        ],
-        'edit': [
-            { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },
-            { id: 'artwork', label: 'Artwork Lab', action: "switchEditView('artwork')" },
-            { id: 'analysis', label: 'Analyse', action: "switchEditView('analysis')" }
-        ],
-        'system': [
-            { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
-            { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
-            { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" },
-            { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
-            { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" }
-        ],
-        'options': [
-            { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
-            { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
-            { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" },
-            { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
-            { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" }
-        ],
-        'parser': [
-            { id: 'config', label: 'Konfiguration', action: "switchParserView('config')" },
-            { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" }
-        ],
-        'status': [
-            { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
-            { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
-            { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
-        ],
-        'debug': [
-            { id: 'overview', label: 'Übersicht', action: "switchDiagnosticsView('debug-db')" },
-            { id: 'tests', label: 'Skript-Tests', action: "switchDiagnosticsView('tests')" },
-            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
-            { id: 'health', label: 'System-Check', action: "switchDiagnosticsView('health')" }
-        ],
-        'tests': [
-            { id: 'health', label: 'System Health', action: "switchDiagnosticsView('health')" },
-            { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
-            { id: 'debug-db', label: 'Debug DB', action: "switchDiagnosticsView('debug-db')" }
-        ],
-        'tools': [
-            { id: 'transcoding', label: 'Transcoding', action: "switchToolsView('transcoding')" },
-            { id: 'processing', label: 'Processing', action: "switchToolsView('processing')" },
-            { id: 'repair', label: 'DB Repair', action: "switchToolsView('repair')" }
-        ],
-        'logbuch': [
-            { id: 'journal', label: 'Journal', action: "switchLogbookSubView('journal')" },
-            { id: 'events', label: 'Events (Live)', action: "switchLogbookSubView('events')" },
-            { id: 'project', label: 'Project Logbook', action: "switchLogbookSubView('project')" }
-        ],
-        'reporting': [
-            { id: 'dashboard', label: 'Dashboard', action: "switchReportingSubView('dashboard')" },
-            { id: 'database', label: 'Database', action: "switchReportingSubView('database')" }
-        ]
-    };
-
-    const entries = subNavMap[normalizedCategory];
+    // V1.41.99 Atomic Rendering from Global Registry
+    const entries = SUB_NAV_REGISTRY[normalizedCategory];
     if (!entries) {
         console.warn(`[UI-NAV] No entry map for ${normalizedCategory}.`);
         console.log(`[UI-NAV] UNSPAWN: Sub-nav cleared for ${normalizedCategory}.`);

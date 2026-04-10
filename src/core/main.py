@@ -106,8 +106,7 @@ def ensure_stable_environment():
             sys.exit(1)
 
 # --- EXECUTE GUARD IMMEDIATELY ---
-if __name__ == "__main__":
-    ensure_stable_environment()
+# Consolidated Entry Point at end of file.
 
 # --- INITIALIZE PROFILER (Post-Guard) ---
 try:
@@ -467,24 +466,25 @@ def trigger_db_reconnect():
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     if profiler: profiler.start_phase("App-Launch-Setup")
-    # --- PROCESS LIFECYCLE MANAGEMENT (v1.41.12 Zero-Ghost Policy) ---
+    # --- ULTRA-SOLO STARTUP (Zero-Latency) ---
+    import subprocess
+    log.info("[Bootstrap] Performing Instant Port Purge (8345)...")
+    try:
+        subprocess.run(["fuser", "-k", "8345/tcp"], capture_output=True, timeout=1.0)
+    except:
+        pass
+
     from core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
     
-    log.warning("[Bootstrap] Aggressive Environment Cleanup Triggered...")
-    pc.cleanup_environment() # Hard-kill all ghosts and clear locks
-    
-    # Singleton Guard & Port Readiness
-    for attempt in range(5):
-        if pc.acquire_lock():
-            break
-        log.warning(f"[Bootstrap] Port 8345 still busy (Attempt {attempt+1}/5). Waiting...")
+    # Singleton Guard
+    if not pc.acquire_lock():
+        log.warning("[Bootstrap] Lock collision. Retrying once...")
         time.sleep(0.5)
-    else:
-        owner_pid = pc.get_lock_owner()
-        log.error(f"[Bootstrap] MWV ALREADY RUNNING (PID: {owner_pid}). Aborting.")
-        sys.exit(1)
+        if not pc.acquire_lock():
+            log.error("[Bootstrap] MWV ALREADY RUNNING. Aborting.")
+            sys.exit(1)
 
     # Port readiness is now handled by fast_port_kill above. 
     # Only do a safety check if not in low-latency mode.
@@ -9622,6 +9622,7 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
+    ensure_stable_environment() # Handles .venv re-exec
     start_app()
 
     log.info("[Main] Entering keepalive loop.")
