@@ -13,6 +13,7 @@ window.MWV_UI = (() => {
     let CONSTANTS = {
         HEADER_HEIGHT: 48,
         SUBNAV_HEIGHT: 35,
+        MODULE_TAB_HEIGHT: 32,
         FOOTER_HEIGHT: 48,
         SIDEBAR_WIDTH: 250
     };
@@ -40,10 +41,13 @@ window.MWV_UI = (() => {
 
             registry.config = await Promise.race([fetchConfig(), timeoutPromise]);
             
-            // --- [v1.41.119] Sync Constants with Config ---
+            // --- [v1.41.119/120] Sync Constants with Config ---
             if (registry.config) {
                 if (registry.config.header_height) CONSTANTS.HEADER_HEIGHT = parseInt(registry.config.header_height);
                 if (registry.config.sub_nav_height) CONSTANTS.SUBNAV_HEIGHT = parseInt(registry.config.sub_nav_height);
+                if (registry.config.module_tab_height) CONSTANTS.MODULE_TAB_HEIGHT = parseInt(registry.config.module_tab_height);
+                if (registry.config.footer_height) CONSTANTS.FOOTER_HEIGHT = parseInt(registry.config.footer_height);
+                if (registry.config.sidebar_width) CONSTANTS.SIDEBAR_WIDTH = parseInt(registry.config.sidebar_width);
             }
             
             console.log("[MWV-UI] Config loaded successfully.");
@@ -145,8 +149,29 @@ window.MWV_UI = (() => {
         const hiddenNow = document.body.classList.contains('mwv-hide-subnav');
         
         updateGeometry();
-        // Use the global override if present, else per-category
         await setSetting('force_sub_nav_visible', !hiddenNow);
+    }
+
+    /**
+     * Toggles the module tab navigation bar visibility.
+     */
+    async function toggleModuleTabs(forceState = null) {
+        document.body.classList.toggle('mwv-hide-module-tabs');
+        const hiddenNow = document.body.classList.contains('mwv-hide-module-tabs');
+        
+        updateGeometry();
+        await setSetting('module_tabs_visible', !hiddenNow);
+    }
+
+    /**
+     * Toggles the main footer visibility.
+     */
+    async function toggleFooter(forceState = null) {
+        document.body.classList.toggle('mwv-hide-footer');
+        const hiddenNow = document.body.classList.contains('mwv-hide-footer');
+        
+        updateGeometry();
+        await setSetting('footer_visible', !hiddenNow);
     }
 
     /**
@@ -203,12 +228,14 @@ window.MWV_UI = (() => {
 
         const h = body.classList.contains('mwv-hide-header') ? 0 : CONSTANTS.HEADER_HEIGHT;
         const s = body.classList.contains('mwv-hide-subnav') ? 0 : CONSTANTS.SUBNAV_HEIGHT;
+        const m = body.classList.contains('mwv-hide-module-tabs') ? 0 : CONSTANTS.MODULE_TAB_HEIGHT;
         const f = body.classList.contains('mwv-hide-footer') ? 0 : CONSTANTS.FOOTER_HEIGHT;
 
         root.style.setProperty('--active-header-height', `${h}px`);
         root.style.setProperty('--active-sub-nav-height', `${s}px`);
+        root.style.setProperty('--active-module-tab-height', `${m}px`);
         root.style.setProperty('--footer-height', `${f}px`);
-        root.style.setProperty('--total-top-offset', `${h + s}px`);
+        root.style.setProperty('--total-top-offset', `${h + s + m}px`);
         
         const sw = registry.sidebarVisible ? CONSTANTS.SIDEBAR_WIDTH : 0;
         root.style.setProperty('--sidebar-width', `${sw}px`);
@@ -222,6 +249,8 @@ window.MWV_UI = (() => {
         apply,
         toggleHeader,
         toggleSubNav,
+        toggleModuleTabs,
+        toggleFooter,
         toggleSidebar,
         updateGeometry,
         getConstants: () => ({ ...CONSTANTS }),

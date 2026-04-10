@@ -32,6 +32,63 @@ body {
     flex-direction: column;
 }
 
+/* --- FOOTER (MEDIA PLAYER BAR) --- */
+.media-footer {
+    height: var(--footer-height, 48px);
+    overflow: hidden;
+    background: var(--bg-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    border-top: 1px solid var(--border-glass);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    transition: height var(--transition-fluid), opacity var(--transition-snappy);
+}
+
+body.mwv-hide-footer .media-footer {
+    height: 0;
+    opacity: 0;
+    border-top: none;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR (NAVIGATION) --- */
+.sidebar {
+    width: var(--sidebar-width, 250px);
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(var(--glass-blur));
+    border-right: 1px solid var(--border-glass);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: width var(--transition-fluid), transform var(--transition-fluid), opacity var(--transition-snappy);
+    overflow: hidden;
+}
+
+body.mwv-sidebar-collapsed .sidebar {
+    width: 0;
+    transform: translateX(-10%);
+    opacity: 0;
+    border-right: none;
+    pointer-events: none;
+}
+
+/* --- MODULE TAB NAV (THIRD BAR) --- */
+.module-tab-nav {
+    height: var(--active-module-tab-height, 32px);
+    overflow: hidden;
+    transition: height var(--transition-fluid), opacity var(--transition-snappy);
+}
+
+body.mwv-hide-module-tabs .module-tab-nav {
+    height: 0;
+    opacity: 0;
+    border-bottom: none;
+    pointer-events: none;
+}
+
 /* --- FOOTER (HIGH-DENSITY) --- */
 .master-footer {
     height: 38px;

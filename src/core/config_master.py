@@ -324,6 +324,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
         "header_height": 48,                 # GLOBAL: Höhe des Haupt-Headers (px).
         "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
+        "module_tab_height": 32,             # GLOBAL: Höhe der Modul-Tab-Leiste (px).
+        "footer_height": 48,                 # GLOBAL: Höhe des Footers (px).
+        "sidebar_width": 250,                # GLOBAL: Breite der Sidebar (px).
         
         # --- GRANULAR UI FRAGMENT FLAGS (v1.38.02) ---
         "ui_fragments": {

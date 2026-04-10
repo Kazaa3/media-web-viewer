@@ -536,7 +536,7 @@ function updateLayoutOffsets() {
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
 document.addEventListener('keydown', (e) => {
-    // [v1.41.119] Forensic UI Toggles
+    // [v1.41.119/120] Forensic UI Toggles
     if (e.altKey && !e.shiftKey && !e.ctrlKey) {
         const key = e.key.toLowerCase();
         
@@ -549,9 +549,19 @@ document.addEventListener('keydown', (e) => {
                 e.preventDefault();
                 if (window.MWV_UI) window.MWV_UI.toggleSubNav();
                 break;
+            case 'm': // Alt+M: Toggle Module Tabs
+                e.preventDefault();
+                if (window.MWV_UI) window.MWV_UI.toggleModuleTabs();
+                break;
+            case 'f': // Alt+F: Toggle Footer
+                e.preventDefault();
+                if (window.MWV_UI) window.MWV_UI.toggleFooter();
+                break;
+            case 's': // Alt+S: Toggle Sidebar
+                e.preventDefault();
+                if (window.MWV_UI) window.MWV_UI.toggleSidebar();
+                break;
             case 'alt': // Simple Alt: Toggle legacy menu logic
-                // Avoid preventing default for just Alt to keep system keys working
-                // toggleMenuBar(); 
                 break;
         }
     }
