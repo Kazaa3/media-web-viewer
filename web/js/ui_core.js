@@ -23,29 +23,44 @@ window.MWV_UI = (() => {
     async function init() {
         console.info("[MWV-UI] Orchestrator Initializing...");
         
-        // 1. Fetch Config
+        // --- 1. Fetch Config with 2s Safety Timeout (v1.41.08 Safe-Boot) ---
         try {
-            if (typeof eel !== 'undefined' && typeof eel.get_ui_settings === 'function') {
-                registry.config = await eel.get_ui_settings()();
-            } else if (window.CONFIG && window.CONFIG.ui_settings) {
-                registry.config = window.CONFIG.ui_settings;
-            }
+            const fetchConfig = async () => {
+                if (typeof eel !== 'undefined' && typeof eel.get_ui_settings === 'function') {
+                    return await eel.get_ui_settings()();
+                } else if (window.CONFIG && window.CONFIG.ui_settings) {
+                    return window.CONFIG.ui_settings;
+                }
+                return null;
+            };
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Backend Timeout")), 2000)
+            );
+
+            registry.config = await Promise.race([fetchConfig(), timeoutPromise]);
+            console.log("[MWV-UI] Config loaded successfully.");
         } catch (e) {
-            console.warn("[MWV-UI] Failed to fetch backend settings, falling back to window.CONFIG:", e);
-            registry.config = window.CONFIG?.ui_settings || {};
+            console.warn("[MWV-UI] Handshake stalled or failed, falling back to Safe Mode:", e.message);
+            registry.config = registry.config || window.CONFIG?.ui_settings || {
+                ui_visibility_matrix: { "media": { "master_header": true, "contextual_pill_nav": true, "footer_visible": true } },
+                force_sub_nav_visible: true // v1.41.08 Force sub-nav in safe-mode
+            };
         }
 
-        // 2. Set Startup Category
+        // --- 2. Emergency Reveal Watchdog (v1.41.08) ---
+        // After 5 seconds, we remove all loading overlays NO MATTER WHAT.
+        setTimeout(() => {
+            if (!registry.isInitialized) {
+                console.warn("[MWV-UI] Emergency Unlock triggered after 5s stall!");
+                hideAllLoadingOverlays();
+                apply(registry.activeCategory || 'media');
+            }
+        }, 5000);
+
+        // 3. Set Startup Category
         registry.activeCategory = localStorage.getItem('mwv_active_category') || 'media';
         
-        // 3. Safety Fallback (Ensure visibility even if config is null)
-        if (!registry.config) {
-            console.warn("[MWV-UI] Using minimal safe-mode config.");
-            registry.config = { ui_visibility_matrix: { 
-                "media": { "master_header": true, "contextual_pill_nav": true, "footer_visible": true } 
-            }};
-        }
-
         // 4. Mark Initialized
         registry.isInitialized = true;
         
@@ -53,6 +68,13 @@ window.MWV_UI = (() => {
         apply(registry.activeCategory);
         
         console.info("[MWV-UI] Orchestrator Ready.");
+    }
+
+    function hideAllLoadingOverlays() {
+        document.querySelectorAll('.loading-fragment').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.body.style.opacity = '1';
     }
 
     /**

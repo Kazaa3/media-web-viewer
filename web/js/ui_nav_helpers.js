@@ -690,8 +690,6 @@ function updateGlobalSubNav(category) {
     // Clear previous
     container.innerHTML = '';
 
-    // V1.34 Master: Top-bar pills are now legacy. 
-    // We only populate if the category specifically requires a global override.
     const subNavMap = {
         'media': [
             { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
@@ -704,6 +702,11 @@ function updateGlobalSubNav(category) {
             { id: 'lib-tab-btn-series',     label: 'Serien',     action: "switchLibrarySubTab('series')" },
             { id: 'lib-tab-btn-albums',     label: 'Alben',      action: "switchLibrarySubTab('albums')" },
             { id: 'lib-tab-btn-audiobooks', label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
+        ],
+        'status': [
+            { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
+            { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
+            { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
         ],
         'file': [
             { id: 'fb-films',       label: 'Filme',      action: "switchLibrarySubTab('films')" },
