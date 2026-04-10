@@ -766,15 +766,23 @@ const SUB_NAV_ALIASES = {
 /**
  * Updates the global sub-navigation bar with contextual entries.
  */
+/**
+ * Updates the global sub-navigation bar with contextual entries.
+ */
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
-    if (!container) return;
+    if (!container) {
+        console.warn("[UI-NAV] #sub-nav-container NOT found in DOM. Bypassing Pill Update.");
+        return;
+    }
 
+    // [v1.41.137] Normalization logic for registry lookup
+    const normalizedCategory = category ? category.toLowerCase() : 'media';
     const registryKey = SUB_NAV_ALIASES[normalizedCategory] || normalizedCategory;
     const entries = SUB_NAV_REGISTRY[registryKey];
     
     if (!entries) {
-        console.warn(`[UI-NAV] No entry map for ${normalizedCategory}. Clearing sub-nav.`);
+        console.warn(`[UI-NAV] No entry map for ${normalizedCategory} (Key: ${registryKey}). Clearing sub-nav.`);
         container.innerHTML = '';
         return;
     }
@@ -815,7 +823,7 @@ function updateGlobalSubNav(category) {
 
     const mainBar = document.getElementById('program-menu-bar');
     if (menuSystemVisible && mainBar && mainBar.style.display === 'none') {
-        toggleMenuBar(true);
+        if (typeof toggleMenuBar === 'function') toggleMenuBar(true);
     }
 
     if (typeof updateLayoutOffsets === 'function') updateLayoutOffsets();
