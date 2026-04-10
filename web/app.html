@@ -190,9 +190,9 @@
     </header>
 
     <!-- [GUI] SUB-MENU BAR: Contextual Navigation Pills (e.g., Queue/Playlist/Lyrics) -->
-    <div id="sub-nav-container" class="sub-nav-bar" onclick="event.stopPropagation()"
-        style="position: fixed; top: var(--active-header-height); left: 0; right: 0; height: var(--active-sub-nav-height); background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); border-bottom: 1px solid var(--border-color); z-index: 10000; align-items: center; padding: 0 20px; gap: 8px; box-shadow: var(--shadow-soft); overflow-x: auto; scrollbar-width: none; transition: opacity 0.3s ease, top 0.3s ease;">
-        <!-- Dynamically populated via updateGlobalSubNav -->
+    <div id="sub-nav-container" class="sub-nav-bar forensic-overlay" onclick="event.stopPropagation()"
+        style="position: fixed; top: 40px; left: 0; right: 0; height: 35px; background: rgba(10,10,15,0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10000; display: flex; align-items: center; padding: 0 15px; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); overflow-x: auto; scrollbar-width: none; transition: opacity 0.3s ease;">
+        <!-- Dynamically populated via updateGlobalSubNav (Atomic Engine v1.41.111) -->
     </div>
 
     <div id=app-progress-bar-container>
@@ -801,9 +801,12 @@
                 style="height: 100%; flex-direction: column;">
                 <div class="loading-fragment">Lade Reporting Dashboard...</div>
             </div>
+            <!-- [PLAYER] CORE AUDIO INTERFACE (Atomic Standard v1.41.112) -->
             <div id="player-panel-container" class="tab-content"
-                style="height: 100%; flex-direction: row;">
-                <div class="loading-fragment" style="display: none;">Lade Tools...</div>
+                style="height: 100%; width: 100%; display: none; background: transparent !important;">
+                <div id="player-main-viewport" style="width: 100%; height: 100%;">
+                    <!-- Hydrated via WindowManager & fragments/player_queue.html -->
+                </div>
             </div>
 
             <!-- TAB: Logbuch -->

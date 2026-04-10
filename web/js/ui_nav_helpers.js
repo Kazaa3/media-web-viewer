@@ -651,6 +651,11 @@ function switchMainCategory(category, btn) {
     if (window.MWV_UI) {
         window.MWV_UI.apply(category);
     }
+    
+    // [v1.41.112] Force Pill Refresh for Legacy Shell
+    if (typeof updateGlobalSubNav === 'function') {
+        updateGlobalSubNav(category);
+    }
 
     // Update active state in header/sidebar
     document.querySelectorAll('.menu-item-btn, .nav-item').forEach(b => b.classList.remove('active'));
@@ -687,8 +692,17 @@ function switchMainCategory(category, btn) {
         switchTab(categoryDefaults[category], btn);
     }
 
-    // Dynamically populate sub-navigation header pills
+    // Dynamically populate sub-navigation header pills (Atomic Engine v1.41.112 Hard-Trigger)
     updateGlobalSubNav(category);
+    
+    // [v1.41.112] Special Visibility Pass: Force-show the target panel
+    const targetPanel = document.getElementById(`${category}-panel-container`);
+    if (targetPanel) {
+        console.log(`[DOM-UI] Forcing visibility for panel: ${category}`);
+        document.querySelectorAll('.tab-content').forEach(p => p.style.display = 'none');
+        targetPanel.style.display = 'flex';
+        targetPanel.style.opacity = '1';
+    }
 
     // [v1.37.06] Centralized Visibility Refresh
     refreshUIVisibility();

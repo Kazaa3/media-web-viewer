@@ -2318,3 +2318,33 @@ body.mwv-hide-subnav #sub-nav-container {
     height: 48px !important;
     border-top: 1px solid rgba(0, 242, 255, 0.1) !important;
 }
+
+/* --- ATOMIC BRIDGE: Forensic Visibility Overrides (v1.41.112) --- */
+#player-panel-container.tab-content {
+    display: none; /* Default hidden */
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    z-index: 10;
+}
+
+#player-panel-container.active {
+    display: flex !important; /* Force flex on active */
+}
+
+#sub-nav-container.sub-nav-bar {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.forensic-overlay {
+    pointer-events: auto !important;
+}
+
+/* Fix for potential black screen caused by viewport shadow-overlap */
+#player-main-viewport {
+    background: transparent !important;
+    position: relative;
+    z-index: 11;
+}
