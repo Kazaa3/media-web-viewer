@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 dict - Config Master (Centralized Config & Flag Orchestrator)
-v1.41.00 - Unified source of truth for backend and frontend settings.
+v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
+
+# --- [v1.41.103-SSOT] Tiered Master Registry ---
+APP_VERSION = "1.41.103-UI-PERFECTION"
+BACKEND_VERSION = "1.41.103-BE-ULTRA"
+FRONTEND_VERSION = "1.41.101-FE-PREMIUM"
 
 import os
 import sys

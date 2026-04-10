@@ -121,7 +121,8 @@ try:
     
     # --- CORE METADATA REGISTRY ---
     from core.models import MASTER_CAT_MAP, TECH_MARKERS
-    from core.config_master import GLOBAL_CONFIG
+    from core.config_master import GLOBAL_CONFIG, APP_VERSION, BACKEND_VERSION, FRONTEND_VERSION
+    VERSION = APP_VERSION
     PROJECT_ROOT = _root
 except ImportError as e:
     log.error(f"[Bootstrap] Required module missing: {e}")
@@ -1707,7 +1708,7 @@ def initialize_debug_flags(args=None):
 
 
 # --- Global Constants & State ---
-VERSION = "1.41.99-ULTRA-SOLO"
+# VERSION is now imported from core.config_master in the bootstrap phase.
 GLOBAL_ACTIVE_STREAMS = {}  # Tracks metrics for get_playback_stats
 
 
@@ -2157,6 +2158,15 @@ def test_media_route(path: str):
 def get_version():
     """Returns the application version."""
     return VERSION
+
+@eel.expose
+def get_version_info():
+    """Returns detailed tiered version information."""
+    return {
+        'app': APP_VERSION,
+        'backend': BACKEND_VERSION,
+        'frontend': FRONTEND_VERSION
+    }
 
 @eel.expose
 def get_debug_stats():
