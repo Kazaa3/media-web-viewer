@@ -1,7 +1,13 @@
 import sys, os
 from pathlib import Path
 
-# 1. Absolute Path Forensics (v1.41.00)
+# --- [v1.41.99-ULTRA-SOLO] Flash Burn Singleton ---
+if __name__ == "__main__":
+    import subprocess
+    # Pre-emptive port cleanup (instant shell execution)
+    subprocess.run("fuser -k 8345/tcp > /dev/null 2>&1", shell=True)
+
+# 1. Absolute Path Forensics
 _file = Path(__file__).resolve()
 _root = _file.parent.parent.parent
 _src = _root / "src"
@@ -467,13 +473,6 @@ def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     if profiler: profiler.start_phase("App-Launch-Setup")
     # --- ULTRA-SOLO STARTUP (Zero-Latency) ---
-    import subprocess
-    log.info("[Bootstrap] Performing Instant Port Purge (8345)...")
-    try:
-        subprocess.run(["fuser", "-k", "8345/tcp"], capture_output=True, timeout=1.0)
-    except:
-        pass
-
     from core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
@@ -1721,7 +1720,7 @@ def initialize_debug_flags(args=None):
 
 
 # --- Global Constants & State ---
-VERSION = "1.35.68"
+VERSION = "1.41.99-ULTRA-SOLO"
 GLOBAL_ACTIVE_STREAMS = {}  # Tracks metrics for get_playback_stats
 
 
