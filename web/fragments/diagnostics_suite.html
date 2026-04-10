@@ -1,8 +1,10 @@
 <!-- ===================== DIAGNOSTICS SUITE (v1.34 Refined) ===================== -->
 <div id="diagnostics-suite-fragment" style="display: flex; flex-direction: column; height: 100%; background: var(--bg-primary); border-radius: var(--radius-card); overflow: hidden;">
     
-    <!-- Control Header & Sub-Tabs -->
-            </div>
+    <!-- Control Header -->
+    <div style="padding: 12px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);">Diagnostics Suite</h2>
         </div>
         <div style="display: flex; gap: 12px;">
             <button id="diag-main-action-btn" onclick="runAllTestsUI()" class="tab-btn active" style="background: #2ecc71; border: none;">
@@ -17,7 +19,7 @@
     <div id="diagnostics-viewport" style="flex: 1; overflow-y: auto; background: var(--bg-primary);">
         
         <!-- VIEW: System Health -->
-        <div id="diagnostics-health-view" class="diagnostics-view" style="; padding: 30px;">
+        <div id="diagnostics-health-view" class="diagnostics-view" style="padding: 30px; display: none;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
                 <!-- Connectivity -->
                 <div class="glass-card" style="padding: 24px; border-top: 4px solid #3498db;">
@@ -37,10 +39,10 @@
             </div>
 
             <!-- Terminal Results Overlay -->
-            <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; ; line-height: 1.5;"></div>
+            <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; line-height: 1.5;"></div>
         </div>
 
-        <!-- VIEW: Overview -->
+        <!-- VIEW: Overview (Debug DB) -->
         <div id="diagnostics-debug-db-view" class="diagnostics-view" style="display: block; height: calc(100% - 10px); overflow: hidden;">
             <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; height: 100%; padding: 20px;">
                 
@@ -131,7 +133,7 @@
         </div>
 
         <!-- VIEW: Flags (Dedicated Restoration) -->
-        <div id="diagnostics-flags-view" class="diagnostics-view" style="; padding: 40px;">
+        <div id="diagnostics-flags-view" class="diagnostics-view" style="padding: 40px; display: none;">
             <div class="glass-card" style="padding: 30px; border-top: 4px solid #b71c1c; background: rgba(183, 28, 28, 0.01);">
                 <h3 style="margin: 0 0 25px 0; font-weight: 900; color: #b71c1c; font-size: 1.3em; text-transform: uppercase;">System Debug Orchestrator</h3>
                 <div id="modal-debug-flags" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
@@ -142,8 +144,7 @@
         </div>
 
         <!-- VIEW: Latency -->
-y -->
-        <div id="diagnostics-latency-view" class="diagnostics-view" style="; padding: 40px;">
+        <div id="diagnostics-latency-view" class="diagnostics-view" style="padding: 40px; display: none;">
             <div class="glass-card" style="padding: 40px; text-align: center;">
                 <h3 style="font-weight: 800; color: var(--text-primary);">Network & IPC Latency Profile</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 30px;">Measure the round-trip time between UI and Python Orchestrator.</p>
@@ -155,7 +156,7 @@ y -->
         </div>
 
         <!-- VIEW: Video Health -->
-        <div id="diagnostics-video-health-view" class="diagnostics-view" style="; padding: 40px;">
+        <div id="diagnostics-video-health-view" class="diagnostics-view" style="padding: 40px; display: none;">
             <div class="glass-card" style="padding: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
                     <div>
@@ -167,7 +168,7 @@ y -->
                     </button>
                 </div>
                 
-                <div id="video-diag-status" style="margin-top: 20px; ;">
+                <div id="video-diag-status" style="margin-top: 20px;">
                     <div id="video-diag-target-info" style="font-size: 11px; color: var(--text-secondary); background: var(--bg-secondary); padding: 8px 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); font-family: monospace;">-</div>
                     <div id="video-diag-results-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                         <!-- Results injected here -->
@@ -182,7 +183,7 @@ y -->
         </div>
 
         <!-- VIEW: Legacy Tests -->
-        <div id="diagnostics-tests-view" class="diagnostics-view" style="; height: 100%; overflow: hidden; padding: 20px;">
+        <div id="diagnostics-logs-view" class="diagnostics-view" style="height: 100%; overflow: hidden; padding: 20px; display: none;">
             <div style="display: flex; flex-direction: column; height: 100%; gap: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.4em; letter-spacing: -1px;">Legacy Test Scripts</h3>
@@ -201,7 +202,7 @@ y -->
                     <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Lade Test-Skripte...</div>
                 </div>
 
-                <div id="test-results-container" style="flex: 0 0 300px; background: #000; border-radius: 12px; border: 1px solid var(--border-color); ; flex-direction: column; overflow: hidden;">
+                <div id="test-results-container" style="flex: 0 0 300px; background: #000; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;">
                     <div style="padding: 10px 15px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                         <span style="font-size: 11px; font-weight: 800; color: #fff; letter-spacing: 1px;">TEST OUTPUT</span>
                         <span id="test-run-summary" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 900;"></span>
@@ -215,19 +216,31 @@ y -->
 </div>
 
 <script>
+    /**
+     * Switch Diagnostics Views (Simplified for Global Sub-Nav - v1.41.137.2)
+     */
     function switchDiagnosticsView(viewId) {
         if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-DIAG', viewId);
         
-        document.querySelectorAll('.diagnostics-view').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.diagnostics-subtab').forEach(el => el.classList.remove('active'));
+        // Hide all views
+        document.querySelectorAll('.diagnostics-view').forEach(el => {
+             el.style.display = 'none';
+        });
         
-        const target = document.getElementById('diagnostics-' + viewId + '-view');
+        // Map common aliases
+        let targetId = 'diagnostics-' + viewId + '-view';
+        if (viewId === 'logs') targetId = 'diagnostics-logs-view';
+        if (viewId === 'network') targetId = 'diagnostics-latency-view';
+        
+        const target = document.getElementById(targetId);
         if (target) {
             target.style.display = 'block';
-            const btn = document.querySelector(`.diagnostics-subtab[data-view="${viewId}"]`);
-            if (btn) btn.classList.add('active');
+            if (targetId.includes('logs') || targetId.includes('health')) {
+                 target.style.display = 'flex';
+            }
         }
         
+        // Initialize logic per view
         if (viewId === 'debug-db' && typeof renderDebugDatabase === 'function') {
             renderDebugDatabase();
         } else if (viewId === 'health' && typeof runAllTestsUI === 'function') {
@@ -235,10 +248,46 @@ y -->
             if (list && list.innerText.includes('Bereit')) {
                 runAllTestsUI();
             }
-        } else if (viewId === 'tests' && typeof loadTestSuites === 'function') {
-            loadTestSuites();
         }
     }
+
+    async function runVideoDiagnosticsUI() {
+        const btn = document.getElementById('run-video-diag-btn');
+        const statusBox = document.getElementById('video-diag-status');
+        const resultsContainer = document.getElementById('video-diag-results-container');
+        const targetInfo = document.getElementById('video-diag-target-info');
+        
+        if (!btn) return;
+
+        btn.disabled = true;
+        btn.innerText = 'Probing...';
+        
+        try {
+            const res = await eel.run_video_transcode_diagnostic()();
+            if (statusBox) statusBox.style.display = 'block';
+            
+            if (res.status === 'complete') {
+                if (targetInfo) targetInfo.innerText = `PROBE TARGET: ${res.target}`;
+                if (resultsContainer) {
+                    resultsContainer.innerHTML = res.results.map(r => `
+                        <div class="glass-card" style="padding: 20px; border-left: 4px solid ${r.status === 'success' ? '#2ecc71' : '#e74c3c'}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: 800; color: var(--text-primary); font-size: 12px; text-transform: uppercase;">${r.name} Pipeline</span>
+                                <span style="font-size: 10px; font-weight: 900; color: ${r.status === 'success' ? '#2ecc71' : '#e74c3c'}; text-transform: uppercase;">${r.status}</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">${r.details}</div>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Run Pipeline Probe';
+        }
+    }
+</script>
 
     async function runVideoDiagnosticsUI() {
         const btn = document.getElementById('run-video-diag-btn');

@@ -79,7 +79,7 @@
         </div>
 
         <!-- DATABASE VIEW (SQL) -->
-        <div id="reporting-database-view" class="reporting-view" style=";">
+        <div id="reporting-database-view" class="reporting-view" style="display: none;">
             <div class="glass-card" style="padding: 40px; border: 1px solid #eee;">
                 <h2 style="font-weight: 900; margin-bottom: 10px;">Datenbank (SQL)</h2>
                 <p style="color: #666; margin-bottom: 25px;">Direktzugriff auf die SQLite-Indizes und Schema-Integritätsprüfung.</p>
@@ -91,19 +91,19 @@
         </div>
 
         <!-- STUBS FOR REMAINING VIEWS -->
-        <div id="reporting-video-streaming-view" class="reporting-view" style=";">
+        <div id="reporting-video-streaming-view" class="reporting-view" style="display: none;">
              <div class="glass-card" style="padding: 40px;"><h2>Video Streaming Diagnostics</h2><p>Ready for MSE/FragMP4 analysis.</p></div>
         </div>
-        <div id="reporting-audio-streaming-view" class="reporting-view" style=";">
+        <div id="reporting-audio-streaming-view" class="reporting-view" style="display: none;">
              <div class="glass-card" style="padding: 40px;"><h2>Audio Streaming Diagnostics</h2><p>Ready for Spectrum/HLS analysis.</p></div>
         </div>
-        <div id="reporting-parser-view" class="reporting-view" style=";">
+        <div id="reporting-parser-view" class="reporting-view" style="display: none;">
              <div class="glass-card" style="padding: 40px;"><h2>Parser / Metadaten Audit</h2><p>Scanning library health...</p></div>
         </div>
-        <div id="reporting-model-analysis-view" class="reporting-view" style=";">
+        <div id="reporting-model-analysis-view" class="reporting-view" style="display: none;">
              <div class="glass-card" style="padding: 40px;"><h2>Modell-Analyse</h2><p>Calculating complexity vectors...</p></div>
         </div>
-        <div id="reporting-routing-suite-view" class="reporting-view" style=";">
+        <div id="reporting-routing-suite-view" class="reporting-view" style="display: none;">
              <div class="glass-card" style="padding: 40px;"><h2>Routing Suite</h2><p>Trace navigation state...</p></div>
         </div>
 
@@ -114,25 +114,30 @@
             0% { transform: scale(1); opacity: 0.8; }
             100% { transform: scale(2.5); opacity: 0; }
         }
-        .reporting-subtab {
-            padding: 8px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            background: transparent;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .reporting-subtab:hover {
-            border-color: #999;
-            background: #f0f0f0;
-        }
-        .reporting-subtab.active {
-            background: #333;
-            color: #fff;
-            border-color: #333;
-        }
     </style>
+
+    <script>
+        /**
+         * Switch Reporting Views (Simplified for Global Sub-Nav - v1.41.137.2)
+         */
+        function switchReportingView(viewId) {
+            if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-REPORT', viewId);
+            
+            // Hide all views
+            document.querySelectorAll('.reporting-view').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Map common aliases
+            let targetId = 'reporting-' + viewId + '-view';
+            if (viewId === 'dashboard') targetId = 'reporting-dashboard-view';
+            if (viewId === 'performance') targetId = 'reporting-video-streaming-view'; // Example mapping
+            
+            // Show target view
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.style.display = 'block';
+            }
+        }
+    </script>
 </div>

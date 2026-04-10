@@ -13,9 +13,6 @@
         </div>
     </div>
 
-    <button id="log-subtab-project" class="tab-btn" onclick="switchLogbookSubView('project')">Project Logbook</button>
-    </div>
-
     <!-- VIEW: Journal -->
     <div id="log-view-journal" class="log-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
         <!-- Filter & Search Bar (Pill Form) -->
@@ -41,7 +38,7 @@
     </div>
 
     <!-- VIEW: Events (Live Console Overlay) -->
-    <div id="log-view-events" class="log-view" style="; flex: 1; padding: 30px; background: #050505;">
+    <div id="log-view-events" class="log-view" style="flex: 1; padding: 30px; background: #050505; display: none;">
         <div class="glass-card" style="height: 100%; border: 1px solid #333; background: #000; padding: 20px; font-family: monospace; color: #0f0; overflow-y: auto;">
             <div style="color: #666; margin-bottom: 20px; font-size: 11px; text-transform: uppercase;">Real-Time Socket Stream...</div>
             <div id="live-event-stream">Connecting to mwv_trace pipeline...</div>
@@ -49,7 +46,7 @@
     </div>
 
     <!-- VIEW: Project Logbook (2-Column Restored) -->
-    <div id="log-view-project" class="log-view" style="; flex: 1; overflow: hidden; background: var(--bg-primary);">
+    <div id="log-view-project" class="log-view" style="flex: 1; overflow: hidden; background: var(--bg-primary); display: none;">
         <div style="display: flex; height: 100%;">
             
             <!-- Sidebar: Navigation -->
@@ -62,19 +59,6 @@
                         </h3>
                         <button onclick="openLogbookEditor()" class="tab-btn sm" style="padding: 4px 8px; font-size: 10px; background: var(--accent-color); color: white; border: none;">+ NEU</button>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <select id="logbuch-category-filter" onchange="renderLogbuchList(currentLogbuchEntries)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 12px; font-weight: 700;">
-                            <option value="Alle">All Categories</option>
-                        </select>
-                        <select id="logbuch-status-filter" onchange="renderLogbuchList(currentLogbuchEntries)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 12px; font-weight: 700;">
-                            <option value="ALL">All Status</option>
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="PLAN">PLAN</option>
-                            <option value="COMPLETED">COMPLETED</option>
-                            <option value="DOCS">DOCS</option>
-                            <option value="BUG">BUG</option>
-                        </select>
-                    </div>
                 </div>
                 <div id="logbuch-entry-sidebar-items" style="flex: 1; overflow-y: auto; padding: 16px; scrollbar-width: thin;">
                     <!-- Entries injected here -->
@@ -83,14 +67,11 @@
 
             <!-- Main Content Area (v1.3.2 Restored Aesthetic) -->
             <div id="logbuch-content-main" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #ffffff;">
-                <div id="logbuch-viewer-header" style="padding: 40px 60px 20px 60px; border-bottom: 2px solid #f0f0f0; ; background: #ffffff; position: relative;">
+                <div id="logbuch-viewer-header" style="padding: 40px 60px 20px 60px; border-bottom: 2px solid #f0f0f0; background: #ffffff; position: relative;">
                     <div style="position: absolute; top: 40px; right: 60px; display: flex; gap: 10px;">
                         <button id="logbuch-edit-btn" onclick="openLogbookEditor(currentLogbuchEntryName)" class="tab-btn sm" style="background: #f5f5f5; color: #333; border: 1px solid #ddd;">EDIT</button>
                     </div>
                     <h1 id="logbuch-tab-title" style="margin: 0; font-size: 2.8em; font-weight: 900; color: #111111; letter-spacing: -2px; line-height: 1.1;">Full Logbook</h1>
-                    <div id="logbuch-entry-meta" style="margin-top: 20px; display: flex; gap: 12px; font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 0.8px;">
-                        <!-- Category/Status pills injected here -->
-                    </div>
                 </div>
                 <div id="logbuch-scroll-container" style="flex: 1; overflow-y: auto; padding: 40px 60px 100px 60px; scrollbar-width: thin;">
                     <div id="logbuch-tab-content" class="markdown-body" style="max-width: 800px; margin: 0; color: #333333; line-height: 1.7; font-size: 15px;">
@@ -113,26 +94,26 @@
 
 <script>
     /**
-     * Switch Logbook Views (v1.34 Master)
+     * Switch Log Views (Simplified for Global Sub-Nav - v1.41.137.2)
      */
-    function switchLogbookSubView(viewId) {
+    function switchLogView(viewId) {
         if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LOG', viewId);
         
-        document.querySelectorAll('.log-view').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('#logbook-fragment .tab-btn').forEach(el => el.classList.remove('active'));
+        // Hide all views
+        document.querySelectorAll('.log-view').forEach(el => {
+            el.style.display = 'none';
+        });
         
+        // Show target view
         const target = document.getElementById('log-view-' + viewId);
         if (target) {
             target.style.display = 'flex';
-            const btn = document.getElementById('log-subtab-' + viewId);
-            if (btn) btn.classList.add('active');
         }
 
         // Initialize Project Logbook logic if selected
-        if (viewId === 'project') {
-            if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
+        if (viewId === 'project' || viewId === 'events') {
+             if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
         }
     }
 </script>
-</div>
 <!-- ===================== LOGBOOK PANEL END ===================== -->
