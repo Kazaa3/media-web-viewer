@@ -2349,7 +2349,15 @@ body.mwv-hide-subnav #sub-nav-container {
     z-index: 11;
 }
 
-/* --- FORENSIC DECK: Workstation Layout Utilities (v1.41.113) --- */
+/* --- SHELL REFINEMENT: Full Bleed Workstation (v1.41.114) --- */
+.shell-full-bleed {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.shell-full-bleed #player-panel-container {
+    padding: 0 !important;
+}
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;

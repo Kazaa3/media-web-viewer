@@ -657,6 +657,13 @@ function switchMainCategory(category, btn) {
         updateGlobalSubNav(category);
     }
 
+    // [v1.41.114] Layout Orchestration: Full Bleed for Media
+    const splitView = document.getElementById('main-split-container');
+    if (splitView) {
+        if (category === 'media') splitView.classList.add('shell-full-bleed');
+        else splitView.classList.remove('shell-full-bleed');
+    }
+
     // Update active state in header/sidebar
     document.querySelectorAll('.menu-item-btn, .nav-item').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
