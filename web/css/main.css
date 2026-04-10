@@ -911,8 +911,8 @@ body.mwv-hide-subnav #sub-nav-container {
     display: flex !important;
     align-items: center;
     gap: 12px;
-    height: 48px !important;
-    min-height: 48px !important;
+    height: 32px !important;
+    min-height: 32px !important;
     padding: 0 20px;
     z-index: 1000;
     background: var(--glass-bg);

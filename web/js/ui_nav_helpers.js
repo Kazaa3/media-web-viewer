@@ -313,6 +313,7 @@ function switchTab(tabId, btn, callback, force = false) {
  */
 
 // --- Global UI State ---
+
 function finishSwitchTab(tabId, targetId, btn) {
     // --- Safety Release (v1.35 Hardening) ---
     isNavigating = false;
@@ -724,6 +725,17 @@ const SUB_NAV_REGISTRY = {
     ]
 };
 
+// v1.41.101 Alias Resolution Map
+const SUB_NAV_ALIASES = {
+    'player': 'media',
+    'diagnostics': 'status',
+    'debug': 'status',
+    'options': 'system',
+    'settings': 'system',
+    'logbuch': 'logbuch', // Ensure direct match
+    'media': 'media'      // Ensure direct match
+};
+
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
@@ -734,8 +746,9 @@ function updateGlobalSubNav(category) {
     
     console.log(`[UI-NAV] Population request for category: [${normalizedCategory}] (passed: ${category})`);
 
-    // V1.41.99 Atomic Rendering from Global Registry
-    const entries = SUB_NAV_REGISTRY[normalizedCategory];
+    // [v1.41.101] Alias Resolution
+    const registryKey = SUB_NAV_ALIASES[normalizedCategory] || normalizedCategory;
+    const entries = SUB_NAV_REGISTRY[registryKey];
     if (!entries) {
         console.warn(`[UI-NAV] No entry map for ${normalizedCategory}.`);
         console.log(`[UI-NAV] UNSPAWN: Sub-nav cleared for ${normalizedCategory}.`);
