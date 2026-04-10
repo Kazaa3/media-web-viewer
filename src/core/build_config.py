@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 dict - Build Config Master (Centralized Build Metadata)
-v1.35.68 - Unified source of truth for packaging and distribution.
+v1.41.00 - Unified source of truth for packaging and distribution.
 """
 
 import os

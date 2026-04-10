@@ -67,7 +67,7 @@ class DatabaseHandler:
 
 def get_default_scan_dir() -> Path:
     """
-    Return the project default scan directory (Centralized v1.35.68).
+    Return the project default scan directory (Centralized v1.41.00).
     """
     return Path(GLOBAL_CONFIG["storage_registry"]["media_dir"]).resolve()
 
@@ -90,7 +90,7 @@ def get_legacy_db_candidates(
     # src/core -> root
     project = (project_root or module_dir.parent.parent).resolve()
     
-    # Base candidates from config (Centralized v1.35.68)
+    # Base candidates from config (Centralized v1.41.00)
     config_candidates = GLOBAL_CONFIG["storage_registry"]["legacy_db_candidates"]
     
     candidates = []
@@ -152,7 +152,7 @@ MAX_INIT_RETRIES = 2
 def init_db(depth: int = 0):
     """
     Initializes the database and runs migrations if needed.
-    @param depth Recursion depth tracking to prevent infinite stalling (v1.35.68).
+    @param depth Recursion depth tracking to prevent infinite stalling (v1.41.00).
     """
     if depth > MAX_INIT_RETRIES:
         log.critical(f"[DB-STALL] Max recursion depth ({MAX_INIT_RETRIES}) exceeded. Aborting init.")
@@ -300,7 +300,7 @@ def init_db(depth: int = 0):
 def factory_reset(depth: int = 0):
     """
     Deletes the current database file and re-initializes from scratch.
-    @param depth Inherited recursion depth (v1.35.68).
+    @param depth Inherited recursion depth (v1.41.00).
     """
     global _RESETTING, _DB_INITIALIZED
     if _RESETTING:
@@ -451,11 +451,11 @@ def insert_media(item_dict):
 
 
 def get_all_media():
-    """Alias for library compatibility (v1.35.68)."""
+    """Alias for library compatibility (v1.41.00)."""
     return get_all_media_items()
 
 def get_library():
-    """Alias for main.py compatibility (v1.35.68)."""
+    """Alias for main.py compatibility (v1.41.00)."""
     return get_all_media_items()
 
 def row_to_dict(row):

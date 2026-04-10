@@ -1,5 +1,5 @@
 # Media Web Viewer - Full / Ultimate Bundle (Core + Test + Dev + Build)
-# v1.35.68 - Consolidated Source of Truth
+# v1.41.00 - Consolidated Source of Truth
 -r requirements-core.txt
 -r requirements-test.txt
 -r requirements-dev.txt

@@ -1,7 +1,7 @@
-// --- Hoisted Global State (v1.35.68 Fix) ---
-// Global state export for cross-module HUD and queue consistency (v1.35.68)
+// --- Hoisted Global State (v1.41.00 Fix) ---
+// Global state export for cross-module HUD and queue consistency (v1.41.00)
 window.__mwv_all_library_items = [];
-// Alias for internal module consistency (v1.35.68)
+// Alias for internal module consistency (v1.41.00)
 Object.defineProperty(window, 'allLibraryItems', {
     get: () => window.__mwv_all_library_items,
     set: (v) => { window.__mwv_all_library_items = v; }
@@ -31,13 +31,13 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
     if (typeof updateSyncAnchor === 'function') updateSyncAnchor('...', '...'); 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Phase 1: Requesting from backend...`, "DB-INFO");
     try {
-        // v1.35.68: Synchronize Category Master before requesting library
+        // v1.41.00: Synchronize Category Master before requesting library
         // --- STAGE 1-3 AUDIT HANDSHAKE (v1.35.96) ---
         const auditStage = window.__mwv_audit_stage || 0;
         let library;
         
         try {
-            // [v1.35.68-B] Stalling Protection: syncCategoryMaster with 2.5s timeout
+            // [v1.41.00-B] Stalling Protection: syncCategoryMaster with 2.5s timeout
             const syncTimeout = new Promise(resolve => setTimeout(() => resolve('timeout'), 2500));
             if (typeof syncCategoryMaster === 'function') {
                 const syncResult = await Promise.race([syncCategoryMaster(), syncTimeout]);
@@ -103,7 +103,7 @@ async function loadLibrary(retryCount = 0, forceRaw = false) {
         if (typeof syncQueueWithLibrary === 'function') {
             syncQueueWithLibrary();
             
-            // v1.35.68 Detection: Trigger Reset if we still have 0 after sync
+            // v1.41.00 Detection: Trigger Reset if we still have 0 after sync
             if (typeof currentPlaylist !== 'undefined' && currentPlaylist.length === 0 && allLibraryItems.length > 0) {
                 console.warn("[DATA-LIB] EMPTY QUEUE DETECTED. Forcing Filter Reset...");
                 if (typeof resetAllFilters === 'function') resetAllFilters();
@@ -144,15 +144,15 @@ async function renderLibrary() {
         return;
     }
 
-    // --- PHASE 1: FILTERING (v1.35.68 Hardened) ---
+    // --- PHASE 1: FILTERING (v1.41.00 Hardened) ---
     console.warn(`[FE-AUDIT] Starting Render for ${(window.__mwv_all_library_items || []).length} items. MainCat: ${libraryFilter}, SubCat: ${librarySubFilter}, Search: "${librarySearch}"`);
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Library] Rendering ${window.__mwv_all_library_items.length} items (Filter: ${libraryFilter})...`, "INFO");
     
-    // Start with all items (using global state export v1.35.68)
+    // Start with all items (using global state export v1.41.00)
     let projectedItems = [...(window.__mwv_all_library_items || [])];
     const initialCount = projectedItems.length;
     
-    // [FE-FORENSIC] Filter Stage 1: Preliminary Cleanup (v1.35.68)
+    // [FE-FORENSIC] Filter Stage 1: Preliminary Cleanup (v1.41.00)
     if (librarySearch) {
         const search = librarySearch.toLowerCase();
         projectedItems = projectedItems.filter(i => (i.name || '').toLowerCase().includes(search));
@@ -163,7 +163,7 @@ async function renderLibrary() {
         console.warn("[FE-FORENSIC] Early filter dropped all items. Check search/category sync.");
     }
 
-    // 1. Hydration Mode Filter (Mock/Real/Both) - v1.35.68
+    // 1. Hydration Mode Filter (Mock/Real/Both) - v1.41.00
     projectedItems = projectedItems.filter(item => {
         const hmode = window.__mwv_hydration_mode || 'real';
         const nameMock = item.name && item.name.startsWith('[MOCK]');
@@ -603,7 +603,7 @@ async function scan(targetDir = null, clearDb = true) {
     }
 }
 /**
- * Reset All Filters (v1.35.68 Recovery)
+ * Reset All Filters (v1.41.00 Recovery)
  * Clears all local storage and UI filter states to show all 541+ items.
  */
 function resetAllFilters() {
@@ -639,7 +639,7 @@ function resetAllFilters() {
 window.resetAllFilters = resetAllFilters;
 
 /**
- * Specialized View Initializers (v1.35.68 Standard)
+ * Specialized View Initializers (v1.41.00 Standard)
  * These ensure categorized data flows correctly when a fragment is loaded.
  */
 function initFilmsView() { 

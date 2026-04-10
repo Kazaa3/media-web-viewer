@@ -518,18 +518,8 @@ function refreshViewportLayout() {
  * Ensures vertical alignment is maintained when header bars are toggled.
  */
 function updateLayoutOffsets() {
-    const isMasterVisible = menuSystemVisible;
-    const subBar = document.getElementById('sub-nav-container');
-    const isSubVisible = subBar && (subBar.style.display !== 'none' && subBar.style.opacity !== '0');
-
-    const hHeight = isMasterVisible ? 40 : 0;
-    const sHeight = isSubVisible ? 32 : 0;
-
-    // Apply to CSS Variables for global geometry alignment
-    document.documentElement.style.setProperty('--active-header-height', `${hHeight}px`);
-    document.documentElement.style.setProperty('--active-sub-nav-height', `${sHeight}px`);
-
-    console.log(`[GEO-ENGINE] Geometry Re-Calculated: H:${hHeight}px, S:${sHeight}px. Total Top Offset: ${hHeight + sHeight}px`);
+    console.debug("[GEO-ENGINE] Delegating offsets to MWV_UI...");
+    if (window.MWV_UI) window.MWV_UI.updateGeometry();
 }
 
 // --- Keyboard Shortcuts & Global Early Initialization ---
@@ -937,7 +927,7 @@ function switchToolsSubView(viewId) {
     });
 }
 
-// Logbook sub-view logic moved to logbook_helpers.js (v1.35.68 Consolidation)
+// Logbook sub-view logic moved to logbook_helpers.js (v1.41.00 Consolidation)
 
 function switchFileSubView(viewId) {
     switchTab('file', null, () => {

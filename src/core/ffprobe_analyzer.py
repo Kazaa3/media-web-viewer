@@ -23,7 +23,7 @@ def ffprobe_analyze(file_path: Union[str, Path]) -> Dict[str, Any]:
 
     is_iso = str(file_path).lower().endswith('.iso')
     
-    # Global/Centralized Binary Orchestration (v1.35.68)
+    # Global/Centralized Binary Orchestration (v1.41.00)
     from src.core.config_master import GLOBAL_CONFIG
     cmd = [
         GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe"),

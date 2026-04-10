@@ -1,5 +1,5 @@
 /**
- * Safety Utilities for Reporting (v1.35.68 Repair)
+ * Safety Utilities for Reporting (v1.41.00 Repair)
  */
 function safeHtml(id, html) {
     const el = document.getElementById(id);
@@ -176,7 +176,7 @@ async function updateAnalyticsDashboard() {
     }
 }
 
-// Initial call for "Fresh Refresh" stability (v1.35.68)
+// Initial call for "Fresh Refresh" stability (v1.41.00)
 function initReportingHydration() {
     const activeTab = localStorage.getItem('mwv_active_tab') || 'media';
     if (activeTab === 'reporting' || activeTab === 'reports') {

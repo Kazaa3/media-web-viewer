@@ -40,7 +40,7 @@ function append_test_output(message) {
 
 /**
  * Loads available test suites from the backend and renders them.
- * v1.35.68 Final: Python only + Autonomous GUI Auditor (Virtual).
+ * v1.41.00 Final: Python only + Autonomous GUI Auditor (Virtual).
  */
 async function loadTestSuites(retryCount) {
     retryCount = retryCount || 0;

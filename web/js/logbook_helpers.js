@@ -14,7 +14,7 @@ function closeLogbookEditor() {
 }
 
 /**
- * Switch Logbook Views (v1.35.68)
+ * Switch Logbook Views (v1.41.00)
  */
 window.switchLogbookSubView = function(viewId) {
     if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LOG', viewId);
@@ -415,7 +415,7 @@ async function openLogbook(featureName, source = 'logbuch', filename = null) {
 }
 
 /**
- * LOGBOOK EDITOR: Activation (v1.35.68)
+ * LOGBOOK EDITOR: Activation (v1.41.00)
  */
 async function openLogbookEditor(name = null) {
     const modal = document.getElementById('logbuch-editor-modal');

@@ -44,10 +44,10 @@ def get_default_scan_dir() -> Path:
     return Path(GLOBAL_CONFIG.get("scan_media_dir", str(Path(__file__).resolve().parent.parent.parent / "media")))
 
 
-# Use Centralized Config (v1.35.68)
+# Use Centralized Config (v1.41.00)
 PARSER_CONFIG = GLOBAL_CONFIG
 
-# SLOW_PARSERS now imported from config_master (Centralized Config v1.35.68)
+# SLOW_PARSERS now imported from config_master (Centralized Config v1.41.00)
 
 
 def sanitize_scan_dirs(scan_dirs: Any) -> list[str]:
@@ -176,7 +176,7 @@ def load_parser_config() -> None:
 
 
 class ConfigJSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder for Pathlib.Path objects (v1.35.68)"""
+    """Custom JSON encoder for Pathlib.Path objects (v1.41.00)"""
     def default(self, obj):
         if isinstance(obj, Path):
             return str(obj)
@@ -242,7 +242,7 @@ def natural_sort_key(text: Any) -> list[tuple[bool, Any]]:
     return [(True, int(c)) if c.isdigit() else (False, c.lower()) for c in parts if c]
 
 
-# Extension Categories (Centralized v1.35.68)
+# Extension Categories (Centralized v1.41.00)
 
 
 
@@ -274,7 +274,7 @@ def format_codec(raw_codec: Any, track_info: Any = None) -> str:
 
     codec = str(raw_codec).lower()
 
-    # Generic mappings for common codecs (Centralized v1.35.68)
+    # Generic mappings for common codecs (Centralized v1.41.00)
     codec_map = GLOBAL_CONFIG["parser_registry"]["codec_map"]
 
     # PCM specific handling
@@ -310,7 +310,7 @@ def format_container(raw_container: Any, file_type: str | None = None) -> str:
             return 'webm'
         return 'mkv'
 
-    # Generic mappings for containers (Centralized v1.35.68)
+    # Generic mappings for containers (Centralized v1.41.00)
     container_map = GLOBAL_CONFIG["parser_registry"]["container_map"]
 
     # Fallback to file_type if we have a generic ID3/WAV container that isn't really a "container"
@@ -336,7 +336,7 @@ def format_tagtype(raw_tagtype: Any) -> str:
     if tag.startswith("ID3v"):
         return tag
 
-    # Generic mappings for tag types (Centralized v1.35.68)
+    # Generic mappings for tag types (Centralized v1.41.00)
     tag_map = GLOBAL_CONFIG["parser_registry"]["tag_type_map"]
     return tag_map.get(tag, tag)
 
@@ -489,7 +489,7 @@ def ffprobe_suite(path: Path | str) -> dict[str, Any]:
     """
     Runs ffprobe on the given path and returns a structured analysis object.
     """
-    # Global/Centralized Binary Orchestration (v1.35.68)
+    # Global/Centralized Binary Orchestration (v1.41.00)
     from src.core.config_master import GLOBAL_CONFIG
     ffprobe_path = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")
     
@@ -565,7 +565,7 @@ def ffprobe_quality_score(analysis: dict[str, Any]) -> int:
     score = 0
     h = analysis.get('height', 0)
     
-    # Resolution base (Centralized v1.35.68)
+    # Resolution base (Centralized v1.41.00)
     weights = GLOBAL_CONFIG["diagnostic_registry"]["quality_score_weights"]
     res_w = weights["resolution"]
     

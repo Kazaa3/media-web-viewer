@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-startup_monitor.py - Centralized Startup & Performance Profiling (v1.35.68)
+startup_monitor.py - Centralized Startup & Performance Profiling (v1.41.00)
 Provides millisecond-accurate tracking of the Media Viewer bootstrap phases.
 """
 

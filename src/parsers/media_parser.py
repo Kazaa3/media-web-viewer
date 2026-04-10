@@ -24,7 +24,7 @@ from . import music_tag_parser
 import multiprocessing
 from src.core.config_master import GLOBAL_CONFIG
 
-# Parser Categories (Centralized v1.35.68)
+# Parser Categories (Centralized v1.41.00)
 AUDIO_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["audio"])
 VIDEO_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["video"])
 UNIVERSAL_PARSER_IDS = set(GLOBAL_CONFIG["parser_registry"]["categories"]["universal"])
@@ -45,7 +45,7 @@ def sanitize_metadata(tags: dict[str, Any]) -> dict[str, Any]:
             
     return tags
 
-# Magic byte signatures (Centralized v1.35.68)
+# Magic byte signatures (Centralized v1.41.00)
 _sig_map = GLOBAL_CONFIG["parser_registry"]["magic_signatures"]
 REQUIRED_MAGIC = {k: bytes.fromhex(v) for k, v in _sig_map.items()}
 
@@ -115,7 +115,7 @@ def run_sandboxed(func, timeout, *args, **kwargs):
         raise e
 
 
-# Mapping which parsers are responsible for which file types (Centralized v1.35.68)
+# Mapping which parsers are responsible for which file types (Centralized v1.41.00)
 PARSER_MAPPING = GLOBAL_CONFIG["parser_registry"]["extension_map"]
 
 
@@ -208,7 +208,7 @@ def _extract_metadata_internal(path, filename, mode='lightweight', category=None
         'name': filename,
         'type': 'directory' if path_obj.is_dir() else 'file' if path_obj.is_file() else 'missing',
     }
-    # Initialize full_tags for high-fidelity modes (v1.35.68 Centralized)
+    # Initialize full_tags for high-fidelity modes (v1.41.00 Centralized)
     if mode in ('full', 'ultimate') and 'full_tags' not in tags:
         tags['full_tags'] = {}
 

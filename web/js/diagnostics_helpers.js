@@ -63,7 +63,7 @@ window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
 window.debugLogBuffer = []; // Store logs for filtering
 
 /**
- * VS Code Dark Syntax Highlighter (v1.35.68)
+ * VS Code Dark Syntax Highlighter (v1.41.00)
  */
 function syntaxHighlightJSON(json) {
     if (typeof json !== 'string') json = JSON.stringify(json, undefined, 2);
@@ -86,11 +86,11 @@ function syntaxHighlightJSON(json) {
 }
 
 /**
- * Modern Database Overview Renderer (v1.35.68 Refined)
+ * Modern Database Overview Renderer (v1.41.00 Refined)
  * Restores the Category Breakdown requested by user.
  */
 /**
- * Modern Database Overview Renderer (v1.35.68 Final Consolidation)
+ * Modern Database Overview Renderer (v1.41.00 Final Consolidation)
  * Restores the Category Breakdown requested by user.
  */
 window.renderDatabaseOverview = async function() {
@@ -187,7 +187,7 @@ window.renderDebugDatabase = async function() {
     display.innerHTML = syntaxHighlightJSON(data);
 };
 
-// --- Sub-Tab Hijack Restoration (v1.35.68 Final) ---
+// --- Sub-Tab Hijack Restoration (v1.41.00 Final) ---
 // --- Unified Sidebar Management (v1.37.03 Restoration) ---
 
 /**
@@ -228,7 +228,7 @@ window.switchSidebarView = function(viewId) {
         }
     }
 
-    // 4. Legacy Bridge (v1.35.68)
+    // 4. Legacy Bridge (v1.41.00)
     if (viewId === 'debug-db') {
         if (typeof renderDebugDatabase === 'function') renderDebugDatabase();
     } else if (viewId === 'tests') {
@@ -835,7 +835,7 @@ setTimeout(window.refreshStartupInfo, 1000);
 window.updateSyncAnchor = updateSyncAnchor;
 
 /**
- * Diagnostic: Hide DB Toggle (v1.35.68 Recovery)
+ * Diagnostic: Hide DB Toggle (v1.41.00 Recovery)
  */
 window.__mwv_hide_db = false;
 function toggleHideDb() {
@@ -850,7 +850,7 @@ function toggleHideDb() {
 window.toggleHideDb = toggleHideDb;
 
 /**
- * Diagnostic: Notify Change (v1.35.68 Overhaul)
+ * Diagnostic: Notify Change (v1.41.00 Overhaul)
  * Provides explicit, non-abbreviated labels for all diagnostic controls.
  */
 function notifyDiagnosticChange(btnId, type, state) {
@@ -932,11 +932,11 @@ function toggleBypassDb() {
 window.toggleBypassDb = toggleBypassDb;
 
 /**
- * Autonomous Self-Test Engine (v1.35.68)
+ * Autonomous Self-Test Engine (v1.41.00)
  * Performs a 7-point integrity check using Sync Anchors.
  */
 async function runAutonomousSelfTest() {
-    // --- ADDED v1.35.68 Stage 10: Queue Parity Audit ---
+    // --- ADDED v1.41.00 Stage 10: Queue Parity Audit ---
     const libCount = (typeof allLibraryItems !== 'undefined') ? allLibraryItems.length : 0;
     const queueCount = (typeof currentPlaylist !== 'undefined') ? currentPlaylist.length : 0;
     const isRaw = window.__mwv_raw_mode === true;
@@ -1040,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
 });
 /**
- * Deep Data Flow Probe (v1.35.68 Recovery)
+ * Deep Data Flow Probe (v1.41.00 Recovery)
  */
 async function probeDataFlow() {
     // Stage 1 (Mock) is the starting baseline

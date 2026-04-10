@@ -29,7 +29,7 @@ class VideoHandler(MediaHandler):
         d_sec = analysis.get("duration_sec", 0)
         ext = self.filepath.suffix.lower()
         
-        # --- Centralized Media Routing (v1.35.68 Sync) ---
+        # --- Centralized Media Routing (v1.41.00 Sync) ---
         is_direct = is_direct_play_capable(self.filepath, client)
         tags = analysis
 

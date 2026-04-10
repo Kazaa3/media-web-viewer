@@ -15,7 +15,7 @@ window.playlistIndex = playlistIndex;
 window.currentPlaylist = currentPlaylist;
 
 /**
- * Empties the current player queue (v1.35.68).
+ * Empties the current player queue (v1.41.00).
  */
 function clearQueue() {
     console.warn(">>> [Queue] Clearing all items.");
@@ -549,7 +549,7 @@ function renderPlaylist() {
     let isRaw = window.__mwv_raw_mode === true;
     let filteredItems = [...(isShuffle ? shuffledPlaylist : currentPlaylist)];
 
-    // v1.35.68: Use Centralized CATEGORY_MAP and TECH_MAP from backend
+    // v1.41.00: Use Centralized CATEGORY_MAP and TECH_MAP from backend
     if (window.activeQueueFilter !== 'all' && !isRaw) {
         const catInfo = CATEGORY_MAP[window.activeQueueFilter] || { aliases: [] };
         const allowedLabels = catInfo.aliases || [];
@@ -723,7 +723,7 @@ function renderPlaylist() {
         list.appendChild(div);
         });
     }
-    }); // v1.35.68 Final closing block
+    }); // v1.41.00 Final closing block
 }
 
 function resetAllFilters() {
@@ -873,10 +873,10 @@ function syncQueueWithLibrary() {
     let filtered;
     const isRaw = window.__mwv_raw_mode === true;
     
-    // v1.35.68 Sync Audit
+    // v1.41.00 Sync Audit
     const audit = { audio: 0, video: 0, dropped: 0, total: allLibraryItems.length };
 
-    // v1.35.68 Unified Sync Strategy
+    // v1.41.00 Unified Sync Strategy
     // We prioritize real media but don't drop them if Diagnostic Mode is on.
     filtered = allLibraryItems.filter(item => {
         const isStage = !!item.stage;
@@ -892,7 +892,7 @@ function syncQueueWithLibrary() {
             return isReal && !video;
         }
 
-        // Productive Mode / v1.35.68 Hybrid Logic
+        // Productive Mode / v1.41.00 Hybrid Logic
         const hmode = window.__mwv_hydration_mode || 'real';
         const nameMock = item.name && item.name.startsWith('[MOCK]');
         const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
@@ -925,7 +925,7 @@ function syncQueueWithLibrary() {
         console.info(`[BD-AUDIT] Filtered ${filtered.length}/${allLibraryItems.length}`);
     }
 
-    // v1.35.68: Master-audit logging (Automated Chain)
+    // v1.41.00: Master-audit logging (Automated Chain)
     if (filtered.length > 0 && filtered.length < 5) {
         filtered.forEach(item => {
             const audit = `AUDIT: [${item.name}] DB_CAT: ${item.category} -> MASTER: ${window.activeQueueFilter} -> STATUS: KEEP`;
@@ -938,7 +938,7 @@ function syncQueueWithLibrary() {
         console.warn("[Recovery] Sync Black Hole detected. Forcing raw fallback to all non-video items.");
         filtered = allLibraryItems.filter(i => {
             const isVid = isVideoItem(i);
-            // v1.35.68: Use standardized video detection (multimedia is now video)
+            // v1.41.00: Use standardized video detection (multimedia is now video)
             return !isVid || (i.category && i.category.toLowerCase() === 'video');
         });
         console.info(`[Sync-Audit] Stage 2 (Rescue): Now has ${filtered.length} items.`);
@@ -954,7 +954,7 @@ function syncQueueWithLibrary() {
         if (typeof renderPlaylist === 'function') renderPlaylist();
         if (typeof renderFullLibraryInPlayer === 'function') renderFullLibraryInPlayer();
         
-        // --- v1.35.68: Synchronize technical anchors ---
+        // --- v1.41.00: Synchronize technical anchors ---
         if (typeof updateSyncAnchor === 'function') {
             const dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
                             ? window.__mwv_all_library_items.length 
@@ -966,7 +966,7 @@ function syncQueueWithLibrary() {
 }
 
 /**
- * Hydration Master Control (v1.35.68)
+ * Hydration Master Control (v1.41.00)
  * Switches between Mock, Real, and Both modes.
  */
 window.setHydrationMode = function(mode) {
@@ -985,7 +985,7 @@ window.setHydrationMode = function(mode) {
         }
     });
 
-    // --- RE-HYDRATION PIPELINE (v1.35.68) ---
+    // --- RE-HYDRATION PIPELINE (v1.41.00) ---
     // 1. Sync the playback queue
     if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
     
@@ -997,7 +997,7 @@ window.setHydrationMode = function(mode) {
     }
 }
 
-// v1.35.68 Override initialization
+// v1.41.00 Override initialization
 window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('mwv_hydration_mode') || 'real';
     setHydrationMode(saved);
@@ -1179,7 +1179,7 @@ if (typeof playAudio === 'function') {
 }
 
 /**
- * Atomic Hydration Watcher (v1.35.68)
+ * Atomic Hydration Watcher (v1.41.00)
  * Ensures the player queue remains synchronized with the backend library.
  * Periodically checks for "zombie" items and triggers hydration if the queue is empty.
  */

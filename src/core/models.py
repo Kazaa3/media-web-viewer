@@ -147,7 +147,7 @@ def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
     for dc in displayed_cats:
         raw_dc = dc.lower()
         
-        # 0. Handle 'all' expansion (v1.35.68 Master Reset)
+        # 0. Handle 'all' expansion (v1.41.00 Master Reset)
         if raw_dc == 'all':
             for key in MASTER_CAT_MAP:
                 allowed.add(key)

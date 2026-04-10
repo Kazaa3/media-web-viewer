@@ -1,5 +1,5 @@
 /**
- * System & Environment Helpers (v1.35.68 Centralized)
+ * System & Environment Helpers (v1.41.00 Centralized)
  */
 let mwv_config = {
     start_page: 'player',
@@ -9,7 +9,7 @@ let mwv_config = {
 
 async function loadConfig() {
     try {
-        // v1.35.68: Prioritize Global Config from backend
+        // v1.41.00: Prioritize Global Config from backend
         if (window.CONFIG && window.CONFIG.parser_registry) {
             mwv_config = { ...mwv_config, ...window.CONFIG.parser_registry };
             console.log('[Sync] System config hydrated from Centralized Registry.');
@@ -32,7 +32,7 @@ async function checkBackendReachability() {
     const container = document.getElementById('rtt-results-container');
     if (container) container.style.display = 'block';
     
-    // v1.35.68: Centralized Network Discovery
+    // v1.41.00: Centralized Network Discovery
     const host = window.CONFIG?.network_settings?.bind_address || '127.0.0.1';
     const port = window.location.port || window.CONFIG?.network_settings?.port || '8345';
     

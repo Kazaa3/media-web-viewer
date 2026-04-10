@@ -4,10 +4,10 @@
     --sub-nav-height: 30px;
     --footer-height: 48px;
     
-    /* Calculated Offsets (Modified by JS) */
+    /* Calculated Offsets (Modified by JS) - v1.41.00 Stability */
     --active-header-height: 38px;
-    --active-sub-nav-height: 30px;
-    --total-top-offset: calc(var(--active-header-height) + var(--active-sub-nav-height));
+    --active-sub-nav-height: 0px; 
+    --total-top-offset: calc(var(--active-header-height, 38px) + var(--active-sub-nav-height, 0px));
     
     /* --- Modern Color Palette (v1.39 Master) --- */
     --bg-primary: #f2f2f7;
@@ -167,8 +167,22 @@ body.mwv-hide-footer { --footer-height: 0px; }
 }
 
 .tab-content.active {
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+    min-height: 0;
+    overflow: hidden !important;
+}
+
+#sub-nav-container {
+    display: flex !important;
+    min-height: 30px !important;
+}
+
+body.mwv-hide-subnav #sub-nav-container {
+    display: none !important;
+    min-height: 0 !important;
 }
 
 /* --- iPad OS Buttons (Clean & Modern) --- */

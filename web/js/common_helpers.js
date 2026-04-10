@@ -15,7 +15,7 @@ async function syncCoreRegistry() {
         const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
         try {
             console.info(`[FE-AUDIT] STAGE 1: syncCoreRegistry triggered. Handshake initiated...`);
-            // Parallel fetch with 2s safety timeout (v1.35.68-B)
+            // Parallel fetch with 2s safety timeout (v1.41.00-B)
             const [master, tech, config] = await Promise.race([
                 Promise.all([
                     eel.get_category_master()(),
@@ -58,7 +58,7 @@ async function syncCoreRegistry() {
 }
 
 /**
- * Specialized Sync Wrappers for Module Compatibility (v1.35.68)
+ * Specialized Sync Wrappers for Module Compatibility (v1.41.00)
  */
 async function syncCategoryMaster() { await syncCoreRegistry(); }
 async function syncTechMarkers()    { await syncCoreRegistry(); }
@@ -383,7 +383,7 @@ function showToast(message, duration = 3000) {
  */
 function isVideoItem(item) {
     if (!item) return false;
-    // 1. Check Category (v1.35.68 Standardized)
+    // 1. Check Category (v1.41.00 Standardized)
     const videoCategories = ['video', 'disk_images']; 
     const internalCat = (item.category || '').toLowerCase();
     if (videoCategories.includes(internalCat)) return true;
@@ -399,7 +399,7 @@ function isVideoItem(item) {
     const extMatch = path.match(/\.([a-z0-9_]+)$/);
     const ext = extMatch ? "." + extMatch[1].toLowerCase() : "";
     
-    // Explicit Audio Override (v1.35.68 Stability)
+    // Explicit Audio Override (v1.41.00 Stability)
     if (ext && audioExtensions.includes(ext)) {
         return false; 
     }
@@ -453,7 +453,7 @@ function getCategoryBadgeHtml(item) {
     return `<div style="position:absolute; bottom:-4px; right:-4px; background:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:5;" title="${item.category}">${catIcon}</div>`;
 }
 /**
- * Updates the technical sync anchor in the footer (v1.35.68).
+ * Updates the technical sync anchor in the footer (v1.41.00).
  * Format: [DB: X | GUI: Y]
  */
 function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
@@ -463,7 +463,7 @@ function updateSyncAnchor(dbCount, guiCount, fsSize = null) {
         return;
     }
 
-    // Capture latest counts if undefined (v1.35.68 Safety)
+    // Capture latest counts if undefined (v1.41.00 Safety)
     const finalDb = (dbCount !== undefined) ? dbCount : (window.__mwv_last_db_count || '--');
     const finalGui = (guiCount !== undefined) ? guiCount : '--';
     
@@ -499,7 +499,7 @@ function setAppModeUI(mode) {
 }
 
 /**
- * Hydration Mode Controller (v1.35.68).
+ * Hydration Mode Controller (v1.41.00).
  * Controls whether the UI shows Mock, Real DB, or Both items.
  * M: Mock | R: Real | B: Both
  */

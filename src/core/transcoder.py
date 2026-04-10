@@ -121,7 +121,7 @@ class TranscoderManager:
         if encoder == "auto":
             encoder = self._auto_select_encoder()
             
-        # GPU Encoders (v1.35.68 Centralized)
+        # GPU Encoders (v1.41.00 Centralized)
         encoder_map = settings.get("encoder_map", {})
         cmd += ["-e", encoder_map.get(encoder, encoder_map.get("fallback", "x264"))]
 
@@ -155,7 +155,7 @@ class TranscoderManager:
         return task_ids
 
     def _build_webm_cmd(self, task: TranscodeTask) -> List[str]:
-        # FFmpeg VP9/WebM command with HW acceleration if available (v1.35.68)
+        # FFmpeg VP9/WebM command with HW acceleration if available (v1.41.00)
         from src.core.config_master import GLOBAL_CONFIG
         ffmpeg_bin = GLOBAL_CONFIG["program_paths"].get("ffmpeg", "ffmpeg")
         settings = GLOBAL_CONFIG.get("transcoding_settings", {}).get("webm_settings", {})
@@ -189,7 +189,7 @@ class TranscoderManager:
         return cmd
 
     def _get_duration(self, task: TranscodeTask):
-        """Use ffprobe to get duration in seconds (v1.35.68)."""
+        """Use ffprobe to get duration in seconds (v1.41.00)."""
         try:
             from src.core.config_master import GLOBAL_CONFIG
             ffprobe_bin = GLOBAL_CONFIG["program_paths"].get("ffprobe", "ffprobe")

@@ -1,5 +1,5 @@
 /**
- * stage_negative.js (v1.35.68)
+ * stage_negative.js (v1.41.00)
  * Stage 1 & 2: Error Handling & Missing File Simulation.
  * Restores 2 items for negative test coverage.
  */

@@ -5,7 +5,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Centralized Metadata Injection (v1.35.68)
+# Centralized Metadata Injection (v1.41.00)
 echo "==> Fetching build metadata from build_config.py..."
 export PYTHONPATH=$PYTHONPATH:.
 eval $(python3 src/core/build_config.py)

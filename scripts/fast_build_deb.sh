@@ -11,7 +11,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📦 [Fast Build] Media Web Viewer v${VERSION} Debian Package"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# 1. Synchronize Version Metadata (v1.35.68)
+# 1. Synchronize Version Metadata (v1.41.00)
 echo "🔄 Synchronizing project version metadata..."
 VERSION=$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")
 python3 "$ROOT_DIR/scripts/update_version.py" --new-version "$VERSION"

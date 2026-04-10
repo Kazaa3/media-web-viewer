@@ -34,7 +34,7 @@ function startBootWatchdog() {
         }
     }, tickInterval);
 }
-// --- Heartbeat & Health Monitoring (v1.35.68) ---
+// --- Heartbeat & Health Monitoring (v1.41.00) ---
 let __mwv_heartbeat_timer = null;
 function startHeartbeat() {
     if (typeof eel === 'undefined') return;
@@ -421,7 +421,7 @@ function run_frontend_probe() {
 }
 
 /**
- * [DIAGNOSTICS] Startup Performance Dashboard (v1.35.68)
+ * [DIAGNOSTICS] Startup Performance Dashboard (v1.41.00)
  * Visualizes the bootstrap timeline and phase durations.
  */
 async function showStartupDashboard() {

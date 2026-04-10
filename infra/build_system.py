@@ -320,7 +320,7 @@ class BuildSystem:
         return all_passed
 
     def _check_browser_available(self) -> bool:
-        """Check if at least one compatible browser is available (Centralized v1.35.68)."""
+        """Check if at least one compatible browser is available (Centralized v1.41.00)."""
         return any(shutil.which(b) for b in GLOBAL_CONFIG["browsers"])
 
     def run_tests(

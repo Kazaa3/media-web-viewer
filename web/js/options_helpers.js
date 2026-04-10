@@ -4,7 +4,7 @@
  */
 
 /**
- * Comprehensive Options Hydration (v1.35.68 Standard)
+ * Comprehensive Options Hydration (v1.41.00 Standard)
  */
 async function loadAllOptions() {
     if (typeof mwv_trace === 'function') mwv_trace('FLOW', 'LOAD-OPTIONS-START');
@@ -72,7 +72,7 @@ async function loadEnvironmentInfo() {
         buildVenvGrid(info.venvs || []);
         buildVenvTree(info.venvs || []);
 
-        // 5. App Mode & Toolchains (v1.35.68 Centralized)
+        // 5. App Mode & Toolchains (v1.41.00 Centralized)
         if (typeof buildHeadlessUI === 'function') buildHeadlessUI();
         if (typeof buildBrowserToolchainUI === 'function') buildBrowserToolchainUI();
         if (typeof buildTranscodingToolchainUI === 'function') buildTranscodingToolchainUI();
@@ -147,7 +147,7 @@ function buildVenvTree(venvs) {
 }
 
 /**
- * v1.35.68: App Mode & Browser Toolchain Builders
+ * v1.41.00: App Mode & Browser Toolchain Builders
  */
 function buildHeadlessUI() {
     const container = document.getElementById('env-headless-registry');
@@ -594,7 +594,7 @@ async function loadAllOptions() {
         buildFeatureFlagsUI(cfg.feature_flags || {});
         buildDebugFlagsUI(cfg.debug_flags || {});
 
-        // ── v1.35.68 High-Fidelity (localStorage based)
+        // ── v1.41.00 High-Fidelity (localStorage based)
         safeCheck('config-diagnostic-mode', localStorage.getItem('mwv_diagnostic_mode') === 'true');
         safeCheck('config-force-native',     localStorage.getItem('mwv_force_native') === 'true');
         safeCheck('config-dom-auditor',      localStorage.getItem('mwv_dom_auditor_visible') !== 'false'); // Default TRUE
@@ -611,7 +611,7 @@ async function loadAllOptions() {
 // ─── Save all options to backend ───────────────────────────────────────────────
 async function saveAllOptions() {
     try {
-        // Collect v1.35.68 High-Fidelity
+        // Collect v1.41.00 High-Fidelity
         const diagMode = !!document.getElementById('config-diagnostic-mode')?.checked;
         const native   = !!document.getElementById('config-force-native')?.checked;
         const auditor  = !!document.getElementById('config-dom-auditor')?.checked;
@@ -713,7 +713,7 @@ function setParserMode(mode) {
 }
 
 /**
- * Parser Panel Logic (v1.35.68)
+ * Parser Panel Logic (v1.41.00)
  */
 function toggleParserIntensity(enabled) {
     const mode = enabled ? 'ultimate' : 'lightweight';
@@ -809,7 +809,7 @@ function setLogLevel(level) {
 }
 
 /**
- * Diagnostic Hub Handlers (v1.35.68)
+ * Diagnostic Hub Handlers (v1.41.00)
  */
 async function triggerDirectScan() {
     if (typeof eel === 'undefined' || typeof eel.run_direct_scan !== 'function') {
@@ -849,7 +849,7 @@ async function triggerDeepSync() {
 }
 
 /**
- * Real-time Diagnostic Log Terminal (v1.35.68)
+ * Real-time Diagnostic Log Terminal (v1.41.00)
  * Receives granular logs from the backend and scrolls into view.
  */
 if (typeof eel !== 'undefined') {
@@ -857,7 +857,7 @@ if (typeof eel !== 'undefined') {
 }
 
 function append_debug_log(msg, category = 'INFO') {
-    // 1. Broadcast to advanced Diagnostic Suite buffer (v1.35.68)
+    // 1. Broadcast to advanced Diagnostic Suite buffer (v1.41.00)
     if (typeof window.appendDebugLog === 'function') {
         const timestamp = new Date().toLocaleTimeString();
         window.appendDebugLog(`${timestamp} [${category}] ${msg}`);
@@ -1108,7 +1108,7 @@ window.switchTab = function(tabId) {
     }
 };
 
-// ─── Fresh Refresh Stability (v1.35.68 Repair) ──────────────────────────────────
+// ─── Fresh Refresh Stability (v1.41.00 Repair) ──────────────────────────────────
 function initParserHydration() {
     const activeTab = localStorage.getItem('mwv_active_tab');
     if (activeTab === 'parser' || activeTab === 'options') {
