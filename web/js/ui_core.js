@@ -263,7 +263,7 @@ window.MWV_UI = (() => {
         const sw = registry.sidebarVisible ? CONSTANTS.SIDEBAR_WIDTH : 0;
         root.style.setProperty('--sidebar-width', `${sw}px`);
 
-        console.log(`[MWV-UI] Geometry Updated: H:${h} S:${s} F:${f} TotalTop:${h+s}`);
+        console.log(`[MWV-UI] Geometry Updated: H:${h} L2:${s2} L3:${s3} F:${f} TotalTop:${h + s2 + s3}px`);
     }
 
     // Export API
