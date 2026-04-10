@@ -32,6 +32,118 @@ body {
     flex-direction: column;
 }
 
+/* --- FOOTER (HIGH-DENSITY) --- */
+.master-footer {
+    height: 38px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    border-top: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    z-index: 1000;
+}
+
+.footer-db-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+
+.swiss-hud-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.hud-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hud-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 900;
+    color: var(--text-secondary);
+}
+
+.hud-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #444;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.hud-led.active { background: var(--accent-success); box-shadow: 0 0 8px var(--accent-success); }
+
+.hud-btn-tiny {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #999;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hud-btn-tiny:hover {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.hud-btn-prime {
+    background: rgba(255, 149, 0, 0.1);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+    color: #ff9500;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.footer-sys-cluster {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tool-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tool-icon-btn:hover { opacity: 1; color: var(--text-primary); }
+
+/* --- DOM-DRIVEN STATE OBSERVABILITY --- */
+body[data-mwv-category="status"] #nav-btn-status {
+    background: rgba(0, 255, 204, 0.15) !important;
+    border-color: rgba(0, 255, 204, 0.3) !important;
+    color: var(--accent-success) !important;
+}
+
+/* Custom Highlight for Active Category in Sub-Nav Neck */
+body[data-mwv-category="media"] .sub-nav-neck { border-bottom-color: var(--accent-primary); }
+body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--accent-success); }
+
 /* --- HEADER (TOP NAV) --- */
 .master-header {
     height: 48px;
