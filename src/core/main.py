@@ -467,23 +467,23 @@ def trigger_db_reconnect():
 def start_app():
     """Launches the Eel application with a robust startup watchdog."""
     if profiler: profiler.start_phase("App-Launch-Setup")
-    # --- PROCESS LIFECYCLE MANAGEMENT (v1.37 Restoration) ---
+    # --- PROCESS LIFECYCLE MANAGEMENT (v1.41.12 Zero-Ghost Policy) ---
     from core.process_manager import ProcessController
     app_data = Path(GLOBAL_CONFIG.get("storage_registry", {}).get("data_dir", str(PROJECT_ROOT)))
     pc = ProcessController(PROJECT_ROOT, app_data)
-    if GLOBAL_CONFIG.get("ui_settings", {}).get("kill_on_startup", True):
-        log.info("[Bootstrap] Performing High-Speed Port Cleanup...")
-        if profiler: profiler.start_phase("Process-Cleanup")
-        # Use fast_port_kill instead of full walk if possible
-        pc.fast_port_kill(port)
-        if profiler: profiler.end_phase("Process-Cleanup")
-        # No more arbitrary sleeps here
     
-    # Singleton Guard
-    if not pc.acquire_lock():
+    log.warning("[Bootstrap] Aggressive Environment Cleanup Triggered...")
+    pc.cleanup_environment() # Hard-kill all ghosts and clear locks
+    
+    # Singleton Guard & Port Readiness
+    for attempt in range(5):
+        if pc.acquire_lock():
+            break
+        log.warning(f"[Bootstrap] Port 8345 still busy (Attempt {attempt+1}/5). Waiting...")
+        time.sleep(0.5)
+    else:
         owner_pid = pc.get_lock_owner()
         log.error(f"[Bootstrap] MWV ALREADY RUNNING (PID: {owner_pid}). Aborting.")
-        # Optional: Force kill if flag is very aggressive, but we already killed above or failed.
         sys.exit(1)
 
     # Port readiness is now handled by fast_port_kill above. 

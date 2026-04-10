@@ -690,8 +690,8 @@ function updateGlobalSubNav(category) {
     
     console.log(`[UI-NAV] Population request for category: [${normalizedCategory}] (passed: ${category})`);
 
-    // Clear previous
-    container.innerHTML = '';
+    // V1.41.12 Atomic Rendering: 
+    // We only clear if we successfully find new entries.
 
     const subNavMap = {
         'media': [
@@ -787,7 +787,7 @@ function updateGlobalSubNav(category) {
     // Render logic with explicit lifecycle markers
     console.info(`[MWV-UI] Populating Sub-Nav for: ${normalizedCategory} | Pills: ${entries.length}`);
     const prevContent = container.innerHTML;
-    container.innerHTML = entries.map(item => `
+    const newContent = entries.map(item => `
         <button id="sub-nav-pill-${item.id}" 
                 class="sub-pill-btn ${activeSubTab === item.id ? 'active' : ''}" 
                 onclick="${item.action}"
@@ -795,6 +795,10 @@ function updateGlobalSubNav(category) {
             ${item.label}
         </button>
     `).join('');
+
+    if (newContent) {
+        container.innerHTML = newContent;
+    }
 
     if (container.innerHTML !== prevContent) {
         console.log(`[UI-NAV] STATE_CHANGE: Sub-Nav content updated for ${normalizedCategory}.`);
@@ -1306,6 +1310,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         });
         observer.observe(pillNav, { childList: true });
     }
+
+    // --- [v1.41.12] SUB-NAV HEALTH GUARDIAN ---
+    // Every 3 seconds, we ensure the sub-nav isn't empty if the category is active.
+    setInterval(() => {
+        const body = document.body;
+        const pillNav = document.getElementById('sub-nav-container');
+        const isHidden = body.classList.contains('mwv-hide-subnav');
+        
+        if (!isHidden && pillNav && pillNav.children.length === 0) {
+            console.warn("[UI-GUARDIAN] Sub-nav is empty but visible. Forcing Re-hydration...");
+            updateGlobalSubNav(currentMainCategory || 'media');
+        }
+    }, 3000);
 
 // ==========================================
 // FRAGMENT HYDRATION AUDITOR (v1.37.46)
