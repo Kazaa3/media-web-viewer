@@ -314,7 +314,33 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     
     # --- UI & NAVIGATION REGISTRY (v1.37.52 Centralized) ---
     "ui_settings": {
+        # --- LEVEL 1: MASTER MENU (Top Header) ---
+        "master_header_visible": True,       # GLOBAL: Obere Haupt-Navigationsleiste (Kategorien).
+        "header_height": 48,                 # GLOBAL: Höhe des Haupt-Headers (px).
+        "header_right_visible": True,        # GLOBAL: Sichtbarkeit der System-Tools oben rechts.
+        "header_left_width": "30%",          # GLOBAL: Breite des linken Header-Bereichs (Kategorien).
+        "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
+        "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
+        
+        # --- LEVEL 2: SUB-MENU (Module Tabs) ---
+        "sub_menu_visible": True,            # GLOBAL: Sichtbarkeit Level 2 (ehemals module_tabs).
+        "sub_menu_height": 32,               # GLOBAL: Höhe Level 2 (px).
+        "sub_menu_width": "100%",            # GLOBAL: Breite Level 2 (%/px).
+        "sub_menu_offset_left": "0px",       # GLOBAL: Horizontaler Versatz Level 2.
+
+        # --- LEVEL 3: TERTIARY HEADER (Sub-Nav) ---
+        "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
+        "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
+        "sub_nav_offset_left": "0px",        # GLOBAL: Horizontaler Versatz der Sub-Nav Buttons (px/%).
         "sub_nav_width": "100%",             # GLOBAL: Breite der Sub-Nav Leiste.
+
+        # --- GLOBAL UI ELEMENTS & GEOMETRY (v1.41.126 Authoritative Recovery) ---
+        "sidebar_allowed": True,             # GLOBAL: Erlaubt die Sidebar-Nutzung generell.
+        "sidebar_visible": False,            # GLOBAL: Sidebar Start-Zustand (True=Offen).
+        "sidebar_width": 250,                # GLOBAL: Breite der Sidebar (px).
+        "footer_visible": True,              # GLOBAL: Schwebende Media-Steuerung unten.
+        "footer_height": 48,                 # GLOBAL: Höhe des Footers (px).
+        "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
         
         # --- GRANULAR UI FRAGMENT FLAGS (v1.38.02) ---
         "ui_fragments": {
@@ -339,6 +365,21 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "lyrics_panel_enabled": True,       # GLOBAL: Metadaten/Lyrics-Panel.
         "mini_player_allowed": True,        # GLOBAL: Floating Mini-Player.
         "global_search_allowed": True,      # GLOBAL: Suchfunktion im Header.
+
+        # --- BEHAVIOR & THEME ---
+        "theme": "dark",                     # Farbschema der Anwendung (Standard: Dark/Glass).
+        "animations_enabled": True,          # Steuert flüssige UI-Übergänge und Micro-Animations.
+        "sub_nav_persistence": True,         # Behält Sub-Menü Zustände beim Kategorie-Wechsel bei.
+        "force_sub_nav_visible": True,       # [v1.41.00 Master] OVERRIDE: Erzwingt die Anzeige des Untermenüs (Pill-Bar).
+        "hydration_mode": "B",               # M=Mock, R=Real, B=Both (Handshake-Modus).
+        "professional_layout_lock": True,    # [GUI] Erzwingt Layout-Regeln für Profi-Workspaces.
+        "kill_on_startup": False,             # [v1.39] Accelerated Boot: Skip kill stale process cleanup by default.
+
+
+        # Einstellungen
+        "pip_installer_timeout": 300,        # [AUTO] Installations-Timeout in Sekunden.
+
+        # --- UI VISIBILITY MATRIX (v1.37.52 Contextual Logic) ---
 
         # --- BEHAVIOR & THEME ---
         "theme": "dark",                     # Farbschema der Anwendung (Standard: Dark/Glass).
