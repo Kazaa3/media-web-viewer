@@ -101,7 +101,52 @@ window.MWV_Diagnostics = (() => {
         // Note: This only clears the UI view, not the backend buffer.
     }
 
-    return { init, toggle, clear };
+    /**
+     * [v1.41.122] Emergency Hydration Test
+     * Forces hardcoded items into the queue and triggers a re-render.
+     */
+    function forceHydrationTest() {
+        console.warn("[MWV-DIAG] Triggering Emergency Hydration Test (Force Mock Data)...");
+        
+        const mockItems = [
+            {
+                id: "mock_01",
+                name: "Forensic_Debug_Sequence_01.wav",
+                path: "debug/forensic_01.wav",
+                category: "Audio",
+                tags: { title: "Hydration Test: Sequence Alpha", artist: "MWV.Diagnostics", duration: 180 }
+            },
+            {
+                id: "mock_02",
+                name: "Forensic_Vocal_Analysis.mp3",
+                path: "debug/vocal_test.mp3",
+                category: "Audio",
+                tags: { title: "Hydration Test: Vocal Analysis", artist: "MWV.Diagnostics", duration: 420 }
+            }
+        ];
+
+        // 1. Force state into global player registry
+        window.currentPlaylist = mockItems;
+        if (typeof window.syncQueueWithLibrary === 'function') {
+            console.log("[MWV-DIAG] Syncing mock data with session...");
+        }
+
+        // 2. Force Render
+        if (typeof window.renderPlaylist === 'function') {
+            window.renderPlaylist();
+        } else {
+            console.error("[MWV-DIAG] renderPlaylist not found! GUI is truly unresponsive.");
+        }
+
+        // 3. Force View Persistence
+        if (typeof switchMainCategory === 'function') {
+            switchMainCategory('media');
+        }
+
+        if (typeof showToast === 'function') showToast("EMERGENCY HYDRATION ACTIVE", 3000);
+    }
+
+    return { init, toggle, clear, forceHydrationTest };
 })();
 
 // Auto-inject appendUiTrace hook for real-time (called by backend)

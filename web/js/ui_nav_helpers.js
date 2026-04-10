@@ -534,42 +534,7 @@ function updateLayoutOffsets() {
     if (window.MWV_UI) window.MWV_UI.updateGeometry();
 }
 
-// --- Keyboard Shortcuts & Global Early Initialization ---
-document.addEventListener('keydown', (e) => {
-    // [v1.41.119/120] Forensic UI Toggles
-    if (e.altKey && !e.shiftKey && !e.ctrlKey) {
-        const key = e.key.toLowerCase();
-        
-        switch(key) {
-            case 'h': // Alt+H: Toggle Header
-                e.preventDefault();
-                if (window.MWV_UI) window.MWV_UI.toggleHeader();
-                break;
-            case 'n': // Alt+N: Toggle Sub-Nav
-                e.preventDefault();
-                if (window.MWV_UI) window.MWV_UI.toggleSubNav();
-                break;
-            case 'm': // Alt+M: Toggle Module Tabs
-                e.preventDefault();
-                if (window.MWV_UI) window.MWV_UI.toggleModuleTabs();
-                break;
-            case 'f': // Alt+F: Toggle Footer
-                e.preventDefault();
-                if (window.MWV_UI) window.MWV_UI.toggleFooter();
-                break;
-            case 'r': // Alt+R: Toggle Header Right (System Cluster)
-                e.preventDefault();
-                if (window.MWV_UI) window.MWV_UI.toggleHeaderRight();
-                break;
-            case 's': // Alt+S: Toggle Sidebar
-                e.preventDefault();
-                if (window.MWV_UI) window.MWV_UI.toggleSidebar();
-                break;
-            case 'alt': // Simple Alt: Toggle legacy menu logic
-                break;
-        }
-    }
-});
+// --- UI Navigation Helpers (v1.41 Transition) ---
 
 /**
  * Switch Audio Player Sub-Views (Warteschlange, Mediengalerie, Visualizer)
