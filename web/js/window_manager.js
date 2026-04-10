@@ -65,11 +65,19 @@ const WindowManager = {
                 }
             }
 
-            // 2. Visibility Matrix Update
+            // 2. Visibility Matrix Update (v1.41.116 Robust Refinement)
             this._hideAllShells();
-            const shell = document.getElementById(win.shellId);
+            let shell = document.getElementById(win.shellId);
+            if (!shell) {
+                // Fallback to domain lookup (v1.41.115 bridging)
+                shell = document.querySelector(`.tab-content[data-tab-domain="${name}"]`);
+                if (!shell) shell = document.querySelector(`.tab-content[data-tab-domain="media"]`); // Extra safety for player/media mismatch
+            }
+
             if (shell) {
+                console.info(`[WM] Stage 1.2: Enforcing visibility on container: #${shell.id}`);
                 shell.style.display = 'flex';
+                shell.style.opacity = '1';
                 shell.classList.add('active');
                 
                 // [v1.37.52] Force Global UI Logic Sync
