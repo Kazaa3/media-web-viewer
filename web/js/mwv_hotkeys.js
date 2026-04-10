@@ -15,11 +15,11 @@
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleHeader();
                     break;
-                case 'c': // Alt+X: Level 3 - TERTIARY SUB-NAV / PILLS (Bottom)
+                case 'x': // Alt+X: Level 2 - CONTEXTUAL PILLS (Sub-Nav)
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleSubNav();
                     break;
-                case 'x': // Alt+C: Level 2 - SUB-MENU / MODULE TABS (Middle)
+                case 'c': // Alt+C: Level 3 - MODULE TABS (Sub-Menu)
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleSubMenu();
                     break;

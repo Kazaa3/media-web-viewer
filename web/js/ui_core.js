@@ -12,8 +12,8 @@ window.MWV_UI = (() => {
 
     let CONSTANTS = {
         L1_HEADER_HEIGHT: 48,
-        L2_SUB_MENU_HEIGHT: 32,
-        L3_SUB_NAV_HEIGHT: 35,
+        L2_SUB_NAV_HEIGHT: 35,
+        L3_SUB_MENU_HEIGHT: 32,
         FOOTER_HEIGHT: 48,
         SIDEBAR_WIDTH: 250
     };
@@ -44,8 +44,8 @@ window.MWV_UI = (() => {
             // --- [v1.41.119/120] Sync Constants with Config ---
             if (registry.config) {
                 if (registry.config.header_height) CONSTANTS.L1_HEADER_HEIGHT = parseInt(registry.config.header_height);
-                if (registry.config.sub_menu_height) CONSTANTS.L2_SUB_MENU_HEIGHT = parseInt(registry.config.sub_menu_height);
-                if (registry.config.sub_nav_height) CONSTANTS.L3_SUB_NAV_HEIGHT = parseInt(registry.config.sub_nav_height);
+                if (registry.config.sub_nav_height) CONSTANTS.L2_SUB_NAV_HEIGHT = parseInt(registry.config.sub_nav_height);
+                if (registry.config.sub_menu_height) CONSTANTS.L3_SUB_MENU_HEIGHT = parseInt(registry.config.sub_menu_height);
                 if (registry.config.footer_height) CONSTANTS.FOOTER_HEIGHT = parseInt(registry.config.footer_height);
                 if (registry.config.sidebar_width) CONSTANTS.SIDEBAR_WIDTH = parseInt(registry.config.sidebar_width);
                 
@@ -165,7 +165,7 @@ window.MWV_UI = (() => {
     }
 
     /**
-     * Toggles the secondary sub-menu bar (Level 2) visibility.
+     * Toggles the secondary sub-menu bar (Level 3) visibility.
      */
     async function toggleSubMenu(forceState = null) {
         document.body.classList.toggle('mwv-hide-sub-menu');
@@ -250,8 +250,8 @@ window.MWV_UI = (() => {
         const body = document.body;
 
         const h = body.classList.contains('mwv-hide-header') ? 0 : CONSTANTS.L1_HEADER_HEIGHT;
-        const s2 = body.classList.contains('mwv-hide-sub-menu') ? 0 : CONSTANTS.L2_SUB_MENU_HEIGHT;
-        const s3 = body.classList.contains('mwv-hide-subnav') ? 0 : CONSTANTS.L3_SUB_NAV_HEIGHT;
+        const s2 = body.classList.contains('mwv-hide-subnav') ? 0 : CONSTANTS.L2_SUB_NAV_HEIGHT;
+        const s3 = body.classList.contains('mwv-hide-sub-menu') ? 0 : CONSTANTS.L3_SUB_MENU_HEIGHT;
         const f = body.classList.contains('mwv-hide-footer') ? 0 : CONSTANTS.FOOTER_HEIGHT;
 
         root.style.setProperty('--active-header-height', `${h}px`);

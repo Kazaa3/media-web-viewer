@@ -325,17 +325,17 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
-        # --- LEVEL 2: SUB-MENU (Module Tabs) ---
-        "sub_menu_visible": True,            # GLOBAL: Sichtbarkeit Level 2 (ehemals module_tabs).
-        "sub_menu_height": 32,               # GLOBAL: Höhe Level 2 (px).
-        "sub_menu_width": "100%",            # GLOBAL: Breite Level 2 (%/px).
-        "sub_menu_offset_left": "0px",       # GLOBAL: Horizontaler Versatz Level 2.
-
-        # --- LEVEL 3: TERTIARY HEADER (Sub-Nav) ---
+        # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---
         "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
         "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
         "sub_nav_offset_left": "0px",        # GLOBAL: Horizontaler Versatz der Sub-Nav Buttons (px/%).
         "sub_nav_width": "100%",             # GLOBAL: Breite der Sub-Nav Leiste.
+
+        # --- LEVEL 3: MODULE TABS (Sub-Menu) ---
+        "sub_menu_visible": True,            # GLOBAL: Sichtbarkeit Level 3 (Module Tabs).
+        "sub_menu_height": 32,               # GLOBAL: Höhe Level 3 (px).
+        "sub_menu_width": "100%",            # GLOBAL: Breite Level 3 (%/px).
+        "sub_menu_offset_left": "0px",       # GLOBAL: Horizontaler Versatz Level 3.
 
         # --- GLOBAL UI ELEMENTS & GEOMETRY ---
         "sidebar_allowed": True,             # GLOBAL: Erlaubt die Sidebar-Nutzung generell.
