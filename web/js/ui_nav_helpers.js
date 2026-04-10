@@ -638,6 +638,11 @@ function switchMainCategory(category, btn) {
     traceUiNav('NAV-CATEGORY', category);
     mwv_trace('DOM-UI', 'NAV-CATEGORY', category);
 
+    // [v1.41.01] Sync with central UI Orchestration Engine
+    if (window.MWV_UI) {
+        window.MWV_UI.apply(category);
+    }
+
     // Update active state in header/sidebar
     document.querySelectorAll('.menu-item-btn, .nav-item').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
