@@ -738,16 +738,16 @@ function updateGlobalSubNav(category) {
             { id: 'config', label: 'Konfiguration', action: "switchParserView('config')" },
             { id: 'chain', label: 'Parser Kette', action: "switchParserView('chain')" }
         ],
+        'status': [
+            { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
+            { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
+            { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
+        ],
         'debug': [
             { id: 'overview', label: 'Übersicht', action: "switchDiagnosticsView('debug-db')" },
             { id: 'tests', label: 'Skript-Tests', action: "switchDiagnosticsView('tests')" },
             { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
             { id: 'health', label: 'System-Check', action: "switchDiagnosticsView('health')" }
-        ],
-        'status': [
-            { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
-            { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
-            { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
         ],
         'tests': [
             { id: 'health', label: 'System Health', action: "switchDiagnosticsView('health')" },
