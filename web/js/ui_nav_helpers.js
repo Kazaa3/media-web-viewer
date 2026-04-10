@@ -1351,101 +1351,13 @@ window.auditFragmentHydration = function(name, status, details = '') {
     renderHydrationMatrix();
 };
 
+/**
+ * [DEPRECATED v1.41.02] Legacy UI Refresh logic.
+ * Visibility is now strictly handled by MWV_UI.apply() in ui_core.js.
+ */
 function refreshUIVisibility(category) {
-    if (!category) return;
-
-    // 1. Fetch Window Registry (Matrix)
-    // SSOT: config_master.py -> window.CONFIG.ui_settings.ui_visibility_matrix
-    const categoryVisible = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.master_header_visible : true;
-    const footerVisibleGlobal = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.footer_visible : true;
-    const audioEngineEnabled = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.audio_engine_enabled : true;
-    const videoEngineEnabled = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.video_engine_enabled : true;
-
-    const matrix = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings.ui_visibility_matrix : null;
-    const settings = (matrix && matrix[category]) ? Object.assign({}, matrix[category]) : { 
-        "master_header": true, "contextual_pill_nav": true, "module_tab_nav": false, 
-        "footer_visible": true, "sidebar_allowed": true, "diagnostics_hud_allowed": true,
-        "sidebar_visible": false,
-        "diagnostics_hud_visible": true,
-        "audio_engine_enabled": true,
-        "video_engine_enabled": true,
-        "queue_panel_enabled": true,
-        "lyrics_panel_enabled": true,
-        "mini_player_allowed": true,        // GLOBAL: Floating Mini-Player.
-        "global_search_allowed": true,      // GLOBAL: Suchfunktion im Header.
-        "forensics_enabled": true,          // GLOBAL: Schaltet alle Forensic-Overlays (Audit, DOM-Check) an/aus.
-        "elite_hud_enabled": false,         // GLOBAL: Hochverdichtetes Cyberpunk/Elite-Interface Layout.
-        "probe_data_flow_enabled": true     // GLOBAL: Schalter für Mock-Daten Handshake im Footer (Probe Flow).
-    };
-
-    // --- OVERRIDE WITH GLOBAL MASTERS ---
-    if (!categoryVisible) settings.master_header = false;
-    if (!footerVisibleGlobal) settings.footer_visible = false;
-    if (category === 'media' && !audioEngineEnabled) settings.footer_visible = false; 
-    if (category === 'video' && !videoEngineEnabled) settings.master_header = false; // Example: block video if disabled
-
-    console.log(`[UI-NAV] ENFORCING FORENSIC-6 for category: ${category}`, settings);
-
-    // 2. Control Master Header (Top Bar)
-    const header = document.getElementById('master-persistent-header');
-    if (header) {
-        header.style.display = settings.master_header ? 'flex' : 'none';
-        header.style.opacity = settings.master_header ? '1' : '0';
-    }
-
-    // 3. Control Sub-Nav (Contextual Pills)
-    const pillNav = document.getElementById('sub-nav-container');
-    if (pillNav) {
-        if (settings.contextual_pill_nav) {
-            pillNav.style.display = 'flex';
-            pillNav.style.opacity = '1';
-            try { 
-                if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav(category); 
-            } catch (e) {
-                console.warn("[UI-NAV] Sub-Nav update failed:", e);
-            }
-        } else {
-            pillNav.style.display = 'none';
-            pillNav.innerHTML = '';
-        }
-    }
-
-    // 4. Control Module Tabs (Internal)
-    const tabNav = document.getElementById('player-sub-nav-shell');
-    if (tabNav) {
-        tabNav.style.display = settings.module_tab_nav ? 'flex' : 'none';
-    }
-
-    // 5. Control Footer (Media Controller)
-    // Note: CSS class .layout-footer-wrapper or .main-footer
-    const footer = document.querySelector('.layout-footer-wrapper') || document.querySelector('.main-footer');
-    if (footer) {
-        footer.style.display = settings.footer_visible ? 'block' : 'none';
-    }
-
-    // 6. Control Sidebar Allowed State (Button visibility)
-    const sidebarBtn = document.getElementById('header-btn-sidebar-toggle');
-    if (sidebarBtn) {
-        sidebarBtn.style.display = settings.sidebar_allowed ? 'flex' : 'none';
-    }
-
-    // 7. Control Diagnostics HUD
-    if (typeof toggleTechnicalHUD === 'function') {
-        // If HUD not allowed, force hide it
-        if (!settings.diagnostics_hud_allowed) toggleTechnicalHUD(false);
-    }
-
-    // 8. FINAL: Recalibrate Viewport Geometry (Calculate heights/offsets)
-    refreshViewportLayout();
-
-    // 9. Sync Sidebar (Classic v1.34 Logic + Forensic 7 Enforcement)
-    if (typeof applySidebarState === 'function') {
-        // Force the configured default for this category
-        if (typeof settings.sidebar_visible !== 'undefined') {
-             if (typeof toggleSidebar === 'function') toggleSidebar(settings.sidebar_visible);
-        }
-        applySidebarState();
-    }
+    console.warn("[UI-NAV] LEGACY refreshUIVisibility called. Redirecting to MWV_UI...");
+    if (window.MWV_UI) window.MWV_UI.apply(category);
 }
 
 window.toggleProbeFlow = function() {

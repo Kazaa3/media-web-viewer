@@ -27,7 +27,7 @@
     <div id="diagnostics-viewport" style="flex: 1; overflow-y: auto; background: var(--bg-primary);">
         
         <!-- VIEW: System Health -->
-        <div id="diagnostics-health-view" class="diagnostics-view" style="display: none; padding: 30px;">
+        <div id="diagnostics-health-view" class="diagnostics-view" style="; padding: 30px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
                 <!-- Connectivity -->
                 <div class="glass-card" style="padding: 24px; border-top: 4px solid #3498db;">
@@ -47,7 +47,7 @@
             </div>
 
             <!-- Terminal Results Overlay -->
-            <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; display: none; line-height: 1.5;"></div>
+            <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; ; line-height: 1.5;"></div>
         </div>
 
         <!-- VIEW: Overview -->
@@ -141,7 +141,7 @@
         </div>
 
         <!-- VIEW: Flags (Dedicated Restoration) -->
-        <div id="diagnostics-flags-view" class="diagnostics-view" style="display: none; padding: 40px;">
+        <div id="diagnostics-flags-view" class="diagnostics-view" style="; padding: 40px;">
             <div class="glass-card" style="padding: 30px; border-top: 4px solid #b71c1c; background: rgba(183, 28, 28, 0.01);">
                 <h3 style="margin: 0 0 25px 0; font-weight: 900; color: #b71c1c; font-size: 1.3em; text-transform: uppercase;">System Debug Orchestrator</h3>
                 <div id="modal-debug-flags" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
@@ -153,7 +153,7 @@
 
         <!-- VIEW: Latency -->
 y -->
-        <div id="diagnostics-latency-view" class="diagnostics-view" style="display: none; padding: 40px;">
+        <div id="diagnostics-latency-view" class="diagnostics-view" style="; padding: 40px;">
             <div class="glass-card" style="padding: 40px; text-align: center;">
                 <h3 style="font-weight: 800; color: var(--text-primary);">Network & IPC Latency Profile</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 30px;">Measure the round-trip time between UI and Python Orchestrator.</p>
@@ -165,7 +165,7 @@ y -->
         </div>
 
         <!-- VIEW: Video Health -->
-        <div id="diagnostics-video-health-view" class="diagnostics-view" style="display: none; padding: 40px;">
+        <div id="diagnostics-video-health-view" class="diagnostics-view" style="; padding: 40px;">
             <div class="glass-card" style="padding: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
                     <div>
@@ -177,7 +177,7 @@ y -->
                     </button>
                 </div>
                 
-                <div id="video-diag-status" style="margin-top: 20px; display: none;">
+                <div id="video-diag-status" style="margin-top: 20px; ;">
                     <div id="video-diag-target-info" style="font-size: 11px; color: var(--text-secondary); background: var(--bg-secondary); padding: 8px 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); font-family: monospace;">-</div>
                     <div id="video-diag-results-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                         <!-- Results injected here -->
@@ -192,7 +192,7 @@ y -->
         </div>
 
         <!-- VIEW: Legacy Tests -->
-        <div id="diagnostics-tests-view" class="diagnostics-view" style="display: none; height: 100%; overflow: hidden; padding: 20px;">
+        <div id="diagnostics-tests-view" class="diagnostics-view" style="; height: 100%; overflow: hidden; padding: 20px;">
             <div style="display: flex; flex-direction: column; height: 100%; gap: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.4em; letter-spacing: -1px;">Legacy Test Scripts</h3>
@@ -211,7 +211,7 @@ y -->
                     <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Lade Test-Skripte...</div>
                 </div>
 
-                <div id="test-results-container" style="flex: 0 0 300px; background: #000; border-radius: 12px; border: 1px solid var(--border-color); display: none; flex-direction: column; overflow: hidden;">
+                <div id="test-results-container" style="flex: 0 0 300px; background: #000; border-radius: 12px; border: 1px solid var(--border-color); ; flex-direction: column; overflow: hidden;">
                     <div style="padding: 10px 15px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
                         <span style="font-size: 11px; font-weight: 800; color: #fff; letter-spacing: 1px;">TEST OUTPUT</span>
                         <span id="test-run-summary" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 900;"></span>

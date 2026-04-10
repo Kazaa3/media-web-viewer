@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 dict - Config Master (Centralized Config & Flag Orchestrator)
-v1.35.68 - Unified source of truth for backend and frontend settings.
+v1.41.00 - Unified source of truth for backend and frontend settings.
 """
 
 import os
@@ -119,7 +119,7 @@ def discover_binary(name: str, fallback: str = "") -> str:
         return shutil.which("cvlc") or "/usr/bin/cvlc"
     return shutil.which(name) or os.environ.get(f"MWV_PATH_{name.upper().replace('-', '_')}", fallback)
 
-# --- VERSION DISCOVERY OPTIMIZATION (v1.35.68) ---
+# --- VERSION DISCOVERY OPTIMIZATION (v1.41.00) ---
 _VERSION_CACHE = {}
 
 def get_binary_version(path: str, flag: str = "-version") -> str:
@@ -228,12 +228,12 @@ def background_version_discovery(config_dict: dict):
 
     threading.Thread(target=worker, daemon=True).start()
 
-# --- VERSION & METADATA CALCULATION (v1.35.68) ---
+# --- VERSION & METADATA CALCULATION (v1.41.00) ---
 VERSION_FILE = PROJECT_ROOT / "VERSION"
 if VERSION_FILE.exists():
     VERSION = VERSION_FILE.read_text().strip()
 else:
-    VERSION = "v1.35.68-dev"
+    VERSION = "v1.41.00-dev"
 
 # --- NETWORK & HOST CALCULATION ---
 APP_PORT = int(os.environ.get("MWV_PORT", 8345))
@@ -257,7 +257,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "version": VERSION,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     
-    # --- NETWORK REGISTRY (v1.35.68 Centralized) ---
+    # --- NETWORK REGISTRY (v1.41.00 Centralized) ---
     "network_settings": {
         "host": APP_HOST,
         "port": APP_PORT,
@@ -275,7 +275,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "hardware_info": {"type": "Awaiting discovery...", "encoders": []},
     "installed_packages": {},
     
-    # --- LOGGING REGISTRY (v1.35.68 Centralized) ---
+    # --- LOGGING REGISTRY (v1.41.00 Centralized) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),
         "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
@@ -367,7 +367,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
     
-    # --- DEBUGGING REGISTRY (v1.35.68 Centralized) ---
+    # --- DEBUGGING REGISTRY (v1.41.00 Centralized) ---
     
     # --- STREAMING & PIPELINE REGISTRY (v1.35.94 Unified) ---
     "atom_detection": {
@@ -431,7 +431,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "task_timeout": 900               # Default timeout for long-running tasks (seconds)
     },
     
-    # --- UI & UX SETTINGS (v1.35.68 Centralized) ---
+    # --- UI & UX SETTINGS (v1.41.00 Centralized) ---
     "start_page": os.environ.get("MWV_START_PAGE", "player"),
     "window_width": int(os.environ.get("MWV_WIDTH", 1550)),
     "window_height": int(os.environ.get("MWV_HEIGHT", 800)),
@@ -465,7 +465,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "exclude_patterns": ["node_modules", ".git", "__pycache__", ".venv"]
     },
     
-    # Diagnostic Toggles (v1.35.68 Centered)
+    # Diagnostic Toggles (v1.41.00 Centered)
     "diag_mode": get_env_bool("MWV_DIAG_MODE", False),
     "raw_mode": get_env_bool("MWV_RAW_MODE", False),
     "bypass_db": get_env_bool("MWV_BYPASS_DB", False),
@@ -502,7 +502,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     
     "active_branch": os.environ.get("MWV_BRANCH", "multimedia"), # audio, multimedia
     
-    # Tool & Parser Settings (v1.35.68)
+    # Tool & Parser Settings (v1.41.00)
     "parser_settings": {
         "mkvmerge": {"cli_flags": "", "timeout": 10},
         "ffprobe": {"cli_flags": "", "timeout": 10},
@@ -523,7 +523,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "hardware_encoders_priority": ["nvenc", "vaapi", "qsv"]
     },
     
-    # Wait & Sleep Intervals (Centralized v1.35.68)
+    # Wait & Sleep Intervals (Centralized v1.41.00)
     "sleep_times": {
         "ui_settle": float(os.environ.get("MWV_SLEEP_UI_SETTLE", 2.0)),
         "boot_probe_wait": float(os.environ.get("MWV_SLEEP_BOOT_PROBE", 5.0)),
@@ -533,7 +533,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "poll_fast": float(os.environ.get("MWV_SLEEP_POLL_FAST", 0.1))
     },
     
-    # --- EXTERNAL BINARY DISCOVERY (Centralized v1.35.68) ---
+    # --- EXTERNAL BINARY DISCOVERY (Centralized v1.41.00) ---
     "program_paths": {
         "vlc": discover_binary("vlc", "vlc"),
         "cvlc": discover_binary("cvlc", "cvlc"),
@@ -560,7 +560,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chrome": discover_binary("google-chrome", "google-chrome") # playwright/eel backend
     },
     
-    # --- STORAGE REGISTRY (v1.35.68 Centralized) ---
+    # --- STORAGE REGISTRY (v1.41.00 Centralized) ---
     "storage_registry": {
         "project_root": str(PROJECT_ROOT),
         "data_dir": str(PROJECT_ROOT / "data"),
@@ -600,7 +600,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
     
-    # --- PARSER & UI REGISTRY (v1.35.68 Centralized) ---
+    # --- PARSER & UI REGISTRY (v1.41.00 Centralized) ---
     "parser_registry": {
         "start_page": os.environ.get("MWV_START_PAGE", "player"),
         "app_mode": os.environ.get("MWV_APP_MODE", "High-Performance"),
@@ -615,7 +615,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
     
-    # --- SCRIPT & UTILITY REGISTRY (v1.35.68 Centralized) ---
+    # --- SCRIPT & UTILITY REGISTRY (v1.41.00 Centralized) ---
     "script_registry": {
         "control": {
             "super_kill": str(PROJECT_ROOT / "scripts" / "super_kill.py"),
@@ -644,7 +644,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "../media_library.db"
     ],
 
-    # --- DIAGNOSTIC & METRIC REGISTRY (v1.35.68 Centralized) ---
+    # --- DIAGNOSTIC & METRIC REGISTRY (v1.41.00 Centralized) ---
     "diagnostic_registry": {
         "benchmarks_enabled": get_env_bool("MWV_BENCHMARKS", True),
         "log_level_registry": {
@@ -674,7 +674,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         }
     },
     
-    # --- PLAYBACK & ENGINE SETISTRY (v1.35.68 Centralized) ---
+    # --- PLAYBACK & ENGINE SETISTRY (v1.41.00 Centralized) ---
     "playback_registry": {
         "modes": ["direct", "transcode", "hls", "vlc", "mpv", "shuttle", "spotify", "hls_mp4frag"],
         "default_video_mode": "hls",
@@ -807,7 +807,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "notes": "Built-in Python-based media engine for fallback and simple playback."
         }
     ],
-    # --- VERSION & METADATA CALCULATION (v1.35.68 - Deferred) ---
+    # --- VERSION & METADATA CALCULATION (v1.41.00 - Deferred) ---
     "app_versions": {
         "ffmpeg": "Discovering...",
         "ffprobe": "Discovering...",
@@ -841,7 +841,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chrome": "Discovering..."
     },
     
-    # --- TRANSCODING TOOLCHAIN (v1.35.68 Centralized) ---
+    # --- TRANSCODING TOOLCHAIN (v1.41.00 Centralized) ---
     "transcoding_toolchain": {
         "ffmpeg": get_binary_version("ffmpeg"),
         "ffprobe": get_binary_version("ffprobe"),
@@ -849,7 +849,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "vlc": get_binary_version("vlc", "--version").split()[0] if "VLC" in get_binary_version("vlc", "--version") else "N/A"
     },
     
-    # --- PARSING TOOLCHAIN (v1.35.68 Centralized) ---
+    # --- PARSING TOOLCHAIN (v1.41.00 Centralized) ---
     "parsing_toolchain": {
         "isoparser": get_binary_version("pip", "show isoparser").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show isoparser") else "N/A",
         "pycdlib": get_binary_version("pip", "show pycdlib").split("Version: ")[1].split("\n")[0] if "Version: " in get_binary_version("pip", "show pycdlib") else "N/A",
@@ -861,7 +861,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "cvlc": get_binary_version("cvlc", "--version").split()[0] if "VLC" in get_binary_version("cvlc", "--version") else "N/A"
     },
     
-    # --- TRANSCODING & ENGINE SETTINGS (v1.35.68 Centralized) ---
+    # --- TRANSCODING & ENGINE SETTINGS (v1.41.00 Centralized) ---
     "transcoding_settings": {
         "ffmpeg_preset": os.environ.get("MWV_FFMPEG_PRESET", "veryfast"),
         "video_bitrate": os.environ.get("MWV_VIDEO_BITRATE", "4000k"),
@@ -905,7 +905,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "rtsp_port": int(os.environ.get("MWV_MTX_RTSP_PORT", 8554))
     },
     
-    # --- THIRD-PARTY INTEGRATIONS (v1.35.68 Centralized) ---
+    # --- THIRD-PARTY INTEGRATIONS (v1.41.00 Centralized) ---
     "spotify_settings": {
         "client_id": os.environ.get("SPOTIPY_CLIENT_ID", ""),
         "client_secret": os.environ.get("SPOTIPY_CLIENT_SECRET", ""),
@@ -919,7 +919,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "chromecast_name": os.environ.get("MWV_CAST_NAME", "")
     },
     
-    # --- BROWSER DISCOVERY LADDER (Centralized v1.35.68) ---
+    # --- BROWSER DISCOVERY LADDER (Centralized v1.41.00) ---
     "browsers": [
         "google-chrome-stable", "google-chrome", "chrome",
         "google-chrome-unstable", "google-chrome-beta",
@@ -929,7 +929,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "brave-browser", "brave", "opera", "vivaldi"
     ],
     
-    # --- HEADLESS & DIALECT REGISTRY (v1.35.68 Centralized) ---
+    # --- HEADLESS & DIALECT REGISTRY (v1.41.00 Centralized) ---
     "headless_registry": {
         "chrome_flags": ["--headless=new", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
         "firefox_flags": ["-headless"],

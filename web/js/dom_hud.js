@@ -43,14 +43,18 @@ window.MWV_DOM_HUD = (() => {
     function updateStats() {
         const elCount = document.querySelectorAll('*').length;
         const hiddenCount = Array.from(document.querySelectorAll('*')).filter(el => el.style.display === 'none').length;
-        const viewportHeight = window.innerHeight;
         
+        // v1.41.02 Geometry Monitoring
+        const h = getComputedStyle(document.documentElement).getPropertyValue('--active-header-height') || '0';
+        const s = getComputedStyle(document.documentElement).getPropertyValue('--active-sub-nav-height') || '0';
+        const f = getComputedStyle(document.documentElement).getPropertyValue('--footer-height') || '0';
+
         hudElement.innerHTML = `
             <span>DOM: <b style="color: var(--accent-color);">${elCount}</b></span>
             <span style="opacity: 0.3;">|</span>
-            <span>HIDDEN: <b>${hiddenCount}</b></span>
+            <span>HID: <b>${hiddenCount}</b></span>
             <span style="opacity: 0.3;">|</span>
-            <span>VH: <b>${viewportHeight}px</b></span>
+            <span title="Geometry Offsets (Header/SubNav/Footer)">H:<b>${h.trim()}</b> S:<b>${s.trim()}</b> F:<b>${f.trim()}</b></span>
         `;
     }
 
