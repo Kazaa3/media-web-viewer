@@ -60,6 +60,13 @@
 
     </main>
 
+    <!-- [BRIDGE] MODAL & OVERLAY PLACEHOLDERS -->
+    <div id="modals-placeholder"></div>
+    <div id="context-menu-placeholder"></div>
+    <div id="svg-icons-placeholder" style="display: none;"></div>
+    <div id="diagnostics-overlay-container"></div>
+    <div id="global-diagnostics-sidebar" class="diagnostics-sidebar"></div>
+
     <!-- Critical Core Scripts -->
     <script type="text/javascript" src="/eel.js"></script>
     <script src="js/ui_core.js"></script>
@@ -67,6 +74,18 @@
     <script src="js/window_manager.js"></script>
     <script src="js/app_core.js"></script>
     <script src="js/version.js"></script>
-    
+
+    <!-- [BOOTSTRAP] ATOMIC BRIDGE TRIGGER (v1.41.107) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("[ATOMIC-BOOT] Activating UI Bridge...");
+            setTimeout(() => {
+                if (typeof updateGlobalSubNav === 'function') {
+                    const activeCat = localStorage.getItem('mwv_active_category') || 'media';
+                    updateGlobalSubNav(activeCat);
+                }
+            }, 500);
+        });
+    </script>
 </body>
 </html>

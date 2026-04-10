@@ -227,42 +227,35 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
         
         // --- v1.37.52 Forensic Window Registry ---
+        // --- v1.41.107 Atomic Shell Registry ---
         if (typeof WindowManager !== 'undefined') {
-            // Register Core UI Fragments
+            // Register Core UI Fragments (IDs must match shell_master.html)
             WM.register('player', { 
-                shellId: 'state-orchestrated-active-queue-list-container', 
+                shellId: 'player-panel-container', 
                 fragmentId: 'player-main-viewport', 
                 fragmentPath: 'fragments/player_queue.html',
                 onActivate: () => { 
                     if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
                     if (typeof renderPlaylist === 'function') renderPlaylist(); 
-                },
-                onHydrate: () => {
-                    // [v1.38.08] Signal hydration to sub-components
-                    if (typeof window.auditFragmentHydration === 'function') {
-                        window.auditFragmentHydration('player-engine', 'success');
-                        window.auditFragmentHydration('player-tabs', 'success');
-                        window.auditFragmentHydration('player-sidebar', 'success');
-                        window.auditFragmentHydration('player-view-lyrics', 'success');
-                    }
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
                 }
             });
             WM.register('library', { 
-                shellId: 'coverflow-library-panel', 
+                shellId: 'library-panel-container', 
                 fragmentId: 'library-main-viewport', 
                 fragmentPath: 'fragments/library_explorer.html',
-                onActivate: () => { if (typeof renderLibrary === 'function') renderLibrary(); }
-            });
-            WM.register('editor', { 
-                shellId: 'metadata-writer-crud-panel', 
-                fragmentId: 'edit-main-viewport', 
-                fragmentPath: 'fragments/metadata_editor.html',
-                onActivate: () => { if (typeof initEdit === 'function') initEdit(); }
+                onActivate: () => { 
+                    if (typeof renderLibrary === 'function') renderLibrary(); 
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('library');
+                }
             });
             WM.register('database', { 
-                shellId: 'database-panel-container', 
-                fragmentId: 'database-main-viewport', 
-                fragmentPath: 'fragments/database_panel.html'
+                shellId: 'status-panel-container', 
+                fragmentId: 'status-main-viewport', 
+                fragmentPath: 'fragments/database_panel.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
+                }
             });
         }
 
@@ -338,18 +331,21 @@ window.addEventListener('DOMContentLoaded', async () => {
             startHeartbeat();
         }
 
-        // 3. Fetch and Display Startup Time
+        // 3. Fetch and Display Startup Info (Atomic Bridge v1.41.107)
         setTimeout(async () => {
             if (typeof eel !== 'undefined' && typeof eel.get_startup_info === 'function') {
                 try {
                     const info = await eel.get_startup_info()();
-                    const statusSpan = document.getElementById('sync-status');
-                    if (statusSpan && info) {
-                        const timeSpan = document.createElement('span');
-                        timeSpan.style.color = 'var(--text-secondary)';
-                        timeSpan.style.marginLeft = '5px';
-                        timeSpan.innerText = `(Boot: ${info.boot_duration_sec}s | PID: ${info.pid})`;
-                        statusSpan.parentNode.insertBefore(timeSpan, statusSpan);
+                    if (info) {
+                        const pidEl = document.getElementById('diag-pid');
+                        const bootEl = document.getElementById('diag-boot');
+                        const upEl = document.getElementById('diag-up');
+                        
+                        if (pidEl) pidEl.innerText = info.pid;
+                        if (bootEl) bootEl.innerText = `${info.boot_duration_sec}s`;
+                        if (upEl && info.uptime_str) upEl.innerText = info.uptime_str;
+                        
+                        console.log(`[HUD] Telemetry synchronized. Boot: ${info.boot_duration_sec}s`);
                     }
                 } catch (e) { console.warn("Failed to get startup info:", e); }
             }
