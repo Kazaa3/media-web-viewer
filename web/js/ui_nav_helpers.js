@@ -290,6 +290,12 @@ function traceUiNav(category, target, details = {}) {
  * Switches between main application tabs.
  */
 function switchTab(tabId, btn, callback, force = false) {
+    if (isNavigating && !force) return;
+
+    // [v1.41.108] DOM Observability Handshake
+    document.body.setAttribute('data-mwv-tab', tabId);
+    console.log(`[UI-NAV] Tab Switch: [${tabId}] (Reflected in DOM)`);
+
     if (typeof WM !== 'undefined' && typeof WM.activate === 'function') {
         // Redraw active button state immediately for responsiveness
         if (btn) {
@@ -626,6 +632,13 @@ window.switchMainCategory = switchMainCategory;
  * Switch top-level category and populate sub-navigation.
  */
 function switchMainCategory(category, btn) {
+    if (!category) return;
+
+    // [v1.41.108] DOM Observability Handshake
+    document.body.setAttribute('data-mwv-category', category);
+    console.log(`[UI-NAV] Category Switch: [${category}] (Reflected in DOM)`);
+
+    currentMainCategory = category;
     console.log(`UI: Main category changed to ${category}`);
     if (typeof traceUiNav === 'function') traceUiNav('CATEGORY-SWITCH', category);
     currentMainCategory = category;
