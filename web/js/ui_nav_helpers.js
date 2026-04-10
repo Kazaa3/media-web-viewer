@@ -1044,10 +1044,10 @@ function switchParserView(viewId) {
  * Updates the active class on sub-nav pill buttons.
  */
 function updateSubNavActiveState(activeId) {
+    if (!activeId) return;
     document.querySelectorAll('.sub-pill-btn').forEach(btn => {
-        const matches = btn.id === `global-sub-nav-${activeId}`
-            || btn.id.endsWith(`-${activeId}`)
-            || (activeId === 'video' && btn.id.endsWith('-video-cinema'));
+        const matches = btn.id === `sub-nav-pill-${activeId}`
+            || btn.id.endsWith(`-${activeId}`);
         btn.classList.toggle('active', matches);
     });
 }
