@@ -267,6 +267,17 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
                 }
             });
+
+            // [v1.41.134] Forensic Status/Debug Integration
+            WM.register('debug', { 
+                shellId: 'status-panel-container', 
+                fragmentId: 'status-main-viewport', 
+                fragmentPath: 'fragments/status_panel.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
+                    if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
+                }
+            });
         }
 
         // Shared background fragments (Immediate parallel load)

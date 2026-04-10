@@ -692,6 +692,7 @@ function switchMainCategory(category, btn) {
     };
 
     if (categoryDefaults[category]) {
+        console.log(`[UI-NAV] Mapping Category [${category}] to Tab [${categoryDefaults[category]}]`);
         switchTab(categoryDefaults[category], btn);
     }
 
