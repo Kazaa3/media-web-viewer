@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Viewer v1.41 - Atomic Shell</title>
+    
+    <!-- Design System -->
+    <link rel="stylesheet" href="css/shell_master.css">
+    
+    <!-- Legacy Styles (selective import for fragments) -->
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+    <!-- [HEAD] TOP NAVIGATION BAR -->
+    <header class="master-header">
+        <div class="nav-cluster">
+            <button id="nav-btn-player" class="menu-item-btn active" onclick="switchMainCategory('media', this)">PLAYER</button>
+            <button id="nav-btn-library" class="menu-item-btn" onclick="switchMainCategory('library', this)">LIBRARIES</button>
+            <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)">EXPLORER</button>
+            <button id="nav-btn-tools" class="menu-item-btn" onclick="switchMainCategory('tools', this)">TOOLS</button>
+            <button id="nav-btn-status" class="menu-item-btn" style="color: #00ffcc;" onclick="switchMainCategory('status', this)">STATUS</button>
+        </div>
+
+        <!-- [HUD] ELITE MONITORING LAYER -->
+        <div class="elite-hud">
+            <div class="hud-pill">PID: <span id="diag-pid" class="hud-val blue">--</span></div>
+            <div class="hud-pill">BOOT: <span id="diag-boot" class="hud-val orange">--s</span></div>
+            <div class="hud-pill">UP: <span id="diag-up" class="hud-val green">--</span></div>
+        </div>
+    </header>
+
+    <!-- [NECK] SUB-NAVIGATION BAR (DYNAMIC) -->
+    <nav id="sub-nav-container" class="sub-nav-neck">
+        <!-- Content injected via Python SSOT (v1.41.105 Orchestrator) -->
+    </nav>
+
+    <!-- [BODY] MAIN VIEWPORT DECK -->
+    <main id="main-viewport" class="main-viewport">
+        
+        <!-- Category Fragments -->
+        <div id="player-panel-container" class="deck-view active">
+            <div id="player-main-viewport" style="width: 100%; height: 100%;">
+                <div class="loading-fragment">Initializing Forensic Player...</div>
+            </div>
+        </div>
+
+        <div id="library-panel-container" class="deck-view">
+            <div id="library-main-viewport" style="width: 100%; height: 100%;">
+                <div class="loading-fragment">Hydrating Library...</div>
+            </div>
+        </div>
+
+        <div id="status-panel-container" class="deck-view">
+            <div id="status-main-viewport" style="width: 100%; height: 100%;">
+                <div class="loading-fragment">Opening Diagnostics...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Critical Core Scripts -->
+    <script type="text/javascript" src="/eel.js"></script>
+    <script src="js/ui_core.js"></script>
+    <script src="js/ui_nav_helpers.js"></script>
+    <script src="js/window_manager.js"></script>
+    <script src="js/app_core.js"></script>
+    <script src="js/version.js"></script>
+    
+</body>
+</html>

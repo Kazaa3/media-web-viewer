@@ -1,0 +1,149 @@
+/**
+ * Media Viewer Atomic Shell v2 Design System
+ * (v1.41.106 - Total Rebuild)
+ */
+
+:root {
+    --bg-master: #050508;
+    --bg-glass: rgba(15, 15, 25, 0.7);
+    --accent-primary: #007aff;
+    --accent-success: #00ffcc;
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --radius-main: 12px;
+    --glass-blur: 20px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+body {
+    background: var(--bg-master);
+    color: var(--text-primary);
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- HEADER (TOP NAV) --- */
+.master-header {
+    height: 48px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+}
+
+.nav-cluster {
+    display: flex;
+    gap: 4px;
+}
+
+.menu-item-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.menu-item-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.menu-item-btn.active {
+    background: rgba(0, 122, 255, 0.15);
+    color: var(--accent-primary);
+    border: 1px solid rgba(0, 122, 255, 0.3);
+}
+
+/* --- NECK (SUB NAV) --- */
+.sub-nav-neck {
+    height: 36px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.sub-pill-btn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.sub-pill-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.sub-pill-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+/* --- MONITORING HUD --- */
+.elite-hud {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}
+
+.hud-pill {
+    color: var(--text-secondary);
+}
+
+.hud-val {
+    font-weight: 800;
+}
+
+.hud-val.blue { color: #007aff; }
+.hud-val.orange { color: #ff9500; }
+.hud-val.green { color: #00ffcc; }
+
+/* --- VIEWPORT --- */
+.main-viewport {
+    flex: 1;
+    position: relative;
+    background: radial-gradient(circle at 50% 50%, #10101a 0%, #050508 100%);
+}
+
+.deck-view {
+    position: absolute;
+    inset: 0;
+    display: none;
+}
+
+.deck-view.active {
+    display: flex;
+}
