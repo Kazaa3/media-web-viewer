@@ -1,13 +1,33 @@
 import sys, os
 from pathlib import Path
+import subprocess
 
-# --- [v1.41.99-ULTRA-SOLO] Flash Burn Singleton ---
+# --- [v1.41.100-SUPER-STABLE] High-Priority Bootstrap Guard ---
+_file = Path(__file__).resolve()
+_root = _file.parent.parent.parent
+_src = _root / "src"
+
+def ensure_stable_environment():
+    """Ensures we are running in the correct .venv (v1.35.68 Restoration)."""
+    if os.environ.get("MWV_AUTO_REEXEC") == "1": return
+    for v in [_root / ".venv", _root / ".venv_run"]:
+        if v.exists():
+            venv_python = v / "bin" / "python"
+            if venv_python.exists() and os.path.abspath(sys.executable) != os.path.abspath(str(venv_python)):
+                print(f"STDOUT: [Guard] Switching to Environment: {venv_python}", flush=True)
+                env = os.environ.copy()
+                env["MWV_AUTO_REEXEC"] = "1"
+                env["PYTHONPATH"] = f"{_root}:{_src}:{env.get('PYTHONPATH', '')}"
+                os.execve(str(venv_python), [str(venv_python), str(_file)] + sys.argv[1:], env)
+                sys.exit(0)
+
 if __name__ == "__main__":
-    import subprocess
-    # Pre-emptive port cleanup (instant shell execution)
+    # 1. Flash Burn (Instant Port Cleanup)
     subprocess.run("fuser -k 8345/tcp > /dev/null 2>&1", shell=True)
+    # 2. Environment Shield
+    ensure_stable_environment()
 
-# 1. Absolute Path Forensics
+# --- 1. Path Forensics ---
 _file = Path(__file__).resolve()
 _root = _file.parent.parent.parent
 _src = _root / "src"
@@ -76,40 +96,7 @@ def log_self_diagnostics():
     log.info(f"SYS_PATH: {sys.path[:3]}") # Show top 3
     log.info("-------------------------")
 
-def ensure_stable_environment():
-    """Ensures we are running in the correct .venv."""
-    if os.environ.get("MWV_AUTO_REEXEC") == "1":
-        return
-
-    # Check for .venv in project root
-    TARGET_VENVS = [_root / ".venv", _root / ".venv_run"]
-    selected_venv = None
-    for v in TARGET_VENVS:
-        if v.exists():
-            selected_venv = v
-            break
-            
-    if not selected_venv:
-        return # Proceed with current env if no venv found
-
-    venv_python = selected_venv / "bin" / "python"
-    current_exe = os.path.abspath(sys.executable)
-    target_exe = os.path.abspath(str(venv_python))
-
-    if venv_python.exists() and current_exe != target_exe:
-        log.info(f"[Guard] Switching Environment to {selected_venv.name}: -> {venv_python}")
-        
-        # --- PATH HARDBEAT (v1.41.00) ---
-        # Explicitly pass the project root to the new process via environment
-        env = os.environ.copy()
-        env["MWV_AUTO_REEXEC"] = "1"
-        env["PYTHONPATH"] = f"{_root}:{_src}:{env.get('PYTHONPATH', '')}"
-        
-        try:
-            os.execve(target_exe, [target_exe, str(_file)] + sys.argv[1:], env)
-        except Exception as e:
-            log.error(f"Environment re-execution failed: {e}")
-            sys.exit(1)
+# Environment Guard already executed at top.
 
 # --- EXECUTE GUARD IMMEDIATELY ---
 # Consolidated Entry Point at end of file.
@@ -9621,7 +9608,6 @@ def audit_specific_item(query: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    ensure_stable_environment() # Handles .venv re-exec
     start_app()
 
     log.info("[Main] Entering keepalive loop.")
