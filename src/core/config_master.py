@@ -245,11 +245,14 @@ DEFAULT_DB_USER = Path.home() / ".media-web-viewer" / "database.db"
 DEFAULT_DB_PROJ = PROJECT_ROOT / "data" / "database.db"
 
 if os.environ.get("MWV_DB"):
-    SELECTED_DB_PATH = Path(os.environ["MWV_DB"])
+    SELECTED_DB_PATH = str(Path(os.environ["MWV_DB"]))
 elif DEFAULT_DB_USER.exists():
-    SELECTED_DB_PATH = DEFAULT_DB_USER
+    SELECTED_DB_PATH = str(DEFAULT_DB_USER)
 else:
-    SELECTED_DB_PATH = DEFAULT_DB_PROJ
+    SELECTED_DB_PATH = str(DEFAULT_DB_PROJ)
+
+# Final Path Enforcement (v1.41.00 Strings for JSON parity)
+SELECTED_DB_PATH = str(SELECTED_DB_PATH)
 
 # --- GLOBAL CONFIGURATION DICTIONARY ---
 from datetime import datetime

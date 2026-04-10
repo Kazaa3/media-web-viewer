@@ -54,8 +54,12 @@ import contextlib
 from pathlib import Path
 from typing import List, Optional, Any
 
-# 56. Environment Integration (v1.41.00 Centralized)
+# --- Environment Integration (v1.41.00 Centralized) ---
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, APP_DATA_DIR
+
+# --- Module Exports (v1.41.00) ---
+# Ensure other modules can access these via logger.XXX
+APP_DATA_DIR = APP_DATA_DIR 
 
 REGISTRY = GLOBAL_CONFIG.get("logging_registry", {})
 LOCAL_LOG_DIR = Path(REGISTRY.get("log_root", str(PROJECT_ROOT / "logs")))
