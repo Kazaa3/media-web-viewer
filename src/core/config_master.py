@@ -5,10 +5,11 @@ dict - Config Master (Centralized Config & Flag Orchestrator)
 v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
-# --- [v1.41.106-ATOMIC-REBUILD] Master Shell Pivot ---
-APP_VERSION = "1.41.106-ATOMIC-REBUILD"
-BACKEND_VERSION = "1.41.106-BE-SHARP"
-FRONTEND_VERSION = "1.41.106-FE-ATOMIC"
+# ---# v1.41.109-LEGACY-EVOLVED: Rebuilding Legacy Shell with Atomic Forensics (Bridge-Standard)
+APP_VERSION_CORE = "v1.41.109"
+APP_VERSION_FRONTEND = "v1.41.109-ATOMIC-BRIDGE"
+APP_VERSION_BACKEND = "v1.41.109-STABLE"
+APP_VERSION_FULL = f"{APP_VERSION_CORE}-LEGACY-EVOLVED"
 
 import os
 import sys

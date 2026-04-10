@@ -513,8 +513,8 @@ def start_app():
         # We specify the port and block=False to allow the watchdog to run.
         # mode='chrome' is the preferred isolated environment.
         if profiler: profiler.start_phase("Eel-Engine-Start")
-        # Pivot to Atomic Shell v2 (v1.41.106)
-        eel.start('shell_master.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
+        # [v1.41.109] Legacy Evolution: Reactivating app.html with Atomic Forensic Standard
+        eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
         if profiler: profiler.end_phase("Eel-Engine-Start")
 
