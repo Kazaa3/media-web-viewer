@@ -26,6 +26,16 @@ function startBootWatchdog() {
             const maxTicks = window.CONFIG?.boot_watchdog_max_ticks || 12;
             if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > maxTicks) { 
                 if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
+                
+                // --- [v1.41.132] Emergency Auto-Hydration Fallback ---
+                if (phase !== 'DATA-READY' && (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0)) {
+                    console.warn("[Watchdog] DATA-TIMEOUT: Initiating Forensic Auto-Hydration...");
+                    if (window.MWV_Diagnostics && typeof window.MWV_Diagnostics.forceHydrationTest === 'function') {
+                        window.MWV_Diagnostics.forceHydrationTest();
+                        if (typeof showToast === 'function') showToast("SAFETY HYDRATION ACTIVE", 5000);
+                    }
+                }
+
                 clearInterval(__mwv_boot_watchdog_timer);
                 __mwv_boot_watchdog_status = 'DONE';
             }

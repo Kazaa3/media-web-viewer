@@ -106,42 +106,44 @@ window.MWV_Diagnostics = (() => {
      * Forces hardcoded items into the queue and triggers a re-render.
      */
     function forceHydrationTest() {
-        console.warn("[MWV-DIAG] Triggering Emergency Hydration Test (Force Mock Data)...");
+        console.warn("[MWV-DIAG] Triggering Emergency Hydration Test (Elite Mock Pack)...");
         
-        const mockItems = [
-            {
-                id: "mock_01",
-                name: "Forensic_Debug_Sequence_01.wav",
-                path: "debug/forensic_01.wav",
-                category: "Audio",
-                tags: { title: "Hydration Test: Sequence Alpha", artist: "MWV.Diagnostics", duration: 180 }
-            },
-            {
-                id: "mock_02",
-                name: "Forensic_Vocal_Analysis.mp3",
-                path: "debug/vocal_test.mp3",
-                category: "Audio",
-                tags: { title: "Hydration Test: Vocal Analysis", artist: "MWV.Diagnostics", duration: 420 }
-            }
+        const eliteMockPack = [
+            { id: "mock_a1", name: "Cyberpunk_Nocturne.flac", path: "mock/a1.flac", category: "Audio", codec: "FLAC", bitrate: "1411kbps", samplerate: "44.1kHz", tags: { title: "Nocturne in Neon", artist: "Ghost City", album: "Electric Dreams", duration: 324 } },
+            { id: "mock_a2", name: "Forensic_Vocal_Capture_04.wav", path: "mock/a2.wav", category: "Audio", codec: "PCM", bitrate: "2304kbps", samplerate: "48kHz", tags: { title: "Vocal Evidence #04", artist: "Field Recorder", album: "Forensic Samples", duration: 185 } },
+            { id: "mock_v1", name: "Security_Cam_A4.mp4", path: "mock/v1.mp4", category: "Video", codec: "H.264", bitrate: "8Mbps", tags: { title: "Security Footage A4", artist: "CCTV-Node-09", duration: 1200 } },
+            { id: "mock_a3", name: "Ambient_Rain_3D.mp3", path: "mock/a3.mp3", category: "Audio", codec: "MP3", bitrate: "320kbps", tags: { title: "City Rain (Binaural)", artist: "Atmos-X", album: "Soundscapes", duration: 600 } },
+            { id: "mock_p1", name: "Tech_Weekly_Ep99.m4a", path: "mock/p1.m4a", category: "Podcast", codec: "AAC", bitrate: "128kbps", tags: { title: "AI Agency & The Future", artist: "Tech Weekly", album: "Podcast Archive", duration: 3600 } },
+            { id: "mock_a4", name: "Deep_Blue_Sub_Bass.ogg", path: "mock/a4.ogg", category: "Audio", codec: "Vorbis", bitrate: "192kbps", tags: { title: "Deep Sea Frequency", artist: "Sub-Sonic", album: "Abyss", duration: 240 } },
+            { id: "mock_v2", name: "Drone_Flyover_HD.mkv", path: "mock/v2.mkv", category: "Video", codec: "H.265", bitrate: "12Mbps", tags: { title: "City Flyover 4K", artist: "Drone-Unit-7", duration: 450 } },
+            { id: "mock_a5", name: "Lost_Transmission.wav", path: "mock/a5.wav", category: "Audio", codec: "PCM", bitrate: "1536kbps", tags: { title: "Static Signal #01", artist: "EVP-Hunter", album: "Classified", duration: 45 } },
+            { id: "mock_m1", name: "Metadata_Test_Extreme.flac", path: "mock/m1.flac", category: "Audio", codec: "FLAC", tags: { title: "Title with Special Char !@#$%", artist: "Extremely Long Artist Name That Should Be Truncated By The CSS System", album: "Standard Album", duration: 10 } },
+            { id: "mock_a6", name: "Jazz_Midnight_Session.mp3", path: "mock/a6.mp3", category: "Audio", codec: "MP3", bitrate: "256kbps", tags: { title: "After Hours", artist: "The Blue Notes", album: "Jazz Room", duration: 520 } },
+            { id: "mock_a7", name: "Classical_Requiem.opus", path: "mock/a7.opus", category: "Audio", codec: "Opus", bitrate: "96kbps", tags: { title: "Requiem in D Minor", artist: "Symphony Orchestra", album: "Masterpieces", duration: 900 } },
+            { id: "mock_v3", name: "Thermal_Scan_A.mp4", path: "mock/v3.mp4", category: "Video", codec: "H.264", tags: { title: "Thermal Analysis A", artist: "Scan-Tech", duration: 300 } }
         ];
 
-        // 1. Force state into global player registry
-        window.currentPlaylist = mockItems;
+        // 1. Force state into global registries
+        window.allLibraryItems = [...eliteMockPack]; // Crucial for renderLibrary to work
+        window.currentPlaylist = [...eliteMockPack];
+        window.__mwv_last_db_count = eliteMockPack.length;
+
+        // 2. Sync with UI Components
         if (typeof window.syncQueueWithLibrary === 'function') {
-            console.log("[MWV-DIAG] Syncing mock data with session...");
+            console.log("[MWV-DIAG] Syncing Elite Mock Pack with session...");
+            // Manual population of currentPlaylist if syncQueueWithLibrary is too strict
+            window.currentPlaylist = [...eliteMockPack];
         }
 
-        // 2. Force Render
-        if (typeof window.renderPlaylist === 'function') {
-            window.renderPlaylist();
-        } else {
-            console.error("[MWV-DIAG] renderPlaylist not found! GUI is truly unresponsive.");
-        }
+        // 3. Force Global Re-Render
+        if (typeof window.renderPlaylist === 'function') window.renderPlaylist();
+        if (typeof window.renderLibrary === 'function') window.renderLibrary();
 
-        // 3. Force View Persistence
-        if (typeof switchMainCategory === 'function') {
-            switchMainCategory('media');
-        }
+        // 4. Update HUD and Toast
+        const countEls = document.querySelectorAll('.synced-count');
+        countEls.forEach(el => el.innerText = `${eliteMockPack.length} Titel`);
+        
+        if (typeof switchMainCategory === 'function') switchMainCategory('media');
 
         if (typeof showToast === 'function') showToast("EMERGENCY HYDRATION ACTIVE", 3000);
     }

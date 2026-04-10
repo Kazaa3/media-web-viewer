@@ -35,7 +35,7 @@
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleSidebar();
                     break;
-                case 'm': // Alt+D: [v1.41.122] Forensic Hydration Test (Emergency)
+                case 'm': // Alt+M: [v1.41.132] Forensic Hydration Bypass (Manual Injection)
                     e.preventDefault();
                     if (window.MWV_Diagnostics) window.MWV_Diagnostics.forceHydrationTest();
                     break;
