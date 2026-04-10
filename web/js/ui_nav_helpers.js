@@ -702,10 +702,14 @@ function switchMainCategory(category, btn) {
     // Dynamically populate sub-navigation header pills (Atomic Engine v1.41.112 Hard-Trigger)
     updateGlobalSubNav(category);
     
-    // [v1.41.112] Special Visibility Pass: Force-show the target panel
-    const targetPanel = document.getElementById(`${category}-panel-container`);
+    // [v1.41.112] Special Visibility Pass: Force-show the target panel (v1.41.115 Robust Lookup)
+    let targetPanel = document.getElementById(`${category}-panel-container`);
+    if (!targetPanel) {
+        targetPanel = document.querySelector(`.tab-content[data-tab-domain="${category}"]`);
+    }
+
     if (targetPanel) {
-        console.log(`[DOM-UI] Forcing visibility for panel: ${category}`);
+        console.log(`[DOM-UI] Forcing visibility for panel: ${category} (Found: ${targetPanel.id})`);
         document.querySelectorAll('.tab-content').forEach(p => p.style.display = 'none');
         targetPanel.style.display = 'flex';
         targetPanel.style.opacity = '1';
