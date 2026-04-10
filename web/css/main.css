@@ -1678,6 +1678,7 @@ body.mwv-hide-subnav #sub-nav-container {
     display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
+    background: var(--bg-primary) !important;
 }
 
 #player-main-viewport {
@@ -1686,7 +1687,7 @@ body.mwv-hide-subnav #sub-nav-container {
     width: 100%;
     overflow: hidden;
     position: relative;
-    background: #000;
+    background: transparent !important; /* Fix for black screen */
 }
 
 /* --- Range Slider Styling (Classic Player) --- */

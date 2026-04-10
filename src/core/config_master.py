@@ -5,10 +5,10 @@ dict - Config Master (Centralized Config & Flag Orchestrator)
 v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
-# --- [v1.41.104-UI-RESTORATION] Tiered Master Registry ---
-APP_VERSION = "1.41.104-UI-RESTORATION"
-BACKEND_VERSION = "1.41.104-BE-FIX"
-FRONTEND_VERSION = "1.41.104-FE-STABLE"
+# --- [v1.41.105-SSOT-REBORN] Tiered Master Registry ---
+APP_VERSION = "1.41.105-SSOT-REBORN"
+BACKEND_VERSION = "1.41.105-BE-CORE"
+FRONTEND_VERSION = "1.41.105-FE-SLAVE"
 
 import os
 import sys
@@ -374,6 +374,33 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "logbuch":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
             "video":      { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
             "status":     { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": False }
+        },
+
+        # --- [v1.41.105] SUB-NAVIGATION REGISTRY (SSOT) ---
+        # The frontend fetches these buttons and actions to render the contextual pills.
+        "sub_nav_registry": {
+            "media": [
+                { "id": "warteschlange", "label": "Queue",      "action": "switchPlayerView('warteschlange')" },
+                { "id": "playlist",      "label": "Playlist",   "action": "switchPlayerView('playlist')" },
+                { "id": "visualizer",    "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
+                { "id": "lyrics",       "label": "Lyrics",      "action": "switchPlayerView('lyrics')" }
+            ],
+            "library": [
+                { "id": "lib-cinema", "label": "Cinema",    "action": "switchLibrarySubTab('cinema')" },
+                { "id": "lib-films",  "label": "Filme",     "action": "switchLibrarySubTab('films')" },
+                { "id": "lib-series", "label": "Serien",    "action": "switchLibrarySubTab('series')" },
+                { "id": "lib-albums", "label": "Alben",     "action": "switchLibrarySubTab('albums')" }
+            ],
+            "status": [
+                { "id": "logs",     "label": "Live Logs",    "action": "switchDiagnosticsView('logs')" },
+                { "id": "health",   "label": "Core Health",  "action": "switchDiagnosticsView('health')" },
+                { "id": "diagnose", "label": "Diagnostics", "action": "switchDiagnosticsView('debug-db')" }
+            ],
+            "system": [
+                { "id": "general",      "label": "Allgemein",    "action": "switchOptionsView('general')" },
+                { "id": "appearance",   "label": "Darstellung",  "action": "switchOptionsView('appearance')" },
+                { "id": "transcoding",  "label": "Transcoding",  "action": "switchOptionsView('transcoding')" }
+            ]
         }
     },
     

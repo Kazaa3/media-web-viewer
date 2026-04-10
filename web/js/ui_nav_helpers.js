@@ -683,65 +683,8 @@ function switchMainCategory(category, btn) {
 
 /**
  * Updates the global sub-navigation bar with contextual entries.
- * (V1.34 Master: Most sub-navigation is now in the Tab's Internal Sidebar, 
- * but we keep this for cross-fragment shortcuts).
+ * (v1.41.105 SSOT-REBORN: Registry is now fetched from Python backend).
  */
-const SUB_NAV_REGISTRY = {
-    'media': [
-        { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
-        { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
-        { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" },
-        { id: 'lyrics', label: 'Lyrics', action: "switchPlayerView('lyrics')" }
-    ],
-    'library': [
-        { id: 'lib-tab-btn-cinema',     label: 'Cinema',     action: "switchLibrarySubTab('cinema')" },
-        { id: 'lib-tab-btn-films',      label: 'Filme',      action: "switchLibrarySubTab('films')" },
-        { id: 'lib-tab-btn-series',     label: 'Serien',     action: "switchLibrarySubTab('series')" },
-        { id: 'lib-tab-btn-albums',     label: 'Alben',      action: "switchLibrarySubTab('albums')" },
-        { id: 'lib-tab-btn-audiobooks', label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
-    ],
-    'status': [
-        { id: 'logs', label: 'Live Logs', action: "switchDiagnosticsView('logs')" },
-        { id: 'health', label: 'Core Health', action: "switchDiagnosticsView('health')" },
-        { id: 'metrics', label: 'System Metrics', action: "switchDiagnosticsView('metrics')" }
-    ],
-    'file': [
-        { id: 'fb-films',       label: 'Filme',      action: "switchLibrarySubTab('films')" },
-        { id: 'fb-series',      label: 'Serien',     action: "switchLibrarySubTab('series')" },
-        { id: 'fb-albums',      label: 'Alben',      action: "switchLibrarySubTab('albums')" },
-        { id: 'fb-audiobooks',  label: 'Hörbuch',    action: "switchLibrarySubTab('audiobooks')" }
-    ],
-    'edit': [
-        { id: 'tags', label: 'Metadaten Tags', action: "switchEditView('tags')" },
-        { id: 'artwork', label: 'Artwork Lab', action: "switchEditView('artwork')" },
-        { id: 'analysis', label: 'Analyse', action: "switchEditView('analysis')" }
-    ],
-    'system': [
-        { id: 'general', label: 'Allgemein', action: "switchOptionsView('general')" },
-        { id: 'appearance', label: 'Darstellung', action: "switchOptionsView('appearance')" },
-        { id: 'indexing', label: 'Indexierung', action: "switchOptionsView('indexing')" },
-        { id: 'parser', label: 'Parser Chain', action: "switchOptionsView('parser')" },
-        { id: 'transcoding', label: 'Transcoding', action: "switchOptionsView('transcoding')" }
-    ],
-    'debug': [
-        { id: 'overview', label: 'Übersicht', action: "switchDiagnosticsView('debug-db')" },
-        { id: 'tests', label: 'Skript-Tests', action: "switchDiagnosticsView('tests')" },
-        { id: 'video-health', label: 'Video Health', action: "switchDiagnosticsView('video-health')" },
-        { id: 'health', label: 'System-Check', action: "switchDiagnosticsView('health')" }
-    ]
-};
-
-// v1.41.101 Alias Resolution Map
-const SUB_NAV_ALIASES = {
-    'player': 'media',
-    'diagnostics': 'status',
-    'debug': 'status',
-    'options': 'system',
-    'settings': 'system',
-    'logbuch': 'logbuch', // Ensure direct match
-    'media': 'media'      // Ensure direct match
-};
-
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
