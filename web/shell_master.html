@@ -58,7 +58,65 @@
             </div>
         </div>
 
-    </main>
+    <!-- [FOOTER] HIGH-DENSITY FORENSIC CONTROL BAR -->
+    <footer class="master-footer">
+        <!-- Cluster 1: DB Count -->
+        <div class="footer-db-status">
+            ITEMS: <span id="footer-db-count" class="hud-val green">--</span>
+        </div>
+
+        <!-- Cluster 2: Swiss Army Tools (Centrally Grouped) -->
+        <div class="swiss-hud-row">
+            <!-- Frontend (FE) -->
+            <div id="hud-fe" class="hud-group" title="Frontend: DOM-Sync & Registry">
+                <span class="hud-label">FE</span>
+                <div class="hud-led"></div>
+                <button class="hud-btn-tiny" onclick="if(typeof syncLibrary === 'function') syncLibrary();">SYNC</button>
+            </div>
+            <!-- Backend (BE) -->
+            <div id="hud-be" class="hud-group" title="Backend: Eel & Process">
+                <span class="hud-label">BE</span>
+                <div class="hud-led"></div>
+                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.kill_stale_and_restart === 'function') eel.kill_stale_and_restart();">KILL</button>
+            </div>
+            <!-- Database (DB) -->
+            <div id="hud-db" class="hud-group" title="Database: SQLite & Con">
+                <span class="hud-label">DB</span>
+                <div class="hud-led"></div>
+                <button class="hud-btn-tiny" onclick="if(typeof eel !== 'undefined' && typeof eel.trigger_db_reconnect === 'function') eel.trigger_db_reconnect()(() => syncLibrary());">RECON</button>
+            </div>
+            <!-- Hydration (HYDR) -->
+            <div id="hud-hydr" class="hud-group" title="Hydration: M(ock) R(eal) B(oth)">
+                <span class="hud-label">HYDR</span>
+                <div class="hud-led"></div>
+                <button id="hydr-btn-M" class="hud-btn-tiny" onclick="setHydrationMode('mock')">M</button>
+                <button id="hydr-btn-R" class="hud-btn-tiny" onclick="setHydrationMode('real')">R</button>
+                <button id="hydr-btn-B" class="hud-btn-tiny" onclick="setHydrationMode('both')">B</button>
+            </div>
+            <!-- Diagnostics (RX) -->
+            <div id="hud-diag" class="hud-group" title="Toggles: RAW(Data) BYPS(Checks)">
+                <span class="hud-label">RX</span>
+                <div class="hud-led"></div>
+                <button id="footer-btn-RAW" class="hud-btn-tiny" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
+                <button id="footer-btn-BYPS" class="hud-btn-tiny" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
+            </div>
+            
+            <button class="hud-btn-prime" onclick="if(window.MWV_Diagnostics) window.MWV_Diagnostics.toggle();">LOGS</button>
+        </div>
+
+        <!-- Cluster 3: System Controls -->
+        <div class="footer-sys-cluster">
+            <button class="tool-icon-btn" onclick="toggleTheme()" title="Toggle Theme">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
+            <button class="tool-icon-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </button>
+            <button class="tool-icon-btn" onclick="toggleDiagnosticsSidebar()" title="Toggle HUD Overlay" style="color: #ff3366;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </button>
+        </div>
+    </footer>
 
     <!-- [BRIDGE] MODAL & OVERLAY PLACEHOLDERS -->
     <div id="modals-placeholder"></div>
