@@ -16,6 +16,18 @@ function appendUiTrace(msg) {
     if (uiTraceLog.length > 100) uiTraceLog.shift();
     
     console.log(`[UI-TRACE] ${msg}`);
+
+    // [v1.41.134] Mirror to Main Status Panel if active
+    const mainLog = document.getElementById('sentinel-log-container-main');
+    if (mainLog) {
+        const p = document.createElement('div');
+        p.style.marginBottom = '2px';
+        p.style.borderBottom = '1px solid rgba(0,255,204,0.05)';
+        p.style.paddingBottom = '2px';
+        p.innerHTML = `<span style="opacity:0.3; font-size:9px;">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+        mainLog.appendChild(p);
+        mainLog.scrollTop = mainLog.scrollHeight;
+    }
     
     if (typeof eel !== 'undefined' && typeof eel.log_js_error === 'function') {
         eel.log_js_error({ type: 'TRACE', message: msg, timestamp: timestamp });
@@ -221,6 +233,32 @@ window.appendUiTrace = appendUiTrace;
 window.runUiIntegrityCheck = runUiIntegrityCheck;
 window.runDiagnostic = runDiagnostic;
 window.initDomWatchdog = initDomWatchdog;
+
+/**
+ * [v1.41.134] Forensic View Switcher for STATUS Category
+ */
+function switchDiagnosticsView(viewId) {
+    appendUiTrace(`[UI-NAV] Switching Main Diagnostic View: ${viewId}`);
+
+    // Update Pills
+    document.querySelectorAll('.sub-pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `sub-nav-pill-${viewId}`);
+    });
+
+    // Content Switch logic
+    const integrityResults = document.getElementById('ui-integrity-results');
+    const logsContainer = document.getElementById('sentinel-log-container-main');
+
+    if (viewId === 'logs') {
+        if (logsContainer) {
+            logsContainer.parentElement.style.display = 'flex';
+            logsContainer.parentElement.style.flex = '1';
+        }
+    } else if (viewId === 'health') {
+        if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
+    }
+}
+window.switchDiagnosticsView = switchDiagnosticsView;
 
 // Auto-init trace hooks
 (function() {
