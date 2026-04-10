@@ -39,6 +39,10 @@
                     e.preventDefault();
                     if (window.MWV_Diagnostics) window.MWV_Diagnostics.forceHydrationTest();
                     break;
+                case 'u': // Alt+U: [v1.41.133] Forensic Integrity Sweep (HEAL)
+                    e.preventDefault();
+                    if (window.runUiIntegrityCheck) window.runUiIntegrityCheck();
+                    break;
                 case 'alt': // Simple Alt
                     break;
             }

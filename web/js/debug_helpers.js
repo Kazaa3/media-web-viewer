@@ -102,11 +102,62 @@ async function runUiIntegrityCheck() {
             log(7, `Backend RTT latency: ${rtt}ms`, rtt < 100 ? 'pass' : 'info');
         }
 
+        // Stage 8: Nuclear Visibility Force (v1.41.133 Hardening)
+        const visible = forceUIVisibility();
+        log(8, "Nuclear Visibility Force: " + (visible ? "Visibility Enforced" : "Force Failed"), visible ? 'pass' : 'fail');
+
         if (typeof showToast === 'function') {
             showToast("UI Integrity Check Complete", 3000);
         }
     } catch (err) {
         log('ERROR', `Integrity check failed: ${err.message}`, 'fail');
+    }
+}
+
+/**
+ * Stage 8: Nuclear Visibility Force
+ * Forcefully overrides styling to ensure containers are visible.
+ */
+function forceUIVisibility() {
+    console.warn(">>> [Forensic] TRIGGERING NUCLEAR VISIBILITY FORCE...");
+    try {
+        const body = document.body;
+        const main = document.getElementById('main-viewport');
+        const activeView = document.querySelector('.deck-view.active');
+
+        // 1. Force Body Overrides
+        body.style.setProperty('display', 'block', 'important');
+        body.style.setProperty('opacity', '1', 'important');
+        body.style.setProperty('visibility', 'visible', 'important');
+
+        // 2. Force Main Viewport
+        if (main) {
+            main.style.setProperty('display', 'flex', 'important');
+            main.style.setProperty('opacity', '1', 'important');
+            main.style.setProperty('z-index', '1', 'important');
+        }
+
+        // 3. Force Active Deck View
+        if (activeView) {
+            activeView.style.setProperty('display', 'flex', 'important');
+            activeView.style.setProperty('opacity', '1', 'important');
+            activeView.style.setProperty('visibility', 'visible', 'important');
+            activeView.style.setProperty('width', '100%', 'important');
+            activeView.style.setProperty('height', '100%', 'important');
+        }
+
+        // 4. Clean up modal overlays that might be blocking the view
+        const blockages = document.querySelectorAll('.modal-backdrop, #loading-screen, .splash-screen');
+        blockages.forEach(b => {
+             console.log(`[Forensic] Removing suspected UI blockage: ${b.className}`);
+             b.style.display = 'none';
+        });
+
+        if (typeof showToast === 'function') showToast("NUCLEAR VISIBILITY ENFORCED", 2000);
+        return true;
+    } catch (e) {
+        console.error("Nuclear Force Failed:", e);
+        return false;
     }
 }
 
