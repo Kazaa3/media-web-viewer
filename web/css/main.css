@@ -177,10 +177,20 @@ body.mwv-hide-footer { --footer-height: 0px; }
 
 #sub-nav-container {
     display: flex !important;
-    min-height: 30px !important;
+    align-items: center !important;
+    min-height: 34px !important;
+    padding: 0 15px !important;
+    gap: 12px !important;
     background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-primary)) !important;
     border-bottom: 1px solid var(--border-color) !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    z-index: 999 !important;
+}
+
+.sub-pill-btn {
+    min-width: 80px;
+    height: 24px;
+    font-weight: 500;
 }
 
 body.mwv-hide-subnav #sub-nav-container {

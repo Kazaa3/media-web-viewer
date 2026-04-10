@@ -783,6 +783,7 @@ function updateGlobalSubNav(category) {
                         'warteschlange';
 
     // Render logic with explicit lifecycle markers
+    console.info(`[MWV-UI] Populating Sub-Nav for: ${normalizedCategory} | Pills: ${entries.length}`);
     const prevContent = container.innerHTML;
     container.innerHTML = entries.map(item => `
         <button id="sub-nav-pill-${item.id}" 
