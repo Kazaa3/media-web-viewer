@@ -685,7 +685,9 @@ function updateGlobalSubNav(category) {
     if (!container) return;
 
     // [v1.37.06] Forensic category normalization
-    const normalizedCategory = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+    let normalizedCategory = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+    normalizedCategory = normalizedCategory.toLowerCase();
+    
     console.log(`[UI-NAV] Population request for category: [${normalizedCategory}] (passed: ${category})`);
 
     // Clear previous

@@ -2126,7 +2126,7 @@ VERSION_FILE = PROJECT_ROOT / "VERSION"
 try:
     VERSION = VERSION_FILE.read_text(encoding='utf-8').strip()
 except Exception:
-    VERSION = "1.35.68"  # Fallback
+    VERSION = "1.41.00 Offline"  # Fallback
 # --- Imprint/Impressum API ---
 
 
