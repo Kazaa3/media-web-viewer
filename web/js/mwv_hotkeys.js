@@ -9,33 +9,33 @@
         // [v1.41.119 - 122] Forensic UI Toggles
         if (e.altKey && !e.shiftKey && !e.ctrlKey) {
             const key = e.key.toLowerCase();
-            
-            switch(key) {
-                case 'h': // Alt+H: Toggle Header
+
+            switch (key) {
+                case 'y': // Alt+H: Level 1 - MASTER MENU / HEADER
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleHeader();
                     break;
-                case 'n': // Alt+N: Toggle Sub-Nav
+                case 'x': // Alt+M: Level 2 - SUB-MENU / MODULE TABS
+                    e.preventDefault();
+                    if (window.MWV_UI) window.MWV_UI.toggleSubMenu();
+                    break;
+                case 'c': // Alt+N: Level 3 - TERTIARY SUB-NAV
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleSubNav();
                     break;
-                case 'm': // Alt+M: Toggle Module Tabs
-                    e.preventDefault();
-                    if (window.MWV_UI) window.MWV_UI.toggleModuleTabs();
-                    break;
-                case 'f': // Alt+F: Toggle Footer
+                case 'v': // Alt+F: Toggle Footer
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleFooter();
                     break;
-                case 'r': // Alt+R: Toggle Header Right (System Cluster)
+                case 'b': // Alt+R: Toggle Header Right (System Cluster)
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleHeaderRight();
                     break;
-                case 's': // Alt+S: Toggle Sidebar
+                case 'n': // Alt+S: Toggle Sidebar
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleSidebar();
                     break;
-                case 'd': // Alt+D: [v1.41.122] Forensic Hydration Test (Emergency)
+                case 'm': // Alt+D: [v1.41.122] Forensic Hydration Test (Emergency)
                     e.preventDefault();
                     if (window.MWV_Diagnostics) window.MWV_Diagnostics.forceHydrationTest();
                     break;

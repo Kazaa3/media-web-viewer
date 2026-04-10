@@ -75,14 +75,21 @@ body.mwv-sidebar-collapsed .sidebar {
     pointer-events: none;
 }
 
-/* --- MODULE TAB NAV (THIRD BAR) --- */
+/* --- LEVEL 2: SUB-MENU BAR (MODULE TABS) --- */
 .module-tab-nav {
-    height: var(--active-module-tab-height, 32px);
-    overflow: hidden;
-    transition: height var(--transition-fluid), opacity var(--transition-snappy);
+    height: var(--active-sub-menu-height, 32px);
+    padding-left: var(--sub-menu-offset-left, 0px);
+    width: var(--sub-menu-width, 100%);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    transition: height var(--transition-fluid), opacity var(--transition-snappy), padding-left var(--transition-fluid);
+    z-index: 10000;
 }
 
-body.mwv-hide-module-tabs .module-tab-nav {
+body.mwv-hide-sub-menu .module-tab-nav {
     height: 0;
     opacity: 0;
     border-bottom: none;

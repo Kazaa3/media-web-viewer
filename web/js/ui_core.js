@@ -11,9 +11,9 @@ window.MWV_UI = (() => {
     };
 
     let CONSTANTS = {
-        HEADER_HEIGHT: 48,
-        SUBNAV_HEIGHT: 35,
-        MODULE_TAB_HEIGHT: 32,
+        L1_HEADER_HEIGHT: 48,
+        L2_SUB_MENU_HEIGHT: 32,
+        L3_SUB_NAV_HEIGHT: 35,
         FOOTER_HEIGHT: 48,
         SIDEBAR_WIDTH: 250
     };
@@ -43,17 +43,21 @@ window.MWV_UI = (() => {
             
             // --- [v1.41.119/120] Sync Constants with Config ---
             if (registry.config) {
-                if (registry.config.header_height) CONSTANTS.HEADER_HEIGHT = parseInt(registry.config.header_height);
-                if (registry.config.sub_nav_height) CONSTANTS.SUBNAV_HEIGHT = parseInt(registry.config.sub_nav_height);
-                if (registry.config.module_tab_height) CONSTANTS.MODULE_TAB_HEIGHT = parseInt(registry.config.module_tab_height);
+                if (registry.config.header_height) CONSTANTS.L1_HEADER_HEIGHT = parseInt(registry.config.header_height);
+                if (registry.config.sub_menu_height) CONSTANTS.L2_SUB_MENU_HEIGHT = parseInt(registry.config.sub_menu_height);
+                if (registry.config.sub_nav_height) CONSTANTS.L3_SUB_NAV_HEIGHT = parseInt(registry.config.sub_nav_height);
                 if (registry.config.footer_height) CONSTANTS.FOOTER_HEIGHT = parseInt(registry.config.footer_height);
                 if (registry.config.sidebar_width) CONSTANTS.SIDEBAR_WIDTH = parseInt(registry.config.sidebar_width);
                 
-                // --- [v1.41.121] Layout Distribution ---
+                // --- [v1.41.121] Level 1 Distribution ---
                 if (registry.config.header_left_width) document.documentElement.style.setProperty('--header-left-width', registry.config.header_left_width);
                 if (registry.config.header_right_width) document.documentElement.style.setProperty('--header-right-width', registry.config.header_right_width);
                 
-                // --- [v1.41.123] Sub-Nav Forensic Alignment ---
+                // --- [v1.41.124] Level 2 Distribution ---
+                if (registry.config.sub_menu_offset_left) document.documentElement.style.setProperty('--sub-menu-offset-left', registry.config.sub_menu_offset_left);
+                if (registry.config.sub_menu_width) document.documentElement.style.setProperty('--sub-menu-width', registry.config.sub_menu_width);
+
+                // --- [v1.41.123] Level 3 Distribution ---
                 if (registry.config.sub_nav_offset_left) document.documentElement.style.setProperty('--sub-nav-offset-left', registry.config.sub_nav_offset_left);
                 if (registry.config.sub_nav_width) document.documentElement.style.setProperty('--sub-nav-width', registry.config.sub_nav_width);
             }
@@ -161,14 +165,14 @@ window.MWV_UI = (() => {
     }
 
     /**
-     * Toggles the module tab navigation bar visibility.
+     * Toggles the secondary sub-menu bar (Level 2) visibility.
      */
-    async function toggleModuleTabs(forceState = null) {
-        document.body.classList.toggle('mwv-hide-module-tabs');
-        const hiddenNow = document.body.classList.contains('mwv-hide-module-tabs');
+    async function toggleSubMenu(forceState = null) {
+        document.body.classList.toggle('mwv-hide-sub-menu');
+        const hiddenNow = document.body.classList.contains('mwv-hide-sub-menu');
         
         updateGeometry();
-        await setSetting('module_tabs_visible', !hiddenNow);
+        await setSetting('sub_menu_visible', !hiddenNow);
     }
 
     /**
@@ -245,16 +249,16 @@ window.MWV_UI = (() => {
         const root = document.documentElement;
         const body = document.body;
 
-        const h = body.classList.contains('mwv-hide-header') ? 0 : CONSTANTS.HEADER_HEIGHT;
-        const s = body.classList.contains('mwv-hide-subnav') ? 0 : CONSTANTS.SUBNAV_HEIGHT;
-        const m = body.classList.contains('mwv-hide-module-tabs') ? 0 : CONSTANTS.MODULE_TAB_HEIGHT;
+        const h = body.classList.contains('mwv-hide-header') ? 0 : CONSTANTS.L1_HEADER_HEIGHT;
+        const s2 = body.classList.contains('mwv-hide-sub-menu') ? 0 : CONSTANTS.L2_SUB_MENU_HEIGHT;
+        const s3 = body.classList.contains('mwv-hide-subnav') ? 0 : CONSTANTS.L3_SUB_NAV_HEIGHT;
         const f = body.classList.contains('mwv-hide-footer') ? 0 : CONSTANTS.FOOTER_HEIGHT;
 
         root.style.setProperty('--active-header-height', `${h}px`);
-        root.style.setProperty('--active-sub-nav-height', `${s}px`);
-        root.style.setProperty('--active-module-tab-height', `${m}px`);
+        root.style.setProperty('--active-sub-menu-height', `${s2}px`);
+        root.style.setProperty('--active-sub-nav-height', `${s3}px`);
         root.style.setProperty('--footer-height', `${f}px`);
-        root.style.setProperty('--total-top-offset', `${h + s + m}px`);
+        root.style.setProperty('--total-top-offset', `${h + s2 + s3}px`);
         
         const sw = registry.sidebarVisible ? CONSTANTS.SIDEBAR_WIDTH : 0;
         root.style.setProperty('--sidebar-width', `${sw}px`);
@@ -267,8 +271,8 @@ window.MWV_UI = (() => {
         init,
         apply,
         toggleHeader,
+        toggleSubMenu,
         toggleSubNav,
-        toggleModuleTabs,
         toggleFooter,
         toggleHeaderRight,
         toggleSidebar,
