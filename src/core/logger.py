@@ -1,4 +1,4 @@
-#dict - Desktop Media Player and Library Manager v1.35.68
+#dict - Desktop Media Player and Library Manager v1.41.00
 # # logger.py - Centralized logging system for dict.
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -54,7 +54,7 @@ import contextlib
 from pathlib import Path
 from typing import List, Optional, Any
 
-# 56. Environment Integration (v1.35.68 Centralized)
+# 56. Environment Integration (v1.41.00 Centralized)
 from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, APP_DATA_DIR
 
 REGISTRY = GLOBAL_CONFIG.get("logging_registry", {})
@@ -71,7 +71,7 @@ MAX_BUFFER_SIZE = REGISTRY.get("max_buffer_size", 10000)
 
 _debug_flags = {}
 _last_ui_broadcast = 0.0
-UI_BROADCAST_COOLDOWN = 0.02 # Max 50 messages/sec (v1.35.68)
+UI_BROADCAST_COOLDOWN = 0.02 # Max 50 messages/sec (v1.41.00)
 
 def set_debug_flags(flags: dict):
     """Update internal reference to debug flags."""
@@ -88,8 +88,8 @@ class UIHandler(logging.Handler):
         try:
             msg = self.format(record)
             
-            # [Echo Guard] v1.35.68: Do not send logs back that originated from the UI!
-            # [Blind-Mute] v1.35.68: Silence heavy render-traces to prevent UI freezing
+            # [Echo Guard] v1.41.00: Do not send logs back that originated from the UI!
+            # [Blind-Mute] v1.41.00: Silence heavy render-traces to prevent UI freezing
             if "[UI-Trace]" in msg or "[BD-AUDIT]" in msg or "[JS-NAV]" in msg or "[UI-INPUT]" in msg \
                or "[UI-RENDER]" in msg or "[DOM-UI]" in msg:
                 return
@@ -100,7 +100,7 @@ class UIHandler(logging.Handler):
             if len(LOG_BUFFER) > MAX_BUFFER_SIZE:
                 LOG_BUFFER.pop(0)
             
-            # Real-time UI tracing with Rate Limiting (v1.35.68)
+            # Real-time UI tracing with Rate Limiting (v1.41.00)
             now = time.time()
             if (now - _last_ui_broadcast) < UI_BROADCAST_COOLDOWN:
                 return

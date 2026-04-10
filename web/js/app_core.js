@@ -300,21 +300,17 @@ window.addEventListener('DOMContentLoaded', async () => {
             if (typeof initTranslations === 'function') initTranslations();
             if (typeof initAllSplitters === 'function') initAllSplitters();
 
-            // Apply persisted sidebar state
-            if (typeof applySidebarState === 'function') applySidebarState();
-
-            // 3. UI Start State (v1.35.68 Config-Driven)
-            const startBranch = window.CONFIG?.active_branch || 'audio';
+            // 3. UI Start State (v1.40 Orchestrated)
             const startTab = window.CONFIG?.start_tab || 'player';
-            
-            console.log(`UI: Booting into ${startBranch} branch at tab: ${startTab}`);
-            
-            // Map branch to main category if needed (default to 'media' for player/video)
             const startCategory = (startTab === 'library') ? 'library' : 
                                  (startTab === 'database') ? 'database' : 
                                  (startTab === 'edit') ? 'edit' : 'media';
 
-            if (typeof switchMainCategory === 'function') switchMainCategory(startCategory);
+            console.log(`UI: Booting into tab: ${startTab} (Category: ${startCategory})`);
+            
+            if (window.MWV_UI) {
+                window.MWV_UI.apply(startCategory);
+            }
 
             if (typeof WM !== 'undefined' && typeof WM.activate === 'function') {
                 WM.activate(startTab);

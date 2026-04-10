@@ -218,48 +218,21 @@ async function toggleDiagnosticsFlag(flagId) {
 /**
  * Toggles the main sidebar visibility.
  */
-function toggleSidebar() {
-    const sidebar = document.getElementById('main-sidebar');
-    const splitter = document.getElementById('main-splitter');
-    if (!sidebar) return;
-
-    sidebarVisible = !sidebarVisible;
-    applySidebarState();
-
-    // Persist only if user explicitly toggles it? 
-    // Or just store it. Let's store it.
-    localStorage.setItem('mwv_sidebar_visible', sidebarVisible);
-
-    console.log(`UI: Sidebar toggled. Visible: ${sidebarVisible}`);
+function toggleSidebar(forceState = null) {
+    if (window.MWV_UI) {
+        window.MWV_UI.toggleSidebar(forceState);
+    } else {
+        console.warn("[UI-NAV] MWV_UI not available for sidebar toggle.");
+    }
 }
 
 /**
  * Applies the current sidebarVisible state to the DOM (v1.36.00 CSS-driven).
  */
 function applySidebarState() {
-    const sidebar = document.getElementById('main-sidebar');
-    const splitter = document.getElementById('main-splitter');
-    if (!sidebar) return;
-
-    // Toggle the .collapsed class for robust state management
-    sidebar.classList.toggle('collapsed', !sidebarVisible);
-    
-    // Sync the vertical splitter
-    if (splitter) {
-        splitter.style.display = sidebarVisible ? 'block' : 'none';
-    }
-
-    // Update toggle button state if it exists
-    const toggleBtn = document.getElementById('sidebar-toggle-btn');
-    const headerToggleBtn = document.getElementById('header-btn-sidebar-toggle');
-    
-    if (toggleBtn) {
-        toggleBtn.classList.toggle('active', sidebarVisible);
-        toggleBtn.style.opacity = sidebarVisible ? '1' : '0.6';
-    }
-    if (headerToggleBtn) {
-        headerToggleBtn.classList.toggle('active', sidebarVisible);
-        headerToggleBtn.style.background = sidebarVisible ? 'rgba(0, 122, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+    // Legacy stub - now handled by MWV_UI (v1.40)
+    if (window.MWV_UI) {
+        window.MWV_UI.updateGeometry();
     }
 }
 
@@ -520,134 +493,12 @@ function toggleMenuBar(forceState = null) {
  */
 async function refreshUIVisibility() {
     console.time('[PERF] UI-Refresh');
-    const category = currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
-    
-    // 1. Ensure we have the latest registry from backend or window.CONFIG
-    let uiRegistry = {};
-    try {
-        if (typeof eel !== 'undefined' && typeof eel.get_ui_settings === 'function') {
-            uiRegistry = await eel.get_ui_settings()();
-        } else if (window.CONFIG && window.CONFIG.ui_settings) {
-            uiRegistry = window.CONFIG.ui_settings;
-        }
-    } catch (e) {
-        console.warn("[UI-NAV] Failed to fetch UI registry for refresh:", e);
-        if (window.CONFIG && window.CONFIG.ui_settings) uiRegistry = window.CONFIG.ui_settings;
+    if (window.MWV_UI) {
+        const category = currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+        window.MWV_UI.apply(category);
+    } else {
+        console.warn("[UI-NAV] MWV_UI not available for refresh.");
     }
-
-    const matrix = uiRegistry.ui_visibility_matrix || {};
-    
-    // [v1.37.52 Hardened Defaults] Ensure Media (Player) always shows its sub-menus
-    const settings = matrix[category] || { 
-        master_header: true, 
-        contextual_pill_nav: true, 
-        module_tab_nav: true 
-    };
-    // [v1.38.02] Granular Fragment Toggling (Override based on Fragment Flags)
-    const fragments = uiRegistry.ui_fragments || {};
-    Object.keys(fragments).forEach(key => {
-        const btn = document.getElementById(`nav-btn-${key}`);
-        if (btn) {
-            btn.style.setProperty('display', fragments[key] ? 'flex' : 'none', 'important');
-        }
-    });
-
-    // 1. Control Master Header (master-persistent-header)
-    const masterHeader = document.getElementById('master-persistent-header');
-    if (masterHeader) {
-        const shouldShowMaster = (settings.master_header !== false) && menuSystemVisible;
-        masterHeader.style.setProperty('display', shouldShowMaster ? 'flex' : 'none', 'important');
-        masterHeader.style.opacity = shouldShowMaster ? '1' : '0';
-    }
-
-    // 2. CONTEXTUAL PILL NAV (Restoration v1.38)
-    const pillNav = document.getElementById('contextual-pill-nav');
-    if (pillNav) {
-         const isPlayer = (category === 'media' || category === 'player');
-         const shouldShowPills = settings.contextual_pill_nav !== false; // [v1.38.08] Standardized to config
-         
-         if (pillNav.getAttribute('data-manual-hide') === 'true' && !isPlayer) {
-             pillNav.style.display = 'none';
-         } else {
-             pillNav.style.display = shouldShowPills ? 'flex' : 'none';
-         }
-         
-         // Trigger update if visible
-         if (shouldShowPills && typeof updateGlobalSubNav === 'function') {
-             updateGlobalSubNav(category);
-         }
-    }
-
-    // 3. Control Module Tabs
-    const tabNav = document.getElementById('player-sub-nav-shell');
-    if (tabNav) {
-        tabNav.style.display = settings.module_tab_nav ? 'flex' : 'none';
-    }
-
-    // 4. Control Footer (Media Controller)
-    const footer = document.querySelector('.main-footer') || document.querySelector('.layout-footer-wrapper');
-    if (footer) {
-        const showFooter = settings.footer_visible !== false;
-        footer.style.display = showFooter ? 'flex' : 'none';
-    }
-
-    // 5. Control Sidebar Allowed State
-    const sidebarBtn = document.getElementById('header-btn-sidebar-toggle');
-    if (sidebarBtn) {
-        sidebarBtn.style.display = settings.sidebar_allowed ? 'flex' : 'none';
-    }
-
-    // 6. Control Diagnostics HUD
-    if (typeof toggleTechnicalHUD === 'function') {
-        if (settings.diagnostics_hud_allowed === false) toggleTechnicalHUD(false);
-    }
-
-    // --- NEW: Audio Player Fragment Control (v1.38.08 - Sentinel Orchestration) ---
-    const audioSidebar = document.getElementById('player-detailed-sidebar');
-    if (audioSidebar) {
-        // Detailed Mode Sidebar (The "Deck") - Left split inside the player
-        const showAudioSidebar = uiRegistry.sidebar_allowed !== false;
-        audioSidebar.style.display = showAudioSidebar ? 'flex' : 'none';
-    }
-
-    const queueList = document.getElementById('state-orchestrated-active-queue-list-container');
-    if (queueList) {
-        // [v1.38.09] Hard-wire visibility for media category to prevent "Black Hole"
-        const isPlayer = (category === 'media' || category === 'player');
-        const showQueue = (uiRegistry.queue_panel_enabled !== false) || isPlayer;
-        queueList.style.setProperty('display', showQueue ? 'flex' : 'none', 'important');
-        queueList.style.setProperty('opacity', '1', 'important');
-
-        // Hide/Show sub-nav buttons based on engine flags
-        const queueBtn = document.getElementById('player-subtab-queue');
-        if (queueBtn) queueBtn.style.display = showQueue ? 'flex' : 'none';
-
-        const lyricsBtn = document.getElementById('player-subtab-lyrics');
-        if (lyricsBtn) {
-            const showLyrics = uiRegistry.lyrics_panel_enabled !== false;
-            lyricsBtn.style.display = showLyrics ? 'flex' : 'none';
-        }
-    }
-
-    // --- Splitter Enforcement (v1.38.08) ---
-    const mainSplitter = document.getElementById('main-splitter');
-    if (mainSplitter) {
-        const sidebarIsVisible = (typeof sidebarVisible !== 'undefined' && sidebarVisible) || (uiRegistry.sidebar_allowed && uiRegistry.sidebar_visible);
-        // Force splitter visibility if a side-by-side layout is active
-        mainSplitter.style.display = sidebarIsVisible ? 'block' : 'none';
-        mainSplitter.style.zIndex = '1000';
-    }
-    // ---------------------------------------------------------------------------
-
-    // 7. FINAL: Recalibrate Viewport Geometry
-    refreshViewportLayout();
-
-    // 8. Sync Sidebar State (Ensure it follows sidebarVisible global)
-    if (typeof applySidebarState === 'function') applySidebarState();
-
-    // 9. Sentinel Audit (Auto-Fix Black Holes)
-    if (typeof UISentinel !== 'undefined') UISentinel.validate();
-
     console.timeEnd('[PERF] UI-Refresh');
 }
 window.refreshUIVisibility = refreshUIVisibility;
@@ -657,37 +508,9 @@ window.refreshUIVisibility = refreshUIVisibility;
  * v1.37.52 Master Engine: Handles 0, 40, 32, or 72px total offset.
  */
 function refreshViewportLayout() {
-    const root = document.documentElement;
-    const masterHeader = document.getElementById('master-persistent-header');
-    const pillNav = document.getElementById('sub-nav-container');
-    const footer = document.querySelector('.layout-footer-wrapper');
-    
-    // Check actual visibility (considering opacity/display)
-    const masterVisible = masterHeader && (masterHeader.style.display !== 'none' && window.getComputedStyle(masterHeader).display !== 'none');
-    const pillVisible = pillNav && (pillNav.style.display !== 'none' && window.getComputedStyle(pillNav).display !== 'none');
-    
-    // Calculate heights - v1.34 Core standards
-    const hHeight = masterVisible ? 40 : 0;
-    const sHeight = pillVisible ? 32 : 0;
-    const totalOffset = hHeight + sHeight;
-    const fHeight = (footer && window.getComputedStyle(footer).display !== 'none') ? 52 : 0;
-    
-    console.log(`[GEO-ENGINE] OFFSET_UPDATE: Header:${hHeight}px + SubNav:${sHeight}px = ${totalOffset}px. Footer: ${fHeight}px`);
-    
-    // Update Global CSS Variables
-    root.style.setProperty('--active-header-height', hHeight + 'px');
-    root.style.setProperty('--active-sub-nav-height', sHeight + 'px');
-    root.style.setProperty('--total-top-offset', totalOffset + 'px');
-    root.style.setProperty('--footer-height', fHeight + 'px');
-
-    // Sidebar Sync
-    const sidebarWidth = (sidebarVisible && typeof sidebarVisible !== 'undefined') ? 250 : 0;
-    root.style.setProperty('--sidebar-width', sidebarWidth + 'px');
-
-    // v1.37.52 Force re-flow on active shells
-    document.querySelectorAll('.tab-content.active').forEach(el => {
-        el.style.marginTop = '0'; // Layout-container handles the margin
-    });
+    if (window.MWV_UI) {
+        window.MWV_UI.updateGeometry();
+    }
 }
 
 /**
@@ -757,9 +580,8 @@ function switchPlayerView(viewId) {
 
 // Restore menu state on load
 document.addEventListener('DOMContentLoaded', () => {
-    const savedMenuState = localStorage.getItem('mwv_menu_system_visible') === 'true';
-    if (savedMenuState) toggleMenuBar(true);
-
+    // Initial UI Setup handled by MWV_UI (v1.40)
+    
     window.__mwv_force_native = localStorage.getItem('mwv_force_native') === 'true';
     diagnosticsSidebarVisible = localStorage.getItem(DIAGNOSTICS_SIDEBAR_STORAGE_KEY) === 'true';
     applyDiagnosticsSidebarState(diagnosticsSidebarVisible);
@@ -767,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load static UI fragments (v1.35.65)
     if (typeof FragmentLoader !== 'undefined') {
-        FragmentLoader.load('svg-icons-placeholder', 'fragments/svg_icons.html');
+        FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html');
         FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
         FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
     }

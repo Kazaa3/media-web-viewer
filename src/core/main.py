@@ -1,7 +1,7 @@
 import sys, os
 from pathlib import Path
 
-# 1. Absolute Path Forensics (v1.35.68)
+# 1. Absolute Path Forensics (v1.41.00)
 _file = Path(__file__).resolve()
 _root = _file.parent.parent.parent
 _src = _root / "src"
@@ -24,7 +24,7 @@ except ImportError as e:
 # -*- coding: utf-8 -*-
 """
 main.py - Business Logic & Application Entry Point
-dict - Desktop Media Player and Library Manager v1.35.68
+dict - Desktop Media Player and Library Manager v1.41.00
 """
 
 import time
@@ -93,7 +93,7 @@ def ensure_stable_environment():
     if venv_python.exists() and current_exe != target_exe:
         log.info(f"[Guard] Switching Environment to {selected_venv.name}: -> {venv_python}")
         
-        # --- PATH HARDBEAT (v1.35.68) ---
+        # --- PATH HARDBEAT (v1.41.00) ---
         # Explicitly pass the project root to the new process via environment
         env = os.environ.copy()
         env["MWV_AUTO_REEXEC"] = "1"
@@ -149,7 +149,7 @@ def get_category_master():
 
 @eel.expose
 def get_global_config():
-    """Returns the full centralized configuration (v1.35.68)."""
+    """Returns the full centralized configuration (v1.41.00)."""
     log.info("[BD-AUDIT] Handshake: get_global_config requested.")
     return GLOBAL_CONFIG
 
@@ -176,14 +176,14 @@ def get_startup_info():
 
 @eel.expose
 def get_startup_report():
-    """Returns the high-resolution StartupProfiler report (v1.35.68)."""
+    """Returns the high-resolution StartupProfiler report (v1.41.00)."""
     if profiler:
         return profiler.get_report()
     return {"status": "error", "message": "Profiler not initialized"}
 
 @eel.expose
 def heartbeat():
-    """Explicit heartbeat for window health monitoring (v1.35.68)."""
+    """Explicit heartbeat for window health monitoring (v1.41.00)."""
     GLOBAL_CONFIG["frontend_last_heartbeat"] = time.time()
     return {"status": "ok", "timestamp": time.time()}
 
@@ -221,7 +221,7 @@ except ImportError:
         def update(self, *a): log.info(f"[Progress] {self.msg} ({a[0]}%)")
 
 class Lazy:
-    """Lazy-loading proxy for modules (v1.35.68 Optimization)."""
+    """Lazy-loading proxy for modules (v1.41.00 Optimization)."""
     def __init__(self, name): self._name, self._mod = name, None
     def __getattr__(self, attr):
         if not self._mod:
@@ -240,7 +240,7 @@ try:
 except ImportError:
     log.info("[Bootstrap] gevent not found, continuing without patching")
 
-# Lazy Proxy Module Registry (v1.35.68 - Exact Mappings)
+# Lazy Proxy Module Registry (v1.41.00 - Exact Mappings)
 mode_router = Lazy("src.core.mode_router")
 hardware_detector = Lazy("src.core.hardware_detector")
 remux_utils = Lazy("src.core.remux_utils")
@@ -419,7 +419,8 @@ def run_app_audit_detached(session_port):
     def audit_trigger():
         log.info(f"[System-Audit] Waiting for UI synchronization on port {session_port}...")
         spawn_event.wait()
-        time.sleep(8) # Allow UI to settle (v1.34 has glassmorphic transitions)
+        log.info(f"[Guard] Boot Sequence Initiated. Waiting for UI hydration...")
+        eel.sleep(8) # Allow UI to settle (v1.34 has glassmorphic transitions)
         log.info(f"[System-Audit] Launching Playwright UI Audit (scripts/app_audit_playwright.py)...")
         
         audit_script = PROJECT_ROOT / "scripts" / "app_audit_playwright.py"
@@ -507,7 +508,7 @@ def start_app():
     
     # Ensure isolation for automated sessions or user preference
     import shutil
-    # Browser Discovery (v1.35.68 Centralized)
+    # Browser Discovery (v1.41.00 Centralized)
     chrome_path = None
     for b in GLOBAL_CONFIG["browsers"]:
         chrome_path = shutil.which(b)
@@ -567,7 +568,7 @@ def start_app():
                 elapsed = int(now - start_wait)
                 log.info(f"[Watchdog] WAITING FOR FRONTEND (ALIVE: {elapsed}s)...")
                 last_alive = now
-            time.sleep(0.5)
+            eel.sleep(0.5)
             
         if spawn_event.is_set():
             print("STDOUT: [Success] UI SYNCHRONIZED. MWV READY.", flush=True)
@@ -594,13 +595,13 @@ def ensure_singleton():
 # SESSION_ID stable and already logged
 from src.core.db import get_active_db_path
 session_port = GLOBAL_CONFIG["port"]
-# 4. Bandwidth Optimization (v1.35.68)
+# 4. Bandwidth Optimization (v1.41.00)
 if GLOBAL_CONFIG.get("bandwidth_mode") == "low":
     log.info("[Config] Low-Bandwidth Mode active: Disabling deep analysis.")
     GLOBAL_CONFIG["ffmpeg_deep_analysis"] = False
     GLOBAL_CONFIG["fast_scan"] = True
 
-# 4. Environment & Session Diagnostics (v1.35.68)
+# 4. Environment & Session Diagnostics (v1.41.00)
 from src.core.config_master import _DOTENV_LOADED
 env_type = "Conda" if os.environ.get("CONDA_PREFIX") else "Venv" if os.environ.get("VIRTUAL_ENV") else "System"
 log.info(f"[System] Booting from {env_type} (Dotenv Loaded: {_DOTENV_LOADED})")
@@ -3450,7 +3451,7 @@ def get_sys_overview(force_refresh=False):
         if pkg.get("name", "").lower() in CORE_KEYS:
             core_packages.append(pkg)
 
-    # ===== Build Response (v1.35.68 Unified Schema) =====
+    # ===== Build Response (v1.41.00 Unified Schema) =====
     result = {
         # Identifiers
         "python_version": platform.python_version(),
@@ -3597,7 +3598,7 @@ def wait_for_port(port: int, host: str = 'localhost', timeout: float = 10.0) -> 
             with socket.create_connection((host, port), timeout=0.1):
                 return True
         except (ConnectionRefusedError, socket.timeout, OSError):
-            time.sleep(0.1)  # Faster polling
+            eel.sleep(0.1)  # Faster polling
     return False
 
 
@@ -4120,7 +4121,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     }
     
     for item in all_media:
-        # [MOCK-FILTER] v1.35.68 Unified Hydration Logic
+        # [MOCK-FILTER] v1.41.00 Unified Hydration Logic
         item_is_mock = bool(item.get('is_mock', 0))
         h_mode = GLOBAL_CONFIG.get('hydration_mode', 'both')
         
@@ -4131,7 +4132,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
             dropped_reasons["real_filtered"] = dropped_reasons.get("real_filtered", 0) + 1
             continue
 
-        # [BYPASS] If All is requested, we keep everything (v1.35.68 Stability)
+        # [BYPASS] If All is requested, we keep everything (v1.41.00 Stability)
         if genre == "all" and "all" in displayed_cats:
             filtered.append(item)
             continue
@@ -4140,14 +4141,14 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
             
-            # [Refine] 'multimedia'-> Map to 'video' (v1.35.68 Final)
+            # [Refine] 'multimedia'-> Map to 'video' (v1.41.00 Final)
             if cat == 'multimedia': 
                 cat = 'video'
                 item['category'] = 'video' # Immediate re-map for UI consistency
                 
             if cat not in allowed_internal_cats:
                 dropped_reasons["category_mismatch"] += 1
-                # [v1.35.68-C] AUTO-RECOVERY: If it's a known extension but wrong category, fix it!
+                # [v1.41.00-C] AUTO-RECOVERY: If it's a known extension but wrong category, fix it!
                 ext = os.path.splitext(str(item.get('path', '')))[1].lower()
                 if ext in ['.mp3', '.flac', '.wav', '.m4a', '.ogg', '.opus']:
                     item['category'] = 'audio'
@@ -4192,7 +4193,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 
     log.info(f"[BD-AUDIT] Filter Pass complete: Kept {len(filtered)} items. Dropped {audit_meta['dropped_total']}.")
     
-    # [FORENSIC-ID] Sample Trace (v1.35.68)
+    # [FORENSIC-ID] Sample Trace (v1.41.00)
     if len(filtered) > 0:
         print(f"STDOUT: [FORENSIC-ID] Sample 1: {filtered[0].get('id')} | {filtered[0].get('name')} | {filtered[0].get('category')}", flush=True)
     
@@ -4212,7 +4213,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
 @eel.expose
 def get_library_forensics():
     """
-    @brief Unified Forensic Bridge (v1.35.68).
+    @brief Unified Forensic Bridge (v1.41.00).
     @details Fixes 'Audit Bridge Fault' by ensuring full object integrity.
     """
     from src.core import db
@@ -4291,7 +4292,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
             
         return {"media": playable, "db_count": len(playable), "status": "mock", "audit": {"stage": 2, "pid": pid}}
 
-    # --- MAIN DATA RETRIEVAL (v1.35.68.99) ---
+    # --- MAIN DATA RETRIEVAL (v1.41.00.99) ---
     all_media = []
     try:
         all_media = db.get_all_media()
@@ -4341,7 +4342,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
         # Only add the hardcoded mocks if they aren't already in final_media
         final_media += [m for m in realistic_mocks if m["id"] not in {item.get("id") for item in final_media}]
 
-    # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.35.68)
+    # [DIAGNOSTIC-FORCE] Absolute terminal visibility (v1.41.00)
     print(f"STDOUT: [BD-AUDIT] get_library returning {len(final_media)} items (DB: {count_total}, Status: {status})", flush=True)
     if len(final_media) > 0:
         print(f"STDOUT: [FORENSIC-ID] Payload Sample: {final_media[0].get('name')} (ID: {final_media[0].get('id')})", flush=True)
@@ -5025,7 +5026,7 @@ def resolve_media_path(file_path: str) -> str:
     """
     Resolves a file path that might be a URL-encoded string or a relative /media/ path.
     """
-    # Decouple from URL encoding (Robust v1.35.68)
+    # Decouple from URL encoding (Robust v1.41.00)
     path_decoded = unquote(str(file_path))
     
     # Pathlib safety: Ensure the path is normalized for the OS
@@ -6908,7 +6909,7 @@ def vlc_ts_mode(file_path):
         # Wait for TS-Stream to be active
         max_retries = 10
         for i in range(max_retries):
-            time.sleep(0.5)
+            eel.sleep(0.5)
             if detect_ts_stream(port):
                 log.info(f"[cvlc] TS Stream active on port {port}")
                 # We return a URL that the frontend can play via Video.js (type: video/mp2t)
@@ -9236,7 +9237,7 @@ def get_routing_suite_report():
 
 @eel.expose
 def get_streaming_capability_matrix():
-    """Returns the centralized streaming capability matrix (v1.35.68)."""
+    """Returns the centralized streaming capability matrix (v1.41.00)."""
     return GLOBAL_CONFIG.get("streaming_capabilities", {})
 
 
@@ -9632,4 +9633,9 @@ if __name__ == "__main__":
             sys.exit(0)
         except BaseException as e:
             log.warning(f"[MainLoop] keepalive recovered from: {e}")
-            time.sleep(1.0)
+            # [SECURITY v1.41] Avoid blocking time.sleep in an event-driven system
+            if 'gevent' in sys.modules:
+                import gevent
+                gevent.sleep(1.0)
+            else:
+                eel.sleep(1.0)

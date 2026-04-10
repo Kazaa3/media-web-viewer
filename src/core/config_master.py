@@ -342,14 +342,17 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "sub_nav_persistence": True,         # Behält Sub-Menü Zustände beim Kategorie-Wechsel bei.
         "hydration_mode": "B",               # M=Mock, R=Real, B=Both (Handshake-Modus).
         "professional_layout_lock": True,    # [GUI] Erzwingt Layout-Regeln für Profi-Workspaces.
-        "kill_on_startup": True,             # Killt Stale-Prozesse beim Booten.
+        "kill_on_startup": False,             # [v1.39] Accelerated Boot: Skip kill stale process cleanup by default.
+
+
+        # Einstellungen
         "pip_installer_timeout": 300,        # [AUTO] Installations-Timeout in Sekunden.
 
         # --- UI VISIBILITY MATRIX (v1.37.52 Contextual Logic) ---
         # Verfeinert die Sichtbarkeit pro Kategorie (falls Global-Toggle auf True ist).
         "ui_visibility_matrix": {
-            "media":      { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": True,  "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": False },
-            "library":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": True,  "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
+            "media":      { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": True,  "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": False },
+            "library":    { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": True,  "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": False },
             "database":   { "master_header": True, "contextual_pill_nav": False, "module_tab_nav": False, "footer_visible": False, "sidebar_allowed": False, "diagnostics_hud_allowed": True, "sidebar_visible": False },
             "file":       { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
             "edit":       { "master_header": True, "contextual_pill_nav": True,  "module_tab_nav": False, "footer_visible": True,  "sidebar_allowed": True,  "diagnostics_hud_allowed": True, "sidebar_visible": True },
