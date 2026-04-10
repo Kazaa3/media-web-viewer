@@ -491,15 +491,20 @@ function toggleMenuBar(forceState = null) {
 /**
  * Refreshes the visibility of all global UI navigation components
  * based on the current active category and the UI Visibility Matrix.
+ * (v1.41.104 Consolidated Orchestrator)
  */
-async function refreshUIVisibility() {
+async function refreshUIVisibility(categoryOverride = null) {
     console.time('[PERF] UI-Refresh');
+    const category = categoryOverride || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
+    
+    // 1. Trigger Orchestrator Matrix
     if (window.MWV_UI) {
-        const category = currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
         window.MWV_UI.apply(category);
-    } else {
-        console.warn("[UI-NAV] MWV_UI not available for refresh.");
     }
+
+    // 2. Force Sub-Nav Population (v1.41.104 Critical Sync)
+    updateGlobalSubNav(category);
+
     console.timeEnd('[PERF] UI-Refresh');
 }
 window.refreshUIVisibility = refreshUIVisibility;
@@ -685,7 +690,8 @@ const SUB_NAV_REGISTRY = {
     'media': [
         { id: 'warteschlange', label: 'Queue', action: "switchPlayerView('warteschlange')" },
         { id: 'playlist', label: 'Playlist Manager', action: "switchPlayerView('playlist')" },
-        { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" }
+        { id: 'visualizer', label: 'Visualizer', action: "switchPlayerView('visualizer')" },
+        { id: 'lyrics', label: 'Lyrics', action: "switchPlayerView('lyrics')" }
     ],
     'library': [
         { id: 'lib-tab-btn-cinema',     label: 'Cinema',     action: "switchLibrarySubTab('cinema')" },
@@ -1347,13 +1353,8 @@ window.auditFragmentHydration = function(name, status, details = '') {
 };
 
 /**
- * [DEPRECATED v1.41.02] Legacy UI Refresh logic.
- * Visibility is now strictly handled by MWV_UI.apply() in ui_core.js.
+ * [v1.41.104 Sync] Legacy point removed to prevent Cross-Effect collision.
  */
-function refreshUIVisibility(category) {
-    console.warn("[UI-NAV] LEGACY refreshUIVisibility called. Redirecting to MWV_UI...");
-    if (window.MWV_UI) window.MWV_UI.apply(category);
-}
 
 window.toggleProbeFlow = function() {
     if (!window.CONFIG || !window.CONFIG.ui_settings) return;
