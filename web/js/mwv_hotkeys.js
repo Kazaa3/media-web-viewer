@@ -15,13 +15,13 @@
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleHeader();
                     break;
-                case 'x': // Alt+M: Level 2 - SUB-MENU / MODULE TABS
-                    e.preventDefault();
-                    if (window.MWV_UI) window.MWV_UI.toggleSubMenu();
-                    break;
-                case 'c': // Alt+N: Level 3 - TERTIARY SUB-NAV
+                case 'c': // Alt+X: Level 3 - TERTIARY SUB-NAV / PILLS (Bottom)
                     e.preventDefault();
                     if (window.MWV_UI) window.MWV_UI.toggleSubNav();
+                    break;
+                case 'x': // Alt+C: Level 2 - SUB-MENU / MODULE TABS (Middle)
+                    e.preventDefault();
+                    if (window.MWV_UI) window.MWV_UI.toggleSubMenu();
                     break;
                 case 'v': // Alt+F: Toggle Footer
                     e.preventDefault();

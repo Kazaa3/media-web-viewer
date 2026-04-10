@@ -33,7 +33,7 @@ body {
 }
 
 /* --- FOOTER (MEDIA PLAYER BAR) --- */
-.media-footer {
+.master-footer {
     height: var(--footer-height, 48px);
     overflow: hidden;
     background: var(--bg-glass);
@@ -47,7 +47,7 @@ body {
     transition: height var(--transition-fluid), opacity var(--transition-snappy);
 }
 
-body.mwv-hide-footer .media-footer {
+body.mwv-hide-footer .master-footer {
     height: 0;
     opacity: 0;
     border-top: none;
