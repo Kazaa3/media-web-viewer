@@ -716,9 +716,38 @@ function switchMainCategory(category, btn) {
     refreshUIVisibility();
 }
 
+// [v1.41.135] Forensic Sub-Nav Registry (Hardcoded Fallback)
+const SUB_NAV_REGISTRY = {
+    "media": [
+        { "id": "warteschlange", "label": "Queue",      "action": "switchPlayerView('warteschlange')" },
+        { "id": "playlist",      "label": "Playlist",   "action": "switchPlayerView('playlist')" },
+        { "id": "visualizer",    "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
+        { "id": "lyrics",       "label": "Lyrics",      "action": "switchPlayerView('lyrics')" }
+    ],
+    "library": [
+        { "id": "lib-visual",  "label": "Gallerie",   "action": "switchLibrarySubTab('visual')" },
+        { "id": "lib-browse",  "label": "Browser",    "action": "switchLibrarySubTab('browse')" },
+        { "id": "lib-inventory","label": "Inventur",   "action": "switchLibrarySubTab('inventory')" }
+    ],
+    "status": [
+        { "id": "health",   "label": "Gesundheit", "action": "switchDiagnosticsView('health')" },
+        { "id": "logs",     "label": "Protokolle",  "action": "switchDiagnosticsView('logs')" }
+    ],
+    "system": [
+        { "id": "general",      "label": "Allgemein",    "action": "switchOptionsView('general')" },
+        { "id": "appearance",   "label": "Design",      "action": "switchOptionsView('appearance')" }
+    ]
+};
+
+const SUB_NAV_ALIASES = {
+    "database": "library",
+    "explorer": "library",
+    "tools": "status",
+    "debug": "status"
+};
+
 /**
  * Updates the global sub-navigation bar with contextual entries.
- * (v1.41.105 SSOT-REBORN: Registry is now fetched from Python backend).
  */
 function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
@@ -728,14 +757,15 @@ function updateGlobalSubNav(category) {
     let normalizedCategory = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
     normalizedCategory = normalizedCategory.toLowerCase();
     
-    console.log(`[UI-NAV] Population request for category: [${normalizedCategory}] (passed: ${category})`);
+    console.log(`[UI-NAV] Population request for category: [${normalizedCategory}]`);
 
     // [v1.41.101] Alias Resolution
     const registryKey = SUB_NAV_ALIASES[normalizedCategory] || normalizedCategory;
     const entries = SUB_NAV_REGISTRY[registryKey];
+    
     if (!entries) {
-        console.warn(`[UI-NAV] No entry map for ${normalizedCategory}.`);
-        console.log(`[UI-NAV] UNSPAWN: Sub-nav cleared for ${normalizedCategory}.`);
+        console.warn(`[UI-NAV] No entry map for ${normalizedCategory}. Clearing sub-nav.`);
+        container.innerHTML = '';
         return;
     }
 

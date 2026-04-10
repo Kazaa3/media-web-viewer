@@ -136,7 +136,7 @@ const WindowManager = {
      * Internal: Resets all shell visibilities to avoid overlaps.
      */
     _hideAllShells() {
-        document.querySelectorAll('.tab-content').forEach(el => {
+        document.querySelectorAll('.tab-content, .deck-view').forEach(el => {
             el.style.display = 'none';
             el.classList.remove('active');
         });
