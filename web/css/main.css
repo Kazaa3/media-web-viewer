@@ -1674,8 +1674,19 @@ body.mwv-hide-subnav #sub-nav-container {
     height: 100%;
 }
 
-.player-view-container.active {
-    display: flex;
+#player-panel-container.active {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#player-main-viewport {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    background: #000;
 }
 
 /* --- Range Slider Styling (Classic Player) --- */
@@ -1862,6 +1873,17 @@ body.mwv-hide-subnav #sub-nav-container {
     overflow-x: auto;
     scrollbar-width: none;
     backdrop-filter: blur(8px);
+}
+
+#sub-nav-container {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 15px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    z-index: 1000; /* Ensure it stays above main content */
 }
 
 .sub-nav-bar::-webkit-scrollbar {

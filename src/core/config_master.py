@@ -5,10 +5,10 @@ dict - Config Master (Centralized Config & Flag Orchestrator)
 v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
-# --- [v1.41.103-SSOT] Tiered Master Registry ---
-APP_VERSION = "1.41.103-UI-PERFECTION"
-BACKEND_VERSION = "1.41.103-BE-ULTRA"
-FRONTEND_VERSION = "1.41.101-FE-PREMIUM"
+# --- [v1.41.104-UI-RESTORATION] Tiered Master Registry ---
+APP_VERSION = "1.41.104-UI-RESTORATION"
+BACKEND_VERSION = "1.41.104-BE-FIX"
+FRONTEND_VERSION = "1.41.104-FE-STABLE"
 
 import os
 import sys
