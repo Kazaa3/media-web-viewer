@@ -716,34 +716,37 @@ function switchMainCategory(category, btn) {
     refreshUIVisibility();
 }
 
-// [v1.41.135] Forensic Sub-Nav Registry (Hardcoded Fallback)
+// [v1.41.136] Forensic Sub-Nav Registry (Hardcoded Fallback - Synced with config_master.py)
 const SUB_NAV_REGISTRY = {
     "media": [
-        { "id": "warteschlange", "label": "Queue",      "action": "switchPlayerView('warteschlange')" },
-        { "id": "playlist",      "label": "Playlist",   "action": "switchPlayerView('playlist')" },
-        { "id": "visualizer",    "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
-        { "id": "lyrics",       "label": "Lyrics",      "action": "switchPlayerView('lyrics')" }
+        { "id": "warteschlange", "label": "Queue",              "action": "switchPlayerView('warteschlange')" },
+        { "id": "playlist",      "label": "Playlist Manager",   "action": "switchPlayerView('playlist')" },
+        { "id": "visualizer",    "label": "Visualizer",         "action": "switchPlayerView('visualizer')" },
+        { "id": "lyrics",       "label": "Lyrics",              "action": "switchPlayerView('lyrics')" }
     ],
     "library": [
-        { "id": "lib-visual",  "label": "Gallerie",   "action": "switchLibrarySubTab('visual')" },
-        { "id": "lib-browse",  "label": "Browser",    "action": "switchLibrarySubTab('browse')" },
-        { "id": "lib-inventory","label": "Inventur",   "action": "switchLibrarySubTab('inventory')" }
+        { "id": "lib-cinema",   "label": "Cinema",    "action": "switchLibrarySubTab('cinema')" },
+        { "id": "lib-films",    "label": "Filme",     "action": "switchLibrarySubTab('films')" }
     ],
     "status": [
-        { "id": "health",   "label": "Gesundheit", "action": "switchDiagnosticsView('health')" },
-        { "id": "logs",     "label": "Protokolle",  "action": "switchDiagnosticsView('logs')" }
+        { "id": "logs",     "label": "Live Logs",    "action": "switchDiagnosticsView('logs')" },
+        { "id": "health",   "label": "Core Health",  "action": "switchDiagnosticsView('health')" }
     ],
     "system": [
         { "id": "general",      "label": "Allgemein",    "action": "switchOptionsView('general')" },
-        { "id": "appearance",   "label": "Design",      "action": "switchOptionsView('appearance')" }
+        { "id": "appearance",   "label": "Darstellung",  "action": "switchOptionsView('appearance')" }
     ]
 };
 
 const SUB_NAV_ALIASES = {
+    "player": "media",
+    "bibliothek": "library",
     "database": "library",
     "explorer": "library",
     "tools": "status",
-    "debug": "status"
+    "debug": "status",
+    "diagnostics": "status",
+    "optionen": "system"
 };
 
 /**

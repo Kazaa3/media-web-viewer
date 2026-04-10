@@ -111,12 +111,10 @@ onclick="toggleMenuBar()"
                 <button id="nav-btn-database" class="menu-item-btn" onclick="switchMainCategory('database', this)"
                     data-category="database">Database</button>
                 
-                <button id="header-btn-status" class="menu-item-btn" onclick="toggleTechnicalHUD()"
+                <button id="nav-btn-status" class="menu-item-btn" 
                     style="color: #00ffcc; font-weight: 900; background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); margin-right: 4px;"
-                    title="Toggle Elite HUD">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                    </svg>
+                    onclick="switchMainCategory('status', this)">
+                    <svg width="12" height="12" style="margin-right: 6px;"><use href="#icon-sparkles"></use></svg>
                     STATUS
                 </button>
 
@@ -355,181 +353,8 @@ onclick="toggleMenuBar()"
         <div id="main-content-area"
             style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); min-width: 0;">
 
-            <!-- Main Active Queue list (Centered in Dashboard) -->
-            <!-- TAB: Player (Audio) START -->
-            <div id="state-orchestrated-active-queue-list-container" class="tab-content active tab-split-layout"
-                style="padding: 0; overflow: hidden; height: 100%; width: 100%;">
-
-                <!-- NEW: Integrated Player Sub-Nav (v1.37 Restoration - Always Ready) -->
-                <div id="player-sub-nav-shell" class="sub-nav-bar"
-                    style="padding: 12px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-shrink: 0;">
-                    <button id="player-subtab-queue" class="tab-btn player-sub-nav-btn active"
-                        data-target="warteschlange"
-                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('warteschlange')">Queue</button>
-                    <button id="player-subtab-playlist" class="tab-btn player-sub-nav-btn" data-target="playlist"
-                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('playlist')">Playlist
-                        Manager</button>
-                    <button id="player-subtab-lyrics" class="tab-btn player-sub-nav-btn" data-target="lyrics"
-                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('lyrics')">Lyrics</button>
-                    <button class="tab-btn player-sub-nav-btn" data-target="visualizer"
-                        onclick="if(typeof switchPlayerView === 'function') switchPlayerView('visualizer')">Visualizer</button>
-                </div>
-
-                <!-- Detailed Mode Sidebar (Left-aligned as per v1.34) -->
-                <div id="player-detailed-sidebar" class="diagnostic-sidebar" style="display: none; position: relative;">
-                    <!-- Vertical Reiter Bar (Tabs) - v1.37.03 Multi-Tabbed Restoration -->
-                    <div class="side-reiter-bar">
-                        <div id="reiter-details" class="side-reiter active" onclick="switchSidebarView('details')">
-                            <span>Details</span>
-                        </div>
-                        <div id="reiter-diagnostics" class="side-reiter" onclick="switchSidebarView('diagnostics')">
-                            <span>Health</span>
-                        </div>
-                        <div id="reiter-recovery" class="side-reiter" onclick="switchSidebarView('recovery')">
-                            <span>Recovery</span>
-                        </div>
-                        <div id="reiter-tools" class="side-reiter" onclick="switchSidebarView('tools')">
-                            <span>Tools</span>
-                        </div>
-                    </div>
-
-                    <!-- VIEW: Media Details -->
-                    <div id="sidebar-view-details" class="sidebar-view-content" style="display: block;">
-                        <div class="diagnostic-header">
-                            <div class="diagnostic-section-title">MEDIA DETAILS</div>
-                            <div id="diag-media-primary" class="diagnostic-value">-</div>
-                            <div class="diagnostic-label">Parser Metrics</div>
-                            <div id="diag-parser-metrics" class="diagnostic-value">Keine Daten</div>
-                        </div>
-                    </div>
-
-                    <!-- VIEW: Health (Technical Audit) -->
-                    <div id="sidebar-view-diagnostics" class="sidebar-view-content" style="display: none;">
-                        <div class="diagnostic-header">
-                            <div class="diagnostic-section-title">TECHNICAL AUDIT</div>
-
-                            <!-- Detailed Parity Anchor -->
-                            <div id="sb-parity-anchor"
-                                style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-color); background: rgba(var(--accent-color-rgb), 0.05); padding: 6px 10px; border-radius: 4px; border: 1px solid rgba(var(--accent-color-rgb), 0.1); margin-bottom: 20px;">
-                                [FS: -- | DB: -- | GUI: --]
-                            </div>
-
-                            <!-- Relocated Toggles -->
-                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                                <div
-                                    style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">
-                                    System Flags</div>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-DIAG" style="font-size: 10px;"
-                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG
-                                    MODE</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-NATV" style="font-size: 10px;"
-                                    onclick="if(typeof window.toggleNatvMode === 'function') { window.toggleNatvMode(); updateDiagBtnState(this, window.__mwv_natv_mode); }">NATV</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-HIDB" style="font-size: 10px;"
-                                    onclick="if(typeof window.toggleHideDb === 'function') { window.toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDB</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-RAW" style="font-size: 10px;"
-                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW
-                                    BYPASS</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-BYPS" style="font-size: 10px;"
-                                    onclick="if(typeof toggleBypassMode === 'function') { toggleBypassMode(); updateDiagBtnState(this, window.__mwv_bypass_mode); }">BYPS</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-AUDIT" style="font-size: 10px;"
-                                    onclick="if(typeof window.runAuditStage === 'function') { window.runAuditStage(1); }">AUDIT</button>
-                                <button class="tab-btn sm diag-tab-btn" id="sb-diag-btn-TEST" style="font-size: 10px;"
-                                    onclick="if(typeof window.runTestStage === 'function') { window.runTestStage(1); }">TEST</button>
-                            </div>
-                            <div class="diagnostic-label">Logic Audit (Dropped Reasons)</div>
-                            <div id="sb-dropped-reasons-viewport"
-                                style="font-size: 10px; color: var(--text-secondary); background: var(--bg-secondary); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 60px;">
-                                No reasons collected...
-                            </div>
-
-                            <div class="diagnostic-label">Engine Health</div>
-                            <button class="tab-btn sm" onclick="if(typeof runDomAudit === 'function') runDomAudit();"
-                                style="width: 100%; color: var(--accent-color); font-size: 10px;">UTILITY
-                                Proben</button>
-
-                            <div id="diag-sidebar-mini-logs"
-                                style="margin-top: 20px; font-size: 9px; font-family: monospace; opacity: 0.7; max-height: 100px; overflow: hidden;">
-                                Waiting for events...</div>
-                        </div>
-                    </div>
-
-                    <!-- VIEW: Recovery (Forensic Restoration) -->
-                    <div id="sidebar-view-recovery" class="sidebar-view-content" style="display: none;">
-                        <div class="diagnostic-header">
-                            <div class="diagnostic-section-title">FORENSIC RECOVERY</div>
-                            <div class="diagnostic-label" style="color: #ff3366;">Nuclear Actions</div>
-                            
-                            <button class="nav-btn active danger" 
-                                onclick="if(confirm('TRIGGER NUCLEAR RESTART?\nThis will terminate the backend process and force a full reload.')) { if(typeof RecoveryManager !== 'undefined') RecoveryManager.nuclearRestart(); }"
-                                style="width: 100%; margin-bottom: 10px; background: rgba(255, 51, 102, 0.1); border: 1px solid #ff3366; color: #ff3366;">
-                                NUCLEAR RESTART
-                            </button>
-
-                            <div class="diagnostic-label">Data Restoration</div>
-                            
-                            <button class="tab-btn sm" 
-                                onclick="if(typeof RecoveryManager !== 'undefined') RecoveryManager.hydrateAll();"
-                                style="width: 100%; margin-bottom: 8px;">
-                                FORCE HYDRATION
-                            </button>
-
-                            <button class="tab-btn sm" 
-                                onclick="if(typeof RecoveryManager !== 'undefined') RecoveryManager.toggleHideMocks();"
-                                style="width: 100%; margin-bottom: 8px;">
-                                TOGGLE MOCKS
-                            </button>
-
-                            <button class="tab-btn sm" 
-                                onclick="if(typeof eel !== 'undefined' && typeof eel._scan_media_execution === 'function') eel._scan_media_execution();"
-                                style="width: 100%;">
-                                RE-SCAN MEDIA
-                            </button>
-
-                            <div class="diagnostic-label">Sync Repair</div>
-                            <div id="recovery-status-msg" style="font-size: 9px; color: var(--text-secondary); opacity: 0.7; height: 40px; overflow-y: auto;">
-                                Ready for recovery operations...
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- VIEW: Tools (Interactive Probes) -->
-                    <div id="sidebar-view-tools" class="sidebar-view-content" style="display: none;">
-                        <div class="diagnostic-header">
-                            <div class="diagnostic-section-title">MEDIA TOOLS</div>
-                            
-                            <div class="diagnostic-label">Performance Probes</div>
-                            <button class="tab-btn sm" 
-                                onclick="if(typeof runLatencyDiagnostics === 'function') runLatencyDiagnostics().then(res => { console.dir(res); alert('Probe Complete! Avg EEL Latency: ' + res.eelRoundtrip.avgMs + 'ms'); });"
-                                style="width: 100%; margin-bottom: 8px;">
-                                LATENCY PROBE
-                            </button>
-
-                            <button class="tab-btn sm" 
-                                onclick="if(typeof runDomAudit === 'function') runDomAudit();"
-                                style="width: 100%; margin-bottom: 8px;">
-                                DOM AUDIT
-                            </button>
-
-                            <div class="diagnostic-label">Orchestration</div>
-                            <button class="tab-btn sm active" 
-                                onclick="if(typeof showFlagsModal === 'function') showFlagsModal();"
-                                style="width: 100%; margin-bottom: 8px;">
-                                FLAGS MODAL
-                            </button>
-
-                            <button class="tab-btn sm" 
-                                onclick="if(typeof showStartupDashboard === 'function') showStartupDashboard();"
-                                style="width: 100%;">
-                                BOOT ANALYTICS
-                            </button>
-
-                            <div id="tools-probes-output" style="margin-top: 20px; font-family: monospace; font-size: 8px; color: var(--accent-color);">
-                                // Select probe...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- [v1.41.136] Legacy Player Container Removed for Atomic Shell Consolidation. 
+                 Viewport is now managed by #player-panel-container below. -->
 
             <!-- TAB: Player (Audio) START (Consolidated v1.41.115) -->
             <div id="player-panel-container" class="tab-content" data-tab-domain="media" style="height: 100%; width: 100%; display: none; background: transparent !important;">
