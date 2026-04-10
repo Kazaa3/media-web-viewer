@@ -54,8 +54,15 @@ import contextlib
 from pathlib import Path
 from typing import List, Optional, Any
 
-# --- Environment Integration (v1.41.00 Centralized) ---
-from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, APP_DATA_DIR
+# --- Environment Integration (v1.41.111 Resilience Upgrade) ---
+try:
+    from src.core.config_master import GLOBAL_CONFIG, PROJECT_ROOT, APP_DATA_DIR
+except (ImportError, AttributeError):
+    # Fallback for cyclic initialization (v1.41.111)
+    GLOBAL_CONFIG = {}
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+    APP_DATA_DIR = str(PROJECT_ROOT)
+    print("STDOUT: [Logger-Bridge] Warning: Initializing with fallback config due to cyclic import.")
 
 # --- Module Exports (v1.41.00) ---
 # Ensure other modules can access these via logger.XXX

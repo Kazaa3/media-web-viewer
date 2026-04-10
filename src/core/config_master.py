@@ -26,11 +26,6 @@ from pathlib import Path
 from typing import Any, Dict, List
 from importlib.metadata import distributions
 
-try:
-    from core import hardware_detector
-    _HW_DETECTOR = True
-except ImportError:
-    _HW_DETECTOR = False
 
 # --- SSOT: TECHNICAL MEDIA CAPABILITY GROUPS (v1.38.01) ---
 # These constants define the technical handling requirements (Native vs. Transcode).
@@ -197,9 +192,11 @@ def background_version_discovery(config_dict: dict):
         
         # 1. Hardware Info (Previously synchronous bottleneck)
         try:
-            if _HW_DETECTOR:
-                # Call with fast_mode=False now that we are in a background thread
-                config_dict["hardware_info"] = hardware_detector.get_hardware_info()
+            # Atomic Bridge v1.41.111: Lazy local import to break cyclic dependency
+            from core import hardware_detector
+            config_dict["hardware_info"] = hardware_detector.get_hardware_info()
+        except ImportError:
+            config_dict["hardware_info"] = {"type": "Unknown", "encoders": []}
         except Exception as e:
             print(f"STDOUT: [Background-Discovery] Hardware detection failed: {e}")
 
