@@ -38,10 +38,18 @@ window.MWV_UI = (() => {
         // 2. Set Startup Category
         registry.activeCategory = localStorage.getItem('mwv_active_category') || 'media';
         
-        // 3. Mark Initialized
+        // 3. Safety Fallback (Ensure visibility even if config is null)
+        if (!registry.config) {
+            console.warn("[MWV-UI] Using minimal safe-mode config.");
+            registry.config = { ui_visibility_matrix: { 
+                "media": { "master_header": true, "contextual_pill_nav": true, "footer_visible": true } 
+            }};
+        }
+
+        // 4. Mark Initialized
         registry.isInitialized = true;
         
-        // 4. Initial Apply
+        // 5. Initial Apply
         apply(registry.activeCategory);
         
         console.info("[MWV-UI] Orchestrator Ready.");
