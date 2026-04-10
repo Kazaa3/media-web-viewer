@@ -557,6 +557,10 @@ document.addEventListener('keydown', (e) => {
                 e.preventDefault();
                 if (window.MWV_UI) window.MWV_UI.toggleFooter();
                 break;
+            case 'r': // Alt+R: Toggle Header Right (System Cluster)
+                e.preventDefault();
+                if (window.MWV_UI) window.MWV_UI.toggleHeaderRight();
+                break;
             case 's': // Alt+S: Toggle Sidebar
                 e.preventDefault();
                 if (window.MWV_UI) window.MWV_UI.toggleSidebar();

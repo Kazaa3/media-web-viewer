@@ -48,6 +48,10 @@ window.MWV_UI = (() => {
                 if (registry.config.module_tab_height) CONSTANTS.MODULE_TAB_HEIGHT = parseInt(registry.config.module_tab_height);
                 if (registry.config.footer_height) CONSTANTS.FOOTER_HEIGHT = parseInt(registry.config.footer_height);
                 if (registry.config.sidebar_width) CONSTANTS.SIDEBAR_WIDTH = parseInt(registry.config.sidebar_width);
+                
+                // --- [v1.41.121] Layout Distribution ---
+                if (registry.config.header_left_width) document.documentElement.style.setProperty('--header-left-width', registry.config.header_left_width);
+                if (registry.config.header_right_width) document.documentElement.style.setProperty('--header-right-width', registry.config.header_right_width);
             }
             
             console.log("[MWV-UI] Config loaded successfully.");
@@ -175,6 +179,17 @@ window.MWV_UI = (() => {
     }
 
     /**
+     * Toggles the top-right system tool cluster.
+     */
+    async function toggleHeaderRight(forceState = null) {
+        document.body.classList.toggle('mwv-hide-header-right');
+        const hiddenNow = document.body.classList.contains('mwv-hide-header-right');
+        
+        // No geometry update needed (position: absolute or flex-item), but good for sync
+        await setSetting('header_right_visible', !hiddenNow);
+    }
+
+    /**
      * Toggles the main sidebar at runtime and syncs with central flags.
      */
     async function toggleSidebar(forceState = null) {
@@ -251,6 +266,7 @@ window.MWV_UI = (() => {
         toggleSubNav,
         toggleModuleTabs,
         toggleFooter,
+        toggleHeaderRight,
         toggleSidebar,
         updateGeometry,
         getConstants: () => ({ ...CONSTANTS }),

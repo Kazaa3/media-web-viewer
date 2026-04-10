@@ -210,10 +210,43 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
     border-bottom: 1px solid var(--border-glass);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: space-between; /* 3-Slot distribution */
     padding: 0 20px;
     z-index: 1000;
     transition: height var(--transition-fluid), opacity var(--transition-snappy);
+}
+
+/* [v1.41.121] Header Slot Configuration */
+.master-header > .nav-cluster.primary-cluster {
+    flex: 0 0 var(--header-left-width, auto);
+    min-width: 0;
+}
+
+.master-header > .header-center-title {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.master-header > .nav-cluster.secondary-cluster {
+    flex: 0 0 var(--header-right-width, auto);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    transition: width var(--transition-fluid), opacity var(--transition-snappy), transform var(--transition-fluid);
+}
+
+body.mwv-hide-header-right .nav-cluster.secondary-cluster {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    transform: translateX(20px);
 }
 
 body.mwv-hide-header .master-header {

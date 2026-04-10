@@ -94,8 +94,9 @@
     <!-- [GUI] TOP MENU BAR: Primary Registry & Main Category Switcher (v1.34 Integrated) -->
     <header id="master-persistent-header"
         style="position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: var(--shadow-soft); user-select: none; transition: background 0.3s ease, height 0.3s ease;">
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <div id="dict-master-toggle" onclick="toggleMenuBar()"
+        <div class="nav-cluster primary-cluster" style="display: flex; align-items: center; padding-left: 20px;">
+            <div class="header-logo-pulsar" 
+onclick="toggleMenuBar()"
                 style="font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -0.5px; transition: transform 0.2s;"
                 onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">dict
             </div>
@@ -145,8 +146,11 @@
             <span style="opacity: 0.2;">|</span>
             <div class="hud-pill-mini">UP: <span id="diag-up" style="color: #2ecc71; font-weight: 800;">--</span></div>
         </div>
+        
+        <div class="header-center-title">dict</div>
+
         <!-- System Controls (Right) -->
-        <div style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
+        <div class="nav-cluster secondary-cluster" style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
             <!-- Diagnostics Sidebar Overlay Toggle -->
             <button id="header-btn-diag-overlay" class="tab-btn" title="Toggle System Diagnostics"
                 onclick="toggleDiagnosticsSidebar()"

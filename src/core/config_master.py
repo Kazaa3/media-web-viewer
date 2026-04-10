@@ -327,6 +327,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "module_tab_height": 32,             # GLOBAL: Höhe der Modul-Tab-Leiste (px).
         "footer_height": 48,                 # GLOBAL: Höhe des Footers (px).
         "sidebar_width": 250,                # GLOBAL: Breite der Sidebar (px).
+
+    # Alternative Menü Oben (Header) v1.41.121
+        "header_right_visible": True,        # GLOBAL: Sichtbarkeit der System-Tools oben rechts.
+        "header_left_width": "30%",          # GLOBAL: Breite des linken Header-Bereichs (Kategorien).
+        "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
+        "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
         # --- GRANULAR UI FRAGMENT FLAGS (v1.38.02) ---
         "ui_fragments": {
