@@ -716,7 +716,7 @@ function switchMainCategory(category, btn) {
     refreshUIVisibility();
 }
 
-// [v1.41.136] Forensic Sub-Nav Registry (Hardcoded Fallback - Synced with config_master.py)
+/// [v1.41.137] Forensic Sub-Nav Registry (Nuclear SSOT - Synced with config_master.py)
 const SUB_NAV_REGISTRY = {
     "media": [
         { "id": "warteschlange", "label": "Queue",              "action": "switchPlayerView('warteschlange')" },
@@ -730,11 +730,23 @@ const SUB_NAV_REGISTRY = {
     ],
     "status": [
         { "id": "logs",     "label": "Live Logs",    "action": "switchDiagnosticsView('logs')" },
-        { "id": "health",   "label": "Core Health",  "action": "switchDiagnosticsView('health')" }
+        { "id": "health",   "label": "Core Health",  "action": "switchDiagnosticsView('health')" },
+        { "id": "network",  "label": "Network",      "action": "switchDiagnosticsView('network')" }
     ],
     "system": [
         { "id": "general",      "label": "Allgemein",    "action": "switchOptionsView('general')" },
-        { "id": "appearance",   "label": "Darstellung",  "action": "switchOptionsView('appearance')" }
+        { "id": "parser",       "label": "Parser Chain", "action": "switchOptionsView('parser')" }
+    ],
+    "reporting": [
+        { "id": "rep-overview", "label": "Overview",    "action": "switchReportingView('dashboard')" },
+        { "id": "rep-perf",     "label": "Performance", "action": "switchReportingView('performance')" },
+        { "id": "rep-errors",   "label": "Error Analytics", "action": "switchReportingView('errors')" },
+        { "id": "rep-video",    "label": "Video Stat",  "action": "switchReportingView('video-streaming')" }
+    ],
+    "unsort": [
+        { "id": "unsort-probe",  "label": "Deep Probe",   "action": "runNuclearDiagnostics()" },
+        { "id": "unsort-audit",  "label": "System Audit", "action": "runUiIntegrityCheck()" },
+        { "id": "unsort-reset",  "label": "Shell Reset",  "action": "WindowManager.resetAll()" }
     ]
 };
 
@@ -746,7 +758,9 @@ const SUB_NAV_ALIASES = {
     "tools": "status",
     "debug": "status",
     "diagnostics": "status",
-    "optionen": "system"
+    "optionen": "system",
+    "report": "reporting",
+    "reporting_dashboard": "reporting"
 };
 
 /**
@@ -756,13 +770,6 @@ function updateGlobalSubNav(category) {
     const container = document.getElementById('sub-nav-container');
     if (!container) return;
 
-    // [v1.37.06] Forensic category normalization
-    let normalizedCategory = category || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
-    normalizedCategory = normalizedCategory.toLowerCase();
-    
-    console.log(`[UI-NAV] Population request for category: [${normalizedCategory}]`);
-
-    // [v1.41.101] Alias Resolution
     const registryKey = SUB_NAV_ALIASES[normalizedCategory] || normalizedCategory;
     const entries = SUB_NAV_REGISTRY[registryKey];
     
