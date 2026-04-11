@@ -50,28 +50,32 @@ const VisibilitySentinel = {
             }
         }
 
-        // --- RULE 2: Fragment Hydration Enforcement ---
+        // --- RULE 2: Fragment Hydration Enforcement (v2.0 Liveness) ---
         const fragContainer = document.getElementById(winConfig.fragmentId);
         if (fragContainer) {
             const html = fragContainer.innerHTML.trim();
-            const isStuck = html === "" || html.includes('loading-fragment') || html.includes('Lade...');
+            const hasLiveness = fragContainer.querySelector('[data-liveness="ready"], .player-controls, .library-grid') !== null;
+            const isStuck = html === "" || html.includes('loading-fragment') || !hasLiveness;
             
             if (isStuck) {
                 if (Date.now() - this.lastCheck > 4000) {
-                    console.warn(`[SENTINEL] Active Fragment (${activeWin}) is STUCK or EMPTY for 4s. Triggering recovery pulse...`);
+                    console.warn(`[SENTINEL] Active Fragment (${activeWin}) LIVENESS FAILURE. Triggering smart recovery pulse...`);
                     this.recoveryCounter++;
                     
                     if (this.recoveryCounter > 3) {
-                        console.error("[SENTINEL] Recovery loop detected. Attempting Atomic Emergency Reload.");
+                        console.error("[SENTINEL] Liveness recovery loop detected. Atomic Rescue Reload.");
                         setTimeout(() => location.reload(), 1000);
                         return;
                     }
 
-                    window.WindowManager.activate(activeWin, true); // Force re-activation
+                    // SMARTER Recovery: Don't just re-activate, re-load the fragment atomically
+                    if (window.WindowManager && window.WindowManager.activate) {
+                        window.WindowManager.activate(activeWin, true); 
+                    }
                     this.lastCheck = Date.now();
                     
                     if (typeof showToast === 'function') {
-                        showToast(`RECOVERY: RESTORING ${activeWin.toUpperCase()}`, 3000);
+                        showToast(`STABILITY: RESCUING ${activeWin.toUpperCase()}`, 3000);
                     }
                 }
             } else {
