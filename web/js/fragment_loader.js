@@ -190,6 +190,13 @@ const FragmentLoader = {
         if (typeof window.auditFragmentHydration === 'function') {
             window.auditFragmentHydration(fragName, 'error', err.message);
         }
+
+        // --- [v1.41.161] AUTO-RESCUE FAILOVER ---
+        if (fragmentPath !== 'fragments/diagnostic_rescue.html') {
+            console.warn(`[FragmentLoader] TRIGGERING AUTO-RESCUE for #${targetId} (Source: ${fragmentPath})`);
+            this._executeLoad(targetId, 'fragments/diagnostic_rescue.html');
+            return;
+        }
         
         // --- v1.35 Safety: Release Global Navigation Lock ---
         if (typeof isNavigating !== 'undefined') {
@@ -200,10 +207,10 @@ const FragmentLoader = {
         const msg = `
             <div class="error-panel" style="padding: 40px; text-align: center; color: var(--text-primary); background: rgba(255, 0, 0, 0.05); border-radius: 12px; border: 1px dashed rgba(255, 0, 0, 0.3); margin: 20px; backdrop-filter: blur(10px);">
                 <div style="font-size: 2.5rem; margin-bottom: 15px;">⚠️</div>
-                <h2 style="margin-bottom: 10px; color: var(--accent-color, #e74c3c);">Fragment Load Failure</h2>
-                <p>The UI module at <code>${fragmentPath}</code> could not be rendered.</p>
+                <h2 style="margin-bottom: 10px; color: var(--accent-color, #e74c3c);">Critical Rescue Failure</h2>
+                <p>The Rescue UI at <code>${fragmentPath}</code> also failed.</p>
                 <p style="opacity: 0.7; font-size: 0.9rem; margin-top: 15px;">Reason: ${err.message || err}</p>
-                <button class="nav-btn active" style="margin-top: 20px; padding: 10px 20px; border-radius: 20px;" onclick="location.reload()">Retry Application Reload</button>
+                <button class="nav-btn active" style="margin-top: 20px; padding: 10px 20px; border-radius: 20px;" onclick="location.reload()">Emergency Reload</button>
             </div>`;
         
         if (typeof safeHtml === 'function') {
