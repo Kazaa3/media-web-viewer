@@ -89,35 +89,49 @@ const NuclearPulsar = {
     },
 
     /**
-     * Injects a high-visibility text marker into the viewport top.
+     * Injects high-visibility text markers into the specific splits.
      */
     injectForensicAnchor(container) {
-        let anchor = document.getElementById('nuclear-forensic-anchor');
-        if (!anchor) {
-            anchor = document.createElement('div');
-            anchor.id = 'nuclear-forensic-anchor';
-            anchor.style = `
-                position: absolute;
-                top: 0; left: 0; right: 0;
-                background: linear-gradient(to right, #ff3366, #ff9500);
-                color: white;
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 10px;
-                font-weight: 800;
-                padding: 4px 15px;
-                z-index: 100001;
-                pointer-events: none;
-                display: flex;
-                justify-content: space-between;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            `;
-            container.appendChild(anchor);
-        }
-        const activeTab = document.body.getAttribute('data-mwv-tab') || 'unknown';
-        anchor.innerHTML = `
-            <span>☢️ NUCLEAR RECOVERY PULSE ACTIVE</span>
-            <span>V1.46.04 | TAB: ${activeTab.toUpperCase()} | PULSE: ${this.iterations}</span>
-        `;
+        // [v1.46.05] Localized Splits Detection
+        const deck = document.getElementById('player-deck-column');
+        const queue = document.getElementById('player-playlist-column');
+
+        const createSplitTag = (id, label, color, position) => {
+            let tag = document.getElementById(id);
+            if (!tag) {
+                tag = document.createElement('div');
+                tag.id = id;
+                tag.style = `
+                    position: absolute;
+                    ${position};
+                    background: ${color};
+                    color: #000;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 9px;
+                    font-weight: 900;
+                    padding: 2px 8px;
+                    z-index: 100002;
+                    border-radius: 4px;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                    pointer-events: none;
+                `;
+                const parent = (id === 'proof-split-deck') ? deck : queue;
+                if (parent) {
+                    if (window.getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+                    parent.appendChild(tag);
+                }
+            }
+            if (tag) {
+                tag.innerHTML = `⚡ ${label} [${this.iterations}]`;
+            }
+        };
+
+        if (deck) createSplitTag('proof-deck-tag', 'FORENSIC-DECK', '#2ecc71', 'top: 10px; left: 10px;');
+        if (queue) createSplitTag('proof-queue-tag', 'FORENSIC-QUEUE', '#e67e22', 'top: 10px; right: 10px;');
+
+        // Remove the legacy global bar if it exists
+        const globalBar = document.getElementById('nuclear-forensic-anchor');
+        if (globalBar) globalBar.remove();
     },
 
     /**

@@ -568,6 +568,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         fragmentPath: 'fragments/player_queue.html',
         onActivate: () => {
             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+            if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
             if (typeof renderAudioQueue === 'function') renderAudioQueue();
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
         }
