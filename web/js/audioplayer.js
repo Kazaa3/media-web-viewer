@@ -22,7 +22,9 @@ let audioContext = null;
 let analyser = null;
 let dataArray = null;
 let visualizerAnimationId = null;
-let visualizerStyle = localStorage.getItem('mwv_visualizer_style') || 'bars'; // 'bars', 'circle', 'wave'
+let visualizerStyle = (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.visualizer_orchestration && window.GLOBAL_CONFIG.visualizer_orchestration.default_style) 
+    ? (localStorage.getItem('mwv_visualizer_style') || window.GLOBAL_CONFIG.visualizer_orchestration.default_style)
+    : (localStorage.getItem('mwv_visualizer_style') || 'bars');
 
 /**
  * Diagnostic Control Handlers (v1.35.65)
@@ -215,6 +217,15 @@ function playAudio(item, startTime = 0) {
  * Setup and start the Web Audio API visualizer.
  */
 function setupVisualizer(audioElement) {
+    // [v1.46.10] Check Global Orchestration
+    const config = window.GLOBAL_CONFIG || {};
+    const vizCfg = config.visualizer_orchestration || { animation_enabled: true };
+    
+    if (vizCfg.animation_enabled === false) {
+        console.warn("[Visualizer] Animation globally disabled in config.");
+        return;
+    }
+
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioContext.createMediaElementSource(audioElement);
@@ -276,15 +287,21 @@ function drawVisualizer() {
             const h = canvases[idx].height;
             ctx.clearRect(0, 0, w, h);
 
+            // [v1.46.10] Color Orchestration
+            const vizCfg = (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.visualizer_orchestration) || {};
+            let accentColor = vizCfg.accent_color || '#007aff';
+            if (vizCfg.use_ui_accent) {
+                accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || accentColor;
+            }
+
             if (visualizerStyle === 'bars') {
                 const barWidth = (w / dataArray.length) * 2.5;
                 let x = 0;
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * h;
-                    // Reference style: Royal Blue to Transparent
                     const gradient = ctx.createLinearGradient(0, h, 0, h - barHeight);
-                    gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-                    gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
+                    gradient.addColorStop(0, 'rgba(0, 122, 255, 0)'); // Keeping base transparent
+                    gradient.addColorStop(1, accentColor + '66'); // Add transparency (66 hex = ~0.4)
                     ctx.fillStyle = gradient;
                     ctx.fillRect(x, h - barHeight, barWidth, barHeight);
                     x += barWidth + 1;
@@ -296,7 +313,7 @@ function drawVisualizer() {
                 const radius = 80;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = 'rgba(0, 122, 255, 0.2)';
+                ctx.strokeStyle = accentColor + '33';
                 ctx.stroke();
                 for (let i = 0; i < dataArray.length; i++) {
                     const angle = (i / dataArray.length) * (Math.PI * 2);
@@ -308,14 +325,14 @@ function drawVisualizer() {
                     ctx.beginPath();
                     ctx.moveTo(x1, y1);
                     ctx.lineTo(x2, y2);
-                    ctx.strokeStyle = `hsla(210, 100%, 50%, ${dataArray[i] / 255})`;
+                    ctx.strokeStyle = accentColor;
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             } else {
                 // Waveform backup
                 ctx.lineWidth = 3;
-                ctx.strokeStyle = 'rgba(0, 122, 255, 0.6)';
+                ctx.strokeStyle = accentColor + '99';
                 ctx.beginPath();
                 const sliceWidth = w / dataArray.length;
                 let x = 0;

@@ -279,6 +279,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "bind_address": BIND_ADDR,
         "api_root": f"http://{BIND_ADDR}:{APP_PORT}"
     },
+
+    # --- VISUALIZER ORCHESTRATION (v1.46.10) ---
+    "visualizer_orchestration": {
+        "animation_enabled": True,      # Global Toggle
+        "default_style": "bars",        # "bars", "circle", "wave"
+        "accent_color": "#007aff",      # Reference Blue (Legacy Accent)
+        "use_ui_accent": True           # If True, overrides accent_color with UI theme color
+    },
     
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
     "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
