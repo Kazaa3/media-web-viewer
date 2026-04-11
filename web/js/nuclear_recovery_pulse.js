@@ -38,12 +38,41 @@ const NuclearPulsar = {
             }
         });
 
-        // 2. Pulse Indicators
+        // 2. HYDRATION SENTINEL (v1.46.12)
+        this.enforceHydration();
+
+        // 3. Pulse Indicators
         this.injectRecoveryBadge();
         this.injectForensicAnchor();
 
         if (this.iterations % 10 === 0 && typeof eel !== 'undefined' && eel.log_spawn_event) {
             eel.log_spawn_event('recovery-pulse', `surgical_pulse_iter_${this.iterations}`);
+        }
+    },
+
+    /**
+     * Enforces that the Global Queue is populated if the Library is hydrated.
+     */
+    enforceHydration() {
+        const hasLibrary = (typeof allLibraryItems !== 'undefined' && Array.isArray(allLibraryItems) && allLibraryItems.length > 0);
+        const queueEmpty = (typeof currentPlaylist !== 'undefined' && Array.isArray(currentPlaylist) && currentPlaylist.length === 0);
+        
+        if (hasLibrary && queueEmpty) {
+            console.warn(`[NUCLEAR-PULSE] HYDRATION GAP DETECTED. Library: ${allLibraryItems.length} | Queue: 0. Forcing Sync...`);
+            if (typeof syncQueueWithLibrary === 'function') {
+                syncQueueWithLibrary();
+            }
+        }
+
+        // DOM Rendering Watchdog
+        const renderTarget = document.getElementById('active-queue-list-render-target-warteschlange');
+        const hasItemsInState = (typeof currentPlaylist !== 'undefined' && currentPlaylist.length > 0);
+        
+        if (renderTarget && hasItemsInState && renderTarget.children.length === 0) {
+            console.error("[NUCLEAR-PULSE] RENDERING BLACKOUT. Queue has items but DOM is empty. Forcing Render...");
+            if (typeof renderAudioQueue === 'function') {
+                renderAudioQueue();
+            }
         }
     },
 
