@@ -604,8 +604,12 @@ def start_app():
         # We specify the port and block=False to allow the watchdog to run.
         # mode='chrome' is the preferred isolated environment.
         if profiler: profiler.start_phase("Eel-Engine-Start")
-        # [v1.41.109] Legacy Evolution: Reactivating app.html with Atomic Forensic Standard
-        eel.start('app.html', block=False, port=port, mode=eel_mode, **eel_kwargs)
+        # [v1.44] DYNAMIC ENTRY POINT SELECTION
+        evolution_mode = GLOBAL_CONFIG.get("ui_evolution_mode", "stable")
+        start_page = 'shell_master.html' if evolution_mode == 'rebuild' else 'app.html'
+        
+        print(f"STDOUT: [Bootstrap] Launching ENTRY_POINT: {start_page} (Mode: {evolution_mode})", flush=True)
+        eel.start(start_page, block=False, port=port, mode=eel_mode, **eel_kwargs)
         log.info("[Eel] Server started. Monitoring for frontend synchronization...")
         if profiler: profiler.end_phase("Eel-Engine-Start")
 
