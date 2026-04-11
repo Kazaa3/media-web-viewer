@@ -710,6 +710,11 @@ function switchMainCategory(category, btn) {
         updateGlobalSubNav(category);
     }
 
+    // [v1.45.150] ACTIVATE FORENSIC WORKSTATION for modern branches
+    if (['media', 'library', 'database'].includes(category)) {
+        if (window.MWV_Workstation) window.MWV_Workstation.activate();
+    }
+
     // [v1.41.114] Layout Orchestration: Full Bleed for Media
     const splitView = document.getElementById('main-split-container');
     if (splitView) {

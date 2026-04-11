@@ -1,0 +1,61 @@
+<!-- ===================== FORENSIC WORKSTATION HUB (v1.45.150) ===================== -->
+<div id="forensic-workstation-root" class="forensic-grid-workstation" style="display: grid; grid-template-columns: 260px 1fr 320px; width: 100%; height: 100%; overflow: hidden; background: var(--bg-master);">
+    
+    <!-- LANE 1: TECHNICAL SIDEBAR (Context & Filters) -->
+    <aside id="workstation-lane-sidebar" class="workstation-lane sidebar-lane" style="border-right: 1px solid var(--border-glass); background: var(--bg-glass); display: flex; flex-direction: column; overflow: hidden;">
+        <div style="padding: 20px; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.2);">
+            <div style="font-size: 10px; font-weight: 900; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px;">Technical Context</div>
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">MODULE SELECTOR</div>
+        </div>
+        
+        <div id="workstation-sidebar-content" style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+            <!-- Categories / Filter Pills injected here -->
+            <div class="loading-fragment" style="font-size: 10px;">Hydrating Sidebar...</div>
+        </div>
+
+        <!-- Meta Data Summary Mini-Panel -->
+        <div style="padding: 15px; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.1);">
+            <div id="sidebar-meta-summary" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-secondary);">
+                CPU: <span class="hud-val green">--%</span> | MEM: <span class="hud-val blue">--MB</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- LANE 2: FORENSIC STAGE (The Active Player) -->
+    <section id="workstation-lane-stage" class="workstation-lane stage-lane" style="position: relative; overflow: hidden; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 50%, rgba(15,15,25,1) 0%, rgba(5,5,8,1) 100%);">
+        <!-- THE PLAYER IS INJECTED HERE -->
+        <div id="workstation-player-anchor" style="width: 100%; height: 100%;">
+            <div class="loading-fragment">Awaiting Media Asset...</div>
+        </div>
+
+        <!-- Stage Overlays (Subtitle, Alerts) -->
+        <div id="stage-toast-container" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none;"></div>
+    </section>
+
+    <!-- LANE 3: ITEM INVENTORY (Queue & Explorer) -->
+    <aside id="workstation-lane-inventory" class="workstation-lane inventory-lane" style="border-left: 1px solid var(--border-glass); background: var(--bg-glass); display: flex; flex-direction: column; overflow: hidden;">
+        <!-- Header -->
+        <div style="padding: 20px; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">INVENTORY</div>
+            <div id="workstation-inventory-count" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: var(--accent-primary);">0 ITEMS</div>
+        </div>
+
+        <!-- Search / Filter Mini Bar -->
+        <div style="padding: 10px 15px; border-bottom: 1px solid var(--border-glass);">
+            <input type="text" id="inventory-mini-search" placeholder="Filter..." 
+                   style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); border-radius: 4px; padding: 6px 10px; color: white; font-size: 11px; outline: none;">
+        </div>
+
+        <!-- List Content -->
+        <div id="workstation-inventory-list" style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+            <div class="loading-fragment" style="font-size: 10px;">Waiting for Handshake...</div>
+        </div>
+
+        <!-- Actions -->
+        <div style="padding: 15px; border-top: 1px solid var(--border-glass); display: flex; gap: 8px;">
+            <button class="hud-btn-tiny" style="flex: 1;" onclick="if(typeof refreshLibrary === 'function') refreshLibrary();">REFRESH</button>
+            <button class="hud-btn-tiny" style="flex: 1;" onclick="if(typeof toggleQueueMode === 'function') toggleQueueMode();">QUEUE</button>
+        </div>
+    </aside>
+
+</div>

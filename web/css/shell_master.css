@@ -434,3 +434,63 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
 .sub-nav-neck::-webkit-scrollbar {
     display: none;
 }
+
+/* --- [v1.45.150] FORENSIC WORKSTATION GRID --- */
+.forensic-grid-workstation {
+    display: grid !important;
+    grid-template-columns: var(--workstation-sidebar-width, 260px) 1fr var(--workstation-inventory-width, 320px);
+    grid-template-rows: 100%;
+    width: 100vw;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-master);
+    position: relative;
+}
+
+.workstation-lane {
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-lane {
+    background: var(--bg-glass);
+    border-right: 1px solid var(--border-glass);
+}
+
+.inventory-lane {
+    background: var(--bg-glass);
+    border-left: 1px solid var(--border-glass);
+}
+
+.stage-lane {
+    background: #000;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- WORKSTATION RESPONSIVITY & HUD --- */
+@media (max-width: 1400px) {
+    .forensic-grid-workstation {
+        grid-template-columns: 200px 1fr 280px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .forensic-grid-workstation {
+        grid-template-columns: 0 1fr 300px; /* Hide sidebar on small screens */
+    }
+    .sidebar-lane { border-right: none; transform: translateX(-100%); }
+}
+
+/* Player Atomic Shell Utilities */
+.player-atomic-shell {
+    animation: workstation-fade-in 0.4s ease-out;
+}
+
+@keyframes workstation-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
