@@ -112,6 +112,14 @@
                 <span id="hlt-btn-spinner" style="width:10px; height:10px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation: rotate 1s infinite linear;"></span>
             </button>
 
+            <!-- VISUAL INTEGRITY TEST (v1.41.159) -->
+            <button onclick="runVisualIntegrityTest()" style="width:100%; height: 35px; background: rgba(0,255,127,0.1); color: #00ff7f; border: 1px solid rgba(0,255,127,0.2); border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,255,127,0.1);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
+                </svg>
+                <span>VISUAL INTEGRITY (FORCE WRITE)</span>
+            </button>
+
             <style>
                 @keyframes scanLine { 0% { top: -5%; } 100% { top: 105%; } }
                 .h-tile { width: 14px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
