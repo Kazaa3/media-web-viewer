@@ -238,22 +238,28 @@ function setupVisualizer(audioElement) {
  * Animation loop for the audio visualizer.
  */
 function drawVisualizer() {
-    const canvas = document.getElementById('audio-visualizer-canvas');
-    if (!canvas) return;
+    const mainCanvas = document.getElementById('audio-visualizer-canvas');
+    const sideCanvas = document.getElementById('sidebar-visualizer-canvas');
+    if (!mainCanvas && !sideCanvas) return;
     
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width = canvas.parentElement.clientWidth;
-    const height = canvas.height = 300;
+    const canvases = [mainCanvas, sideCanvas].filter(Boolean);
+    const ctxs = canvases.map(c => {
+        c.width = c.parentElement.clientWidth;
+        c.height = c.id.includes('sidebar') ? 150 : 300;
+        return c.getContext('2d');
+    });
     
     cancelAnimationFrame(visualizerAnimationId);
     
     function animate() {
         if (!analyser) {
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = 'rgba(128, 128, 128, 0.2)';
-            ctx.font = '700 14px "Inter", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Warte auf Audio-Stream...', width / 2, height / 2);
+            ctxs.forEach((ctx, i) => {
+                ctx.clearRect(0, 0, canvases[i].width, canvases[i].height);
+                ctx.fillStyle = 'rgba(128, 128, 128, 0.2)';
+                ctx.font = '700 14px "Inter", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Warte auf Audio-Stream...', canvases[i].width / 2, canvases[i].height / 2);
+            });
             return;
         }
 
@@ -265,62 +271,65 @@ function drawVisualizer() {
             analyser.getByteFrequencyData(dataArray);
         }
         
-        ctx.clearRect(0, 0, width, height);
+        ctxs.forEach((ctx, idx) => {
+            const w = canvases[idx].width;
+            const h = canvases[idx].height;
+            ctx.clearRect(0, 0, w, h);
 
-        if (visualizerStyle === 'bars') {
-            const barWidth = (width / dataArray.length) * 2.5;
-            let x = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                const barHeight = (dataArray[i] / 255) * height;
-                const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
-                gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
-                gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-                x += barWidth + 1;
-            }
-        } else if (visualizerStyle === 'circle') {
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const radius = 80;
-            
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-            ctx.strokeStyle = 'rgba(0, 122, 255, 0.2)';
-            ctx.stroke();
-
-            for (let i = 0; i < dataArray.length; i++) {
-                const angle = (i / dataArray.length) * (Math.PI * 2);
-                const val = (dataArray[i] / 255) * 60;
-                const x1 = centerX + Math.cos(angle) * radius;
-                const y1 = centerY + Math.sin(angle) * radius;
-                const x2 = centerX + Math.cos(angle) * (radius + val);
-                const y2 = centerY + Math.sin(angle) * (radius + val);
-                
+            if (visualizerStyle === 'bars') {
+                const barWidth = (w / dataArray.length) * 2.5;
+                let x = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const barHeight = (dataArray[i] / 255) * h;
+                    // Reference style: Royal Blue to Transparent
+                    const gradient = ctx.createLinearGradient(0, h, 0, h - barHeight);
+                    gradient.addColorStop(0, 'rgba(0, 122, 255, 0)');
+                    gradient.addColorStop(1, 'rgba(0, 122, 255, 0.4)');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            } else if (visualizerStyle === 'circle' && !canvases[idx].id.includes('sidebar')) {
+                // Keep circle only on main view
+                const centerX = w / 2;
+                const centerY = h / 2;
+                const radius = 80;
                 ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = `hsla(210, 100%, 50%, ${dataArray[i] / 255})`;
-                ctx.lineWidth = 2;
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = 'rgba(0, 122, 255, 0.2)';
+                ctx.stroke();
+                for (let i = 0; i < dataArray.length; i++) {
+                    const angle = (i / dataArray.length) * (Math.PI * 2);
+                    const val = (dataArray[i] / 255) * 60;
+                    const x1 = centerX + Math.cos(angle) * radius;
+                    const y1 = centerY + Math.sin(angle) * radius;
+                    const x2 = centerX + Math.cos(angle) * (radius + val);
+                    const y2 = centerY + Math.sin(angle) * (radius + val);
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.strokeStyle = `hsla(210, 100%, 50%, ${dataArray[i] / 255})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            } else {
+                // Waveform backup
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'rgba(0, 122, 255, 0.6)';
+                ctx.beginPath();
+                const sliceWidth = w / dataArray.length;
+                let x = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * h / 2;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+                ctx.lineTo(w, h / 2);
                 ctx.stroke();
             }
-        } else if (visualizerStyle === 'wave') {
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = 'rgba(0, 122, 255, 0.6)';
-            ctx.beginPath();
-            
-            const sliceWidth = width / dataArray.length;
-            let x = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * height / 2;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-                x += sliceWidth;
-            }
-            ctx.lineTo(width, height / 2);
-            ctx.stroke();
-        }
+        });
     }
     
     animate();
@@ -356,10 +365,21 @@ function updateMediaSidebar(item, path) {
             
             // Core Tech Specs
             const fileExt = item.path ? item.path.split('.').pop().toUpperCase() : '-';
-            safeText(`spec-filetype-${view}`, item.category || 'Audio');
-            safeText(`spec-container-${view}`, tags.container || fileExt);
-            safeText(`spec-codec-${view}`, tags.codec || fileExt);
-            safeText(`spec-bitrate-${view}`, tags.bitrate || '-');
+            const codec = tags.codec || fileExt;
+            const bitrate = tags.bitrate || (item.bitrate ? item.bitrate + ' kbps' : '-');
+            const samplerate = tags.samplerate || (item.samplerate ? item.samplerate + ' kHz' : '-');
+
+            if (view === 'warteschlange') {
+                // Reference Special: Simplified Sync
+                safeText(`spec-codec-${view}`, codec);
+                safeText(`spec-bitrate-${view}`, bitrate);
+                safeText(`spec-samplerate-${view}`, samplerate);
+            } else {
+                safeText(`spec-filetype-${view}`, item.category || 'Audio');
+                safeText(`spec-container-${view}`, tags.container || fileExt);
+                safeText(`spec-codec-${view}`, codec);
+                safeText(`spec-bitrate-${view}`, bitrate);
+            }
             
             if (view === 'legacy' || view === 'warteschlange') {
                 safeText(`spec-bitdepth-${view}`, tags.bitdepth ? tags.bitdepth + ' Bit' : '16 Bit');

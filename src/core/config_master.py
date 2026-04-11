@@ -578,11 +578,11 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- SUB-NAVIGATION REGISTRY ---
         "sub_nav_registry": {
             "media": [
-                { "id": "warteschlange", "label": "QUEUE",            "action": "switchPlayerView('warteschlange')" },
-                { "id": "playlist",      "label": "PLAYLIST MANAGER", "action": "switchPlayerView('playlist')" },
-                { "id": "visualizer",    "label": "VISUALIZER",       "action": "switchPlayerView('visualizer')" },
-                { "id": "lyrics",        "label": "LYRICS",           "action": "switchPlayerView('lyrics')" },
-                { "id": "videocinema",   "label": "VIDEO CINEMA",     "action": "switchMainCategory('video')" }
+                { "id": "warteschlange", "label": "Queue",         "action": "switchPlayerView('warteschlange')" },
+                { "id": "playlist",      "label": "Mediengalerie", "action": "switchPlayerView('playlist')" },
+                { "id": "visualizer",    "label": "Visualizer",    "action": "switchPlayerView('visualizer')" },
+                { "id": "lyrics",        "label": "Lyrics",        "action": "switchPlayerView('lyrics')" },
+                { "id": "videocinema",   "label": "Video Cinema",  "action": "switchMainCategory('video')" }
             ],
             "library": [
                 { "id": "lib-cinema", "label": "Cinema",    "action": "switchLibrarySubTab('cinema')" },
