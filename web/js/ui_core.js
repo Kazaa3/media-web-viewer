@@ -392,8 +392,9 @@ window.__fragment_lifecycle_registry = {};
  * @param {string} name - Fragment name (e.g. 'player_queue')
  * @param {string} status - 'will_spawn' | 'loading' | 'success' | 'error'
  * @param {string} detail - Path or Error message
+ * @param {string} targetId - ID of the container element
  */
-window.auditFragmentHydration = function(name, status, detail = '') {
+window.auditFragmentHydration = function(name, status, detail = '', targetId = '') {
     const timestamp = new Date().toLocaleTimeString();
     
     if (!window.__fragment_lifecycle_registry[name]) {
@@ -402,7 +403,8 @@ window.auditFragmentHydration = function(name, status, detail = '') {
             history: [],
             currentStatus: 'idle',
             lastUpdate: timestamp,
-            detail: detail
+            detail: detail,
+            targetId: targetId
         };
     }
 
@@ -410,7 +412,8 @@ window.auditFragmentHydration = function(name, status, detail = '') {
     entry.currentStatus = status;
     entry.lastUpdate = timestamp;
     if (detail) entry.detail = detail;
-    entry.history.push({ status, timestamp, detail });
+    if (targetId) entry.targetId = targetId;
+    entry.history.push({ status, timestamp, detail, targetId });
 
     // Limit history
     if (entry.history.length > 5) entry.history.shift();
