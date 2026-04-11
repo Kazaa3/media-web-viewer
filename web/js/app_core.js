@@ -239,7 +239,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         // --- v1.37.52 Forensic Window Registry ---
         // --- v1.41.107 Atomic Shell Registry ---
         if (typeof WindowManager !== 'undefined') {
-            // Register Core UI Fragments (IDs must match shell_master.html)
+            // [v1.41.150] Standardized Registry Mapping
             WM.register('player', { 
                 shellId: 'player-panel-container', 
                 fragmentId: 'player-main-viewport', 
@@ -260,22 +260,36 @@ window.addEventListener('DOMContentLoaded', async () => {
                 }
             });
             WM.register('database', { 
-                shellId: 'status-panel-container', 
-                fragmentId: 'status-main-viewport', 
+                shellId: 'database-panel-container', 
+                fragmentId: 'database-main-viewport', 
                 fragmentPath: 'fragments/database_panel.html',
                 onActivate: () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
                 }
             });
-
-            // [v1.41.134] Forensic Status/Debug Integration
+            WM.register('edit', { 
+                shellId: 'edit-panel-container', 
+                fragmentId: 'edit-main-viewport', 
+                fragmentPath: 'fragments/metadata_editor.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('edit');
+                }
+            });
             WM.register('debug', { 
-                shellId: 'status-panel-container', 
-                fragmentId: 'status-main-viewport', 
+                shellId: 'debug-panel-container', 
+                fragmentId: 'debug-main-viewport', 
                 fragmentPath: 'fragments/status_panel.html',
                 onActivate: () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
                     if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
+                }
+            });
+            WM.register('system', { 
+                shellId: 'system-panel-container', 
+                fragmentId: 'options-main-viewport', 
+                fragmentPath: 'fragments/options_panel.html',
+                onActivate: () => {
+                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('system');
                 }
             });
         }

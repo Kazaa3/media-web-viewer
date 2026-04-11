@@ -375,8 +375,7 @@ onclick="toggleMenuBar()"
             <!-- TAB: Player (Audio) END -->
 
             <!-- TAB: Filesystem START -->
-            <div id="filesystem-crawler-directory-panel" class="tab-content tab-split-layout"
-                style="height: 100%; width: 100%;">
+            <div id="browser-panel-container" class="tab-content tab-split-layout" data-tab-domain="file" style="height: 100%; width: 100%;">
                 <!-- Browser Internal Sidebar -->
                 <div class="tab-internal-sidebar">
                     <h3 class="diagnostic-section-title">Browser-Optionen</h3>
@@ -396,7 +395,7 @@ onclick="toggleMenuBar()"
             <!-- TAB: Filesystem END -->
 
             <!-- TAB: Library START -->
-            <div id="coverflow-library-panel" class="tab-content"
+            <div id="library-panel-container" class="tab-content" data-tab-domain="library"
                 style="display: none; padding: 0; overflow: hidden; height: 100%; width: 100%;">
                 <!-- Library Viewport (FRAGMENT TARGET) -->
                 <div id="library-main-viewport" class="content-deck-fill">
@@ -406,7 +405,7 @@ onclick="toggleMenuBar()"
             <!-- TAB: Library END -->
 
             <!-- TAB: Item (Inventory) START -->
-            <div id="indexed-sqlite-media-repository-panel" class="tab-content"
+            <div id="inventory-panel-container" class="tab-content" data-tab-domain="inventory"
                 style="height: 100%; width: 100%;">
                 <div class="loading-fragment">Lade Inventory...</div>
             </div>
@@ -424,7 +423,7 @@ onclick="toggleMenuBar()"
 
 
             <!-- TAB: Edit START -->
-            <div id="metadata-writer-crud-panel" class="tab-content" style="height: 100%; width: 100%;">
+            <div id="edit-panel-container" class="tab-content" data-tab-domain="edit" style="height: 100%; width: 100%;">
                 <!-- Editor Viewport (FRAGMENT TARGET) -->
                 <div id="edit-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Editor...</div>
@@ -434,7 +433,7 @@ onclick="toggleMenuBar()"
 
 
             <!-- TAB: Options START -->
-            <div id="options-panel-container" class="tab-content tab-split-layout"
+            <div id="system-panel-container" class="tab-content tab-split-layout" data-tab-domain="system"
                 style="height: 100%; flex-direction: row;">
                 <!-- Options Internal Sidebar -->
                 <div class="tab-internal-sidebar">
@@ -555,7 +554,7 @@ onclick="toggleMenuBar()"
             </div>
 
             <!-- TAB: Debug START -->
-            <div id="debug-db-panel-container" class="tab-content tab-split-layout"
+            <div id="debug-panel-container" class="tab-content tab-split-layout" data-tab-domain="debug"
                 style="height: 100%; width: 100%;">
                 <!-- Debug Internal Sidebar -->
                 <div class="tab-internal-sidebar">
@@ -593,7 +592,7 @@ onclick="toggleMenuBar()"
             </div>
 
             <!-- TAB: Database Explorer (v1.41.00 Standalone) -->
-            <div id="database-panel-container" class="tab-content" style="height: 100%; width: 100%;">
+            <div id="database-panel-container" class="tab-content" data-tab-domain="database" style="height: 100%; width: 100%;">
                 <div id="database-main-viewport" class="content-deck-fill">
                     <div class="loading-fragment">Lade Datenbank-Master...</div>
                 </div>
