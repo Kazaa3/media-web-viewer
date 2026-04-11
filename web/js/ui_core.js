@@ -184,6 +184,12 @@ window.MWV_UI = (() => {
             zenBtn.style.display = showZen ? 'flex' : 'none';
         }
 
+        const dbStatusBtn = document.getElementById('header-btn-db-status');
+        if (dbStatusBtn) {
+            const showDbStatus = !!(registry.config.enable_footer_db_status);
+            dbStatusBtn.style.display = showDbStatus ? 'flex' : 'none';
+        }
+
         // --- Geometry Recalculation ---
         updateGeometry();
     }

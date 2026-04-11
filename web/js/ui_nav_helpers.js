@@ -223,6 +223,19 @@ function toggleFooterHUD(forceState = null) {
 }
 window.toggleFooterHUD = toggleFooterHUD;
 
+/**
+ * Toggles the DB Health and Hydration cluster (v1.41.155)
+ */
+function toggleFooterDBStatus(forceState = null) {
+    const el = document.getElementById('footer-db-status-cluster');
+    const btn = document.getElementById('header-btn-db-status');
+    if (!el) return;
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (el.style.display === 'none');
+    el.style.display = isVisible ? 'flex' : 'none';
+    if (btn) btn.classList.toggle('active', isVisible);
+}
+window.toggleFooterDBStatus = toggleFooterDBStatus;
+
 async function toggleDiagnosticsFlag(flagId) {
     switch (flagId) {
         case 'DIAG':

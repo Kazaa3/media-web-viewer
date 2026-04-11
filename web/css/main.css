@@ -214,6 +214,18 @@ body.mwv-hide-footer { --footer-height: 0px; }
     border-color: #007aff !important;
 }
 
+#header-btn-db-status:hover {
+    background: rgba(241, 196, 15, 0.2) !important;
+    border-color: rgba(241, 196, 15, 0.4) !important;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+}
+
+#header-btn-db-status.active {
+    background: #f1c40f !important;
+    color: #111 !important;
+    border-color: #f1c40f !important;
+}
+
 /* Zen Mode Orchestration (v1.41.154) */
 body.mwv-hide-header #master-persistent-header {
     display: none !important;
