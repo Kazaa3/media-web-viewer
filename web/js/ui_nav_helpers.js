@@ -172,6 +172,28 @@ function toggleTechnicalHUD(forceState = null) {
 }
 window.toggleTechnicalHUD = toggleTechnicalHUD;
 
+/**
+ * Toggles the 7-Point DOM Auditor HUD (v1.41.151)
+ */
+function toggleDomAuditor(forceState = null) {
+    const hud = document.getElementById('dom-auditor-hud');
+    const btn = document.getElementById('header-btn-auditor');
+    if (!hud) {
+        console.warn("[UI-NAV] DOM Auditor HUD container not found.");
+        return;
+    }
+
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none');
+    hud.style.display = isVisible ? 'block' : 'none';
+    
+    if (btn) btn.classList.toggle('active', isVisible);
+    
+    if (isVisible && typeof window.runDomAudit === 'function') {
+        window.runDomAudit();
+    }
+}
+window.toggleDomAuditor = toggleDomAuditor;
+
 async function toggleDiagnosticsFlag(flagId) {
     switch (flagId) {
         case 'DIAG':

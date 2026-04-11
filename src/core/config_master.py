@@ -346,6 +346,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
         "enable_context_menu": True,         # GLOBAL: Rechtsklick-Menü für Items.
         "enable_diagnostics_hud": True,      # GLOBAL: Sichtbarkeit des technischen HUDs im Header.
+        "enable_dom_auditor": True,          # GLOBAL: Echtzeit-Integritätsprüfung (7-Point Audit).
         
         # --- GRANULAR UI FRAGMENT FLAGS ---
         "ui_fragments": {

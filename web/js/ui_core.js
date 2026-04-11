@@ -151,7 +151,13 @@ window.MWV_UI = (() => {
         const diagBtn = document.getElementById('header-btn-diag-overlay');
         if (diagBtn) {
             const showDiag = !!(registry.config.enable_diagnostics_hud);
-            diagBtn.style.visibility = showDiag ? 'visible' : 'hidden';
+            diagBtn.style.display = showDiag ? 'flex' : 'none';
+        }
+
+        const auditBtn = document.getElementById('header-btn-auditor');
+        if (auditBtn) {
+            const showAudit = !!(registry.config.enable_dom_auditor);
+            auditBtn.style.display = showAudit ? 'flex' : 'none';
         }
 
         // --- Geometry Recalculation ---
