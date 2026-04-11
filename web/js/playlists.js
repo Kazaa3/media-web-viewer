@@ -20,7 +20,12 @@ function syncQueueWithLibrary() {
     }
 
     const hmode = window.__mwv_hydration_mode || 'both';
-    console.warn(`[Sync] Hydrating Global Queue... Mode: ${hmode}, Items: ${allLibraryItems.length}`);
+    console.warn(`[Sync] Hydrating Global Queue... Mode: ${hmode}, Items: ${allLibraryItems ? allLibraryItems.length : 0}`);
+
+    if (!Array.isArray(allLibraryItems)) {
+        console.error("[Sync] allLibraryItems is NOT an array. Aborting.");
+        return;
+    }
 
     // Stage 1: Local Filter Pulse (Mock/Real/Both)
     // Branch-level filtering happened in the backend library fetch.
@@ -39,8 +44,12 @@ function syncQueueWithLibrary() {
     console.info(`[Sync] Global Queue ready: ${window.currentPlaylist.length} items.`);
 
     // Stage 3: Multi-Module UI Refresh Pulse
-    if (typeof renderAudioQueue === 'function') renderAudioQueue();
-    if (typeof renderVideoQueue === 'function') renderVideoQueue();
+    try {
+        if (typeof renderAudioQueue === 'function') renderAudioQueue();
+        if (typeof renderVideoQueue === 'function') renderVideoQueue();
+    } catch (err) {
+        console.error("[Sync] UI Refresh Pulse failed:", err);
+    }
     
     // Stage 4: Centralized Technical Anchors
     if (typeof updateSyncAnchor === 'function') {
