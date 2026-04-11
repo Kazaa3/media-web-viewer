@@ -15,7 +15,19 @@ window.playlistIndex = -1;
  */
 function syncQueueWithLibrary() {
     if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        console.warn("[Sync] Library empty. Skipping queue hydration.");
+        console.warn("[Sync] Library empty. Initiating Forensic Auto-Rescan...");
+        
+        // [v1.46.06] Force Backend Scan if 0 items detected
+        if (typeof eel !== 'undefined' && typeof eel.scan_media === 'function') {
+            eel.scan_media(null, false)();
+        }
+        
+        // Show scan status in the splits
+        const deck = document.getElementById('player-deck-column');
+        const queue = document.getElementById('active-queue-list-render-target-warteschlange');
+        if (deck) deck.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--accent-color); font-weight: 800;">⚡ FORENSIC SCAN IN PROGRESS...</div>`;
+        if (queue) queue.innerHTML = `<div style="padding: 20px; text-align: center; opacity: 0.5;">Awaiting dataset from backend...</div>`;
+        
         return;
     }
 
