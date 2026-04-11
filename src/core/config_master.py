@@ -8,11 +8,11 @@ dict - Config Master (Centralized Config & Flag Orchestrator)
 v1.41.103-SSOT - Unified source of truth for tiered versioning.
 """
 
-# --- v1.41.109/110 Registry (Atomic & Legacy Hybrid) ---
-APP_VERSION_CORE = "v1.41.109"
-APP_VERSION_FRONTEND = "v1.41.109-ATOMIC-BRIDGE"
-APP_VERSION_BACKEND = "v1.41.109-STABLE"
-APP_VERSION_FULL = f"{APP_VERSION_CORE}-LEGACY-EVOLVED"
+# --- v1.45.100 Registry (Multi-Mode Evolution) ---
+APP_VERSION_CORE = "v1.45.100"
+APP_VERSION_FRONTEND = "v1.45.100-HYDRATED-STAGE"
+APP_VERSION_BACKEND = "v1.45.100-STABLE-RECON"
+APP_VERSION_FULL = f"{APP_VERSION_CORE}-EVO-REBUILD"
 
 # Legacy Aliases (Fix for Bootstrap ImportErrors)
 APP_VERSION = APP_VERSION_FULL
@@ -342,12 +342,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
-        # --- [v1.43] NAVIGATION ORCHESTRATOR REGISTRY ---
+        # --- [v1.45.105] BRANCH VS CATEGORY ORCHESTRATOR ---
         "navigation_orchestrator": {
             "level_1": [
-                {"id": "media", "label": "PLAYER", "icon": "play", "action": "media"},
-                {"id": "library", "label": "LIBRARIES", "icon": "grid", "action": "library"},
-                {"id": "database", "label": "EXPLORER", "icon": "folder", "action": "database"},
+                {"id": "media", "label": "AUDIO", "icon": "play", "action": "media"}, # [v1.45] Dev-Branch: Legacy (Audio Only)
+                {"id": "library", "label": "MULTIMEDIA", "icon": "grid", "action": "library"}, # [v1.45] Dev-Branch: Hybrid (A/V/Pictures)
+                {"id": "database", "label": "EXTENDED", "icon": "folder", "action": "database"}, # [v1.45] Dev-Branch: Support (EPUB/ISO/Docs)
                 {"id": "tools", "label": "TOOLS", "icon": "tool", "action": "tools"},
                 {"id": "status", "label": "STATUS", "icon": "sparkles", "action": "status", "color": "#00ffcc"}
             ],
@@ -369,7 +369,17 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     {"id": "dashboard", "label": "Dashboard", "action": "switchToolsTab('dashboard')"},
                     {"id": "parser", "label": "Parser", "action": "switchToolsTab('parser')"}
                 ]
-            }
+            },
+            
+            # --- [v1.45.105] GUI CATEGORY MAP (Items in Dropdown) ---
+            "library_category_map": [
+                {"id": "all", "label": "ALL MEDIA"},
+                {"id": "audio", "label": "AUDIO BRANCH"},
+                {"id": "video", "label": "VIDEO BRANCH"},
+                {"id": "bilder", "label": "BILDER"},
+                {"id": "iso", "label": "ISO IMAGES"},
+                {"id": "transcoded", "label": "TRANSCODED"}
+            ]
         },
         
         # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---

@@ -160,6 +160,7 @@ window.triggerModuleHydration = async function(name) {
             case 'player':
                 if (typeof syncQueueWithLibrary === 'function') await syncQueueWithLibrary();
                 if (window.AudioPlayer && typeof window.AudioPlayer.refresh === 'function') window.AudioPlayer.refresh();
+                if (typeof window.hydrateCategoryDropdown === 'function') window.hydrateCategoryDropdown();
                 break;
             case 'library':
                 if (typeof loadLibrary === 'function') await loadLibrary();
@@ -178,6 +179,35 @@ window.triggerModuleHydration = async function(name) {
         }
     } catch (err) {
         console.error(`[HYDRATION] Critical Failure in ${module}:`, err);
+    }
+};
+
+/**
+ * hydrateCategoryDropdown (v1.45.100)
+ * Populates the 'Category Map' dropdown from backend config.
+ */
+window.hydrateCategoryDropdown = function() {
+    const select = document.getElementById('queue-type-filter');
+    if (!select) return;
+
+    const map = window.CONFIG?.ui_settings?.library_category_map;
+    if (!map || !Array.isArray(map)) {
+        console.warn("[HYDRATION] No library_category_map found in config.");
+        return;
+    }
+
+    console.log(`[HYDRATION] Populating Category Map with ${map.length} entries.`);
+    
+    // Preserve existing selection if possible
+    const currentVal = select.value;
+    
+    // Clear and Fill
+    select.innerHTML = map.map(item => `
+        <option value="${item.id}">${item.label}</option>
+    `).join('');
+
+    if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
+        select.value = currentVal;
     }
 };
 
