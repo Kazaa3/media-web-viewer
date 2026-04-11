@@ -24,9 +24,9 @@ function startBootWatchdog() {
             if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', phase, { tick: __mwv_boot_watchdog_ticks, items: libCount });
 
             const maxTicks = window.CONFIG?.boot_watchdog_max_ticks || 12;
-            if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > maxTicks) { 
+            if (phase === 'DATA-READY' || __mwv_boot_watchdog_ticks > maxTicks) {
                 if (typeof mwv_trace === 'function') mwv_trace('BOOT-WATCHDOG', 'SUCCESS', { ticks: __mwv_boot_watchdog_ticks });
-                
+
                 // --- [v1.41.132] Emergency Auto-Hydration Fallback ---
                 if (phase !== 'DATA-READY' && (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0)) {
                     console.warn("[Watchdog] DATA-TIMEOUT: Initiating Forensic Auto-Hydration...");
@@ -95,26 +95,26 @@ function syncUiGeometry(config) {
     if (!config || !config.ui_settings) return;
     const settings = config.ui_settings;
     const root = document.documentElement;
-    
+
     console.info("[GEOMETRY] Synchronizing UI Dimensions...");
-    
+
     // Level 1: Header
     root.style.setProperty('--nav-header-height', (settings.header_height || 48) + 'px');
-    
+
     // Level 2: Sub-Nav (Neck)
     root.style.setProperty('--nav-sub-height', (settings.sub_nav_height || 35) + 'px');
-    
+
     // Level 3: Module Tabs (Sub-Menu)
     root.style.setProperty('--nav-module-height', (settings.sub_menu_height || 32) + 'px');
-    
+
     // Global: Sidebar
     root.style.setProperty('--sidebar-width', (settings.sidebar_width || 250) + 'px');
-    
+
     if (typeof mwv_trace === 'function') {
-        mwv_trace('DOM-UI', 'GEOMETRY-SYNC', { 
-            h1: settings.header_height, 
-            h2: settings.sub_nav_height, 
-            wS: settings.sidebar_width 
+        mwv_trace('DOM-UI', 'GEOMETRY-SYNC', {
+            h1: settings.header_height,
+            h2: settings.sub_nav_height,
+            wS: settings.sidebar_width
         });
     }
 }
@@ -128,7 +128,7 @@ function renderMasterNav(config) {
     if (!navBar || !config?.navigation_orchestrator?.level_1) return;
 
     console.info("[NAV] Rendering Dynamic Master Navigation...");
-    
+
     let items = config.navigation_orchestrator.level_1;
     const activeBranch = config.active_branch || 'multimedia';
     const activeCat = localStorage.getItem('mwv_active_category') || 'media';
@@ -156,14 +156,14 @@ function renderMasterNav(config) {
  * Ensures that after a fragment load, the module-specific 
  * data hydration pipeline is triggered immediately.
  */
-window.triggerModuleHydration = async function(name) {
+window.triggerModuleHydration = async function (name) {
     console.info(`[HYDRATION] Triggering handshake for: ${name.toUpperCase()}`);
-    
+
     // Normalize name
     const module = name.toLowerCase();
 
     try {
-        switch(module) {
+        switch (module) {
             case 'media':
             case 'player':
                 if (typeof syncQueueWithLibrary === 'function') await syncQueueWithLibrary();
@@ -200,23 +200,23 @@ window.triggerModuleHydration = async function(name) {
  * Populates the 'Category Map' dropdown from backend config 
  * based on the ARCHITECTURE of the active branch.
  */
-window.hydrateCategoryDropdown = function(branchId) {
+window.hydrateCategoryDropdown = function (branchId) {
     const select = document.getElementById('queue-type-filter');
     if (!select) return;
 
     const ui = window.CONFIG?.ui_settings;
     const allCategories = ui?.library_category_map;
     const supportMap = ui?.branch_architecture_registry;
-    
+
     // Normalize branchId for lookup
     let targetBranch = branchId.toLowerCase();
     if (targetBranch === 'player') targetBranch = 'media';
     if (targetBranch === 'explorer') targetBranch = 'database';
 
     console.log(`[HYDRATION] Hydrating dropdown for branch: ${branchId} (Normalized: ${targetBranch})`);
-    
+
     let supportedIds = supportMap ? (supportMap[targetBranch] || supportMap[window.CONFIG?.branch_id] || null) : null;
-    
+
     // [v1.45.305] SAFETY FAILOVER: If still null, default to full multimedia set for the forensic workstation
     if (!supportedIds) {
         console.warn(`[HYDRATION] Architecture lookup failed for ${targetBranch}. Using multimedia failover.`);
@@ -231,12 +231,12 @@ window.hydrateCategoryDropdown = function(branchId) {
     }
 
     console.log(`[HYDRATION] Syncing Category Map for Branch: ${targetBranch.toUpperCase()}`);
-    
+
     // Preserve existing selection if possible
     const currentVal = select.value;
-    
+
     // Filter by Branch Architecture
-    const filtered = supportedIds 
+    const filtered = supportedIds
         ? allCategories.filter(cat => supportedIds.includes(cat.id))
         : allCategories;
 
@@ -284,17 +284,17 @@ function play(item, path, startTime = 0) {
  */
 function playMediaObject(item) {
     if (!item) return;
-    
+
     const isVideo = isVideoItem(item);
     if (isVideo) {
         console.info("[Play-Routing] Video detected, forcing switch to Video Player tab:", item.path);
         if (typeof switchTab === 'function') {
             switchTab('video', null, () => {
-                 if (typeof playVideo === 'function') {
-                     playVideo(item, item.path);
-                 } else {
-                     console.warn("[Play-Routing] Video fragment loaded, but playVideo() not found.");
-                 }
+                if (typeof playVideo === 'function') {
+                    playVideo(item, item.path);
+                } else {
+                    console.warn("[Play-Routing] Video fragment loaded, but playVideo() not found.");
+                }
             }, true); // v1.35.65 Force Jump
         }
     } else {
@@ -394,14 +394,14 @@ document.addEventListener('keydown', async (e) => {
  */
 window.addEventListener('DOMContentLoaded', async () => {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'DOM-READY');
-    
+
     // --- [v1.42] GLOBAL EVOLUTION CHECK ---
     try {
         if (typeof eel !== 'undefined' && typeof eel.get_global_config === 'function') {
             const config = await eel.get_global_config()();
             window.GLOBAL_CONFIG = config;
             window.CONFIG = config; // Ensure legacy/standard references are also updated (v1.45.310 Sync)
-            
+
             // [v1.43] MASTER GEOMETRY SYNC
             syncUiGeometry(config);
 
@@ -415,7 +415,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     FragmentLoader.load('master-header-container', 'fragments/rebuild/menu_l1.html', () => {
                         console.log("[NAV] Level 1 Stage Ready.");
                     });
-                    
+
                     // Level 2: Sub-Nav Neck Rebuild
                     FragmentLoader.load('sub-nav-container', 'fragments/rebuild/menu_l2.html', () => {
                         console.log("[NAV] Level 2 Stage Ready. Syncing default category...");
@@ -433,7 +433,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
-        
+
         let fragmentsNeeded = 4;
         let fragmentsLoaded = 0;
 
@@ -470,12 +470,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
             // 3. UI Start State (v1.40 Orchestrated)
             const startTab = window.CONFIG?.start_tab || 'player';
-            const startCategory = (startTab === 'library') ? 'library' : 
-                                 (startTab === 'database') ? 'database' : 
-                                 (startTab === 'edit') ? 'edit' : 'media';
+            const startCategory = (startTab === 'library') ? 'library' :
+                (startTab === 'database') ? 'database' :
+                    (startTab === 'edit') ? 'edit' : 'media';
 
             console.log(`UI: Booting into tab: ${startTab} (Category: ${startCategory})`);
-            
+
             if (window.MWV_UI) {
                 window.MWV_UI.apply(startCategory);
             }
@@ -516,11 +516,11 @@ window.addEventListener('DOMContentLoaded', async () => {
                         const pidEl = document.getElementById('diag-pid');
                         const bootEl = document.getElementById('diag-boot');
                         const upEl = document.getElementById('diag-up');
-                        
+
                         if (pidEl) pidEl.innerText = info.pid;
                         if (bootEl) bootEl.innerText = `${info.boot_duration_sec}s`;
                         if (upEl && info.uptime_str) upEl.innerText = info.uptime_str;
-                        
+
                         console.log(`[HUD] Telemetry synchronized. Boot: ${info.boot_duration_sec}s`);
                     }
                 } catch (e) { console.warn("Failed to get startup info:", e); }
@@ -554,85 +554,125 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    safeReg('player', { 
-        shellId: 'player-panel-container', 
-        fragmentId: 'player-main-viewport', 
+    safeReg('player', {
+        shellId: 'player-panel-container',
+        fragmentId: 'player-main-viewport',
         fragmentPath: 'fragments/player_queue.html',
-        onActivate: () => { 
+        onActivate: () => {
             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
-            if (typeof renderPlaylist === 'function') renderPlaylist(); 
+            if (typeof renderPlaylist === 'function') renderPlaylist();
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
         }
     });
-    safeReg('library', { 
-        shellId: 'library-panel-container', 
-        fragmentId: 'library-main-viewport', 
+    safeReg('library', {
+        shellId: 'library-panel-container',
+        fragmentId: 'library-main-viewport',
         fragmentPath: 'fragments/library_explorer.html',
-        onActivate: () => { 
-            if (typeof renderLibrary === 'function') renderLibrary(); 
+        onActivate: () => {
+            if (typeof renderLibrary === 'function') renderLibrary();
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('library');
         }
     });
-    safeReg('database', { 
-        shellId: 'database-panel-container', 
-        fragmentId: 'database-main-viewport', 
+    safeReg('database', {
+        shellId: 'database-panel-container',
+        fragmentId: 'database-main-viewport',
         fragmentPath: 'fragments/database_panel.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
         }
     });
-    safeReg('edit', { 
-        shellId: 'edit-panel-container', 
-        fragmentId: 'edit-main-viewport', 
+    safeReg('edit', {
+        shellId: 'edit-panel-container',
+        fragmentId: 'edit-main-viewport',
         fragmentPath: 'fragments/metadata_editor.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('edit');
         }
     });
-    safeReg('debug', { 
-        shellId: 'debug-panel-container', 
-        fragmentId: 'debug-main-viewport', 
+    safeReg('debug', {
+        shellId: 'debug-panel-container',
+        fragmentId: 'debug-main-viewport',
         fragmentPath: 'fragments/status_panel.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
             if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
         }
     });
-    safeReg('system', { 
-        shellId: 'system-panel-container', 
-        fragmentId: 'options-main-viewport', 
+    safeReg('tools', {
+        shellId: 'tools-panel-container',
+        fragmentId: 'tools-view-transcoding',
+        fragmentPath: 'fragments/tools_panel.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
+        }
+    });
+    safeReg('options', {
+        shellId: 'system-panel-container',
+        fragmentId: 'options-main-viewport',
+        fragmentPath: 'fragments/options_panel.html',
+        onActivate: () => {
+            if (typeof switchOptionsView === 'function') switchOptionsView('general');
+        }
+    });
+    safeReg('reporting', {
+        shellId: 'reporting-dashboard-container',
+        fragmentId: 'reporting-dashboard-container',
+        fragmentPath: 'fragments/reporting_dashboard.html',
+        onActivate: () => {
+            if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard();
+        }
+    });
+    safeReg('logbuch', {
+        shellId: 'logbook-tab-container',
+        fragmentId: 'logbook-tab-container',
+        fragmentPath: 'fragments/logbuch_panel.html',
+        onActivate: () => {
+            if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
+        }
+    });
+    safeReg('parser', {
+        shellId: 'parser-panel-container',
+        fragmentId: 'parser-main-viewport',
+        fragmentPath: 'fragments/parser_panel.html',
+        onActivate: () => {
+            if (typeof loadParserConfig === 'function') loadParserConfig();
+        }
+    });
+    safeReg('system', {
+        shellId: 'system-panel-container',
+        fragmentId: 'options-main-viewport',
         fragmentPath: 'fragments/options_panel.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('system');
         }
     });
-    safeReg('video', { 
-        shellId: 'video-panel-container', 
-        fragmentId: 'video-main-viewport', 
+    safeReg('video', {
+        shellId: 'video-panel-container',
+        fragmentId: 'video-main-viewport',
         fragmentPath: 'fragments/video_cinema.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('video');
         }
     });
-    safeReg('tools', { 
-        shellId: 'tools-panel-container', 
-        fragmentId: 'tools-main-viewport', 
+    safeReg('tools', {
+        shellId: 'tools-panel-container',
+        fragmentId: 'tools-main-viewport',
         fragmentPath: 'fragments/tools_dashboard.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
         }
     });
-    safeReg('logbuch', { 
-        shellId: 'logbook-tab-container', 
-        fragmentId: 'logbook-main-viewport', 
+    safeReg('logbuch', {
+        shellId: 'logbook-tab-container',
+        fragmentId: 'logbook-main-viewport',
         fragmentPath: 'fragments/logbook_view.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('logbuch');
         }
     });
-    safeReg('tests', { 
-        shellId: 'tests-panel-container', 
-        fragmentId: 'tests-main-viewport', 
+    safeReg('tests', {
+        shellId: 'tests-panel-container',
+        fragmentId: 'tests-main-viewport',
         fragmentPath: 'fragments/test_sentinel.html',
         onActivate: () => {
             if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tests');
@@ -711,7 +751,7 @@ async function showStartupDashboard() {
     try {
         const report = await eel.get_startup_report()();
         console.table(report.checkpoints);
-        
+
         // Create modal overlay if it doesn't exist
         let modal = document.getElementById('startup-diag-modal');
         if (!modal) {
