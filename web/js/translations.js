@@ -107,3 +107,5 @@ function t(key, defaultValue) {
 
 // Global initialization
 window.addEventListener('load', initTranslations);
+
+// Created with MWV v1.45.100-EVO-REBUILD

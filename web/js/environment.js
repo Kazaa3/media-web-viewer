@@ -143,3 +143,5 @@ function initEnvironmentModule() {
     loadEnvironmentInfo();
     initDefaultFolder();
 }
+
+// Created with MWV v1.45.100-EVO-REBUILD

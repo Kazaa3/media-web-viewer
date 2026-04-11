@@ -131,3 +131,5 @@ class MpvPlayer {
 
 // Export a singleton instance
 window.mpvPlayer = new MpvPlayer('mpv-canvas', 'mpv-menu-overlay');
+
+// Created with MWV v1.45.100-EVO-REBUILD

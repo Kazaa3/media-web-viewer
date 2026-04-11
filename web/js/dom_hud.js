@@ -62,3 +62,5 @@ window.MWV_DOM_HUD = (() => {
 })();
 
 document.addEventListener('DOMContentLoaded', () => MWV_DOM_HUD.init());
+
+// Created with MWV v1.45.100-EVO-REBUILD

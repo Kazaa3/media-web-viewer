@@ -188,3 +188,5 @@ const WindowManager = {
 
 window.WindowManager = WindowManager;
 window.WM = WindowManager; // Global shorthand
+
+// Created with MWV v1.45.100-EVO-REBUILD

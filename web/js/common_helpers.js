@@ -607,3 +607,5 @@ async function exitApplication() {
 }
 
 window.exitApplication = exitApplication;
+
+// Created with MWV v1.45.100-EVO-REBUILD

@@ -692,3 +692,5 @@ window.initAudiobooksView = initAudiobooksView;
 window.initCinemaView = initCinemaView;
 window.initPicturesView = initPicturesView;
 window.initDocumentsView = initDocumentsView;
+
+// Created with MWV v1.45.100-EVO-REBUILD

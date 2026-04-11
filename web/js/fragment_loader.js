@@ -267,3 +267,5 @@ const FragmentLoader = {
 
 // Global accessor
 window.FragmentLoader = FragmentLoader;
+
+// Created with MWV v1.45.100-EVO-REBUILD

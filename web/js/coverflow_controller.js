@@ -179,3 +179,5 @@ function handleCoverSelect(item) {
         switchTab('video');
     }
 }
+
+// Created with MWV v1.45.100-EVO-REBUILD

@@ -4,7 +4,7 @@
  * Milestone: Diagnostic Sync & Routing (29 Items).
  */
 
-window.MWV_VERSION = 'v1.41.117-FINAL-AUDIT';
+window.MWV_VERSION = 'v1.45.100-EVO-REBUILD';
 window.MWV_BOOT_START = performance.now();
 window.MWV_STABILITY = 'Pro-Options-Active';
 
@@ -37,6 +37,8 @@ async function syncVersion() {
         }
     }
 }
+
+// Created with MWV v1.45.100-EVO-REBUILD
 
 // Initial sync on script load
 syncVersion();
