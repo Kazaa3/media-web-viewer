@@ -41,6 +41,18 @@ MASTER_CAT_MAP = {
         "native": AUDIO_NATIVE,
         "transcode": AUDIO_TRANSCODE
     },
+    "audio_native": {
+        "internal": "audio_native",
+        "aliases": ["audio native", "audio-native"],
+        "extensions": AUDIO_NATIVE,
+        "native": AUDIO_NATIVE
+    },
+    "audio_transcode": {
+        "internal": "audio_transcode",
+        "aliases": ["audio transcode", "audio-transcode", "alac", "wma"],
+        "extensions": AUDIO_TRANSCODE,
+        "transcode": AUDIO_TRANSCODE
+    },
     "video": {
         "internal": "video",
         "aliases": ["multimedia", "video", "film", "serie", "tv", "movie", "tv show", "musikvideos", "animes", "cartoons", "documentary", "dok", "dokumentation", "concert", "konzerte", "3d", "4k", "uhd", "ultra hd"],
@@ -50,9 +62,38 @@ MASTER_CAT_MAP = {
         "transcode_pal": VIDEO_PAL_TRANSCODE,
         "transcode_ntsc": VIDEO_NTSC_TRANSCODE
     },
+    "video_native": {
+        "internal": "video_native",
+        "aliases": ["video native", "video-native"],
+        "extensions": VIDEO_NATIVE,
+        "native": VIDEO_NATIVE
+    },
+    "video_hd": {
+        "internal": "video_hd",
+        "aliases": ["video hd", "video-hd", "hd transcode"],
+        "extensions": VIDEO_HD_TRANSCODE,
+        "transcode": VIDEO_HD_TRANSCODE
+    },
+    "video_pal": {
+        "internal": "video_pal",
+        "aliases": ["video pal", "video-pal", "pal transcode"],
+        "extensions": VIDEO_PAL_TRANSCODE,
+        "transcode": VIDEO_PAL_TRANSCODE
+    },
+    "video_iso": {
+        "internal": "video_iso",
+        "aliases": ["video iso", "video-iso", "iso dvd", "dvd iso"],
+        "extensions": DISK_IMAGE_EXTENSIONS,
+        "transcode": DISK_IMAGE_EXTENSIONS
+    },
     "pictures": {
         "internal": "pictures",
         "aliases": ["bilder", "grafik", "bild", "foto", "images", "gallery", "pictures", "fotos"],
+        "extensions": PICTURE_EXTENSIONS
+    },
+    "bilder": { # Alias for global category map parity
+        "internal": "pictures",
+        "aliases": ["bilder"],
         "extensions": PICTURE_EXTENSIONS
     },
     "documents": {
@@ -65,15 +106,15 @@ MASTER_CAT_MAP = {
         "aliases": ["e-book", "ebook", "epub", "mobi"],
         "extensions": EBOOK_EXTENSIONS
     },
+    "epub": { # Alias for global category map parity
+        "internal": "ebooks",
+        "aliases": ["epub"],
+        "extensions": EBOOK_EXTENSIONS
+    },
     "disk_images": {
         "internal": "disk_images",
-        "aliases": ["abbild", "disk-abbild", "iso", "dvd ntsc", "dvd pal", "pal dvd", "ntsc dvd", "blu-ray", "hd-dvd", "iso image"],
+        "aliases": ["abbild", "disk-abbild", "iso", "iso image"],
         "extensions": DISK_IMAGE_EXTENSIONS
-    },
-    "spiel": {
-        "internal": "spiel",
-        "aliases": ["spiel", "game", "pc spiel", "digitales spiel", "steam"],
-        "extensions": {".exe", ".msi"} # Minimal set for mock/recognition
     },
     "playlists": {
         "internal": "playlists",
@@ -103,10 +144,9 @@ TECH_MARKERS = {
     "stage": ["stage", "recovery", "is_stage"]
 }
 
-BRANCH_MAP = {
-    "audio": ["audio"],
-    "video": ["video", "disk_images"]
-}
+# --- [v1.45.141] ARCHITECTURE BRIDGE ---
+# Hardcoded BRANCH_MAP removed. 
+# Logistics now driven by 'branch_architecture_registry' in CONFIG_MASTER.
 
 SLOW_PARSERS = {"isoparser", "pycdlib", "ebml", "mkvparse", "enzyme", "pymkv", "pymediainfo", "ffprobe", "ffmpeg"}
 
