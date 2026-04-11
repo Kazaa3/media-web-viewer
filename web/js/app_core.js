@@ -144,6 +144,44 @@ function renderMasterNav(config) {
 }
 
 /**
+ * triggerModuleHydration (v1.45)
+ * Ensures that after a fragment load, the module-specific 
+ * data hydration pipeline is triggered immediately.
+ */
+window.triggerModuleHydration = async function(name) {
+    console.info(`[HYDRATION] Triggering handshake for: ${name.toUpperCase()}`);
+    
+    // Normalize name
+    const module = name.toLowerCase();
+
+    try {
+        switch(module) {
+            case 'media':
+            case 'player':
+                if (typeof syncQueueWithLibrary === 'function') await syncQueueWithLibrary();
+                if (window.AudioPlayer && typeof window.AudioPlayer.refresh === 'function') window.AudioPlayer.refresh();
+                break;
+            case 'library':
+                if (typeof loadLibrary === 'function') await loadLibrary();
+                break;
+            case 'edit':
+            case 'editor':
+                if (typeof loadEditItems === 'function') await loadEditItems();
+                break;
+            case 'status':
+                if (window.Diagnostics && typeof window.Diagnostics.refresh === 'function') window.Diagnostics.refresh();
+                break;
+        }
+
+        if (typeof mwv_trace === 'function') {
+            mwv_trace('STABILITY', 'HYDRATION-COMPLETE', { module: module });
+        }
+    } catch (err) {
+        console.error(`[HYDRATION] Critical Failure in ${module}:`, err);
+    }
+};
+
+/**
  * Unified Media Playback Router
  * Decides whether to engage the video player or the audio player.
  */
@@ -304,9 +342,16 @@ window.addEventListener('DOMContentLoaded', async () => {
                 console.warn(">>> [ORCHESTRATOR] EVOLUTION MODE: REBUILD ACTIVE <<<");
                 if (typeof FragmentLoader !== 'undefined') {
                     // Level 1: Master Header Rebuild
-                    FragmentLoader.load('master-header-container', 'fragments/rebuild/menu_l1.html');
+                    FragmentLoader.load('master-header-container', 'fragments/rebuild/menu_l1.html', () => {
+                        console.log("[NAV] Level 1 Stage Ready.");
+                    });
+                    
                     // Level 2: Sub-Nav Neck Rebuild
-                    FragmentLoader.load('sub-nav-container', 'fragments/rebuild/menu_l2.html');
+                    FragmentLoader.load('sub-nav-container', 'fragments/rebuild/menu_l2.html', () => {
+                        console.log("[NAV] Level 2 Stage Ready. Syncing default category...");
+                        const activeCat = localStorage.getItem('mwv_active_category') || 'media';
+                        if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav(activeCat);
+                    });
                 }
             }
         }

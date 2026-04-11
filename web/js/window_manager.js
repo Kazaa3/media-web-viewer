@@ -106,6 +106,12 @@ const WindowManager = {
                 } else {
                     throw new Error(`Shell container #${win.shellId} not found in DOM.`);
                 }
+                if (win.onHydrate) win.onHydrate();
+            }
+
+            // [v1.45] MANDATORY HYDRATION HANDSHAKE
+            if (typeof window.triggerModuleHydration === 'function') {
+                await window.triggerModuleHydration(name);
             }
 
             // [v1.37.52] Force Global UI Logic Sync
