@@ -129,6 +129,11 @@ const NuclearPulsar = {
         if (deck) createSplitTag('proof-deck-tag', 'FORENSIC-DECK', '#2ecc71', 'top: 10px; left: 10px;');
         if (queue) createSplitTag('proof-queue-tag', 'FORENSIC-QUEUE', '#e67e22', 'top: 10px; right: 10px;');
 
+        // Standard diagnostic heartbeats (v1.46.06 Integrated)
+        if (this.iterations % 10 === 0 && typeof eel !== 'undefined' && eel.log_spawn_event) {
+            eel.log_spawn_event('diagnostic-pulsar', `pulsing_active_iter_${this.iterations}`);
+        }
+
         // Remove the legacy global bar if it exists
         const globalBar = document.getElementById('nuclear-forensic-anchor');
         if (globalBar) globalBar.remove();
