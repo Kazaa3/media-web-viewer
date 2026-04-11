@@ -899,7 +899,18 @@ function updateGlobalSubNav(category) {
     // [v1.41.137] Normalization logic for registry lookup
     const normalizedCategory = category ? category.toLowerCase() : 'media';
     const registryKey = SUB_NAV_ALIASES[normalizedCategory] || normalizedCategory;
-    const entries = SUB_NAV_REGISTRY[registryKey];
+    // --- [v1.43] UNIFIED ORCHESTRATOR LOOKUP ---
+    let entries = null;
+    const orchestrator = window.GLOBAL_CONFIG?.navigation_orchestrator;
+    if (orchestrator && orchestrator.level_2) {
+        entries = orchestrator.level_2[registryKey];
+    }
+
+    // Fallback to local registry if config is missing (v1.43 Bridge)
+    if (!entries) {
+        console.info(`[UI-NAV] Falling back to local registry for ${registryKey}`);
+        entries = SUB_NAV_REGISTRY[registryKey];
+    }
     
     if (!entries) {
         console.warn(`[UI-NAV] No entry map for ${normalizedCategory} (Key: ${registryKey}). Clearing sub-nav.`);

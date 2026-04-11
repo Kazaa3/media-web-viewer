@@ -120,6 +120,30 @@ function syncUiGeometry(config) {
 }
 
 /**
+ * renderMasterNav (v1.43)
+ * Redners Level 1 Menu from GLOBAL_CONFIG.
+ */
+function renderMasterNav(config) {
+    const navBar = document.getElementById('master-header-container')?.querySelector('.nav-cluster');
+    if (!navBar || !config?.navigation_orchestrator?.level_1) return;
+
+    console.info("[NAV] Rendering Dynamic Master Navigation...");
+    
+    const items = config.navigation_orchestrator.level_1;
+    const activeCat = localStorage.getItem('mwv_active_category') || 'media';
+
+    navBar.innerHTML = items.map(item => `
+        <button id="nav-btn-${item.id}" 
+                class="menu-item-btn ${activeCat === item.id ? 'active' : ''}" 
+                style="${item.color ? 'color: ' + item.color + ';' : ''}"
+                onclick="switchMainCategory('${item.action}', this)">
+            ${item.id === 'status' ? '<svg width="12" height="12" style="margin-right: 6px;"><use href="#icon-sparkles"></use></svg>' : ''}
+            ${item.label}
+        </button>
+    `).join('');
+}
+
+/**
  * Unified Media Playback Router
  * Decides whether to engage the video player or the audio player.
  */
@@ -272,6 +296,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             
             // [v1.43] MASTER GEOMETRY SYNC
             syncUiGeometry(config);
+
+            // [v1.43] MASTER NAVIGATION RENDER
+            renderMasterNav(config);
 
             if (config.ui_evolution_mode === 'rebuild') {
                 console.warn(">>> [ORCHESTRATOR] EVOLUTION MODE: REBUILD ACTIVE <<<");

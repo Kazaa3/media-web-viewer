@@ -210,7 +210,7 @@ body[data-mwv-category="status"] .sub-nav-neck { border-bottom-color: var(--acce
 
 /* --- HEADER (TOP NAV) --- */
 .master-header {
-    height: var(--active-header-height, 48px);
+    height: var(--nav-header-height, 48px);
     overflow: hidden;
     background: var(--bg-glass);
     backdrop-filter: blur(var(--glass-blur));
@@ -317,7 +317,7 @@ body.mwv-hide-subnav .sub-nav-bar {
 
 /* --- NECK (SUB NAV) --- */
 .sub-nav-neck {
-    height: 36px;
+    height: var(--nav-sub-height, 36px);
     background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid var(--border-glass);
     display: flex;
