@@ -18,13 +18,7 @@ const currentPlaylist = window.currentPlaylist;
  */
 // [v1.45.120] clearQueue relocated to playlists.js
 
-let audioContext = null;
-let analyser = null;
-let dataArray = null;
-let visualizerAnimationId = null;
-let visualizerStyle = (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.visualizer_orchestration && window.GLOBAL_CONFIG.visualizer_orchestration.default_style) 
-    ? (localStorage.getItem('mwv_visualizer_style') || window.GLOBAL_CONFIG.visualizer_orchestration.default_style)
-    : (localStorage.getItem('mwv_visualizer_style') || 'bars');
+
 
 /**
  * Diagnostic Control Handlers (v1.35.65)
@@ -216,141 +210,7 @@ function playAudio(item, startTime = 0) {
 /**
  * Setup and start the Web Audio API visualizer.
  */
-function setupVisualizer(audioElement) {
-    // [v1.46.10] Check Global Orchestration
-    const config = window.GLOBAL_CONFIG || {};
-    const vizCfg = config.visualizer_orchestration || { animation_enabled: true };
-    
-    if (vizCfg.animation_enabled === false) {
-        console.warn("[Visualizer] Animation globally disabled in config.");
-        return;
-    }
 
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaElementSource(audioElement);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-        
-        const bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
-    }
-    
-    if (audioContext.state === 'suspended') {
-        audioContext.resume();
-    }
-    
-    drawVisualizer();
-}
-
-/**
- * Animation loop for the audio visualizer.
- */
-function drawVisualizer() {
-    const mainCanvas = document.getElementById('audio-visualizer-canvas');
-    const sideCanvas = document.getElementById('sidebar-visualizer-canvas');
-    if (!mainCanvas && !sideCanvas) return;
-    
-    const canvases = [mainCanvas, sideCanvas].filter(Boolean);
-    const ctxs = canvases.map(c => {
-        c.width = c.parentElement.clientWidth;
-        c.height = c.id.includes('sidebar') ? 150 : 300;
-        return c.getContext('2d');
-    });
-    
-    cancelAnimationFrame(visualizerAnimationId);
-    
-    function animate() {
-        if (!analyser) {
-            ctxs.forEach((ctx, i) => {
-                ctx.clearRect(0, 0, canvases[i].width, canvases[i].height);
-                ctx.fillStyle = 'rgba(128, 128, 128, 0.2)';
-                ctx.font = '700 14px "Inter", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Warte auf Audio-Stream...', canvases[i].width / 2, canvases[i].height / 2);
-            });
-            return;
-        }
-
-        visualizerAnimationId = requestAnimationFrame(animate);
-        
-        if (visualizerStyle === 'wave') {
-            analyser.getByteTimeDomainData(dataArray);
-        } else {
-            analyser.getByteFrequencyData(dataArray);
-        }
-        
-        ctxs.forEach((ctx, idx) => {
-            const w = canvases[idx].width;
-            const h = canvases[idx].height;
-            ctx.clearRect(0, 0, w, h);
-
-            // [v1.46.10] Color Orchestration
-            const vizCfg = (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.visualizer_orchestration) || {};
-            let accentColor = vizCfg.accent_color || '#007aff';
-            if (vizCfg.use_ui_accent) {
-                accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || accentColor;
-            }
-
-            if (visualizerStyle === 'bars') {
-                const barWidth = (w / dataArray.length) * 2.5;
-                let x = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    const barHeight = (dataArray[i] / 255) * h;
-                    const gradient = ctx.createLinearGradient(0, h, 0, h - barHeight);
-                    gradient.addColorStop(0, 'rgba(0, 122, 255, 0)'); // Keeping base transparent
-                    gradient.addColorStop(1, accentColor + '66'); // Add transparency (66 hex = ~0.4)
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(x, h - barHeight, barWidth, barHeight);
-                    x += barWidth + 1;
-                }
-            } else if (visualizerStyle === 'circle' && !canvases[idx].id.includes('sidebar')) {
-                // Keep circle only on main view
-                const centerX = w / 2;
-                const centerY = h / 2;
-                const radius = 80;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = accentColor + '33';
-                ctx.stroke();
-                for (let i = 0; i < dataArray.length; i++) {
-                    const angle = (i / dataArray.length) * (Math.PI * 2);
-                    const val = (dataArray[i] / 255) * 60;
-                    const x1 = centerX + Math.cos(angle) * radius;
-                    const y1 = centerY + Math.sin(angle) * radius;
-                    const x2 = centerX + Math.cos(angle) * (radius + val);
-                    const y2 = centerY + Math.sin(angle) * (radius + val);
-                    ctx.beginPath();
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
-                    ctx.strokeStyle = accentColor;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-            } else {
-                // Waveform backup
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = accentColor + '99';
-                ctx.beginPath();
-                const sliceWidth = w / dataArray.length;
-                let x = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    const v = dataArray[i] / 128.0;
-                    const y = v * h / 2;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                    x += sliceWidth;
-                }
-                ctx.lineTo(w, h / 2);
-                ctx.stroke();
-            }
-        });
-    }
-    
-    animate();
-}
 
 /**
  * Changes the active visualizer style.
@@ -624,127 +484,117 @@ function renderAudioQueue() {
     };
 
         const activeList = filteredItems;
-    if (activeList.length === 0) {
-        let noMediaHtml = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 60px; background: var(--bg-primary);">
-                <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.3; filter: grayscale(1);">🎵</div>
-                <h3 style="margin: 0 0 12px 0; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">Warteschlange leer</h3>
-                <p style="font-size: 0.95em; max-width: 280px; margin: 0 auto 30px auto; opacity: 0.7;">
-                    Füge Lieder aus der Bibliothek hinzu oder ziehe Mediendateien hierher.
-                </p>
-                <button onclick="switchTab('multimedia')" class="tab-btn active" style="padding: 12px 30px;">
-                    Zur Bibliothek
-                </button>
-            </div>
-        `;
-
-            noMediaHtml = `
-                <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(0, 122, 255, 0.05); border: 2px dashed var(--accent-color); border-radius: 12px; margin: 20px;">
-                    <div style="font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--accent-color));">🌀</div>
-                    <div style="font-weight: 800; color: var(--accent-color); margin-bottom: 10px; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">Queue Black Hole</div>
-                    <p style="font-size: 0.9em; color: var(--text-secondary); max-width: 250px; margin: 0 auto 20px auto; line-height: 1.6;">
-                        Deine Mediathek enthält Titel, aber die Warteschlange ist durch Filter blockiert oder nicht synchronisiert.
+        if (activeList.length === 0) {
+            let noMediaHtml = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 60px; background: var(--bg-primary);">
+                    <div style="font-size: 64px; margin-bottom: 24px; opacity: 0.3; filter: grayscale(1);">🎵</div>
+                    <h3 style="margin: 0 0 12px 0; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">Warteschlange leer</h3>
+                    <p style="font-size: 0.95em; max-width: 280px; margin: 0 auto 30px auto; opacity: 0.7;">
+                        Füge Lieder aus der Bibliothek hinzu oder ziehe Mediendateien hierher.
                     </p>
-                    <button onclick="if(typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary()" class="tab-btn active" style="padding: 12px 30px; font-weight: 800;">SYNC & RESET FILTERS</button>
+                    <button onclick="switchTab('multimedia')" class="tab-btn active" style="padding: 12px 30px;">
+                        Zur Bibliothek
+                    </button>
                 </div>
             `;
 
-        list.innerHTML = noMediaHtml;
-    } else {
-        activeList.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'legacy-track-item';
-            div.draggable = true;
-            if (index === playlistIndex) div.classList.add('active');
-
-            const isAvailable = item.available !== false;
-            if (!isAvailable) div.classList.add('offline');
-
-            const tags = item.tags || {};
-            const stagePrefix = item.stage ? `[${item.stage}] ` : '';
-            const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Recovery Item');
-            const artistDisplay = item.artist || tags.artist || 'MWV Recovery';
-            
-            div.innerHTML = `
-                <div style="display: flex; align-items: center; width: 100%; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
-                <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                    <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                        ${titleDisplay}
-                        ${!isAvailable ? ' <span style="font-size: 9px; color: #ff5252; font-weight: 900; background: rgba(255,82,82,0.1); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">OFFLINE</span>' : ''}
+            if (window.activeQueueFilter !== 'all') {
+                noMediaHtml = `
+                    <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-primary); text-align: center; padding: 40px; background: rgba(0, 122, 255, 0.05); border: 2px dashed var(--accent-color); border-radius: 12px; margin: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--accent-color));">🌀</div>
+                        <div style="font-weight: 800; color: var(--accent-color); margin-bottom: 10px; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">Queue Black Hole</div>
+                        <p style="font-size: 0.9em; color: var(--text-secondary); max-width: 250px; margin: 0 auto 20px auto; line-height: 1.6;">
+                            Deine Mediathek enthält Titel, aber die Warteschlange ist durch Filter blockiert.
+                        </p>
+                        <button onclick="changeQueueFilter('all')" class="tab-btn active" style="padding: 12px 30px; font-weight: 800;">FILTERS RESET</button>
                     </div>
-                    <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'No Album'}</span></div>
-                </div>
-                <div class="item-actions" style="display: flex; gap: 4px; align-items: center; opacity: 0; transition: opacity 0.2s;">
-                    <button onclick="event.stopPropagation(); moveItemUp(${index})" title="Nach oben" style="background:transparent; border:none; padding: 6px; color: var(--text-secondary); cursor:pointer;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
-                    </button>
-                    <button onclick="event.stopPropagation(); moveItemDown(${index})" title="Nach unten" style="background:transparent; border:none; padding: 6px; color: var(--text-secondary); cursor:pointer;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
-                    </button>
-                    <button onclick="event.stopPropagation(); removeItem(${index})" title="Entfernen" style="background:transparent; border:none; padding: 6px; color: #ff5252; cursor:pointer;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        div.onmouseenter = () => { div.querySelector('.item-actions').style.opacity = '1'; };
-        div.onmouseleave = () => { div.querySelector('.item-actions').style.opacity = '0'; };
-
-        div.onclick = () => {
-            if (!isAvailable) {
-                if (typeof showToast === 'function') showToast("Medium ist offline oder verschoben.", "warn");
-                return;
+                `;
             }
-            playlistIndex = index;
-            if (typeof playMediaObject === 'function') {
-                playMediaObject(item);
-            } else {
-                playAudio(item, 0);
-            }
-            renderAudioQueue();
-        };
+            list.innerHTML = noMediaHtml;
+        } else {
+            console.debug(`[Queue-UI] Rendering ${activeList.length} items to ${list.id}`);
+            // Use fragment for performant multi-injection (v1.46.10)
+            const fragment = document.createDocumentFragment();
+            
+            activeList.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'legacy-track-item';
+                div.draggable = true;
+                if (index === playlistIndex) div.classList.add('active');
 
-        // Internal Sortable DnD
-        div.ondragstart = (e) => {
-            e.dataTransfer.setData("text/plain", JSON.stringify({ index: index, type: 'reorder' }));
-            div.style.opacity = '0.4';
-        };
-        div.ondragend = () => { div.style.opacity = '1'; };
-        
-        div.ondragover = (e) => {
-            e.preventDefault();
-            div.style.borderTop = '2px solid var(--accent-color)';
-        };
-        div.ondragleave = () => {
-            div.style.borderTop = '1px solid var(--border-color)';
-        };
-        div.ondrop = (e) => {
-            e.preventDefault();
-            div.style.borderTop = '1px solid var(--border-color)';
-            try {
-                const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-                if (data && data.type === 'reorder') {
-                    const fromIndex = data.index;
-                    const toIndex = index;
-                    if (fromIndex === toIndex) return;
-                    const movedItem = currentPlaylist.splice(fromIndex, 1)[0];
-                    currentPlaylist.splice(toIndex, 0, movedItem);
-                    renderAudioQueue();
-                }
-            } catch(err) {}
-        };
-        
-        if (typeof showContextMenu === 'function') {
-            div.addEventListener('contextmenu', (e) => {
-                showContextMenu(e, item);
+                const isAvailable = item.available !== false;
+                if (!isAvailable) div.classList.add('offline');
+
+                const tags = item.tags || {};
+                const stagePrefix = item.stage ? `[${item.stage}] ` : '';
+                const titleDisplay = stagePrefix + (item.title || tags.title || item.name || item.id || 'System Item');
+                const artistDisplay = item.artist || tags.artist || 'Media Workstation';
+                
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; width: 100%; pointer-events: none; ${!isAvailable ? 'opacity: 0.4; filter: grayscale(1);' : ''}">
+                        <img class="legacy-track-thumb" src="/cover/${encodeURIComponent(item.name)}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';" style="width: 38px; height: 38px; border-radius: 4px; object-fit: cover;">
+                        <div class="legacy-track-info" style="flex: 1; padding-left: 12px; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                            <div class="legacy-track-title" style="font-weight: 700; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                ${titleDisplay}
+                                ${!isAvailable ? ' <span style="font-size: 9px; color: #ff5252; font-weight: 900; background: rgba(255,82,82,0.1); padding: 1px 4px; border-radius: 3px; margin-left: 5px;">OFFLINE</span>' : ''}
+                            </div>
+                            <div class="legacy-track-meta" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">
+                                ${artistDisplay} • <span style="opacity: 0.7;">${tags.album || 'Media Library'}</span>
+                            </div>
+                        </div>
+                        <div class="item-actions" style="display: flex; gap: 4px; align-items: center; opacity: 0; transition: opacity 0.2s; pointer-events: all;">
+                            <button onclick="event.stopPropagation(); if(typeof removeItem === 'function') removeItem(${index})" title="Entfernen" style="background:transparent; border:none; padding: 6px; color: #ff5252; cursor:pointer;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                div.onmouseenter = () => { const act = div.querySelector('.item-actions'); if(act) act.style.opacity = '1'; };
+                div.onmouseleave = () => { const act = div.querySelector('.item-actions'); if(act) act.style.opacity = '0'; };
+
+                div.onclick = () => {
+                    if (!isAvailable) {
+                        if (typeof showToast === 'function') showToast("Medium ist offline.", "warn");
+                        return;
+                    }
+                    if (typeof playMediaObject === 'function') playMediaObject(item, index);
+                    else if (typeof playAudio === 'function') playAudio(item, index);
+                };
+
+                // Internal Sortable DnD (v1.46.10 Refined)
+                div.ondragstart = (e) => {
+                    e.dataTransfer.setData("text/plain", JSON.stringify({ index: index, type: 'reorder' }));
+                    div.style.opacity = '0.4';
+                };
+                div.ondragend = () => { div.style.opacity = '1'; };
+                
+                div.ondragover = (e) => {
+                    e.preventDefault();
+                    div.style.borderTop = '2px solid var(--accent-color)';
+                };
+                div.ondragleave = () => {
+                    div.style.borderTop = 'none';
+                };
+                div.ondrop = (e) => {
+                    e.preventDefault();
+                    div.style.borderTop = 'none';
+                    try {
+                        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+                        if (data && data.type === 'reorder') {
+                            const fromIndex = data.index;
+                            if (fromIndex === index) return;
+                            const movedItem = window.currentPlaylist.splice(fromIndex, 1)[0];
+                            window.currentPlaylist.splice(index, 0, movedItem);
+                            renderAudioQueue();
+                        }
+                    } catch(err) {}
+                };
+                
+                fragment.appendChild(div);
             });
+            list.appendChild(fragment);
         }
-        
-        list.appendChild(div);
-        });
-    }
     }); // v1.41.00 Final closing block
 }
 
