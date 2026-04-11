@@ -281,7 +281,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     },
     
     # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
-    "ui_evolution_mode": "rebuild",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
+    "ui_evolution_mode": "stable",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis
     "unicode_safety_map": {
         "☢️": "[NUCLEAR]", "✅": "[SUCCESS]", "❌": "[ERROR]", 
@@ -528,7 +528,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "theme": "dark",
         "animations_enabled": True,
         "ui_registry": {
-            "evolution_mode": "bridge", # "stable", "rebuild", "bridge", "test_ref" (v1.45)
+            "evolution_mode": "stable", # "stable", "rebuild", "bridge", "test_ref" (v1.45)
             "sidebar_default_open": False,
             "glassmorphism_enabled": True,
             "animation_performance_tier": "high",
