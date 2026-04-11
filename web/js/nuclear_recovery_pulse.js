@@ -13,7 +13,7 @@ const NuclearPulsar = {
      */
     start() {
         if (this.interval) clearInterval(this.interval);
-        console.log("%c[NUCLEAR-PULSE] DEEP SCAN MODE ACTIVE.", "color: #ff3131; font-weight: 900;");
+        console.log("%c[NUCLEAR-PULSE] SURGICAL STABILIZATION ACTIVE.", "color: #00ffcc; font-weight: 900;");
         this.interval = setInterval(() => this.pulse(), 1000);
     },
 
@@ -24,32 +24,26 @@ const NuclearPulsar = {
         if (!this.isActive) return;
         this.iterations++;
 
-        // 1. PRIMARY PRIORITY: Proof of Life Badge
-        this.injectRecoveryBadge();
-
-        // 2. ULTRA-AGGRESSIVE DOM SWEEP
-        const targets = document.querySelectorAll('#main-content-area, .tab-content.active, .player-view-container.active, #player-panel-container, #player-main-viewport');
-        targets.forEach(el => {
-            el.style.setProperty('display', 'flex', 'important');
-            el.style.setProperty('visibility', 'visible', 'important');
-            el.style.setProperty('opacity', '1', 'important');
-            el.style.setProperty('min-height', '200px', 'important');
+        // 1. NON-DESTRUCTIVE Visibility Enforcement
+        const targets = ['player-panel-container', 'player-main-viewport', 'main-content-area', 'player-deck-column', 'player-playlist-column'];
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                // Only enforce flex if it's the main container or an active tab
+                if (el.id === 'main-content-area' || el.classList.contains('active') || el.id.includes('panel')) {
+                    el.style.setProperty('display', 'flex', 'important');
+                }
+                el.style.setProperty('visibility', 'visible', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+            }
         });
 
-        // 3. Child Visibility Pulse
-        const splitContainer = document.getElementById('player-tab-split-container');
-        if (splitContainer) {
-            Array.from(splitContainer.children).forEach(child => {
-                child.style.setProperty('display', 'flex', 'important');
-                child.style.setProperty('visibility', 'visible', 'important');
-            });
-        }
-
-        // 4. Split Anchors
+        // 2. Pulse Indicators
+        this.injectRecoveryBadge();
         this.injectForensicAnchor();
 
-        if (this.iterations % 5 === 0 && typeof eel !== 'undefined' && eel.log_spawn_event) {
-            eel.log_spawn_event('recovery-pulse', `deep_scan_iter_${this.iterations}`);
+        if (this.iterations % 10 === 0 && typeof eel !== 'undefined' && eel.log_spawn_event) {
+            eel.log_spawn_event('recovery-pulse', `surgical_pulse_iter_${this.iterations}`);
         }
     },
 
@@ -62,17 +56,14 @@ const NuclearPulsar = {
             badge = document.createElement('div');
             badge.id = 'recovery-mode-badge';
             badge.style = `
-                position: fixed; top: 10px; right: 151px; background: #ff3131; color: #fff;
-                padding: 6px 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
-                font-weight: 900; z-index: 999999; border-radius: 4px; box-shadow: 0 0 20px rgba(255, 49, 49, 0.6);
-                animation: recovery-pulse 0.8s infinite; pointer-events: none;
+                position: fixed; top: 12px; right: 280px; background: rgba(0, 255, 204, 0.2); 
+                color: #00ffcc; border: 1px solid #00ffcc; padding: 4px 12px; 
+                font-family: 'JetBrains Mono', monospace; font-size: 10px; 
+                font-weight: 900; z-index: 999999; border-radius: 4px; pointer-events: none;
             `;
-            const s = document.createElement('style');
-            s.innerHTML = `@keyframes recovery-pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }`;
-            document.head.appendChild(s);
             document.body.appendChild(badge);
         }
-        badge.innerHTML = `☢️ EMERGENCY RECOVERY [${this.iterations}]`;
+        badge.innerHTML = `⚡ STABLE MODE ACTIVE [${this.iterations}]`;
     },
 
     /**
@@ -87,12 +78,15 @@ const NuclearPulsar = {
             if (!tag) {
                 tag = document.createElement('div');
                 tag.id = id;
-                tag.style = `position: absolute; ${pos}; background: ${color}; color: #000; font-family: monospace; font-size: 10px; font-weight: 900; padding: 2px 8px; z-index: 99999; border-radius: 2px;`;
+                tag.style = `position: absolute; ${pos}; background: ${color}; color: #000; font-family: monospace; font-size: 9px; font-weight: 800; padding: 1px 6px; z-index: 99999; border-radius: 2px; opacity: 0.6;`;
                 parent.style.position = 'relative';
                 parent.appendChild(tag);
             }
-            tag.innerHTML = `⚡ ${label} [${this.iterations}]`;
+            tag.innerHTML = `${label} [${this.iterations}]`;
         };
+        create('proof-deck-tag', 'DECK-LIFT', '#2ecc71', 'top: 5px; left: 5px;', deck);
+        create('proof-queue-tag', 'QUEUE-LIFT', '#e67e22', 'top: 5px; right: 5px;', queue);
+        
         // Remove the legacy global bar if it exists
         const globalBar = document.getElementById('nuclear-forensic-anchor');
         if (globalBar) globalBar.remove();
