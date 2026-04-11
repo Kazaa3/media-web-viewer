@@ -120,6 +120,15 @@
                 <span>VISUAL INTEGRITY (FORCE WRITE)</span>
             </button>
 
+            <!-- RESCUE SPAWN (v1.41.161) -->
+            <button onclick="if(window.FragmentLoader) ['player-main-viewport', 'library-main-viewport', 'browser-main-viewport', 'video-main-viewport', 'tools-main-viewport', 'logbook-main-viewport', 'tests-main-viewport', 'edit-main-viewport', 'database-main-viewport', 'options-main-viewport'].forEach(id => FragmentLoader.load(id, 'fragments/diagnostic_rescue.html', null, true))" 
+                style="width:100%; height: 35px; background: rgba(255,51,102,0.1); color: #ff3366; border: 1px solid rgba(255,51,102,0.2); border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(255,51,102,0.1);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>RESCUE ALL VIEWPORTS</span>
+            </button>
+
             <style>
                 @keyframes scanLine { 0% { top: -5%; } 100% { top: 105%; } }
                 .h-tile { width: 14px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
