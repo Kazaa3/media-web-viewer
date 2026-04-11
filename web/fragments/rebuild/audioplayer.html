@@ -3,14 +3,18 @@
      style="display: flex; width: 100%; height: 100%; background: #000; overflow: hidden; gap: 2px;">
     
     <!-- LEFT PANE: TOPDECK PREMIUM SIDEBAR -->
-    <div id="audio-sidebar-mount" style="width: 300px; height: 100%; background: var(--bg-sidebar); border-right: 1px solid var(--border-color);">
+    <div id="audio-sidebar-mount" style="width: 300px; height: 100%; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); position: relative;">
+        <!-- [v1.46.03] HARDCODED PROOF OF LIFE (Correct Split) -->
+        <div id="proof-modular-sidebar" style="position: absolute; top: 10px; left: 10px; background: #2ecc71; color: #000; font-weight: 900; padding: 5px 12px; font-size: 11px; z-index: 10000; border-radius: 4px; box-shadow: 0 4px 15px rgba(46,204,113,0.4);">⚡ SIDEBAR MOUNT SUCCESS</div>
         <div class="recovery-placeholder" style="padding: 30px; color: #444; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
             AWAITING TOPDECK PULSE...
         </div>
     </div>
 
     <!-- RIGHT PANE: MAIN AUDIO VIEWPORT -->
-    <div id="audio-main-mount" style="flex: 1; height: 100%; background: var(--bg-primary); display: flex; flex-direction: column;">
+    <div id="audio-main-mount" style="flex: 1; height: 100%; background: var(--bg-primary); display: flex; flex-direction: column; position: relative;">
+        <!-- [v1.46.03] HARDCODED PROOF OF LIFE (Correct Split) -->
+        <div id="proof-modular-main" style="position: absolute; top: 10px; right: 10px; background: #e67e22; color: #000; font-weight: 900; padding: 5px 12px; font-size: 11px; z-index: 10000; border-radius: 4px; box-shadow: 0 4px 15px rgba(230,126,34,0.4);">⚡ MAIN MOUNT SUCCESS</div>
         <div class="recovery-placeholder" style="flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
             AWAITING QUEUE HYDRATION...
         </div>
@@ -35,10 +39,22 @@
         // 2. Inject Main (Queue / Playlist)
         await ForensicRecovery.forceForensicInjection('audio-main-mount', 'fragments/tests/audio_queue_smoke.html');
 
-        // 3. Final Liveness Signal
+        // 3. Final Liveness Signal & Audit Bridge
         setTimeout(() => {
             const shell = document.getElementById('audio-player-modular-shell');
-            if (shell) shell.dataset.liveness = 'ready';
+            if (shell) {
+                shell.dataset.liveness = 'ready';
+                
+                // BACKEND AUDIT BRIDGE
+                if (typeof eel !== 'undefined') {
+                    eel.log_spawn_event('audio-modular-shell', 'READY');
+                    eel.audit_dom_state({
+                        shell: 'audio-player-modular-shell',
+                        sidebar: document.getElementById('audio-sidebar-mount').innerHTML.length > 100 ? 'hydrated' : 'empty',
+                        main: document.getElementById('audio-main-mount').innerHTML.length > 100 ? 'hydrated' : 'empty'
+                    });
+                }
+            }
             console.info("[SonicCore] Modular Forensic Liveness: READY");
         }, 1000);
     }
