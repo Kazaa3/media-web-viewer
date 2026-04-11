@@ -144,16 +144,25 @@
     <script src="js/gui_diagnostics.js"></script>
     <script src="js/version.js"></script>
 
-    <!-- [BOOTSTRAP] ATOMIC BRIDGE TRIGGER (v1.41.107) -->
+    <!-- [BOOTSTRAP] ATOMIC BRIDGE TRIGGER (v1.45.110) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             console.log("[ATOMIC-BOOT] Activating UI Bridge...");
-            setTimeout(() => {
+            setTimeout(async () => {
+                // 1. Initial Sub-Nav Sync
                 if (typeof updateGlobalSubNav === 'function') {
                     const activeCat = localStorage.getItem('mwv_active_category') || 'media';
                     updateGlobalSubNav(activeCat);
                 }
-            }, 500);
+                
+                // 2. Data Hydration Pulse (v1.45 Repair)
+                if (typeof loadLibrary === 'function') {
+                    console.info("[ATOMIC-BOOT] Triggering proactive library hydration...");
+                    await loadLibrary();
+                } else {
+                    console.warn("[ATOMIC-BOOT] loadLibrary NOT found. Data-layer failure?");
+                }
+            }, 800);
         });
     </script>
 </body>
