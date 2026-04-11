@@ -239,8 +239,23 @@ window.addEventListener('DOMContentLoaded', async () => {
         // --- v1.37.52 Forensic Window Registry ---
         // --- v1.41.107 Atomic Shell Registry ---
         if (typeof WindowManager !== 'undefined') {
+            console.info("[BOOT-AUDIT] WindowManager found. Beginning Forensic Registration...");
+            
             // [v1.41.150] Standardized Registry Mapping
-            WM.register('player', { 
+            const regCount = 10;
+            let regDone = 0;
+
+            const safeReg = (name, config) => {
+                try {
+                    console.log(`[FORENSIC-REG] Registering: ${name.toUpperCase()}...`);
+                    WM.register(name, config);
+                    regDone++;
+                } catch (e) {
+                    console.error(`[FORENSIC-REG] CRITICAL FAILURE registering ${name}:`, e);
+                }
+            };
+
+            safeReg('player', { 
                 shellId: 'player-panel-container', 
                 fragmentId: 'player-main-viewport', 
                 fragmentPath: 'fragments/player_queue.html',
@@ -250,7 +265,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
                 }
             });
-            WM.register('library', { 
+            safeReg('library', { 
                 shellId: 'library-panel-container', 
                 fragmentId: 'library-main-viewport', 
                 fragmentPath: 'fragments/library_explorer.html',
@@ -259,7 +274,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('library');
                 }
             });
-            WM.register('database', { 
+            safeReg('database', { 
                 shellId: 'database-panel-container', 
                 fragmentId: 'database-main-viewport', 
                 fragmentPath: 'fragments/database_panel.html',
@@ -267,7 +282,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
                 }
             });
-            WM.register('edit', { 
+            safeReg('edit', { 
                 shellId: 'edit-panel-container', 
                 fragmentId: 'edit-main-viewport', 
                 fragmentPath: 'fragments/metadata_editor.html',
@@ -275,7 +290,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('edit');
                 }
             });
-            WM.register('debug', { 
+            safeReg('debug', { 
                 shellId: 'debug-panel-container', 
                 fragmentId: 'debug-main-viewport', 
                 fragmentPath: 'fragments/status_panel.html',
@@ -284,7 +299,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
                 }
             });
-            WM.register('system', { 
+            safeReg('system', { 
                 shellId: 'system-panel-container', 
                 fragmentId: 'options-main-viewport', 
                 fragmentPath: 'fragments/options_panel.html',
@@ -292,7 +307,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('system');
                 }
             });
-            WM.register('video', { 
+            safeReg('video', { 
                 shellId: 'video-panel-container', 
                 fragmentId: 'video-main-viewport', 
                 fragmentPath: 'fragments/video_cinema.html',
@@ -300,7 +315,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('video');
                 }
             });
-            WM.register('tools', { 
+            safeReg('tools', { 
                 shellId: 'tools-panel-container', 
                 fragmentId: 'tools-main-viewport', 
                 fragmentPath: 'fragments/tools_dashboard.html',
@@ -308,7 +323,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
                 }
             });
-            WM.register('logbuch', { 
+            safeReg('logbuch', { 
                 shellId: 'logbook-tab-container', 
                 fragmentId: 'logbook-main-viewport', 
                 fragmentPath: 'fragments/logbook_view.html',
@@ -316,7 +331,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('logbuch');
                 }
             });
-            WM.register('tests', { 
+            safeReg('tests', { 
                 shellId: 'tests-panel-container', 
                 fragmentId: 'tests-main-viewport', 
                 fragmentPath: 'fragments/test_sentinel.html',
@@ -324,6 +339,10 @@ window.addEventListener('DOMContentLoaded', async () => {
                     if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tests');
                 }
             });
+
+            console.info(`[BOOT-AUDIT] Forensic Registration Complete: ${regDone}/${regCount} windows ready.`);
+        } else {
+            console.error("[BOOT-AUDIT] CRITICAL: WindowManager NOT FOUND. UI Tracking compromised.");
         }
 
         // Shared background fragments (Immediate parallel load)
