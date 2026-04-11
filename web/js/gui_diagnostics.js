@@ -148,7 +148,14 @@ window.MWV_Diagnostics = (() => {
         if (typeof showToast === 'function') showToast("EMERGENCY HYDRATION ACTIVE", 3000);
     }
 
-    return { init, toggle, clear, forceHydrationTest };
+    function getState() {
+        return {
+            isMonitoring,
+            overlayVisible: logOverlay && logOverlay.style.display !== 'none'
+        };
+    }
+
+    return { init, toggle, clear, forceHydrationTest, getState };
 })();
 
 // Auto-inject appendUiTrace hook for real-time (called by backend)

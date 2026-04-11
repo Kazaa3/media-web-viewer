@@ -1158,8 +1158,23 @@ function syncDiagBtnStates() {
     });
 }
 
-// Modularized into sidebar_controller.js (v1.37.14)
-// function renderLogicAuditSummary(logicAudit) { ... }
+/**
+ * Renders the logic audit results into the diagnostic view.
+ */
+function renderLogicAuditSummary(logicAudit = null) {
+    const target = document.getElementById('diag-audit-results');
+    if (!target) return;
+    
+    const data = logicAudit || window.__mwv_last_audit || {};
+    target.innerHTML = `
+        <div class="audit-summary" style="font-size: 11px; color: var(--text-secondary);">
+            <div class="audit-row">Registry State: <span style="color: #00ffcc;">${data.registry_status || 'OK'}</span></div>
+            <div class="audit-row">Fragment Cache: <span style="color: #ff9500;">${data.fragment_count || 0} loaded</span></div>
+            <div class="audit-row">Handshake: <span style="color: #2ecc71;">${data.backend_connected ? 'CONNECTED' : 'STALLED'}</span></div>
+        </div>
+    `;
+    console.info("[MWV-DIAG] Rendered logic audit summary.");
+}
 
 /**
  * Emergency recovery: Bypasses all backend filters to hydrate the library.

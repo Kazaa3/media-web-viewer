@@ -120,8 +120,6 @@
         <div id="forensic-error-log"></div>
     </div>
 
-    <button onclick="NUCLEAR_RECOVER()" 
-            style="position: fixed; top: 10px; left: 10px; z-index: 200001; padding: 6px 15px; background: #2ecc71; color: white; border: none; border-radius: 20px; font-weight: 900; font-size: 10px; cursor: pointer; box-shadow: 0 0 20px rgba(46,204,113,0.4); animation: pulse 1s infinite alternate;">[RECOVER]</button>
 
     <style>
         /* Emergency Force-Reveal styles */
@@ -135,12 +133,16 @@
         <div class="nav-cluster primary-cluster" style="display: flex; align-items: center; padding-left: 20px;">
             <div class="header-logo-pulsar" 
 onclick="toggleMenuBar()"
-                style="font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -0.5px; transition: transform 0.2s;"
+                style="font-weight: 900; font-size: 1.25em; color: var(--text-primary); cursor: pointer; letter-spacing: -1px; transition: transform 0.2s;"
                 onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">dict
             </div>
             
-            <button onclick="if(typeof forceLife === 'function') forceLife()" class="emergency-btn-flash" 
-                style="padding: 4px 12px; background: #ff3366; color: white; border: none; border-radius: 4px; font-size: 10px; font-weight: 900; cursor: pointer; margin-left: 15px; box-shadow: 0 0 10px rgba(255,51,102,0.4);" title="Emergency Recovery: Click if GUI is black">FLASH</button>
+            <div id="recovery-button-group" style="display: flex; gap: 5px; margin-left: 15px;">
+                <button onclick="NUCLEAR_RECOVER()" 
+                        style="padding: 4px 10px; background: #2ecc71; color: white; border: none; border-radius: 4px; font-weight: 900; font-size: 9px; cursor: pointer; box-shadow: 0 0 10px rgba(46,204,113,0.3); animation: pulse 1.5s infinite alternate;">RECOVER</button>
+                <button onclick="if(typeof forceLife === 'function') forceLife()" 
+                        style="padding: 4px 10px; background: #ff3366; color: white; border: none; border-radius: 4px; font-size: 9px; font-weight: 900; cursor: pointer; box-shadow: 0 0 10px rgba(255,51,102,0.3); animation: pulse 1s infinite alternate;" title="Emergency Recovery">FLASH</button>
+            </div>
 
             <!-- Mega Navigation (Persistent System Row) -->
             <div id="header-nav-buttons"
@@ -186,7 +188,6 @@ onclick="toggleMenuBar()"
             <div class="hud-pill-mini">UP: <span id="diag-up" style="color: #2ecc71; font-weight: 800;">--</span></div>
         </div>
         
-        <div class="header-center-title">dict</div>
 
         <!-- System Controls (Right) -->
         <div class="nav-cluster secondary-cluster" style="display: flex; gap: 8px; align-items: center; margin-right: 20px;">
