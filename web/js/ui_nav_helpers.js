@@ -48,7 +48,7 @@ let currentMainCategory = 'audio';
 window.__mwv_ui_nav_loaded = true;
 
 let sidebarVisible = false; // [v1.37.52] Default to CLOSED for Elite Restoration
-let diagnosticsSidebarVisible = false; 
+let diagnosticsSidebarVisible = false;
 let isNavigating = false;   // Global lock for tab switching
 let navTimeout = null;      // Safety timer for lock release
 let menuSystemVisible = true; // Default to open for UI discovery
@@ -67,7 +67,7 @@ function applyDiagnosticsSidebarState(isVisible) {
     const sb = document.getElementById('global-diagnostics-sidebar');
     const footerBtn = document.getElementById('footer-btn-diag-overlay');
     const headerBtn = document.getElementById('header-btn-diag-overlay');
-    
+
     // Check if we need to load the module first
     if (!sb && isVisible) {
         console.info("[UI-NAV] Diagnostics Sidebar missing, triggering modular load...");
@@ -77,7 +77,7 @@ function applyDiagnosticsSidebarState(isVisible) {
                 applyDiagnosticsSidebarState(true);
             });
         }
-        return false; 
+        return false;
     }
 
     if (!sb) return false;
@@ -125,7 +125,7 @@ function toggleDiagnosticsSidebar(forceState = null) {
 
 function switchDiagnosticsSidebarTab(viewId, btn) {
     if (!diagnosticsSidebarVisible) applyDiagnosticsSidebarState(true);
-    
+
     // Explicit Pane Management
     document.querySelectorAll('.diag-pane').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.side-reiter').forEach(el => el.classList.remove('active'));
@@ -163,9 +163,9 @@ function toggleTechnicalHUD(forceState = null) {
 
     const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none');
     hud.style.display = isVisible ? 'flex' : 'none';
-    
+
     if (btn) btn.classList.toggle('active', isVisible);
-    
+
     if (isVisible && typeof refreshStartupInfo === 'function') {
         refreshStartupInfo(); // Immediate refresh on open
     }
@@ -185,9 +185,9 @@ function toggleDomAuditor(forceState = null) {
 
     const isVisible = (typeof forceState === 'boolean') ? forceState : (hud.style.display === 'none');
     hud.style.display = isVisible ? 'block' : 'none';
-    
+
     if (btn) btn.classList.toggle('active', isVisible);
-    
+
     if (isVisible && typeof window.runDomAudit === 'function') {
         window.runDomAudit();
     }
@@ -214,11 +214,11 @@ function toggleFooterHUD(forceState = null) {
     const clusters = document.querySelectorAll('#footer-hud-cluster, .footer-hud-cluster');
     const btn = document.getElementById('header-btn-footer-hud');
     if (clusters.length === 0) return;
-    
+
     // Check first cluster for state
     const isVisible = (typeof forceState === 'boolean') ? forceState : (clusters[0].style.display === 'none');
     clusters.forEach(c => c.style.display = isVisible ? 'flex' : 'none');
-    
+
     if (btn) btn.classList.toggle('active', isVisible);
 }
 window.toggleFooterHUD = toggleFooterHUD;
@@ -509,7 +509,7 @@ function toggleOptionsSidebar() {
  * UI /**
  * UI Header Management: Zen Mode (v1.41.154 Bridge)
  */
-window.toggleZenMode = function(forceState = null) {
+window.toggleZenMode = function (forceState = null) {
     if (window.MWV_UI && typeof window.MWV_UI.toggleZen === 'function') {
         window.MWV_UI.toggleZen(forceState);
     } else {
@@ -519,7 +519,7 @@ window.toggleZenMode = function(forceState = null) {
     }
 };
 
-window.toggleSubNav = function(forceState = null) {
+window.toggleSubNav = function (forceState = null) {
     const pillNav = document.getElementById('contextual-pill-nav');
     if (!pillNav) return;
 
@@ -534,7 +534,7 @@ window.toggleSubNav = function(forceState = null) {
         pillNav.style.display = 'flex';
         pillNav.removeAttribute('data-manual-hide');
     }
-    
+
     console.log(`[UI] SUB-NAV: ${isNowHidden ? 'HIDDEN' : 'VISIBLE'}`);
     refreshViewportLayout();
 };
@@ -555,7 +555,7 @@ function toggleMenuBar(forceState = null) {
 async function refreshUIVisibility(categoryOverride = null) {
     console.time('[PERF] UI-Refresh');
     const category = categoryOverride || currentMainCategory || localStorage.getItem('mwv_active_category') || 'media';
-    
+
     // 1. Trigger Orchestrator Matrix
     if (window.MWV_UI) {
         window.MWV_UI.apply(category);
@@ -632,7 +632,7 @@ function switchPlayerView(viewId) {
 // Restore menu state on load
 document.addEventListener('DOMContentLoaded', () => {
     // Initial UI Setup handled by MWV_UI (v1.40)
-    
+
     window.__mwv_force_native = localStorage.getItem('mwv_force_native') === 'true';
     diagnosticsSidebarVisible = localStorage.getItem(DIAGNOSTICS_SIDEBAR_STORAGE_KEY) === 'true';
     applyDiagnosticsSidebarState(diagnosticsSidebarVisible);
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function switchSidebarView(viewId) {
     console.log(`[UI-NAV] Switching Sidebar View to ${viewId}`);
-    
+
     // Toggle View Visibility
     document.querySelectorAll('.sidebar-view-content').forEach(el => {
         el.style.display = (el.id === `sidebar-view-${viewId}`) ? 'block' : 'none';
@@ -671,7 +671,7 @@ function switchSidebarView(viewId) {
     document.querySelectorAll('.side-reiter').forEach(el => {
         el.classList.toggle('active', el.id === `reiter-${viewId}`);
     });
-    
+
     // If switching to diagnostics, ensure sync button states are refreshed
     if (viewId === 'diagnostics' && typeof syncDiagBtnStates === 'function') {
         syncDiagBtnStates();
@@ -704,7 +704,7 @@ function switchMainCategory(category, btn) {
     if (window.MWV_UI) {
         window.MWV_UI.apply(category);
     }
-    
+
     // [v1.41.112] Force Pill Refresh for Legacy Shell
     if (typeof updateGlobalSubNav === 'function') {
         updateGlobalSubNav(category);
@@ -759,19 +759,10 @@ function switchMainCategory(category, btn) {
 
     // Dynamically populate sub-navigation header pills (Atomic Engine v1.41.112 Hard-Trigger)
     updateGlobalSubNav(category);
-    
-    // [v1.41.112] Special Visibility Pass: Force-show the target panel (v1.41.115 Robust Lookup)
-    let targetPanel = document.getElementById(`${category}-panel-container`);
-    if (!targetPanel) {
-        targetPanel = document.querySelector(`.tab-content[data-tab-domain="${category}"]`);
-    }
 
-    if (targetPanel) {
-        console.log(`[DOM-UI] Forcing visibility for panel: ${category} (Found: ${targetPanel.id})`);
-        document.querySelectorAll('.tab-content').forEach(p => p.style.display = 'none');
-        targetPanel.style.display = 'flex';
-        targetPanel.style.opacity = '1';
-    }
+    // [v1.45] Orchestration: Delegation to WindowManager
+    // Redundant visibility overrides removed to prevent race conditions with Sentinel.
+    refreshUIVisibility();
 
     // [v1.37.06] Centralized Visibility Refresh
     refreshUIVisibility();
@@ -780,91 +771,91 @@ function switchMainCategory(category, btn) {
 /// [v1.41.137] Forensic Sub-Nav Registry (Nuclear SSOT - Synced with config_master.py)
 const SUB_NAV_REGISTRY = {
     "media": [
-        { "id": "warteschlange", "label": "Queue",              "action": "switchPlayerView('warteschlange')" },
-        { "id": "playlist",      "label": "Playlist Manager",   "action": "switchPlayerView('playlist')" },
-        { "id": "visualizer",    "label": "Visualizer",         "action": "switchPlayerView('visualizer')" },
-        { "id": "lyrics",       "label": "Lyrics",              "action": "switchPlayerView('lyrics')" },
-        { "id": "video-cinema",  "label": "Video Cinema",       "action": "switchMediaSubView('video')" }
+        { "id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')" },
+        { "id": "playlist", "label": "Playlist Manager", "action": "switchPlayerView('playlist')" },
+        { "id": "visualizer", "label": "Visualizer", "action": "switchPlayerView('visualizer')" },
+        { "id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')" },
+        { "id": "video-cinema", "label": "Video Cinema", "action": "switchMediaSubView('video')" }
     ],
     "library": [
-        { "id": "lib-visual",    "label": "Visual Explorer",    "action": "switchLibrarySubView('visual')" },
-        { "id": "lib-browse",    "label": "FileSystem Browse", "action": "switchLibrarySubView('browse')" },
-        { "id": "lib-inventory", "label": "Database Inventory","action": "switchLibrarySubView('inventory')" },
-        { "id": "lib-cinema",    "label": "Cinema View",        "action": "switchLibrarySubTab('cinema')" },
-        { "id": "lib-films",     "label": "Filme / Movie",      "action": "switchLibrarySubTab('films')" },
-        { "id": "lib-series",    "label": "Serien / TV",        "action": "switchLibrarySubTab('series')" }
+        { "id": "lib-visual", "label": "Visual Explorer", "action": "switchLibrarySubView('visual')" },
+        { "id": "lib-browse", "label": "FileSystem Browse", "action": "switchLibrarySubView('browse')" },
+        { "id": "lib-inventory", "label": "Database Inventory", "action": "switchLibrarySubView('inventory')" },
+        { "id": "lib-cinema", "label": "Cinema View", "action": "switchLibrarySubTab('cinema')" },
+        { "id": "lib-films", "label": "Filme / Movie", "action": "switchLibrarySubTab('films')" },
+        { "id": "lib-series", "label": "Serien / TV", "action": "switchLibrarySubTab('series')" }
     ],
     "database": [
-        { "id": "db-explorer",   "label": "DB Explorer",        "action": "switchLibrarySubView('inventory')" },
-        { "id": "db-integrity",  "label": "Integrity Check",    "action": "runNuclearDiagnostics()" },
-        { "id": "db-sync",       "label": "Atomic Sync",        "action": "triggerDeepSync()" },
-        { "id": "db-recovery",   "label": "Recovery Hub",       "action": "switchDiagnosticsSubView('recovery')" }
+        { "id": "db-explorer", "label": "DB Explorer", "action": "switchLibrarySubView('inventory')" },
+        { "id": "db-integrity", "label": "Integrity Check", "action": "runNuclearDiagnostics()" },
+        { "id": "db-sync", "label": "Atomic Sync", "action": "triggerDeepSync()" },
+        { "id": "db-recovery", "label": "Recovery Hub", "action": "switchDiagnosticsSubView('recovery')" }
     ],
     "status": [
-        { "id": "status-health", "label": "Core Health",        "action": "switchDiagnosticsSubView('health')" },
-        { "id": "status-logs",   "label": "Live Logs",          "action": "switchDiagnosticsSubView('logs')" },
-        { "id": "status-net",    "label": "Network/Eel",        "action": "switchDiagnosticsSubView('network')" },
-        { "id": "status-latency","label": "Logic Latency",      "action": "switchDiagnosticsSubView('latency')" }
+        { "id": "status-health", "label": "Core Health", "action": "switchDiagnosticsSubView('health')" },
+        { "id": "status-logs", "label": "Live Logs", "action": "switchDiagnosticsSubView('logs')" },
+        { "id": "status-net", "label": "Network/Eel", "action": "switchDiagnosticsSubView('network')" },
+        { "id": "status-latency", "label": "Logic Latency", "action": "switchDiagnosticsSubView('latency')" }
     ],
     "file": [
-        { "id": "file-local",    "label": "Lokale Medien",      "action": "switchFileSubView('local')" },
-        { "id": "file-network",  "label": "Netzwerk / SMB",     "action": "switchFileSubView('network')" },
-        { "id": "file-mounted",  "label": "Eingehängte Drv",    "action": "switchFileSubView('mounted')" }
+        { "id": "file-local", "label": "Lokale Medien", "action": "switchFileSubView('local')" },
+        { "id": "file-network", "label": "Netzwerk / SMB", "action": "switchFileSubView('network')" },
+        { "id": "file-mounted", "label": "Eingehängte Drv", "action": "switchFileSubView('mounted')" }
     ],
     "edit": [
-        { "id": "edit-basic",    "label": "Basic Metadata",     "action": "switchEditSubView('basic')" },
-        { "id": "edit-tech",     "label": "Technical Specs",    "action": "switchEditSubView('technical')" },
-        { "id": "edit-ffprobe",  "label": "FFprobe Dump",       "action": "switchEditSubView('ffprobe')" },
-        { "id": "edit-album",    "label": "Artwork Editor",     "action": "switchEditSubView('artwork')" }
+        { "id": "edit-basic", "label": "Basic Metadata", "action": "switchEditSubView('basic')" },
+        { "id": "edit-tech", "label": "Technical Specs", "action": "switchEditSubView('technical')" },
+        { "id": "edit-ffprobe", "label": "FFprobe Dump", "action": "switchEditSubView('ffprobe')" },
+        { "id": "edit-album", "label": "Artwork Editor", "action": "switchEditSubView('artwork')" }
     ],
     "system": [
-        { "id": "sys-general",   "label": "Allgemein",          "action": "switchOptionsView('general')" },
-        { "id": "sys-parser",    "label": "Parser Chain",       "action": "switchOptionsView('parser')" },
-        { "id": "sys-trans",     "label": "Transcoding",        "action": "switchOptionsView('transcoding')" },
-        { "id": "sys-env",       "label": "Environments",       "action": "switchOptionsView('environment')" },
-        { "id": "sys-helpers",   "label": "Helper Scripts",     "action": "switchOptionsView('helpers')" }
+        { "id": "sys-general", "label": "Allgemein", "action": "switchOptionsView('general')" },
+        { "id": "sys-parser", "label": "Parser Chain", "action": "switchOptionsView('parser')" },
+        { "id": "sys-trans", "label": "Transcoding", "action": "switchOptionsView('transcoding')" },
+        { "id": "sys-env", "label": "Environments", "action": "switchOptionsView('environment')" },
+        { "id": "sys-helpers", "label": "Helper Scripts", "action": "switchOptionsView('helpers')" }
     ],
     "parser": [
-        { "id": "px-chain",      "label": "Main Chain",         "action": "switchParserView('main')" },
-        { "id": "px-extraction", "label": "Extraction Log",     "action": "switchParserView('extraction')" },
-        { "id": "px-bench",      "label": "Benchmarking",       "action": "switchParserView('benchmark')" }
+        { "id": "px-chain", "label": "Main Chain", "action": "switchParserView('main')" },
+        { "id": "px-extraction", "label": "Extraction Log", "action": "switchParserView('extraction')" },
+        { "id": "px-bench", "label": "Benchmarking", "action": "switchParserView('benchmark')" }
     ],
     "debug": [
-        { "id": "dbg-sentinel",  "label": "UI Sentinel",        "action": "switchDiagnosticsSubView('sentinel')" },
-        { "id": "dbg-audit",     "label": "Forensic Audit",     "action": "switchDiagnosticsSubView('audit')" },
-        { "id": "dbg-state",     "label": "AppState Dump",      "action": "switchDiagnosticsSubView('state')" }
+        { "id": "dbg-sentinel", "label": "UI Sentinel", "action": "switchDiagnosticsSubView('sentinel')" },
+        { "id": "dbg-audit", "label": "Forensic Audit", "action": "switchDiagnosticsSubView('audit')" },
+        { "id": "dbg-state", "label": "AppState Dump", "action": "switchDiagnosticsSubView('state')" }
     ],
     "tests": [
-        { "id": "test-suite",    "label": "Active Suite",       "action": "switchTestView('suite')" },
-        { "id": "test-scripts",  "label": "Test Scripts",       "action": "switchTestView('scripts')" },
-        { "id": "test-regress",  "label": "Regression",         "action": "switchTestView('regression')" }
+        { "id": "test-suite", "label": "Active Suite", "action": "switchTestView('suite')" },
+        { "id": "test-scripts", "label": "Test Scripts", "action": "switchTestView('scripts')" },
+        { "id": "test-regress", "label": "Regression", "action": "switchTestView('regression')" }
     ],
     "tools": [
-        { "id": "tool-set",      "label": "System Toolset",     "action": "switchToolsSubView('main')" },
-        { "id": "tool-workers",  "label": "Active Workers",     "action": "switchToolsSubView('workers')" },
-        { "id": "tool-pipelines","label": "AV Pipelines",       "action": "switchToolsSubView('pipelines')" }
+        { "id": "tool-set", "label": "System Toolset", "action": "switchToolsSubView('main')" },
+        { "id": "tool-workers", "label": "Active Workers", "action": "switchToolsSubView('workers')" },
+        { "id": "tool-pipelines", "label": "AV Pipelines", "action": "switchToolsSubView('pipelines')" }
     ],
     "reporting": [
-        { "id": "rep-overview",  "label": "Overview",           "action": "switchReportingView('dashboard')" },
-        { "id": "rep-perf",      "label": "Performance",        "action": "switchReportingView('performance')" },
-        { "id": "rep-errors",    "label": "Error Analytics",    "action": "switchReportingView('errors')" }
+        { "id": "rep-overview", "label": "Overview", "action": "switchReportingView('dashboard')" },
+        { "id": "rep-perf", "label": "Performance", "action": "switchReportingView('performance')" },
+        { "id": "rep-errors", "label": "Error Analytics", "action": "switchReportingView('errors')" }
     ],
     "logbuch": [
-        { "id": "log-project",   "label": "Projekt Log",        "action": "switchLogbookSubView('project')" },
-        { "id": "log-audit",     "label": "Audit History",      "action": "switchLogbookSubView('audit')" },
-        { "id": "log-feature",   "label": "Feature Status",     "action": "toggleFeatureStatus()" }
+        { "id": "log-project", "label": "Projekt Log", "action": "switchLogbookSubView('project')" },
+        { "id": "log-audit", "label": "Audit History", "action": "switchLogbookSubView('audit')" },
+        { "id": "log-feature", "label": "Feature Status", "action": "toggleFeatureStatus()" }
     ],
     "video": [
-        { "id": "vid-cinema",    "label": "Cinema Cinema",     "action": "switchMediaSubView('video')" },
-        { "id": "vid-accel",     "label": "HW Acceleration",    "action": "switchMediaSubView('visualizer')" },
-        { "id": "vid-stream",    "label": "Stream Relay",       "action": "switchOptionsView('transcoding')" }
+        { "id": "vid-cinema", "label": "Cinema Cinema", "action": "switchMediaSubView('video')" },
+        { "id": "vid-accel", "label": "HW Acceleration", "action": "switchMediaSubView('visualizer')" },
+        { "id": "vid-stream", "label": "Stream Relay", "action": "switchOptionsView('transcoding')" }
     ],
     "unsort": [
-        { "id": "unsort-probe",  "label": "Deep Probe Hub",     "action": "runHydrationAuditProbe()" },
-        { "id": "unsort-sync",   "label": "Force Database Sync", "action": "if(window.triggerMasterSync) window.triggerMasterSync()" },
-        { "id": "unsort-ui",     "label": "UI Refresh",         "action": "refreshViewportLayout()" },
-        { "id": "unsort-log",    "label": "System Log",         "action": "switchMainCategory('logbuch')" },
-        { "id": "unsort-audit",  "label": "System Audit",       "action": "openDiagnosticsTab('status')" }
+        { "id": "unsort-probe", "label": "Deep Probe Hub", "action": "runHydrationAuditProbe()" },
+        { "id": "unsort-sync", "label": "Force Database Sync", "action": "if(window.triggerMasterSync) window.triggerMasterSync()" },
+        { "id": "unsort-ui", "label": "UI Refresh", "action": "refreshViewportLayout()" },
+        { "id": "unsort-log", "label": "System Log", "action": "switchMainCategory('logbuch')" },
+        { "id": "unsort-audit", "label": "System Audit", "action": "openDiagnosticsTab('status')" }
     ]
 };
 
@@ -916,7 +907,7 @@ function updateGlobalSubNav(category) {
         console.info(`[UI-NAV] Falling back to local registry for ${registryKey}`);
         entries = SUB_NAV_REGISTRY[registryKey];
     }
-    
+
     if (!entries) {
         console.warn(`[UI-NAV] No entry map for ${normalizedCategory} (Key: ${registryKey}). Clearing sub-nav.`);
         container.innerHTML = '';
@@ -924,9 +915,9 @@ function updateGlobalSubNav(category) {
     }
 
     // [v1.37.29 Restoration] Track active pill state
-    const activeSubTab = localStorage.getItem('mwv_active_player_view') || 
-                        localStorage.getItem('mwv_active_library_subtab') || 
-                        'warteschlange';
+    const activeSubTab = localStorage.getItem('mwv_active_player_view') ||
+        localStorage.getItem('mwv_active_library_subtab') ||
+        'warteschlange';
 
     // Render logic with explicit lifecycle markers
     console.info(`[MWV-UI] Populating Sub-Nav for: ${normalizedCategory} | Pills: ${entries.length}`);
@@ -999,14 +990,14 @@ function switchDiagnosticsSubView(viewId) {
     // Advanced Mapping for Global Sidebar (v1.37.08 - Hydration & Item Track)
     if (viewId === 'hydration' || viewId === 'item-track') {
         applyDiagnosticsSidebarState(true);
-        
+
         // Toggle Panes
         const hydrationPane = document.getElementById('diag-pane-hydration');
         const itemTrackPane = document.getElementById('diag-pane-item-track');
-        
+
         if (hydrationPane) hydrationPane.style.display = (viewId === 'hydration') ? 'block' : 'none';
         if (itemTrackPane) itemTrackPane.style.display = (viewId === 'item-track') ? 'block' : 'none';
-        
+
         // Initialize view
         if (viewId === 'hydration' && typeof renderLogicAuditSummary === 'function') {
             renderLogicAuditSummary();
@@ -1014,7 +1005,7 @@ function switchDiagnosticsSubView(viewId) {
         if (viewId === 'item-track' && typeof renderItemTrackTab === 'function') {
             renderItemTrackTab();
         }
-        
+
         // Update tab buttons (in case called from elsewhere)
         document.querySelectorAll('#global-diagnostics-sidebar .side-reiter').forEach(el => {
             el.classList.toggle('active', el.id === 'reiter-' + viewId);
@@ -1026,7 +1017,7 @@ function switchDiagnosticsSubView(viewId) {
                 el.style.color = 'rgba(255,255,255,0.5)';
             }
         });
-        
+
         return;
     }
 
@@ -1040,7 +1031,7 @@ function switchDiagnosticsSubView(viewId) {
         syncGlobalDiagnosticsNav(viewId);
         applyDiagnosticsSidebarState(true);
         switchTab('options', null, () => {
-             if (typeof switchOptionsView === 'function') switchOptionsView('recovery');
+            if (typeof switchOptionsView === 'function') switchOptionsView('recovery');
         });
         return;
     }
@@ -1463,33 +1454,33 @@ window.addEventListener('DOMContentLoaded', async () => {
         const body = document.body;
         const pillNav = document.getElementById('sub-nav-container');
         const isHidden = body.classList.contains('mwv-hide-subnav');
-        
+
         if (!isHidden && pillNav && pillNav.children.length === 0) {
             console.warn("[UI-GUARDIAN] Sub-nav is empty but visible. Forcing Re-hydration...");
             updateGlobalSubNav(currentMainCategory || 'audio');
         }
     }, 3000);
 });
- 
- /**
-  * [v1.41.141] EMERGENCY RECOVERY: FORCE LIFE
-  * Brute-forces visibility onto the GUI by stripping blackout classes and injecting life markers.
-  */
- window.forceLife = function() {
-     console.warn(">>> [EMERGENCY] forceLife() triggered. Brute-forcing visibility...");
-     
-     // 1. Show Life-Sign Belt
-     const lifeSign = document.getElementById('emergency-life-sign');
-     if (lifeSign) lifeSign.style.display = 'block';
- 
-     // 2. Strip Blackout Classes
-     document.body.classList.remove('mwv-hide-header', 'mwv-hide-subnav', 'mwv-hide-footer', 'mwv-hide-sidebar', 'mwv-hide-sub-menu');
-     document.body.style.opacity = '1';
- 
-     // 3. Force-Paint Viewport
-     const viewport = document.querySelector('.main-viewport');
-     if (viewport) {
-         viewport.innerHTML = `
+
+/**
+ * [v1.41.141] EMERGENCY RECOVERY: FORCE LIFE
+ * Brute-forces visibility onto the GUI by stripping blackout classes and injecting life markers.
+ */
+window.forceLife = function () {
+    console.warn(">>> [EMERGENCY] forceLife() triggered. Brute-forcing visibility...");
+
+    // 1. Show Life-Sign Belt
+    const lifeSign = document.getElementById('emergency-life-sign');
+    if (lifeSign) lifeSign.style.display = 'block';
+
+    // 2. Strip Blackout Classes
+    document.body.classList.remove('mwv-hide-header', 'mwv-hide-subnav', 'mwv-hide-footer', 'mwv-hide-sidebar', 'mwv-hide-sub-menu');
+    document.body.style.opacity = '1';
+
+    // 3. Force-Paint Viewport
+    const viewport = document.querySelector('.main-viewport');
+    if (viewport) {
+        viewport.innerHTML = `
              <div style="position: absolute; inset: 0; background: #050508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999;">
                  <div style="font-size: 48px; margin-bottom: 20px;">⚡</div>
                  <h1 style="color: #ff3366; font-weight: 900; letter-spacing: 5px; text-transform: uppercase;">Life Detected</h1>
@@ -1500,18 +1491,18 @@ window.addEventListener('DOMContentLoaded', async () => {
                  <button onclick="switchTab('multimedia')" class="tab-btn active" style="padding: 12px 30px; background: #007aff; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">NEUSTART (SYNC)</button>
              </div>
          `;
-     }
- 
-     // 4. Trace the recovery
-     if (typeof mwv_trace === 'function') mwv_trace('EMERGENCY', 'FORCE-LIFE-ACTIVE');
-     if (typeof showToast === 'function') showToast("UI Visibility Forced", "warn");
- };
- 
- window.dumpNavRegistry = function() {
-     console.table(SUB_NAV_REGISTRY);
- };
- 
- // ==========================================
+    }
+
+    // 4. Trace the recovery
+    if (typeof mwv_trace === 'function') mwv_trace('EMERGENCY', 'FORCE-LIFE-ACTIVE');
+    if (typeof showToast === 'function') showToast("UI Visibility Forced", "warn");
+};
+
+window.dumpNavRegistry = function () {
+    console.table(SUB_NAV_REGISTRY);
+};
+
+// ==========================================
 // FRAGMENT HYDRATION AUDITOR (v1.37.46)
 // ==========================================
 
@@ -1529,7 +1520,7 @@ const FRAGMENT_HYDRATION_REGISTRY = {
     'menus': { id: 'context-menu-placeholder', path: 'fragments/context_menu.html', status: 'pending', time: 0 }
 };
 
-window.auditFragmentHydration = function(name, status, details = '') {
+window.auditFragmentHydration = function (name, status, details = '') {
     const entry = FRAGMENT_HYDRATION_REGISTRY[name];
     if (!entry) {
         // Dynamic registration for unknown fragments
@@ -1566,9 +1557,9 @@ window.auditFragmentHydration = function(name, status, details = '') {
 /**
  * Initializes the Forensic 7++ State on Boot (v1.38.10)
  */
-window.initForensicUI = function() {
+window.initForensicUI = function () {
     const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
-    
+
     // 1. Apply Elite HUD if enabled
     if (config.elite_hud_enabled) {
         document.body.classList.add('forensic-elite');
@@ -1581,7 +1572,7 @@ window.initForensicUI = function() {
         console.log("[FORENSIC] LOCKDOWN: Hiding technical interfaces.");
         const techControls = document.getElementById('footer-technical-controls');
         if (techControls) techControls.style.display = 'none';
-        
+
         const pulsarIcon = document.getElementById('footer-pulsar-icon');
         if (pulsarIcon) pulsarIcon.style.display = 'none';
     }
@@ -1598,7 +1589,7 @@ window.initForensicUI = function() {
 /**
  * Renders the Hydration Matrix for forensic audit (v1.38.10)
  */
-window.renderHydrationMatrix = function() {
+window.renderHydrationMatrix = function () {
     const matrix = document.getElementById('hydration-fragment-matrix');
     const summary = document.getElementById('hydration-audit-summary');
     const counter = document.getElementById('hydration-audit-counter');
@@ -1646,12 +1637,12 @@ window.renderHydrationMatrix = function() {
 /**
  * Toggles the Forensic Probe Data Flow (v1.38.10)
  */
-window.toggleProbeFlow = function() {
+window.toggleProbeFlow = function () {
     if (!window.CONFIG || !window.CONFIG.ui_settings) return;
-    
+
     window.CONFIG.ui_settings.probe_data_flow_enabled = !window.CONFIG.ui_settings.probe_data_flow_enabled;
     const isActive = window.CONFIG.ui_settings.probe_data_flow_enabled;
-    
+
     const btn = document.getElementById('footer-btn-probe-flow');
     if (btn) {
         btn.classList.toggle('active', isActive);
@@ -1673,7 +1664,7 @@ window.toggleProbeFlow = function() {
  */
 window.addEventListener('load', async () => {
     console.info("[UI-INIT] UI Orchestration Layer Booting...");
-    
+
     setTimeout(window.initForensicUI, 500);
 
     // 1. Sync Base State
@@ -1682,13 +1673,13 @@ window.addEventListener('load', async () => {
 
     // 2. Initial Visibility Refresh (Immediate Fallback)
     if (typeof refreshUIVisibility === 'function') refreshUIVisibility();
-    
+
     // 1. Sync Base State (Redundancy check removed)
 
     // 2. Hydrate Sub-Navigation (Contextual Level 2)
     console.log(`[UI-INIT] Restoring Level 2 Context for: ${currentMainCategory}...`);
     updateGlobalSubNav(currentMainCategory);
-    
+
     // Safety check for race conditions during fragment loading
     setTimeout(() => {
         const pillNav = document.getElementById('sub-nav-container');
@@ -1726,15 +1717,15 @@ window.addEventListener('load', async () => {
         const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
         sidebarVisible = config.sidebar_visible || false;
     }
-    
+
     if (typeof applySidebarState === 'function') applySidebarState();
-    
+
     // 6. Initialize Splitters
     if (typeof initAllSplitters === 'function') initAllSplitters();
 
     // 7. Initial Viewport Pass
     if (typeof refreshViewportLayout === 'function') refreshViewportLayout();
-    
+
     window.__mwv_ui_nav_loaded = true;
     console.info("[UI-INIT] UI Orchestration Layer Ready.");
 });
@@ -1811,14 +1802,14 @@ async function renderBootTimeline() {
     try {
         const report = await eel.get_startup_report()();
         const phases = report.phases || [];
-        
+
         if (phases.length === 0) {
             container.innerHTML = '<div style="font-size: 8px; opacity: 0.4;">NO BOOT DATA AVAILABLE</div>';
             return;
         }
 
         const maxDuration = Math.max(...phases.map(p => p.duration || 0.1));
-        
+
         container.innerHTML = phases.map(p => {
             const width = Math.max(5, (p.duration / maxDuration) * 100);
             const color = p.duration > 1.0 ? '#ff3366' : (p.duration > 0.3 ? '#ff9500' : '#00ffcc');
@@ -1839,7 +1830,7 @@ async function renderBootTimeline() {
         if (auditContainer && window.UISentinel) {
             const audit = window.UISentinel.getAuditReport();
             const checks = window.UISentinel.checks;
-            
+
             auditContainer.innerHTML = checks.map(c => {
                 const res = audit[c.id] || { exists: false, visible: false };
                 const dotColor = res.exists ? (res.visible ? '#00ffcc' : '#ff9500') : '#ff3366';
@@ -1875,7 +1866,7 @@ const UISentinel = {
 
     audit: {},
 
-    validate: function() {
+    validate: function () {
         console.log(">>> [Sentinel] Performing Integrity Audit...");
         this.checks.forEach(check => {
             const el = document.getElementById(check.id);
@@ -1884,7 +1875,7 @@ const UISentinel = {
             if (exists) {
                 const style = window.getComputedStyle(el);
                 visible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-                
+
                 if (check.critical && !visible && window.__mwv_ui_nav_loaded) {
                     console.warn(`[Sentinel] CRITICAL FIX: Restoring visibility for ${check.label} (#${check.id})`);
                     el.style.setProperty('display', 'flex', 'important');
@@ -1899,14 +1890,14 @@ const UISentinel = {
                 }
             }
         });
-        
+
         if (typeof renderBootTimeline === 'function') {
             const bootPane = document.getElementById('diag-pane-boot');
             if (bootPane && bootPane.style.display !== 'none') renderBootTimeline();
         }
     },
 
-    getAuditReport: function() {
+    getAuditReport: function () {
         return this.audit;
     }
 };
@@ -1929,16 +1920,16 @@ window.renderBootTimeline = renderBootTimeline;
  * Outputs the current Level 2 sub-navigation state to the console.
  * Fulfills the "ohne selenium ... mit domm" requirement.
  */
-window.dumpNavDom = function() {
+window.dumpNavDom = function () {
     const container = document.getElementById('sub-nav-container');
     if (!container) return "DOM_ERROR: #sub-nav-container missing.";
-    
+
     const pills = Array.from(container.children).map(c => ({
         id: c.id,
         label: c.innerText.trim(),
         active: c.classList.contains('active')
     }));
-    
+
     console.table(pills);
     const report = {
         category: currentMainCategory,

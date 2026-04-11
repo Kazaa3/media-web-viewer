@@ -29,6 +29,9 @@ const WindowManager = {
         if (typeof window.auditFragmentHydration === 'function') {
             window.auditFragmentHydration(name, 'pending', config.fragmentPath || 'No Fragment');
         }
+        if (typeof mwv_trace === 'function') {
+            mwv_trace('WM', 'REGISTER', { name, fragmentId: config.fragmentId });
+        }
     },
 
     /**
@@ -51,6 +54,10 @@ const WindowManager = {
         // 0. Update transition state
         document.body.style.cursor = 'wait';
         this.updateStatus(name, 'hydrating');
+        
+        if (typeof mwv_trace === 'function') {
+            mwv_trace('WM', 'ACTIVATE-START', { name, force });
+        }
 
         try {
             // [v1.44] FORENSIC STAGE REDIRECTION

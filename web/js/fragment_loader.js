@@ -165,6 +165,10 @@ const FragmentLoader = {
                 document.head.removeChild(newScript);
             });
 
+            if (typeof mwv_trace === 'function') {
+                mwv_trace('FRAGMENT', 'EXECUTION-COMPLETE', { path: fragmentPath, targetId });
+            }
+
             // Trigger translations for the new content
             if (typeof initTranslations === 'function') {
                 initTranslations();
