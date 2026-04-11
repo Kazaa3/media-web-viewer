@@ -53,13 +53,16 @@ const FragmentLoader = {
         try {
             // [v1.37.47 Audit Bridge]
             const fragName = fragmentPath.split('/').pop().replace('.html', '');
+            
+            // --- v1.41.160 WILL_SPAWN Event ---
             if (typeof window.auditFragmentHydration === 'function') {
-                window.auditFragmentHydration(fragName, 'loading', fragmentPath);
+                window.auditFragmentHydration(fragName, 'will_spawn', fragmentPath);
             }
 
             console.log(`[FragmentLoader] Loading fragment: ${fragmentPath}`);
             let html;
-
+            
+            // ... (rest of loading logic)
             if (this.cache.has(fragmentPath)) {
                 html = this.cache.get(fragmentPath);
             } else {
@@ -94,7 +97,6 @@ const FragmentLoader = {
             
             // [v1.37.47 Audit Bridge Success]
             if (typeof window.auditFragmentHydration === 'function') {
-                const fragName = fragmentPath.split('/').pop().replace('.html', '');
                 window.auditFragmentHydration(fragName, 'success');
             }
 
@@ -151,12 +153,43 @@ const FragmentLoader = {
     },
 
     /**
+     * Localized Visual Integrity Test (v1.41.160)
+     * Hard-writes integrity info into a specific container.
+     */
+    injectLocalizedIntegrityTest(targetId) {
+        const container = document.getElementById(targetId);
+        if (!container) return;
+        
+        console.warn(`[DIAGNOSTICS] Injecting Localized Integrity Test into #${targetId}`);
+        
+        container.style.position = 'relative';
+        container.innerHTML = `
+            <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,255,153,0.1); border:2px dashed #00ff99; box-sizing:border-box; color:#00ff99; font-family:'JetBrains Mono', monospace; padding:20px; text-align:center;">
+                <div style="font-size:24px; font-weight:900; margin-bottom:10px;">LOCAL INTEGRITY OK</div>
+                <div style="font-size:10px; opacity:0.7; letter-spacing:1px; margin-bottom:20px;">CONTAINER: #${targetId}</div>
+                <div style="font-size:14px; font-weight:700; background:rgba(0,0,0,0.4); padding:5px 15px; border-radius:30px;">
+                    ${new Date().toLocaleTimeString()}
+                </div>
+                <button onclick="this.parentElement.remove(); document.getElementById('${targetId}').dataset.loaded='false';" 
+                    style="margin-top:20px; background:transparent; border:1px solid #00ff99; color:#00ff99; padding:5px 15px; border-radius:4px; font-size:10px; cursor:pointer;">
+                    CLEAR TEST
+                </button>
+            </div>
+        `;
+    },
+
+    /**
      * Error Feedback (v1.35)
      * Provides visual feedback in the viewport if a fragment cannot be reached.
      */
     error(targetId, fragmentPath, err) {
         console.error(`[FragmentLoader] Failed to load ${fragmentPath}:`, err);
         if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'ERROR', { path: fragmentPath, error: err.message || err });
+        
+        const fragName = fragmentPath.split('/').pop().replace('.html', '');
+        if (typeof window.auditFragmentHydration === 'function') {
+            window.auditFragmentHydration(fragName, 'error', err.message);
+        }
         
         // --- v1.35 Safety: Release Global Navigation Lock ---
         if (typeof isNavigating !== 'undefined') {
