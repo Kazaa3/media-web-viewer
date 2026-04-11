@@ -1,0 +1,77 @@
+<!-- ===================== ATOMIC AUDIO ENGINE (v1.45.150) ===================== -->
+<div id="audio-player-atomic-shell" class="player-atomic-shell" style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 30px; background: radial-gradient(circle at top left, var(--bg-secondary) 0%, var(--bg-primary) 70%); overflow-y: auto;">
+    
+    <!-- HEADER -->
+    <div class="player-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin:0; color: var(--text-primary); font-size: 1.5em; font-weight: 900; letter-spacing: -1px; display: flex; align-items: center; gap: 12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span>Sonic Core</span>
+            </h2>
+            <div id="audio-codec-badge" class="hud-pill" style="background: var(--accent-hover); color: white; border: none; font-size: 10px; font-weight: 800; text-transform: uppercase;">AWAITING SIGNAL</div>
+        </div>
+
+        <div class="engine-selector-mini" style="display: flex; gap: 4px; border: 1px solid var(--border-color); padding: 4px; border-radius: var(--radius-pill); background: var(--bg-sidebar);">
+            <button class="sub-tab-btn active">Web Audio</button>
+            <button class="sub-tab-btn">DSD Native</button>
+        </div>
+    </div>
+
+    <!-- MAIN WAVEFORM STAGE -->
+    <div id="audio-stage-wrapper" class="glass-card" style="flex: 1; min-height: 300px; border-radius: 24px; margin-bottom: 30px; position: relative; display: flex; flex-direction: column; overflow: hidden; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); box-shadow: 0 40px 100px rgba(0,0,0,0.4);">
+        
+        <!-- Waveform Container -->
+        <div id="waveform-main-container" style="flex: 1; position: relative; padding: 40px;">
+             <div id="waveform" style="width: 100%; height: 100%;"></div>
+             
+             <!-- Artwork Overlay -->
+             <div id="audio-large-art" style="position: absolute; top: 40px; right: 40px; width: 180px; height: 180px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border: 2px solid rgba(255,255,255,0.1); background: #111;">
+                 <img id="audio-art-img" src="/cover/undefined" style="width: 100%; height: 100%; object-fit: cover;">
+             </div>
+        </div>
+
+        <!-- Analyzer Visualizer -->
+        <div id="audio-analyzer-strip" style="height: 100px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border-color); display: flex; align-items: flex-end; padding: 0 24px; gap: 2px;">
+             <!-- Spectrum bars injected here -->
+        </div>
+    </div>
+
+    <!-- METADATA & TELEMETRY -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px;">
+        <div class="glass-card" style="padding: 24px; border-radius: 20px;">
+            <div id="audio-track-title" style="font-size: 1.4em; font-weight: 900; color: var(--text-primary); margin-bottom: 4px;">Select Asset</div>
+            <div id="audio-track-artist" style="font-size: 1.15em; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px;">Forensic Scan Required</div>
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <div class="hud-pill" style="font-size: 11px; font-weight: 800;">ALBUM: <span id="audio-meta-album" class="blue">--</span></div>
+                <div class="hud-pill" style="font-size: 11px; font-weight: 800;">GENRE: <span id="audio-meta-genre" class="orange">--</span></div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding: 24px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div id="audio-bitrate-display" style="font-size: 24px; font-weight: 900; color: var(--accent-color);">-- kbps</div>
+            <div style="font-size: 9px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Stream Efficiency</div>
+        </div>
+    </div>
+
+    <!-- ATOMIC CONTROLS -->
+    <div id="audio-atomic-controls" class="glass-card" style="padding: 20px 30px; border-radius: var(--radius-pill); display: flex; align-items: center; gap: 20px; backdrop-filter: blur(20px); position: sticky; bottom: 0;">
+        <button id="audio-play-pause" class="hud-btn-prime" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: var(--text-secondary);">
+                <span id="audio-time-current">00:00</span>
+                <span id="audio-time-total">00:00</span>
+            </div>
+            <div id="audio-progress-bar" style="width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; cursor: pointer; position: relative;">
+                <div id="audio-progress-fill" style="width: 0%; height: 100%; background: var(--accent-color); border-radius: 3px; box-shadow: 0 0 15px var(--accent-color);"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <button class="tab-btn" title="Toggle Lyrics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            <button class="tab-btn" title="Toggle EQ"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg></button>
+        </div>
+    </div>
+</div>
