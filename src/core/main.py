@@ -4192,7 +4192,7 @@ def get_db_info():
 
 
 
-def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, search: str = "", genre: str = "all", year: str = "all") -> Tuple[List[Dict], Dict[str, Any]]:
+def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, search: str = "", genre: str = "all", year: str = "all", active_branch: str = None) -> Tuple[List[Dict], Dict[str, Any]]:
     """
     @brief Unified category mapping and filtering (v1.35.99 Logic Audit).
     @return Tuple of (filtered_list, audit_metadata)
@@ -4207,6 +4207,14 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         displayed_cats = ["all", "audio", "video", "pictures", "disk_images", "documents"]
 
     allowed_internal_cats = get_allowed_internal_cats(displayed_cats)
+    
+    # [V1.45.142] ARCHITECTURAL BRANCH CONSTRAINTS
+    # Resolve which categories are strictly supported by the active branch
+    branch_registry = GLOBAL_CONFIG.get("branch_architecture_registry", {})
+    supported_by_branch = branch_registry.get(active_branch) if active_branch else None
+    
+    if supported_by_branch:
+        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {active_branch.toUpperCase()}")
 
     filtered = []
     
@@ -4241,6 +4249,28 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
         if not force_raw:
             cat = str(item.get('category', 'Unbekannt')).lower()
             
+            # [V1.45.142] ARCHITECTURAL BRANCH ENFORCEMENT
+            # If a branch is active, we check if this item's capability is supported.
+            if supported_by_branch and "all" not in supported_by_branch:
+                # We check both the canonical category (e.g. 'audio') and granular stages (e.g. 'audio_native')
+                # For now, we perform a smart-match. 
+                # If cat is 'audio', we try to see if 'audio_native' or 'audio_transcode' are in supported_by_branch.
+                
+                # Check for granular match first (if item has it)
+                item_stage = item.get('capability_stage') or cat
+                
+                is_supported = (cat in supported_by_branch) or (item_stage in supported_by_branch)
+                
+                # Special logic for 'audio' -> matches 'audio_native' or 'audio_transcode'
+                if not is_supported and cat == 'audio':
+                    is_supported = 'audio_native' in supported_by_branch or 'audio_transcode' in supported_by_branch
+                if not is_supported and cat == 'video':
+                    is_supported = any(v in supported_by_branch for v in ['video_native', 'video_hd', 'video_pal', 'video_iso'])
+
+                if not is_supported:
+                    dropped_reasons["branch_mismatch"] = dropped_reasons.get("branch_mismatch", 0) + 1
+                    continue
+
             # [Refine] 'multimedia'-> Map to 'video' (v1.41.00 Final)
             if cat == 'multimedia': 
                 cat = 'video'
@@ -4501,12 +4531,12 @@ def force_sync_all():
 
 
 @eel.expose
-def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name", force_raw: bool = False) -> Dict[str, Any]:
+def get_library_filtered(search: str = "", genre: str = "all", year: str = "all", sort_by: str = "name", force_raw: bool = False, active_branch: str = None) -> Dict[str, Any]:
     """
     @brief Advanced filtering for the media library.
     """
     all_media = db.get_all_media()
-    filtered, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, search=search, genre=genre, year=year)
+    filtered, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, search=search, genre=genre, year=year, active_branch=active_branch)
 
     # Sorting
     if sort_by == "year":
