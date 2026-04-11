@@ -227,10 +227,31 @@ document.addEventListener('keydown', async (e) => {
 });
 
 /**
- * Application Boot Notification (v1.41.167 Cleanup)
+ * Application Boot Notification (v1.42 Evolution Path)
  */
 window.addEventListener('DOMContentLoaded', async () => {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'DOM-READY');
+    
+    // --- [v1.42] GLOBAL EVOLUTION CHECK ---
+    try {
+        if (typeof eel !== 'undefined' && typeof eel.get_global_config === 'function') {
+            const config = await eel.get_global_config()();
+            window.GLOBAL_CONFIG = config;
+            
+            if (config.ui_evolution_mode === 'rebuild') {
+                console.warn(">>> [ORCHESTRATOR] EVOLUTION MODE: REBUILD ACTIVE <<<");
+                if (typeof FragmentLoader !== 'undefined') {
+                    // Level 1: Master Header Rebuild
+                    FragmentLoader.load('master-header-container', 'fragments/rebuild/menu_l1.html');
+                    // Level 2: Sub-Nav Neck Rebuild
+                    FragmentLoader.load('sub-nav-container', 'fragments/rebuild/menu_l2.html');
+                }
+            }
+        }
+    } catch (e) {
+        console.error("[ORCHESTRATOR] Evolution Handshake Failed:", e);
+    }
+
     console.log("Core Orchestrator: System checks passing. Initializing UI fragments...");
 
     try {
