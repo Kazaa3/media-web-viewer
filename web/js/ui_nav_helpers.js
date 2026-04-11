@@ -21,7 +21,7 @@ window.mwv_init_actions = {
         }
     },
     'playlist': () => { if (typeof renderPlaylist === 'function') renderPlaylist(); },
-    'library': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
+    'multimedia': () => { if (typeof renderLibrary === 'function') renderLibrary(); },
     'video': () => { if (typeof renderVideoQueue === 'function') renderVideoQueue(); },
     'file': () => { if (typeof fbNavigate === 'function') fbNavigate(typeof fbCurrentPath !== 'undefined' ? fbCurrentPath : '/'); },
     'edit': () => { if (typeof initEdit === 'function') initEdit(); },
@@ -31,7 +31,7 @@ window.mwv_init_actions = {
         if (typeof switchOptionsView === 'function') switchOptionsView('general');
         if (typeof loadDebugFlags === 'function') loadDebugFlags();
     },
-    'database': () => { if (typeof renderDatabaseView === 'function') renderDatabaseView(); },
+    'extended': () => { if (typeof renderDatabaseView === 'function') renderDatabaseView(); },
     'cinema': () => { if (typeof initCinemaView === 'function') initCinemaView(); },
     'debug': () => { toggleDiagnosticsSidebar(true); switchDiagnosticsSidebarTab('debug-db'); },
     'reporting': () => { if (typeof updateAnalyticsDashboard === 'function') updateAnalyticsDashboard(); },
@@ -43,7 +43,7 @@ window.mwv_init_actions = {
 // Global state variables
 let librarySubTab = 'coverflow';
 let librarySubFilter = 'all';
-let currentMainCategory = 'media';
+let currentMainCategory = 'audio';
 
 window.__mwv_ui_nav_loaded = true;
 

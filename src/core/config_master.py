@@ -356,14 +356,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                 {"id": "status", "label": "STATUS", "icon": "sparkles", "action": "status", "color": "#00ffcc"}
             ],
             "level_2": {
-                "media": [
+                "audio": [
                     {"id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')"},
                     {"id": "playlist", "label": "Playlist", "action": "switchPlayerView('playlist')"},
                     {"id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')"}
                 ],
-                "library": [
-                    {"id": "coverflow", "label": "Gallery", "action": "setLibraryLayout('coverflow')"},
-                    {"id": "table", "label": "Technical List", "action": "setLibraryLayout('table')"}
+                "multimedia": [
+                    {"id": "coverflow", "label": "Gallery", "action": "let librarySubTab = localStorage.getItem('mwv_multimedia_sub_tab') || 'coverflow'; switchLibrarySubTab(librarySubTab);"},
+                    {"id": "table", "label": "Technical List", "action": "switchLibrarySubTab('table')"}
                 ],
                 "status": [
                     {"id": "health", "label": "Health", "action": "switchDiagnosticsTab('health')"},
