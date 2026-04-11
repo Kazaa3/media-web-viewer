@@ -227,7 +227,7 @@ document.addEventListener('keydown', async (e) => {
 });
 
 /**
- * Application Boot Notification
+ * Application Boot Notification (v1.41.167 Cleanup)
  */
 window.addEventListener('DOMContentLoaded', async () => {
     if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'DOM-READY');
@@ -239,13 +239,108 @@ window.addEventListener('DOMContentLoaded', async () => {
         let fragmentsNeeded = 4;
         let fragmentsLoaded = 0;
 
+        const onFragmentDone = (name) => {
+            fragmentsLoaded++;
+            if (typeof window.auditFragmentHydration === 'function') {
+                window.auditFragmentHydration(name, 'success');
+            }
+            if (fragmentsLoaded === fragmentsNeeded) mwv_finalize_boot();
+        };
+
+        const bootStartTime = Date.now();
+        if (typeof FragmentLoader?.load === 'function') {
+            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals-res'));
+            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
+            FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
+            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('diags'));
+        } else {
+            mwv_finalize_boot();
+        }
+
+        async function mwv_finalize_boot() {
+            console.log("Orchestrator: Finalizing boot sequence...");
+
+            // 1. Backend Handshake (Critical for Watchdog)
+            if (typeof eel !== "undefined" && typeof eel.report_spawn === 'function') {
+                eel.report_spawn()(() => console.log("DOM: Backend sync complete."));
+            }
+
+            // 2. Initialize Shared Helpers
+            if (typeof initDomWatchdog === 'function') initDomWatchdog();
+            if (typeof initTranslations === 'function') initTranslations();
+            if (typeof initAllSplitters === 'function') initAllSplitters();
+
+            // 3. UI Start State (v1.40 Orchestrated)
+            const startTab = window.CONFIG?.start_tab || 'player';
+            const startCategory = (startTab === 'library') ? 'library' : 
+                                 (startTab === 'database') ? 'database' : 
+                                 (startTab === 'edit') ? 'edit' : 'media';
+
+            console.log(`UI: Booting into tab: ${startTab} (Category: ${startCategory})`);
+            
+            if (window.MWV_UI) {
+                window.MWV_UI.apply(startCategory);
+            }
+
+            const WM = window.WindowManager;
+            if (WM && typeof WM.activate === 'function') {
+                WM.activate(startTab);
+            } else if (typeof switchTab === 'function') {
+                switchTab(startTab);
+            }
+
+            // 4. Data Sync
+            console.log("Data: Triggering library sync...");
+            if (typeof loadLibrary === 'function') await loadLibrary();
+            if (typeof loadEditItems === 'function') await loadEditItems();
+
+            // Start stats polling
+            if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
+                setInterval(() => {
+                    if (typeof window.StatsOverlay.updateStats === 'function') {
+                        const activeTab = localStorage.getItem('mwv_active_tab');
+                        if (activeTab === 'video' || window.StatsOverlay.isVisible) {
+                            window.StatsOverlay.updateStats();
+                        }
+                    }
+                }, 2000);
+            }
+            // 5. Start Services
+            if (typeof startHeartbeat === 'function') startHeartbeat();
+        }
+
+        // 3. Fetch and Display Startup Info (Atomic Bridge v1.41.107)
+        setTimeout(async () => {
+            if (typeof eel !== 'undefined' && typeof eel.get_startup_info === 'function') {
+                try {
+                    const info = await eel.get_startup_info()();
+                    if (info) {
+                        const pidEl = document.getElementById('diag-pid');
+                        const bootEl = document.getElementById('diag-boot');
+                        const upEl = document.getElementById('diag-up');
+                        
+                        if (pidEl) pidEl.innerText = info.pid;
+                        if (bootEl) bootEl.innerText = `${info.boot_duration_sec}s`;
+                        if (upEl && info.uptime_str) upEl.innerText = info.uptime_str;
+                        
+                        console.log(`[HUD] Telemetry synchronized. Boot: ${info.boot_duration_sec}s`);
+                    }
+                } catch (e) { console.warn("Failed to get startup info:", e); }
+            }
+        }, 300);
+
+    } catch (e) {
+        console.error("CRITICAL: Application boot sequence failed:", e);
+    }
+});
+
 /**
- * Atomic Shell Registry (v1.41.107/167)
+ * Atomic Shell Registry (v1.41.167)
  * Immediate execution to prevent race conditions during boot.
  */
 (() => {
     if (typeof WindowManager === 'undefined') {
-        console.error("[BOOT-AUDIT] CRITICAL: WindowManager NOT FOUND. UI Tracking compromised.");
+        console.warn("[BOOT-AUDIT] WindowManager NOT FOUND at immediate execution phase.");
         return;
     }
 
@@ -347,106 +442,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 
     console.info(`[BOOT-AUDIT] Forensic Registration Complete.`);
-
-    // Shared background fragments (Immediate parallel load)
-    if (typeof FragmentLoader !== 'undefined') {
-        FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html');
-        FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
-        FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
-    }
-        const onFragmentDone = (name) => {
-            fragmentsLoaded++;
-            if (typeof window.auditFragmentHydration === 'function') {
-                window.auditFragmentHydration(name, 'success');
-            }
-            if (fragmentsLoaded === fragmentsNeeded) mwv_finalize_boot();
-        };
-
-        const bootStartTime = Date.now();
-        if (typeof FragmentLoader?.load === 'function') {
-            FragmentLoader.load('modals-placeholder', 'fragments/modals_container.html', () => onFragmentDone('modals-res'));
-            FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html', () => onFragmentDone('icons'));
-            FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html', () => onFragmentDone('menus'));
-            FragmentLoader.load('diagnostics-overlay-container', 'fragments/diagnostics_sidebar.html', () => onFragmentDone('diags'));
-        } else {
-            mwv_finalize_boot();
-        }
-
-        async function mwv_finalize_boot() {
-            console.log("Orchestrator: Finalizing boot sequence...");
-
-            // 1. Backend Handshake (Critical for Watchdog)
-            if (typeof eel !== "undefined" && typeof eel.report_spawn === 'function') {
-                eel.report_spawn()(() => console.log("DOM: Backend sync complete."));
-            }
-
-            // 2. Initialize Shared Helpers
-            if (typeof initDomWatchdog === 'function') initDomWatchdog();
-            if (typeof initTranslations === 'function') initTranslations();
-            if (typeof initAllSplitters === 'function') initAllSplitters();
-
-            // 3. UI Start State (v1.40 Orchestrated)
-            const startTab = window.CONFIG?.start_tab || 'player';
-            const startCategory = (startTab === 'library') ? 'library' : 
-                                 (startTab === 'database') ? 'database' : 
-                                 (startTab === 'edit') ? 'edit' : 'media';
-
-            console.log(`UI: Booting into tab: ${startTab} (Category: ${startCategory})`);
-            
-            if (window.MWV_UI) {
-                window.MWV_UI.apply(startCategory);
-            }
-
-            if (typeof WM !== 'undefined' && typeof WM.activate === 'function') {
-                WM.activate(startTab);
-            } else if (typeof switchTab === 'function') {
-                switchTab(startTab);
-            }
-
-            // 4. Data Sync
-            console.log("Data: Triggering library sync...");
-            if (typeof loadLibrary === 'function') await loadLibrary();
-            if (typeof loadEditItems === 'function') await loadEditItems();
-
-            // Start stats polling
-            if (window.StatsOverlay && typeof window.StatsOverlay.init === 'function') {
-                setInterval(() => {
-                    if (typeof window.StatsOverlay.updateStats === 'function') {
-                        const activeTab = localStorage.getItem('mwv_active_tab');
-                        if (activeTab === 'video' || window.StatsOverlay.isVisible) {
-                            window.StatsOverlay.updateStats();
-                        }
-                    }
-                }, 2000);
-            }
-            // 5. Start Services
-            startHeartbeat();
-        }
-
-        // 3. Fetch and Display Startup Info (Atomic Bridge v1.41.107)
-        setTimeout(async () => {
-            if (typeof eel !== 'undefined' && typeof eel.get_startup_info === 'function') {
-                try {
-                    const info = await eel.get_startup_info()();
-                    if (info) {
-                        const pidEl = document.getElementById('diag-pid');
-                        const bootEl = document.getElementById('diag-boot');
-                        const upEl = document.getElementById('diag-up');
-                        
-                        if (pidEl) pidEl.innerText = info.pid;
-                        if (bootEl) bootEl.innerText = `${info.boot_duration_sec}s`;
-                        if (upEl && info.uptime_str) upEl.innerText = info.uptime_str;
-                        
-                        console.log(`[HUD] Telemetry synchronized. Boot: ${info.boot_duration_sec}s`);
-                    }
-                } catch (e) { console.warn("Failed to get startup info:", e); }
-            }
-        }, 300);
-
-    } catch (e) {
-        console.error("CRITICAL: Application boot sequence failed:", e);
-    }
-});
+})();
 
 /**
  * [TEST-SUITE] [DOM-PROBE]
