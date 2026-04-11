@@ -166,6 +166,18 @@ window.MWV_UI = (() => {
             technicalBtn.style.display = showTechnical ? 'flex' : 'none';
         }
 
+        const syncBtn = document.getElementById('header-btn-sync-anchor');
+        if (syncBtn) {
+            const showSync = !!(registry.config.enable_sync_anchor);
+            syncBtn.style.display = showSync ? 'flex' : 'none';
+        }
+
+        const footerHudBtn = document.getElementById('header-btn-footer-hud');
+        if (footerHudBtn) {
+            const showFooterHud = !!(registry.config.enable_footer_hud_cluster);
+            footerHudBtn.style.display = showFooterHud ? 'flex' : 'none';
+        }
+
         // --- Geometry Recalculation ---
         updateGeometry();
     }

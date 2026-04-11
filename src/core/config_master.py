@@ -348,6 +348,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_diagnostics_hud": True,      # GLOBAL: Sichtbarkeit des technischen HUDs im Header.
         "enable_dom_auditor": True,          # GLOBAL: Echtzeit-Integritätsprüfung (7-Point Audit).
         "enable_technical_hud": True,        # GLOBAL: Floating PID/BOOT/UP Pills im Header.
+        "enable_sync_anchor": True,          # GLOBAL: [DB|GUI] Sync-Metriken im Footer.
+        "enable_footer_hud_cluster": True,   # GLOBAL: Swiss FE/BE/DB LED Cluster im Footer.
         
         # --- GRANULAR UI FRAGMENT FLAGS ---
         "ui_fragments": {

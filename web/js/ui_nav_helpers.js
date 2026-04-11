@@ -194,6 +194,35 @@ function toggleDomAuditor(forceState = null) {
 }
 window.toggleDomAuditor = toggleDomAuditor;
 
+/**
+ * Toggles the Sync Anchor metrics (v1.41.153)
+ */
+function toggleSyncAnchor(forceState = null) {
+    const el = document.getElementById('footer-sync-anchor');
+    const btn = document.getElementById('header-btn-sync-anchor');
+    if (!el) return;
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (el.style.display === 'none');
+    el.style.display = isVisible ? 'inline-block' : 'none';
+    if (btn) btn.classList.toggle('active', isVisible);
+}
+window.toggleSyncAnchor = toggleSyncAnchor;
+
+/**
+ * Toggles the Swiss HUD Cluster (v1.41.153)
+ */
+function toggleFooterHUD(forceState = null) {
+    const clusters = document.querySelectorAll('#footer-hud-cluster, .footer-hud-cluster');
+    const btn = document.getElementById('header-btn-footer-hud');
+    if (clusters.length === 0) return;
+    
+    // Check first cluster for state
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (clusters[0].style.display === 'none');
+    clusters.forEach(c => c.style.display = isVisible ? 'flex' : 'none');
+    
+    if (btn) btn.classList.toggle('active', isVisible);
+}
+window.toggleFooterHUD = toggleFooterHUD;
+
 async function toggleDiagnosticsFlag(flagId) {
     switch (flagId) {
         case 'DIAG':
