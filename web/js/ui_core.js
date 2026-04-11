@@ -186,8 +186,31 @@ window.MWV_UI = (() => {
 
         const dbStatusBtn = document.getElementById('header-btn-db-status');
         if (dbStatusBtn) {
-            const showDbStatus = !!(registry.config.enable_footer_db_status);
+            const showDbStatus = !!(registry.config.ui_settings.enable_footer_db_status);
             dbStatusBtn.style.display = showDbStatus ? 'flex' : 'none';
+        }
+
+        // --- Granular Footer Sub-Settings (v1.41.158 Extension) ---
+        const footerSub = registry.config.ui_settings.footer_settings || {};
+
+        const versionEl = document.getElementById('mwv-footer-version');
+        if (versionEl) {
+            versionEl.style.display = (footerSub.show_version_info !== false) ? 'inline-block' : 'none';
+        }
+
+        const hydrEl = document.getElementById('hud-hydr');
+        if (hydrEl) {
+            hydrEl.style.display = (footerSub.show_hydration_labels !== false) ? 'flex' : 'none';
+        }
+
+        const resetBtn = document.getElementById('footer-btn-reset');
+        if (resetBtn) {
+            resetBtn.style.display = (footerSub.show_danger_zone !== false) ? 'inline-block' : 'none';
+        }
+
+        const syncStatusText = document.getElementById('sync-status');
+        if (syncStatusText) {
+            syncStatusText.style.display = (footerSub.show_sync_status !== false) ? 'inline-block' : 'none';
         }
 
         // --- Geometry Recalculation ---

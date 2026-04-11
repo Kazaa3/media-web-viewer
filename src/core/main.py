@@ -375,6 +375,14 @@ def set_ui_config_value(key: str, value: Any):
             GLOBAL_CONFIG["ui_settings"]["ui_fragments"][frag_key] = value
             log.info(f"[CONFIG] Fragment {frag_key} toggled: {value}")
             return True
+
+    # Check if it's a nested footer_settings toggle (v1.41.158 Extension)
+    if key.startswith("footer_settings."):
+        feat_key = key.split(".")[1]
+        if "ui_settings" in GLOBAL_CONFIG and "footer_settings" in GLOBAL_CONFIG["ui_settings"]:
+            GLOBAL_CONFIG["ui_settings"]["footer_settings"][feat_key] = value
+            log.info(f"[CONFIG] Granular Footer Feature {feat_key} toggled: {value}")
+            return True
             
     # Generic set
     return master_set(key, value)
@@ -384,14 +392,20 @@ def set_ui_config_value(key: str, value: Any):
 
 @eel.expose
 def get_footer_registry():
-    """ Returns the states of all footer-related diagnostic flags. """
+    """ Returns a merged dict of primary flat flags and granular footer sub-settings. """
     settings = GLOBAL_CONFIG.get("ui_settings", {})
-    footer_keys = [
+    
+    # 1. Primary Flat Flags
+    flat_keys = [
         "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
         "enable_sync_anchor", "enable_footer_hud_cluster", "enable_zen_mode",
         "enable_footer_db_status"
     ]
-    return {k: settings.get(k, False) for k in footer_keys}
+    resp = {k: settings.get(k, False) for k in flat_keys}
+    
+    # 2. Nested Granular Settings (v1.41.158)
+    resp.update(settings.get("footer_settings", {}))
+    return resp
 
 @eel.expose
 def set_footer_element_state(element_key: str, is_active: bool):

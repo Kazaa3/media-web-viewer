@@ -352,6 +352,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_footer_hud_cluster": True,   # GLOBAL: Swiss FE/BE/DB LED Cluster im Footer.
         "enable_zen_mode": True,             # GLOBAL: Zen Mode (Header/Footer hide) Toggle.
         "enable_footer_db_status": True,     # GLOBAL: DB Status & Hydration Cluster im Footer.
+
+        # --- GRANULAR FOOTER SUB-SETTINGS (v1.41.158 Extension) ---
+        "footer_settings": {
+            "show_version_info": True,       # Toggle: v1.41.x String
+            "show_sync_status": True,        # Toggle: "Synchronized" Text
+            "show_hydration_labels": True,   # Toggle: M/R/B buttons
+            "show_danger_zone": True         # Toggle: RESET button
+        },
         
         # --- GRANULAR UI FRAGMENT FLAGS ---
         "ui_fragments": {
