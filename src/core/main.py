@@ -153,9 +153,15 @@ def shutdown_backend():
     except Exception as e:
         log.error(f"[SHUTDOWN] Cleanup error: {e}")
     
-    log.warning("☢️ [BACKEND] EXECUTING os._exit(0). BYE.")
-    # Use os._exit to force immediate termination of all threads/gevent loops
-    os._exit(0)
+    log.warning("☢️ [BACKEND] PURGING ENVIRONMENT (os.killpg). BYE.")
+    # Use os.killpg to kill the entire process group (Launcher shell, etc.)
+    try:
+        import signal
+        os.killpg(os.getpgrp(), signal.SIGKILL)
+    except Exception as e:
+        log.error(f"[SHUTDOWN] Environment purge failed: {e}")
+        # Final fallback if killpg fails (e.g. not group leader)
+        os._exit(0)
 
 @eel.expose
 def get_category_master():

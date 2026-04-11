@@ -38,7 +38,7 @@ class ProcessController:
         # Specific patterns can be killed globally
         global_patterns = ["chromedriver", "playwright-browser"]
         # Generic patterns MUST be within project root (v1.35.98 - Added ffmpeg)
-        project_patterns = ["main.py", "chromium", "suite_", "eel", "node", "python", "ffmpeg", "ffprobe"]
+        project_patterns = ["main.py", "chromium", "suite_", "eel", "node", "python", "ffmpeg", "ffprobe", "sync_core", "bridge"]
         count = 0
         
         project_root_str = str(self.project_root).lower()
