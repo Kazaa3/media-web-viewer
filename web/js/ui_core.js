@@ -65,9 +65,16 @@ window.MWV_UI = (() => {
             console.log("[MWV-UI] Config loaded successfully.");
         } catch (e) {
             console.warn("[MWV-UI] Handshake stalled or failed, falling back to Safe Mode:", e.message);
-            registry.config = registry.config || window.CONFIG?.ui_settings || {
-                ui_visibility_matrix: { "media": { "master_header": true, "contextual_pill_nav": true, "footer_visible": true } },
-                force_sub_nav_visible: true // v1.41.08 Force sub-nav in safe-mode
+            registry.config = {
+                ui_visibility_matrix: { 
+                    "media": { "master_header": true, "contextual_pill_nav": true, "footer_visible": true },
+                    "status": { "master_header": true, "contextual_pill_nav": true, "footer_visible": true }
+                },
+                force_sub_nav_visible: true,
+                header_height: 48,
+                sub_nav_height: 35,
+                footer_height: 48,
+                sidebar_width: 250
             };
         }
 

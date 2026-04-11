@@ -799,8 +799,11 @@ const SUB_NAV_REGISTRY = {
         { "id": "vid-stream",    "label": "Stream Relay",       "action": "switchOptionsView('transcoding')" }
     ],
     "unsort": [
-        { "id": "unsort-probe",  "label": "Deep Probe",         "action": "runNuclearDiagnostics()" },
-        { "id": "unsort-audit",  "label": "System Audit",       "action": "runUiIntegrityCheck()" }
+        { "id": "unsort-probe",  "label": "Deep Probe Hub",     "action": "runHydrationAuditProbe()" },
+        { "id": "unsort-sync",   "label": "Force Database Sync", "action": "if(window.triggerMasterSync) window.triggerMasterSync()" },
+        { "id": "unsort-ui",     "label": "UI Refresh",         "action": "refreshViewportLayout()" },
+        { "id": "unsort-log",    "label": "System Log",         "action": "switchMainCategory('logbuch')" },
+        { "id": "unsort-audit",  "label": "System Audit",       "action": "openDiagnosticsTab('status')" }
     ]
 };
 
@@ -1392,8 +1395,49 @@ window.addEventListener('DOMContentLoaded', async () => {
             updateGlobalSubNav(currentMainCategory || 'media');
         }
     }, 3000);
-
-// ==========================================
+});
+ 
+ /**
+  * [v1.41.141] EMERGENCY RECOVERY: FORCE LIFE
+  * Brute-forces visibility onto the GUI by stripping blackout classes and injecting life markers.
+  */
+ window.forceLife = function() {
+     console.warn(">>> [EMERGENCY] forceLife() triggered. Brute-forcing visibility...");
+     
+     // 1. Show Life-Sign Belt
+     const lifeSign = document.getElementById('emergency-life-sign');
+     if (lifeSign) lifeSign.style.display = 'block';
+ 
+     // 2. Strip Blackout Classes
+     document.body.classList.remove('mwv-hide-header', 'mwv-hide-subnav', 'mwv-hide-footer', 'mwv-hide-sidebar', 'mwv-hide-sub-menu');
+     document.body.style.opacity = '1';
+ 
+     // 3. Force-Paint Viewport
+     const viewport = document.querySelector('.main-viewport');
+     if (viewport) {
+         viewport.innerHTML = `
+             <div style="position: absolute; inset: 0; background: #050508; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999;">
+                 <div style="font-size: 48px; margin-bottom: 20px;">⚡</div>
+                 <h1 style="color: #ff3366; font-weight: 900; letter-spacing: 5px; text-transform: uppercase;">Life Detected</h1>
+                 <p style="color: var(--text-secondary); max-width: 400px; text-align: center; margin-top: 15px;">
+                     Die GUI Orchestrierung wurde manuell re-aktiviert. <br>
+                     Versuche nun über die Tabs zu navigieren oder drücke F5.
+                 </p>
+                 <button onclick="location.reload()" style="margin-top: 30px; padding: 12px 30px; background: #007aff; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">NEUSTART (SYNC)</button>
+             </div>
+         `;
+     }
+ 
+     // 4. Trace the recovery
+     if (typeof mwv_trace === 'function') mwv_trace('EMERGENCY', 'FORCE-LIFE-ACTIVE');
+     if (typeof showToast === 'function') showToast("UI Visibility Forced", "warn");
+ };
+ 
+ window.dumpNavRegistry = function() {
+     console.table(SUB_NAV_REGISTRY);
+ };
+ 
+ // ==========================================
 // FRAGMENT HYDRATION AUDITOR (v1.37.46)
 // ==========================================
 
@@ -1443,29 +1487,10 @@ window.auditFragmentHydration = function(name, status, details = '') {
  * [v1.41.104 Sync] Legacy point removed to prevent Cross-Effect collision.
  */
 
-window.toggleProbeFlow = function() {
-    if (!window.CONFIG || !window.CONFIG.ui_settings) return;
-    
-    // Toggle the value
-    window.CONFIG.ui_settings.probe_data_flow_enabled = !window.CONFIG.ui_settings.probe_data_flow_enabled;
-    const isActive = window.CONFIG.ui_settings.probe_data_flow_enabled;
-    
-    // Update UI button
-    const btn = document.getElementById('footer-btn-probe-flow');
-    if (btn) {
-        btn.classList.toggle('active', isActive);
-        btn.style.borderColor = isActive ? '#00f2ff' : '';
-        btn.style.color = isActive ? '#00f2ff' : '';
-    }
 
-    console.log(`[FORENSIC] PROBE DATA FLOW: ${isActive ? 'ENABLED (Handshake)' : 'DISABLED (Direct)'}`);
-    
-    // Refresh Audit Panel if open
-    if (typeof refreshForensicAudit === 'function') refreshForensicAudit();
-};
 
 /**
- * Initializes the Forensic 7++ State on Boot
+ * Initializes the Forensic 7++ State on Boot (v1.38.10)
  */
 window.initForensicUI = function() {
     const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
@@ -1496,11 +1521,9 @@ window.initForensicUI = function() {
     }
 };
 
-// Auto-Init on load
-window.addEventListener('load', () => {
-    setTimeout(window.initForensicUI, 500);
-});
-
+/**
+ * Renders the Hydration Matrix for forensic audit (v1.38.10)
+ */
 window.renderHydrationMatrix = function() {
     const matrix = document.getElementById('hydration-fragment-matrix');
     const summary = document.getElementById('hydration-audit-summary');
@@ -1546,30 +1569,65 @@ window.renderHydrationMatrix = function() {
     }
 };
 
+/**
+ * Toggles the Forensic Probe Data Flow (v1.38.10)
+ */
+window.toggleProbeFlow = function() {
+    if (!window.CONFIG || !window.CONFIG.ui_settings) return;
+    
+    window.CONFIG.ui_settings.probe_data_flow_enabled = !window.CONFIG.ui_settings.probe_data_flow_enabled;
+    const isActive = window.CONFIG.ui_settings.probe_data_flow_enabled;
+    
+    const btn = document.getElementById('footer-btn-probe-flow');
+    if (btn) {
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+            btn.style.borderColor = '#00f2ff';
+            btn.style.color = '#00f2ff';
+        } else {
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        }
+    }
+
+    console.log(`[FORENSIC] PROBE DATA FLOW: ${isActive ? 'ENABLED (Handshake)' : 'DISABLED (Direct)'}`);
+    if (typeof refreshForensicAudit === 'function') refreshForensicAudit();
+};
+
+/**
+ * Main UI Orchestration Bootloader (v1.41.00 Cleaned)
+ */
+window.addEventListener('load', async () => {
+    console.info("[UI-INIT] UI Orchestration Layer Booting...");
+    
+    setTimeout(window.initForensicUI, 500);
+
     // 1. Sync Base State
     const savedCategory = localStorage.getItem('mwv_active_category') || 'media';
     currentMainCategory = savedCategory;
 
     // 2. Initial Visibility Refresh (Immediate Fallback)
-    refreshUIVisibility();
+    if (typeof refreshUIVisibility === 'function') refreshUIVisibility();
     
-    // [v1.37.06] Hard-Force Sub-menu for Player on start
-    if (currentMainCategory === 'media') {
-        console.log("[UI-INIT] Hard-injecting Player sub-menu pills...");
-        updateGlobalSubNav('media');
-        // [v1.37.29 Restoration] Delayed check to ensure fragment loading didn't wipe us
-        setTimeout(() => {
-            if (pillNav && pillNav.innerHTML.trim() === '') {
-                console.warn("[UI-INIT-HOTFIX] Sub-nav detected empty after boot, re-injecting.");
-                updateGlobalSubNav('media');
-            }
-        }, 800);
-    }
+    // 1. Sync Base State (Redundancy check removed)
 
-    // 3. Wait for Backend sync (v1.37.06 Hardening)
+    // 2. Hydrate Sub-Navigation (Contextual Level 2)
+    console.log(`[UI-INIT] Restoring Level 2 Context for: ${currentMainCategory}...`);
+    updateGlobalSubNav(currentMainCategory);
+    
+    // Safety check for race conditions during fragment loading
+    setTimeout(() => {
+        const pillNav = document.getElementById('sub-nav-container');
+        if (pillNav && pillNav.innerHTML.trim() === '') {
+            console.warn("[UI-INIT-HOTFIX] Level 2 sub-nav detected empty after boot, re-hydrating...");
+            updateGlobalSubNav(currentMainCategory);
+        }
+    }, 1200);
+
+    // 3. Wait for Backend sync
     if (typeof eel !== 'undefined') {
         try {
-            await refreshUIVisibility();
+            if (typeof refreshUIVisibility === 'function') await refreshUIVisibility();
             console.log("[UI-INIT] Backend Sync Complete.");
         } catch (e) {
             console.warn("[UI-INIT] Backend not ready yet, using static defaults.");
@@ -1582,12 +1640,11 @@ window.renderHydrationMatrix = function() {
         menuSystemVisible = (savedMenuState === 'true');
     }
 
-    // Apply initial visibility (Hardened Persistence)
     if (typeof toggleMenuBar === 'function') {
         toggleMenuBar(menuSystemVisible);
     }
 
-    // 5. Reset Sidebar State (Professional Workspace Default: Hidden)
+    // 5. Reset Sidebar State
     const savedSidebar = localStorage.getItem('mwv_sidebar_visible');
     if (savedSidebar !== null) {
         sidebarVisible = (savedSidebar === 'true');
@@ -1596,79 +1653,16 @@ window.renderHydrationMatrix = function() {
         sidebarVisible = config.sidebar_visible || false;
     }
     
-    applySidebarState();
+    if (typeof applySidebarState === 'function') applySidebarState();
     
-    // 6. Initialize Splitters (v1.37 Restoration)
-    initAllSplitters();
+    // 6. Initialize Splitters
+    if (typeof initAllSplitters === 'function') initAllSplitters();
 
-    // 7. Initial Viewport Geometery Pass
-    refreshViewportLayout();
+    // 7. Initial Viewport Pass
+    if (typeof refreshViewportLayout === 'function') refreshViewportLayout();
     
     window.__mwv_ui_nav_loaded = true;
     console.info("[UI-INIT] UI Orchestration Layer Ready.");
-});
-
-window.toggleProbeFlow = function() {
-    if (!window.CONFIG || !window.CONFIG.ui_settings) return;
-    
-    // Toggle the value
-    window.CONFIG.ui_settings.probe_data_flow_enabled = !window.CONFIG.ui_settings.probe_data_flow_enabled;
-    const isActive = window.CONFIG.ui_settings.probe_data_flow_enabled;
-    
-    // Update UI button
-    const btn = document.getElementById('footer-btn-probe-flow');
-    if (btn) {
-        btn.classList.toggle('active', isActive);
-        btn.style.borderColor = isActive ? '#00f2ff' : '';
-        btn.style.color = isActive ? '#00f2ff' : '';
-    }
-
-    console.log(`[FORENSIC] PROBE DATA FLOW: ${isActive ? 'ENABLED (Handshake)' : 'DISABLED (Direct)'}`);
-    
-    // Refresh Audit Panel if open
-    if (typeof refreshForensicAudit === 'function') refreshForensicAudit();
-};
-
-/**
- * Initializes the Forensic 7++ State on Boot
- */
-window.initForensicUI = function() {
-    const config = (window.CONFIG && window.CONFIG.ui_settings) ? window.CONFIG.ui_settings : {};
-    
-    // 1. Apply Elite HUD if enabled
-    if (config.elite_hud_enabled) {
-        document.body.classList.add('forensic-elite');
-        console.log("[FORENSIC] ELITE HUD: INITIALIZED");
-    }
-
-    // 2. Apply Global Forensic Lockdown
-    const forensicsAllowed = (typeof config.forensics_enabled !== 'undefined') ? config.forensics_enabled : true;
-    if (!forensicsAllowed) {
-        console.log("[FORENSIC] LOCKDOWN: Hiding technical interfaces.");
-        const techControls = document.getElementById('footer-technical-controls');
-        if (techControls) techControls.style.display = 'none';
-        
-        const pulsarIcon = document.getElementById('footer-pulsar-icon');
-        if (pulsarIcon) pulsarIcon.style.display = 'none';
-    }
-
-    // 3. Initial Sync
-    const probeBtn = document.getElementById('footer-btn-probe-flow');
-    if (probeBtn && config.probe_data_flow_enabled) {
-        probeBtn.classList.add('active');
-        probeBtn.style.borderColor = '#00f2ff';
-        probeBtn.style.color = '#00f2ff';
-    }
-};
-
-window.renderHydrationMatrix = function() {
-    console.debug("[HYD-AUDIT] Matrix Refresh triggered.");
-    // UI update logic for hydration cells
-};
-
-// Auto-Init on load
-window.addEventListener('load', () => {
-    setTimeout(window.initForensicUI, 500);
 });
 
 /**
@@ -1687,7 +1681,6 @@ async function renderConfigToggles() {
         const ui = config.ui_settings || {};
         const fragments = ui.ui_fragments || {};
 
-        // 1. Functional Modules
         const moduleKeys = [
             { key: 'audio_engine_enabled', label: 'Audio Engine' },
             { key: 'video_engine_enabled', label: 'Video Engine' },
@@ -1703,7 +1696,6 @@ async function renderConfigToggles() {
             </div>
         `).join('');
 
-        // 2. UI Fragments
         fragmentsContainer.innerHTML = Object.keys(fragments).map(key => `
             <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
                 <span style="font-size: 8px; color: #aaa;">${key.toUpperCase()}</span>
@@ -1725,7 +1717,6 @@ async function updateUIConfigToggle(key, value) {
     try {
         const success = await eel.set_ui_config_value(key, value)();
         if (success) {
-            // Hot-reload visibility if it's a UI flag
             if (key.includes('ui_') || key.includes('visible')) {
                 if (typeof refreshUIVisibility === 'function') refreshUIVisibility();
             }
@@ -1735,7 +1726,6 @@ async function updateUIConfigToggle(key, value) {
         console.error("[UI-CONFIG] Toggle failed:", e);
     }
 }
-
 
 /**
  * [v1.38.07] Renders the Startup Timeline (Boot Profile).
@@ -1771,7 +1761,6 @@ async function renderBootTimeline() {
             `;
         }).join('');
 
-        // [v1.38.08] Populate Sentinel Audit
         const auditContainer = document.getElementById('sentinel-audit-container');
         if (auditContainer && window.UISentinel) {
             const audit = window.UISentinel.getAuditReport();
@@ -1799,10 +1788,8 @@ async function renderBootTimeline() {
     }
 }
 
-
 /**
  * [v1.38.08] UI Sentinel: System-level monitor for fragment integrity.
- * Ensures critical elements are never stuck in "Black Hole" or "Missing" states.
  */
 const UISentinel = {
     checks: [
@@ -1824,7 +1811,6 @@ const UISentinel = {
                 const style = window.getComputedStyle(el);
                 visible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
                 
-                // --- AUTO-FIX: Force visibility for critical dead-zones ---
                 if (check.critical && !visible && window.__mwv_ui_nav_loaded) {
                     console.warn(`[Sentinel] CRITICAL FIX: Restoring visibility for ${check.label} (#${check.id})`);
                     el.style.setProperty('display', 'flex', 'important');
@@ -1833,7 +1819,6 @@ const UISentinel = {
             }
             this.audit[check.id] = { exists, visible };
 
-            // [v1.38.08] Sync with Hydration Registry for BOOT diagnostics
             if (exists && visible && check.registryKey) {
                 if (typeof window.auditFragmentHydration === 'function') {
                     window.auditFragmentHydration(check.registryKey, 'success');
@@ -1841,7 +1826,6 @@ const UISentinel = {
             }
         });
         
-        // Sync results to the BOOT tab if open
         if (typeof renderBootTimeline === 'function') {
             const bootPane = document.getElementById('diag-pane-boot');
             if (bootPane && bootPane.style.display !== 'none') renderBootTimeline();
@@ -1861,6 +1845,32 @@ window.addEventListener('load', () => {
     setTimeout(() => UISentinel.validate(), 2000); // Deferred check after background items load
 });
 
+// Exports for global visibility
 window.renderConfigToggles = renderConfigToggles;
 window.updateUIConfigToggle = updateUIConfigToggle;
 window.renderBootTimeline = renderBootTimeline;
+
+/**
+ * [v1.41.140] DOM Forensic Utility
+ * Outputs the current Level 2 sub-navigation state to the console.
+ * Fulfills the "ohne selenium ... mit domm" requirement.
+ */
+window.dumpNavDom = function() {
+    const container = document.getElementById('sub-nav-container');
+    if (!container) return "DOM_ERROR: #sub-nav-container missing.";
+    
+    const pills = Array.from(container.children).map(c => ({
+        id: c.id,
+        label: c.innerText.trim(),
+        active: c.classList.contains('active')
+    }));
+    
+    console.table(pills);
+    const report = {
+        category: currentMainCategory,
+        pill_count: pills.length,
+        items: pills
+    };
+    return report;
+};
+

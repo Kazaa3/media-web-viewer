@@ -63,12 +63,26 @@ const FragmentLoader = {
             if (this.cache.has(fragmentPath)) {
                 html = this.cache.get(fragmentPath);
             } else {
-                const response = await fetch(fragmentPath);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                html = await response.text();
-                this.cache.set(fragmentPath, html);
-                if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-1', { path: fragmentPath, status: 'fetched' });
-                console.info(`[FL] STAGE 1: HTML Received (${fragmentPath})`);
+                // --- [v1.41.141] Forensic Timeout Guard ---
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                    console.error(`[FL] CRITICAL: Fragment FETCH TIMEOUT after 3500ms (${fragmentPath})`);
+                }, 3500);
+
+                try {
+                    const response = await fetch(fragmentPath, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    html = await response.text();
+                    this.cache.set(fragmentPath, html);
+                    if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-1', { path: fragmentPath, status: 'fetched' });
+                    console.info(`[FL] STAGE 1: HTML Received (${fragmentPath})`);
+                } catch (fetchErr) {
+                    clearTimeout(timeoutId);
+                    throw fetchErr;
+                }
             }
 
             if (!html || html.trim() === '') {
