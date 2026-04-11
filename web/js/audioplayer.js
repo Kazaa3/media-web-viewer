@@ -610,7 +610,7 @@ function renderPlaylist() {
                 <p style="font-size: 0.95em; max-width: 280px; margin: 0 auto 30px auto; opacity: 0.7;">
                     Füge Lieder aus der Bibliothek hinzu oder ziehe Mediendateien hierher.
                 </p>
-                <button onclick="switchTab('library')" class="tab-btn active" style="padding: 12px 30px;">
+                <button onclick="switchTab('multimedia')" class="tab-btn active" style="padding: 12px 30px;">
                     Zur Bibliothek
                 </button>
             </div>
@@ -999,6 +999,7 @@ window.setHydrationMode = function(mode) {
 
 // v1.41.00 Override initialization
 window.addEventListener('DOMContentLoaded', () => {
+    const librarySubTab = localStorage.getItem('mwv_multimedia_sub_tab') || 'coverflow';
     const saved = localStorage.getItem('mwv_hydration_mode') || 'real';
     setHydrationMode(saved);
 });
