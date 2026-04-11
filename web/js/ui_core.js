@@ -368,26 +368,70 @@ window.MWV_UI = (() => {
         console.log(`[MWV-UI] Geometry Updated: H:${h} L2:${s2} L3:${s3} F:${f} TotalTop:${h + s2 + s3}px`);
     }
 
-    // Export API
     return {
         init,
         apply,
         toggleHeader,
-        toggleSubMenu,
         toggleSubNav,
+        toggleSubMenu,
         toggleFooter,
         toggleHeaderRight,
         toggleSidebar,
         toggleZen,
+        setSetting,
         updateGeometry,
-        getConstants: () => ({ ...CONSTANTS }),
-        getState: () => ({ ...registry })
+        getConstants: () => ({ ...CONSTANTS })
     };
 })();
 
-// Auto-init on script load if DOM is ready, or wait
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    MWV_UI.init();
-} else {
-    document.addEventListener('DOMContentLoaded', () => MWV_UI.init());
-}
+// --- [v1.41.160] GLOBAL FRAGMENT LIFECYCLE REGISTRY ---
+window.__fragment_lifecycle_registry = {};
+
+/**
+ * Centrally audits fragment hydration events.
+ * @param {string} name - Fragment name (e.g. 'player_queue')
+ * @param {string} status - 'will_spawn' | 'loading' | 'success' | 'error'
+ * @param {string} detail - Path or Error message
+ */
+window.auditFragmentHydration = function(name, status, detail = '') {
+    const timestamp = new Date().toLocaleTimeString();
+    
+    if (!window.__fragment_lifecycle_registry[name]) {
+        window.__fragment_lifecycle_registry[name] = {
+            name: name,
+            history: [],
+            currentStatus: 'idle',
+            lastUpdate: timestamp,
+            detail: detail
+        };
+    }
+
+    const entry = window.__fragment_lifecycle_registry[name];
+    entry.currentStatus = status;
+    entry.lastUpdate = timestamp;
+    if (detail) entry.detail = detail;
+    entry.history.push({ status, timestamp, detail });
+
+    // Limit history
+    if (entry.history.length > 5) entry.history.shift();
+
+    console.info(`[FORENSIC-AUDIT] Fragment [${name}] -> ${status.toUpperCase()}`);
+    
+    // Pulse the Sentinel if available
+    if (typeof window.sentinelPulse === 'function') {
+        window.sentinelPulse(status === 'error' ? 'ERROR' : 'SPAWN', `Frag: ${name} | State: ${status}`);
+    }
+
+    // Trigger Matrix Update (Global Listener)
+    document.dispatchEvent(new CustomEvent('mwv:fragment_matrix_update', { detail: { name, status } }));
+};
+
+// Global accessor for MWV_UI
+window.MWV_UI = window.MWV_UI; 
+
+// Initial Apply on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.MWV_UI && typeof window.MWV_UI.init === 'function') {
+        window.MWV_UI.init();
+    }
+});
