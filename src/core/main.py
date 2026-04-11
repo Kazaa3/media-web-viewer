@@ -301,14 +301,15 @@ with StatusBar("Initializing Application Environment", total=100) as sb:
     import src.core.logger as logger
     sb.update(60, "Logger Initializing")
 
-    # Initialize SESSION_ID as early as possible for logging
-    SESSION_ID = f"{os.getpid()}_{int(time.time())}"
+    # Initialize SESSION_ID as early as possible (v1.41.169 Custom Format)
+    _fmt = GLOBAL_CONFIG.get("logging_registry", {}).get("session_id_format", "{timestamp}_{pid}")
+    SESSION_ID = _fmt.format(timestamp=int(time.time()), pid=os.getpid())
 
     def initialize_startup_logging():
         is_debug = "--debug" in sys.argv
         log_level = logging.DEBUG if is_debug else logging.INFO
         logger.setup_logging(debug_mode=is_debug, level=log_level, session_id=SESSION_ID)
-        log.info(f"[System] Log initialized (Level: {'DEBUG' if is_debug else 'INFO'})")
+        log.info(f"[System] Log initialized (ID: {SESSION_ID}, Level: {'DEBUG' if is_debug else 'INFO'})")
 
     initialize_startup_logging()
     log = get_logger("main")

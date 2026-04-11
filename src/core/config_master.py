@@ -289,11 +289,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
     "hardware_info": {"type": "Awaiting discovery...", "encoders": []},
     "installed_packages": {},
     
-    # --- LOGGING REGISTRY (v1.41.00 Centralized) ---
+    # --- LOGGING REGISTRY (v1.41.168 Forensic Evolution) ---
     "logging_registry": {
         "log_root": str(PROJECT_ROOT / "logs"),
+        "enable_main_log": True,        # Global app.log
+        "enable_debug_log": True,       # Detailed debug.log
+        "enable_session_log": True,     # Persistent session-specific log
+        "enable_symlink": True,         # logs/current -> session_folder
+        "use_session_subfolders": True, # logs/<session_id>/...
+        "session_id_format": "{timestamp}_{pid}", # e.g. 1775416263_1001527 for sorting
+        
         "main_log": str(PROJECT_ROOT / "logs" / "media_viewer.log"),
-        "session_log": str(PROJECT_ROOT / "logs" / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
+        "session_log_name": "session.log", # Named app.log inside subfolder
+        
         "log_level": os.environ.get("MWV_LOG_LEVEL", "INFO"),
         "max_size_mb": int(os.environ.get("MWV_LOG_MAX_SIZE", 10)),
         "backup_count": int(os.environ.get("MWV_LOG_BACKUPS", 3)),

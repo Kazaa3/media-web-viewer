@@ -174,10 +174,10 @@ def log_system_diagnostics():
 
 def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session_id: Optional[str] = None):
     """
-    Initializes the centralized logging system.
+    Initializes the centralized logging system. (v1.41.168 Forensic Evolution)
     @param debug_mode If True, additional debug file loggers are activated.
-    @param level Optional explicit logging level (e.g. logging.DEBUG, logging.INFO).
-    @param session_id If provided, creates a unique session log file in logs/.
+    @param level Optional explicit logging level.
+    @param session_id If provided, creates a unique session log folder/file.
     """
     root_logger = logging.getLogger()
     
@@ -189,13 +189,34 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
         level = logging.DEBUG if debug_mode else logging.INFO
     root_logger.setLevel(level)
 
+    # --- 1. Resolve Subfolders & Paths ---
+    log_dir = LOCAL_LOG_DIR
+    use_subs = REGISTRY.get("use_session_subfolders", False)
+    
+    if use_subs and session_id:
+        log_dir = LOCAL_LOG_DIR / session_id
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            # Create symlink 'current' -> latest session (Linux only)
+            if REGISTRY.get("enable_symlink", False) and os.name != 'nt':
+                current_sym = LOCAL_LOG_DIR / "current"
+                try:
+                    if current_sym.exists() or current_sym.is_symlink():
+                        current_sym.unlink()
+                    current_sym.symlink_to(session_id, target_is_directory=True)
+                except Exception as e:
+                    print(f"STDOUT: [Logger] Symlink failure: {e}")
+        except Exception as e:
+            print(f"STDOUT: [Logger] Subfolder creation failed: {e}")
+            log_dir = LOCAL_LOG_DIR # Fallback
+
     # Determine session-specific log file
     session_log_path = None
-    if session_id:
-        session_log_path = REGISTRY.get("session_log") or str(LOCAL_LOG_DIR / f"session_{session_id}.log")
-        logging.info(f"Session-specific logging enabled: {session_log_path}")
+    if session_id and REGISTRY.get("enable_session_log", True):
+        log_name = REGISTRY.get("session_log_name", f"session_{session_id}.log")
+        session_log_path = log_dir / log_name
 
-    # In debug mode, we include more technical details (file, line, thread, function)
+    # Formatter Setup
     force_debug = REGISTRY.get("debug_force", False)
     if debug_mode or force_debug:
         format_str = '%(asctime)s [%(levelname)s] [%(name)s] [%(threadName)s] [%(funcName)s] [%(filename)s:%(lineno)d] %(message)s'
@@ -205,24 +226,33 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
     date_fmt = REGISTRY.get("log_datefmt", "%H:%M:%S")
     formatter = logging.Formatter(format_str, datefmt=date_fmt)
 
-    # 1. Console Handler
+    # --- 2. Initialize Handlers ---
+
+    # A. Console Handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
-    # 2. Rotating File Handler (User Data)
-    try:
-        max_bytes = REGISTRY.get("max_size_mb", 10) * 1024 * 1024
-        backup_count = REGISTRY.get("backup_count", 3)
-        file_handler = logging.handlers.RotatingFileHandler(
-            LOG_FILE, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
-        )
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-    except Exception as e:
-        logging.error(f"Failed to initialize file logger: {e}")
+    # B. Master File Handler (app.log / media_viewer.log)
+    if REGISTRY.get("enable_main_log", True):
+        try:
+            m_path = Path(REGISTRY.get("main_log", str(log_dir / "app.log")))
+            # If using subfolders, we might want the master log INSIDE the subfolder too
+            # or keep one central one. User said "AUCH" in subfolder.
+            # We'll stick to the registry path which defaults to logs/media_viewer.log
+            m_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            max_bytes = REGISTRY.get("max_size_mb", 10) * 1024 * 1024
+            backup_count = REGISTRY.get("backup_count", 3)
+            file_handler = logging.handlers.RotatingFileHandler(
+                m_path, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8'
+            )
+            file_handler.setFormatter(formatter)
+            root_logger.addHandler(file_handler)
+        except Exception as e:
+            print(f"STDOUT: [Logger] Error initializing master log: {e}")
 
-    # 2b. Session-Specific File Handler
+    # C. Session-Specific Handler
     if session_log_path:
         try:
             session_file_handler = logging.FileHandler(session_log_path, encoding='utf-8')
@@ -230,24 +260,23 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
             root_logger.addHandler(session_file_handler)
             logging.info(f"Session log initialized at: {session_log_path}")
         except Exception as e:
-            logging.error(f"Failed to initialize session logger: {e}")
+            print(f"STDOUT: [Logger] Error initializing session log: {e}")
 
-    # 3. Project-Local Debug File Handler (only if debug_mode is True)
-    if debug_mode:
+    # D. Debug File Handler
+    if debug_mode and REGISTRY.get("enable_debug_log", True):
         try:
-            DEBUG_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            d_path = log_dir / "debug.log"
             d_max_bytes = REGISTRY.get("debug_max_size_mb", 10) * 1024 * 1024
             d_backup_count = REGISTRY.get("debug_backup_count", 1)
             debug_file_handler = logging.handlers.RotatingFileHandler(
-                DEBUG_LOG_FILE, maxBytes=d_max_bytes, backupCount=d_backup_count, encoding='utf-8'
+                d_path, maxBytes=d_max_bytes, backupCount=d_backup_count, encoding='utf-8'
             )
             debug_file_handler.setFormatter(formatter)
             root_logger.addHandler(debug_file_handler)
-            logging.info(f"Project-local debug log initialized at: {DEBUG_LOG_FILE}")
         except Exception as e:
-            logging.error(f"Failed to initialize project-local debug logger: {e}")
+            print(f"STDOUT: [Logger] Error initializing debug log: {e}")
 
-    # 4. UI Buffer Handler
+    # E. UI Buffer Handler
     ui_handler = UIHandler()
     ui_handler.setFormatter(formatter)
     root_logger.addHandler(ui_handler)
@@ -255,7 +284,7 @@ def setup_logging(debug_mode: bool = False, level: Optional[int] = None, session
     # Suppress noisy third-party logs
     logging.getLogger("geventwebsocket.handler").setLevel(logging.WARNING)
 
-    logging.info("Logging system initialized.")
+    logging.info(f"Logging system initialized (Session: {session_id or 'none'}).")
     if debug_mode:
         logging.debug("Debug mode activated via command line or configuration.")
         log_system_diagnostics()
