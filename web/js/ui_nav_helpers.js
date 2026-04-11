@@ -592,10 +592,14 @@ document.addEventListener('DOMContentLoaded', () => {
         FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
     }
 
-    // Ensure library items are synced to player queue on startup
+    // [v1.41.145] Sub-Nav and UI Visibility Watchdog
+    // Ensures that Level 2 menu entries hydrate even if fragment loading is slow.
+    refreshUIVisibility();
     setTimeout(() => {
+        console.info("[MWV-UI] Watchdog: Final UI Visibility check...");
+        refreshUIVisibility();
         if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-    }, 1500);
+    }, 2000);
 });
 
 /**
