@@ -218,13 +218,16 @@ function showContextMenu(e, item) {
     menu.style.display = 'block';
     menu.style.zIndex = '100002'; // v1.35.62: Ensure visibility above fragments
     
-    // Position menu at cursor
-    let x = e.pageX;
-    let y = e.pageY;
+    // [v1.41.146] Coordinate Logic: Use clientX/Y for fixed-positioning parity
+    let x = e.clientX;
+    let y = e.clientY;
     
-    // Boundary check for window
-    if (x + 200 > window.innerWidth) x -= 200;
-    if (y + 150 > window.innerHeight) y -= 150;
+    // Boundary check for window (v1.35 Hardened)
+    const menuWidth = 240;
+    const menuHeight = 300; // Estimated max
+    
+    if (x + menuWidth > window.innerWidth) x -= menuWidth;
+    if (y + menuHeight > window.innerHeight) y -= menuHeight;
     
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
@@ -282,6 +285,9 @@ function hideContextMenu() {
     const menu = document.getElementById('context-menu');
     if (menu) menu.style.display = 'none';
 }
+
+window.addEventListener('click', hideContextMenu);
+window.addEventListener('scroll', hideContextMenu, true);
 
 /**
  * Common Splitter Initialization

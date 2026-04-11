@@ -121,33 +121,5 @@ async function fbPickFolder() {
     }
 }
 
-/**
- * Context menu management for files.
- */
-// let contextMenuItem = null;
-
-function showContextMenu(e, item) {
-    e.preventDefault();
-    contextMenuItem = item;
-    const menu = document.getElementById('custom-context-menu');
-    if (!menu) return;
-
-    // Logic to determine which items to show based on type
-    const ext = (item.name || '').toLowerCase().split('.').pop();
-    const isVideo = ['mp4', 'mkv', 'webm', 'mov', 'avi', 'ts', 'm2ts', 'vob'].includes(ext);
-    
-    const videoSect = document.getElementById('ctx-video-section');
-    if (videoSect) videoSect.style.display = isVideo ? 'block' : 'none';
-
-    menu.style.display = 'block';
-    menu.style.left = e.clientX + 'px';
-    menu.style.top = e.clientY + 'px';
-}
-
-function hideContextMenu() {
-    const menu = document.getElementById('custom-context-menu');
-    if (menu) menu.style.display = 'none';
-}
-
 window.addEventListener('click', hideContextMenu);
 window.addEventListener('scroll', hideContextMenu, true);
