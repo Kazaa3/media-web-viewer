@@ -206,8 +206,7 @@ onclick="toggleMenuBar()"
     </div>
     <div id=app-progress-text>Ready</div>
 
-    <!-- Context Menu Placeholder (Loaded dynamically) -->
-    <div id="context-menu-placeholder"></div>
+    <!-- [v1.41.148] Redundant placeholder removed for centralization -->
 
     <!-- 
       [AI-READINESS: SHARED UI SYMBOLS]
@@ -956,9 +955,14 @@ onclick="toggleMenuBar()"
     <script src="js/diagnostics/stages/stage_video_universal.js?v=1.35.68"></script>
     <!-- Startup health check moved to diagnostics_helpers.js -->
 
-    <!-- Externally loaded SVG icons and context menu (v1.34) -->
+    <!-- Externally loaded SVG icons/* --- Context Menu (Modernized v1.34) --- */
+.context-menu {
+    display: none !important;
+}
+-->
     <div id="svg-icons-placeholder" style="display: none;"></div>
-    <div id="context-menu-placeholder"></div>
+    <!-- [v1.41.148] Centralized Context-Menu Anchor (Moved to Bottom for Stacking Context Safety) -->
+    <div id="context-menu-placeholder" style="display: none !important;"></div>
     <div id="dom-auditor-container"></div>
     <!-- NEW: Status Notifications Container (Integrated v1.34-1.37 Bridge) -->
     <div id="status-notification-container"></div>

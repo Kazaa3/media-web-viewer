@@ -1305,20 +1305,23 @@ body[data-mwv-category="library"] .sub-pill-btn.active {
     font-weight: 700;
 }
 
-/* --- Context Menu (Modernized v1.34) --- */
+/* --- Context Menu (Modernized v1.41.148 Centralized) --- */
 .context-menu {
-    display: none;
+    display: none; /* Base state: Hidden */
     position: fixed;
-    z-index: 9999;
-    background: var(--glass-bg);
+    z-index: 100005;
+    width: 240px;
+    background: var(--bg-secondary);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-medium);
-    padding: 8px 0;
+    padding: 6px 0;
     min-width: 220px;
-    animation: fadeIn 0.1s ease;
+    overflow: hidden;
+    pointer-events: auto;
+    animation: fadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .context-menu-item {

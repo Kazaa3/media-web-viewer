@@ -201,7 +201,7 @@ function update_progress(data) {
 
 /**
  * Global Context Menu Controller
- */
+function showContextMenu(e, item) {
     // [v1.41.147] Config & Registry Check
     const isEnabled = window.CONFIG && window.CONFIG.ui_settings && window.CONFIG.ui_settings.enable_context_menu !== false;
     if (!isEnabled) {
@@ -214,16 +214,19 @@ function update_progress(data) {
         e.stopPropagation();
     }
     
-    // [v1.41.147] Multi-ID Bridge: Support legacy and modern context-menu IDs
-    const menu = document.getElementById('context-menu') || document.getElementById('custom-context-menu');
-    if (!menu) return;
+    // [v1.41.148] Multi-ID Bridge: Target primary centralized ID
+    const menu = document.getElementById('context-menu');
+    if (!menu) {
+        console.warn("[Context-Menu] Target element #context-menu not found in DOM.");
+        return;
+    }
 
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Context-Menu] Opening for: ${item.name}`);
     console.info(`>>> [Context-Menu] showContextMenu triggered for: ${item.name} at (${e.clientX}, ${e.clientY})`);
 
-    menu.innerHTML = '';
-    
-    // [v1.41.147] Coordinate Hardening: Ensure non-zero displacement
+    // Visibility Toggle (Overriding CSS display: none)
+    menu.style.display = 'block';
+    menu.style.zIndex = '100005'; 
     let x = e.clientX;
     let y = e.clientY;
     
