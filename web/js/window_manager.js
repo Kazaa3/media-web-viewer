@@ -111,6 +111,13 @@ const WindowManager = {
                     shell.style.display = 'flex';
                     shell.style.opacity = '1';
                     shell.classList.add('active');
+                    
+                    // [v1.45.200] Liveness Verification Pulse
+                    const isAlive = await this.verifyLiveness(name);
+                    if (!isAlive) {
+                        console.warn(`[WM] Liveness Check FAILED for ${name}. Attempting secondary hydration...`);
+                        await FragmentLoader.loadAtomic(win.fragmentId, win.fragmentPath);
+                    }
                 } else {
                     throw new Error(`Shell container #${win.shellId} not found in DOM.`);
                 }
@@ -147,6 +154,42 @@ const WindowManager = {
         } finally {
             document.body.style.cursor = 'default';
         }
+    },
+
+    /**
+     * verifyLiveness (v1.45.200)
+     * Performs a forensic check to see if a fragment is actually rendered and responsive.
+     */
+    async verifyLiveness(name) {
+        const win = this.windows.get(name);
+        if (!win || !win.fragmentId) return true;
+
+        return new Promise((resolve) => {
+            let attempts = 0;
+            const check = () => {
+                const container = document.getElementById(win.fragmentId);
+                if (!container) return resolve(false);
+
+                const hasContent = container.children.length > 0;
+                const isReady = container.querySelector('[data-liveness="ready"]') !== null;
+                
+                // Audio Player specific liveness (has controls)
+                const hasControls = container.querySelector('.player-controls, .library-grid') !== null;
+
+                if (hasContent && (isReady || hasControls)) {
+                    console.info(`[WM] Liveness Confirmed for ${name} after ${attempts * 50}ms`);
+                    return resolve(true);
+                }
+
+                attempts++;
+                if (attempts < 10) { // 500ms timeout
+                    setTimeout(check, 50);
+                } else {
+                    resolve(hasContent); // Fallback to basic content check
+                }
+            };
+            check();
+        });
     },
 
     /**

@@ -8,20 +8,27 @@ const FragmentLoader = {
     pendingLoads: new Map(), // Track in-flight requests (targetId -> Promise)
 
     /**
-     * loadAtomic (v1.44)
-     * Performs a 'flicker-free' swap by fetching the HTML first and only
-     * updating the DOM once the content is ready and verified.
+     * loadAtomic (v1.45.200)
+     * Performs a 'flicker-free' shadow swap. Fetches HTML, injects into shadow stage,
+     * monitors for readiness, and then performs an atomic DOM handover.
      */
     async loadAtomic(targetId, fragmentPath, callback) {
         const container = document.getElementById(targetId);
         if (!container) return;
 
-        // Transition: Fade out or show loader
-        container.style.opacity = '0.4';
+        // 1. Create Shadow Stage (if missing)
+        let shadow = document.getElementById('shadow-stage-buffer');
+        if (!shadow) {
+            shadow = document.createElement('div');
+            shadow.id = 'shadow-stage-buffer';
+            shadow.style.display = 'none';
+            document.body.appendChild(shadow);
+        }
+
+        container.style.opacity = '0.5';
         
         try {
-            // Force fetch/cache logic via _executeLoad (but we want it atomic here)
-            // We'll reuse the internal fetch logic
+            // 2. Fetch HTML
             let html;
             if (this.cache.has(fragmentPath)) {
                 html = this.cache.get(fragmentPath);
@@ -34,10 +41,17 @@ const FragmentLoader = {
 
             if (!html || html.trim() === "") throw new Error("Empty Fragment");
 
-            // STAGE 2: SWAP
-            container.innerHTML = html;
+            // 3. Shadow Injection & Prep
+            shadow.innerHTML = html;
+            shadow.dataset.fragment = fragmentPath;
+            
+            // 4. Atomic Handover
+            container.innerHTML = shadow.innerHTML;
             container.dataset.loaded = 'true';
             container.style.opacity = '1';
+            
+            // 5. Cleanup Shadow
+            shadow.innerHTML = '';
             
             if (callback) callback();
         } catch (e) {
