@@ -141,7 +141,13 @@ window.MWV_UI = (() => {
         registry.sidebarVisible = !!settings.sidebar_visible;
         syncSidebar();
 
-        // --- 5. Global Config Overrides (v1.41.147) ---
+        // --- 5. Global Config Overrides (v1.41.147/163) ---
+        const powerBtn = document.getElementById('header-btn-power-exit');
+        if (powerBtn) {
+            const showPower = !!(registry.config.ui_settings?.enable_header_power_button !== false);
+            powerBtn.style.display = showPower ? 'flex' : 'none';
+        }
+
         const diagHud = document.getElementById('header-technical-hud');
         if (diagHud) {
             const showHud = !!(registry.config.enable_diagnostics_hud);

@@ -352,6 +352,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_footer_hud_cluster": True,   # GLOBAL: Swiss FE/BE/DB LED Cluster im Footer.
         "enable_zen_mode": True,             # GLOBAL: Zen Mode (Header/Footer hide) Toggle.
         "enable_footer_db_status": True,     # GLOBAL: DB Status & Hydration Cluster im Footer.
+        "enable_header_power_button": True,  # GLOBAL: [v1.41.163] Power/Exit Button oben links.
+        "enable_rescue_failover": True,     # GLOBAL: [v1.41.163] Auto-Rescue UI bei Fragment-Fehlern.
 
         # --- GRANULAR FOOTER SUB-SETTINGS (v1.41.158 Extension) ---
         "footer_settings": {

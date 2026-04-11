@@ -101,10 +101,11 @@
         style="position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); z-index: 10001; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: var(--shadow-soft); user-select: none; transition: background 0.3s ease, height 0.3s ease;">
         <div class="nav-cluster primary-cluster" style="display: flex; align-items: center; padding-left: 10px;">
             <!-- EXIT / POWER BUTTON (v1.41.162 Restoration: Ganz Oben Links) -->
-            <button onclick="if(typeof eel !== 'undefined' && typeof eel.shutdown_backend === 'function') { eel.shutdown_backend()(); } else { window.close(); }" 
+            <button id="header-btn-power-exit" 
+                onclick="if(typeof eel !== 'undefined' && typeof eel.shutdown_backend === 'function') { eel.shutdown_backend()(); } else { window.close(); }" 
                 title="EXIT APPLICATION" 
                 class="tab-btn"
-                style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); margin-right: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);">
+                style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); margin-right: 15px; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
                 </svg>
