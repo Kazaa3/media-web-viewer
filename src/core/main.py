@@ -4628,8 +4628,25 @@ def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: st
     else:  # both
         final_media = filtered_media[:]
 
+    # [v1.46.12] ABSOLUTE TERMINAL FAILOVER
+    if len(final_media) == 0:
+        log.critical("[BD-RECOVERY] TOTAL HYDRATION FAILURE. Injecting Emergency Mock Items.")
+        final_media = [
+            {
+                "id": "recovery-1", "name": "[RECOVERY] Database Connection Error?", "artist": "System", "album": "Hydration Guard",
+                "category": "audio", "path": "", "is_mock": True, "available": False,
+                "tags": {"title": "DB DISCONNECT / 0 ITEMS", "artist": "Forensic Unit"}
+            },
+            {
+                "id": "recovery-2", "name": "[RECOVERY] Check active_branch settings", "artist": "System", "album": "Hydration Guard",
+                "category": "audio", "path": "", "is_mock": True, "available": False,
+                "tags": {"title": "BRANCH FILTER COLLISION?", "artist": "Forensic Unit"}
+            }
+        ]
+        status = "recovery-emergency"
+
     # Add hardcoded realistic mocks only in mock/both mode
-    if h_mode in ['mock', 'both']:
+    if h_mode in ['mock', 'both'] and status != "recovery-emergency":
         realistic_mocks = [
             {
                 "id": "mock-1", "name": "Anfangsstadium RMX", "artist": "Megaloh", "album": "Auf Ewig Mixtape",
