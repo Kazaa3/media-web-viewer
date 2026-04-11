@@ -681,7 +681,8 @@ def start_app():
             profiler.start_phase("Eel-Engine-Start")
         # [v1.44] DYNAMIC ENTRY POINT SELECTION
         evolution_mode = GLOBAL_CONFIG.get("ui_evolution_mode", "stable")
-        start_page = 'shell_master.html' if evolution_mode == 'rebuild' else 'app.html'
+        # [v1.45] Modern shell serves as the host for rebuild, bridge, and test_ref
+        start_page = 'shell_master.html' if evolution_mode in ['rebuild', 'bridge', 'test_ref'] else 'app.html'
 
         print(f"STDOUT: [Bootstrap] Launching ENTRY_POINT: {start_page} (Mode: {evolution_mode})", flush=True)
         eel.start(start_page, block=False, port=port, mode=eel_mode, **eel_kwargs)

@@ -280,8 +280,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "api_root": f"http://{BIND_ADDR}:{APP_PORT}"
     },
     
-    # --- EVOLUTION & SAFETY REGISTRY (v1.42 Reconstruction) ---
-    "ui_evolution_mode": "rebuild",   # [v1.44] ACTIVE: "stable" or "rebuild"
+    # --- EVOLUTION & SAFETY REGISTRY (v1.45 Reconstruction) ---
+    "ui_evolution_mode": "bridge",   # [v1.45] OPTIONS: "stable", "rebuild", "bridge", "test_ref"
     "unicode_safety_mode": False,   # If True, strips/tags emojis
     "unicode_safety_map": {
         "☢️": "[NUCLEAR]", "✅": "[SUCCESS]", "❌": "[ERROR]", 
@@ -480,7 +480,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "theme": "dark",
         "animations_enabled": True,
         "ui_registry": {
-            "evolution_mode": "stable", # "stable" or "rebuild" (v1.42)
+            "evolution_mode": "bridge", # "stable", "rebuild", "bridge", "test_ref" (v1.45)
             "sidebar_default_open": False,
             "glassmorphism_enabled": True,
             "animation_performance_tier": "high",

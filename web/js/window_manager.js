@@ -60,8 +60,9 @@ const WindowManager = {
         }
 
         try {
-            // [v1.44] FORENSIC STAGE REDIRECTION
-            const isRebuildMode = window.GLOBAL_CONFIG?.ui_evolution_mode === 'rebuild';
+            // [v1.45] FORENSIC STAGE REDIRECTION (Support for rebuild & test_ref)
+            const evoMode = window.GLOBAL_CONFIG?.ui_evolution_mode || 'stable';
+            const isRebuildMode = (evoMode === 'rebuild' || evoMode === 'test_ref');
             const stage = document.getElementById('rebuild-stage');
 
             if (isRebuildMode && stage && win.fragmentPath) {
