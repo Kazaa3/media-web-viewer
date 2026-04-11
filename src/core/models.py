@@ -45,7 +45,7 @@ EXTENSION_REGISTRY = {
 MASTER_CAT_MAP = {
     "audio": {
         "internal": "audio",
-        "aliases": ["audio", "album", "klassik", "hörbuch", "hörspiel", "podcast", "musik", "music", "song", "soundtrack", "radio"],
+        "aliases": ["audio", "musik", "music", "song", "radio"],
         "extensions": ALL_AUDIO_EXTENSIONS,
         "native": AUDIO_NATIVE,
         "transcode": AUDIO_TRANSCODE
@@ -62,53 +62,55 @@ MASTER_CAT_MAP = {
         "extensions": AUDIO_TRANSCODE,
         "transcode": AUDIO_TRANSCODE
     },
+    "album": {
+        "internal": "audio",
+        "aliases": ["album", "lp", "cd"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "single": {
+        "internal": "audio",
+        "aliases": ["single", "ep", "maxi"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "hörbuch": {
+        "internal": "audio",
+        "aliases": ["hörbuch", "hörspiel", "audiobook"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "sampler": {
+        "internal": "audio",
+        "aliases": ["sampler", "mix", "compilation"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
+    "soundtrack": {
+        "internal": "audio",
+        "aliases": ["soundtrack", "ost", "score"],
+        "extensions": ALL_AUDIO_EXTENSIONS
+    },
     "video": {
         "internal": "video",
-        "aliases": ["multimedia", "video", "film", "serie", "tv", "movie", "tv show", "musikvideos", "animes", "cartoons", "documentary", "dok", "dokumentation", "concert", "konzerte", "3d", "4k", "uhd", "ultra hd"],
+        "aliases": ["multimedia", "video", "film", "movie", "tv"],
         "extensions": ALL_VIDEO_EXTENSIONS,
         "native": VIDEO_NATIVE,
         "transcode_hd": VIDEO_HD_TRANSCODE,
         "transcode_pal": VIDEO_PAL_TRANSCODE,
         "transcode_ntsc": VIDEO_NTSC_TRANSCODE
     },
-    "video_native": {
-        "internal": "video_native",
-        "aliases": ["video native", "video-native"],
-        "extensions": VIDEO_NATIVE,
-        "native": VIDEO_NATIVE
-    },
-    "video_hd": {
-        "internal": "video_hd",
-        "aliases": ["video hd", "video-hd", "hd transcode"],
-        "extensions": VIDEO_HD_TRANSCODE,
-        "transcode": VIDEO_HD_TRANSCODE
-    },
-    "video_pal": {
-        "internal": "video_pal",
-        "aliases": ["video pal", "video-pal", "pal transcode"],
-        "extensions": VIDEO_PAL_TRANSCODE,
-        "transcode": VIDEO_PAL_TRANSCODE
-    },
     "video_iso": {
         "internal": "video_iso",
-        "aliases": ["video iso", "video-iso", "iso dvd", "dvd iso"],
+        "aliases": ["video iso", "video-iso", "iso-image", "dvd iso"],
         "extensions": DISK_IMAGE_EXTENSIONS,
         "transcode": DISK_IMAGE_EXTENSIONS
     },
     "pictures": {
         "internal": "pictures",
-        "aliases": ["bilder", "grafik", "bild", "foto", "images", "gallery", "pictures", "fotos"],
+        "aliases": ["bilder", "grafik", "foto", "images", "pictures"],
         "extensions": PICTURE_EXTENSIONS
     },
     "bilder": {  # Alias for global category map parity
         "internal": "pictures",
         "aliases": ["bilder"],
         "extensions": PICTURE_EXTENSIONS
-    },
-    "documents": {
-        "internal": "documents",
-        "aliases": ["dokument", "pdf", "text", "doc", "docx", "txt", "office", "docs"],
-        "extensions": DOCUMENT_EXTENSIONS
     },
     "ebooks": {
         "internal": "ebooks",
@@ -120,19 +122,14 @@ MASTER_CAT_MAP = {
         "aliases": ["epub"],
         "extensions": EBOOK_EXTENSIONS
     },
-    "disk_images": {
-        "internal": "disk_images",
-        "aliases": ["abbild", "disk-abbild", "iso", "iso image"],
-        "extensions": DISK_IMAGE_EXTENSIONS
-    },
-    "playlists": {
-        "internal": "playlists",
-        "aliases": ["playlist", "m3u", "m3u8"],
-        "extensions": PLAYLIST_EXTENSIONS
+    "docs": {
+        "internal": "documents",
+        "aliases": ["dokumente", "docs", "pdf", "text"],
+        "extensions": DOCUMENT_EXTENSIONS
     },
     "archives": {
         "internal": "archives",
-        "aliases": ["archiv", "zip", "rar", "7z", "tar", "compressed", "backup"],
+        "aliases": ["archiv", "archives", "zip", "rar"],
         "extensions": ARCHIVE_EXTENSIONS
     }
 }
@@ -225,11 +222,13 @@ def get_allowed_internal_cats(displayed_cats: list[str]) -> list[str]:
     # Explicit User-to-Internal Alias Table
     category_alias_table = {
         "musik": "audio", "music": "audio", "audio": "audio", "album": "audio",
+        "single": "audio", "hörbuch": "audio", "sampler": "audio", "soundtrack": "audio",
         "video": "video", "film": "video", "movies": "video", "multimedia": "video",
-        "bilder": "pictures", "fotos": "pictures", "pictures": "pictures",
-        "dokumente": "documents", "docs": "documents", "documents": "documents",
+        "video_iso": "video_iso", "iso-image": "video_iso",
+        "bilder": "pictures", "fotos": "pictures", "pictures": "pictures", "bilder": "bilder",
+        "dokumente": "documents", "docs": "documents", "documents": "documents", "dokumente": "docs",
         "disk_images": "disk_images", "isos": "disk_images",
-        "ebooks": "ebooks", "bücher": "ebooks",
+        "ebooks": "ebooks", "bücher": "ebooks", "epub": "epub",
         "unknown": "unknown", "unbekannt": "unknown"
     }
 

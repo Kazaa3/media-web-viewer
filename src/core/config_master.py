@@ -380,6 +380,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "library_category_map": [
             {"id": "all",             "label": "ALLE MEDIEN"},
             {"id": "audio",           "label": "audio"},
+            {"id": "audio_native",    "label": "audio_native"},
+            {"id": "audio_transcode", "label": "audio_transcode"},
             {"id": "album",           "label": "album"},
             {"id": "single",          "label": "single"},
             {"id": "hörbuch",         "label": "hörbuch"},
@@ -395,14 +397,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         ],
 
         "branch_architecture_registry": {
-            "audio":      ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack"],
-            "multimedia": ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
-            "extended":   ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
+            "audio":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack"],
+            "multimedia": ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "extended":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"],
             
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
-            "media":      ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"], 
-            "library":    ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
-            "database":   ["all", "audio", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"]
+            "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"], 
+            "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"]
         },
 
         # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---
