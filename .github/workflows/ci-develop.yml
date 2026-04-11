@@ -1,0 +1,64 @@
+name: Develop CI
+
+on:
+  push:
+    branches: [develop, 'milestone/**', 'meilenstein/**', 'feature/**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  tier-1-2-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+      - name: Install Geckodriver (Fallback)
+        run: |
+          if ! command -v geckodriver; then
+            echo "Geckodriver not found, downloading from Mozilla..."
+            GECKO_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep tag_name | cut -d '"' -f4)
+            wget -O geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/${GECKO_VERSION}/geckodriver-${GECKO_VERSION}-linux64.tar.gz"
+            tar -xzf geckodriver.tar.gz
+            chmod +x geckodriver
+            sudo mv geckodriver /usr/local/bin/
+            rm geckodriver.tar.gz
+          fi
+          geckodriver --version || (echo "Geckodriver installation failed" && exit 1)
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r infra/requirements-test.txt
+
+      - name: Run Tier 1 (Unit) Tests
+        run: |
+          PYTHONPATH=. python infra/build_system.py --test unit -v
+
+      - name: Run Tier 2 (Integration) Tests
+        run: |
+          PYTHONPATH=. python infra/build_system.py --test integration -v
+
+      - name: Build Debian Package (Validation)
+        run: |
+          PYTHONPATH=. python infra/build_system.py --build deb --monitor --skip-build-gate
+
+      - name: Upload Management Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: Management-Reports-develop
+          path: build/management_reports/
+          if-no-files-found: warn
+
+      - name: Cleanup build artifacts
+        run: |
+          PYTHONPATH=. python infra/build_system.py --clean-all

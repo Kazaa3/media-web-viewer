@@ -1,0 +1,143 @@
+<!-- ===================== REPORTING DASHBOARD (v1.34 High-Fidelity) ===================== -->
+<div id="reporting-main-container" style="display: flex; flex-direction: column; height: 100%; overflow: hidden; background: #fff; color: #333;">
+    
+    <!-- Top Header & Action Row -->
+    <div style="padding: 25px 40px; display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 2px solid #f5f5f5;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h1 style="margin: 0; font-size: 2.2em; font-weight: 800; color: #1a1a1a; letter-spacing: -1px;">Test Reporting & Dashboard</h1>
+        </div>
+        <button onclick="updateAnalyticsDashboard()" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Daten aktualisieren
+        </button>
+    </div>
+
+    <!-- [v1.41.137] Fragment Sub-Nav Purged. Managed by Shell. -->
+
+    <!-- Scrollable Content Viewport -->
+    <div id="reporting-viewport" style="flex: 1; overflow-y: auto; padding: 30px 40px; background: #fdfdfd;">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="reporting-dashboard-view" class="reporting-view" style="display: block;">
+            
+            <!-- Backend Pulse Row -->
+            <div style="display: flex; gap: 40px; margin-bottom: 40px; padding: 20px 30px; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="position: relative;">
+                        <circle style="width: 12px; height: 12px; background: #2ecc71; border-radius: 50%; display: block;"></circle>
+                        <div style="position: absolute; top: 0; left: 0; width: 12px; height: 12px; background: #2ecc71; border-radius: 50%; animation: pulse-green 2s infinite opacity;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase;">Backend</div>
+                        <div id="report-engine-status" style="font-size: 14px; font-weight: 700; color: #333;">/ Bottle / WSGI</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 12px; height: 12px; background: #3498db; border-radius: 50%;"></div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase;">Runtime</div>
+                        <div id="report-runtime-status" style="font-size: 14px; font-weight: 700; color: #333;">Aktiv (Gevent / Greenlet)</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 12px; height: 12px; background: #f39c12; border-radius: 50%;"></div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase;">OS Platform</div>
+                        <div id="report-os-platform" style="font-size: 14px; font-weight: 700; color: #333;">Linux / x86_64</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Cluster -->
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; margin-bottom: 40px;">
+                <!-- Status Pie Chart -->
+                <div style="background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #eee;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.25em; font-weight: 800;">Gesamtstatus (Alle Testläufe)</h3>
+                    <div id="status-pie-chart" style="width: 100%; height: 350px;"></div>
+                </div>
+                <!-- Duration Bar Chart -->
+                <div style="background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #eee;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.25em; font-weight: 800;">Dauer der letzten Testläufe (s)</h3>
+                    <div id="duration-bar-chart" style="width: 100%; height: 350px;"></div>
+                </div>
+            </div>
+
+            <!-- Trend Section -->
+            <div style="background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 40px;">
+                <h3 style="margin: 0 0 20px 0; font-size: 1.25em; font-weight: 800;">Trend: Bestanden vs. Fehlgeschlagen</h3>
+                <div id="trend-line-chart" style="width: 100%; height: 400px;"></div>
+            </div>
+
+            <!-- Summary Table Section (v1.41.00 Repair) -->
+            <div style="background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #eee;">
+                <h3 style="margin: 0 0 15px 0; font-size: 1.25em; font-weight: 800;">Zusammenfassung der letzten Läufe</h3>
+                <div id="report-summary-table" style="overflow-x: auto;">
+                    <div style="opacity:0.4; padding:20px;">Lade Tabellen-Daten...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- DATABASE VIEW (SQL) -->
+        <div id="reporting-database-view" class="reporting-view" style="display: none;">
+            <div class="glass-card" style="padding: 40px; border: 1px solid #eee;">
+                <h2 style="font-weight: 900; margin-bottom: 10px;">Datenbank (SQL)</h2>
+                <p style="color: #666; margin-bottom: 25px;">Direktzugriff auf die SQLite-Indizes und Schema-Integritätsprüfung.</p>
+                <div id="sql-console-output" style="background: #1e1e1e; color: #d4d4d4; padding: 20px; font-family: 'JetBrains Mono', monospace; border-radius: 8px; min-height: 400px;">
+                    -- Initialisiere SQL Engine...<br>
+                    -- Await query...
+                </div>
+            </div>
+        </div>
+
+        <!-- STUBS FOR REMAINING VIEWS -->
+        <div id="reporting-video-streaming-view" class="reporting-view" style="display: none;">
+             <div class="glass-card" style="padding: 40px;"><h2>Video Streaming Diagnostics</h2><p>Ready for MSE/FragMP4 analysis.</p></div>
+        </div>
+        <div id="reporting-audio-streaming-view" class="reporting-view" style="display: none;">
+             <div class="glass-card" style="padding: 40px;"><h2>Audio Streaming Diagnostics</h2><p>Ready for Spectrum/HLS analysis.</p></div>
+        </div>
+        <div id="reporting-parser-view" class="reporting-view" style="display: none;">
+             <div class="glass-card" style="padding: 40px;"><h2>Parser / Metadaten Audit</h2><p>Scanning library health...</p></div>
+        </div>
+        <div id="reporting-model-analysis-view" class="reporting-view" style="display: none;">
+             <div class="glass-card" style="padding: 40px;"><h2>Modell-Analyse</h2><p>Calculating complexity vectors...</p></div>
+        </div>
+        <div id="reporting-routing-suite-view" class="reporting-view" style="display: none;">
+             <div class="glass-card" style="padding: 40px;"><h2>Routing Suite</h2><p>Trace navigation state...</p></div>
+        </div>
+
+    </div>
+
+    <style>
+        @keyframes pulse-green {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+    </style>
+
+    <script>
+        /**
+         * Switch Reporting Views (Simplified for Global Sub-Nav - v1.41.137.2)
+         */
+        function switchReportingView(viewId) {
+            if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-REPORT', viewId);
+            
+            // Hide all views
+            document.querySelectorAll('.reporting-view').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Map common aliases
+            let targetId = 'reporting-' + viewId + '-view';
+            if (viewId === 'dashboard') targetId = 'reporting-dashboard-view';
+            if (viewId === 'performance') targetId = 'reporting-video-streaming-view'; // Example mapping
+            
+            // Show target view
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.style.display = 'block';
+            }
+        }
+    </script>
+</div>

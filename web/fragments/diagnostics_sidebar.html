@@ -1,0 +1,777 @@
+<!-- 
+    DIAGNOSTICS OVERLAY (v1.37.10)
+    Modularized Fragment: web/fragments/diagnostics_sidebar.html
+-->
+<div id="global-diagnostics-sidebar" class="diagnostic-sidebar left-overlay" style="display: block;">
+    <div class="sidebar-header" style="display: flex; flex-direction: column; padding: 15px 15px 5px 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff3366" stroke-width="3">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                <h3 style="margin:0; font-size: 11px; letter-spacing: 1px; color: #ff3366; font-weight: 900; text-transform: uppercase;">Diagnostics Overlay</h3>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button onclick="generateForensicSnapshot()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Generate Unified Forensic Report">SNAPSHOT</button>
+                <button class="close-btn" onclick="toggleDiagnosticsSidebar(false)" style="background:none; border:none; color:white; font-size:18px; cursor:pointer; opacity: 0.3;">×</button>
+            </div>
+        </div>
+        
+        <div id="diag-active-header-area" style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div id="diag-active-view-name" style="font-size: 14px; font-weight: 900; color: #fff; letter-spacing: -0.5px;">-</div>
+            <div id="diag-active-view-desc" style="font-size: 10px; color: var(--text-secondary); opacity: 0.7; margin-top: 2px;">Warte auf Auswahl...</div>
+        </div>
+    </div>
+    
+    <div class="sidebar-reiters" style="padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-wrap: wrap; gap: 5px; position: sticky; top: 0; background: #1a1a1a; z-index: 10;">
+        <button id="reiter-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('health', this)">HLT</button>
+        <button id="reiter-log" class="side-reiter active" onclick="switchDiagnosticsSidebarTab('log', this)">LOG</button>
+        <button id="reiter-item-track" class="side-reiter" onclick="switchDiagnosticsSidebarTab('item-track', this)">TRK</button>
+        <button id="reiter-sentinel" class="side-reiter" onclick="switchDiagnosticsSidebarTab('sentinel', this)" style="color: #00ffcc;">SNT</button>
+        <button id="reiter-debug-db" class="side-reiter" onclick="switchDiagnosticsSidebarTab('debug-db', this)">DB</button>
+        <button id="reiter-logs" class="side-reiter" onclick="switchDiagnosticsSidebarTab('logs', this)">LOG</button>
+        <button id="reiter-video-health" class="side-reiter" onclick="switchDiagnosticsSidebarTab('video-health', this)">VID</button>
+        <button id="reiter-recovery" class="side-reiter" onclick="switchDiagnosticsSidebarTab('recovery', this)">REC</button>
+        <button id="reiter-env" class="side-reiter" onclick="switchDiagnosticsSidebarTab('env', this)">ENV</button>
+        <button id="reiter-storage" class="side-reiter" onclick="switchDiagnosticsSidebarTab('storage', this)">STR</button>
+        <button id="reiter-performance" class="side-reiter" onclick="switchDiagnosticsSidebarTab('performance', this)">PER</button>
+        <button class="side-reiter" id="reiter-ply" onclick="switchDiagnosticsSidebarTab('playlist')">PLY</button>
+        <button class="side-reiter" id="reiter-sta" onclick="switchDiagnosticsSidebarTab('state')">STA</button>
+        <button class="side-reiter" id="reiter-net" onclick="switchDiagnosticsSidebarTab('network')">NET</button>
+        <button class="side-reiter" id="reiter-prc" onclick="switchDiagnosticsSidebarTab('process')">PRC</button>
+        <button class="side-reiter" id="reiter-drv" onclick="switchDiagnosticsSidebarTab('driver')">DRV</button>
+        <button class="side-reiter" id="reiter-sec" onclick="switchDiagnosticsSidebarTab('security')">SEC</button>
+        <button id="reiter-api" class="side-reiter" onclick="switchDiagnosticsSidebarTab('api', this)">API</button>
+        <button id="reiter-config" class="side-reiter" onclick="switchDiagnosticsSidebarTab('config', this)" style="color: #ff3366;">CFG</button>
+        <button id="reiter-boot" class="side-reiter" onclick="switchDiagnosticsSidebarTab('boot', this)" style="color: #00ffcc;">BOOT</button>
+        <button id="reiter-hydration-audit" class="side-reiter" onclick="switchDiagnosticsSidebarTab('hydration-audit', this)" style="color: #ff9500;">HYD</button>
+                <!-- PANE: SOFTWARE STACK & DEPENDENCY AUDIT (ENV) [v1.37.40] -->
+                <div id="diag-pane-env" class="diag-pane" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--accent-color); letter-spacing: 2px;">SOFTWARE STACK DASHBOARD</div>
+                        <div style="font-size: 8px; opacity: 0.5;">v1.37.40</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(255,51,102,0.08), rgba(52,152,219,0.08)); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; position: relative; overflow: hidden;">
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Software Stack</div>
+                        <div id="diag-env-os" style="font-size: 12px; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 8px;">-</div>
+                        <div id="diag-env-python" style="font-size: 10px; color: #9cdcfe; margin-bottom: 4px;">Python: -</div>
+                        <div id="diag-env-eel" style="font-size: 10px; color: #ce9178; margin-bottom: 4px;">Eel: -</div>
+                        <div id="diag-env-psutil" style="font-size: 10px; color: #b5cea8; margin-bottom: 4px;">psutil: -</div>
+                        <div id="diag-env-ffmpeg" style="font-size: 10px; color: #ff3366; margin-bottom: 4px;">FFmpeg: -</div>
+                        <div id="diag-env-node" style="font-size: 10px; color: #fff; margin-bottom: 4px;">Node: -</div>
+                    </div>
+                    <button onclick="runEnvAudit()" style="width:100%; height: 35px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(255,51,102,0.2);">
+                        <span>RUN ENV AUDIT</span>
+                        <span id="env-btn-spinner" style="width:10px; height:10px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation: rotate 1s infinite linear;"></span>
+                    </button>
+                    <div id="diag-env-status" style="font-size: 9px; color: #fff; opacity: 0.7; margin-top: 10px; text-align: center;">Awaiting audit...</div>
+                </div>
+        <button class="side-reiter" id="reiter-env" onclick="switchDiagnosticsSidebarTab('env')">ENV</button>
+    </div>
+
+    <div class="sidebar-scroll-viewport" style="padding: 0 15px; overflow-y: auto; height: calc(100vh - 220px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
+        
+        <!-- PANE: GLOBAL HEALTH & READINESS (HLT) [v1.37.36] -->
+        <div id="diag-pane-health" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: var(--accent-color); letter-spacing: 2px;">COMMAND DASHBOARD</div>
+                <div style="font-size: 8px; opacity: 0.5;">v1.37.36</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(52,152,219,0.1), rgba(46,204,113,0.1)); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; position: relative; overflow: hidden;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Technical Readiness</div>
+                <div id="diag-hlt-score" style="font-size: 48px; font-weight: 900; color: #fff; line-height: 1;">--%</div>
+                <div id="diag-hlt-level" style="font-size: 10px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; color: #2ecc71;">CALCULATING...</div>
+                
+                <!-- Sentinel Scan Line Decoration -->
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: rgba(52,152,219,0.5); box-shadow: 0 0 10px rgba(52,152,219,0.8); animation: scanLine 4s infinite linear;"></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div id="diag-hlt-db-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 7px; opacity: 0.4; margin-bottom: 4px;">DB STATE</div>
+                    <div id="diag-hlt-db" style="font-size: 10px; font-weight: 900;">IDLE</div>
+                </div>
+                <div id="diag-hlt-sys-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 7px; opacity: 0.4; margin-bottom: 4px;">SYS LOAD</div>
+                    <div id="diag-hlt-sys" style="font-size: 10px; font-weight: 900;">STABLE</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Forensic Radar</div>
+            <div id="diag-hlt-radar" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 15px;">
+                <!-- 15 Chromatic Tiles -->
+                <div class="h-tile" title="LOG"></div><div class="h-tile" title="VID"></div><div class="h-tile" title="AUD"></div><div class="h-tile" title="REC"></div><div class="h-tile" title="LIB"></div>
+                <div class="h-tile" title="DOM"></div><div class="h-tile" title="DB"></div><div class="h-tile" title="SYS"></div><div class="h-tile" title="VOL"></div><div class="h-tile" title="PRF"></div>
+                <div class="h-tile" title="PLY"></div><div class="h-tile" title="STA"></div><div class="h-tile" title="NET"></div><div class="h-tile" title="PRC"></div><div class="h-tile" title="DRV"></div>
+                <div class="h-tile" title="SEC"></div><div class="h-tile" title="API"></div><div class="h-tile" title="ENV"></div><div class="h-tile" id="h-tile-hlt" title="HLT" style="background:var(--accent-color);"></div>
+            </div>
+
+            <button onclick="runGlobalHealthAudit()" style="width:100%; height: 35px; background: var(--accent-color); color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(52,152,219,0.3);">
+                <span>INITIATE MASTER AUDIT</span>
+                <span id="hlt-btn-spinner" style="width:10px; height:10px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation: rotate 1s infinite linear;"></span>
+            </button>
+
+            <!-- VISUAL INTEGRITY TEST (v1.41.159) -->
+            <button onclick="runVisualIntegrityTest()" style="width:100%; height: 35px; background: rgba(0,255,127,0.1); color: #00ff7f; border: 1px solid rgba(0,255,127,0.2); border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,255,127,0.1);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
+                </svg>
+                <span>VISUAL INTEGRITY (FORCE WRITE)</span>
+            </button>
+
+            <!-- RESCUE SPAWN (v1.41.161) -->
+            <button onclick="if(window.FragmentLoader) ['player-main-viewport', 'library-main-viewport', 'browser-main-viewport', 'video-main-viewport', 'tools-main-viewport', 'logbook-main-viewport', 'tests-main-viewport', 'edit-main-viewport', 'database-main-viewport', 'options-main-viewport'].forEach(id => FragmentLoader.load(id, 'fragments/diagnostic_rescue.html', null, true))" 
+                style="width:100%; height: 35px; background: rgba(255,51,102,0.1); color: #ff3366; border: 1px solid rgba(255,51,102,0.2); border-radius: 6px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(255,51,102,0.1);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>RESCUE ALL VIEWPORTS</span>
+            </button>
+
+            <style>
+                @keyframes scanLine { 0% { top: -5%; } 100% { top: 105%; } }
+                .h-tile { width: 14px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
+                .h-tile.active { background: #2ecc71; box-shadow: 0 0 5px rgba(46,204,113,0.5); }
+            </style>
+        </div>
+
+        <div id="diag-pane-hydration" class="diag-pane" style="display: none;">
+            <!-- MASTER SYNC CONSOLE (v1.37.14) -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:10px; margin-bottom:15px;">
+                <div style="font-size:9px; font-weight:900; opacity:0.4; margin-bottom:10px; letter-spacing:1px; text-align:center;">HYDRATION MASTER CONSOLE</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                    <button onclick="triggerMasterScan()" style="background:#3498db; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-weight:800;" title="Deep File-System Re-Index">DIRECT SCAN</button>
+                    <button onclick="triggerMasterSync()" style="background:#2ecc71; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-weight:800;" title="SQLite Atomic Sync">ATOMIC SYNC</button>
+                    <button onclick="triggerNuclearRecovery()" style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-weight:800; grid-column:span 2;" title="Bypass Filters (Raw Recovery)">NUCLEAR RECOVERY</button>
+                </div>
+            </div>
+
+            <!-- FORENSIC HYDRATION PARITY (v1.37.22) -->
+            <div id="diag-hydration-parity-matrix" style="background:rgba(0,0,0,0.3); border:1px solid rgba(0,255,153,0.1); border-radius:10px; padding:12px; margin-bottom:10px; ;">
+                <div style="font-size:9px; font-weight:900; color:#00ff99; margin-bottom:8px; opacity:0.6; letter-spacing:1px; text-align:center;">FOUR-STAGE PARITY MATRIX</div>
+                <div id="parity-matrix-content"></div>
+            </div>
+
+            <!-- FORENSIC FLOW AUDITOR -->
+            <div id="diag-logic-audit-viewport" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:10px;">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Hydration-Audit...</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                <button onclick="runHydrationAuditProbe()" style="height:34px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); color:#fff; font-size:9px; font-weight:900; border-radius:8px; cursor:pointer; opacity:0.6; transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">PROBE FLOW</button>
+                <button onclick="runHydrationParityAudit()" style="height:34px; background:rgba(0,255,153,0.05); border:1px solid rgba(0,255,153,0.1); color:#00ff99; font-size:9px; font-weight:900; border-radius:8px; cursor:pointer; opacity:0.6; transition:all 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6" title="Execute Deep Pipeline Parity Check">SCAN PARITY</button>
+            </div>
+            
+            <button onclick="MWV_Diagnostics.forceHydrationTest()" style="width:100%; height: 35px; background: rgba(255,149,0,0.1); color: #ff9500; border: 1px solid rgba(255,149,0,0.3); border-radius: 8px; font-weight: 900; font-size: 10px; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(255,149,0,0.1);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M12 2v22M2 12h20M7 7l10 10M17 7L7 10" />
+                </svg>
+                <span>FORCE HYDRATION TEST</span>
+            </button>
+        </div>
+
+        <div id="diag-pane-item-track" class="diag-pane" style="display: none;">
+            <!-- Forensic Item Search Console (v1.37.15) -->
+            <div id="diag-item-track-header" style="margin-bottom:15px;">
+                <div style="display:flex; gap:8px; background:rgba(255,255,255,0.05); padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
+                    <input type="text" id="diag-item-query" placeholder="Suchen nach Pfad (z.B. .mp4) oder ID..." 
+                        style="flex:1; background:transparent; border:none; color:white; font-size:11px; outline:none;"
+                        onkeypress="if(event.key==='Enter') performItemJourneyAudit()">
+                    <button onclick="performItemJourneyAudit()" style="background:#007aff; color:white; border:none; padding:4px 12px; border-radius:6px; font-size:9px; cursor:pointer; font-weight:900;">AUDIT</button>
+                </div>
+            </div>
+
+            <!-- FORENSIC TIMELINE VIEWPORT -->
+            <div id="diag-item-audit-results" style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:12px; overflow-y:auto; max-height:calc(100vh - 350px);">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Item-Trace...</div>
+            </div>
+        </div>
+
+        <div id="diag-pane-sentinel" class="diag-pane" style="display: none;">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding: 0 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; font-weight: 900; color: #00ffcc; opacity: 0.6; letter-spacing: 0.5px;">SENTINEL LIVE-TRACE (v1.37.23)</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="downloadSentinelTrace()" style="background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); color: #00ffcc; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Download Trace as .txt">EXPORT</button>
+                        <button onclick="clearSentinelLog()" style="background: rgba(255,51,102,0.05); border: 1px solid rgba(255,51,102,0.1); color: #ff3366; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 4px; cursor: pointer;">CLEAR</button>
+                    </div>
+                </div>
+                <input type="text" id="sentinel-trace-search" placeholder="Forensic Event Triage (Tag, Message...)" oninput="filterSentinelTrace(this.value)" 
+                    style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.1); color: #00ffcc; font-size: 9px; padding: 6px 10px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; outline: none;">
+            </div>
+            <div id="sentinel-log-container" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(0,255,204,0.1); border-radius: 8px; height: 350px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; color: #00ffcc; line-height: 1.4; scroll-behavior: smooth;"></div>
+        </div>
+
+        <!-- NEW: Integrated Database Overview Pane -->
+        <div id="diag-pane-debug-db" class="diag-pane" style="display: none;">
+            <div id="debug-db-overview-content" class="glass-card" style="padding: 15px; margin-bottom: 10px;"></div>
+            <div style="background: #111; border-radius: 8px; padding: 10px; border: 1px solid #333;">
+                <pre id="debug-items-json" style="margin:0; font-size: 10px; font-family: 'JetBrains Mono', monospace; color: #d4d4d4; overflow: auto; max-height: 300px;"></pre>
+            </div>
+        </div>
+
+        <!-- NEW: Integrated Log Terminal Pane -->
+        <div id="diag-pane-logs" class="diag-pane" style="display: none;">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; font-weight: 900; opacity: 0.5;">LIVE SYSTEM LOGS (v1.37.21)</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="clearDebugConsole()" style="background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.2); color: #e74c3c; font-size: 8px; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-weight: 900;">CLEAR</button>
+                        <button onclick="refreshDebugLogs()" style="background: rgba(0,122,255,0.1); border: 1px solid rgba(0,122,255,0.2); color: #007aff; font-size: 8px; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-weight: 900;">SYNC</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <div style="display: flex; gap: 2px; background: rgba(255,255,255,0.03); padding: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                        <button onclick="setForensicLogLevel('ALL')" id="log-filter-all" class="f-filter-btn active">ALL</button>
+                        <button onclick="setForensicLogLevel('ERROR')" id="log-filter-err" class="f-filter-btn" style="color: #ff3366;">ERR</button>
+                        <button onclick="setForensicLogLevel('WARNING')" id="log-filter-wrn" class="f-filter-btn" style="color: #f1c40f;">WRN</button>
+                    </div>
+                    <input type="text" id="debug-log-search" placeholder="Forensic Search (PID, Path...)" oninput="updateLogFilters()" 
+                        style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); color: #00ff41; font-size: 9px; padding: 4px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;">
+                </div>
+            </div>
+
+            <style>
+                .f-filter-btn { background: none; border: none; font-size: 8px; font-weight: 900; color: #888; padding: 3px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+                .f-filter-btn.active { background: rgba(255,255,255,0.08); color: #fff !important; }
+                .f-filter-btn:hover:not(.active) { background: rgba(255,255,255,0.03); }
+            </style>
+            <div id="debug-console-output" style="background: #000; color: #00ff41; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 10px; border-radius: 8px; height: 400px; overflow-y: auto; border: 1px solid #222;"></div>
+            <div id="debug-log-counter" style="font-size: 8px; opacity: 0.3; margin-top: 6px; text-align: right; font-family: 'JetBrains Mono', monospace;">Forensic View: 0 / 0</div>
+        </div>
+
+        <!-- NEW: Video Health Forensic Pane (v1.37.13) -->
+        <div id="diag-pane-video-health" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 9px; font-weight: 900; opacity: 0.5;">FFMPEG PIPELINE</span>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="triggerPipelineRecovery()" style="background: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;" title="Purge stalled media processes">RECOVER</button>
+                    <button onclick="runVideoForensicAudit()" style="background: #007aff; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;" title="Deep FFmpeg Pipeline Probe">PROBE</button>
+                    <button onclick="runVideoWorkerAudit()" style="background: #2ecc71; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;" title="Audit active transcoding processes">AUDIT WORKERS</button>
+                </div>
+            </div>
+            <div id="diag-video-recovery-status" style="margin-bottom: 8px;"></div>
+            
+            <!-- LIVE WORKER MATRIX (v1.37.25) -->
+            <div id="diag-video-worker-viewport" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(46,204,113,0.1); border-radius: 8px; padding: 10px; margin-bottom: 10px; ;">
+                <div style="font-size:8px; font-weight:900; color:#2ecc71; opacity:0.6; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; text-align:center;">Active Transcoding Workers</div>
+                <div id="video-worker-matrix-content"></div>
+            </div>
+
+            <div id="diag-video-forensic-results" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 11px;">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Bereit fr FFmpeg-Audit...</div>
+            </div>
+        </div>
+
+        <!-- NEW: Database Resilience Pane (v1.37.13) -->
+        <div id="diag-pane-db-resilience" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 9px; font-weight: 900; opacity: 0.5;">DB RESILIENCE</span>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="runDatabaseResilienceAudit()" style="background: #2ecc71; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">PRAGMA</button>
+                    <button onclick="runFSParityAudit()" style="background: #f1c40f; color: black; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">GHOST CHECK</button>
+                </div>
+            </div>
+            <div id="diag-db-resilience-results" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 11px; margin-bottom:10px;">
+                <div style="opacity: 0.4; font-size: 10px; text-align: center; padding: 20px;">Warte auf Integritäts-Scan...</div>
+            </div>
+            <div id="diag-db-prune-status" style="margin-bottom:10px;"></div>
+
+            <!-- SESSION AUDIT TRAIL (v1.37.26) -->
+            <div id="diag-rec-audit-trail" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(241,196,15,0.1); border-radius: 10px; padding: 12px;">
+                <div style="font-size:9px; font-weight:900; color:#f1c40f; opacity:0.6; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; text-align:center;">Session Audit Trail</div>
+                <div id="diag-rec-history-viewport" style="display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto;">
+                    <div style="opacity:0.3; font-size:9px; text-align:center; padding:10px;">Keine Forensic-Aktionen aufgezeichnet.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="diag-pane-environment" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">SYSTEM HEALTH</div>
+                <button onclick="runEnvironmentAudit()" style="background: #00ffcc; color: black; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">REFRESH ENV</button>
+            </div>
+            
+            <div id="diag-env-telemetry" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">CPU USAGE</div>
+                    <div id="diag-env-cpu" style="font-size: 14px; font-weight: 900; color: #00ffcc;">--</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">RAM RSS</div>
+                    <div id="diag-env-ram" style="font-size: 14px; font-weight: 900; color: #00ffcc;">--</div>
+                </div>
+            </div>
+
+            <div id="diag-env-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.6;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Environmental-Scan...</div>
+            </div>
+        </div>
+
+        <div id="diag-pane-storage" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">VOLUME DISCOVERY</div>
+                <button onclick="runStorageAudit()" style="background: #f39c12; color: black; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT VOLUME</button>
+            </div>
+            
+            <div id="diag-str-telemetry" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between;">
+                    <div style="font-size: 9px; opacity: 0.5;">VOLUME SIZE</div>
+                    <div id="diag-str-total-size" style="font-size: 12px; font-weight: 900; color: #f39c12;">--</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">FILES</div>
+                        <div id="diag-str-files" style="font-size: 12px; font-weight: 900;">--</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">FOLDERS</div>
+                        <div id="diag-str-folders" style="font-size: 12px; font-weight: 900;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diag-str-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.4;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Storage-Scan...</div>
+            </div>
+        </div>
+
+        <div id="diag-pane-performance" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">GUI PERFORMANCE</div>
+                <button onclick="runPerformanceAudit()" style="background: #9b59b6; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT GUI</button>
+            </div>
+            
+            <div id="diag-per-telemetry" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">RENDER TIME</div>
+                    <div id="diag-per-latency" style="font-size: 14px; font-weight: 900; color: #9b59b6;">--</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">DOM BLOAT</div>
+                    <div id="diag-per-bloat" style="font-size: 14px; font-weight: 900; color: #9b59b6;">--</div>
+                </div>
+            </div>
+
+            <div id="diag-per-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 10px; line-height: 1.6;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Performance-Scan...</div>
+            </div>
+        </div>
+
+        <!-- PANE: PLAYLIST INTEGRITY (PLY) [v1.37.32] -->
+        <div id="diag-pane-playlist" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">PLAYLIST FORENSICS</div>
+                <button onclick="runPlaylistAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT PLY</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #9b59b6;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">SAVED SETS</div>
+                    <div id="diag-ply-count" style="font-size: 14px; font-weight: 900; color: #9b59b6;">0</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #ff3366;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">TOTAL ORPHANS</div>
+                    <div id="diag-ply-orphans" style="font-size: 14px; font-weight: 900; color: #ff3366;">0</div>
+                </div>
+            </div>
+
+            <div id="diag-ply-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Playlist-Scan...</div>
+            </div>
+
+            <div style="margin-top:10px; display:flex; gap:5px;">
+                <button id="btn-ply-prune-all" onclick="triggerPlaylistPruningAll()" style="flex:1; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Surgical removal of Relational Orphans from all playlists.">PRUNE ALL ORPHANS</button>
+            </div>
+        </div>
+
+        <!-- PANE: STATE PERSISTENCE (STA) [v1.37.33] -->
+        <div id="diag-pane-state" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">STATE & PERSISTENCE</div>
+                <button onclick="runStateAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT STATE</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #2ecc71;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">HEALTH</div>
+                    <div id="diag-sta-health" style="font-size: 14px; font-weight: 900; color: #2ecc71;">--%</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #f1c40f;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">LOCAL DRIFT</div>
+                    <div id="diag-sta-drift" style="font-size: 14px; font-weight: 900; color: #f1c40f;">0</div>
+                </div>
+            </div>
+
+            <div id="diag-sta-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf State-Scan...</div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <button id="btn-sta-sync" onclick="forcePersistenceSync()" style="width:100%; background:rgba(255,255,255,0.05); color:white; border:1px solid rgba(255,255,255,0.1); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Aligns Frontend LocalStorage with Backend Config Master.">FORCE PERSISTENCE SYNC</button>
+            </div>
+        </div>
+
+        <!-- PANE: NETWORK & RPC LATENCY (NET) [v1.37.34] -->
+        <div id="diag-pane-network" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">BRIDGE PERFORMANCE</div>
+                <button onclick="runNetworkAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT RTT</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #3498db;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">AVG. LATENCY</div>
+                    <div id="diag-net-avg" style="font-size: 14px; font-weight: 900; color: #3498db;">--ms</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #2ecc71;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">RPC QUALITY</div>
+                    <div id="diag-net-quality" style="font-size: 14px; font-weight: 900; color: #2ecc71;">--%</div>
+                </div>
+            </div>
+
+            <div id="diag-net-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Warte auf Network-Audit...</div>
+            </div>
+
+            <div style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:8px; opacity:0.5; text-transform:uppercase; margin-bottom:5px;">Real-time Throughput</div>
+                <div id="diag-net-throughput" style="height:30px; display:flex; align-items:flex-end; gap:2px;"></div>
+            </div>
+        </div>
+
+        <!-- PANE: PROCESS CONTROL & ZOMBIE AUDIT (PRC) [v1.37.35] -->
+        <div id="diag-pane-process" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">WORKER HIERARCHY</div>
+                <button onclick="runProcessAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT WORKERS</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #e74c3c;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">ACTIVE WORKERS</div>
+                    <div id="diag-prc-active" style="font-size: 14px; font-weight: 900; color: #fff;">0</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #ff3366;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">ZOMBIE DETECTED</div>
+                    <div id="diag-prc-zombies" style="font-size: 14px; font-weight: 900; color: #ff3366;">0</div>
+                </div>
+            </div>
+
+            <div id="diag-prc-details" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px; max-height: 250px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Scanning process tree...</div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <button id="btn-prc-purge" onclick="purgeZombieWorkers()" style="width:100%; background:rgba(255,51,102,0.1); color:#ff3366; border:1px solid rgba(255,51,102,0.2); padding:6px; border-radius:4px; font-size:8px; cursor:pointer;" title="Surgical termination of all Zombie processes identified in the hierarchy.">PURGE ZOMBIE WORKERS</button>
+            </div>
+        </div>
+
+        <!-- PANE: HARDWARE & ACCELERATION AUDIT (DRV) [v1.37.37] -->
+        <div id="diag-pane-driver" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">ACCELERATION HUB</div>
+                <button onclick="runHardwareAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT HARDWARE</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-bottom: 3px solid #f1c40f;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 2px;">GPU VISIBILITY</div>
+                        <div id="diag-drv-gpu-type" style="font-size: 14px; font-weight: 900; color: #fff;">UNKNOWN</div>
+                    </div>
+                    <div id="diag-drv-gpu-usage" style="font-size: 14px; font-weight: 900; color: #f1c40f;">--%</div>
+                </div>
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px;">ACTIVE ACCELERATION PATHS</div>
+                <div id="diag-drv-encoders" style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 5px;">
+                    <span style="font-size: 8px; padding: 2px 6px; background: rgba(255,255,255,0.05); border-radius: 3px; color: rgba(255,255,255,0.4);">NONE DETECTED</span>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">DISK TYPE</div>
+                    <div id="diag-drv-disk-type" style="font-size: 12px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 8px; opacity: 0.5; margin-bottom: 4px;">BUS GENERATION</div>
+                    <div id="diag-drv-pcie" style="font-size: 12px; font-weight: 900; color: #fff;">-</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Technical Codec Matrix</div>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 9px;">
+                <div id="diag-codec-matrix" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-family: monospace;">
+                    <div style="opacity: 0.4;">Scanning encoders...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANE: SECURITY & FORENSIC AUTHORITY (SEC) [v1.37.38] -->
+        <div id="diag-pane-security" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">AUTHORITY HUB</div>
+                <button onclick="runSecurityAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT SECURITY</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid #9b59b6;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-size: 8px; opacity: 0.5; margin-bottom: 2px;">EXECUTION AUTHORITY</div>
+                        <div id="diag-sec-auth" style="font-size: 14px; font-weight: 900; color: #fff;">SCANNING...</div>
+                    </div>
+                </div>
+                <div id="diag-sec-identity" style="font-size: 8px; opacity: 0.6; font-family: monospace;">UID: -- | GID: -- | ROOT: --</div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Filesystem Permissions</div>
+            <div style="display:grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">DATABASE R/W</div>
+                    <div id="diag-sec-db-perm" style="font-size: 10px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">LIBRARY R/W</div>
+                    <div id="diag-sec-lib-perm" style="font-size: 10px; font-weight: 900; color: #fff;">-</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Forensic Environment</div>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; font-size: 8px; color: rgba(255,255,255,0.6);">
+                <div id="diag-sec-platform">Platform: Detecting...</div>
+            </div>
+        </div>
+
+        <!-- PANE: INTERNAL API REGISTRY & DOCUMENTATION (API) [v1.37.39] -->
+        <div id="diag-pane-api" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">BRIDGE REGISTRY</div>
+                <button onclick="runApiAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT API</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; border-left: 3px solid #3498db; margin-bottom: 15px;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 2px;">TOTAL ENDPOINTS</div>
+                <div id="diag-api-count" style="font-size: 14px; font-weight: 900; color: #fff;">0</div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Live Documentation Stream</div>
+            <div id="diag-api-registry" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; max-height: 300px; overflow-y: auto;">
+                <div style="opacity: 0.4; font-size: 9px; text-align: center; padding: 20px;">Reflecting backend bridges...</div>
+            </div>
+        </div>
+
+        <!-- PANE: SOFTWARE STACK & DEPENDENCY AUDIT (ENV) [v1.37.40] -->
+        <div id="diag-pane-env" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 1px;">STACK DASHBOARD</div>
+                <button onclick="runEnvAudit()" style="background: var(--accent-color); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-weight: 800;">AUDIT STACK</button>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 3px solid #1abc9c;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 2px;">OS PLATFORM</div>
+                <div id="diag-env-os" style="font-size: 11px; font-weight: 900; color: #fff;">SCANNING...</div>
+                <div id="diag-env-node" style="font-size: 8px; opacity: 0.6; font-family: monospace; margin-top: 2px;">Hostname: --</div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Technical Dependencies</div>
+            <div style="display:grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 15px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">PYTHON</div>
+                    <div id="diag-env-python" style="font-size: 9px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">EEL-BRIDGE</div>
+                    <div id="diag-env-eel" style="font-size: 9px; font-weight: 900; color: #fff;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 8px; opacity: 0.5;">PSUTIL-CORE</div>
+                    <div id="diag-env-psutil" style="font-size: 9px; font-weight: 900; color: #fff;">-</div>
+                </div>
+            </div>
+
+            <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px; text-transform: uppercase;">Engine Signatures</div>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 8px; line-height: 1.4; font-family: monospace; color: #1abc9c;">
+                <div id="diag-env-ffmpeg">Detecting FFmpeg engine...</div>
+            </div>
+        </div>
+
+        <div id="diag-pane-legacy" class="diag-pane" style="display: none;">
+             <div id="diag-legacy-content"></div>
+        </div>
+
+        <div class="diagnostic-sidebar-section" style="margin-top: 24px; border-radius: 14px; background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <div class="diagnostic-label" style="font-size: 9px; text-transform: uppercase; opacity: 0.4; margin-bottom: 8px;">System Probes</div>
+            <div class="diag-flag-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                <button class="diag-flag-btn" id="flag-btn-DIAG" onclick="toggleDiagnosticsFlag('DIAG')">DIAG</button>
+                <button class="diag-flag-btn" id="flag-btn-NATV" onclick="toggleDiagnosticsFlag('NATV')">NATV</button>
+                <button class="diag-flag-btn" id="flag-btn-HIDB" onclick="toggleDiagnosticsFlag('HIDB')">HIDB</button>
+                <button class="diag-flag-btn" id="flag-btn-RAW" onclick="toggleDiagnosticsFlag('RAW')">RAW</button>
+                <button class="diag-flag-btn" id="flag-btn-BYPS" onclick="toggleDiagnosticsFlag('BYPS')">BYPS</button>
+                <button class="diag-flag-btn" id="flag-btn-TEST" onclick="toggleDiagnosticsFlag('TEST')">TEST</button>
+                <button class="diag-flag-btn" id="flag-btn-HYD" onclick="switchDiagnosticsSidebarTab('hydration-audit', this)" style="border-color: #ff9500; color: #ff9500;">HYDRATION</button>
+            </div>
+        </div>
+
+        <!-- NEW: FRAGMENT HYDRATION AUDITOR (HYD) [v1.37.45] -->
+        <div id="diag-pane-hydration-audit" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,149,0,0.2); padding-bottom: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: #ff9500; letter-spacing: 2px;">FRAGMENT HYDRATION AUDIT</div>
+                <div style="font-size: 8px; opacity: 0.5;">v1.37.45</div>
+            </div>
+
+            <div style="background: rgba(255,149,0,0.05); border: 1px solid rgba(255,149,0,0.1); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">Boot-Sequence Timeline</div>
+                <div id="hydration-audit-summary" style="font-size: 11px; font-weight: 900; color: #fff;">
+                    Awaiting System Boot...
+                </div>
+                <div id="hydration-audit-counter" style="font-size: 8px; margin-top: 5px; color: var(--text-secondary);">
+                    Progress: 0 / 0 Ready
+                </div>
+            </div>
+
+            <div id="hydration-fragment-matrix" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; border: 1px solid rgba(255,149,0,0.05);">
+                <!-- Dynamically Populated via mwv:fragment_matrix_update (v1.41.160) -->
+                <div style="opacity: 0.3; font-size: 8px; text-align: center; padding: 10px;">Awaiting Spawning Registry...</div>
+            </div>
+
+            <script>
+                // Local listener for the Fragment Matrix (v1.41.160)
+                document.addEventListener('mwv:fragment_matrix_update', () => {
+                    const container = document.getElementById('hydration-fragment-matrix');
+                    const registry = window.__fragment_lifecycle_registry || {};
+                    if (!container) return;
+
+                    const rows = Object.values(registry).map(entry => {
+                        const statusColor = {
+                            'will_spawn': '#f1c40f', // Yellow
+                            'loading': '#3498db',    // Blue
+                            'success': '#2ecc71',    // Green
+                            'error': '#e74c3c',      // Red
+                            'ready': '#2ecc71'
+                        }[entry.currentStatus] || '#777';
+
+                        return `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:2px; border: 1px solid rgba(255,255,255,0.02);">
+                                <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                                    <div style="width:6px; height:6px; border-radius:50%; background:${statusColor}; box-shadow: 0 0 5px ${statusColor};"></div>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="font-size:10px; font-weight:900; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${entry.name}</span>
+                                        <span style="font-size:7px; opacity:0.5;">${entry.lastUpdate}</span>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:5px;">
+                                    <button onclick="if(window.FragmentLoader) window.FragmentLoader.injectLocalizedIntegrityTest('${entry.targetId}')" 
+                                        style="background:rgba(0,255,153,0.1); border:1px solid rgba(0,255,153,0.2); color:#00ff99; font-size:8px; padding:2px 6px; border-radius:4px; cursor:pointer; font-weight:800;">
+                                        TEST
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    container.innerHTML = rows || '<div style="opacity: 0.3; font-size: 8px; text-align: center; padding: 10px;">No fragments registered.</div>';
+                });
+            </script>
+
+            <div class="diagnostic-label">Forensic Loading Logs</div>
+            <div id="hydration-audit-logs" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #ff9500; line-height: 1.4;">
+                [SYSTEM] Waiting for first spawn event...
+            </div>
+            
+            <button onclick="if(typeof location !== 'undefined') location.reload()" style="width:100%; height: 35px; background: rgba(255,149,0,0.1); color: #ff9500; border: 1px solid rgba(255,149,0,0.2); border-radius: 6px; font-weight: 900; font-size: 9px; margin-top: 15px; cursor: pointer;">
+                RE-INITIALIZE HYDRATION
+            </button>
+        </div>
+
+        <!-- NEW: FRAGMENT & MODULE CONTROL (CFG) [v1.38.05] -->
+        <div id="diag-pane-config" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,51,102,0.2); padding-bottom: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: #ff3366; letter-spacing: 2px;">FRAGMENT & MODULE CONTROL</div>
+                <div style="font-size: 8px; opacity: 0.5;">v1.38.05</div>
+            </div>
+
+            <div style="background: rgba(255,51,102,0.05); border: 1px solid rgba(255,51,102,0.1); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">Functional Modules</div>
+                <div id="config-module-matrix" style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    <!-- Populated by ui_nav_helpers.js -->
+                </div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                <div style="font-size: 8px; opacity: 0.5; margin-bottom: 10px; text-transform: uppercase;">UI Fragments (Grid)</div>
+                <div id="config-fragment-matrix" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <!-- Populated by ui_nav_helpers.js -->
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button onclick="refreshUIVisibility()" style="width:100%; height: 30px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: 900; font-size: 8px; cursor: pointer;">FORCE UI REFRESH</button>
+                <button onclick="saveUIPersistence()" style="width:100%; height: 30px; background: #ff3366; color: white; border: none; border-radius: 6px; font-weight: 900; font-size: 8px; cursor: pointer;">SAVE TO PERSISTENCE</button>
+            </div>
+        </div>
+
+        <!-- NEW: STARTUP PERFORMANCE AUDIT (BOOT) [v1.38.07] -->
+        <div id="diag-pane-boot" class="diag-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(0,255,204,0.2); padding-bottom: 10px;">
+                <div style="font-size: 10px; font-weight: 800; color: #00ffcc; letter-spacing: 2px;">STARTUP TIMELINE</div>
+                <div style="font-size: 8px; opacity: 0.5;">LOW-LATENCY ENGINE</div>
+            </div>
+
+            <div id="boot-timeline-container" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated by ui_nav_helpers.js -->
+                <div style="font-size: 8px; opacity: 0.4;">FETCHING BOOT PROFILE...</div>
+            </div>
+
+            <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                <div style="font-size: 8px; color: #ff9500; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px;">FRAGMENT INTEGRITY AUDIT</div>
+                <div id="sentinel-audit-container" style="display: flex; flex-direction: column; gap: 4px;">
+                    <!-- Populated by UISentinel -->
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid rgba(0,255,204,0.1); border-radius: 8px;">
+                <div style="font-size: 8px; color: #00ffcc; font-weight: 800; margin-bottom: 5px;">OPTIMIZATION STATUS</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <div style="font-size: 8px; opacity: 0.6;">Background IO:</div><div style="font-size: 8px; color: #00ffcc; text-align: right;">ACTIVE</div>
+                    <div style="font-size: 8px; opacity: 0.6;">Deferred DB:</div><div style="font-size: 8px; color: #00ffcc; text-align: right;">ACTIVE</div>
+                    <div style="font-size: 8px; opacity: 0.6;">Fast Cleanup:</div><div style="font-size: 8px; color: #00ffcc; text-align: right;">v1.38.07</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .diagnostic-sidebar.left-overlay {
+        position: fixed; top: 40px; left: 0; bottom: 0; width: 340px; 
+        background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(50px);
+        border-right: 1px solid rgba(255,255,255,0.08); z-index: 11000;
+        display: flex; flex-direction: column; animation: slideInLeft 0.3s ease-out;
+    }
+    @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+    .side-reiter {
+        font-size: 9px; padding: 4px 0; border: none; border-radius: 4px; 
+        background: transparent; color: rgba(255,255,255,0.4); cursor: pointer; 
+        transition: all 0.2s; text-transform: uppercase; font-weight: 800; flex: 1;
+    }
+    .side-reiter.active {
+        background: rgba(255,51,102,0.2) !important; color: white !important;
+    }
+    .diag-pane { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .diag-flag-btn {
+        background: transparent; border: 1px solid rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.5); padding: 6px; border-radius: 6px; cursor: pointer;
+        font-size: 8px; font-weight: 900; transition: all 0.2s;
+    }
+    .diag-flag-btn.active { background: #3498db; color: white; border-color: #3498db; }
+    
+    /* JSON highlighting inside modular sidebar */
+    .json-key { color: #9cdcfe; font-weight: 700; }
+    .json-string { color: #ce9178; }
+    .json-number { color: #b5cea8; }
+    .json-boolean { color: #569cd6; font-weight: 800; }
+</style>

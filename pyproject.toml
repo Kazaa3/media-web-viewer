@@ -1,20 +1,39 @@
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-ignore_missing_imports = true
-check_untyped_defs = true
-disallow_untyped_defs = false
-exclude = "packaging/.*"
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[[tool.mypy.overrides]]
-module = "eel.*"
-ignore_missing_imports = true
+[project]
+name = "media-web-viewer"
+version = "1.35.68"
+description = "A powerful agentic media viewer and web-based indexing suite."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Kazaa3", email = "kazaa3@example.com"}
+]
+dependencies = [
+    "eel",
+    "bottle",
+    "bottle-websocket",
+    "mutagen",
+    "pymediainfo",
+    "gevent",
+    "gevent-websocket",
+    "psutil",
+    "future",
+    "chardet",
+    "python-dotenv"
+]
 
-[[tool.mypy.overrides]]
-module = "bottle.*"
-ignore_missing_imports = true
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov"
+]
+dev = [
+    "doxypy"
+]
 
-[[tool.mypy.overrides]]
-module = "mutagen.*"
-ignore_missing_imports = true
+[tool.setuptools]
+packages = ["src"]

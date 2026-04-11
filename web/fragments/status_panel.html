@@ -1,0 +1,77 @@
+<div class="status-panel-root" style="display: flex; flex-direction: column; height: 100%; width: 100%; background: #050505; color: #fff; font-family: 'Inter', system-ui, sans-serif;">
+    <!-- HEADER Cluster -->
+    <div style="padding: 25px 35px; border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(to right, rgba(0,255,204,0.03), transparent); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="font-size: 10px; font-weight: 800; color: #00ffcc; letter-spacing: 2px; margin-bottom: 5px;">FORENSIC COMMAND CENTER</div>
+            <h2 style="margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -1px;">System Integrity & Diagnostics</h2>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="if(typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();" 
+                    style="background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.3); color: #00ffcc; padding: 10px 20px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+                RUN FULL INTEGRITY SWEEP
+            </button>
+            <button onclick="if(typeof forceUIVisibility === 'function') forceUIVisibility();" 
+                    style="background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.3); color: #ff3366; padding: 10px 20px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer;">
+                NUCLEAR VISIBILITY FORCE
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD GRID -->
+    <div style="flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 2px; background: rgba(255,255,255,0.05); overflow: hidden;">
+        
+        <!-- LEFT COLUMN: INTEGRITY & HEALTH -->
+        <div style="background: #080808; display: flex; flex-direction: column; overflow-y: auto;">
+            <div style="padding: 25px 35px;">
+                <h3 style="font-size: 11px; opacity: 0.4; letter-spacing: 1px; margin-bottom: 20px;">UI INTEGRITY STAGES</h3>
+                <div id="ui-integrity-results" class="diagnostic-log-area" 
+                     style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 25px; line-height: 1.8; font-family: 'JetBrains Mono', monospace; font-size: 13px; min-height: 300px;">
+                    <div style="opacity: 0.3;">Awaiting Integrity Sweep...</div>
+                </div>
+            </div>
+
+            <!-- HYDRATION PARITY -->
+            <div style="padding: 0 35px 35px 35px;">
+                <h3 style="font-size: 11px; opacity: 0.4; letter-spacing: 1px; margin-bottom: 20px;">HYDRATION & DATA PARITY</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="glass-card" style="padding: 15px; border-left: 3px solid #007aff;">
+                        <div style="font-size: 9px; opacity: 0.5; margin-bottom: 8px;">ALL_ITEMS_COUNT</div>
+                        <div id="diag-master-count" style="font-size: 20px; font-weight: 900;">--</div>
+                    </div>
+                    <div class="glass-card" style="padding: 15px; border-left: 3px solid #2ecc71;">
+                        <div style="font-size: 9px; opacity: 0.5; margin-bottom: 8px;">QUEUE_COUNT</div>
+                        <div id="diag-queue-count" style="font-size: 20px; font-weight: 900;">--</div>
+                    </div>
+                    <div class="glass-card" style="padding: 15px; border-left: 3px solid #ff9500;">
+                        <div style="font-size: 9px; opacity: 0.5; margin-bottom: 8px;">UI_READY_STATE</div>
+                        <div id="diag-ui-state" style="font-size: 20px; font-weight: 900;">BUSY</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: LIVE LOGS & TRACE -->
+        <div style="background: #0a0a0a; display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.05);">
+            <div style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 11px; opacity: 0.4; letter-spacing: 1px;">SENTINEL LIVE-TRACE</h3>
+                <button onclick="if(typeof clearSentinelLog === 'function') clearSentinelLog();" style="background: transparent; border: none; color: #ff3366; font-size: 10px; font-weight: 800; cursor: pointer;">CLEAR</button>
+            </div>
+            <div id="sentinel-log-container-main" 
+                 style="flex: 1; overflow-y: auto; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: rgba(0,255,204,0.8); background: #000;">
+                <!-- Trace items will be mirrored here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER: Quick Actions -->
+    <div style="padding: 15px 35px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 20px;">
+        <button onclick="localStorage.clear(); location.reload();" style="background: transparent; border: 1px solid #444; color: #888; padding: 6px 15px; border-radius: 6px; font-size: 10px; font-weight: 700;">RESET ALL CACHES</button>
+        <button onclick="if(typeof switchMainCategory === 'function') switchMainCategory('media');" style="background: transparent; border: 1px solid #007aff; color: #007aff; padding: 6px 15px; border-radius: 6px; font-size: 10px; font-weight: 700;">RETURN TO PLAYER</button>
+    </div>
+</div>
+
+<style>
+    .diagnostic-log-area b { color: #00ffcc; }
+    .diagnostic-log-area i { color: #ff9500; font-style: normal; }
+    .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; }
+</style>

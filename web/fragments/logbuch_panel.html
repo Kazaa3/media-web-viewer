@@ -1,0 +1,119 @@
+<!-- ===================== LOGBOOK PANEL (v1.34) ===================== -->
+<div id="logbook-fragment" style="display: flex; flex-direction: column; height: 100%; background: var(--bg-primary); border-radius: var(--radius-card); overflow: hidden;">
+    
+    <!-- Control Header -->
+    <!-- [v1.41.137] Fragment Title Consolidated. Navigation Managed by Shell. -->
+    <div style="padding: 12px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);">Logbuch</h2>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="clearLogUI()" class="tab-btn" style="color: #ff5252; border-color: rgba(255, 82, 82, 0.2);">Log leeren</button>
+            <button onclick="exportLog()" class="tab-btn active">Export M3U/TXT</button>
+        </div>
+    </div>
+
+    <!-- VIEW: Journal -->
+    <div id="log-view-journal" class="log-view" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        <!-- Filter & Search Bar (Pill Form) -->
+        <div style="padding: 20px 30px; background: var(--bg-primary); display: flex; gap: 15px; align-items: center;">
+            <div style="flex: 1; position: relative;">
+                <input type="text" id="log-search-input" placeholder="Search event history..." 
+                    oninput="filterLogUI()"
+                    style="width: 100%; padding: 10px 20px; border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; outline: none;">
+            </div>
+            <select id="log-level-filter" onchange="filterLogUI()" class="action-btn" style="padding: 8px 16px; border-radius: var(--radius-pill); background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); min-width: 140px;">
+                <option value="all">Alle Kritikalitäten</option>
+                <option value="INFO">Information</option>
+                <option value="WARN">Warnungen</option>
+                <option value="ERROR">Kritische Fehler</option>
+                <option value="DEBUG">System Debug</option>
+            </select>
+        </div>
+
+        <!-- Log List Area (Terminal Style Console) -->
+        <div id="log-content-area" style="flex: 1; margin: 0 30px 20px 30px; overflow-y: auto; background: #000; border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: inset 0 2px 20px rgba(0,0,0,0.6);">
+            <pre id="log-entry-list" style="margin: 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11.5px; line-height: 1.5; color: #dcdccc; white-space: pre-wrap; word-break: break-all;"></pre>
+        </div>
+    </div>
+
+    <!-- VIEW: Events (Live Console Overlay) -->
+    <div id="log-view-events" class="log-view" style="flex: 1; padding: 30px; background: #050505; display: none;">
+        <div class="glass-card" style="height: 100%; border: 1px solid #333; background: #000; padding: 20px; font-family: monospace; color: #0f0; overflow-y: auto;">
+            <div style="color: #666; margin-bottom: 20px; font-size: 11px; text-transform: uppercase;">Real-Time Socket Stream...</div>
+            <div id="live-event-stream">Connecting to mwv_trace pipeline...</div>
+        </div>
+    </div>
+
+    <!-- VIEW: Project Logbook (2-Column Restored) -->
+    <div id="log-view-project" class="log-view" style="flex: 1; overflow: hidden; background: var(--bg-primary); display: none;">
+        <div style="display: flex; height: 100%;">
+            
+            <!-- Sidebar: Navigation -->
+            <div id="logbuch-sidebar" style="width: 280px; border-right: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; flex-direction: column; overflow: hidden;">
+                <div style="padding: 24px; border-bottom: 1px solid var(--border-color); background: var(--bg-primary);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.25em; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            Logbook
+                        </h3>
+                        <button onclick="openLogbookEditor()" class="tab-btn sm" style="padding: 4px 8px; font-size: 10px; background: var(--accent-color); color: white; border: none;">+ NEU</button>
+                    </div>
+                </div>
+                <div id="logbuch-entry-sidebar-items" style="flex: 1; overflow-y: auto; padding: 16px; scrollbar-width: thin;">
+                    <!-- Entries injected here -->
+                </div>
+            </div>
+
+            <!-- Main Content Area (v1.3.2 Restored Aesthetic) -->
+            <div id="logbuch-content-main" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #ffffff;">
+                <div id="logbuch-viewer-header" style="padding: 40px 60px 20px 60px; border-bottom: 2px solid #f0f0f0; background: #ffffff; position: relative;">
+                    <div style="position: absolute; top: 40px; right: 60px; display: flex; gap: 10px;">
+                        <button id="logbuch-edit-btn" onclick="openLogbookEditor(currentLogbuchEntryName)" class="tab-btn sm" style="background: #f5f5f5; color: #333; border: 1px solid #ddd;">EDIT</button>
+                    </div>
+                    <h1 id="logbuch-tab-title" style="margin: 0; font-size: 2.8em; font-weight: 900; color: #111111; letter-spacing: -2px; line-height: 1.1;">Full Logbook</h1>
+                </div>
+                <div id="logbuch-scroll-container" style="flex: 1; overflow-y: auto; padding: 40px 60px 100px 60px; scrollbar-width: thin;">
+                    <div id="logbuch-tab-content" class="markdown-body" style="max-width: 800px; margin: 0; color: #333333; line-height: 1.7; font-size: 15px;">
+                        <!-- Markdown text injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Footer -->
+    <div style="padding: 12px 30px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); font-size: 11px; font-weight: 700; color: var(--text-secondary); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.5px;">
+        <div style="display: flex; gap: 20px;">
+            <span>Total Events: <span id="log-entry-count" style="color: var(--accent-color);">0</span></span>
+            <span style="color: #2ecc71;">● Live Sync Active</span>
+        </div>
+        <div>Last Update: <span id="log-last-update" style="font-family: monospace;">--:--:--</span></div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Switch Log Views (Simplified for Global Sub-Nav - v1.41.137.2)
+     */
+    function switchLogView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-LOG', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.log-view').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Show target view
+        const target = document.getElementById('log-view-' + viewId);
+        if (target) {
+            target.style.display = 'flex';
+        }
+
+        // Initialize Project Logbook logic if selected
+        if (viewId === 'project' || viewId === 'events') {
+             if (typeof loadLogbuchTab === 'function') loadLogbuchTab();
+        }
+    }
+</script>
+<!-- ===================== LOGBOOK PANEL END ===================== -->

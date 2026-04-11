@@ -1,0 +1,64 @@
+<!-- [v1.41.161] FORENSIC RESCUE FRAGMENT -->
+<div class="rescue-viewport-wrapper" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background: radial-gradient(circle at center, rgba(30,30,45,1) 0%, rgba(10,10,15,1) 100%); font-family: 'JetBrains Mono', monospace; overflow: hidden; position: relative;">
+    
+    <!-- Background Scanline Effect -->
+    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%); background-size: 100% 4px; pointer-events:none;"></div>
+
+    <!-- Central Alert -->
+    <div style="background: rgba(255,51,102,0.1); border: 2px solid #ff3366; border-radius: 20px; padding: 40px; text-align: center; box-shadow: 0 0 50px rgba(255,51,102,0.2); backdrop-filter: blur(10px); max-width: 400px; z-index: 10;">
+        <div style="font-size: 48px; margin-bottom: 20px; animation: pulse 2s infinite;">⚠️</div>
+        <h2 style="color: #ff3366; margin-bottom: 10px; font-weight: 900; font-size: 1.5rem; letter-spacing: 2px;">RESCUE UI ACTIVE</h2>
+        <p style="color: #fff; opacity: 0.8; font-size: 12px; line-height: 1.6;">The primary component failed to spawn.<br>Rendering pipeline is <b>OPERATIONAL</b>.</p>
+        
+        <!-- Live Diagnostics -->
+        <div style="margin-top:25px; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span style="color:#666; font-size:9px;">VIEWPORT:</span>
+                <span id="rescue-target-id" style="color:#00ffcc; font-size:9px;">DETECTING...</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span style="color:#666; font-size:9px;">HEARTBEAT:</span>
+                <span id="rescue-clock" style="color:#00ffcc; font-size:9px;">00:00:00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#666; font-size:9px;">STATUS:</span>
+                <span style="color:#f1c40f; font-size:9px; font-weight:900;">FALLBACK-ACTIVE</span>
+            </div>
+        </div>
+
+        <button onclick="location.reload()" 
+            style="margin-top: 25px; width: 100%; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; transition: all 0.2s;">
+            RELOAD APPLICATION
+        </button>
+    </div>
+
+    <!-- Corner Decorative HUD -->
+    <div style="position:absolute; top:20px; left:20px; color:rgba(255,255,255,0.1); font-size:10px;">MWV-FORENSIC-RSC-v1.41.161</div>
+    <div style="position:absolute; bottom:20px; right:20px; color:rgba(255,255,255,0.1); font-size:10px;">PIPELINE: STABLE</div>
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; text-shadow: 0 0 10px rgba(255,51,102,0.5); }
+            50% { transform: scale(1.1); opacity: 0.8; text-shadow: 0 0 30px rgba(255,51,102,1); }
+            100% { transform: scale(1); opacity: 1; text-shadow: 0 0 10px rgba(255,51,102,0.5); }
+        }
+    </style>
+
+    <script>
+        (function() {
+            // Self-identifying logic
+            const container = document.currentScript.parentElement;
+            const targetId = container.id || "INLINE-UNKNOWN";
+            const idEl = container.querySelector('#rescue-target-id');
+            if(idEl) idEl.innerText = targetId;
+
+            // Heartbeat Clock
+            const clockEl = container.querySelector('#rescue-clock');
+            setInterval(() => {
+                if(clockEl) clockEl.innerText = new Date().toLocaleTimeString();
+            }, 1000);
+            
+            console.warn(`[RESCUE] Active in viewport: #${targetId}`);
+        })();
+    </script>
+</div>

@@ -1,0 +1,290 @@
+<!-- ===================== DIAGNOSTICS SUITE (v1.34 Refined) ===================== -->
+<div id="diagnostics-suite-fragment" style="display: flex; flex-direction: column; height: 100%; background: var(--bg-primary); border-radius: var(--radius-card); overflow: hidden;">
+    
+    <!-- Control Header -->
+    <div style="padding: 12px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0; font-size: 1.25em; font-weight: 800; color: var(--text-primary);">Diagnostics Suite</h2>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button id="diag-main-action-btn" onclick="runAllTestsUI()" class="tab-btn active" style="background: #2ecc71; border: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> 
+                <span style="font-weight: 700;">Run Tests</span>
+            </button>
+            <button onclick="clearDiagnosticsUI()" class="tab-btn" style="font-weight: 700;">Reset</button>
+        </div>
+    </div>
+
+    <!-- Main Viewport -->
+    <div id="diagnostics-viewport" style="flex: 1; overflow-y: auto; background: var(--bg-primary);">
+        
+        <!-- VIEW: System Health -->
+        <div id="diagnostics-health-view" class="diagnostics-view" style="padding: 30px; display: none;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+                <!-- Connectivity -->
+                <div class="glass-card" style="padding: 24px; border-top: 4px solid #3498db;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">Konnektivität</h3>
+                    <div id="diag-conn-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; color: var(--text-secondary);">Bereit für Scan...</div>
+                </div>
+                <!-- Media Pipeline -->
+                <div class="glass-card" style="padding: 24px; border-top: 4px solid #9b59b6;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">Media Pipeline</h3>
+                    <div id="diag-playback-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; color: var(--text-secondary);">Bereit für Scan...</div>
+                </div>
+                <!-- Filesystem & DB -->
+                <div class="glass-card" style="padding: 24px; border-top: 4px solid #e67e22;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 1.1em; color: var(--text-primary); display: flex; align-items: center; gap: 10px; font-weight: 800;">Filesystem & DB</h3>
+                    <div id="diag-fs-list" style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; color: var(--text-secondary);">Bereit für Scan...</div>
+                </div>
+            </div>
+
+            <!-- Terminal Results Overlay -->
+            <div id="diagnostics-results-pane" style="margin-top: 30px; padding: 24px; background: #0a0a0a; border: 1px solid var(--border-color); color: #00ff41; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; height: 180px; overflow-y: auto; line-height: 1.5;"></div>
+        </div>
+
+        <!-- VIEW: Overview (Debug DB) -->
+        <div id="diagnostics-debug-db-view" class="diagnostics-view" style="display: block; height: calc(100% - 10px); overflow: hidden;">
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; height: 100%; padding: 20px;">
+                
+                <!-- LEFT COLUMN: DB Stats & JSON Data -->
+                <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0; overflow-y: auto;">
+                    
+                    <!-- System Diagnostic Toggles (v1.35.97 Relocation) -->
+                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto; border-top: 4px solid #f1c40f;">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.1em; display: flex; justify-content: space-between; align-items: center;">
+                            System Toggles
+                            <span style="font-size: 9px; opacity: 0.5; font-weight: 400;">v1.35 DEEP AUDIT</span>
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <!-- Data Access Group -->
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Data Access</div>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-DIAG" 
+                                    onclick="if(typeof toggleDiagLibMode === 'function') { toggleDiagLibMode(); updateDiagBtnState(this, (typeof RecoveryManager !== 'undefined' && RecoveryManager.isNuclear)); }">DIAG MODE</button>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-HIDB" 
+                                    onclick="if(typeof toggleHideDb === 'function') { toggleHideDb(); updateDiagBtnState(this, window.__mwv_hide_db); }">HIDE DB</button>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-RAW" 
+                                    onclick="if(typeof toggleRawMode === 'function') { toggleRawMode(); updateDiagBtnState(this, window.__mwv_raw_mode); }">RAW BYPASS</button>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-BYPS" 
+                                    onclick="if(typeof toggleBypassDb === 'function') { toggleBypassDb(); updateDiagBtnState(this, window.__mwv_bypass_db); }">FORCE MOCK</button>
+                            </div>
+                            
+                            <!-- Engine & Audits Group -->
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 9px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Audits & Engine</div>
+                                <button class="tab-btn sm diag-tab-btn" id="diag-btn-NATV" 
+                                    onclick="if(typeof toggleForceNative === 'function') { toggleForceNative(); updateDiagBtnState(this, window.__mwv_force_native); }">FORCE NATIVE</button>
+                                <button class="tab-btn sm" onclick="if(typeof runDomAudit === 'function') runDomAudit();" style="color: var(--accent-color);">DOM AUDIT</button>
+                                <button class="tab-btn sm" onclick="if(typeof runAutonomousSelfTest === 'function') runAutonomousSelfTest();" style="color: #3498db;">SELF TEST</button>
+                                <button class="tab-btn sm" onclick="if(typeof probeDataFlow === 'function') probeDataFlow();" style="color: #2ecc71;">DEEP PROBE</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item DB (Übersicht) -->
+                    <div class="glass-card" style="padding: 20px; flex: 0 0 auto; border-top: 4px solid var(--accent-color);">
+                        <h3 style="margin: 0 0 15px 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em;">Item DB (Übersicht)</h3>
+                        <div id="debug-db-overview-content" style="min-height: 80px;">
+                            <!-- Injected via renderDebugDatabase -->
+                            <div style="color: var(--text-secondary); font-size: 11px;">Betrete Sync-Zustand...</div>
+                        </div>
+                    </div>
+
+                    <!-- Python Dict (Details) -->
+                    <div class="glass-card" style="padding: 20px; flex: 1; display: flex; flex-direction: column; min-height: 400px; border-top: 4px solid #34495e;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em;">Python Dict (Details)</h3>
+                            <select id="debug-dict-select" class="tab-btn" onchange="renderDebugDatabase()" style="padding: 4px 10px; font-size: 11px;">
+                                <option value="library">Library (Live Items)</option>
+                                <option value="config">Active Config Cache</option>
+                                <option value="stats">Engine Performance Stats</option>
+                                <option value="env">System Environment</option>
+                                <option value="formats">Format-Mappings (Exts)</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; overflow: hidden; display: flex; flex-direction: column; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+                            <style>
+                                .json-key { color: #9cdcfe; font-weight: 700; }
+                                .json-string { color: #ce9178; }
+                                .json-number { color: #b5cea8; }
+                                .json-boolean { color: #569cd6; font-weight: 800; }
+                                .json-null { color: #569cd6; font-style: italic; }
+                            </style>
+                            <pre id="debug-items-json" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #d4d4d4; overflow: auto; flex: 1; line-height: 1.5;">Waiting for probe...</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Console / Logs -->
+                <div class="glass-card" style="display: flex; flex-direction: column; padding: 20px; min-width: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.3em; letter-spacing: -1px;">Live Terminal / Console</h3>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button onclick="refreshDebugLogs()" class="tab-btn active" style="padding: 4px 12px; font-size: 11px;">Force Sync</button>
+                            <button onclick="clearDebugConsole()" class="tab-btn" style="padding: 4px 12px; font-size: 11px; opacity: 0.8;">Leeren</button>
+                        </div>
+                    </div>
+                    <div id="debug-console-output" style="flex: 1; background: #000; border-radius: 8px; padding: 15px; border: 1px solid var(--border-color); font-family: 'JetBrains Mono', monospace; font-size: 11px; overflow-y: scroll; white-space: pre-wrap; line-height: 1.4; color: #00ff41;">
+                        <!-- Real-time logs appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Flags (Dedicated Restoration) -->
+        <div id="diagnostics-flags-view" class="diagnostics-view" style="padding: 40px; display: none;">
+            <div class="glass-card" style="padding: 30px; border-top: 4px solid #b71c1c; background: rgba(183, 28, 28, 0.01);">
+                <h3 style="margin: 0 0 25px 0; font-weight: 900; color: #b71c1c; font-size: 1.3em; text-transform: uppercase;">System Debug Orchestrator</h3>
+                <div id="modal-debug-flags" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                    <!-- Dynamically loaded via toggleDebugMenu logic -->
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Initialisiere Debug-Flags...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Latency -->
+        <div id="diagnostics-latency-view" class="diagnostics-view" style="padding: 40px; display: none;">
+            <div class="glass-card" style="padding: 40px; text-align: center;">
+                <h3 style="font-weight: 800; color: var(--text-primary);">Network & IPC Latency Profile</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 30px;">Measure the round-trip time between UI and Python Orchestrator.</p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button onclick="runLatencyDiagnostics()" class="tab-btn active" style="padding: 15px 40px; font-size: 1.1em;">Start Benchmark</button>
+                </div>
+                <div id="latency-results" style="margin-top: 40px;"></div>
+            </div>
+        </div>
+
+        <!-- VIEW: Video Health -->
+        <div id="diagnostics-video-health-view" class="diagnostics-view" style="padding: 40px; display: none;">
+            <div class="glass-card" style="padding: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+                    <div>
+                        <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.4em; letter-spacing: -1px;">Video Pipeline Probe (FFmpeg)</h3>
+                        <p style="color: var(--text-secondary); margin-top: 10px; max-width: 500px;">Verifies real-time transcoding and remuxing health by probing the backend streaming endpoints for valid MP4 atoms and continuous data flow.</p>
+                    </div>
+                    <button id="run-video-diag-btn" onclick="runVideoDiagnosticsUI()" class="tab-btn active" style="padding: 12px 25px; background: var(--accent-color); border: none; font-weight: 800;">
+                        Run Pipeline Probe
+                    </button>
+                </div>
+                
+                <div id="video-diag-status" style="margin-top: 20px;">
+                    <div id="video-diag-target-info" style="font-size: 11px; color: var(--text-secondary); background: var(--bg-secondary); padding: 8px 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); font-family: monospace;">-</div>
+                    <div id="video-diag-results-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+
+                <div id="video-diag-empty-state" style="padding: 60px; text-align: center; color: var(--text-secondary); opacity: 0.5;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <p style="margin-top: 15px; font-weight: 600;">No diagnostic data collected yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: Legacy Tests -->
+        <div id="diagnostics-logs-view" class="diagnostics-view" style="height: 100%; overflow: hidden; padding: 20px; display: none;">
+            <div style="display: flex; flex-direction: column; height: 100%; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-weight: 900; color: var(--text-primary); font-size: 1.4em; letter-spacing: -1px;">Legacy Test Scripts</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 10px; font-weight: 900; color: var(--text-secondary); text-transform: uppercase;">Folder:</span>
+                        <select id="test-folder-select" onchange="loadTestSuites()" class="tab-btn" style="padding: 6px 30px 6px 12px; font-size: 11px; background-color: var(--bg-secondary); border-color: var(--border-color);">
+                            <option value="all">-- All Folders --</option>
+                        </select>
+                        <button onclick="loadTestSuites()" class="tab-btn" style="padding: 8px 16px; font-size: 12px;">Refresh</button>
+                        <button id="run-selected-tests-btn" onclick="runSelectedTests()" class="tab-btn active" style="padding: 8px 20px; font-size: 12px; font-weight: 800;">Run Selected</button>
+                    </div>
+                </div>
+                
+                <div id="test-suites-container" class="media-grid" style="flex: 1; overflow-y: auto; padding-bottom: 20px;">
+                    <!-- Test cards injected here -->
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">Lade Test-Skripte...</div>
+                </div>
+
+                <div id="test-results-container" style="flex: 0 0 300px; background: #000; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;">
+                    <div style="padding: 10px 15px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333;">
+                        <span style="font-size: 11px; font-weight: 800; color: #fff; letter-spacing: 1px;">TEST OUTPUT</span>
+                        <span id="test-run-summary" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 900;"></span>
+                    </div>
+                    <pre id="test-output" style="flex: 1; margin: 0; padding: 15px; color: #00ff41; font-family: 'JetBrains Mono', monospace; font-size: 12px; overflow-y: auto; white-space: pre-wrap;"></pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /**
+     * Switch Diagnostics Views (Simplified for Global Sub-Nav - v1.41.137.2)
+     */
+    function switchDiagnosticsView(viewId) {
+        if (typeof mwv_trace === 'function') mwv_trace('SUBTAB-DIAG', viewId);
+        
+        // Hide all views
+        document.querySelectorAll('.diagnostics-view').forEach(el => {
+             el.style.display = 'none';
+        });
+        
+        // Map common aliases
+        let targetId = 'diagnostics-' + viewId + '-view';
+        if (viewId === 'logs') targetId = 'diagnostics-logs-view';
+        if (viewId === 'network') targetId = 'diagnostics-latency-view';
+        
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.style.display = 'block';
+            if (targetId.includes('logs') || targetId.includes('health')) {
+                 target.style.display = 'flex';
+            }
+        }
+        
+        // Initialize logic per view
+        if (viewId === 'debug-db' && typeof renderDebugDatabase === 'function') {
+            renderDebugDatabase();
+        } else if (viewId === 'health' && typeof runAllTestsUI === 'function') {
+            const list = document.getElementById('diag-conn-list');
+            if (list && list.innerText.includes('Bereit')) {
+                runAllTestsUI();
+            }
+        }
+    }
+
+    async function runVideoDiagnosticsUI() {
+        const btn = document.getElementById('run-video-diag-btn');
+        const statusBox = document.getElementById('video-diag-status');
+        const resultsContainer = document.getElementById('video-diag-results-container');
+        const targetInfo = document.getElementById('video-diag-target-info');
+        
+        if (!btn) return;
+
+        btn.disabled = true;
+        btn.innerText = 'Probing...';
+        
+        try {
+            const res = await eel.run_video_transcode_diagnostic()();
+            if (statusBox) statusBox.style.display = 'block';
+            
+            if (res.status === 'complete') {
+                if (targetInfo) targetInfo.innerText = `PROBE TARGET: ${res.target}`;
+                if (resultsContainer) {
+                    resultsContainer.innerHTML = res.results.map(r => `
+                        <div class="glass-card" style="padding: 20px; border-left: 4px solid ${r.status === 'success' ? '#2ecc71' : '#e74c3c'}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: 800; color: var(--text-primary); font-size: 12px; text-transform: uppercase;">${r.name} Pipeline</span>
+                                <span style="font-size: 10px; font-weight: 900; color: ${r.status === 'success' ? '#2ecc71' : '#e74c3c'}; text-transform: uppercase;">${r.status}</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">${r.details}</div>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Run Pipeline Probe';
+        }
+    }
+</script>

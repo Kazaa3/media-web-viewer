@@ -1,0 +1,23 @@
+#!/bin/bash
+# Media Web Viewer launcher
+# Supports mode passthrough, e.g. --n, --ng, --debug
+# Isolates the process from other python environments (Conda, etc.)
+export PYTHONPATH=""
+export PYTHONHOME=""
+
+APP_DIR="/opt/media-web-viewer"
+VENV_PYTHON="$APP_DIR/.venv/bin/python"
+LOG_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/media-web-viewer/startup.log"
+
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "Fehler: Virtual environment nicht gefunden."
+    echo "Bitte erneut installieren: sudo dpkg -i media-web-viewer_*.deb"
+    exit 1
+fi
+
+# Ensure cache directory exists and start from application directory
+mkdir -p "$(dirname "$LOG_FILE")"
+cd "$APP_DIR" || exit 1
+
+# Run the app and log potential startup errors
+exec "$VENV_PYTHON" "$APP_DIR/src/core/main.py" "$@" >> "$LOG_FILE" 2>&1

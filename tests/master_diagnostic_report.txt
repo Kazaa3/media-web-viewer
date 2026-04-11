@@ -1,0 +1,167 @@
+============================================================
+ULTIMATE MEDIA WEB VIEWER - MASTER DIAGNOSTIC RUNNER
+============================================================
+
+🚀 Starting Ultimate...
+  [Ultimate-L01] Dict Integrity: ✅ PASS | Dictionary structure verified.
+  [Ultimate-L02] DB Persistence: ✅ PASS | Database CRUD verified.
+  [Ultimate-L03] Mode Router: ✅ PASS | Smart routing logic verified (Mode: mse).
+  [Ultimate-L04] HTML Integrity: ✅ PASS | Core DOM elements verified in app.html.
+  [Ultimate-L05] JS Bridge Detection: ✅ PASS | Eel/JS diagnostic logic verified.
+  [Ultimate-L06] Filtered API: ✅ PASS | Server-side filtering logic verified.
+  [Ultimate-L07] Real Media: ✅ PASS | Verified 3 files successfully.
+  [Ultimate-L08] Visual Logic: ✅ PASS | Playlist visual state logic verified in source.
+  [Ultimate-L09] AI System Doctor: ✅ PASS | Environment health check complete.
+  [Ultimate-L10] Selenium E2E: ⏭️ SKIP | Selenium logic omitted in core diagnostic runner.
+  [Ultimate-L11] Frontend Assets: ✅ PASS | Web directory structure verified.
+  [Ultimate-L12] Category Mapping: ✅ PASS | Universal object category mapping verified.
+  [Ultimate-L13] Session Integrity: ✅ PASS | SID: 1516372_1774656844
+  [Ultimate-L14] Process Cleanup: ✅ PASS | Found 0 ffmpeg processes.
+  [Ultimate-L15] WebSocket Load: ✅ PASS | Backend concurrent connection capability verified.
+  [Ultimate-L16] Session Bypass: ✅ PASS | Session lock bypass logic verified.
+  [Ultimate-L17] GUI Sync: ✅ PASS | Multi-client state synchronization logic verified.
+  [Ultimate-L18] Dynamic Lifecycle: ✅ PASS | Library injection/retrieval verified.
+  [Ultimate-L19] Filtering: ✅ PASS | Advanced server-side search/filter logic OK.
+  [Ultimate-L20] Mock Injection: ✅ PASS | Bulk mock data persistence verified.
+  [Ultimate-L21] UI Structural Integrity: ✅ PASS | HTML structure verified.
+  [Ultimate-L22] JS Safety Audit: ✅ PASS | Potential unguarded access points scanned.
+  [Ultimate-L23] Python Syntax Audit: ✅ PASS | All source files parsed successfully.
+  [Ultimate-L24] I18N Coverage: ✅ PASS | Bilingual coverage scan complete.
+  [Ultimate-L25] Performance (100 Items): ✅ PASS | Avg retrieval: 3.44ms.
+  [Ultimate-L26] Type Integrity: ✅ PASS | API type safety verified.
+  [Ultimate-L27] DB Concurrency: ✅ PASS | Inserted 10 items concurrently. Errors: 0
+  [Ultimate-L28] Corrupt Media Logic: ❌ FAIL | Fallback to direct mode: False
+  [Ultimate-L29] Transcoding Stress: ✅ PASS | Concurrency (5 jobs) verified. Done: True
+
+🚀 Starting Items...
+  [Items-L01] Atomic Mock: ✅ PASS | Basic Item structure verified.
+  [Items-L02] FFprobe Simulator: ✅ PASS | Extracted 4K=4K Atmos=True
+  [Items-L03] Cat Map Audit: ✅ PASS | Universal category mapping verified.
+  [Items-L04] Extension Matrix: ✅ PASS | Format/Extension matrix verified.
+  [Items-L05] Routing Matrix: ✅ PASS | Router format matrix verified.
+  [Items-L06] Symlink Safety: ✅ PASS | Recursive symlink loops prevented.
+  [Items-L07] Deep Nesting: ✅ PASS | 10+ level folder depth handled.
+  [Items-L08] Transcode Logic: ✅ PASS | ALAC -> FLAC trigger verified.
+  [Items-L09] Duration H:M:S: ✅ PASS | Format: 1:01:01
+  [Items-L10] Item Type Mapping: ✅ PASS | Cat: Hörbuch
+  [Items-L11] Multi-Track Probe: ✅ PASS | Tracks: A=2 S=2
+
+🚀 Starting UI...
+  [UI-L01] DOM Integrity: ✅ PASS | HTML/JS structure balanced.
+  [UI-L02] Resource Check: ✅ PASS | Static assets (CSS/JS) verified.
+  [UI-L03] Theme Logic: ⚠️ WARN | CSS Variable tokens detected.
+
+🚀 Starting Env...
+  [Env-L01] Binary Check: ⚠️ WARN | Missing: ['mpv', 'swyh-rs']
+  [Env-L02] Python Packages: ✅ PASS | All 9 core dependencies found.
+  [Env-L03] Deployment Assets: ✅ PASS | Reorganized structure: True. Archives: True.
+
+🚀 Starting Database...
+  [Database-L01] Schema Version: ✅ PASS | Database schema initialized.
+  [Database-L02] Media Count: ✅ PASS | Found 10 items in library.
+  [Database-L03] Migration Consistency: ✅ PASS | No pending migrations detected.
+  [Database-L04] Transaction Rollback: ✅ PASS | ACID compliance verified for bulk inserts.
+
+🚀 Starting Player...
+  [Player-L01] Seeking Injection: ✅ PASS | HLS SS Injection: True, MSE SS Injection: True
+  [Player-L02] Session Lifecycle: ❌ FAIL | Previous process terminated on restart.
+  [Player-L03] HW Acceleration: ❌ FAIL | nvenc_h264 found in encoder mapping.
+  [Player-L04] VLC Bridge Logic: ❌ FAIL | VLC sout transcode command generated.
+  [Player-L05] Seeking Precision: ✅ PASS | Float precision verified for 3661.55s offset.
+
+🚀 Starting Integrity...
+  [Integrity-L01] Live MKV Parse: ✅ PASS | Extracted bitrate: 137155 bps
+  [Integrity-L02] Mutagen ID3 Sync: ❌ FAIL | Error: an ID3 tag already exists
+  [Integrity-L03] Artwork Extraction: ✅ PASS | Extracted artwork to: /home/xc/.cache/gui_media_web_viewer/art/c7ad20547304730f9ca8c7b371d35982.jpg
+
+🚀 Starting Network...
+  [Network-L01] Server Ping: ✅ PASS | Received: pong
+  [Network-L02] Static Serving: ✅ PASS | Served content: live_content
+
+🚀 Starting Quality...
+  [Quality-L01] Eel API Alignment: ❌ FAIL | Mismatches: {'get_media_by_name', 'trigger_ffmpeg_stream', 'analyze_media_item', 'smart_route', 'trigger_mp4tag_faststart', 'trigger_webm_transcode', 'run_video_matrix_test', 'update_additional_library_dirs'}
+  [Quality-L02] HTML Sanity: ⚠️ WARN | Div Balance: 841 open vs 840 close.
+  [Quality-L03] Tab Audit: ⚠️ WARN | Missing Tab IDs: ['file', 'library', 'video', 'item', 'tests', 'options', 'reporting', 'player', 'logbuch', 'vlc', 'debug', 'parser', 'edit']
+
+🚀 Starting Automation...
+  [Automation-L01] Desktop Metrics: ✅ PASS | Screen: 1920x1080, Mouse: (1781, 318)
+  [Automation-L02] Interaction Smoke: ✅ PASS | Start: Point(x=1781, y=318), Mid: Point(x=1791, y=328) (Relative Check)
+  [Automation-L03] Structural Audit: ✅ PASS | Final Stack Depth: DIV=0, BRACE=0
+  [Automation-L04] Leakage Audit: ✅ PASS | No obvious code leakage detected.
+  [Automation-L05] Selenium Ready: ⏭️ SKIP | Chrome: /usr/bin/google-chrome, Driver: None
+  [Automation-L06] Selenium Smoke: ⏭️ SKIP | Headless launch failed: No module named 'selenium'
+
+🚀 Starting Casting...
+  [Casting-L01] Binary Audit: ⚠️ WARN | librespot: MISSING | swyh-rs: MISSING
+  [Casting-L02] PyChromecast Ready: ❌ FAIL | Missing dependency: No module named 'pychromecast'
+  [Casting-L03] Discovery Smoke: ⚠️ WARN | Discovery failed: No module named 'pychromecast'
+  [Casting-L04] Spotify Bridge: ✅ PASS | Spotify Bridge active
+  [Casting-L05] swyh-rs Toggle: ✅ PASS | Transitions: enabled -> disabled
+  [Casting-L06] API Alignment: ✅ PASS | All casting endpoints exposed.
+
+🚀 Starting Audioplayer...
+  [Audioplayer-L01] State Sync: ✅ PASS | Global Index: -1, API Index: -1
+  [Audioplayer-L02] Volume Bridge: ⏭️ SKIP | No active VLC player instance for volume audit.
+  [Audioplayer-L03] Transition Logic: ✅ PASS | Prev@Start: start, Next@End: end
+  [Audioplayer-L04] VLC Bridge: ✅ PASS | python-vlc available
+  [Audioplayer-L05] API Alignment: ✅ PASS | All player endpoints exposed.
+
+🚀 Starting Playlist...
+  [Playlist-L01] M3U Export: ✅ PASS | File: test_export.m3u, Valid: True
+  [Playlist-L02] Queue Reorder: ✅ PASS | Order: ['B', 'A']
+  [Playlist-L03] Queue Maintenance: ✅ PASS | Count: 2, Index: -1
+  [Playlist-L04] Persistence Smoke: ✅ PASS | Status: ok
+  [Playlist-L05] API Alignment: ✅ PASS | All playlist endpoints exposed.
+
+🚀 Starting Logbuch...
+  [Logbuch-L01] Directory Discovery: ✅ PASS | Path: /home/xc/#Coding/gui_media_web_viewer/logbuch, Exists: True
+  [Logbuch-L02] Metadata Extraction: ❌ FAIL | Status: None
+  [Logbuch-L03] Status Normalization: ✅ PASS | Logic verified via Level 2.
+  [Logbuch-L04] Entry Lookup: ✅ PASS | Retrieved expected content.
+  [Logbuch-L05] API Alignment: ✅ PASS | All logbook endpoints exposed.
+
+🚀 Starting Reporting...
+  [Reporting-L01] Object Integrity: ✅ PASS | ReportTab instantiated and managed.
+  [Reporting-L02] Benchmark Persistence: ⚠️ WARN | Logic error: module 'src.core.main' has no attribute 'save_playback_benchmarks'
+  [Reporting-L03] Connectivity Structure: ✅ PASS | Report format alignment verified.
+  [Reporting-L04] Media Matrix Aggregation: ⚠️ WARN | Logic error: module 'src.core.main' has no attribute 'get_dvd_film_report'
+  [Reporting-L05] API Alignment: ⚠️ WARN | Missing exports: ['get_playback_benchmarks', 'save_playback_benchmarks', 'get_dvd_film_report']
+
+🚀 Starting UI Integrity...
+  [UI Integrity-L01] Structural Balance: ⚠️ WARN | DIVs: 841/840, Braces: 2653/2654
+  [UI Integrity-L02] CSS Token Audit: ⚠️ WARN | Missing tokens: ['--bg-primary', '--accent-color', '--text-main', '--sidebar-width']
+  [UI Integrity-L03] Critical Selectors: ⚠️ WARN | Missing IDs: ['sidebar-container', 'player-controls', 'library-tab']
+  [UI Integrity-L04] Backend Leakage: ✅ PASS | No obvious backend leakage found.
+  [UI Integrity-L05] Responsive Sanity: ✅ PASS | Found 1 media queries.
+
+🚀 Starting Parser...
+  [Parser-L01] Tool Readiness: ✅ PASS | ffprobe and mkvmerge are ready.
+  [Parser-L02] FFprobe JSON Integrity: ✅ PASS | Analyzer returned dict.
+  [Parser-L03] Metadata Extraction: ✅ PASS | Extraction logic imported.
+  [Parser-L04] MKVMerge Handshake: ✅ PASS | Parser file: True
+  [Parser-L05] M3U8 Awareness: ✅ PASS | Playlist logic alignment verified.
+
+🚀 Starting Edit...
+  [Edit-L01] Tag Extraction: ✅ PASS | Mutagen imported and functional.
+  [Edit-L02] Save Logic: ✅ PASS | save_tags_to_file exists in main.
+  [Edit-L03] Rename Safety: ✅ PASS | Database alignment for renaming verified.
+  [Edit-L04] Artwork Hash: ✅ PASS | Artwork cache refresh logic verified.
+  [Edit-L05] API Alignment: ⚠️ WARN | Missing exports: ['update_metadata_entry']
+
+🚀 Starting Sidebar...
+  [Sidebar-L01] Property Storage: ✅ PASS | Sidebar state property found in main.
+  [Sidebar-L02] Toggle Logic: ✅ PASS | toggle_sidebar exists and is callable.
+  [Sidebar-L03] Sync Integrity: ✅ PASS | Sidebar sync logic alignment verified.
+  [Sidebar-L04] Splitter Persistence: ✅ PASS | Sidebar width persistence verified.
+  [Sidebar-L05] API Alignment: ✅ PASS | All sidebar endpoints exposed.
+
+🚀 Starting Options...
+  [Options-L01] Config Loading: ✅ PASS | PARSER_CONFIG found in main.
+  [Options-L02] Startup Config: ✅ PASS | Startup config retrieved.
+  [Options-L03] Reset Safety: ✅ PASS | reset_config exists in main.
+  [Options-L04] Persistence Smoke: ✅ PASS | Config persistence logic verified.
+  [Options-L05] API Alignment: ✅ PASS | All options endpoints exposed.
+
+============================================================
+MASTER DIAGNOSTIC COMPLETE
+============================================================

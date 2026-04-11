@@ -1,0 +1,189 @@
+<!-- ===================== CINEMA VIEW (v1.41.00) ===================== -->
+<div id="cinema-container" style="display: flex; flex-direction: column; height: 100%; background: var(--bg-primary); overflow: hidden;">
+    
+    <!-- Top Filter Bar -->
+    <div style="padding: 20px 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h2 style="margin: 0; font-size: 1.5em; font-weight: 800; color: #f1c40f;">Cinema</h2>
+            <div id="cinema-stats" style="font-size: 11px; opacity: 0.6; font-weight: 600;">Lade Videos...</div>
+        </div>
+        
+        <div style="display: flex; gap: 15px;">
+            <input type="text" id="cinema-search" placeholder="Cinema durchsuchen..." 
+                   oninput="renderCinemaGrid()"
+                   style="padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); width: 250px; outline: none;">
+            
+            <select id="cinema-sort" onchange="renderCinemaGrid()" style="padding: 8px; border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                <option value="recent">Zuletzt gesehen</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="duration">Länge</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Video Grid -->
+    <div id="cinema-scroll-viewport" style="flex: 1; overflow-y: auto; padding: 30px 40px; scrollbar-width: thin;">
+        <div id="cinema-grid-container" class="cinema-youtube-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px;">
+            <!-- Video cards injected via cinema_helpers.js -->
+        </div>
+    </div>
+
+    <!-- Hover Preview Overlay (Single Dynamic Element) -->
+    <div id="cinema-hover-preview" style="position: fixed; pointer-events: none; z-index: 1000; ; width: 320px; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 2px solid var(--accent-color);">
+        <video id="cinema-preview-player" muted loop style="width: 100%; height: 100%; object-fit: cover;"></video>
+    </div>
+
+</div>
+
+<style>
+    .cinema-card {
+        cursor: pointer;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    .cinema-card:hover {
+        transform: translateY(-5px);
+    }
+    .cinema-thumbnail {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .cinema-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .cinema-progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: var(--accent-color);
+        box-shadow: 0 0 10px var(--accent-color);
+        transition: width 0.3s ease;
+    }
+    .cinema-duration {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .cinema-info {
+        margin-top: 12px;
+    }
+    .cinema-title {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--text-primary);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 4px;
+    }
+    .cinema-meta {
+        font-size: 12px;
+        color: var(--text-secondary);
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+
+<script>
+    /**
+     * Cinema Controller (v1.41.00)
+     */
+    function initCinemaView() {
+        console.log("[Cinema] Initializing specialized view...");
+        if (typeof renderCinemaGrid === 'function') renderCinemaGrid();
+    }
+
+    async function renderCinemaGrid() {
+        const container = document.getElementById('cinema-grid-container');
+        if (!container) return;
+        
+        // Fetch videos (Filter: Video category)
+        const videos = (window.allLibraryItems || []).filter(i => 
+            i.category === 'Video' || i.media_type === 'video'
+        );
+        
+        document.getElementById('cinema-stats').innerText = `${videos.length} Videos gefunden`;
+
+        let html = videos.map(v => {
+            const progress = (v.playback_position && v.duration_sec) ? (v.playback_position / v.duration_sec * 100) : 0;
+            const durationTxt = v.duration || '0:00';
+            const art = v.art_path || 'assets/default_video.png';
+            
+            return `
+                <div class="cinema-card" 
+                     onmouseenter="handleCinemaHover(event, '${v.name}', '${v.path}')" 
+                     onmouseleave="handleCinemaLeave()"
+                     onclick="playMediaDirectly('${v.name}')">
+                    <div class="cinema-thumbnail">
+                        <img src="${art}" loading="lazy">
+                        <div class="cinema-duration">${durationTxt}</div>
+                        ${progress > 0 ? `<div class="cinema-progress-bar" style="width: ${progress}%"></div>` : ''}
+                    </div>
+                    <div class="cinema-info">
+                        <div class="cinema-title">${v.name}</div>
+                        <div class="cinema-meta">
+                            <span>HD | ${v.extension || 'MKV'}</span>
+                            <span>${v.last_played ? 'Weitersehen' : 'Neu'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        container.innerHTML = html || '<div style="grid-column: 1/-1; text-align: center; color: #666; padding: 100px;">Keine Videos in der Bibliothek gefunden.</div>';
+    }
+
+    let cinemaHoverTimeout = null;
+    function handleCinemaHover(event, name, path) {
+        clearTimeout(cinemaHoverTimeout);
+        cinemaHoverTimeout = setTimeout(() => {
+            const overlay = document.getElementById('cinema-hover-preview');
+            const player = document.getElementById('cinema-preview-player');
+            if (!overlay || !player) return;
+
+            // Position overlay over the card
+            const rect = event.currentTarget.getBoundingClientRect();
+            overlay.style.display = 'block';
+            overlay.style.top = rect.top + 'px';
+            overlay.style.left = rect.left + 'px';
+            overlay.style.width = rect.width + 'px';
+
+            // Start preview stream (muted)
+            const videoUrl = `/video_feed?name=${encodeURIComponent(name)}&preview=true&t=30`; 
+            player.src = videoUrl;
+            player.play().catch(e => console.warn("[Cinema] Preview blocked:", e));
+        }, 500); // delay to avoid flickering
+    }
+
+    function handleCinemaLeave() {
+        clearTimeout(cinemaHoverTimeout);
+        const overlay = document.getElementById('cinema-hover-preview');
+        const player = document.getElementById('cinema-preview-player');
+        if (overlay) overlay.style.display = 'none';
+        if (player) {
+            player.pause();
+            player.src = "";
+        }
+    }
+
+    function playMediaDirectly(name) {
+        if (typeof playMedia === 'function') playMedia(name);
+        else console.error("[Cinema] playMedia not found!");
+    }
+</script>

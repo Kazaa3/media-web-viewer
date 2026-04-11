@@ -1,0 +1,5 @@
+# Media Web Viewer - UI Testing Dependencies (Playwright, Selenium)
+playwright>=1.42.0
+selenium>=4.18.0
+pytest-playwright>=0.4.4
+webdriver-manager>=4.0.1

@@ -1,0 +1,39 @@
+<!-- [v1.41.148] Standardized Context Menu Fragment -->
+<div id="context-menu" class="context-menu glassmorphic-panel">
+    <!-- Media Action Cluster -->
+    <div class="context-menu-section" id="context-menu-section-playback">
+        <div class="context-menu-header">Video Wiedergabe</div>
+        
+        <div class="context-menu-item" onclick="handleContextMenuAction('auto')" title="Premium UI mit Video.js">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="21 15 16 10 5 21"></polyline><path d="M17.5 10c.8 1.5 2.5 4 4 4"></path><path d="M7 10h10v8H7z"></path></svg>
+            <span>Video.js (Standard)</span>
+        </div>
+
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_transcode')" title="FFmpeg fMP4 zu MSE">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 10 20 15 15 20"></polyline><path d="M4 4v7a4 4 0 0 0 4 4h12"></path></svg>
+            <span>FFmpeg fMP4 zu MSE</span>
+        </div>
+
+        <div class="context-menu-item" onclick="handleContextMenuAction('chrome_remux')" title="FFmpeg fMP4 zu HLS Remuxing">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4-4 4-4h12a2 2 0 0 1 2 2z"></path></svg>
+            <span>FFmpeg HLS (Remux)</span>
+        </div>
+    </div>
+
+    <div class="context-menu-divider"></div>
+
+    <!-- External Player Cluster -->
+    <div class="context-menu-section" id="context-menu-section-external">
+        <div class="context-menu-header">Externe Player</div>
+        
+        <div class="context-menu-item" onclick="handleContextMenuAction('vlc_extern')">
+            <span style="font-weight: 900; color: #ff9500; font-size: 10px; width: 14px;">V</span>
+            <span>VLC Player (System)</span>
+        </div>
+
+        <div class="context-menu-item" onclick="handleContextMenuAction('mpv')">
+            <span style="font-weight: 900; color: #00ffcc; font-size: 10px; width: 14px;">M</span>
+            <span>MPV Player</span>
+        </div>
+    </div>
+</div>

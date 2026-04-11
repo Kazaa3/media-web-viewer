@@ -1,0 +1,81 @@
+{
+  "version": "1.35.68",
+  "sync_locations": [
+    {
+      "file": "src/core/main.py",
+      "line_pattern": "VERSION = \"${version}\"  # Fallback",
+      "description": "Python fallback version constant",
+      "required": true
+    },
+    {
+      "file": "infra/packaging/DEBIAN/control",
+      "line_pattern": "Version: ${version}",
+      "description": "Debian package control file version",
+      "required": true
+    },
+    {
+      "file": "docs/DOCUMENTATION.md",
+      "line_pattern": "**Version:** ${version}",
+      "description": "Documentation header version",
+      "required": true
+    },
+    {
+      "file": "docs/DOCUMENTATION.md",
+      "line_pattern": "dict (${version})",
+      "description": "Documentation architecture tree header",
+      "required": false
+    },
+    {
+      "file": "infra/packaging/usr/share/applications/media-web-viewer.desktop",
+      "line_pattern": "Name=dict (v${version})",
+      "description": "Linux start menu application name with version",
+      "required": true
+    },
+    {
+      "file": "docs/TECH_STACK.md",
+      "line_pattern": "**Version:** ${version}",
+      "description": "Tech stack version",
+      "required": true
+    },
+    {
+      "file": "docs/INSTALL.md",
+      "line_pattern": "**Version:** ${version}",
+      "description": "Install guide version",
+      "required": true
+    },
+    {
+      "file": "docs/DEPENDENCIES.md",
+      "line_pattern": "# Third-Party Dependencies and Licenses (v${version})",
+      "description": "Dependencies header version",
+      "required": true
+    },
+    {
+      "file": "docs/TEST_SUITE_SUMMARY.md",
+      "line_pattern": "**Version:** ${version}",
+      "description": "Test suite summary version",
+      "required": true
+    },
+    {
+      "file": "infra/packaging/specs/MediaWebViewer.spec",
+      "line_pattern": "VERSION = '${version}'",
+      "description": "PyInstaller spec file version constant",
+      "required": true
+    }
+  ],
+  "version_format": {
+    "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
+    "description": "Semantic versioning: MAJOR.MINOR.PATCH (or MAJOR.MINOR)"
+  },
+  "update_instructions": {
+    "steps": [
+      "1. Run: ./.venv_build/bin/python scripts/update_version.py --new-version X.Y.Z",
+      "2. Run: ./.venv_build/bin/python build_system.py --lint"
+    ],
+    "automated_tool": "./.venv_build/bin/python scripts/update_version.py --new-version X.Y.Z"
+  },
+  "metadata": {
+    "last_updated": "2026-03-13",
+    "maintainer": "dict Team",
+    "documentation": "See docs/logbuch/000_Index.md"
+  }
+}
