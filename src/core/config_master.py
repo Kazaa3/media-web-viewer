@@ -278,6 +278,14 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "bind_address": BIND_ADDR,
         "api_root": f"http://{BIND_ADDR}:{APP_PORT}"
     },
+    
+    # --- EVOLUTION & SAFETY REGISTRY (v1.42 Reconstruction) ---
+    "ui_evolution_mode": "stable",   # "stable" or "rebuild"
+    "unicode_safety_mode": False,   # If True, strips/tags emojis
+    "unicode_safety_map": {
+        "☢️": "[NUCLEAR]", "✅": "[SUCCESS]", "❌": "[ERROR]", 
+        "⚠️": "[WARNING]", "🚀": "[STARTUP]", "⚡": "[ACTIVE]"
+    },
 
     # System & Ports
     "port": APP_PORT,
@@ -390,6 +398,29 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- BEHAVIOR & THEME ---
         "theme": "dark",
         "animations_enabled": True,
+        "ui_registry": {
+            "evolution_mode": "stable", # "stable" or "rebuild" (v1.42)
+            "sidebar_default_open": False,
+            "glassmorphism_enabled": True,
+            "animation_performance_tier": "high",
+            "theme_default": "dark-forensic"
+        },
+        
+        # --- UNICODE & EMOJI REGISTRY (v1.42 Safety Strategy) ---
+        "unicode_registry": {
+            "safety_mode": False,       # If True, replaces emojis with ASCII tags
+            "safety_map": {
+                "☢️": "[NUCLEAR]",
+                "✅": "[SUCCESS]",
+                "❌": "[ERROR]",
+                "⚠️": "[WARNING]",
+                "🚀": "[STARTUP]",
+                "💾": "[SAVE]",
+                "🔍": "[PROBE]",
+                "🔄": "[SYNC]",
+                "⚡": "[ACTIVE]"
+            }
+        },
         "sub_nav_persistence": True,
         "force_sub_nav_visible": True,
         "hydration_mode": "B",
