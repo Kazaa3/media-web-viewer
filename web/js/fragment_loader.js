@@ -56,7 +56,7 @@ const FragmentLoader = {
             
             // --- v1.41.160 WILL_SPAWN Event ---
             if (typeof window.auditFragmentHydration === 'function') {
-                window.auditFragmentHydration(fragName, 'will_spawn', fragmentPath);
+                window.auditFragmentHydration(fragName, 'will_spawn', fragmentPath, targetId);
             }
 
             console.log(`[FragmentLoader] Loading fragment: ${fragmentPath}`);
@@ -97,7 +97,7 @@ const FragmentLoader = {
             
             // [v1.37.47 Audit Bridge Success]
             if (typeof window.auditFragmentHydration === 'function') {
-                window.auditFragmentHydration(fragName, 'success');
+                window.auditFragmentHydration(fragName, 'success', fragmentPath, targetId);
             }
 
             if (typeof mwv_trace === 'function') mwv_trace('FRAGMENT', 'STAGE-2', { path: fragmentPath, targetId });
