@@ -58,6 +58,56 @@ window.runLatencyDiagnostics = async function (payloadSize = 0, samples = 5) {
     return result;
 };
 
+// --- VISUAL INTEGRITY TEST (v1.41.159) ---
+// This test 'hard-writes' a vibrant test pattern directly to the DOM root.
+// Use this to prove the browser is rendering and the UI thread is alive.
+window.runVisualIntegrityTest = function() {
+    const testId = 'mwv-visual-integrity-overlay';
+    if (document.getElementById(testId)) return;
+
+    console.info(">>> [DIAGNOSTICS] Launching Visual Integrity Force-Write Test...");
+
+    const overlay = document.createElement('div');
+    overlay.id = testId;
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: radial-gradient(circle at center, rgba(10, 10, 20, 0.95), rgba(0, 0, 0, 0.98));
+        z-index: 100000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #fff; font-family: 'Inter', sans-serif; backdrop-filter: blur(40px);
+        animation: fadeIn 0.5s ease-out; cursor: default;
+    `;
+
+    overlay.innerHTML = `
+        <div style="text-align: center; border: 2px solid rgba(0, 255, 127, 0.3); padding: 50px; border-radius: 20px; background: rgba(0, 255, 127, 0.05);">
+            <div style="font-size: 80px; font-weight: 900; color: #00ff7f; letter-spacing: -2px; margin-bottom: 10px; text-shadow: 0 0 30px rgba(0, 255, 127, 0.5);">INTEGRITY OK</div>
+            <div style="font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 5px; margin-bottom: 40px;">Rendering Engine Active</div>
+            
+            <div id="integrity-test-clock" style="font-size: 48px; font-family: 'JetBrains Mono', monospace; font-weight: 900; color: #fff; margin-bottom: 10px;">00:00:00</div>
+            <div style="font-size: 10px; opacity: 0.5; font-weight: 700; margin-bottom: 50px;">UI LOOP HEARTBEAT</div>
+
+            <button onclick="document.getElementById('${testId}').remove()" 
+                style="padding: 12px 30px; border-radius: 30px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); font-weight: 800; font-size: 12px; cursor: pointer; transition: all 0.2s;">
+                CLOSE TEST & RETURN TO WORKSTATION
+            </button>
+        </div>
+        <div style="position: absolute; bottom: 20px; font-size: 9px; opacity: 0.3; font-weight: 700;">
+            MWV_FORENSIC_INTEGRITY_SUITE v1.41.159 | PID: ${window.__mwv_last_pid || '??'}
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Live clock to prove JS execution
+    const clock = overlay.querySelector('#integrity-test-clock');
+    const update = () => {
+        if (!document.getElementById(testId)) return;
+        const now = new Date();
+        clock.innerText = now.toTimeString().split(' ')[0];
+        requestAnimationFrame(update);
+    };
+    update();
+};
+
 // --- TAB RENDERING: DEBUG DATABASE ---
 // --- TAB RENDERING: DEBUG DATABASE ---
 window.debugLogBuffer = []; // Store logs for filtering
