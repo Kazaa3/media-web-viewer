@@ -1,5 +1,5 @@
 <!-- ===================== ATOMIC AUDIO ENGINE (v1.45.150) ===================== -->
-<div id="audio-player-atomic-shell" class="player-atomic-shell" style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 30px; background: radial-gradient(circle at top left, var(--bg-secondary) 0%, var(--bg-primary) 70%); overflow-y: auto;">
+<div id="audio-player-atomic-shell" class="player-atomic-shell" data-liveness="pending" style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 30px; background: radial-gradient(circle at top left, var(--bg-secondary) 0%, var(--bg-primary) 70%); overflow-y: auto;">
     
     <!-- HEADER -->
     <div class="player-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
@@ -75,3 +75,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    // [v1.46.01] LIVENESS SIGNAL
+    // Signals to FragmentLoader.loadAtomic that hydration is complete.
+    setTimeout(() => {
+        const shell = document.getElementById('audio-player-atomic-shell');
+        if (shell) shell.dataset.liveness = 'ready';
+        console.info("[SonicCore] Forensic Liveness: READY");
+    }, 100);
+</script>

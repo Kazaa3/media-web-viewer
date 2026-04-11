@@ -185,6 +185,16 @@ window.triggerModuleHydration = async function (name) {
                 break;
         }
 
+        // [v1.45.200] INJECT LIVENESS MARKER
+        const win = window.WindowManager ? window.WindowManager.windows.get(name) : null;
+        if (win && win.fragmentId) {
+            const container = document.getElementById(win.fragmentId);
+            if (container && container.innerHTML.trim() !== "") {
+                container.setAttribute('data-liveness', 'ready');
+                console.info(`[HYDRATION] LIVENESS MARKER INJECTED: ${name.toUpperCase()}`);
+            }
+        }
+
         if (typeof mwv_trace === 'function') {
             mwv_trace('STABILITY', 'HYDRATION-COMPLETE', { module: module });
         }

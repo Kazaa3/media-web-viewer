@@ -280,6 +280,96 @@ async function toggleDiagnosticsFlag(flagId) {
 }
 
 /**
+ * Toggles the library-specific sidebar visibility (v1.45.300).
+ */
+/**
+ * Toggles the library-specific sidebar visibility (v1.45.300 / v1.46.02 Global).
+ */
+function toggleLibrarySidebar(forceState = null) {
+    const sidebar = document.getElementById('lib-sidebar-left');
+    const splitter = document.getElementById('lib-splitter');
+    const btn = document.getElementById('header-btn-lib-sidebar');
+    
+    if (!sidebar) {
+        console.warn("[UI-NAV] Global Library Sidebar element not found.");
+        return;
+    }
+
+    const isVisible = (typeof forceState === 'boolean') ? forceState : (sidebar.style.display === 'none');
+    
+    sidebar.style.display = isVisible ? 'flex' : 'none';
+    if (splitter) splitter.style.display = isVisible ? 'block' : 'none';
+    
+    if (btn) btn.classList.toggle('active', isVisible);
+    
+    localStorage.setItem('mwv_lib_sidebar_visible', isVisible);
+    console.info(`[UI-NAV] Global Sidebar: ${isVisible ? 'OPEN' : 'CLOSED'}`);
+    
+    // Refresh layout to adjust for global sidebar width
+    if (typeof refreshViewportLayout === 'function') refreshViewportLayout();
+}
+window.toggleLibrarySidebar = toggleLibrarySidebar;
+
+/**
+ * [v1.45.300 / v1.46.02] Configuration-Driven Global Sidebar Rendering
+ */
+function renderLibrarySidebar() {
+    const config = window.CONFIG?.library_sidebar_orchestrator;
+    if (!config || !config.sections) {
+        console.warn("[UI-NAV] library_sidebar_orchestrator not found in config.");
+        return;
+    }
+
+    const sidebar = document.getElementById('lib-sidebar-left');
+    if (!sidebar) return;
+
+    console.info("[UI-NAV] Rendering Dynamic Global Sidebar from Config...");
+
+    // Generate HTML for all sections
+    const sectionsHTML = config.sections.map(section => {
+        // Generate Buttons
+        const itemsHTML = section.items.map(item => `
+            <button id="lib-tab-btn-${item.id}" 
+                    class="sub-tab-btn" 
+                    onclick="${item.action}">
+                <svg width="14" height="14" style="margin-right: 8px;">
+                    <use href="#icon-${item.icon}"></use>
+                </svg>
+                ${item.label}
+            </button>
+        `).join('');
+
+        return `
+            <div id="lib-nav-${section.id}-container" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px;">
+                <h4 style="margin: 0 0 12px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1.5px; font-weight: 800;" data-i18n="${section.i18n || ''}">${section.label}</h4>
+                ${itemsHTML}
+            </div>
+            <div style="height: 1px; background: var(--border-color); margin: 5px 10px 20px 10px; opacity: 0.5;"></div>
+        `;
+    }).join('');
+
+    // Add static Filter & Search section if not in config
+    const filterSectionHTML = `
+        <div id="lib-nav-filters-container" style="display: flex; flex-direction: column; gap: 8px;">
+            <h4 style="margin: 0 0 12px 10px; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1.5px; font-weight: 800;" data-i18n="filter_title">Filtern &amp; Suche</h4>
+            <div style="padding: 0 10px 12px 10px;">
+                <input type="text" id="library-search-input" placeholder="Suchen..." 
+                    oninput="if(typeof handleLibrarySearch === 'function') handleLibrarySearch(this.value)"
+                    style="width: 100%; padding: 10px 14px; border-radius: 100px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none;">
+            </div>
+        </div>
+    `;
+
+    sidebar.innerHTML = sectionsHTML + filterSectionHTML;
+
+    // Restore active states
+    const activeView = localStorage.getItem('mwv_active_library_view') || 'coverflow';
+    const activeBtn = document.getElementById(`lib-tab-btn-${activeView}`);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+window.renderLibrarySidebar = renderLibrarySidebar;
+
+/**
  * Toggles the main sidebar visibility.
  */
 function toggleSidebar(forceState = null) {
@@ -1729,6 +1819,32 @@ window.addEventListener('load', async () => {
 
     if (typeof applySidebarState === 'function') applySidebarState();
 
+    // 5.5. [v1.46.02] Forensic Global Sidebar Init
+    console.info("[UI-INIT] Initializing Forensic Global Sidebar...");
+    const config = window.CONFIG?.ui_settings || {};
+    
+    // Check if sidebar is globally enabled
+    const sidebarEnabled = config.forensic_sidebar_enabled !== false;
+    const sidebarElement = document.getElementById('lib-sidebar-left');
+    
+    if (sidebarEnabled && sidebarElement) {
+        if (typeof renderLibrarySidebar === 'function') renderLibrarySidebar();
+        
+        // Restore visibility: LocalStorage > Config Default
+        const savedLibSidebar = localStorage.getItem('mwv_lib_sidebar_visible');
+        const defaultVisible = config.forensic_sidebar_visible !== false;
+        
+        const isVisible = (savedLibSidebar !== null) ? (savedLibSidebar === 'true') : defaultVisible;
+        
+        if (typeof toggleLibrarySidebar === 'function') {
+            toggleLibrarySidebar(isVisible);
+        }
+    } else if (sidebarElement) {
+        sidebarElement.style.display = 'none';
+        const splitter = document.getElementById('lib-splitter');
+        if (splitter) splitter.style.display = 'none';
+    }
+
     // 6. Initialize Splitters
     if (typeof initAllSplitters === 'function') initAllSplitters();
 
@@ -1949,4 +2065,4 @@ window.dumpNavDom = function () {
 };
 
 
-// Created with MWV v1.45.100-EVO-REBUILD
+// Created with MWV v1.46.00-MASTER

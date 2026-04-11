@@ -25,6 +25,13 @@ const VisibilitySentinel = {
      */
     audit() {
         if (!window.WindowManager) return;
+
+        // [v1.46.01] Atomic Pass-Through: Don't audit if an atomic swap is in progress
+        const shadow = document.getElementById('shadow-stage-buffer');
+        if (shadow && shadow.innerHTML.trim() !== "") {
+            console.debug("[SENTINEL] Atomic swap in progress. Skipping audit.");
+            return;
+        }
         
         const activeWin = window.WindowManager.activeWindow;
         if (!activeWin) return;
@@ -100,4 +107,4 @@ window.addEventListener('DOMContentLoaded', () => {
     VisibilitySentinel.init();
 });
 
-// Created with MWV v1.45.100-EVO-REBUILD
+// Created with MWV v1.46.00-MASTER

@@ -8,13 +8,16 @@ const FragmentLoader = {
     pendingLoads: new Map(), // Track in-flight requests (targetId -> Promise)
 
     /**
-     * loadAtomic (v1.45.200)
-     * Performs a 'flicker-free' shadow swap. Fetches HTML, injects into shadow stage,
-     * monitors for readiness, and then performs an atomic DOM handover.
+     * loadAtomic (v1.46.01 Upgrade)
+     * Performs a 'True Atomic' shadow swap. Fetches HTML, injects into shadow stage,
+     * executes scripts, waits for liveness marker [data-liveness="ready"],
+     * and only then performs the DOM swap.
      */
     async loadAtomic(targetId, fragmentPath, callback) {
         const container = document.getElementById(targetId);
         if (!container) return;
+
+        console.info(`[FL] ATOMIC START: ${fragmentPath} -> #${targetId}`);
 
         // 1. Create Shadow Stage (if missing)
         let shadow = document.getElementById('shadow-stage-buffer');
@@ -25,7 +28,9 @@ const FragmentLoader = {
             document.body.appendChild(shadow);
         }
 
-        container.style.opacity = '0.5';
+        // Keep current view visible but slightly dimmed during prep
+        container.style.opacity = '0.6';
+        container.style.transition = 'opacity 0.3s ease';
         
         try {
             // 2. Fetch HTML
@@ -41,18 +46,55 @@ const FragmentLoader = {
 
             if (!html || html.trim() === "") throw new Error("Empty Fragment");
 
-            // 3. Shadow Injection & Prep
+            // 3. Shadow Prep
             shadow.innerHTML = html;
             shadow.dataset.fragment = fragmentPath;
+            shadow.dataset.liveness = 'pending';
+
+            // 4. [v1.46.01] SCRIPT RECLAMATION (Execute scripts in shadow context)
+            const scripts = shadow.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                if (oldScript.textContent) newScript.textContent = oldScript.textContent;
+                document.head.appendChild(newScript);
+                document.head.removeChild(newScript);
+            });
+
+            // 5. [v1.46.01] WAIT FOR HYDRATION (Liveness Polling)
+            // We wait up to 3 seconds for the scripts to set [data-liveness="ready"]
+            const startTime = Date.now();
+            const POLL_TIMEOUT = 3000;
             
-            // 4. Atomic Handover
+            const waitForReady = () => new Promise((resolve) => {
+                const check = () => {
+                    const isReady = shadow.querySelector('[data-liveness="ready"]') !== null || shadow.dataset.liveness === 'ready';
+                    const elapsed = Date.now() - startTime;
+                    
+                    if (isReady) {
+                        console.info(`[FL] ATOMIC HYDRATION READY after ${elapsed}ms`);
+                        resolve(true);
+                    } else if (elapsed > POLL_TIMEOUT) {
+                        console.warn(`[FL] ATOMIC HYDRATION TIMEOUT (${fragmentPath}). Swapping anyway...`);
+                        resolve(false);
+                    } else {
+                        requestAnimationFrame(check);
+                    }
+                };
+                check();
+            });
+
+            await waitForReady();
+
+            // 6. ATOMIC SWAP
             container.innerHTML = shadow.innerHTML;
             container.dataset.loaded = 'true';
             container.style.opacity = '1';
             
-            // 5. Cleanup Shadow
+            // Cleanup Shadow
             shadow.innerHTML = '';
             
+            console.info(`[FL] ATOMIC SWAP COMPLETE (#${targetId})`);
             if (callback) callback();
         } catch (e) {
             this.error(targetId, fragmentPath, e);
@@ -282,4 +324,4 @@ const FragmentLoader = {
 // Global accessor
 window.FragmentLoader = FragmentLoader;
 
-// Created with MWV v1.45.100-EVO-REBUILD
+// Created with MWV v1.46.00-MASTER

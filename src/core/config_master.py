@@ -345,6 +345,12 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
+        # --- [v1.46.02] FORENSIC GLOBAL SIDEBAR (3-Column Architecture) ---
+        "forensic_sidebar_enabled": True,    # GLOBAL: Ob die linke Forensik-Leiste existiert.
+        "forensic_sidebar_visible": True,    # DEFAULT: Ob die Leiste beim Start offen ist.
+        "forensic_sidebar_width": 280,       # GLOBAL: Breite in Pixeln.
+        "forensic_sidebar_behavior": "persistent", # OPTIONS: "persistent", "contextual", "hidden"
+        
         # [v1.45.150] ACTIVATE FORENSIC WORKSTATION for modern categories (v1.45.300 Realignment)
         # if (['audio', 'multimedia', 'extended'].includes(category)) {
         #     if (window.MWV_Workstation) window.MWV_Workstation.activate();
@@ -377,6 +383,40 @@ GLOBAL_CONFIG: Dict[str, Any] = {
                     {"id": "parser", "label": "Parser", "action": "switchToolsTab('parser')"}
                 ]
             }
+        },
+
+        # --- [v1.45.300] LIBRARY SIDEBAR ORCHESTRATOR ---
+        "library_sidebar_orchestrator": {
+            "visible": True,
+            "width": 280,
+            "sections": [
+                {
+                    "id": "overview",
+                    "label": "Übersicht",
+                    "i18n": "sb_overview",
+                    "items": [
+                        {"id": "overview",   "label": "Alle Medien", "icon": "grid",   "action": "switchLibrarySubTab('coverflow')"},
+                        {"id": "cinema",     "label": "Cinema",      "icon": "video",  "action": "switchLibrarySubTab('cinema')"},
+                        {"id": "films",      "label": "Filme / Movie", "icon": "film", "action": "switchLibrarySubTab('films')"},
+                        {"id": "series",     "label": "Serien",      "icon": "tv",     "action": "switchLibrarySubTab('series')"},
+                        {"id": "albums",     "label": "Alben",       "icon": "disc",   "action": "switchLibrarySubTab('albums')"},
+                        {"id": "audiobooks", "label": "Hörbuch",     "icon": "book",   "action": "switchLibrarySubTab('audiobooks')"},
+                        {"id": "pictures",   "label": "Bilder",      "icon": "image",  "action": "switchLibrarySubTab('pictures')"},
+                        {"id": "documents",  "label": "Dokumente",   "icon": "file",   "action": "switchLibrarySubTab('documents')"}
+                    ]
+                },
+                {
+                    "id": "views",
+                    "label": "Ansichten",
+                    "i18n": "sb_views",
+                    "items": [
+                        {"id": "coverflow", "label": "Coverflow", "icon": "layout",   "action": "switchLibrarySubTab('coverflow')"},
+                        {"id": "grid",      "label": "Grid",      "icon": "grid",     "action": "switchLibrarySubTab('grid')"},
+                        {"id": "details",   "label": "Details",   "icon": "list",     "action": "switchLibrarySubTab('details')"},
+                        {"id": "streaming", "label": "Streaming", "icon": "play",     "action": "switchLibrarySubTab('streaming')"}
+                    ]
+                }
+            ]
         },
 
         # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
@@ -418,7 +458,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder", "epub", "docs", "archives", "unknown"]
         },
 
-        # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---
+        # --- [v1.46.00] BRANCH IDENTITY & BUILD REGISTRY ---
         "branch_identity_registry": {
             "audio":      {"label": "BUILD: AUDIO ONLY", "build_id": "MWV-A", "color": "#007aff"},
             "multimedia": {"label": "BUILD: MULTIMEDIA", "build_id": "MWV-M", "color": "#00ffcc"},
@@ -426,7 +466,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         },
 
         "build_configuration": {
-            "orchestrator_version": "v1.45.200-STABLE",
+            "orchestrator_version": "v1.46.00-STABLE",
             "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
             "release_channel": "development"
         },

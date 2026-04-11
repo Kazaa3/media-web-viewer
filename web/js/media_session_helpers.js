@@ -80,4 +80,4 @@
     console.log('[MediaSession] Helpers initialized.');
 })();
 
-// Created with MWV v1.45.100-EVO-REBUILD
+// Created with MWV v1.46.00-MASTER
