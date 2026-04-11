@@ -270,6 +270,7 @@ from datetime import datetime
 GLOBAL_CONFIG: Dict[str, Any] = {
     "version": VERSION,
     "build_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "branch_id": os.environ.get("MWV_BRANCH", "multimedia"),
     
     # --- NETWORK REGISTRY (v1.41.00 Centralized) ---
     "network_settings": {
@@ -404,7 +405,9 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             # Legacy/View Aliases (Redirecting frontend view IDs to branch identity)
             "media":      ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"], 
             "library":    ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
-            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"]
+            "database":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "player":     ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"],
+            "explorer":   ["all", "audio", "audio_native", "audio_transcode", "album", "single", "hörbuch", "sampler", "soundtrack", "video", "video_iso", "bilder"]
         },
 
         # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---

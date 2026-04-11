@@ -213,7 +213,17 @@ window.hydrateCategoryDropdown = function(branchId) {
     if (targetBranch === 'player') targetBranch = 'media';
     if (targetBranch === 'explorer') targetBranch = 'database';
 
-    const supportedIds = supportMap ? (supportMap[targetBranch] || supportMap[window.CONFIG?.branch_id] || null) : null;
+    console.log(`[HYDRATION] Hydrating dropdown for branch: ${branchId} (Normalized: ${targetBranch})`);
+    
+    let supportedIds = supportMap ? (supportMap[targetBranch] || supportMap[window.CONFIG?.branch_id] || null) : null;
+    
+    // [v1.45.305] SAFETY FAILOVER: If still null, default to full multimedia set for the forensic workstation
+    if (!supportedIds) {
+        console.warn(`[HYDRATION] Architecture lookup failed for ${targetBranch}. Using multimedia failover.`);
+        supportedIds = supportMap ? supportMap["multimedia"] : null;
+    }
+
+    console.log(`[HYDRATION] Resolved supported IDs:`, supportedIds);
 
     if (!allCategories || !Array.isArray(allCategories)) {
         console.warn("[HYDRATION] No library_category_map found in config.");
