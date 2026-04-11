@@ -565,7 +565,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     safeReg('player', {
         shellId: 'player-panel-container',
         fragmentId: 'player-main-viewport',
-        fragmentPath: 'fragments/player_queue.html',
+        fragmentPath: 'fragments/rebuild/audioplayer.html',
         onActivate: () => {
             if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
             if (typeof renderAudioQueue === 'function') renderAudioQueue();

@@ -254,6 +254,25 @@ def heartbeat():
 
 
 @eel.expose
+def log_spawn_event(component_id, status):
+    """Logs the instantiation/hydration of a UI component (v1.46.03)."""
+    log.info(f"🚀 [SPAWN-LOG] {component_id.upper()} -> {status}")
+    return True
+
+
+@eel.expose
+def audit_dom_state(state_summary):
+    """Records the structural integrity and liveness of the UI (v1.46.03)."""
+    log.warning(f"🛡️ [DOM-AUDIT] Liveness Report Received: {state_summary}")
+    # Optional: Cache state in GLOBAL_CONFIG for diagnostics
+    GLOBAL_CONFIG["last_dom_audit"] = {
+        "timestamp": time.time(),
+        "summary": state_summary
+    }
+    return True
+
+
+@eel.expose
 def kill_stale_and_restart():
     """
     Kills all project-related processes (v1.35.98 Integrated) and restarts.
