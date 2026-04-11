@@ -88,6 +88,38 @@ let currentVideoPath = null;
 let vjsPlayer = null; // Defined as a shared global in Orchestrator
 
 /**
+ * syncUiGeometry (v1.43)
+ * Injects dimensions from GLOBAL_CONFIG into CSS variables.
+ */
+function syncUiGeometry(config) {
+    if (!config || !config.ui_settings) return;
+    const settings = config.ui_settings;
+    const root = document.documentElement;
+    
+    console.info("[GEOMETRY] Synchronizing UI Dimensions...");
+    
+    // Level 1: Header
+    root.style.setProperty('--nav-header-height', (settings.header_height || 48) + 'px');
+    
+    // Level 2: Sub-Nav (Neck)
+    root.style.setProperty('--nav-sub-height', (settings.sub_nav_height || 35) + 'px');
+    
+    // Level 3: Module Tabs (Sub-Menu)
+    root.style.setProperty('--nav-module-height', (settings.sub_menu_height || 32) + 'px');
+    
+    // Global: Sidebar
+    root.style.setProperty('--sidebar-width', (settings.sidebar_width || 250) + 'px');
+    
+    if (typeof mwv_trace === 'function') {
+        mwv_trace('DOM-UI', 'GEOMETRY-SYNC', { 
+            h1: settings.header_height, 
+            h2: settings.sub_nav_height, 
+            wS: settings.sidebar_width 
+        });
+    }
+}
+
+/**
  * Unified Media Playback Router
  * Decides whether to engage the video player or the audio player.
  */

@@ -342,6 +342,36 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
+        # --- [v1.43] NAVIGATION ORCHESTRATOR REGISTRY ---
+        "navigation_orchestrator": {
+            "level_1": [
+                {"id": "media", "label": "PLAYER", "icon": "play", "action": "media"},
+                {"id": "library", "label": "LIBRARIES", "icon": "grid", "action": "library"},
+                {"id": "database", "label": "EXPLORER", "icon": "folder", "action": "database"},
+                {"id": "tools", "label": "TOOLS", "icon": "tool", "action": "tools"},
+                {"id": "status", "label": "STATUS", "icon": "sparkles", "action": "status", "color": "#00ffcc"}
+            ],
+            "level_2": {
+                "media": [
+                    {"id": "warteschlange", "label": "Queue", "action": "switchPlayerView('warteschlange')"},
+                    {"id": "playlist", "label": "Playlist", "action": "switchPlayerView('playlist')"},
+                    {"id": "lyrics", "label": "Lyrics", "action": "switchPlayerView('lyrics')"}
+                ],
+                "library": [
+                    {"id": "coverflow", "label": "Gallery", "action": "setLibraryLayout('coverflow')"},
+                    {"id": "table", "label": "Technical List", "action": "setLibraryLayout('table')"}
+                ],
+                "status": [
+                    {"id": "health", "label": "Health", "action": "switchDiagnosticsTab('health')"},
+                    {"id": "recovery", "label": "Recovery", "action": "switchDiagnosticsTab('recovery')"}
+                ],
+                "tools": [
+                    {"id": "dashboard", "label": "Dashboard", "action": "switchToolsTab('dashboard')"},
+                    {"id": "parser", "label": "Parser", "action": "switchToolsTab('parser')"}
+                ]
+            }
+        },
+        
         # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---
         "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
         "sub_nav_height": 35,                # GLOBAL: Höhe der Sub-Nav-Leiste (px).
