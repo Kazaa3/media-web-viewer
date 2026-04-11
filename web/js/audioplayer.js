@@ -16,21 +16,7 @@ const currentPlaylist = window.currentPlaylist;
 /**
  * Empties the current player queue (v1.41.00).
  */
-function clearQueue() {
-    console.warn(">>> [Queue] Clearing all items.");
-    window.currentPlaylist = [];
-    window.playlistIndex = -1;
-    
-    // Stop playback if something is playing
-    const pipeline = document.getElementById('native-html5-audio-pipeline-element');
-    if (pipeline) {
-        pipeline.pause();
-        pipeline.src = "";
-    }
-    
-    if (typeof renderAudioQueue === 'function') renderAudioQueue();
-    if (typeof showToast === 'function') showToast("Queue geleert", 1500);
-}
+// [v1.45.120] clearQueue relocated to playlists.js
 
 let audioContext = null;
 let analyser = null;
@@ -725,43 +711,9 @@ function renderAudioQueue() {
     }); // v1.41.00 Final closing block
 }
 
-function resetAllFilters() {
-    console.warn(">>> [Recovery] resetAllFilters triggered.");
-    window.activeQueueFilter = 'all';
-    window.__mwv_raw_mode = false;
-    
-    // Default the UI select if it exists
-    const filterSelect = document.getElementById('queue-type-filter');
-    if (filterSelect) filterSelect.value = 'all';
-    
-    if (typeof syncQueueWithLibrary === 'function') syncQueueWithLibrary();
-    if (typeof renderAudioQueue === 'function') renderAudioQueue();
-    
-    if (typeof showToast === 'function') showToast("Alle Filter zurückgesetzt & Sync erzwungen.", "success");
-}
+// [v1.45.120] resetAllFilters relocated to playlists.js
 
-function moveItemUp(index) {
-    if (index <= 0) return;
-    [currentPlaylist[index], currentPlaylist[index - 1]] = [currentPlaylist[index - 1], currentPlaylist[index]];
-    if (playlistIndex === index) playlistIndex--;
-    else if (playlistIndex === index - 1) playlistIndex++;
-    renderAudioQueue();
-}
-
-function moveItemDown(index) {
-    if (index >= currentPlaylist.length - 1) return;
-    [currentPlaylist[index], currentPlaylist[index + 1]] = [currentPlaylist[index + 1], currentPlaylist[index]];
-    if (playlistIndex === index) playlistIndex++;
-    else if (playlistIndex === index + 1) playlistIndex--;
-    renderAudioQueue();
-}
-
-function removeItem(index) {
-    currentPlaylist.splice(index, 1);
-    if (playlistIndex === index) playlistIndex = -1;
-    else if (playlistIndex > index) playlistIndex--;
-    renderAudioQueue();
-}
+// [v1.45.120] moveItemUp, moveItemDown, removeItem relocated to playlists.js
 
 // --- Player Dashboard Logic (v1.34) ---
 let playerLibrarySearch = '';
@@ -794,13 +746,7 @@ function handlePlayerLibrarySearch(val) {
  * Renders the full indexed library inside the player tab (v1.33 style Restoration).
  */
 
-function addToQueue(idx) {
-    if (typeof allLibraryItems !== 'undefined' && allLibraryItems[idx]) {
-        currentPlaylist.push(allLibraryItems[idx]);
-        renderAudioQueue();
-        if (typeof showToast === 'function') showToast("Zur Warteschlange hinzugefügt", "success");
-    }
-}
+// [v1.45.120] addToQueue relocated to playlists.js
 
 /**
  * Renders the full indexed library inside the player tab.
@@ -837,16 +783,7 @@ function renderFullLibraryInPlayer() {
     }).join('');
 }
 
-function addAndPlayNow(el, item) {
-    if (typeof currentPlaylist !== 'undefined') {
-        currentPlaylist.push(item);
-        playlistIndex = currentPlaylist.length - 1;
-        if (typeof renderAudioQueue === 'function') renderAudioQueue();
-        if (typeof playAudio === 'function') playAudio(item);
-        // Switch back to now playing to show the progress
-        switchPlayerMainView('now-playing');
-    }
-}
+// [v1.45.120] addAndPlayNow relocated to playlists.js
 
 /**
  * Synchronizes the player queue with the current library state (v1.45.110).
@@ -999,39 +936,6 @@ if (typeof playAudio === 'function') {
  * Ensures the player queue remains synchronized with the backend library.
  * Periodically checks for "zombie" items and triggers hydration if the queue is empty.
  */
-function startAtomicHydrationWatcher() {
-    console.info(">>> [Diagnostic] Starting Atomic Hydration Watcher...");
-    setInterval(() => {
-        try {
-            // 1. Hydration Check: If queue is empty but library has items, sync up.
-            if (currentPlaylist.length === 0 && typeof allLibraryItems !== 'undefined' && allLibraryItems.length > 0) {
-                console.warn("[Watcher] Queue is empty. Triggering automatic hydration...");
-                syncQueueWithLibrary();
-            }
+// [v1.45.120] startAtomicHydrationWatcher relocated to playlists.js
 
-            // 2. Health Check: Remove items with undefined/null paths (Zombies)
-            const initialCount = currentPlaylist.length;
-            currentPlaylist = currentPlaylist.filter(item => item && (item.path || item.id) && item.path !== 'undefined');
-            
-            if (currentPlaylist.length !== initialCount) {
-                console.error(`[Watcher] Purged ${initialCount - currentPlaylist.length} zombie items from queue.`);
-                renderAudioQueue();
-            }
-
-            // 3. UI Status Sync (Optional extension for Diagnostic Hub)
-            const hubStatus = document.getElementById('hub-sync-status');
-            if (hubStatus) {
-                hubStatus.innerText = `Synced (${currentPlaylist.length} items)`;
-            }
-        } catch (e) {
-            console.error("[Watcher] Hydration failure:", e);
-        }
-    }, 30000); // 30s heartbeat
-}
-
-// Start on load
-document.addEventListener('DOMContentLoaded', () => {
-    startAtomicHydrationWatcher();
-});
-
-// Created with MWV v1.45.100-EVO-REBUILD
+// Created with MWV v1.45.120-EVO-REBUILD

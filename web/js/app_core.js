@@ -81,8 +81,6 @@ window.addEventListener('error', function (e) {
 
 // --- Global Application State (Consolidated v1.45.110) ---
 let activeAudioPipeline = document.getElementById('native-html5-audio-pipeline-element');
-window.currentPlaylist = [];    // Unified Global Queue (SSOT)
-window.playlistIndex = -1;      // Unified Global Pointer (SSOT)
 let currentVideoItem = null;
 let currentVideoPath = null;
 let vjsPlayer = null; // Defined as a shared global in Orchestrator
@@ -839,50 +837,4 @@ async function triggerModuleHydration(name) {
 window.triggerModuleHydration = triggerModuleHydration;
 window.showStartupDashboard = showStartupDashboard;
 
-
-/**
- * syncQueueWithLibrary (v1.45.110 Centralized)
- * Hydrates the global currentPlaylist from the localized library cache.
- * Branch-aware filtering is primarily handled by the backend, this stage
- * performs final capability mapping and UI notification.
- */
-function syncQueueWithLibrary() {
-    if (typeof allLibraryItems === 'undefined' || allLibraryItems.length === 0) {
-        console.warn("[Sync] Library empty. Skipping queue hydration.");
-        return;
-    }
-
-    const hmode = window.__mwv_hydration_mode || 'both';
-    console.warn(`[Sync] Hydrating Global Queue... Mode: ${hmode}, Items: ${allLibraryItems.length}`);
-
-    // Stage 1: Local Filter Pulse (Mock/Real/Both)
-    // Branch-level filtering happened in the backend library fetch.
-    let filtered = allLibraryItems.filter(item => {
-        const nameMock = item.name && item.name.startsWith('[MOCK]');
-        const mockFlag = (item.is_mock === true || item.is_mock === 1 || nameMock);
-        
-        if (hmode === 'mock') return mockFlag || !!item.stage;
-        if (hmode === 'real') return !mockFlag && !item.stage;
-        return true; // 'both'
-    });
-
-    // Stage 2: Shared State Injection
-    window.currentPlaylist = filtered;
-    
-    console.info(`[Sync] Global Queue ready: ${window.currentPlaylist.length} items.`);
-
-    // Stage 3: Multi-Module UI Refresh Pulse
-    if (typeof renderAudioQueue === 'function') renderAudioQueue();
-    if (typeof renderVideoQueue === 'function') renderVideoQueue();
-    
-    // Stage 4: Centralized Technical Anchors
-    if (typeof updateSyncAnchor === 'function') {
-        const dbCount = (window.__mwv_all_library_items && window.__mwv_all_library_items.length > 0) 
-                        ? window.__mwv_all_library_items.length 
-                        : (window.__mwv_last_db_count || 0);
-        const guiCount = filtered.length;
-        updateSyncAnchor(dbCount, guiCount);
-    }
-}
-
-// Created with MWV v1.45.110-EVO-REBUILD
+// Created with MWV v1.45.120-EVO-REBUILD
