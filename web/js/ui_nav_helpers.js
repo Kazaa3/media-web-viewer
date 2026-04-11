@@ -493,28 +493,17 @@ function toggleOptionsSidebar() {
 }
 
 /**
- * UI Header Management: TOP MENU and SUB-MENU Bar (v1.37 Restoration)
- * These elements provide global control and contextual navigation.
+ * UI /**
+ * UI Header Management: Zen Mode (v1.41.154 Bridge)
  */
 window.toggleZenMode = function(forceState = null) {
-    const header = document.getElementById('master-header');
-    if (!header) return;
-
-    // Use forceState if provided, otherwise toggle
-    const isNowHidden = (forceState !== null) ? forceState : !header.classList.contains('zen-mode-active');
-    
-    if (isNowHidden) {
-        header.classList.add('zen-mode-active');
-        header.style.display = 'none';
-        header.setAttribute('data-manual-zen', 'true');
+    if (window.MWV_UI && typeof window.MWV_UI.toggleZen === 'function') {
+        window.MWV_UI.toggleZen(forceState);
     } else {
-        header.classList.remove('zen-mode-active');
-        header.style.display = 'flex';
-        header.removeAttribute('data-manual-zen');
+        console.warn("[UI-NAV] MWV_UI.toggleZen not found. Falling back to legacy hide.");
+        const header = document.getElementById('master-persistent-header');
+        if (header) header.style.display = 'none';
     }
-    
-    console.log(`[UI] ZEN MODE: ${isNowHidden ? 'ACTIVE' : 'INACTIVE'}`);
-    refreshViewportLayout();
 };
 
 window.toggleSubNav = function(forceState = null) {

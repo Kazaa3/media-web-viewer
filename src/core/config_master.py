@@ -350,6 +350,7 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "enable_technical_hud": True,        # GLOBAL: Floating PID/BOOT/UP Pills im Header.
         "enable_sync_anchor": True,          # GLOBAL: [DB|GUI] Sync-Metriken im Footer.
         "enable_footer_hud_cluster": True,   # GLOBAL: Swiss FE/BE/DB LED Cluster im Footer.
+        "enable_zen_mode": True,             # GLOBAL: Zen Mode (Header/Footer hide) Toggle.
         
         # --- GRANULAR UI FRAGMENT FLAGS ---
         "ui_fragments": {

@@ -202,6 +202,32 @@ body.mwv-hide-footer { --footer-height: 0px; }
     border-color: #9b59b6 !important;
 }
 
+#header-btn-zen-toggle:hover {
+    background: rgba(0, 122, 255, 0.2) !important;
+    border-color: rgba(0, 122, 255, 0.4) !important;
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.2);
+}
+
+#header-btn-zen-toggle.active {
+    background: #007aff !important;
+    color: white !important;
+    border-color: #007aff !important;
+}
+
+/* Zen Mode Orchestration (v1.41.154) */
+body.mwv-hide-header #master-persistent-header {
+    display: none !important;
+}
+
+body.mwv-hide-subnav #contextual-pill-nav {
+    display: none !important;
+}
+
+body.mwv-hide-footer #unified-player-footer,
+body.mwv-hide-footer .layout-footer {
+    display: none !important;
+}
+
 #header-btn-auditor:hover {
     background: rgba(0, 255, 127, 0.2) !important;
     border-color: rgba(0, 255, 127, 0.4) !important;

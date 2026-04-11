@@ -178,6 +178,12 @@ window.MWV_UI = (() => {
             footerHudBtn.style.display = showFooterHud ? 'flex' : 'none';
         }
 
+        const zenBtn = document.getElementById('header-btn-zen-toggle');
+        if (zenBtn) {
+            const showZen = !!(registry.config.enable_zen_mode);
+            zenBtn.style.display = showZen ? 'flex' : 'none';
+        }
+
         // --- Geometry Recalculation ---
         updateGeometry();
     }
@@ -257,6 +263,29 @@ window.MWV_UI = (() => {
     }
 
     /**
+     * Toggles Zen Mode (Unified Header & Footer hide)
+     */
+    async function toggleZen(forceState = null) {
+        const hBtn = document.getElementById('header-btn-zen-toggle');
+        // If header is hidden, we assume zen is active (or header was manual hidden)
+        const isHeaderHidden = document.body.classList.contains('mwv-hide-header');
+        const nextState = (forceState !== null) ? forceState : !isHeaderHidden;
+
+        console.info(`[MWV-UI] Toggling Zen Mode: ${nextState}`);
+        
+        // Hide/Show Header
+        document.body.classList.toggle('mwv-hide-header', nextState);
+        // Hide/Show Footer
+        document.body.classList.toggle('mwv-hide-footer', nextState);
+        // Hide/Show SubNav
+        document.body.classList.toggle('mwv-hide-subnav', nextState);
+
+        if (hBtn) hBtn.classList.toggle('active', nextState);
+
+        updateGeometry();
+    }
+
+    /**
      * Updates a setting in the central flags (backend) and re-applies UI.
      */
     async function setSetting(key, value) {
@@ -320,6 +349,7 @@ window.MWV_UI = (() => {
         toggleFooter,
         toggleHeaderRight,
         toggleSidebar,
+        toggleZen,
         updateGeometry,
         getConstants: () => ({ ...CONSTANTS }),
         getState: () => ({ ...registry })
