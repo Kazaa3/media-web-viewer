@@ -236,118 +236,124 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
         
-        // --- v1.37.52 Forensic Window Registry ---
-        // --- v1.41.107 Atomic Shell Registry ---
-        if (typeof WindowManager !== 'undefined') {
-            console.info("[BOOT-AUDIT] WindowManager found. Beginning Forensic Registration...");
-            
-            // [v1.41.150] Standardized Registry Mapping
-            const regCount = 10;
-            let regDone = 0;
-
-            const safeReg = (name, config) => {
-                try {
-                    console.log(`[FORENSIC-REG] Registering: ${name.toUpperCase()}...`);
-                    WM.register(name, config);
-                    regDone++;
-                } catch (e) {
-                    console.error(`[FORENSIC-REG] CRITICAL FAILURE registering ${name}:`, e);
-                }
-            };
-
-            safeReg('player', { 
-                shellId: 'player-panel-container', 
-                fragmentId: 'player-main-viewport', 
-                fragmentPath: 'fragments/player_queue.html',
-                onActivate: () => { 
-                    if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
-                    if (typeof renderPlaylist === 'function') renderPlaylist(); 
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
-                }
-            });
-            safeReg('library', { 
-                shellId: 'library-panel-container', 
-                fragmentId: 'library-main-viewport', 
-                fragmentPath: 'fragments/library_explorer.html',
-                onActivate: () => { 
-                    if (typeof renderLibrary === 'function') renderLibrary(); 
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('library');
-                }
-            });
-            safeReg('database', { 
-                shellId: 'database-panel-container', 
-                fragmentId: 'database-main-viewport', 
-                fragmentPath: 'fragments/database_panel.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
-                }
-            });
-            safeReg('edit', { 
-                shellId: 'edit-panel-container', 
-                fragmentId: 'edit-main-viewport', 
-                fragmentPath: 'fragments/metadata_editor.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('edit');
-                }
-            });
-            safeReg('debug', { 
-                shellId: 'debug-panel-container', 
-                fragmentId: 'debug-main-viewport', 
-                fragmentPath: 'fragments/status_panel.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
-                    if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
-                }
-            });
-            safeReg('system', { 
-                shellId: 'system-panel-container', 
-                fragmentId: 'options-main-viewport', 
-                fragmentPath: 'fragments/options_panel.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('system');
-                }
-            });
-            safeReg('video', { 
-                shellId: 'video-panel-container', 
-                fragmentId: 'video-main-viewport', 
-                fragmentPath: 'fragments/video_cinema.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('video');
-                }
-            });
-            safeReg('tools', { 
-                shellId: 'tools-panel-container', 
-                fragmentId: 'tools-main-viewport', 
-                fragmentPath: 'fragments/tools_dashboard.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
-                }
-            });
-            safeReg('logbuch', { 
-                shellId: 'logbook-tab-container', 
-                fragmentId: 'logbook-main-viewport', 
-                fragmentPath: 'fragments/logbook_view.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('logbuch');
-                }
-            });
-            safeReg('tests', { 
-                shellId: 'tests-panel-container', 
-                fragmentId: 'tests-main-viewport', 
-                fragmentPath: 'fragments/test_sentinel.html',
-                onActivate: () => {
-                    if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tests');
-                }
-            });
-
-            console.info(`[BOOT-AUDIT] Forensic Registration Complete: ${regDone}/${regCount} windows ready.`);
-        } else {
-            console.error("[BOOT-AUDIT] CRITICAL: WindowManager NOT FOUND. UI Tracking compromised.");
-        }
-
-        // Shared background fragments (Immediate parallel load)
         let fragmentsNeeded = 4;
         let fragmentsLoaded = 0;
+
+/**
+ * Atomic Shell Registry (v1.41.107/167)
+ * Immediate execution to prevent race conditions during boot.
+ */
+(() => {
+    if (typeof WindowManager === 'undefined') {
+        console.error("[BOOT-AUDIT] CRITICAL: WindowManager NOT FOUND. UI Tracking compromised.");
+        return;
+    }
+
+    console.info("[BOOT-AUDIT] WindowManager found. Beginning Forensic Registration...");
+    const WM = WindowManager;
+
+    const safeReg = (name, config) => {
+        try {
+            console.log(`[FORENSIC-REG] Registering: ${name.toUpperCase()}...`);
+            WM.register(name, config);
+        } catch (e) {
+            console.error(`[FORENSIC-REG] CRITICAL FAILURE registering ${name}:`, e);
+        }
+    };
+
+    safeReg('player', { 
+        shellId: 'player-panel-container', 
+        fragmentId: 'player-main-viewport', 
+        fragmentPath: 'fragments/player_queue.html',
+        onActivate: () => { 
+            if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+            if (typeof renderPlaylist === 'function') renderPlaylist(); 
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('media');
+        }
+    });
+    safeReg('library', { 
+        shellId: 'library-panel-container', 
+        fragmentId: 'library-main-viewport', 
+        fragmentPath: 'fragments/library_explorer.html',
+        onActivate: () => { 
+            if (typeof renderLibrary === 'function') renderLibrary(); 
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('library');
+        }
+    });
+    safeReg('database', { 
+        shellId: 'database-panel-container', 
+        fragmentId: 'database-main-viewport', 
+        fragmentPath: 'fragments/database_panel.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
+        }
+    });
+    safeReg('edit', { 
+        shellId: 'edit-panel-container', 
+        fragmentId: 'edit-main-viewport', 
+        fragmentPath: 'fragments/metadata_editor.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('edit');
+        }
+    });
+    safeReg('debug', { 
+        shellId: 'debug-panel-container', 
+        fragmentId: 'debug-main-viewport', 
+        fragmentPath: 'fragments/status_panel.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('status');
+            if (typeof runUiIntegrityCheck === 'function') runUiIntegrityCheck();
+        }
+    });
+    safeReg('system', { 
+        shellId: 'system-panel-container', 
+        fragmentId: 'options-main-viewport', 
+        fragmentPath: 'fragments/options_panel.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('system');
+        }
+    });
+    safeReg('video', { 
+        shellId: 'video-panel-container', 
+        fragmentId: 'video-main-viewport', 
+        fragmentPath: 'fragments/video_cinema.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('video');
+        }
+    });
+    safeReg('tools', { 
+        shellId: 'tools-panel-container', 
+        fragmentId: 'tools-main-viewport', 
+        fragmentPath: 'fragments/tools_dashboard.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tools');
+        }
+    });
+    safeReg('logbuch', { 
+        shellId: 'logbook-tab-container', 
+        fragmentId: 'logbook-main-viewport', 
+        fragmentPath: 'fragments/logbook_view.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('logbuch');
+        }
+    });
+    safeReg('tests', { 
+        shellId: 'tests-panel-container', 
+        fragmentId: 'tests-main-viewport', 
+        fragmentPath: 'fragments/test_sentinel.html',
+        onActivate: () => {
+            if (typeof updateGlobalSubNav === 'function') updateGlobalSubNav('tests');
+        }
+    });
+
+    console.info(`[BOOT-AUDIT] Forensic Registration Complete.`);
+
+    // Shared background fragments (Immediate parallel load)
+    if (typeof FragmentLoader !== 'undefined') {
+        FragmentLoader.load('svg-icons-placeholder', 'fragments/icons.html');
+        FragmentLoader.load('context-menu-placeholder', 'fragments/context_menu.html');
+        FragmentLoader.load('dom-auditor-container', 'fragments/dom_auditor.html');
+    }
         const onFragmentDone = (name) => {
             fragmentsLoaded++;
             if (typeof window.auditFragmentHydration === 'function') {

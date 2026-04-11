@@ -153,14 +153,19 @@ def shutdown_backend():
     except Exception as e:
         log.error(f"[SHUTDOWN] Cleanup error: {e}")
     
-    log.warning("☢️ [BACKEND] PURGING ENVIRONMENT (os.killpg). BYE.")
-    # Use os.killpg to kill the entire process group (Launcher shell, etc.)
+    log.warning("☢️ [BACKEND] [SHUTDOWN-VERIFIED] PURGING ENVIRONMENT. BYE.")
+    
+    # [v1.41.167] Forensic Log Flush
     try:
+        import time
         import signal
+        for handler in log.handlers:
+            handler.flush()
+        time.sleep(0.12) # Brief grace period for disk I/O
+        
         os.killpg(os.getpgrp(), signal.SIGKILL)
     except Exception as e:
-        log.error(f"[SHUTDOWN] Environment purge failed: {e}")
-        # Final fallback if killpg fails (e.g. not group leader)
+        log.error(f"[SHUTDOWN] Nuclear failover: {e}")
         os._exit(0)
 
 @eel.expose
