@@ -380,6 +380,41 @@ def set_ui_config_value(key: str, value: Any):
     return master_set(key, value)
 
 
+# --- UI & Footer Orchestration API (v1.41.156) ---
+
+@eel.expose
+def get_footer_registry():
+    """ Returns the states of all footer-related diagnostic flags. """
+    settings = GLOBAL_CONFIG.get("ui_settings", {})
+    footer_keys = [
+        "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
+        "enable_sync_anchor", "enable_footer_hud_cluster", "enable_zen_mode",
+        "enable_footer_db_status"
+    ]
+    return {k: settings.get(k, False) for k in footer_keys}
+
+@eel.expose
+def set_footer_element_state(element_key: str, is_active: bool):
+    """
+    Dedicated high-level bridge to toggle footer components and persist state.
+    Example element_key: 'enable_sync_anchor'
+    """
+    log.info(f"[UI-ORCHESTRATION] Requesting state change for footer component: {element_key} -> {is_active}")
+    
+    # Validation
+    valid_keys = [
+        "enable_diagnostics_hud", "enable_dom_auditor", "enable_technical_hud",
+        "enable_sync_anchor", "enable_footer_hud_cluster", "enable_zen_mode",
+        "enable_footer_db_status"
+    ]
+    
+    if element_key not in valid_keys:
+        log.warning(f"[UI-ORCHESTRATION] REJECTED: Invalid footer component key: {element_key}")
+        return False
+
+    return set_ui_config_value(element_key, is_active)
+
+
 @eel.expose
 def report_items_spawned(count, source="frontend"):
     """
