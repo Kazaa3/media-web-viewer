@@ -105,6 +105,14 @@ class UIHandler(logging.Handler):
                or "[UI-RENDER]" in msg or "[DOM-UI]" in msg:
                 return
 
+            msg = self.format(record)
+            
+            # --- [v1.42] UNICODE SAFETY FILTER ---
+            if REGISTRY.get("unicode_safety_mode") or REGISTRY.get("safety_mode"):
+                safety_map = REGISTRY.get("unicode_safety_map", {})
+                for emoji, tag in safety_map.items():
+                    msg = msg.replace(emoji, tag)
+
             LOG_BUFFER.append(msg)
 
             # Keep buffer size manageable

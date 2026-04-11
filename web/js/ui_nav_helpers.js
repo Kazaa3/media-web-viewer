@@ -890,9 +890,9 @@ const SUB_NAV_ALIASES = {
  * Updates the global sub-navigation bar with contextual entries.
  */
 function updateGlobalSubNav(category) {
-    const container = document.getElementById('sub-nav-container');
+    let container = document.getElementById('rebuild-pill-container') || document.getElementById('sub-nav-container');
     if (!container) {
-        console.warn("[UI-NAV] #sub-nav-container NOT found in DOM. Bypassing Pill Update.");
+        console.warn("[UI-NAV] No sub-nav container found (#rebuild-pill-container or #sub-nav-container). Bypassing Pill Update.");
         return;
     }
 
