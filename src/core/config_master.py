@@ -376,17 +376,20 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         # --- [v1.45.117] GLOBAL ARCHITECTURE REGISTRIES ---
         "library_category_map": [
             {"id": "all", "label": "ALL MEDIA"},
-            {"id": "audio", "label": "AUDIO BRANCH"},
-            {"id": "video", "label": "VIDEO BRANCH"},
+            {"id": "audio_native", "label": "AUDIO (NATIVE)"},
+            {"id": "audio_transcode", "label": "AUDIO (TRANSCODE)"},
+            {"id": "video_native", "label": "VIDEO (NATIVE)"},
+            {"id": "video_hd", "label": "VIDEO (HD TRANSCODE)"},
+            {"id": "video_pal", "label": "VIDEO (PAL TRANSCODE)"},
+            {"id": "video_iso", "label": "VIDEO (ISO/DVD)"},
             {"id": "bilder", "label": "BILDER"},
-            {"id": "iso", "label": "ISO IMAGES"},
-            {"id": "transcoded", "label": "TRANSCODED"}
+            {"id": "epub", "label": "EPUB SUPPORT [OFF]"}
         ],
 
         "branch_architecture_registry": {
-            "media": ["all", "audio", "transcoded"],
-            "library": ["all", "audio", "video", "bilder", "transcoded"],
-            "database": ["all", "iso", "audio", "transcoded"]
+            "media": ["all", "audio_native", "audio_transcode"],
+            "library": ["all", "audio_native", "audio_transcode", "video_native", "video_hd", "video_pal", "video_iso", "bilder"],
+            "database": ["all", "video_iso", "epub"] # [v1.45] Extended Branch Focus
         },
         
         # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---
