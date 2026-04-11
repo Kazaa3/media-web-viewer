@@ -166,7 +166,7 @@ def extract_metadata(path, filename, mode='lightweight', file_type=None, **kwarg
     """
     path_obj = Path(path)
     file_type = path_obj.suffix.lower()
-    from src.core.models import ALL_AUDIO_EXTENSIONS
+    from src.core.config_master import ALL_AUDIO_EXTENSIONS
     
     if file_type in ALL_AUDIO_EXTENSIONS:
         return extract_metadata_audio(path, filename, mode, **kwargs)

@@ -9524,7 +9524,7 @@ def get_routing_suite_report():
                 dist['81-100'] += 1
 
             # Determine Recommended Mode
-            from src.core.models import DISK_IMAGE_EXTENSIONS
+            from src.core.config_master import DISK_IMAGE_EXTENSIONS
             is_direct = is_direct_play_capable(path, 'browser')
 
             import os as python_os
@@ -9603,7 +9603,7 @@ def get_media_compatibility_report():
             is_ffplay = True  # FFmpeg plays everything
 
             # Specialized check for disc images
-            from src.core.models import DISK_IMAGE_EXTENSIONS
+            from src.core.config_master import DISK_IMAGE_EXTENSIONS
             is_disc = ext in DISK_IMAGE_EXTENSIONS or item.get('category') == 'disk_images'
             if is_disc:
                 is_chrome = False
