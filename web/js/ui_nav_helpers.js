@@ -715,10 +715,10 @@ function switchMainCategory(category, btn) {
         if (window.MWV_Workstation) window.MWV_Workstation.activate();
     }
 
-    // [v1.41.114] Layout Orchestration: Full Bleed for Media
+    // [v1.41.114] Layout Orchestration: Full Bleed for Audio (v1.45.300 Sync)
     const splitView = document.getElementById('main-split-container');
     if (splitView) {
-        if (category === 'media') splitView.classList.add('shell-full-bleed');
+        if (category === 'audio') splitView.classList.add('shell-full-bleed');
         else splitView.classList.remove('shell-full-bleed');
     }
 
@@ -1147,8 +1147,7 @@ function switchOptionsView(viewId) {
  */
 function switchLibrarySubTab(tabId) {
     traceUiNav('SUBTAB-LIB', tabId);
-    librarySubTab = tabId;
-    localStorage.setItem('mwv_library_sub_tab', tabId);
+    let librarySubTab = localStorage.getItem('mwv_library_sub_tab') || 'coverflow';
 
     document.querySelectorAll('#coverflow-library-panel button.options-subtab, #lib-nav-views-container .options-subtab').forEach(btn => btn.classList.remove('active'));
     const btn = document.getElementById(`lib-tab-btn-${tabId}`);
@@ -1166,8 +1165,8 @@ function switchLibrarySubTab(tabId) {
  */
 function switchToolsView(viewId) {
     traceUiNav('SUBTAB-TOOLS', viewId);
-    document.querySelectorAll('.tools-view').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.tools-nav-tabs .options-subtab').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tools-view').forEach(el => { el.style.display = 'none'; });
+    document.querySelectorAll('.tools-nav-tabs .options-subtab').forEach(el => { el.classList.remove('active'); });
 
     const target = document.getElementById('tools-' + viewId + '-view');
     if (target) {
@@ -1279,7 +1278,7 @@ function update_progress(data) {
         text.innerText = (data.task || 'Lade') + '...';
     }
     if (bar) {
-        bar.style.width = (data.percent || 0) + '%';
+        bar.width = (data.percent || 0) + '%';
         if (data.status === 'complete') {
             setTimeout(() => {
                 if (container) container.style.display = 'none';
@@ -1451,7 +1450,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'childList' && pillNav.innerHTML.trim() === '') {
                     console.warn("[UI-FIX] Sub-nav cleared unexpectedly! Re-hydrating...");
-                    updateGlobalSubNav(currentMainCategory || 'media');
+                    updateGlobalSubNav(currentMainCategory || 'audio');
                 }
             });
         });
@@ -1467,7 +1466,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         
         if (!isHidden && pillNav && pillNav.children.length === 0) {
             console.warn("[UI-GUARDIAN] Sub-nav is empty but visible. Forcing Re-hydration...");
-            updateGlobalSubNav(currentMainCategory || 'media');
+            updateGlobalSubNav(currentMainCategory || 'audio');
         }
     }, 3000);
 });
@@ -1498,7 +1497,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                      Die GUI Orchestrierung wurde manuell re-aktiviert. <br>
                      Versuche nun über die Tabs zu navigieren oder drücke F5.
                  </p>
-                 <button onclick="location.reload()" style="margin-top: 30px; padding: 12px 30px; background: #007aff; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">NEUSTART (SYNC)</button>
+                 <button onclick="switchTab('multimedia')" class="tab-btn active" style="padding: 12px 30px; background: #007aff; color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;">NEUSTART (SYNC)</button>
              </div>
          `;
      }
