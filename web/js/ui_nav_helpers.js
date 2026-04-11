@@ -925,10 +925,13 @@ function updateGlobalSubNav(category) {
 
     // Render logic with explicit lifecycle markers
     console.info(`[MWV-UI] Populating Sub-Nav for: ${normalizedCategory} | Pills: ${entries.length}`);
+    const isRebuild = container.id === 'rebuild-pill-container';
+    const pillClass = isRebuild ? 'rebuild-pill' : 'sub-pill-btn';
+
     const prevContent = container.innerHTML;
     const newContent = entries.map(item => `
         <button id="sub-nav-pill-${item.id}" 
-                class="sub-pill-btn ${activeSubTab === item.id ? 'active' : ''}" 
+                class="${pillClass} ${activeSubTab === item.id ? 'active' : ''}" 
                 onclick="${item.action}"
                 title="${item.label}">
             ${item.label}
