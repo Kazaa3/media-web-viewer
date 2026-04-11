@@ -171,9 +171,9 @@ def audit_category_chain(item: Dict) -> str:
 # This map provides the architectural link between branch IDs and human labels.
 # Restored as per user requirement to bridge fixed branches to build process.
 BRANCH_MAP = {
-    "media": "AUDIO NATIVE",
-    "library": "MULTIMEDIA",
-    "database": "EXTENDED"
+    "audio":      "BUILD: AUDIO ONLY", # Legacy
+    "multimedia": "BUILD: MULTIMEDIA", # Current
+    "extended":   "BUILD: EXTENDED" # Future
 }
 
 def get_branch_label(branch_id: str) -> str:

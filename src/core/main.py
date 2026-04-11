@@ -4375,7 +4375,7 @@ def get_branch_identity(branch_id: str = None) -> Dict[str, Any]:
     """Resolves the full identity metadata for a branch (v1.45.200)."""
     from src.core import models
     # Fallback to GLOBAL_CONFIG active_branch if not provided
-    bid = branch_id or GLOBAL_CONFIG.get('active_branch', 'media')
+    bid = branch_id or GLOBAL_CONFIG.get('active_branch', 'multimedia')
     return {
         "id": bid,
         "label": models.get_branch_label(bid),

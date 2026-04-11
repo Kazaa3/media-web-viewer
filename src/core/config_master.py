@@ -342,12 +342,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "header_right_width": "30%",         # GLOBAL: Breite des rechten Header-Bereichs (Tools).
         "header_center_visible": True,       # GLOBAL: Sichtbarkeit des zentralen Titels.
         
-        # --- [v1.45.115] BRANCH VS CATEGORY ORCHESTRATOR (Structural) ---
+        # [v1.45.150] ACTIVATE FORENSIC WORKSTATION for modern categories (v1.45.300 Realignment)
+        # if (['audio', 'multimedia', 'extended'].includes(category)) {
+        #     if (window.MWV_Workstation) window.MWV_Workstation.activate();
+        # }
+        
         "navigation_orchestrator": {
             "level_1": [
-                {"id": "media", "label": "AUDIO", "icon": "play", "action": "media"},
-                {"id": "library", "label": "MULTIMEDIA", "icon": "grid", "action": "library"},
-                {"id": "database", "label": "EXTENDED", "icon": "folder", "action": "database"},
+                {"id": "audio",      "label": "AUDIO",      "icon": "play",   "action": "audio"},
+                {"id": "multimedia", "label": "MULTIMEDIA", "icon": "grid",   "action": "multimedia"},
+                {"id": "extended",   "label": "EXTENDED",   "icon": "folder", "action": "extended"},
                 {"id": "tools", "label": "TOOLS", "icon": "tool", "action": "tools"},
                 {"id": "status", "label": "STATUS", "icon": "sparkles", "action": "status", "color": "#00ffcc"}
             ],
@@ -387,16 +391,16 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         ],
 
         "branch_architecture_registry": {
-            "media": ["all", "audio_native", "audio_transcode"],
-            "library": ["all", "audio_native", "audio_transcode", "video_native", "video_hd", "video_pal", "video_iso", "bilder"],
-            "database": ["all", "video_iso", "epub"] # [v1.45] Extended Branch Focus
+            "audio":      ["audio_native", "audio_transcode"],
+            "multimedia": ["audio_native", "audio_transcode", "video_native", "video_hd", "video_pal"],
+            "extended":   ["all"] # [v1.45] Full Forensic Support
         },
 
-        # --- [v1.45.200] BRANCH IDENTITY & BUILD REGISTRY ---
+        # --- [v1.45.300] BRANCH IDENTITY & BUILD REGISTRY ---
         "branch_identity_registry": {
-            "media":    {"label": "AUDIO NATIVE", "build_id": "MWV-A", "color": "#007aff"},
-            "library":  {"label": "MULTIMEDIA",   "build_id": "MWV-M", "color": "#00ffcc"},
-            "database": {"label": "EXTENDED",     "build_id": "MWV-E", "color": "#ff9500"}
+            "audio":      {"label": "BUILD: AUDIO ONLY", "build_id": "MWV-A", "color": "#007aff"},
+            "multimedia": {"label": "BUILD: MULTIMEDIA", "build_id": "MWV-M", "color": "#00ffcc"},
+            "extended":   {"label": "BUILD: EXTENDED",   "build_id": "MWV-E", "color": "#ff9500"}
         },
 
         "build_configuration": {
