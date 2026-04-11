@@ -141,6 +141,19 @@ window.MWV_UI = (() => {
         registry.sidebarVisible = !!settings.sidebar_visible;
         syncSidebar();
 
+        // --- 5. Global Config Overrides (v1.41.147) ---
+        const diagHud = document.getElementById('header-technical-hud');
+        if (diagHud) {
+            const showHud = !!(registry.config.enable_diagnostics_hud);
+            diagHud.style.display = showHud ? 'flex' : 'none';
+        }
+        
+        const diagBtn = document.getElementById('header-btn-diag-overlay');
+        if (diagBtn) {
+            const showDiag = !!(registry.config.enable_diagnostics_hud);
+            diagBtn.style.visibility = showDiag ? 'visible' : 'hidden';
+        }
+
         // --- Geometry Recalculation ---
         updateGeometry();
     }

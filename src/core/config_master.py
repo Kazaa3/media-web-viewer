@@ -344,6 +344,8 @@ GLOBAL_CONFIG: Dict[str, Any] = {
         "footer_visible": True,              # GLOBAL: Schwebende Media-Steuerung unten.
         "footer_height": 48,                 # GLOBAL: Höhe des Footers (px).
         "diagnostics_hud_visible": True,     # GLOBAL: Technisches HUD-Overlay.
+        "enable_context_menu": True,         # GLOBAL: Rechtsklick-Menü für Items.
+        "enable_diagnostics_hud": True,      # GLOBAL: Sichtbarkeit des technischen HUDs im Header.
         
         # --- GRANULAR UI FRAGMENT FLAGS ---
         "ui_fragments": {
