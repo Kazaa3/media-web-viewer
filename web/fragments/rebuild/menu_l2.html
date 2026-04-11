@@ -1,0 +1,50 @@
+<!-- [v1.42] NEW LEVEL 2 MENU (REBUILD MODE) -->
+<div class="rebuild-sub-nav">
+    <div id="rebuild-pill-container" class="pill-flexbox">
+        <!-- Sub-pills will be injected here via updateGlobalSubNav (Rebuild Adaptor) -->
+    </div>
+</div>
+
+<style>
+.rebuild-sub-nav {
+    background: rgba(10, 10, 15, 0.4);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.pill-flexbox {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Rebuild Pill Style */
+.rebuild-pill {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rebuild-pill:hover {
+    background: rgba(0, 255, 153, 0.05);
+    border-color: rgba(0, 255, 153, 0.2);
+    color: #00ff99;
+}
+
+.rebuild-pill.active {
+    background: #00ff99;
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(0, 255, 153, 0.3);
+}
+</style>

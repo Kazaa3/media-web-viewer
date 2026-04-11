@@ -1,0 +1,79 @@
+<!-- [v1.42] NEW LEVEL 1 MENU (REBUILD MODE) -->
+<div class="rebuild-nav-wrapper">
+    <div class="nav-cluster elite">
+        <button id="nav-btn-media" class="menu-item-btn active" data-cat="media" onclick="switchMainCategory('media', this)">
+            <span class="icon">\u25B6</span> MEDIA
+        </button>
+        <button id="nav-btn-library" class="menu-item-btn" data-cat="library" onclick="switchMainCategory('library', this)">
+            <span class="icon">\u2630</span> LIBRARIES
+        </button>
+        <button id="nav-btn-explorer" class="menu-item-btn" data-cat="database" onclick="switchMainCategory('database', this)">
+            <span class="icon">\uD83D\uDCC1</span> EXPLORER
+        </button>
+        <button id="nav-btn-tools" class="menu-item-btn" data-cat="tools" onclick="switchMainCategory('tools', this)">
+            <span class="icon">\u2699</span> TOOLS
+        </button>
+        <div class="nav-spacer"></div>
+        <button id="nav-btn-recovery" class="menu-item-btn pulse-orange" data-cat="status" onclick="switchMainCategory('status', this)">
+            <span class="icon">\u26A1</span> STATUS
+        </button>
+    </div>
+</div>
+
+<style>
+/* Modern Glassmorphic Overrides for Rebuild Mode */
+.rebuild-nav-wrapper {
+    background: rgba(20, 20, 30, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0 15px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.nav-cluster.elite {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.nav-spacer { flex-grow: 1; }
+
+.menu-item-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-item-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.menu-item-btn.active {
+    background: rgba(0, 255, 153, 0.15);
+    color: #00ff99;
+}
+
+.menu-item-btn.pulse-orange {
+    color: #ffaa00;
+}
+
+.menu-item-btn .icon {
+    font-size: 14px;
+    opacity: 0.8;
+}
+</style>
