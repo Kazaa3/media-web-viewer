@@ -763,9 +763,6 @@ function switchMainCategory(category, btn) {
     // [v1.45] Orchestration: Delegation to WindowManager
     // Redundant visibility overrides removed to prevent race conditions with Sentinel.
     refreshUIVisibility();
-
-    // [v1.37.06] Centralized Visibility Refresh
-    refreshUIVisibility();
 }
 
 /// [v1.41.137] Forensic Sub-Nav Registry (Nuclear SSOT - Synced with config_master.py)
