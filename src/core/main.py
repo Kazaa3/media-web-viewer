@@ -131,8 +131,31 @@ except ImportError as e:
 
 @eel.expose
 def shutdown_backend():
-    log.warning("[BACKEND] Received shutdown signal.")
-    sys.exit(0)
+    """
+    Nuclear Shutdown Sequence (v1.41.164).
+    Ensures all child processes and threads are forcefully terminated.
+    """
+    log.warning("☢️ [BACKEND] CRITICAL: RECEIVED NUCLEAR SHUTDOWN SIGNAL.")
+    
+    try:
+        from src.core.process_manager import ProcessController
+        from pathlib import Path
+        
+        # Initialize ProcessController for emergency cleanup
+        pc = ProcessController(PROJECT_ROOT, Path(GLOBAL_CONFIG["storage_registry"]["data_dir"]))
+        
+        log.info("[SHUTDOWN] Purging project process tree...")
+        pc.kill_stale_instances(current_pid=os.getpid())
+        
+        log.info("[SHUTDOWN] Releasing locks...")
+        pc.release_lock()
+        
+    except Exception as e:
+        log.error(f"[SHUTDOWN] Cleanup error: {e}")
+    
+    log.warning("☢️ [BACKEND] EXECUTING os._exit(0). BYE.")
+    # Use os._exit to force immediate termination of all threads/gevent loops
+    os._exit(0)
 
 @eel.expose
 def get_category_master():

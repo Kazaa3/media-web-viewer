@@ -102,7 +102,7 @@
         <div class="nav-cluster primary-cluster" style="display: flex; align-items: center; padding-left: 10px;">
             <!-- EXIT / POWER BUTTON (v1.41.162 Restoration: Ganz Oben Links) -->
             <button id="header-btn-power-exit" 
-                onclick="if(typeof eel !== 'undefined' && typeof eel.shutdown_backend === 'function') { eel.shutdown_backend()(); } else { window.close(); }" 
+                onclick="exitApplication()" 
                 title="EXIT APPLICATION" 
                 class="tab-btn"
                 style="padding: 6px; border-radius: 6px; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.2); margin-right: 15px; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);">
