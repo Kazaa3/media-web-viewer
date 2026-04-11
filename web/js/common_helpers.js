@@ -201,6 +201,7 @@ function update_progress(data) {
 
 /**
  * Global Context Menu Controller
+ */
 function showContextMenu(e, item) {
     // [v1.41.147] Config & Registry Check
     const isEnabled = window.CONFIG && window.CONFIG.ui_settings && window.CONFIG.ui_settings.enable_context_menu !== false;
@@ -224,9 +225,6 @@ function showContextMenu(e, item) {
     if (typeof appendUiTrace === 'function') appendUiTrace(`[Context-Menu] Opening for: ${item.name}`);
     console.info(`>>> [Context-Menu] showContextMenu triggered for: ${item.name} at (${e.clientX}, ${e.clientY})`);
 
-    // Visibility Toggle (Overriding CSS display: none)
-    menu.style.display = 'block';
-    menu.style.zIndex = '100005'; 
     let x = e.clientX;
     let y = e.clientY;
     
@@ -235,8 +233,9 @@ function showContextMenu(e, item) {
         return;
     }
 
+    // [v1.41.149] Clean Visibility Reveal
     menu.style.display = 'block';
-    menu.style.zIndex = '100005'; // v1.41: Ensure it survives above HUD and other fragments
+    menu.style.zIndex = '100005'; // Ensure it survives above HUD and other fragments
     
     // Boundary check for window (v1.35 Hardened)
     const menuWidth = 240;
