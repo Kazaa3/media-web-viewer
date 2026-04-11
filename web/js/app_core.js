@@ -270,6 +270,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             const config = await eel.get_global_config()();
             window.GLOBAL_CONFIG = config;
             
+            // [v1.43] MASTER GEOMETRY SYNC
+            syncUiGeometry(config);
+
             if (config.ui_evolution_mode === 'rebuild') {
                 console.warn(">>> [ORCHESTRATOR] EVOLUTION MODE: REBUILD ACTIVE <<<");
                 if (typeof FragmentLoader !== 'undefined') {
