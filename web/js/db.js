@@ -13,10 +13,11 @@ async function getLibrary(auditStage = 0) {
     
     // Auto-fallback for stage names
     const forceRaw = (auditStage === 2);
+    const activeBranch = window.activeTab || 'media';
 
     try {
-        console.info(`[DB] getLibrary Request: Stage=${auditStage}, ForceRaw=${forceRaw}`);
-        const result = await eel.get_library(forceRaw, auditStage)();
+        console.info(`[DB] getLibrary Request: Stage=${auditStage}, ForceRaw=${forceRaw}, Branch=${activeBranch}`);
+        const result = await eel.get_library(forceRaw, auditStage, activeBranch)();
         console.log(`[DB] getLibrary Response:`, result);
         return result;
     } catch (e) {
@@ -30,8 +31,9 @@ async function getLibrary(auditStage = 0) {
  */
 async function getLibraryFiltered(search = "", genre = "all", year = "all", sortBy = "name") {
     if (typeof eel === 'undefined') return { media: [] };
+    const activeBranch = window.activeTab || 'media';
     try {
-        return await eel.get_library_filtered(search, genre, year, sortBy)();
+        return await eel.get_library_filtered(search, genre, year, sortBy, false, activeBranch)();
     } catch (e) {
         console.error("[DB] Error fetching filtered library:", e);
         return { media: [] };

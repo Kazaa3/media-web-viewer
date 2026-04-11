@@ -250,6 +250,22 @@ class MediaFormat:
         self.type = self.detect_type()
         self.format = self.detect_format()
         self.content = self.detect_content()
+        self.capability_stage = self.detect_capability_stage()
+
+    def detect_capability_stage(self) -> str:
+        """
+        Determines the granular capability stage for architectural filtering (v1.45.130).
+        """
+        ext = self.extension
+        if ext in AUDIO_NATIVE: return "audio_native"
+        if ext in AUDIO_TRANSCODE: return "audio_transcode"
+        if ext in VIDEO_NATIVE: return "video_native"
+        if ext in VIDEO_HD_TRANSCODE: return "video_hd"
+        if ext in VIDEO_PAL_TRANSCODE: return "video_pal"
+        if ext in DISK_IMAGE_EXTENSIONS: return "video_iso"
+        if ext in PICTURE_EXTENSIONS: return "bilder"
+        if ext in EBOOK_EXTENSIONS: return "epub"
+        return "unknown"
 
     def detect_type(self) -> str:
         ext = self.extension
@@ -404,10 +420,10 @@ class MediaItem:
         # 2. SSOT Categorization (Quadrant Consolidation)
         self.format_info = MediaFormat(self.path, self.tags)
         self.category = self.format_info.type  # Canonical lowercase ID
-        self.logical_type = self.format_info.type
         self.file_format = self.format_info.format
         self.content_type = self.format_info.content
         self.extension = self.format_info.extension.lstrip('.').lower()
+        self.capability_stage = self.format_info.capability_stage
 
         # 3. Features & Playability
         self.is_playable = self.format_info.is_playable
@@ -531,6 +547,7 @@ class MediaItem:
             'codec': self.codec,
             'category': self.category,
             'logical_type': self.logical_type,
+            'capability_stage': self.capability_stage,
             'file_format': self.file_format,
             'content_type': self.content_type,
             'is_artwork_missing': self.is_missing_cover,

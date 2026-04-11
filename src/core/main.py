@@ -4214,7 +4214,7 @@ def _apply_library_filters(all_media: List[Dict], force_raw: bool = False, searc
     supported_by_branch = branch_registry.get(active_branch) if active_branch else None
     
     if supported_by_branch:
-        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {active_branch.toUpperCase()}")
+        log.info(f"[BRIDGE] Enforcing architectural constraints for branch: {str(active_branch).upper() if active_branch else 'NONE'}")
 
     filtered = []
     
@@ -4371,7 +4371,7 @@ def get_library_forensics():
     }
 
 @eel.expose
-def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]:
+def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
     """
     @brief Unified library bridge with integrated forensics (v1.35.96)
     """
@@ -4434,7 +4434,7 @@ def get_library(force_raw: bool = False, audit_stage: int = 0) -> Dict[str, Any]
 
     # --- FILTERING & BYPASS (The Motor) ---
     # Apply production filters unless force_raw is requested
-    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw)
+    filtered_media, logic_audit = _apply_library_filters(all_media, force_raw=force_raw, active_branch=active_branch)
 
     # --- EMERGENCY RECOVERY ---
     # Trigger ONLY if real filtered_media is 0 but DB has data
