@@ -439,6 +439,22 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     console.log("Core Orchestrator: System checks passing. Initializing UI fragments...");
 
+    // [v1.46.07] EMERGENCY BOOT WATCHDOG
+    setTimeout(() => {
+        if (!window.__PLAYER_INITIALIZED__) {
+            console.warn("!!! [WATCHDOG] Player hydration HANG detected. Forcing manual injection...");
+            if (typeof switchMainCategory === 'function') {
+                switchMainCategory('media');
+            }
+            if (typeof FragmentLoader !== 'undefined') {
+                FragmentLoader.load('player-main-viewport', 'fragments/player_queue.html', () => {
+                    window.__PLAYER_INITIALIZED__ = true;
+                    if (typeof switchPlayerView === 'function') switchPlayerView('warteschlange');
+                });
+            }
+        }
+    }, 5000);
+
     try {
         if (typeof mwv_trace_render === 'function') mwv_trace_render('BOOT-WATCHDOG', 'INIT-START');
 
