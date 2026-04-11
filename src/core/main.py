@@ -2415,8 +2415,11 @@ def get_environment_info_dict():
     testbed_pid = find_venv_pid('.venv_testbed')
     selenium_pid = find_venv_pid('.venv_selenium')
 
-    # Use centralized Style Sheet (Template) from v1.35.96 SSOT
-    env_data = GLOBAL_CONFIG["templates"]["environment"].copy()
+    # Use centralized Style Sheet (Template) with safe-get fallback (v1.41.170)
+    _tpt = GLOBAL_CONFIG.get("templates", {})
+    env_data = _tpt.get("environment", {}).copy()
+    
+    # Ensure mandatory fields (even if template was skeleton)
     env_data.update({
         "env_type": env_type,
         "env_name": env_name,
@@ -2434,8 +2437,8 @@ def get_environment_info_dict():
         "log_level": logging.getLevelName(logging.getLogger().getEffectiveLevel()),
         "release": platform.release(),
         "machine": platform.machine(),
-        "debug_flags": DEBUG_FLAGS,
-        "version": VERSION,
+        "debug_flags": globals().get("DEBUG_FLAGS", {}),
+        "version": globals().get("VERSION", "Unknown"),
     })
     return env_data
 
@@ -2445,15 +2448,20 @@ def get_environment_info_dict():
 @eel.expose
 def get_konsole():
     """
-    Returns debug logs, environment info, and dicts for GUI console.
+    Returns debug logs, environment info, and dicts for GUI console. (v1.41.170 Stabilization)
     """
-    return {
-        "logs": "\n".join(logger.get_ui_logs()),
-        "env": get_environment_info_dict(),
-        "version": VERSION,
-        "license": "GNU GPL-3.0",
-        "debug_flags": DEBUG_FLAGS,
-    }
+    try:
+        from src.core import logger
+        return {
+            "logs": "\n".join(logger.get_ui_logs()),
+            "env": get_environment_info_dict(),
+            "version": globals().get("VERSION", "Unknown"),
+            "license": "GNU GPL-3.0",
+            "debug_flags": globals().get("DEBUG_FLAGS", {}),
+        }
+    except Exception as e:
+        print(f"STDOUT: [Main] CRITICAL ERROR in get_konsole: {e}")
+        return {"logs": f"ERROR: {e}", "env": {}, "status": "critical_failure"}
 
 
 @eel.expose
