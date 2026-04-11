@@ -167,7 +167,40 @@ def audit_category_chain(item: Dict) -> str:
         return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: Internal={matched_internal} -> OK"
     return f"[AUDIT] Item '{name}' ({raw_cat}) -> CHAIN: NO MATCH -> DROPPED"
 
-def get_allowed_internal_cats(displayed_cats: List[str]) -> List[str]:
+# --- [v1.45.200] BRANCH IDENTITY & BUILD BRIDGE ---
+# This map provides the architectural link between branch IDs and human labels.
+# Restored as per user requirement to bridge fixed branches to build process.
+BRANCH_MAP = {
+    "media": "AUDIO NATIVE",
+    "library": "MULTIMEDIA",
+    "database": "EXTENDED"
+}
+
+def get_branch_label(branch_id: str) -> str:
+    """Resolves the professional display name for a branch."""
+    reg = GLOBAL_CONFIG.get('branch_identity_registry', {})
+    if branch_id in reg:
+        return reg[branch_id].get('label', BRANCH_MAP.get(branch_id, branch_id.upper()))
+    return BRANCH_MAP.get(branch_id, branch_id.upper())
+
+def get_branch_build_id(branch_id: str) -> str:
+    """Resolves the Build ID (e.g. MWV-A) for a branch."""
+    reg = GLOBAL_CONFIG.get('branch_identity_registry', {})
+    if branch_id in reg:
+        return reg[branch_id].get('build_id', 'MWV-GENERIC')
+    return "MWV-GENERIC"
+
+def get_build_link(branch_id: str) -> str:
+    """Generates the absolute build artifact link for a branch (v1.45.200)."""
+    from src.core.config_master import APP_VERSION_CORE
+    build_id = get_branch_build_id(branch_id)
+    template = GLOBAL_CONFIG.get('build_configuration', {}).get('build_link_template', "")
+    if template:
+        return template.replace("{{BUILD_ID}}", build_id).replace("{{VERSION}}", APP_VERSION_CORE)
+    return f"./dist/MediaWebViewer-{build_id}.exe"
+
+# --- CATEGORY RECONCILIATION ---
+def get_allowed_categories(branch_id: str) -> list[str]:
     """
     @brief Returns the flattened list of internal labels for the requested categories (v1.37.07 SSOT).
     Supports German aliases and cross-mappings.

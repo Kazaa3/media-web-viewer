@@ -4371,6 +4371,20 @@ def get_library_forensics():
     }
 
 @eel.expose
+def get_branch_identity(branch_id: str = None) -> Dict[str, Any]:
+    """Resolves the full identity metadata for a branch (v1.45.200)."""
+    from src.core import models
+    # Fallback to GLOBAL_CONFIG active_branch if not provided
+    bid = branch_id or GLOBAL_CONFIG.get('active_branch', 'media')
+    return {
+        "id": bid,
+        "label": models.get_branch_label(bid),
+        "build_id": models.get_branch_build_id(bid),
+        "build_link": models.get_build_link(bid),
+        "version": GLOBAL_CONFIG.get('build_configuration', {}).get('orchestrator_version', 'v1.45.200')
+    }
+
+@eel.expose
 def get_library(force_raw: bool = False, audit_stage: int = 0, active_branch: str = None) -> Dict[str, Any]:
     """
     @brief Unified library bridge with integrated forensics (v1.35.96)

@@ -391,6 +391,19 @@ GLOBAL_CONFIG: Dict[str, Any] = {
             "library": ["all", "audio_native", "audio_transcode", "video_native", "video_hd", "video_pal", "video_iso", "bilder"],
             "database": ["all", "video_iso", "epub"] # [v1.45] Extended Branch Focus
         },
+
+        # --- [v1.45.200] BRANCH IDENTITY & BUILD REGISTRY ---
+        "branch_identity_registry": {
+            "media":    {"label": "AUDIO NATIVE", "build_id": "MWV-A", "color": "#007aff"},
+            "library":  {"label": "MULTIMEDIA",   "build_id": "MWV-M", "color": "#00ffcc"},
+            "database": {"label": "EXTENDED",     "build_id": "MWV-E", "color": "#ff9500"}
+        },
+
+        "build_configuration": {
+            "orchestrator_version": "v1.45.200-STABLE",
+            "build_link_template": "./dist/MediaWebViewer-{{BUILD_ID}}-{{VERSION}}.exe",
+            "release_channel": "development"
+        },
         
         # --- LEVEL 2: CONTEXTUAL PILLS (Sub-Nav) ---
         "sub_nav_visible": True,             # GLOBAL: Kontext-Pill-Leiste (Queue, Lyrics).
